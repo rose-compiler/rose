@@ -5,14 +5,16 @@
  * Decription : supporting functions for RoseBin
  ****************************************************/
 
+
 #ifndef __RoseBin_support__
 #define __RoseBin_support__
-
+#include <iomanip>
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
 // #include "rose.h"
 #include "stdint.h"
+
 
 #include "RoseBin_IDAPRO_exprTree.h"
 
@@ -313,6 +315,11 @@ class RoseBin_support {
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec * 1.e-6;
   }
+#else
+    static inline double getTime() {
+	// tps (12/08/2009): GetTime unimplemented but will pass like this.
+		return 0;
+	}
 #endif
 
 

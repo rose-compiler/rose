@@ -1,18 +1,24 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "attachPreprocessingInfo.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+// #ifndef USE_ROSE
 // Local typedefs used in this file only...
 typedef boost::wave::cpplexer::lex_token<>  token_type;
 typedef std::vector<token_type>             token_container;
 typedef std::list<token_type>               token_list_container;
 typedef std::vector<std::list<token_type> > token_container_container;
+// #endif
 
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // DQ (11/28/2008): What does this evaluate to???  Does this mix C++ constants with CPP values (does this make sense? Is "true" defined?)
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if !CAN_NOT_COMPILE_WITH_ROSE
+// #if !CAN_NOT_COMPILE_WITH_ROSE
+#ifndef USE_ROSE
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
@@ -28,7 +34,6 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 #include "advanced_preprocessing_hooks.h"
 #include "attributeListMap.h"
-#endif
 
 //Include files to get the current path
 #include <unistd.h>
@@ -94,6 +99,8 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr,  std::map<std::string,ROSEAtt
 void
 attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
    {
+#ifndef  CXX_IS_ROSE_CODE_GENERATION
+
 #ifdef _MSC_VER
 #pragma message ("WARNING: Wave support not ported to Windows MSVC.")
 	   printf ("ERROR: Wave support not ported to Windows MSVC. \n");
@@ -527,11 +534,9 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
         {
           std::string filename2 = it_files->first;
 
-          Sg_File_Info* sourceFileInfo = sageFilePtr->get_file_info();
-          int sourceFileNameId = (sageFilePtr->get_requires_C_preprocessor() == true) ? 
-            Sg_File_Info::getIDFromFilename(filename2) : 
-            sourceFileInfo->get_file_id();
           /*
+          Sg_File_Info* sourceFileInfo = sageFilePtr->get_file_info();
+          int sourceFileNameId = (sageFilePtr->get_requires_C_preprocessor() == true) ? Sg_File_Info::getIDFromFilename(filename2) : sourceFileInfo->get_file_id();
           int sourceFileNameId = (sageFilePtr->get_requires_C_preprocessor() == true) ? 
             Sg_File_Info::getIDFromFilename(sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2)) : 
             sourceFileInfo->get_file_id();
@@ -572,6 +577,9 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 // endif for ifdef _MSC_VER
 #endif
 
+// endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+#endif
+
 #if 0
      printf ("Ending at base of attachPreprocessingInfoUsingWave(SgSourceFile*) \n");
      ROSE_ABORT();
@@ -592,6 +600,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
           sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
 #endif
 
+#ifndef  CXX_IS_ROSE_CODE_GENERATION
      // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Comment and CPP Directive Processing (not using Wave):");
 
@@ -628,6 +637,9 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      {
        tt.traverseWithinFile(sageFilePtr,inh);
      }
+
+// endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+#endif
 
 
 #if 0

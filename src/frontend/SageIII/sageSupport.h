@@ -1,8 +1,17 @@
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// tps (01/27/2010) : Note this is an old file an should not be used!
+
+// DQ (2/6/2010): Make this an error!
+#error "This header file should not be used!"
+
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 // Added global function for getting the string associated 
 // with an enum (which is defined in global scope)
 // string getVariantName ( VariantT v );
+#ifndef __sagesupport
+#define __sagesupport
 
+//#include "setup.h"
 // DQ (7/7/2005): Temp location while I implement this function
 int buildAstMergeCommandFile ( SgProject* project );
 
@@ -14,4 +23,8 @@ StringUtility::FileNameLibrary  get_library     ( Sg_File_Info* X );
 std::string                     get_libraryName ( Sg_File_Info* X );
 StringUtility::OSType           get_OS_type      ();
 int                             get_distanceFromSourceDirectory ( Sg_File_Info* X );
-SgFile*                         determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project );
+// tps (01/26/2010) : SgFile* determineFileType redefined in sageInterface.h !!!!
+//SgFile*                         determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project );
+#endif
+
+

@@ -3,8 +3,11 @@
 #ifndef ROSE_H
 #define ROSE_H
 
+#include "sage3basic.hhh"
 // DQ (4/21/2009): Andreas needs to add a comment about what this is for...
 #define BOOST_WAVE_PREPROCESS_PRAGMA_BODY 1
+
+#include "rosedefs.h"
 
 #if 0
 // Forward references to namespaces used in the binary execuable file format support.
@@ -17,7 +20,9 @@ namespace ELF{
 #endif
 
 // DQ (4/21/2009): This header file contains the definitions of the IR nodes.
-#include "sage3.h"
+// tps : avoid detection" header files are scanned whether they include sage3basic.h for .h and .hh
+
+//#include "sage3.h"
 
 // DQ (3/22/2009): This is already included in sage3.h"
 // #include "roseInternal.h"
@@ -41,10 +46,7 @@ namespace ELF{
 
 // DQ (6/3/2007): added internal support for AST visualization
 // // #include "astVisualization/wholeAST_API.h"
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "wholeAST_API.h"
-//#endif 
 // DQ (10/18/2003) Why is this commented out (what is it)
 //#include "AgProcessing.h"
 
@@ -52,11 +54,8 @@ namespace ELF{
 // which has not defined yet (circular reference in the header files)
 // #include "AstRestructure.h"
 
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "rewrite.h"
 #include "roseTranslators.h"
-//#endif
 
 // this is a temporary fix (will become obsolete)
 #include "AstClearVisitFlags.h"
@@ -66,10 +65,7 @@ namespace ELF{
 // #include "AstMerge.h"
 
 // DQ (5/26/2007): Use the new AST merge mechanism.
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "merge.h"
-// #endif
 // JH (01/18/2006): adding the include file for the AST file I/O (by Jochen)
 #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
@@ -88,53 +84,37 @@ namespace ELF{
 #include "AstAttributeDOT.h"
 
 // DQ (3/11/2006): Jeremiah Willcock's inliner
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "inliner.h"
-//#endif
 
 // DQ (3/18/2006): Jeremiah Willcock's partial redundancy elimination (PRE)
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "pre.h"
-// #endif
 // DQ (4/8/2006): Constant folding of the AST (cleans out redundant
 // constant expresion trees save in translation from the frontend).
 // Required to be run before PRE!
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "constantFolding.h"
-// #endif
 
 // DQ (5/8/2007): Added Robert Preissl's support for hidden type and declartion lists.
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "HiddenList.h"
 #include "HiddenList_Output.h"
 #include "HiddenList_Intersection.h"
-//#endif
 
 // DQ (1/25/2008): Added cfgToDot.h as suggested by Jeremiah
 #include "cfgToDot.h"
 
 // DQ (1/24/2008): Add these here to permit simple and uniform support of binaries.
 // File in src/frontend/BinaryDisassembly
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "RoseBin_support.h"
 #ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
 #endif
-// #endif
 
+
+#include "DataConversion.h"
 #include "Loader.h"
 #include "LoaderELF.h"
 #include "LoaderELFObj.h"
 #include "LoaderPE.h"
 // Files in src/frontend/ExecFormats
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
-//#error "Do not execute this"
 #include "MemoryMap.h"
 
 #include "RoseBin_abstract.h"
@@ -146,7 +126,6 @@ namespace ELF{
 #include "RoseBin_ControlFlowAnalysis.h"
 #include "RoseBin_DataFlowAnalysis.h"
 #include "RoseBin_CallGraphAnalysis.h"
-// #endif
 
 #include "AST_BIN_Traversal.h"
 
@@ -158,6 +137,9 @@ namespace ELF{
 
 #include "powerpcInstructionEnum.h"
 #include "powerpcInstructionProperties.h"
+
+// Files in src/frontent/BinaryLoader
+#include "binaryLoader.h"
 
 // Files in src/frontend/Disassemblers
 #include "Disassembler.h"
@@ -173,8 +155,6 @@ namespace ELF{
 
 
 
-// Endian access wrappers in src/frontend/SageIII/sageInterface
-#include "endianWrappers.h"
 
 // ABI struct layout and similar helpers in src/frontend/SageIII/sageInterface
 #include "abiStuff.h"
@@ -220,7 +200,10 @@ namespace ELF{
 #endif
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
-// #define COMPILE_DEBUG_STATEMENTS 1
+#define COMPILE_DEBUG_STATEMENTS 0
+
+// Endian access wrappers in src/frontend/SageIII/sageInterface
+//#include "endianWrappers.h"
 
 // ifndef ROSE_H
 #endif

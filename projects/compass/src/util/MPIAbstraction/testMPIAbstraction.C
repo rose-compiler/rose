@@ -2,11 +2,13 @@
  *  \file testMPIAbstraction.C
  *  \brief Unit test for the MPIAbstraction module.
  */
-
+  
 #include "rose.h"
 #include <iostream>
 #include <string>
 #include <sstream>
+
+#ifndef CXX_IS_ROSE_CODE_GENERATION
 
 #include <MPIAbstraction/Recognizer.h>
 #include <commandline_processing.h>
@@ -94,6 +96,7 @@ private:
   size_t found_count_; //!< Count the number of calls recognized.
 }; // class RecognitionTraversal
 
+
 //=========================================================================
 
 int
@@ -114,10 +117,12 @@ main (int argc, char* argv[])
   SgProject* proj = frontend (argvList);
   ROSE_ASSERT (proj);
 
+#ifndef CXX_IS_ROSE_CODE_GENERATION
   // Try to recognize constructs.
   cerr << "[Recognizing ...]" << endl;
   RecognitionTraversal traversal (mpi_api_file);
   traversal.traverse (proj, preorder);
+#endif
 
   if (make_pdfs)
     {
@@ -127,6 +132,8 @@ main (int argc, char* argv[])
 
   return 0;
 }
+
+#endif
 
 //=========================================================================
 // eof

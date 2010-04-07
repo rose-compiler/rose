@@ -1,11 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = SemanticVerification
+SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 
-EXTRA_DIST = runTest.C arm-ctrlaltdel.ans \
-	     runExecFormatsTest testShiftResizeSection.sh \
-	     test_findConstants.ans test_disassemble.ans \
-             testSampleBinaries.sh testSampleBinaries.conf
+EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
+		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
+		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
+		test_disassembleBuffer.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -19,10 +19,12 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # The executables...
 ###############################################################################################################################
 
-#noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
-#	          testPeConstruct shiftResizeSection findConstants disassemble
-noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
-	          testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns
+# Each executable will have a test_*.result target for testing and a demo_* target for interactive demo. The former is the
+# name of a file that is created when the test is successful (unsuccessful results are usually saved in *.result.tmp), the later
+# is a phony target.
+noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
+		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
+		expandCoreDump functionBoundaries findConstantsABI rot13
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -77,12 +79,31 @@ shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 findConstants_SOURCES = findConstants.C
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Finds constant values and propagates them across instructions using an ABI
+findConstantsABI_SOURCES = findConstantsABI.C
+findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Disassemble a file containing bare instructions
+disassembleBuffer_SOURCES = disassembleBuffer.C
+disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Program to show function boundary information for a binary executable
+functionBoundaries_SOURCES=functionBoundaries.C
+functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Program to add read-only data to ELF core dumps.
+expandCoreDump_SOURCES=expandCoreDump.C
+expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Program that encodes/decodes data similar to ROT-13 but acceping binary data
+rot13_SOURCES=rot13.C
 
 ###############################################################################################################################
 # DEMOS
@@ -135,10 +156,32 @@ demo_findConstants: findConstants demo_shiftResizeSection
 	@echo; echo; echo "Demo for $<"; echo
 	./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_disassemble: disassemble demo_findConstants
+demo_findConstantsABI: findConstantsABI demo_findConstants
 	@echo; echo; echo "Demo for $<"; echo
-	./disassemble --search-following --search-immediate --search-words --search-allbytes --search-unused --search-nonexe --search-deadend --search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
+	./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin
+
+demo_disassemble: disassemble demo_findConstantsABI
+	@echo; echo; echo "Demo for $<"; echo
+	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
+
+demo_disassembleBuffer: disassembleBuffer demo_disassemble
+	@echo; echo; echo "Demo for $<"; echo
+	./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310
+
+demo_testBinCFG: testBinCFG demo_disassembleBuffer
+	: no demo yet for testBinCFG
+
+demo_expandCoreDump: expandCoreDump demo_testBinCFG
+	: no demo yet for expandCoreDump
+
+demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
+	@echo; echo; echo "Demo for $<";
+	@echo "The functionBoundaries tool prints information about what binary functions were detected and why."
+	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin
+
+demo_rot13: rot13
+	: no demo yet for rot13
 
 ###############################################################################################################################
 # TESTS
@@ -146,126 +189,221 @@ demo_disassemble: disassemble demo_findConstants
 # These are pretty much the same as the demos except they compare the new output with expected output and fail if there
 # are any differences.
 #
-# Each passing test creates a *.passed file so that a subsequent "make" doesn't need to rerun the test.
+# Each passing test creates a *.result file so that a subsequent "make" doesn't need to rerun the test.
+#
+#------------------------------------------------------------------------------------------------------------------------------
+# -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE --
+#
+# SOME OF THE TARGETS DEPEND ON OTHER TESTS BECAUSE ROSE SHOULD NOT EXECUTE CONCURRENTLY IN THE SAME WORKING DIRECTORY FOR
+# SPECIMEN BINARIES HAVING THE SAME NAMES DUE TO ROSE CREATING FILES IN THE CWD BASED ON THE BASE NAME OF THE SPECIMEN.
+# ------------------------------------------------------------------------------------------------------------------------------
+#
 ###############################################################################################################################
-TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS)) test_assembler.passed
 
-test_execFormatsTest.passed: execFormatsTest
-	: $< not currently tested
+# Static tests start here and are individually defined below.
+STATIC_TEST_TARGETS = $(patsubst %,test_%.result,$(noinst_PROGRAMS)) test_assembler.result
+test_static.result: $(STATIC_TEST_TARGETS)
 	@touch $@
 
-test_testBinCFG.passed: testBinCFG
-	$(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so
+# Dynamicly-generated tests start here and their definitions are inserted below by the "build" script.  We make the
+# dynamic tests depend on the static test because we're not sure what output files will be generated and we don't want
+# the output of dynamic tests causing havoc for the static tests.
+test_dynamic.result: test_static.result
+	@$(MAKE) test_sample_binaries.result
 	@touch $@
 
-test_testBinCG.passed: testBinCG
-	$(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so
+test_execFormatsTest.result: execFormatsTest
+	@echo "  TESTING $@ (not currently tested)"
 	@touch $@
 
-test_testElfStrtab.passed: testElfStrtab
-	$(VALGRIND) ./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff
-	@touch $@
+test_testBinCFG.result: testBinCFG
+	@echo "  TESTING $@"
+	@if $(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so >$@.tmp 2>&1; then mv $@.tmp $@; \
+	else sed 's/^/$@> /' < $@.tmp; exit 1; fi
+
+test_testBinCG.result: testBinCG test_testBinCFG.result
+	@echo "  TESTING $@"
+	@if $(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so >$@.tmp 2>&1; then mv $@.tmp $@; \
+	else sed 's/^/$@> /' < $@.tmp; exit 1; fi
+
+test_testElfStrtab.result: testElfStrtab
+	@echo "  TESTING $@"
+	@if $(VALGRIND) ./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; then mv $@.tmp $@; \
+	else sed 's/^/$@> /' < $@.tmp; exit 1; fi
 
 # cannot run in parallel with testElfStrtab
-test_testElfByteOrder.passed: testElfByteOrder test_testElfStrtab.passed
-	$(VALGRIND) ./testElfByteOrder $(BINARY_SAMPLES)/arm-poweroff
-	$(VALGRIND) ./execFormatsTest ./arm-poweroff.new
-	@if diff -u ./arm-poweroff.new{,.new}; then :; else echo "Files differ; byte order test failed"; exit 1; fi
-	@touch $@
+test_testElfByteOrder.result: testElfByteOrder test_testElfStrtab.result
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./testElfByteOrder $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./arm-poweroff.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && diff -u ./arm-poweroff.new{,.new} >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' < $@.tmp; exit 1; fi
 
 # cannot run in parallel with testElfStrtab or testElfByteOrder
-test_testElfWordSize.passed: testElfWordSize test_testElfStrtab.passed test_testElfByteOrder.passed
-	$(VALGRIND) ./testElfWordSize -rose:read_executable_file_format_only $(BINARY_SAMPLES)/arm-poweroff
-	$(VALGRIND) ./execFormatsTest -rose:read_executable_file_format_only ./arm-poweroff.new
-	@if diff -u ./arm-poweroff.new{,.new}; then								\
-		: ok;												\
-	else													\
-		sed -n '0,/^Section/p' <arm-poweroff.dump;							\
-		hexdump -Cv arm-poweroff.new >arm-poweroff.new.hexump;						\
-		hexdump -Cv arm-poweroff.new.new >arm-poweroff.new.new.hexump;					\
-		diff -u arm-poweroff.new{,.new}.hexdump |head -n100;						\
-		rm -f arm-poweroff.new{,.new}.hexdump;								\
-		echo "Files differ; word size test failed";							\
-		exit 1;												\
-	fi
+test_testElfWordSize.result: testElfWordSize test_testElfStrtab.result test_testElfByteOrder.result
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./testElfWordSize -rose:read_executable_file_format_only $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest -rose:read_executable_file_format_only ./arm-poweroff.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && diff -u ./arm-poweroff.new{,.new} >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' < $@.tmp; exit 1; fi
+
+test_testElfSchulz.result: test_testElfSchulz-1.result test_testElfSchulz-2.result
+	@echo "  TESTING $@ (not currently tested)"
 	@touch $@
 
-test_testElfSchulz.passed: test_testElfSchulz-1.passed test_testElfSchulz-2.passed
-	@touch $@
+test_testElfSchulz-1.result: testElfSchulz
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample1.so >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./schulz-sample1.so.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample1-p.so >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && diff -u schulz-sample1{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample1-p.so schulz-sample1.so.new >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_testElfSchulz-1.passed: testElfSchulz
-	$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample1.so
-	$(VALGRIND) ./execFormatsTest ./schulz-sample1.so.new
-	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample1-p.so
-	@if diff -u schulz-sample1{-p.so,.so.new}.dump; then :; \
-	    else echo "Dumps differ; Schulz test-1 failed"; exit 1; fi
-	@if diff $(BINARY_SAMPLES)/schulz-sample1-p.so schulz-sample1.so.new; then :; \
-	    else echo "Libs differ; Schulz test-1 failed"; exit 1; fi
-	@touch $@
+test_testElfSchulz-2.result: testElfSchulz
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample2.so >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./schulz-sample2.so.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample2-p.so >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && diff -u schulz-sample2{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample2-p.so schulz-sample2.so.new >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_testElfSchulz-2.passed: testElfSchulz
-	$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample2.so
-	$(VALGRIND) ./execFormatsTest ./schulz-sample2.so.new
-	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample2-p.so
-	@if diff -u schulz-sample2{-p.so,.so.new}.dump; then :; \
-	    else echo "Dumps differ; Schulz test-2 failed"; exit 1; fi
-	@if diff $(BINARY_SAMPLES)/schulz-sample2-p.so schulz-sample2.so.new; then :; \
-	    else echo "Libs differ; Schulz test-2 failed"; exit 1; fi
-	@touch $@
+test_so_file: test_testBinCFG.result test_testBinCG.result
+	@echo "  TESTING $@"
+	@if $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/libm-2.3.6.so >$@.tmp 2>&1; \
+	 then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_so_file:
-	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/libm-2.3.6.so
+test_testElfConstruct.result: testElfConstruct
+	@echo "  TESTING $@"
+	@if $(VALGRIND) ./testElfConstruct >$@.tmp 2>&1; \
+	 then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_testElfConstruct.passed: testElfConstruct
-	$(VALGRIND) ./testElfConstruct
-	@touch $@
+test_testPeConstruct.result: testPeConstruct
+	@echo "  TESTING $@"
+	@if $(VALGRIND) ./testPeConstruct >$@.tmp 2>&1; \
+	 then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_testPeConstruct.passed: testPeConstruct
-	$(VALGRIND) ./testPeConstruct
-	@touch $@
+test_shiftResizeSection.result: shiftResizeSection
+	@echo "  TESTING $@"
+	@$(srcdir)/testShiftResizeSection.sh $(BINARY_SAMPLES)/arm-ctrlaltdel >arm-ctrlaltdel.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/arm-ctrlaltdel.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_shiftResizeSection.passed: shiftResizeSection
-	$(srcdir)/testShiftResizeSection.sh $(BINARY_SAMPLES)/arm-ctrlaltdel >arm-ctrlaltdel.ans
-	@if diff -u {$(srcdir),.}/arm-ctrlaltdel.ans; then :; else echo "Answer differs from expected"; exit 1; fi
-	@touch $@
+# This test is *very* sensitive to changes to the Disassembler and Partitioner classes because they and this test all use
+# the findConstants instruction semantics. If the Disassembler or Partitioner is even slightly changed, it could make a
+# different number of calls to the instruction semantics, which changes the sequence number used to generate constant
+# names. Therefore, when comparing the test output with the answer, we will change all constant names from "v[0-9]+" to
+# "vXXX".  Any problems in the semantic analysis should still be caught since they would presumably affect lots of
+# other output too.  The test is still sensitive to minor formatting changes in unparseInstruction().
+FIND_CONSTANTS_DIFF=diff -u <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans) \
+                            <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans)
+test_findConstants.result: findConstants
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans 2>$@.tmp;
+	@bash -c 'if $(FIND_CONSTANTS_DIFF) >/dev/null; \
+          then \
+	      mv $@.tmp $@; \
+	  else \
+              echo "*** $@: Result (test_findConstants.ans) differs from expected answer in $(srcdir)"; \
+	      echo "    (You should compare the files manually to verify the result, then copy it to"; \
+	      echo "     $(srcdir) if it looks OK.) First 100 lines of the difference are:"; \
+	      $(FIND_CONSTANTS_DIFF) |head -n100 |sed "s/^/findConstants> /"; \
+	      exit 1 ; \
+	fi'
 
-test_findConstants.passed: findConstants
-	$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans
-	@if diff -u {$(srcdir),.}/test_findConstants.ans; then :; else echo "Answer differs from expected"; exit 1; fi
-	@touch $@
+test_findConstantsABI.result: findConstantsABI
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstantsABI.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstantsABI.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_disassemble.passed: disassemble
-	$(VALGRIND) ./disassemble --search-following --search-immediate --search-words --no-search-allbytes --search-unused --search-nonexe --search-deadend --no-search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
-	@mv i686-test1.O0.bin.dump test_disassemble.ans
-#	Commenting this out on only RedHat 32-bit systems is not enough (also fails on Max OSX; for the same reason).
-if !OS_VENDOR_REDHAT_32BIT
-#	@if diff -u {$(srcdir),.}/test_disassemble.ans; then :; else echo "Answer differs from expected"; exit 1; fi
-endif
-	@touch $@
+test_disassemble.result: disassemble
+	@echo "  TESTING $@ (commented out by DQ on 10/24/09)"
+#	@$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
+#	 [ $$? -eq 0 ] && mv i686-test1.O0.bin.dump test_disassemble.ans; \
+#	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
+#	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+#	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+test_disassembleBuffer.result: disassembleBuffer
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310 >test_disassembleBuffer.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassembleBuffer.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 # disassemble will exit non-zero if the assembly doesn't result in an encoding identical to the original
 # We're using the buffer2.bin from projects/BinQ for now because it's 64-bit; the one in our own srcdir is 32-bit and
 # the assembler isn't completely working yet for 32-bit. [RPM 2009-07-21]
-test_assembler.passed: disassemble
-	$(VALGRIND) ./disassemble --reassemble --show-bad $(top_srcdir)/projects/BinQ/buffer2.bin
+test_assembler.result: disassemble
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./disassemble --quiet --reassemble --show-bad $(top_srcdir)/projects/BinQ/buffer2.bin >$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+test_testEtherInsns.result: testEtherInsns
+	@echo "  TESTING $@ (cannot be run automatically; requires human interaction)"
 	@touch $@
 
-# This tests lots of sample binaries. We cannot run it concurrently with the other tests because some of the output
-# names could conflict with the other tests (we don't know what files are in the sample binaries directory).
-# NOTE: When we get too many tests to reasonably run serially, we can split them into multiple make rules, where each
-# rule either runs a single subdirectory of samples and/or each rule runs different tests by referencing different
-# configuration files. Don't forget to update the mostlyclean-local rule as well.
-test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh $(srcdir)/testSampleBinaries.conf
-	@if $(srcdir)/testSampleBinaries.sh $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf 99>&1 >test_samples.out 2>&1; \
-	then \
-	   touch $@; \
-	else \
-	   echo "Full output is in `pwd`/test_samples.out"; \
-	   false; \
-	fi
+test_expandCoreDump.result: expandCoreDump
+	@echo "  TESTING $@ (not currently tested)"
+	@touch $@
 
-test_testEtherInsns.passed: testEtherInsns
-	@echo "testEtherInsns cannot be run automatically--it requires human interaction.     (SKIPPED)"
+test_rot13.result: rot13
+	@echo "  TESTING $@"
+	@./rot13 --encode <$(BINARY_SAMPLES)/i686-test1.O0.bin |./rot13 --decode >test_rot13.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/i686-test1.O0.bin test_rot13.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+# Tests for detecting the locations of functions, written this way for parallelism.
+test_functionBoundaries_1.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.result
+	@echo "  TESTING $@"
+	@./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin >functionBoundaries_1.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/functionBoundaries_1.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+test_functionBoundaries_2.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin test_findConstants.result test_findConstantsABI.result
+	@echo "  TESTING $@"
+	@./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin >functionBoundaries_2.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/functionBoundaries_2.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+test_functionBoundaries_3.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin
+	@echo "  TESTING $@"
+	@./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin >functionBoundaries_3.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/functionBoundaries_3.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+test_functionBoundaries.result: test_functionBoundaries_1.result test_functionBoundaries_2.result test_functionBoundaries_3.result
+	@touch $@
+
+# The rules in this section of the makefile are generated by the "build" script based on the selection of binary samples
+# (usually from the binaries/samples directory) available at that time.  We do it this way for a number of reasons:
+#
+#  1. Some of the samples have licenses that restrict their distribution.
+#  2. Some developers work with malicious software samples that we don't wish to distribute
+#  3. ROSE generates file names in the current working directory based on basenames of samples. If the sample directories
+#     contain files with duplicate basenames then the tests will fail if those to files happen to be tested in parallel. These
+#     dependencies must be represented in the makefile rules.
+#
+# See scripts/sample_binary_rules.pl for more documentation.
+
+# All sample binary tests have these additional dependencies
+SAMPLE_TEST_DEPS = execFormatsTest disassemble
+
+INSERT_SAMPLE_RULES_HERE:
+
 
 
 ###############################################################################################################################
@@ -274,14 +412,15 @@ test_testEtherInsns.passed: testEtherInsns
 
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
 MOSTLYCLEANFILES = \
-        $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
+	$(STATIC_TEST_TARGETS) $(addsuffix .tmp, $(STATIC_TEST_TARGETS)) \
+	test_testElfSchulz-{1,2}.result test_{static,dynamic}.result \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans test_samples.{passed,out}
+	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
+	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans
 
-mostlyclean-local:
-	$(srcdir)/testSampleBinaries.sh --cleanup $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf
+mostlyclean-local: mostlyclean-binarysamples
 
 
 ###############################################################################################################################
@@ -344,11 +483,9 @@ else
 # DQ (4/8/2009): I have removed the requirement to run rule: test_so_file (added by Thomas)
 # I have left the rule in place so that we can have it availalbe for testing (but it only 
 # works if BinQ is built which is not the default configuration).
-# check-local: runTest test1 $(TEST_PASSED_TARGETS) test_so_file
-# Caution: runTest generates the same output files as some $(TEST_PASSED_TARGETS) [RPM 2009-07-21]
-check-local: runTest test1 $(TEST_PASSED_TARGETS)
-	./runTest $(BINARY_SAMPLES)/buffer2.bin > output
-	$(MAKE) test_samples.passed
+# check-local: runTest test1 $(TEST_RESULT_TARGETS) test_so_file
+# Caution: runTest generates the same output files as some $(TEST_RESULT_TARGETS) [RPM 2009-07-21]
+check-local: runTest test1 test_static.result test_dynamic.result
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/binaryTests: passed ***"
 	@echo "*********************************************************************"

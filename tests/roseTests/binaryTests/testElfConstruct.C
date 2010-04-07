@@ -1,6 +1,7 @@
 /* Tests ability to build a new executable from scratch */
-#include "rose.h"
-
+//#include "fileoffsetbits.h"
+#include "sage3basic.h"
+#include "Loader.h"
 int
 main() 
 {
@@ -99,7 +100,7 @@ main()
         virtual bool reallocate() {
             bool retval = SgAsmElfSection::reallocate();        /* returns true if size or position of any section changed */
             SgAsmElfSectionTableEntry *ste = get_section_entry();
-            ste->set_sh_flags(ste->get_sh_flags() | 0x02); /* set the SHF_ALLOC bit */
+            ste->set_sh_flags(ste->get_sh_flags() | SgAsmElfSectionTableEntry::SHF_ALLOC); /* set the SHF_ALLOC bit */
             return retval;
         }
         virtual void unparse(std::ostream &f) const {
@@ -252,7 +253,7 @@ main()
     dynent->set_name(new SgAsmBasicString("testlib"));
 
     /* Create a relocation table. Relocation tables depend on a symbol table and, indirectly, a string table. */
-    SgAsmElfRelocSection *reladyn = new SgAsmElfRelocSection(fhdr, symtab);
+    SgAsmElfRelocSection *reladyn = new SgAsmElfRelocSection(fhdr, symtab,NULL);
     reladyn->get_name()->set_string(".rela.dyn-test");
     reladyn->set_uses_addend(true);                             /* This is a "rela" table rather than a "rel" table */
     sectab->add_section(reladyn);                               /* Make an ELF Section Table entry */
@@ -265,7 +266,7 @@ main()
     relent->set_r_offset(0x080495ac);                           /* An arbitrary offset */
     relent->set_r_addend(0xaa);                                 /* Arbitrary value to add to relocation address */
     relent->set_sym(symtab->index_of(symbol));                  /* Index of symbol in its symbol table */
-    relent->set_type(0x7);                                      /* See <elf.h> for now */
+    relent->set_type(SgAsmElfRelocEntry::R_386_JMP_SLOT);       /*  */
 
     /* We can add notes to an executable */
     SgAsmElfNoteSection *notes = new SgAsmElfNoteSection(fhdr);

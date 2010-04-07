@@ -7,7 +7,12 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+# SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+
+# DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
+# This was something that was discussed in email previously with the group.  Thei point is to have the
+# first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
+SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
@@ -22,6 +27,7 @@ if ROSE_BUILD_OS_IS_CYGWIN
 else
 
 # Liao, 6/27/2009 skip the test if PCH is not used
+# tps (02/01/2010) : We should check this all the time... I leave it for now
 if ROSE_PCH 
 PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec
 else  
@@ -33,24 +39,26 @@ endif
 # all: detect_roseh detect_rosec
 all: $(PROJECT_SOURCE_CODE_TESTS)
 
-# tps: script that checks that no header file includes rose.h
+# tps: script that checks that no header file includes sage3basic.h
 # rpm: exclude build directories (they contain "include-staging") since ROSE itself creates some source files.
 detect_roseh:
-	touch $(top_builddir)/src/frontend/SageIII/rose.h.pch
-	rm $(top_builddir)/src/frontend/SageIII/rose.h.pch
+	touch $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch
+	rm $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch
 	@echo "***************************************************************************************"
 	@echo "***** ROSE uses pre-compiled headers and needs to check integrity. ********************"
-	@echo "***** ROSE ensures that no header files includes rose.h and that   ********************"
-	@echo "***** the first header file in a source file is rose.h (if used)   ********************"
+	@echo "***** ROSE ensures that no header files includes sage3basic.h and that   ********************"
+	@echo "***** the first header file in a source file is sage3basic.h (if used)   ********************"
 	@echo "***************************************************************************************"
-	@echo Testing for rose.h in header files...
-	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"rose.h\"\|#include <rose.h>" {} \; |  grep -v "//#include \"rose.h\"\|//#include <rose.h>" | grep -v "// #include \"rose.h\"\|// #include <rose.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "rose.h header check passed."; else echo "header files exist that include rose.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"rose.h\"\|#include <rose.h>" {} \; | grep -v "//#include \"rose.h\"\|//#include <rose.h>" | grep -v "// #include \"rose.h\"\|// #include <rose.h>" ; exit 1; fi
+	@echo Testing for sage3basic.h and rose.h and sage3.h in header files...
+	sh $(srcdir)/scripts/checkForInvalidHeaders.sh $(top_srcdir)
+#@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code2" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h or rose.h or sage3.h header check passed."; else echo "header files exist that include sage3basic.h or rose.h or sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
 
 # tps: added script from Andreas with small modifications - find all C files that dont include rose in the top of the file 
 # rpm: exclude build directories (they contain "include-staging") since ROSE itself creates some source files.
 detect_rosec:
-	@echo Testing for rose.h in source files...
-	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "rose.h source file check passed.";  else echo "There are source files that dont include rose.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h"; exit 1; fi
+	@echo Testing for sage3basic.h in source files...
+	sh $(srcdir)/scripts/checkForInvalidSourceFiles.sh $(top_srcdir)
+#@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h source file check passed.";  else echo "There are source files that dont include sage3basic.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h"; exit 1; fi
 
 
 # DQ (3/9/2009): Additional things that we can enforce within ROSE (written by Andreas).
@@ -72,7 +80,11 @@ detect_rosec:
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 
-bincompat-sig:
+# Liao, 12/11/2009. we should force this rule to run every time we want to make a distribution
+# otherwise the stale one can go into the distribution package
+cleanSig:
+	rm -rf bincompat-sig
+bincompat-sig: cleanSig
 	$(srcdir)/scripts/bincompat-sig > $@
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
@@ -83,6 +95,9 @@ bincompat-sig:
 #   tests may have created template repositories here.
 clean-local:
 	rm -rf Templates.DB ii_files ti_files *.csv
+
+# Not sure if this should be part of the clean-local rule.
+# chmod -R +rwx rose-0.9.5a; rm -rf rose-0.9.5a
 
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
@@ -145,6 +160,9 @@ if ENABLE_JAVAPORT
    DISTCHECK_CONFIGURE_FLAGS += --with-javaport
 endif
 
+# DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
+DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
 # opposed to EDG source code we rename the final generated distribution.
 # JJW (8/3/2008): This is only used for source distributions now --
@@ -156,6 +174,12 @@ rename_distribution:
 # We reset distdir as shown on
 # http://jcalcote.wordpress.com/2008/02/23/autoconf-macros-exposed-at3/ to add the SVN
 # revision number
+# The final distribution package should be
+# rose-0.9.5a-8286.tar.gz
+#
+# Liao 12/14/2009
+# We don't use subversion anymore
+# We convert the number of git commits to a pseudo revision number instead
 distdir = $(PACKAGE)-$(VERSION)$(DOT_SVNREV)
 
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)
@@ -170,7 +194,7 @@ distcheck-after:
 	@$(MAKE) rename_distribution
 
 # CLEANFILES = rose_binary_compatibility_signature rose_binary_compatibility_signature_src
-CLEANFILES = rose_binary_compatibility_signature
+CLEANFILES = rose_binary_compatibility_signature bincompat-sig
 
 find_rose_lock_files:
 #	du -a | grep rose_performance_report_lockfile
@@ -201,102 +225,71 @@ docs: FORCE_DOCS_TO_BE_MADE
       echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
    fi
 
-
-clean_binary_distribution: distdir
-	rm -rf $(distdir)/src/frontend/CxxFrontend/EDG*
-	rm -rf $(distdir)/src/frontend/CxxFrontend/Makefile.am # Will be replaced with another version in the binary_edg_tarball rule
-	rm -rf $(distdir)/proposals
-	rm -rf $(distdir)/developersScratchSpace
-# Dan said this is OK 5/27/2009	
-#	rm -rf $(distdir)/projects/assemblyToSourceAst
-	rm -rf $(distdir)/docs/testDoxygen
-
-if BINARY_EDG_TARBALL_ENABLED
-
-rose_binary_compatibility_signature:
-	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.c -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList -o -name \*.yy \) -a -print | env LC_ALL=C sort | xargs cat -ve | \
-	@MD5@ | cut -f 1 -d \  > rose_binary_compatibility_signature
-	cat rose_binary_compatibility_signature
-
-.PHONY : rose_binary_compatibility_signature # Always rebuild the file when needed
+if ROSE_HAS_EDG_SOURCE
 
 # 1
 # This rule generates the simple binary tarball for the directories: EDG and EDG_SAGE_Connection
-binary_edg_tarball: rose_binary_compatibility_signature
-	cd src/ROSETTA/src; $(MAKE)
-	cd src/frontend/CxxFrontend; $(MAKE)
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature` &&
-	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@-`cat rose_binary_compatibility_signature` && \
-	rm -rf $${BINARY_EDG_DIRNAME} && \
-	mkdir $${BINARY_EDG_DIRNAME} && \
-	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/EDG/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la && \
-	cp -Rp src/frontend/CxxFrontend/EDG/.libs $${BINARY_EDG_DIRNAME}/ && \
-	tardir=$${BINARY_EDG_DIRNAME} && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$${BINARY_EDG_DIRNAME}.tar.gz && \
-	rm -rf $${BINARY_EDG_DIRNAME}
+binary_edg_tarball: 
+	$(MAKE) -C src/frontend/CxxFrontend binary_edg_tarball
 
-# 2
-# This rule will insert the binary compatability signature into the filename for the generated binary.
-copy_binary_edg_tarball_to_source_tree: binary_edg_tarball rose_binary_compatibility_signature
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature`
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@-`cat rose_binary_compatibility_signature` && 
-#	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree $(top_srcdir) "@build_triplet_without_redhat@"
-	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree $(top_srcdir) "@build_triplet_without_redhat@" "@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@"
-
-# 3
-# Commits the EDG binary into the SVN repository.
-# copy_binary_edg_tarball_to_source_tree_svn: binary_edg_tarball rose_binary_compatibility_signature
-copy_binary_edg_tarball_to_source_tree_svn: copy_binary_edg_tarball_to_source_tree
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature` && 
-#	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p $(top_srcdir)/.svn/entries` "@build_triplet_without_redhat@"
-	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p $(top_srcdir)/.svn/entries` "@build_triplet_without_redhat@" "@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@" `sed -n 4p $(top_srcdir)/.svn/entries`
-
-# 4
-# Builds source release containing the EDG binary.
-# source_with_binary_edg_dist: rose_binary_compatibility_signature
-# source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree
-
-# DQ (9/16/2009): I think it is an error to call the copy_binary_edg_tarball_to_source_tree_svn rule, 
-#    call copy_binary_edg_tarball_to_source_tree (as it used to be). It fails to work on a distribution
-#    because there in no ".svn/entries" file.
-#    ../sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p ../sourcetree/.svn/entries` "i686-apple-darwin" "GNU-4.0"
-#    sed: ../sourcetree/.svn/entries: No such file or directory
-# source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree_svn
-source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree
-	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
-	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz | wc -l` -eq 0; then echo "Error: Could not find any binary versions of EDG with signature $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi && \
-	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} | wc -l` -ne 0; then echo "Error: The following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} >&2; exit 1; fi && \
-	$(MAKE) clean_binary_distribution && \
-	cp $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz $(distdir)/src/frontend/CxxFrontend && \
-	cat $(top_srcdir)/configure.in | \
-		grep -v '^developersScratchSpace/' | \
-		grep -v '^proposals/' | \
-		grep -v '^src/frontend/CxxFrontend/EDG' | \
-		grep -v '^docs/testDoxygen/' | \
-		sed s/RELEASE_BINARY_COMPATIBILITY_SIGNATURE/$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}/g > \
-		$(distdir)/configure.in
-	cat $(top_srcdir)/Makefile.am | \
-		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
-		$(distdir)/Makefile.am # Remove SUBDIRS references to developersScratchSpace and proposals
-	cat $(top_srcdir)/docs/Makefile.am | \
-		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
-		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
-	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
-	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `echo *.tar.gz`" >> Makefile.am
-	cd $(distdir) && ./build
-	find $(distdir)/ -name Makefile.in~ | xargs rm -rf
-	find $(distdir)/ -depth -name .svn -exec rm -rf {} \;
-	find $(distdir)/ -depth -name autom4te.cache -exec rm -rf {} \;
-	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(PACKAGE)-$(VERSION)-source-with-EDG-binary$(DOT_SVNREV).tar.gz
-	$(am__remove_distdir)
-
-# DQ (9/10/2009): Build a tarball for testing at NMI (ROSE without EDG source)
-# Some of the names of these makefile rules should be changed to be more specific.
-$(PACKAGE)-$(VERSION)-source-with-EDG-binary.tar.gz: source_with_binary_edg_dist
-#	$(MAKE) copy_binary_edg_tarball_to_source_tree
-#	$(MAKE) copy_binary_edg_tarball_to_source_tree_svn
-#	$(MAKE) source_with_binary_edg_dist
-
-# DQ (9/14/2009): this can fail if the most recent binaries are not available.
-binary_tarball: $(PACKAGE)-$(VERSION)-source-with-EDG-binary.tar.gz
+upload_edg_binary:
+	$(MAKE) -C src/frontend/CxxFrontend upload_edg_binary
 
 endif
+
+# Makefile rule to test the Hudson runTest script (used for all Hudson tests).
+# Note that empty ROSE_TEST_BUILD_STYLE maps to a minimal build.
+testHudsonRunScript:
+	export ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT=yes; \
+   export ROSE_TEST_GCC_VERSION=4.2.4; \
+   export ROSE_TEST_BUILD_STYLE=; \
+   export ROSE_TEST_BOOST_PATH=${MY_BOOST_ROOT}; \
+   export ROSE_TEST_JAVA_PATH=${JAVA_PATH}; \
+   cd $(top_srcdir); \
+   $(top_srcdir)/scripts/hudson/runTest
+
+# This will cause the Hudson environment to be dumped to a file so that
+# it can be sourced to reproduce the environment required to run tests
+# in the hudson tmp directories as part of debugging.
+dumpHudsonEnv:
+	export ROSE_DUMP_HUDSON_ENV=yes; $(MAKE) testHudsonRunScript
+
+
+# $(top_srcdir)/scripts/hudson/testHudsonRunScript.sh;
+
+
+# DQ (12/16/2009): Added interesting "git" feature by Liao.
+# It is unclear if it is very meaningful since it represents 
+# individual work style more than anything else (but it's fun).
+CheckinCounts:
+	@echo "*****************************************************"
+	@echo "Generated list of checkins to ROSE sumarized by user."
+	@echo "*****************************************************"
+	cd $(top_srcdir); git shortlog -s -n
+	@echo "*****************************************************"
+
+# DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
+# either doing analysis, code generation, or translation of the ROSE source code.
+ProblemAreas:
+	echo "Directories where ROSE does not analyze code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_ANALYSIS $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not generate code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_CODE_GENERATION $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not translate (compile) code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_TRANSLATE $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not properly handled AST File I/O for at least some ROSE source files."
+	grep -r ROSE_USING_ROSE_AST_FILE_IO $(top_srcdir) | grep Makefile.am
+	echo "Files where ROSE does not analyze some amount of code (test of USE_ROSE in each ROSE source file)."
+	grep -rl USE_ROSE $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_ANALYSIS in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_ANALYSIS $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_CODE_GENERATION in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_CODE_GENERATION $(top_srcdir) | grep "\.C"
+#	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
+#	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
+
+
+
+# Report the version number of the ROSE translator built.
+PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
+	$(top_builddir)/tests/testAnalysis --version

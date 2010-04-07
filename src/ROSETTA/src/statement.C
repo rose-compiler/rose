@@ -425,7 +425,14 @@ Grammar::setUpStatements ()
   // Statement.setSubTreeFunctionPrototype ( "HEADER", "../Grammar/sageCommon.code" );
   // Statement.excludeFunctionPrototype    ( "HEADER", "../Grammar/sageCommon.code" );
 
-     Statement.setFunctionPrototype ( "HEADER", "../Grammar/Statement.code" );
+     Statement.setFunctionPrototype     ("HEADER", "../Grammar/Statement.code" );
+
+  // DQ (12/30/2009): Added post declaration support for the template function StatementReplace
+  // which was previously buried into the generated source code and which work only when
+  // all the references were in the same file.  Now with the new support to build smaller
+  // ROSETTA generated files this template function must be put into the header file where 
+  // all the different source code files can see it defined.
+     Statement.setPostdeclarationString ("HEADER_STATEMENT_POSTDECLARATION", "../Grammar/Statement.code");
 
   // MK: the following two function calls could be wrapped into a single one:
      Statement.setFunctionPrototype("HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Statement.code");
@@ -597,6 +604,12 @@ Grammar::setUpStatements ()
 
 
      BasicBlock.setFunctionPrototype ( "HEADER_BASIC_BLOCK", "../Grammar/Statement.code" );
+
+  // DQ (12/30/2009): As part of building separate smaller files using ROSETTA, we have to 
+  // declare this template function in the headers instead of the source file AND it can 
+  // only appear after the declaration of SgBasicBlock.
+     BasicBlock.setPostdeclarationString ("HEADER_BASIC_BLOCK_POSTDECLARATION", "../Grammar/Statement.code");
+
      BasicBlock.setAutomaticGenerationOfConstructor(false);
      BasicBlock.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      BasicBlock.editSubstitute       ( "LIST_DATA_TYPE", "SgStatementPtrList" );
@@ -606,8 +619,15 @@ Grammar::setUpStatements ()
      BasicBlock.editSubstitute       ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
      BasicBlock.setDataPrototype    ( "SgStatementPtrList", "statements", "",
 				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // BasicBlock.setAutomaticGenerationOfDestructor(false);
+
+  // DQ (3/4/2010): Added support for asm functions in ROSE.  This is support is required for 
+  // handling embedded code. When used the SgBasicBlock can only appear in a SgFunctionDefinition
+  // and can contain any string (only meaningful if they are assembly instructions).
+     BasicBlock.setDataPrototype ( "std::string", "asm_function_body", "= \"\"",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      IfStmt.setFunctionPrototype ( "HEADER_IF_STATEMENT", "../Grammar/Statement.code" );
      IfStmt.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",

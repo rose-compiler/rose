@@ -1,8 +1,8 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-
+#include "Loader.h"
 /* See header file for full documentation */
 
 rose_addr_t
@@ -321,6 +321,17 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
     return ncopied;
 }
 
+ExtentMap
+MemoryMap::va_extents() const
+{
+    ExtentMap retval;
+    for (size_t i=0; i<elements.size(); i++) {
+        const MapElement& me = elements[i];
+        retval.insert(me.get_va(), me.get_size());
+    }
+    return retval;
+}
+
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
@@ -365,9 +376,9 @@ MemoryMap::dump(FILE *f, const char *prefix) const
 
         fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64"\n",
                 prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
-                0==(me.get_mapperms()&PROT_READ) ?'-':'r',
-                0==(me.get_mapperms()&PROT_WRITE)?'-':'w',
-                0==(me.get_mapperms()&PROT_EXEC) ?'-':'x',
+                0==(me.get_mapperms()&MM_PROT_READ) ?'-':'r',
+                0==(me.get_mapperms()&MM_PROT_WRITE)?'-':'w',
+                0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
                 basename.c_str(), elements[i].get_offset());
     }
 }

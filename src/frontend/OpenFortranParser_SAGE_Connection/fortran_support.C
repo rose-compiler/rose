@@ -1,4 +1,4 @@
-#include "rose.h"
+#include "sage3basic.h"
 
 #include "fortran_support.h"
 
@@ -3158,6 +3158,9 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
           ROSE_ASSERT(astIntentSpecStack.size() <= 1);
           while (astIntentSpecStack.empty() == false)
              {
+            // DQ (4/5/2010): Debugging missing INTENT keyword in ROSE output of test2009_19.f90.
+               printf ("Calling attributeSpecificationStatement->set_intent(intent) \n");
+
                int intent = astIntentSpecStack.front();
                attributeSpecificationStatement->set_intent(intent);
                astIntentSpecStack.pop_front();
@@ -3378,6 +3381,8 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
                break;
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
+       // DQ (4/5/2010): These have been removed from OFP 0.8.0
           case ComponentAttrSpec_dimension_paren:
                printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
@@ -3387,6 +3392,7 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                printf ("Error: ComponentAttrSpec_dimension_bracket used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
                break;
+#endif
 
           case ComponentAttrSpec_allocatable:
                printf ("Error: ComponentAttrSpec_allocatable used as an attribute specifier (unclear how to process this) \n");

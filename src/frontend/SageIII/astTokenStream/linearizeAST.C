@@ -1,7 +1,7 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 // rose.C: Example (default) ROSE Preprocessor: used for testing ROSE infrastructure
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "linearizeAST.h"
 #include <boost/lexical_cast.hpp>
 
@@ -64,11 +64,14 @@ class PostAST : public SgBottomUpProcessing<PostSynthesizedAttribute>
               }
 
 
+#ifndef CXX_IS_ROSE_CODE_GENERATION
               if( isSgConditionalExp(astNode) == NULL &&
                   isSgExprListExp(astNode) == NULL )
               ROSE_ASSERT(false);
-
-            }else if(synthesizedAttributeList.size()>0)
+#endif
+            }
+#ifndef CXX_IS_ROSE_CODE_GENERATION
+           else if(synthesizedAttributeList.size()>0)
             {
               if( isSgUnaryOp(astNode) != NULL  )
               {
@@ -97,7 +100,7 @@ class PostAST : public SgBottomUpProcessing<PostSynthesizedAttribute>
               }
             }else
               synAttrib.nodes.push_back(astNode);
-
+#endif
 
             if(astNode == rootNode)
               nodes = synAttrib.nodes;

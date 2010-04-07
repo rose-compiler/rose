@@ -47,6 +47,11 @@ int X<T>::foo()
 // (yet another silly template detail).  It is also correct to not
 // specify it.
 // template <>
+
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ == 4)
+template <>
+#endif
 int X<int>::foo()
    {
      int x;
@@ -61,11 +66,15 @@ int X<int>::foo()
 
 // Template Instantiation Directive
 // This works because "A" has a member function "increment"
+
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ == 3)
 template X<A>;
 
 // Template Instantiation Directive
 // This would fail if the specialization is not output properly
 template X<int>;
+#endif
 
 
 int main()

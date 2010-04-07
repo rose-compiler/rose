@@ -199,6 +199,11 @@ if ROSE_USE_ETHER
   ROSE_ETHER_LIBS    = -L$(ETHER_PREFIX)/lib -lxenctrl
 endif
 
+# DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
+if USING_INTEL_COMPILER
+  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
+endif
+
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
 # boost specified on the configure
 # command-line be used instead of the OS version of boost that is sometimes
@@ -224,6 +229,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
+     -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/Disassemblers \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
@@ -239,8 +245,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
      -I$(top_srcdir)/src/midend/astDiagnostics \
-     -I$(top_srcdir)/src/midend/astInlining \
-     -I$(top_srcdir)/src/midend/astOutlining  \
+     -I$(top_srcdir)/src/midend/programTransformation/astInlining \
+     -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \
      -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/midend/astQuery \
      -I$(top_srcdir)/src/midend/astRewriteMechanism \
@@ -252,13 +258,13 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
      -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
      -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
-     -I$(top_srcdir)/src/midend/loopProcessing/computation \
-     -I$(top_srcdir)/src/midend/loopProcessing/depGraph \
-     -I$(top_srcdir)/src/midend/loopProcessing/depInfo \
-     -I$(top_srcdir)/src/midend/loopProcessing/driver \
-     -I$(top_srcdir)/src/midend/loopProcessing/outsideInterface \
-     -I$(top_srcdir)/src/midend/loopProcessing/prepostTransformation \
-     -I$(top_srcdir)/src/midend/ompLowering \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/computation \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depGraph \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depInfo \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/driver \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/outsideInterface \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/prepostTransformation \
+     -I$(top_srcdir)/src/midend/programTransformation/ompLowering \
      -I$(top_srcdir)/src/midend/programAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
      -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
@@ -340,7 +346,8 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm  $(JAVA_JVM_LINK) $(MYSQL_DATABAS
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
   $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
-  $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS)
+  $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
+  $(ROSE_INTEL_COMPILER_MATH_LIBS)
 
 # DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
 # (this is because it has been moved from being linked statically to being linked dynamically).

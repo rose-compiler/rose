@@ -6,14 +6,47 @@ distributedScripts = \
      dotgen                                               \
      dotgen2                       lsdot                  \
      check-dist-file dotgenLetter  generateDirectoryGraph \
-     libtoolcp     \
-     dotgenLetterPDF dotgenLetterPNG \
-     nmiBuildAndTestFarm \
-     bincompat-sig Error.pm Git.pm
+     libtoolcp                     buildExampleRoseWorkspaceScript.sh \
+     dotgenLetterPDF               dotgenLetterPNG \
+     nmiBuildAndTestFarm           sample_binary_rules.pl \
+     bincompat-sig Error.pm Git.pm checkForInvalidSourceFiles.sh checkForInvalidHeaders.sh
 
 # scripts put into the distribution
-EXTRA_DIST = CMakeLists.txt README $(distributedScripts) 
+EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory hudson
 
 # install the tools in 'bin' (a subsect of EXTRA_DIST)
 bin_SCRIPTS =  $(distributedScripts)
 
+
+# DQ (12/7/2009): Test for the ROSE example workspace generator.
+# Build the directory in the compile tree.
+ExampleRoseWorkspaceTestDirectory = tmpRoseWorkspace
+# This tests the new ROSE workspace
+testExampleRoseWorkspace:
+	echo "absolute_path_srcdir = $(absolute_path_srcdir)"
+	echo "ac_boost_path = $(ac_boost_path)"
+	echo "srcdir = $(srcdir)"
+	echo "PWD = $(PDW)"
+	rm -rf $(ExampleRoseWorkspaceTestDirectory)
+	$(srcdir)/buildExampleRoseWorkspaceScript.sh $(absolute_path_srcdir) $(ExampleRoseWorkspaceTestDirectory) || exit 1
+	echo "Exiting after calling script: $(srcdir)/buildExampleRoseWorkspaceScript.sh"
+	cd $(ExampleRoseWorkspaceTestDirectory); \
+	./build --srcpath $(absolute_path_srcdir) --verbose; \
+	echo "Building the compile tree in the source tree for the example ROSE workspace."; \
+	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@; \
+	make;
+
+# This may be the cause of recursion in the make "check rule"
+#	make check
+
+
+# DQ (12/7/2009): Run a test of the ROSE example workspace generator.
+# This requires an installed version of ROSE so it should be an 
+# installcheck rule.
+# check-local:
+installcheck:
+	@echo "Running test of new ROSE workspace support."
+	$(MAKE) testExampleRoseWorkspace
+
+clean-local:
+	rm -rf *.a *.so *.o $(ExampleRoseWorkspaceTestDirectory)

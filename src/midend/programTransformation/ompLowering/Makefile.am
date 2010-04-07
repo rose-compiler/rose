@@ -1,0 +1,17 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+INCLUDES = $(ROSE_INCLUDES)
+
+noinst_LTLIBRARIES = libompLowering.la
+libompLowering_la_SOURCES = omp_lowering.cpp
+
+lib_LIBRARIES = libxomp.a
+libxomp_a_SOURCES = xomp.c
+
+include_HEADERS = omp_lowering.h libgomp_g.h \
+           libompc.h  libxomp.h
+
+EXTRA_DIST = CMakeLists.txt README
+
+clean-local:
+	rm -rf Templates.DB ii_files ti_files core

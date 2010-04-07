@@ -23,6 +23,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	critical_orphaned.c \
 	dynamicChunk.c \
 	empty.c \
+	endif.c \
+	endif2.c \
+	endif3.c \
 	nowait.c \
 	expressions.c \
 	falsesharing.c \
@@ -39,6 +42,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	lastprivate.c \
 	lastprivateOrphaned.c \
 	limits_threads.c \
+	linebreak.c \
 	lockarray.c \
 	lu_factorization.c \
 	master.c \
@@ -67,9 +71,11 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	recursive.c \
 	reduction2.c \
 	reduction.c \
+	rice1.c \
 	section.c \
 	set_num_threads.c \
 	single.c \
+	single2.c \
 	single_copyprivate.c \
 	sizeof.c \
 	spmd1.c \
@@ -91,14 +97,17 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	variables.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+	classMember.cpp \
 	hello1.cpp \
 	helloNested.cpp \
+	memberFunction.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
 	objectLastprivate.cpp \
 	orphanedAtomic.cpp \
 	preprocessingInfo2.cpp \
 	task_link.cpp \
+	task_link2.cpp \
 	task_tree.cpp 
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
@@ -129,7 +138,6 @@ $(TESTCODE_CURRENTLY_FAILING)
 # the translator should now be able to avoid duplicated processing of pragma statements
 bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
-
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 

@@ -1,5 +1,9 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Loader.h"
+#include "LoaderELF.h"
+#include "LoaderELFObj.h"
+#include "LoaderPE.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -54,12 +58,17 @@ Loader::find_loader(SgAsmGenericHeader *header)
 MemoryMap *
 Loader::map_all_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             return CONTRIBUTE_ADD; /*alignment might weed out non-mapped sections*/
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Returns a map of code-containing sections. A code-containing section is any section that is mapped with execute permission or
@@ -67,6 +76,10 @@ Loader::map_all_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &secti
 MemoryMap *
 Loader::map_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             if (section->get_contains_code()) {
@@ -81,6 +94,7 @@ Loader::map_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sect
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Returns a map of executable sections. Any mapped section that isn't executable is subtracted from the mapping.
@@ -90,6 +104,10 @@ Loader::map_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sect
 MemoryMap *
 Loader::map_executable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             if (!section->is_mapped()) {
@@ -102,6 +120,7 @@ Loader::map_executable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Returns a map of executable sections. Any section that is not writable is removed from the mapping.
@@ -111,6 +130,10 @@ Loader::map_executable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList
 MemoryMap *
 Loader::map_writable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             if (!section->is_mapped()) {
@@ -123,6 +146,7 @@ Loader::map_writable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Align section addresses and sizes */
@@ -260,9 +284,9 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
                 if (p_debug)
                     fprintf(p_debug, "    Map crosses end-of-file at 0x%08"PRIx64"\n", total);
 #ifdef _MSC_VER
-				ltsz = _cpp_min(mem_size, total-offset);
+                ltsz = _cpp_min(mem_size, total-offset);
 #else
-				ltsz = std::min(mem_size, total-offset);
+                ltsz = std::min(mem_size, total-offset);
 #endif
             } else {
                 /* Map falls entirely within the file, but mem size might be larger than file size */
@@ -271,17 +295,17 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
 #else
                 ltsz = std::min(mem_size, file_size);
 #endif
-			}
+            }
             rose_addr_t rtsz = mem_size - ltsz;
 
             /* Permissions */
-            unsigned mapperms=MemoryMap::PROT_NONE;
+            unsigned mapperms=MemoryMap::MM_PROT_NONE;
             if (section->get_mapped_rperm())
-                mapperms |= MemoryMap::PROT_READ;
+                mapperms |= MemoryMap::MM_PROT_READ;
             if (section->get_mapped_wperm())
-                mapperms |= MemoryMap::PROT_WRITE;
+                mapperms |= MemoryMap::MM_PROT_WRITE;
             if (section->get_mapped_xperm())
-                mapperms |= MemoryMap::PROT_EXEC;
+                mapperms |= MemoryMap::MM_PROT_EXEC;
 
             /* Map the left part to the file; right part is anonymous. */
             if (p_debug)

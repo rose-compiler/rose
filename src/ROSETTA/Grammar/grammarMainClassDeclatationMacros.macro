@@ -6,8 +6,6 @@
 
 // This class represents the main class for the grammar (all terminal and nonterminal 
 // classes are supporting classes).  Supporting function prototypes are contained in
-// the rose.h header file.  So include that here.
-// include <rose.h>
 
 // By default the intermediate form is output to a file (for debugging)
 #define OUTPUT_SHOWFILE_TO_FILE TRUE

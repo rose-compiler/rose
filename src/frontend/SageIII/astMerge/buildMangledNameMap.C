@@ -1,10 +1,13 @@
-// #include <merge.h>
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #ifdef _MSC_VER
 #include "buildMangledNameMap.h"
 #endif
-
+#include "buildReplacementMap.h"
+#include "buildMangledNameMap.h"
+#include "fixupTraversal.h"
+#include "collectAssociateNodes.h"
+#include "test_support.h"
 using namespace std;
 
 MangledNameMapTraversal::MangledNameMapTraversal ( MangledNameMapType & m, SetOfNodesType & deleteSet )
@@ -345,9 +348,12 @@ generateMangledNameMap (MangledNameMapTraversal::MangledNameMapType & mangledMap
      set<SgNode*> mangledNameReferenceSet = MangledNameMapTraversal::buildSetFromMangleNameMap(mangledMap);
      setOfIRnodesToDelete = computeSetDifference(setOfIRnodesToDelete,mangledNameReferenceSet);
 
-     printf ("numberOfNodes                         = %d \n",traversal.numberOfNodes);
-     printf ("numberOfNodesSharable                 = %d \n",traversal.numberOfNodesSharable);
-     printf ("numberOfNodesEvaluated                = %d \n",traversal.numberOfNodesEvaluated);
-     printf ("numberOfNodesAddedToManagledNameMap   = %d \n",traversal.numberOfNodesAddedToManagledNameMap);
-     printf ("numberOfNodesAlreadyInManagledNameMap = %d \n",traversal.numberOfNodesAlreadyInManagledNameMap);
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("numberOfNodes                         = %d \n",traversal.numberOfNodes);
+          printf ("numberOfNodesSharable                 = %d \n",traversal.numberOfNodesSharable);
+          printf ("numberOfNodesEvaluated                = %d \n",traversal.numberOfNodesEvaluated);
+          printf ("numberOfNodesAddedToManagledNameMap   = %d \n",traversal.numberOfNodesAddedToManagledNameMap);
+          printf ("numberOfNodesAlreadyInManagledNameMap = %d \n",traversal.numberOfNodesAlreadyInManagledNameMap);
+        }
    }

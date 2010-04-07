@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+//class AttachedPreprocessingInfoType;
+class SgAsmInstruction;
+class SgAsmStatement;
+ 
 namespace VirtualBinCFG {
 
     class CFGEdge;
@@ -58,7 +62,10 @@ namespace VirtualBinCFG {
     public:
         explicit CFGNode(SgAsmInstruction *node, const AuxiliaryInformation *info = NULL)
             : node(node), info(info) {
-            ROSE_ASSERT(node);
+#ifdef _MSC_VER
+	  //#define __builtin_constant_p(exp) (0)
+#endif
+            assert(node);
         }
         std::string toString() const;
         // String for debugging graphs

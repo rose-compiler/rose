@@ -3,6 +3,8 @@
 #ifndef ROSE_ASSEMBLER_X86_H
 #define ROSE_ASSEMBLER_X86_H
 
+//#include "sage3.h"
+
 /** This class contains methods for assembling x86 instructions (SgAsmx86Instruction).
  *
  *  End users will generally not need to use the AssemblerX86 class directly. Instead, they will call Assembler::create() to
@@ -391,6 +393,15 @@ private:
 
     /** Build the dictionary used by the x86 assemblers. All x86 assemblers share a common dictionary. */
     static void initAssemblyRules();
+    static void initAssemblyRules_part1();
+    static void initAssemblyRules_part2();
+    static void initAssemblyRules_part3();
+    static void initAssemblyRules_part4();
+    static void initAssemblyRules_part5();
+    static void initAssemblyRules_part6();
+    static void initAssemblyRules_part7();
+    static void initAssemblyRules_part8();
+    static void initAssemblyRules_part9();
 
     /** Adds a definition to the assembly dictionary. All x86 assemblers share a common dictionary. */
     static void define(const InsnDefn *d) {

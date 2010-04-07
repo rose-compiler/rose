@@ -7,7 +7,8 @@
  * Redhat: http://people.redhat.com/drepper/symbol-versioning
  */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -41,7 +42,7 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   if (0==idx)
     fprintf(f, "%s%-*s   %-10s\n", p, w, "", "Value");
 
-  fprintf(f, "%s%-*s = 0x%08x\n", p, w, "", p_value);
+  fprintf(f, "%s%-*s = 0x%08zx\n", p, w, "", p_value);
 }
 
 /** Non-parsing constructor */
@@ -107,7 +108,6 @@ SgAsmElfSymverSection::unparse(std::ostream &f) const
   /* Write each entry's required part followed by the optional part */
   for (size_t i=0; i<nentries; i++) {
     uint16_t val;
-    void *disk=NULL;
     
     SgAsmElfSymverEntry *entry = p_entries->get_entries()[i];
     host_to_disk(sex,entry->get_value(),&val);
@@ -241,7 +241,7 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   /* compact one-line-per-entry format */
   if (0==idx)
     fprintf(f, "%s%-*s   %-8s %6s %10s %6s %-6s \n", p, w, "", "Version", "Index", "Hash", "Flags", "Names");
-  fprintf(f,   "%s%-*s =  0x%04x  0x%04x 0x%08x 0x%04x ", p, w, "", p_version, p_index, p_hash, p_flags);
+  fprintf(f,   "%s%-*s =  0x%04zx  0x%04zx 0x%08x 0x%04x ", p, w, "", p_version, p_index, p_hash, (uint32_t)p_flags);
 
   const SgAsmElfSymverDefinedAuxPtrList &entries=get_entries()->get_entries();
   if(entries.empty()){
@@ -339,7 +339,7 @@ SgAsmElfSymverDefinedSection::parse()
   SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
   ROSE_ASSERT(NULL!=strsec);
   
-  size_t struct_size=sizeof(SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk);
+  //size_t struct_size=sizeof(SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk);
   
   rose_addr_t entry_addr=0;
 
@@ -612,7 +612,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   /* compact one-line-per-entry format */
   if (0==idx)
     fprintf(f, "%s%-*s   %-8s %-22s %6s %10s %6s %s\n", p, w, "", "Version", "File", "Other", "Hash", "Flags", "Name");
-  fprintf(f,   "%s%-*s =   0x%04x %s", p, w, "", p_version, get_file_name()->c_str());
+  fprintf(f,   "%s%-*s =   0x%04zx %s", p, w, "", p_version, get_file_name()->c_str());
   
 
   const SgAsmElfSymverNeededAuxPtrList &entries=get_entries()->get_entries();
@@ -625,7 +625,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
   for(size_t i=0; i < entries.size(); ++i){
     SgAsmElfSymverNeededAux* aux = entries[i];
-    fprintf(f,   "%s%-*s =                                 0x%04x 0x%08x 0x%04x %s\n", p, w, "", 
+    fprintf(f,   "%s%-*s =                                 0x%04zx 0x%08x 0x%04x %s\n", p, w, "", 
 	    aux->get_other(), aux->get_hash(), aux->get_flags(), aux->get_name()->c_str());
   }
   fprintf(f, "\n");
@@ -657,7 +657,7 @@ SgAsmElfSymverNeededSection::parse()
   SgAsmElfSectionTableEntry *shdr = get_section_entry();
   ROSE_ASSERT(NULL!=shdr);
   
-  size_t struct_size=sizeof(SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk);
+  //size_t struct_size=sizeof(SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk);
   
   rose_addr_t entry_addr=0;
 

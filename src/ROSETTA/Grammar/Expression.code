@@ -5273,6 +5273,8 @@ SgExpression*
 $CLASSNAME::get_next(int& n) const
    {
      ROSE_ASSERT(false);
+   	// tps (12/9/2009) : MSC requires a return value
+     return NULL;
    }
 
 SOURCE_DESIGNATED_INITIALIZER_END

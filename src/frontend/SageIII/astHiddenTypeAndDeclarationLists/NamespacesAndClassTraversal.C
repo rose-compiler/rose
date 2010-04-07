@@ -2,13 +2,17 @@
 // Robert Preissl
 // Last modified : April 16, 2007
 
-// DQ
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "HiddenList.h"
+#include "HiddenList_Intersection.h"
+#include "HiddenList_Output.h"
 
 // DQ (5/8/2007): This is now in the rose.h header file
 // #include "HiddenList.h"
 // #include "HiddenList_Output.h"
 
+#define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 using namespace std;
 
@@ -102,6 +106,15 @@ InheritedAttributeForNamespacesAndClassTraversal NamespacesAndClassTraversal :: 
         TimingPerformance::startTimer(startTime);
 
         TimingPerformance::time_type startTimeCommonCase;
+
+#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
+     // DQ (2/9/2010): Debugging code for ROSE compiling ROSE.
+        if (isSgStatement(n) != NULL)
+           {
+             SgStatement* stmt = isSgStatement(n);
+             printf ("In NamespacesAndClassTraversal::evaluateInheritedAttribute(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
+           }
+#endif
 
          // Robert Preissl, June 20 2007: ad Occurence of using directives (and decl.) in the source-code relative to other declarations.
         if(isSgUsingDirectiveStatement(n) || isSgUsingDeclarationStatement(n)) {

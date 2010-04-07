@@ -4,6 +4,7 @@
 // Move this to rose.h or a build a rose_utility.h file later
 #include "commandline_processing.h"
 #include <vector>
+#include <map>
 #include <string>
 #include <sstream>
 #include <stdint.h>
@@ -28,8 +29,9 @@ namespace StringUtility
 
      std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny = false); // Real declaration is below
 
-     struct StringWithLineNumber {
-          std::string str;
+     struct StringWithLineNumber
+        {
+          std::string str;      // DQ (1/23/2010): this name is difficult to trace within the code.
           std::string filename; // Empty string means generated code
           unsigned int line;
 
@@ -39,14 +41,15 @@ namespace StringUtility
         };
 
 #ifndef USE_ROSE
-  typedef std::vector<StringWithLineNumber> FileWithLineNumbers;
+     typedef std::vector<StringWithLineNumber> FileWithLineNumbers;
 #else
   // workaround of bug 315, separating definitions for a namespace
   // Liao, 2/16/2009
-}
+   }
+
 namespace StringUtility
-{
-  typedef std::vector<StringUtility::StringWithLineNumber> FileWithLineNumbers;
+   {
+     typedef std::vector<StringUtility::StringWithLineNumber> FileWithLineNumbers;
 #endif
 
 	 inline std::ostream& operator<<(std::ostream& os, const StringWithLineNumber& s) {
@@ -162,9 +165,9 @@ namespace StringUtility
            // int isSameName ( const std::string& s1, const std::string& s2 );
 
            // char* stringDuplicate ( const char* tempString );
-	   std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
-	   FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
-	   FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
+          std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
+          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
+          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
        //  bool isContainedIn ( const char* longString, const char* shortString );
            inline bool isContainedIn ( const std::string & longString, const std::string & shortString ) {
 	     return longString.find(shortString) != std::string::npos;
@@ -242,24 +245,42 @@ namespace StringUtility
 
            /* Files can be classified as being in one of three
             * locations: We don't know if it's user or system It is a
-            * user (application) file It is a system library */
+            * user (application) file It is a system library This file
+            * does not exist */
            enum FileNameLocation { FILENAME_LOCATION_UNKNOWN, 
                                    FILENAME_LOCATION_USER,    
-                                   FILENAME_LOCATION_LIBRARY };
+                                   FILENAME_LOCATION_LIBRARY,
+                                   FILENAME_LOCATION_NOT_EXIST };
            
            /* Files can be classified as being part of one of these
             * libraries: Unknown, it isn't a library - it's part of
             * the user application, or any of the libraries that the
             * enum values imply, this list will likely be added to
             * over time */
+	   /* 
            enum FileNameLibrary { FILENAME_LIBRARY_UNKNOWN,
                                   FILENAME_LIBRARY_USER,
                                   FILENAME_LIBRARY_C,
                                   FILENAME_LIBRARY_STDCXX,
+				  FILENAME_LIBRARY_STL,
                                   FILENAME_LIBRARY_LINUX,
                                   FILENAME_LIBRARY_GCC,
                                   FILENAME_LIBRARY_BOOST,
                                   FILENAME_LIBRARY_ROSE };
+				  */
+
+	   static const std::string FILENAME_LIBRARY_UNKNOWN = "Unknown";
+	   static const std::string FILENAME_LIBRARY_USER = "User";
+	   static const std::string FILENAME_LIBRARY_C = "C";
+	   static const std::string FILENAME_LIBRARY_STDCXX = "C++";
+	   static const std::string FILENAME_LIBRARY_STL = "STL";
+	   static const std::string FILENAME_LIBRARY_LINUX = "Linux";
+	   static const std::string FILENAME_LIBRARY_GCC = "GCC";
+	   static const std::string FILENAME_LIBRARY_BOOST = "Boost";
+	   static const std::string FILENAME_LIBRARY_ROSE = "Rose";
+
+	   // CH (2/16/2010): Use this typedef to avoid following changes
+	   typedef std::string FileNameLibrary;
 
            /* This is the return type of classifyFileName, which
             * provides all the details it infers */
@@ -267,18 +288,21 @@ namespace StringUtility
            {
            private:
                FileNameLocation location;
+
+	       // CH (2/12/2010): Change 'library' type from enum to string to let user set it
                FileNameLibrary library;
+	       
                int distance;
 
            public:
                FileNameClassification(FileNameLocation loc,
-                                      FileNameLibrary lib,
+                                      const FileNameLibrary& lib,
                                       int dist) : location(loc),
                                                   library(lib),
                                                   distance(dist)
                    {}
                FileNameClassification() : location(FILENAME_LOCATION_UNKNOWN),
-                                          library(FILENAME_LIBRARY_UNKNOWN),
+                                          library("Unknown"),
                                           distance(0)
                    {}
 
@@ -320,7 +344,8 @@ namespace StringUtility
 
                /* Return a string name for the library indicated by
                 * getLibrary() */
-               const std::string getLibraryName() const;
+               std::string getLibraryName() const
+		   { return library; }
            };
 
            /* Given a fileName and an appPath that is a path to some
@@ -338,6 +363,26 @@ namespace StringUtility
        	    * is part of the source code or some system library */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
+						   OSType os);
+
+           /* Given a fileName and an appPath that is a path to some
+       	    * application's source code directory, and a collection 
+	    * of library paths, return a FileNameClassification
+	    * indicating whether the fileName is part of the source 
+	    * code or some system library and automatically determine 
+	    * the operating system from the host uname */
+           FileNameClassification classifyFileName(const std::string& fileName,
+                                                   const std::string& appPath,
+						   const std::map<std::string, std::string>& libPathCollection);
+
+           /* Given a fileName and an appPath that is a path to some
+       	    * application's source code directory, and a collection 
+	    * of library paths, return a FileNameClassification
+	    * indicating whether the fileName is part of the source 
+	    * code or some system library */ 
+           FileNameClassification classifyFileName(const std::string& fileName,
+                                                   const std::string& appPath,
+						   const std::map<std::string, std::string>& libPathCollection,
                                                    OSType os);
 
            /* Remove leading dots plus a space from a header file name

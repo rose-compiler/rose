@@ -2,7 +2,9 @@
 #include <omp.h>
 static long num_steps = 100000; 
 double step;
-#define NUM_THREADS 20
+/* Liao 1/29/2010, reduced to 2 since Omni runtime will claim if it exceeds the 
+ * number of cores within a machine */
+#define NUM_THREADS 2
 
 int main ()
 {	

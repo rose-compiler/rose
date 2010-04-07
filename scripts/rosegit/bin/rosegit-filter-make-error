@@ -4,10 +4,30 @@
 # that's relevant to the error, based on "Entering directory" and "Leaving directory" messages and correctly handling
 # recursion.
 use strict;
+
 my @stack = ({dirname=>"", output=>"", error=>undef});
 my $ignore_errors = undef; # used to suppress messsages as we unwind the stack after an error
+my $show_progress = undef; # if true then show certain make output
+
+# Parse command-line switches
+while (@ARGV) {
+  local($_) = shift @ARGV;
+  if (/^--progress$/) {
+    $show_progress = 1;
+  } else {
+    die "usage: make | $0 [--progress]\n";
+  }
+}
 
 while (<STDIN>) {
+  if ($show_progress) {
+    if (/^  [A-Z]\w+\s+\S+/) {
+      print $_; # print lines like "COMPILE rose_paths.lo" and "LINK librose.la"
+    } elsif (/warning:/) {
+      print $_; # compiler warnings
+    }
+  }
+
   if (my($level,$dir) = /^make\[(\d+)\]: Entering directory `(.*)'/) {
     $stack[$level] = {dirname=>$dir, output=>$_, error=>undef};
     if ($level>0) {

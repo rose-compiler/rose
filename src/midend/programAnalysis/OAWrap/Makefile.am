@@ -5,10 +5,12 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis/OAWrap -
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
+# DQ (2/10/2010): ROSE currently fails to generate code for this file (it does however compile for analysis only).
 libOAWrapSources = OAWrap.C SAGE2OA.C 
-
-# lib_LTLIBRARIES = libOAWrap.a
-# libOAWrap_a_SOURCES  = $(libOAWrapSources)
+#libOAWrapSources = SAGE2OA.C 
+#if !ROSE_USING_ROSE_CODE_GENERATION
+#   libOAWrapSources += OAWrap.C
+#endif
 
 noinst_LTLIBRARIES = libOAWrap.la
 libOAWrap_la_SOURCES = $(libOAWrapSources)

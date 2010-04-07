@@ -1,6 +1,6 @@
+#include "sage3basic.h"
 
 #include <sstream>
-
 #include "Flops.h"
     
     Flops::Flops()

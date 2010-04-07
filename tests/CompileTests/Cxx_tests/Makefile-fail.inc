@@ -61,6 +61,7 @@ test2007_45.C \
 test2007_51.C \
 test2007_52.C \
 test2007_54.C \
+test2007_56.C \
 test2007_60.C \
 test2007_61.C \
 test2007_63.C \
@@ -133,6 +134,24 @@ test2007_175.C \
 test2007_176.C \
 test2009_21.C \
 test2009_22.C \
+test2009_32.C \
+test2009_33.C \
+test2009_34.C \
+test2009_35.C \
+test2009_36.C \
+test2009_38.C \
+test2009_43.C \
+test2009_44.C \
+test2009_45.C \
+test2009_46.C \
+test2009_47.C \
+test2010_01.C \
+test2010_02.C \
+test2010_07.C \
+test2010_08.C \
+test2010_09.C \
+test2010_10.C \
+test2010_12.C \
 longFile.C \
 certSignalExample.C
 

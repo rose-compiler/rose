@@ -7,7 +7,6 @@ SUBDIRS = util ROSETTA frontend midend backend roseSupport \
 # is run then we only need a single directory
 INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
 
-
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
 # JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
@@ -18,8 +17,9 @@ libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
    $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
    $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
+   $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la \
    $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
-   $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la 
+   $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
 
 if ROSE_USE_SQLITE_DATABASE
 
@@ -54,8 +54,8 @@ libroseLibraries = \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
-   $(top_builddir)/src/midend/astInlining/libastinlining.la \
-   $(top_builddir)/src/midend/astOutlining/libastOutliner.la \
+   $(top_builddir)/src/midend/programTransformation/astInlining/libastinlining.la \
+   $(top_builddir)/src/midend/programTransformation/astOutlining/libastOutliner.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
@@ -63,14 +63,14 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astUtil/astInterface/libastInterface.la \
    $(top_builddir)/src/midend/astUtil/astSupport/libastSupport.la \
    $(top_builddir)/src/midend/astUtil/symbolicVal/libsymbolicVal.la \
-   $(top_builddir)/src/midend/loopProcessing/computation/libcomputation.la \
-   $(top_builddir)/src/midend/loopProcessing/depGraph/libdepGraph.la \
-   $(top_builddir)/src/midend/loopProcessing/depInfo/libdepInfo.la \
-   $(top_builddir)/src/midend/loopProcessing/driver/libdriver.la \
-   $(top_builddir)/src/midend/loopProcessing/outsideInterface/libarrayOptimization.la \
-   $(top_builddir)/src/midend/loopProcessing/prepostTransformation/libprepostloop.la \
-   $(top_builddir)/src/midend/loopProcessing/slicing/libslicing.la \
-   $(top_builddir)/src/midend/ompLowering/libompLowering.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/depGraph/libdepGraph.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/depInfo/libdepInfo.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/driver/libdriver.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
+   $(top_builddir)/src/midend/programTransformation/ompLowering/libompLowering.la \
    $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.la \
    $(top_builddir)/src/midend/programAnalysis/CallGraphAnalysis/libCallGraph.la \
    $(top_builddir)/src/midend/programAnalysis/OAWrap/libOAWrap.la \
@@ -109,7 +109,6 @@ include_HEADERS = \
 # DQ (9/8/2006): The ROSE/docs/Rose/Makefile references the testSharedRoseLib program, so maybe is should be installed?
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
 noinst_PROGRAMS = testSharedRoseLib 
-
 all-local: testSharedRoseLib$(EXEEXT) 
 # Test if programs using ROSE can be run
 	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
@@ -123,6 +122,9 @@ lib_LTLIBRARIES = librose.la
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
    JAVA_JVM_FLAGS = $(JAVA_JVM_LINK)
+
+# OpenFortranParser-${OFP_VERSION}.jar:
+#	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) get_jar_file
 endif
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
@@ -138,6 +140,10 @@ librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIB
 librose_la_LDFLAGS = -no-undefined
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 librose_la_DEPENDENCIES = $(libroseLibraries)
+
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+# librose_la_DEPENDENCIES += OpenFortranParser-${OFP_VERSION}.jar
+# endif
 
 # Build list of all required libraries so that they can be built in parallel
 # REQUIRED_LIBS = $(libdir)/libedg.la
@@ -190,7 +196,9 @@ uninstall-local:
 
 
 rebuildPrelinker:
-	rm -f frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo
+#	DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
+#	rm -f frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo
+	rm -f frontend/CxxFrontend/EDG/EDG_3.3/util/edg_prelink.lo
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)

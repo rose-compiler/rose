@@ -1,0 +1,56 @@
+This is an internal workspace for the development of ROSE
+projects as part of initial development. 
+
+Two step build of ROSE specific workspace
+
+1) Build command:
+./build --srcpath /home/dquinlan/ROSE/git-dq-main-rc
+
+2) Configure command (using the local configure use the same options as 
+used to build the version of ROSE installed in the prefix directory):
+   /home/dquinlan/ROSE/backstroke/configure --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/git_LINUX-64bit-4.2.4-dq-main-rc_install --with-boost=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
+3) To cleanup the source tree after running build run:
+   rm -rf aclocal.m4 autom4te.cache configure internal_rose_config.h.in libltdl Makefile.in rose_workspace_config.h.in stamp-h1.in stamp-h.in
+
+
+**********************************
+Notes about directories and files:
+**********************************
+
+1) Information about files:
+   build
+       This is a copy of the ROSE build script modified slightly to
+       reference the ROSE/config and ROSE/acmacro directories.
+       Later this file might be used as is an optionally take
+       the directory location of the config and acmaros directories
+       (as a command line option).
+
+   configure.ac
+       This is as simple of a autoconf/automake support example
+       as possible.  This work should the use of ROSE to define
+       projects outside of ROSE.
+
+
+2) Information about directories:
+   config 
+       This directory has shell scripts required as part of the build process.
+
+
+*******************************
+Notes about the autoconf build:
+*******************************
+
+   1) The reorganization of the macro calls in configure.ac and ROSE/configure.in
+permit a much simpler configure.ac file, but there are a number of things that
+are tested for the workspace which don't make since and can be avoided:
+     a. The setup on the include-staging directory (backend compiler specific 
+        include files).  This has been eliminated by building two macros and
+        calling the setup of the backend compiler specific include files only 
+        in ROSE/configure.in (and not in the workspace/configure.ac).
+     b. The generation of the compiler backend names.
+
+Using make install to update ROSE can likely be spead up by avoiding
+the relink that libtool does.  More information is available at:
+   http://sourceware.org/autobook/autobook/autobook_85.html
+
+

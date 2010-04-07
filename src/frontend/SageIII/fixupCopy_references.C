@@ -1,5 +1,5 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "fixupCopy.h"
 
 // This file implementes support for the AST copy fixup.  It is specific to:
@@ -58,6 +58,7 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
   // printf ("Inside of SgLocatedNode::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 
+#ifndef CXX_IS_ROSE_CODE_GENERATION
   // Fixup references in SgStatements and SgExpressions
   // Define a traversal to update the references to symbols (per statement)
      class Traversal : public AstSimpleProcessing
@@ -138,7 +139,9 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
                                       }
                                      else
                                       {
-                                        printf ("Error: could not find symbol associated with functionDeclaration_copy = %p = %s = %s \n",functionDeclaration_copy,functionDeclaration_copy->class_name().c_str(),SageInterface::get_name(functionDeclaration_copy).c_str());
+                                        if (SgProject::get_verbose() > 0)
+                                             printf ("Error: could not find symbol associated with functionDeclaration_copy = %p = %s = %s \n",
+                                                  functionDeclaration_copy,functionDeclaration_copy->class_name().c_str(),SageInterface::get_name(functionDeclaration_copy).c_str());
                                      // ROSE_ASSERT(false);
                                       }
                                  }
@@ -175,7 +178,9 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
                                       }
                                      else
                                       {
-                                        printf ("Error: could not find symbol associated with (member) functionDeclaration_copy = %p = %s = %s \n",functionDeclaration_copy,functionDeclaration_copy->class_name().c_str(),SageInterface::get_name(functionDeclaration_copy).c_str());
+                                        if (SgProject::get_verbose() > 0)
+                                             printf ("Error: could not find symbol associated with (member) functionDeclaration_copy = %p = %s = %s \n",
+                                                  functionDeclaration_copy,functionDeclaration_copy->class_name().c_str(),SageInterface::get_name(functionDeclaration_copy).c_str());
                                      // ROSE_ASSERT(false);
                                       }
                                  }
@@ -207,6 +212,7 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
   // DQ (10/24/2007): New test.
      ROSE_ASSERT(copyLocatedNode->variantT() == this->variantT());
+#endif
 
 #if DEBUG_FIXUP_COPY
      printf ("Leaving SgLocatedNode::fixupCopy_references() \n\n");

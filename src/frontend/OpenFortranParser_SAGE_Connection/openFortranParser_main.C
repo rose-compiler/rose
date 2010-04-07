@@ -23,7 +23,7 @@
  * http://java.sun.com/docs/books/jni/html/invoke.html 
  */
 // Include rose.h so that we can reference SgSourceFile::build_classpath() 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include <string.h>
 #include <string>
@@ -116,13 +116,12 @@ int openFortranParser_main(int argc, char **argv)
     assert(env_status == 0);
 #endif
 
-#if 0
-    printf ("Call the function that will start a JVM and call the OFP \n");
-#endif
+    if (SgProject::get_verbose() > 1)
+       {
+         printf ("Call the function that will start a JVM and call the OFP \n");
+       }
+
     int status = runOFP(argc, argv);
-#if 0
-    printf ("DONE: Call the function that will start a JVM and call the OFP status = %d \n",status);
-#endif
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH

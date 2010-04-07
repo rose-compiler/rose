@@ -2,9 +2,25 @@
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
-#include "sage3.h"
+
+// tps (01/27/10): Added essential files..
+//#include "sage3basic.h"
+#include "setup.h"
+#ifdef _MSC_VER
+//#include <cliext/hash_map>
+#else
+#include <ext/hash_map>
+#endif
+#include "Cxx_Grammar.h"
+
+#include "processSupport.h"
+#define __builtin_constant_p (exp) (0)
 
 
+class PreprocessingInfo;
+class AstRegExAttribute;
+class AstAttribute;
+class AstAttributeMechanism;
 
 // DQ (4/21/2009): This is not handled uniformally in sage3.h.
 // DQ (8/8/2008): This is required to process the "stat64 struct in SgAsmGenericFile
@@ -15,7 +31,7 @@ HEADER_NODE_PREDECLARATION_START
 
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
-typedef uint64_t rose_addr_t; /* address and size (file and memory) */
+
 
 /* This is similar to rose_addr_t except instead of representing any kind of address (file offset, virtual address, relative
  * virtual address, etc.) it represents only a relative virtual address. The only significant difference between storing
@@ -70,6 +86,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		void erase(const ExtentPair &extent)
 			{erase(extent.first, extent.second);}
 		void erase(rose_addr_t offset, rose_addr_t size);
+		void erase(const ExtentMap&);
 
 		/* Operator-like non-modifying methods */
 		ExtentMap subtract_from(const ExtentPair &extent) const
@@ -78,6 +95,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		ExtentMap overlap_with(const ExtentPair &extent) const
 			{return overlap_with(extent.first, extent.second);}
 		ExtentMap overlap_with(rose_addr_t offset, rose_addr_t size) const;
+		size_t size() const; /**< Number of bytes in extent map (not the number extents). */
 
 		/* Allocation-like methods */
 		std::map<rose_addr_t,rose_addr_t>::iterator best_fit(rose_addr_t size);
@@ -121,7 +139,9 @@ struct HexdumpFormat {
 // DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
 #define DUMP_FIELD_WIDTH        64                      /* min columns to use for member names in dump() functions */
-
+#include <semaphore.h>
+#ifndef _MSC_VER
+// mutex does not work on Windows
 class mutex
    {
   // This class was added by Valentin David (summer of 2007) as part of support for Stratego using a Java interface.
@@ -145,7 +165,7 @@ class mutex
                sem_post(&mut);
              }
    };
-
+#endif
 //! Declarations to be placed at the top of the header file for this grammar
 /*! The typedefs simplify the resulting generated code.  Note that the use of STL
     for the list types requires the use of an additional typedef to a pointer of that
@@ -1257,7 +1277,7 @@ inline size_t hash_value(const std::pair<int,int> & p)
 typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
 #else
 // DQ (12/1/2009): I can't get this to work under MCVC (so comment it out for now).
-#pragma message ("I can't get this to work under MCVC (so comment it out for now).")
+#pragma message ("Grammer/Node.code: I can't get this to work under MCVC (so comment it out for now).")
 // Use size_t to get this to compile for now.
 typedef rose_hash::hash_multimap<size_t,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
 #endif
@@ -1714,9 +1734,9 @@ std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
 
 
 // DQ (8/21/2006): Jeremiah Willcock's Virtual CFG mechanism.
-#include "virtualCFG.h"
+//#include "virtualCFG.h"
 // tps (8/13/2007): working on binary cfg mechanism.
-#include "virtualBinCFG.h"
+//#include "virtualBinCFG.h"
 
 HEADER_NODE_PREDECLARATION_END
 
@@ -1918,16 +1938,17 @@ HEADER_START
       /* */
 
       /*! \brief Returns the CFG node for just before this AST node */
+     /*! \brief Returns the CFG node for just before this AST node */
           VirtualCFG::CFGNode cfgForBeginning()
              {
-               ROSE_ASSERT (this);
+              ROSE_ASSERT (this);
                return VirtualCFG::CFGNode(this, 0);
              }
 
       /*! \brief Returns the CFG node for just after this AST node */
           VirtualCFG::CFGNode cfgForEnd()
              {
-               ROSE_ASSERT (this);
+             assert (this);
                return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
 	          }
       /* */
@@ -2039,6 +2060,7 @@ HEADER_PARSER_END
 
 SOURCE_START
 
+	          
 // ########################################
 // Some global variables used within SAGE 3
 // ########################################
@@ -2053,6 +2075,7 @@ bool interproceduralControlFlowGraph = false;
 // ###############################
 // Start of source code for SgNode
 // ###############################
+
 
 // Support for global function type symbol table (moved to be static data pointer)
 // DQ (1/31/2006): Modified to build all types in the memory pools
@@ -2226,8 +2249,11 @@ SgNode::removeAttribute(std::string s)
 bool
 SgNode::attributeExists(std::string s) const
    {
-     printf ("Error: calling SgNode::attributeExists(%s) \n",s.c_str());
+     printf ("Error: calling SgNode::attributeExists(%s) on node = %s \n",s.c_str(),class_name().c_str());
      ROSE_ASSERT(false);
+
+  // tps (12/9/2009) : MSC requires a return value
+     return false;
    }
 
 int

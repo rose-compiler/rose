@@ -16,7 +16,9 @@ int X::abc = 789;
 
 class A
    {
-     foo() const;
+  // DQ (2/20/2010): Added "int" to as required for newer GNU compilers.
+  // foo() const;
+     int foo() const;
      int i;
    };
 #endif

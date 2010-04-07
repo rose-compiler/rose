@@ -8,6 +8,8 @@
 #include <string.h>
 #include <iostream>
 #include "commandline_processing.h"
+#include <vector>
+#include <algorithm>
 
 // Use Brian Gunney's String List Assignent (SLA) library
 #include "sla.h"
@@ -166,6 +168,9 @@ CommandlineProcessing::generateArgcArgvFromList ( Rose_STL_Container<string> arg
            ROSE_ABORT();
         }
       
+#ifdef _MSC_VER
+#define __builtin_constant_p(exp) (0)
+#endif
      ROSE_ASSERT (argv == NULL);
      argc = argList.size();
      argv = (char**) malloc (argc * sizeof(char**));

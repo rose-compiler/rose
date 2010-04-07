@@ -1,7 +1,9 @@
 #ifndef ROSE_COMMANDLINE_UTILITY_H
 #define ROSE_COMMANDLINE_UTILITY_H
-
 #include "setup.h"
+//#include "rosedefs.h"
+#include <list>
+#define Rose_STL_Container std::vector
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
 
@@ -116,6 +118,7 @@ namespace CommandlineProcessing
           bool isOptionTakingThirdParameter ( std::string argument );
    };
 
+// DQ (4/5/2010): This are defined in sageSupport.C
 //! Find the path of a ROSE support file.  If ROSE is not installed (see
 //! roseInstallPrefix()), the top of the source tree plus sourceTreeLocation is
 //! used as the location.  If the variable is not set, the path in
@@ -124,6 +127,7 @@ std::string
 findRoseSupportPathFromSource(const std::string& sourceTreeLocation,
                               const std::string& installTreeLocation);
 
+// DQ (4/5/2010): This are defined in sageSupport.C
 //! Find the path of a ROSE support file.  If ROSE is not installed (see
 //! roseInstallPrefix()), the top of the build tree plus buildTreeLocation is
 //! used as the location.  If the variable is not set, the path in
@@ -132,6 +136,7 @@ std::string
 findRoseSupportPathFromBuild(const std::string& buildTreeLocation,
                              const std::string& installTreeLocation);
 
+// DQ (4/5/2010): This are defined in sageSupport.C
 //! Find the path of the ROSE install prefix.  There is an assumption that
 //! <directory containing librose>/.. is the prefix, and that other things can
 //! be found from that.  This may not be true if the various install

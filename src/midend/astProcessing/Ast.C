@@ -1,7 +1,13 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#ifdef _MSC_VER
+// seems to cause problems under Linux
+//#include "rose.h"
+#endif
+
 // Author: Markus Schordan, Vienna University of Technology, 2004.
 // $Id: Ast.C,v 1.3 2006/04/24 00:21:32 dquinlan Exp $
 
-
+#include "sage3basic.h"
 #include "Ast.h"
 
 Ast::iterator&

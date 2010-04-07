@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps : Switching from rose.h to sage3 changed size from 17,7 MB to 7,4MB
+#include "sage3basic.h"
 
 #include "CreateSlice.h"
 #include "iostream"
@@ -134,10 +135,12 @@ BooleanSafeKeeper CreateSlice::evaluateSynthesizedAttribute(SgNode * node, Boole
 						// check if the node is from the sourcefile or goes to the source file, if so kill it
 						// make shure to delete only stuff, the belongs to an unparsed file
 //						if ((*cand)->get_file_info ()->isOutputInCodeGeneration ())
-						if (currentFile &&(*cand)->get_file_info ()->isSameFile(currentFile))
-							
+						if (currentFile &&(*cand)->get_file_info ()->isSameFile(currentFile)) {
+#ifndef _MSC_VER							
 						LowLevelRewrite::remove(isSgStatement(*cand));
+#endif
 	//					delete (*cand);
+						}
 					}
 				}
 				else if (isSgTypedefDeclaration(*cand) ||isSgClassDeclaration(*cand))
@@ -186,8 +189,11 @@ BooleanSafeKeeper CreateSlice::evaluateSynthesizedAttribute(SgNode * node, Boole
 				{
 						// make shure to delete only stuff, the belongs to an unparsed file
 //						if (node->get_file_info ()->isOutputInCodeGeneration ())
-						if (currentFile && node->get_file_info ()->isSameFile(currentFile))
-					LowLevelRewrite::remove(isSgStatement(node));
+					if (currentFile && node->get_file_info ()->isSameFile(currentFile)) {
+#ifndef _MSC_VER
+							LowLevelRewrite::remove(isSgStatement(node));
+#endif
+				}
 				//	delete(node);
 				}
 			}

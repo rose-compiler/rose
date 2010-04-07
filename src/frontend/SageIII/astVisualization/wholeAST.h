@@ -1,6 +1,7 @@
 #ifndef WHOLE_AST_H
 #define WHOLE_AST_H
 
+#include "AstDOTGeneration.h"
 #include <string>
 #include <vector>
 
@@ -45,6 +46,9 @@ class CustomAstDOTGenerationNodeType
           CustomAstDOTGenerationNodeType (SgNode* node, std::string label, std::string options )
              : target(node), labelString(label), optionString(options)
              {
+#ifdef _MSC_VER
+//#define __builtin_constant_p(exp) (0)
+#endif
                ROSE_ASSERT(node != NULL);
                ROSE_ASSERT(labelString.size() < 4000);
                ROSE_ASSERT(optionString.size() < 4000);
@@ -211,6 +215,10 @@ class CustomMemoryPoolDOTGeneration
              int m_variableDeclaration; /*variableDeclarationFilter()*/
 
              int m_variableDefinition; /*variableDefinitionFilter()*/
+
+          // DQ (3/2/2010): Added option to turn off all filtering.
+             int m_noFilter;            /* no filtering */
+
              //! Default constructor
              s_Filter_Flags ();
              //! Constructor from command line options

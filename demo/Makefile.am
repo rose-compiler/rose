@@ -74,20 +74,20 @@ demo_binary_analysis_C:
 	@echo "End of binary_analysis demos"
 
 
-if DQ_DEVELOPER_TESTS 
-# This demo shows the handling of different formats (ELF and PE) and different instruction sets (ARM, PowerPC, x86).
-demo_2: demo_2_test
-	$${EDITOR:-emacs} $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests/asm_code_samples_gcc.exe.dump
-	@echo "End of demo_2"
-
-demo_2_test:
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_Linux
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_Linux
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_PE
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_PE
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_ARM
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_ARM
-endif
+#if DQ_DEVELOPER_TESTS 
+## This demo shows the handling of different formats (ELF and PE) and different instruction sets (ARM, PowerPC, x86).
+#demo_2: demo_2_test
+#	$${EDITOR:-emacs} $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests/asm_code_samples_gcc.exe.dump
+#	@echo "End of demo_2"
+#
+#demo_2_test:
+#	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_Linux
+#	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_Linux
+#	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_PE
+#	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_PE
+#	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_ARM
+#	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_ARM
+#endif
 
 # This demo shows the generation of a few different forms of analysis on binaries
 demo_3: demo_3_test
@@ -158,14 +158,6 @@ demo_10:
 	cd $(top_builddir)/projects/assemblyToSourceAst; $(MAKE) ppc-check
 	@echo "End of demo_10"
 
-if DQ_DEVELOPER_TESTS 
-# Demonstrate edit graph work to support binary comparision on binary file format (related to binary diff on instructions)
-demo_11a:
-	cd $(top_builddir)/developersScratchSpace/Dan/astEquivalence_tests; $(MAKE) demoSourceEquivalence
-	cd $(top_builddir)/developersScratchSpace/Dan/astEquivalence_tests; $(MAKE) demoBinaryEquivalence
-	@echo "End of demo_11a"
-endif
-
 # Demonstrate AST diff using BinQ on binary instructions (only on the instructions)
 demo_11b:
 	cd $(top_builddir)/projects/BinQ; $(MAKE) demo_diff
@@ -176,12 +168,12 @@ demo_12:
 	cd $(top_builddir)/projects/compass/tools/compass/gui; $(MAKE) demo
 	@echo "End of demo_12"
 
-if DQ_DEVELOPER_TESTS 
+# if DQ_DEVELOPER_TESTS 
 # Static binary rewriting
-demo_13:
-	cd $(top_builddir)/developersScratchSpace/Dan/translator_tests; $(MAKE) demo
-	@echo "End of demo_13"
-endif
+# demo_13:
+#	cd $(top_builddir)/developersScratchSpace/Dan/translator_tests; $(MAKE) demo
+#	@echo "End of demo_13"
+# endif
 
 # Template for more rules...
 # demo_15:
@@ -231,29 +223,17 @@ demoBinaryEquivalence: testBinaryEquivalence
 #              Standard Makefile Content
 # ******************************************************
 
-if DQ_DEVELOPER_TESTS 
 check-local:
 	@echo "ROSE demo."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "Testing demos..." 
-	make demo_2_test
+#	make demo_2_test
 	make demo_3_test
 #	make demo_10
 #	make demo_13
 	@echo "****************************************************************************"
 	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
 	@echo "****************************************************************************"
-else
-check-local:
-	@echo "ROSE demo (skipping demos 2, 11a and 13 which referenced the developersScratchSpace directory)."
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "Testing demos..." 
-	make demo_3_test
-#	make demo_10
-	@echo "****************************************************************************"
-	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
-	@echo "****************************************************************************"
-endif
 else
 check-local:
 	@echo "\nROSE demo requires Qt configure option (at least), Demo NOT run.  To run these reconfigure ROSE (see manual)"

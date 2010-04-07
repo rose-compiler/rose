@@ -1,0 +1,56 @@
+#! /bin/sh
+
+# This build script adds a parameter and calls the ROSE source tree's build script.
+# In this way the buidl system for the ROSE workspaces track the build system of 
+# ROSE directly.
+
+# Default value
+ROSE_DISTRIBUTION=no
+
+# Parse command-line
+# Turn on verbose mode to support initial debugging...
+do_quiet=yes
+# do_quiet=no
+do_timing=no
+while [ "$#" -gt 0 ]; do
+    arg="$1"; shift
+    case "$arg" in
+        --verbose)
+            echo "Setting verbose mode in build script ..."
+            do_quiet=no
+            ;;
+        --timing)
+            do_timing=yes
+            ;;
+        --quiet)
+            echo "$0: warning: --quiet is now the default mode and is ignored"
+            ;;
+        --srcpath)
+            ROSE_DISTRIBUTION=$1
+            shift
+            echo "Found the ROSE source tree: ROSE_DISTRIBUTION = $ROSE_DISTRIBUTION"
+            echo "     e.g. ./build --srcpath /home/dquinlan/ROSE/git-dq-main-rc"
+          # echo "args = $0 $1 $2"
+          # exit 1
+            ;;
+        *)
+	    echo "$0: unrecognized argument: $arg" >&2
+       echo "     Use for example: ./build --srcpath /home/dquinlan/ROSE/git-dq-main-rc"
+	    exit 1
+	    ;;
+    esac
+done
+
+if test $ROSE_DISTRIBUTION = no; then
+   echo "Location of ROSE source tree is required...";
+   echo "     e.g. ./build --srcpath /home/dquinlan/ROSE/git-dq-main-rc"
+   exit 1;
+fi
+
+# Call the build script for ROSE.
+echo "$ROSE_DISTRIBUTION/build --srcpath $ROSE_DISTRIBUTION"
+$ROSE_DISTRIBUTION/build --srcpath $ROSE_DISTRIBUTION
+
+# exit this script with comfort message.
+echo "Build script terminated normally ..."
+exit 0

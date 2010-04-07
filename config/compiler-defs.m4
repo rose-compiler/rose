@@ -50,11 +50,17 @@ dnl predefined by a specific compiler
              for macro_i in $extra_icc_defines
                  do
                     echo $macro_i
-                    tmp_macro="$tmp_macro, $macro_i"
+                  # DQ (1/9/2010): Fixing support for Intel icc and icpc compiler.
+                  # tmp_macro="$tmp_macro, $macro_i"
+                    tmp_macro="$tmp_macro, \"$macro_i\""
                     echo " tmp_macro  $tmp_macro"
                  done
            # macroString=" -D__PURE_INTEL_C99_HEADERS__ ${tmp_macro} --preinclude rose_edg_macros_and_functions_required_for_icc.h "
-             macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+           # DQ (1/9/2010): I put this back and commented out the problem directly in the UPC file: lock.upc directly.
+           # DQ (1/9/2010): This causes an error in math.h with an inconstant use of __THROW with the declaration of "abs()".
+           #   from math.h _LIBIMF_EXT _LIBIMF_INT   _LIBIMF_PUBAPI abs( _LIBIMF_INT __x );
+           # macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+             macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
              if test x$enable_new_edg_interface = xyes; then
                :
              else
@@ -73,7 +79,9 @@ dnl predefined by a specific compiler
 
   # Support for ROSE "roseTranslator" as a backend for compiling ROSE generated code
   # Or support "roseAnalysis" as a backend which generates object files from the original source code.
-    roseTranslator|roseAnalysis)
+  # DQ (1/28/2010): Added testAnalysis since this is the name of the executable build in ROSE/tests 
+  # directory and used by ROSE to compile ROSE in the automated Hudson tests.
+    roseTranslator|testTranslator|roseCodeGeneration|testCodeGeneration|roseAnalysis|testAnalysis|roseAstFileIO|testAstFileIO)
            # macroString=" -D__GNUG__=$BACKEND_GCC_MAJOR -D__GNUC__=$BACKEND_GCC_MAJOR -D__GNUC_MINOR__=$BACKEND_GCC_MINOR -D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL -D_GNU_SOURCE --preinclude rose_edg_macros_and_functions_required_for_gnu.h "
            # macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\", \"-D_GNU_SOURCE\""
            # if test x$enable_new_edg_interface = xyes; then
@@ -103,6 +111,8 @@ dnl predefined by a specific compiler
              macroString="${macroString}}"
 
              compilerVendorName=GNU
+             echo "Support for ROSE as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
+             echo "Support for ROSE as a backend for compiling ROSE generated code \"$macroString\" ";
              ;;
 
     *)
@@ -116,6 +126,65 @@ dnl predefined by a specific compiler
 
 # This is now setup in a separate macro and can be specified on the command line
 # AC_DEFINE_UNQUOTED(CXX_COMPILER_NAME, "$CXX")
+
+# DQ (1/9/2010): Detec the type of compiler being used. This is used to add the
+# library libimf with libm to support use of the Intel compiler.  I have added
+# AM conditional for GNu just for completeness.
+  AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xIntel)
+  AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xGNU)
+
+# DQ (1/27/2010): Setup automake conditionals so that we can optionally skip files in ROSE that don't compile.
+  AM_CONDITIONAL(ROSE_USING_ROSE,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator || test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
+  AM_CONDITIONAL(ROSE_USING_ROSE_TRANSLATOR,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator)
+
+# DQ (2/21/2010): If er are testing AST File I/O then set the flag to indicate that we are testing the code generation as well.
+# AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration)
+  AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
+
+  AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis)
+  AM_CONDITIONAL(ROSE_USING_ROSE_AST_FILE_IO,test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
+
+  echo "compilerName = $compilerName"
+  if test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis; then
+     echo "Found the ROSE analysis tool being used as compiler for ROSE source code."
+     AC_DEFINE([CXX_IS_ROSE_ANALYSIS],[1],[Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE).])
+  fi
+
+# DQ (2/20/2010): Support for testing AST File I/O.
+  if test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO; then
+     echo "Found the ROSE analysis tool being used as compiler for ROSE source code."
+     AC_DEFINE([CXX_IS_ROSE_AST_FILE_IO],[1],[Is this the ROSE AST File IO (part of tests to compile ROSE for AST File IO only using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_CODE_GENERATION],[1],[Is this the ROSE Code Generator (part of tests to compile ROSE and generate code using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_ANALYSIS],[1],[Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE).])
+  fi
+
+  if test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration; then
+     echo "Found the ROSE code generation tool being used as compiler for ROSE source code."
+     AC_DEFINE([CXX_IS_ROSE_CODE_GENERATION],[1],[Is this the ROSE Code Generator (part of tests to compile ROSE and generate code using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_ANALYSIS],[1],[Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE).])
+  fi
+
+  if test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator; then
+     echo "Found the ROSE translator tool being used as compiler for ROSE source code."
+     AC_DEFINE([CXX_IS_ROSE_TRANSLATOR],[1],[Is this the ROSE translator (part of tests to compile ROSE using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_CODE_GENERATION],[1],[Is this the ROSE Code Generator (part of tests to compile ROSE and generate code using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_ANALYSIS],[1],[Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE).])
+  fi
+
+# echo "Exiting after recognition of ROSE analizer, code generator, or translator."
+# exit 1;
+
+  if test "x$compilerVendorName" = xIntel; then
+   # using_intel_compiler=true
+     AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
+  fi
+  if test "x$compilerVendorName" = xGNU; then
+   # using_gnu_compiler=true
+     AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
+  fi
+# AC_DEFINE([CXX_IS_INTEL_COMPILER],test "x$compilerVendorName" = xIntel,[Is this an Intel compiler being used to compile ROSE.])
+# AC_DEFINE([CXX_IS_INTEL_COMPILER],[`test $using_intel_compiler`],[Is this an Intel compiler being used to compile ROSE.])
+# AC_DEFINE([CXX_IS_GNU_COMPILER],[`test $using_gnu_compiler`],[Is this a GNU compiler being used to compile ROSE.])
 
 # This string has all compiler specific predefined macros listed
   echo "Backend compiler specific macroString = $macroString"

@@ -1,10 +1,12 @@
+
+
 // Author: Markus Schordan
 // $Id: AstPDFGeneration.C,v 1.5 2007/02/19 16:08:38 vuduc2 Exp $
 
 #ifndef ASTPDFGENERATION_C
 #define ASTPDFGENERATION_C
 
-#include "sage3.h"
+#include "sage3basic.h"
 #include "roseInternal.h"
 #include "AstNodeVisitMapping.h"
 #include <iostream>

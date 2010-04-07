@@ -1,103 +1,111 @@
-# Copyright (c) 2005, 2006 Los Alamos National Security, LLC.  This
-# material was produced under U.S. Government contract DE-
-# AC52-06NA25396 for Los Alamos National Laboratory (LANL), which is
-# operated by the Los Alamos National Security, LLC (LANS) for the
-# U.S. Department of Energy. The U.S. Government has rights to use,
-# reproduce, and distribute this software. NEITHER THE GOVERNMENT NOR
-# LANS MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY
-# LIABILITY FOR THE USE OF THIS SOFTWARE. If software is modified to
-# produce derivative works, such modified software should be clearly
-# marked, so as not to confuse it with the version available from
-# LANL.
-
-# Additionally, this program and the accompanying materials are made
-# available under the terms of the Eclipse Public License v1.0 which
-# accompanies this distribution, and is available at
-# http://www.eclipse.org/legal/epl-v10.html
-
-# Edited for ROSE by Jeremiah Willcock
-
-OFP_INSTALL_DIR=@prefix@
-OFP_ROOT_DIR=@top_srcdir@/src/3rdPartyLibraries/fortran-parser
-OFP_SRC_DIR=$(OFP_ROOT_DIR)/src
-OFP_FRONT_DIR=$(OFP_SRC_DIR)/fortran/ofp
-OFP_PARSER_DIR=$(OFP_FRONT_DIR)/parser
-OFP_C_DIR=$(OFP_FRONT_DIR)/parser/c
-OFP_JNI_DIR=$(OFP_C_DIR)/jni
-OFP_TOOLS_DIR=$(OFP_SRC_DIR)/fortran/tools
-
-OFP_JARFILE=OpenFortranParser.jar
-OFP_C_ACTION_SO=libfortran_ofp_parser_c_jni_FortranParserActionJNI.so 
-
-OFP_CLASSPATH=-classpath @CLASSPATH@:./build:.
-OFP_JFLAGS=$(OFP_CLASSPATH)
-
 javadir=$(libdir)
 
-JARFILE=$(OFP_JARFILE)
-
-java-stuff:
-	-mkdir build
-	-mkdir build/fortran
-	$(JAVAC) $(OFP_CLASSPATH) -d build $(srcdir)/src/fortran/ofp/parser/java/IActionEnums.java
-	$(JAVAC) $(OFP_CLASSPATH) -d build $(srcdir)/src/fortran/ofp/parser/java/IFortranParserAction.java
-	$(JAVA) $(OFP_CLASSPATH) org.antlr.Tool -lib $(srcdir)/src/fortran/ofp/parser/ -fo . $(srcdir)/src/fortran/ofp/parser/FortranLexer.g
-	sed "s/LexerLexer/Lexer/g" FortranLexerLexer.java > FortranLexer.java
-	rm FortranLexerLexer.java
-	$(JAVA) $(OFP_CLASSPATH) org.antlr.Tool -fo . $(srcdir)/src/fortran/ofp/parser/FortranParser.g
-	sed "s/ParserParser/Parser/g" FortranParserParser.java > FortranParser.java
-	rm FortranParserParser.java FortranLexer.tokens FortranParser.tokens
-	-mkdir tmp
-	cp $(srcdir)/src/fortran/ofp/parser/java/IFortranParserAction.java tmp/
-	cp $(srcdir)/src/fortran/ofp/parser/java/makNull.pl tmp/
-	cd tmp; $(PERL) ./makNull.pl
-	$(JAVAC) $(OFP_CLASSPATH) -d build $(srcdir)/src/fortran/ofp/FrontEnd.java FortranLexer.java FortranParser.java tmp/FortranParserActionNull.java $(srcdir)/src/fortran/ofp/parser/java/*.java $(srcdir)/src/fortran/tools/*.java
-	$(JAVA) $(OFP_CLASSPATH) fortran.tools.GenRuleStackTrace
-	$(JAVAC) $(OFP_CLASSPATH) -d build RuleStackTrace.java
-	$(JAVAC) $(OFP_CLASSPATH) -d build $(srcdir)/src/fortran/ofp/parser/java/*.java
-	-mkdir tmp/java
-	-mkdir tmp/c
-	cp $(srcdir)/src/fortran/ofp/parser/java/IFortranParserAction.java $(srcdir)/src/fortran/ofp/parser/java/IActionEnums.java tmp/java/
-	cp $(srcdir)/src/fortran/ofp/parser/java2c.pl tmp/
-	cd tmp; $(PERL) ./java2c.pl
-	$(JAVA) $(OFP_CLASSPATH) fortran.tools.ToC
-	$(JAVAC) $(OFP_CLASSPATH) -d build FortranParserActionJNI.java
-	$(JAVA) $(OFP_CLASSPATH) fortran.tools.CFiles header
-	-rm OpenFortranParser.jar
-	$(JAR) cf OpenFortranParser.jar -C build fortran/
-	touch java-stuff
-
-# lib_LTLIBRARIES = libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
+OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+# DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
 if ROSE_USE_OPEN_FORTRAN_PARSER
-java_DATA = OpenFortranParser.jar
-c_actions_jni.c: java-stuff
-OpenFortranParser.jar: java-stuff
-else
-java_DATA =
+dist_java_DATA = OpenFortranParser-${OFP_VERSION}.jar
 endif
 
-# libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = c_actions_jni.c
-# libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_CPPFLAGS = -I. -I./tmp/c -I$(srcdir)/src/fortran/ofp/parser/c -I$(srcdir)/src/fortran/ofp/parser/c/jni
+# Location of jar file on Open Fortran Parser web site changes from day to day...
+# To get the current setting, dowload the file from the web (e.g. using Firefox) and then click on the
+# entry in the "download window" to select the download link, copy the link into the macro below.
+# Later this needs to be setup via configure (if there is not better solution).
+# EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
+# EXTERNAL_OFP_JAR_FILE_URL=http://iweb.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
+EXTERNAL_OFP_JAR_FILE_URL=http://cdnetworks-us-2.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
 
-CLEANFILES = java-stuff OpenFortranParser.jar c_actions_jni.c FortranParserActionJNI.java RuleStackTrace.java FortranLexer.java FortranParser.java FortranParserAction.h
+# DQ (3/13/2010): I think we need to use: "--no-check-certificate"
+# Using --no-check-certificate to handle errors:
+# Resolving sgone.llnl.gov... 128.115.27.11
+# Connecting to sgone.llnl.gov|128.115.27.11|:443... connected.
+# ERROR: cannot verify sgone.llnl.gov's certificate, issued by `/C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=Terms 
+#   of use at https://www.verisign.com/rpa (c)09/CN=VeriSign Class 3 Secure Server CA - G2': Unable to locally verify the issuer's authority.
+# To connect to sgone.llnl.gov insecurely, use `--no-check-certificate'.
+# Unable to establish SSL connection.
+get_jar_file:
+	test -e OpenFortranParser-${OFP_VERSION}.jar || \
+      (test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar .) || \
+      (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${OFP_VERSION}.jar || exit 1;);
+	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
+      echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
+   else \
+      echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+      exit 1; \
+   fi;
 
-EXTRA_DIST = CMakeLists.txt INSTALL README get_antlr.sh config src tests
+TEST_OFP_VERSION=0.8.0
+TEST_EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${TEST_OFP_VERSION}
+test_get_new_jar_file:
+	test -e OpenFortranParser-${TEST_OFP_VERSION}.jar || \
+     (test -e ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar .) || \
+     wget --no-check-certificate ${TEST_EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${TEST_OFP_VERSION}.jar
+
+# DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
+# OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
+OFP_SOURCE_FILES = \
+   fortran/ofp/parser/c/FortranParserAction.h \
+   fortran/ofp/parser/c/jni/c_actions_jni.c \
+   fortran/ofp/parser/c/token.h \
+   fortran/ofp/parser/c/token.c \
+   fortran/ofp/parser/c/ActionEnums.h \
+   fortran/ofp/parser/c/jni/jni_token_funcs.h \
+   fortran/ofp/parser/c/jni/jni_token_funcs.c \
+   fortran/ofp/parser/c/jni/IFortranParserAction.java
+
+# DQ (4/5/2010): And we need a version of this macro withouth the paths.
+OFP_SOURCE_FILES_WITHOUT_PATHS = \
+   FortranParserAction.h \
+   c_actions_jni.c \
+   token.h \
+   token.c \
+   ActionEnums.h \
+   jni_token_funcs.h \
+   jni_token_funcs.c \
+   IFortranParserAction.java
+
+extract_rose_required_ofp_source_files: get_jar_file
+	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
+      echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
+   else \
+      echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+      exit 1; \
+   fi;
+	jar xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
+	@list='$(OFP_SOURCE_FILES)'; for f in $$list; do \
+	   echo "building $$f file"; \
+	   filename=`basename $$f`; \
+      echo "filename = $$filename"; \
+      if test -e $$f; then \
+         echo "Using OFP source file $$f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
+         cp $$f $$filename; \
+      else \
+         echo "Warning: $$f is not found in jar file."; \
+         if test "x$(OFP_VERSION)" = "x0.7.2"; then \
+            echo "Using OFP source file $$f from version $(OFP_VERSION) distributed with ROSE."; \
+            if test -e $$filename; then \
+               echo "Note: OFP source file $$filename is already present."; \
+            else \
+               echo "Copying OFP source file $$filename from source tree to build tree."; \
+               cp ${srcdir}/$$filename $$filename; \
+            fi; \
+         else \
+            echo "Error: can't use default (version 0.7.2) OFP source file $filename_without_path with OpenFortranParser-${OFP_VERSION}.jar file."; \
+            exit 1; \
+         fi; \
+      fi; \
+   done
+#	Remove the fortran directory generated from the extraction of files from the jar file.
+	@if test -d fortran; then \
+      rm -rf fortran; \
+   fi;
+
+# We distribute the default version of the OFP jar file (version 0.7.2)
+# OpenFortranParser-0.7.2.jar but this is handled using the dist_java_DATA 
+# automake variable. Also add the generated/downloaded/unpacked files from 
+# the OFP jar file.
+EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
 
 clean-local:
-	rm -rf build/ tmp/
-
-
-copy_as_before_fix:
-	cp $(srcdir)/src/fortran/ofp/parser/FortranLexer.g.beforeFix $(srcdir)/src/fortran/ofp/parser/FortranLexer.g
-	cp $(srcdir)/src/fortran/ofp/parser/FortranParser.g.beforeFix $(srcdir)/src/fortran/ofp/parser/FortranParser.g
-	cp $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java.beforeFix $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java
-	cp $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java.beforeFix $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java
-	cp $(srcdir)/src/fortran/ofp/FrontEnd.java.beforeFix $(srcdir)/src/fortran/ofp/FrontEnd.java
-
-copy_as_after_fix:
-	cp $(srcdir)/src/fortran/ofp/parser/FortranLexer.g.afterFix $(srcdir)/src/fortran/ofp/parser/FortranLexer.g
-	cp $(srcdir)/src/fortran/ofp/parser/FortranParser.g.afterFix $(srcdir)/src/fortran/ofp/parser/FortranParser.g
-	cp $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java.afterFix $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java
-	cp $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java.afterFix $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java
-	cp $(srcdir)/src/fortran/ofp/FrontEnd.java.afterFix $(srcdir)/src/fortran/ofp/FrontEnd.java
+	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c
+	rm -f token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c IFortranParserAction.java
 

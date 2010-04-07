@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <iostream>
-#include "rose.h" // Sage Interface and Builders
+#include "sage3basic.h" // Sage Interface and Builders
+#include "sageBuilder.h"
 #include "OmpAttribute.h"
 using namespace OmpSupport;
 
@@ -64,6 +65,10 @@ static SgNode* gNode;
 static SgExpression* current_exp = NULL;
 %}
 
+/* The %union declaration specifies the entire collection of possible data types for semantic values. these names are used in the %token and %type declarations to pick one of the types for a terminal or nonterminal symbol
+corresponding C type is union name defaults to YYSTYPE.
+*/
+
 %union {  int itype;
           double ftype;
           const char* stype;
@@ -79,8 +84,8 @@ static SgExpression* current_exp = NULL;
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2
-        NEWLINE LEXICALERROR IDENTIFIER EXPRESSION ID_EXPRESSION
-
+        LEXICALERROR IDENTIFIER 
+/*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
 
@@ -90,6 +95,7 @@ static SgExpression* current_exp = NULL;
               relational_expr  
 %type <itype> schedule_kind
 
+/* start point for the parsing */
 %start openmp_directive
 
 %%
@@ -120,10 +126,10 @@ openmp_directive
 
 parallel_directive
 		: /* # pragma */ OMP PARALLEL
-		  { ompattribute = buildOmpAttribute(e_parallel,gNode);
+		  { ompattribute = buildOmpAttribute(e_parallel,gNode,true);
 		    omptype = e_parallel; 
 		  }
-		  parallel_clause_optseq new_line
+		  parallel_clause_optseq 
 		;
 
 parallel_clause_optseq
@@ -165,9 +171,9 @@ unique_parallel_clause
 
 for_directive	: /* # pragma */ OMP FOR
 		   { 
-                   ompattribute = buildOmpAttribute(e_for,gNode); 
+                   ompattribute = buildOmpAttribute(e_for,gNode,true); 
                    }
-		   for_clause_optseq new_line
+		   for_clause_optseq
 		;
 
 for_clause_optseq: /* empty*/
@@ -226,8 +232,8 @@ schedule_kind	: STATIC  { $$ = e_schedule_static; }
 
 sections_directive
 		: /* # pragma */ OMP SECTIONS
-		  { ompattribute = buildOmpAttribute(e_sections,gNode); }
-		  sections_clause_optseq new_line
+		  { ompattribute = buildOmpAttribute(e_sections,gNode, true); }
+		  sections_clause_optseq
 		;
 
 sections_clause_optseq
@@ -251,14 +257,14 @@ sections_clause	: data_privatization_clause
 		;
 
 section_directive
-		: /* # pragma */  OMP SECTION new_line 
-		  { ompattribute = buildOmpAttribute(e_section,gNode); }
+		: /* # pragma */  OMP SECTION
+		  { ompattribute = buildOmpAttribute(e_section,gNode,true); }
 		;
 
 single_directive: /* # pragma */ OMP SINGLE
-		  { ompattribute = buildOmpAttribute(e_single,gNode); 
+		  { ompattribute = buildOmpAttribute(e_single,gNode,true); 
 		    omptype = e_single; }
-	           single_clause_optseq new_line
+	           single_clause_optseq
 		;
 
 single_clause_optseq
@@ -285,9 +291,9 @@ unique_single_clause : COPYPRIVATE
 			'(' variable_list ')'
 
 task_directive: /* #pragma */ OMP TASK 
-                 {ompattribute = buildOmpAttribute(e_task,gNode);
+                 {ompattribute = buildOmpAttribute(e_task,gNode,true);
 		  omptype = e_task; }
-		task_clause_optseq new_line
+		task_clause_optseq
 		;
 
 task_clause_optseq:  /* empty*/
@@ -315,8 +321,8 @@ unique_task_clause : IF
 		;
 parallel_for_directive
 		: /* # pragma */ OMP PARALLEL FOR
-		  { ompattribute = buildOmpAttribute(e_parallel_for,gNode); }
-		  parallel_for_clauseoptseq new_line
+		  { ompattribute = buildOmpAttribute(e_parallel_for,gNode, true); }
+		  parallel_for_clauseoptseq
 		;
 
 parallel_for_clauseoptseq	
@@ -343,9 +349,9 @@ parallel_for_clause
 
 parallel_sections_directive
 		: /* # pragma */ OMP PARALLEL SECTIONS
-		  { ompattribute =buildOmpAttribute(e_parallel_sections,gNode); 
+		  { ompattribute =buildOmpAttribute(e_parallel_sections,gNode, true); 
 		    omptype = e_parallel_sections; }
-		  parallel_sections_clause_optseq new_line
+		  parallel_sections_clause_optseq
 		;
 
 parallel_sections_clause_optseq
@@ -369,16 +375,16 @@ parallel_sections_clause
 		| data_reduction_clause
 		;
 
-master_directive: /* # pragma */ OMP MASTER new_line
-		  { ompattribute = buildOmpAttribute(e_master, gNode);}
+master_directive: /* # pragma */ OMP MASTER
+		  { ompattribute = buildOmpAttribute(e_master, gNode, true);}
 		;
 
 critical_directive
 		: /* # pragma */ OMP CRITICAL
 		  {
-                  ompattribute = buildOmpAttribute(e_critical, gNode); 
+                  ompattribute = buildOmpAttribute(e_critical, gNode, true); 
                   }
-		  region_phraseopt new_line
+		  region_phraseopt
 		;
 
 region_phraseopt: /* empty */
@@ -396,22 +402,22 @@ region_phrase	: '(' ID_EXPRESSION ')'
 		;
 
 barrier_directive
-		: /* # pragma */ OMP BARRIER new_line
-		 { ompattribute = buildOmpAttribute(e_barrier,gNode); }
+		: /* # pragma */ OMP BARRIER
+		 { ompattribute = buildOmpAttribute(e_barrier,gNode, true); }
 		;
 
-taskwait_directive : /* #pragma */ OMP TASKWAIT new_line
-		  { ompattribute = buildOmpAttribute(e_taskwait, gNode); } 
+taskwait_directive : /* #pragma */ OMP TASKWAIT
+		  { ompattribute = buildOmpAttribute(e_taskwait, gNode, true); } 
 		;
 
-atomic_directive: /* # pragma */ OMP ATOMIC new_line
-		  { ompattribute = buildOmpAttribute(e_atomic,gNode); }
+atomic_directive: /* # pragma */ OMP ATOMIC
+		  { ompattribute = buildOmpAttribute(e_atomic,gNode, true); }
 		;
 
 flush_directive	: /* # pragma */ OMP FLUSH
-		 { ompattribute = buildOmpAttribute(e_flush,gNode);
+		 { ompattribute = buildOmpAttribute(e_flush,gNode, true);
 	           omptype = e_flush; }
-		flush_varsopt new_line
+		flush_varsopt
 		;
 
 flush_varsopt   : /* empty */
@@ -422,15 +428,15 @@ flush_vars	: '(' variable_list ')'
 		;
 
 ordered_directive
-		: /* # pragma */ OMP ORDERED new_line
-		  { ompattribute = buildOmpAttribute(e_ordered_directive,gNode); }
+		: /* # pragma */ OMP ORDERED
+		  { ompattribute = buildOmpAttribute(e_ordered_directive,gNode, true); }
 		;
 
 threadprivate_directive
 		: /* # pragma */ OMP THREADPRIVATE
-		  { ompattribute = buildOmpAttribute(e_threadprivate,gNode); 
+		  { ompattribute = buildOmpAttribute(e_threadprivate,gNode, true); 
                     omptype = e_threadprivate; }
-		 '(' variable_list ')' new_line
+		 '(' variable_list ')'
 		;
 
 data_default_clause
@@ -661,9 +667,6 @@ unary_expr
 /* in C++ (we use the C++ version) */ 
 variable_list	: ID_EXPRESSION   { if (!addVar((const char*)$1)) YYABORT; }
 		| variable_list ',' ID_EXPRESSION { if (!addVar((const char*)$3)) YYABORT; }
-		;
-
-new_line	: 
 		;
 
 %%

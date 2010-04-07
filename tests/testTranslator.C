@@ -1,34 +1,27 @@
-// Example ROSE Translator
-// used for testing ROSE infrastructure
-
+// Example ROSE Translator used for testing ROSE infrastructure
 #include "rose.h"
-
-// DQ (2/22/2009): This should be removed, if we want this sort of 
-// normalization then it should be put elsewhere in ROSE (astPostProcessing, for example).
-static void removeEmptyElses(SgNode* top) {
-  std::vector<SgNode*> ifs = NodeQuery::querySubTree(top, V_SgIfStmt);
-  for (size_t i = 0; i < ifs.size(); ++i) {
-    SgIfStmt* s = isSgIfStmt(ifs[i]);
-    if (isSgBasicBlock(s->get_false_body()) &&
-        isSgBasicBlock(s->get_false_body())->get_statements().empty()) {
-      s->set_false_body(NULL);
-    }
-  }
-}
 
 int main( int argc, char * argv[] )
    {
+  // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv);
+
+  // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
-// DQ (8/22/2009): I would like to have the test code used for ROSE be an example of simplicity.
-// if there is any specialized transformation required then it should be put into ROSE directly
-// not into the ROSE test code.
 #if 0
-     if (getenv("ROSE_TEST_ELSE_DISAMBIGUATION") != NULL) {
-       removeEmptyElses(project);
-     }
+  // Output an optional graph of the AST (just the tree, when active)
+     printf ("Generating a dot file... (turn off output of dot files before committing code) \n");
+     generateDOT ( *project );
 #endif
 
-     return backend(project); // only backend error code is reported
+#if 0
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+#endif
+
+  // regenerate the source code and call the vendor 
+  // compiler, only backend error code is reported.
+     return backend(project);
    }

@@ -3,6 +3,10 @@
 
 
 #include "unparser.h"
+class SgStatement;
+class SgBasicBlock;
+class SgClassDefinition;
+class SgNamespaceDefinitionStatement;
 #include "unparseLanguageIndependentConstructs.h"
 
 class Unparse_PHP : public UnparseLanguageIndependentConstructs

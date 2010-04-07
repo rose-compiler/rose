@@ -1,19 +1,22 @@
 
-Information on git-svn usage:
-   http://maymay.net/blog/2009/02/24/how-to-use-git-svn-as-the-only-subversion-client-youll-need/
+##################### How to use smgit2 #####################
 
-The Video:
-   http://www.youtube.com/watch?v=4XpnKHJAok8
+git pull not as well supported as git fetch and get merge used directly:
+   smgit2 fetch
+   smgit2 merge origin/master
 
+Alternative to smgit2 to checkin:
+   cd to EDG dir
+   git commit -a -m " "
+   git push origin/<YOUR BRANCH>
+   cd ..
+ # NOTE: do not use: "git add EDG/"
+   git add EDG
+   cd TOPDIR
+   git commit -a -m " "
+   git push origin/<YOUR BRANCH>
 
-Commands used one to setup and maintain GIT and not used by users afterward:
-   Command to use git-svn support (checkes out a git-based SVN repository):
-      git svn clone file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
-
-   To update git repository from SVN use (from in the git repository):
-      git svn fetch
-
-
+#################### Sources of information on git ####################
 
 We will try to give you a fast introduction to git, but you should also consider looking up these documents
   http://*www.*kernel.org/pub/software/scm/git/docs/gittutorial.html
@@ -24,10 +27,10 @@ We will try to give you a fast introduction to git, but you should also consider
 
 The first step of using a ROSE git repository is to create a local copy 
     
-     git clone /usr/casc/overture/ROSE/git/ROSE.git
+     git clone /usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
 
 on laptop use:
-     git clone ssh://dquinlan@tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-rose-dan
+     git clone ssh://dquinlan@tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
 
 
 
@@ -55,8 +58,19 @@ which in the case of the cmake branch would be
 
 ########## Building a Branch for a development team member ################
 
-     git branch matt master
-     git push origin matt
+X     git branch matt master
+X     git push origin matt
+
+  New instructions:
+      git checkout master
+      git pull
+
+    < must edit /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive 
+      file (bottom) to uncomment access control. >
+
+      git push origin master:refs/heads/dj-main-test
+
+    < change back the file: /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive >
 
 
 ############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
@@ -160,7 +174,8 @@ Check that I am on the correct branch
    git branch -a
 
 Now merge the changes from "master" into my branch
-   git merge master
+#  git merge master # Wrong
+   git merge origin/master
 
 Note that this will most likely go smoothly if all changes
 are tken only from "master".  so it might be helpful (to
@@ -249,4 +264,124 @@ gitk master HEAD andreas cmake dan jeff liao matt peter robb svn thomas windows 
 
 To see what branches are tracked and the semantics of "git pull" use:
    $ git remote show origin
+
+
+################### Updating to use the new GIT repository ####################
+
+Directions for how to update to the new repository.
+   We now have a new repository that splits off the EDG work into a 
+"git" submodule.  As a result new local repositories must be built.
+The new git repository has the same name and location as the old one
+and the old one has been saved (and should be accessible for a short while).
+
+   0) Rename your old local repository (for example, "mv git-rose-dan OLD_git-rose-dan")
+      so that you can build a new one (that will use the submodule mechanism).
+
+   1) Build a new local repository:
+      a. build the local repository:
+           "git clone /usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc"
+      b. build a local branch to match a branch in the remote repository:
+           "git branch git-dq-main-rc --track origin/git-dq-main-rc"
+      c. checkout that local branch (switch to it):
+           "git checkout dq-main-rc"
+
+   2) One-time update the local branch to use git's submodule mechanism.
+      a. merge your existing branch with master:
+           "git merge origin/master"
+         Note that I had to resolve a conflict in "configure.in" after this step.
+      b. initialize the submodule mechanism:
+           "git submodule init"
+      c. update the git submodule:
+           "git submodule update"
+
+   3) Forever after, or until better support is available, use:
+      a. To switch branches use BOTH:
+           "git checkout <branch-name>"
+           "git submodule update"
+      b. To push:
+           NOT CLEAR WHAT the SUBMODULE COMMAND IS.
+
+################## Build a new GIT repository ####################
+
+   Building a shared repository that would then be used to clone
+from to generate local repositories:
+   "git init --bare --shared=true"
+However this must be done in an empty repository, I think.
+
+
+initialize a repos: enter your working copy, e.g: scripts
+
+ git init
+ git add .
+ git commit
+
+# cd to parent directory
+ cd ..
+
+Cone a bare repository:
+ git clone --bare scripts scripts.git
+
+Remove the original
+  rm -rf scripts
+
+Now scripts.git is read to be used as remote origin repository.
+
+*************************************************************
+
+An example to build a git repository "Y" from a directory "X".
+This example also builds a local git repository "localY".
+
+   mkdir X
+   cd X
+   touch a.c
+   git init
+   git add .
+   git commit -a
+   cd ..
+   git clone --bare --shared X Y
+   git clone Y localY
+   cd localY/
+   #git branch dq-main-rc master
+   #git push origin dq-main-rc
+   #git checkout master
+   #git branch -d dq-main-rc
+   git branch dq-main-rc --track origin/dq-main-rc
+   git branch -a
+   git checkout dq-main-rc
+
+Bash script:
+#!/bin/sh -ex
+
+# This is the script to build a git repository "Y" from a directory "X"
+# and then build a local clone of the git repository "Y" and then build 
+# the required branch (a local branch that tracks a non-local branch).
+
+mkdir X
+cd X
+touch a.c
+git init
+git add .
+git commit -a -m "Added a.c as a test."
+cd ..
+git clone --bare --shared X Y
+git clone Y localY
+cd localY/
+
+# This will build a local branch 
+# git branch dq-main-rc master
+# This will build in in origin
+# git push origin dq-main-rc
+# This will delete the local branch so that we can call "git branch dq-main-rc --track origin/dq-main-rc"
+# git branch -d dq-main-rc
+
+# If we want to avoid building a local branch and then deleting it later then use:
+git push origin origin:refs/heads/dq-main-rc
+
+git branch dq-main-rc --track origin/dq-main-rc
+
+git push origin dq-main-rc
+
+git branch -a
+git checkout dq-main-rc
+ 
 

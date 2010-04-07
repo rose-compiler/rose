@@ -33,13 +33,44 @@ main ( int argc, char * argv[] )
 #endif
 
 #if 1
+  // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
+     if (SgProject::get_verbose() > 0)
+        {
+          AST_FILE_IO::printListOfPoolSizes() ;
+
+          int memoryUsageSize = memoryUsage();
+          printf ("Alternative output from memoryUsage() = %d \n",memoryUsageSize);
+
+          printf ("Calling AstNodeStatistics::traversalStatistics(project_test) \n");
+          std::cout << AstNodeStatistics::traversalStatistics(project_test);
+
+          printf ("Calling AstNodeStatistics::IRnodeUsageStatistics \n");
+          std::cout << AstNodeStatistics::IRnodeUsageStatistics();
+        }
+#endif
+
+#if 1
      std :: cout  << std::endl<< "Here we call the AST_FILE_IO :: start_up ..." << std::endl;
      AST_FILE_IO :: startUp( project_test ) ;
      std :: cout  << std::endl<< "AST_FILE_IO :: start_up done ... " << std::endl;
 #endif
 
 #if 1
-     AST_FILE_IO::printListOfPoolSizes() ;
+  // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
+     if (SgProject::get_verbose() > 0)
+        {
+          AST_FILE_IO::printListOfPoolSizes() ;
+#if 0
+          int memoryUsageSize = memoryUsage();
+          printf ("Alternative output from memoryUsage() = %d \n",memoryUsageSize);
+
+          printf ("Calling AstNodeStatistics::traversalStatistics(project_test) \n");
+          std::cout << AstNodeStatistics::traversalStatistics(project_test);
+
+          printf ("Calling AstNodeStatistics::IRnodeUsageStatistics \n");
+          std::cout << AstNodeStatistics::IRnodeUsageStatistics();
+#endif
+        }
 #endif
 
 

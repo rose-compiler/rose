@@ -2,11 +2,15 @@
 // support the most condensed usage of memory within the construction of
 // and AST. Large blocks of contiguous storage for each RI node is allocated
 // by a new operator written for each class.
+#include <semaphore.h>
 
 // Static variables supporting memory pools
 int  $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
 $CLASSNAME* $CLASSNAME_Current_Link        = NULL;
+// mutex does not work on Windows
+#ifndef _MSC_VER
 mutex $CLASSNAME_allocation_mutex;
+#endif
 
 #if 0
 // DQ (12/15/2005): Removed in favor of Jochen's implementation using STL.
@@ -38,8 +42,10 @@ std::vector<unsigned char*> $CLASSNAME_Memory_Block_List;
 */
 void *$CLASSNAME::operator new ( size_t Size )
    {
+// mutex does not work on Windows
+#ifndef _MSC_VER  
   $CLASSNAME_allocation_mutex.lock();
-
+#endif
   // printf ("Call $CLASSNAME::operator new! Memory_Block_Index = %zu \n", Memory_Block_List.size());
   // ROSE_ASSERT(false);
 
@@ -93,7 +99,10 @@ void *$CLASSNAME::operator new ( size_t Size )
           printf ("Inside of $CLASSNAME::operator new: sizeof(SgAsmGenericFormat::fileDetails)(%zu) \n",sizeof(SgAsmGenericFormat::fileDetails));
 #endif
 
+// mutex does not work on Windows
+#ifndef _MSC_VER
           $CLASSNAME_allocation_mutex.unlock();
+#endif
           return ROSE_MALLOC(Size);
         }
        else
@@ -209,9 +218,10 @@ void *$CLASSNAME::operator new ( size_t Size )
      if (ROSE_DEBUG > 0)
           printf ("Returning from $CLASSNAME::operator new! (with address of %p) \n",Forward_Link);
 #endif
-
+// mutex does not work on Windows
+#ifndef _MSC_VER
      $CLASSNAME_allocation_mutex.unlock();
-
+#endif
      return Forward_Link;
 
   // case of USE_CPP_NEW_DELETE_OPERATORS
@@ -235,8 +245,10 @@ void *$CLASSNAME::operator new ( size_t Size )
 */
 void $CLASSNAME::operator delete ( void *Pointer, size_t sizeOfObject )
    {
+// mutex does not work on Windows
+#ifndef _MSC_VER   
      $CLASSNAME_allocation_mutex.lock();
-
+#endif
 #if COMPILE_DEBUG_STATEMENTS
      if (ROSE_DEBUG > 1)
         {
@@ -310,7 +322,10 @@ void $CLASSNAME::operator delete ( void *Pointer, size_t sizeOfObject )
 
   // case of USE_CPP_NEW_DELETE_OPERATORS FALSE
 #endif
+// mutex does not work on Windows
+#ifndef _MSC_VER
      $CLASSNAME_allocation_mutex.unlock();
+#endif
    }
 
 // DQ (11/27/2009): I have moved this member function definition to outside of the

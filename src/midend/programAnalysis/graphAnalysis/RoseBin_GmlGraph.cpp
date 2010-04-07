@@ -4,9 +4,10 @@
  * Date : 01 Oct07
  * Decription : GMLGraph Visualization
  ****************************************************/
-
-#include "rose.h"
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 17,9 MB to 8,4MB
+#include "sage3basic.h"
 #include "RoseBin_GmlGraph.h"
+#include "RoseBin_CallGraphAnalysis.h"
 
 using namespace std;
 using namespace VirtualBinCFG;

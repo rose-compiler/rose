@@ -3,6 +3,9 @@
 #ifndef UTILITY_FUNCTIONS_H
 #define UTILITY_FUNCTIONS_H
 
+#include "Cxx_Grammar.h"
+class UnparseDelegate;
+
 #define BACKEND_VERBOSE_LEVEL 2
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
@@ -14,8 +17,9 @@ std::string version_message();
 std::string version_number();
 
 // Simple interface for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
-SgProject* frontend ( int argc, char** argv);
-SgProject* frontend ( const std::vector<std::string>& argv);
+// tps : Need to make this function (DLL) public 
+ROSE_DLL_API SgProject* frontend ( int argc, char** argv);
+ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv);
 
 // This builds a shell of a frontend SgProject with associated SgFile objects (but with empty 
 // SgGlobal objects) supporting only commandline processing and requiring the frontend to be 
@@ -27,12 +31,20 @@ SgProject* frontendShell ( const std::vector<std::string>& argv);
 // objects to control the formatting of code generation and the use of alternative code generation
 // techniques (e.g. copy-based code generation).
 // int backend ( SgProject* project );
-int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
+ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
 
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any
 // other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
-int backendUsingOriginalInputFile ( SgProject* project );
+int backendCompilesUsingOriginalInputFile ( SgProject* project );
+
+// DQ (2/6/2010): This backend forces all code to be generated but still uses the beakend vendor 
+// compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),
+// which does not generate code; and backend() which generated code and compiles it.  The use of
+// this backend permits an intermediate test of robustness where the code that we generate might
+// be generated incorrectly (usually with missing name qualification as required for a specific 
+// backend (vendor) compiler).
+int backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project );
 
 //QY: new back end that performs only source-to-source translations 
 // of the original file. Furthermore, statements are copied from 

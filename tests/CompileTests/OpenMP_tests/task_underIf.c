@@ -6,26 +6,28 @@
 extern void process(int);
 extern void process2(int);
 int item[100];
+int cutoff = 100;
 void foo(int i)
 {
+/*pragma needs scope fixes */
   if (i%2==0)
-    #pragma omp task
+#pragma omp task if (i < cutoff)
     process (item[i]);
   else
-   #pragma omp task
+#pragma omp task
     process2(item[i]);
 
-   if (i%2==0)
-   {
-    #pragma omp task
+/*pragma within explicit scopes */
+  if (i%2==0)
+  {
+#pragma omp task
     process (item[i]);
-   }
+  }
   else
   {
-    #pragma omp task
+#pragma omp task
     process2(item[i]);
   }
-   
 }
 
 

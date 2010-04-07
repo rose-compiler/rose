@@ -431,8 +431,9 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/frontend.docs \
                          @top_srcdir@/docs/testDoxygen \
 			 @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
-                         @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
+                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_3.3/documentation.docs \
 			 @top_srcdir@/src/frontend/Disassemblers \
+			 @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \
@@ -480,12 +481,12 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
 			 @top_srcdir@/src/frontend/BinaryFormats \
-                         @top_srcdir@/src/midend/ompLowering \
+                         @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
-                         @top_srcdir@/src/midend/astInlining/documentation.docs \
-                         @top_srcdir@/src/midend/astOutlining/documentation.docs \
-                         @top_srcdir@/src/midend/loopProcessing/documentation.docs \
+                         @top_srcdir@/src/midend/programTransformation/astInlining/documentation.docs \
+                         @top_srcdir@/src/midend/programTransformation/astOutlining/documentation.docs \
+                         @top_srcdir@/src/midend/programTransformation/loopProcessing/documentation.docs \
                          @top_srcdir@/src/midend/programAnalysis/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
                          @top_srcdir@/src/midend/astRewriteMechanism/ASTRewrite.docs \

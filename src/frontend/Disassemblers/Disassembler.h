@@ -101,6 +101,10 @@
  *  @code
  *  Disassembler::register_subclass(new MyDisassembler);
  *  @endcode
+ *
+ *  Another example is shown in the tests/roseTests/binaryTests/disassembleBuffer.C source code. It is an example of how a
+ *  Disassembler object can be used to disassemble a buffer containing bare machine code when one doesn't have an associated
+ *  executable file.
  */
 class Disassembler {
 public:
@@ -183,6 +187,16 @@ public:
         SEARCH_DEFAULT   = 0x0101       /**< Default set of heuristics to use. The default is to be moderately timid. */
     };
 
+    /** Given a string (presumably from the ROSE command-line), parse it and return the bit vector describing which search
+     *  heuristics should be employed by the disassembler.  The input string should be a comma-separated list (without white
+     *  space) of search specifications. Each specification should be an optional qualifier character followed by either an
+     *  integer or a word. The accepted words are the lower-case versions of the constants enumerated by SearchHeuristic, but
+     *  without the leading "SEARCH_".  The qualifier determines whether the bits specified by the integer or word are added
+     *  to the return value ("+") or removed from the return value ("-").  The "=" qualifier acts like "+" but first zeros the
+     *  return value. The default qualifier is "+" except when the word is "default", in which case the specifier is "=". An
+     *  optional initial bit mask can be specified (defaults to SEARCH_DEFAULT). */
+    static unsigned parse_switches(const std::string &s, unsigned initial=SEARCH_DEFAULT);
+
     /** An AddressSet contains virtual addresses (alternatively, relative virtual addresses) for such things as specifying
      *  which virtual addresses should be disassembled. */
     typedef std::set<rose_addr_t> AddressSet;
@@ -251,7 +265,9 @@ public:
     void disassemble(SgAsmInterpretation*, AddressSet *successors=NULL, BadMap *bad=NULL);
 
     /** This class method is for backward compatibility with the disassembleInterpretation() function in the old Disassembler
-     *  namespace. It just creates a default Disassembler object and invokes its disassemble method. */
+     *  namespace. It just creates a default Disassembler object, sets its search heuristics to the value specified in the
+     *  SgFile node above the interpretataion (presumably the value set with ROSE's "-rose:disassembler_search" switch),
+     *  and invokes the disassemble() method. */
     static void disassembleInterpretation(SgAsmInterpretation*);
 
 
@@ -378,7 +394,7 @@ public:
 
 
 
-    /** Disassembles instructions from the content buffer beginning with at the specified virtual address and including all
+    /** Disassembles instructions from the content buffer beginning at the specified virtual address and including all
      *  instructions that are direct or indirect successors of the first instruction.  The @p map is a mapping from virtual
      *  addresses to offsets in the content buffer.  Any successors of individual instructions that fall outside the buffer
      *  being disassembled will be added to the optional successors set.  If an address cannot be disassembled then the
@@ -457,6 +473,11 @@ public:
 
     /** Marks parts of the file that correspond to instructions as having been referenced. */
     void mark_referenced_instructions(SgAsmInterpretation*, const MemoryMap*, const InstructionMap&);
+
+    /** Calculates the successor addresses of a basic block and adds them to a successors set. The successors is always
+     *  non-null when called. If the function is able to determine the complete set of successors then it should set @p
+     *  complete to true before returning. */
+    AddressSet get_block_successors(const InstructionMap&, bool *complete);
 
 private:
     /** Initialize class (e.g., register built-in disassemblers). */

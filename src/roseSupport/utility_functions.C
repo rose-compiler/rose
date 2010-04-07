@@ -1,5 +1,11 @@
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "checkIsModifiedFlag.h"
+#include "AstPDFGeneration.h"
+//#include "DotGeneration.h"
+#include "AstDOTGeneration.h"
+#include "wholeAST_API.h"
 
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
@@ -36,12 +42,28 @@ const int roseTargetCacheLineSize = 32;
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
+// DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
+std::string ofpVersionString()
+   {
+  // Need to make sure that ROSE can get a version number independent of Fortran support 
+  // being installed or include information in the return string when OFP is not installed.
+     return "unknown";
+   }
+
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_message()
    {
   // returns a string with the version message for ROSE.
   // return "\nROSE (pre-release alpha version: " + version_number() + ") \n";
-     return "ROSE (pre-release beta version: " + version_number() + ")";
+
+  // DQ (2/12/2010): Added EDG version number to make our versioning more clear.
+  // return "ROSE (pre-release beta version: " + version_number() + ")";
+     extern string edgVersionString();
+     extern string ofpVersionString();
+  // return "ROSE (pre-release beta version: " + version_number() + " using EDG C/C++ front-end version " + edgVersionString() + ")";
+     return "ROSE (pre-release beta version: " + version_number() + ")"
+          "\n   --- using EDG C/C++ front-end version: " + edgVersionString() +
+          "\n   --- using OFP Fortran parser version: " + ofpVersionString();
    }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
@@ -255,13 +277,18 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
   // printf ("Inside of backend(SgProject*): SgProject::get_verbose() = %d \n",SgProject::get_verbose());
   // printf ("Inside of backend(SgProject*): project->numberOfFiles() = %d \n",project->numberOfFiles());
-     if (project->numberOfFiles() > 0)
+
+  // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
+  // or perhaps define a more simple function to use more directly.
+  // if (project->numberOfFiles() > 0)
+     if (project->numberOfFiles() > 0 || project->numberOfDirectories() > 0)
         {
        // Compile generated C++ source code with vendor compiler.
        // Generate object file (required for further template processing 
        // if templates exist).
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling project->compileOutput() \n");
+
           finalCombinedExitStatus = project->compileOutput();
         }
        else
@@ -269,7 +296,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
         {
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("   project->get_compileOnly() = %s \n",project->get_compileOnly() ? "true" : "false");
-#if 1
+
        // DQ (5/20/2005): If we have not permitted templates to be instantiated during initial 
        // compilation then we have to do the prelink step (this is however still new and somewhat 
        // problematic (buggy?)).  It relies upon the EDG mechansisms which are not well understood.
@@ -290,9 +317,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
                printf ("Skipping template support in backend(SgProject*) \n");
             // instantiateTemplates (project);
-#else
-               printf ("Skipping template support in backend(SgProject*) \n");
-#endif
              }
 
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
@@ -329,7 +353,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
 
 int
-backendUsingOriginalInputFile ( SgProject* project )
+backendCompilesUsingOriginalInputFile ( SgProject* project )
    {
   // DQ (8/24/2009):
   // To work with existing makefile systems, we want to force an object file to be generated.
@@ -348,57 +372,6 @@ backendUsingOriginalInputFile ( SgProject* project )
      string commandLineToGenerateObjectFile;
 
 
-#if 0
-     commandLineToGenerateObjectFile = "g++";
-
-     SgStringList includeList = project->get_includeDirectorySpecifierList();
-     for (SgStringList::iterator i = includeList.begin(); i != includeList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList libraryDirectoryList = project->get_libraryDirectorySpecifierList();
-     for (SgStringList::iterator i = libraryDirectoryList.begin(); i != libraryDirectoryList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " -L" + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList libraryList = project->get_librarySpecifierList();
-     for (SgStringList::iterator i = libraryList.begin(); i != libraryList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-  // I think this is the *.a 
-     SgStringList libraryList = project->get_libraryFileList();
-     for (SgStringList::iterator i = libraryFileList.begin(); i != libraryFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList objectFileList = project->get_objectFileNameList();
-     string linkOnly = (project->numberOfFiles() > 0) ? "-o " : "";
-     for (SgStringList::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + linkOnly + *i + " ";
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-  // DQ (8/24/2009): Need to be able to generate an executable file if the commandline specified it so
-  // that be used in Autoconf tests by the configure script when specified as the CXX compiler.
-  // This allows CXX=<any ROSE tool> to work with Autoconf tests.
-     SgStringList sourceFileList = project->get_sourceFileNameList();
-     string compileOnly = (project->get_compileOnly() == true) ? "-c " : "";
-     for (SgStringList::iterator i = sourceFileList.begin(); i != sourceFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + compileOnly + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-#else
   // Specify either CC or CXX and then use the rest of the commandline...
   // Any ROSE specific options (e.g. "-rose:xxx") should be ignored by the backend compiler.
      if (project->get_C_only() == true)
@@ -408,11 +381,32 @@ backendUsingOriginalInputFile ( SgProject* project )
         }
        else
         {
-       // Typically "g++"
-          commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+          if (project->get_Cxx_only() == true)
+             {
+            // Typically "g++"
+               commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+             }
+            else
+             {
+               if (project->get_Fortran_only() == true)
+                  {
+                 // Typically "gfortran"
+                    commandLineToGenerateObjectFile = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+                  }
+                 else
+                  {
+                    printf ("In backendCompilesUsingOriginalInputFile(): Unclear what language is being used in ROSE (likely a binary executable) \n");
+                 //  ROSE_ASSERT(false);
+                  }
+             }
         }
 
      SgStringList originalCommandLineArgumentList = project->get_originalCommandLineArgumentList();
+
+  // DQ (2/20/2010): Added filtering of options that should not be passed to the vendor compiler.
+     SgFile::stripRoseCommandLineOptions(originalCommandLineArgumentList);
+     SgFile::stripEdgCommandLineOptions(originalCommandLineArgumentList);
+
      SgStringList::iterator it = originalCommandLineArgumentList.begin();
 
   // Iterate past the name of the compiler being called (arg[0]).
@@ -425,11 +419,10 @@ backendUsingOriginalInputFile ( SgProject* project )
           commandLineToGenerateObjectFile += " " + *i;
         }
   // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-#endif
 
      if ( SgProject::get_verbose() >= 1 )
         {
-          printf ("/* numberOfFiles() = %d commandLineToGenerateObjectFile = \n%s\n*/\n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
+          printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
         }
 
      int finalCombinedExitStatus = 0;
@@ -452,6 +445,33 @@ backendUsingOriginalInputFile ( SgProject* project )
         }
 
      return finalCombinedExitStatus;
+   }
+
+
+
+int
+backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project )
+   {
+  // DQ (2/6/2010): This function is a step between calling the backend()
+  // and calling backendCompilesUsingOriginalInputFile().  It it used
+  // the test the generation of the source code, but not the compilation of
+  // it using the backend (vendor) compiler.  This is used to test ROSE.
+
+  // Users are likely to either want to use backend() to generate the source 
+  // code for there project and it compiled (e.g. for optimization) or call
+  // backendCompilesUsingOriginalInputFile() to process the input code and
+  // then generate object files or executables from the original code 
+  // (e.g for analysis).
+
+  // This instance of complexity is why this needs to be a separate backend function.
+  // Note that file->get_skip_unparse() will be false when the "-E" option, and
+  // the unparse() function will properly assert that it should be true.
+     if (project->get_skip_unparse() == false)
+        {
+          project->unparse();
+        }
+
+     return backendCompilesUsingOriginalInputFile(project);
    }
 
 

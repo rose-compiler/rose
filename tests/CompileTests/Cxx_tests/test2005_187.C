@@ -13,6 +13,11 @@ void foo()
                break;
 
           default:
+       // DQ (2/20/2010): g++ requires "{}" (at least for g++ 4.2).
+#if (__GNUC__ >= 3)
+             {}
+#endif
+
         }
    }
 

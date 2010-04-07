@@ -1,6 +1,7 @@
 /* ELF Relocations (SgAsmElfRelocSection and related classes) */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -22,7 +23,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelaEntry_disk *disk)
     p_r_addend    = disk_to_host(sex, disk->r_addend);
     uint64_t info = disk_to_host(sex, disk->r_info);
     p_sym = info >> 8;
-    p_type = info & 0xff;
+    p_type = (RelocType)(info & 0xff);
 }
 void
 SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelaEntry_disk *disk)
@@ -31,7 +32,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelaEntry_disk *disk)
     p_r_addend    = disk_to_host(sex, disk->r_addend);
     uint64_t info = disk_to_host(sex, disk->r_info);
     p_sym = info >> 32;
-    p_type = info & 0xffffffff;
+    p_type = (RelocType)(info & 0xffffffff);
 }
 void
 SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelEntry_disk *disk)
@@ -40,7 +41,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelEntry_disk *disk)
     p_r_addend    = 0;
     uint64_t info = disk_to_host(sex, disk->r_info);
     p_sym = info >> 8;
-    p_type = info & 0xff;
+    p_type = (RelocType)(info & 0xff);
 }
 void
 SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelEntry_disk *disk)
@@ -49,7 +50,7 @@ SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelEntry_disk *disk)
     p_r_addend    = 0;
     uint64_t info = disk_to_host(sex, disk->r_info);
     p_sym = info >> 32;
-    p_type = info & 0xffffffff;
+    p_type = (RelocType)(info & 0xffffffff);
 }
 
 /* Encode a native entry back into disk format */
@@ -90,6 +91,88 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelEntry_disk *disk) const
     return disk;
 }
 
+/* Change symbol to string */
+const char *
+SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs to handle multiple architectures
+{
+  /* This is incomplete, there are many other ISA's that ROSE doesn't currently support */
+  switch(isa &   ISA_FAMILY_MASK){
+    case ISA_IA32_Family:
+      switch (t) {
+	case R_386_NONE:         return "R_386_NONE";
+	case R_386_32:           return "R_386_32";
+	case R_386_PC32:         return "R_386_PC32";
+	case R_386_GOT32:        return "R_386_GOT32";
+	case R_386_PLT32:        return "R_386_PLT32";
+	case R_386_COPY:         return "R_386_COPY";
+	case R_386_GLOB_DAT:     return "R_386_GLOB_DAT";
+	case R_386_JMP_SLOT:     return "R_386_JMP_SLOT";
+	case R_386_RELATIVE:     return "R_386_RELATIVE";
+	case R_386_GOTOFF:       return "R_386_GOTOFF";
+	case R_386_GOTPC:        return "R_386_GOTPC";
+	case R_386_32PLT:        return "R_386_32PLT";
+	case R_386_TLS_TPOFF:    return "R_386_TLS_TPOFF";
+	case R_386_TLS_IE:       return "R_386_TLS_IE";
+	case R_386_TLS_GOTIE:    return "R_386_TLS_GOTIE";
+	case R_386_TLS_LE:       return "R_386_TLS_LE";
+	case R_386_TLS_GD:       return "R_386_TLS_GD";
+	case R_386_TLS_LDM:      return "R_386_TLS_LDM";
+	case R_386_16:           return "R_386_16";
+	case R_386_PC16:         return "R_386_PC16";
+	case R_386_8:            return "R_386_8";
+	case R_386_PC8:          return "R_386_PC8";
+	case R_386_TLS_GD_32:    return "R_386_TLS_GD_32";
+	case R_386_TLS_GD_PUSH:  return "R_386_TLS_GD_PUSH";
+	case R_386_TLS_GD_CALL:  return "R_386_TLS_GD_CALL";
+	case R_386_TLS_GD_POP:   return "R_386_TLS_GD_POP";
+	case R_386_TLS_LDM_32:   return "R_386_TLS_LDM_32";
+	case R_386_TLS_LDM_PUSH: return "R_386_TLS_LDM_PUSH";
+	case R_386_TLS_LDM_CALL: return "R_386_TLS_LDM_CALL";
+	case R_386_TLS_LDM_POP:  return "R_386_TLS_LDM_POP";
+	case R_386_TLS_LDO_32:   return "R_386_TLS_LDO_32";
+	case R_386_TLS_IE_32:    return "R_386_TLS_IE_32";
+	case R_386_TLS_LE_32:    return "R_386_TLS_LE_32";
+	case R_386_TLS_DTPMOD32: return "R_386_TLS_DTPMOD32";
+	case R_386_TLS_DTPOFF32: return "R_386_TLS_DTPOFF32";
+	case R_386_TLS_TPOFF32:  return "R_386_TLS_TPOFF32";
+	default: return "unknown (IA32)";
+      };
+    case ISA_X8664_Family:
+      switch(t){
+	/** First Entry for X86-64 */
+	case R_X86_64_NONE:	return "R_X86_64_NONE";
+	case R_X86_64_64:	return "R_X86_64_64";
+	case R_X86_64_PC32:	return "R_X86_64_PC32";
+	case R_X86_64_GOT32:	return "R_X86_64_GOT32";
+	case R_X86_64_PLT32:	return "R_X86_64_PLT32";
+	case R_X86_64_COPY:	return "R_X86_64_COPY";
+	case R_X86_64_GLOB_DAT:	return "R_X86_64_GLOB_DAT";
+	case R_X86_64_JUMP_SLOT:	return "R_X86_64_JUMP_SLOT";
+	case R_X86_64_RELATIVE:	return "R_X86_64_RELATIVE";
+	case R_X86_64_GOTPCREL:	return "R_X86_64_GOTPCREL";
+	case R_X86_64_32:	return "R_X86_64_32";
+	case R_X86_64_32S:	return "R_X86_64_32S";
+	case R_X86_64_16:	return "R_X86_64_16";
+	case R_X86_64_PC16:	return "R_X86_64_PC16";
+	case R_X86_64_8:	return "R_X86_64_8";
+	case R_X86_64_PC8:	return "R_X86_64_PC8";
+	case R_X86_64_DTPMOD64:	return "R_X86_64_DTPMOD64";
+	case R_X86_64_DTPOFF64:	return "R_X86_64_DTPOFF64";
+	case R_X86_64_TPOFF64:	return "R_X86_64_TPOFF64";
+	case R_X86_64_TLSGD:	return "R_X86_64_TLSGD";
+	case R_X86_64_TLSLD:	return "R_X86_64_TLSLD";
+	case R_X86_64_DTPOFF32:	return "R_X86_64_DTPOFF32";
+	case R_X86_64_GOTTPOFF:	return "R_X86_64_GOTTPOFF";
+	case R_X86_64_TPOFF32:	return "R_X86_64_TPOFF32";
+	default:
+	  return "unknown (X86-64)";
+      };
+    default:
+      return "unsupported isa";
+  }
+  
+}
+
 /** Print some debugging info */
 void
 SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const
@@ -104,8 +187,18 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 
     /* compact one-line-per-reloc format */
     if (0==idx)
-        fprintf(f, "%s%-*s   %-10s %-4s %-10s %4s %-10s Name + Addend\n", p, w, "", "Offset", "Type", "Addend", "Sym", "Value");
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" 0x%02lx 0x%08"PRIx64" %4lu", p, w, "", p_r_offset, p_type, p_r_addend, p_sym);
+        fprintf(f, "%s%-*s   %-10s %-4s %-10s %-10s %-10s Name + Addend\n", p, w, "", "Offset", "Type", "Addend", "Sym", "Value");
+
+    //static const char* 
+    //if(header)const char* typeStr = to_string(p_type,
+    fprintf(f, "%s%-*s = 0x%08"PRIx64,p, w, "", p_r_offset);
+    SgAsmGenericHeader* header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(this);
+    if(header)
+      fprintf(f, " %10s", to_string(p_type,header->get_isa()));
+    else
+      fprintf(f, "       0x%02zx", (size_t)p_type);
+
+    fprintf(f, " 0x%08"PRIx64" %4lu", p_r_addend, p_sym);
     if (!symtab) {
         fprintf(f, " 0x%08x <no-symtab>", 0);
     } else if (p_sym>=symtab->get_symbols()->get_symbols().size()) {
@@ -123,12 +216,13 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 
 /** Non-parsing constructor */
 void
-SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols)
+SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols,SgAsmElfSection *targetsec)
 {
     p_entries = new SgAsmElfRelocEntryList;
     p_entries->set_parent(this);
     ROSE_ASSERT(symbols!=NULL);
     p_linked_section = symbols;
+    p_target_section = targetsec;// this may be NULL
 }
 
 /** Parse an existing ELF Rela Section */

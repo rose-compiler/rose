@@ -1,9 +1,12 @@
+
+
 // Author: Markus Schordan
 // $Id: AstTraversal.C,v 1.3 2006/04/24 00:21:32 dquinlan Exp $
 
 #ifndef ASTRESTRUCTURE_C
 #define ASTRESTRUCTURE_C
 
+#include "sage3basic.h"
 #include "AstTraversal.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file

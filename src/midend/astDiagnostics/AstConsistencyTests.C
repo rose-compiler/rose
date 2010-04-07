@@ -1,8 +1,11 @@
 // Author: Markus Schordan
 // $Id: AstConsistencyTests.C,v 1.8 2008/01/25 02:25:46 dquinlan Exp $
 
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+// tps : needed to define this here as it is defined in rose.h
+#include "markCompilerGenerated.h"
+#include "AstDiagnostics.h"
 #ifndef ASTTESTS_C
 #define ASTTESTS_C
 // DQ (8/9/2004): Modified to put code below outside of ASTTESTS_C if ... endif
@@ -10,7 +13,7 @@
 
 // DQ (3/6/2003): added from AstProcessing.h to avoid referencing
 // the traversal classes in AstFixes.h before they are defined.
-#include "sage3.h"
+//#include "sage3.h"
 #include "roseInternal.h"
 
 #include "AstConsistencyTests.h"
@@ -169,6 +172,8 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
   // ROSE_Performance::TimingPerformance("AST Consistency Tests");
      TimingPerformance timer ("AST Consistency Tests:");
+
+  // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
 
   // printf ("Exiting at top of AstTests::runAllTests() \n");
   // ROSE_ASSERT(false);
@@ -423,14 +428,14 @@ AstTests::runAllTests(SgProject* sageProject)
 
   // DQ (6/26/2006): Test the parent pointers of IR nodes in memory pool.
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-          cout << "Test parent's child pointers of IR nodes in memory pool started." << endl;
+          cout << "Test parents child pointers of IR nodes in memory pool started." << endl;
         {
           TimingPerformance timer ("AST IR node child pointers test:");
 
           TestChildPointersInMemoryPool::test();
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-          cout << "Test parent's child pointers of IR nodes in memory pool finished." << endl;
+          cout << "Test parents child pointers of IR nodes in memory pool finished." << endl;
 
 #if 0
   // DQ (3/7/2007): At some point I think I decided that this was not a valid test!
@@ -632,6 +637,10 @@ AstTests::runAllTests(SgProject* sageProject)
           i++;
         }
 
+
+       // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
+       // TestForDisconnectedAST::test(sageProject);
+
        // DQ (3/7/2007): This is the end of the timer scope
         }
 
@@ -747,7 +756,8 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
   // Test all traversed nodes to make sure that they have a valid file info object
   // Note that SgFile and SgProject nodes don't have file info objects (so skip them)
   // if ( !isSgFile(node) && !isSgProject(node) )
-     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
+  // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
+     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )
@@ -1565,7 +1575,15 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find('`') == string::npos);
      ROSE_ASSERT(mangledName.find('~') == string::npos);
      ROSE_ASSERT(mangledName.find('!') == string::npos);
+
+  // ROSE_ASSERT(mangledName.find('@') == string::npos);
+     if (mangledName.find('@') != string::npos)
+        {
+          printf ("Error: failed isValidMangledName() test node = %p = %s --- mangledName = %s \n",
+                  node,node->class_name().c_str(),mangledName.c_str());
+        }
      ROSE_ASSERT(mangledName.find('@') == string::npos);
+
      ROSE_ASSERT(mangledName.find('#') == string::npos);
      ROSE_ASSERT(mangledName.find('$') == string::npos);
      ROSE_ASSERT(mangledName.find('%') == string::npos);
@@ -2256,11 +2274,19 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
                if (firstNondefiningDeclaration == definingDeclaration)
                   {
-                    printf ("Warning AST Consistancy Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
-                         declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),firstNondefiningDeclaration);
-                    printf ("declaration->get_definingDeclaration() = %p declaration->get_firstNondefiningDeclaration() = %p \n",
-                         declaration->get_definingDeclaration(),declaration->get_firstNondefiningDeclaration());
-                    declaration->get_file_info()->display("firstNondefiningDeclaration == definingDeclaration: debug");
+                 // DQ (12/12/2009): Suppress the warning about this for the case of a
+                 // SgTypedefDeclaration if not set to verbose mode. This is important to
+                 // reducing the output from the tests of AST merge in the mergeAST_tests
+                 // directory.
+                    SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
+                    if (typedefDeclaration == NULL || (SgProject::get_verbose() > 0) )
+                       {
+                         printf ("Warning AST Consistancy Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
+                              declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),firstNondefiningDeclaration);
+                         printf ("declaration->get_definingDeclaration() = %p declaration->get_firstNondefiningDeclaration() = %p \n",
+                              declaration->get_definingDeclaration(),declaration->get_firstNondefiningDeclaration());
+                         declaration->get_file_info()->display("firstNondefiningDeclaration == definingDeclaration: debug");
+                       }
                   }
 
             // DQ (8/6/2007): Comment this out, at least for SgTypedefDeclaration it should be OK, MAYBE.
@@ -3483,6 +3509,10 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+            // DQ (1/23/2010): Added this case
+               case V_SgFileList:
+               case V_SgDirectoryList:
+
             // DQ (10/4/2008): Added this case
                case V_SgRenamePair:
 
@@ -4377,7 +4407,7 @@ TestMultiFileConsistancy::visit( SgNode* node)
    {
   // DQ (2/23/2009): added testing to support outlining to a separate file.
   // This test is helpful for the outlining to a separate file, where we want to make sure 
-  // that the transformations required do not build a locall inconsistant AST for each file.
+  // that the transformations required do not build a locally inconsistant AST for each file.
      SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
 
      if (declaration != NULL)
@@ -4449,7 +4479,159 @@ TestMultiFileConsistancy::visit( SgNode* node)
 
 
 
+BuildListOfConnectedNodesInAST::BuildListOfConnectedNodesInAST(set<SgNode*> & s)
+   : nodeSet(s)
+   {
+   }
+
+void
+BuildListOfConnectedNodesInAST::visit(SgNode * node)
+   {
+  // printf ("Node = %p = %s \n",node,node->class_name().c_str());
+
+     if (nodeSet.find(node) == nodeSet.end())
+        {
+       // Not found in the set, add to the set and call visit function on all children.
+#if 0
+          printf ("Adding to nodeSet = %p = %s \n",node,node->class_name().c_str());
+#endif
+          nodeSet.insert(node);
+
+          typedef vector<pair<SgNode*,string> > DataMemberMapType;
+          DataMemberMapType dataMemberMap = node->returnDataMemberPointers();
+
+          DataMemberMapType::iterator i = dataMemberMap.begin();
+          while (i != dataMemberMap.end())
+             {
+            // Ignore the parent pointer since it will be reset differently if required
+               SgNode* childPointer = i->first;
+               string  debugString  = i->second;
+
+               if (childPointer != NULL)
+                  {
+                 // printf ("visit node = %p = %s on edge %s found child %p = %s \n",node,node->class_name().c_str(),debugString.c_str(),childPointer,childPointer->class_name().c_str());
+
+                 // Make the recursive call
+                    visit(childPointer);
+
+                    SgLocatedNode* locatedNode = isSgLocatedNode(childPointer);
+                    if (locatedNode != NULL)
+                       {
+                         AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+
+                         if (comments != NULL)
+                            {
+                           // printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+                              AttachedPreprocessingInfoType::iterator i;
+                              for (i = comments->begin(); i != comments->end(); i++)
+                                 {
+                                   ROSE_ASSERT ( (*i) != NULL );
+                                   visit((*i)->get_file_info());
+
+#if 0
+                                   printf ("          Attached Comment (relativePosition=%s): %s\n",
+                                        ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                                        (*i)->getString().c_str());
+                                   printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+                                        (*i)->get_file_info()->display("comment/directive location");
+#endif
+                                 }
+                            }
+                       }
+                  }
+               i++;
+             }
+        }
+       else
+        {
+       // Found in the set, nothing to do.
+        }
+   }
+
+BuildListOfNodesInAST::BuildListOfNodesInAST(const set<SgNode*> & s1, set<SgNode*> & s2)
+   : constNodeSet(s1), nodeSet(s2)
+   {
+   }
+
+void
+BuildListOfNodesInAST::visit(SgNode * node)
+   {
+     ROSE_ASSERT(node != NULL);
+     ROSE_ASSERT(nodeSet.find(node) == nodeSet.end());
+
+     if (constNodeSet.find(node) == constNodeSet.end())
+        {
+          SgNode* parent = node->get_parent();
+          string parentName = parent == NULL ? "null" : parent->class_name();
+
+          printf ("Node not found %p = %s (parent = %p = %s)\n",node,node->class_name().c_str(),parent,parentName.c_str());
+
+#if 1
+          Sg_File_Info* fileInfo = isSg_File_Info(node);
+          if (fileInfo != NULL)
+             {
+            // This will help us know where this came from.
+               fileInfo->display("Node disconected from AST");
+             }
+#endif
+          printf ("Deleting %p = %s (parent = %p = %s)\n",node,node->class_name().c_str(),parent,parentName.c_str());
+          delete node;
+        }
+
+     nodeSet.insert(node);
+   }
+
+void
+TestForDisconnectedAST::test(SgNode * node)
+   {
+  // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
+
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Test declarations for disconnected parts of the AST started." << endl;
+
+     set<SgNode*> AST_set;
+     set<SgNode*> All_IR_Nodes_set;
+
+        {
+          TimingPerformance timer ("Test for disconnected parts of the AST:");
+
+             {
+               TimingPerformance timer ("Test for disconnected parts of the AST:");
+
+               BuildListOfConnectedNodesInAST t1 (AST_set);
+
+            // Traverse the global function type table to preload the AST_set
+               t1.visit(SgNode::get_globalFunctionTypeTable()); // SgFunctionTypeTable
+
+               t1.traverse(node,preorder);
+             }
+
+             {
+               TimingPerformance timer ("Test for disconnected parts of the AST:");
+
+               BuildListOfNodesInAST t1(AST_set,All_IR_Nodes_set);
+               t1.traverseMemoryPool();
+             }
+
+          if (AST_set.size() != All_IR_Nodes_set.size())
+             {
+               printf ("AST_set          = %zu \n",AST_set.size());
+               printf ("All_IR_Nodes_set = %zu \n",All_IR_Nodes_set.size());
+             }
+        }
+
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Test declarations for disconnected parts of the AST finished." << endl;
+   }
 
 
+void
+MemoryCheckingTraversalForAstFileIO::visit ( SgNode* node )
+   {
+     ROSE_ASSERT(node != NULL);
+  // printf ("MemoryCheckingTraversalForAstFileIO::visit: node = %s \n",node->class_name().c_str());
+     ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+     node->checkDataMemberPointersIfInMemoryPool();
+   }
 
 

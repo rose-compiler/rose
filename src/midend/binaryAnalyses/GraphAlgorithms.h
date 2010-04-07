@@ -3,6 +3,8 @@
 #ifndef __RoseBin_GraphAlgorithms__
 #define __RoseBin_GraphAlgorithms__
 
+#include "RoseBin_Graph.h"
+
 class GraphAlgorithms {
 private:
 
@@ -18,6 +20,9 @@ public:
   //void set_bininfo(VirtualBinCFG::AuxiliaryInformation* in) { info=in;}
 
  GraphAlgorithms(VirtualBinCFG::AuxiliaryInformation* info):
+#ifdef _MSC_VER
+//#define __builtin_constant_p(exp) (0)
+#endif
   info(info) {ROSE_ASSERT(info);}
   virtual ~GraphAlgorithms() {}
 

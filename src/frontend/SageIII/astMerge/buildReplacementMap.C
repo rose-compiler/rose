@@ -1,6 +1,11 @@
-// #include <merge.h>
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "buildMangledNameMap.h"
+#include "buildReplacementMap.h"
 
+#include "fixupTraversal.h"
+#include "collectAssociateNodes.h"
+#include "test_support.h"
 using namespace std;
 using namespace SageInterface; // Liao, 2/8/2009, for  generateUniqueName()
 
@@ -28,7 +33,8 @@ ReplacementMapTraversal::buildListOfODRviolations ( ReplacementMapTraversal::ODR
           returnList.insert(i->second);
         }
 
-     printf ("ODR_Violations.size() = %zu  returnList.size() = %zu \n",ODR_Violations.size(),returnList.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("ODR_Violations.size() = %zu  returnList.size() = %zu \n",ODR_Violations.size(),returnList.size());
 
      return returnList;
    }
@@ -138,27 +144,32 @@ ReplacementMapTraversal::verifyODR( SgNode* node, SgNode* duplicateNodeFromOrigi
      if (passesODR == false && nodeString.empty() == false && duplicateNodeFromOriginalASTstring.empty() == false)
         {
 #if 1
-          printf ("##### In ReplacementMapTraversal::verifyODR() is false: node = %p = %s duplicateNodeFromOriginalAST = %p = %s \n",
-               node,node->class_name().c_str(),duplicateNodeFromOriginalAST,duplicateNodeFromOriginalAST->class_name().c_str());
+          if (SgProject::get_verbose() > 0)
+               printf ("##### In ReplacementMapTraversal::verifyODR() is false: node = %p = %s duplicateNodeFromOriginalAST = %p = %s \n",
+                    node,node->class_name().c_str(),duplicateNodeFromOriginalAST,duplicateNodeFromOriginalAST->class_name().c_str());
+
        // printf ("##### passesODR = %s \n",passesODR ? "true" : "false");
        // printf ("duplicateNodeFromOriginalASTstring = \n---> %s\n",duplicateNodeFromOriginalASTstring.c_str());
        // printf ("nodeString                         = \n---> %s\n",nodeString.c_str());
           if (node->get_file_info() != NULL && duplicateNodeFromOriginalAST->get_file_info() != NULL)
              {
-               SgNode* parent_node = node->get_parent();
-               printf ("parent_node = %p = %s = %s \n",parent_node,parent_node->class_name().c_str(),SageInterface::get_name(parent_node).c_str());
-               SgNode* parent_dup = duplicateNodeFromOriginalAST->get_parent();
-               printf ("parent_dup = %p = %s = %s \n",parent_dup,parent_dup->class_name().c_str(),SageInterface::get_name(parent_dup).c_str());
+               if (SgProject::get_verbose() > 0)
+                  {
+                    SgNode* parent_node = node->get_parent();
+                    printf ("parent_node = %p = %s = %s \n",parent_node,parent_node->class_name().c_str(),SageInterface::get_name(parent_node).c_str());
+                    SgNode* parent_dup = duplicateNodeFromOriginalAST->get_parent();
+                    printf ("parent_dup = %p = %s = %s \n",parent_dup,parent_dup->class_name().c_str(),SageInterface::get_name(parent_dup).c_str());
 
-               printf ("\nPosition of error: \n");
-               node->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false: debug");
-               duplicateNodeFromOriginalAST->get_file_info()->display("In ReplacementMapTraversal::verifyODR(duplicateNodeFromOriginalAST) is false: debug");
-               printf ("\nPosition of error: \n");
+                    printf ("\nPosition of error: \n");
+                    node->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false: debug");
+                    duplicateNodeFromOriginalAST->get_file_info()->display("In ReplacementMapTraversal::verifyODR(duplicateNodeFromOriginalAST) is false: debug");
+                    printf ("\nPosition of error: \n");
 
-               printf ("\nPosition of error (parent IR node): \n");
-               parent_node->get_file_info()->display("In ReplacementMapTraversal::verifyODR(parent_node) is false: debug");
-               parent_dup->get_file_info()->display("In ReplacementMapTraversal::verifyODR(parent_dup) is false: debug");
-               printf ("\nPosition of error (parent IR node): \n");
+                    printf ("\nPosition of error (parent IR node): \n");
+                    parent_node->get_file_info()->display("In ReplacementMapTraversal::verifyODR(parent_node) is false: debug");
+                    parent_dup->get_file_info()->display("In ReplacementMapTraversal::verifyODR(parent_dup) is false: debug");
+                    printf ("\nPosition of error (parent IR node): \n");
+                  }
              }
             else
              {
@@ -166,22 +177,25 @@ ReplacementMapTraversal::verifyODR( SgNode* node, SgNode* duplicateNodeFromOrigi
                SgClassType* duplicateNodeFromOriginalAST_classType = isSgClassType(duplicateNodeFromOriginalAST);
                if (classType != NULL)
                   {
-                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                    ROSE_ASSERT(classDeclaration != NULL);
-                    classDeclaration->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false (classType)");
-                    printf ("classDeclaration = %p definingDeclaration = %p nondefiningDeclaration = %p \n",
-                         classDeclaration,
-                         classDeclaration->get_definingDeclaration(),
-                         classDeclaration->get_firstNondefiningDeclaration());
+                    if (SgProject::get_verbose() > 0)
+                       {
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                         ROSE_ASSERT(classDeclaration != NULL);
+                         classDeclaration->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false (classType)");
+                         printf ("classDeclaration = %p definingDeclaration = %p nondefiningDeclaration = %p \n",
+                              classDeclaration,
+                              classDeclaration->get_definingDeclaration(),
+                              classDeclaration->get_firstNondefiningDeclaration());
 
-                    ROSE_ASSERT(duplicateNodeFromOriginalAST_classType != NULL);
-                    SgClassDeclaration* duplicateNodeFromOriginalAST_classDeclaration = isSgClassDeclaration(duplicateNodeFromOriginalAST_classType->get_declaration());
-                    ROSE_ASSERT(duplicateNodeFromOriginalAST_classDeclaration != NULL);
-                    duplicateNodeFromOriginalAST_classDeclaration->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false (duplicateNodeFromOriginalAST_classType)");
-                    printf ("duplicateNodeFromOriginalAST_classDeclaration = %p definingDeclaration = %p nondefiningDeclaration = %p \n",
-                         duplicateNodeFromOriginalAST_classDeclaration,
-                         duplicateNodeFromOriginalAST_classDeclaration->get_definingDeclaration(),
-                         duplicateNodeFromOriginalAST_classDeclaration->get_firstNondefiningDeclaration());
+                         ROSE_ASSERT(duplicateNodeFromOriginalAST_classType != NULL);
+                         SgClassDeclaration* duplicateNodeFromOriginalAST_classDeclaration = isSgClassDeclaration(duplicateNodeFromOriginalAST_classType->get_declaration());
+                         ROSE_ASSERT(duplicateNodeFromOriginalAST_classDeclaration != NULL);
+                         duplicateNodeFromOriginalAST_classDeclaration->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false (duplicateNodeFromOriginalAST_classType)");
+                         printf ("duplicateNodeFromOriginalAST_classDeclaration = %p definingDeclaration = %p nondefiningDeclaration = %p \n",
+                              duplicateNodeFromOriginalAST_classDeclaration,
+                              duplicateNodeFromOriginalAST_classDeclaration->get_definingDeclaration(),
+                              duplicateNodeFromOriginalAST_classDeclaration->get_firstNondefiningDeclaration());
+                       }
                   }
              }
 #endif
@@ -205,37 +219,41 @@ ReplacementMapTraversal::verifyODR( SgNode* node, SgNode* duplicateNodeFromOrigi
 #if 1
      if (passesODR == false)
         {
-          string node_generatedName         = SageInterface::generateUniqueName(node,false);
-          string originalNode_generatedName = SageInterface::generateUniqueName(duplicateNodeFromOriginalAST,false);
-          printf ("ODR Violation Source code: nodeString                         = \n%s\n \n",nodeString.c_str());
-          printf ("ODR Violation Source code: duplicateNodeFromOriginalASTstring = \n%s\n \n",duplicateNodeFromOriginalASTstring.c_str());
-          printf ("nodeString = %s \n",nodeString.c_str());
-          printf ("node_generatedName         = %s \n",node_generatedName.c_str());
-          printf ("originalNode_generatedName = %s \n",originalNode_generatedName.c_str());
-
-          printf ("node                         = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
-          printf ("duplicateNodeFromOriginalAST = %p = %s = %s \n",duplicateNodeFromOriginalAST,duplicateNodeFromOriginalAST->class_name().c_str(),SageInterface::get_name(duplicateNodeFromOriginalAST).c_str());
-
-          printf ("node (unique string)                         = %s \n",generateUniqueName(node,true).c_str());
-          printf ("duplicateNodeFromOriginalAST (unique string) = %s \n",generateUniqueName(duplicateNodeFromOriginalAST,true).c_str());
-
-          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
-          if (declarationStatement != NULL)
+          if (SgProject::get_verbose() > 0)
              {
-               printf ("declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
-               printf ("declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
-             }
+               string node_generatedName         = SageInterface::generateUniqueName(node,false);
+               string originalNode_generatedName = SageInterface::generateUniqueName(duplicateNodeFromOriginalAST,false);
 
-          SgDeclarationStatement* declarationStatement2 = isSgDeclarationStatement(duplicateNodeFromOriginalAST);
-          if (declarationStatement2 != NULL)
-             {
-               printf ("declarationStatement2->get_definingDeclaration()         = %p \n",declarationStatement2->get_definingDeclaration());
-               printf ("declarationStatement2->get_firstNondefiningDeclaration() = %p \n",declarationStatement2->get_firstNondefiningDeclaration());
-             }
+               printf ("ODR Violation Source code: nodeString                         = \n%s\n \n",nodeString.c_str());
+               printf ("ODR Violation Source code: duplicateNodeFromOriginalASTstring = \n%s\n \n",duplicateNodeFromOriginalASTstring.c_str());
+               printf ("nodeString = %s \n",nodeString.c_str());
+               printf ("node_generatedName         = %s \n",node_generatedName.c_str());
+               printf ("originalNode_generatedName = %s \n",originalNode_generatedName.c_str());
 
-          printf ("Source code positions of ORD violation: \n");
-          node->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false: debug");
-          duplicateNodeFromOriginalAST->get_file_info()->display("In ReplacementMapTraversal::verifyODR(duplicateNodeFromOriginalAST) is false: debug");
+               printf ("node                         = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+               printf ("duplicateNodeFromOriginalAST = %p = %s = %s \n",duplicateNodeFromOriginalAST,duplicateNodeFromOriginalAST->class_name().c_str(),SageInterface::get_name(duplicateNodeFromOriginalAST).c_str());
+
+               printf ("node (unique string)                         = %s \n",generateUniqueName(node,true).c_str());
+               printf ("duplicateNodeFromOriginalAST (unique string) = %s \n",generateUniqueName(duplicateNodeFromOriginalAST,true).c_str());
+
+               SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
+               if (declarationStatement != NULL)
+                  {
+                    printf ("declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+                    printf ("declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
+                  }
+
+               SgDeclarationStatement* declarationStatement2 = isSgDeclarationStatement(duplicateNodeFromOriginalAST);
+               if (declarationStatement2 != NULL)
+                  {
+                    printf ("declarationStatement2->get_definingDeclaration()         = %p \n",declarationStatement2->get_definingDeclaration());
+                    printf ("declarationStatement2->get_firstNondefiningDeclaration() = %p \n",declarationStatement2->get_firstNondefiningDeclaration());
+                  }
+
+               printf ("Source code positions of ORD violation: \n");
+               node->get_file_info()->display("In ReplacementMapTraversal::verifyODR(node) is false: debug");
+               duplicateNodeFromOriginalAST->get_file_info()->display("In ReplacementMapTraversal::verifyODR(duplicateNodeFromOriginalAST) is false: debug");
+             }
         }
 #endif
   // ROSE_ASSERT(nodeString == duplicateNodeFromOriginalASTstring);
@@ -427,17 +445,22 @@ replacementMapTraversal (
   // DQ (2/2/2007): Introduce tracking of performance of within AST merge
      TimingPerformance timer ("Build the STL map of shared IR nodes and replacement sites in the AST:");
 
-     printf ("In replacementMapTraversal(): mangledNameMap.size() = %zu \n",mangledNameMap.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("In replacementMapTraversal(): mangledNameMap.size() = %zu \n",mangledNameMap.size());
+
      ReplacementMapTraversal traversal(mangledNameMap,replacementMap,deleteList);
      traversal.traverseMemoryPool();
 
      violations = traversal.odrViolations;
 
-     printf ("ReplacementMapTraversal statistics: \n");
-     printf ("     violations.size() = %zu \n",violations.size());
-     printf ("     numberOfNodes         = %d \n",traversal.numberOfNodes);
-     printf ("     numberOfNodesTested   = %d \n",traversal.numberOfNodesTested);
-     printf ("     numberOfNodesMatching = %d \n",traversal.numberOfNodesMatching);
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("ReplacementMapTraversal statistics: \n");
+          printf ("     violations.size() = %zu \n",violations.size());
+          printf ("     numberOfNodes         = %d \n",traversal.numberOfNodes);
+          printf ("     numberOfNodesTested   = %d \n",traversal.numberOfNodesTested);
+          printf ("     numberOfNodesMatching = %d \n",traversal.numberOfNodesMatching);
+        }
 
   // return traversal.replacementMap;
    }

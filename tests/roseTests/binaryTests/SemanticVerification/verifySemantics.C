@@ -136,7 +136,7 @@ private:
 
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
+        addr.sin_port = my_htons(port);
         assert(he->h_length==sizeof(addr.sin_addr.s_addr));
         memcpy(&addr.sin_addr.s_addr, he->h_addr, he->h_length);
 
@@ -145,6 +145,19 @@ private:
         if (connect(server, (struct sockaddr*)&addr, sizeof addr)<0) {
             fprintf(stderr, "cannot connect to server at %s:%hd: %s\n", hostname.c_str(), port, strerror(errno));
             exit(1);
+        }
+    }
+
+    /** Replacement for system's htons(). Calling htons() on OSX gives an error "'exp' was not declared in this scope" even
+     *  though we've included <netinet/in.h>. Therefore we write our own version here. Furthermore, OSX apparently doesn't
+     *  define __BYTE_ORDER in <sys/param.h> so we have to figure it out ourselves. */
+    static short my_htons(short n) {
+        static unsigned u = 1;
+        if (*((char*)&u)) {
+            /* Little endian */
+            return (((unsigned short)n & 0x00ff)<<8) | (((unsigned short)n & 0xff00)>>8);
+        } else {
+            return n;
         }
     }
 
@@ -354,7 +367,7 @@ public:
             if (v1!=v2) {
                 char buf[256];
                 int w = x86_reg_size[i]/4;
-                sprintf(buf, "%s%s:  0x%0*"PRIx64" (simulated) != 0x%0*"PRIx64" (actual)", prefix, x86_reg_str[i], w, v1, w, v2);
+                sprintf(buf, "%s%s:  0x%0*lx (simulated) != 0x%0*lx (actual)", prefix, x86_reg_str[i], w, v1, w, v2);
                 mesg = mesg + (mesg=="" ? "" : "\n") + buf;
             }
         }
@@ -561,8 +574,8 @@ public:
             case x86_flag_if:    bitidx =  9; s = "if"; break;
             case x86_flag_df:    bitidx = 10; s = "df"; break;
             case x86_flag_of:    bitidx = 11; s = "of"; break;
-            case x86_flag_iopl0: bitidx = 12; s = "iop10"; break;
-            case x86_flag_iopl1: bitidx = 13; s = "iop11"; break;
+            case x86_flag_iopl0: bitidx = 12; s = "iopl0"; break;
+            case x86_flag_iopl1: bitidx = 13; s = "iopl1"; break;
             case x86_flag_nt:    bitidx = 14; s = "nt"; break;
             case x86_flag_15:    bitidx = 15; s = "15f"; break;
             case x86_flag_rf:    bitidx = 16; s = "rf"; break;
@@ -603,8 +616,8 @@ public:
             case x86_flag_if:    bitidx =  9; s = "if"; break;
             case x86_flag_df:    bitidx = 10; s = "df"; break;
             case x86_flag_of:    bitidx = 11; s = "of"; break;
-            case x86_flag_iopl0: bitidx = 12; s = "iop10"; break;
-            case x86_flag_iopl1: bitidx = 13; s = "iop11"; break;
+            case x86_flag_iopl0: bitidx = 12; s = "iopl0"; break;
+            case x86_flag_iopl1: bitidx = 13; s = "iopl1"; break;
             case x86_flag_nt:    bitidx = 14; s = "nt"; break;
             case x86_flag_15:    bitidx = 15; s = "15f"; break;
             case x86_flag_rf:    bitidx = 16; s = "rf"; break;
@@ -921,6 +934,7 @@ private:
     std::ostream *trace_file;
 };
 
+
 /* Prints values of all registers */
 static void dump_registers(FILE *f, const RegisterSet &rs) {
     for (size_t i=0; i<NELMTS(x86_reg_names); i++) {
@@ -990,7 +1004,11 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Starting executable...\n");
     uint64_t nprocessed = 0, nerrors = 0;
     Verifier verifier(&dbg);
+
+#ifndef USE_ROSE
     X86InstructionSemantics<Verifier, VerifierValue> semantics(verifier);
+#endif
+
     dbg.cont(); /* Advance to the first breakpoint. */
 
     /* Each time we hit a breakpoint, find the instruction at that address and run it through the verifier. */
@@ -1013,6 +1031,8 @@ int main(int argc, char *argv[]) {
 
         /* Process instruction semantics. */
         std::ostringstream trace;
+
+#ifndef USE_ROSE
         try {
             verifier.trace(&trace);
             semantics.processInstruction(insn_x86);
@@ -1025,7 +1045,10 @@ int main(int argc, char *argv[]) {
             dump_registers(stderr, dbg.registers());
             dbg.cont();
             continue;
+        } catch (const X86InstructionSemantics<Verifier, VerifierValue>::Exception &e) {
+            fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
         }
+#endif
 
         /* Single step to cause the instruction to be executed remotely. Then compare our state with the remote state. */
         dbg.step();
@@ -1044,5 +1067,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+
     exit(1); /*FIXME*/
 }
+

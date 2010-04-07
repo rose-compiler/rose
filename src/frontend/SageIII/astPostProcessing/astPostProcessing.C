@@ -1,8 +1,13 @@
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "AstFixup.h"
+#include "astPostProcessing.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// tps (01/14/2009): Had to define this locally as it is not part of sage3 but rose.h
+#include "AstDiagnostics.h"
 
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
@@ -14,12 +19,17 @@ void AstPostProcessing (SgNode* node)
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST post-processing:");
 
+  // printf ("Inside of AstPostProcessing(node = %p) \n",node);
+
   // DQ (3/17/2007): This should be empty
      if (SgNode::get_globalMangledNameMap().size() != 0)
         {
-          printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->sage_class_name(), 
-                      SageInterface::get_name(node).c_str());
-          printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
+          if (SgProject::get_verbose() > 0)
+             {
+               printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->sage_class_name(),SageInterface::get_name(node).c_str());
+               printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
+             }
+
           SgNode::clearGlobalMangledNameMap();
         }
      ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
@@ -36,7 +46,13 @@ void AstPostProcessing (SgNode* node)
             // loop iterating over all files because repeated calls to
             // AstPostProcessing are slow due to repeated memory pool
             // traversals of the same nodes over and over again.
-               postProcessingSupport(node);
+            // Only postprocess the AST if it was generated, and not were we just did the parsing.
+            // postProcessingSupport(node);
+
+               if (project->get_exit_after_parser() == false)
+                  {
+                    postProcessingSupport (node);
+                  }
 #if 0
                SgFilePtrList::iterator fileListIterator;
                for (fileListIterator = project->get_fileList().begin(); fileListIterator != project->get_fileList().end(); fileListIterator++)
@@ -58,6 +74,21 @@ void AstPostProcessing (SgNode* node)
 
                printf ("SgDirectory support not implemented in AstPostProcessing \n");
                ROSE_ASSERT(false);
+               break;
+             }
+
+          case V_SgFile:
+          case V_SgSourceFile:
+             {
+               SgFile* file = isSgFile(node);
+               ROSE_ASSERT(file != NULL);
+
+            // Only postprocess the AST if it was generated, and not were we just did the parsing.
+               if (file->get_exit_after_parser() == false)
+                  {
+                    postProcessingSupport (node);
+                  }
+               
                break;
              }
 
@@ -341,6 +372,13 @@ void postProcessingSupport (SgNode* node)
   // DQ (1/19/2008): This can be called at nearly any point in the ast fixup.
      markLhsValues(node);
 
+  // DQ (2/21/2010): This normalizes an EDG trick (well documented) that replaces "__PRETTY_FUNCTION__" variable 
+  // references with variable given the name of the function where the "__PRETTY_FUNCTION__" variable references 
+  // was found. This is only seen when compiling ROSE using ROSE and was a mysterious property of ROSE for a long 
+  // time until it was identified.  This fixup traversal changes the name back to "__PRETTY_FUNCTION__" to make
+  // the code generated using ROSE when compiling ROSE source code the same as if GNU processed it (e.g. using CPP).
+     fixupPrettyFunctionVariables(node);
+
 #if 0
   // DQ (1/22/2008): Use this for the Fortran code to get more accurate source position information.
 
@@ -383,6 +421,10 @@ void postProcessingSupport (SgNode* node)
   // This also will fixup C++ using declarations.
      fixupFortranUseDeclarations(node);
 
+  // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
+  // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).
+  // TestForDisconnectedAST::test(node);
+
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag
   // CheckIsModifiedFlagSupport(node); 
@@ -393,8 +435,11 @@ void postProcessingSupport (SgNode* node)
   // DQ (3/17/2007): This should be empty
   // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
 
-#if 1
+  // This is used for both of the fillowing tests.
      SgSourceFile* sourceFile = isSgSourceFile(node);
+
+#if 1
+  // DQ (9/11/2009): Added support for numbering of statements required to support name qualification.
      if (sourceFile != NULL)
         {
        // DQ (9/11/2009): Added support for numbering of statements required to support name qualification.
@@ -403,21 +448,63 @@ void postProcessingSupport (SgNode* node)
           ROSE_ASSERT(globalScope != NULL);
           globalScope->buildStatementNumbering();
         }
-     else if (SgProject* project = isSgProject(node))
+       else 
         {
-          SgFilePtrList &files = project->get_fileList();
-          for (SgFilePtrList::iterator fileI = files.begin(); fileI != files.end(); ++fileI)
+          if (SgProject* project = isSgProject(node))
              {
-               if (sourceFile = isSgSourceFile(*fileI))
+               SgFilePtrList &files = project->get_fileList();
+               for (SgFilePtrList::iterator fileI = files.begin(); fileI != files.end(); ++fileI)
                   {
-                    SgGlobal* globalScope = sourceFile->get_globalScope();
-                    ROSE_ASSERT(globalScope != NULL);
-                    globalScope->buildStatementNumbering();
+                    if ( (sourceFile = isSgSourceFile(*fileI)) )
+                       {
+                         SgGlobal* globalScope = sourceFile->get_globalScope();
+                         ROSE_ASSERT(globalScope != NULL);
+                         globalScope->buildStatementNumbering();
+                       }
                   }
              }
         }
-
 #endif
+
+  // DQ (4/4/2010): check that the global scope has statements.
+  // This was an error for Fortran and it appeared that everything
+  // was working when it was not.  It appeared because of a strange
+  // error between versions of the OFP support files.  So as a 
+  // way to avoid this in the future, we issue a warning for Fortran
+  // code that has no statements in the global scope.  It can still
+  // be a valid Fortran code (containing only comments).  but this
+  // should help avoid our test codes appearing to work when they 
+  // don't (in the future). For C/C++ files there should always be
+  // something in the global scope (because or ROSE defined functions), 
+  // so this test should not be a problem.
+     if (sourceFile != NULL)
+        {
+          SgGlobal* globalScope = sourceFile->get_globalScope();
+          ROSE_ASSERT(globalScope != NULL);
+          if (globalScope->get_declarations().empty() == true)
+             {
+               printf ("WARNING: no statements in global scope for file = %s \n",sourceFile->getFileName().c_str());
+             }
+        }
+       else 
+        {
+          if (SgProject* project = isSgProject(node))
+             {
+               SgFilePtrList &files = project->get_fileList();
+               for (SgFilePtrList::iterator fileI = files.begin(); fileI != files.end(); ++fileI)
+                  {
+                    if ( (sourceFile = isSgSourceFile(*fileI)) )
+                       {
+                         SgGlobal* globalScope = sourceFile->get_globalScope();
+                         ROSE_ASSERT(globalScope != NULL);
+                         if (globalScope->get_declarations().empty() == true)
+                            {
+                              printf ("WARNING: no statements in global scope for file = %s \n",(*fileI)->getFileName().c_str());
+                            }
+                       }
+                  }
+             }
+        }
 
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
         cout << "/* AST Postprocessing finished */" << endl;

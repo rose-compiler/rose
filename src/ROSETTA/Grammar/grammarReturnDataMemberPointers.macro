@@ -2,10 +2,12 @@
 std::vector<std::pair<SgNode*,std::string> >
 $CLASSNAME::returnDataMemberPointers() const
    {
+     ROSE_ASSERT(this != NULL);
+
   // ------------ checking pointers of $CLASSNAME -------------------
      if (p_freepointer != AST_FileIO::IS_VALID_POINTER() )
         {
-          printf ("Error: In node = %s at %p \n",class_name().c_str(),this);
+          printf ("Error: In node = %s at %p p_freepointer = %p \n",class_name().c_str(),this,p_freepointer);
         }
      ROSE_ASSERT ( p_freepointer == AST_FileIO::IS_VALID_POINTER() );
 

@@ -1,5 +1,10 @@
 #! /bin/sh
 
+
+# This is the default location for build to use as a reference
+# to its macro definitions used by Autoconf and Automake.
+ROSE_DISTRIBUTION=${ROSE_DISTRIBUTION:-.}
+
 # Parse command-line
 do_quiet=yes
 do_timing=no
@@ -16,6 +21,12 @@ while [ "$#" -gt 0 ]; do
         --quiet)
             echo "$0: warning: --quiet is now the default mode and is ignored"
             ;;
+        --srcpath=*)
+            ROSE_DISTRIBUTION="${arg#*=}"
+            ;;
+        --srcpath)
+	    ROSE_DISTRIBUTION="$1"; shift
+	    ;;
         *)
 	    echo "$0: unrecognized argument: $arg" >&2
 	    exit 1
@@ -54,6 +65,15 @@ rm -rf autom4te.cache
 libtoolize_name=""
 test_libtoolize_version=""
 run_libtoolize=""
+
+# Output the name of the machine where the build is being run (helpful for debugging).
+machine_name=`uname -n`
+echo ""
+echo "******************************************"
+echo "Building ROSE Project on: $machine_name"
+echo "Build Disk Usage Report:"
+#df
+echo "******************************************"
 
 echo ""
 echo "******************************************"
@@ -234,8 +254,10 @@ echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
 
 # DJH (20 July 2009): Some macros may be installed in non-standard locations
 # (e.g. libxml's on NMI build machines)
-echo "Running aclocal ..."
-aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
+echo "Running aclocal ... aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES"
+# echo "Running aclocal ..."
+# aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
+aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
 
 echo "Running autoheader ..."
 # autoheader --warnings=obsolete,all || : exit 1
@@ -253,15 +275,33 @@ echo "Running automake ..."
 # DQ (9/26/2009): Testing for "is not a standard library name" is not required any more!
 # automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
 
-echo ""
-echo "*******************************************************************************************"
-echo "Note that due to ROSE support for binary only distributions of EDG we do not distribute any"
-echo "Makefile.am files in 'src/frontend/CxxFrontend/EDG/' to the general audience." 
-echo "The warnings regarding missing Makefile.in can be safely ignored"
-echo ""
-echo "Rose Project Management."
-echo "*******************************************************************************************"
-
+# This list should be the same as in configure.in (search for CLASSPATH_COND_IF)
+if [ \! -e src/frontend/CxxFrontend/EDG/Makefile.am ] ; then
+    # Automake will expect these files to always exist even if they are
+    # in a conditional.  Since we know that they will not be used during
+    # the build process itself, we can create zero-length dummy files.
+    for file in \
+src/frontend/CxxFrontend/EDG/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.3/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.3/misc/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.3/src/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/misc/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/src/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/src/disp/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/lib/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile.in \
+src/frontend/CxxFrontend/EDG/edgRose/Makefile.in
+    do
+        mkdir -p $(dirname $file)
+        touch $file
+    done
+fi
 
 automake -a -c -i 2>&1 || : exit 1
 
@@ -272,6 +312,11 @@ echo "Finishing up details ... exit status = $?"
 # Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
 touch stamp-h.in  || : exit 1
 touch stamp-h1.in || : exit 1
+
+# Add some dynamically-generated targets that run tests on various sample binaries.
+if [ -f tests/roseTests/binaryTests/Makefile.in ]; then
+    (cd $ROSE_DISTRIBUTION && ./scripts/sample_binary_rules.pl) || exit 1
+fi
 
 # Do the same steps in libltdl
 # (cd libltdl && aclocal && automake --add-missing && autoconf)
@@ -298,13 +343,15 @@ fi
 #                  $(CXX) $(DEFS) ....... `test -f 'RDis/main.C' || echo '$(srcdir)/'`RDis/main.C
 #     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
 #
-echo "Report status of verbose mode: do_quiet = $do_quiet"
 if [ "$do_quiet" = "yes" ]; then
+    echo "Converting Makefile.in files to quiet mode (use --verbose to prevent this)."
     find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
 	-e '/echo.*COMPILE/!s/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
 	-e '/echo.*LINK/!s/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
 	-e '/echo.*COMPILE/!s/^\t\$(CXX)/\t@echo "  COMPILE $@"; $(CXX)/' \
-	-e '/LIBTOOL.*quiet/!s/@LIBTOOL@/& --quiet/g'
+	-e '/LIBTOOL.*quiet/!s/@LIBTOOL@/& --quiet/g' \
+	-e '/^\t\$(LIBTOOL) --tag=CXX /s/^\t/\t@echo "  COMPILE $@"; /' \
+	-e '/^\t$(librose_la_LINK) -rpath /s/^\t/\t@echo "  LINK    $@"; /'
 fi
 
 echo "***** BUILD TERMINATED NORMALLY *****"

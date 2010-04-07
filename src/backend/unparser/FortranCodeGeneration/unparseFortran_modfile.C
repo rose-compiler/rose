@@ -1,4 +1,6 @@
-#include "rose.h"
+#include "sage3basic.h"
+#include "unparser_opt.h"
+#include "unparser.h"
 #include "unparseFortran_modfile.h"
 
 using namespace std;

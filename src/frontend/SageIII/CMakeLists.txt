@@ -2,6 +2,8 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 ##AS Commented out for simpler build
 ###add_subdirectory(astFileIO)
+# tps (04/01/2010) : Added  GENERATED_CODE_DIRECTORY_Cxx_Grammar subdirectory
+add_subdirectory(GENERATED_CODE_DIRECTORY_Cxx_Grammar)
 add_subdirectory(astMerge)
 add_subdirectory(astFixup)
 add_subdirectory(astPostProcessing)
@@ -66,8 +68,8 @@ add_custom_target( OMPPARSER ALL DEPENDS
 
 ########### install files ###############
 
-install(FILES  sage3.h rose_attributes_list.h     attachPreprocessingInfo.h     attachPreprocessingInfoTraversal.h     attach_all_info.h manglingSupport.h C++_include_files.h     fixupCopy.h     general_token_defs.h rtiHelpers.h     OmpAttribute.h omp.h dwarfSupport.h     omp_lib_kinds.h omp_lib.h DESTINATION ${INCLUDE_INSTALL_DIR})
-install(FILES  Cxx_Grammar.h     Cxx_GrammarMemoryPoolSupport.h     Cxx_GrammarTreeTraversalAccessEnums.h     AST_FILE_IO.h StorageClasses.h     AstQueryMemoryPool.h     astFileIO/AstSpecificDataManagingClass.h DESTINATION ${INCLUDE_INSTALL_DIR}  )
+install(FILES  sage3.h sage3basic.h rose_attributes_list.h     attachPreprocessingInfo.h     attachPreprocessingInfoTraversal.h     attach_all_info.h manglingSupport.h C++_include_files.h     fixupCopy.h     general_token_defs.h rtiHelpers.h     OmpAttribute.h omp.h dwarfSupport.h     omp_lib_kinds.h omp_lib.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  Cxx_Grammar.h  rosedll.h   Cxx_GrammarMemoryPoolSupport.h     Cxx_GrammarTreeTraversalAccessEnums.h     AST_FILE_IO.h StorageClasses.h     AstQueryMemoryPool.h     astFileIO/AstSpecificDataManagingClass.h DESTINATION ${INCLUDE_INSTALL_DIR}  )
 
 
 #original Makefile.am contents follow:

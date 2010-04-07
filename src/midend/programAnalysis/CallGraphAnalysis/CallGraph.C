@@ -1,5 +1,6 @@
-#include <rose.h>
-#include <boost/lexical_cast.hpp>
+// tps : Switching from rose.h to sage3 changed size from 18 MB to 8,2MB
+#include <sage3basic.h>
+//#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
 #ifdef HAVE_SQLITE3
@@ -779,8 +780,6 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
             if (SgMemberFunctionRefExp *memberFunctionRefExp =
               isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() ) )
             {
-
-              std::cout << "SgArrowExp" << std::endl;
 
               //AS(122805) In the case of a constructor initializer it is possible that a call to a constructor initializer may
               //return a type corresponding to an operator some-type() declared within the constructed class. An example is:

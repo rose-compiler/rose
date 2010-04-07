@@ -36,7 +36,9 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
+SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
+
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
@@ -45,16 +47,46 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
+# VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+
+# DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
+testParser:../../testParser
+	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_01.C
 
 # This requires a special makefile rule
 test2005_56.o: ../../testTranslator
 	../../testTranslator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
+
+test2010_01.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
+
+test2010_02.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_02.C -o test2010_02.o
+
+test2010_07.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+
+test2010_08.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+
+cpp_test2010_07: ../../testTranslator
+	echo "Running boost specific test."
+	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -79,20 +111,50 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2001_15.h  test2001_18B.h  test2003_09.h  test2003_14.h  test2003_25.h  test2005_133.h  test2005_157.h \
      test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_42.h test2007_08.h test2007_41.h \
      test2007_42.h test2007_47.h test2007_48.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
-     LogicalPath.cpp
+     test2008_11.h LogicalPath.cpp test2005_56.C
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h
 # foo.h          test2001_15.h   test2003_08.h   test2003_14.h  test2004_40.h   test2005_157.h  test2005_15.h   test2005_75.h  test2006_136.h   test2006_33.h    test2007_08.h   test2007_114.h  test2007_160a.h  test2007_40.h   test2007_47.h
 # test2001_05.h  test2001_18A.h  test2003_09.h   test2003_24.h  test2005_133.h  test2005_158.h  test2005_160.h  test2005_81.h  test2006_187a.h  test2006_36.h    test2007_101.h  test2007_136.h  test2007_160.h   test2007_41.h   test2007_48.h
 
+# This was a bug specific to the normalization of source file names to absolute paths
+# DQ (12/11/2009): At the moment it is an failing test because "thisIsAnError" will be 
+# interpreted to be a file.
+testUsingBadCommandline: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -DthisIsOK -D thisIsAnError -rose:verbose 0 roseTestProgram.C
+
+# This was a bug specific to the normalization of source file names to absolute paths
+testBuildUsingNoPath: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -rose:verbose 0 roseTestProgram.C
+
+# This was a bug specific to the normalization of source file names to absolute paths
+testBuildUsingRelativePath: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -rose:verbose 0 ../Cxx_tests/roseTestProgram.C
+
+# This was always worked but is the alternative to the normalization of source file names to absolute paths
+testBuildUsingAbsolutePath: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -rose:verbose 0 `pwd`/roseTestProgram.C
+
 check-local:
+	@$(MAKE) test2005_56.o
+#	@$(MAKE) testUsingBadCommandline
+	@$(MAKE) testBuildUsingNoPath
+	@$(MAKE) testBuildUsingRelativePath
+	@$(MAKE) testBuildUsingAbsolutePath
+	@$(MAKE) test2010_07.o
 	@echo "Tests of C++."
 	@$(MAKE) $(PASSING_TEST_Objects)
+#	DQ (4/6/2010): This fails on Hudson, but I don't know why!
+#	@$(MAKE) testParser
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
 	rm -rf QMTest

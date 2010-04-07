@@ -17,6 +17,10 @@ class Y<int>;
 
 // This will build a new SgClassDeclaration, and reuse the existing
 // SgClassDefinition (???).
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ >= 3)
+template<>
+#endif
 class Y<int> {};
 
 // Redundant forward class declaration

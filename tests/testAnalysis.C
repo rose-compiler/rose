@@ -1,21 +1,21 @@
-// Example ROSE Translator
-// used for testing ROSE infrastructure
-
+// Example ROSE Translator used for testing ROSE infrastructure this 
+// tests the ability of ROSE to process the source code, but then 
+// uses the vendor compiler to generate the object file or executable.
 #include "rose.h"
 
 int
 main( int argc, char * argv[] )
    {
-  // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
+  // Introduces tracking of performance of ROSE at the top most level.
      TimingPerformance timer ("AST translation (main): time (sec) = ",true);
 
      SgProject* project = frontend(argc,argv);
+
      AstTests::runAllTests(project);
 
   // Output statistics about how ROSE was used...
      if (project->get_verbose() > 1)
         {
-       // cout << stat.toString(project);
           std::cout << AstNodeStatistics::traversalStatistics(project);
           std::cout << AstNodeStatistics::IRnodeUsageStatistics();
         }
@@ -26,5 +26,5 @@ main( int argc, char * argv[] )
 
   // Skip calling the typical backend for ROSE (not required for just testing analysis)
   // This backend calls the backend compiler using the original input source file list.
-     return backendUsingOriginalInputFile(project);
+     return backendCompilesUsingOriginalInputFile(project);
    }

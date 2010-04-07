@@ -1,5 +1,6 @@
-#include "SymbolicExpr.h"
 
+#include "SymbolicExpr.h"
+#include <stdlib.h>
 struct VarRestr
 {
   SymbolicVal coeff, result;
@@ -9,19 +10,22 @@ struct VarRestr
   bool IsNIL() const { return rel == REL_UNKNOWN; }
 };
 
+// Evaluate conditional symbolic expression, similar to a=b?1:0
 class UnwrapCond : public SymbolicVisitor
 {
   SymbolicVar pivot;
   SymbolicVal left, right;
   CompareRel rel;
   bool succ;
-
+  // unwrap condition based on a symbolic value
   void VisitVar( const SymbolicVar& v)
-    { if (pivot == v) {
+    { 
+      if (pivot == v) {
         left = 1;
         succ = true;
       }
     }
+  // apply on a symbolic expression  
   void VisitExpr( const  SymbolicExpr& v) 
    { 
      //SymbolicVal cur = left; // so that when left is overwritten v is still valid
@@ -45,6 +49,7 @@ class UnwrapCond : public SymbolicVisitor
 	  // this assertion is wrong since p might be a unary expression with its internal operand ==pivot
 	  // I have handled SgCastExp cases in SymbolicValGenerator::GetSymbolicVal() 
 	  // I keep this assertion here to expose other unhandled cases, Liao, 11/20/2008
+          //printf("debug: before assertion ...");
           assert(p == pivot); 	   
           left = 1;
           for (iter=v.GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {

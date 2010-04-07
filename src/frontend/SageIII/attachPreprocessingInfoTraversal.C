@@ -56,8 +56,10 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 
 // #include "attachPreprocessingInfo.h"
 // #include "sage3.h"
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "attachPreprocessingInfo.h"
+#include "attachPreprocessingInfoTraversal.h"
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -70,6 +72,7 @@ using namespace std;
 
 AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles )
    {
+// #ifndef  CXX_IS_ROSE_CODE_GENERATION
   // previousLocNodePtr            = NULL;
   // currentListOfAttributes       = NULL;
   // sizeOfCurrentListOfAttributes = 0;
@@ -90,8 +93,11 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
   // start_index                   = 0;
 
      sourceFile = file;
+// #endif
    }
 
+
+// #ifndef  CXX_IS_ROSE_CODE_GENERATION
 
 // DQ (10/27/2007): Added display function to output information gather durring the collection of 
 // comments and CPP directives across all files.
@@ -1316,3 +1322,5 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      return returnSynthesizeAttribute;
    }
 
+// ifndef  CXX_IS_ROSE_CODE_GENERATION
+// #endif 

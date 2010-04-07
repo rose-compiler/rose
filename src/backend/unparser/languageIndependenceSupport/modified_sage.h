@@ -10,6 +10,10 @@
 
 
 #include "unparser.h"
+class SgExpression;
+class SgType;
+class SgExprListExp;
+class SgConstructorInitializer;
 
 class Unparser;
 

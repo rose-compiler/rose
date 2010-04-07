@@ -4,7 +4,8 @@
  * helper unparse functions such as unparse_helper and printSpecifier.
  */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
 #include "modified_sage.h"
 // include "bool.h"
@@ -706,6 +707,7 @@ int GetPrecedence(int variant)
      // Liao, 7/15/2009, UPC nodes     
           case V_SgUpcThreads:       return 0;
           case V_SgUpcMythread:       return 0;
+          case V_SgNullExpression:    return 0;
 #if 0
        // Template
           case V_:              return 0;

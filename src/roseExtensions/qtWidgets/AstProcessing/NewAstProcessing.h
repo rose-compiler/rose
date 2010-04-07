@@ -2,7 +2,7 @@
 #ifndef NEW_AST_PROCESSING_H
 #define NEW_AST_PROCESSING_H
 
-#include "sage3.h"
+//#include "sage3.h"
 #include "AstSuccessorsSelectors.h"
 #include "StackFrameVector.h"
 
