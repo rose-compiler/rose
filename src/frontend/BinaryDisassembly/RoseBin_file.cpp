@@ -9,6 +9,7 @@
 #include "RoseBin_file.h"
 #include <errno.h>
 #include "readTicl.h"
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace ticl;
@@ -237,8 +238,12 @@ void RoseBin_FILE::process_instruction_query( ) {
 	uint64_t id = 0; // atoll(vec_basic_blocks_1[i].id.c_str());
     uint64_t parent_function = 0; // atoll(vec_basic_blocks_1[i].parent_function.c_str());
 #else
-    uint64_t id = atoll(vec_basic_blocks_1[i].id.c_str());
-    uint64_t parent_function = atoll(vec_basic_blocks_1[i].parent_function.c_str());
+    //uint64_t id = atoll(vec_basic_blocks_1[i].id.c_str());
+    //uint64_t parent_function = atoll(vec_basic_blocks_1[i].parent_function.c_str());
+    //
+    // CH (4/7/2010): Use boost::lexical_cast to cast string to long long type.
+    uint64_t id = boost::lexical_cast<long long>(vec_basic_blocks_1[i].id.c_str());
+    uint64_t parent_function = boost::lexical_cast<long long>(vec_basic_blocks_1[i].parent_function.c_str());
 #endif
     function_of_basic_block[id] = parent_function;
   }

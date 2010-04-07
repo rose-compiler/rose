@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 /** Non-parsing constructor. If you're creating an executable from scratch then call this function and you're done. But if
  *  you're parsing an existing file then call parse() in order to map the file's contents into memory for parsing. */
@@ -40,13 +41,15 @@ SgAsmGenericFile::parse(std::string fileName)
     ROSE_ASSERT(p_fd < 0); /*can call parse() only once per object*/
 
     set_name(fileName);
-#ifdef _MSC_VER
-#pragma message ("WARNING: MSVS des not support Linux open() function.")
-    printf ("ERROR: MSVS des not support Linux open() function.");
-    ROSE_ASSERT(false);
-#else
+
+// CH (4/6/2010): The "io.h" in MSVS does support open()
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: MSVS des not support Linux open() function.")
+//    printf ("ERROR: MSVS des not support Linux open() function.");
+//    ROSE_ASSERT(false);
+//#else
     p_fd = open(fileName.c_str(), O_RDONLY);
-#endif
+//#endif
     if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
         std::string mesg = "Could not open binary file";
         throw FormatError(mesg + ": " + strerror(errno));
@@ -57,14 +60,16 @@ SgAsmGenericFile::parse(std::string fileName)
     unsigned char *mapped = new unsigned char[nbytes];
     if (!mapped)
         throw FormatError("Could not allocate memory for binary file");
-#ifdef _MSC_VER
-#pragma message ("WARNING: MSVS des not support Linux read() function.")
-    printf ("ERROR: MSVS des not support Linux read() function.");
-    ROSE_ASSERT(false);
-    ssize_t nread = 0;
-#else
+
+// CH (4/6/2010): The "io.h" in MSVS does support read()
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: MSVS des not support Linux read() function.")
+//    printf ("ERROR: MSVS des not support Linux read() function.");
+//    ROSE_ASSERT(false);
+//    ssize_t nread = 0;
+//#else
     ssize_t nread = read(p_fd, mapped, nbytes);
-#endif
+//#endif
     if (nread<0 || (size_t)nread!=nbytes)
         throw FormatError("Could not read entire binary file");
 
@@ -101,13 +106,15 @@ SgAsmGenericFile::~SgAsmGenericFile()
     p_data.clear();
 
     if ( p_fd >= 0 ) {
-#ifdef _MSC_VER
-#pragma message ("WARNING: MSVS des not support Linux close() function.")
-        printf ("ERROR: MSVS des not support Linux close() function.");
-        ROSE_ASSERT(false);
-#else
+
+// CH (4/6/2010): The "io.h" in MSVS does support "close(int)"
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: MSVS des not support Linux close() function.")
+//        printf ("ERROR: MSVS des not support Linux close() function.");
+//        ROSE_ASSERT(false);
+//#else
         close(p_fd);
-#endif
+//#endif
     }
 
  // Delete the pointers to the IR nodes containing the STL lists

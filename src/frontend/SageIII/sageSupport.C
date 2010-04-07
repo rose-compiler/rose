@@ -47,7 +47,7 @@
 
 //Needed for boost::filesystem::exists(...)
 #include "boost/filesystem.hpp"
-
+#include <stdio.h>
 
 //Liao, 10/27/2008: parsing OpenMP pragma here
 //Handle OpenMP pragmas. This should be called after preprocessing information is attached since macro calls may exist within pragmas, Liao, 3/31/2009
@@ -7606,12 +7606,19 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      result = vector<string>();
 
+/* 
 #ifdef _MSC_VER
 #pragma message ("WARNING: Linux popen() not supported within MSVC.")
 	 printf ("WARNING: Linux popen() not supported within MSVC.");
 	 ROSE_ASSERT(false);
 #else
+*/
+     // CH (4/6/2010): The Windows version of popen is _popen
+#ifdef _MSC_VER
+     if ((fp = _popen(command.c_str (), "r")) == NULL)
+#else
      if ((fp = popen(command.c_str (), "r")) == NULL)
+#endif
         {
           cerr << "Files or processes cannot be created" << endl;
           returnValue = false;
@@ -7632,12 +7639,16 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
           result.push_back (current_string.substr (0, current_string.size () - 1));
         }
 
+#ifdef _MSC_VER
+     if (_pclose(fp) == -1)
+#else
      if (pclose(fp) == -1)
+#endif
         {
           cerr << ("Cannot execute pclose");
           returnValue = false;
         }
-#endif
+//#endif
 
      return returnValue;
    }
