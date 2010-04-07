@@ -4651,6 +4651,9 @@ HEADER_APPLICATION_PROJECT_START
           bool get_skip_unparse (void) const;
           bool get_useBackendOnly (void) const;
 
+       // DQ (4/6/2010): Added to support parsing only option.
+          bool get_exit_after_parser(void) const;
+
           bool get_C_only (void) const;
           bool get_C99_only (void) const;
           bool get_Cxx_only (void) const;
@@ -11742,6 +11745,21 @@ SgProject::get_useBackendOnly (void) const
         }
      return returnUseBackendOnly;
    }
+
+// DQ (4/6/2010): Added to support parsing only option.
+bool
+SgProject::get_exit_after_parser(void) const
+   {
+  // look at how the files are set
+     bool returnExitAfterParse = (numberOfFiles() > 0) ? true : false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          returnExitAfterParse = returnExitAfterParse && (bool) file.get_exit_after_parser();
+        }
+     return returnExitAfterParse;
+   }
+
 
 bool
 SgProject::get_C_only (void) const
