@@ -92,6 +92,9 @@ useful in an environment with submodules.
                 --squash and --no-squash. The default is that merges are
                 always committed.
 
+   debug        Prints some information about the repository that is
+                useful for debugging problems with smgit2.
+
 CHOOSING SUBMODULE BRANCHES
 
 When a branch is checked out in the main repository, we update the
