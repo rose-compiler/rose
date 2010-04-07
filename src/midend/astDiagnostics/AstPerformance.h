@@ -189,11 +189,8 @@ class AstPerformance
        // Support for file locking (so that the performance file is not 
        // corrupted by parallel writes as used in parallel compiles with 
        // the "-j#" make option).
-          // CH (4/1/2010): Use Standard C File I/O functions for portability
-	  static FILE* getLock();
-          static void releaseLock (FILE* fd );
-          //static int getLock();
-          //static void releaseLock (int fd );
+          static int getLock();
+          static void releaseLock (int fd );
 
        // Timer function support
           static void reportAccumulatedTime ( const std::string & s, const double & accumulatedTime, const double & numberFunctionCalls );
