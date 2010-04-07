@@ -1,10 +1,11 @@
+//#include "rose.h"
 // Author: Markus Schordan
 // $Id: AstNodePtrs.C,v 1.3 2006/04/24 00:21:32 dquinlan Exp $
 
 
 // DQ (3/6/2003): added from AstProcessing.h to avoid referencing
 // the traversal classes in AstFixes.h before they are defined.
-#include "sage3.h"
+#include "sage3basic.h"
 #include "roseInternal.h"
 
 #include <sstream>

@@ -1,7 +1,8 @@
 /* Generic Sections. SgAsmGenericSection serves as a base class for all binary file formats that divide a file into contiguous
  * parts.  The SgAsmGenericSection class describes such a part. Most binary formats will subclass this. */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -142,7 +143,7 @@ SgAsmGenericSection::set_offset(addr_t offset)
 
 /** Returns starting byte offset in the file */
 rose_addr_t
-SgAsmGenericSection::get_end_offset()
+SgAsmGenericSection::get_end_offset() const
 {
     return get_offset() + get_size();
 }
@@ -213,7 +214,7 @@ SgAsmGenericSection::set_mapped_preferred_rva(addr_t a)
 
 /** Returns (non-relative) virtual address if mapped, zero otherwise. */
 rose_addr_t
-SgAsmGenericSection::get_mapped_preferred_va()
+SgAsmGenericSection::get_mapped_preferred_va() const
 {
     ROSE_ASSERT(this != NULL);
     if (is_mapped())
@@ -229,7 +230,7 @@ SgAsmGenericSection::get_mapped_preferred_va()
  *  p_mapped_actual_rva regardless of whether p_mapped_actual_rva is non-zero (this doesn't matter in ELF, where the base
  *  virtual address is always zero anyway). */
 rose_addr_t
-SgAsmGenericSection::get_mapped_actual_va()
+SgAsmGenericSection::get_mapped_actual_va() const
 {
     ROSE_ASSERT(this != NULL);
     return get_base_va() + get_mapped_actual_rva();
@@ -696,7 +697,7 @@ SgAsmGenericSection::unparse_holes(std::ostream &f) const
  *
  *  NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
-SgAsmGenericSection::get_rva_offset(addr_t rva)
+SgAsmGenericSection::get_rva_offset(addr_t rva) const
 {
     return get_va_offset(rva + get_base_va());
 }
@@ -705,7 +706,7 @@ SgAsmGenericSection::get_rva_offset(addr_t rva)
  *
  *  NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
-SgAsmGenericSection::get_va_offset(addr_t va)
+SgAsmGenericSection::get_va_offset(addr_t va) const
 {
     ROSE_ASSERT(is_mapped());
     ROSE_ASSERT(va >= get_base_va());

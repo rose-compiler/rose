@@ -196,7 +196,7 @@ namespace NodeQuery
    * either all the nodes in a subTree or the children of the node 'subTree'.
    *******************************************************************************************/
   template<typename NodeFunctional>
-  typename NodeFunctional::result_type
+  typename NodeFunctional::result_type 
    querySubTree ( SgNode * subTree, 
              NodeFunctional pred, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes)
      {
@@ -214,8 +214,8 @@ namespace NodeQuery
    * returns a list of all SgNodes in the sub-tree of the variable 'subTree' found by the 
    * preimplemented function 'elementReturnType'.
    *******************************************************************************************/
-  NodeQuerySynthesizedAttributeType
-  querySubTree
+  ROSE_DLL_API NodeQuerySynthesizedAttributeType
+  querySubTree 
     (SgNode * subTree,
      TypeOfQueryTypeOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
@@ -233,8 +233,8 @@ namespace NodeQuery
    * returns a list of all SgNodes in the sub-tree of the variable 'subTree' found by the 
    * function 'elementReturnType'.
    *******************************************************************************************/
-   NodeQuerySynthesizedAttributeType
-   querySubTree
+   ROSE_DLL_API NodeQuerySynthesizedAttributeType
+   querySubTree 
     (SgNode * subTree,
      roseFunctionPointerOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
@@ -253,7 +253,7 @@ namespace NodeQuery
    * returns a list of all SgNodes in the sub-tree of the variable 'subTree' found by the 
    * function 'querySolverFunction' given a second argument 'traversal'.
    *******************************************************************************************/
-  NodeQuerySynthesizedAttributeType
+  ROSE_DLL_API NodeQuerySynthesizedAttributeType
   querySubTree
     (SgNode * subTree,
      SgNode * traversal,
@@ -274,7 +274,7 @@ namespace NodeQuery
    * returns a list of all SgNodes in the sub-tree of the variable 'subTree' found by the 
    * preimplemented function 'elementReturnType' given a second argument 'traversal'.
    *******************************************************************************************/
-  NodeQuerySynthesizedAttributeType
+  ROSE_DLL_API NodeQuerySynthesizedAttributeType
   querySubTree
     (SgNode * subTree,
      SgNode * traversal,
@@ -296,7 +296,7 @@ namespace NodeQuery
    * returns a list of all SgNodes in the sub-tree of the variable 'subTree' which is
    * of SgNode VariantT 'targetVariant'.
    *******************************************************************************************/
-  NodeQuerySynthesizedAttributeType
+  ROSE_DLL_API NodeQuerySynthesizedAttributeType
   querySubTree
     (SgNode * subTree,
      VariantT targetVariant,
@@ -362,7 +362,7 @@ namespace NodeQuery
    * reutnrs a list of all SgNodes us the AST sub-tree of the variable 'subTree' conforming to the
    * variants in VariantVector.
    *********************************************************************************************/
-  NodeQuerySynthesizedAttributeType  querySubTree
+  ROSE_DLL_API NodeQuerySynthesizedAttributeType  querySubTree
     (SgNode * subTree,
      VariantVector targetVariantVector,
      AstQueryNamespace::QueryDepth defineQueryType =

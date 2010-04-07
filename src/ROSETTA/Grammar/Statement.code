@@ -426,9 +426,102 @@ HEADER_SCOPE_STATEMENT_START
 HEADER_SCOPE_STATEMENT_END
 
 
+HEADER_STATEMENT_POSTDECLARATION_START
+
+// DQ (12/30/2009): This has been moved from SOURCE_MAIN_STATEMENT to
+// here so that ic can be referenced from the separate source files 
+// now optionally generated within ROSE to support smaller ROSETTA 
+// generated files.
+
+#if 1
+// DQ (12/30/2009): This does not appear to be required to be a template function (base class will work just fine).
+
+// Replace target with newstmt if target matches 'cur'
+template <class Elemtype> 
+inline bool
+StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgStatement *newstmt)
+   {
+     if (cur == target)
+        {
+       // newstmt can be NULL or it must be compatible with cur's type
+       // assert( newstmt == 0 || newstmt->variantT() == cur->variantT());
+          ROSE_ASSERT (newstmt == 0 || dynamic_cast<Elemtype*>(newstmt));
+#ifndef REMOVE_SET_PARENT_FUNCTION
+       // DQ (9/24/2004): Parent will be set in the AST fixup (in post-processing of the AST in AST Fixup)
+       // Should not be set within EDG/Sage III connection code!
+          printf ("Warning: Temporarily skipping set_parent in StatementReplace \n");
+       // if (newstmt != 0)
+       //    newstmt->set_parent( parent);
+#endif
+
+          cur = static_cast<Elemtype *>(newstmt);
+          parent->set_isModified(true);
+          return true;
+        }
+     return false;
+   }
+#else
+// DQ (12/30/2009): This is an attempt to build a more portable function to support new smaller ROSETTA generated files.
+// If we want to build this as a non-template function then we will have to reference "SgLocatedNode *& cur" as 
+// "SgLocatedNode ** cur" (or perhaps using SgStatement), else the types prevent the function from working.
+inline bool
+StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, SgStatement *newstmt)
+// StatementReplace (SgStatement *parent, SgLocatedNode *& cur, SgStatement *target, SgStatement *newstmt)
+   {
+     if (cur == target)
+        {
+       // newstmt can be NULL or it must be compatible with cur's type
+          ROSE_ASSERT (newstmt == NULL || newstmt->variantT() == cur->variantT());
+
+       // cur = static_cast<Elemtype *>(newstmt);
+       // cur = static_cast<SgStatement*>(newstmt);
+          cur = static_cast<SgLocatedNode*>(newstmt);
+
+          parent->set_isModified(true);
+          return true;
+        }
+     return false;
+   }
+#endif
+
+#if 0
+// DQ (12/30/2009): This has been moved to the header file since it was a used in
+// several places and could not be supported in the source file now that we 
+// support the generation of smaller and more numerous files by ROSETTA.
+inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
+   {
+  // DQ (11/20/2004): Modified to provide more accurate information, use the 
+  // copy constructor instead of the constructor that takes a file name.
+  // return new Sg_File_Info( p->get_file_info()->get_filename());
+
+  // DQ (11/6/2006): startOfConstruct is the one Sg_File_Info that will always exist and must exist.
+  // ROSE_ASSERT(p->get_file_info() != NULL);
+  // Sg_File_Info* returnFileInfo = new Sg_File_Info( *( p->get_file_info() ) );
+  // ROSE_ASSERT(returnFileInfo != NULL);
+     ROSE_ASSERT(p->get_startOfConstruct() != NULL);
+     Sg_File_Info* returnFileInfo = new Sg_File_Info( *( p->get_startOfConstruct() ) );
+     ROSE_ASSERT(returnFileInfo != NULL);
+
+  // printf ("In New_File_Info: returnFileInfo = %p \n",returnFileInfo);
+
+     return returnFileInfo;
+   }
+#else
+// Temporary while we move code to use generateMatchingFileInfo directly.
+inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
+   {
+     ROSE_ASSERT(p != NULL);
+     return p->generateMatchingFileInfo();
+   }
+#endif
+
+HEADER_STATEMENT_POSTDECLARATION_END
+
+
 HEADER_POST_CONSTRUCTION_INITIALIZATION_START
           void post_construction_initialization();
 HEADER_POST_CONSTRUCTION_INITIALIZATION_END
+
 
 HEADER_FUNCTION_TYPE_TABLE_START
           $CLASSNAME ();
@@ -533,9 +626,11 @@ HEADER_DECLARATION_STATEMENT_START
        // Support for skipping the "<" and ">" when the output of the template argument list would be empty.
           bool skipEmptyTemplateArgumentListTest ( SgFunctionDeclaration* functionDeclaration );
 
+       // DQ (12/30/2009): Uncomment this so that it can be placed into a class and not be a global scope (or file scope function).
        // DQ (4/28/2005): names of template functions are setup with a name of the form "foo<int>" 
        // and must be converted to a name that can be more easily mangled (with out "<" and ">").
        // SgName fixupTemplateNameForMangledNameSupport( const SgName & s) const;
+          SgName fixupTemplateNameForMangledNameSupport( const SgName & s) const;
 
        // DQ (6/2/2006): Support for name mangling of unnamed classes embedded in 
        // SgVariableDeclaration and SgTypedefDeclaration.
@@ -707,6 +802,143 @@ HEADER_LIST_DECLARATIONS
 #endif
 
 HEADER_BASIC_BLOCK_END
+
+
+HEADER_BASIC_BLOCK_POSTDECLARATION_START
+// The following template function requires the definition of SgBasicBlock, so 
+// we put it in the POSTDECLARATION.
+
+#if 1
+// DQ (12/30/2009): This has been moved to the header file since it was a used in
+// several places and could not be supported in the source file now that we 
+// support the generation of smaller and more numerous files by ROSETTA.
+template <class Elemtype> 
+inline bool
+StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
+                          SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
+   {
+#if 0
+     printf ("In StatementListInsertChild: l.size() = %zu \n",l.size());
+     printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
+     printf ("In StatementListInsertChild: parent   = %p \n",parent);
+     printf ("In StatementListInsertChild: target   = %p \n",target);
+     printf ("In StatementListInsertChild: n        = %p \n",n);
+#endif
+
+     ROSE_ASSERT(parent != NULL);
+     ROSE_ASSERT(target != NULL);
+
+  // DQ (7/19/2005): Milind says that we can comment this out (because the remove function 
+  // calls the replace function which calls this insert function with n == NULL)
+  // This function's name is misleading and could be more clear.
+  // ROSE_ASSERT(n != NULL);
+
+     bool targetLocated = find(l.begin(),l.end(),target) != l.end();
+     if (targetLocated == false)
+        {
+          printf ("Error: target statement = %p not found in list of statements provided. \n",target);
+          ROSE_ASSERT(false);
+        }
+  // ROSE_ASSERT (find(l.begin(),l.end(),target) != l.end());
+
+     unsigned int size = l.size();
+     for (unsigned int p = 0; p < size; ++p)
+        {
+       // printf ("Looping through the list of statements! p = %p \n",l[p]);
+          if ( l[p] == target )
+             {
+               if (removeCurrent)
+                  {
+                 // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
+                    l.erase(l.begin() + p);
+
+                    parent->set_isModified(true);
+                  }
+
+               if (!inFront)
+                    ++p;
+#if 0
+            // DQ (12/6/2004): This interfers with the execution of the EDG/Sage III translation!
+            // DQ (12/5/2004): There should be a valid scope (set before passing the statement to this function!)
+               ROSE_ASSERT(n == NULL || n->get_scope() != NULL);
+#endif
+
+               SgBasicBlock *bn = extractFromBasicBlock? isSgBasicBlock(n) : NULL; 
+               if (bn == NULL)
+                  {
+                    assert(n == 0 || dynamic_cast<Elemtype*>(n) != 0);
+                    if (n != 0)
+                       {
+                      // DQ (10/17/2004): We MUST set the parent here, the string based AST rewrite mechanism 
+                      // requires this semantics. Previously it was removed as part of the movement toward an 
+                      // initialization of the parent pointers within a post processing phase.  This post-processing
+                      // phase was a result of an attempt (successful) to remove side-effects from the set_xxx 
+                      // access functions generated by ROSETTA.  At some point parents will be be initialized within 
+                      // the EDG/Sage interface, but we will be more careful how it is done and not reintroduce the 
+                      // previous side-effects back into the access functions.
+                         n->set_parent(parent);
+
+                      // DQ (12/5/2004): Later in the day I discovered that this allows member functions to be defined 
+                      // as have a scope which is not a class definition (which is an error caught in the unparser!).
+                      // So it would be good to make the scope correctly (this could be a start at marking all other 
+                      // pointers within a new node added by the rewrite system correctly!).  I think the solution is 
+                      // to set the scope before it gets to this function since this is a general mechanism for inserting 
+                      // statements and not one which should have such a side-effect as setting or resetting the scope 
+                      // of statements containing explicit scope pointers.
+
+                      // DQ (6/24/2006): The scope is not explicitly represented and this is not required 
+                      // ("n->set_scope(parentScope);" was already commented out so this is unused code).
+
+                      // DQ (12/5/2004): If the scope is stored explicitly then we must also set the scope of the new 
+                      // statement.  But we will not know the scope, so for now derive it structurally (using the parent).
+                      // But not all statements have a set_scope function, so see if this one does.
+                         SgScopeStatement* parentScope = isSgScopeStatement(parent);
+
+                         if (parentScope == NULL)
+                              parentScope = parent->get_scope();
+
+                      // This is simple error checking
+                         ROSE_ASSERT(parentScope != NULL);
+                      // n->set_scope(parentScope);
+
+                         l.insert(l.begin() + p, static_cast<Elemtype*>(n));
+                         parent->set_isModified(true);
+                       }
+                  }
+                 else
+                  {
+                    SgStatementPtrList& nl = bn->get_statements();
+                    for (SgStatementPtrList::iterator pp = nl.begin(); pp != nl.end(); ++pp)
+                       {
+                         SgStatement* stmt = *pp;
+                         assert(dynamic_cast<Elemtype*>(stmt) != NULL);
+
+                      // DQ (10/17/2004): We MUST set the parent here, see note in true part of conditional (above).
+                         stmt->set_parent(parent);
+
+                      // DQ (12/5/2004): We MUST set the scope here, see note in true part of conditional (above).
+                         SgScopeStatement* parentScope = isSgScopeStatement(parent);
+                         if (parentScope == NULL)
+                              parentScope = parent->get_scope();
+                      // This is simple error checking
+                         ROSE_ASSERT(parentScope != NULL);
+                      // n->set_scope(parentScope);
+
+                         l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
+                         parent->set_isModified(true);
+                       }
+                  }
+
+               return true;
+             }
+        }
+
+     return false;
+   }
+#endif
+
+HEADER_BASIC_BLOCK_POSTDECLARATION_END
+
 
 HEADER_IF_STATEMENT_START
 
@@ -2731,176 +2963,8 @@ SgStatement::get_symbol_from_symbol_table() const
    {
      printf ("Error: virtual function SgStatement::get_symbol_from_symbol_table() called on base class SgStatement = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
-   }
-
-
-
-
-inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
-   {
-  // DQ (11/20/2004): Modified to provide more accurate information, use the 
-  // copy constructor instead of the constructor that takes a file name.
-  // return new Sg_File_Info( p->get_file_info()->get_filename());
-
-  // DQ (11/6/2006): startOfConstruct is the one Sg_File_Info that will always exist and must exist.
-  // ROSE_ASSERT(p->get_file_info() != NULL);
-  // Sg_File_Info* returnFileInfo = new Sg_File_Info( *( p->get_file_info() ) );
-  // ROSE_ASSERT(returnFileInfo != NULL);
-     ROSE_ASSERT(p->get_startOfConstruct() != NULL);
-     Sg_File_Info* returnFileInfo = new Sg_File_Info( *( p->get_startOfConstruct() ) );
-     ROSE_ASSERT(returnFileInfo != NULL);
-
-  // printf ("In New_File_Info: returnFileInfo = %p \n",returnFileInfo);
-
-     return returnFileInfo;
-   }
-
-template <class Elemtype> 
-inline bool
-StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
-                          SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
-   {
-#if 0
-     printf ("In StatementListInsertChild: l.size() = %zu \n",l.size());
-     printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
-     printf ("In StatementListInsertChild: parent   = %p \n",parent);
-     printf ("In StatementListInsertChild: target   = %p \n",target);
-     printf ("In StatementListInsertChild: n        = %p \n",n);
-#endif
-
-     ROSE_ASSERT(parent != NULL);
-     ROSE_ASSERT(target != NULL);
-
-  // DQ (7/19/2005): Milind says that we can comment this out (because the remove function 
-  // calls the replace function which calls this insert function with n == NULL)
-  // This function's name is misleading and could be more clear.
-  // ROSE_ASSERT(n != NULL);
-
-     bool targetLocated = find(l.begin(),l.end(),target) != l.end();
-     if (targetLocated == false)
-        {
-          printf ("Error: target statement = %p not found in list of statements provided. \n",target);
-          ROSE_ASSERT(false);
-        }
-  // ROSE_ASSERT (find(l.begin(),l.end(),target) != l.end());
-
-     unsigned int size = l.size();
-     for (unsigned int p = 0; p < size; ++p)
-        {
-       // printf ("Looping through the list of statements! p = %p \n",l[p]);
-          if ( l[p] == target )
-             {
-               if (removeCurrent)
-                  {
-                 // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
-                    l.erase(l.begin() + p);
-
-                    parent->set_isModified(true);
-                  }
-
-               if (!inFront)
-                    ++p;
-#if 0
-            // DQ (12/6/2004): This interfers with the execution of the EDG/Sage III translation!
-            // DQ (12/5/2004): There should be a valid scope (set before passing the statement to this function!)
-               ROSE_ASSERT(n == NULL || n->get_scope() != NULL);
-#endif
-
-               SgBasicBlock *bn = extractFromBasicBlock? isSgBasicBlock(n) : NULL; 
-               if (bn == NULL)
-                  {
-                    assert(n == 0 || dynamic_cast<Elemtype*>(n) != 0);
-                    if (n != 0)
-                       {
-                      // DQ (10/17/2004): We MUST set the parent here, the string based AST rewrite mechanism 
-                      // requires this semantics. Previously it was removed as part of the movement toward an 
-                      // initialization of the parent pointers within a post processing phase.  This post-processing
-                      // phase was a result of an attempt (successful) to remove side-effects from the set_xxx 
-                      // access functions generated by ROSETTA.  At some point parents will be be initialized within 
-                      // the EDG/Sage interface, but we will be more careful how it is done and not reintroduce the 
-                      // previous side-effects back into the access functions.
-                         n->set_parent(parent);
-
-                      // DQ (12/5/2004): Later in the day I discovered that this allows member functions to be defined 
-                      // as have a scope which is not a class definition (which is an error caught in the unparser!).
-                      // So it would be good to make the scope correctly (this could be a start at marking all other 
-                      // pointers within a new node added by the rewrite system correctly!).  I think the solution is 
-                      // to set the scope before it gets to this function since this is a general mechanism for inserting 
-                      // statements and not one which should have such a side-effect as setting or resetting the scope 
-                      // of statements containing explicit scope pointers.
-
-                      // DQ (6/24/2006): The scope is not explicitly represented and this is not required 
-                      // ("n->set_scope(parentScope);" was already commented out so this is unused code).
-
-                      // DQ (12/5/2004): If the scope is stored explicitly then we must also set the scope of the new 
-                      // statement.  But we will not know the scope, so for now derive it structurally (using the parent).
-                      // But not all statements have a set_scope function, so see if this one does.
-                         SgScopeStatement* parentScope = isSgScopeStatement(parent);
-
-                         if (parentScope == NULL)
-                              parentScope = parent->get_scope();
-
-                      // This is simple error checking
-                         ROSE_ASSERT(parentScope != NULL);
-                      // n->set_scope(parentScope);
-
-                         l.insert(l.begin() + p, static_cast<Elemtype*>(n));
-                         parent->set_isModified(true);
-                       }
-                  }
-                 else
-                  {
-                    SgStatementPtrList& nl = bn->get_statements();
-                    for (SgStatementPtrList::iterator pp = nl.begin(); pp != nl.end(); ++pp)
-                       {
-                         SgStatement* stmt = *pp;
-                         assert(dynamic_cast<Elemtype*>(stmt) != NULL);
-
-                      // DQ (10/17/2004): We MUST set the parent here, see note in true part of conditional (above).
-                         stmt->set_parent(parent);
-
-                      // DQ (12/5/2004): We MUST set the scope here, see note in true part of conditional (above).
-                         SgScopeStatement* parentScope = isSgScopeStatement(parent);
-                         if (parentScope == NULL)
-                              parentScope = parent->get_scope();
-                      // This is simple error checking
-                         ROSE_ASSERT(parentScope != NULL);
-                      // n->set_scope(parentScope);
-
-                         l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
-                         parent->set_isModified(true);
-                       }
-                  }
-
-               return true;
-             }
-        }
-
-     return false;
-   }
-// Replace target with newstmt if target matches 'cur'
-template <class Elemtype> 
-inline bool
-StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgStatement *newstmt)
-   {
-     if (cur == target)
-        {
-          // newstmt can be NULL or it must be compatible with cur's type
-       // assert( newstmt == 0 || newstmt->variantT() == cur->variantT());
-          ROSE_ASSERT (newstmt == 0 || dynamic_cast<Elemtype*>(newstmt));
-#ifndef REMOVE_SET_PARENT_FUNCTION
-       // DQ (9/24/2004): Parent will be set in the AST fixup (in post-processing of the AST in AST Fixup)
-       // Should not be set within EDG/Sage III connection code!
-          printf ("Warning: Temporarily skipping set_parent in StatementReplace \n");
-       // if (newstmt != 0)
-       //    newstmt->set_parent( parent);
-#endif
-
-          cur = static_cast<Elemtype *>(newstmt);
-          parent->set_isModified(true);
-          return true;
-        }
-     return false;
+	// tps (12/9/2009) : MSC requires a return value
+     return NULL;
    }
 
 void
@@ -3211,7 +3275,7 @@ SgStatement::get_scope(void) const
                   {
                     if (stmt->get_parent() == NULL)
                        {
-                      // printf ("Error: SgStatement has NULL parent at node = %p = %s \n",stmt,stmt->class_name().c_str());
+                         printf ("Error: SgStatement has NULL parent at node = %p = %s \n",stmt,stmt->class_name().c_str());
                          stmt->get_file_info()->display("Error: SgStatement has NULL parent");
                        }
                     ROSE_ASSERT(stmt->get_parent() != NULL);
@@ -5241,7 +5305,6 @@ SOURCE_GLOBAL_STATEMENT_PARSER_START
 // the overloaded parse functions for each grammar share the names that are unique to that grammar only.
 // thus we prefix the parse member function name with "Sg".
 
-// include <rose.h>
 
 SgNode*
 Sgparse ( $PARENT_GRAMMARS_PREFIX_Global* Xptr )
@@ -6257,7 +6320,8 @@ stringSupport ( string & sourceString, const string & targetString, const string
    }
 
 // SgName $CLASSNAME::fixupTemplateNameForMangledNameSupport( const SgName & name) const
-static SgName fixupTemplateNameForMangledNameSupport( const SgName & name)
+// static SgName fixupTemplateNameForMangledNameSupport( const SgName & name)
+SgName $CLASSNAME::fixupTemplateNameForMangledNameSupport( const SgName & name) const
    {
   // Where template names are reset to the form "foo < int >" we can look for just
   // the " < " and " > " substrings which are guaranteed to exist by construction!
@@ -7024,13 +7088,13 @@ SgForInitStatement::insert_init_stmt(const SgStatementPtrList::iterator& where, 
 bool
 SgForInitStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
    {
-     return  StatementListInsertChild( this, p_init_stmt, target, newstmt, true, extractBasicBlock, true);
+     return StatementListInsertChild( this, p_init_stmt, target, newstmt, true, extractBasicBlock, true);
    }
 
 bool 
 SgForInitStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront, bool extractBasicBlock)
    {
-     return  StatementListInsertChild( this, p_init_stmt, target, newstmt, inFront, extractBasicBlock, false);
+     return StatementListInsertChild( this, p_init_stmt, target, newstmt, inFront, extractBasicBlock, false);
    }
 
 SOURCE_FOR_INIT_STATEMENT_END
@@ -7095,17 +7159,6 @@ SgForStatement::get_init_stmt()
    { 
   // DQ (6/24/2006): If this is always true then we can simplify this function.
      ROSE_ASSERT(p_for_init_stmt != NULL);
-#if 0
-     if (get_for_init_stmt() == NULL)
-        {
-       // DQ (6/6/2005): fixup parent of SgForInitStatement
-       // set_for_init_stmt(new SgForInitStatement(New_File_Info(this)));
-          SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
-          ROSE_ASSERT(forInitStatement != NULL);
-          set_for_init_stmt(forInitStatement);
-          forInitStatement->set_parent(this);
-        }
-#endif
      return get_for_init_stmt()->get_init_stmt(); 
    }
 
@@ -7123,17 +7176,6 @@ SgForStatement::append_init_stmt(SgStatement * what)
    { 
   // DQ (6/24/2006): If this is always true then we can simplify this function.
      ROSE_ASSERT(p_for_init_stmt != NULL);
-#if 0
-     if (get_for_init_stmt() == NULL)
-        {
-       // DQ (6/6/2005): fixup parent of SgForInitStatement
-       // set_for_init_stmt(new SgForInitStatement(New_File_Info(this)));
-          SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
-          ROSE_ASSERT(forInitStatement != NULL);
-          set_for_init_stmt(forInitStatement);
-          forInitStatement->set_parent(this);
-        }
-#endif
      get_for_init_stmt()->append_init_stmt(what);
    }
 
@@ -7142,40 +7184,8 @@ SgForStatement::prepend_init_stmt(SgStatement * what)
    {
   // DQ (6/24/2006): If this is always true then we can simplify this function.
      ROSE_ASSERT(p_for_init_stmt != NULL);
-#if 0
-     if (get_for_init_stmt() == NULL)
-        {
-       // DQ (6/6/2005): fixup parent of SgForInitStatement
-       // set_for_init_stmt(new SgForInitStatement(New_File_Info(this)));
-          SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
-          ROSE_ASSERT(forInitStatement != NULL);
-          set_for_init_stmt(forInitStatement);
-          forInitStatement->set_parent(this);
-        }
-#endif
      get_for_init_stmt()->prepend_init_stmt(what); 
    }
-
-#if 0
-void
-SgForStatement::insert_init_stmt(const SgStatementPtrList::iterator& where, SgStatement * what) 
-   {
-  // DQ (6/24/2006): If this is always true then we can simplify this function.
-     ROSE_ASSERT(p_for_init_stmt != NULL);
-#if 0
-     if (get_for_init_stmt() == NULL)
-        {
-       // DQ (6/6/2005): fixup parent of SgForInitStatement
-       // set_for_init_stmt(new SgForInitStatement(New_File_Info(this)));
-          SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
-          ROSE_ASSERT(forInitStatement != NULL);
-          set_for_init_stmt(forInitStatement);
-          forInitStatement->set_parent(this);
-        }
-#endif
-     get_for_init_stmt()->insert_init_stmt(where,what);
-   }
-#endif
 
 bool
 SgForStatement::replace_child(SgStatement *target,SgStatement *newstmt,
@@ -7231,36 +7241,9 @@ SgForStatement::set_test_expr (SgExpression* expr )
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (expr != NULL);
 
-#if 0
-  // Make this a new Sg_File_Info object so that they will not be shared
-  // Sg_File_Info* fileInfo1 = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-  // Sg_File_Info* fileInfo2 = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-     Sg_File_Info* fileInfo1 = New_File_Info(expr);
-     Sg_File_Info* fileInfo2 = New_File_Info(expr);
-
-     printf ("Calling SgForStatement::set_test_expr() which builds a SgExpressionRoot (should no longer be used) \n");
-     ROSE_ASSERT(false);
-
-     SgExpressionRoot* expressionRoot     = new SgExpressionRoot(fileInfo1,expr,NULL);
-     ROSE_ASSERT(expressionRoot != NULL);
-
-  // DQ (10/27/2006): This might have to be reset later,
-  // since at this point we might not know the exact size.
-     expressionRoot->set_endOfConstruct(New_File_Info(expr));
-
-  // DQ (4/7/2006): Set the parents
-     expr->set_parent(expressionRoot);
-
-     SgExprStatement* expressionStatement = new SgExprStatement(fileInfo2,expressionRoot);
-     ROSE_ASSERT(expressionStatement != NULL);
-
-  // DQ (4/7/2006): Set the parents
-     expressionRoot->set_parent(expressionStatement);
-#else
      Sg_File_Info* fileInfo = New_File_Info(expr);
      SgExprStatement* expressionStatement = new SgExprStatement(fileInfo,expr);
      ROSE_ASSERT(expressionStatement != NULL);
-#endif
 
   // DQ (10/27/2006): This might have to be reset later, 
   // since at this point we might not know the exact size.
@@ -7280,68 +7263,6 @@ SgForStatement::set_test_expr (SgExpression* expr )
 
      ROSE_ASSERT(isSgStatement(p_test) != NULL);
    }
-
-#if 0
-// DQ (11/7/2006): This function is now generated by ROSETTA.
-
-SgExpressionRoot*
-SgForStatement::get_test_expr_root () const
-   {
-  // DQ (11/25/2005): preserve the previous interface.
-  // This function returns the expression root (one IR node higher than 
-  // the test expression if it is a SgExpression and not a SgStatement).
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT(p_test != NULL);
-     ROSE_ASSERT(isSgStatement(p_test) != NULL);
-
-     SgExpressionRoot*    testExpressionRoot = NULL;
-     SgExprStatement* exprStatement  = isSgExprStatement(p_test);
-     if (exprStatement != NULL)
-        {
-          testExpressionRoot = exprStatement->get_expression_root();
-          ROSE_ASSERT(testExpressionRoot != NULL);
-        }
-       else
-        {
-          printf ("test in SgForStatement is a %s \n",p_test->class_name().c_str());
-          ROSE_ASSERT(false);
-        }
-
-     ROSE_ASSERT(testExpressionRoot != NULL);
-     return testExpressionRoot;
-   }
-#endif
-
-#if 0
-// DQ (11/7/2006): This function is now generated by ROSETTA.
-
-void
-SgForStatement::set_test_expr_root (SgExpressionRoot* expressionRoot )
-   {
-  // DQ (11/25/2005): preserve the previous interface. This function 
-  // sets the SgStatement using a SgExpressionRoot IR node.
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT(expressionRoot != NULL);
-
-     Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-     SgExprStatement* expressionStatement = new SgExprStatement(fileInfo,expressionRoot);
-     ROSE_ASSERT(expressionStatement != NULL);
-
-  // DQ (10/27/2006): This might have to be reset later,
-  // since at this point we might not know the exact size.
-     expressionStatement->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-
-  // DQ (4/7/2006): Set the parents
-     expressionRoot->set_parent(expressionStatement);
-
-     set_test(expressionStatement);
-
-  // DQ (4/7/2006): Set the parents
-     expressionStatement->set_parent(this);
-
-     ROSE_ASSERT(isSgStatement(p_test) != NULL);
-   }
-#endif
 
 // DQ (12/6/2006): We need this sort of function now that we have removed the expression root node!
 // The requirement of not being able to do operations uniformly on expressions may be the disadvantage
@@ -8380,7 +8301,6 @@ SOURCE_FUNCTION_DECLARATION_STATEMENT_PARSER_START
 // the overloaded parse functions for each grammar share the names that are unique to that grammar only.
 // thus we prefix the parse member function name with "Sg".
 
-// include <rose.h>
 
 SgNode*
 Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDeclaration* Xptr )
@@ -8649,7 +8569,6 @@ SOURCE_FUNCTION_DEFINTION_STATEMENT_PARSER_START
 // the overloaded parse functions for each grammar share the names that are unique to that grammar only.
 // thus we prefix the parse member function name with "Sg".
 
-// include <rose.h>
 
 SgNode*
 Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDefinition* Xptr )
@@ -10635,7 +10554,7 @@ bool
 SgClassDefinition::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront,
                                  bool extractBasicBlock)
    {
-     return  StatementListInsertChild( this, get_members(), target, newstmt, inFront, extractBasicBlock, false);
+     return StatementListInsertChild( this, get_members(), target, newstmt, inFront, extractBasicBlock, false);
    }
 
 #if 0
@@ -11136,6 +11055,8 @@ SgSwitchStatement::replace_child(SgStatement *target,SgStatement *newstmt,
    {
      return ( StatementReplace(this, p_body, target, newstmt) == true );
    }
+
+#include "sageBuilder.h"
 
 void
 SgSwitchStatement::append_case(SgCaseOptionStmt *& what)
@@ -12197,9 +12118,9 @@ SgNamespaceDefinitionStatement::insert_child(SgStatement* target, SgStatement* n
 
 bool 
 SgNamespaceDefinitionStatement::replace_child(SgStatement *target ,SgStatement * newstmt, bool extractBasicBlock)
-{
-  return  StatementListInsertChild( this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
-}
+   {
+     return StatementListInsertChild( this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
+   }
 #endif
 
 // DQ (9/8/2004): Added to support qualified name generation
@@ -12317,84 +12238,6 @@ SgProgramHeaderStatement::get_mangled_name() const
      return SgFunctionDeclaration::get_mangled_name();
    }
 
-#if 0
-// DQ (3/20/2007): This should be removed, it is not required.
-SgName 
-SgProgramHeaderStatement::get_name () const
-   {
-     return p_name;
-   }
-
-void
-SgProgramHeaderStatement::set_name ( SgName name )
-   {
-     set_isModified(true);
-     p_name = name;
-   }
-
-SgFunctionType* 
-SgProgramHeaderStatement::get_type () const
-   {
-     assert (this != NULL);
-     return p_type;
-   }
-
-void
-SgProgramHeaderStatement::set_type ( SgFunctionType* type )
-   {
-     assert (this != NULL);
-     set_isModified(true);
-     p_type = type;
-     /* 
-#ifndef REMOVE_SET_PARENT_FUNCTION
-     if (type != NULL)
-          type->set_parent(this);
-#endif */
-   }
-
-SgType* $CLASSNAME::get_orig_return_type() const
-{
-  return get_type()->get_orig_return_type();
-}
-
-void
-$CLASSNAME::hasEllipses()
-   {
-  // Record as true!
-     get_type()->set_has_ellipses(1);
-   }
-
-/* IniitalizedName tuple : ($GRAMMAR_PREFIX_Name, DeclStmt, type, Initializer) */
-$GRAMMAR_PREFIX_InitializedNamePtrList::iterator 
-$CLASSNAME::insert_arg(const $GRAMMAR_PREFIX_InitializedNamePtrList::iterator& where, $GRAMMAR_PREFIX_InitializedName* what)
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->insert_arg(where,what);
-   }
-
-$GRAMMAR_PREFIX_InitializedNamePtrList::iterator
-$CLASSNAME::append_arg( $GRAMMAR_PREFIX_InitializedName* what)
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->append_arg(what);
-   }
-
-$GRAMMAR_PREFIX_InitializedNamePtrList::iterator
-$CLASSNAME::prepend_arg( $GRAMMAR_PREFIX_InitializedName* what)
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->prepend_arg(what);
-   }
-#endif
 
 bool
 SgProgramHeaderStatement::replace_child(SgStatement *target, SgStatement *newstmt, bool extractBasicBlock)
@@ -12405,56 +12248,6 @@ SgProgramHeaderStatement::replace_child(SgStatement *target, SgStatement *newstm
           return (StatementReplace(this, p_parameterList, target, newstmt));
    }
 
-#if 0
-// DQ (8/18/2004): Removing older attribute mechanism
-
-/******  $GRAMMAR_PREFIX_FunctionDeclaration ******/
-/* suppress the printing of atomic keyword */
-int
-get_suppress_atomic ($CLASSNAME *node)
-   {
-     $GRAMMAR_PREFIX_FuncDecl_attr *attr= 
-         ($GRAMMAR_PREFIX_FuncDecl_attr *) $GRAMMAR_PREFIX_get_user_attribute 
-              (node->get_uattributes(),"$GRAMMAR_PREFIX_FuncDecl_attr");
-     if(attr)
-        return attr->get_suppress_atomic();
-
-     return 0;
-   }
-#endif
-
-#if 0
-$GRAMMAR_PREFIX_InitializedNamePtrList & 
-$CLASSNAME::get_args() 
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->get_args();
-   }
-
-const $GRAMMAR_PREFIX_InitializedNamePtrList & 
-$CLASSNAME::get_args() const 
-   {
-  // QY:11/2/04 should make sure get_parameterList() != 0
-     assert(get_parameterList() != NULL);
-     return get_parameterList()->get_args();
-   }
-
-void
-SgProgramHeaderStatement::set_parameterList ( SgFunctionParameterList* parameterList )
-   {
-     assert (this != NULL);
-     set_isModified(true);
-     p_parameterList = parameterList;
-     /* 
-#ifndef REMOVE_SET_PARENT_FUNCTION
-     if (parameterList != NULL)
-          parameterList->set_parent(this);
-#endif */
-   }
-#endif
 SOURCE_PROGRAM_HEADER_STATEMENT_END
 
 SOURCE_PROCEDURE_HEADER_STATEMENT_START
@@ -12502,157 +12295,6 @@ SgProcedureHeaderStatement::isBlockData() const
 
      return result;
    }
-
-#if 0
-// DQ (3/20/2007): These are automatically generated so they need not be defined exxplicitly
-SgName 
-SgProcedureHeaderStatement::get_name () const
-   {
-     return p_name;
-   }
-
-void
-SgProcedureHeaderStatement::set_name ( SgName name )
-   {
-     set_isModified(true);
-     p_name = name;
-   }
-
-SgFunctionType* 
-SgProcedureHeaderStatement::get_type () const
-   {
-     assert (this != NULL);
-     return p_type;
-   }
-
-void
-SgProcedureHeaderStatement::set_type ( SgFunctionType* type )
-   {
-     assert (this != NULL);
-     set_isModified(true);
-     p_type = type;
-     /* 
-#ifndef REMOVE_SET_PARENT_FUNCTION
-     if (type != NULL)
-          type->set_parent(this);
-#endif */
-   }
-
-SgType* $CLASSNAME::get_orig_return_type() const
-{
-  return get_type()->get_orig_return_type();
-}
-
-void
-SgProcedureHeaderStatement::hasEllipses()
-   {
-  // Record as true!
-     get_type()->set_has_ellipses(1);
-   }
-#endif
-
-
-#if 0
-// DQ (3/20/2007): This should use the one in SgFunctionDefinition (base class)
-/* IniitalizedName tuple : ($GRAMMAR_PREFIX_Name, DeclStmt, type, Initializer) */
-$GRAMMAR_PREFIX_InitializedNamePtrList::iterator 
-SgProcedureHeaderStatement::insert_arg(const $GRAMMAR_PREFIX_InitializedNamePtrList::iterator& where, $GRAMMAR_PREFIX_InitializedName* what)
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->insert_arg(where,what);
-   }
-
-$GRAMMAR_PREFIX_InitializedNamePtrList::iterator
-SgProcedureHeaderStatement::append_arg( $GRAMMAR_PREFIX_InitializedName* what)
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->append_arg(what);
-   }
-
-$GRAMMAR_PREFIX_InitializedNamePtrList::iterator
-SgProcedureHeaderStatement::prepend_arg( $GRAMMAR_PREFIX_InitializedName* what)
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->prepend_arg(what);
-   }
-#endif
-
-#if 0
-// DQ (3/20/2007): This should use the one in SgFunctionDefinition (base class)
-// This references the definition which does not exist.
-bool
-SgProcedureHeaderStatement::replace_child($GRAMMAR_PREFIX_Statement *target,$GRAMMAR_PREFIX_Statement *newstmt,
-                              bool extractBasicBlock)
-   {
-     if(StatementReplace(this, p_definition, target, newstmt))
-          return true;
-       else
-          return (StatementReplace(this, p_parameterList, target, newstmt));
-   }
-#endif
-
-#if 0
-// DQ (8/18/2004): Removing older attribute mechanism
-
-/******  $GRAMMAR_PREFIX_FunctionDeclaration ******/
-/* suppress the printing of atomic keyword */
-int
-get_suppress_atomic ($CLASSNAME *node)
-   {
-     $GRAMMAR_PREFIX_FuncDecl_attr *attr= 
-         ($GRAMMAR_PREFIX_FuncDecl_attr *) $GRAMMAR_PREFIX_get_user_attribute 
-              (node->get_uattributes(),"$GRAMMAR_PREFIX_FuncDecl_attr");
-     if(attr)
-        return attr->get_suppress_atomic();
-
-     return 0;
-   }
-#endif
-
-#if 0
-$GRAMMAR_PREFIX_InitializedNamePtrList & 
-SgProcedureHeaderStatement::get_args() 
-   {
-     if (get_parameterList() == NULL) {
-       set_parameterList(new $GRAMMAR_PREFIX_FunctionParameterList(New_File_Info(this)));
-       get_parameterList()->set_parent(this);
-     }
-     return get_parameterList()->get_args();
-   }
-
-const $GRAMMAR_PREFIX_InitializedNamePtrList & 
-SgProcedureHeaderStatement::get_args() const 
-   {
-  // QY:11/2/04 should make sure get_parameterList() != 0
-     assert(get_parameterList() != 0);
-     return get_parameterList()->get_args();
-   }
-#endif
-
-#if 0
-// This should be automatically generated
-void
-SgProcedureHeaderStatement::set_parameterList ( SgFunctionParameterList* parameterList )
-   {
-     assert (this != NULL);
-     set_isModified(true);
-     p_parameterList = parameterList;
-     /* 
-#ifndef REMOVE_SET_PARENT_FUNCTION
-     if (parameterList != NULL)
-          parameterList->set_parent(this);
-#endif */
-   }
-#endif
 
 SOURCE_PROCEDURE_HEADER_STATEMENT_END
 
@@ -12846,18 +12488,17 @@ $CLASSNAME::insert_declaration ( const SgDeclarationStatementPtrList::iterator& 
 // DQ (8/27/2004): Turn this back on!
 #if 1
 bool
-$CLASSNAME::insert_child($GRAMMAR_PREFIX_Statement* target, $GRAMMAR_PREFIX_Statement* newstmt, bool inFront,
-                                 bool extractBasicBlock)
+$CLASSNAME::insert_child($GRAMMAR_PREFIX_Statement* target, $GRAMMAR_PREFIX_Statement* newstmt, bool inFront, bool extractBasicBlock)
    {
      return StatementListInsertChild( this, get_declarations(), target, newstmt, inFront, extractBasicBlock, false);
    }
 
 bool 
-$CLASSNAME::replace_child($GRAMMAR_PREFIX_Statement *target ,$GRAMMAR_PREFIX_Statement * newstmt,
-                                         bool extractBasicBlock)
-{
-  return  StatementListInsertChild( this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
-}
+
+$CLASSNAME::replace_child($GRAMMAR_PREFIX_Statement *target ,$GRAMMAR_PREFIX_Statement * newstmt, bool extractBasicBlock)
+   {
+     return StatementListInsertChild( this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
+   }
 #endif
 
 // DQ (9/8/2004): Added to support qualified name generation
@@ -12951,18 +12592,16 @@ $CLASSNAME::insert_declaration ( const SgDeclarationStatementPtrList::iterator& 
 // DQ (8/27/2004): Turn this back on!
 #if 1
 bool
-$CLASSNAME::insert_child($GRAMMAR_PREFIX_Statement* target, $GRAMMAR_PREFIX_Statement* newstmt, bool inFront,
-                                 bool extractBasicBlock)
+$CLASSNAME::insert_child($GRAMMAR_PREFIX_Statement* target, $GRAMMAR_PREFIX_Statement* newstmt, bool inFront, bool extractBasicBlock)
    {
      return StatementListInsertChild( this, get_declarations(), target, newstmt, inFront, extractBasicBlock, false);
    }
 
 bool 
-$CLASSNAME::replace_child($GRAMMAR_PREFIX_Statement *target ,$GRAMMAR_PREFIX_Statement * newstmt,
-                                         bool extractBasicBlock)
-{
-  return  StatementListInsertChild( this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
-}
+$CLASSNAME::replace_child($GRAMMAR_PREFIX_Statement *target ,$GRAMMAR_PREFIX_Statement * newstmt, bool extractBasicBlock)
+   {
+     return StatementListInsertChild( this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
+   }
 #endif
 #endif
 

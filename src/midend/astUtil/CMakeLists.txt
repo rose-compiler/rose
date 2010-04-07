@@ -11,6 +11,10 @@ add_subdirectory(annotation)
 
 
 
+#add_library( midend_util STATIC ${midend_util_src}  )
+#add_dependencies( midend_util ROSETTA )
+
+
 
 #original Makefile.am contents follow:
 

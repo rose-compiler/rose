@@ -6,6 +6,16 @@ add_subdirectory(finiteDifferencing)
 add_subdirectory(functionCallNormalization)
 add_subdirectory(constantFolding)
 add_subdirectory(implicitCodeGeneration)
+add_subdirectory(astInlining)
+add_subdirectory(astOutlining)
+add_subdirectory(loopProcessing)
+add_subdirectory(ompLowering)
+
+
+
+
+#add_library( midend_pt STATIC ${midend_pt_src}  )
+#add_dependencies( midend_pt ROSETTA  )
 
 
 ########### install files ###############

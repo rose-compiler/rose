@@ -4,10 +4,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # before the subdirectories.
 SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
 
+# DQ (12/29/2009): This is only used to handle generated code as smaller files.
+SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
+
 # DQ (5/2/2009): This supports the optimization of the new 
 # Graph IR nodes (makes about 25% improvement, I think).
 # ROSE_OPTIMIZATION_LEVEL = -O3
 ROSE_OPTIMIZATION_LEVEL =
+# ROSE_VERBOSE = -rose:verbose 2
 
 # Liao, 3/31/2009, moved the OpenMP parser here
 #Liao, 10/27/2008. I decide to parse OpenMP pragma string here
@@ -16,7 +20,10 @@ AM_YFLAGS = -d
 # Flex flags
 AM_LFLAGS =
 # avoid unused Flex functions which are automatically generated
-CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
+#CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
+
+CXXFLAGS+= $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE)
+
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
@@ -30,7 +37,13 @@ all-local: roseh sage.docs
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 # JJW 6-2-2008: We shouldn't be using anything from EDG outside these two directories
-INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+# INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+INCLUDES = $(ROSE_INCLUDES)
+
+# DQ (3/13/2010): sageSupport.C requires the OFP fortran source files to be made available.
+if ROSE_USE_OPEN_FORTRAN_PARSER
+   INCLUDES += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
+endif
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -48,19 +61,16 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # are called preproc.o (from here and from EDG).
 EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
              advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
-             omplexer.cc ompparser.cc ompparser.h
+             omplexer.cc ompparser.cc ompparser.h sage3basic.hhh fileoffsetbits.h rosedll.h
 CLEANFILES = haveRosettaGeneratedSource
 
-# DISTCLEANFILES = preproc.cc ompparser.cc ompparser.h omplexer.cc
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
 
-
-# DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
 # Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
-	Cxx_GrammarRTI.C \
 	Cxx_Grammar.C \
+	Cxx_GrammarRTI.C \
 	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \
 	Cxx_GrammarReturnClassHierarchySubTree.C \
@@ -80,7 +90,6 @@ GENERATED_SOURCE = \
 	Cxx_GrammarProcessDataMemberReferenceToPointers.C \
 	Cxx_GrammarNewConstructors.C \
 	Cxx_GrammarGetChildIndex.C
-
 
 # DQ (4/23/2009): This file depends upon other files
 StorageClasses.lo: $(srcdir)/astFileIO/StorageClassMemoryManagement.C astFileIO/SourcesOfIRNodesAstFileIOSupport.C
@@ -110,6 +119,13 @@ libsage3Sources = \
    ompFortranParser.C \
    dwarfSupport.C \
    rose_graph_support.C
+
+# DQ (2/15/2010): This fails in Hudson tests of ROSE compiling ROSE for code generation, but I can't 
+# get it to fail in my own tests.  Skip it for now and see if there are more of these cases.
+# attachPreprocessingInfo.C
+# if !ROSE_USING_ROSE_CODE_GENERATION
+#    libsage3Sources += attachPreprocessingInfo.C
+# endif
 
 # $(GENERATED_SOURCE) is handled separately
 
@@ -157,11 +173,9 @@ libsage3_la_LIBADD  = \
    astVisualization/libastVisualization.la
 endif
 
-#	astFileIO/libastFileIO.la 
-#	astFileIO/libastFileIO.la 
-
-# $(CXX_TEMPLATE_OBJECTS)
-# libsage3_la_DEPENDENCIES = preproc.o $(GENERATED_OBJECTS) astFixup/*.o astPostProcessing/*.o astMerge/*.o astFileIO/*.o sageInterface/*.o virtualCFG/*.o 
+if ROSE_USE_SMALLER_GENERATED_FILES
+   libsage3_la_LIBADD += GENERATED_CODE_DIRECTORY_Cxx_Grammar/libgeneratedIR.la
+endif
 
 rose_attributes_list.lo : rose_attributes_list.h 
 
@@ -177,8 +191,8 @@ roseh:
 #	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
 #       TPS (23 Feb 2009): Hardcoded -fpic and -DPIC for now because 
 #       for some reason it is used by most files although not specified on configure
-	@echo "  COMPILE rose.h.gch"
-	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	@echo "  COMPILE sage3basic.h.gch"
+	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o sage3basic.h.gch $(top_srcdir)/src/frontend/SageIII/sage3basic.h -I$(top_builddir) $(ROSE_INCLUDES) 
 endif
 else
 # default, do nothing.
@@ -191,14 +205,14 @@ test_roseh: roseh
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
 include_HEADERS = \
-   sage3.h rose_attributes_list.h \
+   sage3.h sage3basic.h rose_attributes_list.h \
    attachPreprocessingInfo.h \
    attachPreprocessingInfoTraversal.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h \
-   omp_lib_kinds.h omp_lib.h
+   omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_include_HEADERS = \
@@ -210,6 +224,14 @@ nodist_include_HEADERS = \
    astFileIO/AstSpecificDataManagingClass.h
 
 BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
+
+
+# DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
+sageSupport.C: extract_rose_required_ofp_source_files
+
+extract_rose_required_ofp_source_files:
+	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
+
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
 # since it is a convinient mechanism to handle included headers 
@@ -227,11 +249,12 @@ clean-local:
 	rm -rf Cxx_Grammar* AST_FILE_IO.C StorageClasses.C
 	rm -rf AST_FILE_IO.h StorageClasses.h AstQueryMemoryPool.h
 	rm -rf generated_abstractcppgrammar.atg
-	rm -f rose.h.gch
+	rm -f sage3basic.h.gch
+	rm -f *.binary
 
 distclean-local:
 	rm -rf Templates.DB
-	rm -f rose.h.gch
+	rm -f sage3basic.h.gch
 
 removeHashLineDirectivesFromGeneratedCode:
 	cp Cxx_Grammar.h  Cxx_Grammar.h.withLineDirectives
@@ -240,7 +263,7 @@ removeHashLineDirectivesFromGeneratedCode:
 
 
 testRose:
-	/usr/bin/time roseAnalysis -rose:verbose 2 -DHAVE_CONFIG_H -I. -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII -I../../.. -I../../../src/frontend/SageIII -I/home/dquinlan/ROSE/svn-rose/src -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astFixup -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astPostProcessing -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astMerge -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astVisualization -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astFileIO -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/sageInterface -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/virtualCFG -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astTokenStream -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astHiddenTypeAndDeclarationLists -I../../../src/frontend/SageIII/astFileIO -I/home/dquinlan/ROSE/svn-rose/src/frontend/OpenFortranParser_SAGE_Connection -I/home/dquinlan/ROSE/svn-rose/src/frontend/PHPFrontend -I/home/dquinlan/ROSE/svn-rose/src/frontend/BinaryDisassembly -I/home/dquinlan/ROSE/svn-rose/src/frontend/Disassemblers -I/home/dquinlan/ROSE/svn-rose/src/frontend/BinaryFormats -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/formatSupport -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/languageIndependenceSupport -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/CxxCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/FortranCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/PHPCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/backend/asmUnparser -I/home/dquinlan/ROSE/svn-rose/src/util -I/home/dquinlan/ROSE/svn-rose/src/util/support -I/home/dquinlan/ROSE/svn-rose/src/util/graphs -I/home/dquinlan/ROSE/svn-rose/src/util/stringSupport -I/home/dquinlan/ROSE/svn-rose/src/util/commandlineProcessing -I/home/dquinlan/ROSE/svn-rose/src/midend/abstractHandle -I/home/dquinlan/ROSE/svn-rose/src/midend/astDiagnostics -I/home/dquinlan/ROSE/svn-rose/src/midend/astInlining -I/home/dquinlan/ROSE/svn-rose/src/midend/astOutlining -I/home/dquinlan/ROSE/svn-rose/src/midend/astProcessing -I/home/dquinlan/ROSE/svn-rose/src/midend/astQuery -I/home/dquinlan/ROSE/svn-rose/src/midend/astRewriteMechanism -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/annotation -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/astInterface -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/astSupport -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/symbolicVal -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses/dataflowanalyses -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses/graph -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses/instructionSemantics -I/home/dquinlan/ROSE/svn-rose/src/midend/loopProcessing/computation -I/home/dquinlan/ROSE/svn-rose/src/midend/loopProcessing/depGraph -I/home/dquinlan/ROSE/svn-rose/src/midend/loopProcessing/depInfo -I/home/dquinlan/ROSE/svn-rose/src/midend/loopProcessing/driver -I/home/dquinlan/ROSE/svn-rose/src/midend/loopProcessing/outsideInterface -I/home/dquinlan/ROSE/svn-rose/src/midend/loopProcessing/prepostTransformation -I/home/dquinlan/ROSE/svn-rose/src/midend/ompLowering -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CFG -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CallGraphAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/OAWrap -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/dataflowAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/defUseAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/distributedMemoryAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/dominanceAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/graphAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/pointerAnal -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/staticInterproceduralSlicing -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/valuePropagation -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/partialRedundancyElimination -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/finiteDifferencing -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/functionCallNormalization -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/constantFolding -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/implicitCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/runtimeTransformation -I/home/dquinlan/ROSE/svn-rose/src/roseSupport -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/MSTL -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/libharu-2.1.0/include -I../../../src/3rdPartyLibraries/libharu-2.1.0/include -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/qrose/Framework -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/qrose/Widgets -I/home/dquinlan/ROSE/svn-rose/projects/dataBase -I/home/dquinlan/ROSE/svn-rose/src/util/graphs -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/astInterface -I/home/dquinlan/ROSE/svn-rose/libltdl -I/home/dquinlan/local/boost_1_37_0_installTree-gxx-4.2.2/include/boost-1_37 -DBOOST_REGEX_MATCH_EXTRA -I/usr/apps/java/jdk1.5.0_11/bin/../include -I/usr/apps/java/jdk1.5.0_11/bin/../include/linux -fPIC -DYY_NO_TOP_STATE -DYY_NO_POP_STATE -c Cxx_Grammar.C -fPIC -DPIC -o .libs/Cxx_Grammar.o >& Cxx_Grammar.verbose_output
+	/usr/bin/time roseAnalysis -rose:verbose 2 -DHAVE_CONFIG_H -I. -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII -I../../.. -I../../../src/frontend/SageIII -I/home/dquinlan/ROSE/svn-rose/src -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astFixup -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astPostProcessing -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astMerge -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astVisualization -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astFileIO -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/sageInterface -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/virtualCFG -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astTokenStream -I/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/astHiddenTypeAndDeclarationLists -I../../../src/frontend/SageIII/astFileIO -I/home/dquinlan/ROSE/svn-rose/src/frontend/OpenFortranParser_SAGE_Connection -I/home/dquinlan/ROSE/svn-rose/src/frontend/PHPFrontend -I/home/dquinlan/ROSE/svn-rose/src/frontend/BinaryDisassembly -I/home/dquinlan/ROSE/svn-rose/src/frontend/Disassemblers -I/home/dquinlan/ROSE/svn-rose/src/frontend/BinaryFormats -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/formatSupport -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/languageIndependenceSupport -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/CxxCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/FortranCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/backend/unparser/PHPCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/backend/asmUnparser -I/home/dquinlan/ROSE/svn-rose/src/util -I/home/dquinlan/ROSE/svn-rose/src/util/support -I/home/dquinlan/ROSE/svn-rose/src/util/graphs -I/home/dquinlan/ROSE/svn-rose/src/util/stringSupport -I/home/dquinlan/ROSE/svn-rose/src/util/commandlineProcessing -I/home/dquinlan/ROSE/svn-rose/src/midend/abstractHandle -I/home/dquinlan/ROSE/svn-rose/src/midend/astDiagnostics -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/astInlining -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/astOutlining -I/home/dquinlan/ROSE/svn-rose/src/midend/astProcessing -I/home/dquinlan/ROSE/svn-rose/src/midend/astQuery -I/home/dquinlan/ROSE/svn-rose/src/midend/astRewriteMechanism -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/annotation -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/astInterface -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/astSupport -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/symbolicVal -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses/dataflowanalyses -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses/graph -I/home/dquinlan/ROSE/svn-rose/src/midend/binaryAnalyses/instructionSemantics -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/loopProcessing/computation -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/loopProcessing/depGraph -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/loopProcessing/depInfo -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/loopProcessing/driver -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/loopProcessing/outsideInterface -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/loopProcessing/prepostTransformation -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/ompLowering -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CFG -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CallGraphAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/OAWrap -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/dataflowAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/defUseAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/distributedMemoryAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/dominanceAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/graphAnalysis -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/pointerAnal -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/staticInterproceduralSlicing -I/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/valuePropagation -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/partialRedundancyElimination -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/finiteDifferencing -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/functionCallNormalization -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/constantFolding -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/implicitCodeGeneration -I/home/dquinlan/ROSE/svn-rose/src/midend/programTransformation/runtimeTransformation -I/home/dquinlan/ROSE/svn-rose/src/roseSupport -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/MSTL -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/libharu-2.1.0/include -I../../../src/3rdPartyLibraries/libharu-2.1.0/include -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/qrose/Framework -I/home/dquinlan/ROSE/svn-rose/src/3rdPartyLibraries/qrose/Widgets -I/home/dquinlan/ROSE/svn-rose/projects/dataBase -I/home/dquinlan/ROSE/svn-rose/src/util/graphs -I/home/dquinlan/ROSE/svn-rose/src/midend/astUtil/astInterface -I/home/dquinlan/ROSE/svn-rose/libltdl -I/home/dquinlan/local/boost_1_37_0_installTree-gxx-4.2.2/include/boost-1_37 -DBOOST_REGEX_MATCH_EXTRA -I/usr/apps/java/jdk1.5.0_11/bin/../include -I/usr/apps/java/jdk1.5.0_11/bin/../include/linux -fPIC -DYY_NO_TOP_STATE -DYY_NO_POP_STATE -c Cxx_Grammar.C -fPIC -DPIC -o .libs/Cxx_Grammar.o >& Cxx_Grammar.verbose_output
 
 
 

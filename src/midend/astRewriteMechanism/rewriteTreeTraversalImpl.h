@@ -2,7 +2,7 @@
 #define AST_REWRITE_TREE_TRAVERSAL_C
 
 //#include "rose.h"
-#include "sage3.h"
+//#include "sage3.h"
 #include "roseInternal.h"
 #include "rewrite.h"
 

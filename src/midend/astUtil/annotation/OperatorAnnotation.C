@@ -1,3 +1,4 @@
+
 #include "OperatorAnnotation.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file

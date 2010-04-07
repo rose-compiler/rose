@@ -5,6 +5,8 @@
 
 // DQ (3/12/2006): We want to remove config.h from being placed in every source file
 #include <rose_config.h>
+#include "fileoffsetbits.h"
+
 
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
@@ -15,7 +17,6 @@
 #include <stdlib.h>
 
 // We need to separate the construction of the code for ROSE from the ROSE code
-// include "rose.h"
 // #include FSTREAM_HEADER_FILE
 #include <fstream>
 #include <sys/types.h>
@@ -182,7 +183,7 @@ class Grammar
           std::string filenameForSupportClasses;
 
        // filename of file containing declaration and source code for a grammar's supporting classes
-	  std::string filenameForGlobalDeclarations;
+          std::string filenameForGlobalDeclarations;
 
        // Support for output of constructors as part of generated documentation
           static std::string staticContructorPrototypeString;
@@ -206,12 +207,11 @@ class Grammar
           static void editStringList ( std::vector<GrammarString *>& origList, 
                                        const std::vector<GrammarString *> & excludeList );
 
-	  std::string buildStringFromLists ( Terminal & node,
+          std::string buildStringFromLists ( Terminal & node,
                                        FunctionPointerType listFunction,
                                        StringGeneratorFunctionPointerType stringGeneratorFunction );
 
-	  std::vector<GrammarString *> buildListFromLists ( Terminal & node,
-								      FunctionPointerType listFunction );
+          std::vector<GrammarString *> buildListFromLists ( Terminal & node, FunctionPointerType listFunction );
 
           void setRootOfGrammar ( Terminal* RootNodeForGrammar );
           Terminal* getRootOfGrammar ();
@@ -290,35 +290,46 @@ class Grammar
           void traverseTreeToSetupAllNodeList ();
           void traverseTreeToSetupAllNodeList ( Terminal & node );
 
-	  std::string getDerivedClassDeclaration ( Terminal & node );
+          std::string getDerivedClassDeclaration ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
-	  StringUtility::FileWithLineNumbers buildHeaderStringBeforeMarker ( const std::string& marker, const std::string& fileName );
+          StringUtility::FileWithLineNumbers buildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
+          StringUtility::FileWithLineNumbers buildHeaderStringBeforeMarker ( const std::string& marker, const std::string& fileName );
 
-	  std::string sourceCodeDirectoryName ();
+          std::string sourceCodeDirectoryName();
 
           static StringUtility::FileWithLineNumbers readFileWithPos ( const std::string& inputFileName );
-          static void writeFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
-                                  const std::string& className, const std::string& fileExtension );
 
-	  std::string generateTraverseSuccessorForLoopSource(std::string typeString, 
+       // DQ (12/28/2009): I don't think we want this to be static, since I want to call sourceCodeDirectoryName().
+       // static void writeFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+       //                         const std::string& className, const std::string& fileExtension );
+          void writeFile  ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+                            const std::string& className, const std::string& fileExtension );
+       // DQ (12/31/2009): Added mechanism to append generated text to files.
+          void appendFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+                            const std::string& className, const std::string& fileExtension );
+
+          std::string generateTraverseSuccessorForLoopSource(std::string typeString, 
 							std::string memberVariableName, 
 							std::string successorContainerName,
 							std::string successorContainerAccessOperator);
       // GB (8/1/2007)
-	  std::string generateNumberOfSuccessorsComputation(std::vector<GrammarString*>& traverseDataMemberList,
+          std::string generateNumberOfSuccessorsComputation(std::vector<GrammarString*>& traverseDataMemberList,
                                std::string successorContainerName);
-	  std::string generateTraverseSuccessor(GrammarString* gs, std::string successorContainerName);
-	  std::string generateTraverseSuccessorNamesForLoopSource(std::string typeString, 
+          std::string generateTraverseSuccessor(GrammarString* gs, std::string successorContainerName);
+          std::string generateTraverseSuccessorNamesForLoopSource(std::string typeString, 
 						       std::string memberVariableName, 
 						       std::string successorContainerName,
 							     std::string successorContainerAccessOperator);
-	  std::string generateTraverseSuccessorNames(GrammarString* gs, std::string successorContainerName);
+          std::string generateTraverseSuccessorNames(GrammarString* gs, std::string successorContainerName);
 
-	  std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className, size_t index);
-	  void buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumbers& rttiFile);
-	  StringUtility::FileWithLineNumbers buildVariants ();
-	  StringUtility::FileWithLineNumbers buildForwardDeclarations ();
+          std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className, size_t index);
+          void buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumbers& rttiFile);
+          StringUtility::FileWithLineNumbers buildVariants ();
+          StringUtility::FileWithLineNumbers buildForwardDeclarations ();
+
+       // DQ (12/28/2009): Added to support optionally smaller (but more numerous header files for ROSE).
+       // StringUtility::FileWithLineNumbers buildIncludesForSeparateHeaderFiles();
+          void buildIncludesForSeparateHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
           void buildVariantsStringPrototype ( StringUtility::FileWithLineNumbers & outputFile );
@@ -326,46 +337,46 @@ class Grammar
 
           void buildHeaderFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
-	  std::string buildStringForPrototypes( Terminal & node );
-	  StringUtility::FileWithLineNumbers buildStringForDataDeclaration                     ( Terminal & node );
-	  StringUtility::FileWithLineNumbers buildStringForDataAccessFunctionDeclaration      ( Terminal & node );
-	  StringUtility::FileWithLineNumbers buildStringForSource                              ( Terminal & node );
+          std::string buildStringForPrototypes( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForDataDeclaration                     ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForDataAccessFunctionDeclaration      ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForSource                              ( Terminal & node );
 
        // Builds the "CLASSNAME::variant()" member function
-	  StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( Terminal & node );
 
        // Builds the "CLASSNAME::isCLASSNAME()" friend function
-	  StringUtility::FileWithLineNumbers supportForBuildStringForIsClassNameFunctionSource ( Terminal & node, const StringUtility::FileWithLineNumbers& accumulationString );
-	  StringUtility::FileWithLineNumbers buildStringForIsClassNameFunctionSource           ( Terminal & node );
+          StringUtility::FileWithLineNumbers supportForBuildStringForIsClassNameFunctionSource ( Terminal & node, const StringUtility::FileWithLineNumbers& accumulationString );
+          StringUtility::FileWithLineNumbers buildStringForIsClassNameFunctionSource           ( Terminal & node );
 
        // DQ (9/21/2005): Added support for memory pools
-	  StringUtility::FileWithLineNumbers buildStringForNewAndDeleteOperatorSource          ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForNewAndDeleteOperatorSource          ( Terminal & node );
 
        // DQ (12/24/2005): Support for memory pool traversal
-	  StringUtility::FileWithLineNumbers buildStringForTraverseMemoryPoolSource            ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForTraverseMemoryPoolSource            ( Terminal & node );
 
        // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
-	  StringUtility::FileWithLineNumbers buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( Terminal & node );
-	  StringUtility::FileWithLineNumbers buildStringToTestPointerForContainmentInMemoryPoolSource ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringToTestPointerForContainmentInMemoryPoolSource ( Terminal & node );
 
        // AS (2/14/06): Added support for building code to return data member pointers to IR nodes
-	  StringUtility::FileWithLineNumbers buildStringForReturnDataMemberPointersSource ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForReturnDataMemberPointersSource ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildStringForProcessDataMemberReferenceToPointersSource ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForProcessDataMemberReferenceToPointersSource ( Terminal & node );
 
        // DQ (3/7/2007): support for getChildIndex member function
-	  StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( Terminal & node );
 
           bool buildConstructorParameterList ( Terminal & node, 
                                                std::vector<GrammarString *> & constructorParameterList,
                                                ConstructParamEnum config );
-	  std::string buildConstructorParameterListString ( Terminal & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
+          std::string buildConstructorParameterListString ( Terminal & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
 
 
        // DQ 11/6/2006): Support for building newer from of constructors (withouth source position information).
           void markNodeForConstructorWithoutSourcePositionInformation ( Terminal & node );
           void markNodeForConstructorWithoutSourcePositionInformationSupport( Terminal & node );
-	  StringUtility::FileWithLineNumbers buildConstructorWithoutSourcePositionInformation       ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildConstructorWithoutSourcePositionInformation ( Terminal & node );
           void buildConstructorWithoutSourcePositionInformationSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
           void constructorLoopBody(const ConstructParamEnum& config, bool& complete, const StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, Terminal& node, StringUtility::FileWithLineNumbers& returnString);
 
@@ -377,12 +388,12 @@ class Grammar
        // variable declaration at the base of the class and the generated access functions at 
        // the top.  This permist us to present the documentation better using Doxygen.
        // string buildDataPrototypesAndAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildDataMemberVariableDeclarations ( Terminal & node );
-	  StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildDataMemberVariableDeclarations ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildConstructor ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildConstructor ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( Terminal & node );
+          StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( Terminal & node );
 
           void buildSourceFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
@@ -410,7 +421,7 @@ class Grammar
           void buildStringForGetChildIndexSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // Uses list of targets and sources stored within each node to drive substitutions
-	  StringUtility::FileWithLineNumbers editSubstitution ( Terminal & node, const StringUtility::FileWithLineNumbers& editString );
+          StringUtility::FileWithLineNumbers editSubstitution ( Terminal & node, const StringUtility::FileWithLineNumbers& editString );
 
        // This calls the functions to build the parsers (one for each child of the root node)
           void buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outputFile );
@@ -452,8 +463,8 @@ class Grammar
           bool isRootGrammar ();
 
        // functions for building the parsers for translation between grammars
-	  std::string buildParserPrototype ( Terminal & node ); 
-	  std::string buildParserSource    ( Terminal & node ); 
+          std::string buildParserPrototype ( Terminal & node ); 
+          std::string buildParserSource    ( Terminal & node ); 
 
        // a more general way to traverse the Grammar and build strings for source code generation
 
@@ -462,11 +473,11 @@ class Grammar
              {
                public:
                     Terminal* grammarnode;
-		    std::string text;
-		    std::string nodetext;
-		    std::string nonterminalsbunch;
-		    std::string terminalsbunch;
-		    std::string problematicnodes;
+                    std::string text;
+                    std::string nodetext;
+                    std::string nonterminalsbunch;
+                    std::string terminalsbunch;
+                    std::string problematicnodes;
              };
 
 	  typedef std::string (Grammar::*evaluateStringAttributeFunctionType)(Terminal&, std::string);

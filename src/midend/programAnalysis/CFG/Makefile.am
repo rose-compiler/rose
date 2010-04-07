@@ -5,10 +5,10 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../OAWrap -I$(top_srcdir
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-libCFGSources =  CFG_ROSE.C CFG_OA.C 
-
-# lib_LTLIBRARIES = libCFG.a
-# libCFG_a_SOURCES  = $(libCFGSources)
+# DQ (2/11/2010): ROSE currently fails to generate code for this CFG_OA.C file (it does however compile for analysis only).
+# Also it does not appear that ROSE requires this CFG_OA.C file, so I have removed it.
+# libCFGSources =  CFG_ROSE.C CFG_OA.C 
+libCFGSources =  CFG_ROSE.C
 
 noinst_LTLIBRARIES = libCFG.la
 libCFG_la_SOURCES = $(libCFGSources)
@@ -20,13 +20,5 @@ distclean-local:
 	rm -rf Templates.DB
 
 include_HEADERS =  CFG.h CFGImpl.h
-
-
-
-
-
-
-
-
 
 EXTRA_DIST = CMakeLists.txt

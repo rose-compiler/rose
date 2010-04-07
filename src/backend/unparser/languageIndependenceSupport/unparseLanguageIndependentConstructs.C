@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
 #include <limits>
 
@@ -1845,6 +1846,11 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                   }
              }
 
+       // DQ (2/9/2010): Shouldn't this be true (it should also return a bool type).
+          ROSE_ASSERT(info.get_nested_expression() != 0);
+#if 0
+          printf ("In unparseBinaryExpr() -- before output of RHS: info.get_nested_expression() = %d info.get_operator_name() = %s \n",info.get_nested_expression(),info.get_operator_name().c_str());
+#endif
           SgExpression* rhs = binary_op->get_rhs_operand();
           if (info.get_operator_name() == ",")
              {

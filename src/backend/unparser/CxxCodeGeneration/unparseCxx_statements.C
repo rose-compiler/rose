@@ -13,8 +13,11 @@
  * Unparse_ExprStmt::unparseStatement is called.
  *
  */
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
+
+#define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -518,6 +521,10 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
       + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
       + " #comments = "    + StringUtility::numberToString(numberOfComments)
       + " */\n ");
+#endif
+
+#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
+  printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
 #endif
 
 #if 0
@@ -1850,6 +1857,15 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint ( string("{"));
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
 
+     if (basic_stmt->get_asm_function_body().empty() == false)
+        {
+       // This is an asm function body.
+          curprint (basic_stmt->get_asm_function_body());
+
+       // Make sure this is a function definition.
+          ROSE_ASSERT(isSgFunctionDefinition(basic_stmt->get_parent()) != NULL);
+        }
+
   // DQ (1/9/2007): This is useful for understanding which blocks are marked as compiler generated.
   // curprint ( string(" /* block compiler generated = " + (basic_stmt->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false") + " */ \n ";
 
@@ -2368,8 +2384,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
       }
     }
-     
- 
+
 #if 0
      printf ("funcdecl_stmt = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
      funcdecl_stmt->get_startOfConstruct()->display("Inside of unparseFuncDeclStmt()");
@@ -2485,6 +2500,14 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // any function declaration!
           ninfo.set_SkipClassDefinition();
           ninfo.set_SkipEnumDefinition();
+
+       // DQ (3/4/2010): Added support for asm functions (see test2010_12.C).
+          SgStorageModifier & storage = funcdecl_stmt->get_declarationModifier().get_storageModifier();
+       // printf ("storage.isAsm() = %s \n",storage.isAsm() ? "true" : "false");
+          if (storage.isAsm() == true)
+             {
+               curprint( "asm ");
+             }
 
           unp->u_sage->printSpecifier(funcdecl_stmt, ninfo);
 
@@ -3498,6 +3521,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          SgStringVal *stringValueExpression = isSgStringVal(assignInitializer->get_operand());
                          if (stringValueExpression != NULL)
                             {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
                            // DQ (3/25/2006): Finally we can use the C++ string class
                               string targetString = "ROSE-MACRO-CALL:";
                               int targetStringLength = targetString.size();
@@ -3512,6 +3536,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                    curprint ( string("\n" ) + remainingString + "\n");
                                    return;
                                  }
+#endif
                             }
                        }
                   }
@@ -3880,7 +3905,20 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // curprint ( string(" = "));
                          if ( constructor != NULL && isSgForInitStatement(stmt->get_parent()) != NULL )
                             {
+                           // DQ (2/9/2010): Previous code had this commented out to fix test2009_40.C.
                            // curprint (" = ");
+
+                           // DQ (2/9/2010): See test2010_05.C
+                              if (constructor->get_need_name() == true && constructor->get_is_explicit_cast() == true )
+                                 {
+                                // This is the syntax: class X = X(arg)
+                                   curprint (" = ");
+                                 }
+                                else
+                                 {
+                                // This is the alternative syntax: class X(arg)
+                                // So don't output a "="
+                                 }
                             }
                            else
                             {

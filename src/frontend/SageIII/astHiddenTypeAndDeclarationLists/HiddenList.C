@@ -2,8 +2,11 @@
 // Robert Preissl
 // Last modified : April 16, 2007
 
-// DQ
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "HiddenList.h"
+#include "HiddenList_Intersection.h"
+#include "HiddenList_Output.h"
 
 // DQ (5/8/2007): This is now in the rose.h header file
 // #include "HiddenList.h"
@@ -12,6 +15,7 @@
 // #include "HiddenList_Output.h"
 // #include "HiddenList_Intersection.h"
 
+#define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 using namespace std;
 
@@ -144,6 +148,7 @@ void HiddenListComputationTraversal::UpdateScope_WithNamespace(Vector_Of_SymbolI
                         //        symbol_information.si_using_decl = NULL
                         //        symbol_information.is_using_decl_in_class = false
                         //        symbol_information.si_using_decl_in_class = NULL
+                        ROSE_ASSERT((*it_VecSymbolInfo) != NULL);
                         temp_symboltable.push_back( new SymbolInformation( (*it_VecSymbolInfo)->symbol_pointer, (*it_VecSymbolInfo)->name, (*it_VecSymbolInfo)->scope_can_be_named, (*it_VecSymbolInfo)->symbol_of_class, true, depth, using_dir_stat, NULL, false, NULL ) );
 
                 }
@@ -466,6 +471,15 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
         TimingPerformance::time_type startTime;
         TimingPerformance::startTimer(startTime);
 
+#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
+     // DQ (2/9/2010): Debugging code for ROSE compiling ROSE.
+        if (isSgStatement(n) != NULL)
+           {
+             SgStatement* stmt = isSgStatement(n);
+             printf ("In HiddenListComputationTraversal::evaluateInheritedAttribute(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
+           }
+#endif
+
         if( isSgSourceFile(n) ) {
                 this->sg_file_pointer = isSgSourceFile(n);
              // cout << " >> File-Name: " << this->sg_file_pointer->getFileName() << endl;
@@ -536,6 +550,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         SetSgSymbolPointers AvailableHidden_Types;
                         SetSgSymbolPointers ElaboratingForcingHidden_Types;
 
+#ifndef _MSC_VER
                         // for gprof
                         CallIntersection_F(
                             inheritedAttribute.pointer_VectorScopeStack,
@@ -548,10 +563,13 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                             this->UsingDeclRelativeToDeclarations,
                             this->UsingDirRelativeToDeclarations_2,
                             this->UsingDeclRelativeToDeclarations_2,
-                            this->UsingDirectivesSet,
-                            this->UsingDeclarationsSet
+							this->UsingDirectivesSet,
+							this->UsingDeclarationsSet
                         );
-
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement: UsingDirectivesSet commented out right now.")
+#endif
                         if(!AvailableHidden_Functions_Variables.empty() || !AvailableHidden_Types.empty() || !ElaboratingForcingHidden_Types.empty()  ) {
 
                                 #ifdef HIDDEN_LIST_DEBUG
@@ -739,7 +757,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         ROSE_ASSERT(using_dir_stmt->get_parent() != NULL);
                         dummy_UsingDirectiveWithScope.scope = isSgScopeStatement(using_dir_stmt->get_parent());
                         dummy_UsingDirectiveWithScope.is_already_proofed_to_be_valid = false;
-
+#ifndef _MSC_VER
                         it_UsingDirectivesSet = this->UsingDirectivesSet.find( dummy_UsingDirectiveWithScope );
 
                         if(it_UsingDirectivesSet != this->UsingDirectivesSet.end() ) {
@@ -762,8 +780,13 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
 
                         }
 
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2 : UsingDirectivesSet commented out right now.")
+#endif
                 }
-                else if( isSgUsingDeclarationStatement(decl_stat) ) {
+
+                if( isSgUsingDeclarationStatement(decl_stat) ) {
 
                         SgUsingDeclarationStatement* using_decl_stmt = isSgUsingDeclarationStatement(decl_stat);
 
@@ -778,6 +801,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         dummy_UsingDeclarationWithScope.scope = isSgScopeStatement(using_decl_stmt->get_parent());
                         dummy_UsingDeclarationWithScope.is_already_proofed_to_be_valid = false;
 
+#ifndef _MSC_VER
                         it_UsingDeclarationSet = this->UsingDeclarationsSet.find( dummy_UsingDeclarationWithScope );
 
                         if(it_UsingDeclarationSet != this->UsingDeclarationsSet.end() ) {
@@ -799,6 +823,10 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                                 cout << "ERROR: it_UsingDeclarationSet != this->UsingDeclarationsSet.end()" << endl;
 
                         }
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement : UsingDeclarationSet commented out right now.")
+#endif
 
                 }
                 else {
@@ -1160,6 +1188,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
 
                 SetSgUsingDirectiveStatementsWithSgScopeStatement::iterator it_UsingDirectivesSet;
 
+#ifndef _MSC_VER
                 // Robert Preissl, June 26 2007: has to be a for-loop and can't use find because there can be more than one using in a scope
                 for( it_UsingDirectivesSet = this->UsingDirectivesSet.begin(); it_UsingDirectivesSet != this->UsingDirectivesSet.end(); ++it_UsingDirectivesSet ) {
 
@@ -1227,9 +1256,14 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         TimingPerformance::accumulateTime ( startTimeCase_7, accumulatedEvaluateInheritedAttributeCaseTime[7], accumulatedEvaluateInheritedAttributeCaseCalls[7] );
                 }
 
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement3: UsingDirectivesSet commented out right now.")
+#endif
 
                 SetSgUsingDeclarationWithScopeWithSgScopeStatement::iterator it_UsingDeclarationsSet;
 
+#ifndef _MSC_VER
                 // Robert Preissl, June 28 2007: doing (nearly) the same as we have done above with using directives:
                 for( it_UsingDeclarationsSet = this->UsingDeclarationsSet.begin(); it_UsingDeclarationsSet != this->UsingDeclarationsSet.end(); ++it_UsingDeclarationsSet ) {
 
@@ -1321,7 +1355,11 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         }
 
                         TimingPerformance::accumulateTime ( startTimeCase_8, accumulatedEvaluateInheritedAttributeCaseTime[8], accumulatedEvaluateInheritedAttributeCaseCalls[8] );
-                }
+				}
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2: UsingDeclarationSet commented out right now.")
+#endif
 
                 #ifdef HIDDEN_LIST_DEBUG
                         cout << "INTERSECTION of the current symbol-table: "<< endl;
@@ -1340,7 +1378,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                 #endif
 
                 // start intersection process of the current symbol table with the current scope
-
+#ifndef _MSC_VER
                 CallIntersection(
                     inheritedAttribute.pointer_VectorScopeStack,
                     inheritedAttribute.depth,
@@ -1355,6 +1393,10 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                     this->UsingDirectivesSet,
                     this->UsingDeclarationsSet
                 );
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement4: UsingDirectivesSet commented out right now.")
+#endif
 
                 if(!AvailableHidden_Functions_Variables.empty() || !AvailableHidden_Types.empty() || !ElaboratingForcingHidden_Types.empty()  ) {
 
@@ -1448,7 +1490,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                 TimingPerformance::accumulateTime ( startTimeCase_2, accumulatedEvaluateInheritedAttributeCaseTime[2], accumulatedEvaluateInheritedAttributeCaseCalls[2] );
 
                 return InheritedAttributeSgScopeStatement(inheritedAttribute.depth + 1, inheritedAttribute.pointer_VectorScopeStack);
-        }
+		}
 
      // DQ (8/3/2007): accumulate the elapsed time for this function
         TimingPerformance::accumulateTime ( startTime, accumulatedEvaluateInheritedAttribute_2_Time, accumulatedEvaluateInheritedAttribute_2_Calls );
@@ -2357,7 +2399,12 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
                         using_directive_with_scope.scope = scope_stmt;
                         using_directive_with_scope.is_already_proofed_to_be_valid = false;
 
-                        (exampleTraversal.UsingDirectivesSet).insert(using_directive_with_scope);
+#ifndef _MSC_VER
+						(exampleTraversal.UsingDirectivesSet).insert(using_directive_with_scope);
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDirectivesSet commented out right now.")
+#endif
 
                 }
 
@@ -2385,7 +2432,12 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
                         using_declaration_with_scope.scope = scope_stmt;
                         using_declaration_with_scope.is_already_proofed_to_be_valid = false;
 
+#ifndef _MSC_VER
                         (exampleTraversal.UsingDeclarationsSet).insert(using_declaration_with_scope);
+#else
+							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDeclarationSet commented out right now.")
+#endif
 
                 }
 

@@ -691,7 +691,9 @@ Grammar::setUpBinaryInstructions ()
      AsmElfRelocSection.setFunctionPrototype("HEADER_ELF_RELOC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfRelocSection.setDataPrototype("bool", "uses_addend", "= true",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfRelocSection.setDataPrototype("SgAsmElfRelocEntryList*", "entries", "= NULL",
+     AsmElfRelocSection.setDataPrototype("SgAsmElfSection*","target_section", "= NULL",
+			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfRelocSection.setDataPrototype("SgAsmElfRelocEntryList*", "entries", "= NULL", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
@@ -703,7 +705,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfRelocEntry.setDataPrototype("unsigned long", "sym", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfRelocEntry.setDataPrototype("unsigned long", "type", "= 0",
+     AsmElfRelocEntry.setDataPrototype("SgAsmElfRelocEntry::RelocType", "type", "= R_386_NONE",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfRelocEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -853,7 +855,7 @@ Grammar::setUpBinaryInstructions ()
 					      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymverDefinedEntry.setDataPrototype("size_t", "index", "= 0",
 					      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSymverDefinedEntry.setDataPrototype("size_t", "hash", "= 0",
+     AsmElfSymverDefinedEntry.setDataPrototype("uint32_t", "hash", "= 0",
 					      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymverDefinedEntry.setDataPrototype("SgAsmElfSymverDefinedAuxList*", "entries", "",
 					      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -884,7 +886,7 @@ Grammar::setUpBinaryInstructions ()
 					      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AsmElfSymverNeededAux.setFunctionPrototype("HEADER_ELF_SYMVER_NEEDED_AUX", "../Grammar/BinaryInstruction.code");
-     AsmElfSymverNeededAux.setDataPrototype("rose_addr_t", "hash", "= 0",
+     AsmElfSymverNeededAux.setDataPrototype("uint32_t", "hash", "= 0",
 					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymverNeededAux.setDataPrototype("int", "flags", "= 0",     
 					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1949,33 +1951,37 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-  // There are several sorts of declarations within a binary
-     AsmDeclaration.setFunctionPrototype        ( "HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
+     // There are several sorts of declarations within a binary
+     AsmDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
+     AsmDataStructureDeclaration.setFunctionPrototype("HEADER_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
+     // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
+     // Binaries have some easily resolved data structures so we use this to represent these
+     // AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
+     //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 
-     AsmDataStructureDeclaration.setFunctionPrototype ( "HEADER_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
-  // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
-  // Binaries have some easily resolved data structures so we use this to represent these
-  // AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 
-  // Binaries have many easily resolved functions so we use this to represent these
-     AsmFunctionDeclaration.setFunctionPrototype        ( "HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
+
+
+     // Binaries have many easily resolved functions so we use this to represent these
+     AsmFunctionDeclaration.setFunctionPrototype("HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
      AsmFunctionDeclaration.setDataPrototype("std::string","name","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFunctionDeclaration.setDataPrototype("unsigned", "reason", "= SgAsmFunctionDeclaration::FUNC_NONE", /*bit flags*/
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmFunctionDeclaration.setDataPrototype("SgAsmFunctionDeclaration::function_kind_enum","function_kind","= SgAsmFunctionDeclaration::e_unknown",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-  // AsmFunctionDeclaration.setDataPrototype("int","function_kind","= 0",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // AsmFunctionDeclaration.setDataPrototype("SgAsmBlockPtrList","body","",
-  //                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunctionDeclaration.setDataPrototype("SgAsmFunctionDeclaration::function_kind_enum",
+                                             "function_kind","= SgAsmFunctionDeclaration::e_unknown",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmFunctionDeclaration.setDataPrototype("std::string","name_md5","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFunctionDeclaration.setDataPrototype("SgAsmStatementPtrList","statementList","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmFunctionDeclaration.setDataPrototype("SgAsmStatementPtrList","dest","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunctionDeclaration.setDataPrototype("rose_addr_t", "entry_va", "= 0",  /*entry point virtual address*/
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                             
+
+
 
   // These are used as data members in AsmDataStructureDeclaration
      AsmFieldDeclaration.setDataPrototype("std::string","name","= \"\"",

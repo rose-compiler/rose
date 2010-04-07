@@ -78,6 +78,15 @@ if test "x$want_boost" = "xyes"; then
 	AC_MSG_CHECKING(for boostlib >= $boost_lib_version_req)
 	succeeded=no
 
+ # DQ (2/4/2010): Added to support setting Automake conditionals for boost versions.
+ # export boost_lib_version_req_major
+ # export boost_lib_version_req_minor
+ # export boost_lib_version_req_sub_minor
+
+ # echo "In ax boost base macro: boost_lib_version_req_major     = $boost_lib_version_req_major"
+ # echo "In ax boost base macro: boost_lib_version_req_minor     = $boost_lib_version_req_minor"
+ # echo "In ax boost base macro: boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
+
 	dnl first we check the system location for boost libraries
 	dnl this location ist chosen if boost libraries are installed with the --layout=system option
 	dnl or if you install boost with RPM
@@ -112,7 +121,7 @@ if test "x$want_boost" = "xyes"; then
  # Use this set of paths, and the set including "/home/dquinlan" for testing this macro.
  # for ac_boost_path_tmp in /usr /usr/local /opt /opt/local /home/dquinlan; do
    for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
-		if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
+		if test "x${ac_boost_path_tmp}/include" != "x${ROSE_BOOST_INCLUDE_PATH}" && test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
 			PREVIOUSLY_INSTALLED_BOOST="$ac_boost_path_tmp/include/boost"
        # echo "Detected a previously installed version of boost library: PREVIOUSLY_INSTALLED_BOOST = $PREVIOUSLY_INSTALLED_BOOST"
 			break;
@@ -229,6 +238,11 @@ if test "x$want_boost" = "xyes"; then
 	       	])
 		AC_LANG_POP([C++])
 	fi
+
+ # DQ (2/4/2010): Added to get version information for what we are using.
+ # echo "Boost version being used is: $_version"
+ # rose_boost_version_number=$_version
+ # export rose_boost_version_number
 
 	if test "$succeeded" != "yes" ; then
 		if test "$_version" = "0" ; then

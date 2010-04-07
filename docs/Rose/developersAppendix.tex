@@ -33,8 +33,189 @@ automated tests ({\em make check} makefile rule).  If you want to add a new
 feature to ROSE, show us your tests.
 %}}}
 
+\section{Working with the ROSE GIT repositories}
+We have two git repositories for ROSE: an internal one at LLNL and an external
+one at SciDAC Outreach Center. These two repositories share histories so that
+you can work closely with us as an external developing using our latest work. 
+Some tips for usign them are gatehred in this section.
+
+
+\subsection{Continous Integration in ROSE}
+
+The ROSE projct uses a workflow that automates the central principles of
+continous integration in order to make integrating the work from different
+developers a non-event. Because the integration process only integrates
+with ROSE the changes that passes all tests we encourage all developers
+to stay in sync with the latest version.
+
+%%Insert picture on structure of developers work here
+
+Each developer is encouraged to develop a feature or
+fix a bug in isolation and submit the code so that it can be considered for
+integration as soon as possible. When a developer submits a code for integation
+it will be tested by our test suite and integrated into our master bracnh if
+it passes all tests.
+
+The testing of each developers work is done by a continous integration server
+called Hudson. We provide developers with a git repository where a repository
+where he can create any number of branches. Each branch should relate to a
+feature that this developer is working on and be relatively short-lived. The
+actual development is done on a develop copy of this repository and a developer
+will push to a branch when his work is ready for integration. When a developer push
+to the ROSE git repository his work will be automatically added to a queue of
+jobs that will be tested by Hudson.
+
+\subsection{The External Repository}
+
+\subsection{The Internal Repository}
+
+The ROSE internal repository keeps track of the latest work of each developer. Each
+developer will make a complete local copy of the repository which he can use to
+perform his work and he can push his work from this copy to a branch he owns in the 
+central repository when he is ready. 
+
+\subsection{Structure of Repositories and Branch Naming Conventions}
+
+
+Both the internal and the external ROSE repositories are structured according to
+an continous integration workflow using git best practises. The master branch
+contains the latest work in ROSE that passes the tests and each developer can
+create any number of branches that he owns. No developer can modify
+a branch owned by another developer, but a group branche can be created that 
+can be modified by groups of users. 
+
+Branches in the ROSE repository is named according to naming convention so that 
+it is easy to see who owns a branch and if the developer intends this branch to
+be tested, released or not tested at all. This is done with a prefix and postfix
+scheme.
+
+The prefix of a branch name maps directly to a user name. A prefix enforces 
+ownership of a branch and is unique to each developer. This prefix is chosen
+by the developer and is on the form 'prefix-'. For instance a user 'John Brandy' 
+with username 'john' can choose the prefix 'jb-'. If he is working on a bugfix
+for bug number 1234 he should create a branch 'jb-bug1234' where he works on this.
+
+Th postfix of a branch determines if a branch should only be tested or tested and
+considered for integation with master. We currently only do automatic testing on
+our internal git repository due to security concerns. A branch that should only be 
+tested must have the postfix '-test'. We test branches with the '-test' prefix as 
+rigorously as a branch that is considered for integration. If work on a branch has
+reached a stage where a developer deems it ready for integration he should create
+a new branch with a branch with a postfix on the form '-rc'. '-rc' is short for
+release candidate as this work will be integrated with master if it passes all test.
+
+If our developer 'John Brandy' wants his bugfix to be merged with master if it passes
+all tests he should rename his branch to 'jb-bug1234-rc'.
+
+
+\subsection{Making a Copy of the Internal repository}
+
+
+
+Before starting to work a developer must create a local clone of the central git repository.
+Please configure this copy with your name and email before starting work.
+
+\begin{itemize}
+
+\item Configuration:
+  \begin{itemize}
+          \item set your name \textit{git config --global user.name 'John Doe' }
+	  \item set your email \textit{git config --global user.email johndoe@example.com}
+	  \item tells git-branch and git-checkout to setup new branches so that git-pull(1)
+    will appropriately merge from that remote branch \textit{git config branch.autosetupmerge true}
+          \item This setting tells git to convert the newlines to the system’s standard
+	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
+   \end{itemize}       
+\item List content in the repository:
+  \begin{itemize}
+          \item list root info: \textit{git clone 
+          file:///usr/casc/overture/ROSE/git/ROSE.git}
+          \item list all branches in the central git repository: \textit{git branch -r}
+          \item list all branches in the local copy of the git repository: \textit{git branch -l}
+          \item list all local and central branches: \textit{git branch -a}
+
+          \item show the log: \textit{git log} 
+   \end{itemize}       
+\item Using a branch:
+   \begin{itemize}
+          \item creating a local branch: \textit{git branch branch-name} 
+          \item creating a local branch to track a central branch: \textit{git branch branch-name --track origin/branch-name} 
+
+          \item creating a branch in the central git: \textit{git push origin origin:refs/heads/branch-name} 
+          \item start working on a branch: \textit{git checkout branch-name} 
+          \item deleting a local branch: \textit{git branch -d branch-name} 
+          \item deleting a remote branch: \textit{git push origin :branch-name } 
+   \end{itemize}     
+\item Adding / Deleting:
+   \begin{itemize}
+          \item add $<$file$>$ to the project \textit{git add $<$file$>$}
+          \item add all files under directory $<$dir$>$ to the project, including subdirectories \textit{git add $<$dir$>$}
+	  \item add all files under the current directory to the project \textit{git add .}
+	  \item remove $<$file$>$ from the project \textit{git rm $<$file$>$}
+   \end{itemize}     
+\item Info on the repository:
+   \begin{itemize}
+          \item show a diff of the changes made since your last commit \textit{git diff}
+	  \item show files added to the staging area, files with changes, and untracked files \textit{git status}
+	  \item show recent commits \textit{git log}
+	  \item show commits between the specified range \textit{git log $<$ref$>$..$<$ref$>$}
+	  \item show the changeset (diff) of a commit specified by $<$rev$>$ \textit{git show $<$rev$>$}
+	  \item show who authored each line in $<$file$>$ \textit{ git blame $<$file$>$ }
+	  \item really nice GUI interface to git blame \textit{ git gui blame}
+	  \item show only the commits which affected $<$file$>$ listing the most recent first \textit{git whatchanged $<$file$>$}
+   \end{itemize}     
+
+\item Sharing changes:
+   \begin{itemize}
+	  \item fetch changes from the server, and merge them into the current branch: \textit{ git pull origin branch-name }
+	  \item pushing local changes to the central git (from working branch): \textit{ git push origin branch-name }
+   \end{itemize}      
+\item Reverting changes:
+   \begin{itemize}
+	  \item reverse commit specified by $<$rev$>$ and commit the result: \textit{ git revert $<$rev$>$ }
+	  \item re-checkout $<$file$>$, overwriting any local changes: \textit{git checkout $<$file$>$ }
+	  \item re-checkout all files, overwriting any local changes: \textit{git checkout . }
+   \end{itemize}      
+\item Fix mistakes / Undo:
+   \begin{itemize}
+	  \item abandon everything since your last commit: \textit{ git reset --hard }
+	  \item undo your most recent *successful* merge *and* any changes that occurred
+	    after \textit{ git reset --hard ORIG\_HEAD }
+	  \item forgot something in your last commit? That's easy to fix. Undo your last
+	    commit, but keep the changes in the staging area for editing.
+	    \textit{ git reset --soft HEAD\^ }
+	  \item redo previous commit, including changes you've staged in the meantime.
+	    Also used to edit commit message of previous commit. \textit{git commit --amend}
+   \end{itemize}      
+\item Stashing:
+   \begin{itemize}
+	  \item save your local modifications to a new stash: \textit{ git stash save $<$optional-name$>$ }
+	  \item restore the changes recorded in the stash on top of the current working tree
+	    state \textit{git stash apply}
+          \item restore the changes from the most recent stash, and remove it from the stack
+	    of stashed changes \textit{git stash pop}
+          \item list all current stashes \textit{ git stash list }
+	  \item show the contents of a stash \textit{ git stash show $<$stash-name$>$ -p}
+	  \item delete current stashes \textit{git stash clear}
+   \end{itemize}      
+
+\item Remotes
+   \begin{itemize}
+       \item delete a branch in a remote repository \textit{git push $<$remote$>$ :refs/heads/$<$branch$>$}
+       \item create a branch on a remote repository \textit{git push $<$remote$>$ $<$remote$>$:refs/heads/$<$remote\_branch$>$}
+       \item create a branch on a remote repository based on +$<$remote$>$ \textit{git push $<$repository$>$ +$<$remote$>$:$<$new\_remote$>$}
+       \item prune deleted remote-tracking branches from "git branch -r" listing \textit{ git remote prune $<$remote$>$ }
+   \end{itemize}
+\end{itemize}
+%}}}
+Git cheat sheet: \htmladdnormallink{http://cheat.errtheblog.com/s/git}{http://cheat.errtheblog.com/s/git}
+
+
+
+
+
 %Added by Liao 10/17/2008
-\section{Working with the ROSE SVN repositories}%{{{
+ \section{Working with the ROSE SVN repositories}%{{{
 \label{gettingStarted::svn}
 We have two subversion repositories for ROSE: an internal one at LLNL and
 an external one at SciDAC Outreach Center (using a vendor drop scheme). 
@@ -1538,8 +1719,8 @@ should appear on the search results page at
 
 
 \subsection{Cron automated tests}%{{{
-Jobs can be added to the cronjobs file in the directory {\tt
-<rose\_dir>/scripts/nmi}. These cronjobs will be loaded every night into the
+Jobs can be added to the cronjobs file in the directory {\tt <rose\_dir>/scripts/nmi}. 
+These cronjobs will be loaded every night into the
 crontab file on the submission host (this is done by the first entry, which
 executes {\tt update.sh}). In order to add your own build tests, simply add a
 line there (see {\tt man 5 crontab} for more information). Be sure to test your
@@ -4571,3 +4752,70 @@ to put) in the ROSE API include:
    \item ompLowering (not for the user interface)
    \item OpenMP Reduction Variable Recognition
 \end{itemize}
+
+
+\newpage
+
+\section{How to add a commandline switch to ROSE translators}
+   The following instructions are only for ROSE developers to add 
+command line switches to {\em ALL} translators built using ROSE.
+the instructions serve mostly as an example and it is helpful to look
+at the referenced source code in the referenced files.
+
+Note that users may process the commandline directly and support in
+available in ROSE explicitly for this level of support (and an example is
+in the ROSE Tutorial).
+
+The following switch is an example of how to add such command line switches to ROSE.
+
+From Support.C in ROSE/src/ROSETTA/src:
+{
+\indent
+\begin{verbatim}
+File.setDataPrototype ( "bool", "F77\_only", "= false",
+          NO\_CONSTRUCTOR\_PARAMETER, BUILD\_FLAG\_ACCESS\_FUNCTIONS, NO\_TRAVERSAL, NO\_DELETE);
+\end{verbatim} 
+}
+
+The look for the names (e.g. "F77\_only") in "sageSupport.C" in ROSE/src/frontend/SageIII
+and put in the command line processing support as in:
+{
+\indent
+\begin{verbatim}
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(f77|F77|Fortran77)",true) == true )
+        {
+          if ( SgProject::get\_verbose() >= 1 )
+               printf ("Fortran77 only mode ON \n");
+          set\_F77\_only(true);
+          set\_Fortran\_only(true);
+          if (get\_sourceFileUsesFortran77FileExtension() == false)
+             {
+               printf ("Warning, Non Fortran77 source file name specificed with explicit -rose:Fortran77 Fortran 77 language option! \n");
+               set\_F77\_only(false);
+             }
+        }
+\end{verbatim} 
+}
+
+There are a few other details, so don't forget the initialize
+the value in the function "SgFile::initialization()" in Support.code
+in src/ROSETTA/Grammar:
+{
+\indent
+\begin{verbatim}
+     p\_F77\_only                = false;
+\end{verbatim} 
+}
+
+If your option takes a parameter, then you have to make this clear by adding it to the
+function (located in sageSupport.C):
+{
+\indent
+\begin{verbatim}
+     bool CommandlineProcessing::isOptionTakingSecondParameter( string argument )
+\end{verbatim} 
+}
+
+Also, don't forget to document your option in SgFile::usage() (also in sageSupport.C).
+
+

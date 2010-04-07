@@ -14,7 +14,8 @@ libastFixup_la_SOURCES      = \
      fixupStorageAccessOfForwardTemplateDeclarations.C \
      fixupSourcePositionInformation.C \
      fixupEnumValues.C \
-     fixupFriendTemplateDeclarations.C
+     fixupFriendTemplateDeclarations.C \
+     fixupPrettyFunction.C
 
 libastFixup_la_LIBADD       = 
 libastFixup_la_DEPENDENCIES = 
@@ -29,6 +30,7 @@ include_HEADERS = \
      fixupTemplateDeclarations.h \
      fixupSourcePositionInformation.h \
      fixupEnumValues.h \
-     fixupFriendTemplateDeclarations.h
+     fixupFriendTemplateDeclarations.h \
+     fixupPrettyFunction.h
 
 EXTRA_DIST = CMakeLists.txt

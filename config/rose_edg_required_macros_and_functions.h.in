@@ -537,13 +537,20 @@ was just float or double for complex<float> or complex<double>.
 
 /* gcc uses the C99 name _Complex_I in <complex.h>, but our EDG doesn't handle
    the GCC extension that they define it to. */
+#ifdef __INTEL_COMPILER
+/* #define _Complex_I __I__ */
+#else
 #define _Complex_I __I__
+#endif
+
 /* Disable inclusion of complex.h on Linux */
 #define _COMPLEX_H
 /* Disable inclusion of complex.h on Mac OS X */
 #define __COMPLEX__
 
 /* DQ (8/25/2009): Added complex builtin functions as required to compile parts of ROSE with ROSE */
+/* #if _GLIBCXX_USE_C99_COMPLEX */
+/* #if _GLIBCXX_USE_C99_COMPLEX || defined(USE_ROSE) */
 #if _GLIBCXX_USE_C99_COMPLEX
 float  __builtin_cabsf(__complex__ float __z);
 double __builtin_cabs (__complex__ double __z);
@@ -594,6 +601,46 @@ __complex__ double __builtin_cpow(__complex__ double __x, __complex__ double __y
 __complex__ long double __builtin_cpowl(const __complex__ long double& __x,const __complex__ long double& __y);
 #endif
 
+#ifdef USE_ROSE
+/* DQ (1/26/2010): Define these so that ROSE will compile with ROSE. */
+#define __builtin_cabsf(x) 0
+#define __builtin_cabs(x)  0
+#define __builtin_cabsl(x) 0
+#define __builtin_cargf(x) 0
+#define __builtin_carg(x) 0
+#define __builtin_cargl(x) 0
+#define __builtin_ccosf(x) 0
+#define __builtin_ccos(x) 0
+#define __builtin_ccosl(x) 0
+#define __builtin_ccoshf(x) 0
+#define __builtin_ccosh(x) 0
+#define __builtin_ccoshl(x) 0
+#define __builtin_cexpf(x) 0
+#define __builtin_cexp(x) 0
+#define __builtin_cexpl(x) 0
+#define __builtin_clogf(x) 0
+#define __builtin_clog(x) 0
+#define __builtin_clogl(x) 0
+#define __builtin_csinf(x) 0
+#define __builtin_csin(x) 0
+#define __builtin_csinl(x) 0
+#define __builtin_csinhf(x) 0
+#define __builtin_csinh(x) 0
+#define __builtin_csinhl(x) 0
+#define __builtin_csqrtf(x) 0
+#define __builtin_csqrt(x) 0
+#define __builtin_csqrtl(x) 0
+#define __builtin_ctanf(x) 0
+#define __builtin_ctan(x) 0
+#define __builtin_ctanl(x) 0
+#define __builtin_ctanhf(x) 0
+#define __builtin_ctanh(x) 0
+#define __builtin_ctanhl(x) 0
+#define __builtin_cpowf(x,y) 0
+#define __builtin_cpow(x,y) 0
+#define __builtin_cpowl(x,y) 0
+#endif
+
 
 /* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
 #define __weakref__(NAME)
@@ -638,4 +685,4 @@ __complex__ long double __builtin_cpowl(const __complex__ long double& __x,const
  */
 #define _GLIBCXX_EXTERN_TEMPLATE 0
 
-#endif // !ROSE_USE_NEW_EDG_INTERFACE
+#endif /* !ROSE_USE_NEW_EDG_INTERFACE */

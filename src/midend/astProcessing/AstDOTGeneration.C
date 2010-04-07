@@ -1,10 +1,12 @@
+
+
 // Author: Markus Schordan
 // $Id: AstDOTGeneration.C,v 1.7 2008/01/08 02:56:38 dquinlan Exp $
 
 #ifndef ASTDOTGENERATION_C
 #define ASTDOTGENERATION_C
 
-#include "sage3.h"
+#include "sage3basic.h"
 #include "AstDOTGeneration.h"
 #include "AstConsistencyTests.h"
 
@@ -584,7 +586,13 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                ROSE_ASSERT(project != NULL);
 
                string generatedProjectName = SageInterface::generateProjectName( project );
-            // printf ("generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
+               printf ("generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
+               if (generatedProjectName.length() > 40)
+                  {
+                    printf ("Warning: generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
+                    generatedProjectName = "aggregatedFileNameTooLong";
+                    printf ("   proposed filename is too long, shortened to: %s \n",generatedProjectName.c_str());
+                  }
 
                string filename = string("./") + generatedProjectName + ".dot";
 

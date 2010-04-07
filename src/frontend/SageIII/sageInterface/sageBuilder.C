@@ -1,6 +1,9 @@
+// tps (01/14/2010) : Switching from rose.h to sage3
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
-#include "rose.h"
+#include "sage3basic.h"
+#include "roseAdapter.h"
+#include "markLhsValues.h"
 #include "sageBuilder.h"
 #include <fstream>
 #include <boost/algorithm/string/trim.hpp>
@@ -197,6 +200,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   if (name != "") { // Anonymous bit fields should not have symbols
     fixVariableDeclaration(varDecl,scope);
   }
+
   SgInitializedName *initName = varDecl->get_decl_item (name);   
   ROSE_ASSERT(initName); 
   ROSE_ASSERT((initName->get_declptr())!=NULL);
@@ -209,20 +213,25 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   setOneSourcePositionNull(variableDefinition_original);
 #endif
   setOneSourcePositionNull(varDecl);
+
+#if 0
+// DQ (1/2/2010): Set the defining declaration to itself.
+  if (varDecl->get_definingDeclaration() == NULL)
+       varDecl->set_definingDeclaration(varDecl);
+#endif
+
   return varDecl;
 }
 
 SgVariableDeclaration*
-SageBuilder::buildVariableDeclaration \
- (const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration(const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
 {
   SgName name2(name);
   return buildVariableDeclaration(name2,type, varInit,scope);
 }
 
 SgVariableDeclaration*
-SageBuilder::buildVariableDeclaration \
- (const char* name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration(const char* name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
 {
   SgName name2(name);
   return buildVariableDeclaration(name2,type, varInit,scope);
@@ -234,6 +243,10 @@ SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type,
 {
   SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope);
   setOneSourcePositionForTransformation(type_decl);
+
+// DQ (1/2/2010): Set the defining declaration to itself.
+// type_decl->set_definingDeclaration(type_decl);
+
   return type_decl;
 }
 
@@ -288,6 +301,12 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
     type_decl->set_definingDeclaration(def_type_decl);
     setOneSourcePositionNull(def_type_decl);
   }
+
+#if 0
+// DQ (1/2/2010): Set the defining declaration to itself.
+  if (type_decl->get_definingDeclaration() == NULL)
+       type_decl->set_definingDeclaration(type_decl);
+#endif
 
   return type_decl;
 }
@@ -813,8 +832,7 @@ SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration
 
 template <class actualFunction>
 actualFunction *
-SageBuilder::buildDefiningFunctionDeclaration_T \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 //	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
 {
   if (scope == NULL)
@@ -850,8 +868,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T \
     func = new actualFunction(name,func_type,NULL);
     ROSE_ASSERT(func);
 
-    func->set_firstNondefiningDeclaration\
-	(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
+    func->set_firstNondefiningDeclaration(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
 
     // fix up defining declarations before current statement
     func_symbol->get_declaration()->set_definingDeclaration(func);
@@ -893,12 +910,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T \
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
-//	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
+SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist,
+                                              SgScopeStatement* scope)
 {
-  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration> \
- (name,return_type,paralist,scope);
+  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration>(name,return_type,paralist,scope);
   return func;
 }
 
@@ -924,16 +939,14 @@ SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 {
   SgName sg_name(name);
   return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 {
   SgName sg_name(name);
   return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
@@ -1722,7 +1735,7 @@ SgNullExpression* SageBuilder::buildNullExpression() {
   return e;
 }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
+SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
 {
   SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
   ROSE_ASSERT(result);   

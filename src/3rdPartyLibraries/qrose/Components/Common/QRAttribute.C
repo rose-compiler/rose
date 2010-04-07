@@ -3,11 +3,10 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
-#include <rose.h>
+#include "sage3basic.h"
 
 #include <QRAttribute.h>
 #include <QRException.h>
-#include <rose.h>
 #include <list>
 
 #include <QPixmap>

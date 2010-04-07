@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 #include "unparseMacro.h"
 
@@ -143,9 +144,10 @@ namespace UnparseMacro {
 
   bool matchMacroToSubtrees(SgNode* searchTree, PreprocessingInfo* macroCall, std::vector<SgNode*>& matchingSubtree)
   {
-
-    using namespace std;
     bool macroMatchesSubtrees = true;
+
+#ifndef CXX_IS_ROSE_CODE_GENERATION
+    using namespace std;
 
     //Find topmost nodes
     bool find_all = false;
@@ -201,7 +203,7 @@ did_removal:
 
     }
 
-
+#endif
 
     //Do some fancy check to see if macro really matches either a subtree or a set of subtrees
 
@@ -240,11 +242,13 @@ did_removal:
 
           if( isSgExpression(macroNode) == NULL )
           {
+#ifndef USE_ROSE
+         // If we are using ROSE to compile ROSE source code then the Wave support is not present.
             PreprocessingInfo::rose_macro_call* macroCall = curPreproc->get_macro_call();
 
             if(macroCall->expanded_macro.size() > 0 && boost::wave::token_id(macroCall->expanded_macro.back()) != boost::wave::T_COLON)
               replacementString +=";";
-
+#endif
           }
 
           std::cout << "Doing line replacement " << macroNode->unparseToString() << " with " << replacementString << std::endl;

@@ -1,0 +1,72 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#ifdef _MSC_VER
+// seems to cause problems under Linux
+//#include "rose.h"
+#endif
+
+
+#include <CompSliceLocality.h>
+#include <InterchangeAnal.h>
+
+#define MAXDEPTH 20
+
+float SliceNestingLevel( const CompSlice *slice)
+{
+  int level = 0, num = 0;
+  CompSlice::ConstLoopIterator iter=slice->GetConstLoopIterator();
+  for ( LoopTreeNode *n; (n = iter.Current()); iter++) {
+    level += n->LoopLevel();
+    num++;
+  }
+  return level*1.0 / num;
+}
+// weight vector should have incremental values
+void ArrangeNestingOrder :: 
+RearrangeSliceNest( CompSliceNest &g, float *weightvec)
+{
+  int num = g.NumberOfEntries();
+  assert( num < MAXDEPTH);
+  for ( int j = 0; j < num; ++j) {
+     // const CompSlice *slice = g[j];
+     float w = weightvec[j];
+     int index = j;
+     for ( int k = j; k < num ; ++k) {
+        // const CompSlice *slice1 = g[k];
+        float w1 = weightvec[k];
+        if ( w1 < w) { // find smaller weight from the vec
+           index = k;
+           w = w1;
+        }
+     }
+     if (index != j) {
+       weightvec[index] = weightvec[j]; // update weight vector
+       weightvec[j] = w;
+       g.SwapEntry(j,index);  // interchange two loops
+     }
+  }
+}
+
+void ArrangeNestingOrder :: operator()( CompSliceLocalityRegistry *anal,CompSliceNest& g)
+{
+  float weightvec[MAXDEPTH];
+  SetNestingWeight( anal, g, weightvec );
+  RearrangeSliceNest( g, weightvec );
+}
+
+void ArrangeOrigNestingOrder :: 
+SetNestingWeight( CompSliceLocalityRegistry *anal, CompSliceNest &g, float *weightvec )
+{
+   for (int i = 0; i < g.NumberOfEntries(); i++) {
+      weightvec[i] = SliceNestingLevel(g[i]);
+   }
+}
+
+void ArrangeReuseOrder :: 
+SetNestingWeight( CompSliceLocalityRegistry *anal, CompSliceNest &g, float *weightvec )
+{
+  for (int i = 0; i < g.NumberOfEntries(); i++) {
+     weightvec[i] = anal->TemporaryReuses( g[i] );
+     weightvec[i] += anal->SpatialReuses( g[i] );
+  }
+}
+

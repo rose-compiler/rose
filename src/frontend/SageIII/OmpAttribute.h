@@ -156,12 +156,15 @@ namespace OmpSupport
   class OmpAttribute;
   //! Some utility functions to manipulate OmpAttribute
   //
-  //! A builder for OmpAttribute
-  OmpAttribute* buildOmpAttribute(enum omp_construct_enum directive_type, SgNode* context_node);
+  //! A builder for OmpAttribute, useDefined indicates if the directive is added by programmer or not (by autoParallelization)
+  OmpAttribute* buildOmpAttribute(enum omp_construct_enum directive_type, SgNode* context_node, bool useDefined);
 
   //! Add OmpAttribute to a SgNode
   void addOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
 
+  //! Check if two OmpAttributes are semantically equivalent to each other 
+  bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2);
+  
   class OmpAttributeList;
   //! Get OmpAttribute from a SgNode, return NULL if not found
   OmpAttributeList* getOmpAttributeList(SgNode* node);
@@ -170,6 +173,9 @@ namespace OmpSupport
   void generatePragmaFromOmpAttribute(SgNode* sg_node); 
   //TODO this is duplicated from autoParallization project's generatedOpenMPPragmas() 
   // We should remove this duplicate once autopar is moved into rose/src 
+  
+  //! Generate diff text from OmpAttribute attached to a statement
+  std::string generateDiffTextFromOmpAttribute(SgNode* sg_node);
 
   //------------------------------------------------------------------
   // By default, the persistent attribute attached to an OpenMP pragma node in SAGE III AST
@@ -203,23 +209,6 @@ namespace OmpSupport
   class OmpAttribute
   {
     public:
-      //It is recommended to use OmpSupport::buildOmpAttribute() instead of 
-      //using the constructors here
-      //!Default constructors
-      OmpAttribute()
-      {
-	mNode = NULL;
-	omp_type = e_unknown;
-	init();
-      }
-      //! Constructor for known directive type and originating pragma/scope node
-      OmpAttribute(omp_construct_enum omptype, SgNode* mynode):
-	mNode(mynode),omp_type(omptype){ 
-	  /*The initialization order has to match the declaration order, 
-	   * otherwise get a compilation warning*/
-	  init();
-	  assert(isDirective(omptype));
-	}
       //!--------------AST connection------------------
       //! Get the associated SgPragmaDeclaration for C/C++, if any
       SgPragmaDeclaration* getPragmaDeclaration();
@@ -294,17 +283,46 @@ namespace OmpSupport
 
       //!Pretty print the OmpAttribute
       void print(); 
+      
+      //!
+      bool get_isUserDefined() {return isUserDefined; }
+
       //! Convert OmpAttribute to a legal OpenMP pragma string, 
       //not named toString() to void ambiguous with OmpAttribute::toString()
       std::string toOpenMPString();
-
+    friend  OmpAttribute* buildOmpAttribute(omp_construct_enum directive_type, SgNode* node, bool userDefined);
       //------------------hide the implementation details, could be changed anytime!!
       //----------------------------------------------------------------------------
     private:  
+      //It is recommended to use OmpSupport::buildOmpAttribute() instead of 
+      //using the constructors here
+      //!Default constructors
+      OmpAttribute()
+      {
+	mNode = NULL;
+	omp_type = e_unknown;
+	init();
+        isUserDefined = true;
+      }
+      //! Constructor for known directive type and originating pragma/scope node
+      OmpAttribute(omp_construct_enum omptype, SgNode* mynode):
+	mNode(mynode),omp_type(omptype){ 
+	  /*The initialization order has to match the declaration order, 
+	   * otherwise get a compilation warning*/
+	  init();
+          isUserDefined = true;
+          // Liao 2/12/2010, we allow build empty attribute as a replacement of a default constructor.
+          // This is used by autoParallization to tentatively create an instance and later fill data fields.
+	  // assert(isDirective(omptype));
+	}
+
       //! The associated SgNode for this attribute, could be SgPragmaDeclaration or other nodes
       SgNode*  mNode; 
       //! Associated PreprocessingInfo for Fortran only
       PreprocessingInfo* pinfo;
+
+      //! A flag to indicate if the source OpenMP directive is introduced by programmers or not (by autoPar)
+      bool isUserDefined; 
 
       //!Directive information: type of OpenMP directive
       enum omp_construct_enum  omp_type; 

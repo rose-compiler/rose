@@ -1,3 +1,4 @@
+
 #include "SymbolicVal.h"
 
 #include "SymbolicMultiply.h"
@@ -190,6 +191,9 @@ std::string RelToString( CompareRel r)
   default:
     assert(false);
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return NULL;
 }
 
 
@@ -227,6 +231,9 @@ AstNodePtr  SymbolicCond :: CodeGen(AstInterface &fa) const
   default:
      assert(false);
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return fa.CreateBinaryOP(AstInterface::BOP_EQ, val1.CodeGen(fa), val2.CodeGen(fa));
 }
 
 AstNodePtr SymbolicMultiply::
@@ -254,6 +261,7 @@ CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
     return fa.CreateBinaryOP(AstInterface::BOP_PLUS, a1, a2); 
  }
 
+//! Evaluate a symbolic expression and return the resulting value
 SymbolicVal SymbolicValGenerator ::
 GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
 {

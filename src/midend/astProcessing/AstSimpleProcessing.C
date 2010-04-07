@@ -1,3 +1,5 @@
+
+
 // Original Author (AstProcessing classes): Markus Schordan
 // Rewritten by: Gergo Barany
 // $Id: AstSimpleProcessing.C,v 1.4 2008/01/08 02:56:39 dquinlan Exp $
@@ -7,7 +9,7 @@
 #ifndef ASTSIMPLEPROCESSING_C
 #define ASTSIMPLEPROCESSING_C
 
-#include "sage3.h"
+#include "sage3basic.h"
 
 #include "AstProcessing.h" 
 #include "AstSimpleProcessing.h"

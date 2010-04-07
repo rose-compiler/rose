@@ -1,4 +1,5 @@
-#include <rose.h>
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "AstInterface.h"
 //#include <sage3.h>
 
@@ -204,6 +205,9 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
        cerr << "unexpected class declaration type: " << decl->sage_class_name() << endl;
        assert(false);
     }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return NULL;
 }
 
 SgScopeStatement* GetScope( SgNode* loc)
@@ -1173,6 +1177,9 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
     }
     cerr << "Error: not recognizable function type : " << s->sage_class_name() << endl;
     assert(false);
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return AstNodePtrImpl(isSgFunctionDefinition(s)->get_declaration());
 }
 
 bool AstInterface::
@@ -1785,6 +1792,9 @@ AstNodeType AstInterface::GetType(const string& name)
        else
           return AstNodeTypeImpl(new SgClassType(c->get_declaration()));
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return AstNodeTypeImpl(new SgTypeVoid());;
 } 
 
 AstNodeType AstInterface::GetArrayType( const AstNodeType& base, const AstNodeList& index)
@@ -2672,6 +2682,9 @@ CreateConstant( const string& valtype, const string& val)
        cerr << "Error: non-recognized value type for creating constant AST: " << valtype << endl;
         assert(false);
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return AstNodePtrImpl(new SgCharVal(GetFileInfo(), val[0]));
 }
 
 SgFunctionSymbol* 

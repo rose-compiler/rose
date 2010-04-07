@@ -4,7 +4,7 @@
 // MSTL
 #include <Translator.h>
 
-#include <sage3.h>
+//#include <sage3.h>
 #include <AstDOTGeneration.h>
 #include <AstPDFGeneration.h>
 #include <AstConsistencyTests.h>
@@ -14,7 +14,7 @@
 //! program. The default midend is the identity transformation.
 //! This Translator can be customized by overriding frontend/midend/backend.
 //! Examples are CppToDotTranslator, CppToPdfTranslator, CppTestTranslator.
-class CppToCppTranslator : public Translator<int> {
+class ROSE_DLL_API CppToCppTranslator : public Translator<int> {
 
  public:
   CppToCppTranslator();
@@ -41,27 +41,27 @@ class CppToCppTranslator : public Translator<int> {
   int statusCode;
 };
 
-class CppToVendorTranslator : public CppToCppTranslator {
+class ROSE_DLL_API CppToVendorTranslator : public CppToCppTranslator {
 protected:
   /*! the backend unparses and invokes the vendor compiler */
   virtual void backend();
 };
 
-class CppToPdfTranslator : public CppToCppTranslator {
+class ROSE_DLL_API CppToPdfTranslator : public CppToCppTranslator {
  protected:
   /*! the backend generates a PDF file (instead of a C++ file). */
   virtual void backend();
 };
 
 
-class CppToDotTranslator : public CppToCppTranslator {
+class ROSE_DLL_API CppToDotTranslator : public CppToCppTranslator {
  protected:
   /*! the backend generates a DOT file (instead of a C++ file). */
   void backend();
 };
 
 
-class RoseTestTranslator : public CppToVendorTranslator {
+class ROSE_DLL_API RoseTestTranslator : public CppToVendorTranslator {
  protected:
   //! The frontend and backend are default, the midend implements
   //! a test on the ROSE infrastructure

@@ -1,3 +1,5 @@
+
+
 %option noyywrap
 %option prefix="Rose_C_Cxx_"
 %option outfile="lex.yy.c"
@@ -178,7 +180,7 @@ write test cases so that
 		    preprocessorList.addElement(macrotype,macroString_str.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
 */
 
-
+#include "sage3basic.hhh"
 #include <iostream>
 #include <stdio.h>
 #include <ctype.h>

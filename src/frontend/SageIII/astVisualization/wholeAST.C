@@ -1,5 +1,8 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "wholeAST.h"
+#include "unparseAsm.h"
+#include "merge.h"
 
 // **********************************************************
 // **********************************************************
@@ -1366,6 +1369,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgProject* project = isSgProject(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=3,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + project->get_outputFileName() + "  ";
+                    labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(project) + "  ";
                  // printf ("########## SgProject = %s \n",project->get_outputFileName().c_str());
                     break;
                   }
@@ -1377,6 +1381,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgFile* file = isSgFile(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + file->get_sourceFileNameWithPath() + "  ";
+                    labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(file) + "  ";
                  // printf ("########## SgFile = %s \n",file->get_sourceFileNameWithPath().c_str());
                     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
                  // printf ("     SgNode::SgFunctionTypeTable = %p size = %ld \n",SgNode::get_globalFunctionTypeTable(),SgNode::get_globalFunctionTypeTable()->get_function_type_table()->size());
@@ -1711,6 +1716,8 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::setDefault()
   m_variableDeclaration = 0;  /*variableDeclarationFilter()*/
 
   m_variableDefinition = 0 ;  /*variableDefinitionFilter()*/
+
+  m_noFilter = 0;               /* no filtering */
 }
 
 void CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_filter_flags ()
@@ -1737,6 +1744,7 @@ void CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_filter_flags ()
 
   printf ("\t m_variableDefinition = %d \n", m_variableDefinition);
 
+  printf ("\t m_noFilter = %d \n", m_noFilter);
 }
 /* Construct an instance from */
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags(std::vector <std::string>& argvList)
@@ -1745,6 +1753,7 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags(std::vector <std::
   // stop here if no arguments are specified at all
   if ( argvList.size() == 0)
     return;
+
   CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmFileFormatFilter", m_asmFileFormat, true);
   CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmTypeFilter", m_asmType, true);
   CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","binaryExecutableFormatFilter", m_binaryExecutableFormat, true);
@@ -1765,10 +1774,12 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags(std::vector <std::
 
   CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","variableDefinitionFilter", m_variableDefinition, true);
 
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","noFilter", m_noFilter, true);
+
 #if 1
   if (CommandlineProcessing::isOption(argvList, "-rose:","help", false)
      || CommandlineProcessing::isOption(argvList, "-help","", false)
-     || CommandlineProcessing::isOption(argvList, "--help:","", false))
+     || CommandlineProcessing::isOption(argvList, "--help","", false))
   {
     print_commandline_help();
     print_filter_flags();
@@ -1801,6 +1812,8 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_commandline_help()
   cout<<"   -rose:dotgraph:variableDeclarationFilter     [0|1]  Disable or enable variableDeclaration filter"<<endl;
 
   cout<<"   -rose:dotgraph:variableDefinitionFilter      [0|1]  Disable or enable variableDefinitionFilter filter"<<endl;
+
+  cout<<"   -rose:dotgraph:noFilter                      [0|1]  Disable or enable no filtering"<<endl;
 }
 
 
@@ -1913,93 +1926,99 @@ void
 SimpleColorMemoryPoolTraversal::visit(SgNode* node)
    {
      ROSE_ASSERT (filterFlags != NULL);
+
+  // DQ (3/2/2010): Test if we have turned off all filtering of the AST.
+     if ( filterFlags->m_noFilter == 0) 
+        {
+       // We allow filitering of the AST.
 #if 1
-  if ( filterFlags->m_default== 1) 
-     defaultFilter(node);
+          if ( filterFlags->m_default== 1) 
+               defaultFilter(node);
 #endif
 
 #if 1
-  // DQ (3/1/2009): Uncommented to allow filtering of types.
-  if ( filterFlags->m_type== 1) 
-     typeFilter(node);
+       // DQ (3/1/2009): Uncommented to allow filtering of types.
+          if ( filterFlags->m_type == 1) 
+               typeFilter(node);
 #endif
 
 #if 1
-  // DQ (3/2/2009): Remove some more nodes to make the graphs more clear.
-  if ( filterFlags->m_expression == 1) 
-     expressionFilter(node);
+       // DQ (3/2/2009): Remove some more nodes to make the graphs more clear.
+          if ( filterFlags->m_expression == 1) 
+               expressionFilter(node);
 #endif
 
 #if 1
-  if ( filterFlags->m_emptySymbolTable== 1) 
-     emptySymbolTableFilter(node);
+          if ( filterFlags->m_emptySymbolTable == 1) 
+               emptySymbolTableFilter(node);
 #endif
 #if 1
-  if ( filterFlags->m_variableDefinition== 1) 
-     variableDefinitionFilter(node);
-  if ( filterFlags->m_variableDeclaration== 1) 
-     variableDeclarationFilter(node);
-  if ( filterFlags->m_ctorInitializer== 1) 
-     ctorInitializerListFilter(node);
+          if ( filterFlags->m_variableDefinition == 1) 
+               variableDefinitionFilter(node);
+          if ( filterFlags->m_variableDeclaration == 1) 
+               variableDeclarationFilter(node);
+          if ( filterFlags->m_ctorInitializer == 1) 
+               ctorInitializerListFilter(node);
 #endif
 #if 1
-  if ( filterFlags->m_symbol== 1) 
-     symbolFilter(node);
+          if ( filterFlags->m_symbol == 1) 
+               symbolFilter(node);
 #endif
 
 #if 1
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
-  if ( filterFlags->m_asmFileFormat== 1) 
-     asmFileFormatFilter(node);
-  if ( filterFlags->m_asmType== 1) 
-     asmTypeFilter(node);
+          if ( filterFlags->m_asmFileFormat == 1) 
+               asmFileFormatFilter(node);
+          if ( filterFlags->m_asmType == 1) 
+               asmTypeFilter(node);
+#endif
+
+#if 0 // this is included inside default filter already
+       // Ignore Sg_File_Info objects associated with comments and CPP directives
+          if ( filterFlags->m_commentAndDirective == 1) 
+               commentAndDirectiveFilter(node);
 #endif
 
 #if 1
-  if ( filterFlags->m_defaultColor== 1) 
-     defaultColorFilter(node);
-#endif
-
-#if 0 // this is included inside default filter laready
-  // Ignore Sg_File_Info objects associated with comments and CPP directives
-  if ( filterFlags->m_commentAndDirective== 1) 
-     commentAndDirectiveFilter(node);
-#endif
-
-#if 1
-  // Control output of Sg_File_Info object in graph of whole AST.
-  if ( filterFlags->m_fileInfo== 1) 
-     fileInfoFilter(node);
+       // Control output of Sg_File_Info object in graph of whole AST.
+          if ( filterFlags->m_fileInfo == 1) 
+               fileInfoFilter(node);
 #endif
 
 #if 0
-  // DQ (5/11/2006): Skip any IR nodes that are part of a gnu compatability specific subtree of the AST
-     Sg_File_Info* currentNodeFileInfo = isSg_File_Info(node);
-     if (currentNodeFileInfo != NULL)
-        {
-       // skipNode(currentNodeFileInfo);
-          if (currentNodeFileInfo->isFrontendSpecific() == true)
+       // DQ (5/11/2006): Skip any IR nodes that are part of a gnu compatability specific subtree of the AST
+          Sg_File_Info* currentNodeFileInfo = isSg_File_Info(node);
+          if (currentNodeFileInfo != NULL)
              {
-           // skipNode(currentNodeFileInfo);
-             }
+            // skipNode(currentNodeFileInfo);
+               if (currentNodeFileInfo->isFrontendSpecific() == true)
+                  {
+                // skipNode(currentNodeFileInfo);
+                  }
 #if 0
-            else
-             {
-               string additionalNodeOptions;
-            // string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
-            // Make this statement different in the generated dot graph
-               string labelWithSourceCode = 
+                 else
+                  {
+                    string additionalNodeOptions;
+                 // string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                 // Make this statement different in the generated dot graph
+                    string labelWithSourceCode = 
                                  "\\n" + currentNodeFileInfo->get_filenameString() + 
                                  "\\n line: " +  StringUtility::numberToString(currentNodeFileInfo->get_line()) + 
                                  " column: " +  StringUtility::numberToString(currentNodeFileInfo->get_col()) + "  " +
                                  "\\n pointer value: " +  StringUtility::numberToString(currentNodeFileInfo) + "  ";
 
-               NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
+                    NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
 
-               addNode(graphNode);
+                    addNode(graphNode);
+                  }
+#endif
              }
 #endif
         }
+
+#if 1
+     if ( filterFlags->m_defaultColor == 1) 
+          defaultColorFilter(node);
 #endif
 
   // Color this IR node differently if it in NOT in the original AST
@@ -2036,7 +2055,9 @@ class SimpleColorFilesInheritedAttribute
        // Default constructor
           SimpleColorFilesInheritedAttribute () : sharedSubTree(false)
              {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
                ROSE_ASSERT(currentNodeOptions.size() < 4000);
+#endif
              }
 
       //! Specific constructors are required

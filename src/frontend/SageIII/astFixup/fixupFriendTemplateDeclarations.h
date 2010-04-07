@@ -6,6 +6,9 @@
     There appears to be no way to tell if a template declaration for a function is marked as friend except that the 
     scopes are different.  So we use this information to explicitly mark friends.
  */
+
+#include "Cxx_Grammar.h"
+
 class FixupFriendTemplateDeclarations : public ROSE_VisitTraversal
    {
      public:

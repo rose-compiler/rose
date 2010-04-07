@@ -2,19 +2,25 @@
 //Liao, 9/18/2008
 //
 
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "sageBuilder.h"
 #include "OmpAttribute.h"
 #include <algorithm>
+#include <sstream>
+#include <iostream>
+#include <string>
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
 namespace OmpSupport{
   //! A builder for OmpAttribute
-  OmpAttribute* buildOmpAttribute(omp_construct_enum directive_type, SgNode* node)
+  OmpAttribute* buildOmpAttribute(omp_construct_enum directive_type, SgNode* node, bool userDefined)
   {
     OmpAttribute* result = new OmpAttribute(directive_type,node);
+    result->isUserDefined = userDefined; 
     ROSE_ASSERT(result);
     return result;
   }
@@ -25,35 +31,144 @@ namespace OmpSupport{
   {
     ROSE_ASSERT(node);
     ROSE_ASSERT(ompattribute);
-#if 0
-    //  OmpAttribute* old_att = getOmpAttribute(node);
-    // if (old_att)
-    //  return;
-    //Add restrictions on the node following some special pragmas
-    if (ompattribute->getOmpDirectiveType() ==e_for ||
-        ompattribute->getOmpDirectiveType() ==e_parallel_for)
-    {
-      ROSE_ASSERT(isSgStatement(node) != NULL);
-      SgForStatement* forstmt = isSgForStatement(getNextStatement(isSgStatement(node))); 
-      if (forstmt !=NULL)
-      {
-        ROSE_ASSERT(isSgForStatement(getNextStatement(isSgStatement(node))) != NULL);
-        // We attach the attribute redundantly for easier loop handling later on in autoTuning
-        // 3/12/2009
-        // Cannot do this: considert loop 1, loop2: loop 2 would be marked during parallelizing loop1!!
-        // should do this at the call site of parsing OpenMP
-        getNextStatement(isSgStatement(node))->addNewAttribute("OmpAttribute",ompattribute);
-      }
-    }
-#endif 
-    OmpAttributeList* cur_list =  getOmpAttributeList(node);
+   OmpAttributeList* cur_list =  getOmpAttributeList(node);
     if (!cur_list)
     {
       cur_list = new OmpAttributeList();
       node->addNewAttribute("OmpAttributeList",cur_list);
+    // cout<<"OmpSupport::addOmpAttribute() tries to the first one attribute to "<<endl;
+      SgLocatedNode * lnode = isSgLocatedNode(node);
+      ROSE_ASSERT (lnode != NULL);
+    //  cout<<" memory address: "<<lnode<<endl;
+    //  cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
+    }
+    else
+    {
+     // cout<<"Warning: OmpSupport::addOmpAttribute() tries to add more than one attribute to "<<endl;
+      SgLocatedNode * lnode = isSgLocatedNode(node);
+      ROSE_ASSERT (lnode != NULL);
+     // cout<<" memory address: "<<lnode<<endl;
+     // cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
     }
     //TODO avoid duplicated ompattributes for the same OpenMP directive
     cur_list->ompAttriList.push_back(ompattribute);
+  }
+  //! Check if two OmpAttributes are semantically equivalent to each other 
+  // It should tolerate different order of variables within variable lists
+  bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2)
+  {
+    // Arguments check
+    // We allow NULL parameters
+    //ROSE_ASSERT (a1 != NULL); 
+    //ROSE_ASSERT (a2 != NULL); 
+    if (a1 == a2) // could be both NULL
+    {
+      cout<<"Warning: isEquivalentOmpAttribute() tries to compare an OmpAttribute to itself."<<endl;
+      return true;
+    }  
+    else
+    {
+      // One of them is NULL, definitely not equivalent
+      if ((a1 == NULL ) || (a2 == NULL))
+        return false;
+    }
+    // now none of them is NULL
+    //check directive type
+    if (a1->getOmpDirectiveType()!= a2->getOmpDirectiveType())
+      return false;
+    
+    // check clauses
+    vector <omp_construct_enum> clauseList1 = a1->getClauses(); 
+    vector <omp_construct_enum> clauseList2 = a2->getClauses(); 
+       // check clause types
+    sort (clauseList1.begin(), clauseList1.end());
+    sort (clauseList2.begin(), clauseList2.end());
+    if (!equal(clauseList1.begin(), clauseList1.end(), clauseList2.begin()))
+      return false;
+      // For each clause, further check the following ...
+    for (size_t i = 0; i < clauseList1.size(); i++)
+    {
+      // check variable list associated with each clause
+      std::vector<std::pair<std::string,SgNode* > > varList1  = a1->getVariableList(clauseList1[i]);
+      std::vector<std::pair<std::string,SgNode* > > varList2  = a2->getVariableList(clauseList2[i]);
+      sort (varList1.begin(), varList1.end());
+      sort (varList2.begin(), varList2.end());
+#if 0      
+      // debug here
+      cout<<"var list 1"<<endl; 
+      for (std::vector<std::pair<std::string,SgNode* > >::iterator i1 = varList1.begin();
+          i1 != varList1.end(); i1++)
+      {
+        cout<<"string = "<<(*i1).first<<" SgNode* = " <<(*i1).second <<endl;
+      }
+      cout<<"var list 2"<<endl; 
+      for (std::vector<std::pair<std::string,SgNode* > >::iterator i2 = varList2.begin();
+          i2 != varList2.end(); i2++)
+      {
+        cout<<"string = "<<(*i2).first<<" SgNode* = " <<(*i2).second <<endl;
+      }
+#endif 
+      // The assumption here is variable name and SgInitializedName are used as pairs
+      // names and SgInitializedNames should be unique for each variable
+      if (!equal(varList1.begin(), varList1.end(), varList2.begin()))
+        return false;
+
+      // check expressions associated with each clause
+      // This is tricky, we need a SageInterface function to do this: TODO
+      // right now, we only compare the unparsed text of expression for simplicity
+      std::pair<std::string, SgExpression*> exp1 = a1->getExpression(clauseList1[i]);
+      std::pair<std::string, SgExpression*> exp2 = a2->getExpression(clauseList2[i]);
+     
+      //do nothing if both are NULL, this is the equal case
+      if (!(exp1.second== NULL && exp2.second == NULL ))
+      {
+        // if both expressions exist
+        if (exp1.second && exp2.second)
+        {
+          if (exp1.second->unparseToString() != exp2.second->unparseToString())
+            return false;
+        }
+        else
+         // if only one of the expressions exist
+         // must be different
+          return false;
+      }  
+    }
+
+    //Similar handling for reduction clauses of different reduction operator
+    // TODO need to check if the omp type is one of reduction types
+    vector <omp_construct_enum> reductionList1 = a1->getReductionOperators(); 
+    vector <omp_construct_enum> reductionList2 = a2->getReductionOperators(); 
+    sort (reductionList1.begin(), reductionList1.end());
+    sort (reductionList2.begin(), reductionList2.end());
+    if (!equal(reductionList1.begin(), reductionList1.end(), reductionList2.begin()))
+      return false;
+    for (size_t i = 0; i < reductionList1.size(); i++)
+    {
+      // check variable list associated with each reduction clause
+      std::vector<std::pair<std::string,SgNode* > > varList1  = a1->getVariableList(reductionList1[i]);
+      std::vector<std::pair<std::string,SgNode* > > varList2  = a2->getVariableList(reductionList2[i]);
+      sort (varList1.begin(), varList1.end());
+      sort (varList2.begin(), varList2.end());
+      // The assumption here is variable name and SgInitializedName are used as pairs
+      // names and SgInitializedNames should be unique for each variable
+      if (!equal(varList1.begin(), varList1.end(), varList2.begin()))
+        return false;
+    }
+
+    // other misc things
+    if (a1->hasClause(e_default)) 
+      if (a1->getDefaultValue() != a2->getDefaultValue()) 
+        return false;
+    if (a1->hasClause(e_schedule))  
+      if (a1->getScheduleKind() != a2->getScheduleKind())  
+        return false;
+    if (a1->getOmpDirectiveType() == e_critical)    
+      if (a1->isNamedCritical())  
+        if (a1->getCriticalName() != a2->getCriticalName())  
+          return false;
+    // all things are checked to be equal, return true
+    return true; 
   }
 
   //! Get OmpAttribute from a SgNode
@@ -204,6 +319,9 @@ namespace OmpSupport{
 
   enum omp_construct_enum OmpAttribute::getDefaultValue()
   {
+    // It does not make sense to get the default value
+    // if there is no default clause
+    ROSE_ASSERT(hasClause(e_default));
     return default_scope;
   }
 
@@ -830,6 +948,7 @@ namespace OmpSupport{
     hasName = false;
     pinfo = NULL;
 
+    default_scope = e_unknown;
     schedule_kind = e_schedule_none;
     wrapperCount=0;
   }
@@ -876,6 +995,68 @@ namespace OmpSupport{
       }
     } // if (attlist)
  }
+
+  //! Generate a diff text for the OpenMP attribute attached to a node
+  //This is essentially a workaround to generate a translation as a patch
+  std::string generateDiffTextFromOmpAttribute(SgNode* sg_node)
+  {
+    std::string rtxt;
+
+    SgStatement* cur_stmt = isSgStatement(sg_node);
+    ROSE_ASSERT(cur_stmt != NULL);
+    // For C/C++, only one OmpAttribute could be attached to each SgNOde
+    // since C/C++ have scopes for each of them
+    // They cannot be used together in one scope?
+    // But we prepare the worst: it may be allowed?
+    OmpAttributeList* attlist = getOmpAttributeList(sg_node);
+    if(attlist)
+    {
+      // No need to duplicate a pragma for an existing OpenMP pragma
+      if (isSgPragmaDeclaration(cur_stmt))
+	return rtxt;
+      // Should only insert the pragma statement
+      // if there is no existing OpenMP pragma with the same attribute
+      SgStatement* prev_stmt = SageInterface::getPreviousStatement(cur_stmt);
+      if (prev_stmt)
+      {
+	SgPragmaDeclaration * prev_pragma = isSgPragmaDeclaration(prev_stmt);
+	if (prev_pragma)
+	{
+	  OmpAttributeList* prev_attlist= getOmpAttributeList(prev_pragma);
+	  if (attlist == prev_attlist)
+	    return rtxt;
+	}
+      }
+
+      // Now we are safe to generate a diff text chunk, such as
+      // 4a5
+      // > #pragma omp parallel for
+      std::vector<OmpAttribute*>::reverse_iterator riter;
+      for (riter=attlist->ompAttriList.rbegin(); riter !=attlist->ompAttriList.rend();riter++)
+      {
+        if (riter == attlist->ompAttriList.rbegin() )
+        {
+          SgLocatedNode * lnode = isSgLocatedNode(sg_node);
+          ROSE_ASSERT (lnode != NULL);
+          int line_no = lnode->get_file_info()->get_line();
+          std::ostringstream os ;
+          os<< (line_no -1);
+          rtxt = os.str()+"a";
+          std::ostringstream os2 ;
+          os2<< line_no;
+          rtxt = rtxt + os2.str()+"\n";
+        }
+	OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
+	if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+	  ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
+
+	string pragma_str= att->toOpenMPString();
+	rtxt += "> #pragma omp "+ pragma_str + "\n";
+      }
+    } // if (attlist)
+    return rtxt;
+ }
+
 
 
 } //end namespace OmpSupport

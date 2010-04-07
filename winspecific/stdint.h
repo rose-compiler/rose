@@ -28,7 +28,8 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 ///////////////////////////////////////////////////////////////////////////////
-
+#ifndef __winspecific
+#define __winspecific
 #ifndef _MSC_VER // [
 // tps (11/17/2009) : Commented this out so it still works with Linux.
 //#error "Use this header only with Microsoft Visual C++ compilers!"
@@ -249,3 +250,4 @@ typedef uint64_t  uintmax_t;
 
 #endif // _MSC_VER ]
 
+#endif

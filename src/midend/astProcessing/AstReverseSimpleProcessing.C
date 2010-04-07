@@ -1,10 +1,13 @@
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+
 // Author: Markus Schordan
 // $Id: AstReverseSimpleProcessing.C,v 1.3 2008/01/08 02:56:38 dquinlan Exp $
 
 #ifndef ASTREVERSESIMPLEPROCESSING_C
 #define ASTREVERSESIMPLEPROCESSING_C
 
-#include "sage3.h"
+//#include "sage3.h"
 #include "AstReverseProcessing.h" 
 #include "AstReverseSimpleProcessing.h"
 

@@ -4,38 +4,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
-set( libastPostProcessing_SRC
-     astPostProcessing.C 
-     fixupSymbolTables.C 
-     markForOutputInCodeGeneration.C 
-     processTemplateHandlingOptions.C 
-     checkIsModifiedFlag.C 
-     fixupTemplateInstantiations.C 
-     markTemplateInstantiationsForOutput.C 
-     resetParentPointers.C 
-     fixupDefiningAndNondefiningDeclarations.C 
-     markCompilerGenerated.C 
-     markTemplateSpecializationsForOutput.C 
-     resetTemplateNames.C 
-     initializeExplicitScopeData.C 
-     fixupDeclarations.C 
-     markOverloadedTemplateInstantiations.C 
-     markTransformationsForOutput.C 
-     markBackendCompilerSpecificFunctions.C 
-     fixupNullPointers.C 
-     fixupNames.C 
-     fixupTypes.C 
-     fixupConstructorPreinitializationLists.C 
-     propagateHiddenListData.C 
-     resolveFortranReferences.C 
-     insertFortranContainsStatement.C 
-     markLhsValues.C 
-     fixupUseAndUsingDeclarations.C 
-     buildStatementNumbering.C
-   )
 
-add_library( libastPostProcessing STATIC ${libastPostProcessing_SRC} )
-add_dependencies( libastPostProcessing ROSETTA   )
+#add_library( libastPostProcessing STATIC ${libastPostProcessing_SRC}  )
+#add_dependencies( libastPostProcessing ROSETTA   )
 
 
 ########### install files ###############

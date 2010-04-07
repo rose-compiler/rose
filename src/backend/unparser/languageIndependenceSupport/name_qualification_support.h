@@ -8,6 +8,10 @@
 #ifndef UNPARSER_NAME_QUALIFICATION
 #define UNPARSER_NAME_QUALIFICATION
 
+class SgType;
+class SgDeclarationStatement;
+class SgName;
+class SgInitializedName;
 
 // #include "rose.h"
 // #include "unparser_opt.h"

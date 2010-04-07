@@ -7,18 +7,25 @@
 #ifndef STORAGE_CLASSES_H
 #define STORAGE_CLASSES_H
 
-#include "sage3.h"
+#include "sage3basic.hhh" // static data managing
 
 /* JH (02/02/2006) REMARK: Since the declarations, definitions and use of the static member functions of 
    the templated EasyStorage classes is spread over the files below, we need to compile them all together 
    at this point. The splitting into several files is just to simplify and separate their contents! 
 */
+
+#include "rosedefs.h"
+#include "Cxx_Grammar.h"
+
 #include "AST_FILE_IO.h"
 #include "Cxx_GrammarMemoryPoolSupport.h"
 #include "StorageClasses.h"
+
+// DQ (3/7/2010): Added to support debugging.
+#include "AstDiagnostics.h"
+
 #include "StorageClassMemoryManagement.C"
 #include "SourcesOfIRNodesAstFileIOSupport.C"
-
 
 
 SgProject* 

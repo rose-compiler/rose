@@ -4,7 +4,7 @@
  *
  */
 
-#include "rose.h"
+#include "sage3basic.h"
 #include "unparser.h"
 
 using namespace std;
@@ -921,6 +921,8 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
         {
        // This define is copied from OFP actionEnum.h This needs to be better handled later (using a proper enum type).
 #define IntentSpecBase 600
+#ifndef _MSC_VER
+			// tps (02/02/2010) : error C2513: 'const int' : no variable declared before '='
           const int IN    = IntentSpecBase+0;
           const int OUT   = IntentSpecBase+1;
           const int INOUT = IntentSpecBase+2;
@@ -940,6 +942,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
              }
 
           curprint("(" + intentString + ")");
+#endif
         }
 
   // The parameter statement is a bit different from the other attribute statements (perhaps enough for it to be it's own IR node.

@@ -1,22 +1,47 @@
 #ifndef __ROSEAttributesList_H__
 #define __ROSEAttributesList_H__
 
-#include "setup.h"
+//#include "setup.h"
 
-#include <list>
-#include <vector>
+//#include <list>
+//#include <vector>
 #include <map>
 
 // Include the ROSE lex specific definitions of tokens
 #include "general_token_defs.h"
 
+// #ifdef CAN_NOT_COMPILE_WITH_ROSE
+//    #warning "CAN_NOT_COMPILE_WITH_ROSE IS defined"
+// #else
+//   #warning "CAN_NOT_COMPILE_WITH_ROSE is NOT defined"
+// #endif
+
+// DQ (2/28/2010): Skip this if we are compiling ROSE using ROSE.
+// This is being used in place of the CAN_NOT_COMPILE_WITH_ROSE macro.
+// Note that CAN_NOT_COMPILE_WITH_ROSE is set by the following projects:
+//     1) projects/DocumentationGenerator
+//     2) projects/haskellport
+// in their Makefile.am files.  I think that using CXX_IS_ROSE_ANALYSIS
+// will be equivalent (used to indicate the a ROSE translator is being 
+// used to compile the ROSE source code).
+// However, it might be that this is equivalent to the USE_ROSE macro, 
+// which is set for all ROSE translators when they compile any code.
 // DQ (12/22/2008): I would appreciate it if this were a better name...
-#if !CAN_NOT_COMPILE_WITH_ROSE 
+// #if !CAN_NOT_COMPILE_WITH_ROSE 
+// #ifndef USE_ROSE
+#if _MSC_VER < 1600  // 1600 == VC++ 10.0
 #include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
 #include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type
+#else
+// #warning "Setting CAN_NOT_COMPILE_WITH_ROSE to value = 1"
+// #define CAN_NOT_COMPILE_WITH_ROSE 1
+// tps (12/4/2009) : This is not found in VC++ 10.0 and Boost 1.4
+#pragma message ("Boost preprocessor and wave not included yet for VC++ 10.0")
 
 #endif
+
+// #endif
 
 //template boost::wave::cpplexer::impl::token_data<std::string, boost::wave::util::file_position_type>::delete(std::size_t) ; 
 // DQ (10/16/2002): Required for compiling with SUN 5.2 C++ compiler
@@ -43,128 +68,20 @@ class Sg_File_Info;
 // DQ (1/21/2008): Need forward declaration
 class SgFile;
 
-#if !CAN_NOT_COMPILE_WITH_ROSE 
+// #if !CAN_NOT_COMPILE_WITH_ROSE 
+// #ifndef USE_ROSE
 
 typedef boost::wave::cpplexer::lex_token<> token_type;
 typedef std::vector<token_type>            token_container;
 typedef std::list<token_type>              token_list_container;
 typedef std::vector<std::list<token_type> >       token_container_container;
 
-#endif
+// #endif
 
 //! For preprocessing information including source comments, #include , #if, #define, etc
 class  PreprocessingInfo
    {
-
-  // This is part of Wave support in ROSE.
-#if !CAN_NOT_COMPILE_WITH_ROSE 
      public:
-/*
-       //AS using the lexer_token from boost_wave in order to store structures
-          typedef boost::wave::cpplexer::lex_token<> token_type;
-          typedef std::vector<token_type>            token_container;
-          typedef std::list<token_type>              token_list_container;
-          typedef std::vector<std::list<token_type> >       token_container_container;
-*/
-     private:
-         //FIXME: To support Jochens AST binary save work the tokenSteam must
-         //have a pointer type.
-
-          //A stream of tokens representing the current prerpocessing info
-          //object. This is equivalent to the internal string, but of cause
-          //contains more information since it is a tokenized stream.
-          token_container* tokenStream;
-
-     public:
-
-
-         
-	  typedef struct r_include_directive{
-	    //  The parameter 'directive' contains the (expanded) file name found after 
-	    //  the #include directive. This has the format '<file>', '"file"' or 
-	    //  'file'.
-	       token_type directive;
-	    //  The paths plus name to the include directive filename
-	       std::string absname;
-	       std::string relname;
-
-
-	  } rose_include_directive;
-
-       //Internal representation of a macro #define directive
-	  typedef struct r_macro_def {
-	       bool is_functionlike; 
-	       bool is_predefined;
-
-	       token_type macro_name;
-	       token_container paramaters;
-	       token_list_container definition;
-
-	       r_macro_def()
-		       : macro_name(), paramaters(),definition()
-			  {
-			  }
-
-	  } rose_macro_definition;
-
-       //Internal representation of a macro call
-       //e.g #define MACRO_CALL int x;
-       //    MACRO_CALL
-	  typedef struct r_macro_call {
-	       bool is_functionlike;
-
-	       PreprocessingInfo* macro_def;
-
-	       token_type macro_call;
-	       token_container_container arguments;
-
-	       token_container expanded_macro;                
-
-               //Get string representation of the 
-               //expanded macro
-               std::string get_expanded_string()
-               {
-                 std::ostringstream os;
-                 token_container::const_iterator iter;
-                 for (iter=expanded_macro.begin(); iter!=expanded_macro.end(); iter++)
-                   os<<(*iter).get_value();
-
-                 return os.str();
-               }
-
-	       r_macro_call()
-		       : macro_call(), arguments(),expanded_macro()
-			  {
-
-			  }
-
-	  } rose_macro_call;
-
-
-
-       // Access functions to get the macro call or macro definition.
-       //These are NULL if the type is not CMacroCall or
-       //CpreprocessorDefineDeclaration
-	  rose_macro_call* get_macro_call(); 
-	  rose_macro_definition* get_macro_def();
-          rose_include_directive* get_include_directive();
-
-	  const token_container* get_token_stream();
-          void push_front_token_stream(token_type tok);
-          void push_back_token_stream(token_type tok);
-
-     private:
-       // AS add macro definition
-	  rose_macro_definition* macroDef;
-       // AS add macro call
-	  rose_macro_call*       macroCall;
-       // AS include directive
-	  rose_include_directive* includeDirective;
-
-#endif
-
-     public:
-
       //  DQ (10/15/2002) moved this to nested scope to avoid global name pollution :-).
       //! MK: Enum type to store if the directive goes before or after the
       //! corresponding line of source code
@@ -189,75 +106,75 @@ class  PreprocessingInfo
        //
        // Rama (08/17/07): Adding a CpreprocessorDeadIfDeclaration and its support
        // in various files.
-	  enum DirectiveType
-	     {
-       // This is treated as an error
-	       CpreprocessorUnknownDeclaration,
+          enum DirectiveType
+             {
+            // This is treated as an error
+               CpreprocessorUnknownDeclaration,
 
-       // These are a classification for comments
-	       C_StyleComment,
-	       CplusplusStyleComment,
-	       FortranStyleComment,
+            // These are a classification for comments
+               C_StyleComment,
+               CplusplusStyleComment,
+               FortranStyleComment,
 
-       // DQ (11/20/2008): Added classification for blank line (a language independent form of comment).
-	       CpreprocessorBlankLine,
+            // DQ (11/20/2008): Added classification for blank line (a language independent form of comment).
+               CpreprocessorBlankLine,
 
-       // These are translated into IR nodes
-	       CpreprocessorIncludeDeclaration,
+            // These are translated into IR nodes
+               CpreprocessorIncludeDeclaration,
                CpreprocessorIncludeNextDeclaration,
-	       CpreprocessorDefineDeclaration,
-	       CpreprocessorUndefDeclaration,
-	       CpreprocessorIfdefDeclaration,
-	       CpreprocessorIfndefDeclaration,
-	       CpreprocessorIfDeclaration,
-	       CpreprocessorDeadIfDeclaration,
-	       CpreprocessorElseDeclaration,
-	       CpreprocessorElifDeclaration,
-	       CpreprocessorEndifDeclaration,
-	       CpreprocessorLineDeclaration,
-	       CpreprocessorErrorDeclaration,
+               CpreprocessorDefineDeclaration,
+               CpreprocessorUndefDeclaration,
+               CpreprocessorIfdefDeclaration,
+               CpreprocessorIfndefDeclaration,
+               CpreprocessorIfDeclaration,
+               CpreprocessorDeadIfDeclaration,
+               CpreprocessorElseDeclaration,
+               CpreprocessorElifDeclaration,
+               CpreprocessorEndifDeclaration,
+               CpreprocessorLineDeclaration,
+               CpreprocessorErrorDeclaration,
 
-	    // DQ (10/19/2005): Added CPP warning directive
-	       CpreprocessorWarningDeclaration,
-	       CpreprocessorEmptyDeclaration,
+            // DQ (10/19/2005): Added CPP warning directive
+               CpreprocessorWarningDeclaration,
+               CpreprocessorEmptyDeclaration,
 
-	    // AS (11/18/05): Added macro support (these are generated by the Wave 
-       // support, but need to be better documented as to what they mean).
-	       CSkippedToken,
-	       CMacroCall,
+            // AS (11/18/05): Added macro support (these are generated by the Wave 
+            // support, but need to be better documented as to what they mean).
+               CSkippedToken,
+               CMacroCall,
 
-       // AS & LIAO (8/12/2008): A PreprocessingInfo that is a 
-       // hand made MacroCall that will expand into a valid statement.
-          CMacroCallStatement,
+            // AS & LIAO (8/12/2008): A PreprocessingInfo that is a 
+            // hand made MacroCall that will expand into a valid statement.
+               CMacroCallStatement,
 
-       // DQ (11/28/2008): What does this mean!
-	    // A line replacement will replace a sub-tree in the AST
-	    // after a node with position (filename,line)
-	       LineReplacement,
+            // DQ (11/28/2008): What does this mean!
+            // A line replacement will replace a sub-tree in the AST
+            // after a node with position (filename,line)
+               LineReplacement,
 
-       // The is the 'extern "C" {' construct.  Note that this is not captured in 
-       // the EDG AST and it is required to be captured as part of the CPP and 
-       // comment preprocessing.
-	       ClinkageSpecificationStart,
-	       ClinkageSpecificationEnd,
+            // The is the 'extern "C" {' construct.  Note that this is not captured in 
+            // the EDG AST and it is required to be captured as part of the CPP and 
+            // comment preprocessing.
+               ClinkageSpecificationStart,
+               ClinkageSpecificationEnd,
 
-       // DQ (11/17/2008): Added support for #ident
-	       CpreprocessorIdentDeclaration,
+            // DQ (11/17/2008): Added support for #ident
+               CpreprocessorIdentDeclaration,
 
-       // DQ (11/17/2008): This handles the case CPP declarations (called "linemarkers")
-       // (see Google for more details) such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
-       // "# 1 "<command line>"" "# 1 "test2008_05.F90""
-       // The first token is the line number,
-       // the second token is the filename (or string),
-       // the optional tokens (zero or more) are flags:
-       //   '1' indicates the start of a new file.
-       //   '2' indicates returning to a file (having included another file).
-       //   '3' indicates that the following text comes from a system header file, so certain warnings should be supressed. 
-       //   '4' indicates that the following text should be treated as being wrapped in an implicit 'extern "C"' block
-	       CpreprocessorCompilerGeneratedLinemarker,
+            // DQ (11/17/2008): This handles the case CPP declarations (called "linemarkers")
+            // (see Google for more details) such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
+            // "# 1 "<command line>"" "# 1 "test2008_05.F90""
+            // The first token is the line number,
+            // the second token is the filename (or string),
+            // the optional tokens (zero or more) are flags:
+            //   '1' indicates the start of a new file.
+            //   '2' indicates returning to a file (having included another file).
+            //   '3' indicates that the following text comes from a system header file, so certain warnings should be supressed. 
+            //   '4' indicates that the following text should be treated as being wrapped in an implicit 'extern "C"' block
+               CpreprocessorCompilerGeneratedLinemarker,
 
-	       LastDirectiveType
-	     };
+               LastDirectiveType
+             };
 
        // DQ (7/10/2004): Make the data private
      private:
@@ -285,20 +202,98 @@ class  PreprocessingInfo
           std::string filenameForCompilerGeneratedLinemarker;
           std::string optionalflagsForCompilerGeneratedLinemarker;
 
+// This is part of Wave support in ROSE.
+// #if !CAN_NOT_COMPILE_WITH_ROSE 
+// #ifndef USE_ROSE
+     public:
+/*
+       // AS using the lexer_token from boost_wave in order to store structures
+          typedef boost::wave::cpplexer::lex_token<> token_type;
+          typedef std::vector<token_type>            token_container;
+          typedef std::list<token_type>              token_list_container;
+          typedef std::vector<std::list<token_type> >       token_container_container;
+*/
+     private:
+       // FIXME: To support Jochens AST binary save work the tokenSteam must
+       // have a pointer type.
+
+       // A stream of tokens representing the current prerpocessing info
+       // object. This is equivalent to the internal string, but of cause
+       // contains more information since it is a tokenized stream.
+          token_container* tokenStream;
+
+     public:         
+          typedef struct r_include_directive
+             {
+            // The parameter 'directive' contains the (expanded) file name found after 
+            // the #include directive. This has the format '<file>', '"file"' or 'file'.
+               token_type directive;
+            // The paths plus name to the include directive filename
+               std::string absname;
+               std::string relname;
+             } rose_include_directive;
+
+       // Internal representation of a macro #define directive
+          typedef struct r_macro_def
+             {
+               bool is_functionlike; 
+               bool is_predefined;
+               token_type macro_name;
+               token_container paramaters;
+               token_list_container definition;
+               r_macro_def() : macro_name(), paramaters(),definition() {}
+             } rose_macro_definition;
+
+       // Internal representation of a macro call
+       // e.g #define MACRO_CALL int x;
+       // MACRO_CALL
+          typedef struct r_macro_call
+             {
+               bool is_functionlike;
+               PreprocessingInfo* macro_def;
+               token_type macro_call;
+               token_container_container arguments;
+               token_container expanded_macro;                
+
+            // Get string representation of the expanded macro
+               std::string get_expanded_string()
+                  {
+                    std::ostringstream os;
+                    token_container::const_iterator iter;
+                    for (iter=expanded_macro.begin(); iter!=expanded_macro.end(); iter++)
+                         os << (*iter).get_value();
+                    return os.str();
+                  }
+
+               r_macro_call() : macro_call(), arguments(),expanded_macro() {}
+             } rose_macro_call;
+
+     private:
+       // AS add macro definition
+          rose_macro_definition*  macroDef;
+       // AS add macro call
+          rose_macro_call*        macroCall;
+       // AS include directive
+          rose_include_directive* includeDirective;
+
+// #endif for Wave specific data not compiled when USE_ROSE is defined.
+// #endif
+
   // member functions
      public:
          ~PreprocessingInfo();
           PreprocessingInfo();
 
-#if !CAN_NOT_COMPILE_WITH_ROSE 
+// #if !CAN_NOT_COMPILE_WITH_ROSE 
+// #ifndef USE_ROSE
        // AS (112105) Added constructors to support macros
           PreprocessingInfo(token_container, DirectiveType, RelativePositionType); 
           PreprocessingInfo(rose_macro_call*, RelativePositionType); 
           PreprocessingInfo(rose_macro_definition*, RelativePositionType); 
           PreprocessingInfo(token_type, token_list_container, bool, DirectiveType,RelativePositionType); 
           PreprocessingInfo(rose_include_directive*, RelativePositionType);
-#endif
-          
+// #endif
+
        // This constructor is called from the C++ code generated from the lex file (preproc.lex)
        // PreprocessingInfo(DirectiveType, const char *inputStringPointer, int line_no , int col_no,
        //                   int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag) ROSE_DEPRECATED_FUNCTION;
@@ -368,6 +363,24 @@ class  PreprocessingInfo
           void set_lineNumberForCompilerGeneratedLinemarker( int x );
           void set_filenameForCompilerGeneratedLinemarker( std::string x );
           void set_optionalflagsForCompilerGeneratedLinemarker( std::string x );
+
+// #if !CAN_NOT_COMPILE_WITH_ROSE 
+// #ifndef USE_ROSE
+  // Wave specific member functions.
+     public:
+       // Access functions to get the macro call or macro definition.
+       // These are NULL if the type is not CMacroCall or
+       // CpreprocessorDefineDeclaration
+          rose_macro_call* get_macro_call(); 
+          rose_macro_definition* get_macro_def();
+          rose_include_directive* get_include_directive();
+
+          const token_container* get_token_stream();
+          void push_front_token_stream(token_type tok);
+          void push_back_token_stream(token_type tok);
+
+// #endif for Wave specific data not compiled when USE_ROSE is defined.
+// #endif
    };
 
 // DQ (10/15/2002) Changed list element from "PreprocessingInfo" to 
@@ -506,10 +519,11 @@ class ROSEAttributesListContainer
    };
 
 
-#if !CAN_NOT_COMPILE_WITH_ROSE 
+// #if !CAN_NOT_COMPILE_WITH_ROSE 
+// #ifndef USE_ROSE
 
 extern token_container wave_tokenStream;
 
-#endif
+// #endif
 
 #endif

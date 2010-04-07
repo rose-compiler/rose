@@ -1,6 +1,7 @@
-
-// #include IOSTREAM_HEADER_FILE
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "processTemplateHandlingOptions.h"
+#include "markTemplateInstantiationsForOutput.h"
 // #include "Cxx_Grammar.h"
 // #include "AstNodePtrs.h"
 
