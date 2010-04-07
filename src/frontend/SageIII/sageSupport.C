@@ -1102,13 +1102,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
     // set_UPC_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
     // ROSE_ASSERT (get_UPC_only() == false);
      bool hasRoseUpcEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPC|UPC_only)",true) ;
-     bool hasEdgUpcEnabled = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
+     bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
      if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled) 
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf (" mode ON \n");
+               printf ("UPC mode ON \n");
           set_C_only(true);
           set_UPC_only(true);
           // remove edg:restrict since we will add it back in SgFile::build_EDG_CommandLine()
@@ -1118,22 +1118,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
     // two situations: either of -rose:upc_threads n  and --edg:upc_threads n appears.
     // set flags and remove both.
-    int integerOptionForUPCThreads = 0;
-    int integerOptionForUPCThreads2 = 0;
-    bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)",
-          integerOptionForUPCThreads,true);
-    bool hasEDGUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"--edg:","(upc_threads)",
-          integerOptionForUPCThreads2,true);
+     int integerOptionForUPCThreads  = 0;
+     int integerOptionForUPCThreads2 = 0;
+     bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)", integerOptionForUPCThreads,true);
+     bool hasEDGUpcThreads  = CommandlineProcessing::isOptionWithParameter(argv,"--edg:","(upc_threads)", integerOptionForUPCThreads2,true);
 
-    integerOptionForUPCThreads= (integerOptionForUPCThreads!=0)?integerOptionForUPCThreads:integerOptionForUPCThreads2;
-    if (hasRoseUpcThreads||hasEDGUpcThreads)
-    {  
+     integerOptionForUPCThreads = (integerOptionForUPCThreads != 0) ? integerOptionForUPCThreads : integerOptionForUPCThreads2;
+     if (hasRoseUpcThreads||hasEDGUpcThreads)
+        {  
        // set ROSE SgFile::upc_threads value, done for ROSE
-       set_upc_threads(integerOptionForUPCThreads);
-       if ( SgProject::get_verbose() >= 1 )
-             printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
-
-     }       
+          set_upc_threads(integerOptionForUPCThreads);
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
+        }
   //
   // C++ only option
   //
