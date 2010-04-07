@@ -8,6 +8,7 @@
 // #include IOSTREAM_HEADER_FILE
 #include <iostream>
 
+#include "rosedll.h"
 #include "AstStatistics.h"
 // #include "AstPDFGeneration.h"
 #include "AstTextAttributesHandling.h"
@@ -45,7 +46,7 @@ class TestAstProperties : public AstBottomUpProcessing<TestAstPropertiesSA>
           TestAstPropertiesSA evaluateSynthesizedAttribute(SgNode* node, SubTreeSynthesizedAttributes l);
    };
 
-class AstTests 
+class ROSE_DLL_API AstTests 
    {
      public:
        // some handy string functions used when testing the RTI information of a SgNode
@@ -345,8 +346,9 @@ class TestLValueExpressions : public AstSimpleProcessing
 
 class TestMultiFileConsistancy : public ROSE_VisitTraversal // AstSimpleProcessing
    {
-  // This class uses a traversal to test expressions that should be marked 
-  // as lvalues and makes sure that other expressions are not marked as lvalues.
+  // DQ (3/7/2010): Corrected the documentation for this class.
+  // Test the declarations to make sure that defining and non-defining appear in 
+  // the same file (for outlining consistency).
 
      public:
 
@@ -354,6 +356,54 @@ class TestMultiFileConsistancy : public ROSE_VisitTraversal // AstSimpleProcessi
           static void test();
 
       //! visit function required for traversal
+          void visit ( SgNode* node );
+   };
+
+
+class BuildListOfConnectedNodesInAST : public AstSimpleProcessing
+   {
+  // DQ (3/7/2010): This class is part of a test to detect disconnected 
+  // parts of the AST. These are currently a problem for the AST File I/O 
+  // and need to be eliminated.
+
+     public:
+         std::set<SgNode*> & nodeSet;
+         BuildListOfConnectedNodesInAST(std::set<SgNode*> & s);
+
+      //! visit function required for traversal
+          void visit ( SgNode* node );
+   };
+
+class BuildListOfNodesInAST : public ROSE_VisitTraversal
+   {
+  // DQ (3/7/2010): This class Corrected the documentation for this class.
+  // Test the declarations to make sure that defining and non-defining appear in 
+  // the same file (for outlining consistency).
+
+     public:
+         const std::set<SgNode*> & constNodeSet;
+         std::set<SgNode*> & nodeSet;
+         BuildListOfNodesInAST(const std::set<SgNode*> & s1,std::set<SgNode*> & s2);
+
+      //! visit function required for traversal
+          void visit ( SgNode* node );
+   };
+
+class TestForDisconnectedAST 
+   {
+  // DQ (3/7/2010): This uses  the results form the BuildListOfConnectedNodesInAST
+  // and BuildListOfNodesInAST and identifies the differences.
+
+     public:
+      //! static function to do trigger the test
+          static void test(SgNode* node);
+   };
+
+
+class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
+   {
+     public:
+          int counter;
           void visit ( SgNode* node );
    };
 

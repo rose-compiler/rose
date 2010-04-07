@@ -17,8 +17,9 @@ std::string version_message();
 std::string version_number();
 
 // Simple interface for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
-SgProject* frontend ( int argc, char** argv);
-SgProject* frontend ( const std::vector<std::string>& argv);
+// tps : Need to make this function (DLL) public 
+ROSE_DLL_API SgProject* frontend ( int argc, char** argv);
+ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv);
 
 // This builds a shell of a frontend SgProject with associated SgFile objects (but with empty 
 // SgGlobal objects) supporting only commandline processing and requiring the frontend to be 
@@ -30,7 +31,7 @@ SgProject* frontendShell ( const std::vector<std::string>& argv);
 // objects to control the formatting of code generation and the use of alternative code generation
 // techniques (e.g. copy-based code generation).
 // int backend ( SgProject* project );
-int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
+ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
 
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any

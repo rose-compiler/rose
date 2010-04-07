@@ -441,7 +441,8 @@ Grammar::generateStorageClassesFiles()
      staticSetSource += "void\n";
      staticSetSource += "AstSpecificDataManagingClass::setStaticDataMembersOfIRNodes ( ) const\n";
      staticSetSource += "   {\n";
-     staticSetSource += "      std::cout << \" Setting data of AST #\" << astIndex << std::endl;\n";
+  // DQ (2/20/2010): Remove extraneous output from AST File I/O (required to be clean for use in Autoconf tests).
+  // staticSetSource += "      std::cout << \" Setting data of AST #\" << astIndex << std::endl;\n";
      staticSetSource += buildStaticDataMemberListSetStaticDataSource(*rootNode);
      staticSetSource += "   }\n\n";
      StorageClassSourceFile << staticSetSource;
@@ -468,9 +469,11 @@ Grammar::generateStorageClassesFiles()
      staticDataConstructorSource += "        }\n";
      staticDataConstructorSource += "     astIndex = AST_FILE_IO::getNumberOfAsts();\n";
      staticDataConstructorSource += "     AST_FILE_IO::addNewAst(this);\n";
-     staticDataConstructorSource += "     std::cout << \"Extending memory pools ...\" << std::flush;\n";
+  // DQ (2/20/2010): Remove extraneous output from AST File I/O (required to be clean for use in Autoconf tests).
+  // staticDataConstructorSource += "     std::cout << \"Extending memory pools ...\" << std::flush;\n";
      staticDataConstructorSource += "     AST_FILE_IO::extendMemoryPoolsForRebuildingAST();\n";
-     staticDataConstructorSource += "     std::cout << \" done\" << std::endl;\n";
+  // DQ (2/20/2010): Remove extraneous output from AST File I/O (required to be clean for use in Autoconf tests).
+  // staticDataConstructorSource += "     std::cout << \" done\" << std::endl;\n";
      staticDataConstructorSource += "     rootOfAst = (SgProject*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex (source.rootOfAst));\n";
      staticDataConstructorSource += generateStaticDataConstructorSource(*rootNode);
      staticDataConstructorSource += "   }\n\n";

@@ -172,14 +172,15 @@ Grammar::buildStorageClassDeclarations()
  */
 string 
 Grammar::build_header_AST_FILE_IO_CLASS()
-   { 
+   {
+  // DQ (2/27/2010): this file needs to be generated so that the "$PLACE_ENUM_SIZE" can be replaced.
+  // There might be an alternative way in the future to get just this numerical value
+  // (e.g. using the enum values: Cxx_Grammar_LAST_TAG or V_SgNumVariants).
      StringUtility::FileWithLineNumbers readFromFile = Grammar::readFileWithPos("../Grammar/grammarAST_FileIoHeader.code");
-     
+
      ROSE_ASSERT (!this->astVariantToNodeMap.empty());
      size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
-     std::string replacement = "     enum { totalNumberOfIRNodes = " + 
-                               StringUtility::numberToString ( maxVariant + 1 ) +
-                               "} ; ";
+     std::string replacement = "enum { totalNumberOfIRNodes = " + StringUtility::numberToString ( maxVariant + 1 ) + "}; ";
     
      string returnString = StringUtility::toString(StringUtility::copyEdit(readFromFile,"$PLACE_ENUM_SIZE", replacement )); 
      return returnString;
@@ -507,7 +508,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
                readASTFromFile += "          " + nodeNameString + "StorageClass* storageArray = storageArray" + nodeNameString + ";\n" ;
                readASTFromFile += "          for ( unsigned int i = 0;  i < sizeOfActualPool; ++i )\n" ;
                readASTFromFile += "             {\n" ;
-               readASTFromFile += "               new " + nodeNameString + " ( *storageArray ) ; \n" ;
+            // readASTFromFile += "               new " + nodeNameString + " ( *storageArray ) ; \n" ;
+               readASTFromFile += "               " + nodeNameString + "* tmp = new " + nodeNameString + " ( *storageArray ) ; \n" ;
+               readASTFromFile += "               ROSE_ASSERT(tmp->p_freepointer == AST_FileIO::IS_VALID_POINTER() ); \n" ;
                readASTFromFile += "               storageArray++ ; \n" ;
                readASTFromFile += "             }\n" ;
                readASTFromFile += "        }  \n" ;

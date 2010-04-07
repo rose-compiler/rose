@@ -8,6 +8,7 @@
 #define SAGE3_CLASSES_BASIC__H
 #include <semaphore.h>
 #include "fileoffsetbits.h"
+#include "rosedll.h"
 
 // DQ (4/21/2009): Note that this header file will include the STL string header file 
 // which will include sys/stat.h, so the _FILE_OFFSET_BITS macro must be already set 
@@ -179,8 +180,20 @@
 // (MAX_NUMBER_OF_MEMORY_BLOCKS * DEFAULT_CLASS_ALLOCATION_POOL_SIZE)
 // It might be better to use an STL vector here since they we don't have
 // an upper bound on the number of IR nodes of each type!!!
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
+
+// DQ (3/7/2010): There is some sort of problem that in the AST File I/O that only
+// happens on block boundaries.  I am changing this to a very small number to support
+// debugging this problem.
 #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
-#define MAX_NUMBER_OF_MEMORY_BLOCKS        1000
+
+// DQ (3/7/2010):Added error checking.
+#if DEFAULT_CLASS_ALLOCATION_POOL_SIZE < 1
+   #error "DEFAULT_CLASS_ALLOCATION_POOL_SIZE must be greater than zero!"
+#endif
+
+// DQ (3/7/2010): This is no longer used (for several years) and we use an STL based implementation.
+// #define MAX_NUMBER_OF_MEMORY_BLOCKS        1000
 
 
 // DQ (9/231/2005): Map these to the C library memory alloction/deallocation functions.
