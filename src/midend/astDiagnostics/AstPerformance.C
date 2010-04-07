@@ -8,12 +8,18 @@
 // file locking support
 #include <errno.h>
 #include <stdio.h>
-//#include <fcntl.h>
-//#include <unistd.h>
+#include <fcntl.h>
+#include <unistd.h>
 #ifndef _MSC_VER
 #include <sys/resource.h>
 #endif
 #endif
+
+#ifdef _MSC_VER
+#include <windows.h> 		// getpagesize()
+#endif
+
+#include <boost/thread.hpp>	// sleep()
 
 // DQ (12/8/2006): Linux memory usage mechanism (no longer used, implemented internally (below)).
 // #include<memoryUsage.h>
@@ -97,8 +103,14 @@ int
 ROSE_MemoryUsage::getPageSizeBytes() const
    {
 #ifdef _MSC_VER
-#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
-	 return 0;
+
+     // CH (4/6/2010): Windows's version of `getpagesize()'
+     SYSTEM_INFO system_info;
+     GetSystemInfo(&system_info);
+     return static_cast<int>(system_info.dwPageSize);
+
+//#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
+//	 return 0;
 #else
      return getpagesize();
 #endif
@@ -115,12 +127,7 @@ ROSE_MemoryUsage::getCurrentMemoryUsage()
 double
 ROSE_MemoryUsage::getPageSizeMegabytes() const
    {
-#ifdef _MSC_VER
-#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
-	 return 0;
-#else
-     return getpagesize() / (1024.0 * 1024.0);
-#endif
+     return getPageSizeBytes() / (1024.0 * 1024.0);
    }
 
 double
@@ -335,7 +342,6 @@ ProcessingPhase::stopTiming(const RoseTimeType& timer) {
      set_resolution(resolution);
    }
 
-/* 
 int
 AstPerformance::getLock()
    {
@@ -381,73 +387,12 @@ AstPerformance::getLock()
 
      return fd;
    }
-   */
 
-// CH (4/1/2010): Replace "open" with "fopen" to make it portable
-FILE*
-AstPerformance::getLock()
-   {
-     FILE* fd;
 
-  // printf ("Build the lock file \n");
-  // generate a lock 
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("Acquiring a lock: rose_performance_report_lockfile.lock \n");
-
-  // DQ (8/24/2008): Setup counters to detect when file locks are in place (this was a problem this morning)
-     unsigned long counter             = 0;
-     const unsigned long userTolerance = 10;
-
-     while ( (fd = fopen("rose_performance_report_lockfile.lock", "w")) == NULL )
-        {
-       // Skip the message output if this is the first try!
-          if ( counter > 0 )
-               printf ("Waiting for lock! counter = %lu userTolerance = %lu \n",counter,userTolerance);
-
-#ifdef _MSC_VER
-#pragma message ("WARNING: sleep() Linux support not available in Windows.")
-#else
-          sleep(1);
-#endif
-          counter++;
-
-       // DQ (8/24/2008): If after waiting a short while and the lock is still there, then report the issue.
-          if ( counter > userTolerance )
-             {
-               printf ("Waiting for file lock (run \"make clean\" to remove lock files, if problem persists)... \n");
-
-            // Reset the counter to prevent it from over flowing on nightly tests, though that might take a long time :-).
-               counter = 1;
-             }
-        }
-
-     if (fd == NULL)
-        {
-          perror("error in opening lock file: rose_performance_report_lockfile.lock");
-       // exit(1);
-        }
-
-     return fd;
-   }
-
-/* 
 void
 AstPerformance::releaseLock (int fd )
    {
      close(fd);
-
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("Removing the lock file \n");
-
-     remove("rose_performance_report_lockfile.lock");
-   }
-   */
-
-// CH (4/1/2010): Replace "close" with "fclose" to make it portable
-void
-AstPerformance::releaseLock (FILE* fd )
-   {
-     fclose(fd);
 
      if ( SgProject::get_verbose() >= 1 )
           printf ("Removing the lock file \n");
@@ -739,10 +684,8 @@ AstPerformance::generateReportToFile( SgProject* project ) const
   // printf ("Get the lock ... \n");
 
   // generate a lock 
-     //int fd = getLock();
-     //ROSE_ASSERT(fd > 0);
-     FILE* fd = getLock();
-     ROSE_ASSERT(fd != NULL);
+     int fd = getLock();
+     ROSE_ASSERT(fd > 0);
   // printf ("Got the lock ... \n");
 
   // Put the data for each ProcessingPhase out to a CSV formatted file

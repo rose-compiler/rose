@@ -12,6 +12,10 @@
 #include "test_support.h"
 #include "merge.h"
 
+#ifdef _MSC_VER
+#include <direct.h>	// chdir
+#endif
+
 // This implements the support for merging ASTs. It should merge perfectly
 // if we handled the merging of everthing, but namespaces and some function declarations
 // will be a problem because they will generate unique names that are not really unique.
@@ -772,14 +776,16 @@ int AstMergeSupport ( SgProject* project )
                     int nextErrorCode = 0;
 #if 1
                  // int fileIndex = 0;
-#ifdef _MSC_VER
-#pragma message ("WARNING: MSVC does not support chdir() function in Linux.")
-					printf ("ERROR: MSVC does not support chdir() function in Linux.");
-					ROSE_ASSERT(false);
-					int chdirError = -1;
-#else
+		                        
+		    // CH (4/7/2010): The header file "direct.h" in MSVC supports 'chdir' function.
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: MSVC does not support chdir() function in Linux.")
+//					printf ("ERROR: MSVC does not support chdir() function in Linux.");
+//					ROSE_ASSERT(false);
+//					int chdirError = -1;
+//#else
 					int chdirError = chdir(workingDirectory.c_str());
-#endif
+//#endif
                     ROSE_ASSERT (chdirError == 0);
 
                     SgFile* newFile = determineFileType( vector<string>(argv, argv+argc), nextErrorCode,  project );
