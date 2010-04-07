@@ -5333,11 +5333,29 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
 
+          bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
+
        // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
           for (size_t i = 0; i < includeList.size(); i++)
              {
                OFPCommandLine.push_back(includeList[i]);
+
+            // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
+
+            // I think we have to permit an optional space between the "-I" and the path
+               if ("-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+                  {
+                 // The source file path is already included!
+                    foundSourceDirectoryExplicitlyListedInIncludePaths = true;
+                  }
+             }
+
+       // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+          if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
+             {
+            // Add the source directory to the include list so that we reproduce the semantics of gfortran
+               OFPCommandLine.push_back("-I" + getSourceDirectory() );
              }
 
           OFPCommandLine.push_back(get_sourceFileNameWithPath());
@@ -5355,15 +5373,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 #else
 
-#error "REMOVE THIS CODE"
+// #error "REMOVE THIS CODE"
 
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_only_argc    = 0;
           char** openFortranParser_only_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
-          frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+       // frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+          int errorCode = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 #endif
-          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) \n");
+          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
        // exit(0);
 
           ROSE_ASSERT(errorCode == 0);
