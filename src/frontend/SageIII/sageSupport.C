@@ -5366,8 +5366,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
           frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 #endif
-          printf ("Exiting after parsing fortran (OFP) ... (get_exit_after_parser() == true) \n");
-          exit(0);
+          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) \n");
+       // exit(0);
+
+          ROSE_ASSERT(errorCode == 0);
+          return errorCode;
        }
                     
   // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
