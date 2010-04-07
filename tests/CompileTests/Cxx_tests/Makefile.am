@@ -58,6 +58,11 @@ VALGRIND =
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): ../../testTranslator
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+
+# DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
+testParser:../../testParser
+	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_01.C
 
 # This requires a special makefile rule
 test2005_56.o: ../../testTranslator
@@ -106,7 +111,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2001_15.h  test2001_18B.h  test2003_09.h  test2003_14.h  test2003_25.h  test2005_133.h  test2005_157.h \
      test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_42.h test2007_08.h test2007_41.h \
      test2007_42.h test2007_47.h test2007_48.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
-     test2008_11.h LogicalPath.cpp
+     test2008_11.h LogicalPath.cpp test2005_56.C
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h
@@ -136,6 +141,7 @@ testBuildUsingAbsolutePath: ../../testTranslator
 	../../testTranslator -rose:verbose 0 `pwd`/roseTestProgram.C
 
 check-local:
+	@$(MAKE) test2005_56.o
 #	@$(MAKE) testUsingBadCommandline
 	@$(MAKE) testBuildUsingNoPath
 	@$(MAKE) testBuildUsingRelativePath
@@ -143,6 +149,8 @@ check-local:
 	@$(MAKE) test2010_07.o
 	@echo "Tests of C++."
 	@$(MAKE) $(PASSING_TEST_Objects)
+#	DQ (4/6/2010): This fails on Hudson, but I don't know why!
+#	@$(MAKE) testParser
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"

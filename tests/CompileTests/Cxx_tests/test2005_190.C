@@ -4,7 +4,11 @@ int hex = 0x0001;
 struct __ios_flags
    {
      typedef short __int_type;
+#if (__GNUC__ >= 3)
+     const __int_type _S_boolalpha; // = 0x0001;
+#else
      const __int_type _S_boolalpha = 0x0001;
+#endif
   // static const __int_type _S_boolalpha = 0x0001;
   // static const __int_type _S_boolalpha = 0x0001 + 0x0002;
    };

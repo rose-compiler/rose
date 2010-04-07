@@ -5,6 +5,7 @@
 //#include "sage3basic.h"
 //#include "sage3.h"
 #include "AstProcessing.h"
+#include "rosedll.h"
 
 #include <functional>
 // Support for operations like (SgTypeInt | SgTypeFloat)
@@ -270,7 +271,7 @@ namespace AstQueryNamespace
    * will query the subtree of the IR node in the first argument for nodes satisfying
    * the criteria specified in and returned by the predicate in the second argument.
    ********************************************************************************/
-  template<typename NodeFunctional>
+template<typename NodeFunctional>
     typename NodeFunctional::result_type 
     querySubTree(SgNode* node, NodeFunctional nodeFunc, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes,
         t_traverseOrder treeTraversalOrder = preorder)
@@ -328,7 +329,7 @@ namespace AstQueryNamespace
    * the criteria specified in and returned by the function pointer in the second argument.
    ********************************************************************************/
   template <class _Arg, class _Result> 
-    _Result querySubTree ( SgNode * subTree,
+     _Result querySubTree ( SgNode * subTree,
         _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
       return querySubTree(subTree,std::bind2nd(std::ptr_fun(__x),x_arg),defineQueryType);
@@ -343,7 +344,7 @@ namespace AstQueryNamespace
    * the criteria specified in and returned by the function pointer in the second argument.
    ********************************************************************************/
   template <class _Result> 
-    _Result querySubTree ( SgNode * subTree,
+     _Result querySubTree ( SgNode * subTree,
         _Result (*__x)(SgNode*),
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
       return querySubTree(subTree,std::ptr_fun(__x),defineQueryType);

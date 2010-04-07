@@ -15,56 +15,10 @@ add_subdirectory(formatSupport)
 
 ########### next target ###############
 
-if (WIN32)
-set( unparser_SRC
-      ./FortranCodeGeneration/unparseFortran_expressions.C
-      ./FortranCodeGeneration/unparseFortran_modfile.C
-      ./FortranCodeGeneration/unparseFortran_statements.C
-      ./FortranCodeGeneration/unparseFortran_types.C
-      ./CxxCodeGeneration/unparseCxx_types.C
-      ./CxxCodeGeneration/unparseCxx_expressions.C
-      ./CxxCodeGeneration/unparseCxx_statements.C
-#      ./copy_unparser.C
-      ./astUnparseAttribute.C
-      ./unparser.C
-      ./unparse_sym.C
-      ./formatSupport/unparseFormatHelp.C
-      ./formatSupport/unparse_format.C
-      ./PHPCodeGeneration/unparsePHP.C
-      ./languageIndependenceSupport/modified_sage_isUnaryOp.C
-      ./languageIndependenceSupport/unparser_opt.C
-      ./languageIndependenceSupport/modified_sage.C
-      ./languageIndependenceSupport/name_qualification_support.C
-      ./languageIndependenceSupport/unparse_debug.C
-      ./languageIndependenceSupport/unparseLanguageIndependentConstructs.C
-  )
-else (WIN32)
-set( unparser_SRC
-      ./FortranCodeGeneration/unparseFortran_expressions.C
-      ./FortranCodeGeneration/unparseFortran_modfile.C
-      ./FortranCodeGeneration/unparseFortran_statements.C
-      ./FortranCodeGeneration/unparseFortran_types.C
-      ./CxxCodeGeneration/unparseCxx_types.C
-      ./CxxCodeGeneration/unparseCxx_expressions.C
-      ./CxxCodeGeneration/unparseCxx_statements.C
-#      ./copy_unparser.C
-      ./astUnparseAttribute.C
-      ./unparser.C
-      ./unparse_sym.C
-      ./formatSupport/unparseFormatHelp.C
-      ./formatSupport/unparse_format.C
-      ./PHPCodeGeneration/unparsePHP.C
-      ./languageIndependenceSupport/modified_sage_isUnaryOp.C
-      ./languageIndependenceSupport/unparser_opt.C
-      ./languageIndependenceSupport/modified_sage.C
-      ./languageIndependenceSupport/name_qualification_support.C
-      ./languageIndependenceSupport/unparse_debug.C
-      ./languageIndependenceSupport/unparseLanguageIndependentConstructs.C
-  )
-endif (WIN32)
 
-add_library(unparser STATIC ${unparser_SRC})
-add_dependencies( unparser ROSETTA )
+# tps : unparser part of ROSE component
+#add_library(unparser STATIC ${unparser_SRC})
+#add_dependencies( unparser ROSETTA )
 ########### install files ###############
 
 install(FILES  $(unparser_headers) DESTINATION ${INCLUDE_INSTALL_DIR})

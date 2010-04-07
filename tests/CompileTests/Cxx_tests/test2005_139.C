@@ -49,9 +49,12 @@ class X<int>
 
 #endif
 
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ == 3)
 // Template Instantiation Directive
 // This works because "A" has a member function "increment"
 template X<A>;
+#endif
 
 // Template Instantiation Directive
 // This would fail if the specialization X<int> is present

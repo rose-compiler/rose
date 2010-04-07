@@ -94,12 +94,11 @@ if (WIN32)
 # /0s small files
 set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR- /EHsc /wd4541" )
 set( CMAKE_C_FLAGS "   /wd4541 " )
-#set( CMAKE_CXX_FLAGS " /TP /O1 /Ob0 /MP /Os" )
-#set( CMAKE_C_FLAGS "  /O1 /Ob0 /MP /Os" )
-
 else (WIN32)
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+#set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+#set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 endif (WIN32)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )

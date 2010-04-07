@@ -31,6 +31,8 @@ true_dep_2.c \
 true_l2.c 
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+class_member.C \
+for-while-for.C \
 ifstmt.C \
 iterator2.C \
 iteratorloop.C
@@ -38,7 +40,6 @@ iteratorloop.C
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
-class_member.C \
 iterator1.C \
 iterator_const1.C \
 list1.C \

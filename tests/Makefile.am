@@ -6,7 +6,15 @@ SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests 
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testAnalysis testCodeGeneration testTranslator testAstFileIO
+bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge
+
+
+# Phase 0 tests code:
+# This is a test of the EDG and OFP parser support. No significant part of ROSE is generated.
+# A bit of the infrastructure of ROSE is tested that sets up work to build the ROSE AST, etc.
+# This test only works with C/C++ and Fortran.  Not clear what it means for the binary, 
+# which has its own options for skipping different phases.
+testParser_SOURCES = testParser.C
 
 # Phase 1 tests code:
 # This is used in specialized tests outside of ROSE testing for analysis only of large projects.
@@ -28,6 +36,12 @@ testTranslator_SOURCES = testTranslator.C
 # This is a special format of the ROSE AST build for performance File I/O (to address the
 # requirements of large scale applications and their analysis).
 testAstFileIO_SOURCES = testAstFileIO.C
+
+# This tests the ability to read one or more of the binary AST files generated from the AST write.
+testAstFileRead_SOURCES = testAstFileRead.C
+
+# This test the parallel merge of AST files using Cong's threaded implmentation of the merge infrastructure.
+parallelASTMerge_SOURCES = parallelASTMerge.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -102,6 +116,16 @@ testObjectFileFileAstFileIO: testAstFileIO
 
 test_testAstFileIO: testObjectFileFileAstFileIO
 
+# *************************************
+# *******  AST File Read Tests  *******
+# *************************************
+testAstRead: testAstFileRead testAstFileIO
+	cp $(srcdir)/inputFile.C alt_AstFileRead_inputFile.C
+	./testAstFileIO -c alt_AstFileRead_inputFile.C -o alt_AstFileRead_inputFile
+	./testAstFileRead alt_AstFileRead_inputFile.C outputFileName_XXX
+
+test_testAstFileIO: testObjectFileFileAstFileIO
+
 # Reported failure from Tristan
 testSimpleLinkFileTranslator: testTranslator
 	cp $(srcdir)/inputFile.C inputSimpleLinkFileTranslator.C
@@ -127,7 +151,8 @@ myCleanRule:
 	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable testExecutableFileAstFileIOExecutable
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
 	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C inputFileAstFileIO.C
-	rm -f alt_AstFileIO_inputFile* a.out *.dot *.binary
+	rm -f alt_AstFileIO_inputFile* alt_AstFileRead_inputFile* a.out *.dot *.binary
+	rm -f *.C_identity 
 
 
 

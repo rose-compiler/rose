@@ -10,44 +10,11 @@
 // void __assert_fail(const char*, const char*, unsigned int, const char*); // Not defined on OS X
 // extern "C" void __assert_fail();
 
-
-#if 0
-void foo1()
-   {
-     ROSE_ASSERT (!"Inside of foo1");
-   }
-
-void foo2( int x )
-   {
-     switch (x)
-        {
-          case 1: ROSE_ASSERT (!"fail in case 1");
-          default: ROSE_ASSERT (!"fail in default case");
-        }
-
-     ROSE_ASSERT (!"fail at end of foo2");
-   }
-
-namespace X
-   {
-     void foo1()
-        {
-          ROSE_ASSERT (!"Inside of X::foo1");
-        }
-
-
-     void foo2( int x )
-        {
-          switch (x)
-             {
-               case 1: ROSE_ASSERT (!"fail in case 1");
-               default: ROSE_ASSERT (!"fail in default case");
-             }
-
-          ROSE_ASSERT (!"fail at end of X::foo2");
-        }
-   }
-#endif
+// Note that the problem is that the use of ROSE_ASSERT() is in a function in a struct.
+// Used elsewhere ROSE_ASSERT() is not a problem.  Also the issue is that
+// CPP will translate this into:
+// ((!"Inside of struct Y::foo1 (using assert)") ? static_cast<void> (0) : (__assert_fail ("!\"Inside of struct Y::foo1 (using assert)\"", "/home/dquinlan/ROSE/git-dq-main-rc/tests/CompileTests/Cxx_tests/test2010_07.C", 21, __PRETTY_FUNCTION__), static_cast<void> (0)));
+// But EDG will substitute "__PRETTY_FUNCTION__" with "__assert_fail", or so it seems.
 
 struct Y
    {
@@ -56,18 +23,5 @@ struct Y
           ROSE_ASSERT (!"Inside of struct Y::foo1 (using ROSE_ASSERT)");
           assert (!"Inside of struct Y::foo1 (using assert)");
         }
-
-#if 0
-     void foo2( int x )
-        {
-          switch (x)
-             {
-               case 1: ROSE_ASSERT (!"fail in case 1");
-               default: ROSE_ASSERT (!"fail in default case");
-             }
-
-          ROSE_ASSERT (!"fail at end of struct Y::foo2");
-        }
-#endif
    };
 

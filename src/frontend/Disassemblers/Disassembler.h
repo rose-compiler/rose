@@ -101,6 +101,10 @@
  *  @code
  *  Disassembler::register_subclass(new MyDisassembler);
  *  @endcode
+ *
+ *  Another example is shown in the tests/roseTests/binaryTests/disassembleBuffer.C source code. It is an example of how a
+ *  Disassembler object can be used to disassemble a buffer containing bare machine code when one doesn't have an associated
+ *  executable file.
  */
 class Disassembler {
 public:
@@ -390,7 +394,7 @@ public:
 
 
 
-    /** Disassembles instructions from the content buffer beginning with at the specified virtual address and including all
+    /** Disassembles instructions from the content buffer beginning at the specified virtual address and including all
      *  instructions that are direct or indirect successors of the first instruction.  The @p map is a mapping from virtual
      *  addresses to offsets in the content buffer.  Any successors of individual instructions that fall outside the buffer
      *  being disassembled will be added to the optional successors set.  If an address cannot be disassembled then the

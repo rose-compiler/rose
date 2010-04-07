@@ -1,6 +1,6 @@
 
 #include "SymbolicExpr.h"
-
+#include <stdlib.h>
 struct VarRestr
 {
   SymbolicVal coeff, result;
@@ -49,6 +49,7 @@ class UnwrapCond : public SymbolicVisitor
 	  // this assertion is wrong since p might be a unary expression with its internal operand ==pivot
 	  // I have handled SgCastExp cases in SymbolicValGenerator::GetSymbolicVal() 
 	  // I keep this assertion here to expose other unhandled cases, Liao, 11/20/2008
+          //printf("debug: before assertion ...");
           assert(p == pivot); 	   
           left = 1;
           for (iter=v.GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {

@@ -372,57 +372,6 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
      string commandLineToGenerateObjectFile;
 
 
-#if 0
-     commandLineToGenerateObjectFile = "g++";
-
-     SgStringList includeList = project->get_includeDirectorySpecifierList();
-     for (SgStringList::iterator i = includeList.begin(); i != includeList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList libraryDirectoryList = project->get_libraryDirectorySpecifierList();
-     for (SgStringList::iterator i = libraryDirectoryList.begin(); i != libraryDirectoryList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " -L" + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList libraryList = project->get_librarySpecifierList();
-     for (SgStringList::iterator i = libraryList.begin(); i != libraryList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-  // I think this is the *.a 
-     SgStringList libraryList = project->get_libraryFileList();
-     for (SgStringList::iterator i = libraryFileList.begin(); i != libraryFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList objectFileList = project->get_objectFileNameList();
-     string linkOnly = (project->numberOfFiles() > 0) ? "-o " : "";
-     for (SgStringList::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + linkOnly + *i + " ";
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-  // DQ (8/24/2009): Need to be able to generate an executable file if the commandline specified it so
-  // that be used in Autoconf tests by the configure script when specified as the CXX compiler.
-  // This allows CXX=<any ROSE tool> to work with Autoconf tests.
-     SgStringList sourceFileList = project->get_sourceFileNameList();
-     string compileOnly = (project->get_compileOnly() == true) ? "-c " : "";
-     for (SgStringList::iterator i = sourceFileList.begin(); i != sourceFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + compileOnly + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-#else
   // Specify either CC or CXX and then use the rest of the commandline...
   // Any ROSE specific options (e.g. "-rose:xxx") should be ignored by the backend compiler.
      if (project->get_C_only() == true)
@@ -432,11 +381,32 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
         }
        else
         {
-       // Typically "g++"
-          commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+          if (project->get_Cxx_only() == true)
+             {
+            // Typically "g++"
+               commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+             }
+            else
+             {
+               if (project->get_Fortran_only() == true)
+                  {
+                 // Typically "gfortran"
+                    commandLineToGenerateObjectFile = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+                  }
+                 else
+                  {
+                    printf ("In backendCompilesUsingOriginalInputFile(): Unclear what language is being used in ROSE (likely a binary executable) \n");
+                 //  ROSE_ASSERT(false);
+                  }
+             }
         }
 
      SgStringList originalCommandLineArgumentList = project->get_originalCommandLineArgumentList();
+
+  // DQ (2/20/2010): Added filtering of options that should not be passed to the vendor compiler.
+     SgFile::stripRoseCommandLineOptions(originalCommandLineArgumentList);
+     SgFile::stripEdgCommandLineOptions(originalCommandLineArgumentList);
+
      SgStringList::iterator it = originalCommandLineArgumentList.begin();
 
   // Iterate past the name of the compiler being called (arg[0]).
@@ -449,11 +419,10 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
           commandLineToGenerateObjectFile += " " + *i;
         }
   // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-#endif
 
      if ( SgProject::get_verbose() >= 1 )
         {
-          printf ("/* numberOfFiles() = %d commandLineToGenerateObjectFile = \n%s\n*/\n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
+          printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
         }
 
      int finalCombinedExitStatus = 0;
