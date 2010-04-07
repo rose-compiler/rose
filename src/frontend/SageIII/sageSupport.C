@@ -3660,6 +3660,11 @@ SgProject::parse(const vector<string>& argv)
                    *   "jserver_finish()" will dostroy the Java VM if it is running.
                    */
 
+                    if (SgProject::get_verbose() > 1)
+                       {
+                         printf ("Calling Open Fortran Parser: jserver_init() \n");
+                       }
+
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -4819,6 +4824,7 @@ SgFile::secondaryPassOverSourceFile()
 #if 1
             // Debugging code (eliminate use of CPP directives from source file so that we
             // can debug the insertion of linemarkers from first phase of CPP processing.
+            // printf ("In SgFile::secondaryPassOverSourceFile(): requiresCPP = %s \n",requiresCPP ? "true" : "false");
                if (requiresCPP == false)
                   {
                     attachPreprocessingInfo(sourceFile);
@@ -4830,9 +4836,8 @@ SgFile::secondaryPassOverSourceFile()
                attachPreprocessingInfo(sourceFile);
 #endif
 
-	       // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
-	       processOpenMP(sourceFile);
-
+            // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
+               processOpenMP(sourceFile);
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
@@ -4875,8 +4880,53 @@ SgFile::secondaryPassOverSourceFile()
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
 string
+global_build_classpath()
+   {
+  // This function builds the class path for use with Java and the cal to the OFP.
+     string classpath = "-Djava.class.path=";
+  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+  // classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+
+  // string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_MAJOR_VERSION_NUMBER + "." + ROSE_OFP_MINOR_VERSION_NUMBER + "." + ROSE_OFP_PATCH_VERSION_NUMBER + ".jar");
+     string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
+     string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
+  // classpath += findRoseSupportPathFromSource(ofp_class_path, ofp_jar_file_name) + ":";
+     classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
+
+#if 0
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
+#else
+   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+   #else
+     printf ("Error: Unknown version of OFP \n");
+     ROSE_ASSERT(false);
+   #endif
+#endif
+#endif
+
+     classpath += ".";
+
+     if (SgProject::get_verbose() > 1)
+        {
+          printf ("In global_build_classpath(): classpath = %s \n",classpath.c_str());
+        }
+
+     return classpath;
+   }
+
+string
 SgSourceFile::build_classpath()
    {
+#if 0
 #if 1
   // This function builds the class path for use with Java and the cal to the OFP.
      string classpath = "-Djava.class.path=";
@@ -4889,7 +4939,18 @@ SgSourceFile::build_classpath()
      classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
 
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
+#else
+   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
      classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+   #else
+     printf ("Error: Unknown version of OFP \n");
+     ROSE_ASSERT(false);
+   #endif
+#endif
+
      classpath += ".";
 
      return classpath;
@@ -4902,6 +4963,9 @@ SgSourceFile::build_classpath()
   // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
      return "error in SgSourceFile::build_classpath()";
 #endif
+#endif
+
+     return global_build_classpath();
    }
 
 int
@@ -5184,7 +5248,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // Build the classpath list for Java support.
      const string classpath = build_classpath();
 
-  // This is part of debugging output to call OFP and output ehe list of parser actions that WOULD be called.
+  // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
   // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
      if (get_output_parser_actions() == true)
         {
@@ -5240,6 +5304,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
              }
 #else
+
+#error "REMOVE THIS CODE"
+
        // This fails, I think because we can't call the openFortranParser_main twice. 
        // DQ (11/30/2008):  Does the work by Rice fix this now?
           int openFortranParser_dump_argc    = 0;
@@ -5290,14 +5357,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                ROSE_ASSERT(false);
              }
 #else
+
+#error "REMOVE THIS CODE"
+
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_only_argc    = 0;
           char** openFortranParser_only_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
           frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 #endif
-          printf ("Exiting after parsing... (get_exit_after_parser() == true) \n");
-          exit(0);
+          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) \n");
+       // exit(0);
+
+          ROSE_ASSERT(errorCode == 0);
+          return errorCode;
        }
                     
   // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
@@ -5616,8 +5689,7 @@ SgSourceFile::processCppLinemarkers()
      ROSE_ASSERT(false);
 #endif
    }
- 
- 
+
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
@@ -8664,43 +8736,79 @@ void convert_OpenMP_pragma_to_AST (SgSourceFile *sageFilePtr)
 }
 
 void build_OpenMP_AST(SgSourceFile *sageFilePtr)
-{
+   {
   // build AST for OpenMP directives and clauses 
   // by converting OmpAttributeList to SgOmpxxx Nodes 
-  if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
-      sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
-  {
-   
-    printf("AST construction for Fortran OpenMP is not yet implemented. \n");
-    assert(false);
-  } //end if (fortran)
-  else// for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
-  {
-    convert_OpenMP_pragma_to_AST( sageFilePtr);
-  }
-}
+     if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
+         sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
+        {
+          printf("AST construction for Fortran OpenMP is not yet implemented. \n");
+          assert(false);
+       // end if (fortran)
+        }
+       else
+        {
+       // for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling convert_OpenMP_pragma_to_AST() \n");
+             }
+     
+          convert_OpenMP_pragma_to_AST( sageFilePtr);
+        }
+   }
+
 // Liao, 5/31/2009 an entry point for OpenMP related processing
 // including parsing, AST construction, and later on tranlation
 void processOpenMP(SgSourceFile *sageFilePtr)
-{
-  ROSE_ASSERT(sageFilePtr != NULL);
-  if (sageFilePtr->get_openmp() == false)
-    return;
+   {
+  // DQ (4/4/2010): This function processes both C/C++ and Fortran code.
+  // As a result of the Fortran processing some OMP pragmas will cause
+  // transformation (e.g. declaration of private variables will add variables
+  // to the local scope).  So this function has side-effects for all languages.
+
+     if (SgProject::get_verbose() > 1)
+        {
+          printf ("Processing OpenMP directives \n");
+        }
+
+     ROSE_ASSERT(sageFilePtr != NULL);
+     if (sageFilePtr->get_openmp() == false)
+        {
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp() = %s \n",sageFilePtr->get_openmp() ? "true" : "false");
+             }
+          return;
+        }
+     
   // parse OpenMP directives and attach OmpAttributeList to relevant SgNode
-  attachOmpAttributeInfo(sageFilePtr);
+     attachOmpAttributeInfo(sageFilePtr);
 
   // stop here if only OpenMP parsing is requested
-  if (sageFilePtr->get_openmp_parse_only())
-    return;
+     if (sageFilePtr->get_openmp_parse_only())
+        {
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_parse_only() = %s \n",sageFilePtr->get_openmp_parse_only() ? "true" : "false");
+             }
+          return;
+        }
 
-  //Build OpenMP AST nodes based on parsing results
-  build_OpenMP_AST(sageFilePtr);
+  // Build OpenMP AST nodes based on parsing results
+     build_OpenMP_AST(sageFilePtr);
 
   // stop here if only OpenMP AST construction is requested
-  if (sageFilePtr->get_openmp_ast_only())
-    return;
+     if (sageFilePtr->get_openmp_ast_only())
+        {
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_ast_only() = %s \n",sageFilePtr->get_openmp_ast_only() ? "true" : "false");
+             }
+          return;
+        }
 
-  lower_omp(sageFilePtr); 
-}
+     lower_omp(sageFilePtr);
+   }
 
 

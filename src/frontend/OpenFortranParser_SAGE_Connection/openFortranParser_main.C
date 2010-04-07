@@ -116,13 +116,12 @@ int openFortranParser_main(int argc, char **argv)
     assert(env_status == 0);
 #endif
 
-#if 0
-    printf ("Call the function that will start a JVM and call the OFP \n");
-#endif
+    if (SgProject::get_verbose() > 1)
+       {
+         printf ("Call the function that will start a JVM and call the OFP \n");
+       }
+
     int status = runOFP(argc, argv);
-#if 0
-    printf ("DONE: Call the function that will start a JVM and call the OFP status = %d \n",status);
-#endif
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH

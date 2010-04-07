@@ -6,6 +6,7 @@
 // DQ (3/21/2009): Cygwin defines this function differently (fails in virtualCFG tests).
 #if !defined(__CYGWIN__)
 
+// DQ (3/29/2010):There is a bug report that this function does not exist on: Ubuntu 9.1 gcc version 4.4.1 (Ubuntu 4.4.1-4ubuntu9)
 void dprintf(int line, long level, char *prefix, ...);
 
 #endif
