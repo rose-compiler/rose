@@ -7,6 +7,10 @@
 #include "AstDOTGeneration.h"
 #include "wholeAST_API.h"
 
+#ifdef _MSC_VER
+#include <direct.h>	// getcwd
+#endif
+
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
 
@@ -952,12 +956,15 @@ ROSE::getWorkingDirectory ()
      const unsigned int maxPathNameLength = 10000;
      char* currentDirectory = new char [maxPathNameLength+1];
 
-#ifdef _MSC_VER
-#pragma message ("Linux getcwd() function unavailable in MSVC.")
-	 const char* getcwdResult = NULL; // getcwd(currentDirectory,maxPathNameLength);
-#else
+
+  // CH (4/7/2010): In MSVC, the header file "direct.h" contains function 'getcwd'
+
+//#ifdef _MSC_VER
+//#pragma message ("Linux getcwd() function unavailable in MSVC.")
+//	 const char* getcwdResult = NULL; // getcwd(currentDirectory,maxPathNameLength);
+//#else
 	 const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
-#endif
+//#endif
      if (!getcwdResult) {
        perror("getcwd: ");
        ROSE_ABORT();
