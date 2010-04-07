@@ -677,6 +677,15 @@ sub do_pull {
   }
 }
 
+# Prints some info that's useful for debugging
+sub do_debug {
+  execute sub {system "cat", ".git/config"; git "submodule"};
+  execute sub {
+    git "status";
+    git "branch", "-av";
+  }, undef, submodules;
+}
+
 ###############################################################################################################################
 # MAIN PROGRAM
 ###############################################################################################################################
@@ -691,6 +700,7 @@ my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
             clone       => \&do_clone,
             commit      => \&do_commit,
+	    debug       => \&do_debug,
             help        => sub {execute sub {git "help", @ARGV}}, # no need to execute in submodules
             merge       => \&do_merge,
 	    pull        => \&do_pull,
