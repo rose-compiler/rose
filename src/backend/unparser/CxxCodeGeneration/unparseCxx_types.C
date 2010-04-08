@@ -49,12 +49,14 @@ string get_type_name(SgType* t)
    {
   // printf ("t->class_name() = %s \n",t->class_name().c_str());
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: Commented out body of get_type_name()")
-	   printf ("Error: Commented out body of get_type_name() \n");
-	   ROSE_ASSERT(false);
-	   return "ERROR IN get_type_name()";
-#else
+	   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+
+//#ifndef _MSC_VER
+//#pragma message ("WARNING: Commented out body of get_type_name()")
+//	   printf ("Error: Commented out body of get_type_name() \n");
+//	   ROSE_ASSERT(false);
+//	   return "ERROR IN get_type_name()";
+//#else
      switch (t->variant())
         {
           case T_UNKNOWN:            return "UNKNOWN"; 
@@ -165,9 +167,11 @@ string get_type_name(SgType* t)
               {
                 SgClassType* class_type = isSgClassType(t);
                 ROSE_ASSERT(class_type != NULL);
-                SgClassDeclaration* cdecl;
-				cdecl = isSgClassDeclaration(class_type->get_declaration());
-                SgName nm = cdecl->get_qualified_name();
+				// CH (4/7/2010): 'cdecl' is a keywork of MSVC
+                //SgClassDeclaration* cdecl;
+				SgClassDeclaration* decl;
+				decl = isSgClassDeclaration(class_type->get_declaration());
+                SgName nm = decl->get_qualified_name();
                 //printf ("In unparseType(%p): nm = %s \n",t,nm.str());
                 if (nm.getString() != "")
                     return nm.getString();
@@ -284,7 +288,7 @@ string get_type_name(SgType* t)
                break;
              }
         }
-#endif
+//#endif
 }
 
 //-----------------------------------------------------------------------------------
@@ -721,29 +725,31 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      info.display("Inside of Unparse_Type::unparseClassType");
 #endif
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: Commented out body of unparseClassType()")
-	   printf ("Error: Commented out body of unparseClassType() \n");
-	   ROSE_ASSERT(false);
-#else
+	 // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+
+//#ifndef _MSC_VER
+//#pragma message ("WARNING: Commented out body of unparseClassType()")
+//	   printf ("Error: Commented out body of unparseClassType() \n");
+//	   ROSE_ASSERT(false);
+//#else
      SgClassType* class_type = isSgClassType(type);
      ROSE_ASSERT(class_type != NULL);
 
   // DQ (6/22/2006): test2006_76.C demonstrates a problem with this code
   // SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
-     SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
-     ROSE_ASSERT(cdecl != NULL);
-     if (cdecl->get_definition() == NULL)
+     SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
+     ROSE_ASSERT(decl != NULL);
+     if (decl->get_definition() == NULL)
         {
        // We likely have a forward declaration so get the defining declaration if it is available
        // (likely the first non-defining declaration and the forward declaration are the same).
           ROSE_ASSERT(class_type->get_declaration() != NULL);
-          if (cdecl->get_definingDeclaration() != NULL)
+          if (decl->get_definingDeclaration() != NULL)
              {
-               ROSE_ASSERT(cdecl->get_definingDeclaration() != NULL);
-               cdecl = isSgClassDeclaration(cdecl->get_definingDeclaration());
-               ROSE_ASSERT(cdecl != NULL);
-               ROSE_ASSERT(cdecl->get_definition() != NULL);
+               ROSE_ASSERT(decl->get_definingDeclaration() != NULL);
+               decl = isSgClassDeclaration(decl->get_definingDeclaration());
+               ROSE_ASSERT(decl != NULL);
+               ROSE_ASSERT(decl->get_definition() != NULL);
              }
             else
              {
@@ -752,7 +758,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
         }
 
   // GB (09/19/2007): This is the defining declaration of the class, it might have preprocessing information attached to it.
-     SgClassDeclaration *cDefiningDecl = isSgClassDeclaration(cdecl->get_definingDeclaration());
+     SgClassDeclaration *cDefiningDecl = isSgClassDeclaration(decl->get_definingDeclaration());
 
 #if 0
      printf ("info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
@@ -778,10 +784,10 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                     unp->u_exprStmt->unparseAttachedPreprocessingInfo(cDefiningDecl, info, PreprocessingInfo::before);
                   }
             // DQ (6/6/2007): Type elaboration goes here.
-               bool useElaboratedType = generateElaboratedType(cdecl,info);
+               bool useElaboratedType = generateElaboratedType(decl,info);
                if (useElaboratedType == true)
                   {
-                    switch (cdecl->get_class_type())
+                    switch (decl->get_class_type())
                        {
                          case SgClassDeclaration::e_class :
                             {
@@ -818,7 +824,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
        // this version should be more robust in generating correct qualified names when the parent is inconsistant
        // with the explicitly stored scope (which happens in rare cases, but particularly in KULL and for va_list 
        // bases typedefed types).
-          SgName nm = cdecl->get_name();
+          SgName nm = decl->get_name();
 
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named 
        // structs.  This is part of the fix for the Red Hat 7.3 gconv problem (see ChangeLog for details).
@@ -845,7 +851,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                  // info.display("In unparseClassType: The C++ support is more complex and can require qualified names");
 
                  // The C++ support is more complex and can require qualified names!
-                    SgName nameQualifier = unp->u_name->generateNameQualifier( cdecl , info );
+                    SgName nameQualifier = unp->u_name->generateNameQualifier( decl , info );
                  // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
 #if 0
                     printf ("In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
@@ -853,8 +859,8 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #endif
                     curprint ( nameQualifier.str());
 
-                    SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(cdecl);
-                    if (isSgTemplateInstantiationDecl(cdecl) != NULL)
+                    SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(decl);
+                    if (isSgTemplateInstantiationDecl(decl) != NULL)
                        {
                       // Handle case of class template instantiation (code located in unparse_stmt.C)
                          unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
@@ -878,7 +884,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
           if ( !info.SkipClassDefinition() )
              {
             // DQ (8/17/2006): Handle the case where the definition does not exist (there may still be a pointer to the type).
-               SgClassDefinition* classdefn_stmt = cdecl->get_definition();
+               SgClassDefinition* classdefn_stmt = decl->get_definition();
                if (classdefn_stmt != NULL)
                   {
                     SgUnparse_Info ninfo(info);
@@ -904,7 +910,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                  // printf ("In unparseClassType: classdefn_stmt = %p \n",classdefn_stmt);
                     if (classdefn_stmt == NULL)
                        {
-                         printf ("Error: In unparseClassType(): classdefn_stmt = NULL cdecl = %p = %s \n",cdecl,cdecl->get_name().str());
+                         printf ("Error: In unparseClassType(): classdefn_stmt = NULL cdecl = %p = %s \n",decl,decl->get_name().str());
                        }
                     ROSE_ASSERT(classdefn_stmt != NULL);
                     SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
@@ -937,7 +943,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                   }
              }
         }
-#endif
+//#endif
    }
 
 

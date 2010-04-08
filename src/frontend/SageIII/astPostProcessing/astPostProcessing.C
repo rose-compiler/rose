@@ -46,7 +46,13 @@ void AstPostProcessing (SgNode* node)
             // loop iterating over all files because repeated calls to
             // AstPostProcessing are slow due to repeated memory pool
             // traversals of the same nodes over and over again.
-               postProcessingSupport(node);
+            // Only postprocess the AST if it was generated, and not were we just did the parsing.
+            // postProcessingSupport(node);
+
+               if (project->get_exit_after_parser() == false)
+                  {
+                    postProcessingSupport (node);
+                  }
 #if 0
                SgFilePtrList::iterator fileListIterator;
                for (fileListIterator = project->get_fileList().begin(); fileListIterator != project->get_fileList().end(); fileListIterator++)
@@ -68,6 +74,21 @@ void AstPostProcessing (SgNode* node)
 
                printf ("SgDirectory support not implemented in AstPostProcessing \n");
                ROSE_ASSERT(false);
+               break;
+             }
+
+          case V_SgFile:
+          case V_SgSourceFile:
+             {
+               SgFile* file = isSgFile(node);
+               ROSE_ASSERT(file != NULL);
+
+            // Only postprocess the AST if it was generated, and not were we just did the parsing.
+               if (file->get_exit_after_parser() == false)
+                  {
+                    postProcessingSupport (node);
+                  }
+               
                break;
              }
 
