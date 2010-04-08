@@ -1,12 +1,3 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!                                                                            !
-!                 Gyrokinetic Toroidal Code (GTC)                            !
-!                          Version 2                                         !
-!          Zhihong Lin, Stephane Ethier, Jerome Lewandowski                  !
-!              Princeton Plasma Physics Laboratory                           !
-!                                                                            !
-!                                                                            !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 program gtc
 !  use global_parameters
