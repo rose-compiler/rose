@@ -1102,13 +1102,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
     // set_UPC_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
     // ROSE_ASSERT (get_UPC_only() == false);
      bool hasRoseUpcEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPC|UPC_only)",true) ;
-     bool hasEdgUpcEnabled = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
+     bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
      if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled) 
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf (" mode ON \n");
+               printf ("UPC mode ON \n");
           set_C_only(true);
           set_UPC_only(true);
           // remove edg:restrict since we will add it back in SgFile::build_EDG_CommandLine()
@@ -1118,22 +1118,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
     // two situations: either of -rose:upc_threads n  and --edg:upc_threads n appears.
     // set flags and remove both.
-    int integerOptionForUPCThreads = 0;
-    int integerOptionForUPCThreads2 = 0;
-    bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)",
-          integerOptionForUPCThreads,true);
-    bool hasEDGUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"--edg:","(upc_threads)",
-          integerOptionForUPCThreads2,true);
+     int integerOptionForUPCThreads  = 0;
+     int integerOptionForUPCThreads2 = 0;
+     bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)", integerOptionForUPCThreads,true);
+     bool hasEDGUpcThreads  = CommandlineProcessing::isOptionWithParameter(argv,"--edg:","(upc_threads)", integerOptionForUPCThreads2,true);
 
-    integerOptionForUPCThreads= (integerOptionForUPCThreads!=0)?integerOptionForUPCThreads:integerOptionForUPCThreads2;
-    if (hasRoseUpcThreads||hasEDGUpcThreads)
-    {  
+     integerOptionForUPCThreads = (integerOptionForUPCThreads != 0) ? integerOptionForUPCThreads : integerOptionForUPCThreads2;
+     if (hasRoseUpcThreads||hasEDGUpcThreads)
+        {  
        // set ROSE SgFile::upc_threads value, done for ROSE
-       set_upc_threads(integerOptionForUPCThreads);
-       if ( SgProject::get_verbose() >= 1 )
-             printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
-
-     }       
+          set_upc_threads(integerOptionForUPCThreads);
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
+        }
   //
   // C++ only option
   //
@@ -5336,11 +5333,29 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
 
+          bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
+
        // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
           for (size_t i = 0; i < includeList.size(); i++)
              {
                OFPCommandLine.push_back(includeList[i]);
+
+            // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
+
+            // I think we have to permit an optional space between the "-I" and the path
+               if ("-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+                  {
+                 // The source file path is already included!
+                    foundSourceDirectoryExplicitlyListedInIncludePaths = true;
+                  }
+             }
+
+       // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+          if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
+             {
+            // Add the source directory to the include list so that we reproduce the semantics of gfortran
+               OFPCommandLine.push_back("-I" + getSourceDirectory() );
              }
 
           OFPCommandLine.push_back(get_sourceFileNameWithPath());
@@ -5358,15 +5373,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 #else
 
-#error "REMOVE THIS CODE"
+// #error "REMOVE THIS CODE"
 
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_only_argc    = 0;
           char** openFortranParser_only_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
-          frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+       // frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+          int errorCode = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 #endif
-          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) \n");
+          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
        // exit(0);
 
           ROSE_ASSERT(errorCode == 0);
