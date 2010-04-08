@@ -53,8 +53,14 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       vector<SgNode*> list;
       FindInstructionsVisitorx86 vis;
 #ifdef _MSC_VER
-#pragma message ("WARNING: Removed reference to AstQueryNamespace::querySubTree()")
-	  ROSE_ASSERT(false);
+//#pragma message ("WARNING: Removed reference to AstQueryNamespace::querySubTree()")
+//	  ROSE_ASSERT(false);
+
+	  // CH (4/7/2010): Workaround for MSVC
+	  vector<SgAsmx86Instruction*> temp_list;
+	  AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &temp_list ));
+	  list.resize(temp_list.size());
+	  std::copy(temp_list.begin(), temp_list.end(), list.begin());
 #else
 	  AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &list ));
 #endif

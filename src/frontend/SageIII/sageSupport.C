@@ -7606,13 +7606,13 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      result = vector<string>();
 
-/* 
-#ifdef _MSC_VER
-#pragma message ("WARNING: Linux popen() not supported within MSVC.")
-	 printf ("WARNING: Linux popen() not supported within MSVC.");
-	 ROSE_ASSERT(false);
-#else
-*/
+
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: Linux popen() not supported within MSVC.")
+//	 printf ("WARNING: Linux popen() not supported within MSVC.");
+//	 ROSE_ASSERT(false);
+//#else
+
      // CH (4/6/2010): The Windows version of popen is _popen
 #ifdef _MSC_VER
      if ((fp = _popen(command.c_str (), "r")) == NULL)

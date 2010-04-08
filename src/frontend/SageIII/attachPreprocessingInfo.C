@@ -1,3 +1,4 @@
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "attachPreprocessingInfo.h"
@@ -22,11 +23,11 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
-#ifdef _MSC_VER
-#pragma message ("WARNING: commented out use of boost/wave.hpp header file.")
-#else
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: commented out use of boost/wave.hpp header file.")
+//#else
 #include <boost/wave.hpp>
-#endif
+//#endif
 ///////////////////////////////////////////////////////////////////////////////
 // Include the lexer stuff
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
@@ -34,6 +35,8 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 #include "advanced_preprocessing_hooks.h"
 #include "attributeListMap.h"
+
+#include <boost/filesystem.hpp>		// exsits()
 
 //Include files to get the current path
 //#include <unistd.h>
@@ -101,11 +104,12 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
    {
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: Wave support not ported to Windows MSVC.")
-	   printf ("ERROR: Wave support not ported to Windows MSVC. \n");
-	   ROSE_ASSERT(false);
-#else
+// CH (4/7/2010): Wave issue fixed.
+//#ifndef _MSC_VER
+//#pragma message ("WARNING: Wave support not ported to Windows MSVC.")
+//	   printf ("ERROR: Wave support not ported to Windows MSVC. \n");
+//	   ROSE_ASSERT(false);
+//#else
      ROSE_ASSERT(sageFilePtr != NULL);
      std::string sourceFileName = sageFilePtr->getFileName();
 
@@ -575,7 +579,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 #endif
 
 // endif for ifdef _MSC_VER
-#endif
+//#endif
 
 // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
 #endif
