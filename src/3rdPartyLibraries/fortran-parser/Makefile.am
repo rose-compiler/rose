@@ -12,7 +12,8 @@ endif
 # Later this needs to be setup via configure (if there is not better solution).
 # EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
 # EXTERNAL_OFP_JAR_FILE_URL=http://iweb.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
-EXTERNAL_OFP_JAR_FILE_URL=http://cdnetworks-us-2.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
+# EXTERNAL_OFP_JAR_FILE_URL=http://cdnetworks-us-2.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
+EXTERNAL_OFP_JAR_FILE_URL=http://voxel.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar
 
 # DQ (3/13/2010): I think we need to use: "--no-check-certificate"
 # Using --no-check-certificate to handle errors:
