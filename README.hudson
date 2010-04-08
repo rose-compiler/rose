@@ -131,3 +131,18 @@ This should setup the /export/tmp.hudson-rose directory.
 Better is to run from the /export directory: "rsync -av tux282:/export/tmp.hudson-rose ."
 And likely we only really need the "opt" directory where all the compilers are located.
 
+
+
+*****************************
+Hudson Windows Server Support
+*****************************
+
+  Different from the Linux machines where the slaves can be started from the
+Hudsom web page on tux269:8080, the Windows tux270-0 slave must
+be started by logging into tux270-0 and using the web page from
+explorer and starting launching the slave service (on tux270-0) directly.
+this is one of the ways that Hudson is handled differently on Windows
+than on Linux.
+
+
+

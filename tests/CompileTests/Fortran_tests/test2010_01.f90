@@ -1,6 +1,6 @@
 module precision
 ! use mpi
-  include 'rose_mpif.h'
+  include 'original_mpif.h'
 ! DQ (4/7/2010): removed problem code for OFP (version 0.7.2)
   integer, parameter :: doubleprec=selected_real_kind(12),&
        singleprec=selected_real_kind(6) !,&

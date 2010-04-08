@@ -4654,17 +4654,21 @@ HEADER_APPLICATION_PROJECT_START
        // DQ (4/6/2010): Added to support parsing only option.
           bool get_exit_after_parser(void) const;
 
-          bool get_C_only (void) const;
+          bool get_C_only   (void) const;
           bool get_C99_only (void) const;
           bool get_Cxx_only (void) const;
 
        // DQ (8/11/2007): Added Fortran support
           bool get_Fortran_only (void) const;
-          bool get_F77_only (void) const;
-          bool get_F90_only (void) const;
-          bool get_F95_only (void) const;
-          bool get_F2003_only (void) const;
+          bool get_F77_only     (void) const;
+          bool get_F90_only     (void) const;
+          bool get_F95_only     (void) const;
+          bool get_F2003_only   (void) const;
           bool get_CoArrayFortran_only (void) const;
+
+          void set_C_only       (bool value);
+          void set_Cxx_only     (bool value);
+          void set_Fortran_only (bool value);
 
           bool get_PHP_only(void) const;
 
@@ -11760,12 +11764,33 @@ SgProject::get_exit_after_parser(void) const
      return returnExitAfterParse;
    }
 
+void 
+SgProject::set_C_only       (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_C_only = value;
+   }
+
+void
+SgProject::set_Cxx_only     (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_Cxx_only = value;
+   }
+
+void
+SgProject::set_Fortran_only (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_Fortran_only = value;
+   }
 
 bool
 SgProject::get_C_only (void) const
    {
   // look at how the files are set (C here implies C89)
-     bool result = false;
+  // bool result = false;
+     bool result = p_C_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
@@ -11791,7 +11816,8 @@ bool
 SgProject::get_Cxx_only (void) const
    {
   // look at how the files are set (C++ only)
-     bool result = false;
+  // bool result = false;
+     bool result = p_Cxx_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
@@ -11804,7 +11830,8 @@ bool
 SgProject::get_Fortran_only (void) const
    {
   // look at how the files are set
-     bool result = false;
+  // bool result = false;
+     bool result = p_Fortran_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
