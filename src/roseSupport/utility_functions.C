@@ -385,7 +385,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
      language = project->get_Cxx_only()     ? e_cxx     : language;
      language = project->get_Fortran_only() ? e_fortran : language;
 
-  // ROSE_ASSERT(language != none);
+  // ROSE_ASSERT(language != e_none);
      if (language == e_none)
         {
        // DQ (4/7/2010): Set the default language for ROSE to be C++
