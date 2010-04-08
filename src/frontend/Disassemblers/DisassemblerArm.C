@@ -149,17 +149,15 @@ SgAsmArmInstruction::terminatesBasicBlock() {
     return modifies_ip(this);
 }
 
-Disassembler *
+bool
 DisassemblerArm::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family)
-        return new DisassemblerArm(header);
-    return NULL;
+    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family;
 }
 
 void
-DisassemblerArm::init(SgAsmGenericHeader *header)
+DisassemblerArm::init()
 {
     decodeUnconditionalInstructions = true;
     set_wordsize(4);

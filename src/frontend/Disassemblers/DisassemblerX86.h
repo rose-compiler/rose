@@ -3,9 +3,8 @@
 #ifndef ROSE_DISASSEMBLER_X86_H
 #define ROSE_DISASSEMBLER_X86_H
 
-/** Disassembler for the x86 architecture.  This class is usually instantiated indirectly through Disassembler::create(). Most
- *  of the useful disassembly methods can be found in the superclass. There's really not much reason to use this class
- *  directly or to call any of these methods directly. */
+/** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
+ *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
 
 
@@ -13,19 +12,32 @@ class DisassemblerX86: public Disassembler {
      * Public methods
      *========================================================================================================================*/
 public:
+    DisassemblerX86(size_t wordsize)
+        : insnSize(x86_insnsize_none), ip(0), insnbufat(0), segOverride(x86_segreg_none), 
+          branchPrediction(x86_branch_prediction_none), branchPredictionEnabled(false), rexPresent(false), rexW(false), 
+          rexR(false), rexX(false), rexB(false), sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false),
+          lock(false), repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), rmField(0), 
+          modrm(NULL), reg(NULL), isUnconditionalJump(false) {
+        init(wordsize);
+    }
 
-    /** An object created by the default constructor can only be used as a factory, passed to the
-     *  Disassembler::register_subclass method. */
-    DisassemblerX86() {}
-
-    /** Constructs a disassembler whose instruction size is determined from the supplied file header. End users don't normally
-     *  call this, but rather the Disassembler::create class method. */
-    DisassemblerX86(SgAsmGenericHeader *fhdr) {init(fhdr);}
-
+    DisassemblerX86(const DisassemblerX86 &other)
+        : Disassembler(other), insnSize(other.insnSize), ip(other.ip), insnbufat(other.insnbufat),
+          segOverride(other.segOverride), branchPrediction(other.branchPrediction),
+          branchPredictionEnabled(other.branchPredictionEnabled), rexPresent(other.rexPresent), rexW(other.rexW), 
+          rexR(other.rexR), rexX(other.rexX), rexB(other.rexB), sizeMustBe64Bit(other.sizeMustBe64Bit),
+          operandSizeOverride(other.operandSizeOverride), addressSizeOverride(other.addressSizeOverride),
+          lock(other.lock), repeatPrefix(other.repeatPrefix), modregrmByteSet(other.modregrmByteSet),
+          modregrmByte(other.modregrmByte), modeField(other.modeField), rmField(other.rmField), modrm(other.modrm),
+          reg(other.reg), isUnconditionalJump(other.isUnconditionalJump) {
+    }
+    
     virtual ~DisassemblerX86() {}
 
+    virtual DisassemblerX86 *clone() const { return new DisassemblerX86(*this); }
+
     /** See Disassembler::can_disassemble */
-    virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
+    virtual bool can_disassemble(SgAsmGenericHeader*) const;
 
     /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
@@ -343,7 +355,7 @@ private:
 private:
 
     /** Initialize instances of this class. Called by constructor. */
-    void init(SgAsmGenericHeader*);
+    void init(size_t wordsize);
 
     /** Resets disassembler state to beginning of an instruction for assembly. */
     void startInstruction(SgAsmx86Instruction *insn) {

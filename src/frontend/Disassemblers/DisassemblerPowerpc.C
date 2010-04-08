@@ -122,17 +122,15 @@ SgAsmPowerpcInstruction::terminatesBasicBlock() {
     }
 }
 
-Disassembler *
+bool
 DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    if (isa == SgAsmExecutableFileFormat::ISA_PowerPC)
-        return new DisassemblerPowerpc(header);
-    return NULL;
+    return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
 }
 
 void
-DisassemblerPowerpc::init(SgAsmGenericHeader *header)
+DisassemblerPowerpc::init()
 {
     set_wordsize(4);
     set_alignment(4);
