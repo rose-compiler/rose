@@ -495,9 +495,12 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
   // insert the new_name in the symbol table
 #ifdef _MSC_VER
   // DQ (11/28/2009): Unclear if this code is a problem (testing).
-#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
-	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
-	 ROSE_ASSERT(false);
+
+	 // CH (4/7/2010): It seems that the following code can be compiled under MSVC 9.0
+//#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
+//	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
+//	 ROSE_ASSERT(false);
+     found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
 #else
      found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
 #endif
@@ -10468,16 +10471,17 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
   {
     if (handle->getNode()!=NULL)
     {
-#ifdef _MSC_VER
-     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
-
-#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
-		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
-		ROSE_ASSERT(false);
-#else
+// CH (4/7/2010): MSVC 9.0 can compile the following code. See "abstract_handle.h"
+//#ifndef _MSC_VER
+//     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
+//		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+//
+//#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
+//		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
+//		ROSE_ASSERT(false);
+//#else
 		SgNode* result = (SgNode*)(handle->getNode()->getNode());
-#endif
+//#endif
       // deallocate memory, should not do this!!
       // May corrupt the internal std maps used in abstract handle namespace
       //delete handle->getNode();

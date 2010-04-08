@@ -267,7 +267,8 @@ struct UsingDirectiveWithScope {
 
 struct cmp_UsingDirectiveWithScope {
 
-        bool operator() (const UsingDirectiveWithScope & X, const UsingDirectiveWithScope & Y) {
+	    // CH (4/7/2010): This function should be const.
+        bool operator() (const UsingDirectiveWithScope & X, const UsingDirectiveWithScope & Y) const {
 
                 // at first sort after scope
                 if( X.scope != Y.scope ) {
@@ -300,7 +301,8 @@ struct UsingDeclarationWithScope {
 
 struct cmp_UsingDeclarationWithScope {
 
-        bool operator() (const UsingDeclarationWithScope& X, const UsingDeclarationWithScope& Y) {
+	    // CH (4/7/2010): This function should be const.
+        bool operator() (const UsingDeclarationWithScope& X, const UsingDeclarationWithScope& Y) const {
 
                 // at first sort after scope
                 if( X.scope != Y.scope ) {
@@ -362,13 +364,14 @@ typedef std::set<SgDeclarationStatement*> SetSgDeclarationStatements;
 typedef std::set<SgSymbol*> SetSgSymbolPointers;
 //typedef std::set<SgSymbol*, cmp_SgSymbolPointer> SetSgSymbolPointers;
 
-#ifdef _MSC_VER
-typedef std::set<UsingDirectiveWithScope> SetSgUsingDirectiveStatementsWithSgScopeStatement;
-typedef std::set<UsingDeclarationWithScope> SetSgUsingDeclarationWithScopeWithSgScopeStatement;
-#else
+// CH (4/7/2010): After adding 'const' to the conparing functor's function, MSVC can compile the following code
+//#ifndef _MSC_VER
+//typedef std::set<UsingDirectiveWithScope> SetSgUsingDirectiveStatementsWithSgScopeStatement;
+//typedef std::set<UsingDeclarationWithScope> SetSgUsingDeclarationWithScopeWithSgScopeStatement;
+//#else
 typedef std::set<UsingDirectiveWithScope, cmp_UsingDirectiveWithScope> SetSgUsingDirectiveStatementsWithSgScopeStatement;
 typedef std::set<UsingDeclarationWithScope, cmp_UsingDeclarationWithScope> SetSgUsingDeclarationWithScopeWithSgScopeStatement;
-#endif
+//#endif
 
 
 
@@ -587,13 +590,15 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 
                 // query the input files if there are Using Decl. or Directives and make an update of the Scope before the intersection procedure starts
                 // Robert Preissl, June 7 2007 Use of sets because faster to find elements (will be done in every Scope)
-#ifndef _MSC_VER
+
+// CH (4/7/2010) : There is no problem now.
+//#ifdef _MSC_VER
 // tps (12/07/2009) : FIXME; This will not work on windows right now
                 SetSgUsingDirectiveStatementsWithSgScopeStatement UsingDirectivesSet;
 				SetSgUsingDeclarationWithScopeWithSgScopeStatement UsingDeclarationsSet;
-#else
-#pragma message ("WARNING: HiddenList : HiddenListComputationTraversal : Change implementation to work under windows. Does not work with Release (MODE)")
-#endif
+//#else
+//#pragma message ("WARNING: HiddenList : HiddenListComputationTraversal : Change implementation to work under windows. Does not work with Release (MODE)")
+//#endif
 
                 //  For collection_mode 0 of NamespacesAndClassTraversal: a UsingDirectiveStatement_LinkedListStackSetSgDeclarationStatements_HashMap will be built up
                 UsingDirectiveStatement_LinkedListStackSetSgDeclarationStatements_HashMap UsingDirRelativeToDeclarations;

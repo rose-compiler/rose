@@ -363,7 +363,8 @@ AstPerformance::getLock()
                printf ("Waiting for lock! counter = %lu userTolerance = %lu \n",counter,userTolerance);
 
 #ifdef _MSC_VER
-#pragma message ("WARNING: sleep() Linux support not available in Windows.")
+//#pragma message ("WARNING: sleep() Linux support not available in Windows.")
+		  Sleep(1000);
 #else
           sleep(1);
 #endif
