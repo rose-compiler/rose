@@ -290,6 +290,9 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2007_example.f90 \
      test2009_1.f90 \
      test2010_01.f90 \
+     test2010_02.f90 \
+     test2010_03.f90 \
+     test2010_04.f90 \
      triangle.f90
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
@@ -446,6 +449,13 @@ module_A_file.o: testTranslator
 # Force representation of module dependency so that mod files are properly generated before use.
 module_B_file.o: testTranslator module_A_file.o
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+
+test2010_01.o:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
+
+test2010_02.o:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
+
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 PASSING_MODULE_TEST_Objects = module_B_file.o
