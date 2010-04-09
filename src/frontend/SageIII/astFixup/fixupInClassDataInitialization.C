@@ -68,7 +68,12 @@ FixupInClassDataInitialization::visit (SgNode* node)
                               (*variable)->set_typeptr(modifierType);
                             }
                          ROSE_ASSERT(modifierType != NULL);
-                         ROSE_ASSERT (modifierType->get_typeModifier().get_constVolatileModifier().isConst());
+                         if (modifierType->get_typeModifier().get_constVolatileModifier().isConst() == false)
+                            {
+                              printf ("Error: this should be a const variable (might be a fortran specific problem) \n");
+                              variableDeclaration->get_file_info()->display("this should be a const variable");
+                            }
+                         ROSE_ASSERT (modifierType->get_typeModifier().get_constVolatileModifier().isConst() == true);
                          if (variableDeclaration->get_declarationModifier().get_storageModifier().isStatic() == false)
                             {
                            // Then modify this node to make it static
