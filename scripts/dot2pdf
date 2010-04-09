@@ -1,8 +1,8 @@
 #!/bin/sh
 case $# in
 0) input="test.dot"
-   output="test.ps";;
-1) input=$1; output="test.ps";;
+   output="test.pdf";;
+1) input=$1; output="test.pdf";;
 2) input=$1; output=$2;;
 esac
 

@@ -242,6 +242,19 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_174.f03 \
      test2007_176.f03
 
+# DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
+OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
+     jacobi.f \
+     default.f \
+     flush.f \
+     exmpaleA221f.f \
+     exampleA251f.f \
+     schedule.f \
+     testNewOFP.f
+
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += $(OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS)
+
+
 if !ROSE_USING_GFORTRAN_VERSION_4_1
    F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
 endif
@@ -276,6 +289,10 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2007_LANL.f90 \
      test2007_example.f90 \
      test2009_1.f90 \
+     test2010_01.f90 \
+     test2010_02.f90 \
+     test2010_03.f90 \
+     test2010_04.f90 \
      triangle.f90
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
@@ -384,6 +401,7 @@ $(TEST_F90_Objects): ../../testTranslator ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
 # How to call a ROSE translator with a Fortran source file.
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 
 $(TEST_F77_Objects): ../../testTranslator ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)
@@ -407,6 +425,10 @@ $(TEST_F03_Objects): ../../testTranslator
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
 	@touch $@
 
+# DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
+testParser:../../testParser
+	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2007_01.f90
+
 
 QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
 
@@ -427,6 +449,13 @@ module_A_file.o: testTranslator
 # Force representation of module dependency so that mod files are properly generated before use.
 module_B_file.o: testTranslator module_A_file.o
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+
+test2010_01.o:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
+
+test2010_02.o:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
+
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 PASSING_MODULE_TEST_Objects = module_B_file.o
@@ -461,6 +490,8 @@ check-local:
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+#	DQ (4/6/2010): This fails on Hudson, but I don't know why.
+#	@$(MAKE) testParser
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"

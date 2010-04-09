@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# This is the launcher for smgit2.  It just runs the "smgit2" perl script that it finds in the "origin/master"
+# branch of the Git repository containing your current working directory.
+#
+# For convenience, install this launcher shell script as "smgit2" somewhere in your $PATH (I put it in ~/bin
+# on my system).  Then whenever you run a command like "smgit2 status" this launcher will make sure you're
+# using the most recent, fully tested version of smgit2.
+####################################################################################################################
+
+
+# Find top-level ROSE repo. These two functions are copied straight from smgit2 (only the "die" is modified)
+rose=$(perl -e '
+    use Cwd;
+    use strict;
+
+    # Returns true if specified directory looks like its the top of ROSE
+    sub is_top_of_rose {
+      my($dir) = @_;
+      return unless -d $dir && -d "$dir/.git";
+      return unless open MODULES, "$dir/.gitmodules";
+      my $has_edg = grep {m(^\[\s*submodule\s+\"src/frontend/CxxFrontend/EDG\"\s*]\s*$)} <MODULES>;
+      close MODULES;
+      return $has_edg;
+    }
+
+    # Returns absolute directory name for top of ROSE repo.  Your CWD must be somewhere inside ROSE to start with.
+    sub top_of_rose {
+      my @comps = split /\//, getcwd;
+      while (@comps) {
+	my $s = join "/", @comps;
+	return $s if is_top_of_rose $s;
+	pop @comps;
+      }
+      die "smgit2_launcher: cannot find top of ROSE source tree (cwd=@{[getcwd]})\n";
+    }
+
+    print top_of_rose, "\n";
+')
+
+if [ ! -d "$rose" ]; then
+    #     --------------------------------------------------------------------------------
+    echo "    Your current working directory is apparently not in a ROSE Git repository."
+    echo "    To start a new repository, execute these commands:"
+    echo "        git clone ROSE_REPO_URL rose"
+    echo "        cd rose"
+    echo "        git submodule init"
+    echo "        ${EDITOR-vi} .git/config # edit the URL for the EDG submodule"
+    echo "        git submodule update"
+    echo "    After you do this, this smgit2 launcher script should work."
+    echo
+    echo "    Alternatively, you can run a temporary copy of the smgit2 perl script"
+    echo "    (i.e., scripts/smgit2) found in most any existing ROSE Git repository. The"
+    echo "    command is:"
+    echo "        smgit2 clone ROSE_REPO_RUL rose"
+    #     --------------------------------------------------------------------------------
+    exit 1
+fi
+
+# Run smgit2 if possible
+if git rev-parse origin/master:scripts/smgit2 >/dev/null 2>&1; then
+    echo "smgit2_launcher: running smgit2 from origin/master..."
+    exec perl <(git show origin/master:scripts/smgit2) "$@"
+    exit 1
+elif [ -f "$rose/scripts/smgit2" ]; then
+    echo "smgit2_launcher: running $rose/scripts/smgit2..."
+    exec $rose/scripts/smgit2 "$@"
+    exit 1
+else
+    echo "smgit2_launcher: cannot find the real smgit2 perl script" >&2
+    exit 1
+fi

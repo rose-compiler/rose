@@ -92,6 +92,9 @@ useful in an environment with submodules.
                 --squash and --no-squash. The default is that merges are
                 always committed.
 
+   debug        Prints some information about the repository that is
+                useful for debugging problems with smgit2.
+
 CHOOSING SUBMODULE BRANCHES
 
 When a branch is checked out in the main repository, we update the
@@ -601,9 +604,10 @@ sub do_merge {
       my @gitargs;
       push @gitargs, "-F", ".git/MERGE_MSG" if -f ".git/MERGE_MSG";
       if (commit_has_effect) {
-	git "commit", @gitargs or die;
+	git "commit", @gitargs or
+	  die "Fix conflicts, add to cache, and rerun $arg0 merge command (or commit manually).\n";
       }
-    } or die "Fix conflicts, add to cache, and rerun $arg0 merge command (or commit manually).\n";
+    };
   }
 }
 
@@ -677,6 +681,15 @@ sub do_pull {
   }
 }
 
+# Prints some info that's useful for debugging
+sub do_debug {
+  execute sub {system "cat", ".git/config"; git "submodule"};
+  execute sub {
+    git "status";
+    git "branch", "-av";
+  }, undef, submodules;
+}
+
 ###############################################################################################################################
 # MAIN PROGRAM
 ###############################################################################################################################
@@ -691,6 +704,7 @@ my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
             clone       => \&do_clone,
             commit      => \&do_commit,
+	    debug       => \&do_debug,
             help        => sub {execute sub {git "help", @ARGV}}, # no need to execute in submodules
             merge       => \&do_merge,
 	    pull        => \&do_pull,

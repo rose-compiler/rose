@@ -57,8 +57,8 @@ TEST_TRANSLATOR = $(top_builddir)/tests/testAstFileIO $(ROSE_FLAGS)
 
 # DQ (2/23/2010): This is the new AST Reader (merges function type tables, etc.)
 # READ_TRANSLATOR = ./astFileRead $(ROSE_FLAGS)
-# READ_TRANSLATOR = $(top_builddir)/tests/testAstFileRead
-READ_TRANSLATOR = $(top_builddir)/tests/parallelASTMerge
+READ_TRANSLATOR = $(top_builddir)/tests/testAstFileRead
+# READ_TRANSLATOR = $(top_builddir)/tests/parallelASTMerge
 
 TESTCODE_INCLUDES =
 
@@ -86,7 +86,8 @@ test2001_03.C.binary: test2001_03.o
 # test-read: test2001_01.binary test2001_02.binary test2001_03.binary
 test-read: test2001_01.C.binary test2001_02.C.binary test2001_03.C.binary
 #	./astFileRead rose_test2001_01.C rose_test2001_02.C rose_test2001_03.C
-	$(READ_TRANSLATOR) test2001_01.C test2001_02.C test2001_03.C
+#	$(READ_TRANSLATOR) test2001_01.C test2001_02.C test2001_03.C
+	$(READ_TRANSLATOR) test2001_01.C test2001_02.C temp_output.C
 
 #TEST_Binaries_short = test2003_*.C.binary
 #TEST_Binaries_shortTrunk = $(TEST_Binaries_short:.binary=)
@@ -162,8 +163,9 @@ test-read-large: $(TEST_LARGE_LIST_BINARIES)
 #	@echo "$(READ_TRANSLATOR) $(TEST_Binaries:.binary=)"
 	$(READ_TRANSLATOR) $(TEST_Binaries:.C.binary=.C)
 
-
-failingTest:
+FailingTests = test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C
+FailingTests_Binaries = $(FailingTests:.C=.o)
+failingTest: $(FailingTests_Binaries)
 	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
 
 testParallelMerge: parallelMerge
@@ -211,8 +213,8 @@ locForRoseFile:
 
 check-local:
 	$(MAKE) $(TEST_Objects)
-	$(MAKE) test-read
-	$(MAKE) test-read-short
+#	$(MAKE) test-read
+#	$(MAKE) test-read-short
 #	$(MAKE) test-read-medium
 	@echo ""
 	@echo "*******************************************************************************************"

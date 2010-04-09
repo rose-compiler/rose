@@ -6,7 +6,15 @@ SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests 
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge
+bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge
+
+
+# Phase 0 tests code:
+# This is a test of the EDG and OFP parser support. No significant part of ROSE is generated.
+# A bit of the infrastructure of ROSE is tested that sets up work to build the ROSE AST, etc.
+# This test only works with C/C++ and Fortran.  Not clear what it means for the binary, 
+# which has its own options for skipping different phases.
+testParser_SOURCES = testParser.C
 
 # Phase 1 tests code:
 # This is used in specialized tests outside of ROSE testing for analysis only of large projects.
@@ -68,7 +76,7 @@ testObjectFileCodeGeneration: testCodeGeneration
 	./testCodeGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
 
 testLinkFileCodeGeneration: testObjectFileCodeGeneration
-	./testCodeGeneration $(INCLUDES) alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
+	./testCodeGeneration -rose:Cxx alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
 
 testCppFileCodeGeneration: testCodeGeneration
 	./testCodeGeneration -E $(INCLUDES) $(srcdir)/inputFile.C

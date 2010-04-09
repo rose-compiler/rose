@@ -646,7 +646,7 @@ AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_gcc_omp" = no)
 
 # JJW and TP (3-17-2008) -- added MPI support
 AC_ARG_WITH(mpi,
-[--with-mpi                    Configure option to have MPI-based tools built.],
+[--with-mpi                    Use this option ONLY if you inted to traverse the AST in parallel using MPI.],
 [ echo "Setting up optional MPI-based tools"
 ])
 AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)
@@ -724,13 +724,6 @@ fi
 # Use our classpath in case the user's is messed up
 AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 
-# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
-
-export CLASSPATH
-AC_SUBST(CLASSPATH)
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
 OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
@@ -796,8 +789,13 @@ if test "x$ofp_major_version_number" = "x0"; then
       if test "x$ofp_patch_version_number" = "x2"; then
          echo "Recognized an accepted patch version number."
       else
-         echo "ERROR: Could not identify the OFP patch version number."
-         exit 1
+         if test "x$ofp_patch_version_number" = "x1"; then
+            echo "Recognized an accepted patch version number ONLY for testing."
+         else
+            echo "ERROR: Could not identify the OFP patch version number."
+            exit 1
+         fi
+       # exit 1
       fi
    else
       if test "x$ofp_minor_version_number" = "x8"; then
@@ -832,6 +830,22 @@ AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 
 # echo "Testing OFP version number specification..."
 # exit 1
+
+# DQ (4/5/2010): Moved the specification of CLASSPATH to after the specification 
+# of OFP version number so that we can use it to set the class path.
+# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+
+export CLASSPATH
+AC_SUBST(CLASSPATH)
+# ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
+
+AC_DEFINE_UNQUOTED([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
+# AC_DEFINE([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
 
 AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
