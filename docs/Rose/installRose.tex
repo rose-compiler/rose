@@ -468,7 +468,7 @@ steps are the same as those of building a distribution version.
 
 % DQ (11/12/2008): This is where we need to accumulate the symptoms of what goes wrong.
 
-   There are a number of famous ways to screw up yur installation of ROSE.
+   There are a number of famous ways to screw up your installation of ROSE.
 \begin{enumerate}
    \item Message: {\tt configure: error: Could not link against boost\_filesystem-gcc41-mt} \\
    This message from running the {\tt configure} command in ROSE (an initial step in building
@@ -873,4 +873,29 @@ and select the project, {\em rose compiler}, from the pull down menu.
 \label{NMI:configureOptions}
 % End of scope in indentation
 }
+
+\subsection{Installation Details for Specific Platforms}
+
+   These are comments collected from users about what 
+platform specific details they have discovered and shared.
+
+\subsubsection{OSX}
+   OSX does not appear to come with wget and it should be installed
+separately so that ROSE can find and download it's required EDG 
+binaries from the web (ROSE web site).
+
+\paragraph{OSX 10.5}
+   We only build EDG binaries for the default GNU 4.0 compiler.
+
+\paragraph{OSX 10.6}
+   The non-standard STL hashmap implementation in OSX 10.6 is broken and so ROSE
+can fail when using this OS.  We are working on a fix to use more standard
+features of STL.
+
+\subsubsection{Fedora 11}
+   Some trivia with regard to libtool and building the SVN version of Rose:
+Fedora (11), at least, has a package, libtool-ltdl-devel that is needed (and separate from
+the libtool package) to make autoconfiguration work right.  The symptom is that the
+post-configure build enters libltdl, and finds no Makefile and fails immediately.
+Before running Rose's "./build", make sure the libtool-ltdl-devel RPM is installed.
 

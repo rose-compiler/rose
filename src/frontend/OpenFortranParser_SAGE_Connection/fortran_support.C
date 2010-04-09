@@ -471,6 +471,7 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      if (sourceLocatedNode->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
         {
           printf ("resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+          sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
         }
      ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
 
