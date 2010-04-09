@@ -112,7 +112,6 @@ inline void preventConstructionOnStack(SgNode* n)
 // JH (11/28/2005): This turns on/off many asserts concerimng the manipulation and remanipulation of the
 // data inside the memory pools.
 #define FILE_IO_EXTRA_CHECK 1
-                                                                                                                                                                                                                          
 
 /* JH (01/18/2006): To improve the memory check (traversing the memory pools, and checking the data member
    pointers to other IR nodes) we have this macro, that manages if a deleted IR node can be returned by the

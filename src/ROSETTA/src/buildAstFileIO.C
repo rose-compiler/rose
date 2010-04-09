@@ -508,7 +508,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
                readASTFromFile += "          " + nodeNameString + "StorageClass* storageArray = storageArray" + nodeNameString + ";\n" ;
                readASTFromFile += "          for ( unsigned int i = 0;  i < sizeOfActualPool; ++i )\n" ;
                readASTFromFile += "             {\n" ;
-               readASTFromFile += "               new " + nodeNameString + " ( *storageArray ) ; \n" ;
+            // readASTFromFile += "               new " + nodeNameString + " ( *storageArray ) ; \n" ;
+               readASTFromFile += "               " + nodeNameString + "* tmp = new " + nodeNameString + " ( *storageArray ) ; \n" ;
+               readASTFromFile += "               ROSE_ASSERT(tmp->p_freepointer == AST_FileIO::IS_VALID_POINTER() ); \n" ;
                readASTFromFile += "               storageArray++ ; \n" ;
                readASTFromFile += "             }\n" ;
                readASTFromFile += "        }  \n" ;
