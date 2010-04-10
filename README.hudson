@@ -145,193 +145,25 @@ this is one of the ways that Hudson is handled differently on Windows
 than on Linux.
 
 
+**************************
+Our Hudson setup on tux269
+**************************
 
-Source Code Management
- CVS
- 	CVSROOT		Help for feature: CVSROOT
-	
-CVSROOT is mandatory
-	
-Loading...
-	
- 	Module(s)	
-	
-	Help for feature: Module(s)
-	
-	
-Loading...
-	
- 	Branch	
-This is a tag, not a branch
-	Help for feature: Branch
-	
-	
-Loading...
-	
-		
-Advanced...
- 	CVS_RSH		Help for feature: CVS_RSH
-	
-	
-Loading...
-	
- 	Legacy mode	(run CVS in a way compatible with older versions of Hudson <1.21) 	Help for feature: Legacy mode
-	
-	
-Loading...
-	
- 	Use update		Help for feature: Use update
-	
-	
-Loading...
-	
- 	Repository browser	
-	
- 	URL		Help for feature: URL
-	
-	
-Loading...
-	
- 	URL		Help for feature: URL
-	
-	
-Loading...
-	
- 	Excluded Regions	
-	Help for feature: Excluded Regions
-	
-	
-Loading...
-	
- None
- Subversion
- 	Modules	
- 	Repository URL		Help for feature: Repository URL
-	
-	
-Loading...
-	
- 	Local module directory (optional)		Help for feature: Local module directory (optional)
-	
-	
-Loading...
-	
- 		
-Add more locations...Delete
-	Help for feature: Modules
-	
-	
-Loading...
-	
-	Help for feature: Modules
-	
-	
-Loading...
-	
- 	Use update	
-	
-	If checked, Hudson will use 'svn update' whenever possible, making the build faster. But this causes the artifacts from the previous build to remain when a new build starts.
- 	Repository browser	
-	
- 	URL		Help for feature: URL
-	
-	
-Loading...
-	
- 	Repository Instance		Help for feature: Repository Instance
-	
-	
-Loading...
-	
- 	URL		Help for feature: URL
-	
-	
-Loading...
-	
- 	URL		Help for feature: URL
-	
-	
-Loading...
-	
- 	URL		Help for feature: URL
-	
-	
-Loading...
-	
- 	Repository Instance		Help for feature: Repository Instance
-	
-	
-Loading...
-	
- 	URL		Help for feature: URL
-	
-	
-Loading...
-	
- 	Root module		Help for feature: Root module
-	
-	
-Loading...
-	
- 	URL	
-	
-		
-Advanced...
- 	Excluded Regions	
-	Help for feature: Excluded Regions
-	
-	
-Loading...
-	
- 	Excluded Users	
-	Help for feature: Excluded Users
-	
-	
-Loading...
-	
- 	Exclusion revprop name		Help for feature: Exclusion revprop name
-	
-	
-Loading...
-	
- Git
- 	Repositories	
- 	URL of repository	<plink://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE.git>
-	
-		
-Advanced...
- 	Name of repository (blank to create default)	<origin>
-	
- 	Refspec (blank to create default)	<+refs/heads/*:refs/remotes/origin/*>
-	
- 		
-Delete Repository
-	
-Add
-	Help for feature: Repositories
-	
-	
-Loading...
-	
- 	Branches to build	
- 	Branch Specifier (blank for default):	
-	
- 		
-Delete Branch
-	
-Add
-	Help for feature: Branches to build
-	
-	
-Loading...
-	
-		
-Advanced...
- 	Merge options	Merge before build?
+Hudson builds a list of branches against which to test.  This is done
+by running get fetch (I think) on the directory located on tux283. The
+directory is: /export/tmp.hudson-rose/hudson/workspace/ROSE-matrix
 
-Branch to merge to: (e.g master)	Help for feature: Merge options
-	
-	
-Loading...
-	
- 	Repository browser	
+A currently problem is that it seems that Hudson is cycling through the
+branches and testing each one.  The branches are a set larger than what is
+in our main GIT repository in /usr/casc, and it has bee identified
+to be the branches that are in tux283:/export/tmp.hudson-rose/hudson/workspace/ROSE-matrix
+This repository is being backed up and pruned to represent the smaller
+number of branches our main GIT repository in /usr/casc.
+
+Note from Andreas:
+   If you ever run into this problem again, go into that directory 
+(tux283:/export/tmp.hudson-rose/hudson/workspace/ROSE-matrix) and type
+"git remote prune origin"
+
+
+
