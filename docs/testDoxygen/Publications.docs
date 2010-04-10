@@ -9,36 +9,62 @@ of any ambitious project; but we have included everything for
 completeness.  It is hoped that the underlying goal within each paper
 of supporting the use of high-level abstractions will be clear together with
 our attempts to address the performance issues required for the use of 
-high-level abstractions within scientific computing.  A selectedpapers.bib 
-is included <a href="../ROSE_ResearchPapers/selectedpapers.bib"> (download here) </a> to make it easy 
-to reference the latest papers.
+high-level abstractions within scientific computing. 
 
-Best papers:
-   -# LCPC2009-SourceToSourceOutliningToSupportWholeProgramEmpiricalOptimization.pdf
-   -# IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf
-   -# ICS05BrianWhiteAndCast.pdf
-   -# LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf
-   -# JMLC2003-RoseArchitecture.ps
-   -# LCPC03-ParallelOptimizationOfContainers.ps
-   -# WOMPAT-OpenMPTranslation.ps
-   -# HIPS2001-LibrariesAsDomainSpecificLanguages.ps
+\section Label10 2010
+- Chunhua Liao, Daniel J. Quinlan , Thomas Panas and Bronis de Supinski, A ROSE-based OpenMP 3.0 Research Compiler Supporting Multiple Runtime Libraries, international Workshop on OpenMP (IWOMP) 2010, accepted in March. 2010 LLNL-CONF-422873  
+<a href="../ROSE_ResearchPapers/2010-06-AROSEBasedOpenMP3.0ResearchCompiler-IWOMP.pdf"> pdf </a>
 
-\section LabelA Brief descriptions of the several papers that we have included
-- Chunhua Liao, Daniel J. Quinlan, Richard Vuduc and Thomas Panas, Effective Source-to-Source Outlining to Support Whole Program Empirical Optimization, The 22nd International Workshop on Languages and Compilers for Parallel Computing, Newark, Delaware, USA. October 8-10, 2009.  <a href="../ROSE_ResearchPapers/LCPC2009-SourceToSourceOutliningToSupportWholeProgramEmpiricalOptimization.pdf"> pdf </a>. \n
+- Chunhua Liao, Daniel J. Quinlan, Jeremiah J. Willcock and Thomas Panas, Semantic-Aware Automatic Parallelization of Modern Applications Using High-Level Abstractions, Journal of Parallel Programming, Accepted in Jan. 2010 
+<a href="../ROSE_ResearchPapers/2010-Semantic-AwareAutomaticParallelizationofModernApplications-CPE.pdf"> pdf </a>
+
+\section Label09 2009
+
+- Chunhua Liao, Daniel J. Quinlan and Thomas Panas, Towards an Abstraction-Friendly Programming Model for High Productivity and High Performance Computing, Workshop on Non-Traditional Programming Models for High-Performance Computing, Los Alamos Computer Science Symposium (LACSS) 2009, Santa Fe, New Mexico, October 13-14, 2009 LLNL-CONF-417691 
+<a href="../ROSE_ResearchPapers/2009-TowardsAnAbstraction-FriendlyProgrammingModel-LACSS.pdf"> pdf </a>. \n
+This is a short position paper.
+
+- Chunhua Liao, Daniel J. Quinlan, Richard Vuduc and Thomas Panas, Effective Source-to-Source Outlining to Support Whole Program Empirical Optimization, The 22nd International Workshop on Languages and Compilers for Parallel Computing, Newark, Delaware, USA. October 8-10, 2009.  
+<a href="../ROSE_ResearchPapers/2009-SourceToSourceOutliningToSupportWholeProgramEmpiricalOptimization-LCPC.pdf"> pdf </a>. \n
  This paper describes our work of using ROSE to build an effective source-to-source outliner in order to support whole program 
  empirical optimization (also called autotuning). The ROSE outliner addresses the problem of extracting tunable
  kernels out of large scale applications, thereby helping to convert the challenging whole-program tuning problem into a set of 
  more manageable kernel tuning tasks. In particular, the outliner can generate kernels which preserve performance characteristics
  of tuning targets which can be easily handled by other tools. This work also demonstrates how one can use ROSE's compiler analyses to enhance the quality of source-to-source translation.
 
+- Saebjornsen, A., Willcock, J., Panas, T., Quinlan, D., and Su, Z. 2009. Detecting code clones in binary executables. In Proceedings of the Eighteenth international Symposium on Software Testing and Analysis (Chicago, IL, USA, July 19 - 23, 2009). ISSTA '09. ACM, New York, NY, 117-128. DOI= http://doi.acm.org/10.1145/1572272.1572287 
+<a href="../ROSE_ResearchPapers/2009-07-DetectingCodeClonesInBinaryExecutables-ISSTA.pdf"> pdf </a>
+
+- Panas, T. and Quinlan, D. 2009. Techniques for software quality analysis of binaries: applied to Windows and Linux. In Proceedings of the 2nd international Workshop on Defects in Large Software Systems: Held in Conjunction with the ACM SIGSOFT international Symposium on Software Testing and Analysis (ISSTA 2009) (Chicago, Illinois, July 19 - 19, 2009). B. Liblit, N. Nagappan, and T. Zimmermann, Eds. DEFECTS '09. ACM, New York, NY, 6-10. DOI= http://doi.acm.org/10.1145/1555860.1555863 
+<a href="../ROSE_ResearchPapers/2009-TechniquesForSoftwareQualityAnalysisOfBinaries-ISTA.pdf"> pdf </a>
+
 - Chunhua Liao, Daniel J. Quinlan, Jeremiah J. Willcock and Thomas Panas,
 "Extending Automatic Parallelization to Optimize High-Level Abstractions for Multicore,"
-In Proceedings of the 5th international Workshop on OpenMP: Evolving OpenMP in An Age of Extreme Parallelism (Dresden, Germany, June 03 - 05, 2009). <a href="../ROSE_ResearchPapers/IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf"> pdf </a>. \n
+In Proceedings of the 5th international Workshop on OpenMP: Evolving OpenMP in An Age of Extreme Parallelism (Dresden, Germany, June 03 - 05, 2009). 
+<a href="../ROSE_ResearchPapers/2009-ExtendingAutoParToOptimizeAbstractions-IWOMP.pdf"> pdf </a>. \n
      This paper describes an approach to extending automatic parallelization to optimize 
      applications written using high level abstractions.
      This work exemplifies a typical usage of ROSE and an initial work by us on the
      general subject of how to leverage semantics associated with high level of abstractions to 
      enable more optimizations.
+
+
+\section Label07 2007
+
+\section Label06 2006
+
+- Parameterization and Search-space Exploitation of Loop Fusion, 2006 <a href="../ROSE_ResearchPapers/Vienna2006-AutomatedTuning.pdf">
+     pdf </a>. \n
+     This represent some recent work on empirical optimization (not yet published).
+     This entry should likely be removed until it is published.
+
+\section Label05 2001-2005
+
+- White, B. S., McKee, S. A., de Supinski, B. R., Miller, B., Quinlan, D., and Schulz, M. 2005. Improving the computational intensity of unstructured mesh applications. In Proceedings of the 19th Annual international Conference on Supercomputing (Cambridge, Massachusetts, June 20 - 22, 2005). ICS '05. ACM, New York, NY, 341-350. DOI= http://doi.acm.org/10.1145/1088149.1088195 
+<a href="../ROSE_ResearchPapers/ICS05BrianWhiteAndCast.pdf"> pdf </a>. \n
+     This paper is about the optimization of unstructured grid applications and represent
+     preparatory work for future automated transformations specific to unstructured grid
+     applications within DOE using ROSE.
 
 - Qing Yi, Daniel J. Quinlan: Applying Loop Optimizations to Object-Oriented Abstractions Through General Classification of Array Semantics. LCPC 2004: 253-267 <a href="../ROSE_ResearchPapers/LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf">pdf </a>. \n
      This paper outlines an approach to the optimization of user-defined abstractions.
@@ -51,17 +77,6 @@ In Proceedings of the 5th international Workshop on OpenMP: Evolving OpenMP in A
 
 - Daniel J. Quinlan, Markus Schordan, Qing Yi, Andreas Sæbjørnsen: Classification and Utilization of Abstractions for Optimization. ISoLA 2004: 57-73 <a href="../ROSE_ResearchPapers/ISOLA2004-ClassificationAndUtilizationOfAbstractionsForOptimization.ps"> ps </a>. \n
      This paper is a general introduction to recent work in the ROSE project.
-
-- Parameterization and Search-space Exploitation of Loop Fusion, 2006 <a href="../ROSE_ResearchPapers/Vienna2006-AutomatedTuning.pdf">
-     pdf </a>. \n
-     This represent some recent work on empirical optimization (not yet published).
-     This entry should likely be removed until it is published.
-
-- White, B. S., McKee, S. A., de Supinski, B. R., Miller, B., Quinlan, D., and Schulz, M. 2005. Improving the computational intensity of unstructured mesh applications. In Proceedings of the 19th Annual international Conference on Supercomputing (Cambridge, Massachusetts, June 20 - 22, 2005). ICS '05. ACM, New York, NY, 341-350. DOI= http://doi.acm.org/10.1145/1088149.1088195 
-<a href="../ROSE_ResearchPapers/ICS05BrianWhiteAndCast.pdf"> pdf </a>. \n
-     This paper is about the optimization of unstructured grid applications and represent
-     preparatory work for future automated transformations specific to unstructured grid
-     applications within DOE using ROSE.
 
 - Schordan M., Quinlan D., "A Source-To-Source Architecture for User-Defined Optimizations", Joint Modular Languages Conference held in conjunction with EuroPar'03, Austria, August 2003 <a href="../ROSE_ResearchPapers/JMLC2003-RoseArchitecture.ps"> ps </a>. \n
     This paper covers the architecture of ROSE as a project.  It is one of the best
@@ -85,13 +100,7 @@ In Proceedings of the 5th international Workshop on OpenMP: Evolving OpenMP in A
      array class library.  ROSE is more general, but this paper is very specific to
      the optimization of a single library.
 
-- Quinlan, D., "ROSE: Compiler Support for Object-Oriented Frameworks"
-Proceedings of Conference on Parallel Compilers (CPC2000), Aussois, France, January 2000.
-Also published in special issue of Parallel Processing Letters, Vol. 10. 
-<a href="../ROSE_ResearchPapers/CPC2000-SupportForObjectOrientedFrameworks.ps"> 
-     ps </a>. \n
-     This paper was an introduction to the work being done at the time on ROSE complete
-     with a more detailed motivation for compile-time optimization of specific libraries.
+\section Label00 2000 and Earlier
 
 - Quinlan, D. Schordan, M. Philip, B. Kowarschik, M. "Parallel Object-Oriented Framework Optimization", Special Issue of Concurrency: Practice and Experience (2003), also in Proceedings of Conference on Parallel Compilers (CPC2001), Edinburgh, Scotland, June 2001.
 <a href="../ROSE_ResearchPapers/CPC2001-Concurrency2003.ps"> ps </a>. \n
@@ -109,6 +118,14 @@ Also published in special issue of Parallel Processing Letters, Vol. 10.
     Intermediate Representations (IRs) for compilers.  It is a tool used within ROSE to
     build the SAGE III IR which we use internally with the EDG front-end.  It is specific
     to details of the internal ROSE compiler infrastructure.
+
+- Quinlan, D., "ROSE: Compiler Support for Object-Oriented Frameworks"
+Proceedings of Conference on Parallel Compilers (CPC2000), Aussois, France, January 2000.
+Also published in special issue of Parallel Processing Letters, Vol. 10. 
+<a href="../ROSE_ResearchPapers/CPC2000-SupportForObjectOrientedFrameworks.ps"> 
+     ps </a>. \n
+     This paper was an introduction to the work being done at the time on ROSE complete
+     with a more detailed motivation for compile-time optimization of specific libraries.
 
 
 - Kei Davis and Dan Quinlan, ROSE II: An Optimizing Code Transformer for C++ Object-Oriented Array Class Libraries, 
@@ -130,24 +147,20 @@ World Multiconference on Systemics, Cybernetics and Informatics and 5th Internat
      written, this is the most complete of them.  It is included with these papers to
      provide a bit of perspective (currently historical).
 
-\subsection relatedPapers Related A++/P++ Papers
+\section LabelRelated Related Papers 
+This section is incomplete.
+
 -# Dan Quinlan and Rebecca Parsons, A++/P++ array classes for architecture independent finite
     differences computations. In Proceedings of the Second Annual Object-Oriented Numerics
     Conference (ONNSKI'94), April 1994.
+
 -# Lemke, M., Quinlan, D. P++, a C++ Virtual Shared Grids Based Programming Environment for
     Architecture-Independent Development of Structured Grid Applications, In Preceeding of
     the CONPAR/VAPP V, September 1992, Lyon, France.  Published in Lecture Notes in
     Computer Science, Springer Verlag, September 1992.
 
-\subsection relatedOverturePaper Related Overture Paper
 -# Brown, D., Henshaw, W., Quinlan, D., "OVERTURE: A Framework for the Complex Geometries,"
     Proceedings of the ISCOPE'99 Conference, San Francisco, CA, Dec 1999.
-
-
-
-\section LabelC RELATED PAPERS
-
-   This section is incomplete.
 
 -# Guy Steele's "Growing A Language"
 -# Telescoping Languages work at Rice (Ken)
