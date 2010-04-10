@@ -575,6 +575,9 @@ ROSE_SUPPORT_DWARF
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
 
+# echo "Exiting after test ..."
+# exit 1
+
 # Call supporting macro for libffi (Foreign Function Interface library)
 # This library is used by Peter's work on the Interpreter in ROSE.
 ROSE_SUPPORT_LIBFFI
