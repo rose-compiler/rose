@@ -551,6 +551,9 @@ ROSE_SUPPORT_MAPLE
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
+# DQ (4/10/2010): Added configure support for Backstroke project.
+ROSE_SUPPORT_BACKSTOKE
+
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
 
@@ -1676,6 +1679,12 @@ projects/QtDesignerPlugins/Makefile
 projects/RoseQt/Makefile
 projects/RoseQt/AstViewer/Makefile
 projects/interpreter/Makefile
+projects/backstroke/Makefile
+projects/backstroke/restrictedLanguage/Makefile
+projects/backstroke/reverseComputation/Makefile
+projects/backstroke/eventDetection/Makefile
+projects/backstroke/eventDetection/ROSS/Makefile
+projects/backstroke/eventDetection/SPEEDES/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
