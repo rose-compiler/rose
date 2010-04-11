@@ -1,3 +1,10 @@
+// This translator acts as a filter to restrict the language used to
+// express events in the discrete event simulation.
+// We only restrict the language constructs used to express events,
+// and impose no restriction of the langauge used to express other 
+// parts of the the descrete event simulation.
+
+
 #include "rose.h"
 
 using namespace std;
