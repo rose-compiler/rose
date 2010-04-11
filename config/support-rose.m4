@@ -245,8 +245,6 @@ if test "x$enable_use_new_graph_node_backward_compatability" = "xyes"; then
 fi
 
 
-#AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
-
 # Set up for use of bison to build dot2gml tool in directory
 # src/roseIndependentSupport/dot2gml.  This is made optional
 # because it seems that many don't have the correct version of bison
@@ -283,9 +281,10 @@ ROSE_HOME=.
 AC_SUBST(ROSE_HOME)
 # echo "In ROSE/configure: ROSE_HOME = $ROSE_HOME"
 
-# This does not appear to exist any more
+# This does not appear to exist any more (not distributed in ROSE)
 # Support for Gabriel's QRose GUI Library
 # ROSE_SUPPORT_QROSE
+#AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 AC_LANG(C++)
 AX_BOOST_BASE([1.35.0], [], [echo "Boost 1.35.0 or above is required for ROSE" 1>&2; exit 1])
@@ -1309,14 +1308,31 @@ export with_png
 with_zlib=no
 export with_zlib
 
+# DQ (4/11/2010): This seems to have to appear before the Qt macros
+# because the "AC PATH QT" are defined in config/qrose_indigo_1.m4.
+# *****************************************************
+#  Support for QRose Qt GUI (work at Imperial College)
+# *****************************************************
+
 # GMY (9/3/2008) QT4 & QROSE Optional Packages
 AC_ARG_WITH(QRose,
 	[--with-QRose=PATH	prefix of QRose installation],
-	[QROSE_PREFIX=$with_QRose],
+	[QROSE_PREFIX=$with_QRose
+    if test "x$with_QRose" = xyes; then
+       echo "Error: --with-QRose=PATH must be specified to use option --with-QRose (a valid QRose intallation)"
+       exit 1
+    fi
+    if test "x$with_QRose" = x; then
+       echo "Error: empty path used in --with-QRose=PATH must be specified to use option --with-QRose (a valid Qt intallation)"
+       exit 1
+    fi
+   ],
 	[with_QRose=no])
 
 AC_SUBST(QROSE_PREFIX)
-AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_QRose" != no)
+AM_CONDITIONAL(ROSE_USE_QROSE,test "x$with_QRose" != xno)
+
+echo "with_QRose = $with_QRose"
 
 #AM_CONDITIONAL(USE_QROSE, test "$with_QRose" != no)
 #QROSE_LDFLAGS="-L${QROSE_PREFIX}/lib -lqrose"
@@ -1324,18 +1340,48 @@ AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_QRose" != no)
 #AC_SUBST(QROSE_LDFLAGS)
 #AC_SUBST(QROSE_CXXFLAGS)
 
-echo "with_QRose = $with_QRose"
 
+# DQ (4/11/2010): Organized the Qt configure support.
+# ****************************************************
+#         Support for Qt (General GUI support)
+# ****************************************************
+
+# These are defined in config/qrose_indigo_1.m4, they 
+# are not standard AC macros.
 AC_PATH_QT
 AC_PATH_QT_MOC
 AC_PATH_QT_RCC
 AC_PATH_QT_UIC
+
+# The code to set ROSEQT is in this macro's definition.
 AC_PATH_QT_VERSION
 
-# echo "with_qt = $with_qt"
-
+echo "with_qt     = $with_qt"
 AM_CONDITIONAL(ROSE_USE_QT,test x"$with_qt" != x"no")
-AM_CONDITIONAL(ROSE_WITH_ROSEQT,test x"$with_roseQt" != x"no")
+if test "x$with_qt" = xyes; then
+   echo "Error: Path to Qt not specified...(usage: --with-qt=PATH)"
+   exit 1
+fi
+
+# If QRose was specified then make sure that Qt was specified.
+if test "x$with_QRose" != xno; then
+   if test "x$with_qt" = xno; then
+      echo "Error: QRose requires valid specification of Qt installation...(requires option: --with-qt=PATH)"
+      exit 1
+   fi
+fi
+
+# *****************************************************
+#   Support for RoseQt GUI (ROSE specific Qt widgets)
+# *****************************************************
+
+# ROSE_SUPPORT_ROSEQT
+# echo "with_roseQt = $with_roseQt"
+# AM_CONDITIONAL(ROSE_WITH_ROSEQT,test x"$with_roseQt" != x"no")
+
+# ****************************************************
+#   Support for Assembly Semantics (binary analysis)
+# ****************************************************
 
 AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
 AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])

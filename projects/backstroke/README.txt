@@ -1,6 +1,6 @@
 Backstroke Design details
 
-Goal: Support the automatd generation of the reverse functions for optimistic discrete
+Goal: Support the automated generation of the reverse functions for optimistic discrete
       event simulation.
 
 Data Structure Design:
