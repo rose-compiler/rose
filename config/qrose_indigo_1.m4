@@ -81,7 +81,16 @@ AC_MSG_CHECKING([for Qt])
 dnl DQ (9/11/2008): Modified to set the "n" so that tests without QT would work.
 AC_ARG_WITH(qt,
     [  --with-qt=DIR where the QT root directory is. ],
-    [  ac_qt_path="$withval"],
+    [  ac_qt_path="$withval"
+       if test "x$with_qt" = xyes; then
+          echo "Error: --with-qt=PATH must be specified to use option --with-qt (a valid Qt intallation)"
+          exit 1
+       fi
+       if test "x$withval" = x; then
+          echo "Error: empty path used in --with-qt=PATH must be specified to use option --with-qt (a valid Qt intallation)"
+          exit 1
+       fi
+    ],
     [  with_qt=no ])
 
 AC_ARG_WITH(qt-inc,
@@ -96,7 +105,16 @@ AC_ARG_WITH(qt-lib,
 
 AC_ARG_WITH(roseQt,
     [  --with-roseQt=Build with roseQt. yes or no. defaults to no. ],
-    [  ],
+    [  echo "In test action given: with_roseQt = $with_roseQt"
+       if test "x$with_roseQt" != xyes; then
+          echo "Error: No option should be specified with --with-roseQt...(usage: --with-roseQt or --with-roseQt=yes only)"
+          exit 1
+       fi
+       if test "x$with_qt" = xno; then
+          echo "Error: --with-qt=PATH must be specified to use option --with-roseQt (roseQt requires valid Qt intallation)"
+          exit 1
+       fi
+    ],
     [  with_roseQt=no ])
   
 dnl ---------------------------[check Qt headers]------------
@@ -234,7 +252,8 @@ dnl ------------------------[check if uic is version 4]-----------------
 dnl DQ (9/12/2008): Added to test for use of QRose to prevent error if Qt3 is found.
    if test "$with_QRose" != no; then
       if test "$uic_dir" != NONE; then
-         try=`$UIC -v 2>&1 | grep "Qt 4."`
+#        try=`$UIC -v 2>&1 | grep "Qt 4."`
+         try=`$UIC -v 2>&1 | grep "Interface Compiler version 4."`
          if test -z "$try"; then
             AC_MSG_ERROR([ invalid version - $UIC must be version 4.x.x])
          else
@@ -286,7 +305,8 @@ dnl ------------------------[check if rcc is version 4]-----------------
 dnl DQ (9/12/2008): Added to test for use of QRose to prevent error if Qt3 is found.
    if test "$with_QRose" != no; then
       if test "$rcc_dir" != NONE; then
-         try=`$RCC -v 2>&1 | grep "Qt 4."`
+#        try=`$RCC -v 2>&1 | grep "Qt 4."`
+         try=`$RCC -v 2>&1 | grep "Qt Resource Compiler version 4."`
          if test -z "$try"; then
             AC_MSG_ERROR([ invalid version - $RCC must be version 4.x.x])
          else
@@ -304,7 +324,6 @@ dnl --------------------------------------------------------------------
 AC_DEFUN([AC_PATH_QT_VERSION],
 [
     AC_REQUIRE([AC_PATH_QT])
-
 
     if test $with_qt != no
     then
@@ -326,6 +345,7 @@ AC_DEFUN([AC_PATH_QT_VERSION],
 
         if test x"$with_roseQt" != x"no"
         then
+            echo "In qrose_indigi_1 -- qt version macro: with_roseQt $with_roseQt QT_VERSION_MAJOR = $QT_VERSION_MAJOR QT_VERSION_MINOR = $QT_VERSION_MINOR"
             AC_MSG_CHECKING([Qt version compatible with roseQt])
             if test $QT_VERSION_MAJOR -ge 4 && test $QT_VERSION_MINOR -ge 4
             then
@@ -334,7 +354,7 @@ AC_DEFUN([AC_PATH_QT_VERSION],
             else
                 AC_MSG_ERROR([ invalid version - qt must be at least version 4.4.x in order to build with roseQt])
             fi
-	dnl Comment the following lines in, to have roseQt automatically enabled if qt>=4.4.0
+        dnl Comment the following lines in, to have roseQt automatically enabled if qt>=4.4.0
         dnl else
             dnl if test $QT_VERSION_MAJOR -lt 4 && test $QT_VERSION_MINOR -lt 4
             dnl then
@@ -348,5 +368,8 @@ AC_DEFUN([AC_PATH_QT_VERSION],
         AC_SUBST(QT_VERSION_MAJOR)
         AC_SUBST(QT_VERSION_MINOR)
     fi
+
+    echo "with_roseQt = $with_roseQt"
+    AM_CONDITIONAL(ROSE_WITH_ROSEQT,test x"$with_roseQt" != x"no")
 ])
             
