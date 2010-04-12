@@ -5,6 +5,7 @@ SUBDIRS = \
      AstEquivalence \
      autoParallelization \
      autoTuning\
+     backstroke \
      BinQ \
      CertSecureCodeProject \
      BinaryCloneDetection \
