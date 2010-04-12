@@ -13,9 +13,8 @@
  *  @code
  *  // Disassemble the interpretation (normally happens automatically)
  *  SgAsmInterpretation *interp = ....;
- *  Disassembler *d = Disassembler::create(interp);
+ *  Disassembler *d = Disassembler::lookup(interp);
  *  d->disassemble(interp);
- *  delete d;
  *
  *  // Create an assembler that can handle instructions in this interpretation.
  *  Assembler *asm = Assembler::create(interp);
