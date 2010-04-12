@@ -46,7 +46,13 @@ void AstPostProcessing (SgNode* node)
             // loop iterating over all files because repeated calls to
             // AstPostProcessing are slow due to repeated memory pool
             // traversals of the same nodes over and over again.
-               postProcessingSupport(node);
+            // Only postprocess the AST if it was generated, and not were we just did the parsing.
+            // postProcessingSupport(node);
+
+               if (project->get_exit_after_parser() == false)
+                  {
+                    postProcessingSupport (node);
+                  }
 #if 0
                SgFilePtrList::iterator fileListIterator;
                for (fileListIterator = project->get_fileList().begin(); fileListIterator != project->get_fileList().end(); fileListIterator++)
@@ -68,6 +74,21 @@ void AstPostProcessing (SgNode* node)
 
                printf ("SgDirectory support not implemented in AstPostProcessing \n");
                ROSE_ASSERT(false);
+               break;
+             }
+
+          case V_SgFile:
+          case V_SgSourceFile:
+             {
+               SgFile* file = isSgFile(node);
+               ROSE_ASSERT(file != NULL);
+
+            // Only postprocess the AST if it was generated, and not were we just did the parsing.
+               if (file->get_exit_after_parser() == false)
+                  {
+                    postProcessingSupport (node);
+                  }
+               
                break;
              }
 
@@ -222,12 +243,13 @@ void postProcessingSupport (SgNode* node)
   // fixup handles this case and traverses just the SgEnumVal objects.
      fixupEnumValues();
 
+  // DQ (4/7/2010): This was commented out to modify Fortran code, but I think it should NOT modify Fortran code.
   // DQ (5/21/2008): This only make since for C and C++ (Error, this DOES apply to Fortran where the "parameter" attribute is used!)
-  // if (SageInterface::is_Fortran_language() == false)
-  //    {
+     if (SageInterface::is_Fortran_language() == false)
+        {
        // DQ (3/20/2005): Fixup AST so that GNU g++ compile-able code will be generated
           fixupInClassDataInitialization(node);
-  //    }
+        }
 
   // DQ (3/24/2005): Fixup AST to generate code that works around GNU g++ bugs
      fixupforGnuBackendCompiler(node);
