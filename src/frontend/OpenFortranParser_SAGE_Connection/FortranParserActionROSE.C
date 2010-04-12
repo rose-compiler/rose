@@ -689,18 +689,38 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                   {
                  // Note that I think that there can be more values than just the value 8, 
                  // but I have not seen any codes that use them.
+                    case 0:
+                       {
+                       // DQ (4/7/2010): This is nothing to do for this case (use of "REAL" or "INTEGER" instead of "REAL*8" or "INTEGER*8"
+                          printf ("Case 0 of type keyword1->text = %s (pop the stack) \n",keyword1->text);
+#if 1
+                       // Output debugging information about saved state (stack) information.
+                          outputState("Case 0 of type in R403 c_action_intrinsic_type_spec()");
+#endif
+
+                       // DQ (4/7/2010): There can be a couple of parameters on the stack (see test2010_04.f90).
+                       // astExpressionStack.pop_front();
+                          astExpressionStack.clear();
+                          break;
+                       }
+                    
                     case 8:
                        {
                          ROSE_ASSERT(keyword1 != NULL);
                          if ( strncasecmp(keyword1->text,"real",4) == 0 )
                             {
                               printf ("Processing the real case \n");
-                              SgType* currentType = astTypeStack.front();
+
+                              ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                              ROSE_ASSERT(astTypeStack.empty() == true);
+
+                           // SgType* currentType = astTypeStack.front();
+                              SgType* currentType = astBaseTypeStack.front();
                               SgTypeDouble* typeDouble = isSgTypeDouble(currentType);
                               if (typeDouble == NULL)
                                  {
                                 // Note that since types are shared we don't want to delete the currentType
-                                   printf ("Incorrectly constructed type = %s should be SgTypeDouble \n",currentType->class_name().c_str());
+                                // printf ("Incorrectly constructed type = %s should be SgTypeDouble \n",currentType->class_name().c_str());
                                    SgType* newType = SgTypeDouble::createType();
 
                                 // DQ (12/8/2007): Use the new mechanism using the astBaseTypeStack.
@@ -763,6 +783,12 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                     default:
                        {
                          printf ("Default reached in real*8 type specification: integerExpression->get_value() = %d \n",integerExpression->get_value());
+
+#if 1
+                      // Output debugging information about saved state (stack) information.
+                         outputState("Default reached in R403 c_action_intrinsic_type_spec()");
+#endif
+
                          ROSE_ASSERT(false);
                        }
                   }
@@ -3599,7 +3625,7 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_initialization(): hasExpr = %s hasNullInit = %s \n",hasExpr ? "true" : "false",hasNullInit ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R506 c_action_initialization()");
 #endif
@@ -3700,8 +3726,13 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
             // DQ (4/30/2008): I am unclear if this is still required.
                if (astExpressionStack.empty() == false && isSgVarRefExp(astExpressionStack.front()) != NULL)
                   {
-                    printf ("Poping a useless expression off the stack! \n");
+#if 0
+                    printf ("Poping a useless expression off the stack = %p = %s = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str(),SageInterface::get_name(astExpressionStack.front()).c_str());
                     astExpressionStack.pop_front();
+#else
+                 // DQ (4/7/2010): test2010_01.f90 demonstrates that we need this expression as an initializer for F90 code.
+                    printf ("Skip poping a seemingly useless expression off the stack (It is the initializer for a variable (see test2010_01.f90) = %p = %s = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str(),SageInterface::get_name(astExpressionStack.front()).c_str());
+#endif
                   }
 #endif
 
@@ -3746,7 +3777,7 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
   // DQ (5/4/2008): Now that we don't use the astInitializerStack, we can't assert this.
   // ROSE_ASSERT(astExpressionStack.empty() == true);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R506 c_action_initialization()");
 #endif
