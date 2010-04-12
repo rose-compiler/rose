@@ -3,7 +3,8 @@
 // We only restrict the language constructs used to express events,
 // and impose no restriction of the langauge used to express other 
 // parts of the the descrete event simulation.
-
+// Step 1: Identify the event functions (save as a list)
+// Step 2: Enforce language restrictions on the event functions.
 
 #include "rose.h"
 

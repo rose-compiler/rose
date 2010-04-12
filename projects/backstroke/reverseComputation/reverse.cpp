@@ -5,8 +5,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <stack>
-#include "boost/date_time/local_time/local_time.hpp"
-#include <boost/date_time.hpp>
+
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
+   #include "boost/date_time/local_time/local_time.hpp"
+   #include <boost/date_time.hpp>
+#endif
+
 
 using namespace std;
 using namespace boost;
@@ -464,9 +468,12 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 	SgFunctionDeclaration* func_decl = func_exp->getAssociatedFunctionDeclaration();
 	FunctionRC func_generator(func_decl);
 	vector<FuncDeclPair> func_pairs = func_generator.OutputFunctions();
+
+// NOTE: g++ 4.3 warning: suggest explicit braces to avoid ambiguous 'else'
 	if (func_processed_.count(func_decl) == 0)
 	    foreach(const FuncDeclPair& func_pair, func_pairs)
 		output_func_pairs_.push_back(func_pair);
+
 	SgFunctionDeclaration* ins_func = func_pairs.back().first;
 	SgFunctionDeclaration* inv_func = func_pairs.back().second;
 	
@@ -826,7 +833,7 @@ vector<FuncDeclPair> FunctionRC::OutputFunctions()
 
     pushScopeStack(isSgScopeStatement(ins_func_decl->get_definition()->get_body()));
     SgStatementPtrList ins_stmt_list = isSgBasicBlock(bodies.first)->get_statements();
-#if (__GNUC__ == 4) && (__GNUC_MINOR__ == 3)
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
  // This fails to link when this is include with the 4.3.2 compiler.
  // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
     for_each(ins_stmt_list.begin(), ins_stmt_list.end(), appendStatement);
@@ -840,7 +847,7 @@ vector<FuncDeclPair> FunctionRC::OutputFunctions()
 
     pushScopeStack(isSgScopeStatement(inv_func_decl->get_definition()->get_body()));
     SgStatementPtrList inv_stmt_list = isSgBasicBlock(bodies.second)->get_statements();
-#if (__GNUC__ == 4) && (__GNUC_MINOR__ == 3)
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
  // This fails to link when this is include with the 4.3.2 compiler.
  // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
     for_each(inv_stmt_list.begin(), inv_stmt_list.end(), appendStatement);
@@ -901,6 +908,7 @@ int main( int argc, char * argv[] )
     timeval tv;
     gettimeofday(&tv, NULL);
 
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
     //using namespace boost::date_time;
     using namespace boost::local_time;
  //local_microsec_clock::local_time();
@@ -909,6 +917,7 @@ int main( int argc, char * argv[] )
 time_zone_ptr zone(
   new posix_time_zone("MST-07")
 );
+
 local_date_time ldt = 
   local_microsec_clock::local_time(
     zone);
@@ -919,6 +928,7 @@ local_date_time ldt =
   local_sec_clock::local_time(zone);
 
     cout << tv.tv_sec << ' ' << ldt.local_time().time_of_day() << endl;
+#endif
 
     return 0;
 
