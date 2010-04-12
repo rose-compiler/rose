@@ -201,13 +201,6 @@ write_loopbound(_) :- gtrace,
   maplist(write, ['WCET_LOOP_BOUND (', 4294967295, ')']),
   nl.
 
-get_bb_marker(Stmts, Marker) :-
-  member(Stmt, Stmts),
-  \+ pragma_text(Stmt, wcet_loopbound(_)),
-  analysis_info(Stmt, analysis_info(Ai)),
-  member(entry_exit_labels(Id-_), Ai),
-  atom_concat(label, Id, Marker).
-
 % output scope-specific things
 unparse_scope(UI, Bb) :- 
   Bb = basic_block(List, _,_,_),
@@ -219,8 +212,6 @@ unparse_scope(UI, Bb) :-
       % Markers must come after vardecls
       maplist(output_vardecl, List),
       maplist(output_marker, List),
-      get_bb_marker(List, Label),
-      maplist(write, ['WCET_MARKER(', Label, ');\n']),
     
       my_unparse(UI, Bb),
       write_restrictions(Bb),
@@ -228,13 +219,7 @@ unparse_scope(UI, Bb) :-
   ;
       maplist(output_vardecl, List),
       maplist(output_marker, List),
-      (	   % FIXME
-	   List = [basic_block(_, _,_,_)|_]
-      ->  true
-      ;	  get_bb_marker(List, Label),
-	   maplist(write, ['WCET_MARKER(', Label, ');\n'])
-      ),
-      
+     
       my_unparse(UI, Bb)
   ).
 
