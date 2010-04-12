@@ -42,9 +42,7 @@ namespace OmpSupport
     ROSE_ASSERT (globalscope != NULL);
 #ifdef ENABLE_XOMP
       SageInterface::insertHeader("libxomp.h",PreprocessingInfo::after,false,globalscope);
-   //SageInterface::insertHeader("libompc.h",PreprocessingInfo::after,false,globalscope);
 #else    
-    SageInterface::insertHeader("libgomp_g.h",PreprocessingInfo::after,false,globalscope);
     if (rtl_type == e_omni)
       SageInterface::insertHeader("ompcLib.h",PreprocessingInfo::after,false,globalscope);
     else if (rtl_type == e_gomp)
