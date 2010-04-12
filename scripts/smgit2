@@ -1638,6 +1638,7 @@ package main;
 
 use Cwd;
 use File::Temp 'tempfile';
+sub GetOptionsFromArray { goto &Getopt::Long::GetOptionsFromArray }
 #use Getopt::Long 'GetOptionsFromArray';  # included above
 use Term::ReadLine;
 use strict;
