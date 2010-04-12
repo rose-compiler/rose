@@ -8,6 +8,16 @@
 # using the most recent, fully tested version of smgit2.
 ####################################################################################################################
 
+# Parse command-line options for the launcher
+branch=origin/master
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--) shift; break ;;
+	--branch=*) branch="${1#--branch=}"; shift ;;
+	*) break ;;
+    esac
+done
+
 
 # Find top-level ROSE repo. These two functions are copied straight from smgit2 (only the "die" is modified)
 rose=$(perl -e '
@@ -58,13 +68,9 @@ if [ ! -d "$rose" ]; then
 fi
 
 # Run smgit2 if possible
-if (cd $rose && git rev-parse origin/master:scripts/smgit2) >/dev/null 2>&1; then
-    echo "smgit2_launcher: running smgit2 from origin/master..."
-    exec perl <(cd $rose && git show origin/master:scripts/smgit2) "$@"
-    exit 1
-elif [ -f "$rose/scripts/smgit2" ]; then
-    echo "smgit2_launcher: running $rose/scripts/smgit2..."
-    exec $rose/scripts/smgit2 "$@"
+if (cd $rose && git rev-parse $branch:scripts/smgit2) >/dev/null 2>&1; then
+    echo "smgit2_launcher: running smgit2 from $branch..."
+    exec perl <(cd $rose && git show $branch:scripts/smgit2) "$@"
     exit 1
 else
     echo "smgit2_launcher: cannot find the real smgit2 perl script" >&2
