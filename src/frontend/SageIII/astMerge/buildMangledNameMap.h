@@ -39,11 +39,13 @@ class MangledNameMapTraversal : public ROSE_VisitTraversal
        // Would it make a different to make the first template argument a "const std::string" instead of a "std::string"?
        // typedef std::map<std::string,SgNode*> MangledNameMapType;
        // typedef hash_multimap<const std::string, SgNode*, hash_string, eqstr_string> MangledNameMapType;
-#ifdef _MSC_VER
-       // typedef rose_hash::hash_map<std::string, SgNode*, rose_hash::hash_string> MangledNameMapType;
-          typedef rose_hash::hash_map<std::string, SgNode*> MangledNameMapType;
+// CH (4/9/2010): Use boost::unordered instead 
+//#ifdef _MSC_VER
+#if 0
+       // typedef rose_hash::unordered_map<std::string, SgNode*, rose_hash::hash_string> MangledNameMapType;
+          typedef rose_hash::unordered_map<std::string, SgNode*> MangledNameMapType;
 #else
-          typedef rose_hash::hash_map<std::string, SgNode*, rose_hash::hash_string, rose_hash::eqstr_string> MangledNameMapType;
+          typedef rose_hash::unordered_map<std::string, SgNode*, rose_hash::hash_string, rose_hash::eqstr_string> MangledNameMapType;
 #endif
        // The delete list is just a set
           typedef std::set<SgNode*> SetOfNodesType;

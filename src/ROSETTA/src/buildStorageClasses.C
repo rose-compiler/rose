@@ -1012,12 +1012,13 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            break;
 
                          case ROSE_HASH_MULTIMAP:
-                        // s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
-                           s += "#ifdef _MSC_VER \n";
-                           s += "     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it; \n" ;
-                           s += "#else \n";
-                           s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
-                           s += "#endif \n";
+                        // s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+			   // CH (4/8/2010): Use boost::unordered instead
+                           //s += "#ifdef _MSC_VER \n";
+                           //s += "     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it; \n" ;
+                           //s += "#else \n";
+                           s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+                           //s += "#endif \n";
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgSymbol** tempList" + varNameString + " = new SgSymbol* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it = source->p_" + varNameString + "->begin(); it != source->p_" + varNameString + "->end(); ++it)\n" ;
@@ -1038,7 +1039,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
 
                          case ROSE_GRAPH_HASH_MULTIMAP:
 #if 0
-                           s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+                           s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it = source->p_" + varNameString + "->begin(); it != source->p_" + varNameString + "->end(); ++it)\n" ;
@@ -1056,12 +1057,13 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "        }\n";
                            s += "      delete [] tempList" + varNameString + "; \n";
 #else
-                        // s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
-                           s += "#ifdef _MSC_VER \n";
-                           s += "     rose_hash::hash_multimap<std::string, SgGraphNode*>::iterator it; \n" ;
-                           s += "#else \n";
-                           s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
-                           s += "#endif \n";
+                        // s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+			   // CH (4/8/2010): Use boost::unordered instead
+                           //s += "#ifdef _MSC_VER \n";
+                           //s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*>::iterator it; \n" ;
+                           //s += "#else \n";
+                           s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+                           //s += "#endif \n";
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + ".size() ]; \n" ;
                            s += "     for (it = source->p_" + varNameString + ".begin(); it != source->p_" + varNameString + ".end(); ++it)\n" ;
@@ -1086,7 +1088,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
                            s += "   {\n";
-                           s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_1; \n" ;
+                           s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_1; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgDirectedGraphEdge** tempList" + varNameString + " = new SgDirectedGraphEdge* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it_1 = source->p_" + varNameString + "->begin(); it_1 != source->p_" + varNameString + "->end(); ++it_1)\n" ;
@@ -1107,7 +1109,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
 #else
                         // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
                            s += "   {\n";
-                           s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_1; \n" ;
+                           s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_1; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgDirectedGraphEdge** tempList" + varNameString + " = new SgDirectedGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
                            s += "     for (it_1 = source->p_" + varNameString + ".begin(); it_1 != source->p_" + varNameString + ".end(); ++it_1)\n" ;
@@ -1133,7 +1135,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                       // DQ (5/2/2009): These are no longer used
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
-                           s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
+                           s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgUndirectedGraphEdge** tempList" + varNameString + " = new SgUndirectedGraphEdge* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it_2 = source->p_" + varNameString + "->begin(); it_2 != source->p_" + varNameString + "->end(); ++it_2)\n" ;
@@ -1152,7 +1154,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "      delete [] tempList" + varNameString + "; \n";
 #else
                         // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
-                           s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
+                           s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgUndirectedGraphEdge** tempList" + varNameString + " = new SgUndirectedGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
                            s += "     for (it_2 = source->p_" + varNameString + ".begin(); it_2 != source->p_" + varNameString + ".end(); ++it_2)\n" ;
@@ -1620,12 +1622,13 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       break;
                     case ROSE_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                   // s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
-                      s += "#ifdef _MSC_VER \n";
-                      s += "     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it; \n " ;
-                      s += "#else \n";
-                      s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
-                      s += "#endif \n";
+                   // s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
+		      // CH (4/8/2010): Use boost::unordered instead
+                      //s += "#ifdef _MSC_VER \n";
+                      //s += "     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it; \n " ;
+                      //s += "#else \n";
+                      s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
+                      //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgSymbol*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1636,7 +1639,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                     case ROSE_GRAPH_HASH_MULTIMAP:
 #if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgGraphNode*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1644,12 +1647,13 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #else
                    // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                   // s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
-                      s += "#ifdef _MSC_VER \n";
-                      s += "     rose_hash::hash_multimap<std::string, SgGraphNode*>::iterator it; \n " ;
-                      s += "#else \n";
-                      s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
-                      s += "#endif \n";
+                   // s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+		      // CH (4/8/2010): Use boost::unordered instead
+                      //s += "#ifdef _MSC_VER \n";
+                      //s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*>::iterator it; \n " ;
+                      //s += "#else \n";
+                      s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgGraphNode*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1661,7 +1665,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                     case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgDirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1669,12 +1673,13 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #else
                    // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                   // s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
-                      s += "#ifdef _MSC_VER \n";
-                      s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*>::iterator it; \n " ;
-                      s += "#else \n";
-                      s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
-                      s += "#endif \n";
+                   // s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+		      // CH (4/8/2010): Use boost::unordered instead
+                      //s += "#ifdef _MSC_VER \n";
+                      //s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*>::iterator it; \n " ;
+                      //s += "#else \n";
+                      s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgDirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1686,7 +1691,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                     case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgUndirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1694,12 +1699,13 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #else
                    // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                   // s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
-                      s += "#ifdef _MSC_VER \n";
-                      s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*>::iterator it; \n " ;
-                      s += "#else \n";
-                      s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
-                      s += "#endif \n";
+                   // s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+		      // CH (4/8/2010): Use boost::unordered instead
+                      //s += "#ifdef _MSC_VER \n";
+                      //s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*>::iterator it; \n " ;
+                      //s += "#else \n";
+                      s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgUndirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";

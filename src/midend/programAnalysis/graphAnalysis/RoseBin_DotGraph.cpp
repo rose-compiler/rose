@@ -36,11 +36,13 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
   int counter=nodes.size();
 
   // DQ (4/23/2009): Added a typedef to refactor the specification of the type (and add the explicit reference to the hash function).
-  // rose_hash::hash_set <std::string> funcNames;
-#ifdef _MSC_VER
-    typedef rose_hash::hash_set <std::string> funcNamesType;
+  // rose_hash::unordered_set <std::string> funcNames;
+// CH (4/9/2010): Use boost::unordered instead  
+//#ifdef _MSC_VER
+#if 0
+    typedef rose_hash::unordered_set <std::string> funcNamesType;
 #else
-    typedef rose_hash::hash_set <std::string,rose_hash::hash_string> funcNamesType;
+    typedef rose_hash::unordered_set <std::string,rose_hash::hash_string> funcNamesType;
 #endif
 	funcNamesType funcNames;
 
@@ -71,7 +73,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
     if (pos<=0) pos=funcName.length();
     funcName=funcName.substr(0,pos);
     bool found = true;
-    //rose_hash::hash_set <std::string>::iterator funcNames_it=funcNames.find(funcName);
+    //rose_hash::unordered_set <std::string>::iterator funcNames_it=funcNames.find(funcName);
     funcNamesType::iterator funcNames_it=funcNames.find(funcName);
     if (funcNames_it==funcNames.end()) {
       funcNames.insert(funcName);

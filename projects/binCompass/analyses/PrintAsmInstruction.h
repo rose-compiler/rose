@@ -13,7 +13,7 @@ class PrintAsmInstruction: public BC_AnalysisInterface {
 // to non-scalar type 
 // '__gnu_cxx::_Hashtable_const_iterator<std::pair<const std::basic_string<char >, int>, std::basic_string<char >, hash_string, std::_Select1st<std::pair<const std::basic_string<char >, int> >, eqstr_string, std::allocator<int> >'
 
-  rose_hash::hash_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> instMap;
+  rose_hash::unordered_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> instMap;
 
 
  public:

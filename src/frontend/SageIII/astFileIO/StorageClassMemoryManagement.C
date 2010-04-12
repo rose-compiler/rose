@@ -1202,10 +1202,12 @@ void EasyStorage <rose_hash_multimap*> ::storeDataInEasyStorageClass(rose_hash_m
        // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration ! 
           parent = AST_FILE_IO :: getGlobalIndexFromSgClassPointer( data_->parent );
        // get staring iterator
-#ifdef _MSC_VER
-          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>::iterator copy_ = data_->begin();
+// CH (4/9/2010): Use boost::unordered instead       
+//#ifdef _MSC_VER
+#if 0
+          rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>::iterator copy_ = data_->begin();
 #else
-          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
+          rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
 #endif
           long offset = Base::setPositionAndSizeAndReturnOffset ( data_->size() ) ;
        // if the new data does not fit in the actual block
@@ -2944,7 +2946,7 @@ void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_
        // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration ! 
           parent = AST_FILE_IO :: getGlobalIndexFromSgClassPointer( data_->parent );
        // get staring iterator
-          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
+          rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
           long offset = Base::setPositionAndSizeAndReturnOffset ( data_->size() ) ;
        // if the new data does not fit in the actual block
           if (0 < offset)

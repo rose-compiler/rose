@@ -110,13 +110,13 @@ class FindNodeVisitor: public std::binary_function<SgNode*, std::vector<SgLocate
 class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorithms {
  public:
   //remove later!
-   //typedef rose_hash::hash_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
+   //typedef rose_hash::unordered_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
 
 
  protected:
-   rose_hash::hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
+   rose_hash::unordered_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
 
-  typedef rose_hash::hash_map< uint64_t, SgGraphNode*> tabletype_inv;
+  typedef rose_hash::unordered_map< uint64_t, SgGraphNode*> tabletype_inv;
 
   //tabletype_inv usetable_instr;
   tabletype_inv deftable_instr;
@@ -124,7 +124,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
   int nrOfFunctions;
 
   //typedef SB_DirectedGraph::nodeType nodeType;
-  //typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
+  //typedef rose_hash::unordered_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
 
   SgAsmNode* globalBin;
   int func_nr;
@@ -150,19 +150,21 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
 
   // visited map for the CFG graph
 // DQ (4/23/2009): We need to specify the default template parameters explicitly.
-// rose_hash::hash_map <std::string, SgAsmInstruction*> local_visited;
-#ifdef _MSC_VER
-//  rose_hash::hash_map <std::string, SgAsmInstruction*,rose_hash::hash_string> local_visited;
-  rose_hash::hash_map <std::string, SgAsmInstruction*> local_visited;
+// rose_hash::unordered_map <std::string, SgAsmInstruction*> local_visited;
+// CH (4/9/2010): Use boost::unordered instead
+//#ifdef _MSC_VER
+#if 0
+//  rose_hash::unordered_map <std::string, SgAsmInstruction*,rose_hash::hash_string> local_visited;
+  rose_hash::unordered_map <std::string, SgAsmInstruction*> local_visited;
 #else
-  rose_hash::hash_map <std::string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string> local_visited;
+  rose_hash::unordered_map <std::string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string> local_visited;
 #endif
 
   typedef std::map<std::string, SgAsmFunctionDeclaration*> bin_funcs_type;
   bin_funcs_type bin_funcs;
 
   // vector of graphs
-  rose_hash::hash_map <std::string, SgIncidenceDirectedGraph*> graphs;
+  rose_hash::unordered_map <std::string, SgIncidenceDirectedGraph*> graphs;
 
   static bool initialized;
 

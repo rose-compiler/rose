@@ -271,7 +271,7 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondi
     uint64_t addrInst = inst->get_address();
     uint64_t size = (inst->get_raw_bytes()).size();
     uint64_t nextAddr = addrInst+size;
-    rose_hash::hash_map <uint64_t, SgAsmInstruction* >::const_iterator it2 =
+    rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::const_iterator it2 =
       rememberInstructions.find(nextAddr);
     if (it2!=rememberInstructions.end()) {
       // found the next instruction
@@ -355,7 +355,7 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
 	//if (RoseBin_support::DEBUG_MODE())
 	//cerr << "    looking for value ("<<valStr << " ) in InstrSet: "
 	//     << val << "  " << addrhex2.str() << endl;
-        rose_hash::hash_map <uint64_t, SgAsmInstruction* >::const_iterator itc =
+        rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::const_iterator itc =
 	  rememberInstructions.find(val);
 	if (itc!=rememberInstructions.end()) {
 	  SgAsmInstruction* target = itc->second;
@@ -429,7 +429,7 @@ void
 RoseBin_FlowAnalysis::process_jumps() {
     if (RoseBin_support::DEBUG_MODE())
       cerr << "\n >>>>>>>>> processing jumps ... " << endl;
-  rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator it;
+  rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::iterator it;
   for (it=rememberInstructions.begin();it!=rememberInstructions.end();++it) {
     SgAsmx86Instruction* inst = isSgAsmx86Instruction(it->second);
     if (inst->get_kind() == x86_call) {
@@ -514,7 +514,7 @@ RoseBin_FlowAnalysis::process_jumps() {
   //cerr << "\n >>>>>>>>> processing jumps ... done. " << endl;
 
   //  cerr << "\n >>>>>>>>> resolving RET jumps ... " << endl;
-  rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator it2;
+  rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::iterator it2;
   for (it2=rememberInstructions.begin();it2!=rememberInstructions.end();++it2) {
     //int id = it2->first;
     SgAsmx86Instruction* target = isSgAsmx86Instruction(it2->second);
@@ -575,7 +575,7 @@ RoseBin_FlowAnalysis::createInstToNodeTable() {
   //  tabletype::const_iterator it = deftable.begin();
 
   // DQ (4/23/2009): We want the type defined in the base class.
-  // typedef rose_hash::hash_map <std::string, SgGraphNode*> nodeType;
+  // typedef rose_hash::unordered_map <std::string, SgGraphNode*> nodeType;
 
   if (RoseBin_support::DEBUG_MODE())
     cerr << " RoseBin_FlowAnalysis::createInstToNodeTable" << endl;
@@ -886,11 +886,13 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	bool target_visited = false;
 
 	// DQ (4/23/2009): We want the type defined in the base class.
-	// rose_hash::hash_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
-#ifndef _MSC_VER
-	rose_hash::hash_map <string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator vis = local_visited.find(hexStr);
+	// rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
+// CH (4/9/2010): Use boost::unordered instead   
+//#ifndef _MSC_VER
+#if 0
+	rose_hash::unordered_map <string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator vis = local_visited.find(hexStr);
 #else
-	rose_hash::hash_map <string, SgAsmInstruction*,rose_hash::hash_string>::iterator vis = local_visited.find(hexStr);
+	rose_hash::unordered_map <string, SgAsmInstruction*,rose_hash::hash_string>::iterator vis = local_visited.find(hexStr);
 #endif
 	if (vis!=local_visited.end())
 	  target_visited=true;
