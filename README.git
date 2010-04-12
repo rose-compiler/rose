@@ -19,10 +19,10 @@ Alternative to smgit2 to checkin:
 #################### Sources of information on git ####################
 
 We will try to give you a fast introduction to git, but you should also consider looking up these documents
-  http://*www.*kernel.org/pub/software/scm/git/docs/gittutorial.html
-  http://*book.git-scm.com/
-  http://*www.*sourcemage.org/Git_Guide ( more like a FAQ )
-  http://*stackoverflow.com/questions/315911/git-for-beginners-the-definitive-practical-guide
+  http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html
+  http://book.git-scm.com/
+  http://www.sourcemage.org/Git_Guide ( more like a FAQ )
+  http://stackoverflow.com/questions/315911/git-for-beginners-the-definitive-practical-guide
 
 
 The first step of using a ROSE git repository is to create a local copy 
