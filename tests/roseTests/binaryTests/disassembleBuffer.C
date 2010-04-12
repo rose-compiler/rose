@@ -84,13 +84,14 @@ main(int argc, char* argv[])
      * have even come from a file. */
     SgAsmGenericFile *file = new SgAsmGenericFile();
 
-    /* In order to disassemble, we need a Disassembler object.  The most convenient way to do this is to ask the Disassembler
-     * class to create a disassembler from its list of known disassembler subclasses.  We need to provide information about
+    /* In order to disassemble, we need a Disassembler object.  The most convenient way to get one is to ask the Disassembler
+     * class to look up a suitable disassembler from those which have been registered.  We then clone that disassembler so
+     * that any changes we make (like changing its search heuristics) are local.  We need to provide information about
      * what kind of instructions will be disassembled, which is done through the instruction set architecutre (InsSetArchecture)
      * data member of an SgAsmGenericHeader object. Fortunately, the SgAsmPEFileHeader subclass' constructor fills in
      * reasonable values for the instruction set (i.e., 32-bit x86). */
     SgAsmPEFileHeader *pe = new SgAsmPEFileHeader(file);
-    Disassembler *d = Disassembler::create(pe);
+    Disassembler *d = Disassembler::lookup(pe)->clone();
     d->set_search(Disassembler::SEARCH_FOLLOWING | Disassembler::SEARCH_DEADEND);
     
     /* Disassemble the mapped buffer. The last two arguments are optional, but we show how to use them here. */

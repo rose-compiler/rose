@@ -214,7 +214,7 @@ main(int argc, char *argv[])
          * graph (CFG) in order to discover functions and we find it convenient to use the same machinery to produce a
          * SgIncidenceDirectedGraph below. So we'll provide our own partitioner object (rather than have the disassembler
          * create a temporary one) so we can obtain its CFG after the disassembler is finished. */
-        Disassembler *d = Disassembler::create(interp);
+        Disassembler *d = Disassembler::lookup(interp)->clone(); /*cloned so we can make local changes*/
         if (do_debug)
             d->set_debug(stderr);
         d->set_search(search);

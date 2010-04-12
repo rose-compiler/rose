@@ -19,12 +19,14 @@
  *  disassembleOne(), that is implemented by architecture-specific subclasses and whose purpose is to disassemble one
  *  instruction.
  *
- *  New architectures can be added to ROSE without modifying any ROSE source code. One does this by subclassing Disassembler
- *  and providing an implementation for the virtual can_disassemble() method.  An instance of the new class is registered with
- *  ROSE by calling the Disassembler's register_subclass() class method. When ROSE needs to disassemble something, it calls the
- *  can_disassemble() methods for all known disassemblers, and the first one that returns a new disassembler object will be
- *  used for the disassembly.  Class derivation can also be used to influence various disassembler settings--see the example
- *  below.
+ *  New architectures can be added to ROSE without modifying any ROSE source code. One does this by subclassing an existing
+ *  disassembler, overriding any necessary virtual methods, and registering an instance of this subclass with
+ *  Disassembler::register_subclass().  If the new subclass can handle multiple architectures then a disassembler is
+ *  registered for each of those architectures.
+ *
+ *  When ROSE needs to disassemble something, it calls Disassembler::lookup(), which in turn calls the can_disassemble()
+ *  method for all registered disassemblers.  The first disassembler whose can_disassemble() returns true is used for the
+ *  disassemby.
  *
  *  If an error occurs during the disassembly of a single instruction, the disassembler will throw an exception. When
  *  disassembling multiple instructions the exceptions are saved in a map, by virtual address, and the map is returned to the
@@ -61,7 +63,7 @@
  *  MemoryMap *map = loader->map_executable_sections(header);
  *
  *  // Disassemble everything defined by the memory map
- *  Disassembler *d = Disassembler::create(header);
+ *  Disassembler *d = Disassembler::lookup(header)->clone();
  *  d->set_search(Disassembler::SEARCH_ALLBYTES); // disassemble at every address
  *  Disassembler::AddressSet worklist; // can be empty due to SEARCH_ALLBYTES
  *  Disassembler::InstructionMap insns;
@@ -76,30 +78,26 @@
  *  The following example shows how one can influence how ROSE disassembles instructions. Let's say you have a problem with
  *  the way ROSE is partitioning instructions into functions: it's applying the instruction pattern detector too aggressively
  *  when disassembling x86 programs, so you want to turn it off.  Here's how you would do that. First, create a subclass of
- *  the Disassembler you want to influence.  All the work is in the can_disassemble() method.
+ *  the Disassembler you want to influence.
  *
  *  @code
  *  class MyDisassembler: public DisassemblerX86 {
  *  public:
- *      virtual Disassembler *can_disassemble(SgAsmGenericHeader *hdr) const {
- *          Disassembler *d = DisassemblerX86::can_disassemble(hdr);
- *          if (!d) return NULL;
- *          delete d;
- *          Partitioner *p = new Partitioner;
+ *      MyDisassembler(size_t wordsize): DisassemblerX86(wordsize) {
+ *          Partitioner *p = new Partitioner();
  *          unsigned h = p->get_heuristics();
- *          h &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
+ *          7 &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
  *          p->set_heuristics(h);
- *          d = new MyDisassembler;
- *          d->set_partitioner(p);
- *          return d;
+ *          set_partitioner(p);
  *      }
  *  };
  *  @endcode
  *
- *  Then the new class is registered with ROSE:
+ *  Then the new disassemblers are registered with ROSE:
  *
  *  @code
- *  Disassembler::register_subclass(new MyDisassembler);
+ *  Disassembler::register_subclass(new MyDisassembler(4)); // 32-bit
+ *  Disassembler::register_subclass(new MyDisassembler(8)); // 64-bit
  *  @endcode
  *
  *  Another example is shown in the tests/roseTests/binaryTests/disassembleBuffer.C source code. It is an example of how a
@@ -212,35 +210,42 @@ public:
         : p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
         p_wordsize(4), p_sex(SgAsmExecutableFileFormat::ORDER_LSB), p_alignment(4), p_ndisassembled(0)
         {ctor();}
+
+    Disassembler(const Disassembler& other)
+        : p_partitioner(other.p_partitioner), p_search(other.p_search), p_debug(other.p_debug), p_wordsize(other.p_wordsize),
+          p_sex(other.p_sex), p_alignment(other.p_alignment), p_ndisassembled(other.p_ndisassembled) {}
+
     virtual ~Disassembler() {}
 
 
 
 
     /*==========================================================================================================================
-     * Factory methods
+     * Registration and lookup methods
      *========================================================================================================================== */
 public:
-    /** Register a disassembler with the factory.  The disassembler should provide a can_disassemble() method (virtual in
-     *  Disassembler) which will return a new instance if the class has the capability to disassemble the specified header. The
-     *  create() method will try subclasses in the opposite order they are registered (so register the most specific classes
-     *  last). */
+    /** Register a disassembler instance. More specific disassembler instances should be registered after more general
+     *  disassemblers since the lookup() method will inspect disassemblers in reverse order of their registration. */
     static void register_subclass(Disassembler*);
 
-    /*NOTE: Keep this pure virtual. We cannot have Disassembler serving as a real disassembler--only subclasses can actually
-     *      disassemble anything. Keeping at least one pure virtual method will prevent anyone from even trying to do that! */
-    /** Method provided by subclasses and used by create().  It should return a new instance of the subclass if the subclass
-     *  has the capability to disassemble the specified header. */
-    virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const = 0;
+    /** Predicate determining the suitability of a disassembler for a specific file header.  If this disassembler is capable
+     *  of disassembling machine code described by the specified file header, then this predicate returns true, otherwise it
+     *  returns false. */
+    virtual bool can_disassemble(SgAsmGenericHeader*) const = 0;
 
-    /** Factory method to create a disassembler based on the architecture represented by the file header. */
-    static Disassembler *create(SgAsmGenericHeader*);
+    /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
+     *  registered to earliest registered) and returns the first one whose can_disassemble() predicate returns true.  Throws
+     *  an exception if no suitable disassembler can be found. */
+    static Disassembler *lookup(SgAsmGenericHeader*);
+    
+    /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
+     *  registered to earliest registered) and returns the first one whose can_disassemble() predicate returns true. This is
+     *  done for each header contained in the interpretation and the disassembler for each header must match the other
+     *  headers. An exception is thrown if no suitable disassembler can be found. */
+    static Disassembler *lookup(SgAsmInterpretation*);
 
-    /** Factory method to create a disassembler based on the architecture represented by the interpretation. */
-    static Disassembler *create(SgAsmInterpretation*);
-
-
-
+    /** Creates a new copy of a disassembler. The new copy has all the same settings as the original. */
+    virtual Disassembler *clone() const = 0;
 
     /*==========================================================================================================================
      * Main public disassembly methods

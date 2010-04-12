@@ -225,42 +225,31 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
  * DisassemblerX86 primary methods, mostly defined by the superclass.
  *========================================================================================================================*/
 
-Disassembler *
+bool
 DisassemblerX86::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     if (isSgAsmDOSFileHeader(header))
-        return new DisassemblerX86(header);
+        return 2==get_wordsize();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family)
-        return new DisassemblerX86(header);
+        return 4==get_wordsize();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family)
-        return new DisassemblerX86(header);
-    return NULL;
+        return 8==get_wordsize();
+    return false;
 }
 
 void
-DisassemblerX86::init(SgAsmGenericHeader *header)
+DisassemblerX86::init(size_t wordsize)
 {
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    if (isSgAsmDOSFileHeader(header)) {
-        insnSize = x86_insnsize_16;
-        set_wordsize(2);
-        set_alignment(1);
-        set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
-        insnSize = x86_insnsize_32;
-        set_wordsize(4);
-        set_alignment(1);
-        set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-        insnSize = x86_insnsize_64;
-        set_wordsize(8);
-        set_alignment(1);
-        set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    } else {
-        ROSE_ASSERT(!"unknown x86 sub-architecture");
-        abort();
+    switch (wordsize) {
+        case 2: insnSize = x86_insnsize_16; break;
+        case 4: insnSize = x86_insnsize_32; break;
+        case 8: insnSize = x86_insnsize_64; break;
+        default: ROSE_ASSERT(!"unknown x86 instruction size");
     }
+    set_wordsize(wordsize);
+    set_alignment(1);
+    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */
