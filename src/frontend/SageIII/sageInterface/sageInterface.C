@@ -527,7 +527,7 @@ SageInterface::get_name ( const SgC_PreprocessorDirectiveStatement* directive )
 
      name = directive->class_name();
 
-#if 0
+#if 1
   // I don't think we need this code now!
      switch (directive->variantT())
         {
@@ -1410,6 +1410,10 @@ SageInterface::get_name ( const SgExpression* expr )
           default:
              {
             // Nothing to do for other IR nodes
+
+            // DQ (4/8/2010): define something specific to this function to make debugging more clear.
+               name = "undefined_expression_name";
+               break;
              }
         }
 

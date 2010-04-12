@@ -8,13 +8,23 @@
 # using the most recent, fully tested version of smgit2.
 ####################################################################################################################
 
+# Parse command-line options for the launcher
+branch=origin/master
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--) shift; break ;;
+	--branch=*) branch="${1#--branch=}"; shift ;;
+	*) break ;;
+    esac
+done
+
 
 # Find top-level ROSE repo. These two functions are copied straight from smgit2 (only the "die" is modified)
 rose=$(perl -e '
     use Cwd;
     use strict;
 
-    # Returns true if specified directory looks like its the top of ROSE
+    # Returns true if specified directory looks like it is the top of ROSE
     sub is_top_of_rose {
       my($dir) = @_;
       return unless -d $dir && -d "$dir/.git";
@@ -35,7 +45,7 @@ rose=$(perl -e '
       die "smgit2_launcher: cannot find top of ROSE source tree (cwd=@{[getcwd]})\n";
     }
 
-    print top_of_rose, "\n";
+    print top_of_rose;
 ')
 
 if [ ! -d "$rose" ]; then
@@ -52,19 +62,15 @@ if [ ! -d "$rose" ]; then
     echo "    Alternatively, you can run a temporary copy of the smgit2 perl script"
     echo "    (i.e., scripts/smgit2) found in most any existing ROSE Git repository. The"
     echo "    command is:"
-    echo "        smgit2 clone ROSE_REPO_RUL rose"
+    echo "        smgit2 clone ROSE_REPO_URL rose"
     #     --------------------------------------------------------------------------------
     exit 1
 fi
 
 # Run smgit2 if possible
-if git rev-parse origin/master:scripts/smgit2 >/dev/null 2>&1; then
-    echo "smgit2_launcher: running smgit2 from origin/master..."
-    exec perl <(git show origin/master:scripts/smgit2) "$@"
-    exit 1
-elif [ -f "$rose/scripts/smgit2" ]; then
-    echo "smgit2_launcher: running $rose/scripts/smgit2..."
-    exec $rose/scripts/smgit2 "$@"
+if (cd $rose && git rev-parse $branch:scripts/smgit2) >/dev/null 2>&1; then
+    echo "smgit2_launcher: running smgit2 from $branch..."
+    exec perl <(cd $rose && git show $branch:scripts/smgit2) "$@"
     exit 1
 else
     echo "smgit2_launcher: cannot find the real smgit2 perl script" >&2
