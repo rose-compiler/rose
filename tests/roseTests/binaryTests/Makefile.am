@@ -301,28 +301,21 @@ test_shiftResizeSection.result: shiftResizeSection
 # This test is *very* sensitive to changes to the Disassembler and Partitioner classes because they and this test all use
 # the findConstants instruction semantics. If the Disassembler or Partitioner is even slightly changed, it could make a
 # different number of calls to the instruction semantics, which changes the sequence number used to generate constant
-# names. Therefore, when comparing the test output with the answer, we will change all constant names from "v[0-9]+" to
-# "vXXX".  Any problems in the semantic analysis should still be caught since they would presumably affect lots of
-# other output too.  The test is still sensitive to minor formatting changes in unparseInstruction().
-FIND_CONSTANTS_DIFF=diff -u <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans) \
-                            <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans)
+# names. Therefore, when comparing the test output with the answer, we will renumber all constant names sequentially.
+# The test is still sensitive to minor formatting changes in unparseInstruction().
+FIND_CONSTANTS_FILTER=perl -p -e 's/\bv(\d+)\b/$$map{$$1} ||= "V" . ++$$seq/ge'
 test_findConstants.result: findConstants
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans 2>$@.tmp;
-	@bash -c 'if $(FIND_CONSTANTS_DIFF) >/dev/null; \
-          then \
-	      mv $@.tmp $@; \
-	  else \
-              echo "*** $@: Result (test_findConstants.ans) differs from expected answer in $(srcdir)"; \
-	      echo "    (You should compare the files manually to verify the result, then copy it to"; \
-	      echo "     $(srcdir) if it looks OK.) First 100 lines of the difference are:"; \
-	      $(FIND_CONSTANTS_DIFF) |head -n100 |sed "s/^/findConstants> /"; \
-	      exit 1 ; \
-	fi'
+	@$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_findConstants.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstants.ans >>$@.tmp 2>&1 ;\
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 test_findConstantsABI.result: findConstantsABI
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstantsABI.ans 2>$@.tmp; \
+	@$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_findConstantsABI.ans 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstantsABI.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
