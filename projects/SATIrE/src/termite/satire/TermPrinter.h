@@ -209,7 +209,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
    * Compute the PROLOG representation of a node using
    * the successors' synthesized attributes.
    *
-   * o nodes with a fixed number of atmost 4 successors will be
+   * o nodes with a fixed number of at most 4 successors will be
    *   represented by a term in which the successor nodes have fixed
    *   positions
    *
@@ -228,7 +228,19 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
   assert(program != NULL);
 #endif
 
-  /* See if this node is intended to be unparsed -> decls inserted by EDG will be stripped */
+  /* Backwards-compatability and related stuff */
+  if (isSgProject(astNode)) {
+    /* Newer versions of Rose wrap SgFiles inside an unnecessary
+       SgFileList node */
+    PrologCompTerm* fileList = dynamic_cast<PrologCompTerm*>(synList.at(0));
+    if (fileList != NULL) {
+      ROSE_ASSERT (synList.size() == 1);
+      synList[0] = fileList->at(0);
+    } 
+  }
+
+  /* See if this node is intended to be unparsed */
+  /*  -> decls inserted by EDG will be stripped */
   Sg_File_Info* fi = astNode->get_file_info();
   if (fi == NULL) {
     fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
@@ -241,7 +253,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
 
   if (fi->isCompilerGenerated() && isSgBasicBlock(astNode)) {
     /* Adrian 2009/10/27:
-       ROSE insists on wrapping loop bodies into a second SgBasicBlock now.
+       ROSE insists on wrapping loop bodies inside a second SgBasicBlock now.
        We don't need that */
  // GB (2009-11-05): We can't assert his here because it fails sometimes.
  // (Don't know when.) If the condition is true, take the way out;
