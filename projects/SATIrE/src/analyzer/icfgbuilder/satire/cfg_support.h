@@ -13,12 +13,13 @@
 
 // #include <config.h>
 
+#include <satire_rose.h>
+
 #include "kfg_types.h"
 // #include "iface.h"
 
 // #include "EqualityTraversal.h"
 class EqualityTraversal;
-#include <satire_rose.h>
 #include "AnalyzerOptions.h"
 
 enum

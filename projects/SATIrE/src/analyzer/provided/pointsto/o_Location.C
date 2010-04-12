@@ -33,13 +33,14 @@
 #include <cstring>
 #include <cstdlib>
 
+#include "cfg_support.h"
+
 #if HAVE_PAG
 #include "gc_mem.h"
 #include "unum.h"
 #include "str.h"
 #endif
 
-#include "cfg_support.h"
 #include "IrCreation.h"
 #include "o_VariableId.h"
 #include "o_ExpressionId.h"

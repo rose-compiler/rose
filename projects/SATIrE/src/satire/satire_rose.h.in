@@ -4,6 +4,10 @@
 #ifndef SATIRE_ROSE_H
 #define SATIRE_ROSE_H
 
+// FIXME: Workaround a strange bug with ROSE 0.9.5
+#include <cassert>
+#define ROSE_ASSERT assert
+
 // Undefine existing definitions.
 #undef PACKAGE
 #undef PACKAGE_BUGREPORT
