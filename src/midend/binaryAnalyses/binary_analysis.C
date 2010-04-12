@@ -423,10 +423,8 @@ SgIncidenceDirectedGraph* constructCallGraph( const  Partitioner::FunctionStarts
  */
 SgIncidenceDirectedGraph* constructCallGraph( SgAsmInterpretation *interp )
 {
-  /* Build the disassembler */
-  Disassembler *d = Disassembler::create(interp);
-  //if (do_debug)
-  //  d->set_debug(stderr);
+  /* Get a copy of the disassembler so we can adjust settings locally. */
+  Disassembler *d = Disassembler::lookup(interp)->clone();
   d->set_search( Disassembler::SEARCH_DEFAULT  );
 
   /* RPM: you don't actually need to pass "bad", which returns the addresses/error messages for instructions that
@@ -456,6 +454,7 @@ SgIncidenceDirectedGraph* constructCallGraph( SgAsmInterpretation *interp )
 
 
   // SgAsmBlock* blocks = part.partition(interp->get_header(), instMap);
+  delete d;
   return constructCallGraph(func_starts,bb_starts,instMap);
 
 };
@@ -469,10 +468,8 @@ SgIncidenceDirectedGraph* constructCallGraph( SgAsmInterpretation *interp )
  */
 SgIncidenceDirectedGraph* constructCFG( SgAsmInterpretation *interp )
 {
-  /* Build the disassembler */
-  Disassembler *d = Disassembler::create(interp);
-  //if (do_debug)
-  //  d->set_debug(stderr);
+  /* Get a copy of the disassembler so we can adjust settings locally. */
+  Disassembler *d = Disassembler::lookup(interp)->clone();
   d->set_search( Disassembler::SEARCH_DEFAULT  );
 
   /* RPM: you don't actually need to pass "bad", which returns the addresses/error messages for instructions that
@@ -502,6 +499,7 @@ SgIncidenceDirectedGraph* constructCFG( SgAsmInterpretation *interp )
 
 
   // SgAsmBlock* blocks = part.partition(interp->get_header(), instMap);
+  delete d;
   return constructCFG(func_starts,bb_starts,instMap);
 
 };

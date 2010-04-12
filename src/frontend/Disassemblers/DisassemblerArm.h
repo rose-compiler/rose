@@ -3,22 +3,27 @@
 #ifndef ROSE_DISASSEMBLER_ARM_H
 #define ROSE_DISASSEMBLER_ARM_H
 
-/** Disassembler for the ARM architecture.  This class is usually instantiated indirectly through Disassembler::create().
- *  Most of the useful disassembly methods can be found in the superclass. */
+/** Disassembler for the ARM architecture. Most of the useful disassembly methods can be found in the superclass. */
 class DisassemblerArm: public Disassembler {
 public:
-    /** An object created by the default constructor can only be used as a factory, passed to the
-     *  Disassembler::register_subclass method. */
-    DisassemblerArm() {}
+    DisassemblerArm()
+        : decodeUnconditionalInstructions(true), ip(0), insn(0), cond(arm_cond_unknown) {
+        init();
+    }
 
-    /** Constructs a disassembler whose instruction size is determined from the supplied file header. End users don't normally
-     *  call this, but rather the Disassembler::create class method. */
-    DisassemblerArm(SgAsmGenericHeader *fhdr) {init(fhdr);}
+    DisassemblerArm(const DisassemblerArm& other)
+        : Disassembler(other), decodeUnconditionalInstructions(other.decodeUnconditionalInstructions), 
+          ip(other.ip), insn(other.insn), cond(other.cond) {
+    }
 
     virtual ~DisassemblerArm() {}
 
+    virtual Disassembler *clone() const {
+        return new DisassemblerArm(*this);
+    }
+
     /** See Disassembler::can_disassemble */
-    virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
+    virtual bool can_disassemble(SgAsmGenericHeader*) const;
 
     /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
@@ -67,7 +72,7 @@ private:
     SgAsmArmInstruction *disassemble();
     
     /** Initialize instances of this class. Called by constructor. */
-    void init(SgAsmGenericHeader*);
+    void init();
 
     /** Resets disassembler state to beginning of an instruction. */
     void startInstruction(rose_addr_t start_va, uint32_t c) {

@@ -293,6 +293,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_02.f90 \
      test2010_03.f90 \
      test2010_04.f90 \
+     test2010_05.f90 \
      triangle.f90
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
@@ -454,6 +455,9 @@ test2010_01.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
 
 test2010_02.o:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
+
+test2010_05.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
 
 
