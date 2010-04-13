@@ -283,6 +283,10 @@ collate_children(Map, Reduce, A0, Node, As) :-
   maplist(collate_ast(Map, Reduce, A0), Children, As).
 collate_children(_, _, _, _, []).
 
+%-----------------------------------------------------------------------
+% UNPARSING
+%-----------------------------------------------------------------------
+
 %% unparse_to_atom(?Output, +Term) is det.
 % Unparse the program Term using unparse/1 and sent the output to Output
 % @see with_output_to/2
@@ -674,7 +678,9 @@ unparse1(_UI, X) :- var(X), !, writeln('UNBOUND!'), gtrace.
 unparse1(UI, X) :- write(X), gtrace, unparse(UI, X).
 
 unparse_sem(UI, X) :-
-  functor(X, basic_block, _), !,
+  (   functor(X, basic_block, _)
+  ;   functor(X, if_stmt, _)
+  ), !,
   unparse(UI, X).
 unparse_sem(UI, X) :-
   unparse(UI, X), writeln(';').
