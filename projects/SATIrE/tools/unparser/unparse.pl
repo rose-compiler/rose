@@ -14,10 +14,21 @@
 :- use_module([library(asttransform), library(astproperties)]).
 
 
-strip_headers(_, _, _, Node, null) :-
-  file_info(Node, file_info(File, _, _)),
-  concat_atom([_, '.h'], File).
-strip_headers(_, _, _, Node, Node).
+% remember the current file name
+strip_headers(_, FileName, FileName, File, File) :-
+  File = source_file(_,_,_,file_info(FileName, _, _)),
+  !.
+
+% strip all lines from any other files
+strip_headers(FileName, FileName, FileName, Node, Node1) :-
+  (   (	  file_info(Node, file_info(FileName, _, _))
+      ;	  file_info(Node, file_info(compilerGenerated, _, _))
+      ;	  file_info(Node, file_info(transformation, _, _))
+      )
+  ->  Node1 = Node
+  ;   Node1 = null(null,null,null,file_info(null,0,0))
+      % We don't confuse the traversal that way
+  ).
 
 main :-
   prompt(_,''),
@@ -25,7 +36,7 @@ main :-
   read_term(P, []),
   compound(P),
 
-  transformed_with(P, strip_headers, postorder, [], _, P1),
+  transformed_with(P, strip_headers, preorder, _, _, P1),
 
   catch(%profile(
 	unparse(P1), E, (print_message(error, E), fail)),

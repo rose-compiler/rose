@@ -510,18 +510,19 @@ unparse1(UI, function_declaration(Params, Definition,
   unparse_modifier(Mod),
   unparse(UI, Type), write(' '), write(Name),
   write('('),
-  (Params = function_parameter_list(Ps, _, _, _) ->
-   (replace_types(Ps, Type, Ps1),
-    unparse(UI, Ps1))
-  ;
-   true),
+  (   Params = function_parameter_list(Ps, _, _, _)
+  ->  (	  replace_types(Ps, Type, Ps1),
+	  unparse(UI, Ps1)
+      )
+  ;   true),
   write(')'),
-  (Definition = null)
-    -> writeln(';') ;
-    (
-     Definition = function_definition(Bb, _, _, _),
-     unparse(UI, Bb)
-    ).
+  (   Definition = null
+  ->  writeln(';')
+  ;   (	  
+	  Definition = function_definition(Bb, _, _, _),
+	  unparse(UI, Bb)
+      )
+  ).
 
 
 unparse1(UI, function_type(Type, _NumParams, _ParamTypes)) :- !, unparse(UI, Type).
@@ -672,6 +673,10 @@ unparse1(_UI, function_end(_, function_declaration_annotation(_, Name, _, _), _)
 
 % artificial and only used by simplify
 unparse1(_UI, interval(Min, Max)) :- !, write(interval(Min, Max)).
+
+% artificial and used to suppress certain list nodes (cf. unparse.pl)
+unparse1(_UI, null(_,_,_,_)) :- !.
+
 
 % ERRORS
 unparse1(_UI, X) :- var(X), !, writeln('UNBOUND!'), gtrace.
