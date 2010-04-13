@@ -45,8 +45,7 @@
 
 // tps (11/10/2009): This include is needed in windows to find the realpath
 #if ROSE_MICROSOFT_OS
-// CH (4/1/2010): <unistd.h> belongs to C POSIX Library and should not appear in Windows
-//#include <unistd.h>
+#include <unistd.h>
 
 // DQ (11/27/2009): this is required for use of GetFullPathName() (below).
 #include <windows.h>

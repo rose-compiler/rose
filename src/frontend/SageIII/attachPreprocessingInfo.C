@@ -39,7 +39,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 #include <boost/filesystem.hpp>		// exsits()
 
 //Include files to get the current path
-//#include <unistd.h>
+#include <unistd.h>
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: param.h header file not available in MSVC.")

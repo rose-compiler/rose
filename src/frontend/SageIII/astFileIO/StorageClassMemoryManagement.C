@@ -1207,7 +1207,8 @@ void EasyStorage <rose_hash_multimap*> ::storeDataInEasyStorageClass(rose_hash_m
 #if 0
           rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>::iterator copy_ = data_->begin();
 #else
-          rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
+          //rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
+          rose_hash_multimap::iterator copy_ = data_->begin();
 #endif
           long offset = Base::setPositionAndSizeAndReturnOffset ( data_->size() ) ;
        // if the new data does not fit in the actual block

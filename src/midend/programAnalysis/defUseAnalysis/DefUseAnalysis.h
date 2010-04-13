@@ -39,7 +39,7 @@ template <> struct hash <SgNode*> {
 #include <ext/hash_map>
 #include <ext/hash_set>
 
-namespace __gnu_cxx {
+namespace rose_hash {
   template <> struct hash <SgNode*> {
     size_t operator()(SgNode* const & n) const {
       return (size_t) n;

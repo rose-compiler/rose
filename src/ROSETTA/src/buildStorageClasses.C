@@ -1017,7 +1017,8 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            //s += "#ifdef _MSC_VER \n";
                            //s += "     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it; \n" ;
                            //s += "#else \n";
-                           s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+                           //s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+                           s += "     rose_hash_multimap::iterator it; \n" ;
                            //s += "#endif \n";
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgSymbol** tempList" + varNameString + " = new SgSymbol* [ source->p_" + varNameString + "->size() ]; \n" ;
@@ -1062,7 +1063,8 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            //s += "#ifdef _MSC_VER \n";
                            //s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*>::iterator it; \n" ;
                            //s += "#else \n";
-                           s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+                           //s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+                           s += "     rose_graph_hash_multimap::iterator it; \n" ;
                            //s += "#endif \n";
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + ".size() ]; \n" ;
@@ -1627,7 +1629,8 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       //s += "#ifdef _MSC_VER \n";
                       //s += "     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it; \n " ;
                       //s += "#else \n";
-                      s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
+                      //s += "     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
+                      s += "     rose_hash_multimap::iterator it; \n " ;
                       //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
@@ -1652,7 +1655,8 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       //s += "#ifdef _MSC_VER \n";
                       //s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*>::iterator it; \n " ;
                       //s += "#else \n";
-                      s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      //s += "     rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     rose_graph_hash_multimap::iterator it; \n " ;
                       //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
@@ -1678,7 +1682,8 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       //s += "#ifdef _MSC_VER \n";
                       //s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*>::iterator it; \n " ;
                       //s += "#else \n";
-                      s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      //s += "     rose_hash::unordered_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     rose_graph_directed_edge_hash_multimap::iterator it; \n " ;
                       //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
@@ -1704,7 +1709,8 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       //s += "#ifdef _MSC_VER \n";
                       //s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*>::iterator it; \n " ;
                       //s += "#else \n";
-                      s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      //s += "     rose_hash::unordered_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     rose_graph_undirected_edge_hash_multimap::iterator it; \n " ;
                       //s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
