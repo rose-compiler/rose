@@ -37,3 +37,7 @@ check-local:
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/restrictedLanguage: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
+
+clean-local:
+	rm rose_testcode_??.C
+
