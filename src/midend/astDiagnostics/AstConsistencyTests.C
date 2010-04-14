@@ -2413,7 +2413,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                             }
                            else
                             {
-                              //ROSE_ASSERT(local_symbol != NULL);
+                              ROSE_ASSERT(local_symbol != NULL);
                             }
                        }
                  // ROSE_ASSERT(declarationStatement->hasAssociatedSymbol() == false || local_symbol != NULL);
