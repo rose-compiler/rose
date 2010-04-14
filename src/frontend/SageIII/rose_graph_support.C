@@ -544,7 +544,7 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
 	 ROSE_ASSERT(false);
 #else
      // CH (4/9/2010): boost::unordered_map uses 'rehash' instead of 'resize'  
-#ifndef unordered_map     
+#if 1    
      p_node_index_to_node_map.rehash(numberOfNodes);
      p_edge_index_to_edge_map.rehash(numberOfEdges);
 

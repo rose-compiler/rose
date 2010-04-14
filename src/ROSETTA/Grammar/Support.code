@@ -3200,8 +3200,8 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
 #endif
 #else  // ifdef _MSC_VER
 #include <ext/hash_map>
-//class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+//class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
      protected:
           SgNode * parent;
@@ -3209,16 +3209,16 @@ class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, ha
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-             //: rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
-             : __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
              {}
           rose_hash_multimap(int sz) 
-             //: rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
-             : __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
              {}
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-             //: rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs),parent(rhs.parent)
-             : __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs),parent(rhs.parent)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
              {}
 #endif
           void set_parent(SgNode * new_parent) 

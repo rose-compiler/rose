@@ -890,7 +890,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 // CH (4/9/2010): Use boost::unordered instead   
 //#ifndef _MSC_VER
 #if 1
-	rose_hash::unordered_map <string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator vis = local_visited.find(hexStr);
+	rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
 #else
 	rose_hash::unordered_map <string, SgAsmInstruction*,rose_hash::hash_string>::iterator vis = local_visited.find(hexStr);
 #endif

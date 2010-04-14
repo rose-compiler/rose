@@ -11,8 +11,8 @@ HEADER_NODE_PREDECLARATION_START
 //#else
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-#include <ext/hash_map>
-#include <ext/hash_set>
+//#include <ext/hash_map>
+//#include <ext/hash_set>
 //#endif
 #include "Cxx_Grammar.h"
 

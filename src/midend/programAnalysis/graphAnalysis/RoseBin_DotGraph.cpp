@@ -42,7 +42,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 #if 0
     typedef rose_hash::unordered_set <std::string> funcNamesType;
 #else
-    typedef rose_hash::unordered_set <std::string,rose_hash::hash_string> funcNamesType;
+    typedef rose_hash::unordered_set <std::string> funcNamesType;
 #endif
 	funcNamesType funcNames;
 
