@@ -1637,7 +1637,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     end_stmt_list.push_back(atomic_end_stmt);   
   }
 
-   //TODO move to sageInterface advanced transformation
+   //TODO move to sageInterface advanced transformation ???
    //! Generate element-by-element assignment from a right-hand array to left_hand array variable. 
    //
    //e.g.  for int a[M][N], b[M][N],  a=b is implemented as follows:
@@ -1649,7 +1649,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
    //  for (i=0;i<element_count; i++) 
    //    *(b_ap+i) = *(a_ap+i);
    //
-   SgBasicBlock* generateArrayAssignmentStatements
+   static  SgBasicBlock* generateArrayAssignmentStatements
    (SgInitializedName* left_operand, SgInitializedName* right_operand, SgScopeStatement* scope)
    {
      // parameter validation
