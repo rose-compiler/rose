@@ -280,6 +280,23 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 #include "AstPerformance.h"
 
 
+// DQ (4/10/2010): Moved Dwarf and Intel Pin headers to here from rose.h.
+// DQ (11/7/2008): Added Dwarf support to ROSE AST (applies only to binary executables generated with dwarf debugging information).
+#ifndef _MSC_VER
+// tps (11/23/2009) : Commented out right now to make progress in Windows
+   #if USE_ROSE_DWARF_SUPPORT
+      #include "dwarfSupport.h"
+   #endif
+
+// DQ (3/8/2009): Added support for Intel Pin (Dynamic binary Instrumentation)
+// tps (11/23/2009) : Commented out right now to make progress in Windows
+   #ifdef USE_ROSE_INTEL_PIN_SUPPORT
+// Note that pin.H (in it's header files) will define "TRUE" and "FALSE" as macros.
+      #include "IntelPinSupport.h"
+   #endif
+#endif
+
+
 #endif
 
 
