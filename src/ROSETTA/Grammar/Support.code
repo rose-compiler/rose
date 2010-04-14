@@ -3120,7 +3120,9 @@ struct hash_Name
    {
 // CH (4/8/2010): Use boost::unordered instead     
 //#ifndef _MSC_VER 
-     rose_hash::hash<const char*> hasher;
+     // CH (4/13/2010): Use boost::hash<string> instead  
+     //rose_hash::hash<const char*> hasher;
+     rose_hash::hash<std::string> hasher;
 //#else
 //   public:
 //      static const size_t bucket_size = 4;

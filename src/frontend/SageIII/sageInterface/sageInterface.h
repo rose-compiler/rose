@@ -117,8 +117,8 @@ struct hash_nodeptr
    {
 // CH (4/9/2010): Use boost::hash instead 
 //#ifndef _MSC_VER
-#if 1
-	   rose_hash::hash<char*> hasher;
+#if 0
+	   //rose_hash::hash<char*> hasher;
 #endif
      public:
           size_t operator()(SgNode* node) const
