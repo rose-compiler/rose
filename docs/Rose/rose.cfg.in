@@ -490,7 +490,7 @@ INPUT                  = \
                          @top_srcdir@/src/midend/programAnalysis/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
                          @top_srcdir@/src/midend/astRewriteMechanism/ASTRewrite.docs \
-                         @top_srcdir@/src/midend/astProcessing/AstProcessing.docs \
+                         @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
 			 @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
@@ -509,6 +509,9 @@ INPUT                  = \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
                          @top_srcdir@/src/extra.docs \
                          @top_srcdir@/projects/projects.docs
+
+# DQ (4/13/2010): Added @top_srcdir@/src/midend/astProcessing directory in place of:
+#                         @top_srcdir@/src/midend/astProcessing/AstProcessing.docs 
 
 # EXTRA_STUFF 			= \
 #                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/docs \
