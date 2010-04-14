@@ -11,4 +11,7 @@ Headers: src/frontend/SageIII/omp.h
 
 Please refer to the Chapter named "OpenMP support" in the ROSE manual (http://www.rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf) for details about how to use this new feature. 
 
+Or refer to the paper:
+
+Chunhua Liao, Daniel J. Quinlan , Thomas Panas and Bronis de Supinski, A ROSE-based OpenMP 3.0 Research Compiler Supporting Multiple Runtime Libraries, the 6th International Workshop on OpenMP (IWOMP), June 14-16, 2010, Tsukuba, Japan. LLNL-CONF-422873 
 
