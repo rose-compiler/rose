@@ -375,7 +375,7 @@ EXTRA_DIST = CMakeLists.txt \
    developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex \
    preface.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
    AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
-   roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf
+   roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf introduction_start.tex
 
 # DQ (3/4/2009): Removed requirements.tex since it is not longer used.
 # requirements.tex
@@ -396,4 +396,5 @@ CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
 	     AvailableDocumentation.docs  leftmenu.html rosePlatformPrerequisites.txt \
         rosePlatformConfigureOptions.txt
+
 .PHONY :generated_files_for_manual generated_ompLowering_files_for_manual generated_autoPar_files_for_manual generated_upcCompile_files_for_manual generated_upcTrans_files_for_manual

@@ -6998,6 +6998,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 //!SageInterface::prependStatement()
   void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
+    ROSE_ASSERT (stmt != NULL);
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope != NULL);

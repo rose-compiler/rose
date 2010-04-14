@@ -851,7 +851,6 @@ vector<FuncDeclPair> FunctionRC::OutputFunctions()
 
     pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
     SgStatementPtrList rev_stmt_list = isSgBasicBlock(bodies.second)->get_statements();
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
  // This fails to link when this is include with the 4.3.2 compiler.
  // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
     for_each(rev_stmt_list.begin(), rev_stmt_list.end(), appendStatement);
