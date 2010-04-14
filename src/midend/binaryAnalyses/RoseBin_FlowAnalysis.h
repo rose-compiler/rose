@@ -157,7 +157,9 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
 //  rose_hash::unordered_map <std::string, SgAsmInstruction*,rose_hash::hash_string> local_visited;
   rose_hash::unordered_map <std::string, SgAsmInstruction*> local_visited;
 #else
-  rose_hash::unordered_map <std::string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string> local_visited;
+  // CH (4/13/2010): Use boost::hash<string> instead
+  //rose_hash::unordered_map <std::string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string> local_visited;
+  rose_hash::unordered_map <std::string, SgAsmInstruction*> local_visited;
 #endif
 
   typedef std::map<std::string, SgAsmFunctionDeclaration*> bin_funcs_type;

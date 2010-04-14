@@ -45,7 +45,9 @@ class MangledNameMapTraversal : public ROSE_VisitTraversal
        // typedef rose_hash::unordered_map<std::string, SgNode*, rose_hash::hash_string> MangledNameMapType;
           typedef rose_hash::unordered_map<std::string, SgNode*> MangledNameMapType;
 #else
-          typedef rose_hash::unordered_map<std::string, SgNode*, rose_hash::hash_string, rose_hash::eqstr_string> MangledNameMapType;
+	  // CH (4/13/2010): Use boost::hash<string> instead
+          //typedef rose_hash::unordered_map<std::string, SgNode*, rose_hash::hash_string, rose_hash::eqstr_string> MangledNameMapType;
+          typedef rose_hash::unordered_map<std::string, SgNode*> MangledNameMapType;
 #endif
        // The delete list is just a set
           typedef std::set<SgNode*> SetOfNodesType;

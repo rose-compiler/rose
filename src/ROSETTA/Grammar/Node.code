@@ -894,6 +894,8 @@ namespace rose_hash
 /*! \brief Hash name support for symbol tables within ROSE.
  */
 
+// CH (4/13/2010): Use boost::hash<string> instead     
+#if 0
      struct hash_string
         {
 // tps (11/17/2009) : Changed this so that it works under Windows.
@@ -917,6 +919,7 @@ namespace rose_hash
 #endif
              }
         };
+#endif
 
 // hashing function for s_s
 // CH (4/9/2010): Use boost::hash instead	    
@@ -1033,7 +1036,8 @@ inline size_t hash_value(const int & s)
 #if 0
 typedef rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string> rose_graph_string_node_hash_multimap_base_type;
 #else
-typedef rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_node_hash_multimap_base_type;
+//typedef rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_node_hash_multimap_base_type;
+typedef rose_hash::unordered_multimap<std::string, SgGraphNode*> rose_graph_string_node_hash_multimap_base_type;
 #endif
 
 class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
@@ -1438,7 +1442,8 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 // typedef rose_hash::unordered_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
 typedef rose_hash::unordered_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
 #else
-typedef rose_hash::unordered_multimap<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_integer_hash_multimap_base_type;
+//typedef rose_hash::unordered_multimap<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_integer_hash_multimap_base_type;
+typedef rose_hash::unordered_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
 #endif
 class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer_hash_multimap_base_type
    {

@@ -76,7 +76,9 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 //   typedef rose_hash::unordered_map <std::string, uint64_t,rose_hash::hash_string> variablesReverseType;
    typedef rose_hash::unordered_map <std::string, uint64_t> variablesReverseType;
 #else
-   typedef rose_hash::unordered_map <std::string, uint64_t,rose_hash::hash_string,rose_hash::eqstr_string> variablesReverseType;
+   // CH (4/13/2010): Use boost::hash<string> instead
+   //typedef rose_hash::unordered_map <std::string, uint64_t,rose_hash::hash_string,rose_hash::eqstr_string> variablesReverseType;
+   typedef rose_hash::unordered_map <std::string, uint64_t> variablesReverseType;
 #endif
 
 // rose_hash::unordered_map <std::string, uint64_t> variablesReverse;

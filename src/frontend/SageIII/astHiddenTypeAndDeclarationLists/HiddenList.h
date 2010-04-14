@@ -50,7 +50,8 @@ struct equal_symbol {
 
 };
 
-
+// CH (4/13/2010): Use boost::hash<string> instead
+#if 0
 struct eqstr3 {
 
         bool operator()(const std::string & s1, const std::string & s2) const {
@@ -60,10 +61,12 @@ struct eqstr3 {
         }
 
 };
+#endif
 
 
 // taken form sgi stl page
 //The hash<T> template is only defined for template arguments of type char*, const char*, crope, wrope, and the built-in integral types.
+#if 0
 struct HashFunction_String
 {
         /*public:
@@ -95,6 +98,7 @@ struct HashFunction_String
                 }
 
 };
+#endif
 
 
 struct SymbolInformation {
@@ -355,7 +359,9 @@ typedef rose_hash::unordered_map<SgSymbol*, SymbolHashMapValue*, HashFunction_Sy
 // typedef rose_hash::unordered_map<std::string, SymbolHashMap, HashFunction_String> ScopeStackEntry;
 typedef rose_hash::unordered_map<std::string, SymbolHashMap> ScopeStackEntry;
 #else
-typedef rose_hash::unordered_map<std::string, SymbolHashMap, HashFunction_String, cmp_string> ScopeStackEntry;
+// CH (4/13/2010): Use boost::hash<string>
+//typedef rose_hash::unordered_map<std::string, SymbolHashMap, HashFunction_String, cmp_string> ScopeStackEntry;
+typedef rose_hash::unordered_map<std::string, SymbolHashMap> ScopeStackEntry;
 #endif
 
 // ad using directives: used for storing namespaces
@@ -368,7 +374,9 @@ typedef rose_hash::unordered_map<std::string, SymbolHashMap, HashFunction_String
 // typedef rose_hash::unordered_map<std::string, Vector_Of_SymbolInformation, HashFunction_String> StringVectorHashMap;
 typedef rose_hash::unordered_map<std::string, Vector_Of_SymbolInformation> StringVectorHashMap;
 #else
-typedef rose_hash::unordered_map<std::string, Vector_Of_SymbolInformation, HashFunction_String, eqstr3> StringVectorHashMap;
+// CH (4/13/2010): Use boost::hash<string>
+//typedef rose_hash::unordered_map<std::string, Vector_Of_SymbolInformation, HashFunction_String, eqstr3> StringVectorHashMap;
+typedef rose_hash::unordered_map<std::string, Vector_Of_SymbolInformation> StringVectorHashMap;
 #endif
 
 // calculating the valid scope; make only an intersection of the entries of StringVectorHashMap(VScopeStack) that match with ValidScope
@@ -422,7 +430,9 @@ typedef std::vector<NamespaceInformation> VectorOfNamespaceInformation;
 // typedef rose_hash::unordered_map<std::string, VectorOfNamespaceInformation, HashFunction_String> String_VectorOfNamespaceInformation_HashMap;
 typedef rose_hash::unordered_map<std::string, VectorOfNamespaceInformation> String_VectorOfNamespaceInformation_HashMap;
 #else
-typedef rose_hash::unordered_map<std::string, VectorOfNamespaceInformation, HashFunction_String, eqstr3> String_VectorOfNamespaceInformation_HashMap;
+// CH (4/13/2010): Use boost::hash<string>
+//typedef rose_hash::unordered_map<std::string, VectorOfNamespaceInformation, HashFunction_String, eqstr3> String_VectorOfNamespaceInformation_HashMap;
+typedef rose_hash::unordered_map<std::string, VectorOfNamespaceInformation> String_VectorOfNamespaceInformation_HashMap;
 #endif
 
 typedef std::vector<NamespaceInformation>::iterator it_VectorOfNamespaceInformation;
@@ -438,7 +448,9 @@ struct it_VectorOfNamespaceInformation_boolean {
 // typedef rose_hash::unordered_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String> String_it_VectorOfNamespaceInformation_boolean;
 typedef rose_hash::unordered_map<std::string, it_VectorOfNamespaceInformation_boolean> String_it_VectorOfNamespaceInformation_boolean;
 #else
-typedef rose_hash::unordered_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String, eqstr3> String_it_VectorOfNamespaceInformation_boolean;
+// CH (4/13/2010): Use boost::hash<string>
+//typedef rose_hash::unordered_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String, eqstr3> String_it_VectorOfNamespaceInformation_boolean;
+typedef rose_hash::unordered_map<std::string, it_VectorOfNamespaceInformation_boolean> String_it_VectorOfNamespaceInformation_boolean;
 #endif
 
 // Robert Preissl, June 20 2007: in addition to the SetSgUsingDirectiveStatementsWithSgScopeStatement (and also for using decl.) we keep a special data structure that keeps
