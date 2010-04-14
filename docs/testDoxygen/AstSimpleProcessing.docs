@@ -1,0 +1,61 @@
+/* \p a g e AstSimpleProcessing ROSE AST Traversal Mechanism
+
+    This page describes the AST traversal mechanism in ROSE where no 
+attributes are used (the simplest case of an AST traversal).
+
+\section TraversalDesign Design of the AST Traversal Mechanism
+
+    The ROSE AST traversal mechanism ...
+
+\todo Finish this documentation...
+*/
+
+
+
+/*! \class AstSimpleProcessing AstProcessing.h
+    \ingroup AstProcessingClasses
+
+    \brief Class for traversing the AST.
+
+    \todo Make options 'preorder' and 'postorder' local to the class (will brake user code).
+
+    This class allows to traverse the AST in preorder or postorder. A visit function must be implemented
+    by the user which is automaticly called by the provided AST traversal.
+
+    \internal This class is derived from the SgTreeTraversal class.
+ */
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class AstSimpleProcessing member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn AstSimpleProcessing::traverse(SgNode* node, Order treeTraversalOrder)
+\brief Function to start the traversal on the subtree defined by node.
+
+   This is the call to start the traversal on the subtree defined by node.
+
+\param node represents the root of the subtree in the AST
+\param treeTraversalOrder represents the traversal order (preorder or postorder).
+*/
+/*
+\sa 
+\ref AstSimpleProcessing_call "Example:call to traverse the input subtree"
+*/
+
+/*!
+\fn AstSimpleProcessing::traverseInputFiles(SgProject* projectNode, Order treeTraversalOrder)
+\brief Function to start the traversal on the subtree defined by root (skip and nodes from other files).
+
+   This is the call to start the traversal on the subtree defined by root.
+This function will cause AST nodes that have a source position in any other
+files to be skipped (skips all header files for example).
+
+\param projectNode represents the root of the subtree in the AST
+\param treeTraversalOrder represents the traversal order (preorder or postorder).
+*/
+/*
+\sa 
+\ref AstSimpleProcessing_call "Example:call to traverse the input subtree"
+*/
+
+
