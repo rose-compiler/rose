@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
             void visit(SgNode *node) {
                 SgAsmGenericHeader *fhdr = isSgAsmGenericHeader(node);
                 if (!disassembler && fhdr)
-                    disassembler = Disassembler::create(fhdr);
+                    disassembler = Disassembler::lookup(fhdr)->clone();
             }
         };
         T1 analysis;

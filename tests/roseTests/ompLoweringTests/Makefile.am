@@ -16,6 +16,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         dynamicChunk.c \
 	endif.c \
 	endif3.c \
+	firstPrivateArray.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
         master.c \

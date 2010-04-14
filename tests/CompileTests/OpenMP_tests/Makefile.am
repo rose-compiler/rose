@@ -30,6 +30,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	expressions.c \
 	falsesharing.c \
 	firstprivate.c \
+	firstPrivateArray.c \
 	firstlastprivate.c \
 	flush.c \
 	flush_exampleA_21_1c.c \
