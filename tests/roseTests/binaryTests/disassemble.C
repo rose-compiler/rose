@@ -5,6 +5,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "bincfg.h"
+
 /* Traversal prints information about each SgAsmFunctionDeclaration node. */
 class ShowFunctions : public SgSimpleProcessing {
 public:
@@ -70,80 +72,19 @@ public:
     }
 };
 
-
-/* Extra info about a basic block */
-struct BlockInfo {
-    SgAsmFunctionDeclaration *func;             /* Function to which this block belongs. */
-    std::vector<SgAsmInstruction*> insns;       /* Instruction in this basic block. */
-    Disassembler::AddressSet successors;        /* List of all known successors. */
-    bool complete;                              /* True if successors list is complete. */
-};
-
-/* Get information about every basic block */
-class AllBlockInfo: public SgSimpleProcessing {
-public:
-    typedef std::map<rose_addr_t, BlockInfo> map_type;
-    typedef map_type::iterator iterator;
-    
-    explicit AllBlockInfo(SgNode *ast) {
-        traverse(ast, preorder);
-    }
-
-    /* Find all functions that call the specified function, including this function itself. */
-    std::set<SgAsmFunctionDeclaration*> callers(SgAsmFunctionDeclaration *callee) {
-        std::set<SgAsmFunctionDeclaration*> retval;
-        for (iterator bi=bb_info.begin(); bi!=bb_info.end(); ++bi) {
-            BlockInfo &src_block = bi->second;
-            if (src_block.func!=NULL) {
-                for (Disassembler::AddressSet::iterator si=src_block.successors.begin(); si!=src_block.successors.end(); ++si) {
-                    iterator dst_i = bb_info.find(*si);
-                    if (dst_i!=bb_info.end()) {
-                        BlockInfo &dst_block = dst_i->second;
-                        if (dst_block.func==callee && dst_block.insns.front()->get_address()==callee->get_entry_va())
-                            retval.insert(src_block.func);
-                    }
-                }
-            }
-        }
-        return retval;
-    }
-
-    BlockInfo & operator[](rose_addr_t block_va) {
-        return bb_info[block_va];
-    }
-
-protected:
-    void visit(SgNode *node) {
-        SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
-        if (func) {
-            std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
-            for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-                BlockInfo &block = bb_info[(*bbi)->get_address()];
-                block.func = func;
-                for (size_t i=0; i<(*bbi)->get_statementList().size(); i++) {
-                    SgAsmInstruction *insn = isSgAsmInstruction((*bbi)->get_statementList()[i]);
-                    if (insn) block.insns.push_back(insn);
-                }
-                block.successors = block.insns.front()->get_successors(block.insns, &(block.complete));
-            }
-        }
-    }
-
-private:
-    map_type bb_info;
-};
-
 static std::string
 function_label_attr(SgAsmFunctionDeclaration *func)
 {
     std::string retval;
     if (func) {
-        char addr_str[64];
-        sprintf(addr_str, "F%08"PRIx64, func->get_entry_va());
-        retval += std::string("label = \"") + addr_str;
+        char buf[64];
+        sprintf(buf, "F%08"PRIx64, func->get_entry_va());
+        retval += std::string("label = \"") + buf;
         if (func->get_name().size()>0)
             retval += std::string(" <") + func->get_name() + ">";
-        retval += std::string("\\n(") + func->reason_str(false) + ")\"";
+        retval += std::string("\\n(") + func->reason_str(false) + ")";
+        sprintf(buf, "\\n%zu instructions", SageInterface::querySubTree<SgAsmInstruction>(func, V_SgAsmInstruction).size());
+        retval += std::string(buf) + "\"";
     }
     return retval;
 }
@@ -151,7 +92,7 @@ function_label_attr(SgAsmFunctionDeclaration *func)
 /** Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
  *  control flow edges within the function. */
 static std::string
-dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, AllBlockInfo &blocks, bool verbose) 
+dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bool verbose) 
 {
     char node_name[64];
     sprintf(node_name, "%08"PRIx64, func->get_entry_va());
@@ -165,19 +106,19 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, AllBlockInfo &bloc
         /* Write the node definitions (basic blocks of this function) */
         std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
         for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-            BlockInfo &block = blocks[(*bbi)->get_address()];
             fprintf(out, "    B%08"PRIx64" [ label=<<table border=\"0\">", (*bbi)->get_address());
-            for (size_t i=0; i<block.insns.size(); i++) {
-                std::string s = unparseInstructionWithAddress(block.insns[i]).c_str();
+            std::vector<SgAsmInstruction*> insns = cfg.instructions(*bbi);
+            for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                std::string s = unparseInstructionWithAddress(*ii).c_str();
                 for (size_t j=0; j<s.size(); j++) if ('\t'==s[j]) s[j]=' ';
                 fprintf(out, "<tr><td align=\"left\">%s</td></tr>", s.c_str());
             }
             fprintf(out, "</table>>");
-            if (!block.complete) {
-                if (isSgAsmx86Instruction(block.insns.back()) &&
-                    isSgAsmx86Instruction(block.insns.back())->get_kind()==x86_ret) {
+            if (!cfg.is_complete((*bbi)->get_address())) {
+                if (isSgAsmx86Instruction(insns.back()) &&
+                    isSgAsmx86Instruction(insns.back())->get_kind()==x86_ret) {
                     fprintf(out, ", color=blue"); /*function return statement, not used as an unconditional branch*/
-                } else if (!block.complete) {
+                } else {
                     fprintf(out, ", color=red"); /*red implies that we don't have complete information for successors*/
                 }
             }
@@ -186,9 +127,9 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, AllBlockInfo &bloc
 
         /* Write the edge definitions for internal flow control */
         for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-            BlockInfo &block = blocks[(*bbi)->get_address()];
-            for (Disassembler::AddressSet::iterator si=block.successors.begin(); si!=block.successors.end(); ++si) {
-                if (blocks[*si].func==func)
+            const Disassembler::AddressSet &sucs = cfg.successors((*bbi)->get_address());
+            for (Disassembler::AddressSet::iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                if (cfg.function(*si)==func)
                     fprintf(out, "    B%08"PRIx64" -> B%08"PRIx64";\n", (*bbi)->get_address(), *si);
             }
         }
@@ -203,59 +144,117 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, AllBlockInfo &bloc
  *  flowing into or our of this fuction from/to other functions are represented in the graph, although nodes for the other
  *  functions are simplified (containing only some summary information). */
 static void
-dump_function_cfg(SgAsmFunctionDeclaration *func, std::string filename, AllBlockInfo &blocks)
+dump_function_cfg(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg)
 {
-    char func_node_name[64];
-    sprintf(func_node_name, "F%08"PRIx64, func->get_entry_va());
-    filename += std::string("-") + func_node_name + ".dot";
-    FILE *out = fopen(filename.c_str(), "w");
-    ROSE_ASSERT(out!=NULL);
-    fprintf(out, "digraph {\n");
-    fprintf(out, "  node [ shape = box ];\n");
+    Disassembler::AddressSet seen;
+    std::string my_node = dump_function_node(out, func, cfg, true);
+    seen.insert(func->get_entry_va());
 
-    std::map<SgAsmFunctionDeclaration*, std::string> fnodes;
-    std::string my_node = dump_function_node(out, func, blocks, true);
-    fnodes.insert(std::make_pair(func, my_node));
+    /* Nodes and edges for functions that this function calls. We can't use BinaryCG::callees() because we want to draw the
+     * graph edges from the actual block that does the calling, not the function itself. */
+    struct T1: public BinaryCFG::NodeFunctor {
+        SgAsmFunctionDeclaration *func;
+        Disassembler::AddressSet &seen;
+        FILE *out;
+        T1(SgAsmFunctionDeclaration *func, Disassembler::AddressSet &seen, FILE *out): func(func), seen(seen), out(out) {}
+        void operator()(BinaryCFG *cfg, rose_addr_t va) {
+            if (cfg->function(va)==func) {
+                const Disassembler::AddressSet &sucs = cfg->successors(va);
+                for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                    SgAsmFunctionDeclaration *callee = cfg->function(*si);
+                    if (callee!=func || *si==func->get_entry_va()) {
+                        if (seen.find(*si)==seen.end()) {
+                            if (!callee) {
+                                /* Node is not present in the CFG, probably because we didn't disassemble at that address. */
+                                fprintf(out, "B%08"PRIx64" [ style=filled, color=lightpink ];\n", *si);
+                            } else {
+                                dump_function_node(out, callee, *cfg, false);
+                            }
+                            seen.insert(*si);
+                        }
+                        fprintf(out, "  B%08"PRIx64" -> B%08"PRIx64";\n", va, *si);
+                    }
+                }
+            }
+        }
+    } t1(func, seen, out);
+    cfg.apply(t1);
 
-    /* Nodes for other functions that call this function */
-    std::set<SgAsmFunctionDeclaration*> callers = blocks.callers(func);
+    /* Nodes and edges for other functions that call this function */
+    BinaryCG cg(cfg);
+    std::set<SgAsmFunctionDeclaration*> callers = cg.callers(func);
     for (std::set<SgAsmFunctionDeclaration*>::iterator ci=callers.begin(); ci!=callers.end(); ++ci) {
         if (*ci!=func) {
-            std::string caller_node = dump_function_node(out, *ci, blocks, false);
-            fnodes.insert(std::make_pair(*ci, caller_node));
+            std::string caller_node = dump_function_node(out, *ci, cfg, false);
+            seen.insert((*ci)->get_entry_va());
             fprintf(out, "  %s -> %s\n", caller_node.c_str(), my_node.c_str());
         }
     }
-
-    /* Nodes for functions that this function calls */
-    std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
-    for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-        BlockInfo &src_block = blocks[(*bbi)->get_address()];
-        for (Disassembler::AddressSet::iterator si=src_block.successors.begin(); si!=src_block.successors.end(); ++si) {
-            BlockInfo &dst_block = blocks[*si];
-            if (dst_block.func!=NULL && dst_block.func!=func) {
-                if (fnodes.find(dst_block.func)==fnodes.end()) {
-                    std::string callee_node = dump_function_node(out, dst_block.func, blocks, false);
-                    fnodes.insert(std::make_pair(dst_block.func, callee_node));
-                }
-                fprintf(out, "  B%08"PRIx64" -> B%08"PRIx64";\n", (*bbi)->get_address(), *si);
-            }
-        }
-    }
-
-    fprintf(out, "}\n"); /*digraph*/
-    fclose(out);
 }
 
 static void
 dumpCFG(SgNode *ast)
 {
-    AllBlockInfo blocks(ast);
-
     std::vector<SgAsmFunctionDeclaration*> funcs = SageInterface::querySubTree<SgAsmFunctionDeclaration>
                                                    (ast, V_SgAsmFunctionDeclaration);
-    for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi)
-        dump_function_cfg(*fi, "x", blocks);
+
+    BinaryCFG cfg(ast);
+
+    /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. */
+    for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
+        if ((*fi)->get_name() == "***unassigned blocks***")
+            cfg.erase(*fi);
+    }
+
+    /* Generate a dot file for the function call graph */
+    struct T1: public BinaryCG::NodeFunctor {
+        Disassembler::AddressSet seen;
+        FILE *out;
+        T1(FILE *out): out(out) {}
+        void operator()(BinaryCG *cg, SgAsmFunctionDeclaration *func) {
+            if (seen.find(func->get_entry_va())==seen.end()) {
+                dump_function_node(out, func, cg->cfg(), false);
+                seen.insert(func->get_entry_va());
+            }
+            Disassembler::AddressSet callees = cg->callees(func);
+            for (Disassembler::AddressSet::iterator ci=callees.begin(); ci!=callees.end(); ++ci) {
+                SgAsmFunctionDeclaration *callee = cg->cfg().function(*ci);
+                if (seen.find(*ci)==seen.end()) {
+                    if (!callee) {
+                        fprintf(out, "B%08"PRIx64" [ style=filled, color=lightpink ];\n", *ci);
+                    } else {
+                        dump_function_node(out, callee, cg->cfg(), false);
+                    }
+                    seen.insert(*ci);
+                }
+                fprintf(out, "  B%08"PRIx64" -> B%08"PRIx64";\n", func->get_entry_va(), *ci);
+            }
+        }
+    };
+
+    FILE *out = fopen("x-cg.dot", "w");
+    ROSE_ASSERT(out);
+    fprintf(out, "digraph {\n");
+    fprintf(out, "node [ shape = box ];\n");
+    T1 t1(out);
+    BinaryCG(cfg).apply(t1);
+    fprintf(out, "}\n");
+    fclose(out);
+    
+    /* Generate a dot file for each function */
+    for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
+        char func_node_name[64];
+        sprintf(func_node_name, "F%08"PRIx64, (*fi)->get_entry_va());
+        std::string filename = std::string("x-") + func_node_name + ".dot";
+        FILE *out = fopen(filename.c_str(), "w");
+        ROSE_ASSERT(out!=NULL);
+        fprintf(out, "digraph {\n");
+        fprintf(out, "  node [ shape = box ];\n");
+        dump_function_cfg(out, *fi, cfg);
+        fprintf(out, "}\n"); /*digraph*/
+        fclose(out);
+    };
+
 }
 
 int
