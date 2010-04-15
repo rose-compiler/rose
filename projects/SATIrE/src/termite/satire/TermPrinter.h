@@ -233,7 +233,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
     /* Newer versions of Rose wrap SgFiles inside an unnecessary
        SgFileList node */
     PrologCompTerm* fileList = dynamic_cast<PrologCompTerm*>(synList.at(0));
-    if (fileList != NULL) {
+    if (fileList != NULL && fileList->getName() == "file_list") {
       ROSE_ASSERT (synList.size() == 1);
       synList[0] = fileList->at(0);
     } 
