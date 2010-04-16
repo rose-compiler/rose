@@ -164,7 +164,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // printf ("\n\n************************************************************\n");
   // MangledNameMapTraversal::SetOfNodesType intermediateDeleteSet;
      set<SgNode*>  intermediateDeleteSet;
-#ifdef _MSC_VER
+// CH (4/9/2010): Since the type switch to boost::unordered, Windows won't suffer this any more    
+//#ifdef _MSC_VER
+#if 0
   // DQ (11/27/2009): MSVC does not appear to support optional specification of size of hash table.
 #pragma message ("WARNING: MSVC does not appear to support optional specification of size of hash table.")
 	 printf ("WARNING: MSVC does not appear to support optional specification of size of hash table.");
@@ -277,7 +279,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
                numberOfASTnodesAfterCopy,numberOfASTnodesAfterCopy-numberOfASTnodesBeforeCopy,(long int)intermediateDeleteSet.size());
 
   // DQ (2/19/2007): Build the replacement map externally and pass it in to avoid copying.
-#ifdef _MSC_VER
+// CH (4/9/2010): Since the type switch to boost::unordered, Windows won't suffer this any more    
+//#ifdef _MSC_VER
+#if 0
   // DQ (11/27/2009): MSVC does not appear to support optional specification of size of hash table.
 #pragma message ("WARNING: MSVC does not appear to support optional specification of size of hash table.")
 	 printf ("WARNING: MSVC does not appear to support optional specification of size of hash table.");

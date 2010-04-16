@@ -3,8 +3,10 @@
 
 #if 1
 #include <iostream>
-#include <hash_map.h>
-#include <hash_set.h>
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
+//#include <hash_map.h>
+//#include <hash_set.h>
 #include "GlobalDatabaseConnection.h"
 #include "TableDefinitions.h"
 
@@ -90,16 +92,16 @@ struct pairltstr
   }
 };
 
-// hash_multimap<Key, Data, HashFcn, EqualKey, Alloc>
-typedef hash_multimap<const char*, const char *, hash<const char*>, eqstr> map_type;
+// boost::unordered_multimap<Key, Data, HashFcn, EqualKey, Alloc>
+typedef boost::unordered_multimap<const char*, const char *, hash<const char*>, eqstr> map_type;
 
-// hash_map<Key, Data, HashFcn, EqualKey, Alloc>
-typedef hash_map<const char *, int, hash<const char *>, eqstr> str_int_map;
-typedef hash_map<const char *, const char *, hash<const char *>, eqstr> str_str_map;
-typedef hash_map<const char *, str_int_map *, hash<const char *>, eqstr> str_map_map;
+// boost::unordered_map<Key, Data, HashFcn, EqualKey, Alloc>
+typedef boost::unordered_map<const char *, int, hash<const char *>, eqstr> str_int_map;
+typedef boost::unordered_map<const char *, const char *, hash<const char *>, eqstr> str_str_map;
+typedef boost::unordered_map<const char *, str_int_map *, hash<const char *>, eqstr> str_map_map;
 
-typedef hash_map<int, const char *, hash<int>, eqint> int_str_map;
-typedef hash_map<const char *, int_str_map *, hash<const char *>, eqstr> int_map_map;
+typedef boost::unordered_map<int, const char *, hash<int>, eqint> int_str_map;
+typedef boost::unordered_map<const char *, int_str_map *, hash<const char *>, eqstr> int_map_map;
 
 class SideEffect : public SideEffectAnalysis {
 
@@ -158,7 +160,9 @@ class SideEffect : public SideEffectAnalysis {
   int nextdfn;
   deque<callVertex> vertexStack;
   
-  hash_set<int, hash<int>, eqint> shadowStack;
+  // CH (4/9/2010): Use boost::unordered_set instead
+  //hash_set<int, hash<int>, eqint> shadowStack;
+  boost::unordered_set<int, hash<int>, eqint> shadowStack;
   
   int *lowlink;
   int *dfn;
@@ -2582,7 +2586,9 @@ int *dfn;
 int 
 SideEffect::onStack(int num)
 {
-  hash_set<int, hash<int>, eqint>::const_iterator it = 
+  // CH (4/9/2010): Use boost::unordered_set instead
+  //hash_set<int, hash<int>, eqint>::const_iterator it = 
+    boost::unordered_set<int, hash<int>, eqint>::const_iterator it = 
     shadowStack.find(num);
 
   return ( it != shadowStack.end() );

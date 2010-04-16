@@ -287,7 +287,7 @@ void RoseBin_FILE::process_instruction_query( ) {
       // if it is in the callgraph, one wants to create a BinaryCall instead
 
       // append the instruction to its function
-      rose_hash::hash_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
+      rose_hash::unordered_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
       SgAsmFunctionDeclaration* func = NULL;
       // for (func_it; func_it!=rememberFunctions.end(); ++func_it) {
       if (func_it != rememberFunctions.end()) {
@@ -718,7 +718,7 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
     // get basic_block and append this instruction
     if (RoseBin_support::DEBUG_MODE())
       cout << "\n\n> appending operandList to instruction.  " << endl;
-    rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator blockIt;      
+    rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::iterator blockIt;      
     int count = 0;
     //cerr << "Instruction count: " << rememberInstructions.size() << endl;
     for (blockIt=rememberInstructions.begin();blockIt!=rememberInstructions.end();++blockIt) {

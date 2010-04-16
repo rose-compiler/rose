@@ -1,0 +1,67 @@
+This document describes how to get Started to use ROSE under Windows.
+
+**************************************************
+REQUIREMENTS
+**************************************************
+What we have installed to make this work:
+* BISON (2.4.1)
+* JAVA (1.6)
+* FLEX (2.5.4)
+* CMAKE (2.8.0)
+* GIT (1.6.5)
+* Visual Studio 2008 (32bit)
+* BOOST (1_37 Windows version)
+
+Make sure to include the /bin /lib directory for these tools in your system path.
+For BOOST create a variable in the system called BOOST_ROOT.
+
+You can test your environment by going to CMD and typing for instance 
+cl.exe (Visual Studio), git, javac, cmake
+
+**************************************************
+DO NOT
+**************************************************
+* DO NOT use or even install cygwin or similar
+
+**************************************************
+DOWNLOAD AND CONFIGURE ROSE
+**************************************************
+* Download ROSE or use the git repository to get a copy of ROSE (using ssh)
+* Configure ROSE using cmake (use cmake GUI under Windows): Currently no changes in GUI needed (Details are handled in CMakelist)
+
+**************************************************
+COMPILE
+**************************************************
+* Open the generated ROSE.sln file using Visual Studio. Press F7 to compile the whole project. This currently includes only the src directory and will fail during linking.
+
+
+ 
+**************************************************
+HUDSON specific (automated testing)
+**************************************************
+Information to test ROSE under Hudson using Windows.
+* Make sure you have all Hudson files available (see c:/ROSE/hudson on tux270)
+* Start the Windows Hudson Slave as admin (in our case hudson-rose). For this I recommend to open a GIT or CMD terminal as admin (right click and choose : "Run as administrator")
+* There are two ways to start the slave (for ROSE team go to c:/ROSE/hudson):
+  a) as a Service - advantage starts when computer starts. This is the preferred way. See runslave.bat in hudson directory
+  b) as a JNI slave - you need to start this using startSlave.bat.
+
+Once the slave is running on Windows, the hudson specific test for Windows can be triggered (windows-test). This will cause ROSE to be checked out, cmake to be run and the
+visual studio compiler to be run. 
+
+
+
+
+**************************************************
+WHEN Things do not work
+**************************************************
+1) When you cant get a connection between Windows Client and Server
+  * make sure you use the same version of client and server
+  * make sure to read the output of the server on connection - common errors are permission errors - trying to copy files using ssh
+  * Therefore use ssh-keygen to allow connection between client and server
+  * If some files cannot be copied to Client (because its Windows and ssh does not work) - copy by hand - the file will be needed once - but beware of version issues!
+2) Git repository does not check out ROSE
+  * Make sure to use ssh to check out from repository using Windows
+  * When using hudson-rose account for ssh checkout, make sure that all permissions are set and checkout works without hudson; this is different on Windows than Linux since ssh is needed
+
+ 

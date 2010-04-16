@@ -6,9 +6,16 @@ INCLUDES = $(ROSE_INCLUDES)
 # an better alternative to identityTranslator
 # Liao 1/29/2009
 bin_PROGRAMS = roseCompiler
+
 roseCompiler_SOURCES = roseCompiler.C
-roseCompiler_DEPENDENCIES = $(REQUIRED_LIBS)
-roseCompiler_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Example translator to help make code as part of questions
+# exampleTranslator_SOURCES = exampleTranslator.C
+
+# roseCompiler_DEPENDENCIES = $(REQUIRED_LIBS)
+# roseCompiler_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+DEPENDENCIES = $(REQUIRED_LIBS)
+LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # The bug numbers come from ROSE's SciDAC bug trackers
 noinst_PROGRAMS = \
@@ -18,7 +25,7 @@ noinst_PROGRAMS = \
 bug125_SOURCES = bug125.C
 qualifiedName_SOURCES = qualifiedName.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 

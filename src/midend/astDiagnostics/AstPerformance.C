@@ -364,7 +364,7 @@ AstPerformance::getLock()
 
 #ifdef _MSC_VER
 //#pragma message ("WARNING: sleep() Linux support not available in Windows.")
-		  Sleep(1000);
+          Sleep(1000);
 #else
           sleep(1);
 #endif

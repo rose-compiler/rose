@@ -15,6 +15,11 @@
 
 #include <iostream>
 
+// CH (4/9/2010): Use boost::unordered instead
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
+
+#if 0
 #ifdef _MSC_VER
 #include <hash_map>
 #include <hash_set>
@@ -34,7 +39,7 @@ template <> struct hash <SgNode*> {
 #include <ext/hash_map>
 #include <ext/hash_set>
 
-namespace __gnu_cxx {
+namespace rose_hash {
   template <> struct hash <SgNode*> {
     size_t operator()(SgNode* const & n) const {
       return (size_t) n;
@@ -47,6 +52,8 @@ namespace __gnu_cxx {
   };
 }
 #endif
+
+#endif 
 
 
 class DefUseAnalysis : public DFAnalysis, Support {
@@ -64,10 +71,13 @@ class DefUseAnalysis : public DFAnalysis, Support {
 
   typedef std::map< SgNode* , multitype > tabletype;
   // typedef std::map< SgNode* , int > convtype;
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::unordered instead  
+//#ifdef _MSC_VER
+#if 0
   typedef hash_map< SgNode* , int > convtype;
 #else
-  typedef __gnu_cxx::hash_map< SgNode* , int > convtype;
+  //typedef __gnu_cxx::hash_map< SgNode* , int > convtype;
+  typedef rose_hash::unordered_map< SgNode* , int > convtype;
 #endif
 
   // local functions ---------------------

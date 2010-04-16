@@ -40,7 +40,8 @@ main ( int argc, char* argv[] )
   // Build the traversal object
      visitorTraversal exampleTraversal;
 
-  // Call the traversal starting at the project node of the AST
+  // Call the traversal function (member function of AstSimpleProcessing)
+  // starting at the project node of the AST, using a preorder traversal.
      exampleTraversal.traverseInputFiles(project,preorder);
 
      return 0;

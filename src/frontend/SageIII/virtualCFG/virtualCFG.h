@@ -64,7 +64,7 @@ namespace VirtualCFG {
     public:
     CFGNode(): node(0), index(0) {}
     explicit CFGNode(SgNode* node, unsigned int index = 0): node(node), index(index) {
-//      assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
+      assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
     }
     //! Pretty string for Dot node labels, etc.
     std::string toString() const;
