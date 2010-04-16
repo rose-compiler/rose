@@ -2,12 +2,26 @@
 \label{Tutorial:chapterASTGraphGenerator}
 
 \paragraph{What To Learn From This Example}
-This example shows how to generate and visualize a simplified AST (filtered
-out symbol tables and others for simplicity) from any input program.
+This example shows how to generate a DOT file to visualize a simplified AST 
+% (filtered out symbol tables and others for simplicity) 
+from any input program.
+\vspace{0.25in}
+
+   DOT is a graphics file format from the AT\&T GraphViz project used to 
+visualize moderate sized graphs.  It is one of the visualization tools used within the
+ROSE project.  More inforamtion can be readily found at {\em www.graphviz.org/}.
+We have found the {\em zgrviewer} to be an especially useful program for 
+visualizing graphs generated in the DOT file format (see 
+chapter~\ref{Tutorial:chapterGeneralASTGraphGeneration} for more information 
+on zgrviewer).
+
 Each node of the graph in figure~\ref{tutorial:exampleOutputCodeGraph} shows
-a node of the Intermediate Representation (IR).  Each edge shows the connection
+a node of the Intermediate Representation (IR); the graphs demonstrates that the 
+AST is formally a tree.  Each edge shows the connection
 of the IR nodes in memory. The generated graph shows the connection of different 
-IR nodes to form the AST.  The generation of such graphs is appropriate for small 
+IR nodes that form the AST for an input program source code.  Binary executables
+can similarly be vizualized using DOT files.
+The generation of such graphs is appropriate for small 
 input programs, chapter~\ref{Tutorial:chapter_AST_PDF_Generator} shows a mechanism 
 using PDF files that is more appropriate to larger programs (e.g. 100K lines of code).
 More information about generation of specialized AST graphs can be found in 
@@ -15,15 +29,13 @@ More information about generation of specialized AST graphs can be found in
 \ref{Tutorial:chapterCustomGraphs}.
 
 Note that a similar utility program named \textit{dotGenerator} already exists within
-ROSE/exampleTranslators/DOTGenerator . 
+ROSE/exampleTranslators/DOTGenerator. 
 %(and includes a utility to output an alternative PDF representation (suitable for larger ASTs) as well). 
-It is also installed to \textit{ROSE\_INS/bin}.  
-
+It is also installed to \textit{ROSE\_INS/bin}.
 
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
-
 
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
@@ -215,8 +227,9 @@ represent rather large ASTs.
 \end{figure}
 
 \begin{figure}
-\includegraphics[scale=0.75]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_small}
-\caption{AST representing the tiny source code file: inputCode\_wholeAST\_1.C.}
+\includegraphics[scale=0.95]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_small}
+\caption{AST representing the tiny source code file: inputCode\_wholeAST\_1.C. This graphs
+    shows types, symbols, and other attributes that are defined on the {\em attributed} AST.}
 \label{tutorial:exampleOutputCodeWholeGraph_small}
 \end{figure}
 
@@ -258,8 +271,10 @@ are a number of different colors and shapes to make them more recognizable.
 \end{figure}
 
 \begin{figure}
-\includegraphics[scale=0.65]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_large}
-\caption{AST representing the small source code file: inputCode\_wholeAST\_2.C.}
+\includegraphics[scale=0.95]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_large}
+\caption{AST representing the small source code file: inputCode\_wholeAST\_2.C. This
+    graph shows the significantly greater internal complexity of a slightly larger 
+    input source code.}
 \label{tutorial:exampleOutputCodeWholeGraph_large}
 \end{figure}
 
@@ -268,5 +283,9 @@ previous graph but larger and more complex because it is from a larger code. Lar
 graphs of this sort are still very useful in understanding how more significant
 language constructs are organized and reference each other in the AST.  Tools
 such as {\bf zgrviewer} are essential to reviewing and understanding these
-graphs.
+graphs. Although such graphs can be visualized, in practice this is only useful
+for debugging small codes in the construction of custom analysis and transformation
+tools. The graphs for real million line applications would never be visualized.
+Using ROSE one can build automated tools to operate on the AST for large scale
+applications where visualization would not be possible.
 

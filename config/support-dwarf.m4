@@ -19,6 +19,11 @@ if test "$with_dwarf" = no; then
    # If dwarf is not specified, then don't use it.
    echo "Skipping use of Dwarf (libdwarf) support!"
 else
+   if test "$with_dwarf" = yes; then
+      # Path not specified...
+      echo "Error: Path to libdwarf not specified...(usage: --with-dwarf=PATH)"
+      exit 1
+   fi
    dwarf_path=$with_dwarf
    echo "Setup Dwarf support in ROSE! path = $dwarf_path"
    AC_DEFINE([USE_ROSE_DWARF_SUPPORT],1,[Controls use of ROSE support for Dwarf (libdwarf) library.])

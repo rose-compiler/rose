@@ -306,7 +306,10 @@ SgGraph::addEdge( SgGraphEdge* edge )
        // p_node_index_pair_to_edge_multimap[std::pair<int,int>(edge->get_node_A(),edge->get_node_B())] = edge;
 #if 1
        // p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(edge->get_node_A()->get_index(),edge->get_node_B()->get_index()),edge));
-#ifdef _MSC_VER
+       //
+// CH (4/9/2010): Use boost::unordered instead 
+//#ifdef _MSC_VER
+#if 0
 // tps (12/09/09) : Cannot compile this right now.
 #pragma message("rose_graph_support.C: Problem compiling multimap")
 #else
@@ -384,7 +387,10 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
        // Note that this significantly slows down the performance of the new graph support (appears to be about a factor of 10X).
        // Is there a better (faster) way to build the p_node_index_pair_to_edge_multimap? Yes, increase the size of the hash table (DONE).
 #if 1
-#ifndef _MSC_VER
+
+// CH (4/9/2010): Use boost::unordered instead 
+//#ifndef _MSC_VER
+#if 1
 		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
 #else
 // tps (12/09/09) Does not work under Windows right now.
@@ -455,7 +461,9 @@ SgGraph::display_node_index_pair_to_edge_multimap() const
      rose_graph_integerpair_edge_hash_multimap::const_iterator i = p_node_index_pair_to_edge_multimap.begin();
      while (i != p_node_index_pair_to_edge_multimap.end())
         {
-#ifndef _MSC_VER
+// CH (4/9/2010): Use boost::unordered instead 
+//#ifndef _MSC_VER
+#if 1
 // tps (12/08/09) : Does not work under windows:  error C2039: 'first' : is not a member of 'System::UInt32'
 			printf ("   node pair: (i->first.first = %d,i->first.second = %d) SgGraphEdge: i->second = %p = %d \n",i->first.first,i->first.second,i->second,i->second->get_index());
 #endif
@@ -528,10 +536,24 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
   // Note that the next larger prime number will be used by the 
   // hash_map and hash_multimap for the internal table size.
 
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::unordered instead 
+//#ifdef _MSC_VER
+#if 0
 #pragma message ("WARNING: std::hash_map::resize() function not available in MSVC.")
 	 printf ("std::hash_map::resize() function not available in MSVC. \n");
 	 ROSE_ASSERT(false);
+#else
+     // CH (4/9/2010): boost::unordered_map uses 'rehash' instead of 'resize'  
+#if 1    
+     p_node_index_to_node_map.rehash(numberOfNodes);
+     p_edge_index_to_edge_map.rehash(numberOfEdges);
+
+     p_node_index_to_edge_multimap.rehash(numberOfEdges);
+     p_node_index_pair_to_edge_multimap.rehash(numberOfEdges);
+
+     p_string_to_node_index_multimap.rehash(numberOfNodes);
+     p_string_to_edge_index_multimap.rehash(numberOfEdges);
+
 #else
      p_node_index_to_node_map.resize(numberOfNodes);
      p_edge_index_to_edge_map.resize(numberOfEdges);
@@ -541,6 +563,8 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
 
      p_string_to_node_index_multimap.resize(numberOfNodes);
      p_string_to_edge_index_multimap.resize(numberOfEdges);
+#endif
+
 #endif
 // #endif
    }
