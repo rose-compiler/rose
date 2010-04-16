@@ -1,6 +1,13 @@
 #!/bin/bash
 
+# Warning! "dot" does not exit with non-zero status if interrupted by control-C.
+
+did_something=
+
+# Generate web pages for function control flow graphs
 for fdot in *-F*.dot; do
+    [ -f "$fdot" ] || continue
+
     # Base name of original executable
     exebase="${fdot%-F*.dot}"
 
@@ -11,10 +18,33 @@ for fdot in *-F*.dot; do
     node="${fdot#$exebase-}"
     node="${node%.dot}"
 
-    echo $node
-    echo "<html><body><img src=${basename}.gif usemap=\"#${node}\"/>" >$basename.html
-    dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null || exit 1
-    sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
-    rm $basename.map
-    echo "</body></html>" >>$basename.html
+    if [ ! -f "$basename.html" -o "$basename.html" -ot "$fdot" ]; then
+	did_something=yes
+	echo -n "$node... "
+	dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null || exit 1
+	echo "<html><body><img src=\"${basename}.gif\" usemap=\"#${node}\"/>" >$basename.html
+	sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
+	rm $basename.map
+	echo "</body></html>" >>$basename.html
+	echo "ok"
+    fi
 done
+
+# Generate web pages for call graphs
+for fdot in *-cg.dot; do
+    [ -f "$fdot" ] || continue
+    basename="${fdot%.dot}"
+    if [ ! -f "$basename.html" -o "$basename.html" -ot "$fdot" ]; then
+	did_something=yes
+	echo -n "callgraph (this may take a while)... "
+	dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null || exit 1
+	echo "<html><body><img src=\"${basename}.gif\" usemap=\"#callgraph\"/>" >$basename.html
+	cat <$basename.map >>$basename.html
+	rm $basename.map
+	echo "</body></html>" >>$basename.html
+	echo "ok"
+    fi
+done
+
+[ -n "$did_something" ] || echo "up to date"
+exit 0

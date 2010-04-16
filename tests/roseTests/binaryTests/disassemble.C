@@ -264,7 +264,7 @@ dump_CFG_CG(SgNode *ast)
     fprintf(stderr, "  generating: cg");
     FILE *out = fopen((filename+"-cg.dot").c_str(), "w");
     ROSE_ASSERT(out);
-    fprintf(out, "digraph {\n");
+    fprintf(out, "digraph callgraph {\n");
     fprintf(out, "node [ shape = box ];\n");
     T1 t1(out);
     BinaryCG(cfg).apply(t1);
