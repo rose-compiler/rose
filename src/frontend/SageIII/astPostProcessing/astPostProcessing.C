@@ -243,12 +243,13 @@ void postProcessingSupport (SgNode* node)
   // fixup handles this case and traverses just the SgEnumVal objects.
      fixupEnumValues();
 
+  // DQ (4/7/2010): This was commented out to modify Fortran code, but I think it should NOT modify Fortran code.
   // DQ (5/21/2008): This only make since for C and C++ (Error, this DOES apply to Fortran where the "parameter" attribute is used!)
-  // if (SageInterface::is_Fortran_language() == false)
-  //    {
+     if (SageInterface::is_Fortran_language() == false)
+        {
        // DQ (3/20/2005): Fixup AST so that GNU g++ compile-able code will be generated
           fixupInClassDataInitialization(node);
-  //    }
+        }
 
   // DQ (3/24/2005): Fixup AST to generate code that works around GNU g++ bugs
      fixupforGnuBackendCompiler(node);

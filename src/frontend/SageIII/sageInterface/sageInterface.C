@@ -493,11 +493,16 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
      scope_stmt->get_symbol_table()->get_table()->erase(found_it);
 
   // insert the new_name in the symbol table
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::unordered instead   
+//#ifdef _MSC_VER
+#if 0
   // DQ (11/28/2009): Unclear if this code is a problem (testing).
-#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
-	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
-	 ROSE_ASSERT(false);
+
+// CH (4/7/2010): It seems that the following code can be compiled under MSVC 9.0
+//#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
+//	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
+//	 ROSE_ASSERT(false);
+     found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
 #else
      found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
 #endif
@@ -527,7 +532,7 @@ SageInterface::get_name ( const SgC_PreprocessorDirectiveStatement* directive )
 
      name = directive->class_name();
 
-#if 0
+#if 1
   // I don't think we need this code now!
      switch (directive->variantT())
         {
@@ -1410,6 +1415,10 @@ SageInterface::get_name ( const SgExpression* expr )
           default:
              {
             // Nothing to do for other IR nodes
+
+            // DQ (4/8/2010): define something specific to this function to make debugging more clear.
+               name = "undefined_expression_name";
+               break;
              }
         }
 
@@ -2948,7 +2957,9 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 #pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
      printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
@@ -4581,7 +4592,8 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
         {
           SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label);
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
-		  #ifndef _MSC_VER
+		  //#ifndef _MSC_VER
+#if 1		  
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
 #endif
 	 }
@@ -5088,9 +5100,9 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
 void SageInterface::removeStatement(SgStatement* stmt)
 {
   ROSE_ASSERT(stmt);
-#ifndef _MSC_VER
+//#ifndef _MSC_VER
   LowLevelRewrite::remove(stmt);
-#endif
+//#endif
 }
 
 
@@ -6986,6 +6998,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 //!SageInterface::prependStatement()
   void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
+    ROSE_ASSERT (stmt != NULL);
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope != NULL);
@@ -9760,7 +9773,9 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 #pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
 	 printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
@@ -10258,10 +10273,10 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 #if 0
 // This function is not implemented our used, but it might be when the final code is refactored.
 
-// rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr>
+// rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr>
 // void SageInterface::supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap )
 void
-SageInterface::supplementReplacementSymbolMap ( rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap )
+SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap )
    {
   // Prior to the call to fixupSubtreeTraversal(), we have to build the "replacementMap".  The "replacementMap"
   // contains the IR node address references into the old AST (what was copied) which need to be replaced in the 
@@ -10468,16 +10483,17 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
   {
     if (handle->getNode()!=NULL)
     {
-#ifdef _MSC_VER
-     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
-
-#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
-		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
-		ROSE_ASSERT(false);
-#else
+// CH (4/7/2010): MSVC 9.0 can compile the following code. See "abstract_handle.h"
+//#ifndef _MSC_VER
+//     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
+//		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+//
+//#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
+//		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
+//		ROSE_ASSERT(false);
+//#else
 		SgNode* result = (SgNode*)(handle->getNode()->getNode());
-#endif
+//#endif
       // deallocate memory, should not do this!!
       // May corrupt the internal std maps used in abstract handle namespace
       //delete handle->getNode();

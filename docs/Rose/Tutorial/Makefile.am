@@ -1,5 +1,5 @@
 # When debugging latex documentation skip using the --interaction=batchmode option
-#PDFLATEX = env TEXINPUTS=$(srcdir):$(srcdir)/..:$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
+# PDFLATEX = env TEXINPUTS=$(srcdir):$(srcdir)/..:$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 PDFLATEX = env TEXINPUTS=$(srcdir):$(srcdir)/..:$(top_srcdir)/tests:.: pdflatex
 
 # We can't specify the source directory to latex so we have to build

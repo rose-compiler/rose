@@ -791,9 +791,10 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_loader_flags",      p_e_loader_flags, p_e_loader_flags);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
     for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
-        sprintf(p, "%sPEFileHeader.pair[%d].", prefix, i);
-        w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-        fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p, w, "..",
+        char p2[256];
+        sprintf(p2, "%s.pair[%d].", p, i);
+        w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p2));
+        fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p2, w, "..",
                 p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),
                 p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
     }

@@ -7,12 +7,19 @@
 #if 1
 // file locking support
 #include <errno.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #ifndef _MSC_VER
 #include <sys/resource.h>
 #endif
 #endif
+
+#ifdef _MSC_VER
+#include <windows.h> 		// getpagesize()
+#endif
+
+#include <boost/thread.hpp>	// sleep()
 
 // DQ (12/8/2006): Linux memory usage mechanism (no longer used, implemented internally (below)).
 // #include<memoryUsage.h>
@@ -96,8 +103,14 @@ int
 ROSE_MemoryUsage::getPageSizeBytes() const
    {
 #ifdef _MSC_VER
-#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
-	 return 0;
+
+     // CH (4/6/2010): Windows's version of `getpagesize()'
+     SYSTEM_INFO system_info;
+     GetSystemInfo(&system_info);
+     return static_cast<int>(system_info.dwPageSize);
+
+//#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
+//	 return 0;
 #else
      return getpagesize();
 #endif
@@ -114,12 +127,7 @@ ROSE_MemoryUsage::getCurrentMemoryUsage()
 double
 ROSE_MemoryUsage::getPageSizeMegabytes() const
    {
-#ifdef _MSC_VER
-#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
-	 return 0;
-#else
-     return getpagesize() / (1024.0 * 1024.0);
-#endif
+     return getPageSizeBytes() / (1024.0 * 1024.0);
    }
 
 double
@@ -355,7 +363,8 @@ AstPerformance::getLock()
                printf ("Waiting for lock! counter = %lu userTolerance = %lu \n",counter,userTolerance);
 
 #ifdef _MSC_VER
-#pragma message ("WARNING: sleep() Linux support not available in Windows.")
+//#pragma message ("WARNING: sleep() Linux support not available in Windows.")
+          Sleep(1000);
 #else
           sleep(1);
 #endif
@@ -379,6 +388,7 @@ AstPerformance::getLock()
 
      return fd;
    }
+
 
 void
 AstPerformance::releaseLock (int fd )
