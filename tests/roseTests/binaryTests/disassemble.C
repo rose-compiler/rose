@@ -20,7 +20,7 @@ public:
         printf("      E = entry address         C = call target           X = exception frame\n");
         printf("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
         printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
-        printf("      H = insn sequence head\n");
+        printf("      H = insn sequence head    L = leftover blocks\n");
         printf("\n");
         printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name\n");
         printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");

@@ -3867,7 +3867,11 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 		FUNC_INTERPAD    = 0x080,		/**< Created to represent NOP padding between other functions. */
 		FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous in memory. */
 		FUNC_INSNHEAD    = 0x200,		/**< For initial instructions not in any other function (is always run) */
-                FUNC_DEFAULT     = 0x3ff                /**< Default value for Partitioner class */
+		FUNC_LEFTOVERS   = 0x400,		/**< Generated function to hold blocks that are otherwise not part of
+							 *   any function.  If this bit is turned off then the instruction
+							 *   Partitioner will delete instructions that it couldn't assign to
+							 *   a function. */
+                FUNC_DEFAULT     = 0x7ff                /**< Default value for Partitioner class */
         };
 
 	/** Returns a very short string describing the reason mask. */

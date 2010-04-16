@@ -174,7 +174,8 @@ public:
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
      *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
-     *  "***unassigned blocks***" whose entry address will be the address of the lowest instruction. */
+     *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction.  However, if the
+     *  FUNC_LEFTOVERS bit is not turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
     
 protected:

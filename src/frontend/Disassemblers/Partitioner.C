@@ -62,6 +62,7 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
     add_to_reason_string(result, (r & FUNC_USERDEF),     do_pad, "U", "user defined");
     add_to_reason_string(result, (r & FUNC_INTERPAD),    do_pad, "N", "padding");
     add_to_reason_string(result, (r & FUNC_DISCONT),     do_pad, "D", "discontiguous");
+    add_to_reason_string(result, (r & FUNC_LEFTOVERS),   do_pad, "L", "leftovers");
     return result;
 }
 /*
@@ -116,6 +117,8 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunctionDeclaration::FUNC_USERDEF;
         } else if (word=="pad" || word=="padding" || word=="interpad") {
             bits = SgAsmFunctionDeclaration::FUNC_INTERPAD;
+        } else if (word=="unassigned" || word=="unclassified" || word=="leftover" || word=="leftovers") {
+            bits = SgAsmFunctionDeclaration::FUNC_LEFTOVERS;
         } else if (word=="default") {
             bits = SgAsmFunctionDeclaration::FUNC_DEFAULT;
             if (howset==NOT_SPECIFIED) howset = SET_VALUE;
@@ -984,15 +987,18 @@ Partitioner::post_cfg(SgAsmInterpretation *interp)
 SgAsmBlock *
 Partitioner::build_ast()
 {
-    /* Build a function to hold all the unassigned instructions. */
+    /* Build a function to hold all the unassigned instructions.  Update documentation if changing the name of
+     * this generated function! */
     Function *catchall = NULL;
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        BasicBlock *bb = find_bb_containing(ii->first);
-        ROSE_ASSERT(bb!=NULL);
-        if (!bb->function) {
-            if (!catchall)
-                catchall = add_function(ii->first, 0, "***unassigned blocks***"); /*see documentation if changing this name*/
-            append(catchall, bb);
+    if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
+        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+            BasicBlock *bb = find_bb_containing(ii->first);
+            ROSE_ASSERT(bb!=NULL);
+            if (!bb->function) {
+                if (!catchall)
+                    catchall = add_function(ii->first, SgAsmFunctionDeclaration::FUNC_LEFTOVERS, "***uncategorized blocks***");
+                append(catchall, bb);
+            }
         }
     }
 
