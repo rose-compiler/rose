@@ -3101,7 +3101,8 @@ std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
-#ifdef _MSC_VER 
+//#ifdef _MSC_VER 
+#if 0
 // DQ (11/29/2009): attempting to fix: error C2903: 'rebind' : symbol is neither a class template nor a function template
 // #pragma message ("WARNING: struct eqstr skipped for MSVC.")
 #else
@@ -3199,7 +3200,7 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
              {}
 #endif
 #else  // ifdef _MSC_VER
-#include <ext/hash_map>
+
 class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 //class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
