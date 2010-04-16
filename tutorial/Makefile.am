@@ -64,6 +64,7 @@ TUTORIAL_EXAMPLES = \
    defuseAnalysis \
    dwarfAnalysis \
    dwarfInstructionAddressToSourceLineAnalysis \
+   findVariableDeclarations \
    generatingUniqueNamesFromDeclaration \
    graphGenerationOfSubtree \
    graphTraversal \
@@ -307,6 +308,8 @@ sprintf_to_snprintf_SOURCES = sprintf_to_snprintf.C
 seedBugsExample_arrayIndexing_SOURCES = seedBugsExample_arrayIndexing.C
 
 volatileTypeModifier_SOURCES = volatileTypeModifier.C
+
+findVariableDeclarations_SOURCES = findVariableDeclarations.C
 
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.

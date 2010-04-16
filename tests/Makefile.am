@@ -76,7 +76,7 @@ testObjectFileCodeGeneration: testCodeGeneration
 	./testCodeGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
 
 testLinkFileCodeGeneration: testObjectFileCodeGeneration
-	./testCodeGeneration $(INCLUDES) alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
+	./testCodeGeneration -rose:Cxx alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
 
 testCppFileCodeGeneration: testCodeGeneration
 	./testCodeGeneration -E $(INCLUDES) $(srcdir)/inputFile.C

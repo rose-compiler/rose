@@ -16,7 +16,7 @@ chapter {\em Getting Started} for more details).
            The User Manual presents how to get started with ROSE and documents 
            features of the ROSE infrastructure.  The User Manual is found in 
            ROSE/docs/Rose directory, or at: \\
-           \htmladdnormallink{ROSE User Manual (postscript version, relative link)}{../ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf}
+           \htmladdnormallink{ROSE User Manual (pdf version, relative link)}{../ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf}
 
 %          \htmladdnormallink{ROSE User Manual (postscript version)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_UserManual/ROSE-@VERSION@-UserManual.ps} or
 %          \htmladdnormallink{ROSE User Manual (postscript version, relative link)}{../ROSE_UserManual/ROSE-@VERSION@-UserManual.ps} or \\
@@ -40,7 +40,7 @@ chapter {\em Getting Started} for more details).
            example may be modified (changing either the example translators or the
            inputs to the examples).  The ROSE Tutorial can also be found in the
            {\tt ROSE/docs/Rose/Tutorial} directory (the LaTeX document; ps or pdf file) \\
-           \htmladdnormallink{: ROSE Tutorial (postscript version, relative link),}{../ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf}
+           \htmladdnormallink{: ROSE Tutorial (pdf version, relative link),}{../ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf}
 
 %          \htmladdnormallink{: ROSE Tutorial (postscript version, relative link),}{../ROSE_Tutorial/ROSE-@VERSION@-Tutorial.ps} 
 %          \htmladdnormallink{ or ROSE Tutorial (html version, relative link)}{file:../ROSE_Tutorial/tutorial.html}

@@ -7,14 +7,14 @@
 #include "integerOps.h"
 #include "sageBuilderAsm.h"
 
-/** Disassembler for the PowerPC architecture.  This class is usually instantiated indirectly through Disassembler::create().
- *  Most of the useful disassembly methods can be found in the superclass. */
+/** Disassembler for the PowerPC architecture. */
 class DisassemblerPowerpc: public Disassembler {
 public:
-    DisassemblerPowerpc() {} /* Such an object can only be used as a factory for Disassembler::register_subclass() */
-    DisassemblerPowerpc(SgAsmGenericHeader *fhdr) {init(fhdr);}
+    DisassemblerPowerpc(): ip(0), insn(0) { init(); }
+    DisassemblerPowerpc(const DisassemblerPowerpc& other): Disassembler(other), ip(other.ip), insn(other.insn) {}
     virtual ~DisassemblerPowerpc() {}
-    virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
+    virtual DisassemblerPowerpc *clone() const { return new DisassemblerPowerpc(*this); }
+    virtual bool can_disassemble(SgAsmGenericHeader*) const;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
@@ -238,7 +238,7 @@ private:
     SgAsmPowerpcInstruction* disassemble();
 
     /** Initialize instances of this class. Called by constructor. */
-    void init(SgAsmGenericHeader*);             /* initialize instances */
+    void init();
     
     /** Resets disassembler state to beginning of an instruction. */
     void startInstruction(rose_addr_t start_va, uint32_t c) {

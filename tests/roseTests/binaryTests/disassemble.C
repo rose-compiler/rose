@@ -141,8 +141,8 @@ main(int argc, char *argv[])
                 continue;
         }
 
-        /* Build the disassembler */
-        Disassembler *d = Disassembler::create(interp);
+        /* Get a copy of the disassembler so we can modify it locally. */
+        Disassembler *d = Disassembler::lookup(interp)->clone();
         if (do_debug_disassembler)
             d->set_debug(stderr);
 

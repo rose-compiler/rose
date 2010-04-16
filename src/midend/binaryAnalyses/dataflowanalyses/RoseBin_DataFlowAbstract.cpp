@@ -935,7 +935,7 @@ RoseBin_DataFlowAbstract::createVariable(uint64_t position,
   }
   string var_name = RoseBin_support::HexToString(position)+":"+name;
 
-  rose_hash::hash_map <uint64_t, RoseBin_Variable*>::iterator it = variables.find(position);
+  rose_hash::unordered_map <uint64_t, RoseBin_Variable*>::iterator it = variables.find(position);
   if (it==variables.end()) {
     var_hashed = new RoseBin_Variable(position, name, type, description, length, value);
     variables[position] = var_hashed;
@@ -962,7 +962,7 @@ RoseBin_DataFlowAbstract::getVariable(std::string var) {
   uint64_t val = 0;
 
 // DQ (4/23/2009): Made a typedef for the type used here since it is sensative to the template default parameters.
-// rose_hash::hash_map <std::string,uint64_t>::iterator it = variablesReverse.find(var);
+// rose_hash::unordered_map <std::string,uint64_t>::iterator it = variablesReverse.find(var);
   variablesReverseType::iterator it = variablesReverse.find(var);
 
   if (it!=variablesReverse.end()) {
@@ -975,7 +975,7 @@ RoseBin_DataFlowAbstract::getVariable(std::string var) {
 RoseBin_Variable*
 RoseBin_DataFlowAbstract::getVariable(uint64_t pos) {
   RoseBin_Variable* var=NULL;
-  rose_hash::hash_map <uint64_t, RoseBin_Variable*>::iterator it = variables.find(pos);
+  rose_hash::unordered_map <uint64_t, RoseBin_Variable*>::iterator it = variables.find(pos);
   if (it!=variables.end()) {
     var = it->second;
   }

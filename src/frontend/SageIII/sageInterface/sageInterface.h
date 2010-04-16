@@ -104,21 +104,28 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 // DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined 
 // function into the list used to edit the outlined code subtree to fixup references (from symbols 
 // in the original file to the symbols in the newer separate file).
-// typedef rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
+// typedef rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
 // void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
-#ifdef _MSC_VER
+
+// CH (4/9/2010): Use boost::hash instead 
+//#ifdef _MSC_VER
+#if 0 
 inline size_t hash_value(SgNode* t) {return (size_t)t;}
 #endif
 
 struct hash_nodeptr
    {
-#ifndef _MSC_VER
-	   rose_hash::hash<char*> hasher;
+// CH (4/9/2010): Use boost::hash instead 
+//#ifndef _MSC_VER
+#if 0
+	   //rose_hash::hash<char*> hasher;
 #endif
      public:
           size_t operator()(SgNode* node) const
              {
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::hash instead 
+//#ifdef _MSC_VER
+#if 0
 				 return (size_t) hash_value(node);
 #else
 				 return (size_t) node;
@@ -126,7 +133,7 @@ struct hash_nodeptr
 		  }
    };
 
- void supplementReplacementSymbolMap ( rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
+ void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
 
 //------------------------------------------------------------------------
 //@{

@@ -12,12 +12,10 @@
 #include <algorithm>
 #include <climits>
 #include <queue>
-
 #include <boost/lexical_cast.hpp>
 #include <boost/progress.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
-
 // #include <rose.h>
 
 using namespace std;
@@ -110,7 +108,6 @@ class AstStorage
     {
 // DQ (3/4/2010): This source file does not appear to compile with the AST File I/O (which is kind of ironic).
 #ifndef CXX_IS_ROSE_AST_FILE_IO
-
 	using namespace boost::filesystem;
 	if (exists(output))
 	    remove(output);

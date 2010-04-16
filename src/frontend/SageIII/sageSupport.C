@@ -47,7 +47,7 @@
 
 //Needed for boost::filesystem::exists(...)
 #include "boost/filesystem.hpp"
-
+#include <stdio.h>
 
 //Liao, 10/27/2008: parsing OpenMP pragma here
 //Handle OpenMP pragmas. This should be called after preprocessing information is attached since macro calls may exist within pragmas, Liao, 3/31/2009
@@ -437,7 +437,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // return value for calls to SLA
      int optionCount = 0;
 
-#if 1
+#if 0
   // DQ (11/1/2009): To be consistant with other tools disable -h and -help options (use --h and --help instead).
   // This is a deprecated option
   //
@@ -490,7 +490,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           exit(0);
         }
 
-#if 1
+#if 0
   // DQ (11/1/2009): To be consistant with other tools disable -h and -help options (use --h and --help instead).
   // This is a deprecated option
   //
@@ -559,6 +559,43 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("Option -c found (compile only)! \n");
           set_compileOnly(true);
+        }
+
+
+  // DQ (4/7/2010): This is useful when using ROSE translators as a linker, this permits the SgProject
+  // to know what backend compiler to call to do the linking.  This is required when there are no SgFile
+  // objects to get this information from.
+     set_C_only(false);
+     ROSE_ASSERT (get_C_only() == false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(c|C)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In SgProject: C only mode ON \n");
+          set_C_only(true);
+        }
+
+  // DQ (4/7/2010): This is useful when using ROSE translators as a linker, this permits the SgProject
+  // to know what backend compiler to call to do the linking.  This is required when there are no SgFile
+  // objects to get this information from.
+     set_Cxx_only(false);
+     ROSE_ASSERT (get_Cxx_only() == false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(cxx|Cxx)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In SgProject: C++ only mode ON \n");
+          set_Cxx_only(true);
+        }
+
+  // DQ (4/7/2010): This is useful when using ROSE translators as a linker, this permits the SgProject
+  // to know what backend compiler to call to do the linking.  This is required when there are no SgFile
+  // objects to get this information from.
+     set_Fortran_only(false);
+     ROSE_ASSERT (get_Fortran_only() == false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(f|F|Fortran)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In SgProject: Fortran only mode ON \n");
+          set_Fortran_only(true);
         }
 
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
@@ -1055,8 +1092,20 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_syntax_check)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf ("skip syntax checking mode ON \n");
+               printf ("skip syntax check mode ON \n");
           set_skip_syntax_check(true);
+        }
+
+  //
+  // Turn on relaxed syntax checking mode (only applies to Fortran support).
+  //
+     set_relax_syntax_check(false);
+     ROSE_ASSERT (get_relax_syntax_check() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(relax_syntax_check)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("relax syntax check mode ON \n");
+          set_relax_syntax_check(true);
         }
 
   //
@@ -1102,13 +1151,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
     // set_UPC_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
     // ROSE_ASSERT (get_UPC_only() == false);
      bool hasRoseUpcEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPC|UPC_only)",true) ;
-     bool hasEdgUpcEnabled = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
+     bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
      if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled) 
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf (" mode ON \n");
+               printf ("UPC mode ON \n");
           set_C_only(true);
           set_UPC_only(true);
           // remove edg:restrict since we will add it back in SgFile::build_EDG_CommandLine()
@@ -1118,22 +1167,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
     // two situations: either of -rose:upc_threads n  and --edg:upc_threads n appears.
     // set flags and remove both.
-    int integerOptionForUPCThreads = 0;
-    int integerOptionForUPCThreads2 = 0;
-    bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)",
-          integerOptionForUPCThreads,true);
-    bool hasEDGUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"--edg:","(upc_threads)",
-          integerOptionForUPCThreads2,true);
+     int integerOptionForUPCThreads  = 0;
+     int integerOptionForUPCThreads2 = 0;
+     bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)", integerOptionForUPCThreads,true);
+     bool hasEDGUpcThreads  = CommandlineProcessing::isOptionWithParameter(argv,"--edg:","(upc_threads)", integerOptionForUPCThreads2,true);
 
-    integerOptionForUPCThreads= (integerOptionForUPCThreads!=0)?integerOptionForUPCThreads:integerOptionForUPCThreads2;
-    if (hasRoseUpcThreads||hasEDGUpcThreads)
-    {  
+     integerOptionForUPCThreads = (integerOptionForUPCThreads != 0) ? integerOptionForUPCThreads : integerOptionForUPCThreads2;
+     if (hasRoseUpcThreads||hasEDGUpcThreads)
+        {  
        // set ROSE SgFile::upc_threads value, done for ROSE
-       set_upc_threads(integerOptionForUPCThreads);
-       if ( SgProject::get_verbose() >= 1 )
-             printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
-
-     }       
+          set_upc_threads(integerOptionForUPCThreads);
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
+        }
   //
   // C++ only option
   //
@@ -1956,6 +2002,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
      optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);
@@ -4892,26 +4939,9 @@ global_build_classpath()
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
      classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
 
-  // string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_MAJOR_VERSION_NUMBER + "." + ROSE_OFP_MINOR_VERSION_NUMBER + "." + ROSE_OFP_PATCH_VERSION_NUMBER + ".jar");
      string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
-  // classpath += findRoseSupportPathFromSource(ofp_class_path, ofp_jar_file_name) + ":";
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
-
-#if 0
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
-#else
-   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
-     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
-   #else
-     printf ("Error: Unknown version of OFP \n");
-     ROSE_ASSERT(false);
-   #endif
-#endif
-#endif
 
      classpath += ".";
 
@@ -4926,45 +4956,6 @@ global_build_classpath()
 string
 SgSourceFile::build_classpath()
    {
-#if 0
-#if 1
-  // This function builds the class path for use with Java and the cal to the OFP.
-     string classpath = "-Djava.class.path=";
-  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
-  // classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
-     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
-
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
-  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
-#else
-   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
-     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
-   #else
-     printf ("Error: Unknown version of OFP \n");
-     ROSE_ASSERT(false);
-   #endif
-#endif
-
-     classpath += ".";
-
-     return classpath;
-#else
-  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
-     fprintf(stderr, "SgSourceFile::build_classpath() should not be called.  It sets up the wrong class paths. \n");
-     ROSE_ASSERT(false);
-  // abort();
-
-  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
-     return "error in SgSourceFile::build_classpath()";
-#endif
-#endif
-
      return global_build_classpath();
    }
 
@@ -5136,11 +5127,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // or -ffixed-line-length-none options (not available in all versions of gfortran).
           string use_line_length_none_string;
 
+          bool relaxSyntaxCheckInputCode = (get_relax_syntax_check() == true);
+
        // DQ (11/17/2007): Set the fortran mode used with gfortran.
           if (get_F90_only() == true || get_F95_only() == true)
              {
             // For now let's consider f90 to be syntax checked under f95 rules (since gfortran does not support a f90 specific mode)
-               fortranCommandLine.push_back("-std=f95");
+               if (relaxSyntaxCheckInputCode == false)
+                    fortranCommandLine.push_back("-std=f95");
 
             // DQ (5/20/2008)
             // fortranCommandLine.push_back("-ffree-line-length-none");
@@ -5150,7 +5144,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              {
                if (get_F2003_only() == true)
                   {
-                    fortranCommandLine.push_back("-std=f2003");
+                 // fortranCommandLine.push_back("-std=f2003");
+                    if (relaxSyntaxCheckInputCode == false)
+                         fortranCommandLine.push_back("-std=f2003");
 
                  // DQ (5/20/2008)
                  // fortranCommandLine.push_back("-ffree-line-length-none");
@@ -5336,11 +5332,29 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
 
+          bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
+
        // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
           for (size_t i = 0; i < includeList.size(); i++)
              {
                OFPCommandLine.push_back(includeList[i]);
+
+            // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
+
+            // I think we have to permit an optional space between the "-I" and the path
+               if ("-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+                  {
+                 // The source file path is already included!
+                    foundSourceDirectoryExplicitlyListedInIncludePaths = true;
+                  }
+             }
+
+       // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+          if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
+             {
+            // Add the source directory to the include list so that we reproduce the semantics of gfortran
+               OFPCommandLine.push_back("-I" + getSourceDirectory() );
              }
 
           OFPCommandLine.push_back(get_sourceFileNameWithPath());
@@ -5358,15 +5372,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 #else
 
-#error "REMOVE THIS CODE"
+// #error "REMOVE THIS CODE"
 
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_only_argc    = 0;
           char** openFortranParser_only_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
-          frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+       // frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+          int errorCode = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 #endif
-          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) \n");
+          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
        // exit(0);
 
           ROSE_ASSERT(errorCode == 0);
@@ -6808,8 +6823,8 @@ SgProject::link ( std::string linkerName )
   // if (numberOfFiles() == 0)
      if (numberOfFiles() == 0 && numberOfDirectories() == 0)
         {
-          if (get_verbose() >0)
-               cout << "SgProject::link may encountering an object file ..." << endl;
+          if (get_verbose() > 0)
+               cout << "SgProject::link maybe encountering an object file ..." << endl;
 
        // DQ (1/24/2010): support for directories not in place yet.
           if (numberOfDirectories() > 0)
@@ -6930,10 +6945,11 @@ SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
 
           if (get_Fortran_only() == true)
              {
-               linkerName = "f77 ";
+            // linkerName = "f77 ";
+               linkerName = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
              }
         }
-     
+
   // This is a better implementation since it will include any additional command line options that target the linker
      Rose_STL_Container<string> linkingCommand ; 
 
@@ -6942,40 +6958,35 @@ SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
      // The assumption is that -o objectFileName is made explicit and
      // is generated by SgFile::generateOutputFileName()
      for (int i=0; i < numberOfFiles(); i++)
-     {
-       linkingCommand.push_back(get_file(i).generateOutputFileName());
-     }
+        {
+          linkingCommand.push_back(get_file(i).generateOutputFileName());
+        }
 
-     // Add any options specified in the original command line (after preprocessing)
+  // Add any options specified in the original command line (after preprocessing)
      linkingCommand.insert(linkingCommand.end(), argv.begin(), argv.end());
 
-     //Check if -o option exists, otherwise append -o a.out to the command line
-     
-     //Additional libraries to be linked with
-     // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
+  // Check if -o option exists, otherwise append -o a.out to the command line
+
+  // Additional libraries to be linked with
+  // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
      if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering()))
-     {
+        {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
        // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-       {
-         string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-         ROSE_ASSERT (gomp_lib_path.size() != 0);
-         linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-         linkingCommand.push_back("-lpthread");
-       }
+          if (USE_ROSE_GOMP_OPENMP_LIBRARY)
+             {
+               string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
+               ROSE_ASSERT (gomp_lib_path.size() != 0);
+               linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
+               linkingCommand.push_back("-lpthread");
+             }
 #endif
-     }
+        }
 
-     if ( get_verbose() > 1 )
-     {
-       cout<<"linking command line is "<<endl;
-       for (vector<string>::iterator iter = linkingCommand.begin(); iter != linkingCommand.end(); iter++)
-       {
-         std::string str = *iter;
-         cout<<"\t"<<str<<endl;
-       }
-     }
+     if ( get_verbose() > 0 )
+        {
+          printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
+        }
 
      int status = systemFromVector(linkingCommand);
 
@@ -7059,9 +7070,11 @@ SgFile::usage ( int status )
 "                             filename where compiler performance for internal\n"
 "                             phases (in CSV form) is placed for later\n"
 "                             processing (using script/graphPerformance)\n"
-"     -rose:exit_after_parser just call the parser (fortran only)\n"
+"     -rose:exit_after_parser just call the parser (C, C++, and fortran only)\n"
 "     -rose:skip_syntax_check skip Fortran syntax checking (required for F2003 and Co-Array Fortran code\n"
 "                             when using gfortran versions greater than 4.1)\n"
+"     -rose:relax_syntax_check skip Fortran syntax checking (required for some F90 code\n"
+"                             when using gfortran based syntax checking)\n"
 "     -rose:skip_rose         process command line and call backend directly,\n"
 "                             skipping all ROSE-specific processing\n"
 "     -rose:skip_transformation\n"
@@ -7606,12 +7619,19 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      result = vector<string>();
 
+
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: Linux popen() not supported within MSVC.")
+//	 printf ("WARNING: Linux popen() not supported within MSVC.");
+//	 ROSE_ASSERT(false);
+//#else
+
+     // CH (4/6/2010): The Windows version of popen is _popen
 #ifdef _MSC_VER
-#pragma message ("WARNING: Linux popen() not supported within MSVC.")
-	 printf ("WARNING: Linux popen() not supported within MSVC.");
-	 ROSE_ASSERT(false);
+     if ((fp = _popen(command.c_str (), "r")) == NULL)
 #else
      if ((fp = popen(command.c_str (), "r")) == NULL)
+#endif
         {
           cerr << "Files or processes cannot be created" << endl;
           returnValue = false;
@@ -7632,12 +7652,16 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
           result.push_back (current_string.substr (0, current_string.size () - 1));
         }
 
+#ifdef _MSC_VER
+     if (_pclose(fp) == -1)
+#else
      if (pclose(fp) == -1)
+#endif
         {
           cerr << ("Cannot execute pclose");
           returnValue = false;
         }
-#endif
+//#endif
 
      return returnValue;
    }

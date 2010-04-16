@@ -131,9 +131,11 @@ Disassembler::initclass()
     static bool initialized=false;
     if (!initialized) {
         initialized = true;
-        register_subclass(new DisassemblerArm);
-        register_subclass(new DisassemblerPowerpc);
-        register_subclass(new DisassemblerX86);
+        register_subclass(new DisassemblerArm());
+        register_subclass(new DisassemblerPowerpc());
+        register_subclass(new DisassemblerX86(2)); /*16-bit*/
+        register_subclass(new DisassemblerX86(4)); /*32-bit*/
+        register_subclass(new DisassemblerX86(8)); /*64-bit*/
     }
 }
 
@@ -146,14 +148,14 @@ Disassembler::register_subclass(Disassembler *factory)
     disassemblers.push_back(factory);
 }
 
-/* Class factory method */
+/* Class method */
 Disassembler *
-Disassembler::create(SgAsmInterpretation *interp)
+Disassembler::lookup(SgAsmInterpretation *interp)
 {
     Disassembler *retval=NULL;
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     for (size_t i=0; i<headers.size(); i++) {
-        Disassembler *candidate = create(headers[i]);
+        Disassembler *candidate = lookup(headers[i]);
         if (retval && retval!=candidate)
             throw Exception("interpretation has multiple disassemblers");
         retval = candidate;
@@ -161,17 +163,14 @@ Disassembler::create(SgAsmInterpretation *interp)
     return retval;
 }
 
-/* Class factory method */
+/* Class method */
 Disassembler *
-Disassembler::create(SgAsmGenericHeader *header)
+Disassembler::lookup(SgAsmGenericHeader *header)
 {
     initclass();
     for (size_t i=disassemblers.size(); i>0; --i) {
-        Disassembler *factory = disassemblers[i-1];
-        ROSE_ASSERT(factory);
-        Disassembler *d = factory->can_disassemble(header);
-        if (d)
-            return d;
+        if (disassemblers[i-1]->can_disassemble(header))
+            return disassemblers[i-1];
     }
     throw Exception("no disassembler for architecture");
 }
@@ -195,7 +194,8 @@ Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, B
 void
 Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 {
-    Disassembler *disassembler = Disassembler::create(interp);
+    /* Create a new disassembler so we can modify its behavior locally. */
+    Disassembler *disassembler = Disassembler::lookup(interp)->clone();
 
     /* Search methods specified with "-rose:disassembler_search" are stored in the SgFile object. Use them rather than the
      * defaults built into the Disassembler class. */

@@ -204,7 +204,7 @@
 %-----------------------------------------------------------
 \part[Working with the ROSE AST]{  Working with the ROSE AST \\
 \vspace{1.0in}
-\normalsize{Get familiar with the ROSE AST is the basis for any advanced
+\normalsize{Getting familiar with the ROSE AST is the basis for any advanced
 usage of ROSE. This part of tutorial collects examples for AST
 visualization, traversal, query, and debugging.}
 }
