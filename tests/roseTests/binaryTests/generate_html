@@ -1,0 +1,20 @@
+#!/bin/bash
+
+for fdot in *-F*.dot; do
+    # Base name of original executable
+    exebase="${fdot%-F*.dot}"
+
+    # Base name of generated files (exe base name and node name)
+    basename="${fdot%.dot}"
+
+    # Name of function node
+    node="${fdot#$exebase-}"
+    node="${node%.dot}"
+
+    echo $node
+    echo "<html><body><img src=${basename}.gif usemap=\"#${node}\"/>" >$basename.html
+    dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null || exit 1
+    sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
+    rm $basename.map
+    echo "</body></html>" >>$basename.html
+done

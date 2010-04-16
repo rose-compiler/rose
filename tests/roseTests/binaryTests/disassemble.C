@@ -72,6 +72,7 @@ public:
     }
 };
 
+/* Generate the "label" attribute for a function node in a *.dot file. */
 static std::string
 function_label_attr(SgAsmFunctionDeclaration *func)
 {
@@ -89,8 +90,17 @@ function_label_attr(SgAsmFunctionDeclaration *func)
     return retval;
 }
 
-/** Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
- *  control flow edges within the function. */
+/* Generate the "URL" attribute for a function node in a *.dot file */
+static std::string
+function_url_attr(SgAsmFunctionDeclaration *func)
+{
+    char buf[64];
+    sprintf(buf, "F%08"PRIx64, func->get_entry_va());
+    return std::string("URL=\"") + buf + ".html\"";
+}
+
+/* Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
+ * control flow edges within the function. */
 static std::string
 dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bool verbose) 
 {
@@ -135,17 +145,24 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bo
         }
         fprintf(out, "  };\n"); /*subgraph*/
     } else {
-        fprintf(out, "B%s [ %s ];\n", node_name, label_attr.c_str());
+        fprintf(out, "B%s [ %s, %s ];\n", node_name, label_attr.c_str(), function_url_attr(func).c_str());
     }
     return std::string("B") + node_name;
 }
 
-/** Creates a GraphVis file (*.dot) containing the instructions and control flow information for a single function.  Control
- *  flowing into or our of this fuction from/to other functions are represented in the graph, although nodes for the other
- *  functions are simplified (containing only some summary information). */
+/* Create a graphvis *.dot file of the control-flow graph for the specified function, along with the call graph edges into and
+ * out of the specified function. */
 static void
-dump_function_cfg(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg)
+dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func, BinaryCFG &cfg)
 {
+    char func_node_name[64];
+    sprintf(func_node_name, "F%08"PRIx64, func->get_entry_va());
+    fprintf(stderr, " %s", func_node_name);
+    FILE *out = fopen((fileprefix+"-"+func_node_name+".dot").c_str(), "w");
+    ROSE_ASSERT(out!=NULL);
+    fprintf(out, "digraph %s {\n", func_node_name);
+    fprintf(out, "  node [ shape = box ];\n");
+
     Disassembler::AddressSet seen;
     std::string my_node = dump_function_node(out, func, cfg, true);
     seen.insert(func->get_entry_va());
@@ -190,21 +207,33 @@ dump_function_cfg(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg)
             fprintf(out, "  %s -> %s\n", caller_node.c_str(), my_node.c_str());
         }
     }
+
+    fprintf(out, "}\n"); /*digraph*/
+    fclose(out);
 }
 
+/* Create control flow graphs for each function, one per file.  Also creates a function call graph. */
 static void
-dumpCFG(SgNode *ast)
+dump_CFG_CG(SgNode *ast)
 {
     std::vector<SgAsmFunctionDeclaration*> funcs = SageInterface::querySubTree<SgAsmFunctionDeclaration>
                                                    (ast, V_SgAsmFunctionDeclaration);
 
     BinaryCFG cfg(ast);
 
-    /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. */
+    /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. Note that if the
+     * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
+     * have been pruned from the AST anyway. */
     for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
         if ((*fi)->get_name() == "***unassigned blocks***")
             cfg.erase(*fi);
     }
+
+    /* Get the base name for the output files. */
+    SgFile *srcfile = NULL;
+    for (SgNode *n=ast; n && !srcfile; n=n->get_parent())
+        srcfile = isSgFile(n);
+    std::string filename = srcfile ? srcfile->get_sourceFileNameWithoutPath() : "x";
 
     /* Generate a dot file for the function call graph */
     struct T1: public BinaryCG::NodeFunctor {
@@ -232,7 +261,8 @@ dumpCFG(SgNode *ast)
         }
     };
 
-    FILE *out = fopen("x-cg.dot", "w");
+    fprintf(stderr, "  generating: cg");
+    FILE *out = fopen((filename+"-cg.dot").c_str(), "w");
     ROSE_ASSERT(out);
     fprintf(out, "digraph {\n");
     fprintf(out, "node [ shape = box ];\n");
@@ -242,19 +272,10 @@ dumpCFG(SgNode *ast)
     fclose(out);
     
     /* Generate a dot file for each function */
-    for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
-        char func_node_name[64];
-        sprintf(func_node_name, "F%08"PRIx64, (*fi)->get_entry_va());
-        std::string filename = std::string("x-") + func_node_name + ".dot";
-        FILE *out = fopen(filename.c_str(), "w");
-        ROSE_ASSERT(out!=NULL);
-        fprintf(out, "digraph {\n");
-        fprintf(out, "  node [ shape = box ];\n");
-        dump_function_cfg(out, *fi, cfg);
-        fprintf(out, "}\n"); /*digraph*/
-        fclose(out);
-    };
+    for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi)
+        dump_function_cfg(filename, *fi, cfg);
 
+    fprintf(stderr, "\n");
 }
 
 int
@@ -392,9 +413,9 @@ main(int argc, char *argv[])
         /* Generate graph of the AST */
         if (do_dot) {
             printf("Generating DOT graphs...\n");
-            //generateDOT(*project);
+            dump_CFG_CG(interp);
+            generateDOT(*project);
             //generateAstGraph(project, INT_MAX);
-            dumpCFG(interp);
         }
         
         /* Test assembler */
