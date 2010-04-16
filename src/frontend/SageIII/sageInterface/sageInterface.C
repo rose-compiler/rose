@@ -10483,17 +10483,16 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
   {
     if (handle->getNode()!=NULL)
     {
-// CH (4/7/2010): MSVC 9.0 can compile the following code. See "abstract_handle.h"
-//#ifndef _MSC_VER
-//     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-//		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
-//
-//#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
-//		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
-//		ROSE_ASSERT(false);
-//#else
+#ifdef _MSC_VER
+     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
+		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+
+#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
+		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
+		ROSE_ASSERT(false);
+#else
 		SgNode* result = (SgNode*)(handle->getNode()->getNode());
-//#endif
+#endif
       // deallocate memory, should not do this!!
       // May corrupt the internal std maps used in abstract handle namespace
       //delete handle->getNode();
