@@ -11,31 +11,50 @@ INCLUDES = -Winvalid-pch $(ROSE_INCLUDES)
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
 # JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
 # more information on this process.
-libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+# libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+   libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+else
+   libroseEDGlibraries =
+endif
 
-libroseBinaryLibraries = \
-   $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-   $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
-   $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
-   $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la \
-   $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
-   $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+   libroseOpenFortranParserlibraries = frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
+else
+   libroseOpenFortranParserlibraries =
+endif
+
+if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+   librosePHPlibraries = frontend/PHPFrontend/librosePHPFrontend.la
+else
+   librosePHPlibraries =
+endif
+
+# if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   libroseBinaryLibraries = \
+      $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
+      $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
+      $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
+      $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la \
+      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
+      $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
+# else
+#   libroseBinaryLibraries =
+# endif
 
 if ROSE_USE_SQLITE_DATABASE
-
-libroseSqlite3xConnection = \
-   $(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
-   OPT_SQLITE3_LDFLAGS = $(SQLITE3_LDFLAGS)
+   libroseSqlite3xConnection = $(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
+   OPT_SQLITE3_LDFLAGS       = $(SQLITE3_LDFLAGS)
 else
    libroseSqlite3xConnection = 
    OPT_SQLITE3_LDFLAGS =
 endif
 
 if ROSE_WITH_ROSEQT
-libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la \
-                     $(top_builddir)/src/3rdPartyLibraries/qrose/QRoseLib/libqrose.la
+   libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la \
+                        $(top_builddir)/src/3rdPartyLibraries/qrose/QRoseLib/libqrose.la
 else
-libroseQtExtension =
+   libroseQtExtension =
 endif
 
 # TODO: correct list!
@@ -48,8 +67,8 @@ libroseLibraries = \
    $(top_builddir)/src/backend/unparser/PHPCodeGeneration/libunparsePHP.la \
    $(top_builddir)/src/backend/unparser/formatSupport/libunparseFormatSupport.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
-   $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la \
-   $(top_builddir)/src/frontend/PHPFrontend/librosePHPFrontend.la \
+   $(libroseOpenFortranParserlibraries) \
+   $(librosePHPlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
@@ -92,6 +111,9 @@ libroseLibraries = \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
+# DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
+# used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
+# used $(librosePHPlibraries) to replace $(top_builddir)/src/frontend/PHPFrontend/librosePHPFrontend.la
 
 EXTRA_DIST = CMakeLists.txt extra.docs
 
@@ -198,7 +220,9 @@ uninstall-local:
 rebuildPrelinker:
 #	DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
 #	rm -f frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	rm -f frontend/CxxFrontend/EDG/EDG_3.3/util/edg_prelink.lo
+endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)

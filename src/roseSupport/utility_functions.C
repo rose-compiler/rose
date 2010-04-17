@@ -42,12 +42,27 @@ const int roseTargetCacheLineSize = 32;
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
+#ifndef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+// DQ (4/17/2010): This function must be define if C++ support in ROSE is disabled.
+std::string edgVersionString()
+   {
+     return "unknown (EDG is disabled)";
+   }
+#endif
+
+// DQ (4/17/2010): Added OFP version number support.
 // DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
 std::string ofpVersionString()
    {
   // Need to make sure that ROSE can get a version number independent of Fortran support 
   // being installed or include information in the return string when OFP is not installed.
-     return "unknown";
+  // return "unknown";
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     string ofp_version = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER);
+#else
+     string ofp_version = "unknown (OFP is disabled)";
+#endif
+     return ofp_version;
    }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.

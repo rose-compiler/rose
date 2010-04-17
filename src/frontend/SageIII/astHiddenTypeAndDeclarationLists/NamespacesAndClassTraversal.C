@@ -641,18 +641,21 @@ InheritedAttributeForNamespacesAndClassTraversal NamespacesAndClassTraversal :: 
                                         inherited_symbol_table = this->ClassHashMap[inherited_class_name];
                                         bool insert_ok = false;
 
-                                        // for each class in this list ..
-                                        for(int i = 0; i < (int)this->ClassHashMap[inherited_class_name].size(); ++i) {
+                                     // for each class in this list ..
+                                     // for(int i = 0; i < (int)this->ClassHashMap[inherited_class_name].size(); ++i) {
+                                        for(int i = 0; i < (int)(inherited_symbol_table.size()); ++i) {
 
                                                 SgSymbol* symb = (inherited_symbol_table[i]->symbol_pointer);
 
                                                 if(symb != NULL) {
 
-                                                // DQ (5/31/2007): TODO: Please consider an implementation using "switch"
-
-
-                                                        // check if this symbols are private, if yes -> don't make an update with them
-                                                        if(isSgVariableSymbol(symb) || isSgMemberFunctionSymbol(symb) || isSgClassSymbol(symb) || isSgTypedefSymbol(symb) || isSgEnumSymbol(symb) || isSgEnumFieldSymbol(symb) ) {
+                                                     // DQ (5/31/2007): TODO: Please consider an implementation using "switch"
+#if 0
+                                                        printf ("In NamespacesAndClassTraversal::evaluateInheritedAttribute(): i = %d inherited_symbol_table.size() = %zu symb = %p \n",i,inherited_symbol_table.size(),symb);
+                                                        printf ("In NamespacesAndClassTraversal::evaluateInheritedAttribute(): symb = %p = %s \n",symb,symb->class_name().c_str());
+#endif
+                                                     // check if this symbols are private, if yes -> don't make an update with them
+                                                        if (isSgVariableSymbol(symb) || isSgMemberFunctionSymbol(symb) || isSgClassSymbol(symb) || isSgTypedefSymbol(symb) || isSgEnumSymbol(symb) || isSgEnumFieldSymbol(symb) ) {
 
                                                                 SgDeclarationStatement* decl_statement = NULL;
                                                                 SgAccessModifier access_modifier;
