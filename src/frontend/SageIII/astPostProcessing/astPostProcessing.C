@@ -156,6 +156,11 @@ void postProcessingSupport (SgNode* node)
        // setup the global function type table there to be uniform.
           fixupAstSymbolTables(node);
 
+       // DQ (4/14/2010): Added support for symbol aliases for C++
+       // This is the support for C++ "using declarations" which uses symbol aliases in the symbol table to provide 
+       // correct visability of symbols included from alternative scopes (e.g. namespaces).
+          fixupAstSymbolTablesToSupportAliasedSymbols(node);
+
        // This resets the isModified flag on each IR node so that we can record 
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
@@ -421,6 +426,11 @@ void postProcessingSupport (SgNode* node)
   // DQ (9/26/2008): fixup the handling of use declarations (SgUseStatement).
   // This also will fixup C++ using declarations.
      fixupFortranUseDeclarations(node);
+
+  // DQ (4/14/2010): Added support for symbol aliases for C++
+  // This is the support for C++ "using declarations" which uses symbol aliases in the symbol table to provide 
+  // correct visability of symbols included from alternative scopes (e.g. namespaces).
+     fixupAstSymbolTablesToSupportAliasedSymbols(node);
 
   // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
   // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).

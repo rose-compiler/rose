@@ -101,17 +101,398 @@ fi
 #echo "Exiting as a test!"
 #exit 1
 
+
+# ***************************************************************
+# Options to enable selection of only a single language
+# Handle these options before the --enable-languages=LIST option.
+# ***************************************************************
+
+# DQ (4/16/2010): Added to support to only handle Fortran (support for Rice and LANL users)
+# AC_ARG_ENABLE([only-fortran],AS_HELP_STRING([--enable-only-fortran],[Only support Fortran using ROSE (turns off all other support)],[26],[120]),[enableval=yes],[enableval=no])
+AC_ARG_ENABLE([only-fortran],AS_HELP_STRING([--enable-only-fortran],[Only support Fortran using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
+support_language_only=no
+support_fortran_only=no
+echo "BEFORE Setting: enableval = $enableval support_fortran_only = $support_fortran_only"
+if test "x$enableval" = "xyes"; then
+   support_fortran_only=yes
+   support_language_only=yes
+   echo "Setting: support_fortran_only = $support_fortran_only"
+#   AC_DEFINE([ROSE_BUILD_FORTRAN_ONLY_LANGUAGE_SUPPORT], [], [Build ROSE to support the C langauge])
+#   AM_CONDITIONAL(ROSE_BUILD_FORTRAN_ONLY_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
+fi
+
+AC_ARG_ENABLE([only-c],AS_HELP_STRING([--enable-only-c],[Only support C using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
+support_c_only=no
+echo "BEFORE Setting: enableval = $enableval support_c_only = $support_c_only"
+if test "x$enableval" = "xyes"; then
+   support_c_only=yes
+   support_language_only=yes
+   echo "Setting: support_c_only = $support_c_only"
+fi
+echo "AFTER Setting: support_c_only = $support_c_only"
+
+AC_ARG_ENABLE([only-cxx],AS_HELP_STRING([--enable-only-cxx],[Only support C++ using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
+support_cxx_only=no
+echo "BEFORE Setting: enableval = $enableval support_cxx_only = $support_cxx_only"
+if test "x$enableval" = "xyes"; then
+   support_cxx_only=yes
+   support_language_only=yes
+   echo "Setting: support_cxx_only = $support_cxx_only"
+fi
+
+AC_ARG_ENABLE([only-php],AS_HELP_STRING([--enable-only-php],[Only support PHP using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
+support_php_only=no
+echo "BEFORE Setting: enableval = $enableval support_php_only = $support_php_only"
+if test "x$enableval" = "xyes"; then
+   support_php_only=yes
+   support_language_only=yes
+   echo "Setting: support_php_only = $support_php_only"
+fi
+
+AC_ARG_ENABLE([only-binary-analysis],AS_HELP_STRING([--enable-only-binary-analysis],[Only support Binary Analysis using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
+support_binary_analysis_only=no
+echo "BEFORE Setting: enableval = $enableval support_binary_analysis_only = $support_binary_analysis_only"
+if test "x$enableval" = "xyes"; then
+   support_binary_analysis_only=yes
+   support_language_only=yes
+   echo "Setting: support_binary_analysis_only = $support_binary_analysis_only"
+fi
+
+echo "Debugging for --enable-only=<LANGUAGE> options: "
+echo "   support_language_only        = $support_language_only"
+echo "   support_c_only               = $support_c_only"
+echo "   support_cxx_only             = $support_cxx_only"
+echo "   support_fortran_only         = $support_fortran_only"
+echo "   support_php_only             = $support_php_only"
+echo "   support_binary_analysis_only = $support_binary_analysis_only"
+
+AC_MSG_CHECKING([error checking language only selections])
+if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
+   support_c_only=yes
+   support_cxx_only=yes
+   AC_MSG_WARN([Specification of either --enable-only-c or --enable-only-cxx turns on both C and C++ support (at least for now)])
+   if test "x$support_fortran_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-fortran])
+   fi
+   if test "x$support_php_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-php])
+   fi
+   if test "x$support_binary_analysis_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-binary-analysis])
+   fi
+   disable_languages=yes
+fi
+
+if test "x$support_fortran_only" = "xyes"; then
+   if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of either --enable-only-c or --enable-only-cxx])
+   fi
+   if test "x$support_php_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-php])
+   fi
+   if test "x$support_binary_analysis_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-binary-analysis])
+   fi
+   disable_languages=yes
+fi
+
+if test "x$support_php_only" = "xyes"; then
+   if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of either C or C++ support])
+   fi
+   if test "x$support_fortran_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-fortran])
+   fi
+   if test "x$support_binary_analysis_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-binary-analysis])
+   fi
+   disable_languages=yes
+fi
+
+if test "x$support_binary_analysis_only" = "xyes"; then
+   if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-binary-analysis is inconsistant with use of either C or C++ support])
+   fi
+   if test "x$support_fortran_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-binary-analysis is inconsistant with use of --enable-only-fortran])
+   fi
+   if test "x$support_php_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-binary-analysis is inconsistant with use of --enable-only-php])
+   fi
+   disable_languages=yes
+fi
+AC_MSG_RESULT(ok)
+
+
+# ************************************************
+# Option to enable selection of multiple languages
+# ************************************************
+
+# DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
+AC_MSG_CHECKING([selecting languages to support])
+AC_ARG_ENABLE([languages],AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,c,c++,fortran,php,binaries (default=all)]),,enableval=all)
+
+LANGUAGES_TO_BUILD=""
+case "$enableval" in
+# yes ) LANGUAGES_TO_BUILD="all" ;;
+  all | yes ) LANGUAGES_TO_BUILD="all" 
+      support_c_language=yes
+      support_cxx_language=yes
+      support_fortran_language=yes
+      support_php_language=yes
+      support_binaries=yes
+      AC_MSG_RESULT(all)
+     ;;
+  none | no) LANGUAGES_TO_BUILD="none"
+      support_c_language=no
+      support_cxx_language=no
+      support_fortran_language=no
+      support_php_language=no
+      support_binaries=no
+      AC_MSG_RESULT(none)
+     ;;
+  *)for a_language in `echo $enableval|sed -e 's/,/ /g' ` ; do
+      case "$a_language" in
+        c) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD c"
+           support_c_language=yes
+           ;;
+        c++) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD c++" 
+           support_cxx_language=yes
+           ;;
+        fortran) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD fortran"
+           support_fortran_language=yes
+           ;;
+        php) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+           support_php_language=yes
+           ;;
+        binaries) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD binaries"
+           support_binaries=yes
+           ;;
+        *) AC_MSG_ERROR([Unrecognized language $a_language]) ;;
+      esac
+  done
+  AC_MSG_RESULT($enableval)
+  ;;
+esac
+
+# *******************************************************************************
+# Specify configure options for a minimal configuration that is language specific
+# *******************************************************************************
+
+echo "support_c_language       = $support_c_language"
+echo "support_cxx_language     = $support_cxx_language"
+echo "support_fortran_language = $support_fortran_language"
+echo "support_php_language     = $support_php_language"
+echo "support_binaries         = $support_binaries"
+
+AC_MSG_CHECKING([for language specific options to generate a minimal ROSE configuration])
+# Specify how to set the ROSE configure options when a minimal configuration of ROSE for only C language support is required
+if test "x$support_c_only" = "xyes"; then
+
+   support_fortran_language=no
+   support_php_language=no
+   support_binaries=no
+
+   AC_MSG_RESULT(haskell:off fortran:off php:off)
+fi
+
+# Specify how to set the ROSE configure options when a minimal configuration of ROSE for only Fortran language support is required (support requested by Rice and LANL)
+if test "x$support_fortran_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+ # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
+ # without_php=yes
+   with_php=no
+
+ # disable_binary_analysis_tests=yes
+   enable_binary_analysis_tests=no
+
+ # Allow tests directory to be run so that we can run the Fortran tests.
+ # enable_tests_directory=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+ # Test disabling a configure test that is on by default
+ # I can't verify that the disable version of the variable effects the option.
+ # Where as the enable version of the macro WILL control the setting of the option.
+ # disable_language_only_restriction_test=yes
+ # disable_language_only_restriction_test=no
+ # enable_language_only_restriction_test=yes
+ # enable_language_only_restriction_test=no
+
+ # Turn off all the other language support.
+   support_c_language=no
+   support_cxx_language=no
+   support_php_language=no
+   support_binaries=no
+
+   AC_MSG_RESULT(haskell:off php:off binary-analysis-tests:off)
+
+ # This allows testing this mechanism to set configure options from within the configure script...
+ # enable_edg_version=4.5
+
+   echo "Detected specification of Fortran ONLY request for minimal configuration of ROSE..."
+fi
+
+echo "BEFORE Setting: enableval = $enableval enable_language_only_restriction_test = $enable_language_only_restriction_test"
+# AC_ARG_ENABLE([language-only-restriction-test],AS_HELP_STRING([--enable-language-only-restriction-test],[Support language only restriction test]),[enableval=yes],[enableval=no])
+AC_ARG_ENABLE([language-only-restriction-test],AS_HELP_STRING([--enable-language-only-restriction-test],[Support language only restriction test]),[],[])
+echo "AFTER Setting: enableval = $enableval enable_language_only_restriction_test = $enable_language_only_restriction_test"
+if test "x$enableval" = "xyes"; then
+   echo "Setting: language-only-restriction-test option IS yes"
+else
+   echo "Setting: language-only-restriction-test option is NOT yes"
+fi
+if test "x$enable_language_only_restriction_test" = "xyes"; then
+   echo "Value of: language-only-restriction-test option macro IS yes"
+else
+   echo "Value of: language-only-restriction-test option macro is NOT yes"
+fi
+
+echo "enable_languages = $enable_languages"
+echo "LANGUAGES_TO_BUILD = $LANGUAGES_TO_BUILD"
+
+echo "support_c_language       = $support_c_language"
+echo "support_cxx_language     = $support_cxx_language"
+echo "support_fortran_language = $support_fortran_language"
+echo "support_php_language     = $support_php_language"
+echo "support_binaries         = $support_binaries"
+
+# Set the macros that will appears in the rose_config.h header file.
+if test "x$support_c_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_C_LANGUAGE_SUPPORT], [], [Build ROSE to support the C langauge])
+else
+   echo "Support for C language support is disabled..."
+fi
+
+if test "x$support_cxx_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_CXX_LANGUAGE_SUPPORT], [], [Build ROSE to support the C++ langauge])
+else
+   echo "Support for C++ language support is disabled..."
+fi
+
+if test "x$support_fortran_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
+else
+   echo "Support for Fortran language support is disabled..."
+fi
+
+if test "x$support_php_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_PHP_LANGUAGE_SUPPORT], [], [Build ROSE to support the PHP langauge])
+else
+   echo "Support for PHP language support is disabled..."
+fi
+
+if test "x$support_binaries" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_BINARY_ANALYSIS_SUPPORT], [], [Build ROSE to support the Binary Analysis])
+else
+   echo "Support for binary analysis support is disabled..."
+fi
+
+# Set the automake conditional macros that will be used in Makefiles.
+AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
+
+# echo "Exiting after handling initial language specification..."
+# exit 1
+
+# *******************************************************
+# Option to compilation and testing of projects directory
+# *******************************************************
+
+AC_MSG_CHECKING([if we should build the ROSE projects directory])
+AC_ARG_ENABLE([projects-directory],AS_HELP_STRING([--disable-projects-directory],[Exclude compilation and tests on ROSE projects directory]),[],[enableval=yes])
+support_projects_directory=yes
+# echo "BEFORE Setting: enableval = $enableval support_projects_directory = $support_projects_directory"
+if test "x$enableval" = "xyes"; then
+   support_projects_directory=yes
+#  echo "Setting: support_projects_directory = $support_projects_directory"
+else
+   support_projects_directory=no
+fi
+
+if test "x$support_projects_directory" = "xyes"; then
+   AC_MSG_RESULT(enabled)
+#  echo "Support for building the projects directory is enabled..."
+   AC_DEFINE([ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT], [], [Build ROSE projects directory])
+else
+   AC_MSG_RESULT(disabled)
+#  echo "Support for building the projects directory is disabled..."
+fi
+AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$support_projects_directory" = xyes])
+
+# ****************************************************
+# Option to compilation and testing of tests directory
+# ****************************************************
+
+AC_MSG_CHECKING([if we should build the ROSE tests directory])
+AC_ARG_ENABLE([tests-directory],AS_HELP_STRING([--disable-tests-directory],[Exclude compilation and tests on ROSE tests directory]),[],[enableval=yes])
+support_tests_directory=yes
+# echo "BEFORE Setting: enableval = $enableval support_tests_directory = $support_tests_directory"
+if test "x$enableval" = "xyes"; then
+   support_tests_directory=yes
+#  echo "Setting: support_tests_directory = $support_tests_directory"
+else
+   support_tests_directory=no
+fi
+
+if test "x$support_tests_directory" = "xyes"; then
+   AC_MSG_RESULT(enabled)
+#  echo "Support for building the tests directory is enabled..."
+   AC_DEFINE([ROSE_BUILD_TESTS_DIRECTORY_SUPPORT], [], [Build ROSE tests directory])
+else
+   AC_MSG_RESULT(disabled)
+#  echo "Support for building the tests directory is disabled..."
+fi
+AM_CONDITIONAL(ROSE_BUILD_TESTS_DIRECTORY_SUPPORT, [test "x$support_tests_directory" = xyes])
+
+# *******************************************************
+# Option to compilation and testing of tutorial directory
+# *******************************************************
+
+AC_MSG_CHECKING([if we should build the ROSE tutorial directory])
+AC_ARG_ENABLE([tutorial-directory],AS_HELP_STRING([--disable-tutorial-directory],[Exclude compilation and tests on ROSE tutorial directory]),[],[enableval=yes])
+support_tutorial_directory=yes
+# echo "BEFORE Setting: enableval = $enableval support_tutorial_directory = $support_tutorial_directory"
+if test "x$enableval" = "xyes"; then
+   support_tutorial_directory=yes
+#  echo "Setting: support_tutorial_directory = $support_tutorial_directory"
+else
+   support_tutorial_directory=no
+fi
+
+if test "x$support_tutorial_directory" = "xyes"; then
+   AC_MSG_RESULT(enabled)
+#  echo "Support for building the tutorial directory is enabled..."
+   AC_DEFINE([ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT], [], [Build ROSE tutorial directory])
+else
+   AC_MSG_RESULT(disabled)
+#  echo "Support for building the tutorial directory is disabled..."
+fi
+AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
+
+# echo "Exiting after handling initial language specification..."
+# exit 1
+
+# ************************************************************
+# Option to control the size of the generated files by ROSETTA
+# ************************************************************
+
 # DQ (12/29/2009): This is part of optional support to reduce the sizes of some of the ROSETTA generated files.
 AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
 AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
 if test "x$enable_smaller_generated_files" = "xyes"; then
   AC_MSG_WARN([Using optional ROSETTA mechanim to generate numerous but smaller files for the ROSE IR.])
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
-#  ROSE_SUPPORT_SMALLER_GENERATED_FILES="TRUE"
-#else
-#  ROSE_SUPPORT_SMALLER_GENERATED_FILES="FALSE"
 fi
-#AC_SUBST(ROSE_SUPPORT_SMALLER_GENERATED_FILES)
 
 
 # JJW: This needs to be early as things like C++ header editing are not done for the new interface
@@ -133,7 +514,7 @@ fi
 
 # DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
 AC_ARG_ENABLE(edg-version,
-[--enable-edg_version   major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).],
+[  --enable-edg_version     major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).],
 [ echo "Setting up EDG version"
 ])
 
@@ -251,7 +632,7 @@ fi
 # to support the compilation of this tool.  This is it is a configure
 # option to build it (or have the makefile system have it be built).
 AC_ARG_ENABLE(dot2gml_translator,
-[--enable-dot2gml_translator   Configure option to have DOT to GML translator built (bison version specific tool).],
+[  --enable-dot2gml_translator   Configure option to have DOT to GML translator built (bison version specific tool).],
 [ echo "Setting up optional DOT-to-GML translator in directory: src/roseIndependentSupport/dot2gml"
 ])
 AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
@@ -287,13 +668,13 @@ AC_SUBST(ROSE_HOME)
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 AC_LANG(C++)
-AX_BOOST_BASE([1.35.0], [], [echo "Boost 1.35.0 or above is required for ROSE" 1>&2; exit 1])
+AX_BOOST_BASE([1.36.0], [], [echo "Boost 1.36.0 or above is required for ROSE" 1>&2; exit 1])
 AC_SUBST(ac_boost_path) dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only be used to set --with-boost in distcheck
 
 # Requested boost version
-echo "boost_lib_version_req_major     = $boost_lib_version_req_major"
-echo "boost_lib_version_req_minor     = $boost_lib_version_req_minor"
-echo "boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
+echo "Requested minimum boost version: boost_lib_version_req_major     = $boost_lib_version_req_major"
+echo "Requested minimum boost version: boost_lib_version_req_minor     = $boost_lib_version_req_minor"
+echo "Requested minimum boost version: boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
 
 # Actual boost version
 echo "Boost version being used is: $_version"
@@ -307,6 +688,11 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$_version" = "x1.37")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$_version" = "x1.38")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$_version" = "x1.39")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$_version" = "x1.40")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$_version" = "x1.41")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$_version" = "x1.42")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$_version" = "x1.43")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$_version" = "x1.44")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$_version" = "x1.45")
 
 # echo "Exiting as a test."
 # exit 1
@@ -497,7 +883,7 @@ AC_ARG_WITH(valgrind, [  --with-valgrind ... Run uninitialized field tests that 
             [AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])
              if test "x$withval" = "xyes"; then VALGRIND_BINARY="`which valgrind`"; else VALGRIND_BINARY="$withval"; fi])
 
-AC_ARG_WITH(wave-default, [  --with-wave-default ... Use Wave as the default preprocessor],
+AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default preprocessor],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], true, [Use Wave as default in ROSE])],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
@@ -651,7 +1037,7 @@ AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_gcc_omp" = no)
 
 # JJW and TP (3-17-2008) -- added MPI support
 AC_ARG_WITH(mpi,
-[--with-mpi                    Use this option ONLY if you inted to traverse the AST in parallel using MPI.],
+[  --with-mpi                    Use this option ONLY if you inted to traverse the AST in parallel using MPI.],
 [ echo "Setting up optional MPI-based tools"
 ])
 AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)
@@ -660,7 +1046,7 @@ AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 
 # TPS (2-11-2009) -- added PCH Support
 AC_ARG_WITH(pch,
-[--with-pch                    Configure option to have pre-compiled header support enabled.],
+[  --with-pch                    Configure option to have pre-compiled header support enabled.],
 [ echo "Enabling precompiled header"
 ])
 AM_CONDITIONAL(ROSE_PCH,test "$with_pch" = yes)
@@ -767,7 +1153,7 @@ AC_SUBST(GFORTRAN_PATH)
 
 # DQ (2/2/2010): New code to control use of different versions of OFP within ROSE.
 AC_ARG_ENABLE(ofp-version,
-[--enable-ofp_version   major.minor.patch version number for OFP (e.g. 0.7.2, 0.8.0, ...).],
+[  --enable-ofp-version    major.minor.patch version number for OFP (e.g. 0.7.2, 0.8.0, ...).],
 [ echo "Setting up OFP version"
 ])
 
@@ -1315,9 +1701,8 @@ export with_zlib
 # *****************************************************
 
 # GMY (9/3/2008) QT4 & QROSE Optional Packages
-AC_ARG_WITH(QRose,
-	[--with-QRose=PATH	prefix of QRose installation],
-	[QROSE_PREFIX=$with_QRose
+AC_ARG_WITH(QRose, [  --with-QRose=PATH     prefix of QRose installation],
+   [QROSE_PREFIX=$with_QRose
     if test "x$with_QRose" = xyes; then
        echo "Error: --with-QRose=PATH must be specified to use option --with-QRose (a valid QRose intallation)"
        exit 1
