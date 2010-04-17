@@ -16,8 +16,13 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
   // This simplifies how the traversal is called!
      FixupAstSymbolTablesToSupportAliasedSymbols astFixupTraversal;
 
+#if 0
+  // DQ (4/17/2010): Comment this new option out for now while I focus on getting the 
+  // language only configure options into place.
+
   // I think the default should be preorder so that the interfaces would be more uniform
      astFixupTraversal.traverse(node,preorder);
+#endif
    }
 
 
