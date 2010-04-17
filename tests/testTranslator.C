@@ -11,7 +11,7 @@ int main( int argc, char * argv[] )
 
 #if 0
   // Output an optional graph of the AST (just the tree, when active)
-     printf ("Generating a dot file... (turn off output of dot files before committing code) \n");
+     printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
      generateDOT ( *project );
 #endif
 
