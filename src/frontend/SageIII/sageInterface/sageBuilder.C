@@ -3953,7 +3953,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           testfile.close();
           ofstream outputfile(inputFileName.c_str(),ios::out); 
        // DQ (2/6/2009): I think this comment is helpful to put into the file (helps explain why the file exists).
-       // outputfile<<"// Output file generated so that StringUtility::getAbsolutePathFromRelativePath() will see a vaild file ... unparsed file will have rose_ prefix "<<endl;
+          outputfile<<"// Output file generated so that StringUtility::getAbsolutePathFromRelativePath() will see a vaild file ... unparsed file will have rose_ prefix "<<endl;
           outputfile.close();
         }
        else // file already exists , load and parse it
@@ -3996,6 +3996,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
         }
 #endif
 
+  // DQ (4/15/2010): Turn on verbose mode
+     arglist.push_back("-rose:verbose 2");
+
   // This handles the case where the original command line may have referenced multiple files.
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist,/* binaryMode = */ false);
      CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
@@ -4005,8 +4008,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // AS(10/04/08) Because of refactoring we require the determineFileType function to be called 
   // to construct the node.
   // SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
-     //SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
-     // TH (2009-07-15): changed to more generig isSgFile, this also supports SgBinaryComposite
+  // SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
+  // TH (2009-07-15): changed to more generig isSgFile, this also supports SgBinaryComposite
      SgFile* result = determineFileType(arglist, nextErrorCode, project);
      ROSE_ASSERT(result != NULL);
 

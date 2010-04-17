@@ -56,6 +56,12 @@ git clone ssh://dquinlan@tux282.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git
 
 
 Setting up SSH keys on Windows Server (logged in as hudson-rose):
+
+A. Generate the keys:
+   1) Generate the keys, run "plink -agent tux269" and enter your
+      own login and then password. to login to tux269 and then exit.
+
+B. Copy the keys onto tux270-0:
    1) Double Click on "My_Computer" icon
    2) Goto C:, tools, pageant.exe
    3) Double click on pageant.exe
@@ -66,11 +72,14 @@ Setting up SSH keys on Windows Server (logged in as hudson-rose):
    8) Click on file "id_rsa.ppk"  (this will load the private  key for use by ssh).
    9) Now try to run the git command:
          git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE.git c:\ROSE\hudson\workspace\test-windows\label\windows-server
-      And it shuld work.
+      and
+         git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE-EDG.git c:\ROSE\hudson\workspace\test-windows\label\windows-server\src\frontend\CxxFrontend\EDG
+      And it should work.
 
-  10) If not then it might be because we ran "plink -agent tux269"
+  10) (moved to part A-1 above) If not then it might be because we ran "plink -agent tux269"
      and entered the login "hudson-rose" and then the password,
      to login to tux269, and then exited.
+
 
 For Linux:
 Command to run cmake to build ROSE:

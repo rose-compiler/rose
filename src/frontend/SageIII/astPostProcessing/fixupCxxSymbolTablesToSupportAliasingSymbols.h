@@ -13,13 +13,16 @@
     and is similar to work that is currently supporting "use"
     declarations in Fortran 90.
  */
-void
-fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
+void fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node);
 
 class FixupAstSymbolTablesToSupportAliasedSymbols : public AstSimpleProcessing
    {
      public:
           void visit ( SgNode* node );
+
+       // This inserts an alias for each of the symbols in referencedScope into the symbol table of currentScope
+          void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope );
+
    };
 
 // endif for FIXUP_CXX_TO_USE_ALIASING_SYMBOLS_H

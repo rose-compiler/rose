@@ -78,10 +78,12 @@ AC_DEFUN([MDL_HAVE_OPENGL],
   AC_CACHE_CHECK([for OpenGL], mdl_cv_have_OpenGL,
   [
 dnl Check for Mesa first, unless we were asked not to.
-    AC_ARG_WITH([--with-Mesa],
-                   [Prefer the Mesa library over a vendors native OpenGL library (default=yes)],
-                   with_Mesa_help_string)
-    AC_ARG_ENABLE(Mesa, $with_Mesa_help_string, use_Mesa=$enableval, use_Mesa=yes)
+
+  # DQ (4/17/2010): Cleaned up the handling of these macros (only one is used an usefull).
+  # AC_ARG_WITH([--with-Mesa],[  --with-Mesa     Prefer the Mesa library over a vendors native OpenGL library (default=yes)],[],[])
+  # with_Mesa_help_string)
+  # AC_ARG_ENABLE(Mesa, $with_Mesa_help_string, use_Mesa=$enableval, use_Mesa=yes)
+    AC_ARG_ENABLE(Mesa,[  --enable-Mesa      Support for Mesa OpenGL support],[use_Mesa=$enableval],[use_Mesa=yes])
 
     if test x"$use_Mesa" = xyes; then
        GL_search_list="MesaGL   GL"

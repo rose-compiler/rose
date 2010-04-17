@@ -642,6 +642,14 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                ROSE_ASSERT(finalDeleteSet.find(initializedName->get_type()) == finalDeleteSet.end());
 
             // DQ (2/17/2007): This appears to be a problem for orphaned IR nodes!
+               if (initializedName->get_scope() == NULL)
+                  {
+                    printf ("Error: initializedName->get_scope() == NULL name = %p = %s at: \n",initializedName,initializedName->get_name().str());
+                    initializedName->get_file_info()->display("Error: initializedName->get_scope() == NULL");
+
+                 // DQ (4/15/2010): Added return to support debugging...must be removed...
+                    return;
+                  }
                ROSE_ASSERT(initializedName->get_scope() != NULL);
                if (initializedName->get_scope()->get_symbol_table() == NULL)
                   {

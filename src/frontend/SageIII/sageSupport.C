@@ -5708,9 +5708,6 @@ SgSourceFile::processCppLinemarkers()
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-  // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
-     int edg_main(int, char *[], SgSourceFile & sageFile );
-
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
@@ -5720,8 +5717,14 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      int edg_argc = 0;
      char **edg_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
-                                 
+
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+  // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
+     int edg_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
+#else
+     int frontendErrorLevel = 0;
+#endif
 
      return frontendErrorLevel;
    }
@@ -5737,7 +5740,11 @@ SgSourceFile::build_PHP_AST()
 
 	 int frontendErrorLevel = -1;
 #else
+#ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
      int frontendErrorLevel = php_main(phpFileName, this);
+#else
+     int frontendErrorLevel = 0;
+#endif
 #endif
      return frontendErrorLevel;
    }
