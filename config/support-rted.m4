@@ -4,7 +4,7 @@ AC_DEFUN([ROSE_SUPPORT_RTED],
 
 AC_MSG_CHECKING(for rted)
 AC_ARG_WITH(rted,
-[--with-rted=PATH              Configure option to have RTED enabled.],
+[  --with-rted=PATH     Configure option to have RTED enabled.],
 ,
 if test ! "$with_rted" ; then
    with_rted=no
