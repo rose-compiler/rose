@@ -43,7 +43,11 @@ testTranslator2010_01_test: testTranslator2010_01
 EXTRA_DIST = CMakeLists.txt inputbug125.C
 
 check-local:
-	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
+#	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
+	@$(MAKE) testbug125 testqualifiedName
+	@echo "****************************************************************************************"
+	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
+	@echo "****************************************************************************************"
 
 
 distclean-local:
