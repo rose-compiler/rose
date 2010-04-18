@@ -831,13 +831,12 @@ vector<FuncDeclPair> FunctionRC::OutputFunctions()
 
     SgName func_name = func_decl_->get_name() + "_instrumented";
     SgFunctionDeclaration* fwd_func_decl = 
-	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
-		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
-
+    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList())));
 
     pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
     SgStatementPtrList fwd_stmt_list = isSgBasicBlock(bodies.first)->get_statements();
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3))
  // This fails to link when this is include with the 4.3.2 compiler.
  // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
     for_each(fwd_stmt_list.begin(), fwd_stmt_list.end(), appendStatement);
@@ -846,12 +845,12 @@ vector<FuncDeclPair> FunctionRC::OutputFunctions()
 
     func_name = func_decl_->get_name() + "_reverse";
     SgFunctionDeclaration* rev_func_decl = 
-	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
 		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
 
     pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
     SgStatementPtrList rev_stmt_list = isSgBasicBlock(bodies.second)->get_statements();
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3))
  // This fails to link when this is include with the 4.3.2 compiler.
  // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
     for_each(rev_stmt_list.begin(), rev_stmt_list.end(), appendStatement);
