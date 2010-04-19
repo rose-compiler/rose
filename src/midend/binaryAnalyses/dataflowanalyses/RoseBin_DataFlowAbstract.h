@@ -17,7 +17,7 @@
 class RoseBin_Variable  {
  public:
   //remove later!
-  //  typedef rose_hash::hash_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
+  //  typedef rose_hash::unordered_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
   //typedef rose_graph_node_edge_hash_multimap edgeType;
   //  typedef rose_graph_hash_multimap nodeType;
 
@@ -68,19 +68,23 @@ class RoseBin_Variable  {
 
 class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
  protected:
-   rose_hash::hash_map <uint64_t, RoseBin_Variable*> variables;
+   rose_hash::unordered_map <uint64_t, RoseBin_Variable*> variables;
    GraphAlgorithms* g_algo;
-#ifdef _MSC_VER
-//   typedef rose_hash::hash_map <std::string, uint64_t,rose_hash::hash_string> variablesReverseType;
-   typedef rose_hash::hash_map <std::string, uint64_t> variablesReverseType;
+// CH (4/9/2010): Use boost::unordered instead
+//#ifdef _MSC_VER
+#if 0
+//   typedef rose_hash::unordered_map <std::string, uint64_t,rose_hash::hash_string> variablesReverseType;
+   typedef rose_hash::unordered_map <std::string, uint64_t> variablesReverseType;
 #else
-   typedef rose_hash::hash_map <std::string, uint64_t,rose_hash::hash_string,rose_hash::eqstr_string> variablesReverseType;
+   // CH (4/13/2010): Use boost::hash<string> instead
+   //typedef rose_hash::unordered_map <std::string, uint64_t,rose_hash::hash_string,rose_hash::eqstr_string> variablesReverseType;
+   typedef rose_hash::unordered_map <std::string, uint64_t> variablesReverseType;
 #endif
 
-// rose_hash::hash_map <std::string, uint64_t> variablesReverse;
+// rose_hash::unordered_map <std::string, uint64_t> variablesReverse;
    variablesReverseType variablesReverse;
 
-   rose_hash::hash_map <uint64_t, RoseBin_Variable*> memory;
+   rose_hash::unordered_map <uint64_t, RoseBin_Variable*> memory;
 
 
 
@@ -89,12 +93,14 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   typedef std::multimap< std::pair<X86RegisterClass, int>, SgGraphNode*> multitype;
   //typedef std::map< SgGraphNode*, multitype> tabletype;
   //typedef __gnu_cxx::hash_multimap< std::pair<X86RegisterClass, int> , SgGraphNode*> multitype;
-#ifdef _MSC_VER
-//  typedef rose_hash::hash_map< SgGraphNode*, multitype,rose_hash::hash_graph_node> tabletype;
+// CH (4/9/2010): Use boost::unordered instead
+//#ifdef _MSC_VER
+#if 0
+//  typedef rose_hash::unordered_map< SgGraphNode*, multitype,rose_hash::hash_graph_node> tabletype;
 	// tps (12/07/2009) This seemed to work before with the above line, hmm..
-  typedef rose_hash::hash_map< SgGraphNode*, multitype> tabletype;
+  typedef rose_hash::unordered_map< SgGraphNode*, multitype> tabletype;
 #else
-  typedef rose_hash::hash_map< SgGraphNode*, multitype,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> tabletype;
+  typedef rose_hash::unordered_map< SgGraphNode*, multitype,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> tabletype;
 #endif
 
   // statistics

@@ -96,6 +96,11 @@ namespace RoseBin_DataTypes {
  extern DataTypes Rose_Data;
 }
 
+// CH (4/9/2010): Use boost::unordered instead
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
+
+#if 0
 #ifdef _MSC_VER
 #include <hash_map>
 #include <hash_set>
@@ -103,28 +108,26 @@ namespace RoseBin_DataTypes {
 #include <ext/hash_map>
 #include <ext/hash_set>
 #endif
+#endif
 
 class SgDirectedGraphNode;
-#ifndef _MSC_VER
-namespace __gnu_cxx {
+#if 0
+//#ifndef _MSC_VER
+#if 1
+namespace rose_hash {
   template <> struct hash <SgDirectedGraphNode*> {
     size_t operator()(SgDirectedGraphNode* const & n) const {
       return (size_t) n;
     }
   };
-}
 
-
-namespace __gnu_cxx {
   template <> struct hash <X86RegisterClass> {
     size_t operator()(X86RegisterClass const & n) const {
       return (size_t) n;
     }
   };
-}
 
 #ifndef __LP64__
-namespace __gnu_cxx {
   template <> struct hash <uint64_t> {
     size_t operator()(uint64_t const& n) const {
       return (size_t)((n >> 32) ^ n);
@@ -135,6 +138,8 @@ namespace __gnu_cxx {
 #else
 // DQ (11/27/2009): No message is required, since this is the correct fix for MSVC.
 // #pragma message ("WARNING: Commented out hash_map operators in RoseBin_support.h for Windows. Might need to fix this.")
+#endif
+
 #endif
 
 

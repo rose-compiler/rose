@@ -239,6 +239,12 @@ rosegit_show_environment () {
     echo "    $(tex --version |head -n1)"
     echo "    $(latex --version |head -n1)"
     echo "    $(swig -version |grep -i version)"
+    if [ -f /usr/include/boost/version.hpp ]; then
+	echo "    boost (in /usr/include)" \
+	    $(sed -n '/#define BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' </usr/include/boost/version.hpp | tr _ .)
+    else
+	echo "    boost: not in /usr/include (see configure output for version)"
+    fi
     echo "Configuration:"
     eval "perl -e 'print qq{    \$_\n} for @ARGV' -- $ROSEGIT_CONFIGURE"
 }

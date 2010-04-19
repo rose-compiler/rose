@@ -47,7 +47,7 @@
 
 //Needed for boost::filesystem::exists(...)
 #include "boost/filesystem.hpp"
-
+#include <stdio.h>
 
 //Liao, 10/27/2008: parsing OpenMP pragma here
 //Handle OpenMP pragmas. This should be called after preprocessing information is attached since macro calls may exist within pragmas, Liao, 3/31/2009
@@ -5708,9 +5708,6 @@ SgSourceFile::processCppLinemarkers()
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-  // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
-     int edg_main(int, char *[], SgSourceFile & sageFile );
-
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
@@ -5720,8 +5717,14 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      int edg_argc = 0;
      char **edg_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
-                                 
+
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+  // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
+     int edg_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
+#else
+     int frontendErrorLevel = 0;
+#endif
 
      return frontendErrorLevel;
    }
@@ -5737,7 +5740,11 @@ SgSourceFile::build_PHP_AST()
 
 	 int frontendErrorLevel = -1;
 #else
+#ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
      int frontendErrorLevel = php_main(phpFileName, this);
+#else
+     int frontendErrorLevel = 0;
+#endif
 #endif
      return frontendErrorLevel;
    }
@@ -7619,12 +7626,19 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      result = vector<string>();
 
+
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: Linux popen() not supported within MSVC.")
+//	 printf ("WARNING: Linux popen() not supported within MSVC.");
+//	 ROSE_ASSERT(false);
+//#else
+
+     // CH (4/6/2010): The Windows version of popen is _popen
 #ifdef _MSC_VER
-#pragma message ("WARNING: Linux popen() not supported within MSVC.")
-	 printf ("WARNING: Linux popen() not supported within MSVC.");
-	 ROSE_ASSERT(false);
+     if ((fp = _popen(command.c_str (), "r")) == NULL)
 #else
      if ((fp = popen(command.c_str (), "r")) == NULL)
+#endif
         {
           cerr << "Files or processes cannot be created" << endl;
           returnValue = false;
@@ -7645,12 +7659,16 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
           result.push_back (current_string.substr (0, current_string.size () - 1));
         }
 
+#ifdef _MSC_VER
+     if (_pclose(fp) == -1)
+#else
      if (pclose(fp) == -1)
+#endif
         {
           cerr << ("Cannot execute pclose");
           returnValue = false;
         }
-#endif
+//#endif
 
      return returnValue;
    }

@@ -6,12 +6,6 @@
 #include <boost/tuple/tuple.hpp>
 #include <stack>
 
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
-   #include "boost/date_time/local_time/local_time.hpp"
-   #include <boost/date_time.hpp>
-#endif
-
-
 using namespace std;
 using namespace boost;
 using namespace SageBuilder;
@@ -72,25 +66,25 @@ bool isZero(SgValueExp* value)
    }
 
    std::pair<SgIfStmt*, SgIfStmt*>
-   instrumentAndInverseIfStmt(SgIfStmt* if_stmt)
+   instrumentAndReverseIfStmt(SgIfStmt* if_stmt)
    {
    SgTreeCopy tree_copy;
    int counter = flag_;
 
 // deep copy the statement
-SgIfStmt* ins_if_stmt = dynamic_cast<SgIfStmt*>(if_stmt->copy(tree_copy));
-SgStatement* true_body = ins_if_stmt->get_true_body();
-ins_if_stmt->set_true_body(instrumentBody(true_body));
-SgStatement* false_body = ins_if_stmt->get_false_body();
-ins_if_stmt->set_false_body(instrumentBody(false_body));
+SgIfStmt* fwd_if_stmt = dynamic_cast<SgIfStmt*>(if_stmt->copy(tree_copy));
+SgStatement* true_body = fwd_if_stmt->get_true_body();
+fwd_if_stmt->set_true_body(instrumentBody(true_body));
+SgStatement* false_body = fwd_if_stmt->get_false_body();
+fwd_if_stmt->set_false_body(instrumentBody(false_body));
 
-SgIfStmt* inv_if_stmt = dynamic_cast<SgIfStmt*>(if_stmt->copy(tree_copy));
+SgIfStmt* rev_if_stmt = dynamic_cast<SgIfStmt*>(if_stmt->copy(tree_copy));
 SgEqualityOp* eq_op = buildBinaryExpression<SgEqualityOp>(state_var_, buildIntVal(counter));
-inv_if_stmt->set_conditional(buildExprStatement(eq_op));
+rev_if_stmt->set_conditional(buildExprStatement(eq_op));
 
 // may invert the statements in the body
 
-return std::make_pair(ins_if_stmt, inv_if_stmt);
+return std::make_pair(fwd_if_stmt, rev_if_stmt);
 }
 
 void instrumentIfStmt(SgIfStmt* if_stmt)
@@ -105,7 +99,7 @@ if (SgIfStmt* stmt = isSgIfStmt(false_body))
 instrumentIfStmt(stmt);
 }
 
-void inverseIfStmt(SgIfStmt* if_stmt)
+void reverseIfStmt(SgIfStmt* if_stmt)
 {
 SgStatement* true_body = if_stmt->get_true_body();
 int counter = flag_table_[true_body];
@@ -114,7 +108,7 @@ if_stmt->set_conditional(buildExprStatement(eq_op));
 
 SgStatement* false_body = if_stmt->get_false_body();
 if (SgIfStmt* stmt = isSgIfStmt(false_body))
-inverseIfStmt(stmt);
+reverseIfStmt(stmt);
 }
 
 private:
@@ -168,6 +162,7 @@ return body;
    }
    */
 
+
 typedef std::pair<SgExpression*, SgExpression*> ExpPair;
 typedef std::pair<SgStatement*, SgStatement*> StmtPair;
 typedef std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> FuncDeclPair;
@@ -197,6 +192,7 @@ class FunctionRC
     }
     vector<FuncDeclPair> OutputFunctions();
 
+    // Get all variables' declarations including all kinds of states
     vector<SgStatement*> GetVarDeclarations()
     {
 	vector<SgStatement*> decls;
@@ -221,10 +217,18 @@ class FunctionRC
     static const ExpPair NULL_EXP_PAIR;
     static const StmtPair NULL_STMT_PAIR;
 
-    SgExpression* inverseExpression(SgExpression* exp);
-    ExpPair instrumentAndInverseExpression(SgExpression* exp);
-    StmtPair instrumentAndInverseStatement(SgStatement* stmt);
+    // Just reverse an expression
+    SgExpression* reverseExpression(SgExpression* exp);
 
+    // Get the forward and reverse version of an expression
+    ExpPair instrumentAndReverseExpression(SgExpression* exp);
+
+    // Get the forward and reverse version of an statement 
+    StmtPair instrumentAndReverseStatement(SgStatement* stmt);
+
+    // Tell whether an expression is a state variable. We only reverse the "states".
+    // Normally the state is passed into functions as arguments, or they are class members
+    // in C++. 
     SgExpression* isStateVar(SgExpression* exp)
     {
 	if (SgArrowExp* arr_exp = isSgArrowExp(exp))
@@ -239,6 +243,7 @@ class FunctionRC
 	return NULL;
     }
 
+    // Get the variable name which saves the branch state
     SgExpression* GetStateVar(SgExpression* var)
     {
 	string name = function_name_ + "_state_" + lexical_cast<string>(counter_++);
@@ -246,6 +251,7 @@ class FunctionRC
 	return buildVarRefExp(name);
     }
 
+    // Return the statement which saves the branch state
     SgStatement* PutBranchFlag(bool flag = true)
     {
 	/* 
@@ -258,6 +264,7 @@ class FunctionRC
 		buildExprListExp(buildVarRefExp("flags"), buildIntVal(flag)));
     }
 
+    // Return the statement which checks the branch flag
     SgStatement* CheckBranchFlag()
     {
 	/* 
@@ -318,24 +325,25 @@ const ExpPair FunctionRC::NULL_EXP_PAIR = ExpPair(NULL, NULL);
 const StmtPair FunctionRC::NULL_STMT_PAIR = StmtPair(NULL, NULL);
 
 
-SgExpression* FunctionRC::inverseExpression(SgExpression* exp)
+SgExpression* FunctionRC::reverseExpression(SgExpression* exp)
 {
 
     return NULL;
 }
 
 
-ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
+ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 {
+    // if this expression is a binary one
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
     {
-	SgExpression *ins_left, *ins_right, *inv_left, *inv_right;
-	tie(ins_right, inv_right) = instrumentAndInverseExpression(bin_op->get_rhs_operand_i());
-	tie(ins_left, inv_left) = instrumentAndInverseExpression(bin_op->get_lhs_operand_i());
+	SgExpression *fwd_left, *fwd_right, *rev_left, *rev_right;
+	tie(fwd_right, rev_right) = instrumentAndReverseExpression(bin_op->get_rhs_operand_i());
+	tie(fwd_left, rev_left) = instrumentAndReverseExpression(bin_op->get_lhs_operand_i());
 
-	SgBinaryOp* ins_exp = isSgBinaryOp(copyExpression(exp));
-	ins_exp->set_lhs_operand_i(ins_left);
-	ins_exp->set_rhs_operand_i(ins_right);
+	SgBinaryOp* fwd_exp = isSgBinaryOp(copyExpression(exp));
+	fwd_exp->set_lhs_operand_i(fwd_left);
+	fwd_exp->set_rhs_operand_i(fwd_right);
 
 	// if the left-hand side of the assign-op is the state
 	if (SgExpression* var = isStateVar(bin_op->get_lhs_operand_i()))
@@ -346,7 +354,7 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 		if (isSgPlusAssignOp(exp))
 		{
 		    return ExpPair(
-			    ins_exp,
+			    fwd_exp,
 			    buildBinaryExpression<SgMinusAssignOp>(
 				var, rhs_operand));
 		}
@@ -354,7 +362,7 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 		if (isSgMinusAssignOp(exp))
 		{
 		    return ExpPair(
-			    ins_exp,
+			    fwd_exp,
 			    buildBinaryExpression<SgPlusAssignOp>(
 				var, rhs_operand));
 		}
@@ -363,7 +371,7 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 		{
 		    // if the rhs_operand is a value and the value is not 0
 		    return ExpPair(
-			    ins_exp,
+			    fwd_exp,
 			    buildBinaryExpression<SgDivAssignOp>(
 				var, rhs_operand));
 		}
@@ -381,47 +389,47 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 		    isSgRshiftAssignOp(exp))
 	    {
 		SgBinaryOp* exp_copy = isSgBinaryOp(copyExpression(exp));
-		SgExpression *ins_rhs_exp, *inv_rhs_exp;
-		tie(ins_rhs_exp, inv_rhs_exp) = 
-		    instrumentAndInverseExpression(exp_copy->get_rhs_operand_i());
-		exp_copy->set_rhs_operand_i(ins_rhs_exp);
+		SgExpression *fwd_rhs_exp, *rev_rhs_exp;
+		tie(fwd_rhs_exp, rev_rhs_exp) = 
+		    instrumentAndReverseExpression(exp_copy->get_rhs_operand_i());
+		exp_copy->set_rhs_operand_i(fwd_rhs_exp);
 
 		SgExpression* state_var = GetStateVar(var);
 		// save the state
-		SgExpression* ins_exp = buildBinaryExpression<SgCommaOpExp>(
+		SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
 			buildBinaryExpression<SgAssignOp>(
 			    state_var,
 			    copyExpression(var)),
 			exp_copy);
 
 		// retrieve the state
-		SgExpression* inv_exp = buildBinaryExpression<SgAssignOp>(
+		SgExpression* rev_exp = buildBinaryExpression<SgAssignOp>(
 			copyExpression(var),
 			copyExpression(state_var));
-		if (inv_rhs_exp)
-		    inv_exp = buildBinaryExpression<SgCommaOpExp>(inv_rhs_exp, inv_exp);
-		return ExpPair(ins_exp, inv_exp);
+		if (rev_rhs_exp)
+		    rev_exp = buildBinaryExpression<SgCommaOpExp>(rev_rhs_exp, rev_exp);
+		return ExpPair(fwd_exp, rev_exp);
 	    }
 	}
 
-	SgExpression* inv_exp = NULL;
-	if (inv_right && inv_left)
-	    inv_exp = buildBinaryExpression<SgCommaOpExp>(inv_right, inv_left);
-	else if (inv_left)
-	    inv_exp = inv_left;
-	else if (inv_right)
-	    inv_exp = inv_right;
+	SgExpression* rev_exp = NULL;
+	if (rev_right && rev_left)
+	    rev_exp = buildBinaryExpression<SgCommaOpExp>(rev_right, rev_left);
+	else if (rev_left)
+	    rev_exp = rev_left;
+	else if (rev_right)
+	    rev_exp = rev_right;
 
-	return ExpPair(ins_exp, inv_exp);
+	return ExpPair(fwd_exp, rev_exp);
     }
 
     if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
     {
-	SgExpression *ins_operand_exp, *inv_operand_exp;
-	tie(ins_operand_exp, inv_operand_exp) = instrumentAndInverseExpression(unary_op->get_operand());
+	SgExpression *fwd_operand_exp, *rev_operand_exp;
+	tie(fwd_operand_exp, rev_operand_exp) = instrumentAndReverseExpression(unary_op->get_operand());
 	// instrument its operand
-	SgUnaryOp* ins_exp = isSgUnaryOp(copyExpression(exp));
-	ins_exp->set_operand_i(ins_operand_exp);
+	SgUnaryOp* fwd_exp = isSgUnaryOp(copyExpression(exp));
+	fwd_exp->set_operand_i(fwd_operand_exp);
 
 	if (SgExpression* var = isStateVar(unary_op->get_operand_i()))
 	{
@@ -431,7 +439,7 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 		if (pp_mode == SgUnaryOp::prefix) pp_mode = SgUnaryOp::postfix;
 		else pp_mode = SgUnaryOp::prefix;
 		return ExpPair(
-			ins_exp,
+			fwd_exp,
 			buildMinusMinusOp(var, pp_mode));
 	    }
 
@@ -441,26 +449,26 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 		if (mm_mode == SgUnaryOp::prefix) mm_mode = SgUnaryOp::postfix;
 		else mm_mode = SgUnaryOp::prefix;
 		return ExpPair(
-			ins_exp,
+			fwd_exp,
 			buildPlusPlusOp(var, mm_mode));
 	    }
 	}
 
-	SgExpression* inv_exp = inv_operand_exp;
-	return ExpPair(ins_exp, inv_exp);
+	SgExpression* rev_exp = rev_operand_exp;
+	return ExpPair(fwd_exp, rev_exp);
     }
 
     if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
     {
-	SgExpression *inv_cond_exp, *inv_true_exp, *inv_false_exp;
-	SgExpression *ins_cond_exp, *ins_true_exp, *ins_false_exp;
+	SgExpression *rev_cond_exp, *rev_true_exp, *rev_false_exp;
+	SgExpression *fwd_cond_exp, *fwd_true_exp, *fwd_false_exp;
 
-	tie(inv_cond_exp, ins_cond_exp) = instrumentAndInverseExpression(cond_exp->get_conditional_exp());
-	tie(inv_true_exp, ins_true_exp) = instrumentAndInverseExpression(cond_exp->get_true_exp());
-	tie(inv_false_exp, ins_false_exp) = instrumentAndInverseExpression(cond_exp->get_false_exp());
+	tie(rev_cond_exp, fwd_cond_exp) = instrumentAndReverseExpression(cond_exp->get_conditional_exp());
+	tie(rev_true_exp, fwd_true_exp) = instrumentAndReverseExpression(cond_exp->get_true_exp());
+	tie(rev_false_exp, fwd_false_exp) = instrumentAndReverseExpression(cond_exp->get_false_exp());
 	return ExpPair(
-		buildConditionalExp(inv_cond_exp, inv_true_exp, inv_false_exp),
-		buildConditionalExp(ins_cond_exp, ins_true_exp, ins_false_exp));
+		buildConditionalExp(rev_cond_exp, rev_true_exp, rev_false_exp),
+		buildConditionalExp(fwd_cond_exp, fwd_true_exp, fwd_false_exp));
     }
 
     if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
@@ -468,32 +476,29 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 	SgFunctionDeclaration* func_decl = func_exp->getAssociatedFunctionDeclaration();
 	FunctionRC func_generator(func_decl);
 	vector<FuncDeclPair> func_pairs = func_generator.OutputFunctions();
-
-// NOTE: g++ 4.3 warning: suggest explicit braces to avoid ambiguous 'else'
 	if (func_processed_.count(func_decl) == 0)
 	    foreach(const FuncDeclPair& func_pair, func_pairs)
 		output_func_pairs_.push_back(func_pair);
-
-	SgFunctionDeclaration* ins_func = func_pairs.back().first;
-	SgFunctionDeclaration* inv_func = func_pairs.back().second;
+	SgFunctionDeclaration* fwd_func = func_pairs.back().first;
+	SgFunctionDeclaration* rev_func = func_pairs.back().second;
 	
-	SgExprListExp* ins_args = buildExprListExp();
-	SgExprListExp* inv_args = buildExprListExp();
+	SgExprListExp* fwd_args = buildExprListExp();
+	SgExprListExp* rev_args = buildExprListExp();
 	foreach (SgExpression* exp, func_exp->get_args()->get_expressions())
 	{
-	    SgExpression *ins_exp, *inv_exp;
-	    //tie(ins_exp, inv_exp) = instrumentAndInverseExpression(exp);
-	    ins_exp = copyExpression(exp);
-	    inv_exp = copyExpression(exp);
-	    ins_args->append_expression(ins_exp);
-	    inv_args->append_expression(inv_exp);
+	    SgExpression *fwd_exp, *rev_exp;
+	    //tie(fwd_exp, rev_exp) = instrumentAndReverseExpression(exp);
+	    fwd_exp = copyExpression(exp);
+	    rev_exp = copyExpression(exp);
+	    fwd_args->append_expression(fwd_exp);
+	    rev_args->append_expression(rev_exp);
 	}
 
 	func_processed_.insert(func_decl);
 
 	return ExpPair(
-		buildFunctionCallExp(ins_func->get_name(), ins_func->get_orig_return_type(), ins_args),
-		buildFunctionCallExp(inv_func->get_name(), inv_func->get_orig_return_type(), inv_args));
+		buildFunctionCallExp(fwd_func->get_name(), fwd_func->get_orig_return_type(), fwd_args),
+		buildFunctionCallExp(rev_func->get_name(), rev_func->get_orig_return_type(), rev_args));
 
     }
 
@@ -502,8 +507,7 @@ ExpPair FunctionRC::instrumentAndInverseExpression(SgExpression* exp)
 }
 
 
-
-StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
+StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 {
     if (stmt == NULL)
 	return NULL_STMT_PAIR;
@@ -511,7 +515,7 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
     if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
     {
 	SgExpression* exp = exp_stmt->get_expression();
-	ExpPair exp_pair = instrumentAndInverseExpression(exp);
+	ExpPair exp_pair = instrumentAndReverseExpression(exp);
 	if (exp_pair.first && exp_pair.second)
 	    return StmtPair(
 		    buildExprStatement(exp_pair.first), 
@@ -534,70 +538,70 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
     // if it's a block, process each statement inside
     if (SgBasicBlock* body = isSgBasicBlock(stmt))
     {
-	SgBasicBlock* ins_body = buildBasicBlock();
-	SgBasicBlock* inv_body = buildBasicBlock();
+	SgBasicBlock* fwd_body = buildBasicBlock();
+	SgBasicBlock* rev_body = buildBasicBlock();
 
-	vector<SgStatement*> inv_forward_stmts;
+	vector<SgStatement*> rev_forward_stmts;
 	foreach(SgStatement* s, body->get_statements())
 	{
-	    SgStatement *ins_stmt, *inv_stmt;
-	    tie(ins_stmt, inv_stmt) = instrumentAndInverseStatement(s);
-	    if (ins_stmt)
-		ins_body->append_statement(ins_stmt);
-	    if (isSgReturnStmt(inv_stmt) ||
-		    isSgBreakStmt(inv_stmt) ||
-		    isSgContinueStmt(inv_stmt))
-		inv_body->append_statement(inv_stmt);
-	    else if (isSgVariableDeclaration(inv_stmt))
-		inv_forward_stmts.push_back(inv_stmt);
-	    else if (inv_stmt)
-		inv_body->prepend_statement(inv_stmt);
+	    SgStatement *fwd_stmt, *rev_stmt;
+	    tie(fwd_stmt, rev_stmt) = instrumentAndReverseStatement(s);
+	    if (fwd_stmt)
+		fwd_body->append_statement(fwd_stmt);
+	    if (isSgReturnStmt(rev_stmt) ||
+		    isSgBreakStmt(rev_stmt) ||
+		    isSgContinueStmt(rev_stmt))
+		rev_body->append_statement(rev_stmt);
+	    else if (isSgVariableDeclaration(rev_stmt))
+		rev_forward_stmts.push_back(rev_stmt);
+	    else if (rev_stmt)
+		rev_body->prepend_statement(rev_stmt);
 	}
-	for (vector<SgStatement*>::reverse_iterator it = inv_forward_stmts.rbegin();
-		it != inv_forward_stmts.rend(); ++it)
-	    inv_body->prepend_statement(*it);
+	for (vector<SgStatement*>::reverse_iterator it = rev_forward_stmts.rbegin();
+		it != rev_forward_stmts.rend(); ++it)
+	    rev_body->prepend_statement(*it);
 
-	return StmtPair(ins_body, inv_body);
+	return StmtPair(fwd_body, rev_body);
     }
 
     // if it's a if statement, process it according to the rule
     if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
     {
-	SgStatement *ins_true_body, *ins_false_body;
-	SgStatement *inv_true_body, *inv_false_body;
+	SgStatement *fwd_true_body, *fwd_false_body;
+	SgStatement *rev_true_body, *rev_false_body;
 
 	SgStatement* true_body = if_stmt->get_true_body();
 	SgStatement* false_body = if_stmt->get_false_body();
 
-	tie(ins_true_body, inv_true_body) = instrumentAndInverseStatement(true_body);
-	tie(ins_false_body, inv_false_body) = instrumentAndInverseStatement(false_body);
+	tie(fwd_true_body, rev_true_body) = instrumentAndReverseStatement(true_body);
+	tie(fwd_false_body, rev_false_body) = instrumentAndReverseStatement(false_body);
 
-	if (SgBasicBlock* body = isSgBasicBlock(ins_true_body))
+	if (SgBasicBlock* body = isSgBasicBlock(fwd_true_body))
 	    body->append_statement(PutBranchFlag(true));
-	else if (ins_true_body)
-	    ins_true_body = buildBasicBlock(ins_true_body, PutBranchFlag(true));
+	else if (fwd_true_body)
+	    fwd_true_body = buildBasicBlock(fwd_true_body, PutBranchFlag(true));
 
-	if (SgBasicBlock* body = isSgBasicBlock(ins_false_body))
+	if (SgBasicBlock* body = isSgBasicBlock(fwd_false_body))
 	    body->append_statement(PutBranchFlag(false));
-	else if (ins_false_body)
-	    ins_false_body = buildBasicBlock(ins_false_body, PutBranchFlag(false));
+	else if (fwd_false_body)
+	    fwd_false_body = buildBasicBlock(fwd_false_body, PutBranchFlag(false));
 
 	SgStatement* cond = if_stmt->get_conditional();
 
-	SgStatement *ins_cond_exp, *inv_post_exp;
-	SgStatement* inv_cond_exp = CheckBranchFlag();
+	SgStatement *fwd_cond_exp, *rev_post_exp;
+	SgStatement* rev_cond_exp = CheckBranchFlag();
 
 	// do not switch the position of the following statement to the one above;
 	// make sure the current flag is used before generating new statement
-	tie(ins_cond_exp, inv_post_exp) = instrumentAndInverseStatement(cond);
+	tie(fwd_cond_exp, rev_post_exp) = instrumentAndReverseStatement(cond);
 
 	return StmtPair(
 		//buildBasicBlock(
-		    buildIfStmt(ins_cond_exp, ins_true_body, ins_false_body),
+		    buildIfStmt(fwd_cond_exp, fwd_true_body, fwd_false_body),
 		    //NewBranchFlag()),
 		buildBasicBlock(
-		    buildIfStmt(inv_cond_exp, inv_true_body, inv_false_body),
-		    inv_post_exp));
+		    buildIfStmt(rev_cond_exp, rev_true_body, rev_false_body),
+		    rev_post_exp));
     }
 
     if (SgForStatement* for_stmt = isSgForStatement(stmt))
@@ -607,40 +611,40 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 	SgExpression* incr = for_stmt->get_increment();
 	SgStatement* body = for_stmt->get_loop_body();
 
-	SgStatement *ins_init, *inv_init, *ins_test, *inv_test;
-	SgExpression *ins_incr, *inv_incr;
-	SgStatement *ins_body, *inv_body;
+	SgStatement *fwd_init, *rev_init, *fwd_test, *rev_test;
+	SgExpression *fwd_incr, *rev_incr;
+	SgStatement *fwd_body, *rev_body;
 
-	tie(ins_init, inv_init) = instrumentAndInverseStatement(init);
-	tie(ins_test, inv_test) = instrumentAndInverseStatement(test);
-	tie(ins_incr, inv_incr) = instrumentAndInverseExpression(incr);
-	tie(ins_body, inv_body) = instrumentAndInverseStatement(body);
+	tie(fwd_init, rev_init) = instrumentAndReverseStatement(init);
+	tie(fwd_test, rev_test) = instrumentAndReverseStatement(test);
+	tie(fwd_incr, rev_incr) = instrumentAndReverseExpression(incr);
+	tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
 	/* 
 	foreach(SgStatement* stmt, init->get_init_stmt())
-	    isSgBasicBlock(ins_body)->append_statement(stmt);
-	isSgBasicBlock(ins_body)->append_statement(init);
+	    isSgBasicBlock(fwd_body)->append_statement(stmt);
+	isSgBasicBlock(fwd_body)->append_statement(init);
 	*/
-	inv_init = copyStatement(init);
-	inv_test = copyStatement(test);
-	inv_incr = copyExpression(incr);
-	SgForStatement* ins_for = buildForStatement(ins_init, ins_test, ins_incr, ins_body);
-	SgForStatement* inv_for = buildForStatement(NULL, inv_test, inv_incr, inv_body);
-	//SgForInitStatement for_init = inv_for->get_
-	//ins_for->set_for_init_stmt(init);
-	inv_for->set_for_init_stmt(isSgForInitStatement(inv_init));
+	rev_init = copyStatement(init);
+	rev_test = copyStatement(test);
+	rev_incr = copyExpression(incr);
+	SgForStatement* fwd_for = buildForStatement(fwd_init, fwd_test, fwd_incr, fwd_body);
+	SgForStatement* rev_for = buildForStatement(NULL, rev_test, rev_incr, rev_body);
+	//SgForInitStatement for_init = rev_for->get_
+	//fwd_for->set_for_init_stmt(init);
+	rev_for->set_for_init_stmt(isSgForInitStatement(rev_init));
 
 	return StmtPair(
-		ins_for,
-		//buildForStatement(ins_init, ins_test, ins_incr, ins_body),
-		inv_for);
-		//buildForStatement(init, test, incr, inv_body));
+		fwd_for,
+		//buildForStatement(fwd_init, fwd_test, fwd_incr, fwd_body),
+		rev_for);
+		//buildForStatement(init, test, incr, rev_body));
     }
     
     if (SgForInitStatement* for_init_stmt = isSgForInitStatement(stmt))
     {
 	if (for_init_stmt->get_init_stmt().size() == 1)
-	    return instrumentAndInverseStatement(*(for_init_stmt->get_init_stmt().begin()));
+	    return instrumentAndReverseStatement(*(for_init_stmt->get_init_stmt().begin()));
     }
 
     if (SgWhileStmt* while_stmt = isSgWhileStmt(stmt))
@@ -648,13 +652,13 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 	SgStatement* cond = while_stmt->get_condition();
 	SgStatement* body = while_stmt->get_body();
 
-	SgStatement *ins_cond, *inv_cond, *ins_body, *inv_body;
-	tie(ins_cond, inv_cond) = instrumentAndInverseStatement(cond);
-	tie(ins_body, inv_body) = instrumentAndInverseStatement(body);
+	SgStatement *fwd_cond, *rev_cond, *fwd_body, *rev_body;
+	tie(fwd_cond, rev_cond) = instrumentAndReverseStatement(cond);
+	tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
 	SgName counter_name = GenerateVar("while_counter");
 	// initialize the counter
-	SgStatement* ins_pre_exp = buildExprStatement(
+	SgStatement* fwd_pre_exp = buildExprStatement(
 		buildBinaryExpression<SgAssignOp>(
 		    buildVarRefExp(counter_name), 
 		    buildIntVal(0)));
@@ -664,17 +668,17 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 		    buildVarRefExp(counter_name), 
 		    SgUnaryOp::prefix));
 
-	if (SgBasicBlock* body = isSgBasicBlock(ins_body))
+	if (SgBasicBlock* body = isSgBasicBlock(fwd_body))
 	    body->append_statement(incr_counter);
-	else if (ins_body)
-	    ins_body = buildBasicBlock(ins_body, incr_counter);
+	else if (fwd_body)
+	    fwd_body = buildBasicBlock(fwd_body, incr_counter);
 
-	if (inv_cond != NULL)
+	if (rev_cond != NULL)
 	{
-	    if (SgBasicBlock* body = isSgBasicBlock(inv_body))
-		body->append_statement(inv_cond);
-	    else if (inv_body)
-		inv_body = buildBasicBlock(inv_body, inv_cond);
+	    if (SgBasicBlock* body = isSgBasicBlock(rev_body))
+		body->append_statement(rev_cond);
+	    else if (rev_body)
+		rev_body = buildBasicBlock(rev_body, rev_cond);
 	}
 
 	// compare the counter to 0
@@ -687,15 +691,15 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 		buildVarRefExp(counter_name), 
 		SgUnaryOp::prefix);
 	// for loop
-	SgStatement* inv_for_body = buildForStatement(NULL, test, incr, inv_body);
-	if (inv_cond != NULL)
-	    inv_for_body = buildBasicBlock(inv_for_body, inv_cond);
+	SgStatement* rev_for_body = buildForStatement(NULL, test, incr, rev_body);
+	if (rev_cond != NULL)
+	    rev_for_body = buildBasicBlock(rev_for_body, rev_cond);
 
 	return StmtPair(
 		buildBasicBlock(
-		    ins_pre_exp,
-		    buildWhileStmt(ins_cond, ins_body)),
-		inv_for_body);
+		    fwd_pre_exp,
+		    buildWhileStmt(fwd_cond, fwd_body)),
+		rev_for_body);
     }
       
     if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(stmt))
@@ -703,13 +707,13 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 	SgStatement* cond = do_while_stmt->get_condition();
 	SgStatement* body = do_while_stmt->get_body();
 
-	SgStatement *ins_cond, *inv_cond, *ins_body, *inv_body;
-	tie(ins_cond, inv_cond) = instrumentAndInverseStatement(cond);
-	tie(ins_body, inv_body) = instrumentAndInverseStatement(body);
+	SgStatement *fwd_cond, *rev_cond, *fwd_body, *rev_body;
+	tie(fwd_cond, rev_cond) = instrumentAndReverseStatement(cond);
+	tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
 	SgName counter_name = GenerateVar("while_counter");
 	// initialize the counter
-	SgStatement* ins_pre_exp = buildExprStatement(
+	SgStatement* fwd_pre_exp = buildExprStatement(
 		buildBinaryExpression<SgAssignOp>(
 		    buildVarRefExp(counter_name), 
 		    buildIntVal(0)));
@@ -719,17 +723,17 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 		    buildVarRefExp(counter_name), 
 		    SgUnaryOp::prefix));
 
-	if (SgBasicBlock* body = isSgBasicBlock(ins_body))
+	if (SgBasicBlock* body = isSgBasicBlock(fwd_body))
 	    body->append_statement(incr_counter);
-	else if (ins_body)
-	    ins_body = buildBasicBlock(ins_body, incr_counter);
+	else if (fwd_body)
+	    fwd_body = buildBasicBlock(fwd_body, incr_counter);
 
-	if (inv_cond != NULL)
+	if (rev_cond != NULL)
 	{
-	    if (SgBasicBlock* body = isSgBasicBlock(inv_body))
-		body->prepend_statement(inv_cond);
-	    else if (inv_body)
-		inv_body = buildBasicBlock(inv_cond, inv_body);
+	    if (SgBasicBlock* body = isSgBasicBlock(rev_body))
+		body->prepend_statement(rev_cond);
+	    else if (rev_body)
+		rev_body = buildBasicBlock(rev_cond, rev_body);
 	}
 
 	// compare the counter to 0
@@ -742,13 +746,13 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 		buildVarRefExp(counter_name), 
 		SgUnaryOp::prefix);
 	// for loop
-	SgStatement* inv_for_body = buildForStatement(NULL, test, incr, inv_body);
+	SgStatement* rev_for_body = buildForStatement(NULL, test, incr, rev_body);
 
 	return StmtPair(
 		buildBasicBlock(
-		    ins_pre_exp,
-		    buildDoWhileStmt(ins_body, ins_cond)),
-		inv_for_body);
+		    fwd_pre_exp,
+		    buildDoWhileStmt(fwd_body, fwd_cond)),
+		rev_for_body);
 
     }
 
@@ -757,7 +761,7 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 	SgStatement* item_selector = switch_stmt->get_item_selector();
 	SgBasicBlock* body = isSgBasicBlock(switch_stmt->get_body());
 	const SgStatementPtrList& stmts = body->get_statements();
-	SgStatementPtrList ins_stmts, inv_stmts;
+	SgStatementPtrList fwd_stmts, rev_stmts;
 
 	// this part should be refined in case that there is no 'break' in one case.
 	foreach(SgStatement* s, stmts)
@@ -768,19 +772,19 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 		if (case_body == NULL)
 		    case_body = buildBasicBlock();
 
-		StmtPair body_pair = instrumentAndInverseStatement(case_body);
-		SgBasicBlock* ins_case_body = isSgBasicBlock(body_pair.first);
-		SgBasicBlock* inv_case_body = isSgBasicBlock(body_pair.second);
+		StmtPair body_pair = instrumentAndReverseStatement(case_body);
+		SgBasicBlock* fwd_case_body = isSgBasicBlock(body_pair.first);
+		SgBasicBlock* rev_case_body = isSgBasicBlock(body_pair.second);
 
-		ins_case_body->prepend_statement(PutBranchFlag());
+		fwd_case_body->prepend_statement(PutBranchFlag());
 
-		ins_stmts.push_back(buildCaseOptionStmt(
+		fwd_stmts.push_back(buildCaseOptionStmt(
 			    case_opt_stmt->get_key(),
-			    ins_case_body));
-		inv_stmts.push_back(buildCaseOptionStmt(
+			    fwd_case_body));
+		rev_stmts.push_back(buildCaseOptionStmt(
 			    case_opt_stmt->get_key(),
 			    //buildIntVal(0),
-			    inv_case_body));
+			    rev_case_body));
 	    }
 
 	    if (SgDefaultOptionStmt* default_opt_stmt = isSgDefaultOptionStmt(s))
@@ -788,30 +792,30 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 		SgBasicBlock* default_body = isSgBasicBlock(default_opt_stmt->get_body());		
 		if (default_body != NULL)
 		{
-		    StmtPair body_pair = instrumentAndInverseStatement(default_body);
-		    SgBasicBlock* ins_default_body = isSgBasicBlock(body_pair.first);
-		    SgBasicBlock* inv_default_body = isSgBasicBlock(body_pair.second);
+		    StmtPair body_pair = instrumentAndReverseStatement(default_body);
+		    SgBasicBlock* fwd_default_body = isSgBasicBlock(body_pair.first);
+		    SgBasicBlock* rev_default_body = isSgBasicBlock(body_pair.second);
 
-		    ins_default_body->prepend_statement(PutBranchFlag());
-		    ins_stmts.push_back(buildDefaultOptionStmt(ins_default_body));
-		    inv_stmts.push_back(buildCaseOptionStmt(
+		    fwd_default_body->prepend_statement(PutBranchFlag());
+		    fwd_stmts.push_back(buildDefaultOptionStmt(fwd_default_body));
+		    rev_stmts.push_back(buildCaseOptionStmt(
 				buildIntVal(0),
-				inv_default_body));
+				rev_default_body));
 		}
 	    }
 	}
 
-	SgBasicBlock* ins_body = buildBasicBlock();
-	foreach(SgStatement* s, ins_stmts)
-	    ins_body->append_statement(s);
+	SgBasicBlock* fwd_body = buildBasicBlock();
+	foreach(SgStatement* s, fwd_stmts)
+	    fwd_body->append_statement(s);
 
-	SgBasicBlock* inv_body = buildBasicBlock();
-	foreach(SgStatement* s, inv_stmts)
-	    inv_body->append_statement(s);
+	SgBasicBlock* rev_body = buildBasicBlock();
+	foreach(SgStatement* s, rev_stmts)
+	    rev_body->append_statement(s);
 
 	return StmtPair(
-		buildSwitchStatement(item_selector, ins_body),
-		buildSwitchStatement(item_selector, inv_body));
+		buildSwitchStatement(item_selector, fwd_body),
+		buildSwitchStatement(item_selector, rev_body));
     }
 
     return StmtPair(
@@ -823,38 +827,37 @@ StmtPair FunctionRC::instrumentAndInverseStatement(SgStatement* stmt)
 vector<FuncDeclPair> FunctionRC::OutputFunctions()
 {
     SgBasicBlock* body = func_decl_->get_definition()->get_body();
-    StmtPair bodies = instrumentAndInverseStatement(body);
+    StmtPair bodies = instrumentAndReverseStatement(body);
 
     SgName func_name = func_decl_->get_name() + "_instrumented";
-    SgFunctionDeclaration* ins_func_decl = 
-	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
-		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
+    SgFunctionDeclaration* fwd_func_decl = 
+    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList())));
 
-
-    pushScopeStack(isSgScopeStatement(ins_func_decl->get_definition()->get_body()));
-    SgStatementPtrList ins_stmt_list = isSgBasicBlock(bodies.first)->get_statements();
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
+    pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
+    SgStatementPtrList fwd_stmt_list = isSgBasicBlock(bodies.first)->get_statements();
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3))
  // This fails to link when this is include with the 4.3.2 compiler.
  // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
-    for_each(ins_stmt_list.begin(), ins_stmt_list.end(), appendStatement);
+    for_each(fwd_stmt_list.begin(), fwd_stmt_list.end(), appendStatement);
 #endif
     popScopeStack();
 
-    func_name = func_decl_->get_name() + "_inverse";
-    SgFunctionDeclaration* inv_func_decl = 
-	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+    func_name = func_decl_->get_name() + "_reverse";
+    SgFunctionDeclaration* rev_func_decl = 
+    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
 		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
 
-    pushScopeStack(isSgScopeStatement(inv_func_decl->get_definition()->get_body()));
-    SgStatementPtrList inv_stmt_list = isSgBasicBlock(bodies.second)->get_statements();
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
+    pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
+    SgStatementPtrList rev_stmt_list = isSgBasicBlock(bodies.second)->get_statements();
+#if !((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3))
  // This fails to link when this is include with the 4.3.2 compiler.
  // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
-    for_each(inv_stmt_list.begin(), inv_stmt_list.end(), appendStatement);
+    for_each(rev_stmt_list.begin(), rev_stmt_list.end(), appendStatement);
 #endif
     popScopeStack();
 
-    output_func_pairs_.push_back(FuncDeclPair(ins_func_decl, inv_func_decl));
+    output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rev_func_decl));
     return output_func_pairs_;
 }
 
@@ -879,7 +882,7 @@ void visitorTraversal::visit(SgNode* n)
 
 	/* 
 	   pair<SgFunctionDeclaration*, SgFunctionDeclaration*> 
-	   func = inverseFunction(func_decl->get_definition());
+	   func = reverseFunction(func_decl->get_definition());
 	   if (func.first != NULL)
 	   funcs.push_back(func.first);
 	   if (func.second != NULL)
@@ -888,50 +891,9 @@ void visitorTraversal::visit(SgNode* n)
     }
 }
 
-class A{};
-class B:public A{};
-struct abc : public std::binary_function<int, vector<B*>*, void>
-{
-    void operator () (first_argument_type a, vector<B*>* b) const
-    {return;}
-};
-
-void foo(vector<A*>* b) {};
 // Typical main function for ROSE translator
 int main( int argc, char * argv[] )
 {
-    vector<A*> a;
-    foo(&a);
-    abc c;
-    bind2nd(c, &a)(0);
-
-    timeval tv;
-    gettimeofday(&tv, NULL);
-
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
-    //using namespace boost::date_time;
-    using namespace boost::local_time;
- //local_microsec_clock::local_time();
-    //cout << tv.tv_usec << ' ' << local_microsec_clock::local_time() << endl;
-
-time_zone_ptr zone(
-  new posix_time_zone("MST-07")
-);
-
-local_date_time ldt = 
-  local_microsec_clock::local_time(
-    zone);
-
-    cout << tv.tv_usec << ' ' << ldt << endl;
-
- ldt = 
-  local_sec_clock::local_time(zone);
-
-    cout << tv.tv_sec << ' ' << ldt.local_time().time_of_day() << endl;
-#endif
-
-    return 0;
-
     SgProject* project = frontend(argc,argv);
     visitorTraversal traversal;
 

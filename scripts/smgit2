@@ -2183,7 +2183,12 @@ sub do_pull {
 
 # Prints some info that's useful for debugging
 sub do_debug {
-  execute sub {system "cat", ".git/config"; git "submodule"};
+  print "cwd=", cwd(), "\n";
+  execute sub {
+    git "--version";
+    system "cat", ".git/config";
+    git "submodule";
+  };
   execute sub {
     git "status";
     git "branch", "-av";
@@ -2199,6 +2204,10 @@ sub do_debug {
 my @gvers = `git --version` =~ /(\d+)\.(\d+)\.(\d+)/;
 die "$arg0: requires Git version 1.6.4 or later\n"
   unless $gvers[0]>1 || ($gvers[0]==1 && ($gvers[1]>6 || ($gvers[1]==6 && $gvers[2]>=4)));
+
+die "$arg0: you have no submodules; use plain old git instead.
+    (smgit2 is a wrapper around git that limits the functionality in order to
+    make it easier to use submodules.)\n" unless submodules;
 
 my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,

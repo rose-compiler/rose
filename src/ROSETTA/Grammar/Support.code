@@ -317,14 +317,14 @@ HEADER_GRAPH_NODE_END
 
 HEADER_GRAPH_NODE_LIST_START
      public:
-          typedef rose_hash::hash_multimap<std::string,SgGraphNode*, rose_hash::hash_string, rose_hash::eqstr_string> local_hash_multimap_type;
+          typedef rose_hash::unordered_multimap<std::string,SgGraphNode*, rose_hash::hash_string, rose_hash::eqstr_string> local_hash_multimap_type;
           typedef local_hash_multimap_type::iterator iterator;
 HEADER_GRAPH_NODE_LIST_END
 
 
 HEADER_GRAPH_EDGE_LIST_START
      public:
-          typedef rose_hash::hash_multimap<SgGraphNode*,SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> local_hash_multimap_type;
+          typedef rose_hash::unordered_multimap<SgGraphNode*,SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> local_hash_multimap_type;
           typedef local_hash_multimap_type::iterator iterator;
 HEADER_GRAPH_EDGE_LIST_END
 
@@ -3118,22 +3118,26 @@ struct eqstr
  */
 struct hash_Name
    {
-#ifndef _MSC_VER 
-     rose_hash::hash<const char*> hasher;
-#else
-   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifndef _MSC_VER 
+     // CH (4/13/2010): Use boost::hash<string> instead  
+     //rose_hash::hash<const char*> hasher;
+     rose_hash::hash<std::string> hasher;
+//#else
+//   public:
+//      static const size_t bucket_size = 4;
+//      static const size_t min_buckets = 8;
+//#endif
 
      public:
           size_t operator()(const SgName & name) const
              {
-#ifdef _MSC_VER 
-               return stdext::hash_compare<const char*>()(name.str()); 
-#else
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER 
+//               return stdext::hash_compare<const char*>()(name.str()); 
+//#else
                return hasher(name.str());
-#endif
+//#endif
              }
    };
 
@@ -3148,7 +3152,10 @@ struct hash_Name
 
  */
  // tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
-#ifdef _MSC_VER
+
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 // DQ (11/27/2009): Trying to fix MSVC compiler warning: 
 //    warning C4717: 'rose_hash_multimap::rose_hash_multimap' : recursive on all control paths, function will cause runtime stack overflow.
 
@@ -3167,8 +3174,8 @@ inline size_t hash_value(const SgName & _Keyval)
    }
 #endif
 
-// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>
-class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*>
+// class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>
+class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*>
    {
      protected:
           SgNode * parent;
@@ -3176,23 +3183,25 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*>
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
-          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
              {}
 // tps (11/18/2009) : this constructor is not valid, see Node.code
 #if 0
           rose_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
              {}
 #endif
 #if 0
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
              {}
 #endif
-#else
-class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+#else  // ifdef _MSC_VER
+#include <ext/hash_map>
+class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+//class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
      protected:
           SgNode * parent;
@@ -3200,13 +3209,16 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, ha
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
              {}
           rose_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
              {}
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs),parent(rhs.parent)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
              {}
 #endif
           void set_parent(SgNode * new_parent) 
@@ -5307,7 +5319,9 @@ SgSymbolTable::SgSymbolTable()
    {
   // This should always be a non-null pointer (and never shared)!
      int symbolTableSize = 17;
-#ifdef _MSC_VER
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
      p_table = new BaseHashType();
 #else
@@ -5330,7 +5344,9 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
   // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
   // p_table = new SgSymbolHashMultiMap(sz);
 
-#ifdef _MSC_VER
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
      p_table = new BaseHashType();
 #else
@@ -5567,12 +5583,12 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
      if (isSgFunctionTypeSymbol(sp) == NULL)
         {
        // set<SgNode*> existingSymbolBasisDeclarations;
-          map<SgNode*, rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator > existingSymbolBasisDeclarations;
+          map<SgNode*, rose_hash_multimap::iterator > existingSymbolBasisDeclarations;
 
           SgNode* sp_associatedDeclaration = sp->get_symbol_basis();
           assert(sp_associatedDeclaration != NULL);
 
-          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+          rose_hash_multimap::iterator i = get_table()->begin();
           while (i != get_table()->end())
              {
             // test if symbol is in set
@@ -5706,14 +5722,15 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      assert (p_table != NULL);
 
-#ifdef _MSC_VER
-  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
-     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator> deleteList;
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
-#else
-     list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+//     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator> deleteList;
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+//#else
+     list<rose_hash_multimap::iterator> deleteList;
+     rose_hash_multimap::iterator it = get_table()->find(name);
+//#endif
      while (it != get_table()->end() && (*it).first == name)
         {
           assert(it->second->variantT() == V_SgFunctionTypeSymbol);
@@ -5723,12 +5740,13 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-#ifdef _MSC_VER
-  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
-     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
-#else
-     list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+//     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
+//#else
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
+//#endif
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase((*i)->second);"
@@ -5937,13 +5955,14 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
 #endif
-#ifdef _MSC_VER
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator elementToDelete = get_table()->end();
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
-#else
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator elementToDelete = get_table()->end();
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator elementToDelete = get_table()->end();
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+//#else
+     rose_hash_multimap::iterator elementToDelete = get_table()->end();
+     rose_hash_multimap::iterator it = get_table()->find(name);
+//#endif
      while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
         {
        // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
@@ -5966,7 +5985,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
        // make sure that the complexity is not linear in the size of the symbol table!
           assert(false);
 
-          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+          rose_hash_multimap::iterator i = get_table()->begin();
           while ( (i != get_table()->end()) && (elementToDelete == get_table()->end()) )
              {
             // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
@@ -6044,7 +6063,7 @@ SgSymbolTable::remove_function( const SgName & name )
    {
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6056,7 +6075,7 @@ SgSymbolTable::remove_function( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6075,7 +6094,7 @@ SgSymbolTable::remove_class( const SgName & name )
    {
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6087,7 +6106,7 @@ SgSymbolTable::remove_class( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(i->second);"
@@ -6109,7 +6128,7 @@ SgSymbolTable::remove_enum( const SgName & name )
    {
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6121,7 +6140,7 @@ SgSymbolTable::remove_enum( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6143,7 +6162,7 @@ SgSymbolTable::remove_label( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6155,7 +6174,7 @@ SgSymbolTable::remove_label( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6177,7 +6196,7 @@ SgSymbolTable::remove_var( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6189,7 +6208,7 @@ SgSymbolTable::remove_var( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6211,7 +6230,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6223,7 +6242,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6245,7 +6264,7 @@ SgSymbolTable::remove_namespace( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6257,7 +6276,7 @@ SgSymbolTable::remove_namespace( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -7662,11 +7681,12 @@ SgSymbolTable::get_symbols() const
      set<SgNode*> returnSet;
 
      assert(p_table != NULL);
-#ifdef _MSC_VER
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
-#else
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
+//#else
+     rose_hash_multimap::iterator i = get_table()->begin();
+//#endif
      while (i != p_table->end())
         {
           assert(i->second != NULL);
@@ -10825,6 +10845,9 @@ SgFile::get_project()
 // Moved to sageSupport.C: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
 // Moved to sageSupport.C: void SgFile::usage ( int status )
 
+#ifdef _MSC_VER
+#include <direct.h> 	// getcwd()
+#endif
 
  //! get the current directory
 string
@@ -10837,14 +10860,15 @@ SgFile::getWorkingDirectory ()
      for (i=0; i < maxPathNameLength; i++)
           currentDirectory[i] = '\0';  // set to NULL string
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: support for Linux getcwd() unavailable in Microsoft Visual Studio.")
-	 printf ("Error: support for Linux getcwd() unavailable in Microsoft Visual Studio.");
-	 assert(false);
-     char* returnString = NULL;
-#else
+// CH (4/8/2010): "direct.h" in MSVC provides getcwd()     
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: support for Linux getcwd() unavailable in Microsoft Visual Studio.")
+//	 printf ("Error: support for Linux getcwd() unavailable in Microsoft Visual Studio.");
+//	 assert(false);
+//     char* returnString = NULL;
+//#else
      char* returnString = getcwd(currentDirectory,maxPathNameLength - 1);
-#endif
+//#endif
      assert (returnString != NULL);
      currentDirectory[maxPathNameLength - 1] = 0; // Just in case
 

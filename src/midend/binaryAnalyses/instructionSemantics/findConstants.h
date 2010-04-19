@@ -681,6 +681,9 @@ struct FindConstantsPolicy {
 
     template <size_t Len>
     XVariablePtr<Len> number(uint64_t n) {
+
+#ifndef ROSE_APPLE_OS_VENDOR
+     // DQ (4/17/2010): This appears to fail to compile on MAC OSX 10.5.
         struct NumberConstraint: public NullaryConstraint<Len> {
             uint64_t val;
             NumberConstraint(XVariablePtr<Len> var, uint64_t val)
@@ -693,6 +696,13 @@ struct FindConstantsPolicy {
         XVariablePtr<Len> var = new XVariable<Len>();
         (new NumberConstraint(var, n))->activate();
         return var;
+#else
+        printf ("ERROR: code commented out for APPLE OSX \n");
+        ROSE_ASSERT(false);
+
+        return 0;
+#endif
+
     }
 
     // Only safe when MSBs don't matter (i.e., you can't extract bits from something and then use this to put in zeros -- the

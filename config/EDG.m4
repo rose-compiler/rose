@@ -66,7 +66,7 @@ EXE=""
 AC_SUBST(EXE)
 
 AC_ARG_ENABLE(purify,
-[  --enable-purify use memory managment that purify can understand],
+[  --enable-purify        use memory managment that purify can understand],
 [if test $enable_purify = yes; then
      AC_DEFINE([USING_PURIFY],[],[Support for PURIFY debugging software.])
  fi])
@@ -79,7 +79,7 @@ AC_ARG_ENABLE(purify,
 
 consistency_checking_define_value=0
 AC_ARG_ENABLE(checking,
-[  --disable-checking don't do EDG specific consistency checking in parser],
+[  --disable-checking     don't do EDG specific consistency checking in parser],
 [if test $enable_checking = yes; then
     # AC_DEFINE([CHECKING],[1],[Internal consistency tests.])
       consistency_checking_define_value=0
@@ -98,7 +98,7 @@ AC_ARG_ENABLE(stand-alone,
 )
 
 AC_ARG_ENABLE(cp-backend,
-	[  --enable-cp-backend generate c++ code as output],
+	[  --enable-cp-backend  generate c++ code as output],
 	[cp_backend="$enableval"],
 	[cp_backend="no"]
 )

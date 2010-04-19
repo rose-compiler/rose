@@ -35,6 +35,9 @@
 // DQ (9/28/2008): This is for Fortran and eventually maybe C++ support.
 #include "fixupUseAndUsingDeclarations.h"
 
+// DQ (4/14/2010): This is the C++ specific support for symbol aliasing (to support better name qualification).
+#include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
+
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
 void postProcessingSupport (SgNode* node);

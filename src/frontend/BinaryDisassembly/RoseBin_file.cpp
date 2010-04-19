@@ -9,6 +9,7 @@
 #include "RoseBin_file.h"
 #include <errno.h>
 #include "readTicl.h"
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace ticl;
@@ -229,17 +230,21 @@ void RoseBin_FILE::process_instruction_query( ) {
 
   map<uint64_t, uint64_t> function_of_basic_block;
   for (size_t i = 0; i < vec_basic_blocks_1.size(); ++i) {
-#ifdef _MSC_VER
-#pragma message ("Linux atoll() function not available in MSVC.")
-    printf ("atoll() is not available in MSCV (need a MSC equivalent or use boost equivalent). \n");
-	ROSE_ASSERT(false);
+//#ifdef _MSC_VER
+//#pragma message ("Linux atoll() function not available in MSVC.")
+ //   printf ("atoll() is not available in MSCV (need a MSC equivalent or use boost equivalent). \n");
+	//ROSE_ASSERT(false);
 
-	uint64_t id = 0; // atoll(vec_basic_blocks_1[i].id.c_str());
-    uint64_t parent_function = 0; // atoll(vec_basic_blocks_1[i].parent_function.c_str());
-#else
-    uint64_t id = atoll(vec_basic_blocks_1[i].id.c_str());
-    uint64_t parent_function = atoll(vec_basic_blocks_1[i].parent_function.c_str());
-#endif
+	//uint64_t id = 0; // atoll(vec_basic_blocks_1[i].id.c_str());
+ //   uint64_t parent_function = 0; // atoll(vec_basic_blocks_1[i].parent_function.c_str());
+//#else
+    //uint64_t id = atoll(vec_basic_blocks_1[i].id.c_str());
+    //uint64_t parent_function = atoll(vec_basic_blocks_1[i].parent_function.c_str());
+    //
+    // CH (4/7/2010): Use boost::lexical_cast to cast string to long long type.
+    uint64_t id = boost::lexical_cast<long long>(vec_basic_blocks_1[i].id.c_str());
+    uint64_t parent_function = boost::lexical_cast<long long>(vec_basic_blocks_1[i].parent_function.c_str());
+//#endif
     function_of_basic_block[id] = parent_function;
   }
 
@@ -282,7 +287,7 @@ void RoseBin_FILE::process_instruction_query( ) {
       // if it is in the callgraph, one wants to create a BinaryCall instead
 
       // append the instruction to its function
-      rose_hash::hash_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
+      rose_hash::unordered_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
       SgAsmFunctionDeclaration* func = NULL;
       // for (func_it; func_it!=rememberFunctions.end(); ++func_it) {
       if (func_it != rememberFunctions.end()) {
@@ -713,7 +718,7 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
     // get basic_block and append this instruction
     if (RoseBin_support::DEBUG_MODE())
       cout << "\n\n> appending operandList to instruction.  " << endl;
-    rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator blockIt;      
+    rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::iterator blockIt;      
     int count = 0;
     //cerr << "Instruction count: " << rememberInstructions.size() << endl;
     for (blockIt=rememberInstructions.begin();blockIt!=rememberInstructions.end();++blockIt) {
