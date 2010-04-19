@@ -2183,7 +2183,12 @@ sub do_pull {
 
 # Prints some info that's useful for debugging
 sub do_debug {
-  execute sub {system "cat", ".git/config"; git "submodule"};
+  print "cwd=", cwd(), "\n";
+  execute sub {
+    git "--version";
+    system "cat", ".git/config";
+    git "submodule";
+  };
   execute sub {
     git "status";
     git "branch", "-av";
