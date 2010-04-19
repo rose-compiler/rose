@@ -318,8 +318,38 @@ Partitioner::address(BasicBlock* bb) const
     return bb->insns.front()->get_address();
 }
 
-/* Split a basic block into two so that the instruction before @p va remain in the original block and a new block is created
- * to hold the instructions at @p va and after.  The new block is returned. Both blocks remain in the same function, if any. */
+/** Split a basic block into two at address. The result is that the instructions before @p va remain in the original block and
+ *  a new block is created to hold the instructions at @p va and after.  Both blocks remain in the same function, if possible
+ *  (see counter example below) and the new block is returned.
+ *
+ *  FIXME: The counter examples are not implemented. [RPM 2010-04-19]
+ *
+ *  It is possible that splitting a block causes its successors to change.  Consider the case where an x86 RET instruction is
+ *  being used as an unconditional branch. If the block is split between address 1 and 2, then the RET is no longer an
+ *  unconditional branch, but rather has unknown successors.  The instruction at address 8 should no longer be a part of the
+ *  same basic block as the RET at address 2.
+ *
+ *  \code
+ *      1: push 8
+ *      2: ret
+ *      8: add eax, eax
+ *  \endcode
+ *
+ *  It's possible to also end up with cases of circular logic. Consider the closely related case where the RET instruction,
+ *  when used as an unconditional branch, points to the middle of the very block in which it appears.  A block can have only
+ *  one entry address (the first instruction), so we must split the block. However, splitting the block changes the behavior
+ *  of the RET statement to be a normal function return, in which case it's not necessary that the original block had been
+ *  split.
+ *
+ *  \code
+ *      1: push 2
+ *      2: nop
+ *      3: ret
+ *  \endcode
+ *
+ *  In the second example, our choice is to create two blocks: the first contains the PUSH, and the second contains the NOP
+ *  and RET.  In general, the partitioner creates new basic blocks but does not attempt to combine existing blocks.
+ */
 Partitioner::BasicBlock*
 Partitioner::split(BasicBlock* bb1, rose_addr_t va)
 {
@@ -911,6 +941,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
             /* Although this looks like a function call from the perspective of the caller, the called block pops the
              * return value off the stack and therefore we should treat the CALL instruction as an unconditional branch.
              * We add this current block to the function and discovery continues at the branch target. */
+            if (debug) fprintf(debug, "[!call]");
             append(f, bb);
             discover_blocks(f, call_target);
         } else {
