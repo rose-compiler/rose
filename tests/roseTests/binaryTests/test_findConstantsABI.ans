@@ -277,7 +277,7 @@ Constant propagation in function "_init"
         size=4; addr=V5-0x4 [from 0x80482c8:push   ebp]; value=V6
     }
 ==============================================
-Constant propagation in function "***unassigned blocks***"
+Constant propagation in function "***uncategorized blocks***"
 ==============================================
 0x80482df:add    bh, bh
     ax = V112

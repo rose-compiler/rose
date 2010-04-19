@@ -131,6 +131,8 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bo
                 } else {
                     fprintf(out, ", color=red"); /*red implies that we don't have complete information for successors*/
                 }
+            } else if ((*bbi)->get_address()==func->get_entry_va()) {
+                fprintf(out, ", color=darkgreen");
             }
             fprintf(out, " ];\n");
         }

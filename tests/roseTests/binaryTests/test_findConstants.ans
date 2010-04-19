@@ -271,7 +271,7 @@ Constant propagation in function "_init"
     ?15 = <top>
     memory =     <top>
 ==============================================
-Constant propagation in function "***unassigned blocks***"
+Constant propagation in function "***uncategorized blocks***"
 ==============================================
 0x80482df:add    bh, bh
     ax = V37

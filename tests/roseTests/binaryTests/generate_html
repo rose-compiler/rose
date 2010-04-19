@@ -3,6 +3,7 @@
 # Warning! "dot" does not exit with non-zero status if interrupted by control-C.
 
 did_something=
+errors=
 
 # Generate web pages for function control flow graphs
 for fdot in *-F*.dot; do
@@ -21,12 +22,16 @@ for fdot in *-F*.dot; do
     if [ ! -f "$basename.html" -o "$basename.html" -ot "$fdot" ]; then
 	did_something=yes
 	echo -n "$node... "
-	dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null || exit 1
-	echo "<html><body><img src=\"${basename}.gif\" usemap=\"#${node}\"/>" >$basename.html
-	sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
-	rm $basename.map
-	echo "</body></html>" >>$basename.html
-	echo "ok"
+	if dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null; then
+	    echo "<html><body><img src=\"${basename}.gif\" usemap=\"#${node}\"/>" >$basename.html
+	    sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
+	    rm $basename.map
+	    echo "</body></html>" >>$basename.html
+	    echo "ok"
+	else
+	    echo "fail"
+	    errors="$errors $node"
+	fi
     fi
 done
 
@@ -37,14 +42,24 @@ for fdot in *-cg.dot; do
     if [ ! -f "$basename.html" -o "$basename.html" -ot "$fdot" ]; then
 	did_something=yes
 	echo -n "callgraph (this may take a while)... "
-	dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null || exit 1
-	echo "<html><body><img src=\"${basename}.gif\" usemap=\"#callgraph\"/>" >$basename.html
-	cat <$basename.map >>$basename.html
-	rm $basename.map
-	echo "</body></html>" >>$basename.html
-	echo "ok"
+	if dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null; then
+	    echo "<html><body><img src=\"${basename}.gif\" usemap=\"#callgraph\"/>" >$basename.html
+	    cat <$basename.map >>$basename.html
+	    rm $basename.map
+	    echo "</body></html>" >>$basename.html
+	    echo "ok"
+	else
+	    echo "fail"
+	    errors="$errors cg"
+	fi
     fi
 done
 
+if [ -n "$errors" ]; then
+    echo "failed for nodes:$errors"
+    exit 1
+fi
+
 [ -n "$did_something" ] || echo "up to date"
+
 exit 0
