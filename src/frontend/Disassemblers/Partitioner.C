@@ -769,7 +769,7 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp)
  *  by following the successors of each block.  Two types of successors are recognized: "call successors" are successors
  *  that invoke a function (on x86 this is usually a CALL instruction, see is_function_call()), and "flow control" successors
  *  that usually (but not always) branches within a single function.  If a successor is an instruction belonging to some other
- *  function then its either a function call (if it branches to the entry point of that function) or its a collision.
+ *  function then its either a function call (if it branches to the entry point of that function) or it's a collision.
  *  Collisions are resolved by discarding and rediscovering the blocks of the other function. */
 void
 Partitioner::discover_blocks(Function *f, rose_addr_t va)
