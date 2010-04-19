@@ -757,7 +757,9 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         ROSE_ASSERT(using_dir_stmt->get_parent() != NULL);
                         dummy_UsingDirectiveWithScope.scope = isSgScopeStatement(using_dir_stmt->get_parent());
                         dummy_UsingDirectiveWithScope.is_already_proofed_to_be_valid = false;
-#ifndef _MSC_VER
+
+// CH (4/7/2010) : Issue fixed as above
+//#ifndef _MSC_VER
                         it_UsingDirectivesSet = this->UsingDirectivesSet.find( dummy_UsingDirectiveWithScope );
 
                         if(it_UsingDirectivesSet != this->UsingDirectivesSet.end() ) {
@@ -780,10 +782,10 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
 
                         }
 
-#else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2 : UsingDirectivesSet commented out right now.")
-#endif
+//#else
+//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2 : UsingDirectivesSet commented out right now.")
+//#endif
                 }
 
                 if( isSgUsingDeclarationStatement(decl_stat) ) {
@@ -801,7 +803,8 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         dummy_UsingDeclarationWithScope.scope = isSgScopeStatement(using_decl_stmt->get_parent());
                         dummy_UsingDeclarationWithScope.is_already_proofed_to_be_valid = false;
 
-#ifndef _MSC_VER
+// CH (4/7/2010) : Issue fixed as above
+//#ifndef _MSC_VER
                         it_UsingDeclarationSet = this->UsingDeclarationsSet.find( dummy_UsingDeclarationWithScope );
 
                         if(it_UsingDeclarationSet != this->UsingDeclarationsSet.end() ) {
@@ -823,10 +826,10 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                                 cout << "ERROR: it_UsingDeclarationSet != this->UsingDeclarationsSet.end()" << endl;
 
                         }
-#else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement : UsingDeclarationSet commented out right now.")
-#endif
+//#else
+//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement : UsingDeclarationSet commented out right now.")
+//#endif
 
                 }
                 else {
@@ -1188,7 +1191,8 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
 
                 SetSgUsingDirectiveStatementsWithSgScopeStatement::iterator it_UsingDirectivesSet;
 
-#ifndef _MSC_VER
+// CH (4/7/2010) : Issue fixed as above
+//#ifdef _MSC_VER
                 // Robert Preissl, June 26 2007: has to be a for-loop and can't use find because there can be more than one using in a scope
                 for( it_UsingDirectivesSet = this->UsingDirectivesSet.begin(); it_UsingDirectivesSet != this->UsingDirectivesSet.end(); ++it_UsingDirectivesSet ) {
 
@@ -1256,14 +1260,15 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         TimingPerformance::accumulateTime ( startTimeCase_7, accumulatedEvaluateInheritedAttributeCaseTime[7], accumulatedEvaluateInheritedAttributeCaseCalls[7] );
                 }
 
-#else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement3: UsingDirectivesSet commented out right now.")
-#endif
+//#else
+//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement3: UsingDirectivesSet commented out right now.")
+//#endif
 
                 SetSgUsingDeclarationWithScopeWithSgScopeStatement::iterator it_UsingDeclarationsSet;
 
-#ifndef _MSC_VER
+// CH (4/7/2010) : Problem fixed as above.
+//#ifdef _MSC_VER
                 // Robert Preissl, June 28 2007: doing (nearly) the same as we have done above with using directives:
                 for( it_UsingDeclarationsSet = this->UsingDeclarationsSet.begin(); it_UsingDeclarationsSet != this->UsingDeclarationsSet.end(); ++it_UsingDeclarationsSet ) {
 
@@ -1356,10 +1361,10 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
 
                         TimingPerformance::accumulateTime ( startTimeCase_8, accumulatedEvaluateInheritedAttributeCaseTime[8], accumulatedEvaluateInheritedAttributeCaseCalls[8] );
 				}
-#else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2: UsingDeclarationSet commented out right now.")
-#endif
+//#else
+//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2: UsingDeclarationSet commented out right now.")
+//#endif
 
                 #ifdef HIDDEN_LIST_DEBUG
                         cout << "INTERSECTION of the current symbol-table: "<< endl;
@@ -1977,6 +1982,14 @@ SgDeclarationStatement* GetSgDeclarationStatementOutOfSgSymbol(SgSymbol* p_symbo
                         decl_stat = (SgDeclarationStatement*)namespace_symbol->get_declaration();
                 }
         }
+     // DQ (4/14/2010): Added support for Alias symbols
+        else if(isSgAliasSymbol(p_symbol)) {
+                // cout << " isSgAliasSymbol " << endl;
+                SgAliasSymbol* alias_symbol = isSgAliasSymbol(p_symbol);
+                if(alias_symbol != NULL) {
+                        decl_stat = (SgDeclarationStatement*)alias_symbol->get_declaration();
+                }
+        }
         else if(isSgTemplateSymbol(p_symbol)) {
                 // cout << " isSgTemplateSymbol " << endl;
                 SgTemplateSymbol* template_symbol = isSgTemplateSymbol(p_symbol);
@@ -2399,12 +2412,13 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
                         using_directive_with_scope.scope = scope_stmt;
                         using_directive_with_scope.is_already_proofed_to_be_valid = false;
 
-#ifndef _MSC_VER
+// CH (4/7/2010) : The coresponding member has been added.
+//#ifndef _MSC_VER
 						(exampleTraversal.UsingDirectivesSet).insert(using_directive_with_scope);
-#else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDirectivesSet commented out right now.")
-#endif
+//#else
+//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDirectivesSet commented out right now.")
+//#endif
 
                 }
 
@@ -2432,12 +2446,13 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
                         using_declaration_with_scope.scope = scope_stmt;
                         using_declaration_with_scope.is_already_proofed_to_be_valid = false;
 
-#ifndef _MSC_VER
+// CH (4/7/2010) : The coresponding member has been added.
+//#ifdef _MSC_VER
                         (exampleTraversal.UsingDeclarationsSet).insert(using_declaration_with_scope);
-#else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDeclarationSet commented out right now.")
-#endif
+//#else
+//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDeclarationSet commented out right now.")
+//#endif
 
                 }
 

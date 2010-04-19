@@ -21,8 +21,8 @@ class AstDOTGeneration : public DOTGeneration<SgNode*>
           void addAdditionalNodesAndEdges(SgNode* node);
 
      protected:
-          DOTInheritedAttribute evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute ia);
-          DOTSynthesizedAttribute evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l);
+          virtual DOTInheritedAttribute evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute ia);
+          virtual DOTSynthesizedAttribute evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l);
           std::string additionalNodeInfo(SgNode* node);
 
        // DQ (11/1/2003) added mechanism to add node options (to add color, etc.)

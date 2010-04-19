@@ -38,7 +38,8 @@
           traversal and attribute evaluation.
   */
 
- /*! \class AstSimpleProcessing AstProcessing.h
+ /*  MOVED TO AstSimpleProcessing.docs file in docs/testDoxygen
+     \class AstSimpleProcessing AstProcessing.h
      \ingroup AstProcessingClasses
 
      \brief Class for traversing the AST.
