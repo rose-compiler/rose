@@ -1091,6 +1091,11 @@ void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 //! handling side effects as appropriate
 void prependStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
+//! Check if a scope statement has a simple children statement list
+//! so insert additional statements under the scope is straightforward and unambiguous . 
+//! for example, SgBasicBlock has a simple statement list while IfStmt does not.
+bool  hasSimpleChildrenList (SgScopeStatement* scope);
+
 //! Insert a statement before or after the target statement within the target's scope
 void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true);
 

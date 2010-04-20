@@ -1982,6 +1982,14 @@ SgDeclarationStatement* GetSgDeclarationStatementOutOfSgSymbol(SgSymbol* p_symbo
                         decl_stat = (SgDeclarationStatement*)namespace_symbol->get_declaration();
                 }
         }
+     // DQ (4/14/2010): Added support for Alias symbols
+        else if(isSgAliasSymbol(p_symbol)) {
+                // cout << " isSgAliasSymbol " << endl;
+                SgAliasSymbol* alias_symbol = isSgAliasSymbol(p_symbol);
+                if(alias_symbol != NULL) {
+                        decl_stat = (SgDeclarationStatement*)alias_symbol->get_declaration();
+                }
+        }
         else if(isSgTemplateSymbol(p_symbol)) {
                 // cout << " isSgTemplateSymbol " << endl;
                 SgTemplateSymbol* template_symbol = isSgTemplateSymbol(p_symbol);

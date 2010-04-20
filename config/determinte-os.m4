@@ -38,6 +38,7 @@ AC_DEFUN([DETERMINE_OS],
     AM_CONDITIONAL([OS_MINGW], [ test "x$MINGW"  = xyes ] )
     AM_CONDITIONAL([OS_MSDOS], [ test "x$MSDOS"  = xyes ] )
 
+  # AC_DEFINE([ROSE_BUILD_OS], $build_os , [Operating System (OS) being used to build ROSE])
   ])
 
 
@@ -114,18 +115,23 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
    case $OS_vendor in
       Debian*)
          DEBIAN=yes
+         AC_DEFINE([ROSE_DEBIAN_OS_VENDOR], [] , [Debian Operating System (OS) being used to build ROSE])
          ;;
       RedHat*)
          REDHAT=yes
+         AC_DEFINE([ROSE_REDHAT_OS_VENDOR], [] , [RedHat Operating System (OS) being used to build ROSE])
          ;;
       Ubuntu*)
          UBUNTU=yes
+         AC_DEFINE([ROSE_UBUNTU_OS_VENDOR], [] , [Ubuntu Operating System (OS) being used to build ROSE])
          ;;
       CentOS*)
          CENTOS=yes
+         AC_DEFINE([ROSE_CENTOS_OS_VENDOR], [] , [CentOS Operating System (OS) being used to build ROSE])
          ;;
       apple*)
          APPLE=yes
+         AC_DEFINE([ROSE_APPLE_OS_VENDOR], [] , [apple Operating System (OS) being used to build ROSE])
          ;;
       esac
          AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
@@ -145,6 +151,9 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
 
    AC_SUBST(OS_vendor)
    AC_SUBST(OS_release)
+
+ # AC_DEFINE_UNQUOTED([ROSE_OS_VENDOR], $OS_vendor , [Operating System (OS) being used to build ROSE])
+ # AC_DEFINE([ROSE_OS_VENDOR], $OS_vendor , [Operating System (OS) being used to build ROSE])
 
   ])
 

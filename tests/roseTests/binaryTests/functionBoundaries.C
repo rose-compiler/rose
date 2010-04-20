@@ -67,12 +67,17 @@ class MyDisassembler: public DisassemblerX86 {
 public:
     MyDisassembler(size_t wordsize)
         : DisassemblerX86(wordsize) {
+
+// DQ (4/18/2010): This code does not compile with ROSE (commented out to both mark 
+// it as such and allow tests of compiling the rest of ROSE using ROSE to proceed).
+#ifndef CXX_IS_ROSE_ANALYSIS
         Partitioner *p = new Partitioner;
         unsigned h = p->get_search();
         h &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
         p->set_search(h);
         p->add_function_detector(user_pattern);
         set_partitioner(p);
+#endif
     }
 private:
     /* Looks for "push bp" (any word size) and makes them the start of functions. */

@@ -2,8 +2,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # SUBDIRS = eventDetection
 
-bin_PROGRAMS = reverse
-reverse_SOURCES = reverse.cpp
+# This file does not compile using ROSE (skip testing it for now)
+if !ROSE_USING_ROSE_ANALYSIS
+   bin_PROGRAMS = reverse
+   reverse_SOURCES = reverse.cpp
+endif
 
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

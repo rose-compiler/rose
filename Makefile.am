@@ -12,8 +12,26 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
 # This was something that was discussed in email previously with the group.  Thei point is to have the
 # first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
-SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
+# SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
+# DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
+SUBDIRS = libltdl config src
+if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
+   SUBDIRS += tests
+endif
+if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
+   SUBDIRS += projects
+endif
+if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
+ # If we can't process the tutorial directory then we can't generate example translators or the documentation
+   SUBDIRS += tutorial exampleTranslators docs 
+endif
+SUBDIRS += tools scripts 
+if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
+ # If we can't process the tutorial directory then we can't run demos
+   SUBDIRS += demo
+endif
+SUBDIRS += binaries
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 

@@ -1037,6 +1037,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
    // paste the preprocessing info with inside position to the outlined function's body
    pastePreprocessingInfo(outlined_func->get_definition()->get_body(), PreprocessingInfo::inside, save_buf_inside); 
 
+   // SageInterface::deepDelete(target);
     // Postprocessing  to ensure the AST is legal 
     // Should not rely on this usually.
     //   SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(g_scope);
