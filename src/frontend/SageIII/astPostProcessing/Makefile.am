@@ -31,7 +31,8 @@ libastPostProcessing_la_SOURCES      = \
      insertFortranContainsStatement.C \
      markLhsValues.C \
      fixupUseAndUsingDeclarations.C \
-     buildStatementNumbering.C
+     buildStatementNumbering.C \
+     fixupCxxSymbolTablesToSupportAliasingSymbols.C
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
@@ -62,6 +63,7 @@ include_HEADERS = \
      resolveFortranReferences.h \
      insertFortranContainsStatement.h \
      markLhsValues.h \
-     fixupUseAndUsingDeclarations.h
+     fixupUseAndUsingDeclarations.h \
+     fixupCxxSymbolTablesToSupportAliasingSymbols.h
 
 EXTRA_DIST = CMakeLists.txt
