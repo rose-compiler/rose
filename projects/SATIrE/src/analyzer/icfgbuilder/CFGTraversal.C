@@ -1833,7 +1833,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	SgStatement *item_sel = switchs->get_item_selector();
 	SgExpression *new_expr;
 	if (isSgExprStatement(item_sel)) {
-	  new_expr = isSgExprStatement(item_sel)->get_expression();
+	  new_expr = isSgExpression(
+        Ir::deepCopy(isSgExprStatement(item_sel)->get_expression()));
 	} else {
 	  std::cerr << "TODO: unsupported statement type in switch"
           << " (" << item_sel->class_name() << ")"
