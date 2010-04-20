@@ -92,11 +92,13 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelEntry_disk *disk) const
 }
 
 /* Change symbol to string */
-const char *
+std::string
 SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs to handle multiple architectures
 {
+  static char buf[64];
+
   /* This is incomplete, there are many other ISA's that ROSE doesn't currently support */
-  switch(isa &   ISA_FAMILY_MASK){
+  switch(isa & ISA_FAMILY_MASK){
     case ISA_IA32_Family:
       switch (t) {
 	case R_386_NONE:         return "R_386_NONE";
@@ -135,7 +137,9 @@ SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs 
 	case R_386_TLS_DTPMOD32: return "R_386_TLS_DTPMOD32";
 	case R_386_TLS_DTPOFF32: return "R_386_TLS_DTPOFF32";
 	case R_386_TLS_TPOFF32:  return "R_386_TLS_TPOFF32";
-	default: return "unknown (IA32)";
+	default: 
+	  snprintf(buf,sizeof(buf),"unknown relocation - IA32 (%zu)",size_t(t)) ;
+	  return buf;
       };
     case ISA_X8664_Family:
       switch(t){
@@ -147,7 +151,7 @@ SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs 
 	case R_X86_64_PLT32:	return "R_X86_64_PLT32";
 	case R_X86_64_COPY:	return "R_X86_64_COPY";
 	case R_X86_64_GLOB_DAT:	return "R_X86_64_GLOB_DAT";
-	case R_X86_64_JUMP_SLOT:	return "R_X86_64_JUMP_SLOT";
+	case R_X86_64_JUMP_SLOT:return "R_X86_64_JUMP_SLOT";
 	case R_X86_64_RELATIVE:	return "R_X86_64_RELATIVE";
 	case R_X86_64_GOTPCREL:	return "R_X86_64_GOTPCREL";
 	case R_X86_64_32:	return "R_X86_64_32";
@@ -165,10 +169,11 @@ SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs 
 	case R_X86_64_GOTTPOFF:	return "R_X86_64_GOTTPOFF";
 	case R_X86_64_TPOFF32:	return "R_X86_64_TPOFF32";
 	default:
-	  return "unknown (X86-64)";
+	  snprintf(buf,sizeof(buf),"unknown relocation - X86-64 (%zu)",size_t(t)) ;
+	  return buf;
       };
     default:
-      return "unsupported isa";
+      return "unsupported isa for relocation";
   }
   
 }
@@ -194,7 +199,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     fprintf(f, "%s%-*s = 0x%08"PRIx64,p, w, "", p_r_offset);
     SgAsmGenericHeader* header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(this);
     if(header)
-      fprintf(f, " %10s", to_string(p_type,header->get_isa()));
+      fprintf(f, " %10s", to_string(p_type,header->get_isa()).c_str());
     else
       fprintf(f, "       0x%02zx", (size_t)p_type);
 
