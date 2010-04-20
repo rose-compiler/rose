@@ -57,7 +57,7 @@ held in the AST would be expressed using a traversal over the AST and
 code {\em semantic actions} to mutate the AST. Then the transformed source code would be 
 generated ({\em unparsed}) from the AST.  In the case of binaries 
 (including executables, object files, and libraries), the AST will 
-represent the structure of the binary. The AST for a binary includes the 
+represent the structure of the binary. The AST for a binary also includes the 
 binary file format (symbol table, debug format, import tables, etc.), 
 disassembled instructions, all instruction operands, etc.
 
@@ -80,7 +80,7 @@ DOE at LLNL.
 ROSE uses a source-to-source approach to define such translators. Note that 
 translators are significantly more sophisticated than {\em preprocessors} 
 but the terms are frequently confused. A translator must understand the 
-source code at fundamentally deeper level using a grammar for the whole language
+source code at a fundamentally deeper level using a grammar for the whole language
 and on the whole source code, where as a preprocessor only understands the 
 source code using a simpler grammar and on a subset of the source code. 
 It is {\em loosely} the difference between any language compiler and the 
