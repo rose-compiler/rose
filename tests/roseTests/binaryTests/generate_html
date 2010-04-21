@@ -44,7 +44,7 @@ for fdot in *-cg.dot; do
 	echo -n "callgraph (this may take a while)... "
 	if dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null; then
 	    echo "<html><body><img src=\"${basename}.gif\" usemap=\"#callgraph\"/>" >$basename.html
-	    cat <$basename.map >>$basename.html
+	    sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
 	    rm $basename.map
 	    echo "</body></html>" >>$basename.html
 	    echo "ok"
