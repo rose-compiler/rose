@@ -318,60 +318,26 @@ Partitioner::address(BasicBlock* bb) const
     return bb->insns.front()->get_address();
 }
 
-/** Split a basic block into two at address. The result is that the instructions before @p va remain in the original block and
- *  a new block is created to hold the instructions at @p va and after.  Both blocks remain in the same function, if possible
- *  (see counter example below) and the new block is returned.
- *
- *  FIXME: The counter examples are not implemented. [RPM 2010-04-19]
- *
- *  It is possible that splitting a block causes its successors to change.  Consider the case where an x86 RET instruction is
- *  being used as an unconditional branch. If the block is split between address 1 and 2, then the RET is no longer an
- *  unconditional branch, but rather has unknown successors.  The instruction at address 8 should no longer be a part of the
- *  same basic block as the RET at address 2.
- *
- *  \code
- *      1: push 8
- *      2: ret
- *      8: add eax, eax
- *  \endcode
- *
- *  It's possible to also end up with cases of circular logic. Consider the closely related case where the RET instruction,
- *  when used as an unconditional branch, points to the middle of the very block in which it appears.  A block can have only
- *  one entry address (the first instruction), so we must split the block. However, splitting the block changes the behavior
- *  of the RET statement to be a normal function return, in which case it's not necessary that the original block had been
- *  split.
- *
- *  \code
- *      1: push 2
- *      2: nop
- *      3: ret
- *  \endcode
- *
- *  In the second example, our choice is to create two blocks: the first contains the PUSH, and the second contains the NOP
- *  and RET.  In general, the partitioner creates new basic blocks but does not attempt to combine existing blocks.
- */
-Partitioner::BasicBlock*
-Partitioner::split(BasicBlock* bb1, rose_addr_t va)
+/* Reduces the size of a basic block by truncating its list of instructions.  The new block contains initial instructions up
+ * to but not including the instruction at the specified virtual address.  The addresses of the instructions (aside from the
+ * instruction with the specified split point), are irrelevant since the choice of where to split is based on the relative
+ * positions in the basic block's instruction vector rather than instruction address. */
+void
+Partitioner::truncate(BasicBlock* bb1, rose_addr_t va)
 {
     ROSE_ASSERT(bb1);
     ROSE_ASSERT(bb1==find_bb_containing(va));
-    BasicBlock *bb2 = new BasicBlock;
 
-    /* Move some instructions from bb1 to bb2 */
+    /* Find the cut point in the instruction vector. I.e., the first instruction to remove from the vector. */
     std::vector<SgAsmInstruction*>::iterator cut = bb1->insns.begin();
     while (cut!=bb1->insns.end() && (*cut)->get_address()!=va) ++cut;
+    ROSE_ASSERT(cut!=bb1->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
+
+    /* Remove instructions from the cut point and beyond. */
     for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb1->insns.end(); ++ii) {
-        bb2->insns.push_back(*ii);
-        insn2block[(*ii)->get_address()] = bb2;
+        insn2block[(*ii)->get_address()] = NULL;
     }
     bb1->insns.erase(cut, bb1->insns.end());
-
-    /* Insert bb2 into the same function as bb1 */
-    if (bb1->function)
-        append(bb1->function, bb2);
-
-    ROSE_ASSERT(bb2->insns.size()>0);
-    return bb2;
 }
 
 /* Append instruction to basic block */
@@ -896,7 +862,6 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     if (debug) fprintf(debug, " B%08"PRIx64, va);
     Disassembler::InstructionMap::const_iterator ii = insns.find(va);
     if (ii==insns.end()) return; /* No instruction at this address. */
-    SgAsmInstruction *insn = ii->second;
     rose_addr_t call_target = NO_TARGET;
 
     /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. */
@@ -906,24 +871,23 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         return;
     }
 
-    /* Split an existing basic block if necessary since basic blocks can have only one entry address. */
-    bool did_split = false;
-    BasicBlock *bb = find_bb_containing(insn);
+    BasicBlock *bb = find_bb_containing(va);
     ROSE_ASSERT(bb!=NULL);
+
+    /* Truncate an existing basic block if necessary since basic blocks can have only one entry address. The block we
+     * truncated now probably has different successors. If it was part of a function, then we need to be sure to recalculate
+     * which basic blocks are part of that function (i.e., set that function's "pending" status). */
     if (va!=address(bb)) {
         if (debug) fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
-        did_split = true;
-        bb = split(bb, va);
+        truncate(bb, va);
+        if (bb->function!=NULL) bb->function->pending = true;
+        bb = find_bb_containing(va);
+        ROSE_ASSERT(bb!=NULL);
+        ROSE_ASSERT(va==address(bb));
     }
     
     if (bb->function==f) {
-        /* This block already belongs to this function. However, if we split the block then its successors may have changed
-         * and we need to follow the new successors. */    
-        if (did_split) {
-            const Disassembler::AddressSet& suc = successors(bb);
-            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si)
-                discover_blocks(f, *si);
-        }
+        /* already processed */
     } else if (bb->function && va==bb->function->entry_va) {
         /* This is a call to an existing function. Do not add it to the current function. */
         if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());

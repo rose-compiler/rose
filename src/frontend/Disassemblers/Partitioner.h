@@ -187,7 +187,7 @@ protected:
     virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
-    virtual BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
+    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
     virtual void discover_blocks(Function*, rose_addr_t);       /* see implementation */
     virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
