@@ -37,7 +37,7 @@ it easier to customize a query over a large set of nodes.
 % query the wanted subset of SgNode's from the AST of the program at hand.
 Internally these functions will accumulate the results from the application 
 of the user-defined function on each IR node and return them as an STL list
-(std::list<SgNode*>).
+(std::list$<$SgNode*$>$).
 
 There are three different types of queries in the NodeQuery mechanism:
 \begin{enumerate}
@@ -225,8 +225,8 @@ flexible. An example functional is:
 
 
 For the legacy C-Style interface there are two type of functions:
-  typedef std::list <SgNode*>(*roseFunctionPointerOneParameter) (SgNode *);
-  typedef std::list <SgNode*>(*roseFunctionPointerTwoParameters) (SgNode *, SgNode *);
+  typedef std::list $<$SgNode*$>$(*roseFunctionPointerOneParameter) (SgNode *);
+  typedef std::list $<$SgNode*$>$(*roseFunctionPointerTwoParameters) (SgNode *, SgNode *);
 The second function allows a user-defined second parameter which  can be
 provided to the interfaces directly. This parameter has no side-effect outside
 the user-defined function. For the querySubTree the second parameter to the interface 
