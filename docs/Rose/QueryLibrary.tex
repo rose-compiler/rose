@@ -52,7 +52,7 @@ traversed.
 
 VariantVector objects are internally a bitvector or IR node types (from the hierarchy of
 IR nodes).  VariantVector can be formed via masks built from variant names.
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{verbatim}
    VariantVector ir_nodes (V_SgType);
 
@@ -78,7 +78,7 @@ This permits compositional queries using simple function composition.
 \subsection{Interface Functions}
    
    The functions supported in the AST Node Query interface are:
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{verbatim}
 namespace NodeQuery
 {
@@ -155,7 +155,7 @@ can be invoked by the user through an enum variable. There are two types of
 preimplemented queries; a TypeOfQueryTypeOneParameter and a
 TypeOfQueryTypeTwoParameters. 
 
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{verbatim}
   enum TypeOfQueryTypeOneParameter
   {
@@ -183,7 +183,7 @@ extra parameter of SgNode* type like for instance the
 TypeOfQueryTypeTwoParameters::ClassDeclarationNames which takes a SgName*
 which represents the class name to look for.
 
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{verbatim}
   enum TypeOfQueryTypeTwoParameters
   {
@@ -208,7 +208,7 @@ user-defined query functions. The C++ style functionals can be used together
 with powerful concepts like std::bind etc. to make the interface very 
 flexible. An example functional is:
 
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{verbatim}
      class DefaultNodeFunctional :  public std::unary_function<SgNode*, std::list<SgNode*> > 
      {
@@ -244,7 +244,7 @@ for two differences; the user defined functions returns a
 std::list<std::string>s and the C-Style functions take a std::string as a
 second parameter. The predefined functions implemented in this interface are:
 
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{verbatim}
 namespace NameQuery{
 
@@ -283,7 +283,7 @@ for two differences; the user defined functions returns a
 std::list<int>s and the C-Style functions take an 'int' as a
 second parameter. The predefined functions implemented in this interface are:
 
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{verbatim}
 namespace NumberQuery{
      enum TypeOfQueryTypeOneParameter

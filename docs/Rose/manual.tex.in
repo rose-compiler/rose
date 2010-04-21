@@ -18,8 +18,11 @@ citecolor=black,
 linkcolor=black,
 }
 
+\lstset{language=C++,basicstyle=\footnotesize }
 
-\newcommand{\mySmallFontSize}{\scriptsize}
+\newcommand{\mySmallFontSize}{\footnotesize}
+%\newcommand{\mySmallFontSize}{\scriptsize} % scriptsize is too small, 
+% Liao 4/21/2010
 \newcommand{\mySmallestFontSize}{\tiny}
 
 \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
