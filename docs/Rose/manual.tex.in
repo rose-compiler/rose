@@ -10,6 +10,14 @@
 \usepackage{multicol}
 \usepackage{multirow}
 \usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup {
+colorlinks= true,
+urlcolor=blue,
+citecolor=black,
+linkcolor=black,
+}
+
 
 \newcommand{\mySmallFontSize}{\scriptsize}
 \newcommand{\mySmallestFontSize}{\tiny}
