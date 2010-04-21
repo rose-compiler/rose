@@ -70,7 +70,8 @@ visit function at each node of the AST. This can be done as
 a preorder or postorder traversal.
 
 {\indent
-{\mySmallFontSize
+%{\mySmallFontSize
+{\footnotesize
 \begin{verbatim}
      typedef {preorder,postorder} t_traversalOrder;
 
@@ -403,25 +404,33 @@ degree. Essentially, this allows for the implementation of a pattern, also calle
 can be implemented using this technique.
 
 {\indent
-{\mySmallFontSize
+{\footnotesize
 \begin{verbatim}
      template<InheritedAttributeType, SynthesizedAttributeType>
      class AstTopDownBottomUpProcessing {
         public:
-           SynthesizedAttributeType traverse(SgNode* node, InheritedAttributeType initialInheritedAttribute);
-           SynthesizedAttributeType traverseWithinFile(SgNode* node, InheritedAttributeType initialInheritedAttribute);
-           void traverseInputFiles(SgProject* projectNode, InheritedAttributeType initialInheritedAttribute);
+           SynthesizedAttributeType traverse(SgNode* node, 
+                 InheritedAttributeType initialInheritedAttribute);
+
+           SynthesizedAttributeType traverseWithinFile(SgNode* node, 
+                 InheritedAttributeType initialInheritedAttribute);
+
+           void traverseInputFiles(SgProject* projectNode, 
+                 InheritedAttributeType initialInheritedAttribute);
+
            typedef ... SynthesizedAttributesList;
         protected:
            InheritedAttributeType
            virtual evaluateInheritedAttribute(SgNode* astNode, InheritedAttributeType inheritedValue);
            SynthesizedAttributeType
-           virtual evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttributeType inh, SynthesizedAttributesList synList)=0;
+           virtual evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttributeType inh, 
+                            SynthesizedAttributesList synList)=0;
            SynthesizedAttributeType
            virtual defaultSynthesizedAttribute();
      };
 \end{verbatim}
-}}
+}
+}
 
 \section{Combined Processing Classes}
 
@@ -465,13 +474,19 @@ of these classes are presented below, the others are analogous.
      template<InheritedAttributeType, SynthesizedAttributeType>
      class AstCombinedTopDownBottomUpProcessing {
         public:
-           vector<SynthesizedAttributeType> traverse(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
-           vector<SynthesizedAttributeType> traverseWithinFile(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
-           void traverseInputFiles(SgProject* projectNode, vector<InheritedAttributeType> initialInheritedAttributes);
-           typedef ... SynthesizedAttributesList;
+           vector<SynthesizedAttributeType> 
+             traverse(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
+          
+           vector<SynthesizedAttributeType> 
+              traverseWithinFile(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
+          
+          void traverseInputFiles(SgProject* projectNode, vector<InheritedAttributeType> initialInheritedAttributes);
+          
+          typedef ... SynthesizedAttributesList;
 
            void addTraversal(AstTopDownBottomUpProcessing<InheritedAttributeType, SynthesizedAttributeType>* traversal);
-           vector<AstTopDownBottomUpProcessing<InheritedAttributeType, SynthesizedAttributeType>*>& get_traversalPtrListRef();
+           vector<AstTopDownBottomUpProcessing<InheritedAttributeType, SynthesizedAttributeType>*>
+             & get_traversalPtrListRef();
      };
 \end{verbatim}
 }}
