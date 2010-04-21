@@ -286,9 +286,11 @@ main(int argc, char *argv[])
     bool show_bad = false;
     bool do_debug_disassembler = false, do_debug_partitioner=false;
     bool do_reassemble = false;
-    bool do_dot = false;
+    bool do_ast_dot = false;
+    bool do_cfg_dot = false;
     bool do_quiet = false;
     bool do_skip_dos = false;
+    bool do_show_extents = false;
     bool do_show_functions = false;
     int exit_status = 0;
 
@@ -302,25 +304,32 @@ main(int argc, char *argv[])
         if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
             fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", argv[0]);
             exit(1);
-        } if (!strcmp(argv[i], "--dot")) {
-            do_dot = true;      /* generate dot files showing the AST */
+        } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
+            do_ast_dot = true;
+        } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
+            do_cfg_dot = true;
+        } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
+            do_ast_dot = true;
+            do_cfg_dot = true;
         } else if (!strcmp(argv[i], "--skip-dos")) {
             do_skip_dos = true;
-        } else if (!strcmp(argv[i], "--show-bad")) {
-            show_bad = true;    /* show details about failed disassembly or assembly */
-        } else if (!strcmp(argv[i], "--show-functions")) {
-            do_show_functions = true; /*show function summary*/
-        } else if (!strcmp(argv[i], "--reassemble")) {
-            do_reassemble = true; /* reassemble what we disassembled in order to test the assembler */
-        } else if (!strcmp(argv[i], "--debug")) {/* dump lots of debugging information */
+        } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
+            show_bad = true;
+        } else if (!strcmp(argv[i], "--show-functions")) {      /* show function summary */
+            do_show_functions = true;
+        } else if (!strcmp(argv[i], "--show-extents")) {        /* show parts of file that were not disassembled */
+            do_show_extents = true;
+        } else if (!strcmp(argv[i], "--reassemble")) {          /* reassemble in order to test the assembler */
+            do_reassemble = true;
+        } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--debug-disassembler")) {
             do_debug_disassembler = true;
         } else if (!strcmp(argv[i], "--debug-partitioner")) {
             do_debug_partitioner = true;
-        } else if (!strcmp(argv[i], "--quiet")) {
-            do_quiet = true;    /* do not emit the instructions to stdout (they're still stored in the *.dump file) */
+        } else if (!strcmp(argv[i], "--quiet")) {               /* do not emit instructions to stdout */
+            do_quiet = true;
         } else if (argv[i][0]=='-') {
             printf("switch passed along to ROSE proper: %s\n", argv[i]);
             new_argv[new_argc++] = argv[i];
@@ -400,26 +409,31 @@ main(int argc, char *argv[])
         interp->get_map()->dump(stdout, "    ");
 
         /* Figure out what part of the memory mapping does not have instructions. */
-        ExtentMap extents=interp->get_map()->va_extents();
-        std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
-        for (size_t j=0; j<insns.size(); j++) {
-            SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
-            extents.erase(insn->get_address(), insn->get_raw_bytes().size());
-        }
-        size_t unused = extents.size();
-        if (unused>0) {
-            printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
-            extents.dump_extents(stdout, "    ", NULL, 0);
+        if (do_show_extents) {
+            ExtentMap extents=interp->get_map()->va_extents();
+            std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
+            for (size_t j=0; j<insns.size(); j++) {
+                SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
+                extents.erase(insn->get_address(), insn->get_raw_bytes().size());
+            }
+            size_t unused = extents.size();
+            if (unused>0) {
+                printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
+                extents.dump_extents(stdout, "    ", NULL, 0);
+            }
         }
 
-        /* Generate graph of the AST */
-        if (do_dot) {
-            printf("Generating DOT graphs...\n");
-            dump_CFG_CG(interp);
+        /* Generate dot files */
+        if (do_ast_dot) {
+            printf("Generating GraphViz dot files for the AST...\n");
             generateDOT(*project);
             //generateAstGraph(project, INT_MAX);
         }
-        
+        if (do_cfg_dot) {
+            printf("Generating GraphViz dot files for control flow graphs...\n");
+            dump_CFG_CG(interp);
+        }
+
         /* Test assembler */
         if (do_reassemble) {
             size_t assembly_failures = 0;
