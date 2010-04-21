@@ -1343,3 +1343,176 @@ permit custom queries. (NEED SOME EXAMPLES)
 
 % end of commented out section
 }
+
+
+
+\section{Extending the AST Query}
+
+The AST Query can be extended using the internal interface. The functions supported
+in the AST Query are.
+
+The purpose of the AST Query is to provide a convenient mechanism for performing
+operations that can be done in each node in isolation. This operation may either be
+for the purpose of transforming the AST or more commonly for the purpose of returning
+some information about a set of nodes.
+
+Operations on nodes are specified by a functional in the AST Query mechanism
+(http://www.cplusplus.com/reference/std/functional/). A functional is basically a
+stateless object that can be treated like a function. The benefit of using functionals
+over regular function pointers is that functionals can be used in conjunction with STL
+mechanism that extends it's capabilities. STL::bind can for instance help for extending
+the AST Query to take functionals of two arguments by binding the second argument to
+a variable. Binding the return list to the second variable tends to speed up the AST
+Query equivalence of the NodeQuery by up to 3000%.
+
+
+Each return type needs a Merge(,) function to specify how to merge the result
+of two applications of the functional:
+\begin{verbatim}
+void AstQueryNamespace::Merge(Rose_STL_Container<SgNode*>& mergeWith, Rose_STL_Container<SgNode*>  mergeTo );
+\end{verbatim}
+ROSE supports returning void*, Rose\_STL\_Container<SgNode*>, Rose\_STL\_Container<int>, Rose\_STL\_Container<std::string>
+or Rose\_STL\_Container<SgFunctionDeclaration*>. But it is easy to extend it to support any other
+type by adding your own custom AstQueryNamespace::Merge function.
+
+\subsection{Query a Subtree of the AST}
+
+The AstQueryNamespace::querySubTree functions apply the provided functional to nodes in a subtree of the AST.
+
+
+The following function let's you the subtree of 'node' for all the nodes returned by the functional 'nodeFunc'
+when applied by default to all nodes in the subtree using a preorder traversal. You can specify a querydepth of
+your own 
+\begin{verbatim}
+  enum QueryDepth
+  {
+    ChildrenOnly                     = 1, // only of depth 1
+    AllNodes                         = 2, // all nodes
+    ExtractTypes                     = 3, // visit types
+  };
+\end{verbatim}
+or specify your own query order.
+\begin{verbatim}
+
+  template<typename NodeFunctional>
+    typename NodeFunctional::result_type 
+    AstQueryNamespace::querySubTree(SgNode* node, NodeFunctional nodeFunc, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes,
+	t_traverseOrder treeTraversalOrder = preorder)
+\end{verbatim}
+
+The following function is similar to the function above that operates on nodes using functionals, but for convenience
+reasons we here support using function pointers instead of functionals. If the function pointer that you want to apply
+to every node is
+\begin{verbatim}
+std::list<SgNode*> exampleFunction(SgNode* arg1) 
+\end{verbatim}
+Then you have to instantiate the following template with the argument 'AstQueryNamespace::querySubTree$<$ std::list$<$SgNode*$>$ $>$(..)'.
+\begin{verbatim}
+
+    template <class _Result> 
+    _Result AstQueryNamespace::querySubTree ( SgNode * subTree,
+	_Result (*__x)(SgNode*),
+	AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes )
+\end{verbatim}
+
+We have extended the support for function pointers to function pointers with two arguments. If you want to apply the
+following function to every node
+\begin{verbatim}
+void* exampleFunction(SgNode* arg1, std::list<SgNode*> returnList) 
+\end{verbatim}
+then you have to instantiate the following template with the arguments 'AstQueryNamespace::querySubTree$<$ std::list$<$SgNode*$>$, void* $>$(..)'.
+The third argument to 'querySubTree', x\_arg, is always provided as the second argument to the function pointer.
+\begin{verbatim}
+
+    template <class _Arg, class _Result> 
+    _Result AstQueryNamespace::querySubTree ( SgNode * subTree,
+	_Result (*__x)(SgNode*,_Arg), _Arg x_arg,
+	AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes )
+\end{verbatim}
+
+
+
+
+\subsection{Query an Iterator Range}
+
+The AST Query mechanism supports querying using iterators in a similar manner to STL functions in STL::Algorithms.
+
+The following function will query the range betweeen begin and end.
+\begin{verbatim}
+
+    template <class Iterator, class NodeFunctional>
+    typename NodeFunctional::result_type 
+    AstQueryNamespace::queryRange(Iterator begin, Iterator end, 
+	NodeFunctional nodeFunc)
+\end{verbatim}
+
+Similarly to querySubTree we support using function pointers instead of functionals. If you want to apply the
+functional
+\begin{verbatim}
+std::list<SgNode*> exampleFunction(SgNode* arg1) 
+\end{verbatim}
+to every node in the range you have to invoke the template like 'AstQueryNamespace::queryRange$<$ std::list$<$SgNode*$>$ $>$ (..)'
+
+\begin{verbatim}
+
+    template <class _Result> 
+    _Result AstQueryNamespace::queryRange (typename _Result::iterator begin, typename _Result::iterator end,
+	_Result (*__x)(SgNode*))
+\end{verbatim}
+
+We also support function pointers that take two arguments. If you for instance want to apply the pointer
+\begin{verbatim}
+void* exampleFunction(SgNode* arg1, std::list<SgNode*> returnList) 
+\end{verbatim}
+to every node in the range you have to invoke the template like 'AstQueryNamespace::queryRange$<$ std::list$<$SgNode*$>$, void* $>$ (..)'.
+the last argument of queryrange, x\_arg, is always provided as the second argument to the function pointer.
+\begin{verbatim}
+
+    template <class _Arg, class _Result> 
+    _Result AstQueryNamespace::queryRange ( typename _Result::iterator begin, const typename _Result::iterator end,
+	_Result (*__x)(SgNode*,_Arg), _Arg x_arg)
+\end{verbatim}
+
+\subsection{Query the ROSE Memory Pool}
+
+The AST Query provides a mechanism for querying the node types in the memory pool without having to travers
+the whole AST. This can potentially give a large speedup if you only need to traverse certain types.
+
+The basic version of querying the memory pool takes a functional 'nodeFunc' and a VariantVector that specifies
+which types should be traversed as arguments.
+\begin{verbatim}
+
+    template<typename NodeFunctional>
+    typename NodeFunctional::result_type 
+    AstQueryNamespace::queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
+ \end{verbatim}
+
+For convenience reasons we support using function pointers instead of functionals. If you want to apply the
+following function
+\begin{verbatim}
+std::list<SgNode*> exampleFunction(SgNode* arg1) 
+\end{verbatim}
+to every node of the types in the VariantVector you need to instantiate the following template as
+'AstQueryNamespace::queryMemoryPool$<$ std::list$<$SgNode*$>$  $>$()'
+
+\begin{verbatim}
+template <class _Result> 
+_Result AstQueryNamespace::queryMemoryPool ( _Result (*__x)(SgNode*), VariantVector* targetVariantVector = NULL )
+}
+\end{verbatim}
+
+We also support function pointers that take two arguments. If you want to apply the following function
+\begin{verbatim}
+void* exampleFunction(SgNode* arg1, std::list<SgNode*> returnList) 
+\end{verbatim}
+to every node type in the VariantVector you need to instantiate the following template as
+'AstQueryNamespace::queryMemoryPool$<$ std::list$<$SgNode*$>$, void*  $>$()'. The second argument, x\_arg,
+  is always provided as the second argument to the function pointer.
+\begin{verbatim}
+template <class _Arg, class _Result> 
+_Result AstQueryNamespace::queryMemoryPool ( 
+    _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
+    VariantVector* targetVariantVector = NULL)
+\end{verbatim}
+
+
