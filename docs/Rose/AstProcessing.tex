@@ -550,15 +550,8 @@ sequence can store and read results to and from each node of the
 AST. For example, the first traversal may attach its results for each node as
 attributes to the AST, and the second traversal can read and use these results.
 
-\section{Conclusions}
 
-All AST*Processing classes provide similar interfaces that differ only by the attributes used. AST node attributes can be used to attach data to each AST node and to share information between different traversals. 
-
-Additional examples for traversal, attributes, pdf, and dot output can be found in 
-\begin{itemize}
-\item \verb+ROSE/exampleTranslators/documentedExamples/astProcessingExamples+.
-\end{itemize}
-
+%===========================================================================
 \section{Visualization}
 
 \subsection{Example Graphs}
@@ -628,4 +621,60 @@ AstDOTGeneration::PREORDER} (or {\tt AstDOTGeneration::POSTORDER}).
     is called in a top-down-bottom-up processing.}
 \label{AstProcessing:TopDownBottomUpAst}
 \end{figure}
+%===========================================================================
+\section{Conclusions}
+
+All AST*Processing classes provide similar interfaces that differ only by the attributes used. AST node attributes can be used to attach data to each AST node and to share information between different traversals. 
+
+Additional examples for traversal, attributes, pdf, and dot output can be found in 
+\begin{itemize}
+\item \verb+ROSE/exampleTranslators/documentedExamples/astProcessingExamples+.
+\end{itemize}
+
+Table~\ref{tab:sumTraversal} summaries and compares the traversal and query support in ROSE. 
+It shows the types of SgNode visited, context, performance, order of nodes being visited, source files being visited, 
+and suggested use for each of the choices. 
+% Liao 4/21/2010 add a table to summary traversal/query
+\begin{table}[htbp]
+  \centering
+\resizebox{7.5in}{!}{ % width of the table
+\begin{tabular}{||l|c|c|c|c|c|c||} \hline
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Regular AST Traversal}}} \\\hline \hline
+& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+%ROSE\_VisitorPattern&  predefined & No & regular & configurable & configuration & Simple traversal \\ \hline
+AstSimpleProcessing  &  predefined & No & regular & configurable & configurable & simple analysis \\ \hline
+AstPrePostProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
+AstTopDownProcessing $<$InheritedAttribute$>$ &  & & &  & &  \\ \hline
+AstBottomUpProcessing $<$SynthesizedAttribute$>$ &  & & &  & &  \\ \hline
+AstCombinedTopDownProcessing &  & & &  & & \\ \hline
+AstCombinedTopDownBottomUpProcessing &  & & &  & & \\ \hline
+AstReversePrefixSimpleProcessing &  & & &  & & \\ \hline
+AstReverseBranchSimpleProcessing &  & & &  & & \\ \hline
+AstReverseBranchInhProcessing &  & & &  & & \\ \hline
+AstReversePrefixInhProcessing &  & & &  & & \\ \hline
+AstReverseBranchSynProcessing &  & & &  & & \\ \hline
+AstReversePrefixSynProcessing &  & & &  & & \\ \hline
+AstReverseBranchInhSynProcessing &  & & &  & & \\ \hline
+AstReversePrefixInhSynProcessing &  & & &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Memory Pool Traversal}}} \\\hline \hline
+%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+ROSE\_VisitTraversal &  & & &  & & \\ \hline
+ROSE\_VisitorPattern&  & & &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{AST Query}}} \\\hline \hline
+%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+  NodeQuery::querySubTree&  & & &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Parallel Traversal}}} \\\hline \hline
+%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+AstSharedMemoryParallelizablePrePostProcessing &  & & &  & & \\ \hline
+AstSharedMemoryParallelizableSimpleProcessing &  & & &  & & \\ \hline
+AstSharedMemoryParallelizablePrePostProcessing &  & & &  & & \\ \hline
+
+\end{tabular}
+}
+\caption{Summary and Comparison of AST Traversals and Queries}
+\label{tab:sumTraversal}
+\end{table}
 
