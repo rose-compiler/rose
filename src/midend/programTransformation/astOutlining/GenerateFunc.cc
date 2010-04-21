@@ -1191,7 +1191,7 @@ Outliner::generateFunction ( SgBasicBlock* s,
   }
 #endif
 
-  //step 3: variable handling, including: 
+  //step 4: variable handling, including: 
   // -----------------------------------------
   //   create parameters of the outlined functions
   //   add statements to unwrap the parameters

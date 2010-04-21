@@ -783,6 +783,14 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int64_t h, int64_t *np);
 
+	  static std::string isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
+	  static std::string isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
+       /**alias for isa_to_string(InsSetArchitecture) */
+	  static std::string to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
+	  static std::string to_string(SgAsmExecutableFileFormat::ByteOrder);
+	  static std::string to_string(SgAsmExecutableFileFormat::ExecFamily);
+	  static std::string to_string(SgAsmExecutableFileFormat::ExecABI);
+	  static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose);
 HEADER_EXECUTABLE_FILE_FORMAT_END
 
 
@@ -1485,7 +1493,7 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 	private:
 		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
 		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
-		static const char *to_string(SectionType);
+		static std::string to_string(SectionType);
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 
@@ -1731,7 +1739,7 @@ HEADER_ELF_RELOC_ENTRY_START
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
 			{dump(f, prefix, idx, NULL);}
-		static const char *to_string(RelocType,InsSetArchitecture);
+		static std::string to_string(RelocType,InsSetArchitecture);
 	private:
 		void ctor(SgAsmElfRelocSection*);
 
