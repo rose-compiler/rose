@@ -20,8 +20,8 @@ public:
   PrologTerm* getSpecific(SgNode*);
   PrologCompTerm* getFileInfo(Sg_File_Info*);
   static std::string prologize(std::string);
-private:
   static PrologTerm* traverseSingleNode(SgNode*);
+private:
   bool typeWasDeclaredBefore(std::string type);
   std::set<std::string> declaredTypes;
   RoseEnums re;

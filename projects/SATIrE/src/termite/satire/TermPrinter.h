@@ -239,6 +239,21 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
     } 
   }
 
+  else if (SgCastExp* cst = dynamic_cast<SgCastExp*>(astNode)) {
+    // Use the original expression tree instead of what EDG generates
+    SgExpression* original = cst->get_originalExpressionTree();
+    if (original != NULL) {
+      //std::cerr << "** DEBUG: replacing\n" << astNode->unparseToString()
+      //	<< "\n with \n" << original->unparseToString() << std::endl;
+	
+      astNode = original;
+
+      // Rebuild the Prolog term for the original expression
+      // and substitute as our synthesized attribute
+      synList[0] = RoseToTerm::traverseSingleNode(original);
+    }
+  }
+
   /* See if this node is intended to be unparsed */
   /*  -> decls inserted by EDG will be stripped */
   Sg_File_Info* fi = astNode->get_file_info();
