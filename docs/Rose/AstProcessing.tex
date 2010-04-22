@@ -655,25 +655,29 @@ and suggested use for each of the choices.
   \centering
 \resizebox{7.0in}{!}{ % width of the table
 \begin{tabular}{||l|c|c|c|c|c|c||} \hline
+
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Regular AST Traversal}}} \\\hline \hline
 & \textbf{Node Types} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
 %ROSE\_VisitorPattern&  predefined & No & regular & configurable & configuration & Simple traversal \\ \hline
 AstSimpleProcessing  &  predefined & No & regular & configurable & configurable & simple analysis \\ \hline
-AstPrePostProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
-AstTopDownProcessing $<$InheritedAttribute$>$ &  & & &  & &  \\ \hline
-AstBottomUpProcessing $<$SynthesizedAttribute$>$ &  & & &  & &  \\ \hline
+AstTopDownProcessing  &  & & &  & &  \\ \hline
+AstBottomUpProcessing &  & & &  & &  \\ \hline
 AstTopDownBottomUpProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
+AstPrePostProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
+
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Combined AST Traversal}}} \\\hline \hline
 AstCombinedSimpleProcessing&  & & &  & & \\ \hline
-AstCombinedPrePostProcessing&  & & &  & & \\ \hline
 AstCombinedTopDownProcessing &  & & &  & & \\ \hline
 AstcombinedBottomUpProcessing&  & & &  & & \\ \hline
 AstCombinedTopDownBottomUpProcessing &  & & &  & & \\ \hline
+AstCombinedPrePostProcessing&  & & &  & & \\ \hline
+
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Reverse AST Traversal}}} \\\hline \hline
 AstReversePrefixSimpleProcessing &  & & &  & & \\ \hline
 AstReversePrefixInhProcessing &  & & &  & & \\ \hline
 AstReversePrefixSynProcessing &  & & &  & & \\ \hline
 AstReversePrefixInhSynProcessing &  & & &  & & \\ \hline
+
 AstReverseBranchSimpleProcessing &  & & &  & & \\ \hline
 AstReverseBranchInhProcessing &  & & &  & & \\ \hline
 AstReverseBranchSynProcessing &  & & &  & & \\ \hline
@@ -690,8 +694,8 @@ AstSharedMemoryParallelPrePostProcessing &  & & Best &  & & \\ \hline
 AstSharedMemoryParallelizableSimpleProcessing &  & &  Best & & & \\ \hline
 AstSharedMemoryParallelizableTopDownProcessing &  & & Best &  & & \\ \hline
 AstSharedMemoryParallelizableBottomUpProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
 AstSharedMemoryParallelizableTopDownBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Memory Pool Traversal}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
