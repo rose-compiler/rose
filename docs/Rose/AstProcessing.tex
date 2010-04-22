@@ -1,6 +1,7 @@
 %\textcolor{red}{Adaptive Mesh Refinement}
 
-\chapter{AST Processing}
+\chapter{AST Traversal}
+%\chapter{AST Processing\{Traversal\}}
 \label{AstProcessing:astProcessing}
 
 \fixme{ This chapter should cover both the classic Object-Oriented Visitor Pattern
@@ -13,6 +14,21 @@
 
 \section{Introduction}
 \label{AstProcessing:introduction}
+Tree traversal is a fundamental operation used to visit each node in a tree
+data structure in a systematic way. Such traversals are categorized by the
+order in which the nodes are visited. A traversal can start at the root and
+explore as far as possible along each branch before backtracking, which is
+referred to as depth-first traversal. It can also be breadth-first
+traversal\fixme{Does ROSE support breadth-first traversal?} which begins at the root node
+and explores all nodes at depth level 1, then nodes at level 2, and so on. 
+For depth-first traversal of a binary tree, it can in turn have three
+variants: preorder (parent, left-child, right-child), inorder (left-child,
+parent, right-child), or postorder (left-child, right-child, parent).
+Inorder traversal does not make too much sense for tree nodes with varying
+number of children since the "in" position of a parent among its children
+is not well defined.  
+Please note that postorder (left-child, right-child, parent) is
+\textbf{NOT} equal to the reversed order of preorder (right-child, left-child, parent).  
 
 ROSE aids the library writer by providing a traversal
 mechanism that visits all the nodes of the AST in a predefined order
@@ -646,8 +662,10 @@ AstSimpleProcessing  &  predefined & No & regular & configurable & configurable 
 AstPrePostProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
 AstTopDownProcessing $<$InheritedAttribute$>$ &  & & &  & &  \\ \hline
 AstBottomUpProcessing $<$SynthesizedAttribute$>$ &  & & &  & &  \\ \hline
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Combined AST Traversal}}} \\\hline \hline
 AstCombinedTopDownProcessing &  & & &  & & \\ \hline
 AstCombinedTopDownBottomUpProcessing &  & & &  & & \\ \hline
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Reverse AST Traversal}}} \\\hline \hline
 AstReversePrefixSimpleProcessing &  & & &  & & \\ \hline
 AstReverseBranchSimpleProcessing &  & & &  & & \\ \hline
 AstReverseBranchInhProcessing &  & & &  & & \\ \hline
@@ -659,8 +677,8 @@ AstReversePrefixInhSynProcessing &  & & &  & & \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Memory Pool Traversal}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
-ROSE\_VisitTraversal &  & & &  & & \\ \hline
-ROSE\_VisitorPattern&  & & &  & & \\ \hline
+ROSE\_VisitTraversal &  & & better  &  & & \\ \hline
+ROSE\_VisitorPattern &  & & better &  & & \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{AST Query}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
@@ -668,9 +686,9 @@ ROSE\_VisitorPattern&  & & &  & & \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Parallel Traversal}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
-AstSharedMemoryParallelizablePrePostProcessing &  & & &  & & \\ \hline
-AstSharedMemoryParallelizableSimpleProcessing &  & & &  & & \\ \hline
-AstSharedMemoryParallelizablePrePostProcessing &  & & &  & & \\ \hline
+AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizableSimpleProcessing &  & &  Best & & & \\ \hline
+AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
 
 \end{tabular}
 }
