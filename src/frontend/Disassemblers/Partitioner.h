@@ -179,6 +179,8 @@ public:
     virtual SgAsmBlock* build_ast();
     
 protected:
+    struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery */
+
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
     virtual BasicBlock* find_bb_containing(rose_addr_t);        /**< Find basic block containing instruction address */
     virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}

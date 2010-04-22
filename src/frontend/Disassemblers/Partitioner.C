@@ -876,11 +876,17 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
 
     /* Truncate an existing basic block if necessary since basic blocks can have only one entry address. The block we
      * truncated now probably has different successors. If it was part of a function, then we need to be sure to recalculate
-     * which basic blocks are part of that function (i.e., set that function's "pending" status). */
+     * which basic blocks are part of that function (i.e., set that function's "pending" status).  If the function is the one
+     * we're currently working on, then our to-do list of outstanding blocks for this function (contained in various levels of
+     * the stack) are possibly outdated -- we abandon this function and try the whole thing again later. */
     if (va!=address(bb)) {
         if (debug) fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
         truncate(bb, va);
         if (bb->function!=NULL) bb->function->pending = true;
+        if (bb->function==f) {
+            if (debug) fprintf(debug, " abandon");
+            throw AbandonFunctionDiscovery();
+        }
         bb = find_bb_containing(va);
         ROSE_ASSERT(bb!=NULL);
         ROSE_ASSERT(va==address(bb));
@@ -899,6 +905,8 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         if (functions.find(va)==functions.end())
             add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
         bb->function->pending = f->pending = true;
+        if (debug) fprintf(debug, " abandon");
+        throw AbandonFunctionDiscovery();
     } else if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
                bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
         if (pops_return_address(call_target)) {
@@ -957,7 +965,11 @@ Partitioner::analyze_cfg()
                         SgAsmFunctionDeclaration::reason_str(true, pending[i]->reason).c_str(),
                         pending[i]->entry_va, pending[i]->name.c_str(), pass);
             }
-            discover_blocks(pending[i], pending[i]->entry_va);
+            try {
+                discover_blocks(pending[i], pending[i]->entry_va);
+            } catch (const AbandonFunctionDiscovery&) {
+                /* thrown when discover_blocks() decides it needs to start over on a function */
+            }
             if (debug) fprintf(debug, "\n");
         }
     }
