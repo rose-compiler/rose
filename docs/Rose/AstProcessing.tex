@@ -18,7 +18,7 @@ Tree traversal is a fundamental operation used to visit each node in a tree
 data structure in a systematic way. Such traversals are categorized by the
 order in which the nodes are visited. A traversal can start at the root and
 explore as far as possible along each branch before backtracking, which is
-referred to as depth-first traversal. It can also be breadth-first
+referred to as a depth-first traversal. It can also be breadth-first
 traversal\fixme{Does ROSE support breadth-first traversal?} which begins at the root node
 and explores all nodes at depth level 1, then nodes at level 2, and so on. 
 For depth-first traversal of a binary tree, it can in turn have three
@@ -653,27 +653,45 @@ and suggested use for each of the choices.
 % Liao 4/21/2010 add a table to summary traversal/query
 \begin{table}[htbp]
   \centering
-\resizebox{7.5in}{!}{ % width of the table
+\resizebox{7.0in}{!}{ % width of the table
 \begin{tabular}{||l|c|c|c|c|c|c||} \hline
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Regular AST Traversal}}} \\\hline \hline
-& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+& \textbf{Node Types} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
 %ROSE\_VisitorPattern&  predefined & No & regular & configurable & configuration & Simple traversal \\ \hline
 AstSimpleProcessing  &  predefined & No & regular & configurable & configurable & simple analysis \\ \hline
 AstPrePostProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
 AstTopDownProcessing $<$InheritedAttribute$>$ &  & & &  & &  \\ \hline
 AstBottomUpProcessing $<$SynthesizedAttribute$>$ &  & & &  & &  \\ \hline
+AstTopDownBottomUpProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Combined AST Traversal}}} \\\hline \hline
+AstCombinedSimpleProcessing&  & & &  & & \\ \hline
+AstCombinedPrePostProcessing&  & & &  & & \\ \hline
 AstCombinedTopDownProcessing &  & & &  & & \\ \hline
+AstcombinedBottomUpProcessing&  & & &  & & \\ \hline
 AstCombinedTopDownBottomUpProcessing &  & & &  & & \\ \hline
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Reverse AST Traversal}}} \\\hline \hline
 AstReversePrefixSimpleProcessing &  & & &  & & \\ \hline
+AstReversePrefixInhProcessing &  & & &  & & \\ \hline
+AstReversePrefixSynProcessing &  & & &  & & \\ \hline
+AstReversePrefixInhSynProcessing &  & & &  & & \\ \hline
 AstReverseBranchSimpleProcessing &  & & &  & & \\ \hline
 AstReverseBranchInhProcessing &  & & &  & & \\ \hline
-AstReversePrefixInhProcessing &  & & &  & & \\ \hline
 AstReverseBranchSynProcessing &  & & &  & & \\ \hline
-AstReversePrefixSynProcessing &  & & &  & & \\ \hline
 AstReverseBranchInhSynProcessing &  & & &  & & \\ \hline
-AstReversePrefixInhSynProcessing &  & & &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Parallel Traversal}}} \\\hline \hline
+%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+AstSharedMemoryParallelSimpleProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelTopDownProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelTopDownBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelPrePostProcessing &  & & Best &  & & \\ \hline
+
+AstSharedMemoryParallelizableSimpleProcessing &  & &  Best & & & \\ \hline
+AstSharedMemoryParallelizableTopDownProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizableBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizableTopDownBottomUpProcessing &  & & Best &  & & \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Memory Pool Traversal}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
@@ -684,11 +702,6 @@ ROSE\_VisitorPattern &  & & better &  & & \\ \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
   NodeQuery::querySubTree&  & & &  & & \\ \hline
 
- \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Parallel Traversal}}} \\\hline \hline
-%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
-AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelizableSimpleProcessing &  & &  Best & & & \\ \hline
-AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
 
 \end{tabular}
 }
