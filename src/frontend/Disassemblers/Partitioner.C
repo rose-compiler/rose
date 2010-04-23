@@ -189,9 +189,12 @@ public:
     }
 };
 
-/* Returns true if the basic block at the specified address causes the top value of the stack to be popped without ending with
- * a RET instruction. Blocks of this type are sometimes used in obfuscated software in conjuction with a CALL statement in
- * order to emulate the semantics of an unconditional branch. */
+/* Returns true if the basic block at the specified virtual address appears to discard the return address from the top of the
+ * stack.
+ *
+ * FIXME: This is far from perfect: it analyzes only the first basic block; it may have incomplete information about where the
+ *        basic block ends due to not yet having discovered all incoming CFG edges; it doesn't consider cases where the return
+ *        value is popped but saved and restored later; etc. */
 bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
@@ -205,16 +208,27 @@ Partitioner::pops_return_address(rose_addr_t va)
     /* Analyze the block */
     if (last_insn && last_insn->get_kind()!=x86_ret) {
         try {
+            XVariablePtr<32> origsp;
             IsFunctionCallPolicy policy;
             Semantics semantics(policy);
             for (size_t i=0; i<target_block->insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(target_block->insns[i]);
                 semantics.processInstruction(insn);
+                if (0==i) origsp = policy.get_sp(va);
+#if 0
+                std::ostringstream s;
+                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
+                  <<policy.currentRset
+                  <<"    ip = " <<policy.readIP() <<"\n";
+                s <<"get_sp(0x" <<std::hex <<va <<std::dec <<") = " <<policy.get_sp(va) <<"\n";
+                fputs(s.str().c_str(), stderr);
+#endif
             }
-            const XVariablePtr<32>& origsp = policy.get_sp(va);
             XVariablePtr<32> newsp = policy.readGPR(x86_gpr_sp);
             if (newsp->get().name==origsp->get().name && newsp->get().offset==origsp->get().offset+wordsize) {
-                fprintf(stderr, "Partitioner::pops_return_address(): block 0x%08"PRIx64" pops return address\n", va);
+                retval = true;
+            } else if (last_insn->get_kind()==x86_call &&
+                       newsp->get().name==origsp->get().name && newsp->get().offset==origsp->get().offset) {
                 retval = true;
             }
         } catch(const Semantics::Exception&) {
@@ -225,6 +239,9 @@ Partitioner::pops_return_address(rose_addr_t va)
     /* We don't want to have a basic block created just because we did some analysis. */
     if (!preexisting)
         discard(target_block);
+
+    if (retval && debug)
+        fprintf(debug, "[B%08"PRIx64" discards return address]\n", va);
 
     return retval;
 }
