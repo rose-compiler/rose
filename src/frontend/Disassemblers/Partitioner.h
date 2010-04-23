@@ -36,12 +36,13 @@ protected:
 
     /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
     struct BasicBlock {
-        BasicBlock(): sucs_complete(false), sucs_ninsns(0), function(NULL) {}
+        BasicBlock(): sucs_complete(false), sucs_first_va(0), sucs_ninsns(0), function(NULL) {}
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         Disassembler::AddressSet sucs;          /**< Cached set of known successors */
         bool sucs_complete;                     /**< Is the set of successors known completely? */
+        rose_addr_t sucs_first_va;              /**< First instruction va when "sucs" was computed */
         size_t sucs_ninsns;                     /**< Number of instructions in block when "sucs" was computed */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
     };

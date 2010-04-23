@@ -149,7 +149,7 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
 const Disassembler::AddressSet&
 Partitioner::successors(BasicBlock *bb, bool *complete)
 {
-    if (bb->insns.size()!=bb->sucs_ninsns) {
+    if (bb->insns.size()!=bb->sucs_ninsns || bb->insns.front()->get_address()!=bb->sucs_first_va) {
         /* Compute successors from scratch. */
         bb->sucs.clear();
         bool b;
@@ -167,6 +167,7 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
         }
 
         bb->sucs_ninsns = bb->insns.size();
+        bb->sucs_first_va = bb->insns.front()->get_address();
     }
     return bb->sucs;
 }
