@@ -229,8 +229,14 @@ unparseAsmStatement(SgAsmStatement* stmt)
                 result += unparseAsmStatement(blk->get_statementList()[i]);
             }
 #if 1
-            /* Show block successors. This is mostly for debugging, but might be useful in regular output too.
-             * [RPM 2010-01-06] */        
+            /* Show block successors. This is mostly for debugging, but might be useful in regular output too. [RPM 2010-01-06]
+             *
+             * FIXME: The successors displayed here are not necessarily the same ones that were used when partitioning
+             *        instructions into basic blocks and basic blocks into functions because the Partitioner::successors()
+             *        method does some additional work beyond what SgAsmInstruction::get_successors() does (the former does
+             *        some inter-block analysis).  A better solution might be to cache successor information in the basic
+             *        block IR node. This would also prevent us from continually reimplementing the successor caching that we
+             *        do in various places to improve performance. [RPM 2010-04-23] */
             if (blk->get_statementList().size()>0) {
                 std::vector<SgAsmInstruction*> insns;
                 for (size_t i=0; i<blk->get_statementList().size(); ++i) {
