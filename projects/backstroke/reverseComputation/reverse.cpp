@@ -1,28 +1,10 @@
 // Example ROSE Translator: used within ROSE/tutorial
 
-#include "rose.h"
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/tuple/tuple.hpp>
+#include "reverse.h"
 #include <stack>
 
 using namespace std;
 using namespace boost;
-using namespace SageBuilder;
-using namespace SageInterface;
-
-#define foreach BOOST_FOREACH
-
-
-SgProject* project1;
-
-class visitorTraversal : public AstSimpleProcessing
-{
-    public:
-	virtual void visit(SgNode* n);
-	vector<SgFunctionDeclaration*> funcs;
-	vector<SgStatement*> var_decls;
-};
 
 #define ISZERO(value, ValType) \
     if (ValType* val = is##ValType(value)) \
@@ -51,303 +33,38 @@ bool isZero(SgValueExp* value)
     return true;
 }
 
-/* 
-   class IfStmtHandler
-   {
-   int flag_;
-   SgVarRefExp* state_var_;
-   std::map<SgStatement*, int> flag_table_;
+set<SgFunctionDeclaration*> EventReverser::func_processed_;
+const ExpPair EventReverser::NULL_EXP_PAIR = ExpPair(NULL, NULL);
+const StmtPair EventReverser::NULL_STMT_PAIR = StmtPair(NULL, NULL);
 
-   public:
-   IfStmtHandler()
-   : flag_(0)
-   {
-   state_var_ = buildVarRefExp("saved_state_b");
-   }
 
-   std::pair<SgIfStmt*, SgIfStmt*>
-   instrumentAndReverseIfStmt(SgIfStmt* if_stmt)
-   {
-   SgTreeCopy tree_copy;
-   int counter = flag_;
-
-// deep copy the statement
-SgIfStmt* fwd_if_stmt = dynamic_cast<SgIfStmt*>(if_stmt->copy(tree_copy));
-SgStatement* true_body = fwd_if_stmt->get_true_body();
-fwd_if_stmt->set_true_body(instrumentBody(true_body));
-SgStatement* false_body = fwd_if_stmt->get_false_body();
-fwd_if_stmt->set_false_body(instrumentBody(false_body));
-
-SgIfStmt* rev_if_stmt = dynamic_cast<SgIfStmt*>(if_stmt->copy(tree_copy));
-SgEqualityOp* eq_op = buildBinaryExpression<SgEqualityOp>(state_var_, buildIntVal(counter));
-rev_if_stmt->set_conditional(buildExprStatement(eq_op));
-
-// may invert the statements in the body
-
-return std::make_pair(fwd_if_stmt, rev_if_stmt);
-}
-
-void instrumentIfStmt(SgIfStmt* if_stmt)
+SgExpression* EventReverser::reverseExpression(SgExpression* exp)
 {
-SgStatement* true_body = if_stmt->get_true_body();
-if_stmt->set_true_body(instrumentBody(true_body));
-
-SgStatement* false_body = if_stmt->get_false_body();
-if_stmt->set_false_body(instrumentBody(false_body));
-
-if (SgIfStmt* stmt = isSgIfStmt(false_body))
-instrumentIfStmt(stmt);
-}
-
-void reverseIfStmt(SgIfStmt* if_stmt)
-{
-SgStatement* true_body = if_stmt->get_true_body();
-int counter = flag_table_[true_body];
-SgEqualityOp* eq_op = buildBinaryExpression<SgEqualityOp>(state_var_, buildIntVal(counter));
-if_stmt->set_conditional(buildExprStatement(eq_op));
-
-SgStatement* false_body = if_stmt->get_false_body();
-if (SgIfStmt* stmt = isSgIfStmt(false_body))
-reverseIfStmt(stmt);
-}
-
-private:
-SgStatement* instrumentBody(SgStatement* body)
-{
-if (SgBasicBlock* block_body = isSgBasicBlock(body))
-{
-flag_table_[isSgStatement(block_body)] = flag_;
-
-pushScopeStack(isSgScopeStatement(block_body));
-SgAssignOp* ass_op = buildBinaryExpression<SgAssignOp>(state_var_, buildIntVal(flag_++));
-SgExprStatement* stmt = buildExprStatement(ass_op);
-appendStatement(stmt);
-popScopeStack();
-return block_body;
-}
-
-if (SgExprStatement* exp_stmt = isSgExprStatement(body))
-{
-    flag_table_[isSgStatement(exp_stmt)] = flag_;
-
-    SgAssignOp* ass_op = buildBinaryExpression<SgAssignOp>(state_var_, buildIntVal(flag_++));
-    SgExprStatement* stmt = buildExprStatement(ass_op);
-    SgBasicBlock* block_body = buildBasicBlock(exp_stmt, stmt);
-    return block_body;
-}
-
-if (body == NULL)
-{
-    SgAssignOp* ass_op = buildBinaryExpression<SgAssignOp>(state_var_, buildIntVal(flag_++));
-    SgExprStatement* stmt = buildExprStatement(ass_op);
-    return stmt;
-}
-
-
-return body;
-}
-
-};
-*/
-
-/* 
-   inline ExpPair makeExpPair(SgExpression* first, SgExpression* second)
-   {
-   return std::pair<SgExpression*, SgExpression*>(first, second);
-   }
-
-   inline StmtPair makeStmtPair(SgStatement* first, SgStatement* second)
-   {
-   return std::pair<SgStatement*, SgStatement*>(first, second);
-   }
-   */
-
-
-typedef std::pair<SgExpression*, SgExpression*> ExpPair;
-typedef std::pair<SgStatement*, SgStatement*> StmtPair;
-typedef std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> FuncDeclPair;
-
-class FunctionRC
-{
-    SgFunctionDeclaration* func_decl_;
-    string function_name_;
-    vector<string> branch_flags_;
-    vector<string> while_counters_;
-    map<string, SgType*> state_vars_;
-    int flag_;
-    int flag_saved_;
-    string flag_name_saved_;
-    string flagstack_name_;
-    int counter_;
-    vector<FuncDeclPair> output_func_pairs_;
-    static set<SgFunctionDeclaration*> func_processed_;
-
-    public:
-    FunctionRC(SgFunctionDeclaration* func_decl) 
-	: func_decl_(func_decl), 
-	function_name_(func_decl_->get_name()), 
-	flag_(1), flag_saved_(0), counter_(0) 
-    {
-	flagstack_name_ = "flags";
-    }
-    vector<FuncDeclPair> OutputFunctions();
-
-    // Get all variables' declarations including all kinds of states
-    vector<SgStatement*> GetVarDeclarations()
-    {
-	vector<SgStatement*> decls;
-	foreach(const string& flag, branch_flags_)
-	    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
-
-	foreach(const string& counter, while_counters_)
-	    decls.push_back(buildVariableDeclaration(counter, buildIntType()));
-
-	pair<string, SgType*> state_var;
-	foreach(state_var, state_vars_)
-	{
-	    decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
-	}
-
-	// how to build a class type?
-	//decls.push_back(buildVariableDeclaration(flagstack_name_, build
-	return decls;
-    }
-
-    private:
-    static const ExpPair NULL_EXP_PAIR;
-    static const StmtPair NULL_STMT_PAIR;
-
-    // Just reverse an expression
-    SgExpression* reverseExpression(SgExpression* exp);
-
-    // Get the forward and reverse version of an expression
-    ExpPair instrumentAndReverseExpression(SgExpression* exp);
-
-    // Get the forward and reverse version of an statement 
-    StmtPair instrumentAndReverseStatement(SgStatement* stmt);
-
-    // Tell whether an expression is a state variable. We only reverse the "states".
-    // Normally the state is passed into functions as arguments, or they are class members
-    // in C++. 
-    SgExpression* isStateVar(SgExpression* exp)
-    {
-	if (SgArrowExp* arr_exp = isSgArrowExp(exp))
-	{
-	    return arr_exp;
-	}
-	else if (SgPntrArrRefExp* ref_exp = isSgPntrArrRefExp(exp))
-	{
-	    if (isSgArrowExp(ref_exp->get_lhs_operand_i()))
-		return ref_exp;
-	}
-	return NULL;
-    }
-
-    // Get the variable name which saves the branch state
-    SgExpression* GetStateVar(SgExpression* var)
-    {
-	string name = function_name_ + "_state_" + lexical_cast<string>(counter_++);
-	state_vars_[name] = var->get_type();
-	return buildVarRefExp(name);
-    }
-
-    // Return the statement which saves the branch state
-    SgStatement* PutBranchFlag(bool flag = true)
-    {
-	/* 
-	if (branch_flags_.empty())
-	    branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
-	SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
-	return buildExprStatement(buildBinaryExpression<SgIorAssignOp>(flag_var, buildIntVal(flag_)));
-	*/
-	return buildFunctionCallStmt("Push", buildVoidType(), 
-		buildExprListExp(buildVarRefExp("flags"), buildIntVal(flag)));
-    }
-
-    // Return the statement which checks the branch flag
-    SgStatement* CheckBranchFlag()
-    {
-	/* 
-	SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
-	SgStatement* flag_check = buildExprStatement(buildBinaryExpression<SgBitAndOp>(flag_var, buildIntVal(flag_)));
-
-	flag_ <<= 1;
-	if (flag_ == 0)
-	{
-	    // the current flag has been used up, we need a new one.
-	    flag_ = 1;
-	    branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
-	}
-
-	return flag_check;
-	*/
-	SgStatement* flag_check = buildFunctionCallStmt("Pop", buildVoidType(), 
-		buildExprListExp(buildVarRefExp(flagstack_name_)));
-	return flag_check;
-    }
-
-    SgStatement* NewBranchFlag()
-    {
-	SgStatement* flag = buildFunctionCallStmt("Push", buildVoidType(), 
-		buildExprListExp(buildVarRefExp(flagstack_name_)));
-	return flag;
-    }
-
-    void SaveBranchFlag() 
-    {
-	/* 
-	if (branch_flags_.empty())
-	    branch_flags_.push_back(function_name_ + "_branch_flag" + lexical_cast<string>(counter_++));
-	flag_saved_ = flag_;
-	flag_name_saved_ = branch_flags_.back();
-	*/
-    }
-
-    SgName GenerateVar(const string& name, SgType* type = buildIntType())
-    {
-	string var_name = function_name_ + "_" + name + "_" + lexical_cast<string>(counter_++);
-	state_vars_[var_name] = type;
-	return var_name;
-    }
-
-    SgStatement* InitWhileCounter()
-    {
-	while_counters_.push_back(function_name_ + "_while_counter_" + lexical_cast<string>(counter_++));
-	return buildExprStatement(
-		buildBinaryExpression<SgAssignOp>(
-		    buildVarRefExp(while_counters_.back()), 
-		    buildIntVal(0)));
-    }
-};
-
-set<SgFunctionDeclaration*> FunctionRC::func_processed_;
-const ExpPair FunctionRC::NULL_EXP_PAIR = ExpPair(NULL, NULL);
-const StmtPair FunctionRC::NULL_STMT_PAIR = StmtPair(NULL, NULL);
-
-
-SgExpression* FunctionRC::reverseExpression(SgExpression* exp)
-{
-
     return NULL;
 }
 
 
-ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
+ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 {
     // if this expression is a binary one
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
     {
+	// a binary operation contains two expressions which need to be processed first
 	SgExpression *fwd_left, *fwd_right, *rev_left, *rev_right;
 	tie(fwd_right, rev_right) = instrumentAndReverseExpression(bin_op->get_rhs_operand_i());
 	tie(fwd_left, rev_left) = instrumentAndReverseExpression(bin_op->get_lhs_operand_i());
 
+	// the default forward version. Unless state saving is needed, we use the following one.
 	SgBinaryOp* fwd_exp = isSgBinaryOp(copyExpression(exp));
 	fwd_exp->set_lhs_operand_i(fwd_left);
 	fwd_exp->set_rhs_operand_i(fwd_right);
 
 	// if the left-hand side of the assign-op is the state
+	// (note that only in this situation do we consider to reverse this expression)
 	if (SgExpression* var = isStateVar(bin_op->get_lhs_operand_i()))
 	{
+	    // the operations +=, -=, and *= can be reversed without state saving,
+	    // if the rhs operand is a value or state variable.
 	    SgExpression* rhs_operand = bin_op->get_rhs_operand_i();
 	    if (isStateVar(rhs_operand) || isSgValueExp(rhs_operand))
 	    {
@@ -367,6 +84,7 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 				var, rhs_operand));
 		}
 
+		// we must ensure that the rhs operand of *= is not ZERO
 		if (isSgMultAssignOp(exp) && !isZero(isSgValueExp(rhs_operand)))
 		{
 		    // if the rhs_operand is a value and the value is not 0
@@ -377,6 +95,8 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 		}
 	    }
 
+	    // the following operations which alter the value of the lhs operand
+	    // can be reversed by state saving
 	    if (isSgAssignOp(exp) ||
 		    isSgMultAssignOp(exp) ||
 		    isSgDivAssignOp(exp) ||
@@ -389,13 +109,17 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 		    isSgRshiftAssignOp(exp))
 	    {
 		SgBinaryOp* exp_copy = isSgBinaryOp(copyExpression(exp));
+		ROSE_ASSERT(exp_copy);
+
 		SgExpression *fwd_rhs_exp, *rev_rhs_exp;
 		tie(fwd_rhs_exp, rev_rhs_exp) = 
 		    instrumentAndReverseExpression(exp_copy->get_rhs_operand_i());
 		exp_copy->set_rhs_operand_i(fwd_rhs_exp);
 
-		SgExpression* state_var = GetStateVar(var);
-		// save the state
+		SgExpression* state_var = getStateVar(var);
+
+		// Save the state (we cannot use the default forward expression any more).
+		// Here we use comma operator expression to implement state saving.
 		SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
 			buildBinaryExpression<SgAssignOp>(
 			    state_var,
@@ -406,12 +130,18 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 		SgExpression* rev_exp = buildBinaryExpression<SgAssignOp>(
 			copyExpression(var),
 			copyExpression(state_var));
+
+		// If the rhs operand expression can be reversed, we have to deal with 
+		// both sides at the same time. For example: b = ++a, where a and b are 
+		// both state variables.
 		if (rev_rhs_exp)
 		    rev_exp = buildBinaryExpression<SgCommaOpExp>(rev_rhs_exp, rev_exp);
 		return ExpPair(fwd_exp, rev_exp);
 	    }
 	}
 
+	// The following is the default reverse expression which is a combination
+	// of reverse expressions of both sides.
 	SgExpression* rev_exp = NULL;
 	if (rev_right && rev_left)
 	    rev_exp = buildBinaryExpression<SgCommaOpExp>(rev_right, rev_left);
@@ -423,16 +153,24 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 	return ExpPair(fwd_exp, rev_exp);
     }
 
+    // if the expression is a unary one
     if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
     {
 	SgExpression *fwd_operand_exp, *rev_operand_exp;
 	tie(fwd_operand_exp, rev_operand_exp) = instrumentAndReverseExpression(unary_op->get_operand());
-	// instrument its operand
+
+	// The default forward version should instrument its operand.
+	// For example, ++(a = 5), where a is a state variable.
+	// Its forward expression is like ++(s = a, a = 5), where s is for state saving.
 	SgUnaryOp* fwd_exp = isSgUnaryOp(copyExpression(exp));
+	ROSE_ASSERT(fwd_exp);
 	fwd_exp->set_operand_i(fwd_operand_exp);
 
+	// if the left-hand side of the assign-op is the state
+	// (note that only in this situation do we consider to reverse this expression)
 	if (SgExpression* var = isStateVar(unary_op->get_operand_i()))
 	{
+	    // ++ and -- can both be reversed without state saving
 	    if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
 	    {
 		SgUnaryOp::Sgop_mode pp_mode = pp_op->get_mode();
@@ -458,6 +196,7 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 	return ExpPair(fwd_exp, rev_exp);
     }
 
+    // process the conditional expression (?:).
     if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
     {
 	SgExpression *rev_cond_exp, *rev_true_exp, *rev_false_exp;
@@ -471,17 +210,20 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 		buildConditionalExp(fwd_cond_exp, fwd_true_exp, fwd_false_exp));
     }
 
+    // process the function call expression
     if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
     {
+	// When there is a function call in the event function, we should consider to
+	// instrument and reverse this function.
 	SgFunctionDeclaration* func_decl = func_exp->getAssociatedFunctionDeclaration();
-	FunctionRC func_generator(func_decl);
-	vector<FuncDeclPair> func_pairs = func_generator.OutputFunctions();
+	EventReverser func_generator(func_decl);
+	vector<FuncDeclPair> func_pairs = func_generator.outputFunctions();
 	if (func_processed_.count(func_decl) == 0)
 	    foreach(const FuncDeclPair& func_pair, func_pairs)
 		output_func_pairs_.push_back(func_pair);
 	SgFunctionDeclaration* fwd_func = func_pairs.back().first;
 	SgFunctionDeclaration* rev_func = func_pairs.back().second;
-	
+
 	SgExprListExp* fwd_args = buildExprListExp();
 	SgExprListExp* rev_args = buildExprListExp();
 	foreach (SgExpression* exp, func_exp->get_args()->get_expressions())
@@ -507,7 +249,7 @@ ExpPair FunctionRC::instrumentAndReverseExpression(SgExpression* exp)
 }
 
 
-StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
+StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 {
     if (stmt == NULL)
 	return NULL_STMT_PAIR;
@@ -529,11 +271,11 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
     }
 
     /* 
-    if (isSgVariableDeclaration(stmt))
-    {
-	return StmtPair(copyStatement(stmt), NULL);
-    }
-    */
+       if (isSgVariableDeclaration(stmt))
+       {
+       return StmtPair(copyStatement(stmt), NULL);
+       }
+       */
 
     // if it's a block, process each statement inside
     if (SgBasicBlock* body = isSgBasicBlock(stmt))
@@ -577,19 +319,19 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 	tie(fwd_false_body, rev_false_body) = instrumentAndReverseStatement(false_body);
 
 	if (SgBasicBlock* body = isSgBasicBlock(fwd_true_body))
-	    body->append_statement(PutBranchFlag(true));
+	    body->append_statement(putBranchFlag(true));
 	else if (fwd_true_body)
-	    fwd_true_body = buildBasicBlock(fwd_true_body, PutBranchFlag(true));
+	    fwd_true_body = buildBasicBlock(fwd_true_body, putBranchFlag(true));
 
 	if (SgBasicBlock* body = isSgBasicBlock(fwd_false_body))
-	    body->append_statement(PutBranchFlag(false));
+	    body->append_statement(putBranchFlag(false));
 	else if (fwd_false_body)
-	    fwd_false_body = buildBasicBlock(fwd_false_body, PutBranchFlag(false));
+	    fwd_false_body = buildBasicBlock(fwd_false_body, putBranchFlag(false));
 
 	SgStatement* cond = if_stmt->get_conditional();
 
 	SgStatement *fwd_cond_exp, *rev_post_exp;
-	SgStatement* rev_cond_exp = CheckBranchFlag();
+	SgStatement* rev_cond_exp = checkBranchFlag();
 
 	// do not switch the position of the following statement to the one above;
 	// make sure the current flag is used before generating new statement
@@ -597,8 +339,8 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 
 	return StmtPair(
 		//buildBasicBlock(
-		    buildIfStmt(fwd_cond_exp, fwd_true_body, fwd_false_body),
-		    //NewBranchFlag()),
+	    buildIfStmt(fwd_cond_exp, fwd_true_body, fwd_false_body),
+	    //NewBranchFlag()),
 		buildBasicBlock(
 		    buildIfStmt(rev_cond_exp, rev_true_body, rev_false_body),
 		    rev_post_exp));
@@ -621,10 +363,10 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 	tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
 	/* 
-	foreach(SgStatement* stmt, init->get_init_stmt())
-	    isSgBasicBlock(fwd_body)->append_statement(stmt);
-	isSgBasicBlock(fwd_body)->append_statement(init);
-	*/
+	   foreach(SgStatement* stmt, init->get_init_stmt())
+	   isSgBasicBlock(fwd_body)->append_statement(stmt);
+	   isSgBasicBlock(fwd_body)->append_statement(init);
+	   */
 	rev_init = copyStatement(init);
 	rev_test = copyStatement(test);
 	rev_incr = copyExpression(incr);
@@ -638,9 +380,9 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 		fwd_for,
 		//buildForStatement(fwd_init, fwd_test, fwd_incr, fwd_body),
 		rev_for);
-		//buildForStatement(init, test, incr, rev_body));
+	//buildForStatement(init, test, incr, rev_body));
     }
-    
+
     if (SgForInitStatement* for_init_stmt = isSgForInitStatement(stmt))
     {
 	if (for_init_stmt->get_init_stmt().size() == 1)
@@ -656,7 +398,7 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 	tie(fwd_cond, rev_cond) = instrumentAndReverseStatement(cond);
 	tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
-	SgName counter_name = GenerateVar("while_counter");
+	SgName counter_name = generateVar("while_counter");
 	// initialize the counter
 	SgStatement* fwd_pre_exp = buildExprStatement(
 		buildBinaryExpression<SgAssignOp>(
@@ -701,7 +443,7 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 		    buildWhileStmt(fwd_cond, fwd_body)),
 		rev_for_body);
     }
-      
+
     if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(stmt))
     {
 	SgStatement* cond = do_while_stmt->get_condition();
@@ -711,7 +453,7 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 	tie(fwd_cond, rev_cond) = instrumentAndReverseStatement(cond);
 	tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
-	SgName counter_name = GenerateVar("while_counter");
+	SgName counter_name = generateVar("while_counter");
 	// initialize the counter
 	SgStatement* fwd_pre_exp = buildExprStatement(
 		buildBinaryExpression<SgAssignOp>(
@@ -776,7 +518,7 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 		SgBasicBlock* fwd_case_body = isSgBasicBlock(body_pair.first);
 		SgBasicBlock* rev_case_body = isSgBasicBlock(body_pair.second);
 
-		fwd_case_body->prepend_statement(PutBranchFlag());
+		fwd_case_body->prepend_statement(putBranchFlag());
 
 		fwd_stmts.push_back(buildCaseOptionStmt(
 			    case_opt_stmt->get_key(),
@@ -796,7 +538,7 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 		    SgBasicBlock* fwd_default_body = isSgBasicBlock(body_pair.first);
 		    SgBasicBlock* rev_default_body = isSgBasicBlock(body_pair.second);
 
-		    fwd_default_body->prepend_statement(PutBranchFlag());
+		    fwd_default_body->prepend_statement(putBranchFlag());
 		    fwd_stmts.push_back(buildDefaultOptionStmt(fwd_default_body));
 		    rev_stmts.push_back(buildCaseOptionStmt(
 				buildIntVal(0),
@@ -824,12 +566,12 @@ StmtPair FunctionRC::instrumentAndReverseStatement(SgStatement* stmt)
 }
 
 
-vector<FuncDeclPair> FunctionRC::OutputFunctions()
+vector<FuncDeclPair> EventReverser::outputFunctions()
 {
     SgBasicBlock* body = func_decl_->get_definition()->get_body();
     StmtPair bodies = instrumentAndReverseStatement(body);
 
-    SgName func_name = func_decl_->get_name() + "_instrumented";
+    SgName func_name = func_decl_->get_name() + "_forward";
     SgFunctionDeclaration* fwd_func_decl = 
 	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
 		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
@@ -837,11 +579,8 @@ vector<FuncDeclPair> FunctionRC::OutputFunctions()
 
     pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
     SgStatementPtrList fwd_stmt_list = isSgBasicBlock(bodies.first)->get_statements();
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
- // This fails to link when this is include with the 4.3.2 compiler.
- // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
-    for_each(fwd_stmt_list.begin(), fwd_stmt_list.end(), appendStatement);
-#endif
+    foreach (SgStatement* stmt, fwd_stmt_list)
+	appendStatement(stmt);
     popScopeStack();
 
     func_name = func_decl_->get_name() + "_reverse";
@@ -851,16 +590,22 @@ vector<FuncDeclPair> FunctionRC::OutputFunctions()
 
     pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
     SgStatementPtrList rev_stmt_list = isSgBasicBlock(bodies.second)->get_statements();
-#if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
- // This fails to link when this is include with the 4.3.2 compiler.
- // error: /usr/bin/ld: final link failed: Nonrepresentable section on output
-    for_each(rev_stmt_list.begin(), rev_stmt_list.end(), appendStatement);
-#endif
+    foreach (SgStatement* stmt, rev_stmt_list)
+	appendStatement(stmt);
     popScopeStack();
 
     output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rev_func_decl));
     return output_func_pairs_;
 }
+
+
+class visitorTraversal : public AstSimpleProcessing
+{
+    public:
+	virtual void visit(SgNode* n);
+	vector<SgFunctionDeclaration*> funcs;
+	vector<SgStatement*> var_decls;
+};
 
 
 void visitorTraversal::visit(SgNode* n)
@@ -869,15 +614,15 @@ void visitorTraversal::visit(SgNode* n)
     if (SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(n))
     {
 	if (func_decl->get_name() != "event") return;
-	FunctionRC func_rc(func_decl);
-	vector<FuncDeclPair> func_pairs = func_rc.OutputFunctions();
+	EventReverser reverser(func_decl);
+	vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
 	foreach(const FuncDeclPair& func_pair, func_pairs)
 	{
 	    funcs.push_back(func_pair.first);
 	    funcs.push_back(func_pair.second);
 	}
 
-	vector<SgStatement*> vars = func_rc.GetVarDeclarations();
+	vector<SgStatement*> vars = reverser.getVarDeclarations();
 	foreach(SgStatement* stmt, vars)
 	    var_decls.push_back(stmt);
 
@@ -892,13 +637,78 @@ void visitorTraversal::visit(SgNode* n)
     }
 }
 
+
+SgFunctionDeclaration* buildMainFunction()
+{
+    SgFunctionDeclaration* func_decl = 
+	buildDefiningFunctionDeclaration(
+		"main",
+		buildIntType(),
+		buildFunctionParameterList());
+    pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
+
+    /////////////////////////////////////////////////////////////////////////////////////////
+    // There are two tests: one is testing event and event_fwd get the same value of the model,
+    // the other is performing event_fwd and event_reverse to see if the value of the model changes
+    
+    SgType* model_type = buildStructDeclaration("model")->get_type();
+
+    // Declare two variables 
+    SgVariableDeclaration* var1 = buildVariableDeclaration("m1", model_type);
+    SgVariableDeclaration* var2 = buildVariableDeclaration("m2", model_type);
+
+    // Initialize them
+    SgExprListExp* para1 = buildExprListExp(
+	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")));
+    SgExprStatement* init1 = buildFunctionCallStmt("initialize", buildVoidType(), para1);
+    SgExprListExp* para2 = buildExprListExp(
+	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
+    SgExprStatement* init2 = buildFunctionCallStmt("initialize", buildVoidType(), para2);
+
+    // Output PASS or FAIL information
+    SgExprListExp* para_pass = buildExprListExp(buildStringVal("PASS!\\n"));
+    SgExprListExp* para_fail = buildExprListExp(buildStringVal("FAIL!\\n"));
+    SgExprStatement* test_pass = buildFunctionCallStmt("printf", buildVoidType(), para_pass);
+    SgExprStatement* test_fail = buildFunctionCallStmt("printf", buildVoidType(), para_fail);
+
+
+    // Call event and event_forward then check two models' values
+    SgExprStatement* call_event = buildFunctionCallStmt("event", buildVoidType(), para1);
+    SgExprStatement* call_event_fwd = buildFunctionCallStmt("event_forward", buildVoidType(), para2);
+    SgExprListExp* para_comp = buildExprListExp(
+	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
+	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
+    SgExprStatement* call_compare = buildFunctionCallStmt("compare", buildVoidType(), para_comp);
+    SgIfStmt* test_compare = buildIfStmt(call_compare, test_fail, NULL);
+
+    // Call event_forward and event_reverse then check if the model's value changes
+    SgExprStatement* call_event_rev = buildFunctionCallStmt("event_reverse", buildVoidType(), para2);
+
+    appendStatement(var1);
+    appendStatement(var2);
+    appendStatement(init1);
+    appendStatement(init2);
+    appendStatement(call_event);
+    appendStatement(call_event_fwd);
+    appendStatement(test_compare);
+    appendStatement(copyStatement(init1));
+    appendStatement(copyStatement(init2));
+    appendStatement(copyStatement(call_event_fwd));
+    appendStatement(call_event_rev);
+    appendStatement(copyStatement(test_compare));
+    appendStatement(test_pass);
+
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    popScopeStack();
+    return func_decl;
+}
+
 // Typical main function for ROSE translator
 int main( int argc, char * argv[] )
 {
     SgProject* project = frontend(argc,argv);
     visitorTraversal traversal;
-
-    project1 = project;
 
     SgGlobal *globalScope = getFirstGlobalScope (project);
     pushScopeStack (isSgScopeStatement (globalScope));
@@ -909,6 +719,8 @@ int main( int argc, char * argv[] )
 	appendStatement(traversal.var_decls[i], globalScope);
     for (size_t i = 0; i < traversal.funcs.size(); ++i)
 	appendStatement(traversal.funcs[i], globalScope);
+
+    appendStatement(buildMainFunction());
 
     popScopeStack();
 
