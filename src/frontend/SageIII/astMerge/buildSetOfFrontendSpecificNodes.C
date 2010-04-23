@@ -83,7 +83,7 @@ getSetOfNonFrontendSpecificNodes()
    {
   // This function computes the set of IR nodes that are not front-end specific, then we will do set difference 
   // (with the list that can be considered front-end specific).  These lists have a non-null intersection because 
-  // some IR nodes are shared (types for example) and we want to front-end specific IR nodes that are a part of 
+  // some IR nodes are shared (types for example) and we want to isolate front-end specific IR nodes that are a part of 
   // the front-end, but NOT shared with parts of the whole AST graph that are separate from the front-end.
 
   // Generate a subset of the SgNode* in the memory pool (all IR nodes)

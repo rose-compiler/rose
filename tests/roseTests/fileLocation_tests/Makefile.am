@@ -644,6 +644,12 @@ testLinkedFileLocation: fileLocation
 testFileLocationROSE: fileLocation
 	./fileLocation -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $(srcdir)/input_fileLocationRose.C
 
+if OS_MACOSX
+check-local:
+	@echo "*****************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/fileLocation_tests:               COMMENTED OUT FOR OSX            ******"
+	@echo "*****************************************************************************************************"
+else
 check-local:
 #	@$(MAKE) testStatementPosition
 	@$(MAKE) $(PASSING_TEST_Objects)
@@ -651,6 +657,7 @@ check-local:
 	@echo "*****************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/fileLocation_tests: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************"
+endif
 
 distclean-local:
 	rm -rf Makefile

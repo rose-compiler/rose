@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Warning! "dot" does not exit with non-zero status if interrupted by control-C.
+
+did_something=
+errors=
+
+# Generate web pages for function control flow graphs
+for fdot in *-F*.dot; do
+    [ -f "$fdot" ] || continue
+
+    # Base name of original executable
+    exebase="${fdot%-F*.dot}"
+
+    # Base name of generated files (exe base name and node name)
+    basename="${fdot%.dot}"
+
+    # Name of function node
+    node="${fdot#$exebase-}"
+    node="${node%.dot}"
+
+    if [ ! -f "$basename.html" -o "$basename.html" -ot "$fdot" ]; then
+	did_something=yes
+	echo -n "$node... "
+	if dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null; then
+	    echo "<html><body><img src=\"${basename}.gif\" usemap=\"#${node}\"/>" >$basename.html
+	    sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
+	    rm $basename.map
+	    echo "</body></html>" >>$basename.html
+	    echo "ok"
+	else
+	    echo "fail"
+	    errors="$errors $node"
+	fi
+    fi
+done
+
+# Generate web pages for call graphs
+for fdot in *-cg.dot; do
+    [ -f "$fdot" ] || continue
+    basename="${fdot%.dot}"
+    if [ ! -f "$basename.html" -o "$basename.html" -ot "$fdot" ]; then
+	did_something=yes
+	echo -n "callgraph (this may take a while)... "
+	if dot -Tcmapx -o$basename.map -Tgif -o$basename.gif $fdot >/dev/null; then
+	    echo "<html><body><img src=\"${basename}.gif\" usemap=\"#callgraph\"/>" >$basename.html
+	    sed "s/href=\"F/href=\"$exebase-F/" <$basename.map >>$basename.html
+	    rm $basename.map
+	    echo "</body></html>" >>$basename.html
+	    echo "ok"
+	else
+	    echo "fail"
+	    errors="$errors cg"
+	fi
+    fi
+done
+
+if [ -n "$errors" ]; then
+    echo "failed for nodes:$errors"
+    exit 1
+fi
+
+[ -n "$did_something" ] || echo "up to date"
+
+exit 0

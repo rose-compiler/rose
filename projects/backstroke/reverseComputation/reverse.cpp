@@ -573,9 +573,8 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
 
     SgName func_name = func_decl_->get_name() + "_forward";
     SgFunctionDeclaration* fwd_func_decl = 
-	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
-		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
-
+    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList())));
 
     pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
     SgStatementPtrList fwd_stmt_list = isSgBasicBlock(bodies.first)->get_statements();
@@ -585,7 +584,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
 
     func_name = func_decl_->get_name() + "_reverse";
     SgFunctionDeclaration* rev_func_decl = 
-	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
 		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
 
     pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
