@@ -451,7 +451,7 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 }
 
 /** Change symbol to string */
-const char *
+std::string
 SgAsmElfSectionTableEntry::to_string(SectionType t)
 {
     switch (t) {
@@ -482,7 +482,7 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
         } else {
             return "unknown";
         }
-    }
+    };
 }
 
 /** Print some debugging info */
@@ -499,7 +499,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     
     fprintf(f, "%s%-*s = %u bytes into strtab\n",                      p, w, "sh_name",        p_sh_name);
     fprintf(f, "%s%-*s = 0x%x (%d) %s\n",                              p, w, "sh_type", 
-            p_sh_type, p_sh_type, to_string(p_sh_type));
+            p_sh_type, p_sh_type, to_string(p_sh_type).c_str());
     fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_link",        p_sh_link);
     fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_info",        p_sh_info);
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",                             p, w, "sh_flags",       p_sh_flags);

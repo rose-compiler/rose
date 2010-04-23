@@ -10,8 +10,19 @@
 \usepackage{multicol}
 \usepackage{multirow}
 \usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup {
+colorlinks= true,
+urlcolor=blue,
+citecolor=black,
+linkcolor=black,
+}
 
-\newcommand{\mySmallFontSize}{\scriptsize}
+\lstset{language=C++,basicstyle=\footnotesize }
+
+\newcommand{\mySmallFontSize}{\footnotesize}
+%\newcommand{\mySmallFontSize}{\scriptsize} % scriptsize is too small, 
+% Liao 4/21/2010
 \newcommand{\mySmallestFontSize}{\tiny}
 
 \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/simpleTranslatorExamples}

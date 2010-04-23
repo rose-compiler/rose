@@ -1,6 +1,7 @@
 %\textcolor{red}{Adaptive Mesh Refinement}
 
-\chapter{AST Processing}
+\chapter{AST Traversal}
+%\chapter{AST Processing\{Traversal\}}
 \label{AstProcessing:astProcessing}
 
 \fixme{ This chapter should cover both the classic Object-Oriented Visitor Pattern
@@ -13,6 +14,21 @@
 
 \section{Introduction}
 \label{AstProcessing:introduction}
+Tree traversal is a fundamental operation used to visit each node in a tree
+data structure in a systematic way. Such traversals are categorized by the
+order in which the nodes are visited. A traversal can start at the root and
+explore as far as possible along each branch before backtracking, which is
+referred to as a depth-first traversal. It can also be breadth-first
+traversal\fixme{Does ROSE support breadth-first traversal?} which begins at the root node
+and explores all nodes at depth level 1, then nodes at level 2, and so on. 
+For depth-first traversal of a binary tree, it can in turn have three
+variants: preorder (parent, left-child, right-child), inorder (left-child,
+parent, right-child), or postorder (left-child, right-child, parent).
+Inorder traversal does not make too much sense for tree nodes with varying
+number of children since the "in" position of a parent among its children
+is not well defined.  
+Please note that postorder (left-child, right-child, parent) is
+\textbf{NOT} equal to the reversed order of preorder (right-child, left-child, parent).  
 
 ROSE aids the library writer by providing a traversal
 mechanism that visits all the nodes of the AST in a predefined order
@@ -70,7 +86,8 @@ visit function at each node of the AST. This can be done as
 a preorder or postorder traversal.
 
 {\indent
-{\mySmallFontSize
+%{\mySmallFontSize
+{\footnotesize
 \begin{verbatim}
      typedef {preorder,postorder} t_traversalOrder;
 
@@ -403,25 +420,33 @@ degree. Essentially, this allows for the implementation of a pattern, also calle
 can be implemented using this technique.
 
 {\indent
-{\mySmallFontSize
+{\footnotesize
 \begin{verbatim}
      template<InheritedAttributeType, SynthesizedAttributeType>
      class AstTopDownBottomUpProcessing {
         public:
-           SynthesizedAttributeType traverse(SgNode* node, InheritedAttributeType initialInheritedAttribute);
-           SynthesizedAttributeType traverseWithinFile(SgNode* node, InheritedAttributeType initialInheritedAttribute);
-           void traverseInputFiles(SgProject* projectNode, InheritedAttributeType initialInheritedAttribute);
+           SynthesizedAttributeType traverse(SgNode* node, 
+                 InheritedAttributeType initialInheritedAttribute);
+
+           SynthesizedAttributeType traverseWithinFile(SgNode* node, 
+                 InheritedAttributeType initialInheritedAttribute);
+
+           void traverseInputFiles(SgProject* projectNode, 
+                 InheritedAttributeType initialInheritedAttribute);
+
            typedef ... SynthesizedAttributesList;
         protected:
            InheritedAttributeType
            virtual evaluateInheritedAttribute(SgNode* astNode, InheritedAttributeType inheritedValue);
            SynthesizedAttributeType
-           virtual evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttributeType inh, SynthesizedAttributesList synList)=0;
+           virtual evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttributeType inh, 
+                            SynthesizedAttributesList synList)=0;
            SynthesizedAttributeType
            virtual defaultSynthesizedAttribute();
      };
 \end{verbatim}
-}}
+}
+}
 
 \section{Combined Processing Classes}
 
@@ -465,13 +490,19 @@ of these classes are presented below, the others are analogous.
      template<InheritedAttributeType, SynthesizedAttributeType>
      class AstCombinedTopDownBottomUpProcessing {
         public:
-           vector<SynthesizedAttributeType> traverse(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
-           vector<SynthesizedAttributeType> traverseWithinFile(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
-           void traverseInputFiles(SgProject* projectNode, vector<InheritedAttributeType> initialInheritedAttributes);
-           typedef ... SynthesizedAttributesList;
+           vector<SynthesizedAttributeType> 
+             traverse(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
+          
+           vector<SynthesizedAttributeType> 
+              traverseWithinFile(SgNode* node, vector<InheritedAttributeType> initialInheritedAttributes);
+          
+          void traverseInputFiles(SgProject* projectNode, vector<InheritedAttributeType> initialInheritedAttributes);
+          
+          typedef ... SynthesizedAttributesList;
 
            void addTraversal(AstTopDownBottomUpProcessing<InheritedAttributeType, SynthesizedAttributeType>* traversal);
-           vector<AstTopDownBottomUpProcessing<InheritedAttributeType, SynthesizedAttributeType>*>& get_traversalPtrListRef();
+           vector<AstTopDownBottomUpProcessing<InheritedAttributeType, SynthesizedAttributeType>*>
+             & get_traversalPtrListRef();
      };
 \end{verbatim}
 }}
@@ -535,15 +566,8 @@ sequence can store and read results to and from each node of the
 AST. For example, the first traversal may attach its results for each node as
 attributes to the AST, and the second traversal can read and use these results.
 
-\section{Conclusions}
 
-All AST*Processing classes provide similar interfaces that differ only by the attributes used. AST node attributes can be used to attach data to each AST node and to share information between different traversals. 
-
-Additional examples for traversal, attributes, pdf, and dot output can be found in 
-\begin{itemize}
-\item \verb+ROSE/exampleTranslators/documentedExamples/astProcessingExamples+.
-\end{itemize}
-
+%===========================================================================
 \section{Visualization}
 
 \subsection{Example Graphs}
@@ -613,4 +637,79 @@ AstDOTGeneration::PREORDER} (or {\tt AstDOTGeneration::POSTORDER}).
     is called in a top-down-bottom-up processing.}
 \label{AstProcessing:TopDownBottomUpAst}
 \end{figure}
+%===========================================================================
+\section{Conclusions}
+
+All AST*Processing classes provide similar interfaces that differ only by the attributes used. AST node attributes can be used to attach data to each AST node and to share information between different traversals. 
+
+Additional examples for traversal, attributes, pdf, and dot output can be found in 
+\begin{itemize}
+\item \verb+ROSE/exampleTranslators/documentedExamples/astProcessingExamples+.
+\end{itemize}
+
+Table~\ref{tab:sumTraversal} summaries and compares the traversal and query support in ROSE. 
+It shows the types of SgNode visited, context, performance, order of nodes being visited, source files being visited, 
+and suggested use for each of the choices. 
+% Liao 4/21/2010 add a table to summary traversal/query
+\begin{table}[htbp]
+  \centering
+\resizebox{7.0in}{!}{ % width of the table
+\begin{tabular}{||l|c|c|c|c|c|c||} \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Regular AST Traversal}}} \\\hline \hline
+& \textbf{Node Types} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+%ROSE\_VisitorPattern&  predefined & No & regular & configurable & configuration & Simple traversal \\ \hline
+AstSimpleProcessing  &  predefined & No & regular & configurable & configurable & simple analysis \\ \hline
+AstTopDownProcessing  &  & & &  & &  \\ \hline
+AstBottomUpProcessing &  & & &  & &  \\ \hline
+AstTopDownBottomUpProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
+AstPrePostProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Combined AST Traversal}}} \\\hline \hline
+AstCombinedSimpleProcessing&  & & &  & & \\ \hline
+AstCombinedTopDownProcessing &  & & &  & & \\ \hline
+AstcombinedBottomUpProcessing&  & & &  & & \\ \hline
+AstCombinedTopDownBottomUpProcessing &  & & &  & & \\ \hline
+AstCombinedPrePostProcessing&  & & &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Reverse AST Traversal}}} \\\hline \hline
+AstReversePrefixSimpleProcessing &  & & &  & & \\ \hline
+AstReversePrefixInhProcessing &  & & &  & & \\ \hline
+AstReversePrefixSynProcessing &  & & &  & & \\ \hline
+AstReversePrefixInhSynProcessing &  & & &  & & \\ \hline
+
+AstReverseBranchSimpleProcessing &  & & &  & & \\ \hline
+AstReverseBranchInhProcessing &  & & &  & & \\ \hline
+AstReverseBranchSynProcessing &  & & &  & & \\ \hline
+AstReverseBranchInhSynProcessing &  & & &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Parallel Traversal}}} \\\hline \hline
+%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+AstSharedMemoryParallelSimpleProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelTopDownProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelTopDownBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelPrePostProcessing &  & & Best &  & & \\ \hline
+
+AstSharedMemoryParallelizableSimpleProcessing &  & &  Best & & & \\ \hline
+AstSharedMemoryParallelizableTopDownProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizableBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizableTopDownBottomUpProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Memory Pool Traversal}}} \\\hline \hline
+%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+ROSE\_VisitTraversal &  & & better  &  & & \\ \hline
+ROSE\_VisitorPattern &  & & better &  & & \\ \hline
+
+ \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{AST Query}}} \\\hline \hline
+%& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
+  NodeQuery::querySubTree&  & & &  & & \\ \hline
+
+
+\end{tabular}
+}
+\caption{Summary and Comparison of AST Traversals and Queries}
+\label{tab:sumTraversal}
+\end{table}
 

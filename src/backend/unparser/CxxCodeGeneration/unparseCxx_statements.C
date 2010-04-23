@@ -2367,6 +2367,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // printf ("In unparseFuncDeclStmt(): info.get_current_scope() = %p = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str());
 
+//    if (stmt->get_startOfConstruct()->isOutputInCodeGeneration()==false)
+//      return;
+
      SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(stmt);
      ROSE_ASSERT(funcdecl_stmt != NULL);
 
