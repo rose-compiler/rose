@@ -654,48 +654,69 @@ and suggested use for each of the choices.
 \begin{table}[htbp]
   \centering
 \resizebox{7.0in}{!}{ % width of the table
-\begin{tabular}{||l|c|c|c|c|c|c||} \hline
+\begin{tabular}{||l|c|p{1.0in}|c|c|c|p{1.0in}||} \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Regular AST Traversal}}} \\\hline \hline
 & \textbf{Node Types} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
 %ROSE\_VisitorPattern&  predefined & No & regular & configurable & configuration & Simple traversal \\ \hline
 AstSimpleProcessing  &  predefined & No & regular & configurable & configurable & simple analysis \\ \hline
-AstTopDownProcessing  &  & & &  & &  \\ \hline
-AstBottomUpProcessing &  & & &  & &  \\ \hline
-AstTopDownBottomUpProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
-AstPrePostProcessing &  predefined & No & regular & fixed? & configurable & simple analysis \\ \hline
+AstTopDownProcessing  & predefined & attributes from parent nodes& regular &
+configurable & configurable & inherited attributes \\ \hline
+AstBottomUpProcessing & predefined & attributes from child nodes & regular
+& configurable & configurable & synthesized attribute \\ \hline
+AstTopDownBottomUpProcessing &  predefined & attributes from both parent
+and children & regular & configurable & configurable & mixed inherited and synthesized
+attributes \\ \hline
+AstPrePostProcessing &  predefined & No & regular & configurable &
+configurable & mixed topdown and bottomup w/o attributes \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Combined AST Traversal}}} \\\hline \hline
-AstCombinedSimpleProcessing&  & & &  & & \\ \hline
-AstCombinedTopDownProcessing &  & & &  & & \\ \hline
-AstcombinedBottomUpProcessing&  & & &  & & \\ \hline
-AstCombinedTopDownBottomUpProcessing &  & & &  & & \\ \hline
-AstCombinedPrePostProcessing&  & & &  & & \\ \hline
+%AstCombinedSimpleProcessing&  & & &  & & \\ \hline
+AstCombinedSimpleProcessing &  \multicolumn{6}{|c||}{} \\ \cline{1-1}
+AstCombinedTopDownProcessing &  \multicolumn{6}{|c||}{} \\ \cline{1-1}
+AstcombinedBottomUpProcessing&  \multicolumn{6}{|c||}{Similar to the
+corresponding traversals above but fuse multiple traversals into one} \\ \cline{1-1}
+AstCombinedTopDownBottomUpProcessing & \multicolumn{6}{|c||}{} \\ \cline{1-1} 
+AstCombinedPrePostProcessing& \multicolumn{6}{|c||}{} \\ \hline \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Reverse AST Traversal}}} \\\hline \hline
-AstReversePrefixSimpleProcessing &  & & &  & & \\ \hline
-AstReversePrefixInhProcessing &  & & &  & & \\ \hline
-AstReversePrefixSynProcessing &  & & &  & & \\ \hline
-AstReversePrefixInhSynProcessing &  & & &  & & \\ \hline
+AstReversePrefixSimpleProcessing &  \multicolumn{6}{|c||}{} \\ \cline{1-1}
+AstReversePrefixInhProcessing &  \multicolumn{6}{|c||}{ ???? } \\ \cline{1-1}
+AstReversePrefixSynProcessing &  \multicolumn{6}{|c||}{} \\ \cline{1-1}
+AstReversePrefixInhSynProcessing &  \multicolumn{6}{|c||}{} \\ \hline \hline
 
-AstReverseBranchSimpleProcessing &  & & &  & & \\ \hline
-AstReverseBranchInhProcessing &  & & &  & & \\ \hline
-AstReverseBranchSynProcessing &  & & &  & & \\ \hline
-AstReverseBranchInhSynProcessing &  & & &  & & \\ \hline
+AstReverseBranchSimpleProcessing &  \multicolumn{6}{|c||}{} \\ \cline{1-1}
+AstReverseBranchInhProcessing &  \multicolumn{6}{|c||}{ ??? } \\ \cline{1-1}
+AstReverseBranchSynProcessing &  \multicolumn{6}{|c||}{} \\ \cline{1-1}
+AstReverseBranchInhSynProcessing &  \multicolumn{6}{|c||}{} \\ \hline \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Parallel Traversal}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
-AstSharedMemoryParallelSimpleProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelTopDownProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelBottomUpProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelTopDownBottomUpProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelPrePostProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelSimpleProcessing &  \multicolumn{6}{|c||}{} \\
+\cline{1-1}
+AstSharedMemoryParallelTopDownProcessing &  \multicolumn{6}{|c||}{} \\
+\cline{1-1}
+AstSharedMemoryParallelBottomUpProcessing &  \multicolumn{6}{|c||}{ Similar
+to AstCombined*Processing if traverse() is called,} \\
+\cline{1-1}
+AstSharedMemoryParallelTopDownBottomUpProcessing &  \multicolumn{6}{|c||}{
+but do parallel traversal via Pthreads if traverseInParallel() is called.}
+\\ \cline{1-1}
+AstSharedMemoryParallelPrePostProcessing &  \multicolumn{6}{|c||}{} \\
+\hline \hline
 
-AstSharedMemoryParallelizableSimpleProcessing &  & &  Best & & & \\ \hline
-AstSharedMemoryParallelizableTopDownProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelizableBottomUpProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelizableTopDownBottomUpProcessing &  & & Best &  & & \\ \hline
-AstSharedMemoryParallelizablePrePostProcessing &  & & Best &  & & \\ \hline
+AstSharedMemoryParallelizableSimpleProcessing &   \multicolumn{6}{|c||}{}
+\\ \cline{1-1}
+AstSharedMemoryParallelizableTopDownProcessing &  \multicolumn{6}{|c||}{}
+\\ \cline{1-1} 
+AstSharedMemoryParallelizableBottomUpProcessing &
+\multicolumn{6}{|c||}{Internal use only, representing a traversal that}
+\\ \cline{1-1}
+AstSharedMemoryParallelizableTopDownBottomUpProcessing &
+\multicolumn{6}{|c||}{ that can run in parallel without interfering others.} \\ \cline{1-1}
+AstSharedMemoryParallelizablePrePostProcessing &  \multicolumn{6}{|c||}{}
+\\ \hline \hline
+
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Memory Pool Traversal}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
@@ -712,4 +733,12 @@ ROSE\_VisitorPattern &  & & better &  & & \\ \hline
 \caption{Summary and Comparison of AST Traversals and Queries}
 \label{tab:sumTraversal}
 \end{table}
+
+%\begin{tabular}{||l|lr||} \hline  % l l r  --> three columns, 
+%\textbf{Veg}  & \multicolumn{2}{|c||}{\textbf{Detail}}\\\hline
+%carrots    & per pound & \pounds 0.75 \\ \cline{2-3}
+%           & each      &         20p  \\ \hline
+%mushrooms  & dozen     &         86p  \\ \cline{1-1} \cline{3-3}
+%toadstools & pick your own & free     \\ \hline
+%\end{tabular}
 
