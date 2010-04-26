@@ -93,7 +93,7 @@ public:
 };
 
 
-typedef rose_hash::hash_map< std::pair<int,int>,
+typedef rose_hash::unordered_map< std::pair<int,int>,
 			     FunctionInfo* > FunctionType;
 
 class Traversal : public AstSimpleProcessing {
