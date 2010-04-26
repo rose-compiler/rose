@@ -241,7 +241,7 @@ Partitioner::pops_return_address(rose_addr_t va)
         discard(target_block);
 
     if (retval && debug)
-        fprintf(debug, "[B%08"PRIx64" discards return address]\n", va);
+        fprintf(debug, "[B%08"PRIx64" discards return address]", va);
 
     return retval;
 }
@@ -868,6 +868,58 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp)
     }
 }
 
+/** Adds first basic block to empty function before we start discovering blocks of any other functions. This
+ *  protects against cases where one function simply falls through to another within a basic block, such as:
+ *   08048460 <foo>:
+ *    8048460:       55                      push   ebp
+ *    8048461:       89 e5                   mov    ebp,esp
+ *    8048463:       83 ec 08                sub    esp,0x8
+ *    8048466:       c7 04 24 d4 85 04 08    mov    DWORD PTR [esp],0x80485d4
+ *    804846d:       e8 8e fe ff ff          call   8048300 <puts@plt>
+ *    8048472:       c7 04 24 00 00 00 00    mov    DWORD PTR [esp],0x0
+ *    8048479:       e8 a2 fe ff ff          call   8048320 <_exit@plt>
+ *    804847e:       89 f6                   mov    esi,esi
+ *   
+ *   08048480 <handler>:
+ *    8048480:       55                      push   ebp
+ *    8048481:       89 e5                   mov    ebp,esp
+ *    8048483:       83 ec 08                sub    esp,0x8
+ */
+void
+Partitioner::discover_first_block(Function *func) 
+{
+    if (debug) {
+        fprintf(debug, "1st block %s F%08"PRIx64" \%s\": ",
+                SgAsmFunctionDeclaration::reason_str(true, func->reason).c_str(),
+                func->entry_va, func->name.c_str());
+    }
+    BasicBlock *bb = find_bb_containing(func->entry_va);
+
+    /* If this function's entry block collides with some other function, then truncate that other functions block and
+     * subsume part of it into this function. Mark the other function as pending because its block may have new
+     * successors now. */
+    if (bb && func->entry_va!=address(bb)) {
+        ROSE_ASSERT(bb->function!=func);
+        if (debug) fprintf(debug, "[split from B%08"PRIx64, address(bb));
+        if (bb->function) {
+            if (debug) fprintf(debug, " in F%08"PRIx64" \"%s\"", address(bb), bb->function->name.c_str());
+            bb->function->pending = true;
+        }
+        if (debug) fprintf(debug, "] ");
+        truncate(bb, func->entry_va);
+        bb = find_bb_containing(func->entry_va);
+        ROSE_ASSERT(bb!=NULL);
+        ROSE_ASSERT(func->entry_va==address(bb));
+    }
+
+    if (bb) {
+        append(func, bb);
+        if (debug) fprintf(debug, "added %zu instruction%s\n", bb->insns.size(), 1==bb->insns.size()?"":"s");
+    } else if (debug) {
+        fprintf(debug, "no instruction at function entry address\n");
+    }
+}
+
 /** Discover the basic blocks that belong to the current function. This function recursively adds basic blocks to function @p f
  *  by following the successors of each block.  Two types of successors are recognized: "call successors" are successors
  *  that invoke a function (on x86 this is usually a CALL instruction, see is_function_call()), and "flow control" successors
@@ -882,12 +934,14 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     if (ii==insns.end()) return; /* No instruction at this address. */
     rose_addr_t call_target = NO_TARGET;
 
+#if 0 /* no longer needed since discover_first_block() is called prior to this [RPM 2010-04-26] */
     /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. */
     Functions::iterator fi = functions.find(va);
     if (fi!=functions.end() && fi->second!=f) {
         if (debug) fprintf(debug, "[entry \"%s\"]", fi->second->name.c_str());
         return;
     }
+#endif
 
     BasicBlock *bb = find_bb_containing(va);
     ROSE_ASSERT(bb!=NULL);
@@ -911,7 +965,14 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     }
     
     if (bb->function==f) {
-        /* already processed */
+        /* Already processed unless this is the first block, in which case we should not add it to the function but should
+         * follow the successors. The first block was added with discover_first_block() but its successors were not originally
+         * followed. */
+        if (address(bb)==f->entry_va) {
+            const Disassembler::AddressSet& suc = successors(bb);
+            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si)
+                discover_blocks(f, *si);
+        }
     } else if (bb->function && va==bb->function->entry_va) {
         /* This is a call to an existing function. Do not add it to the current function. */
         if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
@@ -962,7 +1023,7 @@ Partitioner::analyze_cfg()
 {
     for (size_t pass=0; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        fprintf(stderr, "Partitioner[pass %zu]: detected %zu functions\n", pass, functions.size());
+        fprintf(stderr, "Partitioner[pass %zu]: starting with %zu functions\n", pass, functions.size());
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -976,6 +1037,10 @@ Partitioner::analyze_cfg()
         }
         if (pending.size()==0)
             break;
+
+        /* Make sure all functions have an initial basic block if possible. */
+        for (size_t i=0; i<pending.size(); ++i)
+            discover_first_block(pending[i]);
         
         /* (Re)discover each function's blocks starting with the function entry point */
         for (size_t i=0; i<pending.size(); ++i) {
