@@ -770,6 +770,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
 }
 
 /* Gives names to the dynamic linking trampolines in the .plt section. */
+/* FIXME: We should also have a similar method that creates functions for all PLT entries. [RPM 2010-04-26] */
 void
 Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 {
@@ -895,7 +896,7 @@ Partitioner::discover_first_block(Function *func)
     }
     BasicBlock *bb = find_bb_containing(func->entry_va);
 
-    /* If this function's entry block collides with some other function, then truncate that other functions block and
+    /* If this function's entry block collides with some other function, then truncate that other function's block and
      * subsume part of it into this function. Mark the other function as pending because its block may have new
      * successors now. */
     if (bb && func->entry_va!=address(bb)) {
@@ -934,14 +935,14 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     if (ii==insns.end()) return; /* No instruction at this address. */
     rose_addr_t call_target = NO_TARGET;
 
-#if 0 /* no longer needed since discover_first_block() is called prior to this [RPM 2010-04-26] */
-    /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. */
+    /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. This
+     * can happen when a new function was discovered during the current pass. It can't happen for functions discovered in a
+     * previous pass since we would have called discover_first_block() by now for any such functions. */
     Functions::iterator fi = functions.find(va);
     if (fi!=functions.end() && fi->second!=f) {
         if (debug) fprintf(debug, "[entry \"%s\"]", fi->second->name.c_str());
         return;
     }
-#endif
 
     BasicBlock *bb = find_bb_containing(va);
     ROSE_ASSERT(bb!=NULL);
@@ -997,10 +998,15 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
             discover_blocks(f, call_target);
         } else {
             /* This block appears to end with a function call. Add this block to the function and create a function at the
-             * call target. Discovery will continue with the non-called successors (usually just the fall-through
-             * address). */
+             * call target.  If the target block is in the middle of the other function (i.e., not that function's entry
+             * block) then mark that function as pending so that the target block can be removed and that function's blocks
+             * rediscovered.  Discovery for this current function will continue with the non-called successors (usually just
+             * the fall-through address). */
             if (debug) fprintf(debug, "[call F%08"PRIx64"]", call_target);
             add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+            BasicBlock *target_bb = find_bb_containing(call_target);
+            if (target_bb && target_bb->function && address(target_bb)!=target_bb->function->entry_va)
+                target_bb->function->pending = true;
             append(f, bb);
             const Disassembler::AddressSet& suc = successors(bb);
             for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
