@@ -195,8 +195,8 @@ protected:
     virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */
-    virtual SgAsmFunctionDeclaration* build_ast(Function*) const;/**< Build AST for a single function */
-    virtual SgAsmBlock* build_ast(BasicBlock*) const;           /**< Build AST for a single basic block */
+    virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
+    virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     
     

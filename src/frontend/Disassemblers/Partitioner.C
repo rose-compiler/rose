@@ -125,7 +125,7 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         } else if (isdigit(word[0])) {
             bits = strtol(word.c_str(), NULL, 0);
         } else {
-            throw std::string("unknown partitioner heuristic: " + word);
+            throw std::string("unknown partitioner heuristic: \"" + word + "\"");
         }
 
         switch (howset) {
@@ -152,9 +152,7 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
     if (bb->insns.size()!=bb->sucs_ninsns || bb->insns.front()->get_address()!=bb->sucs_first_va) {
         /* Compute successors from scratch. */
         bb->sucs.clear();
-        bool b;
-        if (!complete) complete=&b;
-        bb->sucs = bb->insns.front()->get_successors(bb->insns, complete);
+        bb->sucs = bb->insns.front()->get_successors(bb->insns, &(bb->sucs_complete));
 
         /* If the last instruction of a block is an x86 CALL or FARCALL instruction then this is probably a function call.
          * However, if we can determine the address of the called block and that block appears to pop the return address off
@@ -163,12 +161,14 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
         if (bb->is_function_call(&call_target) && call_target!=NO_TARGET && pops_return_address(call_target)) {
             bb->sucs.clear();
             bb->sucs.insert(call_target);
-            *complete = true;
+            bb->sucs_complete = true;
         }
 
         bb->sucs_ninsns = bb->insns.size();
         bb->sucs_first_va = bb->insns.front()->get_address();
     }
+    if (complete)
+        *complete = bb->sucs_complete;
     return bb->sucs;
 }
 
@@ -962,6 +962,7 @@ Partitioner::analyze_cfg()
 {
     for (size_t pass=0; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
+        fprintf(stderr, "Partitioner[pass %zu]: detected %zu functions\n", pass, functions.size());
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -1047,7 +1048,7 @@ Partitioner::build_ast()
 }
 
 SgAsmFunctionDeclaration *
-Partitioner::build_ast(Function* f) const
+Partitioner::build_ast(Function* f)
 {
     if (f->blocks.size()==0) {
         if (debug) fprintf(debug, "function F%08"PRIx64" \"%s\" has no basic blocks!\n", f->entry_va, f->name.c_str());
@@ -1086,7 +1087,7 @@ Partitioner::build_ast(Function* f) const
 }
 
 SgAsmBlock *
-Partitioner::build_ast(BasicBlock* bb) const
+Partitioner::build_ast(BasicBlock* bb)
 {
     SgAsmBlock *retval = new SgAsmBlock;
     retval->set_id(bb->insns.front()->get_address());
@@ -1095,6 +1096,14 @@ Partitioner::build_ast(BasicBlock* bb) const
         retval->get_statementList().push_back(*ii);
         (*ii)->set_parent(retval);
     }
+
+    /* Cache block successors so other layers don't have to constantly compute them */
+    bool complete;
+    Disassembler::AddressSet sucs = successors(bb, &complete);
+    SgAddressList addrlist(sucs.begin(), sucs.end());
+    retval->set_cached_successors(addrlist);
+    retval->set_complete_successors(complete);
+
     return retval;
 }
 

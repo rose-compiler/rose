@@ -229,6 +229,20 @@ unparseAsmStatement(SgAsmStatement* stmt)
                 result += unparseAsmStatement(blk->get_statementList()[i]);
             }
 #if 1
+            /* Show cached block successors. */
+            if (blk->get_statementList().size()>0) {
+                result += "            (successors:";
+                const SgAddressList &sucs = blk->get_cached_successors();
+                for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                    char addrbuf[64];
+                    sprintf(addrbuf, " 0x%08"PRIx64, *si);
+                    result += addrbuf;
+                }
+                if (!blk->get_complete_successors())
+                    result += "...";
+                result += ")\n";
+            }
+#else
             /* Show block successors. This is mostly for debugging, but might be useful in regular output too. [RPM 2010-01-06]
              *
              * FIXME: The successors displayed here are not necessarily the same ones that were used when partitioning
