@@ -654,21 +654,23 @@ and suggested use for each of the choices.
 \begin{table}[htbp]
   \centering
 \resizebox{7.0in}{!}{ % width of the table
-\begin{tabular}{||l|c|p{1.0in}|c|c|c|p{1.0in}||} \hline
+\begin{tabular}{||l|c|p{1.0in}|c|p{0.8in}|c|p{1.0in}||} \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Regular AST Traversal}}} \\\hline \hline
 & \textbf{Node Types} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
 %ROSE\_VisitorPattern&  predefined & No & regular & configurable & configuration & Simple traversal \\ \hline
-AstSimpleProcessing  &  predefined & No & regular & configurable & configurable & simple analysis \\ \hline
-AstTopDownProcessing  & predefined & attributes from parent nodes& regular &
-configurable & configurable & inherited attributes \\ \hline
-AstBottomUpProcessing & predefined & attributes from child nodes & regular
-& configurable & configurable & synthesized attribute \\ \hline
-AstTopDownBottomUpProcessing &  predefined & attributes from both parent
-and children & regular & configurable & configurable & mixed inherited and synthesized
-attributes \\ \hline
-AstPrePostProcessing &  predefined & No & regular & configurable &
-configurable & mixed topdown and bottomup w/o attributes \\ \hline
+AstSimpleProcessing  &  & No & & pre or post order & & simple analysis \\ \cline{1-1}
+\cline{3-3} \cline{5-5} \cline{7-7}
+AstTopDownProcessing  & & attributes from parent nodes& & preorder & & inherited attributes \\  \cline{1-1}
+\cline{3-3} \cline{5-5} \cline{7-7}
+AstBottomUpProcessing & a predefined & attributes from child nodes & regular
+& postorder & configurable & synthesized attribute \\  \cline{1-1}
+\cline{3-3} \cline{5-5} \cline{7-7}
+AstTopDownBottomUpProcessing & subset & attributes from both parent
+and children & & pre and post order & & mixed inherited and synthesized
+attributes \\ \cline{1-1}
+\cline{3-3} \cline{5-5} \cline{7-7}
+AstPrePostProcessing &  & No & & pre and post order & & mixed topdown and bottomup w/o attributes \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Combined AST Traversal}}} \\\hline \hline
 %AstCombinedSimpleProcessing&  & & &  & & \\ \hline
@@ -720,12 +722,15 @@ AstSharedMemoryParallelizablePrePostProcessing &  \multicolumn{6}{|c||}{}
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{Memory Pool Traversal}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
-ROSE\_VisitTraversal &  & & better  &  & & \\ \hline
-ROSE\_VisitorPattern &  & & better &  & & \\ \hline
+ROSE\_VisitTraversal & all & No  & better  & sequential & all & simple
+analysis  \\
+\cline{1-1} \cline{7-7}
+ROSE\_VisitorPattern &  & & &  & & classic support \\ \hline
 
  \multicolumn{7}{||c||}{\textbf{\textcolor{blue}{AST Query}}} \\\hline \hline
 %& \textbf{Node Type Visited} & \textbf{Context} & \textbf{Performance} & \textbf{Order} & \textbf{File Visited} & \textbf{Suggested Use} \\ \hline
-  NodeQuery::querySubTree&  & & &  & & \\ \hline
+  NodeQuery::querySubTree& subset & No & regular & pre order? & ?? &
+  simple analysis \\ \hline
 
 
 \end{tabular}
