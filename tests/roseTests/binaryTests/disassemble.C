@@ -243,7 +243,8 @@ dump_CFG_CG(SgNode *ast)
         srcfile = isSgFile(n);
     std::string filename = srcfile ? srcfile->get_sourceFileNameWithoutPath() : "x";
 
-    /* Generate a dot file for the function call graph */
+    /* Generate a dot file for the function call graph. This is a slight bit complex because the CG has edges from blocks to
+     * functions but we need edges from functions to functions. Also, we want to annotate the edge with the number of calls. */
     std::set<rose_addr_t> cg_defined_nodes;
     fprintf(stderr, "  generating: cg");
     FILE *out = fopen((filename+"-cg.dot").c_str(), "w");
@@ -252,20 +253,29 @@ dump_CFG_CG(SgNode *ast)
     fprintf(out, "node [ shape = box ];\n");
     for (BinaryCG::CallerMap::const_iterator i1=cg.caller_edges.begin(); i1!=cg.caller_edges.end(); ++i1) {
         SgAsmFunctionDeclaration *caller = i1->first;
-        for (BinaryCG::CallToEdges::const_iterator i2=i1->second.begin(); i2!=i1->second.end(); ++i2) {
-            rose_addr_t callee = i2->second;
+        if (cg_defined_nodes.find(caller->get_entry_va())==cg_defined_nodes.end()) {
+            cg_defined_nodes.insert(caller->get_entry_va());
             dump_function_node(out, caller, cfg, false);
-            if (cg_defined_nodes.find(callee)==cg_defined_nodes.end()) {
-                cg_defined_nodes.insert(callee);
-                SgAsmBlock *callee_bb = cfg.block(callee);
+        }
+        typedef std::map<rose_addr_t/*callee_addr*/, size_t/*count*/> CalleeCounts;
+        CalleeCounts callee_counts;
+        for (BinaryCG::CallToEdges::const_iterator i2=i1->second.begin(); i2!=i1->second.end(); ++i2) {
+            callee_counts[i2->second]++;
+        }
+        for (CalleeCounts::iterator cci=callee_counts.begin(); cci!=callee_counts.end(); ++cci) {
+            rose_addr_t callee_addr = cci->first;
+            if (cg_defined_nodes.find(callee_addr)==cg_defined_nodes.end()) {
+                cg_defined_nodes.insert(callee_addr);
+                SgAsmBlock *callee_bb = cfg.block(callee_addr);
                 SgAsmFunctionDeclaration *callee_func = callee_bb ? isSgAsmFunctionDeclaration(callee_bb->get_parent()) : NULL;
                 if (callee_func) {
                     dump_function_node(out, callee_func, cfg, false);
                 } else {
-                    fprintf(out, "  B%08"PRIx64" [ style=filled, color=lightpink ];\n", callee);
+                    fprintf(out, "  B%08"PRIx64" [ style=filled, color=lightpink ];\n", callee_addr);
                 }
             }
-            fprintf(out, "  B%08"PRIx64" -> B%08"PRIx64";\n", caller->get_entry_va(), callee);
+            fprintf(out, "  B%08"PRIx64" -> B%08"PRIx64" [ label=\"%zu\" ];\n",
+                    caller->get_entry_va(), callee_addr, cci->second);
         }
     }
     fprintf(out, "}\n");
