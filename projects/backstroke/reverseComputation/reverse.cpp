@@ -256,6 +256,8 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 
     if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
     {
+	// For a simple expression statement, we just process its 
+	// expression then build new statements for the expression pair.
 	SgExpression* exp = exp_stmt->get_expression();
 	ExpPair exp_pair = instrumentAndReverseExpression(exp);
 	if (exp_pair.first && exp_pair.second)
@@ -280,6 +282,10 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
     // if it's a block, process each statement inside
     if (SgBasicBlock* body = isSgBasicBlock(stmt))
     {
+	// A basic block normally contains a group of statements.
+	// We process them one by one. Note that the reverse version
+	// of the basic block has its reverse statements in reverse order. 
+
 	SgBasicBlock* fwd_body = buildBasicBlock();
 	SgBasicBlock* rev_body = buildBasicBlock();
 
@@ -309,6 +315,15 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
     // if it's a if statement, process it according to the rule
     if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
     {
+	// For if statement, we have to use the external flags to save which 
+	// branch is taken. The reverse version check these flags to select
+	// the proper branch.
+	// Currently we use a stack to store those flags in case that the if statement is 
+	// inside a loop. The stack is written in C. For "if()else if()... else",
+	// the current strategy does not make the optimal space use.
+	// FIXME: Note that sometimes we don't have to use flags. for example, 
+	// if the condition is decided by model state.
+
 	SgStatement *fwd_true_body, *fwd_false_body;
 	SgStatement *rev_true_body, *rev_false_body;
 
@@ -318,6 +333,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 	tie(fwd_true_body, rev_true_body) = instrumentAndReverseStatement(true_body);
 	tie(fwd_false_body, rev_false_body) = instrumentAndReverseStatement(false_body);
 
+	// putBranchFlag is used to store which branch is chosen
 	if (SgBasicBlock* body = isSgBasicBlock(fwd_true_body))
 	    body->append_statement(putBranchFlag(true));
 	else if (fwd_true_body)
@@ -348,6 +364,10 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 
     if (SgForStatement* for_stmt = isSgForStatement(stmt))
     {
+	// Currently, we just process the normal simple "for" use:
+	// for (int i = 0; i < n; ++i)
+	// FIXME: the complicated use of for needs to be dealt with in future.
+
 	SgForInitStatement* init = for_stmt->get_for_init_stmt();
 	SgStatement* test = for_stmt->get_test();
 	SgExpression* incr = for_stmt->get_increment();
@@ -391,6 +411,10 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 
     if (SgWhileStmt* while_stmt = isSgWhileStmt(stmt))
     {
+	// We use an external counter to record the loop number.
+	// In the reverse version, we use "for" loop according to the 
+	// counter.
+
 	SgStatement* cond = while_stmt->get_condition();
 	SgStatement* body = while_stmt->get_body();
 
@@ -446,6 +470,8 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 
     if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(stmt))
     {
+	// This is similar to while statement.
+
 	SgStatement* cond = do_while_stmt->get_condition();
 	SgStatement* body = do_while_stmt->get_body();
 
@@ -530,7 +556,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 	    }
 
 	    if (SgDefaultOptionStmt* default_opt_stmt = isSgDefaultOptionStmt(s))
-	    {
+	    { 
 		SgBasicBlock* default_body = isSgBasicBlock(default_opt_stmt->get_body());		
 		if (default_body != NULL)
 		{
@@ -553,7 +579,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 
 	SgBasicBlock* rev_body = buildBasicBlock();
 	foreach(SgStatement* s, rev_stmts)
-	    rev_body->append_statement(s);
+	    rev_body->append_statement(s); 
 
 	return StmtPair(
 		buildSwitchStatement(item_selector, fwd_body),
@@ -573,7 +599,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
 
     SgName func_name = func_decl_->get_name() + "_forward";
     SgFunctionDeclaration* fwd_func_decl = 
-    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
 		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList())));
 
     pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
@@ -584,7 +610,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
 
     func_name = func_decl_->get_name() + "_reverse";
     SgFunctionDeclaration* rev_func_decl = 
-    buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
+	buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
 		isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
 
     pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
@@ -639,6 +665,7 @@ void visitorTraversal::visit(SgNode* n)
 
 SgFunctionDeclaration* buildMainFunction()
 {
+    // build the main function which performs the test
     SgFunctionDeclaration* func_decl = 
 	buildDefiningFunctionDeclaration(
 		"main",
@@ -649,7 +676,7 @@ SgFunctionDeclaration* buildMainFunction()
     /////////////////////////////////////////////////////////////////////////////////////////
     // There are two tests: one is testing event and event_fwd get the same value of the model,
     // the other is performing event_fwd and event_reverse to see if the value of the model changes
-    
+
     SgType* model_type = buildStructDeclaration("model")->get_type();
 
     // Declare two variables 

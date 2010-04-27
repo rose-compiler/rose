@@ -24,7 +24,8 @@ int compare(struct model *m1,struct model *m2)
 
 void event(struct model *m)
 {
-  ++m -> m_int;
+  //++m -> m_int;
+  m->m_int = 5;
 }
 
 

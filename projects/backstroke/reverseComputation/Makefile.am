@@ -25,7 +25,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 $(TEST_Objects): reverse
 	@cp $(srcdir)/test/$(@:.o=.C) $(@:.o=.C)
 	./reverse -I$(srcdir)/test -c $(@:.o=.C)       		
-	g++ -I$(srcdir)/test rose_$(@:.o=.C) -o $(@:.o=.C).o
+	@g++ -I$(srcdir)/test rose_$(@:.o=.C) -o $(@:.o=.C).o
 	./$(@:.o=.C).o		
 
 check-local:
