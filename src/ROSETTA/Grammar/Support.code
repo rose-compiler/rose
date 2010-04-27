@@ -3199,7 +3199,7 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
              {}
 #endif
 #else  // ifdef _MSC_VER
-#include <ext/hash_map>
+//#include <ext/hash_map>
 class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 //class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
