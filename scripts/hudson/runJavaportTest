@@ -5,7 +5,7 @@
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
 # tps : allow to source the latest SWIG version
-source /usr/apss/swig/latest/setup.sh
+source /usr/apps/swig/latest/setup.sh
 
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
 
