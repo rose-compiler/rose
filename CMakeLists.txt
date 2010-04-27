@@ -36,11 +36,10 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 endif (WIN32)
 
-#set(BOOST_ROOT "C:\\ROSE\\vs_boost_1_37_0-install") 
 #Ensure that Boost is found
 # environment variable BOOST_ROOT can help to find a user-specified path to Boost
-#SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
-find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave thread REQUIRED)
+SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
+find_package( Boost 1.36.0 COMPONENTS date_time filesystem program_options regex system wave thread REQUIRED)
 
 
 

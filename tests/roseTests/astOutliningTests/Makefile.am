@@ -1,6 +1,9 @@
 # Import definitions common to Outliner submodules.
 #include ../Make.inc
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 SUBDIRS = fortranTests
+endif
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 

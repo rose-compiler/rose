@@ -228,30 +228,20 @@ unparseAsmStatement(SgAsmStatement* stmt)
             for (size_t i = 0; i < blk->get_statementList().size(); ++i) {
                 result += unparseAsmStatement(blk->get_statementList()[i]);
             }
-#if 1
-            /* Show block successors. This is mostly for debugging, but might be useful in regular output too.
-             * [RPM 2010-01-06] */        
-            if (blk->get_statementList().size()>0) {
-                std::vector<SgAsmInstruction*> insns;
-                for (size_t i=0; i<blk->get_statementList().size(); ++i) {
-                    SgAsmInstruction *insn = isSgAsmInstruction(blk->get_statementList()[i]);
-                    if (!insn) break;
-                    insns.push_back(insn);
+            /* Show cached block successors. These are the successors that were probably cached by the instruction partitioner,
+             * which does fairly extensive analysis -- definitely more than just looking at the last instruction of the block! */
+            if (blk->get_statementList().size()>0 && isSgAsmInstruction(blk->get_statementList().front())) {
+                result += "            (successors:";
+                const SgAddressList &sucs = blk->get_cached_successors();
+                for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                    char addrbuf[64];
+                    sprintf(addrbuf, " 0x%08"PRIx64, *si);
+                    result += addrbuf;
                 }
-                if (insns.size()>0) {
-                    result += "            (successors:";
-                    bool complete;
-                    Disassembler::AddressSet suc = insns.front()->get_successors(insns, &complete);
-                    for (Disassembler::AddressSet::iterator si=suc.begin(); si!=suc.end(); si++) {
-                        char addrbuf[64];
-                        sprintf(addrbuf, " 0x%08"PRIx64, *si);
-                        result += addrbuf;
-                    }
-                    if (!complete) result += "...";
-                    result += ")\n";
-                }
+                if (!blk->get_complete_successors())
+                    result += "...";
+                result += ")\n";
             }
-#endif
             return result;
         }
 

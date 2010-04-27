@@ -28,12 +28,14 @@
 #include <libgen.h>
 #endif
 
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 //FMZ (5/19/2008): 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #include "FortranModuleInfo.h"
 #include "FortranParserState.h"
 #include "unparseFortran_modfile.h"
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#endif
 
 #ifdef HAVE_DLADDR
 #include <dlfcn.h>
@@ -3617,11 +3619,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
    }
 
 
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 //FMZ(5/19/2008):
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 extern void jserver_init();
 extern void jserver_finish();
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#endif
 
 //! internal function to invoke the EDG frontend and generate the AST
 int
@@ -3711,11 +3715,11 @@ SgProject::parse(const vector<string>& argv)
                        {
                          printf ("Calling Open Fortran Parser: jserver_init() \n");
                        }
-
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
+#endif
                     errorCode = parse();
 
                     // FMZ deleteComm jserver_finish();
@@ -3779,9 +3783,11 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNa
 int
 SgSourceFile::callFrontEnd()
    {
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT     
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      FortranParserState* currStks = new FortranParserState(); 
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#endif
 
      int frontendErrorLevel = SgFile::callFrontEnd();
   // DQ (1/21/2008): This must be set for all languages
@@ -3794,10 +3800,11 @@ SgSourceFile::callFrontEnd()
      ROSE_ASSERT (get_globalScope()->get_startOfConstruct() != NULL);
      ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
 
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      delete  currStks ;
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
+#endif
      return frontendErrorLevel;
    }
 
@@ -3848,10 +3855,12 @@ SgProject::parse()
 
   // ROSE_ASSERT (p_fileList != NULL);
 
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      FortranModuleInfo::setCurrentProject(this);
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#endif
 
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.
@@ -4480,11 +4489,13 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
    }
 
 
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 // This is the "C" function implemented in:
 //    ROSE/src/frontend/OpenFortranParser_SAGE_Connection/openFortranParser_main.c
 // This function calls the Java JVM to load the Java implemented parser (written 
 // using ANTLR, a parser generator).
 int openFortranParser_main(int argc, char **argv );
+#endif 
 
 int
 SgFile::callFrontEnd()
@@ -4774,6 +4785,7 @@ SgFile::callFrontEnd()
   // traversals.
   // AstPostProcessing(this);
 
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile() == false)
@@ -4787,7 +4799,7 @@ SgFile::callFrontEnd()
                printf ("DONE: Generating a Fortran 90 module file (*.rmod) \n");
         }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
+#endif 
 #if 0
      printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
      display("At bottom of SgFile::callFrontEnd()");
@@ -4924,6 +4936,7 @@ SgFile::secondaryPassOverSourceFile()
    }
 
 
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
 string
@@ -5309,6 +5322,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           char** openFortranParser_dump_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_dump_argc,openFortranParser_dump_argv);
           frontendErrorLevel = openFortranParser_main (openFortranParser_dump_argc, openFortranParser_dump_argv);
+
 #endif
        // If this was selected as an option then we can stop here (rather than call OFP again).
        // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
@@ -5380,6 +5394,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
        // frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
           int errorCode = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+
 #endif
           printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
        // exit(0);
@@ -5480,6 +5495,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
      printf ("********************************************************************************************** \n");
 #else
+
   // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
      int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
 #endif
@@ -5575,6 +5591,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 	 return -1;
    }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
+#endif // ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT   
 
 
 namespace SgSourceFile_processCppLinemarkers
@@ -5904,12 +5922,20 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
      int frontendErrorLevel = 0;
      if (get_Fortran_only() == true)
         {
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT           
+
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
 #else
           fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
           ROSE_ASSERT(false);
 #endif
+
+#else
+          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
+          ROSE_ASSERT(false);
+#endif
+
         }
        else
         {
