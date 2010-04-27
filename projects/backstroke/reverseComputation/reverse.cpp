@@ -662,6 +662,34 @@ void visitorTraversal::visit(SgNode* n)
     }
 }
 
+SgFunctionDeclaration* buildCompareFunction(SgType* model_type)
+{
+    SgInitializedName* model_obj1 = buildInitializedName("m1", buildPointerType(model_type));
+    SgInitializedName* model_obj2 = buildInitializedName("m2", buildPointerType(model_type));
+    SgFunctionParameterList* para_list = buildFunctionParameterList(model_obj1, model_obj2);
+    SgFunctionDeclaration* func_decl = 
+	buildDefiningFunctionDeclaration(
+		"compare",
+		buildIntType(),
+		para_list);
+    pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
+
+    SgArrowExp* int_var1 = buildBinaryExpression<SgArrowExp>(
+	    buildVarRefExp(model_obj1),
+	    buildVarRefExp(INT_MEM_NAME)); 
+    SgArrowExp* int_var2 = buildBinaryExpression<SgArrowExp>(
+	    buildVarRefExp(model_obj2),
+	    buildVarRefExp(INT_MEM_NAME)); 
+    SgNotEqualOp* compare_int_exp = buildBinaryExpression<SgNotEqualOp>(int_var1, int_var2);
+    SgIfStmt* if_compare_int_stmt = buildIfStmt(compare_int_exp, buildReturnStmt(buildIntVal(1)), NULL);
+    appendStatement(if_compare_int_stmt);
+
+    // return 0 if two models are equal
+    appendStatement(buildReturnStmt(buildIntVal(0)));
+
+    popScopeStack();
+    return func_decl;
+}
 
 SgFunctionDeclaration* buildMainFunction()
 {
