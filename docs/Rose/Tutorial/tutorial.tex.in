@@ -13,6 +13,14 @@
 
 \usepackage{moreverb}
 
+\usepackage{hyperref}
+\hypersetup {
+colorlinks= true,
+urlcolor=blue,
+citecolor=black,
+linkcolor=black,
+}
+
 \newcommand{\mySmallFontSize}{\scriptsize}
 \newcommand{\mySmallestFontSize}{\tiny}
 
