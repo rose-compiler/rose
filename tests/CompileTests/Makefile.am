@@ -18,13 +18,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
-SUBDIRS =
+SUBDIRS = OpenMP_tests
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += \
       C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests UPC_tests \
       copyAST_tests RoseExample_tests PythonExample_tests \
       colorAST_tests mergeAST_tests unparseToString_tests \
-      sourcePosition_tests OpenMP_tests \
+      sourcePosition_tests \
       boost_tests virtualCFG_tests uninitializedField_tests \
       A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
       ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
