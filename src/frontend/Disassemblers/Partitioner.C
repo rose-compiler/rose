@@ -262,6 +262,8 @@ Partitioner::discard(BasicBlock *bb)
     return NULL;
 }
 
+size_t Partitioner::BasicBlock::nblocks;
+
 /* Returns true if block ends with what appears to be a function call. Don't modify @p target if this isn't a function call. */
 bool
 Partitioner::BasicBlock::is_function_call(rose_addr_t *target)
@@ -316,9 +318,9 @@ Partitioner::clear()
 
     /* Delete all basic blocks */
     std::set<BasicBlock*> blocks;
-    for (size_t i=0; i<insn2block.size(); i++) {
-        if (insn2block[i]!=NULL)
-            blocks.insert(insn2block[i]);
+    for (std::map<rose_addr_t, BasicBlock*>::const_iterator ibi=insn2block.begin(); ibi!=insn2block.end(); ++ibi) {
+        if (ibi->second)
+            blocks.insert(ibi->second);
     }
     for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
         delete *bi;
@@ -341,21 +343,22 @@ Partitioner::address(BasicBlock* bb) const
  * instruction with the specified split point), are irrelevant since the choice of where to split is based on the relative
  * positions in the basic block's instruction vector rather than instruction address. */
 void
-Partitioner::truncate(BasicBlock* bb1, rose_addr_t va)
+Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
 {
-    ROSE_ASSERT(bb1);
-    ROSE_ASSERT(bb1==find_bb_containing(va));
+    ROSE_ASSERT(bb);
+    ROSE_ASSERT(bb==find_bb_containing(va));
 
     /* Find the cut point in the instruction vector. I.e., the first instruction to remove from the vector. */
-    std::vector<SgAsmInstruction*>::iterator cut = bb1->insns.begin();
-    while (cut!=bb1->insns.end() && (*cut)->get_address()!=va) ++cut;
-    ROSE_ASSERT(cut!=bb1->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
+    std::vector<SgAsmInstruction*>::iterator cut = bb->insns.begin();
+    while (cut!=bb->insns.end() && (*cut)->get_address()!=va) ++cut;
+    ROSE_ASSERT(cut!=bb->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
 
     /* Remove instructions from the cut point and beyond. */
-    for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb1->insns.end(); ++ii) {
+    for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
+        ROSE_ASSERT(insn2block[(*ii)->get_address()] == bb);
         insn2block[(*ii)->get_address()] = NULL;
     }
-    bb1->insns.erase(cut, bb1->insns.end());
+    bb->insns.erase(cut, bb->insns.end());
 }
 
 /* Append instruction to basic block */
@@ -890,7 +893,7 @@ void
 Partitioner::discover_first_block(Function *func) 
 {
     if (debug) {
-        fprintf(debug, "1st block %s F%08"PRIx64" \%s\": ",
+        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": ",
                 SgAsmFunctionDeclaration::reason_str(true, func->reason).c_str(),
                 func->entry_va, func->name.c_str());
     }
@@ -1031,7 +1034,10 @@ Partitioner::analyze_cfg()
 {
     for (size_t pass=0; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        fprintf(stderr, "Partitioner[pass %zu]: starting with %zu functions\n", pass, functions.size());
+        fprintf(stderr, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
+                BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -1065,6 +1071,10 @@ Partitioner::analyze_cfg()
             if (debug) fprintf(debug, "\n");
         }
     }
+    fprintf(stderr, "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+            functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+            BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
+            BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
 }
 
 void
@@ -1189,7 +1199,9 @@ Partitioner::partition(SgAsmInterpretation* interp, const Disassembler::Instruct
     pre_cfg(interp);
     analyze_cfg();
     post_cfg(interp);
-    return build_ast();
+    SgAsmBlock *ast = build_ast();
+    clear();
+    return ast;
 }
 
 

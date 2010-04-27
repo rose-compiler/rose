@@ -36,7 +36,15 @@ protected:
 
     /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
     struct BasicBlock {
-        BasicBlock(): sucs_complete(false), sucs_first_va(0), sucs_ninsns(0), function(NULL) {}
+        BasicBlock(): sucs_complete(false), sucs_first_va(0), sucs_ninsns(0), function(NULL) {
+            /* Keep track of the number of blocks allocated so we can print that info for debugging output. The number
+             * of blocks isn't otherwise directly available. */
+            ++nblocks;
+        }
+        ~BasicBlock() {
+            --nblocks; /* for debugging output */
+        }
+        static size_t nblocks;                  /**< Number of blocks allocated; only used for debugging */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
@@ -111,7 +119,7 @@ public:
 
 public:
     Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL) {}
-    virtual ~Partitioner() {}
+    virtual ~Partitioner() { clear(); }
 
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
      *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
