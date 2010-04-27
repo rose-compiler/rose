@@ -971,8 +971,10 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
          * followed. */
         if (address(bb)==f->entry_va) {
             const Disassembler::AddressSet& suc = successors(bb);
-            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si)
-                discover_blocks(f, *si);
+            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
+                if (*si!=f->entry_va)
+                    discover_blocks(f, *si);
+            }
         }
     } else if (bb->function && va==bb->function->entry_va) {
         /* This is a call to an existing function. Do not add it to the current function. */
