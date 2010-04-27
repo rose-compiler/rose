@@ -1,6 +1,5 @@
 # Support functions for definition of C++ grammar (SAGE 3)
 
-
 HEADER_START
   // DQ (4/13/2004): Make the copy constructor parameter a const ref instead of just ref parameter
   // previously was protected so it couldn't be used (too easily).
@@ -3102,7 +3101,8 @@ std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
-#ifdef _MSC_VER 
+//#ifdef _MSC_VER 
+#if 0
 // DQ (11/29/2009): attempting to fix: error C2903: 'rebind' : symbol is neither a class template nor a function template
 // #pragma message ("WARNING: struct eqstr skipped for MSVC.")
 #else
@@ -3200,7 +3200,7 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
              {}
 #endif
 #else  // ifdef _MSC_VER
-#include <ext/hash_map>
+
 class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 //class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
@@ -4458,7 +4458,9 @@ HEADER_APPLICATION_SOURCE_FILE_START
           static std::string build_classpath();
 
       //! Divide up the handling of different languages
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+#endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
