@@ -1,5 +1,6 @@
 # Support functions for definition of C++ grammar (SAGE 3)
 
+
 HEADER_START
   // DQ (4/13/2004): Make the copy constructor parameter a const ref instead of just ref parameter
   // previously was protected so it couldn't be used (too easily).
