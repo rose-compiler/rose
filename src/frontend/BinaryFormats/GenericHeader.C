@@ -389,3 +389,4 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++)
         p_symbols->get_symbols()[i]->dump(f, p, i);
 }
+
