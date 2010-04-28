@@ -662,6 +662,8 @@ void visitorTraversal::visit(SgNode* n)
     }
 }
 
+const string INT_MEM_NAME = "m_int";
+
 SgFunctionDeclaration* buildCompareFunction(SgType* model_type)
 {
     SgInitializedName* model_obj1 = buildInitializedName("m1", buildPointerType(model_type));
