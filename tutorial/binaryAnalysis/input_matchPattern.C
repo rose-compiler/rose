@@ -1,6 +1,8 @@
 
 int main()
    {
+     int result = 0;
+     result++;
      asm ("nop");
      asm ("nop");
      asm ("nop");
@@ -12,5 +14,6 @@ int main()
      asm ("nop");
      asm ("nop");
 
-     return 0;
+     result++;
+     return result;
    }

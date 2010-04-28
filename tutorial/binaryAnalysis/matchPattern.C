@@ -10,12 +10,11 @@ class CountTraversal : public SgSimpleProcessing
      public:
        // Local Accumulator Attribute
           int count;
-          int maxCount;
           bool previousInstructionWasNop;
           SgAsmInstruction* nopSequenceStart;
           std::vector<pair<SgAsmInstruction*,int> > nopSequences;
 
-          CountTraversal() : count(0), maxCount(0), previousInstructionWasNop(false) {}
+          CountTraversal() : count(0), previousInstructionWasNop(false) {}
           void visit ( SgNode* n );
    };
 
@@ -43,10 +42,8 @@ void CountTraversal::visit ( SgNode* n )
             else
              {
             // Save the count if it was larger than the max count.
-            // if (count > maxCount)
                if (count > 0)
                    {
-                     maxCount = count;
                      SgAsmFunctionDeclaration* functionDeclaration = getAsmFunctionDeclaration(asmInstruction);
                      printf ("Reporting NOP sequence of length %3d at address %p in function %s (reason for this being a function = %u = %s) \n",
                           count,nopSequenceStart->get_address(),functionDeclaration->get_name().c_str(),
