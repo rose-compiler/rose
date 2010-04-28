@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # This file does not compile using ROSE (skip testing it for now)
 if !ROSE_USING_ROSE_ANALYSIS
    bin_PROGRAMS = headerFilesGraphGenerator 
-   reverse_SOURCES = headerFilesGraphGenerator.cpp
+   headerFilesGraphGenerator_SOURCES = headerFilesGraphGenerator.C
 endif
 
 INCLUDES = $(ROSE_INCLUDES)

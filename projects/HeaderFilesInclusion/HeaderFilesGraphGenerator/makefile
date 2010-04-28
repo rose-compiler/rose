@@ -2,7 +2,7 @@ ROSE_INS = /home/hou1/opt/rose
 #-------------translator---------------------------
 
 #SRC_FILE=main.cpp
-SRC_FILE=headerFilesGraphGenerator.cpp
+SRC_FILE=headerFilesGraphGenerator.C
 #SRC_FILE=headersScanner.cpp
 #SRC_FILE=isevent.cpp
 
