@@ -494,40 +494,35 @@ Grammar::setUpBinaryInstructions ()
      //AsmStatement.setDataPrototype("SgAsmNode*","parent","= NULL",
      //                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
-  // Most platform and non-platform dependent machine instructions will map to this IR node
-     AsmInstruction.setFunctionPrototype        ( "HEADER_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+
+
+     // Most platform and non-platform dependent machine instructions will map to this IR node
+     AsmInstruction.setFunctionPrototype( "HEADER_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
      AsmInstruction.setDataPrototype("std::string","mnemonic","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-  // AsmInstruction.setDataPrototype("long","basic_block_id","= -1",
-  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-
-  // DQ (8/30/2008): since there can be NULL values in the definition of the instructions, std::string is not
-  // as good of a container for the raw bytes as the SgUnsignedCharList, which is designed for this purpose.
-  // AsmInstruction.setDataPrototype("std::string","raw_bytes","= \"\"",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmInstruction.setDataPrototype("SgUnsignedCharList","raw_bytes","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-
-  // DQ (8/23/2008): Moved the comment string from the AsmInstruction to the AsmStatement
-  // AsmInstruction.setDataPrototype("std::string","comment","= \"\"",
-  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmInstruction.setDataPrototype("SgAsmOperandList*","operandList","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmInstruction.setDataPrototype("SgAsmStatementPtrList","sources","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Block of instructions (helps define depth to the AST)
-     AsmBlock.setFunctionPrototype              ( "HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
-     // added by tps, 05Apr07 ... need this for the control_flow_graph
-     AsmBlock.setDataPrototype("rose_addr_t","next_block_true_address","= 0",
+
+
+     // Instruction basic block. One entry point (first instruction) and one exit point (last instruction).
+     AsmBlock.setFunctionPrototype( "HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
+     AsmBlock.setDataPrototype("rose_addr_t","next_block_true_address","= 0",// [tps 05Apr07] needed for the control_flow_graph
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("rose_addr_t","next_block_false_address","= 0",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/28/2008): Ask Thomas if we should change "unsigned int" to "addr_t"
      AsmBlock.setDataPrototype("rose_addr_t","id","= 0",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","", //in order of execution
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("SgAddressList", "cached_successors", "",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("bool", "complete_successors", "= false", // are all successors known and cached?
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      AsmOperandList.setFunctionPrototype        ( "HEADER_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");

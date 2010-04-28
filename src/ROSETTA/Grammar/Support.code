@@ -3794,7 +3794,7 @@ HEADER_NAME_START
        // (STL builds the "operator!=()" from the "operator==()"
           bool operator== (const int i) const { return false; }
 
-          void display( const std::string& label = "" ) const;
+          void display( const std::string& label ) const;
 
        // DQ (9/9/2004): Supporting function for building qualified names (specialied std::string concatination)
           static SgName assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & localName);
@@ -4023,6 +4023,7 @@ HEADER_FILE_INFORMATION_START
           void set_line (int line);
           void set_col ( int n );
           void display (const std::string label ) const;
+          void display () const;
           std::string displayString (const std::string & label = "") const;
           //void output (std::ostream& os) ROSE_DEPRECATED_FUNCTION;
 
@@ -4456,7 +4457,9 @@ HEADER_APPLICATION_SOURCE_FILE_START
           static std::string build_classpath();
 
       //! Divide up the handling of different languages
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+#endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
@@ -9176,6 +9179,14 @@ operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
 
      return result;
    }
+
+//Liao 4/16/2010. The default value for display(label) cannot be instantiated from gdb,
+// which is very annoying during debugging. I added the empty parameter one to better support debugging.
+void
+Sg_File_Info::display( ) const
+{
+  display ("");
+}
 
 void
 Sg_File_Info::display( const std::string label ) const

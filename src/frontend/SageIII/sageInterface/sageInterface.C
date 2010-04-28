@@ -7021,6 +7021,44 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
     }
   }
 
+  //! Check if a scope statement has a simple children statement list (SgStatementPtrList)
+  //! so insert additional statements under the scope is straightforward and unambiguous . 
+  //! for example, SgBasicBlock has a simple statement list while IfStmt does not.
+  bool  SageInterface::hasSimpleChildrenList (SgScopeStatement* scope)
+{
+  bool rt = false;
+  ROSE_ASSERT (scope != NULL);
+  switch (scope->variantT())
+  {
+    case V_SgBasicBlock:
+    case V_SgClassDefinition:
+    case V_SgFunctionDefinition:
+    case V_SgGlobal:
+    case V_SgNamespaceDefinitionStatement: //?
+      rt = true;
+      break;
+
+     case V_SgAssociateStatement :
+     case V_SgBlockDataStatement :
+     case V_SgCatchOptionStmt:
+     case V_SgDoWhileStmt:
+     case V_SgForAllStatement:
+     case V_SgForStatement:
+     case V_SgFortranDo:
+     case V_SgIfStmt:
+     case V_SgSwitchStatement:
+     case V_SgUpcForAllStatement:
+     case V_SgWhileStmt:
+      rt = false;
+      break;
+    
+    default: 
+      cout<<"unrecognized or unhandled scope type for SageInterface::hasSimpleChildrenList() "<<endl;
+    break; 
+  }
+  return rt;
+}
+
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
   // insert  SageInterface::insertStatement()
@@ -10315,9 +10353,16 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
   // This function moves statements from one block to another (used by the outliner).
   // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
     ROSE_ASSERT (sourceBlock && targetBlock);
+    if (sourceBlock == targetBlock)
+    {
+      cerr<<"warning: SageInterface::moveStatementsBetweenBlocks() is skipped, "<<endl;
+      cerr<<"         since program is trying to move statements from and to the identical basic block. "<<endl;
+      return;
+    }
 
      SgStatementPtrList & srcStmts = sourceBlock->get_statements();
 
+//     cout<<"debug SageInterface::moveStatementsBetweenBlocks() number of stmts = "<< srcStmts.size() <<endl;
      for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
         {
           // append statement to the target block
@@ -10331,9 +10376,10 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
             // I am unclear if this is a reasonable constraint, it passes all tests but this one!
                if ((*i)->get_scope() != targetBlock)
                   {
-                    printf ("Warning: test failing (*i)->get_scope() == targetBlock, fails for tutorial/outliner/inputCode_OutlineNonLocalJumps.cc \n");
+                    //(*i)->set_scope(targetBlock);
+                    printf ("Warning: test failing (*i)->get_scope() == targetBlock \n");
                   }
-            // ROSE_ASSERT((*i)->get_scope() == targetBlock);
+               //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }
 
           SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
@@ -10365,6 +10411,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        {
                          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
                          ROSE_ASSERT (funcDecl);
+                         //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
                     default:
@@ -10382,7 +10429,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
      ROSE_ASSERT(srcStmts.empty() == true);
      ROSE_ASSERT(sourceBlock->get_statements().empty() == true);
 
-  // Copy the symbol table
+  // Move the symbol table
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
      targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 
