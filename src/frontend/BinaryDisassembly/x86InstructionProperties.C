@@ -9,6 +9,7 @@ bool x86InstructionIsConditionalFlagControlTransfer(SgAsmx86Instruction* inst) {
     case x86_jbe:
     case x86_jcxz:
     case x86_je:
+    case x86_jecxz:
     case x86_jg:
     case x86_jge:
     case x86_jl:
@@ -19,6 +20,7 @@ bool x86InstructionIsConditionalFlagControlTransfer(SgAsmx86Instruction* inst) {
     case x86_jo:
     case x86_jpe:
     case x86_jpo:
+    case x86_jrcxz:
     case x86_loopnz:
     case x86_loopz:
       return true;
@@ -129,6 +131,7 @@ bool x86InstructionIsControlTransfer(SgAsmx86Instruction* inst) {
     case x86_jbe:
     case x86_jcxz:
     case x86_je:
+    case x86_jecxz:
     case x86_jg:
     case x86_jge:
     case x86_jl:
@@ -139,6 +142,7 @@ bool x86InstructionIsControlTransfer(SgAsmx86Instruction* inst) {
     case x86_jo:
     case x86_jpe:
     case x86_jpo:
+    case x86_jrcxz:
     case x86_js:
     case x86_loop:
     case x86_loopnz:

@@ -251,6 +251,7 @@ if test "x$want_boost" = "xyes"; then
 			AC_MSG_ERROR([[Boost libraries (version $boost_lib_version_req_shorten or higher) must be specified on the configure line (using the --with-boost=<path> option) and the boost libraries must be in your LD_LIBRARY_PATH.]])
 		else
 			AC_MSG_NOTICE([Your boost libraries seems to old (version $_version).])
+			exit 1
 		fi
 	else
 		AC_SUBST(BOOST_CPPFLAGS)
