@@ -2116,6 +2116,8 @@ projects/backstroke/reverseComputation/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
+projects/HeaderFilesInclusion/Makefile
+projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
