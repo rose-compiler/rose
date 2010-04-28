@@ -657,6 +657,7 @@ SgAsmFunctionDeclaration::get_functionReasonString ()
                case FUNC_INTERPAD:    s += "FUNC_INTERPAD ";    break;
                case FUNC_DISCONT:     s += "FUNC_DISCONT ";     break;
                case FUNC_INSNHEAD:    s += "FUNC_INSNHEAD ";    break;
+               case FUNC_LEFTOVERS:   s += "FUNC_LEFTOVERS ";   break;
             // case FUNC_DEFAULT:     s += "FUNC_DEFAULT ";     break;
 
                default:
