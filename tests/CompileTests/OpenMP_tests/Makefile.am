@@ -3,7 +3,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS = parseOmp
 parseOmp_SOURCES = parseOmp.C
 
-SUBDIRS= fortran cvalidation
+SUBDIRS= 
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+  SUBDIRS += cvalidation
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+  SUBDIRS += fortran 
+endif
+
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -57,6 +64,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor3.c \
 	ompfor4.c \
 	ompfor5.c \
+	ompGetNumThreads.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
@@ -139,6 +147,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 # the translator should now be able to avoid duplicated processing of pragma statements
 bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
+
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
@@ -147,6 +157,13 @@ check-local:
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
+else
+check-local:
+	@echo "Test for ROSE OpenMP Parser."
+	@echo "***********************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule for C/C++ skipped (terminated normally) ******"
+	@echo "***********************************************************************************************************"
+endif
 
 EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c
 

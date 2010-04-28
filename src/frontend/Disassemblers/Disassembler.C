@@ -725,7 +725,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
                     if (file)
                         file->set_tracking_references(was_tracking);
                     file = NULL;
-                    me = map->find(insn->get_address());
+                    me = map->find(va);
                     ROSE_ASSERT(me!=NULL);
                     if (me->is_anonymous())
                         break;
@@ -745,9 +745,10 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
                 size_t n = std::min(nbytes, me->get_size()-me_offset);
                 if (file) {
                     size_t file_offset = me->get_offset() + me_offset;
-                    file->read_content(file_offset, buf, n);
+                    file->read_content(file_offset, buf, n, false);
                 }
                 nbytes -= n;
+                va += n;
             }
         }
         if (file)

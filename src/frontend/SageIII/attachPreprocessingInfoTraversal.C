@@ -423,6 +423,8 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      printf ("Inside of AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) \n",use_Wave ? "true" : "false");
 #endif
 
+  // Liao 4/26/2010 support --enable-only-c
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // DQ (12/10/2007): Declare Fortran specific lexical pass function explicitly.
   // extern int getFortranFixedFormatPreprocessorDirectives( std::string fileName );
   // extern int getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
@@ -430,7 +432,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      extern std::list <stream_element*>* getFortranFixedFormatPreprocessorDirectives( std::string fileName );
      extern std::list <stream_element*>* getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
 #endif
-
+#endif 
      ROSEAttributesList* returnListOfAttributes = new ROSEAttributesList();
 
   // Build an empty list while we skip the translation of tokens
@@ -480,6 +482,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                {
                  fileNameForDirectivesAndComments = sourceFile->generate_C_preprocessor_intermediate_filename(fileNameForDirectivesAndComments);
                }
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
             // This is either of two different kinds of Fortran programs: fixed format or free format
@@ -559,6 +562,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                fprintf(stderr, "Fortran parser not enabled \n");
                ROSE_ABORT();
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#endif // for #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
              }
             else
              {

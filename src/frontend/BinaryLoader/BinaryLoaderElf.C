@@ -994,10 +994,10 @@ void performRelocation(SgAsmElfRelocEntry* reloc,
     ROSE_ASSERT(NULL != targetSection);
     string symbolName=relocSymbol->get_name()->c_str();
 
-    const char* relocStr="";
+    std::string relocStr;
     if(header)
       relocStr = reloc->to_string(reloc->get_type(),isa);
-    printf("%16s '%25s' 0x%016lx",relocStr,symbolName.c_str(),reloc->get_r_offset());
+    printf("%16s '%25s' 0x%016lx",relocStr.c_str(),symbolName.c_str(),reloc->get_r_offset());
   }
 
     // TODO support other than x86
@@ -1028,9 +1028,9 @@ void performRelocation(SgAsmElfRelocEntry* reloc,
 	  case SgAsmElfRelocEntry::R_386_TLS_DTPMOD32:
 	  case SgAsmElfRelocEntry::R_386_TLS_DTPOFF32:
 	  case SgAsmElfRelocEntry::R_386_TLS_TPOFF32:
-	    printf("%s%s\n", "<unresolved>: Thread Local Storage not supported",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa)); break;
+	    printf("%s%s\n", "<unresolved>: Thread Local Storage not supported",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str()); break;
 	  default:
-	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa));
+	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str());
 	};
 	break;
       case SgAsmGenericHeader::ISA_X8664_Family:
@@ -1042,11 +1042,11 @@ void performRelocation(SgAsmElfRelocEntry* reloc,
 	  case SgAsmElfRelocEntry::R_X86_64_64:relocate_X86_64_64(reloc,parentSection,masterSymbolMap,resolver,8);break;
 	  case SgAsmElfRelocEntry::R_X86_64_RELATIVE:relocate_X86_64_RELATIVE(reloc,parentSection,masterSymbolMap,resolver,8);break;
 	  default:
-	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa));	  
+	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str());	  
 	};
 	break;
       default:
-	printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa));
+	printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str());
     };
 }
 
@@ -1957,10 +1957,10 @@ void processOneRelocation(RelocationEntry relocation,
     string symbolName = symbol->get_name()->c_str();// symbolName may be empty
     if(get_verbose())
     {
-      const char* relocStr="";
+      std::string relocStr;
       if(header)
 	relocStr = reloc->to_string(reloc->get_type(),isa);
-      printf("%16s '%25s' 0x%016x",relocStr,symbolName.c_str(),reloc_va);
+      printf("%16s '%25s' 0x%016x",relocStr.c_str(),symbolName.c_str(),reloc_va);
     }
 
     // TODO support other than x86
@@ -1991,9 +1991,9 @@ void processOneRelocation(RelocationEntry relocation,
 	  case SgAsmElfRelocEntry::R_386_TLS_DTPMOD32:
 	  case SgAsmElfRelocEntry::R_386_TLS_DTPOFF32:
 	  case SgAsmElfRelocEntry::R_386_TLS_TPOFF32:
-	    printf("%s%s\n", "<unresolved>: Thread Local Storage not supported",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa)); break;
+	    printf("%s%s\n", "<unresolved>: Thread Local Storage not supported",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str()); break;
 	  default:
-	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa));
+	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str());
 	};
 	break;
       case SgAsmGenericHeader::ISA_X8664_Family:
@@ -2005,11 +2005,11 @@ void processOneRelocation(RelocationEntry relocation,
 	  case SgAsmElfRelocEntry::R_X86_64_64:      relocate_386_32      (reloc,symbol,symbolMap,extentSortedSections,8);break;
 	  case SgAsmElfRelocEntry::R_X86_64_RELATIVE:relocate_386_RELATIVE(reloc,symbol,symbolMap,extentSortedSections);break;
 	  default:
-	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa));	  
+	    printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str());	  
 	};
 	break;
       default:
-	printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa));
+	printf("%s%s\n","<unresolved>:",SgAsmElfRelocEntry::to_string(reloc->get_type(),isa).c_str());
     };
 }
 

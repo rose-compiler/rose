@@ -36,13 +36,21 @@ protected:
 
     /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
     struct BasicBlock {
-        BasicBlock(): sucs_complete(false), sucs_ninsns(0), function(NULL) {}
-        const Disassembler::AddressSet& successors(bool *complete=NULL); /**< Calculates known successors */
+        BasicBlock(): sucs_complete(false), sucs_first_va(0), sucs_ninsns(0), function(NULL) {
+            /* Keep track of the number of blocks allocated so we can print that info for debugging output. The number
+             * of blocks isn't otherwise directly available. */
+            ++nblocks;
+        }
+        ~BasicBlock() {
+            --nblocks; /* for debugging output */
+        }
+        static size_t nblocks;                  /**< Number of blocks allocated; only used for debugging */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         Disassembler::AddressSet sucs;          /**< Cached set of known successors */
         bool sucs_complete;                     /**< Is the set of successors known completely? */
+        rose_addr_t sucs_first_va;              /**< First instruction va when "sucs" was computed */
         size_t sucs_ninsns;                     /**< Number of instructions in block when "sucs" was computed */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
     };
@@ -111,7 +119,7 @@ public:
 
 public:
     Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL) {}
-    virtual ~Partitioner() {}
+    virtual ~Partitioner() { clear(); }
 
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
      *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
@@ -175,23 +183,31 @@ public:
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
      *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
-     *  "***unassigned blocks***" whose entry address will be the address of the lowest instruction. */
+     *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction.  However, if the
+     *  FUNC_LEFTOVERS bit is not turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
     
 protected:
+    struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery */
+
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
     virtual BasicBlock* find_bb_containing(rose_addr_t);        /**< Find basic block containing instruction address */
     virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
+    virtual const Disassembler::AddressSet& successors(BasicBlock*, bool *complete=NULL); /**< Calculates known successors */
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
+    virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
-    virtual BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
+    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
+    virtual void discover_first_block(Function*);               /* see implementation */
     virtual void discover_blocks(Function*, rose_addr_t);       /* see implementation */
     virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */
-    virtual SgAsmFunctionDeclaration* build_ast(Function*) const;/**< Build AST for a single function */
-    virtual SgAsmBlock* build_ast(BasicBlock*) const;           /**< Build AST for a single basic block */
+    virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
+    virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
+    virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
+    
     
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
@@ -222,6 +238,9 @@ protected:
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
+
+private:
+    static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
 
 #endif
