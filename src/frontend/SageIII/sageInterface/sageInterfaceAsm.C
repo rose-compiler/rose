@@ -676,3 +676,59 @@ SgAsmFunctionDeclaration::get_functionReasonString ()
 
      return s;
    }
+
+
+// DQ (4/28/2010): Added support for interface to detect NOP's.  This function is for a single instruction.
+bool
+SageInterface::isNOP ( SgAsmInstruction* asmInstruction )
+   {
+
+  // Test an instruction for if it has no side-effect to the state (is so then it is a NOP). 
+  // This is a more general test than if it is equivelent to the NOP memonic instruction.
+     bool returnValue = false;
+
+  // This is the most trivial case of detecting a NOP instruction.
+     if (isInstructionKind(asmInstruction,x86_nop) == true)
+        {
+          returnValue = true;
+        }
+       else
+        {
+       // We also want to handle more complex cases of NOP instructions (later).
+        }
+
+     return returnValue;
+   }
+     
+// DQ (4/28/2010): Added support for interface to detect NOP's.  This function is for a list of instructions.
+bool
+SageInterface::isNOP ( const std::vector<SgAsmInstruction*> & asmInstructionList )
+   {
+  //! Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
+     bool returnValue = false;
+
+  // This is an initial implementation to be improved on later using the instruction semantics and looking at
+  // combinations of instructions.
+     std::vector<SgAsmInstruction*>::const_iterator i = asmInstructionList.begin();
+     while (returnValue == true && i != asmInstructionList.end())
+        {
+          returnValue = isNOP(*i);
+          i++;
+        }
+
+     return returnValue;
+   }
+
+// DQ (4/28/2010): Added support for interface to detect NOP's.  This function detects NOP sequences in a SgAsmBlock.
+std::vector<std::vector<SgAsmInstruction*> >
+SageInterface::find_NOP_sequences ( const SgAsmBlock* & asmBlock )
+   {
+  // find sequences of NOP instructions in a SgAsmBlock
+     std::vector<std::vector<SgAsmInstruction*> > returnSequence;
+
+     printf ("This SageInterface::find_NOP_sequences ( const SgAsmBlock* & asmBlock ) function is not implemented yet \n");
+     ROSE_ASSERT(false);
+
+     return returnSequence;
+   }
+   

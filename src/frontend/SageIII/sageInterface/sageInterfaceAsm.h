@@ -51,6 +51,16 @@ namespace SageInterface
   // General function to find matching target AST in larger AST.
   // SgNode* find ( SgNode* astNode, SgNode* target, EquivalenceTestFunctionType equivalenceTest );
      std::vector<SgNode*> find ( SgNode* astNode, SgNode* target, EquivalenceTestFunctionType equivalenceTest );
+
+  // DQ (4/28/2010): Added support for interface to detect NOP's in all their glory.
+  //! Test an instruction for if it has no side-effect to the state (is so then it is a NOP). This is a more general test than if it is equivelent to the NOP memonic instruction.
+  // bool isNOP ( const SgAsmInstruction* asmInstruction );
+     bool isNOP ( SgAsmInstruction* asmInstruction );
+  //! Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
+     bool isNOP ( const std::vector<SgAsmInstruction*> & asmInstructionList );
+  //! find sequences of NOP instructions in a SgAsmBlock
+     std::vector<std::vector<SgAsmInstruction*> > find_NOP_sequences ( const SgAsmBlock* & asmBlock );
+
    }
 
 // endif for ROSE_SAGE_INTERFACE_ASM
