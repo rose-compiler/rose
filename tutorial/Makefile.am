@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = database roseHPCT outliner intelPin
+SUBDIRS = database roseHPCT outliner intelPin binaryAnalysis
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -34,7 +34,7 @@ TUTORIAL_EXAMPLES = \
    astFileIO_ReadMultipleASTs \
    ASTGraphGenerator \
    bin_example \
-   binaryAnalysis \
+   binaryAnalysisExample \
    binaryAnalysis_symbolTable \
    binaryFileRead \
    sb_callgraphAnalysis \
@@ -205,7 +205,7 @@ buildCFG_SOURCES = buildCFG.C
 
 defuseAnalysis_SOURCES = defuseAnalysis.C
 
-binaryAnalysis_SOURCES = binaryAnalysis.C
+binaryAnalysisExample_SOURCES = binaryAnalysisExample.C
 
 sb_callgraphAnalysis_SOURCES = callGraphSourceBinaryExample.C 
 
@@ -1117,7 +1117,7 @@ binaryAnalysis_pic1.pdf: binaryAnalysis
 #	./binaryAnalysis bin_example
 # trick is to load a 32bit binary
 	cp $(srcdir)/buffer2.bin ./bin_example
-	./binaryAnalysis bin_example
+	./binaryAnalysisExample bin_example
 	@echo "BinaryAnalysis: Building assembly listing for binary (rose_bin_example.s.a) ..."
 	split -42 rose_bin_example.s rose_bin_example.s.
 	@echo "BinaryAnalysis: Building postscript file from cfg.dot & dfg.dot ..."

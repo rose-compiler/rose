@@ -2223,6 +2223,7 @@ tutorial/database/Makefile
 tutorial/roseHPCT/Makefile
 tutorial/outliner/Makefile
 tutorial/intelPin/Makefile
+tutorial/binaryAnalysis/Makefile
 exampleTranslators/Makefile
 exampleTranslators/AstCopyReplTester/Makefile
 exampleTranslators/DOTGenerator/Makefile
