@@ -23,7 +23,9 @@ void CountTraversal::visit ( SgNode* n )
      SgAsmInstruction* asmInstruction = isSgAsmInstruction(n);
      if (asmInstruction != NULL)
         {
-          if (isInstructionKind(asmInstruction,x86_nop) == true)
+       // Use the new interface support for this. 
+       // if (isInstructionKind(asmInstruction,x86_nop) == true)
+          if (SageInterface::isNOP(asmInstruction) == true)
              {
                if (previousInstructionWasNop == true)
                   {

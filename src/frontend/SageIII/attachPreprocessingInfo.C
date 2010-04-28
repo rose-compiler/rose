@@ -322,11 +322,11 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
     if( sageFilePtr->get_C_only() == true){
        // Tentaive support for C. For now treat it like C99 since Wave does not
        // have an option for just C.
-          ctx.add_macro_definition(std::string("ROSE_CPP_MODE=0"),true);
+          ctx.add_macro_definition(std::string("ROSE_LANGUAGE_MODE=0"),true);
      }else if( sageFilePtr->get_C99_only() == true ){
-          ctx.add_macro_definition(std::string("ROSE_CPP_MODE=0"),true);
+          ctx.add_macro_definition(std::string("ROSE_LANGUAGE_MODE=0"),true);
      }else{
-          ctx.add_macro_definition(std::string("ROSE_CPP_MODE=1"),true);
+          ctx.add_macro_definition(std::string("ROSE_LANGUAGE_MODE=1"),true);
      }
 
      if (SgProject::get_verbose() >= 1)

@@ -155,8 +155,8 @@
 */
 #ifndef SKIP_ROSE_BUILTIN_DECLARATIONS
 
-#ifndef ROSE_CPP_MODE
-  #error "Macro ROSE_CPP_MODE should have been defined ROSE_CPP_MODE == 0 for C and C99 and ROSE_CPP_MODE == 1 for C++"
+#ifndef ROSE_LANGUAGE_MODE
+  #error "Macro ROSE_LANGUAGE_MODE should have been defined ROSE_LANGUAGE_MODE == 0 for C and C99 and ROSE_LANGUAGE_MODE == 1 for C++ (CUDA == 2, OpenCL == 3)"
 #endif
 
 /* PC (9/25/2006): Define __builtin_va_start to the EDG expected symbol
@@ -618,7 +618,8 @@ was just float or double for complex<float> or complex<double>.
    _Complex
 */
 /* #ifdef __cplusplus */
-#if ROSE_CPP_MODE
+/* #if ROSE_CPP_MODE */
+#if (ROSE_LANGUAGE_MODE == 1)
 /* C++ case is different because the header files will define a complex type (see hdrs1/complex) */
 
   #define __complex__
