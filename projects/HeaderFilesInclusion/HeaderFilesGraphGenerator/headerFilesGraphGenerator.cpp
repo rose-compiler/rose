@@ -23,13 +23,14 @@ using namespace std;
 // tell if p1 is the parent path of p2
 bool isParent(const path& p1, const path& p2)
 {
-    path p = p2.parent_path();
+    path p = p2;
     while (1)
     {
-	if (p == p1) return true;
+	if (equivalent<path, path>(p, p1)) return true;
 	if (!p.has_parent_path())
 	    break;
 	p = p.parent_path();
+	cout << "!!!" << p << endl;
     }
     return false;
 }
@@ -220,12 +221,15 @@ void getLibMapByRegex(
 	    if (result)
 	    {
 		path header_path;
+		cout << what[2] << endl;
 		// now we just use target_path to find all headers under this directory
 		if (what[2] == ">")
 		{
 		    foreach (const path& p, include_paths)
 		    {
 			header_path = p / path(what[1]);
+			cout << target_path << ' ' << header_path << ' '
+			 << isParent(target_path, header_path) << endl;
 			if (exists(header_path) && isParent(target_path, header_path))
 			{
 			    header_map[header].insert(header_path);

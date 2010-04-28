@@ -15,7 +15,7 @@ INPUT_CODE= /home/hou1/opt/rose/include include_path.txt macro_defined.txt
 BOOST_ROOT=/home/hou1/opt/boost_1_36_0/include/boost-1_36/
 BOOST_LIB=/home/hou1/opt/boost_1_36_0/lib
 
-CXXFLAGS=-O3 
+CXXFLAGS=-g3 
 
 .PHONY :clean test default
 all:clean test
