@@ -26,8 +26,7 @@ testmatchPattern: matchPattern input_matchPattern
 EXTRA_DIST = CMakeLists.txt input_matchPattern.C
 
 check-local:
-#	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
-	@$(MAKE) testbug125 testqualifiedName
+	@$(MAKE) testmatchPattern
 	@echo "****************************************************************************************"
 	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************"
