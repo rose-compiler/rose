@@ -472,17 +472,72 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
       case SHT_GNU_verdef: return "SHT_GNU_verdef";
       case SHT_GNU_verneed: return "SHT_GNU_verneed";
       case SHT_GNU_versym: return "SHT_GNU_versym";
-      default:
+      default:{
+	char buf[128];
 	if(t>=SHT_LOOS && t <= SHT_HIOS) {
-	    return "os-specific";
-        } else if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
-            return "processor-specific";
-        } else if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
-            return "application-specific";
-        } else {
-            return "unknown";
+	  snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
+	  return buf;
+	} else if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
+	  snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
+	  return buf;
+	} else if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
+	  snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
+	  return buf;
+	} else {
+	  snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
+	  return buf;
         }
+      }
     };
+}
+
+std::string
+SgAsmElfSectionTableEntry::to_string(SectionFlags val)
+{
+  std::string str;
+  static const uint32_t kBaseMask=0x3ff;
+  for( size_t i=0; (1u <<i) <= SHF_TLS; ++i){
+    if( i!= 0)
+      str += ' ';
+    if(val & (1 << i)){
+      switch(1 << i){
+	case SHF_NULL:      str += "NULL";break;
+	case SHF_WRITE:     str += "WRITE";break;
+	case SHF_ALLOC:     str += "ALLOC";break;
+	case SHF_EXECINSTR: str +=  "CODE";break;
+	case SHF_MERGE:     str += "MERGE";break;/** Might be merged */
+	case SHF_STRINGS:   str += "STRINGS";break;
+	case SHF_INFO_LINK: str += "INFO_LINK";break;
+	case SHF_LINK_ORDER:str += "LINK_ORDER";break;
+	case SHF_OS_NONCONFORMING:str += "OS SPECIAL";break;
+	case SHF_GROUP:     str += "GROUP";break;
+	case SHF_TLS:       str += "TLS";break;
+      };
+    }
+  }
+  uint32_t os   = (val & ~(uint32_t)(SHF_MASKOS));
+  uint32_t proc = (val & ~(uint32_t)(SHF_MASKPROC));
+  uint32_t rest = (val & ~(uint32_t)(kBaseMask | SHF_MASKOS | SHF_MASKPROC));
+
+  if(os){
+    char buf[64];
+    snprintf(buf,sizeof(buf),"os flags(%2x)", os >> 20);
+    str += buf;    
+  }
+
+  if(proc){
+    char buf[64];
+    snprintf(buf,sizeof(buf),"proc flags(%1x)", proc >> 28);
+    str += buf;    
+  }
+
+  if(rest){
+    char buf[64];
+    snprintf(buf,sizeof(buf),"unknown(%x)", rest);
+    str += buf;
+  }
+
+  return str;
 }
 
 /** Print some debugging info */
@@ -513,6 +568,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
+
 
 /** Pre-unparsing updates */
 bool
@@ -612,3 +668,4 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmElfSectionTable) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+
