@@ -760,7 +760,6 @@ SgFunctionDeclaration* buildMainFunction()
     return func_decl;
 }
 
-// Typical main function for ROSE translator
 int main( int argc, char * argv[] )
 {
     SgProject* project = frontend(argc,argv);
