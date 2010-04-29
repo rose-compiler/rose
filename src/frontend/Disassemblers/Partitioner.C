@@ -8,7 +8,7 @@
 #include "AssemblerX86.h"
 #include "unparseAsm.h"
 #include <inttypes.h>
-#include "findConstants.h"
+#include "ConstantPropagationPolicy.h"
 
 /* See header file for full documentation. */
 
@@ -175,23 +175,6 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
     return bb->sucs;
 }
 
-/* Used by Partitioner::pops_return_address(). Overrides superclass so that it doesn't try to traverse the AST, which
- * hasn't been created yet. */
-class IsFunctionCallPolicy: public FindConstantsPolicy {
-public:
-    void startInstruction(SgAsmInstruction* insn) {
-        addr = insn->get_address();
-        newIp = number<32>(addr);
-        if (rsets.find(addr)==rsets.end())
-            rsets[addr].setToBottom();
-        currentRset = rsets[addr];
-        currentInstruction = isSgAsmx86Instruction(insn);
-    }
-    const XVariablePtr<32>& get_sp(rose_addr_t va) {
-        return rsets[addr].gpr[x86_gpr_sp];
-    }
-};
-
 /* Returns true if the basic block at the specified virtual address appears to discard the return address from the top of the
  * stack.
  *
@@ -202,7 +185,7 @@ bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
     bool retval = false;
-    typedef X86InstructionSemantics<IsFunctionCallPolicy, XVariablePtr> Semantics;
+    typedef X86InstructionSemantics<ConstantPropagationPolicy, CPValue> Semantics;
     static const uint64_t wordsize=4; /*FIXME: instruction semantics are only for 32-bit code for now, so this is ok*/
     bool preexisting = insn2block[va]!=NULL;
     BasicBlock* target_block = find_bb_containing(va);
@@ -211,27 +194,25 @@ Partitioner::pops_return_address(rose_addr_t va)
     /* Analyze the block */
     if (last_insn && last_insn->get_kind()!=x86_ret) {
         try {
-            XVariablePtr<32> origsp;
-            IsFunctionCallPolicy policy;
+            ConstantPropagationPolicy policy;
             Semantics semantics(policy);
+            CPValue<32> origsp = policy.readGPR(x86_gpr_sp);
             for (size_t i=0; i<target_block->insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(target_block->insns[i]);
                 semantics.processInstruction(insn);
-                if (0==i) origsp = policy.get_sp(va);
 #if 0
                 std::ostringstream s;
                 s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.currentRset
+                  <<policy.state
                   <<"    ip = " <<policy.readIP() <<"\n";
-                s <<"get_sp(0x" <<std::hex <<va <<std::dec <<") = " <<policy.get_sp(va) <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            XVariablePtr<32> newsp = policy.readGPR(x86_gpr_sp);
-            if (newsp->get().name==origsp->get().name && newsp->get().offset==origsp->get().offset+wordsize) {
+            CPValue<32> newsp = policy.readGPR(x86_gpr_sp);
+            if (newsp.name==origsp.name && newsp.offset==origsp.offset+wordsize) {
                 retval = true;
             } else if (last_insn->get_kind()==x86_call &&
-                       newsp->get().name==origsp->get().name && newsp->get().offset==origsp->get().offset) {
+                       newsp.name==origsp.name && newsp.offset==origsp.offset) {
                 retval = true;
             }
         } catch(const Semantics::Exception&) {
