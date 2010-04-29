@@ -281,7 +281,7 @@ public:
 
     /** Called only for the INT instruction. */
     void interrupt(uint8_t num) {
-        ROSE_ASSERT(!"set to bottom not implemented yet");
+        state = MachineState(); /*reset entire machine state*/
     }
 
     /** Used to build a known constant. */
