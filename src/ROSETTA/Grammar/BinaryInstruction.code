@@ -3868,6 +3868,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	void append_dest(SgAsmStatement* instruction);
 	void remove_children();
 
+   std::string get_functionReasonString();
+
 	/** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
 	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
 	 *  instructions into functions. */
@@ -3904,6 +3906,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 		e_thunk	   = 4,
 		e_last
 	};
+
+
 HEADER_BINARY_FUNCTION_DECLARATION_END
 
 

@@ -153,6 +153,7 @@ test2006_153.C \
 test2006_154.C \
 test2006_181.C \
 test2008_04.C \
+test2010_16.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
