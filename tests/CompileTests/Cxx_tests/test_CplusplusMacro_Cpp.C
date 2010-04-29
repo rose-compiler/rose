@@ -18,23 +18,23 @@
   #error "__cplusplus NOT defined"
 #endif
 
-// DQ (11/29/2006): Added ROSE_CPP_MODE macro for use in:
+// DQ (11/29/2006): Added ROSE_LANGUAGE_MODE macro for use in:
 //      rose_edg_required_macros_and_functions.h.
-// Note that ROSE_CPP_MODE should always be defined since we require it to
+// Note that ROSE_LANGUAGE_MODE should always be defined since we require it to
 // communicate to the ROSE spsecific header files if we are in C or C++ mode.
 // Note that the macro __cplusplus macro is not enough since it is true when
 // compiling in C mode if the source filename uses a C++ file name extension
 // (suffix).
-#ifdef ROSE_CPP_MODE
-  #if (ROSE_CPP_MODE == 0)
+#ifdef ROSE_LANGUAGE_MODE
+  #if (ROSE_LANGUAGE_MODE == 0)
     #warning "This is the ROSE C mode, independent of the setting of the __cplusplus Macro"
   #else
-    #if (ROSE_CPP_MODE == 1)
+    #if (ROSE_LANGUAGE_MODE == 1)
       #warning "This is the ROSE C++ mode, independent of the setting of the __cplusplus Macro"
     #else
       #error "This is an unknown ROSE language mode, independent of the setting of the __cplusplus Macro"
     #endif
   #endif
 // #else
-//  #warning "ROSE_CPP_MODE is defined for internal ROSE use only, and is not defined for the vendor compiler.
+//  #warning "ROSE_LANGUAGE_MODE is defined for internal ROSE use only, and is not defined for the vendor compiler.
 #endif
