@@ -34,6 +34,12 @@ feature to ROSE, show us your tests.
 %}}}
 
 \section{Working with the ROSE GIT repositories}
+This section is mostly useful for internal ROSE developers who have access
+to LLNL's network file system hosting ROSE's git repository or external
+developers who are comfortable with using git. 
+Otherwise, external developers are suggested to use our external SVN repository as
+described in Section~\ref{gettingStarted::svn}.
+
 We have two git repositories for ROSE: an internal one at LLNL and an external
 one hosted at \url{http://www.rosecompiler.org}. These two repositories share histories so that
 you can work closely with us as an external developing using our latest work. 
@@ -63,7 +69,8 @@ Then a feature or a bugfix can be developed in isolation within the private repo
 He can create any number of private branches. Each branch should relate to a
 feature that this developer is working on and be relatively short-lived. 
 %and offline (can commit without active connection with the shared repository).
-The developer can commit changes to the private repository without maintaining an active connect to 
+The developer can commit changes to the private repository without
+maintaining an active connection to 
 the shared repository.  When work is finished and locally tested, he can push all accumulated commits within the private repository 
 to his branch within the shared repository. 
 We create a dedicated branch within the shared repository for each developer and establish access control of the
@@ -89,23 +96,6 @@ As a result, the master branch of the shared git repository is always stable and
 %will push to a branch when his work is ready for integration. When a developer push
 %to the ROSE git repository his work will be automatically added to a queue of
 %jobs that will be tested by Hudson.
-
-\subsection{The External Repository}
-
-External users (who don't have account with LLNL) are recommended to use
-ROSE's external SVN repository, which is described
-in~\ref{gettingStarted::svn}.
-
-
-For advanced external users who are comfortable with git. 
-We have an external git repository which is cloned and synchronized with our internal shared repository. 
-To clone the external git repository, simply type:
-
-\textit{git clone http://www.rosecompiler.org/rose.git/}
-
-\noindent Depending on your network speed, the commandline above may take 3 to 5
-minutes or even longer.
-
 \subsection{The Internal Repository}
 
 The ROSE internal repository (the shared git repository shown in Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/usr/casc/overture/ROSE/git/ROSE.git}.
@@ -264,18 +254,32 @@ Please configure this copy with your name and email before starting work.
 %}}}
 Git cheat sheet: \htmladdnormallink{http://cheat.errtheblog.com/s/git}{http://cheat.errtheblog.com/s/git}
 
+\subsection{The External Repository}
+
+External users (who don't have account with LLNL) are recommended to use
+ROSE's external SVN repository, which is described
+in~\ref{gettingStarted::svn}.
 
 
+For advanced external users who are comfortable with git. 
+We have an external git repository which is cloned and synchronized with our internal shared repository. 
+To clone the external git repository, simply type:
+
+\textit{git clone http://www.rosecompiler.org/rose.git/}
+
+\noindent Depending on your network speed, the commandline above may take 3 to 5
+minutes or even longer.
 
 
 %Added by Liao 10/17/2008
- \section{Working with the ROSE SVN repositories}%{{{
+ \section{Working with the ROSE SVN repository}%{{{
 \label{gettingStarted::svn}
-We have two subversion repositories for ROSE: an internal one at LLNL and
-an external one at SciDAC Outreach Center (using a vendor drop scheme). 
+We maintain an external subversion repository for ROSE at SciDAC Outreach
+Center. It is synchronized with the internal shared git repository using a
+vendor drop scheme (building a distribution from the git repository and
+load the content of the distribution to the svn repository). 
 Some tips for using them are gathered in this section. 
 
-\subsection{The External Repository}
 If you are our external (non-LLNL) users who make contributions to ROSE,
 we highly recommend you to work on a dedicated branch of the external repository. 
 We can create the branch for you on request. And you need to apply an account of
