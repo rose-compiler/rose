@@ -240,9 +240,31 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
   }
 
   else if (SgCastExp* cst = dynamic_cast<SgCastExp*>(astNode)) {
-    // Use the original expression tree instead of what EDG generates
+    // Use the original expression tree instead of what EDG generates for
+    // the case  (cast) &foo.member . This has a doubly nested cast!
+#if 0
+    // Dump the structure of the cast expression.
+    std::cerr << "- " << cst->unparseToString() << std::endl;
+    std::cerr << "cst";
+    SgExpression *p = cst;
+    while (p != NULL) {
+      std::cerr << " -> " << p->class_name();
+      p = (isSgUnaryOp(p) ? isSgUnaryOp(p)->get_operand() : NULL);
+    }
+    std::cerr << std::endl;
+#endif
+
+    SgCastExp *nestedCast = isSgCastExp(cst->get_operand());
     SgExpression* original = cst->get_originalExpressionTree();
-    if (original != NULL) {
+    if (nestedCast != NULL && original != NULL) {
+#if 0
+      std::cerr << "** DEBUG: cst = " << cst->unparseToString() << std::endl
+                << "** original: " << (original == NULL ? "NULL"
+                                      : original->unparseToString())
+                << std::endl;
+      std::cerr << "** original type: " << original->class_name()
+                << std::endl;
+#endif
       //std::cerr << "** DEBUG: replacing\n" << astNode->unparseToString()
       //	<< "\n with \n" << original->unparseToString() << std::endl;
 	
