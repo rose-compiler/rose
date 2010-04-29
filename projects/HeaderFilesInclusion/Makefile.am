@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = HeaderFilesGraphGenerator
+SUBDIRS = HeaderFilesGraphGenerator HeaderFilesNotIncludedList
 
 # bin_PROGRAMS = reverse
 # reverse_SOURCES = reverse.cpp
