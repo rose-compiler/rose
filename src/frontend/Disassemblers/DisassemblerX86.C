@@ -11,8 +11,7 @@
 #include <inttypes.h>
 #include <sstream>
 
-#include "integerOps.h"
-#include "findConstants.h"
+#include "ConstantPropagationPolicy.h"
 
 /* See header file for full documentation. */
 
@@ -152,20 +151,6 @@ SgAsmx86Instruction::get_successors(bool *complete) {
     return retval;
 }
 
-/* Used by get_successors() for basic blocks. Override superclass method so that they don't try to traverse the AST, which
- * hasn't been created yet. */
-class BlockSuccessorsPolicy: public FindConstantsPolicy {
-public:
-    void startInstruction(SgAsmInstruction* insn) {
-        addr = insn->get_address();
-        newIp = number<32>(addr);
-        if (rsets.find(addr)==rsets.end())
-            rsets[addr].setToBottom();
-        currentRset = rsets[addr];
-        currentInstruction = isSgAsmx86Instruction(insn);
-    }
-};
-
 /* "this" is only used to select the virtual function */
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
@@ -176,9 +161,9 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
      * successors, a thorough analysis might be able to narrow it down to a single successor. */
     if (!*complete || successors.size()>1) {
-        typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
+        typedef X86InstructionSemantics<ConstantPropagationPolicy, CPValue> Semantics;
         try {
-            BlockSuccessorsPolicy policy;
+            ConstantPropagationPolicy policy;
             Semantics semantics(policy);
             for (size_t i=0; i<insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
@@ -186,15 +171,15 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 #if 0
                 std::ostringstream s;
                 s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.currentRset
+                  <<policy.state
                   <<"    ip = " <<policy.readIP() <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            XVariablePtr<32> newip = policy.readIP();
-            if (newip->get().name==0) {
+            CPValue<32> newip = policy.readIP();
+            if (newip.name==0) {
                 successors.clear();
-                successors.insert(newip->get().offset);
+                successors.insert(newip.offset);
                 *complete = true; /*this is the complete set of successors*/
             }
         } catch(const Semantics::Exception& e) {
