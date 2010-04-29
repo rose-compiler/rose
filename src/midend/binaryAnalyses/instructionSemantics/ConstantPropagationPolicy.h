@@ -375,6 +375,7 @@ public:
     /** Computes bit-wise AND of two values. */
     template <size_t Len>
     CPValue<Len> and_(const CPValue<Len> &a, const CPValue<Len> &b) {
+        if ((!a.name && 0==a.offset) || (!b.name && 0==b.offset)) return 0;
         if (a.name || b.name) return CPValue<Len>();
         return a.offset & b.offset;
     }
@@ -383,7 +384,7 @@ public:
     template <size_t Len>
     CPValue<1> equalToZero(const CPValue<Len> &a) {
         if (a.name) return undefined_();
-        return a.offset ? true_() : false_();
+        return a.offset ? false_() : true_();
     }
 
     /** One's complement */
