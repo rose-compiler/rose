@@ -5,6 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libsageInterface.la
 libsageInterface_la_SOURCES      = \
      sageInterface.C \
+     sageInterfaceAsm.C \
      sageInterface_asm.C \
      sageInterface_type.C \
      generateUniqueName.C \
@@ -20,6 +21,7 @@ libsageInterface_la_DEPENDENCIES =
 
 include_HEADERS = \
      sageInterface.h \
+     sageInterfaceAsm.h \
      sageBuilder.h \
      sageBuilderAsm.h \
      endianWrappers.h \
