@@ -56,6 +56,7 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
     
     add_to_reason_string(result, (r & FUNC_CALL_TARGET), do_pad, "C", "call target");
     add_to_reason_string(result, (r & FUNC_EH_FRAME),    do_pad, "X", "exception frame");
+    add_to_reason_string(result, (r & FUNC_IMPORT),      do_pad, "I", "import");
     add_to_reason_string(result, (r & FUNC_SYMBOL),      do_pad, "S", "symbol");
     add_to_reason_string(result, (r & FUNC_PATTERN),     do_pad, "P", "pattern");
     add_to_reason_string(result, (r & FUNC_GRAPH),       do_pad, "G", "graph");
@@ -109,6 +110,8 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
         } else if (word=="eh" || word=="eh_frame") {
             bits = SgAsmFunctionDeclaration::FUNC_EH_FRAME;
+        } else if (word=="import") {
+            bits = SgAsmFunctionDeclaration::FUNC_IMPORT;
         } else if (word=="symbol") {
             bits = SgAsmFunctionDeclaration::FUNC_SYMBOL;
         } else if (word=="pattern") {
@@ -483,6 +486,78 @@ Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr)
     }
 }
 
+/* Adds each entry of the ELF procedure lookup table (.plt section) to the list of functions. */
+void
+Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
+{
+    /* This function is ELF, x86 specific. */
+    SgAsmElfFileHeader *elf = isSgAsmElfFileHeader(fhdr);
+    if (!elf) return;
+    
+    /* Find important sections */
+    SgAsmGenericSection *plt = elf->get_section_by_name(".plt");
+    if (!plt || !plt->is_mapped()) return;
+    SgAsmGenericSection *gotplt = elf->get_section_by_name(".got.plt");
+    if (!gotplt || !gotplt->is_mapped()) return;
+
+    /* Find all relocation sections */
+    std::set<SgAsmElfRelocSection*> rsects;
+    const SgAsmGenericSectionPtrList &sections = elf->get_sections()->get_sections();
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
+        SgAsmElfRelocSection *reloc_section = isSgAsmElfRelocSection(*si);
+        if (reloc_section) {
+            ROSE_ASSERT(isSgAsmElfSymbolSection(reloc_section->get_linked_section()));
+            rsects.insert(reloc_section);
+        }
+    }
+    if (rsects.empty()) return;
+
+    /* Look at each instruction in the .plt section. If the instruction is a computed jump to an address stored in the
+     * .got.plt then we've found the beginning of a plt trampoline. */
+    rose_addr_t plt_offset = 14; /* skip the first entry (PUSH ds:XXX; JMP ds:YYY; 0x00; 0x00)--the JMP is not a function*/
+    while (plt_offset<plt->get_mapped_size()) {
+
+        /* Find an x86 instruction */
+        Disassembler::InstructionMap::iterator ii = insns.find(plt->get_mapped_actual_rva()+plt_offset);
+        if (ii==insns.end()) {
+            ++plt_offset;
+            continue;
+        }
+        plt_offset += ii->second->get_raw_bytes().size();
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        if (!insn) continue;
+            
+        rose_addr_t gotplt_va = get_indirection_addr(insn);
+        if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
+            gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size()) {
+            continue; /* jump is not indirect through the .got.plt section */
+        }
+        
+
+        /* Find the relocation entry whose offset is the gotplt_va and use that entry's symbol for the function name. */
+        std::string name;
+        for (std::set<SgAsmElfRelocSection*>::iterator ri=rsects.begin(); ri!=rsects.end() && name.empty(); ++ri) {
+            SgAsmElfRelocEntryList *entries = (*ri)->get_entries();
+            SgAsmElfSymbolSection *symbol_section = isSgAsmElfSymbolSection((*ri)->get_linked_section());
+            SgAsmElfSymbolList *symbols = symbol_section->get_symbols();
+            for (size_t ei=0; ei<entries->get_entries().size() && name.empty(); ++ei) {
+                SgAsmElfRelocEntry *rel = entries->get_entries()[ei];
+                if (rel->get_r_offset()==gotplt_va) {
+                    unsigned long symbol_idx = rel->get_sym();
+                    if (symbol_idx < symbols->get_symbols().size()) {
+                        SgAsmElfSymbol *symbol = symbols->get_symbols()[symbol_idx];
+                        name = symbol->get_name()->get_string() + "@plt";
+                    }
+                }
+            }
+        }
+        
+        add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+    }
+}
+
+
+
 /* Use symbol tables to determine function entry points. */
 void
 Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
@@ -772,8 +847,9 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
     return retval; /*calculated value, or defaults to zero*/
 }
 
-/* Gives names to the dynamic linking trampolines in the .plt section. */
-/* FIXME: We should also have a similar method that creates functions for all PLT entries. [RPM 2010-04-26] */
+/* Gives names to the dynamic linking trampolines in the .plt section if the Partitioner detected them as functions. If
+ * mark_elf_plt_entries() was called then they all would have been marked as functions and given names. Otherwise, ROSE might
+ * have detected some of them in other ways (like CFG analysis) and this function will give them names. */
 void
 Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 {
@@ -859,6 +935,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp)
             mark_func_symbols(headers[i]);
         if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
             mark_func_patterns(headers[i]);
+        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_IMPORT)
+            mark_elf_plt_entries(headers[i]);
     }
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */

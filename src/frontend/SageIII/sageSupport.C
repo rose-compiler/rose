@@ -3112,7 +3112,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   }
 
             // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
-               commandLine.push_back("-DROSE_CPP_MODE=1");
+               commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
              }
             else
              {
@@ -3127,7 +3127,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   }
        
             // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
-               commandLine.push_back("-DROSE_CPP_MODE=0");
+               commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
              }
         }
        else
@@ -3151,7 +3151,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
              }
 
        // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
-          commandLine.push_back("-DROSE_CPP_MODE=1");
+          commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
         }
 
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
