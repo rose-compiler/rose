@@ -255,24 +255,27 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
 #endif
 
     SgCastExp *nestedCast = isSgCastExp(cst->get_operand());
-    SgExpression* original = cst->get_originalExpressionTree();
-    if (nestedCast != NULL && original != NULL) {
+    SgCastExp *originalCast = isSgCastExp(cst->get_originalExpressionTree());
+    SgAddressOfOp *addressOp = isSgAddressOfOp(
+        originalCast ? originalCast->get_operand() : NULL);
+    if (nestedCast != NULL && addressOp != NULL &&
+        isSgDotExp(addressOp->get_operand())) {
 #if 0
       std::cerr << "** DEBUG: cst = " << cst->unparseToString() << std::endl
-                << "** original: " << (original == NULL ? "NULL"
-                                      : original->unparseToString())
+                << "** original: " << (originalCast == NULL ? "NULL"
+                                      : originalCast->unparseToString())
                 << std::endl;
-      std::cerr << "** original type: " << original->class_name()
+      std::cerr << "** original type: " << originalCast->class_name()
                 << std::endl;
 #endif
       //std::cerr << "** DEBUG: replacing\n" << astNode->unparseToString()
       //	<< "\n with \n" << original->unparseToString() << std::endl;
 	
-      astNode = original;
+      astNode = originalCast;
 
       // Rebuild the Prolog term for the original expression
       // and substitute as our synthesized attribute
-      synList[0] = RoseToTerm::traverseSingleNode(original);
+      synList[0] = RoseToTerm::traverseSingleNode(originalCast);
     }
   }
 
