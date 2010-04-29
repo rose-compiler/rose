@@ -37,13 +37,13 @@ feature to ROSE, show us your tests.
 We have two git repositories for ROSE: an internal one at LLNL and an external
 one at SciDAC Outreach Center. These two repositories share histories so that
 you can work closely with us as an external developing using our latest work. 
-Some tips for usign them are gatehred in this section.
+Some tips for using them are gathered in this section.
 
 
-\subsection{Continous Integration in ROSE}
+\subsection{Continuous Integration in ROSE}
 
-The ROSE projct uses a workflow that automates the central principles of
-continous integration in order to make integrating the work from different
+The ROSE project uses a workflow that automates the central principles of
+continuous integration in order to make integrating the work from different
 developers a non-event. Because the integration process only integrates
 with ROSE the changes that passes all tests we encourage all developers
 to stay in sync with the latest version.
@@ -52,11 +52,11 @@ to stay in sync with the latest version.
 
 Each developer is encouraged to develop a feature or
 fix a bug in isolation and submit the code so that it can be considered for
-integration as soon as possible. When a developer submits a code for integation
-it will be tested by our test suite and integrated into our master bracnh if
+integration as soon as possible. When a developer submits a code for integration
+it will be tested by our test suite and integrated into our master branch if
 it passes all tests.
 
-The testing of each developers work is done by a continous integration server
+The testing of each developers work is done by a continuous integration server
 called Hudson. We provide developers with a git repository where a repository
 where he can create any number of branches. Each branch should relate to a
 feature that this developer is working on and be relatively short-lived. The
@@ -66,6 +66,18 @@ to the ROSE git repository his work will be automatically added to a queue of
 jobs that will be tested by Hudson.
 
 \subsection{The External Repository}
+
+External users (who don't have account with LLNL) are recommended to use
+ROSE's external SVN repository, which is described
+in~\ref{gettingStarted::svn}.
+
+For advanced external users who are comfortable with git. 
+We have an external git repository. To clone it, simply type:
+
+\textit{git clone http://www.rosecompiler.org/rose.git/}
+
+Depending on your network speed, the commandline above may take 3 to 5
+minutes or even longer.
 
 \subsection{The Internal Repository}
 
@@ -78,10 +90,10 @@ central repository when he is ready.
 
 
 Both the internal and the external ROSE repositories are structured according to
-an continous integration workflow using git best practises. The master branch
+an continuous integration workflow using git best practises. The master branch
 contains the latest work in ROSE that passes the tests and each developer can
 create any number of branches that he owns. No developer can modify
-a branch owned by another developer, but a group branche can be created that 
+a branch owned by another developer, but a group branch can be created that 
 can be modified by groups of users. 
 
 Branches in the ROSE repository is named according to naming convention so that 
@@ -96,7 +108,7 @@ with username 'john' can choose the prefix 'jb-'. If he is working on a bugfix
 for bug number 1234 he should create a branch 'jb-bug1234' where he works on this.
 
 Th postfix of a branch determines if a branch should only be tested or tested and
-considered for integation with master. We currently only do automatic testing on
+considered for integration with master. We currently only do automatic testing on
 our internal git repository due to security concerns. A branch that should only be 
 tested must have the postfix '-test'. We test branches with the '-test' prefix as 
 rigorously as a branch that is considered for integration. If work on a branch has
