@@ -80,7 +80,8 @@ findConstants_SOURCES = findConstants.C
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions using an ABI
-findConstantsABI_SOURCES = findConstantsABI.C
+findConstantsABI_SOURCES = findConstants.C
+findConstantsABI_CPPFLAGS = -DBASE_POLICY=FindConstantsABIPolicy
 findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
