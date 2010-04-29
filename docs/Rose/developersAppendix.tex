@@ -157,11 +157,17 @@ Please configure this copy with your name and email before starting work.
           \item This setting tells git to convert the newlines to the system’s standard
 	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
    \end{itemize}       
-\item List content in the repository:
+\item Get content in the repository:
   \begin{itemize}
           \item Clone a private repository from the shared repository: \textit{git clone 
           file:///usr/casc/overture/ROSE/git/ROSE.git} . A directory named ROSE will show up after this 
            command. Type \textit{cd ROSE} to operate within the private repository from now on.
+           \item Retrieve EDG source files: we use a separated git
+           repository for EDG to protect its proprietary source files. The
+           EDG git repository is linked to the ROSE git repository as a
+           submodule. You have to explicitly get the submodule if you want to
+           modify the EDG source files. Just type:
+           \\ \textit{git submodule init; git submodule update}
           \item list all branches in the central git repository: \textit{git branch -r}
           \item list all branches in the local copy of the git repository: \textit{git branch -l}
           \item list all local and central branches: \textit{git branch -a}
