@@ -35,7 +35,7 @@ feature to ROSE, show us your tests.
 
 \section{Working with the ROSE GIT repositories}
 We have two git repositories for ROSE: an internal one at LLNL and an external
-one at SciDAC Outreach Center. These two repositories share histories so that
+one hosted at \url{http://www.rosecompiler.org}. These two repositories share histories so that
 you can work closely with us as an external developing using our latest work. 
 Some tips for using them are gathered in this section.
 
@@ -48,22 +48,47 @@ developers a non-event. Because the integration process only integrates
 with ROSE the changes that passes all tests we encourage all developers
 to stay in sync with the latest version.
 
-%%Insert picture on structure of developers work here
+%%Liao 4/28/2010
+\begin{figure}[htbp]  
+  \centering
+    \includegraphics[width=0.8\textwidth]{rose-git-hudson.pdf}
+  \caption{Contiguous integration using Git and Hudson}
+  \label{fig:rose-git-hudson}
+\end{figure}
 
-Each developer is encouraged to develop a feature or
-fix a bug in isolation and submit the code so that it can be considered for
-integration as soon as possible. When a developer submits a code for integration
-it will be tested by our test suite and integrated into our master branch if
-it passes all tests.
+Figure~\ref{fig:rose-git-hudson} shows a high level overview of the development model used by 
+ROSE developers. Taking advantage of the distributed source code repositories based on git, 
+each developer should first clone his/her own repository from a shared repository.
+Then a feature or a bugfix can be developed in isolation within the private repository.
+He can create any number of private branches. Each branch should relate to a
+feature that this developer is working on and be relatively short-lived. 
+%and offline (can commit without active connection with the shared repository).
+The developer can commit changes to the private repository without maintaining an active connect to 
+the shared repository.  When work is finished and locally tested, he can push all accumulated commits within the private repository 
+to his branch within the shared repository. 
+We create a dedicated branch within the shared repository for each developer and establish access control of the
+branch so only an authorized developer can push commits to a particular branch of the shared repository. 
+%will submit the code so that it can be considered for
+%integration as soon as possible. When a developer submits a code for integration
+%it will be tested by our test suite and integrated into our master branch if
+%it passes all tests.
 
-The testing of each developers work is done by a continuous integration server
-called Hudson. We provide developers with a git repository where a repository
-where he can create any number of branches. Each branch should relate to a
-feature that this developer is working on and be relatively short-lived. The
-actual development is done on a develop copy of this repository and a developer
-will push to a branch when his work is ready for integration. When a developer push
-to the ROSE git repository his work will be automatically added to a queue of
-jobs that will be tested by Hudson.
+Any commits from a developer's private repository will not be immediately merged to the master branch
+of the shared repository. In fact, we have access control to prevent any developer from pushing commits 
+to the master branch within the shared repository.
+A continuous integration server called Hudson is actively monitoring each developer's branch within the shared repository 
+and will initiate comprehensive tests upon the branch once new commits are detected.
+Finally, Hudson will merge the new commits to the master branch of the shared repository if all tests pass.
+If a single test fails, Hudson will report the error and the responsible developer should address the error in 
+his private repository and push improved commits again. 
+As a result, the master branch of the shared git repository is always stable and can be readily released.  
+
+%We provide developers with a git repository where a repository
+%where 
+%the actual development is done on a develop copy of this repository and a developer
+%will push to a branch when his work is ready for integration. When a developer push
+%to the ROSE git repository his work will be automatically added to a queue of
+%jobs that will be tested by Hudson.
 
 \subsection{The External Repository}
 
@@ -71,17 +96,21 @@ External users (who don't have account with LLNL) are recommended to use
 ROSE's external SVN repository, which is described
 in~\ref{gettingStarted::svn}.
 
+
 For advanced external users who are comfortable with git. 
-We have an external git repository. To clone it, simply type:
+We have an external git repository which is cloned and synchronized with our internal shared repository. 
+To clone the external git repository, simply type:
 
 \textit{git clone http://www.rosecompiler.org/rose.git/}
 
-Depending on your network speed, the commandline above may take 3 to 5
+\noindent Depending on your network speed, the commandline above may take 3 to 5
 minutes or even longer.
 
 \subsection{The Internal Repository}
 
-The ROSE internal repository keeps track of the latest work of each developer. Each
+The ROSE internal repository (the shared git repository shown in Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/usr/casc/overture/ROSE/git/ROSE.git}.
+It keeps track of the latest work of each
+internal developer (who have an account with LLNL). Each
 developer will make a complete local copy of the repository which he can use to
 perform his work and he can push his work from this copy to a branch he owns in the 
 central repository when he is ready. 
@@ -140,8 +169,9 @@ Please configure this copy with your name and email before starting work.
    \end{itemize}       
 \item List content in the repository:
   \begin{itemize}
-          \item list root info: \textit{git clone 
-          file:///usr/casc/overture/ROSE/git/ROSE.git}
+          \item Clone a private repository from the shared repository: \textit{git clone 
+          file:///usr/casc/overture/ROSE/git/ROSE.git} . A directory named ROSE will show up after this 
+           command. Type \textit{cd ROSE} to operate within the private repository from now on.
           \item list all branches in the central git repository: \textit{git branch -r}
           \item list all branches in the local copy of the git repository: \textit{git branch -l}
           \item list all local and central branches: \textit{git branch -a}
@@ -153,8 +183,8 @@ Please configure this copy with your name and email before starting work.
           \item creating a local branch: \textit{git branch branch-name} 
           \item creating a local branch to track a central branch: \textit{git branch branch-name --track origin/branch-name} 
 
-          \item creating a branch in the central git: \textit{git push origin origin:refs/heads/branch-name} 
-          \item start working on a branch: \textit{git checkout branch-name} 
+          \item creating a branch in the central git: \textit{git push origin origin:refs/heads/branch-name} . This command is not allowed for average developer. Please ask ROSE administrator to create a remote branch if needed.
+          \item start working on (switch to) a branch: \textit{git checkout branch-name} 
           \item deleting a local branch: \textit{git branch -d branch-name} 
           \item deleting a remote branch: \textit{git push origin :branch-name } 
    \end{itemize}     
@@ -165,6 +195,18 @@ Please configure this copy with your name and email before starting work.
 	  \item add all files under the current directory to the project \textit{git add .}
 	  \item remove $<$file$>$ from the project \textit{git rm $<$file$>$}
    \end{itemize}     
+\item Committing and pushing: intermediate changes can be committed locally. A set of local commits can be pushed to the central repository when ready.
+   \begin{itemize}
+          \item Commit changes to the local repository: \textit{git commit -a} 
+          \item Push all commits of the current local branch to a branch of the central repository:\\ \textit{git push origin HEAD:branch-name}
+   \end{itemize}   
+\item Pulling and Merging: It is recommended to synchronize the master branches often and merge new commits from others to 
+   your local branch.
+   \begin{itemize}
+          \item Synchronize a local master branch: \textit{git checkout master; git pull origin master}
+          \item Merge new commits to your local branch: \textit{git checkout branch-name; git merge master}
+   \end{itemize}   
+
 \item Info on the repository:
    \begin{itemize}
           \item show a diff of the changes made since your last commit \textit{git diff}
@@ -211,7 +253,7 @@ Please configure this copy with your name and email before starting work.
 	  \item delete current stashes \textit{git stash clear}
    \end{itemize}      
 
-\item Remotes
+\item Remotes: Again, only administrators can change remote repository's branches.
    \begin{itemize}
        \item delete a branch in a remote repository \textit{git push $<$remote$>$ :refs/heads/$<$branch$>$}
        \item create a branch on a remote repository \textit{git push $<$remote$>$ $<$remote$>$:refs/heads/$<$remote\_branch$>$}
