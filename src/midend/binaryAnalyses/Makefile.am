@@ -16,7 +16,7 @@ libbinaryMidend_la_SOURCES = \
      dataflowanalyses/RoseBin_Emulate.cpp \
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
      instructionSemantics/findConstants.C \
-     instructionSemantics/ConstantPropagationPolicy.C \
+     instructionSemantics/VirtualMachineSemantics.C \
      GraphAlgorithms.C
 
 if ROSE_USE_SQLITE_DATABASE
@@ -41,7 +41,7 @@ include_HEADERS = \
    dataflowanalyses/RoseBin_Emulate.h \
    dataflowanalyses/RoseBin_VariableAnalysis.h \
    instructionSemantics/findConstants.h \
-   instructionSemantics/ConstantPropagationPolicy.h \
+   instructionSemantics/VirtualMachineSemantics.h \
    instructionSemantics/flowEquations.h \
    instructionSemantics/semanticsModule.h \
    instructionSemantics/x86InstructionSemantics.h \

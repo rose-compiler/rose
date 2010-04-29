@@ -8,7 +8,7 @@
 #include "AssemblerX86.h"
 #include "unparseAsm.h"
 #include <inttypes.h>
-#include "ConstantPropagationPolicy.h"
+#include "VirtualMachineSemantics.h"
 
 /* See header file for full documentation. */
 
@@ -185,7 +185,7 @@ bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
     bool retval = false;
-    typedef X86InstructionSemantics<ConstantPropagationPolicy, CPValue> Semantics;
+    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     static const uint64_t wordsize=4; /*FIXME: instruction semantics are only for 32-bit code for now, so this is ok*/
     bool preexisting = insn2block[va]!=NULL;
     BasicBlock* target_block = find_bb_containing(va);
@@ -194,9 +194,9 @@ Partitioner::pops_return_address(rose_addr_t va)
     /* Analyze the block */
     if (last_insn && last_insn->get_kind()!=x86_ret) {
         try {
-            ConstantPropagationPolicy policy;
+            VirtualMachineSemantics::Policy policy;
             Semantics semantics(policy);
-            CPValue<32> origsp = policy.readGPR(x86_gpr_sp);
+            VirtualMachineSemantics::ValueType<32> origsp = policy.readGPR(x86_gpr_sp);
             for (size_t i=0; i<target_block->insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(target_block->insns[i]);
                 semantics.processInstruction(insn);
@@ -208,11 +208,9 @@ Partitioner::pops_return_address(rose_addr_t va)
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            CPValue<32> newsp = policy.readGPR(x86_gpr_sp);
-            if (newsp.name==origsp.name && newsp.offset==origsp.offset+wordsize) {
+            if (policy.readGPR(x86_gpr_sp)==policy.add(origsp, policy.number<32>(wordsize))) {
                 retval = true;
-            } else if (last_insn->get_kind()==x86_call &&
-                       newsp.name==origsp.name && newsp.offset==origsp.offset) {
+            } else if (last_insn->get_kind()==x86_call && policy.readGPR(x86_gpr_sp)==origsp) {
                 retval = true;
             }
         } catch(const Semantics::Exception&) {

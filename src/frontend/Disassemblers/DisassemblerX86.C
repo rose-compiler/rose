@@ -11,7 +11,7 @@
 #include <inttypes.h>
 #include <sstream>
 
-#include "ConstantPropagationPolicy.h"
+#include "VirtualMachineSemantics.h"
 
 /* See header file for full documentation. */
 
@@ -161,9 +161,9 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
      * successors, a thorough analysis might be able to narrow it down to a single successor. */
     if (!*complete || successors.size()>1) {
-        typedef X86InstructionSemantics<ConstantPropagationPolicy, CPValue> Semantics;
+        typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
         try {
-            ConstantPropagationPolicy policy;
+            VirtualMachineSemantics::Policy policy;
             Semantics semantics(policy);
             for (size_t i=0; i<insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
@@ -176,7 +176,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            CPValue<32> newip = policy.readIP();
+            VirtualMachineSemantics::ValueType<32> newip = policy.readIP();
             if (newip.name==0) {
                 successors.clear();
                 successors.insert(newip.offset);
