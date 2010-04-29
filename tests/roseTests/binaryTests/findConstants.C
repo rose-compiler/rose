@@ -5,48 +5,83 @@
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include "findConstants.h"
+#include <set>
 #include <inttypes.h>
 
-/* Returns the function name if known, or the address as a string otherwise. */
-static std::string
-name_or_addr(const SgAsmFunctionDeclaration *f)
-{
-    if (f->get_name()!="")
-        return f->get_name();
+#ifndef BASE_POLICY
+#define BASE_POLICY FindConstantsPolicy
+#endif
 
-    char buf[128];
-    ROSE_ASSERT(f->get_statementList().size()>0);
-    SgAsmBlock *first_bb = isSgAsmBlock(f->get_statementList().front());
-    sprintf(buf, "0x%"PRIx64, first_bb->get_id());
-    return buf;
-}
-
-class AnalyzeFunctions : public SgSimpleProcessing {
-  public:
-    void visit(SgNode *node) {
-        SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
-        if (func) {
-            std::cout <<"==============================================\n"
-                      <<"Constant propagation in function \"" <<name_or_addr(func) <<"\"\n"
-                      <<"==============================================\n";
-            FindConstantsPolicy policy;
-            X86InstructionSemantics<FindConstantsPolicy, XVariablePtr> t(policy);
-            std::vector<SgNode*> instructions = NodeQuery::querySubTree(func, V_SgAsmx86Instruction);
-            for (size_t i=0; i<instructions.size(); i++) {
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(instructions[i]);
-                ROSE_ASSERT(insn);
-                try {
-                    t.processInstruction(insn);
-                } catch (const X86InstructionSemantics<FindConstantsPolicy, XVariablePtr>::Exception &e) {
-                    fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
-                }
-                RegisterSet rset = policy.currentRset;
-                std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                          <<rset;
-            }
+struct TestPolicy: public BASE_POLICY {
+    void startInstruction(SgAsmInstruction *insn) {
+        addr = insn->get_address();
+        newIp = number<32>(addr);
+        if (rsets.find(addr)==rsets.end()) {
+            rsets[addr].setToBottom();
+            std::cout <<"Initial state:\n" <<rsets[addr];
         }
+        currentRset = rsets[addr];
+        currentInstruction = isSgAsmx86Instruction(insn);
     }
 };
+
+/* Analyze a single interpretation a block at a time */
+static void
+analyze_interp(SgAsmInterpretation *interp)
+{
+    typedef X86InstructionSemantics<TestPolicy, XVariablePtr> Semantics;
+
+    /* Get the set of all instructions */
+    struct AllInstructions: public SgSimpleProcessing, public std::map<rose_addr_t, SgAsmx86Instruction*> {
+        void visit(SgNode *node) {
+            SgAsmx86Instruction *insn = isSgAsmx86Instruction(node);
+            if (insn) insert(std::make_pair(insn->get_address(), insn));
+        }
+    } insns;
+    insns.traverse(interp, postorder);
+
+    while (!insns.empty()) {
+        std::cout <<"=====================================================================================\n"
+                  <<"=== Starting a new basic block                                                    ===\n"
+                  <<"=====================================================================================\n";
+        AllInstructions::iterator si = insns.begin();
+        SgAsmx86Instruction *insn = si->second;
+        insns.erase(si);
+
+        TestPolicy policy;
+        Semantics semantics(policy);
+
+
+        /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
+         * the instruction pointer or the instruction pointer refers to an instruction that doesn't exist or which has already
+         * been processed. */
+        while (1) {
+            /* Analyze current instruction */
+            try {
+                semantics.processInstruction(insn);
+                RegisterSet rset = policy.currentRset;
+                std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                          <<rset
+                          <<"    ip = " <<policy.newIp <<"\n";
+            } catch (const Semantics::Exception &e) {
+                std::cout <<e.mesg <<": " <<unparseInstructionWithAddress(e.insn) <<"\n";
+                break;
+            }
+
+            /* Never follow CALL instructions */
+            if (insn->get_kind()==x86_call || insn->get_kind()==x86_farcall)
+                break;
+
+            /* Get next instruction of this block */
+            if (policy.newIp->get().name) break;
+            rose_addr_t next_addr = policy.newIp->get().offset;
+            si = insns.find(next_addr);
+            if (si==insns.end()) break;
+            insn = si->second;
+            insns.erase(si);
+        }
+    }
+}
 
 /* Analyze only interpretations that point only to 32-bit x86 instructions. */
 class AnalyzeX86Functions: public SgSimpleProcessing {
@@ -62,7 +97,7 @@ public:
                 only_x86 = 4==headers[i]->get_word_size();
             if (only_x86) {
                 ++ninterps;
-                AnalyzeFunctions().traverse(node, postorder);
+                analyze_interp(interp);
             }
         }
     }
