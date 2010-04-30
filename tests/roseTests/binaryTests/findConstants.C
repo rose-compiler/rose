@@ -5,32 +5,64 @@
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include "findConstants.h"
+#include "VirtualMachineSemantics.h"
 #include <set>
 #include <inttypes.h>
 
-#ifndef BASE_POLICY
-#define BASE_POLICY FindConstantsPolicy
-#endif
-
-struct TestPolicy: public BASE_POLICY {
-    void startInstruction(SgAsmInstruction *insn) {
-        addr = insn->get_address();
-        newIp = number<32>(addr);
-        if (rsets.find(addr)==rsets.end()) {
-            rsets[addr].setToBottom();
-            std::cout <<"Initial state:\n" <<rsets[addr];
+#if 1==POLICY_SELECTOR
+#   define TestValueTemplate XVariablePtr
+    struct TestPolicy: public FindConstantsPolicy {
+        void startInstruction(SgAsmInstruction *insn) {
+            addr = insn->get_address();
+            newIp = number<32>(addr);
+            if (rsets.find(addr)==rsets.end())
+                rsets[addr].setToBottom();
+            currentRset = rsets[addr];
+            currentInstruction = isSgAsmx86Instruction(insn);
         }
-        currentRset = rsets[addr];
-        currentInstruction = isSgAsmx86Instruction(insn);
-    }
-};
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<currentRset
+                      <<"    ip = " <<newIp <<"\n";
+        }
+    };
+
+#elif  2==POLICY_SELECTOR
+#   define TestValueTemplate XVariablePtr
+    struct TestPolicy: public FindConstantsABIPolicy {
+        void startInstruction(SgAsmInstruction *insn) {
+            addr = insn->get_address();
+            newIp = number<32>(addr);
+            if (rsets.find(addr)==rsets.end())
+                rsets[addr].setToBottom();
+            currentRset = rsets[addr];
+            currentInstruction = isSgAsmx86Instruction(insn);
+        }
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<currentRset
+                      <<"    ip = " <<newIp <<"\n";
+        }
+    };
+#elif  3==POLICY_SELECTOR
+#   define TestValueTemplate VirtualMachineSemantics::ValueType
+    struct TestPolicy: public VirtualMachineSemantics::Policy {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<state
+                      <<"    ip = " <<new_ip <<"\n";
+        }
+    };
+#else
+#error "Invalid policy selector"
+#endif
+typedef X86InstructionSemantics<TestPolicy, TestValueTemplate> Semantics;
+
 
 /* Analyze a single interpretation a block at a time */
 static void
 analyze_interp(SgAsmInterpretation *interp)
 {
-    typedef X86InstructionSemantics<TestPolicy, XVariablePtr> Semantics;
-
     /* Get the set of all instructions */
     struct AllInstructions: public SgSimpleProcessing, public std::map<rose_addr_t, SgAsmx86Instruction*> {
         void visit(SgNode *node) {
@@ -59,10 +91,7 @@ analyze_interp(SgAsmInterpretation *interp)
             /* Analyze current instruction */
             try {
                 semantics.processInstruction(insn);
-                RegisterSet rset = policy.currentRset;
-                std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                          <<rset
-                          <<"    ip = " <<policy.newIp <<"\n";
+                policy.dump(insn);
             } catch (const Semantics::Exception &e) {
                 std::cout <<e.mesg <<": " <<unparseInstructionWithAddress(e.insn) <<"\n";
                 break;
@@ -73,8 +102,13 @@ analyze_interp(SgAsmInterpretation *interp)
                 break;
 
             /* Get next instruction of this block */
+#if 3==POLICY_SELECTOR
+            if (policy.new_ip.name) break;
+            rose_addr_t next_addr = policy.new_ip.offset;
+#else
             if (policy.newIp->get().name) break;
             rose_addr_t next_addr = policy.newIp->get().offset;
+#endif
             si = insns.find(next_addr);
             if (si==insns.end()) break;
             insn = si->second;
