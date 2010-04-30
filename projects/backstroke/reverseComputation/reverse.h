@@ -61,9 +61,21 @@ class EventReverser
 	    decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
 	}
 
-	// how to build a class type?
-	//decls.push_back(buildVariableDeclaration(flagstack_name_, build
+	SgType* stack_type = buildPointerType(buildStructDeclaration("flag_stack")->get_type());
+	decls.push_back(
+		buildVariableDeclaration(flagstack_name_, stack_type));
 	return decls;
+    }
+
+    vector<SgStatement*> getVarInitializers()
+    {
+	vector<SgStatement*> inits;
+	// Initialize the flag stack object.
+	SgType* stack_type = buildPointerType(buildStructDeclaration("flag_stack")->get_type());
+	inits.push_back(buildAssignStatement(
+		buildVarRefExp(flagstack_name_),
+		buildFunctionCallExp("BuildFlagStack", stack_type)));
+	return inits;
     }
 
     private:
@@ -108,11 +120,11 @@ class EventReverser
     SgStatement* putBranchFlag(bool flag = true)
     {
 	/* 
-	if (branch_flags_.empty())
-	    branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
-	SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
-	return buildExprStatement(buildBinaryExpression<SgIorAssignOp>(flag_var, buildIntVal(flag_)));
-	*/
+	   if (branch_flags_.empty())
+	   branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
+	   SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
+	   return buildExprStatement(buildBinaryExpression<SgIorAssignOp>(flag_var, buildIntVal(flag_)));
+	   */
 	return buildFunctionCallStmt("Push", buildVoidType(), 
 		buildExprListExp(buildVarRefExp("flags"), buildIntVal(flag)));
     }
@@ -121,15 +133,15 @@ class EventReverser
     SgStatement* checkBranchFlag()
     {
 	/* 
-	SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
-	SgStatement* flag_check = buildExprStatement(buildBinaryExpression<SgBitAndOp>(flag_var, buildIntVal(flag_)));
+	   SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
+	   SgStatement* flag_check = buildExprStatement(buildBinaryExpression<SgBitAndOp>(flag_var, buildIntVal(flag_)));
 
-	flag_ <<= 1;
-	if (flag_ == 0)
-	{
-	    // the current flag has been used up, we need a new one.
-	    flag_ = 1;
-	    branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
+	   flag_ <<= 1;
+	   if (flag_ == 0)
+	   {
+	// the current flag has been used up, we need a new one.
+	flag_ = 1;
+	branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
 	}
 
 	return flag_check;
@@ -149,11 +161,11 @@ class EventReverser
     void saveBranchFlag() 
     {
 	/* 
-	if (branch_flags_.empty())
-	    branch_flags_.push_back(function_name_ + "_branch_flag" + lexical_cast<string>(counter_++));
-	flag_saved_ = flag_;
-	flag_name_saved_ = branch_flags_.back();
-	*/
+	   if (branch_flags_.empty())
+	   branch_flags_.push_back(function_name_ + "_branch_flag" + lexical_cast<string>(counter_++));
+	   flag_saved_ = flag_;
+	   flag_name_saved_ = branch_flags_.back();
+	   */
     }
 
     SgName generateVar(const string& name, SgType* type = buildIntType())

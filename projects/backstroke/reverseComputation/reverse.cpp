@@ -630,6 +630,7 @@ class visitorTraversal : public AstSimpleProcessing
 	virtual void visit(SgNode* n);
 	vector<SgFunctionDeclaration*> funcs;
 	vector<SgStatement*> var_decls;
+	vector<SgStatement*> var_inits;
 };
 
 
@@ -647,9 +648,8 @@ void visitorTraversal::visit(SgNode* n)
 	    funcs.push_back(func_pair.second);
 	}
 
-	vector<SgStatement*> vars = reverser.getVarDeclarations();
-	foreach(SgStatement* stmt, vars)
-	    var_decls.push_back(stmt);
+	var_decls = reverser.getVarDeclarations();
+	var_inits = reverser.getVarInitializers();
 
 	/* 
 	   pair<SgFunctionDeclaration*, SgFunctionDeclaration*> 
@@ -664,8 +664,34 @@ void visitorTraversal::visit(SgNode* n)
 
 const string INT_MEM_NAME = "m_int";
 
-SgFunctionDeclaration* buildCompareFunction(SgType* model_type)
+SgFunctionDeclaration* buildInitializationFunction()
 {
+    SgType* model_type = buildStructDeclaration("model")->get_type();
+
+    SgInitializedName* model_obj = buildInitializedName("m", buildPointerType(model_type));
+    SgFunctionParameterList* para_list = buildFunctionParameterList(model_obj);
+    SgFunctionDeclaration* func_decl = 
+	buildDefiningFunctionDeclaration(
+		"initialize",
+		buildVoidType(),
+		para_list);
+    pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
+
+    SgArrowExp* int_var = buildBinaryExpression<SgArrowExp>(
+	    buildVarRefExp(model_obj),
+	    buildVarRefExp(INT_MEM_NAME)); 
+    SgAssignOp* assign_0_to_int = buildBinaryExpression<SgAssignOp>(int_var, buildIntVal(0));
+    SgStatement* stmt = buildExprStatement(assign_0_to_int);
+    appendStatement(stmt);
+
+    popScopeStack();
+    return func_decl;
+}
+
+SgFunctionDeclaration* buildCompareFunction()
+{
+    SgType* model_type = buildStructDeclaration("model")->get_type();
+
     SgInitializedName* model_obj1 = buildInitializedName("m1", buildPointerType(model_type));
     SgInitializedName* model_obj2 = buildInitializedName("m2", buildPointerType(model_type));
     SgFunctionParameterList* para_list = buildFunctionParameterList(model_obj1, model_obj2);
@@ -683,17 +709,17 @@ SgFunctionDeclaration* buildCompareFunction(SgType* model_type)
 	    buildVarRefExp(model_obj2),
 	    buildVarRefExp(INT_MEM_NAME)); 
     SgNotEqualOp* compare_int_exp = buildBinaryExpression<SgNotEqualOp>(int_var1, int_var2);
-    SgIfStmt* if_compare_int_stmt = buildIfStmt(compare_int_exp, buildReturnStmt(buildIntVal(1)), NULL);
+    SgIfStmt* if_compare_int_stmt = buildIfStmt(compare_int_exp, buildReturnStmt(buildIntVal(0)), NULL);
     appendStatement(if_compare_int_stmt);
 
-    // return 0 if two models are equal
-    appendStatement(buildReturnStmt(buildIntVal(0)));
+    // return 1 if two models are equal
+    appendStatement(buildReturnStmt(buildIntVal(1)));
 
     popScopeStack();
     return func_decl;
 }
 
-SgFunctionDeclaration* buildMainFunction()
+SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits)
 {
     // build the main function which performs the test
     SgFunctionDeclaration* func_decl = 
@@ -734,11 +760,15 @@ SgFunctionDeclaration* buildMainFunction()
     SgExprListExp* para_comp = buildExprListExp(
 	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
 	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
-    SgExprStatement* call_compare = buildFunctionCallStmt("compare", buildVoidType(), para_comp);
-    SgIfStmt* test_compare = buildIfStmt(call_compare, test_fail, NULL);
+    SgExpression* call_compare_exp = buildFunctionCallExp("compare", buildVoidType(), para_comp);
+    SgExprListExp* para_assert = buildExprListExp(call_compare_exp);
+    SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), para_assert);
 
     // Call event_forward and event_reverse then check if the model's value changes
     SgExprStatement* call_event_rev = buildFunctionCallStmt("event_reverse", buildVoidType(), para2);
+
+    // First, input all initializing statements.
+    foreach (SgStatement* stmt, inits) appendStatement(stmt);
 
     appendStatement(var1);
     appendStatement(var2);
@@ -766,16 +796,24 @@ int main( int argc, char * argv[] )
     visitorTraversal traversal;
 
     SgGlobal *globalScope = getFirstGlobalScope (project);
+    string includes = "#include \"rctypes.h\"\n"
+	"#include <stdio.h>\n"
+	"#include <assert.h>\n";
+    addTextForUnparser(globalScope,includes,AstUnparseAttribute::e_before); 
+
     pushScopeStack (isSgScopeStatement (globalScope));
 
     traversal.traverseInputFiles(project,preorder);
+
+    appendStatement(buildInitializationFunction());
+    appendStatement(buildCompareFunction());
 
     for (size_t i = 0; i < traversal.var_decls.size(); ++i)
 	appendStatement(traversal.var_decls[i], globalScope);
     for (size_t i = 0; i < traversal.funcs.size(); ++i)
 	appendStatement(traversal.funcs[i], globalScope);
 
-    appendStatement(buildMainFunction());
+    appendStatement(buildMainFunction(traversal.var_inits));
 
     popScopeStack();
 
