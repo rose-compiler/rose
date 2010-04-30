@@ -159,26 +159,38 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
             break;
         }
         case V_SgAsmByteValueExpression: {
-            char buf[32];
-            sprintf(buf, "0x%02"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            char buf[64];
+            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            sprintf(buf, "0x%02"PRIx64, v);
+            if (v & 0x80)
+                sprintf(buf+strlen(buf), "(-0x%02"PRIx64")", (~v+1) & 0xff);
             result = buf;
             break;
         }
         case V_SgAsmWordValueExpression: {
-            char buf[32];
-            sprintf(buf, "0x%04"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            char buf[64];
+            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            sprintf(buf, "0x%04"PRIx64, v);
+            if (v & 0x8000)
+                sprintf(buf+strlen(buf), "(-0x%04"PRIx64")", (~v+1) & 0xffff);
             result = buf;
             break;
         }
         case V_SgAsmDoubleWordValueExpression: {
-            char buf[32];
-            sprintf(buf, "0x%08"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            char buf[64];
+            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            sprintf(buf, "0x%08"PRIx64, v);
+            if (v & 0x80000000)
+                sprintf(buf+strlen(buf), "(-0x%08"PRIx64")", (~v+1) & 0xffffffff);
             result = buf;
             break;
         }
         case V_SgAsmQuadWordValueExpression: {
-            char buf[32];
-            sprintf(buf, "0x%016"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            char buf[64];
+            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            sprintf(buf, "0x%016"PRIx64, v);
+            if (v & ((uint64_t)1<<63))
+                sprintf(buf+strlen(buf), "(-0x%016"PRIx64")", (~v+1));
             result = buf;
             break;
         }
