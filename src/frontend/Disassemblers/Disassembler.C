@@ -722,22 +722,28 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
             while (nbytes>0) {
                 /* Find the map element and the file that goes with that element (if any) */
                 if (!me || va<me->get_va() || va>=me->get_va()+me->get_size()) {
-                    if (file)
+                    if (file) {
                         file->set_tracking_references(was_tracking);
-                    file = NULL;
-                    me = map->find(va);
-                    ROSE_ASSERT(me!=NULL);
-                    if (me->is_anonymous())
-                        break;
-                    for (size_t i=0; i<files.size(); i++) {
-                        if (&(files[i]->get_data()[0]) == me->get_base()) {
-                            file = files[i];
-                            was_tracking = file->get_tracking_references();
-                            file->set_tracking_references(true);
-                            break;
-                        }
+                        file = NULL;
                     }
-                    ROSE_ASSERT(file);
+                    me = map->find(va);
+                    if (!me) {
+                        /* This byte of the instruction is not mapped. Perhaps the next one is. */
+                        ++va;
+                        --nbytes;
+                        continue;
+                    }
+                    if (!me->is_anonymous()) {
+                        for (size_t i=0; i<files.size(); i++) {
+                            if (&(files[i]->get_data()[0]) == me->get_base()) {
+                                file = files[i];
+                                was_tracking = file->get_tracking_references();
+                                file->set_tracking_references(true);
+                                break;
+                            }
+                        }
+                        ROSE_ASSERT(file);
+                    }
                 }
 
                 /* Read the file */
