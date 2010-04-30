@@ -23,6 +23,10 @@ extern uint64_t name_counter;
 
 template<size_t nBits>
 struct ValueType {
+    uint64_t name;                      /**< Zero for constants; non-zero ID number for everything else. */
+    uint64_t offset;                    /**< The constant (if name==0) or an offset w.r.t. an unknown (named) base value. */
+    bool negate;                        /**< Switch between name+offset and (-name)+offset; should be false for constants. */
+
     ValueType(): name(++name_counter), offset(0), negate(false) {}
 
     template <size_t Len>
@@ -54,9 +58,6 @@ struct ValueType {
         return a.offset < b.offset;
     }
 
-    uint64_t name;                      /**< Zero for constants; non-zero ID number for everything else. */
-    uint64_t offset;                    /**< The constant (if name==0) or an offset w.r.t. an unknown (named) base value. */
-    bool negate;                        /**< Switch between name+offset and (-name)+offset; should be false for constants. */
 };
 
 struct MemoryCell {
@@ -99,7 +100,10 @@ struct MemoryCell {
     friend bool operator<(const MemoryCell &a, const MemoryCell &b) {
         return a.address < b.address;
     }
-
+    friend std::ostream& operator<<(std::ostream &o, const MemoryCell &me) {
+        o <<"size=" <<me.nbytes <<"; addr=" <<me.address <<"; value=" <<me.data;
+        return o;
+    }
     template <size_t Len>
     friend std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
         uint64_t sign_bit = (uint64_t)1 << (Len-1);  /* e.g., 80000000 */
@@ -132,7 +136,7 @@ struct MachineState {
     ValueType<32> gpr[8];
     ValueType<16> segreg[6];
     ValueType<1> flag[16];
-    std::vector<MemoryCell> mem;
+    Memory mem;
 
     friend std::ostream& operator<<(std::ostream &o, const MachineState &state) {
         std::string prefix = "    ";
@@ -147,13 +151,8 @@ struct MachineState {
             o <<"{}\n";
         } else {
             o <<"{\n";
-            for (size_t i = 0; i < state.mem.size(); ++i) {
-                o <<prefix <<"    "
-                  <<"size=" <<state.mem[i].nbytes
-                  << "; addr=" <<state.mem[i].address
-                  << "; value=" <<state.mem[i].data
-                  <<"\n";
-            }
+            for (Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi)
+                o <<prefix <<"    " <<(*mi) <<"\n";
             o <<prefix << "}\n";
         }
         return o;
@@ -310,30 +309,6 @@ public:
         return (a.offset >> BeginAt) & (IntegerOps::SHL1<uint64_t, EndAt-BeginAt>::value - 1);
     }
 
-    /** Add two values of equal size and a carry flag. */
-    template <size_t Len>
-    ValueType<Len> add3(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> c) {
-        if ((a.name?1:0) + (b.name?1:0) + (c.name?1:0) <= 1) {
-            /* At most, one of the operands is an unknown value. See add() for more details. */
-            return ValueType<Len>(a.name+b.name+c.name, a.offset+b.offset+c.offset, a.negate||b.negate||c.negate);
-        } else if (a.name==b.name && !c.name && a.negate!=b.negate) {
-            /* A and B are known or have bases that cancel out, and C is known */
-            return a.offset + b.offset + c.offset;
-        } else {
-            return ValueType<Len>();
-        }
-    }
-
-    /** Bitwise XOR of three values. */
-    template <size_t Len>
-    ValueType<Len> xor3(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<Len> &c) {
-        if (a==b) return c;
-        if (b==c) return a;
-        if (a==c) return b;
-        if (a.name || b.name || c.name) return ValueType<Len>();
-        return a.offset ^ b.offset ^ c.offset;
-    }
-
     /** Return a newly sized value by either truncating the most significant bits or by adding more most significant bits that
      *  are set to zeros. */
     template <size_t FromLen, size_t ToLen>
@@ -341,8 +316,39 @@ public:
         return ValueType<ToLen>(a);
     }
     
+    /** Returns true if the specified value exists in memory and is provably at or above the stack pointer. */
+    bool on_stack(const ValueType<32> &value) {
+        //std::cerr <<"VirtualMachineSemantics::on_stack(value=" <<value <<"):\n";
+        const ValueType<32> sp_inverted = invert(state.gpr[x86_gpr_sp]);
+        //std::cerr <<"  stack pointer = " <<state.gpr[x86_gpr_sp] <<"; inverted = " <<sp_inverted <<"\n";
+        for (Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+            //std::cerr <<"  mem entry " <<(*mi) <<":\n";
+            if ((*mi).nbytes!=4 || !((*mi).data==value)) continue;
+            const ValueType<32> &addr = (*mi).address;
+
+            /* Is addr >= sp? */
+            ValueType<32> carries = 0;
+            ValueType<32> diff = addWithCarries(addr, sp_inverted, true_(), carries/*out*/);
+            //std::cerr <<"    [" <<addr <<"] + [" <<sp_inverted <<"] = [" <<diff <<"] carry=" <<carries <<"\n";
+            //ValueType<1> pf = parity(extract<0, 8>(diff));
+            ValueType<1> sf = extract<31,32>(diff);
+            //ValueType<1> zf = equalToZero(diff);
+            //ValueType<1> af = invert(extract<3,4>(carries));
+            //ValueType<1> cf = invert(extract<31,32>(carries));
+            ValueType<1> of = xor_(extract<31,32>(carries), extract<30,31>(carries));
+            //std::cerr <<"    sf=" <<sf <<", of=" <<of <<"\n";
+            //std::cerr <<"    on stack? "<<(sf==of ? "yes" : "no") <<"\n";
+            if (sf==of) return true;
+        }
+        return false;
+    }
+
+
+
+
+
     /*************************************************************************************************************************
-     * OPERATORS (alphabetically)
+     * Functions invoked by the X86InstructionSemantics class
      *************************************************************************************************************************/
 
     /** Adds two values. */
@@ -363,17 +369,36 @@ public:
         }
     }
 
-    /** Add two numbers and a carry bit, returning carry info for each bit position (shifted by one). In other words, the
-     *  carry results are like the 1s (or tick marks) you would place above the first addend if you were a 2nd grader learning
-     *  long addition, except shifted to the right by one slot. */
+    /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
+     *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do
+     *  (of course, they'd probably be adding two base-10 numbers).  For instance, when adding 00110110 and 11100100:
+     *
+     *  \code
+     *    '''..'..         <-- carry tick marks: '=carry .=no carry
+     *     00110110
+     *   + 11100100
+     *   ----------
+     *    100011010
+     *  \endcode
+     *
+     *  The carry_out value is 11100100.
+     */
     template <size_t Len>
-    ValueType<Len> addWithCarries(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> &carryIn,
-                                  ValueType<Len> &carries) {
-        ValueType<Len+1> aa = extendByMSB<Len, Len+1>(a);
-        ValueType<Len+1> bb = extendByMSB<Len, Len+1>(b);
-        ValueType<Len+1> ans = add3(aa, bb, carryIn);
-        carries = extract<1, Len+1>(xor3(aa, bb, ans));
-        return extract<0, Len>(ans);
+    ValueType<Len> addWithCarries(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> &c,
+                                  ValueType<Len> &carry_out) {
+        int n_unknown = (a.name?1:0) + (b.name?1:0) + (c.name?1:0);
+        if (n_unknown <= 1) {
+            /* At most, one of the operands is an unknown value. See add() for more details. */
+            carry_out = 0==n_unknown ? ValueType<Len>((a.offset ^ b.offset ^ c.offset)>>1) : ValueType<Len>();
+            return ValueType<Len>(a.name+b.name+c.name, a.offset+b.offset+c.offset, a.negate||b.negate||c.negate);
+        } else if (a.name==b.name && !c.name && a.negate!=b.negate) {
+            /* A and B are known or have bases that cancel out, and C is known */
+            carry_out = ValueType<Len>((a.offset + b.offset + c.offset)>>1);
+            return a.offset + b.offset + c.offset;
+        } else {
+            carry_out = ValueType<Len>();
+            return ValueType<Len>();
+        }
     }
     
     /** Computes bit-wise AND of two values. */
