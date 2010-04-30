@@ -989,7 +989,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     if (debug) fprintf(debug, " B%08"PRIx64, va);
     Disassembler::InstructionMap::const_iterator ii = insns.find(va);
     if (ii==insns.end()) return; /* No instruction at this address. */
-    rose_addr_t call_target = NO_TARGET;
+    rose_addr_t target_va = NO_TARGET; /*target of function call instructions (e.g., x86 CALL and FARCALL)*/
 
     /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. This
      * can happen when a new function was discovered during the current pass. It can't happen for functions discovered in a
@@ -1045,31 +1045,40 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         bb->function->pending = f->pending = true;
         if (debug) fprintf(debug, " abandon");
         throw AbandonFunctionDiscovery();
-    } else if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
-               bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
-        if (pops_return_address(call_target)) {
+    } else if (bb->is_function_call(&target_va) && target_va!=NO_TARGET) {
+        if (pops_return_address(target_va)) {
             /* Although this looks like a function call from the perspective of the caller, the called block pops the
              * return value off the stack and therefore we should treat the CALL instruction as an unconditional branch.
              * We add this current block to the function and discovery continues at the branch target. */
             if (debug) fprintf(debug, "[!call]");
             append(f, bb);
-            discover_blocks(f, call_target);
+            discover_blocks(f, target_va);
         } else {
-            /* This block appears to end with a function call. Add this block to the function and create a function at the
-             * call target.  If the target block is in the middle of the other function (i.e., not that function's entry
-             * block) then mark that function as pending so that the target block can be removed and that function's blocks
-             * rediscovered.  Discovery for this current function will continue with the non-called successors (usually just
-             * the fall-through address). */
-            if (debug) fprintf(debug, "[call F%08"PRIx64"]", call_target);
-            add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
-            BasicBlock *target_bb = find_bb_containing(call_target);
-            if (target_bb && target_bb->function && address(target_bb)!=target_bb->function->entry_va)
-                target_bb->function->pending = true;
+            /* The target address appears to be a valid function entry point. */
+            if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
+
+            /* Does a function exist already at the call target? */
+            BasicBlock *target_bb = find_bb_containing(target_va);
+            Function *target_func = target_bb ? target_bb->function : NULL;
+
+            /* If the call target is in the middle of an existing function (i.e., not its entry address) then mark that
+             * function as pending so that the target block can be removed and the target function's blocks rediscovered. */
+            if (target_func && target_va!=target_func->entry_va)
+                target_func->pending = true;
+
+            /* Optionally create a new function. */
+            if (!target_func && (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
+                target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+
+            /* Current block is discovered. If the target function returns then we also continue the discovery proccess at the
+             * call's fall-through address. */       
             append(f, bb);
-            const Disassembler::AddressSet& suc = successors(bb);
-            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-                if (*si!=call_target)
-                    discover_blocks(f, *si);
+            if (target_func && target_func->returns) {
+                const Disassembler::AddressSet& suc = successors(bb);
+                for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
+                    if (*si!=target_va)
+                        discover_blocks(f, *si);
+                }
             }
         }
     } else {

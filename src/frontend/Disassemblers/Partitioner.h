@@ -101,8 +101,8 @@ protected:
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunctionDeclaration in the
      *  AST. */
     struct Function {
-        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va) {}
-        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va) {}
+        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(true) {}
+        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(true) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
             : reason(r), name(name), pending(true), entry_va(entry_va) {}
         void clear_blocks();                    /**< Remove all blocks from this function */
@@ -112,6 +112,7 @@ protected:
         BasicBlocks blocks;                     /**< Basic blocks belonging to this function */
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
+        bool returns;                           /**< Does this function return? */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
 
