@@ -697,8 +697,17 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     /* Disassemble all that we've mapped, according to aggressiveness settings. */
     InstructionMap retval = disassembleBuffer(map, worklist, successors, bad);
 
-    /* Mark the parts of the file corresponding to the instructions as having been referenced, since this is part of parsing. */
+#if 0
+    /* Mark the parts of the file corresponding to the instructions as having been referenced, since this is part of parsing.
+     *
+     * NOTE: I turned this off because it's slow if there's a lot of instructions (e.g., about 20s/million instructions on my
+     *       machine). If the user really needs to know this information they can probably calculate it using an ExtentMap and
+     *       traversing the instructions in the final AST.  Another problem is that since the disassembler runs before the
+     *       partitioner, and the partitioner might throw away unused instructions, calculating the references here in the
+     *       disassembler is not accurate.  [RPM 2010-04-30] */
     mark_referenced_instructions(interp, map, retval);
+#endif
+
     return retval;
 }
         
@@ -712,6 +721,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     const SgAsmGenericFilePtrList &files = interp->get_files();
     bool was_tracking;
 
+    /* Re-read each instruction so the file has a chance to track the reference. */
     try {
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmInstruction *insn = ii->second;
