@@ -313,8 +313,8 @@ public:
     /** Add two values of equal size and a carry flag. */
     template <size_t Len>
     ValueType<Len> add3(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> c) {
-        if ((a.name?1:0) + (b.name?1:0) + (c.name?1:0) == 1) {
-            /* One of the operands is an unknown value while the other two are known values. See add() for more details. */
+        if ((a.name?1:0) + (b.name?1:0) + (c.name?1:0) <= 1) {
+            /* At most, one of the operands is an unknown value. See add() for more details. */
             return ValueType<Len>(a.name+b.name+c.name, a.offset+b.offset+c.offset, a.negate||b.negate||c.negate);
         } else if (a.name==b.name && !c.name && a.negate!=b.negate) {
             /* A and B are known or have bases that cancel out, and C is known */
