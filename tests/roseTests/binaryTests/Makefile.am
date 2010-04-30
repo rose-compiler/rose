@@ -5,7 +5,7 @@ SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
 		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
 		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
-		test_disassembleBuffer.ans bincfg.h
+		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -24,7 +24,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
-		expandCoreDump functionBoundaries findConstantsABI rot13
+		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -38,7 +38,6 @@ testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 #Test the binary call graph that uses the semantic representation to perform an accurate analysis
 testBinCG_SOURCES = testBinCG.C
 testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
@@ -77,12 +76,18 @@ shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 
 # Finds constant values and propagates them across instructions
 findConstants_SOURCES = findConstants.C
+findConstants_CPPFLAGS = -DPOLICY_SELECTOR=1
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions using an ABI
 findConstantsABI_SOURCES = findConstants.C
-findConstantsABI_CPPFLAGS = -DBASE_POLICY=FindConstantsABIPolicy
+findConstantsABI_CPPFLAGS = -DPOLICY_SELECTOR=2
 findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Uses VirtualMachineSemantics semantic analysis policy
+virtualMachineSemantics_SOURCES = findConstants.C
+virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
+virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
@@ -161,7 +166,11 @@ demo_findConstantsABI: findConstantsABI demo_findConstants
 	@echo; echo; echo "Demo for $<"; echo
 	./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_disassemble: disassemble demo_findConstantsABI
+demo_virtualMachineSemantics: virtualMachineSemantics demo_findConstantsABI
+	@echo; echo; echo "Demo for $<"; echo
+	./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin
+
+demo_disassemble: disassemble demo_virtualMachineSemantics
 	@echo; echo; echo "Demo for $<"; echo
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
@@ -304,7 +313,7 @@ test_shiftResizeSection.result: shiftResizeSection
 # different number of calls to the instruction semantics, which changes the sequence number used to generate constant
 # names. Therefore, when comparing the test output with the answer, we will renumber all constant names sequentially.
 # The test is still sensitive to minor formatting changes in unparseInstruction().
-FIND_CONSTANTS_FILTER=perl -p -e 's/\bv(\d+)\b/$$map{$$1} ||= "V" . ++$$seq/ge'
+FIND_CONSTANTS_FILTER=perl -p -e '/====/ && ($$seq=0); s/\bv(\d+)\b/$$map{$$1} ||= "V" . ++$$seq/ge'
 test_findConstants.result: findConstants
 	@echo "  TESTING $@"
 	@$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin |\
@@ -318,6 +327,14 @@ test_findConstantsABI.result: findConstantsABI
 	@$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin |\
 	    $(FIND_CONSTANTS_FILTER) >test_findConstantsABI.ans 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstantsABI.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+test_virtualMachineSemantics.result: virtualMachineSemantics
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_virtualMachineSemantics.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_virtualMachineSemantics.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
@@ -412,7 +429,8 @@ MOSTLYCLEANFILES = \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
 	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
-	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans
+	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
+	test_virtualMachineSemantics.ans
 
 mostlyclean-local: mostlyclean-binarysamples
 
