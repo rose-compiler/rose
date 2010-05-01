@@ -1063,8 +1063,10 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
 
             /* If the call target is in the middle of an existing function (i.e., not its entry address) then mark that
              * function as pending so that the target block can be removed and the target function's blocks rediscovered. */
-            if (target_func && target_va!=target_func->entry_va)
+            if (target_func && target_func!=f && target_va!=target_func->entry_va) {
                 target_func->pending = true;
+                target_func = NULL;
+            }
 
             /* Optionally create a new function. */
             if (!target_func && (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
