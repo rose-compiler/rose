@@ -167,31 +167,32 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
 Disassembler::AddressSet
 Partitioner::successors(BasicBlock *bb, bool *complete)
 {
-    ROSE_ASSERT(bb!=NULL);
+    ROSE_ASSERT(bb!=NULL && !bb->insns.empty());
 
     /* Make sure locally-computed successors are up to date. Calculating them could involve semantic analysis of the entire
      * basic block, which is why we're caching this info. */
-    if (bb->sucs.is_cached!=bb->insns.size()) {
+    if (!bb->valid_cache()) {
         bb->sucs.cache = bb->insns.front()->get_successors(bb->insns, &(bb->sucs.complete));
-        bb->sucs.is_cached = bb->insns.size();
+        if (!bb->insns.front()->is_function_call(bb->insns, &(bb->sucs.call_target)))
+            bb->sucs.call_target = NO_TARGET;
+        bb->validate_cache();
     }
     Disassembler::AddressSet retval = bb->sucs.cache;
     if (complete) *complete = bb->sucs.complete;
 
     /* Run non-local analyses if necessary. These are never cached here in this block. */
-    rose_addr_t call_target = NO_TARGET;
-    if (bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
-        if (pops_return_address(call_target)) {
+    if (bb->sucs.call_target!=NO_TARGET) {
+        if (pops_return_address(bb->sucs.call_target)) {
             retval.clear();
-            retval.insert(call_target);
+            retval.insert(bb->sucs.call_target);
             if (complete) *complete = true;
         } else {
-            std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(call_target);
+            std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(bb->sucs.call_target);
             if (bb_found!=insn2block.end() && bb_found->second) {
                 BasicBlock *target_bb = bb_found->second;
                 if (target_bb->function && !target_bb->function->returns) {
                     retval.clear();
-                    retval.insert(call_target);
+                    retval.insert(bb->sucs.call_target);
                     if (complete) *complete = true;
                 }
             }
@@ -199,6 +200,17 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
     }
 
     return retval;
+}
+
+/** Returns call target if block could be a function call. If the specified block looks like it could be a function call
+ *  (using only local analysis) then return the call target address.  If the block does not look like a function call or the
+ *  target address cannot be statically computed, then return Partitioner::NO_TARGET. */
+rose_addr_t
+Partitioner::call_target(BasicBlock *bb)
+{
+    if (!bb->valid_cache())
+        (void)successors(bb, NULL);
+    return bb->sucs.call_target;
 }
 
 /* Returns true if the basic block at the specified virtual address appears to pop the return address from the top of the
@@ -272,21 +284,6 @@ Partitioner::discard(BasicBlock *bb)
 }
 
 size_t Partitioner::BasicBlock::nblocks;
-
-/* Returns true if block ends with what appears to be a function call. Don't modify @p target if this isn't a function call. */
-/*FIXME: This should be cached in BlockSuccessorInfo [RPM 2010-05-01] */
-bool
-Partitioner::BasicBlock::is_function_call(rose_addr_t *target)
-{
-    if (insns.size()==0)
-        return false;
-    rose_addr_t va;
-    if (insns.front()->is_function_call(insns, &va)) {
-        *target = va;
-        return true;
-    }
-    return false;
-}
 
 /* Returns instruction with highest address */
 SgAsmInstruction *
@@ -1029,10 +1026,8 @@ Partitioner::discover_first_block(Function *func)
 }
 
 /** Discover the basic blocks that belong to the current function. This function recursively adds basic blocks to function @p f
- *  by following the successors of each block.  Two types of successors are recognized: "call successors" are successors
- *  that invoke a function (on x86 this is usually a CALL instruction, see is_function_call()), and "flow control" successors
- *  that usually (but not always) branches within a single function.  If a successor is an instruction belonging to some other
- *  function then its either a function call (if it branches to the entry point of that function) or it's a collision.
+ *  by following the successors of each block.  If a successor is an instruction belonging to some other
+ *  function then it's either a function call (if it branches to the entry point of that function) or it's a collision.
  *  Collisions are resolved by discarding and rediscovering the blocks of the other function. */
 void
 Partitioner::discover_blocks(Function *f, rose_addr_t va)
@@ -1094,7 +1089,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
             if (debug) fprintf(debug, " abandon");
             throw AbandonFunctionDiscovery();
         }
-    } else if (bb->is_function_call(&target_va) && target_va!=NO_TARGET) {
+    } else if (NO_TARGET!=(target_va=call_target(bb))) {
         if (pops_return_address(target_va)) {
             /* Although this looks like a function call from the perspective of the caller, the called block pops the
              * return value off the stack and therefore we should treat the CALL instruction as an unconditional branch.

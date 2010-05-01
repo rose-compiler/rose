@@ -85,7 +85,7 @@ protected:
      *  related basic blocks). */
     class BlockSuccessorInfo {
     public:
-        BlockSuccessorInfo(): is_cached(0), complete(false), non_local(false) {}
+        BlockSuccessorInfo(): is_cached(0), complete(false), call_target(NO_TARGET), non_local(false) {}
         void clear() {
             is_cached = false;
             cache.clear();
@@ -100,6 +100,12 @@ protected:
                                                  *   See non_local data member. */
         Disassembler::AddressSet cache;         /**< Locally computed cached successors. */
         bool complete;                          /**< True if locally computed successors are fully known. */
+        rose_addr_t call_target;                /**< Target of a CALL instruction if this block ends with what appears to be a
+                                                 *   function call (whether, in fact, it truly is a function call is immaterial
+                                                 *   since the final determination requires non-local analysis. If this block
+                                                 *   does not end with a call or if the target of the call cannot be statically
+                                                 *   determined, then the value is set to Partitioner::NO_TARGET. */
+
         bool non_local;                         /**< If true, then the computation of successors for this block relies on
                                                  *   analysis of other blocks and the computed successors cannot be cached.
                                                  *   However, if non_local is true, is_cached can still be set and the cached
@@ -116,6 +122,10 @@ protected:
         ~BasicBlock() {
             --nblocks; /* for debugging output */
         }
+        bool valid_cache() const { return sucs.is_cached==insns.size(); }
+        void invalidate_cache() { sucs.is_cached=0; }
+        void validate_cache() { sucs.is_cached=insns.size(); }
+
         static size_t nblocks;                  /**< Number of blocks allocated; only used for debugging */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
@@ -324,6 +334,7 @@ protected:
     virtual BasicBlock* find_bb_containing(rose_addr_t);        /* Find basic block containing instruction address */
     virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
+    virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
     virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
