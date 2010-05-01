@@ -152,43 +152,53 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
 }
 
 /** Returns known successors of a basic block.  Computing successors can be a relatively expensive operation, so we also cache
- *  the successors.  The cache is expired when the size of the basic block changes. */
-const Disassembler::AddressSet&
+ *  the successors.  The cache is expired when the size of the basic block changes.
+ *
+ *  There are two types of successor analyses:  one is an analysis that depends only on the instructions of the basic block
+ *  for which successors are being calculated.  It is safe to cache these based on properties of the block itself (e.g., the
+ *  number of instructions in the block).
+ *
+ *  The other category is analyses that depend on other blocks, such as determining whether the target of an x86 CALL
+ *  instruction returns to the instruction after the CALL site.  The results of these analyses cannot be cached at the block
+ *  that needs them and must be recomputed for each call.  However, they can be cached at either the block or function that's
+ *  analyzed, so recomputing them here in this block is probably not too expensive.
+ *
+ *  Successor information is encapsulated in its own class, BlockSuccessorInfo. */
+Disassembler::AddressSet
 Partitioner::successors(BasicBlock *bb, bool *complete)
 {
-    if (bb->insns.size()!=bb->sucs_ninsns || bb->insns.front()->get_address()!=bb->sucs_first_va) {
-        /* Compute successors from scratch. */
-        bb->sucs.clear();
-        bb->sucs = bb->insns.front()->get_successors(bb->insns, &(bb->sucs_complete));
+    ROSE_ASSERT(bb!=NULL);
 
-        /* If the last instruction of a block is an x86 CALL or FARCALL instruction then this is probably a function call.
-         * However, if we can determine the address of the called block and that block appears to pop the return address off
-         * the stack, then treat this CALL/FARCALL instruction as an unconditional branch. */
-        rose_addr_t call_target = NO_TARGET;
-        if (bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
-            if (pops_return_address(call_target)) {
-                bb->sucs.clear();
-                bb->sucs.insert(call_target);
-                bb->sucs_complete = true;
-            } else {
-                std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(call_target);
-                if (bb_found!=insn2block.end() && bb_found->second) {
-                    BasicBlock *target_bb = bb_found->second;
-                    if (target_bb->function && !target_bb->function->returns) {
-                        bb->sucs.clear();
-                        bb->sucs.insert(call_target);
-                        bb->sucs_complete = true;
-                    }
+    /* Make sure locally-computed successors are up to date. Calculating them could involve semantic analysis of the entire
+     * basic block, which is why we're caching this info. */
+    if (bb->sucs.is_cached!=bb->insns.size()) {
+        bb->sucs.cache = bb->insns.front()->get_successors(bb->insns, &(bb->sucs.complete));
+        bb->sucs.is_cached = bb->insns.size();
+    }
+    Disassembler::AddressSet retval = bb->sucs.cache;
+    if (complete) *complete = bb->sucs.complete;
+
+    /* Run non-local analyses if necessary. These are never cached here in this block. */
+    rose_addr_t call_target = NO_TARGET;
+    if (bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
+        if (pops_return_address(call_target)) {
+            retval.clear();
+            retval.insert(call_target);
+            if (complete) *complete = true;
+        } else {
+            std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(call_target);
+            if (bb_found!=insn2block.end() && bb_found->second) {
+                BasicBlock *target_bb = bb_found->second;
+                if (target_bb->function && !target_bb->function->returns) {
+                    retval.clear();
+                    retval.insert(call_target);
+                    if (complete) *complete = true;
                 }
             }
         }
-
-        bb->sucs_ninsns = bb->insns.size();
-        bb->sucs_first_va = bb->insns.front()->get_address();
     }
-    if (complete)
-        *complete = bb->sucs_complete;
-    return bb->sucs;
+
+    return retval;
 }
 
 /* Returns true if the basic block at the specified virtual address appears to pop the return address from the top of the
@@ -264,6 +274,7 @@ Partitioner::discard(BasicBlock *bb)
 size_t Partitioner::BasicBlock::nblocks;
 
 /* Returns true if block ends with what appears to be a function call. Don't modify @p target if this isn't a function call. */
+/*FIXME: This should be cached in BlockSuccessorInfo [RPM 2010-05-01] */
 bool
 Partitioner::BasicBlock::is_function_call(rose_addr_t *target)
 {

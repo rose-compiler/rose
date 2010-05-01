@@ -74,11 +74,41 @@
  */
 class Partitioner {
 protected:
+    /*************************************************************************************************************************
+     *                                        Data Structures Useful to Subclasses
+     *************************************************************************************************************************/
+
     struct Function;
+
+    /** Information about block successors and how they're cached. Successors are calculated either localy (by examining only
+     *  the instructions of the basic block for which we're calculating the successors) or non-locally (by examining other
+     *  related basic blocks). */
+    class BlockSuccessorInfo {
+    public:
+        BlockSuccessorInfo(): is_cached(0), complete(false), non_local(false) {}
+        void clear() {
+            is_cached = false;
+            cache.clear();
+            complete = false;
+            non_local = false;
+        }
+
+        size_t is_cached;                       /**< Non zero implies locally computed successors are cached. The actual value
+                                                 *   of this data member is the number of instructions in the basic block when
+                                                 *   the successor information was computed.  Successors that are computed via
+                                                 *   analyses over other blocks (i.e., non-local analysis) are never cached.
+                                                 *   See non_local data member. */
+        Disassembler::AddressSet cache;         /**< Locally computed cached successors. */
+        bool complete;                          /**< True if locally computed successors are fully known. */
+        bool non_local;                         /**< If true, then the computation of successors for this block relies on
+                                                 *   analysis of other blocks and the computed successors cannot be cached.
+                                                 *   However, if non_local is true, is_cached can still be set and the cached
+                                                 *   successors will be those that are computed locally. */
+    };
 
     /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
     struct BasicBlock {
-        BasicBlock(): sucs_complete(false), sucs_first_va(0), sucs_ninsns(0), function(NULL) {
+        BasicBlock(): function(NULL) {
             /* Keep track of the number of blocks allocated so we can print that info for debugging output. The number
              * of blocks isn't otherwise directly available. */
             ++nblocks;
@@ -90,10 +120,7 @@ protected:
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
-        Disassembler::AddressSet sucs;          /**< Cached set of known successors */
-        bool sucs_complete;                     /**< Is the set of successors known completely? */
-        rose_addr_t sucs_first_va;              /**< First instruction va when "sucs" was computed */
-        size_t sucs_ninsns;                     /**< Number of instructions in block when "sucs" was computed */
+        BlockSuccessorInfo sucs;                /**< Cached set of known successors */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
     };
     typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
@@ -296,7 +323,7 @@ protected:
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
     virtual BasicBlock* find_bb_containing(rose_addr_t);        /* Find basic block containing instruction address */
     virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
-    virtual const Disassembler::AddressSet& successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
+    virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
     virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
