@@ -31,7 +31,7 @@ void NopTransform::visit ( SgNode* n )
           int n = rand() % 10;
           if (n > 0)
              {
-                printf ("Introducing a multi-byte NOP instruction (n = %d) at the top of function %s \n",n,functionDefinition->get_declaration()->get_name().str());
+               printf ("Introducing a multi-byte NOP instruction (n = %d) at the top of function %s \n",n,functionDefinition->get_declaration()->get_name().str());
                SgAsmStmt* nopStatement = buildMultibyteNopStatement(n);
 
             // Add to the front o the list of statements in the function body

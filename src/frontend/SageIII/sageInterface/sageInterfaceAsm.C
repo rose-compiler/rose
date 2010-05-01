@@ -674,3 +674,66 @@ SageInterface::find_NOP_sequences ( const SgAsmBlock* & asmBlock )
    }
 
 
+void
+SageInterface::insertInstruction(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction, bool insertBefore)
+   {
+     ROSE_ASSERT(targetInstruction && newInstruction);
+     ROSE_ASSERT(targetInstruction != newInstruction); // should not share statement nodes!
+     SgNode* parent = targetInstruction->get_parent();
+     if (parent == NULL)
+        {
+          cerr << "Empty parent pointer for target instruction. May be caused by the wrong order of target and new instructions in insertInstruction(targetStmt, newStmt)" << endl;
+          ROSE_ASSERT(parent);
+        }
+
+  // Set the parent
+     newInstruction->set_parent(parent);
+
+     SgAsmBlock* block = isSgAsmBlock(parent);
+     ROSE_ASSERT(block != NULL);
+
+     SgAsmStatementPtrList & l = block->get_statementList();
+     SgAsmStatementPtrList::iterator i = find(l.begin(),l.end(),targetInstruction);
+     ROSE_ASSERT(i != l.end());
+
+     if (insertBefore == true)
+        {
+          l.insert(i,newInstruction);
+        }
+       else
+        {
+          l.insert(i,newInstruction);
+        }
+  }
+
+
+ //! Insert a instruction before a target instruction
+void
+SageInterface::insertInstructionBefore(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction)
+   {
+     printf ("Function not implemented: SageInterface::insertInstructionBefore(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction) \n");
+  // ROSE_ASSERT(false);
+
+     insertInstruction (targetInstruction,newInstruction,true);
+   }
+
+ //! Remove a instruction
+void
+SageInterface::removeInstruction(SgAsmStatement* instruction)
+   {
+     printf ("Function not implemented: SageInterface::removeInstruction(SgAsmInstruction* instuction) \n");
+  // ROSE_ASSERT(false);
+
+     SgNode* parent = instruction->get_parent();
+     ROSE_ASSERT(parent != NULL);
+
+     SgAsmBlock* block = isSgAsmBlock(parent);
+     ROSE_ASSERT(block != NULL);
+
+     SgAsmStatementPtrList & l = block->get_statementList();
+     SgAsmStatementPtrList::iterator i = find(l.begin(),l.end(),instruction);
+     ROSE_ASSERT(i != l.end());
+
+     l.erase(i);
+   }
+
