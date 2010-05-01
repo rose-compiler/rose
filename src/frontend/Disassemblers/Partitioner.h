@@ -119,7 +119,11 @@ protected:
     /** Data type for user-defined function detectors. */
     typedef void (*FunctionDetector)(Partitioner*, SgAsmGenericHeader*, const Disassembler::InstructionMap&);
 
+    /*************************************************************************************************************************
+     *                                                     Deprecated
+     *************************************************************************************************************************/
 public:
+
     /* FIXME: Backward compatibility stuff prior to 2010-01-01. These are deprecated and should eventually be removed. They
      *        are currently used by src/midend/binaryAnalyses/binary_analysis.C for some of the CFG and call graph functions. */
 
@@ -160,9 +164,18 @@ public:
                                    BasicBlockStarts &bb_starts/*out*/) const;
 
 
+    /*************************************************************************************************************************
+     *                                                 Constructors, etc.
+     *************************************************************************************************************************/
 public:
-    Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL) {}
+
+    Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true) {}
     virtual ~Partitioner() { clear(); }
+
+    /*************************************************************************************************************************
+     *                                              Accessors for Properties
+     *************************************************************************************************************************/
+public:
 
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
      *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
@@ -176,6 +189,57 @@ public:
     virtual unsigned get_search() const {
         return func_heuristics;
     }
+
+    /** Turns on/off the allowing of discontiguous basic blocks.  When set, a basic block may contain instructions that are
+     *  discontiguous in memory. Such blocks are created when find_bb_containing() encounters an unconditional jump whose only
+     *  successor is known and the successor would not be part of any other block.
+     *
+     *  \code
+     *    0x00473bf0: 83 c0 18          |...   |   add    eax, 0x18
+     *    0x00473bf3: 68 e0 84 44 00    |h..D. |   push   0x004484e0
+     *    0x00473bf8: e9 db 72 fc ff    |..r.. |   jmp    0x0043aed8
+     *    0x0043aed8: c3                |.     |   ret    
+     *    0x004484e0: 89 45 f0          |.E.   |   mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax
+     *    0x004484e3: 8b 45 f0          |.E.   |   mov    eax, DWORD PTR ss:[ebp + 0xf0(-0x10)]
+     *    0x004484e6: 8b 40 60          |.@`   |   mov    eax, DWORD PTR ds:[eax + 0x60]
+     *    0x004484e9: 03 45 fc          |.E.   |   add    eax, DWORD PTR ss:[ebp + 0xfc(-0x04)]
+     *    0x004484ec: 89 45 ec          |.E.   |   mov    DWORD PTR ss:[ebp + 0xec(-0x14)], eax
+     *    0x004484ef: e9 0c 83 02 00    |..... |   jmp    0x00470800
+     *    0x00470800: 8b 45 ec          |.E.   |   mov    eax, DWORD PTR ss:[ebp + 0xec(-0x14)]
+     *    0x00470803: 8b 40 18          |.@.   |   mov    eax, DWORD PTR ds:[eax + 0x18]
+     *    0x00470806: 48                |H     |   dec    eax
+     *    0x00470807: 85 c0             |..    |   test   eax, eax
+     *    0x00470809: 0f 8c 4f 3d 00 00 |..O=..|   jl     0x0047455e
+     *                (successors: 0x0047080f 0x0047455e)
+     *  \endcode
+     *
+     *  When this property is disabled, the above single basic block would have been four blocks, ending at the JMP at 0x473bf8,
+     *  the RET at 0x43aed8, the JMP at 0x4484ef, and the JL at 0x470809.
+     *
+     *  The default is that blocks are allowed to be discontiguous. */
+    void set_allow_discontiguous_blocks(bool b) {
+        allow_discont_blocks = b;
+    }
+
+    /** Returns an indication of whether discontiguous blocks are allowed. See set_allow_discontiguous_blocks() for details. */
+    bool get_allow_discontiguous_blocks() const {
+        return allow_discont_blocks;
+    }
+
+    /** Sends diagnostics to the specified output stream. Null (the default) turns off debugging. */
+    void set_debug(FILE *f) {
+        debug = f;
+    }
+
+    /** Returns the file currently used for debugging; null implies no debugging. */
+    FILE *get_debug() const {
+        return debug;
+    }
+
+    /*************************************************************************************************************************
+     *                                                High-level Functions
+     *************************************************************************************************************************/
+public:
 
     /** Adds a user-defined function detector to this partitioner. Any number of detectors can be added and they will be run
      *  by pre_cfg() in the order they were added, after the built-in methods run.  Each user-defined detector will be called
@@ -197,16 +261,6 @@ public:
      *  can be specified (defaults to SgAsmFunctionDeclaration::FUNC_DEFAULT). */
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
 
-    /** Sends diagnostics to the specified output stream. Null (the default) turns off debugging. */
-    void set_debug(FILE *f) {
-        debug = f;
-    }
-
-    /** Returns the file currently used for debugging; null implies no debugging. */
-    FILE *get_debug() const {
-        return debug;
-    }
-
     /** Top-level function to run the partitioner on some instructions and build an AST */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
@@ -220,30 +274,36 @@ public:
     }
 
     /** Adds a new function definition to the partitioner.  New functions can be added at any time, including during the
-     *  analyze_cfg() call. */
+     *  analyze_cfg() call.  When this method is called with an entry_va for an existing function, the specified @p reasons
+     *  will be merged with the existing function, and the existing function will be given the specified name if it has none. */
     virtual Function* add_function(rose_addr_t entry_va, unsigned reasons, std::string name="");
 
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
      *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
-     *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction.  However, if the
-     *  FUNC_LEFTOVERS bit is not turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
+     *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction, and whose reasons for
+     * existence will include the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
+     * turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
     
+    /*************************************************************************************************************************
+     *                                                 Low-level Functions
+     *************************************************************************************************************************/
 protected:
+    /* NOTE: Some of these are documented at their implementation... */
     struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery */
 
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
-    virtual BasicBlock* find_bb_containing(rose_addr_t);        /**< Find basic block containing instruction address */
+    virtual BasicBlock* find_bb_containing(rose_addr_t);        /* Find basic block containing instruction address */
     virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
-    virtual const Disassembler::AddressSet& successors(BasicBlock*, bool *complete=NULL); /**< Calculates known successors */
+    virtual const Disassembler::AddressSet& successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
     virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
     virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
-    virtual void discover_first_block(Function*);               /* see implementation */
-    virtual void discover_blocks(Function*, rose_addr_t);       /* see implementation */
+    virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
+    virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
     virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */
@@ -275,13 +335,18 @@ protected:
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
 
+    /*************************************************************************************************************************
+     *                                                     Data Members
+     *************************************************************************************************************************/
 protected:
+
     Disassembler::InstructionMap insns;                 /**< Set of all instructions to partition. */
     std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block */
     Functions functions;                                /**< All known functions, pending and complete */
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
+    bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

@@ -36,13 +36,15 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
     }
 }
 
+/** Returns reason string for this function. */
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad) const
 {
     return reason_str(do_pad, get_reason());
 }
 
-/* Class method */
+/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
+ *  SgAsmFunctionDeclaration::FunctionReason bits. */
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 {
@@ -77,7 +79,7 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 
 
 
-/* Parse argument for "-rose:partitioner" command-line swich */
+/* Parse argument for "-rose:partitioner" command-line swich. */
 unsigned
 Partitioner::parse_switches(const std::string &s, unsigned flags)
 {
@@ -149,7 +151,8 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-/* Return known successors of basic block and cache them. */
+/** Returns known successors of a basic block.  Computing successors can be a relatively expensive operation, so we also cache
+ *  the successors.  The cache is expired when the size of the basic block changes. */
 const Disassembler::AddressSet&
 Partitioner::successors(BasicBlock *bb, bool *complete)
 {
@@ -162,10 +165,22 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
          * However, if we can determine the address of the called block and that block appears to pop the return address off
          * the stack, then treat this CALL/FARCALL instruction as an unconditional branch. */
         rose_addr_t call_target = NO_TARGET;
-        if (bb->is_function_call(&call_target) && call_target!=NO_TARGET && pops_return_address(call_target)) {
-            bb->sucs.clear();
-            bb->sucs.insert(call_target);
-            bb->sucs_complete = true;
+        if (bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
+            if (pops_return_address(call_target)) {
+                bb->sucs.clear();
+                bb->sucs.insert(call_target);
+                bb->sucs_complete = true;
+            } else {
+                std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(call_target);
+                if (bb_found!=insn2block.end() && bb_found->second) {
+                    BasicBlock *target_bb = bb_found->second;
+                    if (target_bb->function && !target_bb->function->returns) {
+                        bb->sucs.clear();
+                        bb->sucs.insert(call_target);
+                        bb->sucs_complete = true;
+                    }
+                }
+            }
         }
 
         bb->sucs_ninsns = bb->insns.size();
@@ -379,8 +394,25 @@ Partitioner::remove(Function* f, BasicBlock* bb)
     f->blocks.erase(address(bb));
 }
 
-/* Find (or create) a basic block containing the specified instruction address. The address is assumed to be an instruction
- * boundary, not an arbitrary address. Returns null if there is no instruction at the specified address. */
+/** Finds a basic block containing the specified instruction address. If no basic block exists then a new block is created
+ *  which starts at the specified address.  The return value, in the case when a block already exists, may be a block where
+ *  the specified virtual address is either the beginning of the block or somewhere inside the block. In any case, the virtual
+ *  address will always represent a function.
+ *
+ *  If no instruction can be found at the specified address then no block is created and a null pointer is returned.
+ *
+ *  Blocks are created by adding the initial instruction to the block, then repeatedly attempting to add more instructions as
+ *  follows: if the block successors can all be statically determined, and there is exactly one successor, and that successor
+ *  is not already part of a block, then the successor is appended to the block.
+ *
+ *  Block creation is recursive in nature since the computation of a (partial) block's successors might require creation of
+ *  other blocks. Consider the case of an x86 CALL instruction:  after a CALL is appended to a block, the successors are
+ *  calculated by looking at the target of the CALL. If the target is known and it can be proved that the target block
+ *  (recursively constructed) discards the return address, then the fall-through address of the CALL is not a direct
+ *  successor.
+ *
+ *  See also, set_allow_discontiguous_blocks().
+ */
 Partitioner::BasicBlock *
 Partitioner::find_bb_containing(rose_addr_t va)
 {
@@ -399,23 +431,24 @@ Partitioner::find_bb_containing(rose_addr_t va)
         if (!bb)
             bb = new BasicBlock;
         append(bb, insn);
-        if (insn->terminatesBasicBlock()) {
+        if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
-#if 0 /*basic blocks contiguous in memory*/
-            if (!complete || sucs.size()!=1 || *(sucs.begin())!=va)
-                break;
-#else /*basic blocks not contigiguous in memory*/
-            if (!complete || sucs.size()!=1)
-                break;
-            va = *(sucs.begin());
-#endif
+            if (allow_discont_blocks) {
+                if (!complete || sucs.size()!=1)
+                    break;
+                va = *(sucs.begin());
+            } else {
+                if (!complete || sucs.size()!=1 || *(sucs.begin())!=va)
+                    break;
+            }
         }
     }
     ROSE_ASSERT(!bb || bb->insns.size()>0);
     return bb;
 }
 
+/* Adds or updates a function definition. */
 Partitioner::Function *
 Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string name)
 {
