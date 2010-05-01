@@ -37,10 +37,39 @@ SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_blo
 
 /* This has no other home, so it's here for now. */
 bool
-SgAsmInstruction::terminatesBasicBlock() {
+SgAsmInstruction::terminatesBasicBlock()
+{
     abort();
     // tps (12/9/2009) : MSC requires a return value
     return false;
+}
+
+/** Virtual method to determine if a single instruction has an effect. Unless subclass redefines, assume all instructions have
+ *  an effect. See SgAsmx86Instruction implementation for complete documentation. */
+bool
+SgAsmInstruction::has_effect()
+{
+    return true;
+}
+
+/** Virtual method to determine if an instruction sequence has an effect. Unless subclass redefines, assume all instruction
+ *  sequences have an effect. See SgAsmx86Instruction implementation for complete documentation. */
+bool
+SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/)
+{
+    return true;
+}
+
+/** Virtual method to find subsequences of an instruction sequence that are effectively no-ops. Unless subclass redefines,
+ *  assume that the sequence has no no-op subsequences. See SgAsmx86Instruction implementation for complete documentation.
+ *  
+ *  FIXME: Instead of leaving this unimplemented, we could implement it in terms of has_effect() and let the subclasses
+ *         reimplement it only if they can do so more efficiently (which they probably can). [RPM 2010-04-30] */
+std::vector<std::pair<size_t,size_t> >
+SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/)
+{
+    std::vector<std::pair<size_t, size_t> > retval;
+    return retval;
 }
 
 /* List of disassembler subclasses */

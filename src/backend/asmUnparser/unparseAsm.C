@@ -206,6 +206,8 @@ unparseAsmStatement(SgAsmStatement* stmt)
             result += "   ";
             std::string instructionString = unparseInstruction(insn);
             result += instructionString;
+            if (!insn->has_effect())
+                result += "; no-effect";
             if (!commentString.empty()) {
                 size_t instructionStringSize = instructionString.size();
                 for (size_t i = instructionStringSize; i <= RIGHT_COMMENT_COLUMN_BOUNDARY; i++)
@@ -220,27 +222,54 @@ unparseAsmStatement(SgAsmStatement* stmt)
             /* The boundary between two blocks is represented by either a "Function" line or a blank line. The
              * SgAsmInstruction will provide the linefeed. */
             SgAsmBlock* blk = isSgAsmBlock(stmt);
-            if (blk->get_statementList().size()==0) {
-                char addrbuf[64];
-                sprintf(addrbuf, "0x%08"PRIx64, blk->get_address());
-                result = result + "\n" + addrbuf + "  /* empty basic block! */\n";
+            std::string blk_addrstr = StringUtility::addrToString(blk->get_address());
+
+            /* The instructions in this block (do not traverse deeper) */
+            const SgAsmStatementPtrList &stmts = blk->get_statementList();
+            std::vector<SgAsmInstruction*> insns;
+            insns.reserve(stmts.size());
+            for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+                if (isSgAsmInstruction(*si))
+                    insns.push_back(isSgAsmInstruction(*si));
             }
-            for (size_t i = 0; i < blk->get_statementList().size(); ++i) {
-                result += unparseAsmStatement(blk->get_statementList()[i]);
-            }
-            /* Show cached block successors. These are the successors that were probably cached by the instruction partitioner,
-             * which does fairly extensive analysis -- definitely more than just looking at the last instruction of the block! */
-            if (blk->get_statementList().size()>0 && isSgAsmInstruction(blk->get_statementList().front())) {
-                result += "            (successors:";
-                const SgAddressList &sucs = blk->get_cached_successors();
-                for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                    char addrbuf[64];
-                    sprintf(addrbuf, " 0x%08"PRIx64, *si);
-                    result += addrbuf;
+
+            if (stmts.empty()) {
+                result += std::string("\n") + blk_addrstr + "  /* empty basic block! */\n";
+
+            } else {
+
+#if 0 /*Turned off because it's really ugly! [RPM 2010-04-30]*/
+                /* Information about what subsequences are no-ops */
+                if (!insns.empty()) {
+                    typedef std::vector<std::pair<size_t, size_t> > NoopSequences; /* array of index,size pairs */
+                    NoopSequences noop_sequences = insns.front()->find_noop_subsequences(insns);
+                    if (!noop_sequences.empty()) {
+                        result += blk_addrstr + " no-op subsequences for the following block:\n";
+                        for (NoopSequences::iterator ni=noop_sequences.begin(); ni!=noop_sequences.end(); ++ni) {
+                            result += blk_addrstr + ": " +
+                                      StringUtility::numberToString((*ni).first) + ", " +
+                                      StringUtility::numberToString((*ni).second) + "\n";
+                        }
+                    }
                 }
-                if (!blk->get_complete_successors())
-                    result += "...";
-                result += ")\n";
+#endif
+
+                /* The statements (or instructions) */
+                for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si)
+                    result += unparseAsmStatement(*si);
+
+                /* Show cached block successors. These are the successors that were probably cached by the instruction
+                 * partitioner, which does fairly extensive analysis -- definitely more than just looking at the last
+                 * instruction of the block! */
+                if (!insns.empty()) {
+                    result += "            (successors:";
+                    const SgAddressList &sucs = blk->get_cached_successors();
+                    for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si)
+                        result += std::string(" ") + StringUtility::addrToString(*si);
+                    if (!blk->get_complete_successors())
+                        result += "...";
+                    result += ")\n";
+                }
             }
             return result;
         }

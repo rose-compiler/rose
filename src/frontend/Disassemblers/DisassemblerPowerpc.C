@@ -35,6 +35,20 @@
 #define V2FLOATT (SgAsmTypeVector::createType(2, FLOATT))
 #define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
 
+/* FIXME: Assume, for now, that all PowerPC instructions have an effect. */
+bool
+SgAsmPowerpcInstruction::has_effect()
+{
+    return true;
+}
+
+/* FIXME: Assume, for now, that all PowerPC instruction sequences have an effect. */
+bool
+SgAsmPowerpcInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/)
+{
+    return true;
+}
+
 
 Disassembler::AddressSet
 SgAsmPowerpcInstruction::get_successors(bool *complete) {

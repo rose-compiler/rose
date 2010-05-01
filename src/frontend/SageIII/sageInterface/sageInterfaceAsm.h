@@ -59,7 +59,7 @@ namespace SageInterface
   //! Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
      bool isNOP ( const std::vector<SgAsmInstruction*> & asmInstructionList );
   //! find sequences of NOP instructions in a SgAsmBlock
-     std::vector<std::vector<SgAsmInstruction*> > find_NOP_sequences ( const SgAsmBlock* & asmBlock );
+     std::vector<std::vector<SgAsmInstruction*> > find_NOP_sequences ( SgAsmBlock* asmBlock );
 
    }
 
