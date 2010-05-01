@@ -107,6 +107,38 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     dump(f, prefix, idx, NULL);
 }
 
+std::string
+SgAsmElfSymbol::to_string(ElfSymBinding val)
+{
+  switch (val) {
+    case STB_LOCAL:  return "local";  
+    case STB_GLOBAL: return "global"; 
+    case STB_WEAK:   return "weak";   
+  };
+  char sbuf[256];
+  snprintf(sbuf, sizeof(sbuf),"unknown binding (%zu)", (size_t)val);
+  return sbuf;
+}
+
+std::string
+SgAsmElfSymbol::to_string(ElfSymType val)
+{
+  switch (val) {
+    case STT_NOTYPE:  return "no-type";   
+    case STT_OBJECT:  return "object";    
+    case STT_FUNC:    return "function";  
+    case STT_SECTION: return "section";   
+    case STT_FILE:    return "file";      
+    case STT_COMMON:  return "common";      
+    case STT_TLS:     return "tls";      
+  };
+
+  char sbuf[256];
+  snprintf(sbuf, sizeof(sbuf),"unknown type (%zu)", (size_t)val);
+  return sbuf;
+}  
+
+
 SgAsmElfSymbol::ElfSymBinding
 SgAsmElfSymbol::get_elf_binding() const
 {
@@ -158,36 +190,11 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
         sprintf(p, "%sElfSymbol.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    const char *s;
-    char sbuf[256];
 
     SgAsmGenericSymbol::dump(f, p, -1);
 
-    fprintf(f, "%s%-*s = %u (",          p, w, "st_info",  p_st_info);
-    switch (get_elf_binding()) {
-      case STB_LOCAL:  s = "local";  break;
-      case STB_GLOBAL: s = "global"; break;
-      case STB_WEAK:   s = "weak";   break;
-      default:
-        sprintf(sbuf, "binding-%d", get_elf_binding());
-        s = sbuf;
-        break;
-    }
-    fputs(s, f);
-    switch (get_elf_type()) {
-      case STT_NOTYPE:  s = " no-type";   break;
-      case STT_OBJECT:  s = " object";    break;
-      case STT_FUNC:    s = " function";  break;
-      case STT_SECTION: s = " section";   break;
-      case STT_FILE:    s = " file";      break;
-      default:
-        sprintf(sbuf, " type-%d", get_elf_type());
-        s = sbuf;
-        break;
-    }
-    fputs(s, f);
-    fputs(")\n", f);
-
+    fprintf(f, "%s%-*s = %u",          p, w, "st_info",  p_st_info);
+    fprintf(f, " (%s %s)\n",to_string(get_elf_binding()).c_str(),to_string(get_elf_type()).c_str());
     fprintf(f, "%s%-*s = %u\n",         p, w, "st_res1", p_st_res1);
     fprintf(f, "%s%-*s = %"PRIu64"\n",  p, w, "st_size", p_st_size);
 
