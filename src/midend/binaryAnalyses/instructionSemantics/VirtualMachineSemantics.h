@@ -1,8 +1,3 @@
-/* A policy for x86InstructionSemantics.
- *
- * This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature to the
- * FindConstantsPolicy except much simpler. */
-
 #ifndef Rose_VirtualMachineSemantics_H
 #define Rose_VirtualMachineSemantics_H
 #include <stdint.h>
@@ -17,18 +12,25 @@
 #include <vector>
 
 
+/* A policy for x86InstructionSemantics.
+ *
+ * This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature to the
+ * FindConstantsPolicy except much simpler, much faster, and much more memory-lean. */
 namespace VirtualMachineSemantics {
 
 extern uint64_t name_counter;
 
+/** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
 template<size_t nBits>
 struct ValueType {
     uint64_t name;                      /**< Zero for constants; non-zero ID number for everything else. */
     uint64_t offset;                    /**< The constant (if name==0) or an offset w.r.t. an unknown (named) base value. */
     bool negate;                        /**< Switch between name+offset and (-name)+offset; should be false for constants. */
 
+    /** Construct a value that is unknown and unique. */
     ValueType(): name(++name_counter), offset(0), negate(false) {}
 
+    /** Copy-construct a value, truncating or extending at msb the source value. */
     template <size_t Len>
     ValueType(const ValueType<Len> &other) {
         name = other.name;
@@ -36,18 +38,35 @@ struct ValueType {
         negate = other.negate;
     }
 
+    /** Construct a ValueType with a known value. */
     ValueType(uint64_t n)   /*implicit*/
         : name(0), offset(n), negate(false) {
         this->offset &= IntegerOps::GenMask<uint64_t, nBits>::value;
     }
 
+    /** Low-level constructor used internally. */
     ValueType(uint64_t name, uint64_t offset, bool negate=false)
         : name(name), offset(offset), negate(negate) {
         this->offset &= IntegerOps::GenMask<uint64_t, nBits>::value;
     }
 
+    /** Returns true if the value is known, false if the value only has a name. */
+    bool is_known() const {
+        return 0==name;
+    }
+
+    /** Returns the value if it is known. */
+    uint64_t known_value() const {
+        ROSE_ASSERT(is_known());
+        return offset;
+    }
+
     friend bool operator==(const ValueType &a, const ValueType &b) {
         return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
+    }
+
+    friend bool operator!=(const ValueType &a, const ValueType &b) {
+        return !(a==b);
     }
 
     friend bool operator<(const ValueType &a, const ValueType &b) {
@@ -60,6 +79,7 @@ struct ValueType {
 
 };
 
+/** Represents one location in memory. Has an address data and size. Memory granularity is 32-bits. */
 struct MemoryCell {
     ValueType<32> address;
     ValueType<32> data;
@@ -132,19 +152,45 @@ struct MemoryCell {
 
 typedef std::vector<MemoryCell> Memory;
 
-struct MachineState {
-    ValueType<32> gpr[8];
-    ValueType<16> segreg[6];
-    ValueType<1> flag[16];
+/** Represents the entire state of the machine. However, the instruction pointer is not included in the state. */
+struct State {
+    static const size_t n_gprs = 8;
+    static const size_t n_segregs = 6;
+    static const size_t n_flags = 16;
+
+    ValueType<32> gpr[n_gprs];
+    ValueType<16> segreg[n_segregs];
+    ValueType<1> flag[n_flags];
     Memory mem;
 
-    friend std::ostream& operator<<(std::ostream &o, const MachineState &state) {
+    friend bool operator==(const State &a, const State &b) {
+        for (size_t i=0; i<n_gprs; ++i)
+            if (a.gpr[i]!=b.gpr[i]) return false;
+        for (size_t i=0; i<n_segregs; ++i)
+            if (a.segreg[i]!=b.segreg[i]) return false;
+        for (size_t i=0; i<n_flags; ++i)
+            if (a.flag[i]!=b.flag[i]) return false;
+        if (a.mem.size()!=b.mem.size()) return false;
+        for (size_t i=0; i<a.mem.size(); i++) {
+            if (a.mem[i].nbytes!=b.mem[i].nbytes ||
+                a.mem[i].address!=b.mem[i].address ||
+                a.mem[i].data!=b.mem[i].data)
+                return false;
+        }
+        return true;
+    }
+
+    friend bool operator!=(const State &a, const State &b) {
+        return !(a==b);
+    }
+
+    friend std::ostream& operator<<(std::ostream &o, const State &state) {
         std::string prefix = "    ";
-        for (size_t i = 0; i < 8; ++i)
+        for (size_t i=0; i<n_gprs; ++i)
             o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << state.gpr[i] << std::endl;
-        for (size_t i = 0; i < 6; ++i)
+        for (size_t i=0; i<n_segregs; ++i)
             o <<prefix << segregToString((X86SegmentRegister)i) << " = " << state.segreg[i] << std::endl;
-        for (size_t i = 0; i < 16; ++i)
+        for (size_t i=0; i<n_flags; ++i)
             o <<prefix << flagToString((X86Flag)i) << " = " << state.flag[i] << std::endl;
         o <<prefix << "memory = ";
         if (state.mem.empty()) {
@@ -159,139 +205,21 @@ struct MachineState {
     }
 };
 
+/** A policy that is supplied to the semantic analysis constructor. */
 class Policy {
-public:
-    SgAsmInstruction *cur_insn;
-    ValueType<32> new_ip;
-    MachineState state;
+private:
+    SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
+    ValueType<32> ip;                   /**< Initially cur_insn->get_address(), then updated during processInstruction() */
+    State state;                        /**< Complete machine state updated by each processInstruction() */
 
+public:
     Policy(): cur_insn(NULL) {}
 
-    /* Called at the beginning of X86InstructionSemantics::processInstruction() */
-    void startInstruction(SgAsmInstruction *insn) {
-        cur_insn = insn;
-        new_ip = ValueType<32>(insn->get_address());
-    }
-
-    /* Called at the end of X86InstructionSemantics::processInstruction() */
-    void finishInstruction(SgAsmInstruction*) {
-        cur_insn = NULL;
-    }
-
-    /** Returns value of the specified 32-bit general purpose register. */
-    ValueType<32> readGPR(X86GeneralPurposeRegister r) {
-        return state.gpr[r];
-    }
+    /* Accessors */
+    const State& get_state() const { return state; }
+    State& get_state() { return state; }
+    const ValueType<32>& get_ip() const { return ip; }
     
-    /** Places a value in the specified 32-bit general purpose register. */
-    void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
-        state.gpr[r] = value;
-    }
-    
-    /** Reads a value from the specified 16-bit segment register. */
-    ValueType<16> readSegreg(X86SegmentRegister sr) {
-        return state.segreg[sr];
-    }
-    
-    /** Places a value in the specified 16-bit segment register. */
-    void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
-        state.segreg[sr] = value;
-    }
-    
-    /** Returns the value of the instruction pointer as it would be during the execution of the instruction. In other words,
-     *  it points to the first address past the end of the current instruction. */
-    ValueType<32> readIP() {
-        return new_ip;
-    }
-    
-    /** Changes the value of the instruction pointer. */
-    void writeIP(const ValueType<32> &value) {
-        new_ip = value;
-    }
-    
-    /** Returns the value of a specific control/status/system flag. */
-    ValueType<1> readFlag(X86Flag f) {
-        return state.flag[f];
-    }
-    
-    /** Changes the value of the specified control/status/system flag. */
-    void writeFlag(X86Flag f, const ValueType<1> &value) {
-        state.flag[f] = value;
-    }
-
-    /** Reads a value from memory. */
-    template <size_t Len>
-    ValueType<Len> readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) {
-        MemoryCell melmt(addr, ValueType<32>(0), Len/8);
-        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            if (melmt.must_alias(*mi))
-                return (*mi).data;
-        }
-        return ValueType<Len>();
-    }
-    
-    /** Writes a value to memory. */
-    template <size_t Len>
-    void writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
-        MemoryCell melmt(addr, data, Len/8);
-        Memory new_memory;
-        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            if (!melmt.may_alias(*mi))
-                new_memory.push_back(*mi);
-        }
-        new_memory.push_back(melmt);
-        std::sort(new_memory.begin(), new_memory.end());
-        state.mem = new_memory;
-    }
-    
-    /** True value */
-    ValueType<1> true_() {
-        return 1;
-    }
-
-    /** False value */
-    ValueType<1> false_() {
-        return 0;
-    }
-    
-    /** Undfined Boolean */
-    ValueType<1> undefined_() {
-        return ValueType<1>();
-    }
-
-    /** Called only for CALL instructions before assigning new value to IP register. */
-    ValueType<32> filterCallTarget(const ValueType<32> &a) {
-        return a;
-    }
-
-    /** Called only for RET instructions before adjusting the IP register. */
-    ValueType<32> filterReturnTarget(const ValueType<32> &a) {
-        return a;
-    }
-
-    /** Called only for JMP instructions before adjusting the IP register. */
-    ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) {
-        return a;
-    }
-
-    /** Called only for the HLT instruction. */
-    void hlt() {} // FIXME
-
-    /** Called only for the RDTSC instruction. */
-    ValueType<64> rdtsc() {
-        return 0;
-    }
-
-    /** Called only for the INT instruction. */
-    void interrupt(uint8_t num) {
-        state = MachineState(); /*reset entire machine state*/
-    }
-
-    /** Used to build a known constant. */
-    template <size_t Len>
-    ValueType<Len> number(uint64_t n) {
-        return n;
-    }
 
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
@@ -316,7 +244,8 @@ public:
         return ValueType<ToLen>(a);
     }
     
-    /** Returns true if the specified value exists in memory and is provably at or above the stack pointer. */
+    /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The stack pointer
+     *  need not have a known value. */
     bool on_stack(const ValueType<32> &value) {
         //std::cerr <<"VirtualMachineSemantics::on_stack(value=" <<value <<"):\n";
         const ValueType<32> sp_inverted = invert(state.gpr[x86_gpr_sp]);
@@ -345,10 +274,158 @@ public:
 
 
 
+    /*************************************************************************************************************************
+     * Functions invoked by the X86InstructionSemantics class for every processed instructions
+     *************************************************************************************************************************/
+
+    /* Called at the beginning of X86InstructionSemantics::processInstruction() */
+    void startInstruction(SgAsmInstruction *insn) {
+        cur_insn = insn;
+        ip = ValueType<32>(insn->get_address());
+    }
+
+    /* Called at the end of X86InstructionSemantics::processInstruction() */
+    void finishInstruction(SgAsmInstruction*) {
+        cur_insn = NULL;
+    }
+
 
 
     /*************************************************************************************************************************
-     * Functions invoked by the X86InstructionSemantics class
+     * Functions invoked by the X86InstructionSemantics class to construct values
+     *************************************************************************************************************************/
+
+    /** True value */
+    ValueType<1> true_() {
+        return 1;
+    }
+
+    /** False value */
+    ValueType<1> false_() {
+        return 0;
+    }
+
+    /** Undefined Boolean */
+    ValueType<1> undefined_() {
+        return ValueType<1>();
+    }
+
+    /** Used to build a known constant. */
+    template <size_t Len>
+    ValueType<Len> number(uint64_t n) {
+        return n;
+    }
+
+
+
+    /*************************************************************************************************************************
+     * Functions invoked by the X86InstructionSemantics class for individual instructions
+     *************************************************************************************************************************/
+
+    /** Called only for CALL instructions before assigning new value to IP register. */
+    ValueType<32> filterCallTarget(const ValueType<32> &a) {
+        return a;
+    }
+
+    /** Called only for RET instructions before adjusting the IP register. */
+    ValueType<32> filterReturnTarget(const ValueType<32> &a) {
+        return a;
+    }
+
+    /** Called only for JMP instructions before adjusting the IP register. */
+    ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) {
+        return a;
+    }
+
+    /** Called only for the HLT instruction. */
+    void hlt() {} // FIXME
+
+    /** Called only for the RDTSC instruction. */
+    ValueType<64> rdtsc() {
+        return 0;
+    }
+
+    /** Called only for the INT instruction. */
+    void interrupt(uint8_t num) {
+        state = State(); /*reset entire machine state*/
+    }
+
+
+
+    /*************************************************************************************************************************
+     * Functions invoked by the X86InstructionSemantics class for data access operations
+     *************************************************************************************************************************/
+
+    /** Returns value of the specified 32-bit general purpose register. */
+    ValueType<32> readGPR(X86GeneralPurposeRegister r) {
+        return state.gpr[r];
+    }
+
+    /** Places a value in the specified 32-bit general purpose register. */
+    void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
+        state.gpr[r] = value;
+    }
+
+    /** Reads a value from the specified 16-bit segment register. */
+    ValueType<16> readSegreg(X86SegmentRegister sr) {
+        return state.segreg[sr];
+    }
+
+    /** Places a value in the specified 16-bit segment register. */
+    void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
+        state.segreg[sr] = value;
+    }
+
+    /** Returns the value of the instruction pointer as it would be during the execution of the instruction. In other words,
+     *  it points to the first address past the end of the current instruction. */
+    ValueType<32> readIP() {
+        return ip;
+    }
+
+    /** Changes the value of the instruction pointer. */
+    void writeIP(const ValueType<32> &value) {
+        ip = value;
+    }
+
+    /** Returns the value of a specific control/status/system flag. */
+    ValueType<1> readFlag(X86Flag f) {
+        return state.flag[f];
+    }
+
+    /** Changes the value of the specified control/status/system flag. */
+    void writeFlag(X86Flag f, const ValueType<1> &value) {
+        state.flag[f] = value;
+    }
+
+    /** Reads a value from memory. */
+    template <size_t Len>
+    ValueType<Len> readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) {
+        MemoryCell melmt(addr, ValueType<32>(0), Len/8);
+        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+            if (melmt.must_alias(*mi))
+                return (*mi).data;
+        }
+        return ValueType<Len>();
+    }
+
+    /** Writes a value to memory. */
+    template <size_t Len>
+    void writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+        MemoryCell melmt(addr, data, Len/8);
+        Memory new_memory;
+        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+            if (!melmt.may_alias(*mi))
+                new_memory.push_back(*mi);
+        }
+        new_memory.push_back(melmt);
+        std::sort(new_memory.begin(), new_memory.end());
+        state.mem = new_memory;
+    }
+
+
+
+    /*************************************************************************************************************************
+     * Functions invoked by the X86InstructionSemantics class for arithmetic operations
      *************************************************************************************************************************/
 
     /** Adds two values. */
@@ -400,7 +477,7 @@ public:
             return ValueType<Len>();
         }
     }
-    
+
     /** Computes bit-wise AND of two values. */
     template <size_t Len>
     ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) {
@@ -422,7 +499,7 @@ public:
         if (a.name) return ValueType<Len>(a.name, ~a.offset, !a.negate);
         return ~a.offset;
     }
-    
+
     /** Concatenate the values of @p a and @p b so that the result has @p b in the high-order bits and @p a in the low order
      *  bits. */
     template<size_t Len1, size_t Len2>
@@ -481,28 +558,28 @@ public:
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
     }
-    
+
     /** Rotate bits to the right. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
     }
-    
+
     /** Returns arg shifted left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
     }
-    
+
     /** Returns arg shifted right logically (no sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
     }
-    
+
     /** Returns arg shifted right arithmetically (with sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) {
@@ -560,12 +637,9 @@ public:
         if (a.name || b.name) return ValueType<Len>();
         return a.offset ^ b.offset;
     }
-    
-
-
 };
     
-};
+}; /*namespace*/
 
 
 #endif

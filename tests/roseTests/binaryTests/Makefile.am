@@ -259,15 +259,19 @@ test_testElfWordSize.result: testElfWordSize test_testElfStrtab.result test_test
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' < $@.tmp; exit 1; fi
 
+test_testElfSchulz_flags = -rose:partitioner_search -leftovers
 test_testElfSchulz.result: test_testElfSchulz-1.result test_testElfSchulz-2.result
 	@echo "  TESTING $@ (not currently tested)"
 	@touch $@
 
 test_testElfSchulz-1.result: testElfSchulz
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample1.so >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./schulz-sample1.so.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample1-p.so >>$@.tmp 2>&1; \
+	@$(VALGRIND) ./testElfSchulz $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample1.so >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              ./schulz-sample1.so.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample1-p.so >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff -u schulz-sample1{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample1-p.so schulz-sample1.so.new >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
@@ -275,9 +279,12 @@ test_testElfSchulz-1.result: testElfSchulz
 
 test_testElfSchulz-2.result: testElfSchulz
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample2.so >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./schulz-sample2.so.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample2-p.so >>$@.tmp 2>&1; \
+	@$(VALGRIND) ./testElfSchulz $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample2.so >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              ./schulz-sample2.so.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample2-p.so >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff -u schulz-sample2{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample2-p.so schulz-sample2.so.new >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
