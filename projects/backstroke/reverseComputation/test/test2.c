@@ -1,3 +1,4 @@
+#include <stdlib.h>
 struct model ;
 
 struct model 

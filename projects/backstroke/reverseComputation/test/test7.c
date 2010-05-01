@@ -1,3 +1,4 @@
+#include <stdlib.h>
 struct model ;
 
 struct model 
@@ -9,6 +10,6 @@ struct model
 
 void event(struct model *m)
 {
-  m -> m_int *= 196;
+  m -> m_int *= 3034;
 }
 

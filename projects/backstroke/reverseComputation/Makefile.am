@@ -32,9 +32,7 @@ test10.c \
 test11.c \
 test12.c \
 test13.c \
-test14.c \
-test15.c \
-test16.c
+test14.c
 
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 

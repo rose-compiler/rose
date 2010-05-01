@@ -1,3 +1,4 @@
+#include <stdlib.h>
 struct model ;
 
 struct model 
@@ -9,7 +10,6 @@ struct model
 
 void event(struct model *m)
 {
-  if (3071 > 4096) 
-    ++m -> m_int;
+  ++m -> m_int?m -> m_int++ : --m -> m_int;
 }
 

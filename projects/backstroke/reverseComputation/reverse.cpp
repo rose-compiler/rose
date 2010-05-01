@@ -199,15 +199,17 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
     // process the conditional expression (?:).
     if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
     {
-	SgExpression *rev_cond_exp, *rev_true_exp, *rev_false_exp;
+	// Since conditional expression is quite like a if statement,
+	// we will reverse it using flags like reversing if statement
 	SgExpression *fwd_cond_exp, *fwd_true_exp, *fwd_false_exp;
+	SgExpression *rev_cond_exp, *rev_true_exp, *rev_false_exp;
 
-	tie(rev_cond_exp, fwd_cond_exp) = instrumentAndReverseExpression(cond_exp->get_conditional_exp());
-	tie(rev_true_exp, fwd_true_exp) = instrumentAndReverseExpression(cond_exp->get_true_exp());
-	tie(rev_false_exp, fwd_false_exp) = instrumentAndReverseExpression(cond_exp->get_false_exp());
+	tie(fwd_cond_exp, rev_cond_exp) = instrumentAndReverseExpression(cond_exp->get_conditional_exp());
+	tie(fwd_true_exp, rev_true_exp) = instrumentAndReverseExpression(cond_exp->get_true_exp());
+	tie(fwd_false_exp, rev_false_exp) = instrumentAndReverseExpression(cond_exp->get_false_exp());
 	return ExpPair(
-		buildConditionalExp(rev_cond_exp, rev_true_exp, rev_false_exp),
-		buildConditionalExp(fwd_cond_exp, fwd_true_exp, fwd_false_exp));
+		buildConditionalExp(fwd_cond_exp, fwd_true_exp, fwd_false_exp),
+		buildConditionalExp(rev_cond_exp, rev_true_exp, rev_false_exp));
     }
 
     // process the function call expression
@@ -339,6 +341,8 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 	else if (fwd_true_body)
 	    fwd_true_body = buildBasicBlock(fwd_true_body, putBranchFlag(true));
 
+	if (fwd_false_body == NULL)
+	    fwd_false_body = buildBasicBlock();
 	if (SgBasicBlock* body = isSgBasicBlock(fwd_false_body))
 	    body->append_statement(putBranchFlag(false));
 	else if (fwd_false_body)
