@@ -151,8 +151,26 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-/** Returns known successors of a basic block.  Computing successors can be a relatively expensive operation, so we also cache
- *  the successors.  The cache is expired when the size of the basic block changes.
+/** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
+ *  results only depend on the specified block and which are valid into the future as long as the instructions in the block do
+ *  not change. */
+void
+Partitioner::update_analyses(BasicBlock *bb)
+{
+    ROSE_ASSERT(bb!=NULL && !bb->insns.empty());
+    if (bb->valid_cache()) return;
+
+    /* Successor analysis */
+    bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete));
+
+    /* Call target analysis */
+    if (!bb->insns.front()->is_function_call(bb->insns, &(bb->cache.call_target)))
+        bb->cache.call_target = NO_TARGET;
+
+    bb->validate_cache();
+}
+
+/** Returns known successors of a basic block.
  *
  *  There are two types of successor analyses:  one is an analysis that depends only on the instructions of the basic block
  *  for which successors are being calculated.  It is safe to cache these based on properties of the block itself (e.g., the
@@ -163,36 +181,27 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
  *  that needs them and must be recomputed for each call.  However, they can be cached at either the block or function that's
  *  analyzed, so recomputing them here in this block is probably not too expensive.
  *
- *  Successor information is encapsulated in its own class, BlockSuccessorInfo. */
+ *  Successor information is encapsulated in the BlockAnalysisCache object of the basic block. */
 Disassembler::AddressSet
 Partitioner::successors(BasicBlock *bb, bool *complete)
 {
-    ROSE_ASSERT(bb!=NULL && !bb->insns.empty());
-
-    /* Make sure locally-computed successors are up to date. Calculating them could involve semantic analysis of the entire
-     * basic block, which is why we're caching this info. */
-    if (!bb->valid_cache()) {
-        bb->sucs.cache = bb->insns.front()->get_successors(bb->insns, &(bb->sucs.complete));
-        if (!bb->insns.front()->is_function_call(bb->insns, &(bb->sucs.call_target)))
-            bb->sucs.call_target = NO_TARGET;
-        bb->validate_cache();
-    }
-    Disassembler::AddressSet retval = bb->sucs.cache;
-    if (complete) *complete = bb->sucs.complete;
+    update_analyses(bb); /*make sure cache is current*/
+    Disassembler::AddressSet retval = bb->cache.sucs;
+    if (complete) *complete = bb->cache.sucs_complete;
 
     /* Run non-local analyses if necessary. These are never cached here in this block. */
-    if (bb->sucs.call_target!=NO_TARGET) {
-        if (pops_return_address(bb->sucs.call_target)) {
+    if (bb->cache.call_target!=NO_TARGET) {
+        if (pops_return_address(bb->cache.call_target)) {
             retval.clear();
-            retval.insert(bb->sucs.call_target);
+            retval.insert(bb->cache.call_target);
             if (complete) *complete = true;
         } else {
-            std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(bb->sucs.call_target);
+            std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(bb->cache.call_target);
             if (bb_found!=insn2block.end() && bb_found->second) {
                 BasicBlock *target_bb = bb_found->second;
                 if (target_bb->function && !target_bb->function->returns) {
                     retval.clear();
-                    retval.insert(bb->sucs.call_target);
+                    retval.insert(bb->cache.call_target);
                     if (complete) *complete = true;
                 }
             }
@@ -208,9 +217,8 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
 rose_addr_t
 Partitioner::call_target(BasicBlock *bb)
 {
-    if (!bb->valid_cache())
-        (void)successors(bb, NULL);
-    return bb->sucs.call_target;
+    update_analyses(bb); /*make sure cache is current*/
+    return bb->cache.call_target;
 }
 
 /* Returns true if the basic block at the specified virtual address appears to pop the return address from the top of the

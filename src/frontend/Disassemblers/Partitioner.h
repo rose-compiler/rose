@@ -80,36 +80,30 @@ protected:
 
     struct Function;
 
-    /** Information about block successors and how they're cached. Successors are calculated either localy (by examining only
-     *  the instructions of the basic block for which we're calculating the successors) or non-locally (by examining other
-     *  related basic blocks). */
-    class BlockSuccessorInfo {
+    /** Analysis that can be cached in a block. Some analyses are expensive enough that we can cache them in a block. Analyses
+     *  are either locally computed (by examining only the block where they're cached) or non-locally computed (by examining
+     *  other related basic blocks.  Non-local analyses are not cached locally, but they might be cached in other blocks. */
+    class BlockAnalysisCache {
     public:
-        BlockSuccessorInfo(): is_cached(0), complete(false), call_target(NO_TARGET), non_local(false) {}
+        BlockAnalysisCache(): age(0), sucs_complete(false), call_target(NO_TARGET) {}
         void clear() {
-            is_cached = false;
-            cache.clear();
-            complete = false;
-            non_local = false;
+            age = 0;
+            sucs.clear();
+            sucs_complete = false;
         }
 
-        size_t is_cached;                       /**< Non zero implies locally computed successors are cached. The actual value
+        size_t age;                             /**< Non zero implies locally computed successors are cached. The actual value
                                                  *   of this data member is the number of instructions in the basic block when
-                                                 *   the successor information was computed.  Successors that are computed via
-                                                 *   analyses over other blocks (i.e., non-local analysis) are never cached.
-                                                 *   See non_local data member. */
-        Disassembler::AddressSet cache;         /**< Locally computed cached successors. */
-        bool complete;                          /**< True if locally computed successors are fully known. */
+                                                 *   the successor information was computed, so if this value matches the current
+                                                 *   number of instructions, the cached info is up to date. Analyses that are
+                                                 *   computed over other blocks (i.e., non-local analyses) are never cached. */
+        Disassembler::AddressSet sucs;          /**< Locally computed cached successors. */
+        bool sucs_complete;                     /**< True if locally computed successors are fully known. */
         rose_addr_t call_target;                /**< Target of a CALL instruction if this block ends with what appears to be a
                                                  *   function call (whether, in fact, it truly is a function call is immaterial
                                                  *   since the final determination requires non-local analysis. If this block
                                                  *   does not end with a call or if the target of the call cannot be statically
                                                  *   determined, then the value is set to Partitioner::NO_TARGET. */
-
-        bool non_local;                         /**< If true, then the computation of successors for this block relies on
-                                                 *   analysis of other blocks and the computed successors cannot be cached.
-                                                 *   However, if non_local is true, is_cached can still be set and the cached
-                                                 *   successors will be those that are computed locally. */
     };
 
     /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
@@ -122,15 +116,15 @@ protected:
         ~BasicBlock() {
             --nblocks; /* for debugging output */
         }
-        bool valid_cache() const { return sucs.is_cached==insns.size(); }
-        void invalidate_cache() { sucs.is_cached=0; }
-        void validate_cache() { sucs.is_cached=insns.size(); }
+        bool valid_cache() const { return cache.age==insns.size(); }
+        void invalidate_cache() { cache.age=0; }
+        void validate_cache() { cache.age=insns.size(); }
 
         static size_t nblocks;                  /**< Number of blocks allocated; only used for debugging */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
-        BlockSuccessorInfo sucs;                /**< Cached set of known successors */
+        BlockAnalysisCache cache;               /**< Cached results of local analyses */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
     };
     typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
@@ -348,6 +342,7 @@ protected:
     virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
     virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
+    virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
     
     
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
