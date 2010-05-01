@@ -421,6 +421,10 @@ main(int argc, char *argv[])
         /* Figure out what part of the memory mapping does not have instructions. */
         if (do_show_extents) {
             ExtentMap extents=interp->get_map()->va_extents();
+
+         // DQ (4/29/2010): Adding support for computing coverage of disassembled functions over the lenghts of sections where we attempt to disassemble functions.
+            double extendSizeBefore = (double) extents.size();
+
             std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
             for (size_t j=0; j<insns.size(); j++) {
                 SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
@@ -431,6 +435,11 @@ main(int argc, char *argv[])
                 printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
                 extents.dump_extents(stdout, "    ", NULL, 0);
             }
+
+         // DQ (4/29/2010): Adding support for computing coverage of disassembled functions over the lenghts of sections where we attempt to disassemble functions.
+            double extendSizeAfter = (double) unused;
+            interp->set_percentageCoverage(extendSizeBefore/extendSizeAfter);
+            interp->set_coverageComputed(true);
         }
 
         /* Generate dot files */
