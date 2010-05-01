@@ -15,6 +15,7 @@ LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS = 
 
+noinst_HEADERS = detectNopSequencesTraversal.h
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND =
