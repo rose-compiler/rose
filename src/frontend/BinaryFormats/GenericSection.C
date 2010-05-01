@@ -734,8 +734,7 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
 void
 SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
-    char p[4096], sbuf[256];
-    const char *s;
+    char p[4096];
     if (idx>=0) {
         sprintf(p, "%sSection[%zd].", prefix, idx);
     } else {
@@ -762,18 +761,8 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = not associated\n",          p, w, "header");
     }
     
-    switch (p_purpose) {
-      case SP_UNSPECIFIED: s = "not specified"; break;
-      case SP_PROGRAM:     s = "program-supplied data/code/etc"; break;
-      case SP_HEADER:      s = "executable format header";       break;
-      case SP_SYMTAB:      s = "symbol table";                   break;
-      case SP_OTHER:       s = "other";                          break;
-      default:
-        sprintf(sbuf, "%u", p_purpose);
-        s = sbuf;
-        break;
-    }
-    fprintf(f, "%s%-*s = %s\n", p, w, "purpose", s);
+    std::string purpose = to_string(p_purpose);
+    fprintf(f, "%s%-*s = %s\n", p, w, "purpose", purpose.c_str());
 
     if (is_mapped()) {
         fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_preferred_rva, p_mapped_size);
@@ -798,4 +787,19 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmGenericSection) {
         hexdump(f, 0, std::string(p)+"data at ", p_data);
     }
+}
+
+
+std::string SgAsmGenericSection::to_string(SectionPurpose val)
+{
+  static char buf[64];
+  switch (val) {
+    case SP_UNSPECIFIED: return "not specified"; 
+    case SP_PROGRAM:     return "program-supplied data/code/etc"; 
+    case SP_HEADER:      return "executable format header";       
+    case SP_SYMTAB:      return "symbol table";                   
+    case SP_OTHER:       return "other";                          
+  };
+  snprintf(buf, sizeof(buf), "unknown section purpose (%zu)", (size_t)val);
+  return buf;
 }

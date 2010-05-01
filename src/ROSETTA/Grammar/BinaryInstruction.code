@@ -901,6 +901,7 @@ HEADER_GENERIC_SECTION_START
 		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
 
 		bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
+		static std::string to_string(SgAsmGenericSection::SectionPurpose);
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
 
@@ -1490,10 +1491,11 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 			SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
 		void update_from_section(SgAsmElfSection*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
+		static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
 	private:
 		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
 		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
-		static std::string to_string(SectionType);
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 
@@ -1871,8 +1873,8 @@ HEADER_ELF_DYNAMIC_ENTRY_START
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-		const char *stringify_tag(EntryType) const;
 
+	        static std::string to_string(SgAsmElfDynamicEntry::EntryType);
 		/*Override ROSETTA because set_name() needs to adjust parent pointer*/
 		SgAsmGenericString *get_name() const {return p_name;}
 		void set_name(SgAsmGenericString *name);
@@ -2197,10 +2199,11 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 		/* Segment bit flags */
 		enum SegmentFlags {
 			PF_NONE		= 0,		/* Initial value in c'tor */
-			PF_RESERVED     = 0x0ffffff8,   /* Reserved bits */
+			PF_RESERVED     = 0x000ffff8,   /* Reserved bits */
 			PF_XPERM        = 0x00000001,   /* Execute permission */
 			PF_WPERM        = 0x00000002,   /* Write permission */
 			PF_RPERM        = 0x00000004,   /* Read permission */
+	                PF_OS_MASK      = 0x0ff00000,   /* os-specific bits */
 			PF_PROC_MASK    = 0xf0000000    /* Processor-specific bits */
 		};
 
@@ -2255,7 +2258,9 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
 		void update_from_section(SgAsmElfSection*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-		std::string stringifyType(SgAsmElfSegmentTableEntry::SegmentType  kind) const;
+		static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
+		static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags);
+
 
 	private:
 		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
@@ -2351,6 +2356,9 @@ HEADER_ELF_SYMBOL_START
 		void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*) const;
 		SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
 		SgAsmElfSymbol::ElfSymType get_elf_type() const;
+
+		static std::string to_string(SgAsmElfSymbol::ElfSymBinding);
+		static std::string to_string(SgAsmElfSymbol::ElfSymType);
 
 	private:
 		void ctor(SgAsmElfSymbolSection*);
@@ -3860,6 +3868,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	void append_dest(SgAsmStatement* instruction);
 	void remove_children();
 
+   std::string get_functionReasonString();
+
 	/** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
 	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
 	 *  instructions into functions. */
@@ -3875,11 +3885,12 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 		FUNC_INTERPAD    = 0x080,		/**< Created to represent NOP padding between other functions. */
 		FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous in memory. */
 		FUNC_INSNHEAD    = 0x200,		/**< For initial instructions not in any other function (is always run) */
-		FUNC_LEFTOVERS   = 0x400,		/**< Generated function to hold blocks that are otherwise not part of
+		FUNC_IMPORT      = 0x400,		/**< Functions dynamically linked */
+		FUNC_LEFTOVERS   = 0x800,		/**< Generated function to hold blocks that are otherwise not part of
 							 *   any function.  If this bit is turned off then the instruction
 							 *   Partitioner will delete instructions that it couldn't assign to
 							 *   a function. */
-                FUNC_DEFAULT     = 0x7ff                /**< Default value for Partitioner class */
+                FUNC_DEFAULT     = 0xfff                /**< Default value for Partitioner class */
         };
 
 	/** Returns a very short string describing the reason mask. */
@@ -3895,6 +3906,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 		e_thunk	   = 4,
 		e_last
 	};
+
+
 HEADER_BINARY_FUNCTION_DECLARATION_END
 
 

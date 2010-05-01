@@ -2,6 +2,7 @@ CMake is now checked in by Andreas, so we can play with it building ROSE using C
 under both Linux and Windows.
 
 
+
 For Windows:
 To run rdesktop from my Linux machine:
      wxp -g 5 -s tux245-0
@@ -56,6 +57,8 @@ git clone ssh://dquinlan@tux282.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git
 
 
 Setting up SSH keys on Windows Server (logged in as hudson-rose):
+NOTE: Important is that is is done for CMD (not for git-bash or cygwin, etc.)
+More information about this is at: http://devlicio.us/blogs/sergio_pereira/archive/2009/05/06/git-ssh-putty-github-unfuddle-the-kitchen-sink.aspx
 
 A. Generate the keys:
    1) Generate the keys, run "plink -agent tux269" and enter your

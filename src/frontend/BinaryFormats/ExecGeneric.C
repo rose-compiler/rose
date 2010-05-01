@@ -411,19 +411,18 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Byte
 
 std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecFamily family)
 {
-  const char* s=NULL;
   switch(family){
-    case FAMILY_UNSPECIFIED:  s = "unspecified";                          break;
-    case FAMILY_DOS:          s = "Microsoft DOS";                        break;
-    case FAMILY_ELF:          s = "Executable and Linking Format (ELF)";  break;
-    case FAMILY_LE:           s = "Microsoft Linear Executable (LE)";     break;
-    case FAMILY_LX:           s = "OS/2 Extended Linear Executable (LX)"; break;
-    case FAMILY_NE:           s = "Microsoft New Executable (NE)";        break;
-    case FAMILY_PE:           s = "Microsoft Portable Executable (PE)";   break;
-    default:
-      s = "unknown exec family";
+    case FAMILY_UNSPECIFIED:  return "unspecified";                          
+    case FAMILY_DOS:          return "Microsoft DOS";                        
+    case FAMILY_ELF:          return "Executable and Linking Format (ELF)";  
+    case FAMILY_LE:           return "Microsoft Linear Executable (LE)";     
+    case FAMILY_LX:           return "OS/2 Extended Linear Executable (LX)"; 
+    case FAMILY_NE:           return "Microsoft New Executable (NE)";        
+    case FAMILY_PE:           return "Microsoft Portable Executable (PE)";   
   };
-  return s;
+  char buf[128];
+  snprintf(buf,sizeof(buf),"unknown exec family (%zu)",size_t(family)) ;
+  return buf;
 }
 
 std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecABI abi)
