@@ -104,7 +104,7 @@ protected:
         Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(true) {}
         Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(true) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
-            : reason(r), name(name), pending(true), entry_va(entry_va) {}
+            : reason(r), name(name), pending(true), entry_va(entry_va), returns(true) {}
         void clear_blocks();                    /**< Remove all blocks from this function */
         BasicBlock* last_block() const;         /**< Return pointer to block with highest address */
         unsigned reason;                        /**< SgAsmFunctionDeclaration::FunctionReason bit flags */

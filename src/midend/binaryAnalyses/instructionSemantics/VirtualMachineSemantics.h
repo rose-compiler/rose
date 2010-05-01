@@ -128,7 +128,7 @@ struct MemoryCell {
     friend std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
         uint64_t sign_bit = (uint64_t)1 << (Len-1);  /* e.g., 80000000 */
         uint64_t val_mask = sign_bit - 1;            /* e.g., 7fffffff */
-        uint64_t negative = (e.offset & sign_bit) ? (~e.offset & val_mask) + 1 : 0; /*magnitude of negative value*/
+        uint64_t negative = Len>1 && (e.offset & sign_bit) ? (~e.offset & val_mask) + 1 : 0; /*magnitude of negative value*/
 
         if (e.name!=0) {
             /* This is a named value rather than a constant. */
@@ -259,11 +259,7 @@ public:
             ValueType<32> carries = 0;
             ValueType<32> diff = addWithCarries(addr, sp_inverted, true_(), carries/*out*/);
             //std::cerr <<"    [" <<addr <<"] + [" <<sp_inverted <<"] = [" <<diff <<"] carry=" <<carries <<"\n";
-            //ValueType<1> pf = parity(extract<0, 8>(diff));
             ValueType<1> sf = extract<31,32>(diff);
-            //ValueType<1> zf = equalToZero(diff);
-            //ValueType<1> af = invert(extract<3,4>(carries));
-            //ValueType<1> cf = invert(extract<31,32>(carries));
             ValueType<1> of = xor_(extract<31,32>(carries), extract<30,31>(carries));
             //std::cerr <<"    sf=" <<sf <<", of=" <<of <<"\n";
             //std::cerr <<"    on stack? "<<(sf==of ? "yes" : "no") <<"\n";
@@ -466,12 +462,14 @@ public:
         int n_unknown = (a.name?1:0) + (b.name?1:0) + (c.name?1:0);
         if (n_unknown <= 1) {
             /* At most, one of the operands is an unknown value. See add() for more details. */
-            carry_out = 0==n_unknown ? ValueType<Len>((a.offset ^ b.offset ^ c.offset)>>1) : ValueType<Len>();
-            return ValueType<Len>(a.name+b.name+c.name, a.offset+b.offset+c.offset, a.negate||b.negate||c.negate);
+            uint64_t sum = a.name + b.name + c.name;
+            carry_out = 0==n_unknown ? ValueType<Len>((a.offset ^ b.offset ^ sum)>>1) : ValueType<Len>();
+            return ValueType<Len>(sum, a.offset+b.offset+c.offset, a.negate||b.negate||c.negate);
         } else if (a.name==b.name && !c.name && a.negate!=b.negate) {
             /* A and B are known or have bases that cancel out, and C is known */
-            carry_out = ValueType<Len>((a.offset + b.offset + c.offset)>>1);
-            return a.offset + b.offset + c.offset;
+            uint64_t sum = a.offset + b.offset + c.offset;
+            carry_out = ValueType<Len>((a.offset ^ b.offset ^ sum)>>1);
+            return ValueType<Len>(sum);
         } else {
             carry_out = ValueType<Len>();
             return ValueType<Len>();

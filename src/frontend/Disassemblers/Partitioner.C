@@ -186,6 +186,8 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
 bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
+    bool on_stack = true; /*assume return value stays on stack; prove otherwise*/
+    bool preexisting = insn2block[va]!=NULL;
     BasicBlock *bb = find_bb_containing(va);
     if (!bb) return false;
     SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
@@ -208,19 +210,23 @@ Partitioner::pops_return_address(rose_addr_t va)
 #if 0
             std::ostringstream s;
             s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-              <<policy.state
-              <<"    ip = " <<policy.readIP() <<"\n";
+              <<policy.get_state()
+              <<"    ip = " <<policy.get_ip() <<"\n";
             fputs(s.str().c_str(), stderr);
 #endif
         }
+        on_stack = policy.on_stack(orig_retaddr);
+        if (!on_stack && debug)
+            fprintf(debug, "[B%08"PRIx64" discards return address]", va);
     } catch (const Semantics::Exception&) {
-        return false;
+        /*void*/
     }
-    
+
+    /* We don't want to have a basic block created just because we did some analysis. */
+    if (!preexisting)
+        discard(bb);
+
     /* Is the original return value still on the stack? */
-    bool on_stack = policy.on_stack(orig_retaddr);
-    if (!on_stack && debug)
-        fprintf(debug, "[B%08"PRIx64" discards return address]", va);
     return !on_stack;
 }
 
@@ -356,6 +362,7 @@ Partitioner::append(Function* f, BasicBlock *bb)
 {
     ROSE_ASSERT(f);
     ROSE_ASSERT(bb);
+    if (bb->function==f) return;
     ROSE_ASSERT(bb->function==NULL);
     bb->function = f;
     f->blocks[address(bb)] = bb;
@@ -1020,31 +1027,29 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         ROSE_ASSERT(bb!=NULL);
         ROSE_ASSERT(va==address(bb));
     }
-    
-    if (bb->function==f) {
-        /* Already processed unless this is the first block, in which case we should not add it to the function but should
-         * follow the successors. The first block was added with discover_first_block() but its successors were not originally
-         * followed. */
-        if (address(bb)==f->entry_va) {
-            const Disassembler::AddressSet& suc = successors(bb);
-            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-                if (*si!=f->entry_va)
-                    discover_blocks(f, *si);
-            }
+
+    /* Don't reprocess blocks for this function. However, we need to reprocess the first block because it was added by
+     * discover_first_block(), which is not recursive.  Care should be taken so none of the recursive calls below are invoked
+     * for the first block, or we'll have infinite recurision! */
+    if (bb->function==f && address(bb)!=f->entry_va)
+        return;
+
+    if (bb->function && bb->function!=f) {
+        if (va==bb->function->entry_va) {
+            /* This is a call to some other existing function. Do not add it to the current function. */
+            if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
+        } else {
+            /* This block belongs internally to some other function. Since ROSE requires that blocks be owned by exactly one
+             * function (the function/block relationship is an edge in the abstract syntax tree), we have to remove this block
+             * from the other function.  We'll mark both the other function and this function as being in conflict and try
+             * again later. */
+            if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+            if (functions.find(va)==functions.end())
+                add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
+            bb->function->pending = f->pending = true;
+            if (debug) fprintf(debug, " abandon");
+            throw AbandonFunctionDiscovery();
         }
-    } else if (bb->function && va==bb->function->entry_va) {
-        /* This is a call to an existing function. Do not add it to the current function. */
-        if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
-    } else if (bb->function) {
-        /* This block belongs to some other function. Since ROSE requires that blocks be owned by exactly one function (the
-         * function/block relationship is an edge in the abstract syntax tree), we have to remove this block from the other
-         * function.  We'll mark both the other function and this function as being in conflict and try again later. */
-        if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
-        if (functions.find(va)==functions.end())
-            add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
-        bb->function->pending = f->pending = true;
-        if (debug) fprintf(debug, " abandon");
-        throw AbandonFunctionDiscovery();
     } else if (bb->is_function_call(&target_va) && target_va!=NO_TARGET) {
         if (pops_return_address(target_va)) {
             /* Although this looks like a function call from the perspective of the caller, the called block pops the
@@ -1052,7 +1057,8 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
              * We add this current block to the function and discovery continues at the branch target. */
             if (debug) fprintf(debug, "[!call]");
             append(f, bb);
-            discover_blocks(f, target_va);
+            if (target_va!=f->entry_va)
+                discover_blocks(f, target_va);
         } else {
             /* The target address appears to be a valid function entry point. */
             if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
@@ -1068,8 +1074,8 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
                 target_func = NULL;
             }
 
-            /* Optionally create a new function. */
-            if (!target_func && (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
+            /* Optionally create a new function (or add reason flags). */
+            if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
                 target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
 
             /* Current block is discovered. If the target function returns then we also continue the discovery proccess at the
@@ -1078,7 +1084,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
             if (target_func && target_func->returns) {
                 const Disassembler::AddressSet& suc = successors(bb);
                 for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-                    if (*si!=target_va)
+                    if (*si!=target_va && *si!=f->entry_va)
                         discover_blocks(f, *si);
                 }
             }
@@ -1088,7 +1094,8 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         append(f, bb);
         const Disassembler::AddressSet& suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-            discover_blocks(f, *si);
+            if (*si!=f->entry_va)
+                discover_blocks(f, *si);
         }
     }
 }
