@@ -1146,7 +1146,7 @@
     ?15 = V24
     memory = {}
     ip = 0x8048345
-0x8048345:and    esp, 0xf0
+0x8048345:and    esp, 0xf0(-0x10)
     ax = V1
     cx = V5+0x4
     dx = V3
@@ -1885,7 +1885,7 @@
     ?15 = V30
     memory = {}
     ip = 0x8048375
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc]
+0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc(-0x00000004)]
     ax = V1
     cx = V2
     dx = V37
@@ -4245,7 +4245,7 @@
         size=4; addr=V5-0x4; value=V6
     }
     ip = 0x804841b
-0x804841b:and    esp, 0xf0
+0x804841b:and    esp, 0xf0(-0x10)
     ax = V1
     cx = V2
     dx = 0x8048480
@@ -6278,7 +6278,7 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80484ca:lea    eax, [ebx + 0xffffff20]
+0x80484ca:lea    eax, [ebx + 0xffffff20(-0x000000e0)]
     ax = V1-0xe0
     cx = V2
     dx = V3
@@ -6311,7 +6311,7 @@
     ?15 = V29
     memory = {}
     ip = 0x80484d0
-0x80484d0:lea    edx, [ebx + 0xffffff20]
+0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]
     ax = V1-0xe0
     cx = V2
     dx = V1-0xe0
@@ -6359,18 +6359,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = -V30-0x1
+    cf = 0x0
     ?1 = V15
     pf = 0x1 (-0x1)
     ?3 = V17
-    af = -V31-0x1
+    af = 0x1 (-0x1)
     ?5 = V19
     zf = 0x1 (-0x1)
     sf = 0x0
     tf = V22
     if = V23
     df = V24
-    of = V32
+    of = 0x1 (-0x1)
     iopl0 = V26
     iopl1 = V27
     nt = V28
@@ -6396,7 +6396,7 @@
     ?1 = V15
     pf = 0x1 (-0x1)
     ?3 = V17
-    af = V33
+    af = V30
     ?5 = V19
     zf = 0x1 (-0x1)
     sf = 0x0
@@ -6410,7 +6410,7 @@
     ?15 = V29
     memory = {}
     ip = 0x80484db
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0], eax
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax
     ax = 0x0
     cx = V2
     dx = V1-0xe0
@@ -6429,7 +6429,7 @@
     ?1 = V15
     pf = 0x1 (-0x1)
     ?3 = V17
-    af = V33
+    af = V30
     ?5 = V19
     zf = 0x1 (-0x1)
     sf = 0x0
@@ -6464,7 +6464,7 @@
     ?1 = V15
     pf = 0x1 (-0x1)
     ?3 = V17
-    af = V33
+    af = V30
     ?5 = V19
     zf = 0x1 (-0x1)
     sf = 0x0
@@ -6495,18 +6495,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = V34
+    cf = V31
     ?1 = V15
-    pf = -V35-0x1
+    pf = -V32-0x1
     ?3 = V17
-    af = V36
+    af = V33
     ?5 = V19
-    zf = V37
-    sf = V38
+    zf = V34
+    sf = V35
     tf = V22
     if = V23
     df = V24
-    of = V39
+    of = V36
     iopl0 = V26
     iopl1 = V27
     nt = V28
@@ -6519,7 +6519,7 @@
     ax = 0x0
     cx = V2
     dx = V1-0xe0
-    bx = V40
+    bx = V37
     sp = V4+0x10
     bp = V5
     si = V6
@@ -6530,18 +6530,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = V34
+    cf = V31
     ?1 = V15
-    pf = -V35-0x1
+    pf = -V32-0x1
     ?3 = V17
-    af = V36
+    af = V33
     ?5 = V19
-    zf = V37
-    sf = V38
+    zf = V34
+    sf = V35
     tf = V22
     if = V23
     df = V24
-    of = V39
+    of = V36
     iopl0 = V26
     iopl1 = V27
     nt = V28
@@ -6554,10 +6554,10 @@
     ax = 0x0
     cx = V2
     dx = V1-0xe0
-    bx = V40
+    bx = V37
     sp = V4+0x14
     bp = V5
-    si = V41
+    si = V38
     di = V7
     es = V8
     cs = V9
@@ -6565,18 +6565,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = V34
+    cf = V31
     ?1 = V15
-    pf = -V35-0x1
+    pf = -V32-0x1
     ?3 = V17
-    af = V36
+    af = V33
     ?5 = V19
-    zf = V37
-    sf = V38
+    zf = V34
+    sf = V35
     tf = V22
     if = V23
     df = V24
-    of = V39
+    of = V36
     iopl0 = V26
     iopl1 = V27
     nt = V28
@@ -6589,29 +6589,29 @@
     ax = 0x0
     cx = V2
     dx = V1-0xe0
-    bx = V40
+    bx = V37
     sp = V4+0x18
     bp = V5
-    si = V41
-    di = V42
+    si = V38
+    di = V39
     es = V8
     cs = V9
     ss = V10
     ds = V11
     fs = V12
     gs = V13
-    cf = V34
+    cf = V31
     ?1 = V15
-    pf = -V35-0x1
+    pf = -V32-0x1
     ?3 = V17
-    af = V36
+    af = V33
     ?5 = V19
-    zf = V37
-    sf = V38
+    zf = V34
+    sf = V35
     tf = V22
     if = V23
     df = V24
-    of = V39
+    of = V36
     iopl0 = V26
     iopl1 = V27
     nt = V28
@@ -6624,29 +6624,29 @@
     ax = 0x0
     cx = V2
     dx = V1-0xe0
-    bx = V40
+    bx = V37
     sp = V4+0x1c
-    bp = V43
-    si = V41
-    di = V42
+    bp = V40
+    si = V38
+    di = V39
     es = V8
     cs = V9
     ss = V10
     ds = V11
     fs = V12
     gs = V13
-    cf = V34
+    cf = V31
     ?1 = V15
-    pf = -V35-0x1
+    pf = -V32-0x1
     ?3 = V17
-    af = V36
+    af = V33
     ?5 = V19
-    zf = V37
-    sf = V38
+    zf = V34
+    sf = V35
     tf = V22
     if = V23
     df = V24
-    of = V39
+    of = V36
     iopl0 = V26
     iopl1 = V27
     nt = V28
@@ -6659,29 +6659,29 @@
     ax = 0x0
     cx = V2
     dx = V1-0xe0
-    bx = V40
+    bx = V37
     sp = V4+0x20
-    bp = V43
-    si = V41
-    di = V42
+    bp = V40
+    si = V38
+    di = V39
     es = V8
     cs = V9
     ss = V10
     ds = V11
     fs = V12
     gs = V13
-    cf = V34
+    cf = V31
     ?1 = V15
-    pf = -V35-0x1
+    pf = -V32-0x1
     ?3 = V17
-    af = V36
+    af = V33
     ?5 = V19
-    zf = V37
-    sf = V38
+    zf = V34
+    sf = V35
     tf = V22
     if = V23
     df = V24
-    of = V39
+    of = V36
     iopl0 = V26
     iopl1 = V27
     nt = V28
@@ -6689,7 +6689,7 @@
     memory = {
         size=4; addr=V5-0x10; value=0x0
     }
-    ip = V44
+    ip = V41
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -6995,7 +6995,7 @@
     ?15 = V30
     memory = {}
     ip = 0x8048506
-0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]
+0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]
     ax = V1
     cx = V2
     dx = V3
@@ -7658,7 +7658,7 @@
     ?15 = V30
     memory = {}
     ip = 0x8048535
-0x8048535:lea    eax, [ebx + 0xffffff20]
+0x8048535:lea    eax, [ebx + 0xffffff20(-0x000000e0)]
     ax = V4+0x10ba
     cx = V2
     dx = V3
@@ -7691,7 +7691,7 @@
     ?15 = V30
     memory = {}
     ip = 0x804853b
-0x804853b:lea    edx, [ebx + 0xffffff20]
+0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]
     ax = V4+0x10ba
     cx = V2
     dx = V4+0x10ba
@@ -7739,18 +7739,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V37-0x1
+    cf = 0x0
     ?1 = V16
     pf = 0x1 (-0x1)
     ?3 = V18
-    af = -V38-0x1
+    af = 0x1 (-0x1)
     ?5 = V20
     zf = 0x1 (-0x1)
     sf = 0x0
     tf = V23
     if = V24
     df = V25
-    of = V39
+    of = 0x1 (-0x1)
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -7776,7 +7776,7 @@
     ?1 = V16
     pf = 0x1 (-0x1)
     ?3 = V18
-    af = V40
+    af = V37
     ?5 = V20
     zf = 0x1 (-0x1)
     sf = 0x0
@@ -7790,7 +7790,7 @@
     ?15 = V30
     memory = {}
     ip = 0x8048546
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax
     ax = 0x0
     cx = V2
     dx = V4+0x10ba
@@ -7809,7 +7809,7 @@
     ?1 = V16
     pf = 0x1 (-0x1)
     ?3 = V18
-    af = V40
+    af = V37
     ?5 = V20
     zf = 0x1 (-0x1)
     sf = 0x0
@@ -7844,14 +7844,14 @@
     ?1 = V16
     pf = 0x1 (-0x1)
     ?3 = V18
-    af = 0x1 (-0x1)
+    af = 0x0
     ?5 = V20
     zf = 0x0
     sf = 0x1 (-0x1)
     tf = V23
     if = V24
     df = V25
-    of = 0x0
+    of = 0x1 (-0x1)
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -7860,7 +7860,7 @@
         size=4; addr=V6-0x10; value=0x0
     }
     ip = 0x804854a
-0x804854a:cmp    eax, 0xff
+0x804854a:cmp    eax, 0xff(-0x01)
     ax = 0xffffffff (-0x1)
     cx = V2
     dx = V4+0x10ba
@@ -7875,7 +7875,7 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = 0x0
+    cf = 0x1 (-0x1)
     ?1 = V16
     pf = 0x1 (-0x1)
     ?3 = V18
@@ -7886,7 +7886,7 @@
     tf = V23
     if = V24
     df = V25
-    of = 0x0
+    of = 0x1 (-0x1)
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -7910,7 +7910,7 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = 0x0
+    cf = 0x1 (-0x1)
     ?1 = V16
     pf = 0x1 (-0x1)
     ?3 = V18
@@ -7921,7 +7921,7 @@
     tf = V23
     if = V24
     df = V25
-    of = 0x0
+    of = 0x1 (-0x1)
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -7945,7 +7945,7 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = 0x0
+    cf = 0x1 (-0x1)
     ?1 = V16
     pf = 0x1 (-0x1)
     ?3 = V18
@@ -7956,7 +7956,7 @@
     tf = V23
     if = V24
     df = V25
-    of = 0x0
+    of = 0x1 (-0x1)
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -8204,7 +8204,7 @@
     ?15 = V30
     memory = {}
     ip = 0x8048566
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi
     ax = V1
     cx = V2
     dx = V3
@@ -8952,7 +8952,7 @@
         size=4; addr=V5-0x4; value=V6
     }
     ip = 0x8048591
-0x8048591:cmp    eax, 0xff
+0x8048591:cmp    eax, 0xff(-0x01)
     ax = V37
     cx = V2
     dx = V3
@@ -9197,7 +9197,7 @@
     ?15 = V30
     memory = {}
     ip = 0x80485a7
-0x80485a7:cmp    eax, 0xff
+0x80485a7:cmp    eax, 0xff(-0x01)
     ax = V1
     cx = V2
     dx = V3

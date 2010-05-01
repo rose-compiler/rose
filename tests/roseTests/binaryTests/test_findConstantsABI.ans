@@ -1146,12 +1146,12 @@
     ?15 = V23
     memory = {}
     ip = 0x8048345 [from 0x8048343:mov    ecx, esp]
-0x8048345:and    esp, 0xf0
+0x8048345:and    esp, 0xf0(-0x10)
     ax = V1
     cx = V5+0x4 [from 0x8048342:pop    esi]
     dx = V3
     bx = V4
-    sp = V25 [from 0x8048345:and    esp, 0xf0]
+    sp = V25 [from 0x8048345:and    esp, 0xf0(-0x10)]
     bp = 0x0 [from 0x8048340:xor    ebp, ebp]
     si = V24 [from 0x8048342:pop    esi]
     di = V7
@@ -1161,24 +1161,24 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
     ?15 = V23
     memory = {}
-    ip = 0x8048348 [from 0x8048345:and    esp, 0xf0]
+    ip = 0x8048348 [from 0x8048345:and    esp, 0xf0(-0x10)]
 0x8048348:push   eax
     ax = V1
     cx = V5+0x4 [from 0x8048342:pop    esi]
@@ -1194,18 +1194,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1229,18 +1229,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1265,18 +1265,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1302,18 +1302,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1340,18 +1340,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1379,18 +1379,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1419,18 +1419,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1460,18 +1460,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1502,18 +1502,18 @@
     ds = V11
     fs = V12
     gs = V13
-    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?1 = V14
-    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0]
+    pf = -V26-0x1 [from 0x8048345:and    esp, 0xf0(-0x10)]
     ?3 = V15
     af = <top>
     ?5 = V16
-    zf = V27 [from 0x8048345:and    esp, 0xf0]
-    sf = V28 [from 0x8048345:and    esp, 0xf0]
+    zf = V27 [from 0x8048345:and    esp, 0xf0(-0x10)]
+    sf = V28 [from 0x8048345:and    esp, 0xf0(-0x10)]
     tf = V17
     if = V18
     df = V19
-    of = 0x0 [from 0x8048345:and    esp, 0xf0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0(-0x10)]
     iopl0 = V20
     iopl1 = V21
     nt = V22
@@ -1885,10 +1885,10 @@
     ?15 = V30
     memory = {}
     ip = 0x8048375 [from 0x804836f:add    ebx, 0x0000135a]
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc]
+0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc(-0x00000004)]
     ax = V1
     cx = V2
-    dx = V37 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc]]
+    dx = V37 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc(-0x00000004)]]
     bx = V4+0x135a [from 0x804836f:add    ebx, 0x0000135a]
     sp = V5+0x4 [from 0x804836e:pop    ebx]
     bp = V6
@@ -1917,11 +1917,11 @@
     nt = V29
     ?15 = V30
     memory = {}
-    ip = 0x804837b [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc]]
+    ip = 0x804837b [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc(-0x00000004)]]
 0x804837b:test   edx, edx
     ax = V1
     cx = V2
-    dx = V37 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc]]
+    dx = V37 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc(-0x00000004)]]
     bx = V4+0x135a [from 0x804836f:add    ebx, 0x0000135a]
     sp = V5+0x4 [from 0x804836e:pop    ebx]
     bp = V6
@@ -1954,7 +1954,7 @@
 0x804837d:je     0x08048384
     ax = V1
     cx = V2
-    dx = V37 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc]]
+    dx = V37 [from 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc(-0x00000004)]]
     bx = V4+0x135a [from 0x804836f:add    ebx, 0x0000135a]
     sp = V5+0x4 [from 0x804836e:pop    ebx]
     bp = V6
@@ -4245,12 +4245,12 @@
         size=4; addr=V5-0x4 [from 0x8048410:push   ebp]; value=V6
     }
     ip = 0x804841b [from 0x8048418:sub    esp, 0x08]
-0x804841b:and    esp, 0xf0
+0x804841b:and    esp, 0xf0(-0x10)
     ax = V1
     cx = V2
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x08048480]
     bx = V4
-    sp = V37 [from 0x804841b:and    esp, 0xf0]
+    sp = V37 [from 0x804841b:and    esp, 0xf0(-0x10)]
     bp = V5-0x4 [from 0x8048410:push   ebp]
     si = V7
     di = V8
@@ -4260,18 +4260,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?1 = V16
-    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0]
+    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?3 = V18
     af = <top>
     ?5 = V20
-    zf = V39 [from 0x804841b:and    esp, 0xf0]
-    sf = V40 [from 0x804841b:and    esp, 0xf0]
+    zf = V39 [from 0x804841b:and    esp, 0xf0(-0x10)]
+    sf = V40 [from 0x804841b:and    esp, 0xf0(-0x10)]
     tf = V23
     if = V24
     df = V25
-    of = 0x0 [from 0x804841b:and    esp, 0xf0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -4279,13 +4279,13 @@
     memory = {
         size=4; addr=V5-0x4 [from 0x8048410:push   ebp]; value=V6
     }
-    ip = 0x804841e [from 0x804841b:and    esp, 0xf0]
+    ip = 0x804841e [from 0x804841b:and    esp, 0xf0(-0x10)]
 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx
     ax = V1
     cx = V2
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x08048480]
     bx = V4
-    sp = V37 [from 0x804841b:and    esp, 0xf0]
+    sp = V37 [from 0x804841b:and    esp, 0xf0(-0x10)]
     bp = V5-0x4 [from 0x8048410:push   ebp]
     si = V7
     di = V8
@@ -4295,18 +4295,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?1 = V16
-    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0]
+    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?3 = V18
     af = <top>
     ?5 = V20
-    zf = V39 [from 0x804841b:and    esp, 0xf0]
-    sf = V40 [from 0x804841b:and    esp, 0xf0]
+    zf = V39 [from 0x804841b:and    esp, 0xf0(-0x10)]
+    sf = V40 [from 0x804841b:and    esp, 0xf0(-0x10)]
     tf = V23
     if = V24
     df = V25
-    of = 0x0 [from 0x804841b:and    esp, 0xf0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -4320,7 +4320,7 @@
     cx = V2
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x08048480]
     bx = V4
-    sp = V37 [from 0x804841b:and    esp, 0xf0]
+    sp = V37 [from 0x804841b:and    esp, 0xf0(-0x10)]
     bp = V5-0x4 [from 0x8048410:push   ebp]
     si = V7
     di = V8
@@ -4330,24 +4330,24 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?1 = V16
-    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0]
+    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?3 = V18
     af = <top>
     ?5 = V20
-    zf = V39 [from 0x804841b:and    esp, 0xf0]
-    sf = V40 [from 0x804841b:and    esp, 0xf0]
+    zf = V39 [from 0x804841b:and    esp, 0xf0(-0x10)]
+    sf = V40 [from 0x804841b:and    esp, 0xf0(-0x10)]
     tf = V23
     if = V24
     df = V25
-    of = 0x0 [from 0x804841b:and    esp, 0xf0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
     ?15 = V30
     memory = {
-        size=4; addr=V37 [from 0x804841b:and    esp, 0xf0]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
+        size=4; addr=V37 [from 0x804841b:and    esp, 0xf0(-0x10)]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
         size=4; addr=V37+0x4 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x8048411:mov    edx, 0x08048480]
     }
     ip = 0x8048429 [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
@@ -4366,24 +4366,24 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?1 = V16
-    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0]
+    pf = -V38-0x1 [from 0x804841b:and    esp, 0xf0(-0x10)]
     ?3 = V18
     af = <top>
     ?5 = V20
-    zf = V39 [from 0x804841b:and    esp, 0xf0]
-    sf = V40 [from 0x804841b:and    esp, 0xf0]
+    zf = V39 [from 0x804841b:and    esp, 0xf0(-0x10)]
+    sf = V40 [from 0x804841b:and    esp, 0xf0(-0x10)]
     tf = V23
     if = V24
     df = V25
-    of = 0x0 [from 0x804841b:and    esp, 0xf0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0(-0x10)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
     ?15 = V30
     memory = {
-        size=4; addr=V37 [from 0x804841b:and    esp, 0xf0]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
+        size=4; addr=V37 [from 0x804841b:and    esp, 0xf0(-0x10)]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a]
         size=4; addr=V37+0x4 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x8048411:mov    edx, 0x08048480]
         size=4; addr=V37-0x4 [from 0x8048429:call   0x080482f0]; value=0x804842e [from 0x8048429:call   0x080482f0]
     }
@@ -6278,8 +6278,8 @@
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
-0x80484ca:lea    eax, [ebx + 0xffffff20]
-    ax = V1-0xe0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20]]
+0x80484ca:lea    eax, [ebx + 0xffffff20(-0x000000e0)]
+    ax = V1-0xe0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20(-0x000000e0)]]
     cx = V2
     dx = V3
     bx = V1
@@ -6310,11 +6310,11 @@
     nt = V28
     ?15 = V29
     memory = {}
-    ip = 0x80484d0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20]]
-0x80484d0:lea    edx, [ebx + 0xffffff20]
-    ax = V1-0xe0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20]]
+    ip = 0x80484d0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20(-0x000000e0)]]
+0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]
+    ax = V1-0xe0 [from 0x80484ca:lea    eax, [ebx + 0xffffff20(-0x000000e0)]]
     cx = V2
-    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20]]
+    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V1
     sp = V4
     bp = V5
@@ -6343,11 +6343,11 @@
     nt = V28
     ?15 = V29
     memory = {}
-    ip = 0x80484d6 [from 0x80484d0:lea    edx, [ebx + 0xffffff20]]
+    ip = 0x80484d6 [from 0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
 0x80484d6:sub    eax, edx
     ax = -V30 [from 0x80484d6:sub    eax, edx]
     cx = V2
-    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20]]
+    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V1
     sp = V4
     bp = V5
@@ -6380,7 +6380,7 @@
 0x80484d8:sar    eax, 0x02
     ax = V37 [from 0x80484d8:sar    eax, 0x02]
     cx = V2
-    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20]]
+    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V1
     sp = V4
     bp = V5
@@ -6410,10 +6410,10 @@
     ?15 = V29
     memory = {}
     ip = 0x80484db [from 0x80484d8:sar    eax, 0x02]
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0], eax
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax
     ax = V37 [from 0x80484d8:sar    eax, 0x02]
     cx = V2
-    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20]]
+    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V1
     sp = V4
     bp = V5
@@ -6442,13 +6442,13 @@
     nt = V28
     ?15 = V29
     memory = {
-        size=4; addr=V5-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=V37 [from 0x80484d8:sar    eax, 0x02]
+        size=4; addr=V5-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]; value=V37 [from 0x80484d8:sar    eax, 0x02]
     }
-    ip = 0x80484de [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0], eax]
+    ip = 0x80484de [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]
 0x80484de:jne    0x080484f0
     ax = V37 [from 0x80484d8:sar    eax, 0x02]
     cx = V2
-    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20]]
+    dx = V1-0xe0 [from 0x80484d0:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V1
     sp = V4
     bp = V5
@@ -6477,7 +6477,7 @@
     nt = V28
     ?15 = V29
     memory = {
-        size=4; addr=V5-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=V37 [from 0x80484d8:sar    eax, 0x02]
+        size=4; addr=V5-0x10 [from 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]; value=V37 [from 0x80484d8:sar    eax, 0x02]
     }
     ip = V42 [from 0x80484de:jne    0x080484f0]
 =====================================================================================
@@ -6986,7 +6986,7 @@
     ?15 = V30
     memory = {}
     ip = 0x8048506 [from 0x8048503:add    esi, 0x04]
-0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]
+0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]
     ax = V1
     cx = V2
     dx = V3
@@ -7001,24 +7001,24 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V37-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    cf = -V37-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     ?1 = V16
-    pf = -V38-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    pf = -V38-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     ?3 = V18
-    af = -V39-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    af = -V39-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     ?5 = V20
-    zf = V40 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
-    sf = V41 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    zf = V40 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
+    sf = V41 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     tf = V23
     if = V24
     df = V25
-    of = V42 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    of = V42 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     iopl0 = V27
     iopl1 = V28
     nt = V29
     ?15 = V30
     memory = {}
-    ip = 0x8048509 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    ip = 0x8048509 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
 0x8048509:jb     0x08048500
     ax = V1
     cx = V2
@@ -7034,18 +7034,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V37-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    cf = -V37-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     ?1 = V16
-    pf = -V38-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    pf = -V38-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     ?3 = V18
-    af = -V39-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    af = -V39-0x1 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     ?5 = V20
-    zf = V40 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
-    sf = V41 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    zf = V40 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
+    sf = V41 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     tf = V23
     if = V24
     df = V25
-    of = V42 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]]
+    of = V42 [from 0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0(-0x10)]]
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -7649,8 +7649,8 @@
     ?15 = V30
     memory = {}
     ip = 0x8048535 [from 0x804852f:add    ebx, 0x0000119a]
-0x8048535:lea    eax, [ebx + 0xffffff20]
-    ax = V4+0x10ba [from 0x8048535:lea    eax, [ebx + 0xffffff20]]
+0x8048535:lea    eax, [ebx + 0xffffff20(-0x000000e0)]
+    ax = V4+0x10ba [from 0x8048535:lea    eax, [ebx + 0xffffff20(-0x000000e0)]]
     cx = V2
     dx = V3
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
@@ -7681,11 +7681,11 @@
     nt = V29
     ?15 = V30
     memory = {}
-    ip = 0x804853b [from 0x8048535:lea    eax, [ebx + 0xffffff20]]
-0x804853b:lea    edx, [ebx + 0xffffff20]
-    ax = V4+0x10ba [from 0x8048535:lea    eax, [ebx + 0xffffff20]]
+    ip = 0x804853b [from 0x8048535:lea    eax, [ebx + 0xffffff20(-0x000000e0)]]
+0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]
+    ax = V4+0x10ba [from 0x8048535:lea    eax, [ebx + 0xffffff20(-0x000000e0)]]
     cx = V2
-    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
     sp = V5+0x4 [from 0x804852e:pop    ebx]
     bp = V6
@@ -7714,11 +7714,11 @@
     nt = V29
     ?15 = V30
     memory = {}
-    ip = 0x8048541 [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    ip = 0x8048541 [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
 0x8048541:sub    eax, edx
     ax = -V37 [from 0x8048541:sub    eax, edx]
     cx = V2
-    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
     sp = V5+0x4 [from 0x804852e:pop    ebx]
     bp = V6
@@ -7751,7 +7751,7 @@
 0x8048543:sar    eax, 0x02
     ax = V44 [from 0x8048543:sar    eax, 0x02]
     cx = V2
-    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
     sp = V5+0x4 [from 0x804852e:pop    ebx]
     bp = V6
@@ -7781,10 +7781,10 @@
     ?15 = V30
     memory = {}
     ip = 0x8048546 [from 0x8048543:sar    eax, 0x02]
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax
     ax = V44 [from 0x8048543:sar    eax, 0x02]
     cx = V2
-    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
     sp = V5+0x4 [from 0x804852e:pop    ebx]
     bp = V6
@@ -7813,13 +7813,13 @@
     nt = V29
     ?15 = V30
     memory = {
-        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
     }
-    ip = 0x8048549 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]
+    ip = 0x8048549 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]
 0x8048549:dec    eax
     ax = V44-0x1 [from 0x8048549:dec    eax]
     cx = V2
-    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
     sp = V5+0x4 [from 0x804852e:pop    ebx]
     bp = V6
@@ -7848,13 +7848,13 @@
     nt = V29
     ?15 = V30
     memory = {
-        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
     }
     ip = 0x804854a [from 0x8048549:dec    eax]
-0x804854a:cmp    eax, 0xff
+0x804854a:cmp    eax, 0xff(-0x01)
     ax = V44-0x1 [from 0x8048549:dec    eax]
     cx = V2
-    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
     sp = V5+0x4 [from 0x804852e:pop    ebx]
     bp = V6
@@ -7866,30 +7866,30 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V54-0x1 [from 0x804854a:cmp    eax, 0xff]
+    cf = -V54-0x1 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     ?1 = V16
-    pf = -V55-0x1 [from 0x804854a:cmp    eax, 0xff]
+    pf = -V55-0x1 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     ?3 = V18
-    af = -V56-0x1 [from 0x804854a:cmp    eax, 0xff]
+    af = -V56-0x1 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     ?5 = V20
-    zf = V57 [from 0x804854a:cmp    eax, 0xff]
-    sf = V58 [from 0x804854a:cmp    eax, 0xff]
+    zf = V57 [from 0x804854a:cmp    eax, 0xff(-0x01)]
+    sf = V58 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     tf = V23
     if = V24
     df = V25
-    of = V59 [from 0x804854a:cmp    eax, 0xff]
+    of = V59 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
     ?15 = V30
     memory = {
-        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
     }
-    ip = 0x804854d [from 0x804854a:cmp    eax, 0xff]
+    ip = 0x804854d [from 0x804854a:cmp    eax, 0xff(-0x01)]
 0x804854d:je     0x0804856b
     ax = V44-0x1 [from 0x8048549:dec    eax]
     cx = V2
-    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
+    dx = V4+0x10ba [from 0x804853b:lea    edx, [ebx + 0xffffff20(-0x000000e0)]]
     bx = V4+0x119a [from 0x804852f:add    ebx, 0x0000119a]
     sp = V5+0x4 [from 0x804852e:pop    ebx]
     bp = V6
@@ -7901,24 +7901,24 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V54-0x1 [from 0x804854a:cmp    eax, 0xff]
+    cf = -V54-0x1 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     ?1 = V16
-    pf = -V55-0x1 [from 0x804854a:cmp    eax, 0xff]
+    pf = -V55-0x1 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     ?3 = V18
-    af = -V56-0x1 [from 0x804854a:cmp    eax, 0xff]
+    af = -V56-0x1 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     ?5 = V20
-    zf = V57 [from 0x804854a:cmp    eax, 0xff]
-    sf = V58 [from 0x804854a:cmp    eax, 0xff]
+    zf = V57 [from 0x804854a:cmp    eax, 0xff(-0x01)]
+    sf = V58 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     tf = V23
     if = V24
     df = V25
-    of = V59 [from 0x804854a:cmp    eax, 0xff]
+    of = V59 [from 0x804854a:cmp    eax, 0xff(-0x01)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
     ?15 = V30
     memory = {
-        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
+        size=4; addr=V6-0x10 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax]; value=V44 [from 0x8048543:sar    eax, 0x02]
     }
     ip = V60 [from 0x804854d:je     0x0804856b]
 =====================================================================================
@@ -8160,7 +8160,7 @@
     ?15 = V30
     memory = {}
     ip = 0x8048566 [from 0x8048563:sub    esi, 0x04]
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi
     ax = V1
     cx = V2
     dx = V3
@@ -8175,24 +8175,24 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V37-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    cf = -V37-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     ?1 = V16
-    pf = -V38-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    pf = -V38-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     ?3 = V18
-    af = -V39-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    af = -V39-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     ?5 = V20
-    zf = V40 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
-    sf = V41 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    zf = V40 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
+    sf = V41 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     tf = V23
     if = V24
     df = V25
-    of = V42 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    of = V42 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     iopl0 = V27
     iopl1 = V28
     nt = V29
     ?15 = V30
     memory = {}
-    ip = 0x8048569 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    ip = 0x8048569 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
 0x8048569:jne    0x08048560
     ax = V1
     cx = V2
@@ -8208,18 +8208,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V37-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    cf = -V37-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     ?1 = V16
-    pf = -V38-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    pf = -V38-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     ?3 = V18
-    af = -V39-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    af = -V39-0x1 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     ?5 = V20
-    zf = V40 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
-    sf = V41 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    zf = V40 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
+    sf = V41 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     tf = V23
     if = V24
     df = V25
-    of = V42 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi]
+    of = V42 [from 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0(-0x10)], edi]
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -8946,7 +8946,7 @@
         size=4; addr=V5-0x4 [from 0x8048580:push   ebp]; value=V6
     }
     ip = 0x8048591 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8]]
-0x8048591:cmp    eax, 0xff
+0x8048591:cmp    eax, 0xff(-0x01)
     ax = V37 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8]]
     cx = V2
     dx = V3
@@ -8961,18 +8961,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V38-0x1 [from 0x8048591:cmp    eax, 0xff]
+    cf = -V38-0x1 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     ?1 = V16
-    pf = -V39-0x1 [from 0x8048591:cmp    eax, 0xff]
+    pf = -V39-0x1 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     ?3 = V18
-    af = -V40-0x1 [from 0x8048591:cmp    eax, 0xff]
+    af = -V40-0x1 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     ?5 = V20
-    zf = V41 [from 0x8048591:cmp    eax, 0xff]
-    sf = V42 [from 0x8048591:cmp    eax, 0xff]
+    zf = V41 [from 0x8048591:cmp    eax, 0xff(-0x01)]
+    sf = V42 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     tf = V23
     if = V24
     df = V25
-    of = V43 [from 0x8048591:cmp    eax, 0xff]
+    of = V43 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -8981,7 +8981,7 @@
         size=4; addr=V5-0x8 [from 0x8048583:push   ebx]; value=V4
         size=4; addr=V5-0x4 [from 0x8048580:push   ebp]; value=V6
     }
-    ip = 0x8048594 [from 0x8048591:cmp    eax, 0xff]
+    ip = 0x8048594 [from 0x8048591:cmp    eax, 0xff(-0x01)]
 0x8048594:je     0x080485ac
     ax = V37 [from 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8]]
     cx = V2
@@ -8997,18 +8997,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V38-0x1 [from 0x8048591:cmp    eax, 0xff]
+    cf = -V38-0x1 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     ?1 = V16
-    pf = -V39-0x1 [from 0x8048591:cmp    eax, 0xff]
+    pf = -V39-0x1 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     ?3 = V18
-    af = -V40-0x1 [from 0x8048591:cmp    eax, 0xff]
+    af = -V40-0x1 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     ?5 = V20
-    zf = V41 [from 0x8048591:cmp    eax, 0xff]
-    sf = V42 [from 0x8048591:cmp    eax, 0xff]
+    zf = V41 [from 0x8048591:cmp    eax, 0xff(-0x01)]
+    sf = V42 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     tf = V23
     if = V24
     df = V25
-    of = V43 [from 0x8048591:cmp    eax, 0xff]
+    of = V43 [from 0x8048591:cmp    eax, 0xff(-0x01)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
@@ -9191,7 +9191,7 @@
     ?15 = V30
     memory = {}
     ip = 0x80485a7 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
-0x80485a7:cmp    eax, 0xff
+0x80485a7:cmp    eax, 0xff(-0x01)
     ax = V1 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
     cx = V2
     dx = V3
@@ -9206,24 +9206,24 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V31-0x1 [from 0x80485a7:cmp    eax, 0xff]
+    cf = -V31-0x1 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     ?1 = V16
-    pf = -V32-0x1 [from 0x80485a7:cmp    eax, 0xff]
+    pf = -V32-0x1 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     ?3 = V18
-    af = -V33-0x1 [from 0x80485a7:cmp    eax, 0xff]
+    af = -V33-0x1 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     ?5 = V20
-    zf = V34 [from 0x80485a7:cmp    eax, 0xff]
-    sf = V35 [from 0x80485a7:cmp    eax, 0xff]
+    zf = V34 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
+    sf = V35 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     tf = V23
     if = V24
     df = V25
-    of = V36 [from 0x80485a7:cmp    eax, 0xff]
+    of = V36 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
     ?15 = V30
     memory = {}
-    ip = 0x80485aa [from 0x80485a7:cmp    eax, 0xff]
+    ip = 0x80485aa [from 0x80485a7:cmp    eax, 0xff(-0x01)]
 0x80485aa:jne    0x080485a0
     ax = V1 [from 0x80485a5:mov    eax, DWORD PTR ds:[ebx]]
     cx = V2
@@ -9239,18 +9239,18 @@
     ds = V12
     fs = V13
     gs = V14
-    cf = -V31-0x1 [from 0x80485a7:cmp    eax, 0xff]
+    cf = -V31-0x1 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     ?1 = V16
-    pf = -V32-0x1 [from 0x80485a7:cmp    eax, 0xff]
+    pf = -V32-0x1 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     ?3 = V18
-    af = -V33-0x1 [from 0x80485a7:cmp    eax, 0xff]
+    af = -V33-0x1 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     ?5 = V20
-    zf = V34 [from 0x80485a7:cmp    eax, 0xff]
-    sf = V35 [from 0x80485a7:cmp    eax, 0xff]
+    zf = V34 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
+    sf = V35 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     tf = V23
     if = V24
     df = V25
-    of = V36 [from 0x80485a7:cmp    eax, 0xff]
+    of = V36 [from 0x80485a7:cmp    eax, 0xff(-0x01)]
     iopl0 = V27
     iopl1 = V28
     nt = V29
