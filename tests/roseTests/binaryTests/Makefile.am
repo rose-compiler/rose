@@ -90,8 +90,8 @@ virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
 virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
-disassemble_SOURCES = disassemble.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+disassemble_SOURCES = disassemble.C RPM_unparser.C
+disassemble_LDADD = -lgcrypt $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassemble a file containing bare instructions
 disassembleBuffer_SOURCES = disassembleBuffer.C

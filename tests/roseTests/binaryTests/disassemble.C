@@ -4,8 +4,12 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <gcrypt.h>
+#include <ostream>
 
+#include "VirtualMachineSemantics.h"
 #include "bincfg.h"
+#include "RPM_unparser.h"
 
 /* Traversal prints information about each SgAsmFunctionDeclaration node. */
 class ShowFunctions : public SgSimpleProcessing {
@@ -72,6 +76,45 @@ public:
     }
 };
 
+/* Compute a SHA1 hash for the semantics of a basic block */
+std::string
+block_semantics(SgAsmBlock *blk) 
+{
+    if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front()))
+        return "";
+
+    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
+    VirtualMachineSemantics::Policy policy;
+    Semantics semantics(policy);
+
+    try {
+        const SgAsmStatementPtrList &stmts = blk->get_statementList();
+        for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
+            ROSE_ASSERT(insn!=NULL);
+            semantics.processInstruction(insn);
+        }
+    } catch (const Semantics::Exception&) {
+        return "";
+    }
+
+    /* Compute digest based on print form of policy state, then convert to ASCII */
+    std::stringstream s;
+    VirtualMachineSemantics::State final_state = policy.get_state();
+    final_state.canonicalize();
+    s <<final_state;
+    size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
+    char *digest = new char[digest_sz];
+    gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
+    std::string digest_str;
+    for (size_t i=digest_sz; i>0; --i) {
+        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+    }
+    delete[] digest; digest=NULL;
+    return digest_str;
+}
+
 /* Generate the "label" attribute for a function node in a *.dot file. */
 static std::string
 function_label_attr(SgAsmFunctionDeclaration *func)
@@ -99,48 +142,66 @@ function_url_attr(SgAsmFunctionDeclaration *func)
     return std::string("URL=\"") + buf + ".html\"";
 }
 
+
+        
+
 /* Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
  * control flow edges within the function. */
 static std::string
-dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bool verbose) 
+dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bool verbose) 
 {
-    char node_name[64];
-    sprintf(node_name, "%08"PRIx64, func->get_entry_va());
+    using namespace StringUtility;
+
+    struct Unparser: public RPM_unparser {
+        Unparser() {
+            insn_show_bytes = false;
+            insn_linefeed = false;
+            blk_detect_noop_seq = true;
+            blk_remove_noop_seq = false;
+            blk_show_noop_warning = false;
+            blk_show_successors = false;
+            func_show_title = false;
+            interp_show_title = false;
+        }
+        virtual void pre(std::ostream &o, SgAsmInstruction*) {
+            o <<"<tr>"
+              <<"<td align=\"left\"" <<(insn_is_noop_seq?" bgcolor=\"gray50\"":"") <<">";
+        }
+        virtual void post(std::ostream &o, SgAsmInstruction*) {
+            o <<"</td></tr>";
+        }
+        virtual void pre(std::ostream &o, SgAsmBlock *b) {
+            o <<"B" <<StringUtility::addrToString(b->get_address()) <<" [ label=<<table border=\"0\">"
+              <<"<tr><td align=\"left\" bgcolor=\"green\">" <<block_semantics(b) <<"</td></tr>";
+        }
+        virtual void post(std::ostream &o, SgAsmBlock*b) {
+            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(b->get_parent());
+            o <<"</table>>";
+            if (!b->get_complete_successors()) {
+                SgAsmInstruction *last_insn = isSgAsmInstruction(b->get_statementList().back());
+                if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
+                    o <<", color=blue"; /*function return statement, not used as an unconditional branch*/
+                } else {
+                    o <<", color=red"; /*red implies that we don't have complete information for successors*/
+                }
+            } else if (func && b->get_address()==func->get_entry_va()) {
+                o <<", color=darkgreen";
+            }
+            o <<" ];\n";
+        }
+    } unparser;
+
     std::string label_attr = function_label_attr(func);
 
     if (verbose) {
-        fprintf(out, "  subgraph clusterF%s {\n", node_name);
-        fprintf(out, "    style=filled; color=gray95;\n");
-        fprintf(out, "    %s;\n", label_attr.c_str());
+        sout <<"  subgraph clusterF" <<addrToString(func->get_entry_va()) <<" {\n"
+             <<"    style=filled; color=gray95;\n"
+             <<"    " <<label_attr.c_str() <<";\n";
 
         /* Write the node definitions (basic blocks of this function) */
         std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
-        for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-            fprintf(out, "    B%08"PRIx64" [ label=<<table border=\"0\">", (*bbi)->get_address());
-            const SgAsmStatementPtrList &stmts = (*bbi)->get_statementList();
-            for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-                SgAsmInstruction *insn = isSgAsmInstruction(*si);
-                if (insn!=NULL) {
-                    char addr_str[64];
-                    sprintf(addr_str, "0x%08"PRIx64": ", insn->get_address());
-                    std::string s = std::string(addr_str) + unparseInstruction(insn).c_str();
-                    for (size_t j=0; j<s.size(); j++) if ('\t'==s[j]) s[j]=' ';
-                    fprintf(out, "<tr><td align=\"left\">%s</td></tr>", s.c_str());
-                }
-            }
-            fprintf(out, "</table>>");
-            if (!(*bbi)->get_complete_successors()) {
-                SgAsmInstruction *last_insn = isSgAsmInstruction((*bbi)->get_statementList().back());
-                if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
-                    fprintf(out, ", color=blue"); /*function return statement, not used as an unconditional branch*/
-                } else {
-                    fprintf(out, ", color=red"); /*red implies that we don't have complete information for successors*/
-                }
-            } else if ((*bbi)->get_address()==func->get_entry_va()) {
-                fprintf(out, ", color=darkgreen");
-            }
-            fprintf(out, " ];\n");
-        }
+        for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi)
+            unparser.unparse(sout, *bbi);
 
         /* Write the edge definitions for internal flow control */
         for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
@@ -150,14 +211,16 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bo
                 SgAsmFunctionDeclaration *target_func = target_block ?
                                                         isSgAsmFunctionDeclaration(target_block->get_parent()) : NULL;
                 if (target_func==func)
-                    fprintf(out, "    B%08"PRIx64" -> B%08"PRIx64";\n", (*bbi)->get_address(), *si);
+                    sout <<"    B" <<addrToString((*bbi)->get_address())
+                         <<" -> B" <<addrToString(*si) <<";\n";
             }
         }
-        fprintf(out, "  };\n"); /*subgraph*/
+        sout <<"  };\n"; /*subgraph*/
     } else {
-        fprintf(out, "B%s [ %s, %s ];\n", node_name, label_attr.c_str(), function_url_attr(func).c_str());
+        sout <<"B" <<addrToString(func->get_entry_va())
+             <<" [ " <<label_attr <<", " <<function_url_attr(func) <<" ];\n";
     }
-    return std::string("B") + node_name;
+    return std::string("B") + addrToString(func->get_entry_va());
 }
 
 /* Create a graphvis *.dot file of the control-flow graph for the specified function, along with the call graph edges into and
@@ -165,15 +228,18 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bo
 static void
 dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, BinaryCG &cg)
 {
+    using namespace StringUtility;
+
     char func_node_name[64];
     sprintf(func_node_name, "F%08"PRIx64, func->get_entry_va());
     fprintf(stderr, " %s", func_node_name);
     FILE *out = fopen((fileprefix+"-"+func_node_name+".dot").c_str(), "w");
     ROSE_ASSERT(out!=NULL);
-    fprintf(out, "digraph %s {\n", func_node_name);
-    fprintf(out, "  node [ shape = box ];\n");
+    std::stringstream sout;
+    sout <<"digraph " <<func_node_name <<" {\n"
+         <<"  node [ shape = box ];\n";
 
-    std::string my_node = dump_function_node(out, func, cfg, true);
+    std::string my_node = dump_function_node(sout, func, cfg, true);
     Disassembler::AddressSet node_defined;      /* nodes (virtual addresses) that we've defined in this graph so far */
     node_defined.insert(func->get_entry_va());
 
@@ -190,14 +256,14 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
                 SgAsmBlock *dst_bb = cfg.block(dst_addr);
                 SgAsmFunctionDeclaration *dst_func = dst_bb ? isSgAsmFunctionDeclaration(dst_bb->get_parent()) : NULL;
                 if (dst_func) {
-                    dump_function_node(out, dst_func, cfg, false);
+                    dump_function_node(sout, dst_func, cfg, false);
                 } else {
                     /* Node is not present in the CFG, so print a "B" (block) node rather than an "F" (function) node. */
-                    fprintf(out, "B%08"PRIx64" [ style=filled, color=lightpink ];\n", dst_addr);
+                    sout <<"B" <<addrToString(dst_addr) <<" [ style=filled, color=lightpink ];\n";
                 }
                 node_defined.insert(dst_addr);
             }
-            fprintf(out, "B%08"PRIx64" -> B%08"PRIx64";\n", src_bb->get_address(), dst_addr);
+            sout <<"B" <<addrToString(src_bb->get_address()) <<" -> B" <<addrToString(dst_addr) <<";\n";
         }
     }
 
@@ -208,15 +274,17 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
             SgAsmFunctionDeclaration *src_func = ei->first;
             rose_addr_t src_addr = src_func->get_entry_va();
             if (node_defined.find(src_addr)==node_defined.end()) {
-                dump_function_node(out, src_func, cfg, false);
+                dump_function_node(sout, src_func, cfg, false);
                 node_defined.insert(src_addr);
             }
-            fprintf(out, "B%08"PRIx64" -> B%08"PRIx64" [ label=\"%zu call%s\" ];\n",
-                    src_addr, func->get_entry_va(), ei->second, 1==ei->second?"":"s");
+            sout <<"B" <<addrToString(src_addr)
+                 <<" -> B" <<addrToString(func->get_entry_va())
+                 <<" [ label=\"" <<ei->second <<" call" <<(1==ei->second?"":"s") <<"\" ];\n";
         }
     }
 
-    fprintf(out, "}\n"); /*digraph*/
+    sout <<"}\n";
+    fputs(sout.str().c_str(), out);
     fclose(out);
 }
 
@@ -224,6 +292,8 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
 static void
 dump_CFG_CG(SgNode *ast)
 {
+    using namespace StringUtility;
+
     std::vector<SgAsmFunctionDeclaration*> funcs = SageInterface::querySubTree<SgAsmFunctionDeclaration>
                                                    (ast, V_SgAsmFunctionDeclaration);
 
@@ -249,13 +319,14 @@ dump_CFG_CG(SgNode *ast)
     fprintf(stderr, "  generating: cg");
     FILE *out = fopen((filename+"-cg.dot").c_str(), "w");
     ROSE_ASSERT(out);
-    fprintf(out, "digraph callgraph {\n");
-    fprintf(out, "node [ shape = box ];\n");
+    std::stringstream sout;
+    sout <<"digraph callgraph {\n"
+         <<"node [ shape = box ];\n";
     for (BinaryCG::CallerMap::const_iterator i1=cg.caller_edges.begin(); i1!=cg.caller_edges.end(); ++i1) {
         SgAsmFunctionDeclaration *caller = i1->first;
         if (cg_defined_nodes.find(caller->get_entry_va())==cg_defined_nodes.end()) {
             cg_defined_nodes.insert(caller->get_entry_va());
-            dump_function_node(out, caller, cfg, false);
+            dump_function_node(sout, caller, cfg, false);
         }
         typedef std::map<rose_addr_t/*callee_addr*/, size_t/*count*/> CalleeCounts;
         CalleeCounts callee_counts;
@@ -269,16 +340,17 @@ dump_CFG_CG(SgNode *ast)
                 SgAsmBlock *callee_bb = cfg.block(callee_addr);
                 SgAsmFunctionDeclaration *callee_func = callee_bb ? isSgAsmFunctionDeclaration(callee_bb->get_parent()) : NULL;
                 if (callee_func) {
-                    dump_function_node(out, callee_func, cfg, false);
+                    dump_function_node(sout, callee_func, cfg, false);
                 } else {
-                    fprintf(out, "  B%08"PRIx64" [ style=filled, color=lightpink ];\n", callee_addr);
+                    sout <<"  B" <<addrToString(callee_addr) <<" [ style=filled, color=lightpink ];\n";
                 }
             }
-            fprintf(out, "  B%08"PRIx64" -> B%08"PRIx64" [ label=\"%zu\" ];\n",
-                    caller->get_entry_va(), callee_addr, cci->second);
+            sout <<"  B" <<addrToString(caller->get_entry_va()) <<" -> B" <<addrToString(callee_addr)
+                 <<" [ label=\"" <<cci->second <<"\" ];\n";
         }
     }
-    fprintf(out, "}\n");
+    sout <<"}\n";
+    fputs(sout.str().c_str(), out);
     fclose(out);
     
     /* Generate a dot file for each function */
@@ -384,6 +456,8 @@ main(int argc, char *argv[])
     const char *blocks_filename = NULL;
     int exit_status = 0;
 
+    gcry_check_version(NULL);
+
     /* Parse and remove the command-line switches intended for this executable, but leave the switches we don't
      * understand so they can be handled by ROSE's frontend(). */
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
@@ -481,7 +555,12 @@ main(int argc, char *argv[])
         if (do_show_functions)
             ShowFunctions().show(interp);
         if (!do_quiet) {
+#if 0
             fputs(unparseAsmInterpretation(interp).c_str(), stdout);
+#else
+            RPM_unparser unparser;
+            unparser.unparse(std::cout, interp);
+#endif
             fputs("\n\n", stdout);
         }
 
