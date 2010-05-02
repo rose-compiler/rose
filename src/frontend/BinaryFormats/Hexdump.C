@@ -68,7 +68,7 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, addr_t base_addr, const unsi
         }
 
         if (fmt.show_numeric && fmt.show_chars)
-            f <<"  |";
+            f <<" |";
         
         /* Character byte values */
         if (fmt.show_chars) {

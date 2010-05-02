@@ -151,7 +151,8 @@ namespace ELF{
 #include "AssemblerX86.h"
 
 // Files in src/backend/asmUnparser
-#include "unparseAsm.h"
+#include "AsmUnparser.h"
+#include "AsmUnparser_compat.h"  /*backward compatibility functions once in unparseAsm.h*/
 
 
 

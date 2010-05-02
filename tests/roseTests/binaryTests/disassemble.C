@@ -7,9 +7,9 @@
 #include <gcrypt.h>
 #include <ostream>
 
+#include "AsmUnparser.h"
 #include "VirtualMachineSemantics.h"
 #include "bincfg.h"
-#include "RPM_unparser.h"
 
 /* Traversal prints information about each SgAsmFunctionDeclaration node. */
 class ShowFunctions : public SgSimpleProcessing {
@@ -152,7 +152,7 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
 {
     using namespace StringUtility;
 
-    struct Unparser: public RPM_unparser {
+    struct Unparser: public AsmUnparser {
         Unparser() {
             insn_show_bytes = false;
             insn_linefeed = false;
@@ -558,7 +558,7 @@ main(int argc, char *argv[])
 #if 0
             fputs(unparseAsmInterpretation(interp).c_str(), stdout);
 #else
-            RPM_unparser unparser;
+            AsmUnparser unparser;
             unparser.unparse(std::cout, interp);
 #endif
             fputs("\n\n", stdout);

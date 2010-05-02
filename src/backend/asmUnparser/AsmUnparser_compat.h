@@ -1,5 +1,28 @@
-#ifndef ROSE_UNPARSEASM_H
-#define ROSE_UNPARSEASM_H
+/* Old functions for backward compatitility, reimplemented in terms of AsmUnparser. */
+#ifndef ROSE_ASM_UNPARSER_COMPAT_H
+#define ROSE_ASM_UNPARSER_COMPAT_H
+
+#include "sage3basic.h"
+#include "AsmUnparser.h"
+
+/** Returns the string representation of an assembly instruction, sans address. */
+std::string unparseInstruction(SgAsmInstruction*);
+
+/** Returns the string representation of an assembly instruction with address. */
+std::string unparseInstructionWithAddress(SgAsmInstruction*);
+
+/** Returns a string representing the part of the assembly instruction before the first operand. */
+std::string unparseMnemonic(SgAsmInstruction*);
+
+/** Returns the string representation of an instruction operand (SgAsmExpression), the format of which might depend on the
+ *  instruction with which it's associated. */
+std::string unparseExpression(SgAsmExpression*);
+
+std::string unparseAsmStatement(SgAsmStatement*);
+
+void unparseAsmStatementToFile(const std::string& filename, SgAsmStatement*);
+
+std::string unparseAsmInterpretation(SgAsmInterpretation*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * X86
@@ -29,21 +52,4 @@ std::string unparseX86Register(X86RegisterClass, int reg, X86PositionInRegister)
 std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction*);
 std::string unparsePowerpcExpression(SgAsmExpression*);
 
-/*-------------------------------------------------------------------------------------------------------------------------------
- * Generic unparsing declarations
- *-------------------------------------------------------------------------------------------------------------------------------*/
-std::string unparseInstruction(SgAsmInstruction* insn);
-std::string unparseInstructionWithAddress(SgAsmInstruction* insn);
-std::string unparseMnemonic(SgAsmInstruction *insn);
-std::string unparseExpression(SgAsmExpression *expr);
-
-// Fixed to take a SgAsmStatement and added support for comments.
-std::string unparseAsmStatement(SgAsmStatement* stmt);
-
-// DQ (8/30/2008): Added prototype so this can be called from the unparser.
-// As part of work to merge the executable file format dump with instructions.
-std::string unparseAsmInterpretation(SgAsmInterpretation* interp);
-
-void unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt);
-
-#endif /* ROSE_UNPARSEASM_H */
+#endif

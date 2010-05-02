@@ -19,12 +19,13 @@
  *  RET; or a CALL to a block that discards the return address).  ROSE includes unconditional branch instructions and their
  *  targets within the same basic block (provided no other CFG edge comes into the middle of the block).
  *
- *  The partitioner organizes basic blocks into functions in three phases. The first phase considers all disassembled
- *  instructions and other available information such as symbol tables and tries to determine which addresses are entry points
- *  for functions.  For instance, if the symbol table contains function symbols, then the address stored in the symbol table is
- *  assumed to be the entry point of a function.  ROSE has a variety of these "pre-cfg" detection methods which can be
- *  enabled/disabled at runtime with the "-rose:partitioner_search" command-line switch.  ROSE also supports user-defined
- *  search methods that can be registered with an existing partitioner (see add_function_detector()).
+ *  The partitioner organizes basic blocks into functions in three phases, all three of which can be run by a single call
+ *  to the partitioner() method. The first phase considers all disassembled instructions and other available information such as
+ *  symbol tables and tries to determine which addresses are entry points for functions.  For instance, if the symbol table
+ *  contains function symbols, then the address stored in the symbol table is assumed to be the entry point of a function.  ROSE
+ *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the
+ *  "-rose:partitioner_search" command-line switch.  ROSE also supports user-defined search methods that can be registered with
+ * an existing partitioner (see add_function_detector()).
  *
  *  The second phase for assigning blocks to functions is via analysis of the control-flow graph.  In a nutshell, ROSE
  *  traverses the CFG starting with the entry address of each function, adding blocks to the function as it goes. When it
@@ -39,8 +40,7 @@
  *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
  *  information via a call to the build_ast() method, which constructs a ROSE AST.  Any instructions that were not assigned to
  *  blocks of a function can be optionally discarded (see the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit of set_search(), or
- *  the "leftovers" parameter of the "-rose:partitioner_search" command-line switch).  All three phases of detection and
- *  building of the final AST can be performed with a single call to the partition() method.
+ *  the "leftovers" parameter of the "-rose:partitioner_search" command-line switch).
  *
  *  The Partitioner class can easily be subclassed by the user. Some of the Disassembler methods automatically call
  *  Partitioner::partition(), using either a temporarily instantiated Partitioner, or a partitioner provided by the user.
