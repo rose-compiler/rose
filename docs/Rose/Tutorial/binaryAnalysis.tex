@@ -295,3 +295,171 @@ the future).}
 
 
  
+\section{Analysis and Transformations on Binaries}
+
+   This section demonstrates how the binary can be analyized and
+transformed via operations on the AST. In this tutorial example we will
+recognize sequences of NOP (No OPeration) instructions (both single byte
+and less common multi-byte NOPs) and replace them in the binary with as 
+few multi-byte NOP instructions as required to overwrite the identified
+NOP sequence (also called a {\em nop sled}).
+
+In the following subsections we will demonstrate three example codes that
+work together to demonstrate aspects of the binary analysis and transforamation using
+ROSE, specifically:
+\begin{enumerate}
+   \item How to insert NOP sequences into binaries via source-to-source transformations.
+         The tutorial example will demonstrate the trival insertion of random length
+         nop sequences into all functions of an input source code application.
+         The purpose of this is to really just generate arbitrary test codes
+         upon which to use in sperately demonstrating (and testing) the binary analysis 
+         support and the binary transformation support (next).  This example is
+         shown in figure~\ref{Tutorial:exampleTransformSourceToInsertNOPs}.
+   \item How to identify sequences of NOP instructions in the binary ({\em nop sleds}).
+         The tutorial example show how to identify arbitrary NOP sequences in the 
+         binary.  Note that our approach looks only for single instructions that have
+         no side-effect operations and thus qualify as a NOP, and specifically does not
+         look at collections of multiple statements that taken togehter have no
+         side-effect and thus could be considered a NOP sequence. Our test on each 
+         instruciton is isolated to the {\tt SageInterface::isNOP(SgAsmInstruction*)} 
+         function.  Initially this function only detects NOP instructions that are
+         single and multi-byte Intel x86 suggested NOP instructions.  The catagory of
+         NOP instructions that have no side-effects is broader than this and will
+         be addressed more completely in the future.This example is
+         shown in figures \ref{Tutorial:exampleTransformBinaryToDetectNOPs_header},
+         \ref{Tutorial:exampleTransformBinaryToDetectNOPs_source}, and
+         \ref{Tutorial:exampleTransformBinaryToDetectNOPs_main}.
+   \item Transformations on the binary executable is done to support rewriting
+         all identified NOP sequences as Intel x86 suggested NOP instructions.
+         Importantly, this tutorial example of an AST rewrite does not change the size 
+         of any part of the final executable.This example is
+         shown in figure~\ref{Tutorial:exampleTransformBinaryToInsertNOPs}.
+\end{enumerate}
+
+use a small example that demonstrates various 
+features of Binary-Rose. The source code of our binary example is:
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/nopSourceTransform.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/nopSourceTransform.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Source-tosource transformation to introduce NOP assemble instructions in the
+    generated binary executable.}
+\label{Tutorial:exampleTransformSourceToInsertNOPs}
+\end{figure}
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.h}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.h}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Header file for the traversal used to identify the NOP sequences in the binary executable.}
+\label{Tutorial:exampleTransformBinaryToDetectNOPs_header}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example code to identify the NOP sequences in the binary executable.}
+\label{Tutorial:exampleTransformBinaryToDetectNOPs_source}
+\end{figure}
+
+
+
+
+
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/detectNopSequences.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/detectNopSequences.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Main program using the traversal to identify the NOP sequences in the binary executable.}
+\label{Tutorial:exampleTransformBinaryToDetectNOPs_main}
+\end{figure}
+
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/nopBinaryTransform.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/nopBinaryTransform.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example code showing the transformation of the binary executable.}
+\label{Tutorial:exampleTransformBinaryToInsertNOPs}
+\end{figure}
+
