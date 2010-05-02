@@ -196,14 +196,11 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
             retval.insert(bb->cache.call_target);
             if (complete) *complete = true;
         } else {
-            std::map<rose_addr_t, BasicBlock*>::iterator bb_found = insn2block.find(bb->cache.call_target);
-            if (bb_found!=insn2block.end() && bb_found->second) {
-                BasicBlock *target_bb = bb_found->second;
-                if (target_bb->function && !target_bb->function->returns) {
-                    retval.clear();
-                    retval.insert(bb->cache.call_target);
-                    if (complete) *complete = true;
-                }
+            BasicBlock *target_bb = find_bb_containing(bb->cache.call_target, false);
+            if (target_bb && target_bb->function && !target_bb->function->returns) {
+                retval.clear();
+                retval.insert(bb->cache.call_target);
+                if (complete) *complete = true;
             }
         }
     }
@@ -232,39 +229,50 @@ bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
     bool on_stack = true; /*assume return value stays on stack; prove otherwise*/
-    bool preexisting = insn2block[va]!=NULL;
-    BasicBlock *bb = find_bb_containing(va);
+
+    /* Create the basic block if possible, but if we created it here then we should clear it below. */
+    BasicBlock *bb = find_bb_containing(va, false);
+    bool preexisting = bb!=NULL;
+    if (!bb) bb = find_bb_containing(va);
     if (!bb) return false;
-    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
-
-    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
-    VirtualMachineSemantics::Policy policy;
-    VirtualMachineSemantics::ValueType<32> orig_retaddr;
-    policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
-    Semantics semantics(policy);
-
-#if 0
-    fputs("Partitioner::pops_return_address:\n", stderr);
-#endif
     try {
-        for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
-            if (!insn) return false;
-            if (insn==last_insn && insn->get_kind()==x86_ret) break;
-            semantics.processInstruction(insn);
+
+        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
+
+        typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
+        VirtualMachineSemantics::Policy policy;
+        VirtualMachineSemantics::ValueType<32> orig_retaddr;
+        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
+        Semantics semantics(policy);
+
 #if 0
-            std::ostringstream s;
-            s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-              <<policy.get_state()
-              <<"    ip = " <<policy.get_ip() <<"\n";
-            fputs(s.str().c_str(), stderr);
+        fputs("Partitioner::pops_return_address:\n", stderr);
 #endif
+        try {
+            for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+                if (!insn) return false;
+                if (insn==last_insn && insn->get_kind()==x86_ret) break;
+                semantics.processInstruction(insn);
+#if 0
+                std::ostringstream s;
+                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
+                  <<policy.get_state()
+                  <<"    ip = " <<policy.get_ip() <<"\n";
+                fputs(s.str().c_str(), stderr);
+#endif
+            }
+            on_stack = policy.on_stack(orig_retaddr);
+            if (!on_stack && debug)
+                fprintf(debug, "[B%08"PRIx64" discards return address]", va);
+        } catch (const Semantics::Exception&) {
+            /*void*/
         }
-        on_stack = policy.on_stack(orig_retaddr);
-        if (!on_stack && debug)
-            fprintf(debug, "[B%08"PRIx64" discards return address]", va);
-    } catch (const Semantics::Exception&) {
-        /*void*/
+        
+    } catch(...) {
+        if (!preexisting)
+            discard(bb);
+        throw;
     }
 
     /* We don't want to have a basic block created just because we did some analysis. */
@@ -410,10 +418,10 @@ Partitioner::remove(Function* f, BasicBlock* bb)
     f->blocks.erase(address(bb));
 }
 
-/** Finds a basic block containing the specified instruction address. If no basic block exists then a new block is created
- *  which starts at the specified address.  The return value, in the case when a block already exists, may be a block where
- *  the specified virtual address is either the beginning of the block or somewhere inside the block. In any case, the virtual
- *  address will always represent a function.
+/** Finds a basic block containing the specified instruction address. If no basic block exists and @p create is set, then a
+ *  new block is created which starts at the specified address.  The return value, in the case when a block already exists,
+ *  may be a block where the specified virtual address is either the beginning of the block or somewhere inside the block. In
+ *  any case, the virtual address will always represent a function.
  *
  *  If no instruction can be found at the specified address then no block is created and a null pointer is returned.
  *
@@ -430,10 +438,12 @@ Partitioner::remove(Function* f, BasicBlock* bb)
  *  See also, set_allow_discontiguous_blocks().
  */
 Partitioner::BasicBlock *
-Partitioner::find_bb_containing(rose_addr_t va)
+Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 {
     if (insn2block[va]!=NULL)
         return insn2block[va];
+    if (!create)
+        return NULL;
 
     BasicBlock *bb = NULL;
     while (1) {
