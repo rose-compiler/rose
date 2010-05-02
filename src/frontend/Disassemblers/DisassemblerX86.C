@@ -407,6 +407,9 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
 std::vector< std::pair< size_t, size_t > >
 SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/)
 {
+    static const bool verbose = false;
+    
+    if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
@@ -421,10 +424,19 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+            if (verbose)
+                std::cerr <<"  insn #" <<(state.size()-1)
+                          <<" " <<(insn ? unparseInstructionWithAddress(insn) : "<none>") <<"\n";
             if (!insn) return retval;
-            if (insn->get_address()!=next_ip) return retval;
+            if (insn->get_address()!=next_ip) {
+                if (verbose) std::cerr <<"  expected insn at " <<StringUtility::addrToString(next_ip) <<"!\n";
+                break;
+            }
             semantics.processInstruction(insn);
-            if (!policy.get_ip().is_known()) return retval;
+            if (!policy.get_ip().is_known()) {
+                if (verbose) std::cerr <<"  next IP value is unknown: " <<policy.get_ip() <<" Abandoned!\n";
+                break;
+            }
             next_ip = policy.get_ip().known_value();
             state.push_back(policy.get_state());
         }
@@ -434,16 +446,20 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
 
     /* If the last state instruction pointer is not the fall-through address of the last instruction then remove it from the
      * state list because the last instruction cannot possibly be part of a no-op sequence in that case. */
-    ROSE_ASSERT(policy.get_ip().is_known());
-    if (!allow_branch && policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size())
+    if (!allow_branch &&
+        (!policy.get_ip().is_known() ||
+         policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size()))
         state.pop_back();
 
     /* Find pairs of equivalent states. */
     const size_t nstates = state.size();
+    if (verbose) std::cerr <<"  number of states: " <<nstates <<"\n";
     for (size_t i=0; i<nstates-1; i++) {
         for (size_t j=i+1; j<nstates; j++) {
-            if (state[i]==state[j])
+            if (state[i]==state[j]) {
+                if (verbose) std::cerr <<"  found sequence of " <<(j-i) <<" instructions at index " <<i <<"\n";
                 retval.push_back(std::make_pair(i, j-i));
+            }
         }
     }
 
