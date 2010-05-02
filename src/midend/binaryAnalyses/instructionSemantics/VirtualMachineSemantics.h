@@ -20,6 +20,8 @@ namespace VirtualMachineSemantics {
 
 extern uint64_t name_counter;
 
+typedef std::map<uint64_t/*oldname*/, uint64_t/*newname*/> RenameMap;
+
 /** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
 template<size_t nBits>
 struct ValueType {
@@ -61,6 +63,11 @@ struct ValueType {
         return offset;
     }
 
+    /** Print the value */
+    void print(std::ostream &o) const;
+
+    void rename(RenameMap&);
+
     friend bool operator==(const ValueType &a, const ValueType &b) {
         return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
     }
@@ -76,8 +83,10 @@ struct ValueType {
         if (a.name && b.negate<a.negate) return false;
         return a.offset < b.offset;
     }
-
 };
+
+template<size_t Len>
+std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e);
 
 /** Represents one location in memory. Has an address data and size. Memory granularity is 32-bits. */
 struct MemoryCell {
@@ -89,30 +98,14 @@ struct MemoryCell {
     MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes)
         : address(address), data(data), nbytes(nbytes) {}
 
+    void rename(RenameMap&);
+
     /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns fals
      *  only if this memory location cannot overlap with @p other memory location. */
-    bool may_alias(const MemoryCell &other) const {
-        const ValueType<32> &addr1 = this->address;
-        const ValueType<32> &addr2 = other.address;
-        if (addr1.name != addr2.name) return true;
-
-        /* Same unknown values but inverses (any offset). */
-        if (addr1.name && addr1.negate!=addr2.negate) return true;
-
-        /* If they have the same base values (or are both constant) then check the offsets. The 32-bit casts are purportedly
-         * necessary to wrap propertly, but I'm not sure this will work for addresses (LatticeElements) that have a length other
-         * than 32 bits. [FIXME RPM 2009-02-03]. */
-        uint32_t offsetDiff = (uint32_t)(addr1.offset - addr2.offset);
-        if (offsetDiff < this->nbytes || offsetDiff > (uint32_t)(-other.nbytes))
-            return true;
-        return false;
-    }
+    bool may_alias(const MemoryCell &other) const;
 
     /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap". */
-    bool must_alias(const MemoryCell &other) const {
-        if (!may_alias(other)) return false;
-        return this->address == other.address;
-    }
+    bool must_alias(const MemoryCell &other) const;
     
     friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
         return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes;
@@ -122,30 +115,6 @@ struct MemoryCell {
     }
     friend std::ostream& operator<<(std::ostream &o, const MemoryCell &me) {
         o <<"size=" <<me.nbytes <<"; addr=" <<me.address <<"; value=" <<me.data;
-        return o;
-    }
-    template <size_t Len>
-    friend std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
-        uint64_t sign_bit = (uint64_t)1 << (Len-1);  /* e.g., 80000000 */
-        uint64_t val_mask = sign_bit - 1;            /* e.g., 7fffffff */
-        uint64_t negative = Len>1 && (e.offset & sign_bit) ? (~e.offset & val_mask) + 1 : 0; /*magnitude of negative value*/
-
-        if (e.name!=0) {
-            /* This is a named value rather than a constant. */
-            const char *sign = e.negate ? "-" : "";
-            o <<sign <<"v" <<std::dec <<e.name;
-            if (negative) {
-                o <<"-0x" <<std::hex <<negative;
-            } else if (e.offset) {
-                o <<"+0x" <<std::hex <<e.offset;
-            }
-        } else {
-            /* This is a constant */
-            ROSE_ASSERT(!e.negate);
-            o  <<"0x" <<std::hex <<e.offset;
-            if (negative)
-                o <<" (-0x" <<std::hex <<negative <<")";
-        }
         return o;
     }
 };
@@ -163,46 +132,21 @@ struct State {
     ValueType<1> flag[n_flags];
     Memory mem;
 
-    friend bool operator==(const State &a, const State &b) {
-        for (size_t i=0; i<n_gprs; ++i)
-            if (a.gpr[i]!=b.gpr[i]) return false;
-        for (size_t i=0; i<n_segregs; ++i)
-            if (a.segreg[i]!=b.segreg[i]) return false;
-        for (size_t i=0; i<n_flags; ++i)
-            if (a.flag[i]!=b.flag[i]) return false;
-        if (a.mem.size()!=b.mem.size()) return false;
-        for (size_t i=0; i<a.mem.size(); i++) {
-            if (a.mem[i].nbytes!=b.mem[i].nbytes ||
-                a.mem[i].address!=b.mem[i].address ||
-                a.mem[i].data!=b.mem[i].data)
-                return false;
-        }
-        return true;
-    }
+    void print(std::ostream &o) const;
+    void rename(RenameMap&);
 
-    friend bool operator!=(const State &a, const State &b) {
-        return !(a==b);
-    }
+    /* Remap all named constants to lowest possible names.  This can be used before comparing states from two different
+     * policies. */
+    void canonicalize();
 
-    friend std::ostream& operator<<(std::ostream &o, const State &state) {
-        std::string prefix = "    ";
-        for (size_t i=0; i<n_gprs; ++i)
-            o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << state.gpr[i] << std::endl;
-        for (size_t i=0; i<n_segregs; ++i)
-            o <<prefix << segregToString((X86SegmentRegister)i) << " = " << state.segreg[i] << std::endl;
-        for (size_t i=0; i<n_flags; ++i)
-            o <<prefix << flagToString((X86Flag)i) << " = " << state.flag[i] << std::endl;
-        o <<prefix << "memory = ";
-        if (state.mem.empty()) {
-            o <<"{}\n";
-        } else {
-            o <<"{\n";
-            for (Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi)
-                o <<prefix <<"    " <<(*mi) <<"\n";
-            o <<prefix << "}\n";
-        }
-        return o;
-    }
+#if 0
+    /* Returns the SHA1 hash of a state. */
+    std::string SHA1() const;
+#endif
+
+    friend std::ostream& operator<<(std::ostream&, const State&);
+    friend bool operator==(const State&, const State&);
+    friend bool operator!=(const State&, const State&);
 };
 
 /** A policy that is supplied to the semantic analysis constructor. */
@@ -246,29 +190,7 @@ public:
     
     /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The stack pointer
      *  need not have a known value. */
-    bool on_stack(const ValueType<32> &value) {
-        //std::cerr <<"VirtualMachineSemantics::on_stack(value=" <<value <<"):\n";
-        const ValueType<32> sp_inverted = invert(state.gpr[x86_gpr_sp]);
-        //std::cerr <<"  stack pointer = " <<state.gpr[x86_gpr_sp] <<"; inverted = " <<sp_inverted <<"\n";
-        for (Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            //std::cerr <<"  mem entry " <<(*mi) <<":\n";
-            if ((*mi).nbytes!=4 || !((*mi).data==value)) continue;
-            const ValueType<32> &addr = (*mi).address;
-
-            /* Is addr >= sp? */
-            ValueType<32> carries = 0;
-            ValueType<32> diff = addWithCarries(addr, sp_inverted, true_(), carries/*out*/);
-            //std::cerr <<"    [" <<addr <<"] + [" <<sp_inverted <<"] = [" <<diff <<"] carry=" <<carries <<"\n";
-            ValueType<1> sf = extract<31,32>(diff);
-            ValueType<1> of = xor_(extract<31,32>(carries), extract<30,31>(carries));
-            //std::cerr <<"    sf=" <<sf <<", of=" <<of <<"\n";
-            //std::cerr <<"    on stack? "<<(sf==of ? "yes" : "no") <<"\n";
-            if (sf==of) return true;
-        }
-        return false;
-    }
-
-
+    bool on_stack(const ValueType<32> &value);
 
     /*************************************************************************************************************************
      * Functions invoked by the X86InstructionSemantics class for every processed instructions
