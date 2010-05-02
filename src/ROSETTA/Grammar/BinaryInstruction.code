@@ -3889,35 +3889,36 @@ HEADER_BINARY_OPERAND_LIST_END
 
 
 HEADER_BINARY_FUNCTION_DECLARATION_START
-          int nrOfValidInstructions(std::vector<SgNode*>& succs);
-       // void append_block(SgAsmBlock* operand);
-          void append_statement(SgAsmStatement* statement);
-          void remove_statement(SgAsmStatement* statement);
-          void append_dest(SgAsmStatement* instruction);
-          void remove_children();
+	int nrOfValidInstructions(std::vector<SgNode*>& succs);
+	//void append_block(SgAsmBlock* operand);
+	void append_statement(SgAsmStatement* statement);
+	void remove_statement(SgAsmStatement* statement);
+	void append_dest(SgAsmStatement* instruction);
+	void remove_children();
 
-          std::string get_functionReasonString();
+   std::string get_functionReasonString();
 
-      /** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
-       *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
-       *  instructions into functions. */
-          enum FunctionReason {
-               FUNC_NONE        = 0x000,    /**< Used for initialization; not a bit flag */
-               FUNC_ENTRY_POINT = 0x001,    /**< An entry point specified in the file header */
-               FUNC_CALL_TARGET = 0x002,    /**< Target of a CALL-like instruction */
-               FUNC_EH_FRAME    = 0x004,    /**< Address mentioned in the ELF .eh_frame section */
-               FUNC_SYMBOL      = 0x008,    /**< Address of a function symbol in a symbol table */
-               FUNC_PATTERN     = 0x010,    /**< Appears to be a function based on pattern of instructions */
-               FUNC_GRAPH       = 0x020,    /**< Implied by inter-basicblock branching */
-               FUNC_USERDEF     = 0x040,    /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
-               FUNC_INTERPAD    = 0x080,		/**< Created to represent NOP padding between other functions. */
-               FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous in memory. */
-               FUNC_INSNHEAD    = 0x200,		/**< For initial instructions not in any other function (is always run) */
-               FUNC_LEFTOVERS   = 0x400,		/**< Generated function to hold blocks that are otherwise not part of
-                                              *   any function.  If this bit is turned off then the instruction
-                                              *   Partitioner will delete instructions that it couldn't assign to
-                                              *   a function. */
-               FUNC_DEFAULT     = 0x7ff     /**< Default value for Partitioner class */
+	/** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
+	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
+	 *  instructions into functions. */
+        enum FunctionReason {
+                FUNC_NONE        = 0x000,               /**< Used for initialization; not a bit flag */
+                FUNC_ENTRY_POINT = 0x001,               /**< An entry point specified in the file header */
+                FUNC_CALL_TARGET = 0x002,               /**< Target of a CALL-like instruction */
+                FUNC_EH_FRAME    = 0x004,               /**< Address mentioned in the ELF .eh_frame section */
+                FUNC_SYMBOL      = 0x008,               /**< Address of a function symbol in a symbol table */
+                FUNC_PATTERN     = 0x010,               /**< Appears to be a function based on pattern of instructions */
+                FUNC_GRAPH       = 0x020,               /**< Implied by inter-basicblock branching */
+                FUNC_USERDEF     = 0x040,               /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
+		FUNC_INTERPAD    = 0x080,		/**< Created to represent NOP padding between other functions. */
+		FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous in memory. */
+		FUNC_INSNHEAD    = 0x200,		/**< For initial instructions not in any other function (is always run) */
+		FUNC_IMPORT      = 0x400,		/**< Functions dynamically linked */
+		FUNC_LEFTOVERS   = 0x800,		/**< Generated function to hold blocks that are otherwise not part of
+							 *   any function.  If this bit is turned off then the instruction
+							 *   Partitioner will delete instructions that it couldn't assign to
+							 *   a function. */
+                FUNC_DEFAULT     = 0xfff                /**< Default value for Partitioner class */
         };
 
       /** Returns a very short string describing the reason mask. */

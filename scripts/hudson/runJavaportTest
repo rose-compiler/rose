@@ -4,6 +4,12 @@
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
+# tps : allow to source the latest SWIG version
+MYVER=swig/1.3.37
+MYBIN=/nfs/apps/${MYVER}/bin
+PATH=${MYBIN}:${PATH}
+export PATH
+
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
 
 echo "*******************************************************************"
