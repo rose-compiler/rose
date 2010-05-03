@@ -47,7 +47,7 @@ $(TEST_Objects): reverse
 	./$(@:.o=.c).o		
 
 check-local:
-	@$(MAKE) $(TEST_Objects)
+#@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/reverseComputation: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
