@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 
 #include "sageInterfaceAsm.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 // These function in this file are expected to become a part of the 
 // Binary Analysis and Transformation interfaces in the nes ROSE API.

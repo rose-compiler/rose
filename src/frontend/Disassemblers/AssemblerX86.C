@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
