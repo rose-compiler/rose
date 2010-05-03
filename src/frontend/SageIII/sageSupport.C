@@ -3923,6 +3923,8 @@ SgProject::parse()
           i++;
         }
 
+  // printf ("Inside of SgProject::parse() before AstPostProcessing() \n");
+
   // GB (8/19/2009): Moved the AstPostProcessing call from
   // SgFile::callFrontEnd to this point. Thus, it is only called once for
   // the whole project rather than once per file. Repeated calls to
@@ -3931,10 +3933,21 @@ SgProject::parse()
   // it on, and they are meant to be used in some way other than just
   // calling the backend on them. (If only the backend is used, this was
   // never called by SgFile::callFrontEnd either.)
-     if ( !get_fileList().empty() && !get_useBackendOnly() )
+  // if ( !get_fileList().empty() && !get_useBackendOnly() )
+     if ( (get_fileList().empty() == false) && (get_useBackendOnly() == false) )
         {
           AstPostProcessing(this);
         }
+#if 0
+       else
+        {
+       // Alternatively if this is a part of binary analysis then process via AstPostProcessing().
+          if (this->get_binary_only() == true)
+             {
+               AstPostProcessing(this);
+             }
+        }
+#endif
 
   // GB (9/4/2009): Moved the secondary pass over source files (which
   // attaches the preprocessing information) to this point. This way, the
