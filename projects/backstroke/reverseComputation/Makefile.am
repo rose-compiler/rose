@@ -11,7 +11,7 @@ endif
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = 
+EXTRA_DIST = reverse.h test
 
 CLEANFILES = 
 
@@ -32,7 +32,11 @@ test10.c \
 test11.c \
 test12.c \
 test13.c \
-test14.c
+test14.c \
+test15.c \
+test16.c \
+test17.c \
+test18.c
 
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 

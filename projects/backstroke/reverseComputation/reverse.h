@@ -117,7 +117,7 @@ class EventReverser
     }
 
     // Return the statement which saves the branch state
-    SgStatement* putBranchFlag(bool flag = true)
+    SgExpression* putBranchFlagExp(bool flag = true)
     {
 	/* 
 	   if (branch_flags_.empty())
@@ -125,12 +125,16 @@ class EventReverser
 	   SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
 	   return buildExprStatement(buildBinaryExpression<SgIorAssignOp>(flag_var, buildIntVal(flag_)));
 	   */
-	return buildFunctionCallStmt("Push", buildVoidType(), 
+	return buildFunctionCallExp("Push", buildVoidType(), 
 		buildExprListExp(buildVarRefExp("flags"), buildIntVal(flag)));
+    }
+    SgStatement* putBranchFlagStmt(bool flag = true)
+    {
+	return buildExprStatement(putBranchFlagExp(flag));
     }
 
     // Return the statement which checks the branch flag
-    SgStatement* checkBranchFlag()
+    SgExpression* checkBranchFlagExp()
     {
 	/* 
 	   SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
@@ -146,16 +150,18 @@ class EventReverser
 
 	return flag_check;
 	*/
-	SgStatement* flag_check = buildFunctionCallStmt("Pop", buildVoidType(), 
+	return buildFunctionCallExp("Pop", buildVoidType(), 
 		buildExprListExp(buildVarRefExp(flagstack_name_)));
-	return flag_check;
+    }
+    SgStatement* checkBranchFlagStmt()
+    {
+	return buildExprStatement(checkBranchFlagExp());
     }
 
-    SgStatement* newBranchFlag()
+    SgExpression* newBranchFlag()
     {
-	SgStatement* flag = buildFunctionCallStmt("Push", buildVoidType(), 
+	return buildFunctionCallExp("Push", buildVoidType(), 
 		buildExprListExp(buildVarRefExp(flagstack_name_)));
-	return flag;
     }
 
     void saveBranchFlag() 
