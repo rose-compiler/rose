@@ -645,12 +645,17 @@ SageInterface::isNOP ( SgAsmInstruction* asmInstruction )
 bool
 SageInterface::isNOP ( const std::vector<SgAsmInstruction*> & asmInstructionList )
    {
-  //! Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
-     bool returnValue = false;
-
   // This is an initial implementation to be improved on later using the instruction semantics and looking at
   // combinations of instructions.
      std::vector<SgAsmInstruction*>::const_iterator i = asmInstructionList.begin();
+
+  // Let's disallow an empty list (since it is niether true nor false).
+     ROSE_ASSERT(i != asmInstructionList.end());
+
+  // Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
+     bool returnValue = true;
+
+  // This is the simple case of a sequence of instructions where each is a NOP.
      while (returnValue == true && i != asmInstructionList.end())
         {
           returnValue = isNOP(*i);
