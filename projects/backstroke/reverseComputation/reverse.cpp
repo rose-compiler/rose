@@ -208,8 +208,8 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 	tie(fwd_true_exp, rev_true_exp) = instrumentAndReverseExpression(cond_exp->get_true_exp());
 	tie(fwd_false_exp, rev_false_exp) = instrumentAndReverseExpression(cond_exp->get_false_exp());
 
-	fwd_true_exp = buildBinaryExpression<SgCommaOpExp>(fwd_true_exp, putBranchFlagExp(true));
-	fwd_false_exp = buildBinaryExpression<SgCommaOpExp>(fwd_false_exp, putBranchFlagExp(false));
+	fwd_true_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(true), fwd_true_exp);
+	fwd_false_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(false),fwd_false_exp);
 
 	SgExpression* fwd_exp = buildConditionalExp(fwd_cond_exp, fwd_true_exp, fwd_false_exp); 
 	SgExpression* rev_exp = buildConditionalExp(checkBranchFlagExp(), rev_true_exp, rev_false_exp);
@@ -765,6 +765,11 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits)
     // There are two tests: one is testing event and event_fwd get the same value of the model,
     // the other is performing event_fwd and event_reverse to see if the value of the model changes
 
+    // reset the seed of the random number generator
+    SgExprListExp* get_clock = buildExprListExp(
+	    buildFunctionCallExp("time", buildIntType(), 
+		buildExprListExp(buildIntVal(0))));
+    SgStatement* reset_seed = buildFunctionCallStmt("srand", buildVoidType(), get_clock);
     SgType* model_type = buildStructDeclaration("model")->get_type();
 
     // Declare two variables 
@@ -802,6 +807,7 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits)
     // First, input all initializing statements.
     foreach (SgStatement* stmt, inits) appendStatement(stmt);
 
+    appendStatement(reset_seed);
     appendStatement(var1);
     appendStatement(var2);
     appendStatement(init1);
@@ -831,6 +837,8 @@ int main( int argc, char * argv[] )
     SgGlobal *globalScope = getFirstGlobalScope (project);
     string includes = "#include \"rctypes.h\"\n"
 	"#include <stdio.h>\n"
+	"#include <stdlib.h>\n"
+	"#include <time.h>\n"
 	"#include <assert.h>\n";
     addTextForUnparser(globalScope,includes,AstUnparseAttribute::e_before); 
 
