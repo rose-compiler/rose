@@ -98,6 +98,8 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 	    // the following operations which alter the value of the lhs operand
 	    // can be reversed by state saving
 	    if (isSgAssignOp(exp) ||
+		    isSgPlusAssignOp(exp) ||
+		    isSgMinusAssignOp(exp) ||
 		    isSgMultAssignOp(exp) ||
 		    isSgDivAssignOp(exp) ||
 		    isSgModAssignOp(exp) ||
@@ -712,7 +714,7 @@ SgFunctionDeclaration* buildInitializationFunction()
     SgArrowExp* int_var = buildBinaryExpression<SgArrowExp>(
 	    buildVarRefExp(model_obj),
 	    buildVarRefExp(INT_MEM_NAME)); 
-    SgAssignOp* assign_0_to_int = buildBinaryExpression<SgAssignOp>(int_var, buildIntVal(0));
+    SgAssignOp* assign_0_to_int = buildBinaryExpression<SgAssignOp>(int_var, buildIntVal(0xFFFF));
     SgStatement* stmt = buildExprStatement(assign_0_to_int);
     appendStatement(stmt);
 

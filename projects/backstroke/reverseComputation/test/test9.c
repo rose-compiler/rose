@@ -10,6 +10,6 @@ struct model
 
 void event(struct model *m)
 {
-  m -> m_int %= 3034;
+  m -> m_int = ++m -> m_int;
 }
 
