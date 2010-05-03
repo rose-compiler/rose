@@ -1498,6 +1498,19 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                 retval.push_back(iprel & 0xff);
                 break;
             case od_cw:
+                /* The following 'if' was added for 32-bit assembly to prevent JMP instructions from being encoded with a two
+                 * byte displacement when there was no operand override prefix.  The relevant lines from the Intel manual are
+                 * on page 3-105:
+                 *
+                 *   E8 cw                CALL rel16    N.S.      Valid      Call near, relative, displacement
+                 *                                                           relative to next instruction.
+                 *   E8 cd                CALL rel32    Valid     Valid      Call near, relative, displacement
+                 *                                                           relative to next instruction. 32-bit
+                 *                                                           displacement sign extended to 64-bits
+                 *                                                           in 64-bit mode.
+                 * [RPM 2010-05-03] */
+                if (x86_insnsize_16!=insn->get_operandSize())
+                    throw Exception("operand size is not 16", insn);
                 iprel -= 2;
                 if (iprel<-32768 || iprel>32767)
                     throw Exception("displacement out of range", insn);
