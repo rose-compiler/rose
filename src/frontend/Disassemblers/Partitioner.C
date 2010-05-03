@@ -8,7 +8,7 @@
 #include "Partitioner.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 #include "VirtualMachineSemantics.h"
 
 /* See header file for full documentation. */

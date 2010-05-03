@@ -11,7 +11,7 @@
 // include "array_class_interface.h"
 #include "unparser.h"
 
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 #include <string.h>
 #if _MSC_VER
 #include <direct.h>
