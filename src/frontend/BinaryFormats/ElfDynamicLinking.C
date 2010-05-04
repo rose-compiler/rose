@@ -49,8 +49,8 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
 }
 
 /** Convert Dynamic Entry Tag to a string */
-const char *
-SgAsmElfDynamicEntry::stringify_tag(EntryType t) const
+std::string
+SgAsmElfDynamicEntry::to_string(EntryType t) 
 {
     switch (t) {
       case DT_NULL:             return "DT_NULL";
@@ -156,7 +156,7 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     char label[256];
-    strcpy(label, stringify_tag(p_d_tag));
+    strcpy(label, to_string(p_d_tag).c_str());
     for (char *s=label; *s; s++) *s = tolower(*s);
 
     fprintf(f, "%s%-*s = %s", p, w, label, p_d_val.to_string().c_str());

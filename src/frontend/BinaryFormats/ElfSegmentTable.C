@@ -104,11 +104,12 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = %zu\n",                             p, w, "index",  p_index);
-    fprintf(f, "%s%-*s = 0x%08x = %s\n",                     p, w, "type",   p_type,  stringifyType(p_type).c_str());
+    fprintf(f, "%s%-*s = 0x%08x = %s\n",                     p, w, "type",   p_type,  to_string(p_type).c_str());
     fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "flags",  p_flags);
     fputc(p_flags & PF_RPERM ? 'r' : '-', f);
     fputc(p_flags & PF_WPERM ? 'w' : '-', f);
     fputc(p_flags & PF_XPERM ? 'x' : '-', f);
+    if (p_flags & PF_OS_MASK) fputs(" os", f);
     if (p_flags & PF_PROC_MASK) fputs(" proc", f);
     if (p_flags & PF_RESERVED) fputs(" *", f);
     fputc('\n', f);
@@ -126,48 +127,91 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 // DQ (26/2008): Support output of named enum values
 std::string
-SgAsmElfSegmentTableEntry::stringifyType(SegmentType kind) const
+SgAsmElfSegmentTableEntry::to_string(SegmentType kind) 
 {
     std::string s;
 
     switch (kind) {
-      case SgAsmElfSegmentTableEntry::PT_NULL:    s = "PT_NULL";    break; // 0
-      case SgAsmElfSegmentTableEntry::PT_LOAD:    s = "PT_LOAD";    break; // 1
-      case SgAsmElfSegmentTableEntry::PT_DYNAMIC: s = "PT_DYNAMIC"; break; // 2
-      case SgAsmElfSegmentTableEntry::PT_INTERP:  s = "PT_INTERP";  break; // 3
-      case SgAsmElfSegmentTableEntry::PT_NOTE:    s = "PT_NOTE";    break; // 4
-      case SgAsmElfSegmentTableEntry::PT_SHLIB:   s = "PT_SHLIB";   break; // 5
-      case SgAsmElfSegmentTableEntry::PT_PHDR:    s = "PT_PHDR";    break; // 6
+      case PT_NULL:    s = "PT_NULL";    break; // 0
+      case PT_LOAD:    s = "PT_LOAD";    break; // 1
+      case PT_DYNAMIC: s = "PT_DYNAMIC"; break; // 2
+      case PT_INTERP:  s = "PT_INTERP";  break; // 3
+      case PT_NOTE:    s = "PT_NOTE";    break; // 4
+      case PT_SHLIB:   s = "PT_SHLIB";   break; // 5
+      case PT_PHDR:    s = "PT_PHDR";    break; // 6
 
       // DQ (10/31/2008): Added mising enum values to prevent run-time warnings
       /* OS- and Processor-specific ranges */
-      case SgAsmElfSegmentTableEntry::PT_LOOS: s = "PT_LOOS";  break; // 0x60000000, Values reserved for OS-specific semantics
-      case SgAsmElfSegmentTableEntry::PT_HIOS: s = "PT_HIOS";  break; // 0x6fffffff,
+      case PT_LOOS: s = "PT_LOOS";  break; // 0x60000000, Values reserved for OS-specific semantics
+      case PT_HIOS: s = "PT_HIOS";  break; // 0x6fffffff,
 
       /* Values reserved for processor-specific semantics */
-      case SgAsmElfSegmentTableEntry::PT_LOPROC: s = "PT_LOPROC";  break;
-      case SgAsmElfSegmentTableEntry::PT_HIPROC: s = "PT_HIPROC";  break;
+      case PT_LOPROC: s = "PT_LOPROC";  break;
+      case PT_HIPROC: s = "PT_HIPROC";  break;
 
       /* OS-specific values for GNU/Linux */
-      case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: s = "PT_GNU_EH_FRAME"; break; // 0x6474e550 GCC .eh_frame_hdr segment
-      case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    s = "PT_GNU_STACK";    break; // 0x6474e551 Indicates stack executability */
-      case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    s = "PT_GNU_RELRO";    break; // 0x6474e552 Read-only after relocation */
-      case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    s = "PT_PAX_FLAGS";    break; // 0x65041580 Indicates PaX flag markings */
+      case PT_GNU_EH_FRAME: s = "PT_GNU_EH_FRAME"; break; // 0x6474e550 GCC .eh_frame_hdr segment
+      case PT_GNU_STACK:    s = "PT_GNU_STACK";    break; // 0x6474e551 Indicates stack executability */
+      case PT_GNU_RELRO:    s = "PT_GNU_RELRO";    break; // 0x6474e552 Read-only after relocation */
+      case PT_PAX_FLAGS:    s = "PT_PAX_FLAGS";    break; // 0x65041580 Indicates PaX flag markings */
 
       /* OS-specific values for Sun */
-      case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      s = "PT_SUNWBSS";   break; // 0x6ffffffa Sun Specific segment */
-      case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    s = "PT_SUNWSTACK"; break; // 0x6ffffffb Stack segment */
+      case PT_SUNWBSS:      s = "PT_SUNWBSS";   break; // 0x6ffffffa Sun Specific segment */
+      case PT_SUNWSTACK:    s = "PT_SUNWSTACK"; break; // 0x6ffffffb Stack segment */
 
       default:
-      {
+	{
           s = "error";
 
           // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
-          printf ("Warning: default reached for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
+          printf ("Warning: default reached for SgAsmElfSegmentTableEntry::to_string(SegmentType) = 0x%x \n",kind);
       }
     }
     return s;
 }
+
+
+std::string
+SgAsmElfSegmentTableEntry::to_string(SegmentFlags val)
+{
+  std::string str;
+  for( size_t i=0; (1u << i) <= PF_RPERM; ++i){
+    if( i!= 0)
+      str += ' ';
+    if(val & (1 << i)){
+      switch(1 << i){
+	case PF_XPERM: str += "EXECUTE";break;
+	case PF_WPERM: str += "WRITE"; break;
+	case PF_RPERM: str += "READ";break;
+      };
+    }
+  }
+  uint32_t os   = (val & ~(uint32_t)(PF_OS_MASK));
+  uint32_t proc = (val & ~(uint32_t)(PF_PROC_MASK));
+  uint32_t rest = (val & ~(uint32_t)(PF_RESERVED));
+
+  if(os){
+    char buf[64];
+    snprintf(buf,sizeof(buf),"os flags(%2x)", os >> 20);
+    str += buf;    
+  }
+
+  if(proc){
+    char buf[64];
+    snprintf(buf,sizeof(buf),"proc flags(%1x)", proc >> 28);
+    str += buf;    
+  }
+
+  if(rest){
+    char buf[64];
+    snprintf(buf,sizeof(buf),"unknown(%x)", rest);
+    str += buf;
+  }
+
+  return str;
+
+}
+
 
 /** Non-parsing constructor for an ELF Segment (Program Header) Table */
 void

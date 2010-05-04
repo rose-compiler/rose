@@ -11,6 +11,13 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+/* This does not work since the include path may not be set to include this file. 
+   Also including this is problematic since it would be used in both the compilation 
+   of ROSE source code and source code using ROSE (which is awkward).
+ */
+/* Include rose_config.h (so that we can see and use the macro definitions) */
+/* #include "rose_config.h" */
+
 /* DQ (7/11/2009): fix emacs coloring... with a '$' */
 
 /* Turn on use of restrict in EDG front-end using --edg:restrict */
@@ -32,8 +39,14 @@
 */
 #ifndef SKIP_ROSE_BUILTIN_DECLARATIONS
 
-#ifndef ROSE_CPP_MODE
-  #error "Macro ROSE_CPP_MODE should have been defined ROSE_CPP_MODE == 0 for C and C99 and ROSE_CPP_MODE == 1 for C++"
+/* Defined language modes in ROSE (permits control over what builting functions are defined) */
+#define ROSE_C_LANGUAGE_MODE      0
+#define ROSE_CXX_LANGUAGE_MODE    1
+#define ROSE_CUDA_LANGUAGE_MODE   2
+#define ROSE_OPENCL_LANGUAGE_MODE 3
+
+#ifndef ROSE_LANGUAGE_MODE
+  #error "Macro ROSE_LANGUAGE_MODE should have been defined ROSE_LANGUAGE_MODE == 0 for C and C99 and ROSE_LANGUAGE_MODE == 1 for C++ (CUDA == 2, OpenCL == 3)"
 #endif
 
 /* PC (9/25/2006): Define __builtin_va_start to the EDG expected symbol
@@ -318,7 +331,8 @@ _Atomic_word  __sync_fetch_and_add(volatile _Atomic_word* __mem, int __val);
 #endif
 
 /* DQ (8/25/2009): Added another builtin function required to compile ROSE with ROSE. (required for boost) */
-#if ROSE_CPP_MODE
+/* #if ROSE_CPP_MODE */
+#if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
 /* These use C++ references and so can't be used in C mode */
 int __sync_lock_test_and_set( int & v, int n );
 int __sync_lock_release( int & v );
@@ -519,7 +533,8 @@ was just float or double for complex<float> or complex<double>.
    _Complex
 */
 /* #ifdef __cplusplus */
-#if ROSE_CPP_MODE
+/* #if ROSE_CPP_MODE */
+#if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
 /* C++ case is different because the header files will define a complex type (see hdrs1/complex) */
 
   #define __complex__
@@ -684,5 +699,28 @@ __complex__ long double __builtin_cpowl(const __complex__ long double& __x,const
    DQ (9/12/2009): Avoid this GNU extension since it is a problem for EDG.
  */
 #define _GLIBCXX_EXTERN_TEMPLATE 0
+
+/*************************************************
+        CUDA and OPENCL SPECIFIC SUPPORT
+*************************************************/
+
+#if (ROSE_LANGUAGE_MODE == ROSE_CUDA_LANGUAGE_MODE)
+
+/* CUDA Built-in Functions */
+void __threadfence_block();
+void __threadfence();
+void __threadfence_system();
+
+#endif
+
+
+#if (ROSE_LANGUAGE_MODE == ROSE_OPENCL_LANGUAGE_MODE)
+
+/* OpenCL Built-in Functions */
+uint get_work_dim();
+size_t get_global_size(uint dimindx);
+size_t get_global_id(uint dimindx);
+
+#endif
 
 #endif /* !ROSE_USE_NEW_EDG_INTERFACE */

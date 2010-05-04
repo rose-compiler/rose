@@ -612,6 +612,8 @@ AddVar( SgInitializedName *d, SgScopeStatement* curscope)
      return v;
    }
 
+// CH (4/8/2010): Comment this function to see if it is used.
+/* 
 //QY:1/3/08: this function is no longer invoked b/c calling EDG front end
 // multiple times no longer seem to work.
 SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
@@ -685,7 +687,7 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
      decls.clear();
      return r;
    }
-
+*/
 SgVariableSymbol* AstInterfaceImpl::
 NewVar ( SgType* type, const string& _name, bool makeunique, SgScopeStatement* loc)
 { 
@@ -1962,6 +1964,10 @@ IsBinaryOp( const AstNodePtr& _exp, OperatorEnum* opr,
    case V_SgLshiftOp:
         if (opr != 0)  *opr = BOP_BIT_LSHIFT;
         break;
+   case V_SgModOp: // Liao 5/4/2010, based on Qing's suggestion
+        if (opr != 0)  *opr = BOP_MOD;
+        break;
+
     default:
        return false;
   }

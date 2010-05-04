@@ -1,22 +1,41 @@
-\chapter{AST Graph Generator}
+\chapter{Simple AST Graph Generator}
 \label{Tutorial:chapterASTGraphGenerator}
 
 \paragraph{What To Learn From This Example}
-This example shows how to generate and visualize the AST from any input program.
+This example shows how to generate a DOT file to visualize a simplified AST 
+% (filtered out symbol tables and others for simplicity) 
+from any input program.
+\vspace{0.25in}
+
+   DOT is a graphics file format from the AT\&T GraphViz project used to 
+visualize moderate sized graphs.  It is one of the visualization tools used within the
+ROSE project.  More inforamtion can be readily found at {\em www.graphviz.org/}.
+We have found the {\em zgrviewer} to be an especially useful program for 
+visualizing graphs generated in the DOT file format (see 
+chapter~\ref{Tutorial:chapterGeneralASTGraphGeneration} for more information 
+on zgrviewer).
+
 Each node of the graph in figure~\ref{tutorial:exampleOutputCodeGraph} shows
-a node of the Intermediate Representation (IR).  Each edge shows the connection
+a node of the Intermediate Representation (IR); the graphs demonstrates that the 
+AST is formally a tree.  Each edge shows the connection
 of the IR nodes in memory. The generated graph shows the connection of different 
-IR nodes to form the AST.  The generation of such graphs is appropriate for small 
-input programs, chapter~\ref{Tutorial:chapterASTPDFGenerator} shows a mechanism 
+IR nodes that form the AST for an input program source code.  Binary executables
+can similarly be vizualized using DOT files.
+The generation of such graphs is appropriate for small 
+input programs, chapter~\ref{Tutorial:chapter_AST_PDF_Generator} shows a mechanism 
 using PDF files that is more appropriate to larger programs (e.g. 100K lines of code).
 More information about generation of specialized AST graphs can be found in 
 \ref{Tutorial:chapterGeneralASTGraphGeneration} and custom graph generation in
 \ref{Tutorial:chapterCustomGraphs}.
 
+Note that a similar utility program named \textit{dotGenerator} already exists within
+ROSE/exampleTranslators/DOTGenerator. 
+%(and includes a utility to output an alternative PDF representation (suitable for larger ASTs) as well). 
+It is also installed to \textit{ROSE\_INS/bin}.
+
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
-
 
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
@@ -44,9 +63,7 @@ code which is processed to generate a graph of the AST, generating a
 {\tt dot} file.   The {\tt dot} file is then processed
 using {\tt dot} to generate a postscript file~\ref{tutorial:exampleOutputCodeGraph}
 (within the {\tt Makefile}).
-Note that a similar utility program already exists within ROSE/exampleTranslators
-(and includes a utility to output an alternative PDF representation 
-(suitable for larger ASTs) as well).  Figure~\ref{tutorial:exampleOutputCodeGraph}
+Figure~\ref{tutorial:exampleOutputCodeGraph}
 (\TutorialExampleBuildDirectory/test.ps) can be found in the compile 
 tree (in the tutorial directory) and viewed directly using ghostview 
 or any postscript viewer to see more detail.
@@ -100,7 +117,7 @@ data members in the classes representing the IR nodes.
 
 
 
-
+%------------------------------------------------------------------------
 \chapter{AST Whole Graph Generator}
 \label{Tutorial:chapterASTWholeGraphGenerator}
 
@@ -114,16 +131,24 @@ a node of the Intermediate Representation (IR).  Each edge shows the connection
 of the IR nodes in memory. The generated graph shows the connection of different 
 IR nodes to form the AST and its additional attributes (e.g types, modifiers, etc).  
 The generation of such graphs is appropriate for very small 
-input programs, chapter~\ref{Tutorial:chapterASTPDFGenerator} shows a mechanism 
+input programs, chapter~\ref{Tutorial:chapter_AST_PDF_Generator} shows a mechanism 
 using PDF files that is more appropriate to larger programs (e.g. 100K lines of code).
 More information about generation of specialized AST graphs can be found in 
 \ref{Tutorial:chapterGeneralASTGraphGeneration} and custom graph generation in
 \ref{Tutorial:chapterCustomGraphs}.
 
+Again, a utility program, called
+\textit{dotGeneratorWholeASTGraph} is provided within ROSE to generate
+detailed dot graph for input code. It is available from
+\textit{ROSE\_BUILD/exampleTranslators/DOTGenerator} or
+\textit{ROSE\_INS/bin}. A set of options is available to further customize
+what types of AST nodes to be shown or hidden. Please consult the screen output of
+\textit{dotGeneratorWholeASTGraph -help} for details.
+
    {\em Viewing these dot files is best done using:} {\bf zgrviewer} at 
 {\tt http://zvtm.sourceforge.net/zgrviewer.html}.  This tool permits zooming
 in and out and viewing isolated parts of even very large graphs. {\bf Zgrviewer} permits 
-a more natural way of understanding the AST and its additioan IR nodes than the 
+a more natural way of understanding the AST and its additional IR nodes than the 
 pdf file displayed in these pages.  The few lines of code used to generate the
 graphs can be used on any input code to better understand how the AST represents
 different languages and their constructs.
@@ -202,8 +227,9 @@ represent rather large ASTs.
 \end{figure}
 
 \begin{figure}
-\includegraphics[scale=0.75]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_small}
-\caption{AST representing the tiny source code file: inputCode\_wholeAST\_1.C.}
+\includegraphics[scale=0.95]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_small}
+\caption{AST representing the tiny source code file: inputCode\_wholeAST\_1.C. This graphs
+    shows types, symbols, and other attributes that are defined on the {\em attributed} AST.}
 \label{tutorial:exampleOutputCodeWholeGraph_small}
 \end{figure}
 
@@ -245,8 +271,10 @@ are a number of different colors and shapes to make them more recognizable.
 \end{figure}
 
 \begin{figure}
-\includegraphics[scale=0.65]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_large}
-\caption{AST representing the small source code file: inputCode\_wholeAST\_2.C.}
+\includegraphics[scale=0.95]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_large}
+\caption{AST representing the small source code file: inputCode\_wholeAST\_2.C. This
+    graph shows the significantly greater internal complexity of a slightly larger 
+    input source code.}
 \label{tutorial:exampleOutputCodeWholeGraph_large}
 \end{figure}
 
@@ -255,5 +283,9 @@ previous graph but larger and more complex because it is from a larger code. Lar
 graphs of this sort are still very useful in understanding how more significant
 language constructs are organized and reference each other in the AST.  Tools
 such as {\bf zgrviewer} are essential to reviewing and understanding these
-graphs.
+graphs. Although such graphs can be visualized, in practice this is only useful
+for debugging small codes in the construction of custom analysis and transformation
+tools. The graphs for real million line applications would never be visualized.
+Using ROSE one can build automated tools to operate on the AST for large scale
+applications where visualization would not be possible.
 

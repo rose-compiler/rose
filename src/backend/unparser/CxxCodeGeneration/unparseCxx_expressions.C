@@ -1815,11 +1815,13 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
-#ifdef _MSC_VER
-#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
-	   printf ("Error: Commented out body of unparseMFuncRef() \n");
-	   ROSE_ASSERT(false);
-#else
+	   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+
+//#ifndef _MSC_VER
+//#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
+//	   printf ("Error: Commented out body of unparseMFuncRef() \n");
+//	   ROSE_ASSERT(false);
+//#else
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
 
@@ -1838,8 +1840,8 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 
   // DQ (2/16/2004): error in templates (test2004_18.C)
      ROSE_ASSERT (cdef != NULL);
-     SgClassDeclaration* cdecl;
-	 cdecl = cdef->get_declaration();
+     SgClassDeclaration* decl;
+	 decl = cdef->get_declaration();
 #if 0
      printf ("Inside of unparseMFuncRef expr = %p (name = %s::%s) \n",expr,cdecl->get_name().str(),mfd->get_name().str());
      curprint ( "\n /* Inside of unparseMFuncRef */ \n");
@@ -1856,8 +1858,8 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
   // if (!get_is_virtual_call()) -- take off because this is not properly set
 
   // DQ (9/17/2004): Added assertion
-     ROSE_ASSERT(cdecl != NULL);
-     ROSE_ASSERT(cdecl->get_parent() != NULL);
+     ROSE_ASSERT(decl != NULL);
+     ROSE_ASSERT(decl->get_parent() != NULL);
 
      bool print_colons = false;
   // printf ("mfunc_ref->get_need_qualifier() = %s \n",(mfunc_ref->get_need_qualifier() == true) ? "true" : "false");
@@ -1877,7 +1879,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 
             // DQ (10/11/2006): I don't think that we want the fully qualified name, just the class name!
             // curprint (  cdecl->get_qualified_name().str() + "::";
-               curprint (  string(cdecl->get_name().str()) + "::");
+               curprint (  string(decl->get_name().str()) + "::");
             // curprint ( "\n /* DONE: Output the qualified class name */ \n";
                print_colons = true;
              }
@@ -2056,7 +2058,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
      curprint ( "\n/* leaving unparseMFuncRef */ \n");
 #endif
 
-#endif
+//#endif
    }
 
 

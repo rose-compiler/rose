@@ -5,8 +5,8 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 ########### next target ###############
 
 
-add_library( astFixup ${astFixup_SRC} )
-add_dependencies( astFixup ROSETTA )
+#add_library( astFixup ${astFixup_SRC} )
+#add_dependencies( astFixup ROSETTA )
 ########### install files ###############
 
 install(FILES  AstFixup.h fixupFunctionDefinitions.h

@@ -8,6 +8,7 @@
 #define SAGE3_CLASSES_BASIC__H
 #include <semaphore.h>
 #include "fileoffsetbits.h"
+#include "rosedll.h"
 
 // DQ (4/21/2009): Note that this header file will include the STL string header file 
 // which will include sys/stat.h, so the _FILE_OFFSET_BITS macro must be already set 
@@ -152,7 +153,8 @@
 #else
 // DQ (11/4/2009): Use the GNU depricated stuff (what works in ROSE at the moment)
 // tps (01/25/2010) : deprecated - does not work in setup.h
-#include <ext/hash_map>
+// CH (04/28/2010) : We don't need it anymore
+//#include <ext/hash_map>
 #endif
 #endif
 
@@ -179,8 +181,20 @@
 // (MAX_NUMBER_OF_MEMORY_BLOCKS * DEFAULT_CLASS_ALLOCATION_POOL_SIZE)
 // It might be better to use an STL vector here since they we don't have
 // an upper bound on the number of IR nodes of each type!!!
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
+
+// DQ (3/7/2010): There is some sort of problem that in the AST File I/O that only
+// happens on block boundaries.  I am changing this to a very small number to support
+// debugging this problem.
 #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
-#define MAX_NUMBER_OF_MEMORY_BLOCKS        1000
+
+// DQ (3/7/2010):Added error checking.
+#if DEFAULT_CLASS_ALLOCATION_POOL_SIZE < 1
+   #error "DEFAULT_CLASS_ALLOCATION_POOL_SIZE must be greater than zero!"
+#endif
+
+// DQ (3/7/2010): This is no longer used (for several years) and we use an STL based implementation.
+// #define MAX_NUMBER_OF_MEMORY_BLOCKS        1000
 
 
 // DQ (9/231/2005): Map these to the C library memory alloction/deallocation functions.
@@ -265,6 +279,23 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (7/6/2005): Added to support performance analysis of ROSE.
 // This is located in ROSE/src/midend/astDiagnostics
 #include "AstPerformance.h"
+
+
+// DQ (4/10/2010): Moved Dwarf and Intel Pin headers to here from rose.h.
+// DQ (11/7/2008): Added Dwarf support to ROSE AST (applies only to binary executables generated with dwarf debugging information).
+#ifndef _MSC_VER
+// tps (11/23/2009) : Commented out right now to make progress in Windows
+   #if USE_ROSE_DWARF_SUPPORT
+      #include "dwarfSupport.h"
+   #endif
+
+// DQ (3/8/2009): Added support for Intel Pin (Dynamic binary Instrumentation)
+// tps (11/23/2009) : Commented out right now to make progress in Windows
+   #ifdef USE_ROSE_INTEL_PIN_SUPPORT
+// Note that pin.H (in it's header files) will define "TRUE" and "FALSE" as macros.
+      #include "IntelPinSupport.h"
+   #endif
+#endif
 
 
 #endif

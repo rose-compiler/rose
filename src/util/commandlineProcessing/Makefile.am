@@ -30,6 +30,14 @@ libRoseCommandlineUtil_la_SOURCES = $(libRoseCommandlineUtilSources)
 
 include_HEADERS = sla.h commandline_processing.h
 
+# DQ (2/28/2010): New binary AST merge tests.
+READ_TRANSLATOR = $(top_builddir)/tests/testAstFileRead
+# READ_TRANSLATOR = $(top_builddir)/tests/parallelASTMerge
+
+testBinaryAstMerge:
+#	$(READ_TRANSLATOR) $(libRoseCommandlineUtilSources)
+	roseAstFileRead $(libRoseCommandlineUtilSources) OUTPUT_BINARY_AST_FILE
+
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
 

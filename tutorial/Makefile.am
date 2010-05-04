@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = database roseHPCT outliner intelPin
+SUBDIRS = database roseHPCT outliner intelPin binaryAnalysis
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -34,7 +34,7 @@ TUTORIAL_EXAMPLES = \
    astFileIO_ReadMultipleASTs \
    ASTGraphGenerator \
    bin_example \
-   binaryAnalysis \
+   binaryAnalysisExample \
    binaryAnalysis_symbolTable \
    binaryFileRead \
    sb_callgraphAnalysis \
@@ -64,6 +64,7 @@ TUTORIAL_EXAMPLES = \
    defuseAnalysis \
    dwarfAnalysis \
    dwarfInstructionAddressToSourceLineAnalysis \
+   findVariableDeclarations \
    generatingUniqueNamesFromDeclaration \
    graphGenerationOfSubtree \
    graphTraversal \
@@ -204,7 +205,7 @@ buildCFG_SOURCES = buildCFG.C
 
 defuseAnalysis_SOURCES = defuseAnalysis.C
 
-binaryAnalysis_SOURCES = binaryAnalysis.C
+binaryAnalysisExample_SOURCES = binaryAnalysisExample.C
 
 sb_callgraphAnalysis_SOURCES = callGraphSourceBinaryExample.C 
 
@@ -307,6 +308,8 @@ sprintf_to_snprintf_SOURCES = sprintf_to_snprintf.C
 seedBugsExample_arrayIndexing_SOURCES = seedBugsExample_arrayIndexing.C
 
 volatileTypeModifier_SOURCES = volatileTypeModifier.C
+
+findVariableDeclarations_SOURCES = findVariableDeclarations.C
 
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.
@@ -1114,7 +1117,7 @@ binaryAnalysis_pic1.pdf: binaryAnalysis
 #	./binaryAnalysis bin_example
 # trick is to load a 32bit binary
 	cp $(srcdir)/buffer2.bin ./bin_example
-	./binaryAnalysis bin_example
+	./binaryAnalysisExample bin_example
 	@echo "BinaryAnalysis: Building assembly listing for binary (rose_bin_example.s.a) ..."
 	split -42 rose_bin_example.s rose_bin_example.s.
 	@echo "BinaryAnalysis: Building postscript file from cfg.dot & dfg.dot ..."

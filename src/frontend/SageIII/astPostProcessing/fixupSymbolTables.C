@@ -290,3 +290,4 @@ FixupAstSymbolTables::visit ( SgNode* node )
         }
    }
 
+

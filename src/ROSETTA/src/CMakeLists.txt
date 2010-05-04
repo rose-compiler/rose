@@ -78,9 +78,8 @@ set(GRAMMAR_SOURCE_FILES
 add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
 
 # build ROSETTA code generator
-# target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib)
-target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
-#target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib )
+#target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
+target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES})
 
 get_target_property (META_EXE_LOC CxxGrammarMetaProgram LOCATION) 
 message(STATUS "META_EXE_LOC = " ${META_EXE_LOC} )

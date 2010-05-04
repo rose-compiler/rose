@@ -9,7 +9,7 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-#define ENABLE_XOMP 1  // test middle layer of runtime library
+#define ENABLE_XOMP 1  // Enable the middle layer (XOMP) of OpenMP runtime libraries
   //! Generate a symbol set from an initialized name list, 
   //filter out struct/class typed names
 static void convertAndFilter (const SgInitializedNamePtrList input, ASTtools::VarSymSet_t& output)
@@ -42,9 +42,7 @@ namespace OmpSupport
     ROSE_ASSERT (globalscope != NULL);
 #ifdef ENABLE_XOMP
       SageInterface::insertHeader("libxomp.h",PreprocessingInfo::after,false,globalscope);
-   //SageInterface::insertHeader("libompc.h",PreprocessingInfo::after,false,globalscope);
 #else    
-    SageInterface::insertHeader("libgomp_g.h",PreprocessingInfo::after,false,globalscope);
     if (rtl_type == e_omni)
       SageInterface::insertHeader("ompcLib.h",PreprocessingInfo::after,false,globalscope);
     else if (rtl_type == e_gomp)
@@ -465,8 +463,34 @@ namespace OmpSupport
   }
   GOMP_loop_end ();                                          
   //  GOMP_loop_end_nowait (); 
+  //
+  // More explanation: -------------------------------------------
+     // Omni uses the following translation 
+     _ompc_dynamic_sched_init(_p_loop_lower,_p_loop_upper,_p_loop_stride,5);
+      while(_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper)){
+        for (_p_loop_index = _p_loop_lower; (_p_loop_index) < _p_loop_upper; _p_loop_index += _p_loop_stride) {
+          k_3++;
+        }
+      }
+    // In order to merge two kinds of translations into one scheme.
+    // we split 
+      while(_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper)){
+        for (_p_loop_index = _p_loop_lower; (_p_loop_index) < _p_loop_upper; _p_loop_index += _p_loop_stride) {
+          k_3++;
+        }
+      }
+
+  // to 
+     if (_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper)){
+       do {
+        for (_p_loop_index = _p_loop_lower; (_p_loop_index) < _p_loop_upper; _p_loop_index += _p_loop_stride) {
+          k_3++;
+        }
+       } while (_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper));
+     }
+  // and XOMP layer will compensate for the difference.
   */
-  static void transOmpFor_nonStaticOrOrderedSchedule(SgOmpForStatement * target,  
+  static void transOmpFor_others(SgOmpForStatement * target,  
       SgVariableDeclaration* index_decl, SgVariableDeclaration* lower_decl,  SgVariableDeclaration* upper_decl, 
       SgBasicBlock* bb1)
   {
@@ -606,7 +630,7 @@ namespace OmpSupport
   // < --> <= and > --> >=, 
   // GCC-GOMP use compiler-generated statements to schedule loop iterations using static schedule
   // All other schedule policies use runtime calls instead.
-  // We translate static schedule here and non-static ones in transOmpFor_nonStaticOrOrderedSchedule()
+  // We translate static schedule here and non-static ones in transOmpFor_others()
   // 
   // Static schedule, including:
   //1. default (static even) case
@@ -678,9 +702,14 @@ namespace OmpSupport
     //  ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
 
     // Declare local loop control variables: _p_loop_index _p_loop_lower _p_loop_upper , no change to the original stride
-    SgVariableDeclaration* index_decl =  buildVariableDeclaration("_p_index",  buildIntType(), NULL,bb1); 
-    SgVariableDeclaration* lower_decl =  buildVariableDeclaration("_p_lower",  buildIntType(), NULL,bb1); 
-    SgVariableDeclaration* upper_decl =  buildVariableDeclaration("_p_upper",  buildIntType(), NULL,bb1); 
+    SgType* loop_var_type  = NULL ;
+    if (sizeof(void*) ==8 ) // xomp interface expects long* for some runtime calls. 
+     loop_var_type = buildLongType();
+   else 
+     loop_var_type = buildIntType();
+    SgVariableDeclaration* index_decl =  buildVariableDeclaration("_p_index", loop_var_type , NULL,bb1); 
+    SgVariableDeclaration* lower_decl =  buildVariableDeclaration("_p_lower", loop_var_type , NULL,bb1); 
+    SgVariableDeclaration* upper_decl =  buildVariableDeclaration("_p_upper", loop_var_type , NULL,bb1); 
 
     appendStatement(index_decl, bb1);
     appendStatement(lower_decl, bb1);
@@ -690,32 +719,33 @@ namespace OmpSupport
     if (hasClause(target, V_SgOmpOrderedClause))
       hasOrder = true;
 
+    // Grab or calculate chunk_size
+    SgExpression* my_chunk_size = NULL; 
+    bool hasSpecifiedSize = false;
+    Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
+    if (clauses.size() !=0)
+    {
+      SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
+      ROSE_ASSERT(s_clause);
+      SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
+      // ROSE_ASSERT(s_kind == SgOmpClause::e_omp_schedule_static);
+      SgExpression* orig_chunk_size = s_clause->get_chunk_size();  
+    //  ROSE_ASSERT(orig_chunk_size->get_parent() != NULL);
+      if (orig_chunk_size)
+      {
+        hasSpecifiedSize = true;
+        my_chunk_size = orig_chunk_size;
+      }
+    }
+
     //  step 3. Translation for omp for 
     //if (hasClause(target, V_SgOmpScheduleClause)) 
-    if (!useStaticSchedule(target) || hasOrder) 
+    if (!useStaticSchedule(target) || hasOrder || hasSpecifiedSize) 
     {
-      transOmpFor_nonStaticOrOrderedSchedule( target,   index_decl, lower_decl,   upper_decl, bb1);
+      transOmpFor_others( target,   index_decl, lower_decl,   upper_decl, bb1);
     }
     else 
     {
-      // Grab or calculate chunk_size
-      SgExpression* my_chunk_size = NULL; 
-      bool hasSpecifiedSize = false;
-      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
-      if (clauses.size() !=0)
-      {
-        SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
-        ROSE_ASSERT(s_clause);
-        SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
-        ROSE_ASSERT(s_kind == SgOmpClause::e_omp_schedule_static);
-        SgExpression* orig_chunk_size = s_clause->get_chunk_size();  
-      //  ROSE_ASSERT(orig_chunk_size->get_parent() != NULL);
-        if (orig_chunk_size)
-        {
-          hasSpecifiedSize = true;
-          my_chunk_size = orig_chunk_size;
-        }
-      }
       // ---------------------------------------------------------------
       // calculate chunksize for static scheduling , if the chunk size is not specified.
       if (!hasSpecifiedSize)
@@ -1039,6 +1069,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
    // paste the preprocessing info with inside position to the outlined function's body
    pastePreprocessingInfo(outlined_func->get_definition()->get_body(), PreprocessingInfo::inside, save_buf_inside); 
 
+   // SageInterface::deepDelete(target);
     // Postprocessing  to ensure the AST is legal 
     // Should not rely on this usually.
     //   SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(g_scope);
@@ -1639,6 +1670,81 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     end_stmt_list.push_back(atomic_end_stmt);   
   }
 
+   //TODO move to sageInterface advanced transformation ???
+   //! Generate element-by-element assignment from a right-hand array to left_hand array variable. 
+   //
+   //e.g.  for int a[M][N], b[M][N],  a=b is implemented as follows:
+   //
+   //  int element_count = ...;
+   //  int *a_ap = (int *)a;
+   //  int *b_ap = (int *)b;
+   //  int i;
+   //  for (i=0;i<element_count; i++) 
+   //    *(b_ap+i) = *(a_ap+i);
+   //
+   static  SgBasicBlock* generateArrayAssignmentStatements
+   (SgInitializedName* left_operand, SgInitializedName* right_operand, SgScopeStatement* scope)
+   {
+     // parameter validation
+      ROSE_ASSERT(scope != NULL); // enforce top-down AST construction here for simplicity
+      ROSE_ASSERT (left_operand != NULL);
+      ROSE_ASSERT (right_operand != NULL);
+
+      SgType* left_type = left_operand->get_type();
+      SgType* right_type = right_operand->get_type();
+      SgArrayType* left_array_type = isSgArrayType(left_type);
+      SgArrayType* right_array_type = isSgArrayType(right_type);
+
+      ROSE_ASSERT (left_array_type != NULL);
+      ROSE_ASSERT (right_array_type != NULL);
+      // make sure two array are compatible: same dimension, bounds, and element types, etc.
+      ROSE_ASSERT (getElementType(left_array_type) == getElementType(right_array_type));
+      int dim_count = getDimensionCount(left_array_type);
+      ROSE_ASSERT (dim_count == getDimensionCount(right_array_type));
+      int element_count = getArrayElementCount (left_array_type); 
+      ROSE_ASSERT (element_count == (int) getArrayElementCount (right_array_type));
+
+     SgBasicBlock* bb = buildBasicBlock();
+       // front_stmt_list.push_back() will handle this later on.
+       // Keep this will cause duplicated appendStatement()
+      // appendStatement(bb, scope);
+     
+         // int *a_ap = (int*) a;
+      string right_name = right_operand->get_name().getString(); 
+      string right_name_p = right_name+"_ap"; // array pointer (ap)
+      SgType* elementPointerType = buildPointerType(buildIntType());
+      SgAssignInitializer * initor = buildAssignInitializer
+             (buildCastExp(buildVarRefExp(right_operand,scope),elementPointerType),elementPointerType);
+      SgVariableDeclaration* decl_right = buildVariableDeclaration (right_name_p, elementPointerType, initor, bb );
+     appendStatement(decl_right, bb);
+      
+      // int *b_ap = (int*) b;
+      string left_name = left_operand->get_name().getString(); 
+      string left_name_p = left_name+"_ap";
+      SgAssignInitializer * initor2 = buildAssignInitializer
+             (buildCastExp(buildVarRefExp(left_operand,scope),elementPointerType),elementPointerType);
+      SgVariableDeclaration* decl_left = buildVariableDeclaration (left_name_p, elementPointerType, initor2, bb );
+     appendStatement(decl_left, bb);
+   
+     // int i;
+     SgVariableDeclaration* decl_i = buildVariableDeclaration("_p_i", buildIntType(), NULL, bb);
+     appendStatement(decl_i, bb);
+
+   //  for (i=0;i<element_count; i++) 
+   //    *(b_ap+i) = *(a_ap+i);
+    SgStatement* init_stmt = buildAssignStatement(buildVarRefExp(decl_i), buildIntVal(0));
+    SgStatement* test_stmt = buildExprStatement(buildLessThanOp(buildVarRefExp(decl_i),buildIntVal(element_count)));
+    SgExpression* incr_exp = buildPlusPlusOp(buildVarRefExp(decl_i),SgUnaryOp::postfix);
+    SgStatement* loop_body = buildAssignStatement(
+         buildPointerDerefExp(buildAddOp(buildVarRefExp(decl_left),buildVarRefExp(decl_i))),
+         buildPointerDerefExp(buildAddOp(buildVarRefExp(decl_right),buildVarRefExp(decl_i)))
+          );
+    SgForStatement* for_stmt = buildForStatement(init_stmt, test_stmt, incr_exp, loop_body);
+     appendStatement(for_stmt, bb);
+
+     return bb;
+   }
+
     //! Translate clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
     //bb1 is the affected code block by the clause.
     //Command steps are: insert local declarations for the variables:(all)
@@ -1687,7 +1793,12 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
       {
         SgInitializer * init = NULL;
         // use copy constructor for firstprivate on C++ class object variables
-        if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause))
+        // For simplicity, we handle C and C++ scalar variables the same way
+        //
+        // But here is one exception: an array type firstprivate variable should
+        // be initialized element-by-element
+        // Liao, 4/12/2010
+        if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && !isSgArrayType(orig_type))
         {
           init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
         }
@@ -1697,13 +1808,15 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         // record the map from old to new symbol
        var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
       }
-      // step 2. Initialize the local copy for reduction TODO copyin, copyprivate?
-#if 0
-      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause))
+      // step 2. Initialize the local copy for array-type firstprivate variables TODO copyin, copyprivate
+#if 1
+      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && isSgArrayType(orig_type))
       {
-        SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), buildVarRefExp(orig_var, bb1));
-       front_stmt_list.push_back(init_stmt);   
-      } else 
+        // SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), buildVarRefExp(orig_var, bb1));
+        SgInitializedName* leftArray = getFirstInitializedName(local_decl); 
+        SgBasicBlock* arrayAssign = generateArrayAssignmentStatements (leftArray, orig_var, bb1); 
+       front_stmt_list.push_back(arrayAssign);   
+      } 
 #endif    
       if (isReductionVar)
       {

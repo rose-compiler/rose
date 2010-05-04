@@ -7,6 +7,10 @@
 #include "AstDOTGeneration.h"
 #include "wholeAST_API.h"
 
+#ifdef _MSC_VER
+#include <direct.h>	// getcwd
+#endif
+
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
 
@@ -42,12 +46,32 @@ const int roseTargetCacheLineSize = 32;
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
+// DQ (4/17/2010): This function must be define if C++ support in ROSE is disabled.
+std::string edgVersionString()
+   {
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+      string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
+#else
+     string edg_version = "unknown (EDG is disabled)";
+#endif
+
+     return edg_version;
+   }
+
+// DQ (4/17/2010): Added OFP version number support.
 // DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
 std::string ofpVersionString()
    {
   // Need to make sure that ROSE can get a version number independent of Fortran support 
   // being installed or include information in the return string when OFP is not installed.
-     return "unknown";
+  // return "unknown";
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     string ofp_version = string("ofp-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER);
+#else
+     string ofp_version = "unknown (OFP is disabled)";
+#endif
+
+     return ofp_version;
    }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
@@ -371,113 +395,85 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
   // to build an object file.
      string commandLineToGenerateObjectFile;
 
+     enum language_enum
+        {
+          e_none = 0,
+          e_c    = 1, 
+          e_cxx = 2, 
+          e_fortran = 3, 
+          e_last_language 
+        };
 
-#if 0
-     commandLineToGenerateObjectFile = "g++";
+     language_enum language = e_none;
+     language = project->get_C_only()       ? e_c       : language;
+     language = project->get_Cxx_only()     ? e_cxx     : language;
+     language = project->get_Fortran_only() ? e_fortran : language;
 
-     SgStringList includeList = project->get_includeDirectorySpecifierList();
-     for (SgStringList::iterator i = includeList.begin(); i != includeList.end(); i++)
+  // ROSE_ASSERT(language != e_none);
+     if (language == e_none)
         {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList libraryDirectoryList = project->get_libraryDirectorySpecifierList();
-     for (SgStringList::iterator i = libraryDirectoryList.begin(); i != libraryDirectoryList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " -L" + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList libraryList = project->get_librarySpecifierList();
-     for (SgStringList::iterator i = libraryList.begin(); i != libraryList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-  // I think this is the *.a 
-     SgStringList libraryList = project->get_libraryFileList();
-     for (SgStringList::iterator i = libraryFileList.begin(); i != libraryFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-     SgStringList objectFileList = project->get_objectFileNameList();
-     string linkOnly = (project->numberOfFiles() > 0) ? "-o " : "";
-     for (SgStringList::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + linkOnly + *i + " ";
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-
-  // DQ (8/24/2009): Need to be able to generate an executable file if the commandline specified it so
-  // that be used in Autoconf tests by the configure script when specified as the CXX compiler.
-  // This allows CXX=<any ROSE tool> to work with Autoconf tests.
-     SgStringList sourceFileList = project->get_sourceFileNameList();
-     string compileOnly = (project->get_compileOnly() == true) ? "-c " : "";
-     for (SgStringList::iterator i = sourceFileList.begin(); i != sourceFileList.end(); i++)
-        {
-          commandLineToGenerateObjectFile += " " + compileOnly + *i;
-        }
-  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-#else
-  // Specify either CC or CXX and then use the rest of the commandline...
-  // Any ROSE specific options (e.g. "-rose:xxx") should be ignored by the backend compiler.
-     if (project->get_C_only() == true)
-        {
-       // Typically "gcc"
-          commandLineToGenerateObjectFile = BACKEND_C_COMPILER_NAME_WITH_PATH;
-        }
-       else
-        {
-       // Typically "g++"
-          commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+       // DQ (4/7/2010): Set the default language for ROSE to be C++
+       // This will mean that linking fortran object files will not be possible with ROSE.
+       // but at least configure will work propoerly since it will have a valid default.
+       // If we add state to SgProject, then we could set the default, but also allow it
+       // to be overriden using -rose:C or -rose:Cxx or -rose:Fortran options.
+          language = e_cxx;
         }
 
-     SgStringList originalCommandLineArgumentList = project->get_originalCommandLineArgumentList();
-
-  // DQ (2/20/2010): Added filtering of options that should not be passed to the vendor compiler.
-     SgFile::stripRoseCommandLineOptions(originalCommandLineArgumentList);
-     SgFile::stripEdgCommandLineOptions(originalCommandLineArgumentList);
-
-     SgStringList::iterator it = originalCommandLineArgumentList.begin();
-
-  // Iterate past the name of the compiler being called (arg[0]).
-     if (it != originalCommandLineArgumentList.end())
-          it++;
-
-  // Make a list of the remaining command line arguments
-     for (SgStringList::iterator i = it; i != originalCommandLineArgumentList.end(); i++)
+     switch (language)
         {
-          commandLineToGenerateObjectFile += " " + *i;
-        }
-  // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
-#endif
+          case e_c       : commandLineToGenerateObjectFile = BACKEND_C_COMPILER_NAME_WITH_PATH;       break;
+          case e_cxx     : commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;     break;
+          case e_fortran : commandLineToGenerateObjectFile = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH; break;
 
-     if ( SgProject::get_verbose() >= 1 )
-        {
-          printf ("/* numberOfFiles() = %d commandLineToGenerateObjectFile = \n%s\n*/\n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
+          default:
+             {
+            // Note that the default is C++, and that if there are no SgFile objects then there is no place to hold the default
+            // since the SgProject does not have any such state to hold this information.  A better idea might be to give the
+            // SgProject state so that it can hold if it is used with -rose:C or -rose:Cxx or -rose:Fortran on the command line.
+
+               printf ("Default reached in switch in backendCompilesUsingOriginalInputFile() \n");
+               printf ("   Note use options: -rose:C or -rose:Cxx or -rose:Fortran to specify which language backend compiler to link object files. \n");
+               ROSE_ASSERT(false);
+             }
         }
 
      int finalCombinedExitStatus = 0;
      if (project->numberOfFiles() > 0)
         {
+          SgStringList originalCommandLineArgumentList = project->get_originalCommandLineArgumentList();
+
+       // DQ (2/20/2010): Added filtering of options that should not be passed to the vendor compiler.
+          SgFile::stripRoseCommandLineOptions(originalCommandLineArgumentList);
+          SgFile::stripEdgCommandLineOptions(originalCommandLineArgumentList);
+
+          SgStringList::iterator it = originalCommandLineArgumentList.begin();
+
+       // Iterate past the name of the compiler being called (arg[0]).
+          if (it != originalCommandLineArgumentList.end())
+               it++;
+
+       // Make a list of the remaining command line arguments
+          for (SgStringList::iterator i = it; i != originalCommandLineArgumentList.end(); i++)
+             {
+               commandLineToGenerateObjectFile += " " + *i;
+             }
+       // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+
+          if ( SgProject::get_verbose() >= 1 )
+             {
+               printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
+             }
+
           finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
         }
        else
         {
-          if (project->get_C_only() == true)
-             {
-            // printf ("Link using the C language linker (when handling C programs) \n");
-               finalCombinedExitStatus = project->link("gcc");
-             }
-            else
-             {
-            // Use the default name for C++ compiler (defined at configure time)
-               finalCombinedExitStatus = project->link();
-             }
+       // Note that in general it is not possible to tell whether to use gcc, g++, or gfortran to do the linking.
+       // When we just have a list of object files then we can't assume anything (and project->get_C_only() will be false).
+
+       // Note that commandLineToGenerateObjectFile is just the name of the backend compiler to use!
+          finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
         }
 
      return finalCombinedExitStatus;
@@ -988,12 +984,15 @@ ROSE::getWorkingDirectory ()
      const unsigned int maxPathNameLength = 10000;
      char* currentDirectory = new char [maxPathNameLength+1];
 
-#ifdef _MSC_VER
-#pragma message ("Linux getcwd() function unavailable in MSVC.")
-	 const char* getcwdResult = NULL; // getcwd(currentDirectory,maxPathNameLength);
-#else
+
+  // CH (4/7/2010): In MSVC, the header file "direct.h" contains function 'getcwd'
+
+//#ifdef _MSC_VER
+//#pragma message ("Linux getcwd() function unavailable in MSVC.")
+//	 const char* getcwdResult = NULL; // getcwd(currentDirectory,maxPathNameLength);
+//#else
 	 const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
-#endif
+//#endif
      if (!getcwdResult) {
        perror("getcwd: ");
        ROSE_ABORT();

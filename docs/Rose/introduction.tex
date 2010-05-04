@@ -23,39 +23,10 @@
 
 %\textcolor{red}{ROSE}
 
-% Sections suggested by Carol Eidt (at Microsoft)
-\section{Why you should be interested in ROSE}
-ROSE is a tool for building source-to-source translators.
-You should be interested in ROSE if you want to 
-understand or improve any aspect of your software. ROSE
-makes it easy to build tools that read and operate on source code
-from large scale applications (millions of lines).  Whole projects
-may be analyzed and even optimized using tools built using ROSE.
+% Include common text used in both the manual and the tutorial
+\input{introduction_start}
 
-\section{Problems that ROSE can address}
-    ROSE is a mechanism to build source-to-source analysis or 
-optimization tools that operate directly on the source code of large 
-scale applications.  Example tools that {\em have} been built include:
-\begin{itemize}
-   \item Array Class abstraction optimizer,
-   \item Source-to-source instrumenter,
-   \item Loop analyzer,
-   \item Symbolic complexity analyzer,
-   \item Code coverage tools,
-   \item and many more.
-\end{itemize}
-Example tools that {\em can} be built include:
-\begin{itemize}
-   \item Custom optimization tools,
-   \item Custom documentation generators,
-   \item Custom analysis tools,
-   \item Code pattern recognition tools,
-   \item Security analysis tools,
-   \item and many more.
-\end{itemize}
-
-
-\section{What Is ROSE}
+\section{Research Goals for ROSE}
 ROSE is a project that aims to define a new type of compiler technology that allows
 compilation techniques to address the optimization of user-defined abstractions.
 Due to the nature of the solution we provide, it is also an open compiler infrastructure
@@ -224,7 +195,7 @@ Each chapter is described briefly below:
    \item {\bf AST Query Library} \\
       This chapter presents work that has been completed to support simple and complex queries on the AST.
 
-   \item {\bf AST Processing} \\
+   \item {\bf AST Traversal} \\
       This chapter covers different ways to write AST traversals (operators on the
       AST). This chapter 
     % requires an understanding of the previous chapter, and 

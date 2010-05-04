@@ -6,11 +6,14 @@
 //      code to fix bugs etc.  See the ROSE README file
 //      for directions.
 
+// tps: (02/22/2010): Adding DLL export requirements
+#include "rosedll.h"
+
 // predeclarations for $CLASSNAME
 $PREDECLARATIONS
 
 // Class Definition for $CLASSNAME
-class $CLASSNAME $BASECLASS
+class ROSE_DLL_API $CLASSNAME  $BASECLASS
    {
      public:
 

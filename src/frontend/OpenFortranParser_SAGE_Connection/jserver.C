@@ -120,6 +120,12 @@ jserver_callBooleanMethod(jobject obj_class, jmethodID method)
 JvmT* 
 get_jvmEnv()
 {
+#if 0
+  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+     printf ("In get_jvmEnv(): This code is not called and I think it can be removed... \n");
+     ROSE_ASSERT(false);
+#endif
+
   //static JvmT je;
   if (je.jvm == NULL ) {
        jserver_start(&je);
@@ -140,7 +146,9 @@ get_env()
 {
    return (get_jvmEnv())->env;
 }
-     
+
+// DQ (4/5/2010): Centralize the specification of the class path.
+extern string global_build_classpath();
 
 //static void 
 void 
@@ -150,16 +158,45 @@ jserver_start(JvmT* je)
   // char *jni_version = NULL;
   int res;
 
-//  char *classpathEnvVar = NULL;
-//  char *classpath;
-//
-  string classpath = "-Djava.class.path=";
-  classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
-  classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
-  classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
-  classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
-  classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
-  classpath += ".";
+  // char *classpathEnvVar = NULL;
+  // char *classpath;
+
+#if 0
+     string classpath = "-Djava.class.path=";
+  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+  // classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+
+  // DQ (3/12/2010): Moved OpenFortranParser-0.7.2.jar to fortran-parser from fortran-parser/lib
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
+#else
+   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+   #else
+     printf ("Error: Unknown version of OFP \n");
+     ROSE_ASSERT(false);
+   #endif
+#endif
+
+     classpath += ".";
+#else
+  // DQ (3/12/2010): We can't use this since we don't include the ROSE header files 
+  // (however, this might simplify the design).
+  // string classpath = SgSourceFile::build_classpath();
+     string classpath = global_build_classpath();
+#endif
+
+#if 0
+  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+     printf ("In jserver_start(): This code is not called and I think it can be removed... \n");
+     ROSE_ASSERT(false);
+#endif
 
   //const char *javaCPOption = "-Djava.class.path=";
   //int len;
@@ -217,11 +254,12 @@ jserver_start(JvmT* je)
      jvm_args.options[0].optionString = strdup(classpath.c_str());
      jvm_args.ignoreUnrecognized = JNI_FALSE;
 
-     // JNI_CreateJavaVM(&jvm, (void **)&env, &jvm_args);
+  // JNI_CreateJavaVM(&jvm, (void **)&env, &jvm_args);
+  // handleExceptionMaybe(jvm, env);
+
+  // printf ("Create and load the Java VM: Calling JNI_CreateJavaVM(); \n");
      
-     //handleExceptionMaybe(jvm, env);
-     
-     /* Create and load the Java VM.  */
+  /* Create and load the Java VM.  */
      res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
 
      if (res<0 || je->jvm==NULL || je->env==NULL)

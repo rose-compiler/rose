@@ -1,6 +1,7 @@
 # Please be careful about where to put your tests and variable settings
 # The order matters!!
 
+
 #----- put platform independent settings in this section-----------------
 cmake_minimum_required(VERSION 2.6)
 project (ROSE CXX C)
@@ -36,11 +37,10 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 endif (WIN32)
 
-#set(BOOST_ROOT "C:\\ROSE\\vs_boost_1_37_0-install") 
 #Ensure that Boost is found
 # environment variable BOOST_ROOT can help to find a user-specified path to Boost
-#SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
-find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave thread REQUIRED)
+SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
+find_package( Boost 1.36.0 COMPONENTS date_time filesystem program_options regex system wave thread REQUIRED)
 
 
 
@@ -92,14 +92,13 @@ if (WIN32)
 # /Ob0 disable inline expansion
 # /MP multiple processors compilation
 # /0s small files
-set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR- /EHsc /wd4541" )
-set( CMAKE_C_FLAGS "   /wd4541 " )
-#set( CMAKE_CXX_FLAGS " /TP /O1 /Ob0 /MP /Os" )
-#set( CMAKE_C_FLAGS "  /O1 /Ob0 /MP /Os" )
-
+set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR- /EHsc /wd4541 /Zi- /Z7" )
+set( CMAKE_C_FLAGS "   /wd4541 /Zi- /Z7" )
 else (WIN32)
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+#set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+#set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 endif (WIN32)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )

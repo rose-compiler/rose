@@ -493,11 +493,16 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
      scope_stmt->get_symbol_table()->get_table()->erase(found_it);
 
   // insert the new_name in the symbol table
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::unordered instead   
+//#ifdef _MSC_VER
+#if 0
   // DQ (11/28/2009): Unclear if this code is a problem (testing).
-#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
-	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
-	 ROSE_ASSERT(false);
+
+// CH (4/7/2010): It seems that the following code can be compiled under MSVC 9.0
+//#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
+//	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
+//	 ROSE_ASSERT(false);
+     found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
 #else
      found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
 #endif
@@ -527,7 +532,7 @@ SageInterface::get_name ( const SgC_PreprocessorDirectiveStatement* directive )
 
      name = directive->class_name();
 
-#if 0
+#if 1
   // I don't think we need this code now!
      switch (directive->variantT())
         {
@@ -1410,6 +1415,10 @@ SageInterface::get_name ( const SgExpression* expr )
           default:
              {
             // Nothing to do for other IR nodes
+
+            // DQ (4/8/2010): define something specific to this function to make debugging more clear.
+               name = "undefined_expression_name";
+               break;
              }
         }
 
@@ -2948,8 +2957,10 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
-#ifdef _MSC_VER
-#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
+// CH (4/9/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
+//#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
      printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
 #else
@@ -4581,8 +4592,11 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
         {
           SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label);
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
+#ifndef _MSC_VER
+//#if 1		  
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
-        }
+#endif
+	 }
    }
 
 // Add a step statement to the end of a loop body
@@ -5086,7 +5100,9 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
 void SageInterface::removeStatement(SgStatement* stmt)
 {
   ROSE_ASSERT(stmt);
+#ifndef _MSC_VER
   LowLevelRewrite::remove(stmt);
+#endif
 }
 
 
@@ -6982,6 +6998,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 //!SageInterface::prependStatement()
   void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
+    ROSE_ASSERT (stmt != NULL);
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope != NULL);
@@ -7003,6 +7020,44 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
       prependStatement(stmts[i - 1], scope);
     }
   }
+
+  //! Check if a scope statement has a simple children statement list (SgStatementPtrList)
+  //! so insert additional statements under the scope is straightforward and unambiguous . 
+  //! for example, SgBasicBlock has a simple statement list while IfStmt does not.
+  bool  SageInterface::hasSimpleChildrenList (SgScopeStatement* scope)
+{
+  bool rt = false;
+  ROSE_ASSERT (scope != NULL);
+  switch (scope->variantT())
+  {
+    case V_SgBasicBlock:
+    case V_SgClassDefinition:
+    case V_SgFunctionDefinition:
+    case V_SgGlobal:
+    case V_SgNamespaceDefinitionStatement: //?
+      rt = true;
+      break;
+
+     case V_SgAssociateStatement :
+     case V_SgBlockDataStatement :
+     case V_SgCatchOptionStmt:
+     case V_SgDoWhileStmt:
+     case V_SgForAllStatement:
+     case V_SgForStatement:
+     case V_SgFortranDo:
+     case V_SgIfStmt:
+     case V_SgSwitchStatement:
+     case V_SgUpcForAllStatement:
+     case V_SgWhileStmt:
+      rt = false;
+      break;
+    
+    default: 
+      cout<<"unrecognized or unhandled scope type for SageInterface::hasSimpleChildrenList() "<<endl;
+    break; 
+  }
+  return rt;
+}
 
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
@@ -7706,7 +7761,8 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
 {
   // This is part of Wave support in ROSE.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if CAN_NOT_COMPILE_WITH_ROSE == 0
+// #if CAN_NOT_COMPILE_WITH_ROSE == 0
+#ifndef USE_ROSE
   ROSE_ASSERT(target != NULL);
   AttachedPreprocessingInfoType *info=  target->getAttachedPreprocessingInfo ();
   if (info == NULL) return;
@@ -9755,8 +9811,10 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
-#ifdef _MSC_VER
-#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
+// CH (4/9/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
+//#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
 	 printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
 #else
@@ -10253,10 +10311,10 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 #if 0
 // This function is not implemented our used, but it might be when the final code is refactored.
 
-// rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr>
+// rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr>
 // void SageInterface::supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap )
 void
-SageInterface::supplementReplacementSymbolMap ( rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap )
+SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap )
    {
   // Prior to the call to fixupSubtreeTraversal(), we have to build the "replacementMap".  The "replacementMap"
   // contains the IR node address references into the old AST (what was copied) which need to be replaced in the 
@@ -10295,9 +10353,16 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
   // This function moves statements from one block to another (used by the outliner).
   // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
     ROSE_ASSERT (sourceBlock && targetBlock);
+    if (sourceBlock == targetBlock)
+    {
+      cerr<<"warning: SageInterface::moveStatementsBetweenBlocks() is skipped, "<<endl;
+      cerr<<"         since program is trying to move statements from and to the identical basic block. "<<endl;
+      return;
+    }
 
      SgStatementPtrList & srcStmts = sourceBlock->get_statements();
 
+//     cout<<"debug SageInterface::moveStatementsBetweenBlocks() number of stmts = "<< srcStmts.size() <<endl;
      for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
         {
           // append statement to the target block
@@ -10311,9 +10376,10 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
             // I am unclear if this is a reasonable constraint, it passes all tests but this one!
                if ((*i)->get_scope() != targetBlock)
                   {
-                    printf ("Warning: test failing (*i)->get_scope() == targetBlock, fails for tutorial/outliner/inputCode_OutlineNonLocalJumps.cc \n");
+                    //(*i)->set_scope(targetBlock);
+                    printf ("Warning: test failing (*i)->get_scope() == targetBlock \n");
                   }
-            // ROSE_ASSERT((*i)->get_scope() == targetBlock);
+               //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }
 
           SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
@@ -10345,6 +10411,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        {
                          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
                          ROSE_ASSERT (funcDecl);
+                         //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
                     default:
@@ -10362,7 +10429,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
      ROSE_ASSERT(srcStmts.empty() == true);
      ROSE_ASSERT(sourceBlock->get_statements().empty() == true);
 
-  // Copy the symbol table
+  // Move the symbol table
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
      targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 

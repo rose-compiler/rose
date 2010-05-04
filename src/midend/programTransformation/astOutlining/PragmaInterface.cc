@@ -152,7 +152,9 @@ Outliner::outline (SgPragmaDeclaration* decl)
 
 #if 1
        // This will search the parent for the location of decl, but this is not found
-       LowLevelRewrite::remove (decl);
+#ifndef _MSC_VER
+	   LowLevelRewrite::remove (decl);
+#endif
 #else
        // DQ (2/24/2009): Added more direct concept of remove.
        // We just want a more direct and simpler concept of remove (remove the AST, 

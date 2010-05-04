@@ -4,9 +4,6 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
-set( libabstractHandle_SRC
-     abstract_handle.cpp roseAdapter.cpp
-   )
 #add_library(libabstractHandle ${libabstractHandle_SRC})
 
 ########### install files ###############

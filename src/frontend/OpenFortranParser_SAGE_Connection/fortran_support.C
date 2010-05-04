@@ -471,6 +471,7 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      if (sourceLocatedNode->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
         {
           printf ("resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+          sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
         }
      ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
 
@@ -2340,7 +2341,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
   // DQ (11/18/2007): Save the attributes used and clear the astAttributeSpecStack for this declaration
      while (astAttributeSpecStack.empty() == false)
         {
-       // printf (" %d ",astAttributeSpecStack.front());
+       // printf ("Process attribute spec %d ",astAttributeSpecStack.front());
           setDeclarationAttributeSpec(variableDeclaration,astAttributeSpecStack.front());
           astAttributeSpecStack.pop_front();
         }
@@ -3158,6 +3159,9 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
           ROSE_ASSERT(astIntentSpecStack.size() <= 1);
           while (astIntentSpecStack.empty() == false)
              {
+            // DQ (4/5/2010): Debugging missing INTENT keyword in ROSE output of test2009_19.f90.
+               printf ("Calling attributeSpecificationStatement->set_intent(intent) \n");
+
                int intent = astIntentSpecStack.front();
                attributeSpecificationStatement->set_intent(intent);
                astIntentSpecStack.pop_front();
@@ -3349,6 +3353,28 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
           case AttrSpec_PARAMETER:
             // printf ("Error: PARAMETER is an attribute that implies constant value ('const' in C/C++) \n");
                variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+
+               if (astBaseTypeStack.empty() == false)
+                  {
+                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                         printf ("Processing AttrSpec_PARAMETER case, astBaseTypeStack not empty: astBaseTypeStack.front() = %p = %s = %s (CLEARING astBaseTypeStack) \n",
+                              astBaseTypeStack.front(),astBaseTypeStack.front()->class_name().c_str(),SageInterface::get_name(astBaseTypeStack.front()).c_str());
+
+                    SgModifierType* modifierType = isSgModifierType(astBaseTypeStack.front());
+                 // ROSE_ASSERT(modifierType != NULL);
+                    if (modifierType != NULL)
+                       {
+                         modifierType->get_typeModifier().get_constVolatileModifier().setConst();
+                       }
+                      else
+                       {
+                      // printf ("This was not a modifier Type \n");
+                       }
+
+                 // DQ (4/7/2010): This might be the perfect place to pop the stack, and avoid the warning later!
+                 // astBaseTypeStack.pop();
+                  }
+
                break;
 
           case AttrSpec_POINTER:
@@ -3378,6 +3404,8 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
                break;
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
+       // DQ (4/5/2010): These have been removed from OFP 0.8.0
           case ComponentAttrSpec_dimension_paren:
                printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
@@ -3387,6 +3415,7 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                printf ("Error: ComponentAttrSpec_dimension_bracket used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
                break;
+#endif
 
           case ComponentAttrSpec_allocatable:
                printf ("Error: ComponentAttrSpec_allocatable used as an attribute specifier (unclear how to process this) \n");
@@ -4428,7 +4457,7 @@ cleanupTypeStackAfterDeclaration()
        // astTypeStack.pop_front();
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("WARNING, astTypeStack not empty: astTypeStack.front() = %p = %s (CLEARING astTypeStack) \n",astTypeStack.front(),astTypeStack.front()->class_name().c_str());
+             printf ("WARNING, astTypeStack not empty: astTypeStack.front() = %p = %s = %s (CLEARING astTypeStack) \n",astTypeStack.front(),astTypeStack.front()->class_name().c_str(),SageInterface::get_name(astTypeStack.front()).c_str());
 
           astTypeStack.clear();
 #if 0
@@ -4441,7 +4470,7 @@ cleanupTypeStackAfterDeclaration()
      if (astBaseTypeStack.empty() == false)
         {
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("WARNING, astBaseTypeStack not empty: astBaseTypeStack.front() = %p = %s (CLEARING astBaseTypeStack) \n",astBaseTypeStack.front(),astBaseTypeStack.front()->class_name().c_str());
+               printf ("WARNING, astBaseTypeStack not empty: astBaseTypeStack.front() = %p = %s = %s (CLEARING astBaseTypeStack) \n",astBaseTypeStack.front(),astBaseTypeStack.front()->class_name().c_str(),SageInterface::get_name(astBaseTypeStack.front()).c_str());
 
           astBaseTypeStack.clear();
 #if 0

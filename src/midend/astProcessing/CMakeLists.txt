@@ -19,21 +19,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstReverseSimpleProcessing.C
 
 ########### next target ###############
-set( libastprocessing_SRC  
-   AstPDFGeneration.C AstNodeVisitMapping.C AstTextAttributesHandling.C 
-   AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C Ast.C 
-   AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C 
-   AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C 
-   AstTraversal.C AstCombinedSimpleProcessing.C 
-   )
-if (NOT WIN32)
-set( libastprocessing_SRC  ${libastprocessing_SRC} 
-   AstSharedMemoryParallelSimpleProcessing.C 
-   )
-endif (NOT WIN32)
 
-add_library( midend_processing  ${libastprocessing_SRC} )
-add_dependencies( midend_processing ROSETTA )
+#add_library( midend_processing  ${libastprocessing_SRC} )
+#add_dependencies( midend_processing ROSETTA )
 
 
 ########### install files ###############
