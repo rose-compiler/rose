@@ -255,6 +255,8 @@ SgAsmVectorValueExpression
 SgAsmWordValueExpression
 SgAsmx86Instruction
 SgAsmx86RegisterReferenceExpression
+SgAsmBinaryAddressSymbol
+SgAsmBinaryDataSymbol
 SgAssignInitializer
 SgAssignOp
 SgAssignStatement
@@ -415,6 +417,8 @@ SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol
 SgIorAssignOp
+SgKernelExecConfig
+SgKernelCallExp
 SgLabelRefExp
 SgLabelStatement
 SgLabelSymbol
@@ -497,6 +501,7 @@ SgOmpScheduleClause
 SgOmpSharedClause
 SgOmpUntiedClause
 SgOmpVariablesClause
+SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions
 SgOrOp
