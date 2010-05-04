@@ -10,12 +10,20 @@ void
 SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
+#ifndef _MSC_VER
     if (idx>=0) {
         snprintf(p, sizeof(p),"%sFormat[%zd].", prefix, idx);
     } else {
         snprintf(p, sizeof(p),"%sFormat.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#else
+    if (idx>=0) {
+        _snprintf(p, sizeof(p),"%sFormat[%zd].", prefix, idx);
+    } else {
+        _snprintf(p, sizeof(p),"%sFormat.", prefix);
+    }
+#endif
+	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = %s\n", p, w, "family", to_string(get_family()).c_str());
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", to_string(get_purpose()).c_str());

@@ -135,7 +135,8 @@ struct MachineState {
     std::vector<MemoryCell> mem;
 
     friend std::ostream& operator<<(std::ostream &o, const MachineState &state) {
-        std::string prefix = "    ";
+		std::string prefix = "    ";
+#ifndef _MSC_VER
         for (size_t i = 0; i < 8; ++i)
             o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << state.gpr[i] << std::endl;
         for (size_t i = 0; i < 6; ++i)
@@ -156,7 +157,8 @@ struct MachineState {
             }
             o <<prefix << "}\n";
         }
-        return o;
+#endif
+		return o;
     }
 };
 

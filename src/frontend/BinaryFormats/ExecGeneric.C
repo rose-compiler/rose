@@ -206,7 +206,11 @@ std::string SgAsmExecutableFileFormat::isa_family_to_string(SgAsmExecutableFileF
       break;
   };
   char buf[64];
+#ifndef _MSC_VER
   snprintf(buf,sizeof(buf),"unknown isa family (%zu)",size_t(isa & ISA_FAMILY_MASK)) ;
+#else
+  _snprintf(buf,sizeof(buf),"unknown isa family (%zu)",size_t(isa & ISA_FAMILY_MASK)) ;
+#endif
   return buf;
 }
 
@@ -393,7 +397,11 @@ std::string SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::
       return isa_family_to_string(isa);
   };
   char buf[64];
+#ifndef _MSC_VER
   snprintf(buf,sizeof(buf),"unknown isa (%zu)",size_t(isa)) ;
+#else
+  _snprintf(buf,sizeof(buf),"unknown isa (%zu)",size_t(isa)) ;
+#endif
   return buf;
 }
 
@@ -405,7 +413,11 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Byte
     case ORDER_MSB:             return "big-endian";    
   };
   char buf[64];
+#ifndef _MSC_VER
   snprintf(buf,sizeof(buf),"unknown byte order (%zu)",size_t(sex)) ;
+#else
+  _snprintf(buf,sizeof(buf),"unknown byte order (%zu)",size_t(sex)) ;
+#endif
   return buf;
 }
 
@@ -421,7 +433,11 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Exec
     case FAMILY_PE:           return "Microsoft Portable Executable (PE)";   
   };
   char buf[128];
+#ifndef _MSC_VER
   snprintf(buf,sizeof(buf),"unknown exec family (%zu)",size_t(family)) ;
+#else
+  _snprintf(buf,sizeof(buf),"unknown exec family (%zu)",size_t(family)) ;
+#endif
   return buf;
 }
 
@@ -450,7 +466,11 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Exec
     case ABI_WIN386:      return "Microsoft Windows";
   };
   char buf[64];
+#ifndef _MSC_VER
   snprintf(buf,sizeof(buf),"unknown abi (%zu)",size_t(abi)) ;
+#else
+  _snprintf(buf,sizeof(buf),"unknown abi (%zu)",size_t(abi)) ;
+#endif
   return buf;
 }
 
@@ -466,6 +486,10 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Exec
     case PURPOSE_PROC_SPECIFIC: return "processor specific purpose";        
   };
   char buf[64];
+#ifndef _MSC_VER
   snprintf(buf,sizeof(buf),"unknown exec purpose (%zu)",size_t(purpose)) ;
+#else
+  _snprintf(buf,sizeof(buf),"unknown exec purpose (%zu)",size_t(purpose)) ;
+#endif
   return buf;
 }
