@@ -116,11 +116,7 @@ SgAsmElfSymbol::to_string(ElfSymBinding val)
     case STB_WEAK:   return "weak";   
   };
   char sbuf[256];
-#ifndef _MSC_VER
   snprintf(sbuf, sizeof(sbuf),"unknown binding (%zu)", (size_t)val);
-#else
-  _snprintf(sbuf, sizeof(sbuf),"unknown binding (%zu)", (size_t)val);
-#endif
   return sbuf;
 }
 
@@ -138,11 +134,7 @@ SgAsmElfSymbol::to_string(ElfSymType val)
   };
 
   char sbuf[256];
-#ifndef _MSC_VER
   snprintf(sbuf, sizeof(sbuf),"unknown type (%zu)", (size_t)val);
-#else
-  _snprintf(sbuf, sizeof(sbuf),"unknown type (%zu)", (size_t)val);
-#endif
   return sbuf;
 }  
 
