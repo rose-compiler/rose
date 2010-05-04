@@ -68,9 +68,11 @@ HEADER_BINARY_INSTRUCTION_START
 		virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) {return false;}
 		virtual bool has_effect();
-		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false);
+		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+					bool relax_stack_semantics=false);
 		virtual std::vector<std::pair<size_t,size_t> >
-		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false);
+		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool *complete);
 HEADER_BINARY_INSTRUCTION_END
@@ -3828,9 +3830,11 @@ HEADER_BINARY_X86_INSTRUCTION_START
 		virtual bool terminatesBasicBlock();
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
 		virtual bool has_effect();
-		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false);
+		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+				        bool relax_stack_semantics=false);
 		virtual std::vector<std::pair<size_t,size_t> >
-		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false);
+		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool* complete);
 HEADER_BINARY_X86_INSTRUCTION_END
@@ -3841,8 +3845,6 @@ HEADER_BINARY_POWERPC_INSTRUCTION_START
 	public:
 		/* These virtual functions are implemented in DisassemblerPowerpc.C */
 		virtual bool terminatesBasicBlock();
-		virtual bool has_effect();
-		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
@@ -3852,8 +3854,6 @@ HEADER_BINARY_ARM_INSTRUCTION_START
 	public:
 		/* These virtual functions are implemented in DisassemblerArm.C */
 		virtual bool terminatesBasicBlock();
-		virtual bool has_effect();
-		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
 HEADER_BINARY_ARM_INSTRUCTION_END
 

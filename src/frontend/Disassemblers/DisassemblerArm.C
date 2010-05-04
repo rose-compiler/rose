@@ -149,20 +149,6 @@ SgAsmArmInstruction::terminatesBasicBlock() {
     return modifies_ip(this);
 }
 
-/* FIXME: Assume, for now, that all ARM instructions have an effect. */
-bool
-SgAsmArmInstruction::has_effect()
-{
-    return true;
-}
-
-/* FIXME: Assume, for now, that all ARM instruction sequences have an effect. */
-bool
-SgAsmArmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/)
-{
-    return true;
-}
-
 bool
 DisassemblerArm::can_disassemble(SgAsmGenericHeader *header) const
 {

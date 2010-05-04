@@ -355,16 +355,22 @@ SgAsmx86Instruction::has_effect()
  *  2. If the JE always falls through then it is a no-op regardless of the allow_branch setting.
  *  3. If the JE always branches, then it is a no-op only if allow_branch is set.
  *
+ *  If relax_stack_semantics is true then each time the stack pointer is increased the memory locations below
+ *  the new stack value are discarded.  Typically, well behaved programs do not read stack data that is below the stack
+ *  pointer.
+ *
  *  "this" is only used to select the virtual function; the operation is performed on the specified instruction vector.
  */
 bool
-SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/)
+SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+                                bool relax_stack_semantics/*false*/)
 {
     if (insns.empty()) return false;
 
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
     Semantics semantics(policy);
+    if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     VirtualMachineSemantics::State original_state = policy.get_state();
     rose_addr_t next_ip = insns.front()->get_address();
     try {
@@ -405,15 +411,17 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
  *
  *  "this" is only used to select the virtual function; the operation is performed over the specified instruction vector. */
 std::vector< std::pair< size_t, size_t > >
-SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/)
+SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+                                            bool relax_stack_semantics/*false*/)
 {
-    static const bool verbose = false;
+    static const bool verbose = true;
     
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
+    if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
 
     /* Save the state before and after each instruction.  states[i] is the state before insn[i] and states[i+1] is the state
@@ -439,6 +447,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
             }
             next_ip = policy.get_ip().known_value();
             state.push_back(policy.get_state());
+            if (verbose) std::cerr <<"  state:\n" <<policy.get_state().normalize();
         }
     } catch (const Semantics::Exception&) {
         /* Perhaps we can find at least a few no-op subsequences... */

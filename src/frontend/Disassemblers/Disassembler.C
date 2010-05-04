@@ -55,7 +55,8 @@ SgAsmInstruction::has_effect()
 /** Virtual method to determine if an instruction sequence has an effect. Unless subclass redefines, assume all instruction
  *  sequences have an effect. See SgAsmx86Instruction implementation for complete documentation. */
 bool
-SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/)
+SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/,
+                             bool relax_stack_semantics/*false*/)
 {
     return true;
 }
@@ -66,7 +67,8 @@ SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_b
  *  FIXME: Instead of leaving this unimplemented, we could implement it in terms of has_effect() and let the subclasses
  *         reimplement it only if they can do so more efficiently (which they probably can). [RPM 2010-04-30] */
 std::vector<std::pair<size_t,size_t> >
-SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/)
+SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+                                         bool relax_stack_semantics/*false*/)
 {
     std::vector<std::pair<size_t, size_t> > retval;
     return retval;
