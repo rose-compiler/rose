@@ -153,7 +153,8 @@
 #else
 // DQ (11/4/2009): Use the GNU depricated stuff (what works in ROSE at the moment)
 // tps (01/25/2010) : deprecated - does not work in setup.h
-#include <ext/hash_map>
+// CH (04/28/2010) : We don't need it anymore
+//#include <ext/hash_map>
 #endif
 #endif
 
