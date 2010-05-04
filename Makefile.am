@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
+
 # DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
@@ -311,3 +312,8 @@ ProblemAreas:
 # Report the version number of the ROSE translator built.
 PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
 	$(top_builddir)/tests/testAnalysis --version
+
+release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
+
+PrintBinaryCompatibilitySignature:
+	@echo "release_binary_compatibility_signature = ${release_binary_compatibility_signature}"
