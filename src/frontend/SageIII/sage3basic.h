@@ -10,7 +10,7 @@
 #include "fileoffsetbits.h"
 #include "rosedll.h"
 //tps (05/04/2010): Added compatibility
-#ifndef _MSC_VER
+#ifdef _MSC_VER
   #define snprintf _snprintf
 #endif
 // DQ (4/21/2009): Note that this header file will include the STL string header file 
