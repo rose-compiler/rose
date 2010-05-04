@@ -354,8 +354,8 @@ ProcessAssign( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs, b
   std::string modname, readname;
   AstNodePtr modscope, readscope;
  
+  readname = Get_VarName(fa, rhs); 
   if (!fa.IsVarRef(mod, 0, &modname, &modscope) )  {
-     readname = Get_VarName(fa, rhs); 
      if (readlhs)  {
           modname = Get_VarName(fa,mod);
           std::list<std::string> opds;
