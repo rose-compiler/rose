@@ -84,7 +84,7 @@ class AstInterface
            BOP_DOT_ACCESS, BOP_ARROW_ACCESS, 
            BOP_TIMES, BOP_DIVIDE, BOP_PLUS, BOP_MINUS, 
            BOP_EQ, BOP_LE, BOP_LT, BOP_NE, BOP_GT, BOP_GE, 
-           BOP_AND, BOP_OR,
+           BOP_AND, BOP_OR, BOP_MOD, 
            BOP_BIT_AND,BOP_BIT_OR, BOP_BIT_RSHIFT, BOP_BIT_LSHIFT,
            OP_ARRAY_ACCESS} OperatorEnum;
 
