@@ -1007,6 +1007,13 @@ HEADER_PSEUDO_DESTRUCTOR_REF_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_PSEUDO_DESTRUCTOR_REF_END
 
+HEADER_KERNEL_EXEC_CONFIG_START
+HEADER_KERNEL_EXEC_CONFIG_END
+
+HEADER_KERNEL_CALL_EXPRESSION_START
+HEADER_LIST_DECLARATIONS
+HEADER_KERNEL_CALL_EXPRESSION_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -5366,3 +5373,91 @@ SgPseudoDestructorRefExp::post_construction_initialization()
    }
 SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
+
+
+SOURCE_KERNEL_EXEC_CONFIG_START
+SOURCE_KERNEL_EXEC_CONFIG_END
+
+SOURCE_KERNEL_CALL_EXPRESSION_START
+
+void
+SgKernelCallExp::post_construction_initialization() 
+   {
+     if (p_function != NULL)
+          p_function->set_parent(this);
+          
+     // TODO : exec_config
+   }
+
+void
+SgKernelCallExp::append_arg(SgExpression* what)
+   {
+     assert(this != NULL);
+
+  // DQ (11/15/2006): avoid setting newArgs this late in the process.
+     ROSE_ASSERT(p_args != NULL);
+     if (p_args == NULL)
+        {
+       // set_args(new SgExprListExp(this->get_file_info()));
+          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
+          assert(newArgs != NULL);
+          newArgs->set_endOfConstruct( this->get_file_info() );
+          set_args(newArgs);
+        }
+
+    // insert_arg(p_args->end(),what);
+       p_args->append_expression(what);
+   }
+   
+SgType* SgKernelCallExp::get_type() const
+   {
+	SgType* returnType = NULL;
+
+     ROSE_ASSERT(p_function != NULL);
+  // printf ("In SgFunctionCallExp::get_type(): calling get_type() on p_function = %p = %s \n",p_function,p_function->class_name().c_str());
+     SgType* likelyFunctionType = p_function->get_type();
+     ROSE_ASSERT(likelyFunctionType != NULL);
+     while (likelyFunctionType && isSgTypedefType(likelyFunctionType))
+        {
+          likelyFunctionType = isSgTypedefType(likelyFunctionType)->get_base_type();
+          ROSE_ASSERT(likelyFunctionType != NULL);
+        }
+
+     SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
+     if (functionType == NULL)
+        {
+          printf ("Error: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
+       // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
+
+       // DQ (7/15/2007): Handle case of typedef of function type
+          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
+
+          printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
+
+          functionType = isSgFunctionType(likelyFunctionType);
+
+#ifdef ROSE_USE_EDG_VERSION_4
+       // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
+       // I think this is an improvement to this functionality of this function.
+          if (functionType == NULL)
+               returnType = likelyFunctionType;
+#else
+          ROSE_ASSERT(functionType != NULL);
+#endif
+        }
+
+#ifdef ROSE_USE_EDG_VERSION_4
+  // if not already set
+     if (returnType == NULL)
+          returnType = functionType->get_return_type();
+#else
+     ROSE_ASSERT(functionType != NULL);
+     returnType = functionType->get_return_type();
+#endif
+     ROSE_ASSERT(returnType != NULL);
+
+     return returnType;
+   }
+
+   
+SOURCE_KERNEL_CALL_EXPRESSION_END

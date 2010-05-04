@@ -708,6 +708,9 @@ int GetPrecedence(int variant)
           case V_SgUpcThreads:       return 0;
           case V_SgUpcMythread:       return 0;
           case V_SgNullExpression:    return 0;
+    // TV (04/26/2010): CUDA nodes
+          case V_SgKernelExecConfig: return 0;
+          case V_SgKernelCallExp:    return 0;
 #if 0
        // Template
           case V_:              return 0;
@@ -1802,6 +1805,20 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                (isDeclarationOfTemplateSpecialization == false) )
              {
                curprint( "explicit ");
+             }
+             
+       // TV (04/26/2010): CUDA function modifiers
+          if (functionDeclaration->get_functionModifier().isCudaKernel())
+             {
+               curprint( "__global__ ");
+             }
+          if (functionDeclaration->get_functionModifier().isCudaDevice())
+             {
+               curprint( "__device__ ");
+             }
+          if (functionDeclaration->get_functionModifier().isCudaHost())
+             {
+               curprint( "__host__ ");
              }
         }
 
