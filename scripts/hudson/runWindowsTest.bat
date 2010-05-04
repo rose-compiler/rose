@@ -33,7 +33,7 @@ cmake -DBOOST_ROOT=%BOOST_ROOT% -DCMAKE_BUILD_TYPE=Release -G"Visual Studio 9 20
 @echo PHASE 2 : vcbuild
 @echo ----------------------------
 
-vcbuild.exe RUN_TESTS.vcproj "Release|Win32"
+vcbuild.exe ZERO_CHECK.vcproj "Release|Win32"
 
 
 
