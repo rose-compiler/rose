@@ -26,8 +26,8 @@ cmake.exe --version
 mkdir win-build
 cd win-build
 
-@echo cmake -DBOOST_ROOT=%BOOST_ROOT% -G"Visual Studio 9 2008"  ../ 
-cmake -DBOOST_ROOT=%BOOST_ROOT% -G"Visual Studio 9 2008"  ../
+@echo cmake -DBOOST_ROOT=%BOOST_ROOT% -DCMAKE_BUILD_TYPE=Release -G"Visual Studio 9 2008"  ../ 
+cmake -DBOOST_ROOT=%BOOST_ROOT% -DCMAKE_BUILD_TYPE=Release -G"Visual Studio 9 2008"  ../
 
 @echo ----------------------------
 @echo PHASE 2 : vcbuild
