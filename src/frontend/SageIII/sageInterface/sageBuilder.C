@@ -2815,6 +2815,73 @@ SgNullStatement* SageBuilder::buildNullStatement_nfi()
   return result;
 }
 
+// DQ (4/30/2010): Added support for building asm statements.
+//! Build an asm statement
+SgAsmStmt* SageBuilder::buildAsmStatement( std::string s )
+{
+  SgAsmStmt* result = NULL;
+  result = new SgAsmStmt();
+  ROSE_ASSERT(result);
+  result->set_assemblyCode(s);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+// DQ (4/30/2010): Added support for building asm statements.
+//! Build an asm statement
+SgAsmStmt* SageBuilder::buildAsmStatement_nfi( std::string s )
+{
+  SgAsmStmt* result = NULL;
+  result = new SgAsmStmt();
+  ROSE_ASSERT(result);
+  result->set_assemblyCode(s);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgAsmStmt*
+SageBuilder::buildMultibyteNopStatement( int n )
+   {
+// Multi-byte NOP instructions.
+// Note: I can't seem to get the memonic versions to work properly
+#define NOP_1_BYTE_STRING "nop"
+#define NOP_2_BYTE_STRING ".byte 0x66,0x90"
+#define NOP_3_BYTE_STRING "nopl (%eax)"
+#define NOP_4_BYTE_STRING "nopl 0x01(%eax)"
+#define NOP_5_BYTE_STRING ".byte 0x0f,0x1f,0x44,0x00,0x00"
+#define NOP_6_BYTE_STRING ".byte 0x66,0x0f,0x1f,0x44,0x00,0x00"
+#define NOP_7_BYTE_STRING ".byte 0x0f,0x1f,0x80,0x00,0x00,0x00,0x00"
+#define NOP_8_BYTE_STRING ".byte 0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00"
+#define NOP_9_BYTE_STRING ".byte 0x66,0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00"
+
+     ROSE_ASSERT(n > 0);
+
+     SgAsmStmt* nopStatement = NULL;
+
+     switch (n)
+        {
+          case 1: nopStatement = buildAsmStatement(NOP_1_BYTE_STRING); break;
+          case 2: nopStatement = buildAsmStatement(NOP_2_BYTE_STRING); break;
+          case 3: nopStatement = buildAsmStatement(NOP_3_BYTE_STRING); break;
+          case 4: nopStatement = buildAsmStatement(NOP_4_BYTE_STRING); break;
+          case 5: nopStatement = buildAsmStatement(NOP_5_BYTE_STRING); break;
+          case 6: nopStatement = buildAsmStatement(NOP_6_BYTE_STRING); break;
+          case 7: nopStatement = buildAsmStatement(NOP_7_BYTE_STRING); break;
+          case 8: nopStatement = buildAsmStatement(NOP_8_BYTE_STRING); break;
+          case 9: nopStatement = buildAsmStatement(NOP_9_BYTE_STRING); break;
+
+          default:
+             {
+               printf ("Only supporting values of multi-byte nop's up to 9 bytes long. \n");
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return nopStatement;
+   }
+
+
+
 //! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
 // This does not work properly since the global scope expects declaration statement, not just SgNullStatement
 #if 0    
