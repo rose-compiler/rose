@@ -255,6 +255,8 @@ SgAsmVectorValueExpression
 SgAsmWordValueExpression
 SgAsmx86Instruction
 SgAsmx86RegisterReferenceExpression
+SgAsmBinaryAddressSymbol
+SgAsmBinaryDataSymbol
 SgAssignInitializer
 SgAssignOp
 SgAssignStatement

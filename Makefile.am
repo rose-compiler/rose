@@ -311,3 +311,8 @@ ProblemAreas:
 # Report the version number of the ROSE translator built.
 PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
 	$(top_builddir)/tests/testAnalysis --version
+
+release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
+
+PrintBinaryCompatibilitySignature:
+	@echo "release_binary_compatibility_signature = ${release_binary_compatibility_signature}"

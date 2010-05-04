@@ -44,17 +44,45 @@ HEADER_BINARY_END
 
 
 HEADER_INTERPRETATION_START
-	public:
-		SgAsmInterpretation()
-			: p_map(NULL), p_dwarf_info(NULL), p_headers(NULL), p_global_block(NULL) {
-			ctor();
-		}
-		SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
-		MemoryMap *get_map() const {return p_map;}
-		void set_map(MemoryMap* m) {p_map=m;}
-	private:
-		void ctor();
-		MemoryMap *p_map;
+     public:
+          SgAsmInterpretation()
+             : p_map(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL), p_headers(NULL), p_global_block(NULL) 
+             {
+               ctor();
+             }
+          SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
+          MemoryMap *get_map() const {return p_map;}
+          void set_map(MemoryMap* m) {p_map=m;}
+
+      //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
+      //! to the size of the section which are disassembled (in bytes) (uses coverageComputed and percentageCoverage data members).
+          int get_disassembledInstructionCoverageMetricForDisassembledSections() const;
+
+      //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
+      //! to the size of the address range of the top of the first block in memory to the end of the last block in memory.
+          double get_disassembledInstructionCoverageMetricForAddressRangeOfFunctionBlocks() const;
+
+          void set_coverageComputed( bool x )
+             {
+               coverageComputed = x;
+             }
+
+          void set_percentageCoverage( double x )
+             {
+               percentageCoverage = x;
+             }
+
+     private:
+          void ctor();
+          MemoryMap *p_map;
+
+       // DQ (4/29/2010): Added support for computing the percentage of coverage of the disassembled functions relative to the section size.
+      //! Save as state if the coverage was computed (so that we can know when the value in percentageCoverage makes sense).
+          bool coverageComputed;
+
+      //! The percentage of an interpretation where each section is marked as executable and identified for disassembly into instructions.
+          double percentageCoverage;
+
 HEADER_INTERPRETATION_END
 
 
@@ -3893,20 +3921,46 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 FUNC_DEFAULT     = 0xfff                /**< Default value for Partitioner class */
         };
 
-	/** Returns a very short string describing the reason mask. */
-	std::string reason_str(bool pad) const;
-	static std::string reason_str(bool pad, unsigned reason);
+      /** Returns a very short string describing the reason mask. */
+          std::string reason_str(bool pad) const;
+          static std::string reason_str(bool pad, unsigned reason);
 
-	//! enum declaration as specified in proposed Sabre database schema
-	enum function_kind_enum {
-		e_unknown  = 0,
-		e_standard = 1,
-		e_library  = 2,
-		e_imported = 3,
-		e_thunk	   = 4,
-		e_last
-	};
+      //! enum declaration as specified in proposed Sabre database schema
+          enum function_kind_enum {
+               e_unknown  = 0,
+               e_standard = 1,
+               e_library  = 2,
+               e_imported = 3,
+               e_thunk	   = 4,
+               e_last
+             };
 
+      //! enum declaration to specify type of calling convention used.
+          enum function_calling_convention_enum {
+       // Note that there are additional modes: syscall, optlink, pascal, register, 
+       // Microsoft fastcall, Borland fastcall, Watcom register based calling convention, 
+       // Topspeed/Clarion/JPI, safecall, etc.  More info is available at:
+       //    http://en.wikipedia.org/wiki/X86_calling_conventions
+               e_unknown_call  = 0,
+               e_std_call      = 1,
+               e_fast_call     = 2,
+               e_cdecl_call    = 3,
+               e_this_call	    = 4,
+               e_last_call
+             };
+
+      //! Computes the calling convention used in this function (used to score properly formed functions).
+          function_calling_convention_enum get_functionCallingConvention() const;
+
+      //! Computes the offset of the stack at the end of the call relative the the start of the call (in a perfect function this would be zero, this is used to score properly formed functions).
+          int get_stackNutralityMetric() const;
+
+      //! Computes the number of paths determined to no return (all paths returning metric)
+          int get_numberOfPathsNotReturningMetric() const;
+
+      //! Compute the percentage of coverage based on the length of blocks in this disassembled function (in bytes) compared 
+      //! to the size of the address range of the top of the first block in memory to the end of the last block in memory.
+          double get_disassembledInstructionCoverageMetricForAddressRangeOfBlocks() const;
 
 HEADER_BINARY_FUNCTION_DECLARATION_END
 
@@ -4514,6 +4568,104 @@ SgAsmFunctionDeclaration::append_block( SgAsmBlock* operand )
      p_body.push_back(operand);
    }
 */
+
+// DQ (4/29/2010): Added function to return string for function reason field (for debugging).
+string
+SgAsmFunctionDeclaration::get_functionReasonString ()
+   {
+#if 0
+     enum FunctionReason {
+          FUNC_NONE        = 0x000,  /**< Used for initialization; not a bit flag */
+          FUNC_ENTRY_POINT = 0x001,  /**< An entry point specified in the file header */
+          FUNC_CALL_TARGET = 0x002,  /**< Target of a CALL-like instruction */
+          FUNC_EH_FRAME    = 0x004,  /**< Address mentioned in the ELF .eh_frame section */
+          FUNC_SYMBOL      = 0x008,  /**< Address of a function symbol in a symbol table */
+          FUNC_PATTERN     = 0x010,  /**< Appears to be a function based on pattern of instructions */
+          FUNC_GRAPH       = 0x020,  /**< Implied by inter-basicblock branching */
+          FUNC_USERDEF     = 0x040,  /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
+          FUNC_INTERPAD    = 0x080,  /**< Created to represent NOP padding between other functions. */
+          FUNC_DISCONT     = 0x100,  /**< Blocks of function are not contiguous in memory. */
+          FUNC_INSNHEAD    = 0x200,  /**< For initial instructions not in any other function (is always run) */
+          FUNC_DEFAULT     = 0x3ff   /**< Default value for Partitioner class */
+#endif
+
+     string s;
+
+     unsigned int reason = this->get_reason();
+  // printf ("reason = %u \n",reason);
+     for (unsigned i = 0; i < sizeof(FunctionReason) * 8; i++)
+        {
+          unsigned x = (1 << i) & reason;
+          switch (x)
+             {
+            // case FUNC_NONE:        s += "FUNC_NONE ";        break;
+               case FUNC_ENTRY_POINT: s += "FUNC_ENTRY_POINT "; break;
+               case FUNC_CALL_TARGET: s += "FUNC_CALL_TARGET "; break;
+               case FUNC_EH_FRAME:    s += "FUNC_EH_FRAME ";    break;
+               case FUNC_SYMBOL:      s += "FUNC_SYMBOL ";      break;
+               case FUNC_PATTERN:     s += "FUNC_PATTERN ";     break;
+               case FUNC_GRAPH:       s += "FUNC_GRAPH ";       break;
+               case FUNC_USERDEF:     s += "FUNC_USERDEF ";     break;
+               case FUNC_INTERPAD:    s += "FUNC_INTERPAD ";    break;
+               case FUNC_DISCONT:     s += "FUNC_DISCONT ";     break;
+               case FUNC_INSNHEAD:    s += "FUNC_INSNHEAD ";    break;
+               case FUNC_LEFTOVERS:   s += "FUNC_LEFTOVERS ";   break;
+            // case FUNC_DEFAULT:     s += "FUNC_DEFAULT ";     break;
+
+               default:
+                  {
+                 // Nothing to do here!
+                  }
+             }
+        }
+
+  // Output NONE if nothing was set
+     if (s.empty() == true)
+        {
+       // s = "FUNC_NONE";
+          s = "no bit flags set";
+        }
+
+     return s;
+   }
+
+
+// DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
+SgAsmFunctionDeclaration::function_calling_convention_enum
+SgAsmFunctionDeclaration::get_functionCallingConvention() const
+   {
+  // This function classifies the calling convention used and contributes to a scoring of functions as valid functions.
+
+     printf ("Error: This SgAsmFunctionDeclaration::get_functionCallingConvention() function is not yet implemented. \n");
+     ROSE_ASSERT(false);
+
+     return e_unknown_call;
+   }
+
+// DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
+int
+SgAsmFunctionDeclaration::get_stackNutralityMetric() const
+   {
+  // This function computes the positon of the stack at the end of the function relative to the 
+  // start of the function and contributes to a scoring of functions as valid functions.
+
+     printf ("Error: This SgAsmFunctionDeclaration::get_stackNutralityMetric() function is not yet implemented. \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+   }
+
+// DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
+int
+SgAsmFunctionDeclaration::get_numberOfPathsNotReturningMetric() const
+   {
+  // This function computes the number of paths determined to no return (all paths returning metric)
+
+     printf ("Error: This SgAsmFunctionDeclaration::get_numberOfPathsNotReturningMetric() function is not yet implemented. \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+   }
 
 SOURCE_BINARY_FUNCTION_DECLARATION_END
 
