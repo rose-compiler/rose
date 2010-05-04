@@ -20,6 +20,7 @@ SUBDIRS = \
      FiniteStateModelChecker \
      programModeling \
      arrayOptimization \
+     HeaderFilesInclusion \
      highLevelGrammars \
      dataStructureGraphing \
      checkPointExample \

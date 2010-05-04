@@ -2960,7 +2960,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 // CH (4/9/2010): Use boost::unordered instead     
 //#ifdef _MSC_VER
 #if 0
-#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
+//#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
      printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
 #else
@@ -4592,8 +4592,8 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
         {
           SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label);
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
-		  //#ifndef _MSC_VER
-#if 1		  
+#ifndef _MSC_VER
+//#if 1		  
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
 #endif
 	 }
@@ -5100,9 +5100,9 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
 void SageInterface::removeStatement(SgStatement* stmt)
 {
   ROSE_ASSERT(stmt);
-//#ifndef _MSC_VER
+#ifndef _MSC_VER
   LowLevelRewrite::remove(stmt);
-//#endif
+#endif
 }
 
 
@@ -9814,7 +9814,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 // CH (4/9/2010): Use boost::unordered instead     
 //#ifdef _MSC_VER
 #if 0
-#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
+//#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
 	 printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
 #else
@@ -10530,17 +10530,16 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
   {
     if (handle->getNode()!=NULL)
     {
-// CH (4/7/2010): MSVC 9.0 can compile the following code. See "abstract_handle.h"
-//#ifndef _MSC_VER
-//     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-//		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
-//
-//#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
-//		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
-//		ROSE_ASSERT(false);
-//#else
+#ifdef _MSC_VER
+     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
+		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+
+#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
+		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
+		ROSE_ASSERT(false);
+#else
 		SgNode* result = (SgNode*)(handle->getNode()->getNode());
-//#endif
+#endif
       // deallocate memory, should not do this!!
       // May corrupt the internal std maps used in abstract handle namespace
       //delete handle->getNode();
