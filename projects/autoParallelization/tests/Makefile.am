@@ -35,7 +35,8 @@ class_member.C \
 for-while-for.C \
 ifstmt.C \
 iterator2.C \
-iteratorloop.C
+iteratorloop.C \
+test20100223.C 
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
