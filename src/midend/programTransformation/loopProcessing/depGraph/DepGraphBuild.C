@@ -167,8 +167,17 @@ void BuildAstTreeDepGraph :: TranslateCtrlDeps(LoopTransformInterface &fa)
          for (DepInfoConstIterator depIter2 = 
                      graph->GetDepInfoIteratorImpl(e2, DEPTYPE_DATA);
               ! depIter2.ReachEnd(); depIter2++)  {
-             DepInfo tmpd = depIter2.Current() * cd;
-             graph->CreateEdgeImpl(n2,n1, tmpd);
+             // Liao 5/4/2010, in rare cases, the dependences can not multiply
+             if (depIter2.Current().cols() == cd.rows()) 
+             {
+               DepInfo tmpd = depIter2.Current() * cd;
+               graph->CreateEdgeImpl(n2,n1, tmpd);
+             }
+             else
+             {
+               std::cerr<<"Warning: found two matrices which cannot multiply in BuildAstTreeDepGraph::TranslateCtrlDeps ()"
+                  <<std::endl;
+             }
          }
        }
     }
