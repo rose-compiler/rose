@@ -3,7 +3,7 @@
 #ifndef __helper__
 #define __helper__
 
-//#include <rose.h>
+#include <rose.h>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -35,6 +35,9 @@ GLfloat knots[16] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0
 GLUnurbsObj *nurb;
 
 
+// CH (4/30/2010): Since we use boost::unordered now, and boost provides hash function for pair<>,
+// we don't need the following hash function any more.
+/* 
 namespace __gnu_cxx {
   template <> struct hash<std::pair<int,int> > {
     unsigned long operator()( const std::pair<int,int> &s) const {
@@ -42,6 +45,7 @@ namespace __gnu_cxx {
     }
   };
 }
+*/
 
 bool containsArgument(int argc, char** argv, std::string pattern) {
   for (int i = 2; i < argc ; i++) {

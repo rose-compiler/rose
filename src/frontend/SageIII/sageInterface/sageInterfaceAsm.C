@@ -618,66 +618,6 @@ SageInterface::find ( SgNode* astNode, SgNode* target, EquivalenceTestFunctionTy
    }
 
 
-string
-SgAsmFunctionDeclaration::get_functionReasonString ()
-   {
-#if 0
-     enum FunctionReason {
-          FUNC_NONE        = 0x000,  /**< Used for initialization; not a bit flag */
-          FUNC_ENTRY_POINT = 0x001,  /**< An entry point specified in the file header */
-          FUNC_CALL_TARGET = 0x002,  /**< Target of a CALL-like instruction */
-          FUNC_EH_FRAME    = 0x004,  /**< Address mentioned in the ELF .eh_frame section */
-          FUNC_SYMBOL      = 0x008,  /**< Address of a function symbol in a symbol table */
-          FUNC_PATTERN     = 0x010,  /**< Appears to be a function based on pattern of instructions */
-          FUNC_GRAPH       = 0x020,  /**< Implied by inter-basicblock branching */
-          FUNC_USERDEF     = 0x040,  /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
-          FUNC_INTERPAD    = 0x080,  /**< Created to represent NOP padding between other functions. */
-          FUNC_DISCONT     = 0x100,  /**< Blocks of function are not contiguous in memory. */
-          FUNC_INSNHEAD    = 0x200,  /**< For initial instructions not in any other function (is always run) */
-          FUNC_DEFAULT     = 0x3ff   /**< Default value for Partitioner class */
-#endif
-
-     string s;
-
-     unsigned int reason = this->get_reason();
-  // printf ("reason = %u \n",reason);
-     for (unsigned i = 0; i < sizeof(FunctionReason) * 8; i++)
-        {
-          unsigned x = (1 << i) & reason;
-          switch (x)
-             {
-            // case FUNC_NONE:        s += "FUNC_NONE ";        break;
-               case FUNC_ENTRY_POINT: s += "FUNC_ENTRY_POINT "; break;
-               case FUNC_CALL_TARGET: s += "FUNC_CALL_TARGET "; break;
-               case FUNC_EH_FRAME:    s += "FUNC_EH_FRAME ";    break;
-               case FUNC_SYMBOL:      s += "FUNC_SYMBOL ";      break;
-               case FUNC_PATTERN:     s += "FUNC_PATTERN ";     break;
-               case FUNC_GRAPH:       s += "FUNC_GRAPH ";       break;
-               case FUNC_USERDEF:     s += "FUNC_USERDEF ";     break;
-               case FUNC_INTERPAD:    s += "FUNC_INTERPAD ";    break;
-               case FUNC_DISCONT:     s += "FUNC_DISCONT ";     break;
-               case FUNC_INSNHEAD:    s += "FUNC_INSNHEAD ";    break;
-               case FUNC_LEFTOVERS:   s += "FUNC_LEFTOVERS ";   break;
-            // case FUNC_DEFAULT:     s += "FUNC_DEFAULT ";     break;
-
-               default:
-                  {
-                 // Nothing to do here!
-                  }
-             }
-        }
-
-  // Output NONE if nothing was set
-     if (s.empty() == true)
-        {
-       // s = "FUNC_NONE";
-          s = "no bit flags set";
-        }
-
-     return s;
-   }
-
-
 // DQ (4/28/2010): Added support for interface to detect NOP's.  This function is for a single instruction.
 bool
 SageInterface::isNOP ( SgAsmInstruction* asmInstruction )
@@ -688,6 +628,7 @@ SageInterface::isNOP ( SgAsmInstruction* asmInstruction )
      bool returnValue = false;
 
   // This is the most trivial case of detecting a NOP instruction.
+  // This will detect single and multi-byte NOP instructions.
      if (isInstructionKind(asmInstruction,x86_nop) == true)
         {
           returnValue = true;
@@ -699,17 +640,22 @@ SageInterface::isNOP ( SgAsmInstruction* asmInstruction )
 
      return returnValue;
    }
-     
+
 // DQ (4/28/2010): Added support for interface to detect NOP's.  This function is for a list of instructions.
 bool
 SageInterface::isNOP ( const std::vector<SgAsmInstruction*> & asmInstructionList )
    {
-  //! Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
-     bool returnValue = false;
-
   // This is an initial implementation to be improved on later using the instruction semantics and looking at
   // combinations of instructions.
      std::vector<SgAsmInstruction*>::const_iterator i = asmInstructionList.begin();
+
+  // Let's disallow an empty list (since it is niether true nor false).
+     ROSE_ASSERT(i != asmInstructionList.end());
+
+  // Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
+     bool returnValue = true;
+
+  // This is the simple case of a sequence of instructions where each is a NOP.
      while (returnValue == true && i != asmInstructionList.end())
         {
           returnValue = isNOP(*i);
@@ -731,4 +677,68 @@ SageInterface::find_NOP_sequences ( const SgAsmBlock* & asmBlock )
 
      return returnSequence;
    }
-   
+
+
+void
+SageInterface::insertInstruction(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction, bool insertBefore)
+   {
+     ROSE_ASSERT(targetInstruction && newInstruction);
+     ROSE_ASSERT(targetInstruction != newInstruction); // should not share statement nodes!
+     SgNode* parent = targetInstruction->get_parent();
+     if (parent == NULL)
+        {
+          cerr << "Empty parent pointer for target instruction. May be caused by the wrong order of target and new instructions in insertInstruction(targetStmt, newStmt)" << endl;
+          ROSE_ASSERT(parent);
+        }
+
+  // Set the parent
+     newInstruction->set_parent(parent);
+
+     SgAsmBlock* block = isSgAsmBlock(parent);
+     ROSE_ASSERT(block != NULL);
+
+     SgAsmStatementPtrList & l = block->get_statementList();
+     SgAsmStatementPtrList::iterator i = find(l.begin(),l.end(),targetInstruction);
+     ROSE_ASSERT(i != l.end());
+
+     if (insertBefore == true)
+        {
+          l.insert(i,newInstruction);
+        }
+       else
+        {
+          l.insert(i,newInstruction);
+        }
+  }
+
+
+ //! Insert a instruction before a target instruction
+void
+SageInterface::insertInstructionBefore(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction)
+   {
+     printf ("Function not implemented: SageInterface::insertInstructionBefore(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction) \n");
+  // ROSE_ASSERT(false);
+
+     insertInstruction (targetInstruction,newInstruction,true);
+   }
+
+ //! Remove a instruction
+void
+SageInterface::removeInstruction(SgAsmStatement* instruction)
+   {
+     printf ("Function not implemented: SageInterface::removeInstruction(SgAsmInstruction* instuction) \n");
+  // ROSE_ASSERT(false);
+
+     SgNode* parent = instruction->get_parent();
+     ROSE_ASSERT(parent != NULL);
+
+     SgAsmBlock* block = isSgAsmBlock(parent);
+     ROSE_ASSERT(block != NULL);
+
+     SgAsmStatementPtrList & l = block->get_statementList();
+     SgAsmStatementPtrList::iterator i = find(l.begin(),l.end(),instruction);
+     ROSE_ASSERT(i != l.end());
+
+     l.erase(i);
+   }
+
