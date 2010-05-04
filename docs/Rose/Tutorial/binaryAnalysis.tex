@@ -295,3 +295,255 @@ the future).}
 
 
  
+\section{Analysis and Transformations on Binaries}
+
+   This section demonstrates how the binary can be analyized and
+transformed via operations on the AST. In this tutorial example we will
+recognize sequences of NOP (No OPeration) instructions (both single byte
+and less common multi-byte NOPs) and replace them in the binary with as 
+few multi-byte NOP instructions as required to overwrite the identified
+NOP sequence (also called a {\em nop sled}).
+
+In the following subsections we will demonstrate three example codes that
+work together to demonstrate aspects of the binary analysis and transforamation using
+ROSE.  All of these codes are located in the directory {\em tutorial/binaryAnalysis}
+of the ROSE distribution. We show specifically:
+\begin{enumerate}
+   \item How to insert NOP sequences into binaries via source-to-source transformations.
+         The tutorial example will demonstrate the trival insertion of random length
+         nop sequences into all functions of an input source code application.
+         The purpose of this is to really just generate arbitrary test codes
+         upon which to use in sperately demonstrating (and testing) the binary analysis 
+         support and the binary transformation support (next).  This example is
+         shown in figure~\ref{Tutorial:exampleTransformSourceToInsertNOPs}.
+         The file name is: 
+   \item How to identify sequences of NOP instructions in the binary ({\em nop sleds}).
+         The tutorial example show how to identify arbitrary NOP sequences in the 
+         binary.  Note that our approach looks only for single instructions that have
+         no side-effect operations and thus qualify as a NOP, and specifically does not
+         look at collections of multiple statements that taken togehter have no
+         side-effect and thus could be considered a NOP sequence. Our test on each 
+         instruciton is isolated to the {\tt SageInterface::isNOP(SgAsmInstruction*)} 
+         function.  Initially this function only detects NOP instructions that are
+         single and multi-byte Intel x86 suggested NOP instructions.  The catagory of
+         NOP instructions that have no side-effects is broader than this and will
+         be addressed more completely in the future. This example is
+         shown in figures \ref{Tutorial:exampleTransformBinaryToDetectNOPs_header},
+         \ref{Tutorial:exampleTransformBinaryToDetectNOPs_source}, and
+         \ref{Tutorial:exampleTransformBinaryToDetectNOPs_main}.
+   \item How transformations on the binary executable are done to support rewriting
+         all identified NOP sequences as Intel x86 suggested NOP instructions.
+         Importantly, this tutorial example of an AST rewrite does not change the 
+         size of any part of the final executable. This example is
+         shown in figure~\ref{Tutorial:exampleTransformBinaryToInsertNOPs}.
+\end{enumerate}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/nopSourceTransform.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/nopSourceTransform.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Source-to-source transformation to introduce NOP assemble instructions in the
+    generated binary executable.}
+\label{Tutorial:exampleTransformSourceToInsertNOPs}
+\end{figure}
+
+
+\subsection{Source-to-source transformations to introduce NOPs}
+
+   This tutorial example (see figure~\ref{Tutorial:exampleTransformSourceToInsertNOPs})
+is a source-to-source trnasformation that is used to
+generate test codes for the binary NOP sequence detection example and the 
+NOP sequence transformation example (the next two tutorial examples).
+This tutorial uses C language {\em asm} statements that are inserted into
+each function in the source code, the resulting generated source code (with {\em asm}
+statements) is then compiled to generate inputs to use in our detection and
+transformation of NOP sequences.  Although it is possible, the backend
+compiler (at least the one we are using), does not optimize away these 
+{\em asm} statements that represent NOP instructions.  In general all
+C and C++ compilers turn off optimizations upon encountering the {\em asm}
+language construct, so it is easy to use this approach to build binaries
+from arbitrary source code that have a range of properties.  Seeding 
+the source code with such properties causes the binary to have the similar
+properties.  We include this example in the tutorial because it is a cute
+example of how we can combine source code analsys with binary analysis
+(in this case we are only supporting testing of the binary analysis).
+Much more interesting example of the connection of source code and
+binary analysis are available.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.h}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.h}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Header file for the traversal used to identify the NOP sequences in the binary executable.}
+\label{Tutorial:exampleTransformBinaryToDetectNOPs_header}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/detectNopSequencesTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example code to identify the NOP sequences in the binary executable.}
+\label{Tutorial:exampleTransformBinaryToDetectNOPs_source}
+\end{figure}
+
+
+
+
+
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/detectNopSequences.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/detectNopSequences.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Main program using the traversal to identify the NOP sequences in the binary executable.}
+\label{Tutorial:exampleTransformBinaryToDetectNOPs_main}
+\end{figure}
+
+
+\subsection{Detection of NOP sequences in the binary AST}
+
+   The tutorial example (see figures \ref{Tutorial:exampleTransformBinaryToDetectNOPs_header},
+\ref{Tutorial:exampleTransformBinaryToDetectNOPs_source}, and
+\ref{Tutorial:exampleTransformBinaryToDetectNOPs_main})
+shows the detection of NOP sequences and is separated into three
+figures (the header file, the source code, and the main program).  The header file
+and source file will be reused in the next tutorial example to demonstrate the
+transformation of the NOP sequences that this tutorial identifies.  The
+transformation will be done on the AST (and a new modified executable generated
+by unparsing the AST). 
+
+    Using a simple preorder traversal over the AST we identify independent sequences of
+NOP instructions.  This traversal save the sequence so that it can be used in both the
+tutorial example that detects the NOP sequences and also the tutorial example that 
+will transform them to be more compact multi-byte NOP sequences that will use the
+suggested Intel x86 multi-byte NOP instructions.
+
+   In this example, the sequence of a NOP sequence is saved as the address of the 
+starting NOP instruction and the number of instructions in the sequence.  The function
+{\tt SageInterface::isNOP(SgAsmInstruction*)} is used to test of an instruction is
+a NOP.  Presently this test only identifies single or multi-byte NOP instrucitons
+that have been suggested for use as single and multi-byte NOP instructions by Intel.
+Other instruction may semantically be equivalent to a NOP instruction and they are
+not identified in this initial work.  Later work may include this capability and
+for this purpose we have isolated out the {\tt SageInterface::isNOP(SgAsmInstruction*)}.
+Note also that sequences of instructions may be semantically equivalent to a 
+NOP sequence and we also do not attempt to identify these (separate interface 
+functions in the {\tt SageInterface} namespace have been defined to support this
+work; these functions are presently unimplemented.
+
+\begin{figure}[!h]
+{\indent
+{
+% \mySmallFontSize
+\tiny
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/binaryAnalysis/nopBinaryTransform.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/binaryAnalysis/nopBinaryTransform.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example code showing the transformation of the binary executable.}
+\label{Tutorial:exampleTransformBinaryToInsertNOPs}
+\end{figure}
+
+\subsection{Transformations on the NOP sequences in the binary AST}
+
+   Using the results from the previously presented traversal to identify
+NOP sequences, we demonstrate the transformation to change these 
+locations of the binary (in the AST) and then regenerate the executable 
+to have a different representation. The new representation is a more clear
+(obvious within manual binary analysis) and likely more compressed 
+representation using only the suggested Intel x86 multi-byte NOP.
+
+
+
+\subsection{Conclusions}
+
+\fixme{Not sure if the resulting executable will use the assembler on each
+instruction in the generated binary from the unparsing within ROSE. This might 
+require some more work. So at the moment the AST is transformed and I have
+to look into if the binary sees the effect of the transformation in the AST.}
+
+   The identification and transformation have been deomonstrated on the AST
+and can be expressed in the binary binary by calling the {\em backend()} 
+function in ROSE; which will regenerate the executable.  The capability to
+regenerate the executable will not always result in a properly formed
+executable that can be executed, this depends upon the transformations done
+and does ROSE does not have specialized support for this beyond regnerating
+the binary executable from the AST.  In the case of this NOP transformation
+we have not changed the size of any part of the binary so any relative offsets 
+need not be fixed up. Assumeing we have not accedentaly interpreted data that
+had values that matched parts of the opcodes that were transformed, then resulting
+binary executable should execute without problems.  This transformation however
+makes clear how critical it is that data not be interpreted as instructions
+(which could randomly be interpreted as NOPs in the case of this tutorial example).
+
