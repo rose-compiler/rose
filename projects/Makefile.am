@@ -5,6 +5,7 @@ SUBDIRS = \
      AstEquivalence \
      autoParallelization \
      autoTuning\
+     backstroke \
      BinQ \
      CertSecureCodeProject \
      BinaryCloneDetection \
@@ -19,6 +20,7 @@ SUBDIRS = \
      FiniteStateModelChecker \
      programModeling \
      arrayOptimization \
+     HeaderFilesInclusion \
      highLevelGrammars \
      dataStructureGraphing \
      checkPointExample \
@@ -28,7 +30,6 @@ SUBDIRS = \
      javaport \
      haskellport \
      reverseComputation \
-     DistributedMemoryAnalysisCompass \
      assemblyToSourceAst \
      bugSeeding \
      binaryVisualization \
@@ -46,10 +47,15 @@ SUBDIRS = \
 if !ROSE_USING_ROSE_CODE_GENERATION
    SUBDIRS += compass
 
+
  # DQ (2/13/2010): This appears to have a dependence on compass, but I don't know why.
  # All projects should be independent of each other so that they should be able to be
  # compiled in any order. It was originally listed after "haskellport".
    SUBDIRS += palette
+endif
+
+if ROSE_MPI
+   SUBDIRS += DistributedMemoryAnalysisCompass 
 endif
 
 # Disable the use of the interpreter except on GNU 4.2

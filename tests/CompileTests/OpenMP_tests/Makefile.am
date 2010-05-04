@@ -3,7 +3,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS = parseOmp
 parseOmp_SOURCES = parseOmp.C
 
-SUBDIRS= fortran cvalidation
+SUBDIRS= 
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+  SUBDIRS += cvalidation
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+  SUBDIRS += fortran 
+endif
+
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -30,6 +37,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	expressions.c \
 	falsesharing.c \
 	firstprivate.c \
+	firstPrivateArray.c \
 	firstlastprivate.c \
 	flush.c \
 	flush_exampleA_21_1c.c \
@@ -44,6 +52,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	limits_threads.c \
 	linebreak.c \
 	lockarray.c \
+	loop1.c \
 	lu_factorization.c \
 	master.c \
 	masterSingle.c \
@@ -56,6 +65,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor3.c \
 	ompfor4.c \
 	ompfor5.c \
+	ompGetNumThreads.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
@@ -90,6 +100,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_underIf.c \
 	task_wait.c \
 	task_wait2.c \
+	twoRegions.c \
 	threadprivate2.c \
 	threadprivate3.c \
 	threadprivate.c \
@@ -100,6 +111,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	classMember.cpp \
 	hello1.cpp \
 	helloNested.cpp \
+	memberFunction.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
 	objectLastprivate.cpp \
@@ -137,6 +149,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 # the translator should now be able to avoid duplicated processing of pragma statements
 bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
+
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
@@ -145,6 +159,13 @@ check-local:
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
+else
+check-local:
+	@echo "Test for ROSE OpenMP Parser."
+	@echo "***********************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule for C/C++ skipped (terminated normally) ******"
+	@echo "***********************************************************************************************************"
+endif
 
 EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c
 

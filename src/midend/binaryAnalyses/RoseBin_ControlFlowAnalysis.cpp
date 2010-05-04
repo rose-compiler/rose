@@ -64,8 +64,8 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
     std::cerr << "CFG -- contains filter: ." << *it << "." << endl;
   }
 
-// typedef rose_hash::hash_map <std::string, SgGraphNode*> nodeType;
-// typedef rose_hash::hash_map <string, SgGraphNode*,hash_stringptr> nodeType;
+// typedef rose_hash::unordered_map <std::string, SgGraphNode*> nodeType;
+// typedef rose_hash::unordered_map <string, SgGraphNode*,hash_stringptr> nodeType;
   rose_graph_integer_node_hash_map result;
   //rose_graph_hash_multimap& nodes = vizzGraph->get_node_index_to_node_map();
   rose_graph_integer_node_hash_map nodes = vizzGraph->get_node_index_to_node_map();

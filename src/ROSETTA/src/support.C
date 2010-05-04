@@ -897,6 +897,12 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "skip_syntax_check", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/7/2010): This permits less agressive syntax checking, but still some syntax checking.
+  // Some F90 code cannot be passed through the gfortran syntax check using "-std=f95" so we have
+  // to relax this to "-std=gnu" or skip the option altogether.
+     File.setDataPrototype         ( "bool", "relax_syntax_check", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Operational options
   // File.setDataPrototype         ( "bool", "skip_rose", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1583,7 +1589,7 @@ Grammar::setUpSupport ()
   // confusion when processing object files within linking (where no source file is present
   // and the object file could be interpreted as being provided for binary analysis).
      Project.setDataPrototype ( "bool", "binary_only", "= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (5/1/2009): Requested feature by Andreas (controls use of SQLite database for analysis).
@@ -1599,6 +1605,16 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ("SgDirectoryList*", "directoryList", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (4/7/2010): Support for C, C++, and Fortran. The SgProject needs this state so that
+  // it can save information from the command line when there are no files such as when it 
+  // is used for linking (where there is just a list of object files).
+     Project.setDataPrototype ( "bool", "C_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ( "bool", "Cxx_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ( "bool", "Fortran_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1775,10 +1791,15 @@ Specifiers that can have only one value (implemented with a protected enum varia
   //                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setPostdeclarationString   ("HEADER_UNPARSE_POSTDECLARATION", "../Grammar/Support.code");
 
+  // DQ (2/23/2010): Added static access function for static data members (ROSETTA generates only not statuc access functions).
+  // File_Info.setDataPrototype("static std::map<int, std::string>","fileidtoname_map","",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File_Info.setDataPrototype("static std::map<std::string, int>","nametofileid_map","",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setDataPrototype("static std::map<int, std::string>","fileidtoname_map","",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setDataPrototype("static std::map<std::string, int>","nametofileid_map","",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // File_Info.setDataPrototype("static int","max_file_id","",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

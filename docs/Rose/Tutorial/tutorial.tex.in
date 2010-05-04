@@ -13,6 +13,14 @@
 
 \usepackage{moreverb}
 
+\usepackage{hyperref}
+\hypersetup {
+colorlinks= true,
+urlcolor=blue,
+citecolor=black,
+linkcolor=black,
+}
+
 \newcommand{\mySmallFontSize}{\scriptsize}
 \newcommand{\mySmallestFontSize}{\tiny}
 
@@ -204,7 +212,7 @@
 %-----------------------------------------------------------
 \part[Working with the ROSE AST]{  Working with the ROSE AST \\
 \vspace{1.0in}
-\normalsize{Get familiar with the ROSE AST is the basis for any advanced
+\normalsize{Getting familiar with the ROSE AST is the basis for any advanced
 usage of ROSE. This part of tutorial collects examples for AST
 visualization, traversal, query, and debugging.}
 }
@@ -216,11 +224,13 @@ visualization, traversal, query, and debugging.}
 %}
 
 \input{identityTranslator}
-\input{scopeInformation}
 \input{ASTGraphGenerator}
 \input{wholeGraphAST}
 \input{AST_PDF_Generator}
 \input{traversal}
+% the chapter talking about scope uses AST traversal
+% So I moved it after the traversal chapter.  Liao 3/3/2010
+\input{scopeInformation}
 \input{queryLibraryExample}
 \input{astFileIO}
 \input{debuggingSupport}

@@ -6,6 +6,7 @@
 #include <stdio.h>
 static int par_res;
 
+extern int fib(int); 
 void fib0 (int n)
 {
         #pragma omp parallel

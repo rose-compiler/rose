@@ -6,40 +6,55 @@ INCLUDES = $(ROSE_INCLUDES)
 # an better alternative to identityTranslator
 # Liao 1/29/2009
 bin_PROGRAMS = roseCompiler
+
 roseCompiler_SOURCES = roseCompiler.C
-roseCompiler_DEPENDENCIES = $(REQUIRED_LIBS)
-roseCompiler_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# roseCompiler_DEPENDENCIES = $(REQUIRED_LIBS)
+# roseCompiler_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+DEPENDENCIES = $(REQUIRED_LIBS)
+LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # The bug numbers come from ROSE's SciDAC bug trackers
 noinst_PROGRAMS = \
        bug125 \
-       qualifiedName
+       qualifiedName \
+       testTranslator2010_01
 
+# Example translators used in regression tests
 bug125_SOURCES = bug125.C
 qualifiedName_SOURCES = qualifiedName.C
+testTranslator2010_01_SOURCES = testTranslator2010_01.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 
 VALGRIND =
 
-testbug125:bug125 
+testbug125: bug125 
 	./bug125 -c $(srcdir)/inputbug125.C
 
 testqualifiedName: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 
+testTranslator2010_01_test: testTranslator2010_01 
+	./testTranslator2010_01 -rose:verbose 2
+
 EXTRA_DIST = CMakeLists.txt inputbug125.C
 
 check-local:
+#	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
 	@$(MAKE) testbug125 testqualifiedName
+	@echo "****************************************************************************************"
+	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
+	@echo "****************************************************************************************"
+
 
 distclean-local:
 	rm -rf Makefile
 
 clean-local:
-	rm -rf *.o *.ps *.pdf *.dot rose_*.C rose_*.c core *.int.c *.ti a.out roseTestProgram.C
+	rm -rf *.o *.ps *.pdf *.dot rose_*.C rose_*.c core *.int.c *.ti a.out roseTestProgram.C *.dot *.cpp
 
 cleandata:
 	rm -f *.ti *.ii rose_*.C rose_*.c *.dot test*.o rose_*.o

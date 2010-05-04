@@ -1,6 +1,11 @@
 \chapter{Introduction to AST Traversals}
 \label{chap:traversals}
 
+% Suggestions from discussions with Jim McGraw about this chapter.
+\fixme{Add {\bf What to learn from this example} paragraph to each example.}
+\fixme{Add {\bf What is different from previous example} paragraph to each example.}
+\fixme{Add a table and/or graph at the end of this chapter to summarize the traversals.}
+
     An essential operation in the analysis and construction of ASTs is the
 definition of traversals upon the AST to gather information and modify
 targeted internal representation (IR) nodes.  ROSE includes different
@@ -99,12 +104,22 @@ The simple traversals of both kinds have the same interface so the user may
 easily switch between them with out significant difficulty.
 
 % \clearpage
-\subsection{Classic Object-Oriented Visitor Pattern for the AST (Not Yet Implemented)}
+% \subsection{Classic Object-Oriented Visitor Pattern for the AST (Not Yet Implemented)}
+\subsection{Classic Object-Oriented Visitor Pattern for the AST}
+
+   We show this example first, but it is rarely used in practice, and
+more useful traversals follow.  It is however most closely similar to
+traversals that are available in other compiler infrastructures, and so
+a concept with which many people will be familar.  In this case because
+this implementation is based on the memory pool infrstructure it will
+visit all node and not in any order based on the AST.  The ASTSimpleProcessing
+traversal in section~\ref{ASTSimpleProcessing_traversal} is closer to a common 
+visitor pattern that visits the IR nodes in the order in which they appear in 
+the AST.
 
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
-
 
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
@@ -150,10 +165,12 @@ easily switch between them with out significant difficulty.
 
 Figure~\ref{Tutorial:exampleClassicVisitorPattern} shows the source code 
 for a translator using the classic object-oriented visitor pattern 
-to traverse the AST.  {\em This visitor pattern is not yet implemented
-except for the memory pool based traversal.  It is however expected
-to appear identical to the classing visitor pattern shown for the 
-memory pool traversal.} 
+to traverse the AST.  {\em This visitor pattern is only implemented
+for the memory pool based traversal.}  Thus it works on the whole
+of the attributed AST and does not work on a restricted subset of 
+the AST (e.g. a subtree of the unattributed AST).
+% It is however expected to appear identical to the classing visitor pattern 
+% shown for the memory pool traversal.} 
 Figure~\ref{Tutorial:exampleOutput_ClassicVisitorPattern} shows the 
 output from this traversal using the example input source from 
 figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
@@ -162,6 +179,7 @@ figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
 
 % \clearpage
 \subsection{Simple Traversal (no attributes)}
+\label{ASTSimpleProcessing_traversal}
 
 \begin{figure}[!h]
 {\indent
@@ -210,11 +228,24 @@ figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
 \end{figure}
 
 Figure~\ref{Tutorial:exampleVisitorTraversal} shows the source code 
-for a translator which traverses the AST.  At each node the 
-{\tt visit()} function is called using only the input information
-represented by the current node.  Note that using this simple traversal
+for a translator which traverses the AST.  The traversal object is
+from the type {\tt visitorTraversal} derived from {\tt AstSimpleProcessing}.
+The {\tt visit()} function is required to be defined because it is 
+defined as a pure virutal funciton in the {\tt AstSimpleProcessing} base class.
+The member function {\tt traverseInputFiles()} of {\tt AstSimpleProcessing} 
+is called to traverse the AST and call the {\tt visit()} function on each
+IR node.  Note that the function {\tt traverse()} (not used) would visit
+each IR nodes while {\tt traverseInputFiles()} will only visit those
+IR nodes that originate in the input source code (thus skipping all 
+header files).
+
+For each node where the {\tt visit()} function is called a {\tt SgNode} 
+pointer is to the node is passed into the {\tt visit} function.
+% using only the input information represented by the current node.
+Note that using this simple traversal
 the only context information available to the visit function is what is stored
-in its member variables.
+in its member variables (though access to other nodes is possible along
+any edges in the attributed AST graph).
 The only option is to traverse the AST in either pre-order or postorder.
 The {\tt atTraversalEnd()} function may be defined by the user to do final
 processing after all nodes have been visited (or to perform preparations

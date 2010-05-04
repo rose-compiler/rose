@@ -2660,7 +2660,7 @@ void commentOutEvertythingButDwarf (SgNode* node)
 // same static code.
 // ************************************************************
 
-#include "sys/fcntl.h"
+//#include "sys/fcntl.h"
 #include "elf.h"
 #include "libelf.h"
 #include "assert.h"

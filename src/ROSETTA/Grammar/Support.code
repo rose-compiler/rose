@@ -317,14 +317,14 @@ HEADER_GRAPH_NODE_END
 
 HEADER_GRAPH_NODE_LIST_START
      public:
-          typedef rose_hash::hash_multimap<std::string,SgGraphNode*, rose_hash::hash_string, rose_hash::eqstr_string> local_hash_multimap_type;
+          typedef rose_hash::unordered_multimap<std::string,SgGraphNode*, rose_hash::hash_string, rose_hash::eqstr_string> local_hash_multimap_type;
           typedef local_hash_multimap_type::iterator iterator;
 HEADER_GRAPH_NODE_LIST_END
 
 
 HEADER_GRAPH_EDGE_LIST_START
      public:
-          typedef rose_hash::hash_multimap<SgGraphNode*,SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> local_hash_multimap_type;
+          typedef rose_hash::unordered_multimap<SgGraphNode*,SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> local_hash_multimap_type;
           typedef local_hash_multimap_type::iterator iterator;
 HEADER_GRAPH_EDGE_LIST_END
 
@@ -3101,7 +3101,8 @@ std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
-#ifdef _MSC_VER 
+//#ifdef _MSC_VER 
+#if 0
 // DQ (11/29/2009): attempting to fix: error C2903: 'rebind' : symbol is neither a class template nor a function template
 // #pragma message ("WARNING: struct eqstr skipped for MSVC.")
 #else
@@ -3118,22 +3119,26 @@ struct eqstr
  */
 struct hash_Name
    {
-#ifndef _MSC_VER 
-     rose_hash::hash<const char*> hasher;
-#else
-   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifndef _MSC_VER 
+     // CH (4/13/2010): Use boost::hash<string> instead  
+     //rose_hash::hash<const char*> hasher;
+     rose_hash::hash<std::string> hasher;
+//#else
+//   public:
+//      static const size_t bucket_size = 4;
+//      static const size_t min_buckets = 8;
+//#endif
 
      public:
           size_t operator()(const SgName & name) const
              {
-#ifdef _MSC_VER 
-               return stdext::hash_compare<const char*>()(name.str()); 
-#else
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER 
+//               return stdext::hash_compare<const char*>()(name.str()); 
+//#else
                return hasher(name.str());
-#endif
+//#endif
              }
    };
 
@@ -3148,7 +3153,10 @@ struct hash_Name
 
  */
  // tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
-#ifdef _MSC_VER
+
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 // DQ (11/27/2009): Trying to fix MSVC compiler warning: 
 //    warning C4717: 'rose_hash_multimap::rose_hash_multimap' : recursive on all control paths, function will cause runtime stack overflow.
 
@@ -3167,8 +3175,8 @@ inline size_t hash_value(const SgName & _Keyval)
    }
 #endif
 
-// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>
-class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*>
+// class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>
+class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*>
    {
      protected:
           SgNode * parent;
@@ -3176,23 +3184,25 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*>
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
-          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
              {}
 // tps (11/18/2009) : this constructor is not valid, see Node.code
 #if 0
           rose_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
              {}
 #endif
 #if 0
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
              {}
 #endif
-#else
-class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+#else  // ifdef _MSC_VER
+
+class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+//class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
      protected:
           SgNode * parent;
@@ -3200,13 +3210,16 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, ha
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
              {}
           rose_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
              {}
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs),parent(rhs.parent)
+             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
              {}
 #endif
           void set_parent(SgNode * new_parent) 
@@ -3782,7 +3795,7 @@ HEADER_NAME_START
        // (STL builds the "operator!=()" from the "operator==()"
           bool operator== (const int i) const { return false; }
 
-          void display( const std::string& label = "" ) const;
+          void display( const std::string& label ) const;
 
        // DQ (9/9/2004): Supporting function for building qualified names (specialied std::string concatination)
           static SgName assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & localName);
@@ -4011,6 +4024,7 @@ HEADER_FILE_INFORMATION_START
           void set_line (int line);
           void set_col ( int n );
           void display (const std::string label ) const;
+          void display () const;
           std::string displayString (const std::string & label = "") const;
           //void output (std::ostream& os) ROSE_DEPRECATED_FUNCTION;
 
@@ -4174,6 +4188,18 @@ HEADER_FILE_INFORMATION_START
           friend bool operator<  ( const Sg_File_Info & X, const Sg_File_Info & Y );
           friend bool operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y );
           friend bool operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y );
+
+        // DQ (2/23/2010): Added static access function for static data members (ROSETTA generates only not statuc access functions).
+       //! Access function for static datamember fileidtoname_map.
+          static std::map<int, std::string> & get_fileidtoname_map();
+       //! Access function for map of file names.
+          static void set_fileidtoname_map(std::map<int, std::string> & X);
+
+        // DQ (2/23/2010): Added static access function for static data members (ROSETTA generates only not statuc access functions).
+       //! Access function for static datamember nametofileid_map.
+         static std::map<std::string, int> & get_nametofileid_map();
+       //! Access function for map of file names.
+         static void set_nametofileid_map(std::map<std::string,int> & X);
 
        // MK (7/22/05) This enum is used by the file id mechanism
        /*! \brief Enum to hold previously common default values for filename used by the default and static SgNULL_File constructors.
@@ -4432,7 +4458,9 @@ HEADER_APPLICATION_SOURCE_FILE_START
           static std::string build_classpath();
 
       //! Divide up the handling of different languages
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+#endif
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
@@ -4639,17 +4667,24 @@ HEADER_APPLICATION_PROJECT_START
           bool get_skip_unparse (void) const;
           bool get_useBackendOnly (void) const;
 
-          bool get_C_only (void) const;
+       // DQ (4/6/2010): Added to support parsing only option.
+          bool get_exit_after_parser(void) const;
+
+          bool get_C_only   (void) const;
           bool get_C99_only (void) const;
           bool get_Cxx_only (void) const;
 
        // DQ (8/11/2007): Added Fortran support
           bool get_Fortran_only (void) const;
-          bool get_F77_only (void) const;
-          bool get_F90_only (void) const;
-          bool get_F95_only (void) const;
-          bool get_F2003_only (void) const;
+          bool get_F77_only     (void) const;
+          bool get_F90_only     (void) const;
+          bool get_F95_only     (void) const;
+          bool get_F2003_only   (void) const;
           bool get_CoArrayFortran_only (void) const;
+
+          void set_C_only       (bool value);
+          void set_Cxx_only     (bool value);
+          void set_Fortran_only (bool value);
 
           bool get_PHP_only(void) const;
 
@@ -5287,7 +5322,9 @@ SgSymbolTable::SgSymbolTable()
    {
   // This should always be a non-null pointer (and never shared)!
      int symbolTableSize = 17;
-#ifdef _MSC_VER
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
      p_table = new BaseHashType();
 #else
@@ -5310,7 +5347,9 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
   // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
   // p_table = new SgSymbolHashMultiMap(sz);
 
-#ifdef _MSC_VER
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+#if 0
 	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
      p_table = new BaseHashType();
 #else
@@ -5547,12 +5586,12 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
      if (isSgFunctionTypeSymbol(sp) == NULL)
         {
        // set<SgNode*> existingSymbolBasisDeclarations;
-          map<SgNode*, rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator > existingSymbolBasisDeclarations;
+          map<SgNode*, rose_hash_multimap::iterator > existingSymbolBasisDeclarations;
 
           SgNode* sp_associatedDeclaration = sp->get_symbol_basis();
           assert(sp_associatedDeclaration != NULL);
 
-          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+          rose_hash_multimap::iterator i = get_table()->begin();
           while (i != get_table()->end())
              {
             // test if symbol is in set
@@ -5686,14 +5725,15 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      assert (p_table != NULL);
 
-#ifdef _MSC_VER
-  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
-     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator> deleteList;
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
-#else
-     list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+//     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator> deleteList;
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+//#else
+     list<rose_hash_multimap::iterator> deleteList;
+     rose_hash_multimap::iterator it = get_table()->find(name);
+//#endif
      while (it != get_table()->end() && (*it).first == name)
         {
           assert(it->second->variantT() == V_SgFunctionTypeSymbol);
@@ -5703,12 +5743,13 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-#ifdef _MSC_VER
-  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
-     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
-#else
-     list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+//     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
+//#else
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
+//#endif
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase((*i)->second);"
@@ -5917,13 +5958,14 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
 #endif
-#ifdef _MSC_VER
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator elementToDelete = get_table()->end();
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
-#else
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator elementToDelete = get_table()->end();
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator elementToDelete = get_table()->end();
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+//#else
+     rose_hash_multimap::iterator elementToDelete = get_table()->end();
+     rose_hash_multimap::iterator it = get_table()->find(name);
+//#endif
      while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
         {
        // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
@@ -5946,7 +5988,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
        // make sure that the complexity is not linear in the size of the symbol table!
           assert(false);
 
-          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+          rose_hash_multimap::iterator i = get_table()->begin();
           while ( (i != get_table()->end()) && (elementToDelete == get_table()->end()) )
              {
             // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
@@ -6024,7 +6066,7 @@ SgSymbolTable::remove_function( const SgName & name )
    {
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6036,7 +6078,7 @@ SgSymbolTable::remove_function( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6055,7 +6097,7 @@ SgSymbolTable::remove_class( const SgName & name )
    {
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6067,7 +6109,7 @@ SgSymbolTable::remove_class( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(i->second);"
@@ -6089,7 +6131,7 @@ SgSymbolTable::remove_enum( const SgName & name )
    {
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6101,7 +6143,7 @@ SgSymbolTable::remove_enum( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6123,7 +6165,7 @@ SgSymbolTable::remove_label( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6135,7 +6177,7 @@ SgSymbolTable::remove_label( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6157,7 +6199,7 @@ SgSymbolTable::remove_var( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6169,7 +6211,7 @@ SgSymbolTable::remove_var( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6191,7 +6233,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6203,7 +6245,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6225,7 +6267,7 @@ SgSymbolTable::remove_namespace( const SgName & name )
 
      assert(p_table != NULL);
 
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash_multimap::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -6237,7 +6279,7 @@ SgSymbolTable::remove_namespace( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -7642,11 +7684,12 @@ SgSymbolTable::get_symbols() const
      set<SgNode*> returnSet;
 
      assert(p_table != NULL);
-#ifdef _MSC_VER
-     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
-#else
-     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
-#endif
+// CH (4/8/2010): Use boost::unordered instead     
+//#ifdef _MSC_VER
+//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
+//#else
+     rose_hash_multimap::iterator i = get_table()->begin();
+//#endif
      while (i != p_table->end())
         {
           assert(i->second != NULL);
@@ -9138,6 +9181,14 @@ operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
      return result;
    }
 
+//Liao 4/16/2010. The default value for display(label) cannot be instantiated from gdb,
+// which is very annoying during debugging. I added the empty parameter one to better support debugging.
+void
+Sg_File_Info::display( ) const
+{
+  display ("");
+}
+
 void
 Sg_File_Info::display( const std::string label ) const
    {
@@ -10145,6 +10196,34 @@ Sg_File_Info::getIDFromFilename( std::string filename )
      return p_nametofileid_map[filename];
    }
 
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+std::map<int, std::string> & 
+Sg_File_Info::get_fileidtoname_map()
+   {
+     return p_fileidtoname_map;
+   }
+
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+void
+Sg_File_Info::set_fileidtoname_map(std::map<int, std::string> & X)
+   {
+     p_fileidtoname_map = X;
+   }
+
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+std::map<std::string, int> &
+Sg_File_Info::get_nametofileid_map()
+   {
+     return p_nametofileid_map;
+   }
+
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+void
+Sg_File_Info::set_nametofileid_map(std::map<std::string,int> & X)
+   {
+     p_nametofileid_map = X;
+   }
+
 SOURCE_FILE_INFORMATION_END
 
 
@@ -10769,6 +10848,9 @@ SgFile::get_project()
 // Moved to sageSupport.C: void SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
 // Moved to sageSupport.C: void SgFile::usage ( int status )
 
+#ifdef _MSC_VER
+#include <direct.h> 	// getcwd()
+#endif
 
  //! get the current directory
 string
@@ -10781,14 +10863,15 @@ SgFile::getWorkingDirectory ()
      for (i=0; i < maxPathNameLength; i++)
           currentDirectory[i] = '\0';  // set to NULL string
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: support for Linux getcwd() unavailable in Microsoft Visual Studio.")
-	 printf ("Error: support for Linux getcwd() unavailable in Microsoft Visual Studio.");
-	 assert(false);
-     char* returnString = NULL;
-#else
+// CH (4/8/2010): "direct.h" in MSVC provides getcwd()     
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: support for Linux getcwd() unavailable in Microsoft Visual Studio.")
+//	 printf ("Error: support for Linux getcwd() unavailable in Microsoft Visual Studio.");
+//	 assert(false);
+//     char* returnString = NULL;
+//#else
      char* returnString = getcwd(currentDirectory,maxPathNameLength - 1);
-#endif
+//#endif
      assert (returnString != NULL);
      currentDirectory[maxPathNameLength - 1] = 0; // Just in case
 
@@ -11703,11 +11786,47 @@ SgProject::get_useBackendOnly (void) const
      return returnUseBackendOnly;
    }
 
+// DQ (4/6/2010): Added to support parsing only option.
+bool
+SgProject::get_exit_after_parser(void) const
+   {
+  // look at how the files are set
+     bool returnExitAfterParse = (numberOfFiles() > 0) ? true : false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          returnExitAfterParse = returnExitAfterParse && (bool) file.get_exit_after_parser();
+        }
+     return returnExitAfterParse;
+   }
+
+void 
+SgProject::set_C_only       (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_C_only = value;
+   }
+
+void
+SgProject::set_Cxx_only     (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_Cxx_only = value;
+   }
+
+void
+SgProject::set_Fortran_only (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_Fortran_only = value;
+   }
+
 bool
 SgProject::get_C_only (void) const
    {
   // look at how the files are set (C here implies C89)
-     bool result = false;
+  // bool result = false;
+     bool result = p_C_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
@@ -11733,7 +11852,8 @@ bool
 SgProject::get_Cxx_only (void) const
    {
   // look at how the files are set (C++ only)
-     bool result = false;
+  // bool result = false;
+     bool result = p_Cxx_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
@@ -11746,7 +11866,8 @@ bool
 SgProject::get_Fortran_only (void) const
    {
   // look at how the files are set
-     bool result = false;
+  // bool result = false;
+     bool result = p_Fortran_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);

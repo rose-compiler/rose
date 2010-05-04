@@ -72,6 +72,8 @@ HEADER_ALIAS_SYMBOL_START
       //! For a chain of aliased symbols, this function returns the last (non-aliased) symbol.
           SgSymbol* get_base() const;
 
+      //! Where possible extract the declaration from the aliased symbol
+          SgDeclarationStatement* get_declaration() const;
 HEADER_ALIAS_SYMBOL_END
 
 HEADER_RENAME_SYMBOL_START
@@ -85,6 +87,13 @@ HEADER_RENAME_SYMBOL_END
 HEADER_NAMESPACE_SYMBOL_START
           void post_construction_initialization();
 HEADER_NAMESPACE_SYMBOL_END
+
+
+HEADER_ASM_BINARY_ADDRESS_SYMBOL_START
+HEADER_ASM_BINARY_ADDRESS_SYMBOL_END
+
+HEADER_ASM_BINARY_DATA_SYMBOL_START
+HEADER_ASM_BINARY_DATA_SYMBOL_END
 
 // #########################################################
 // #########################################################
@@ -595,6 +604,128 @@ SgAliasSymbol::get_base() const
      return nonAliasedSymbol;
    }
 
+
+SgDeclarationStatement*
+SgAliasSymbol::get_declaration() const
+   {
+  // DQ (4/14/2010): Added support for getting declarations from the alias symbols.
+
+     ROSE_ASSERT(get_alias() != NULL);
+
+     SgDeclarationStatement* returnValue = NULL;
+     switch (get_alias()->variantT())
+        {
+          case V_SgNamespaceSymbol:
+             {
+               SgNamespaceSymbol* symbol = isSgNamespaceSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+          case V_SgVariableSymbol:
+             {
+            // This case is a bit special since the SgInitializedName is not a declaration
+            // and thus the get_declaration() function does not return a SgDeclarationStatement.
+               SgVariableSymbol* symbol = isSgVariableSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               SgInitializedName* initializedName = isSgInitializedName(symbol->get_declaration());
+               ROSE_ASSERT(initializedName != NULL);
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+               ROSE_ASSERT(variableDeclaration != NULL);
+               returnValue = variableDeclaration;
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+          case V_SgFunctionSymbol:
+             {
+               SgFunctionSymbol* symbol = isSgFunctionSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+           case V_SgClassSymbol:
+             {
+               SgClassSymbol* symbol = isSgClassSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+           case V_SgEnumSymbol:
+             {
+               SgEnumSymbol* symbol = isSgEnumSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+           case V_SgEnumFieldSymbol:
+             {
+               SgEnumFieldSymbol* symbol = isSgEnumFieldSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               SgInitializedName* initializedName = isSgInitializedName(symbol->get_declaration());
+               ROSE_ASSERT(initializedName != NULL);
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+               ROSE_ASSERT(variableDeclaration != NULL);
+               returnValue = variableDeclaration;
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+#if 0
+        // I don't think we want to handle this case (at least not as part of alias support)!
+           case V_SgLabelSymbol:
+             {
+               SgLabelSymbol* symbol = isSgLabelSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+#endif
+           case V_SgTemplateSymbol:
+             {
+               SgTemplateSymbol* symbol = isSgTemplateSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+           case V_SgTypedefSymbol:
+             {
+               SgTypedefSymbol* symbol = isSgTypedefSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+           case V_SgAliasSymbol:
+             {
+               SgAliasSymbol* symbol = isSgAliasSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached in switch inside of SgAliasSymbol::get_declaration() get_alias() = %p = %s \n",get_alias(),get_alias()->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return returnValue;
+   }
+
 SOURCE_ALIAS_SYMBOL_END
 
 SOURCE_RENAME_SYMBOL_START
@@ -742,6 +873,50 @@ SgNamespaceSymbol::post_construction_initialization()
 
 SOURCE_NAMESPACE_SYMBOL_END
 
+
+SOURCE_ASM_BINARY_ADDRESS_SYMBOL_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     return NULL;
+   }
+
+SgName
+$CLASSNAME::get_name() const
+   {
+     return SgName("undefined_binary_address_symbol");
+   }
+
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+
+SOURCE_ASM_BINARY_ADDRESS_SYMBOL_END
+
+SOURCE_ASM_BINARY_DATA_SYMBOL_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     return NULL;
+   }
+
+SgName
+$CLASSNAME::get_name() const
+   {
+     return SgName("undefined_binary_data_variable_symbol");
+   }
+
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+
+SOURCE_ASM_BINARY_DATA_SYMBOL_END
 
 
 

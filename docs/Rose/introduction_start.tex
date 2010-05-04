@@ -1,0 +1,124 @@
+\section{What is ROSE}
+
+% Describe ROSE to the broad target audience.
+% Describe how it works 
+%    Read the input source code
+%    Generate the AST (define AST and define graph) 
+%       The structure of the original source code is preserved
+%       Details aboaut the source code can be found in the AST
+%    Provide tools 
+%       for the analysis and transformation of the AST
+%       generate additional information from the AST (call graph, etc.)
+%       visualization of the program
+%    Source code regeneration
+%
+   ROSE is an open source compiler infrastructure for building tools that can
+read and write source code in multiple languages (C/C++/Fortran) and/or analyze
+binary executables (using the x86, Power-PC, and ARM instruction sets).
+The target audience for ROSE is people building tools for the analysis
+and transformation of software generally as well as code generation tools.
+% source code and/or analysis of binary executables.
+ROSE provides a library (librose) that can be 
+used to support the universal requirements of tools that
+do custom analysis and/or transformations on source code
+and custom analysis of binary forms of software. ROSE is 
+portable across and expanding range of operating systems
+and work with an growing number of compilers.
+
+   ROSE provides a common level of infrastructure support to
+user-defined tools, so that they need not implement the 
+complex support required for software analysis and transformation operations. 
+For source code based tools these include parsing, common forms of 
+compiler analysis, common transformations, and code generation.
+For binary analysis based tools these include disassembly,
+function boundary detection, and common forms of analysis.
+User defined tools may also mix source code and binary analysis
+to form more interesting tools for specialized purposes.
+ROSE is part of research work to unify the analysis of
+both source code and binaries within general compiler research
+and define mixed forms of static and dynamic analysis.
+
+   ROSE works by reading the source code and/or binary
+and generating an Abstract Syntax Tree (AST).  The AST forms
+a graph representing the structure of the source code and/or binary
+executable and is held in memory to provide the fastest possible means 
+of operating on the graph.  The nodes used to define the AST graph are 
+an {\em intermediate representation} (IR); common within compiler research
+as a way of representing the structure of software absent syntax details
+(commas, semi-colons, white-space, etc.).  ROSE provides mechanisms to 
+traverse and manipulate the AST. Finally, in the case of source code, 
+ROSE provides mechanisms to regenerate source code from the AST.
+
+   As a trivial example, if the input source code program contains a variable declaration
+for an integer, all of this information will be available in the AST generated from
+the input code passed on the command line to any tool built using ROSE.
+Similarly, an automated transformation of the variable declaration 
+held in the AST would be expressed using a traversal over the AST and
+code {\em semantic actions} to mutate the AST. Then the transformed source code would be 
+generated ({\em unparsed}) from the AST.  In the case of binaries 
+(including executables, object files, and libraries), the AST will 
+represent the structure of the binary. The AST for a binary also includes the 
+binary file format (symbol table, debug format, import tables, etc.), 
+disassembled instructions, all instruction operands, etc.
+
+   ROSE provides a rich set of tools to support the analysis of 
+software including the support for users to build their own forms
+of analysis and specialized transformations. As an example, ROSE includes
+a full OpenMP compiler built using the internal ROSE infrastructure 
+for analysis and transformation.
+A wide assortment of AST traversals are provided
+to express both analysis and transformations of the AST. A set of
+common forms of analysis are provided (call graph, control flow, etc.)
+most work uniformly on both source code and binary executables.
+Visualization support in included to help users understand and debug
+their tools.  GUI support is available to support building professional
+level tools using ROSE. ROSE is actively supported by a small
+group at LLNL and is used as a basis for compiler research work within 
+DOE at LLNL.
+
+   Technically, ROSE is designed to build what are called {\em translators}, 
+ROSE uses a source-to-source approach to define such translators. Note that 
+translators are significantly more sophisticated than {\em preprocessors} 
+but the terms are frequently confused. A translator must understand the 
+source code at a fundamentally deeper level using a grammar for the whole language
+and on the whole source code, where as a preprocessor only understands the 
+source code using a simpler grammar and on a subset of the source code. 
+It is {\em loosely} the difference between any language compiler and the 
+C preprocessor (cpp).
+
+% Sections suggested by Carol Eidt (at Microsoft)
+\section{Why you should be interested in ROSE}
+ROSE is a tool for building source-to-source translators.
+You should be interested in ROSE if you want to 
+understand or improve any aspect of your software. ROSE
+makes it easy to build tools that read and operate on source code
+from large scale applications (millions of lines).  Whole projects
+may be analyzed and even optimized using tools built using ROSE.
+For example, ROSE is itself analyzed nightly using ROSE.
+
+To get started immediately consult the ROSE User Manual, chapter
+{\em Getting Started} for details).
+
+\section{Problems that ROSE can address}
+    ROSE is a mechanism to build source-to-source analysis or 
+optimization tools that operate directly on the source code of large 
+scale applications.  Example tools that {\em have} been built include:
+\begin{itemize}
+   \item OpenMP translator,
+   \item Array class abstraction optimizer,
+   \item Source-to-source instrumenter,
+   \item Loop analyzer,
+   \item Symbolic complexity analyzer,
+   \item Inliner and outliner,
+   \item Code coverage tools,
+   \item and many more...
+\end{itemize}
+Example tools that {\em can} be built include:
+\begin{itemize}
+   \item Custom optimization tools,
+   \item Custom documentation generators,
+   \item Custom analysis tools,
+   \item Code pattern recognition tools,
+   \item Security analysis tools,
+   \item and many more...
+\end{itemize}

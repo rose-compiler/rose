@@ -3,28 +3,74 @@
 #include "Disassembler.h"
 /** Partitions instructions into basic blocks and functions.
  *
- *  The Partitioner classes are responsible for partitioning the set of instructions disassembled by a Disassembler class into
- *  AST nodes for basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration).  A basic block is a contiguous sequence
- *  of nonoverlapping instructions where control flow enters at only the first instruction and exits at only the last
+ *  The Partitioner classes are responsible for partitioning the set of instructions previously disassembled by a Disassembler
+ *  class into AST nodes for basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration).  A basic block is a contiguous
+ *  sequence of nonoverlapping instructions where control flow enters at only the first instruction and exits at only the last
  *  instruction. A function is a collection of basic blocks with a single entry point. In the final ROSE AST, each instruction
  *  belongs to exactly one basic block, and each basic block belongs to exactly one function.
  *
  *  The partitioner organizes instructions into basic blocks by starting at a particular instruction and then looking at its
- *  set of successor addresses from SgAsmInstruction::get_successors().  If the following address is the only successor then
- *  the instruction at that address is added to the basic block and the process repeats.
+ *  set of successor addresses. Successor addresses are edges of the eventual control-flow graph (CFG) that are calculated
+ *  using instruction semantics, and are available to the end user via SgAsmBlock::get_cached_successors().  It's not always
+ *  possible to statically determine the complete set of successors; in this case, get_cached_successors() will return only the
+ *  statically known successors and SgAsmBlock::get_complete_successors() will return false.  Because ROSE performs semantic
+ *  analysis over all instructions of the basic block (and occassionally related blocks), it can sometimes determine that
+ *  instructions that are usually considered to be conditional branches are, in fact, unconditional (e.g., a PUSH followed by a
+ *  RET; or a CALL to a block that discards the return address).  ROSE includes unconditional branch instructions and their
+ *  targets within the same basic block (provided no other CFG edge comes into the middle of the block).
  *
- *  The partitioner organizes basic blocks into functions in two phases. The first phase considers all disassembled
- *  instructions and other available information such as symbol tables. The heuristics used to find function entry points are
- *  controlled by setting or clearing various SgAsmFunctionDeclaration::FunctionReason bits with the set_search() method.
- *  Although this phase is part of the main partition() method, it can also be invoked explicitly by calling seed_functions().
+ *  The partitioner organizes basic blocks into functions in three phases. The first phase considers all disassembled
+ *  instructions and other available information such as symbol tables and tries to determine which addresses are entry points
+ *  for functions.  For instance, if the symbol table contains function symbols, then the address stored in the symbol table is
+ *  assumed to be the entry point of a function.  ROSE has a variety of these "pre-cfg" detection methods which can be
+ *  enabled/disabled at runtime with the "-rose:partitioner_search" command-line switch.  ROSE also supports user-defined
+ *  search methods that can be registered with an existing partitioner (see add_function_detector()).
  *
- *  The second phase uses a control flow graph (CFG) to create basic blocks and assign them to functions. While analyzing the
- *  CFG additional function entry points might be recognized.  Some aspects of the second phase are also controlled by
- *  set_search(), such as recognition of x86 "CALL" targets as function entry points.  Although this phase is part of the
- *  main partition() method, it can also be invoked explicitly by calling analyze_cfg().
+ *  The second phase for assigning blocks to functions is via analysis of the control-flow graph.  In a nutshell, ROSE
+ *  traverses the CFG starting with the entry address of each function, adding blocks to the function as it goes. When it
+ *  detects that a block has edges coming in from two different functions, it creates a new function whose entry point is that
+ *  block (see definition of "function" above; a function can only have one entry point).
  *
- *  Once all functions are detected and basic blocks are created and assigned to the functions, the AST can be created by
- *  calling build_ast().
+ *  The third and final phase, called "post-cfg", makes final adjustments, such as adding SgAsmFunctionDeclaration objects for
+ *  no-op or zero padding occuring between the previously detected functions. This could also be user-extended to add blocks to
+ *  functions that ROSE detected during CFG analysis (such as unreferenced basic blocks, no-ops, etc. that occur within the
+ *  extent of a function.)
+ *
+ *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
+ *  information via a call to the build_ast() method, which constructs a ROSE AST.  Any instructions that were not assigned to
+ *  blocks of a function can be optionally discarded (see the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit of set_search(), or
+ *  the "leftovers" parameter of the "-rose:partitioner_search" command-line switch).  All three phases of detection and
+ *  building of the final AST can be performed with a single call to the partition() method.
+ *
+ *  The Partitioner class can easily be subclassed by the user. Some of the Disassembler methods automatically call
+ *  Partitioner::partition(), using either a temporarily instantiated Partitioner, or a partitioner provided by the user.
+ *
+ *  NOTE: Some of the methods used by the partitioner are more complex than one might originally imagine.  The CFG analysis,
+ *  for instance, must contend with the fact that the graph nodes (basic blocks) are changing as new edges are discovered
+ *  (e.g., splitting a large block when we discover an edge coming into the middle). Changes to the nodes result in
+ *  changes to the edges (e.g., a PUSH/RET pair is an unconditional branch to a known target, but if the block were to be
+ *  divided then the RET becomes a branch to an unknown address (i.e., the edge disappears).
+ *  
+ *  Another complexity is that the CFG analysis must avoid circular logic. Consider the following instructions:
+ *  \code
+ *     1: PUSH 2
+ *     2: NOP
+ *     3: RET
+ *  \endcode
+ *
+ *  When all three instructions are in the same basic block, as they are initially, the RET is an unconditional branch to the
+ *  NOP. This splits the block and the RET no longer has known successors (according to block semantic analysis).  So the edge
+ *  from the RET to the NOP disappears and the three instructions would coalesce back into a single basic block.  In this
+ *  situation, ROSE keeps these three instructions as two basic blocks with no CFG edges to the second block.
+ *
+ *  A third complexity is that the Partitioner cannot rely on the usual ROSE AST traversal mechanisms because it must perform
+ *  its work before the AST is created.  However, the Partitioner benefits from this situation by being able to use data
+ *  structures and methods that are optimized for performance.
+ *
+ *  A final complexity, is that the Disassembler and Partitioner classes are both designed to be useful in a general way, and
+ *  independent of each other.  These two classes can be called even when the user doesn't have an AST.  For instance, the
+ *  tests/roseTests/binaryTests/disassembleBuffer.C is an example of how the Disassembler and Partitioner classes can be used
+ *  to disassemble and partition a buffer of instructions obtained outside of ROSE's binary file parsing mechanisms.
  */
 class Partitioner {
 protected:
@@ -32,13 +78,21 @@ protected:
 
     /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
     struct BasicBlock {
-        BasicBlock(): sucs_complete(false), sucs_ninsns(0), function(NULL) {}
-        const Disassembler::AddressSet& successors(bool *complete=NULL); /**< Calculates known successors */
+        BasicBlock(): sucs_complete(false), sucs_first_va(0), sucs_ninsns(0), function(NULL) {
+            /* Keep track of the number of blocks allocated so we can print that info for debugging output. The number
+             * of blocks isn't otherwise directly available. */
+            ++nblocks;
+        }
+        ~BasicBlock() {
+            --nblocks; /* for debugging output */
+        }
+        static size_t nblocks;                  /**< Number of blocks allocated; only used for debugging */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         Disassembler::AddressSet sucs;          /**< Cached set of known successors */
         bool sucs_complete;                     /**< Is the set of successors known completely? */
+        rose_addr_t sucs_first_va;              /**< First instruction va when "sucs" was computed */
         size_t sucs_ninsns;                     /**< Number of instructions in block when "sucs" was computed */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
     };
@@ -107,7 +161,7 @@ public:
 
 public:
     Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL) {}
-    virtual ~Partitioner() {}
+    virtual ~Partitioner() { clear(); }
 
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
      *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
@@ -171,26 +225,35 @@ public:
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
      *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
-     *  "***unassigned blocks***" whose entry address will be the address of the lowest instruction. */
+     *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction.  However, if the
+     *  FUNC_LEFTOVERS bit is not turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
     
 protected:
+    struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery */
+
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
     virtual BasicBlock* find_bb_containing(rose_addr_t);        /**< Find basic block containing instruction address */
     virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
+    virtual const Disassembler::AddressSet& successors(BasicBlock*, bool *complete=NULL); /**< Calculates known successors */
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
+    virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
-    virtual BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
+    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
+    virtual void discover_first_block(Function*);               /* see implementation */
     virtual void discover_blocks(Function*, rose_addr_t);       /* see implementation */
     virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */
-    virtual SgAsmFunctionDeclaration* build_ast(Function*) const;/**< Build AST for a single function */
-    virtual SgAsmBlock* build_ast(BasicBlock*) const;           /**< Build AST for a single basic block */
+    virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
+    virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
+    virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
+    
     
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
+    virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
     virtual void mark_func_patterns(SgAsmGenericHeader*);       /**< Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
@@ -218,6 +281,9 @@ protected:
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
+
+private:
+    static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
 
 #endif

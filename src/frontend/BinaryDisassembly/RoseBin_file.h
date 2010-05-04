@@ -30,13 +30,13 @@ class RoseBin_FILE  {
   std::string filename;
 
   // remember a map of comments
-  rose_hash::hash_map <int, std::string > rememberComments; // Instruction addr -> comment
+  rose_hash::unordered_map <int, std::string > rememberComments; // Instruction addr -> comment
   // remember the map of functions
-  rose_hash::hash_map <int, SgAsmFunctionDeclaration* > rememberFunctions; // Start of function -> decl
+  rose_hash::unordered_map <int, SgAsmFunctionDeclaration* > rememberFunctions; // Start of function -> decl
   // remember a map of blocks
   //std::map <int, SgAsmBlock* > rememberBlocks;
   // remember a map of instructions
-  rose_hash::hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
+  rose_hash::unordered_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
   //typedef __gnu_debug::hash_map <uint64_t, SgAsmInstruction* > remInstType;
   //remInstType rememberInstructions; // Insn address -> ROSE insn
   // remember a map of all operand strings
@@ -54,9 +54,9 @@ class RoseBin_FILE  {
   // std::map <int, std::multimap<int,int> > rememberExpressionTree_ParentChild;
   std::vector < std::map<int, std::vector<int> > > rememberExpressionTree_ParentChild;
   // map of substitutions
-  rose_hash::hash_map <int, exprSubstitutionType > rememberSubstitution;
+  rose_hash::unordered_map <int, exprSubstitutionType > rememberSubstitution;
   // map of callgraph info , <address, callgraphType>
-  rose_hash::hash_map <int, CallGraphType > rememberCallGraph;
+  rose_hash::unordered_map <int, CallGraphType > rememberCallGraph;
   // map of branchgraph info , <address of src_blockid, callgraphType>
   //  std::multimap <int, BranchGraphType > rememberBranchGraph;
 

@@ -53,19 +53,23 @@ private:
     public:
       size_t operator()(void * p) const { return (size_t) p; }
 
-#ifdef _MSC_VER 
+// CH (4/9/2010): Use boost::unordered instead   
+//#ifdef _MSC_VER 
+#if 0
    public:
       static const size_t bucket_size = 4;
       static const size_t min_buckets = 8;
 #endif
    };
 
-#ifdef _MSC_VER
-  typedef rose_hash::hash_map<void*, VarRef> NameMap;
-  typedef rose_hash::hash_map<void*, std::pair<size_t,size_t> > StmtMap;
+// CH (4/9/2010): Use boost::unordered instead   
+//#ifdef _MSC_VER
+#if 0
+  typedef rose_hash::unordered_map<void*, VarRef> NameMap;
+  typedef rose_hash::unordered_map<void*, std::pair<size_t,size_t> > StmtMap;
 #else
-  typedef rose_hash::hash_map<void*, VarRef, PtrAnal::hash> NameMap;
-  typedef rose_hash::hash_map<void*, std::pair<size_t,size_t>, PtrAnal::hash> StmtMap;
+  typedef rose_hash::unordered_map<void*, VarRef, PtrAnal::hash> NameMap;
+  typedef rose_hash::unordered_map<void*, std::pair<size_t,size_t>, PtrAnal::hash> StmtMap;
 #endif
 
   std::list<std::string> fdefined;

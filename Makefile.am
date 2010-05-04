@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
+
 # DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
@@ -12,8 +13,26 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
 # This was something that was discussed in email previously with the group.  Thei point is to have the
 # first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
-SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
+# SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
+# DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
+SUBDIRS = libltdl config src
+if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
+   SUBDIRS += tests
+endif
+if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
+   SUBDIRS += projects
+endif
+if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
+ # If we can't process the tutorial directory then we can't generate example translators or the documentation
+   SUBDIRS += tutorial exampleTranslators docs 
+endif
+SUBDIRS += tools scripts 
+if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
+ # If we can't process the tutorial directory then we can't run demos
+   SUBDIRS += demo
+endif
+SUBDIRS += binaries
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 
@@ -50,21 +69,15 @@ detect_roseh:
 	@echo "***** the first header file in a source file is sage3basic.h (if used)   ********************"
 	@echo "***************************************************************************************"
 	@echo Testing for sage3basic.h and rose.h and sage3.h in header files...
-	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code2" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h or rose.h or sage3.h header check passed."; else echo "header files exist that include sage3basic.h or rose.h or sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
-#	@echo Testing for sage3.h in header files...
-#	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3.h header check passed."; else echo "header files exist that include sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
-#	@echo Testing for rose.h in header files...
-#	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"rose.h\"\|#include <rose.h>" {} \; |  grep -v "//#include \"rose.h\"\|//#include <rose.h>" | grep -v "// #include \"rose.h\"\|// #include <rose.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "rose.h header check passed."; else echo "header files exist that include rose.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"rose.h\"\|#include <rose.h>" {} \; | grep -v "//#include \"rose.h\"\|//#include <rose.h>" | grep -v "// #include \"rose.h\"\|// #include <rose.h>" ; exit 1; fi
+	sh $(srcdir)/scripts/checkForInvalidHeaders.sh $(top_srcdir)
+#@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code2" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h or rose.h or sage3.h header check passed."; else echo "header files exist that include sage3basic.h or rose.h or sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
 
 # tps: added script from Andreas with small modifications - find all C files that dont include rose in the top of the file 
 # rpm: exclude build directories (they contain "include-staging") since ROSE itself creates some source files.
 detect_rosec:
 	@echo Testing for sage3basic.h in source files...
-	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h source file check passed.";  else echo "There are source files that dont include sage3basic.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h"; exit 1; fi
-#	@echo Testing for sage3.h in source files...
-#	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3.h\"\|<sage3.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3.h source file check passed.";  else echo "There are source files that dont include sage3.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3.h\"\|<sage3.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3.h\|mpi.h"; exit 1; fi
-#	@echo Testing for rose.h in source files...
-#	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "rose.h source file check passed.";  else echo "There are source files that dont include rose.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h"; exit 1; fi
+	sh $(srcdir)/scripts/checkForInvalidSourceFiles.sh $(top_srcdir)
+#@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h source file check passed.";  else echo "There are source files that dont include sage3basic.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h"; exit 1; fi
 
 
 # DQ (3/9/2009): Additional things that we can enforce within ROSE (written by Andreas).
@@ -165,6 +178,9 @@ endif
 if ENABLE_JAVAPORT
    DISTCHECK_CONFIGURE_FLAGS += --with-javaport
 endif
+
+# DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
+DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
 # opposed to EDG source code we rename the final generated distribution.
@@ -296,3 +312,8 @@ ProblemAreas:
 # Report the version number of the ROSE translator built.
 PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
 	$(top_builddir)/tests/testAnalysis --version
+
+release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
+
+PrintBinaryCompatibilitySignature:
+	@echo "release_binary_compatibility_signature = ${release_binary_compatibility_signature}"

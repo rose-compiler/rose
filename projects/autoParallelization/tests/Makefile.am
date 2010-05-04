@@ -32,6 +32,7 @@ true_l2.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 class_member.C \
+for-while-for.C \
 ifstmt.C \
 iterator2.C \
 iteratorloop.C \

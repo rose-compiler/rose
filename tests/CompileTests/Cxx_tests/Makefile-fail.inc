@@ -150,6 +150,10 @@ test2010_02.C \
 test2010_07.C \
 test2010_08.C \
 test2010_09.C \
+test2010_10.C \
+test2010_12.C \
+test2010_15.C \
+test2010_16.C \
 longFile.C \
 certSignalExample.C
 

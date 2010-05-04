@@ -11,6 +11,7 @@ int main( int argc, char * argv[] )
 
 #if 0
   // Output an optional graph of the AST (just the tree, when active)
+     printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
      generateDOT ( *project );
 #endif
 
@@ -19,7 +20,6 @@ int main( int argc, char * argv[] )
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
-
 
   // regenerate the source code and call the vendor 
   // compiler, only backend error code is reported.

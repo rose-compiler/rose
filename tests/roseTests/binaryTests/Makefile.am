@@ -4,7 +4,8 @@ SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 
 EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
 		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
-		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans
+		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
+		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -22,8 +23,8 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # name of a file that is created when the test is successful (unsuccessful results are usually saved in *.result.tmp), the later
 # is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
-		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns \
-		expandCoreDump functionBoundaries findConstantsABI rot13
+		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
+		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -37,7 +38,6 @@ testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 #Test the binary call graph that uses the semantic representation to perform an accurate analysis
 testBinCG_SOURCES = testBinCG.C
 testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
@@ -76,15 +76,26 @@ shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 
 # Finds constant values and propagates them across instructions
 findConstants_SOURCES = findConstants.C
+findConstants_CPPFLAGS = -DPOLICY_SELECTOR=1
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions using an ABI
-findConstantsABI_SOURCES = findConstantsABI.C
+findConstantsABI_SOURCES = findConstants.C
+findConstantsABI_CPPFLAGS = -DPOLICY_SELECTOR=2
 findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Uses VirtualMachineSemantics semantic analysis policy
+virtualMachineSemantics_SOURCES = findConstants.C
+virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
+virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Disassemble a file containing bare instructions
+disassembleBuffer_SOURCES = disassembleBuffer.C
+disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
@@ -155,12 +166,20 @@ demo_findConstantsABI: findConstantsABI demo_findConstants
 	@echo; echo; echo "Demo for $<"; echo
 	./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_disassemble: disassemble demo_findConstantsABI
+demo_virtualMachineSemantics: virtualMachineSemantics demo_findConstantsABI
+	@echo; echo; echo "Demo for $<"; echo
+	./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin
+
+demo_disassemble: disassemble demo_virtualMachineSemantics
 	@echo; echo; echo "Demo for $<"; echo
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
-demo_testBinCFG: testBinCFG demo_disassemble
+demo_disassembleBuffer: disassembleBuffer demo_disassemble
+	@echo; echo; echo "Demo for $<"; echo
+	./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310
+
+demo_testBinCFG: testBinCFG demo_disassembleBuffer
 	: no demo yet for testBinCFG
 
 demo_expandCoreDump: expandCoreDump demo_testBinCFG
@@ -292,29 +311,30 @@ test_shiftResizeSection.result: shiftResizeSection
 # This test is *very* sensitive to changes to the Disassembler and Partitioner classes because they and this test all use
 # the findConstants instruction semantics. If the Disassembler or Partitioner is even slightly changed, it could make a
 # different number of calls to the instruction semantics, which changes the sequence number used to generate constant
-# names. Therefore, when comparing the test output with the answer, we will change all constant names from "v[0-9]+" to
-# "vXXX".  Any problems in the semantic analysis should still be caught since they would presumably affect lots of
-# other output too.  The test is still sensitive to minor formatting changes in unparseInstruction().
-FIND_CONSTANTS_DIFF=diff -u <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans) \
-                            <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans)
+# names. Therefore, when comparing the test output with the answer, we will renumber all constant names sequentially.
+# The test is still sensitive to minor formatting changes in unparseInstruction().
+FIND_CONSTANTS_FILTER=perl -p -e '/====/ && ($$seq=0); s/\bv(\d+)\b/$$map{$$1} ||= "V" . ++$$seq/ge'
 test_findConstants.result: findConstants
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans 2>$@.tmp;
-	@bash -c 'if $(FIND_CONSTANTS_DIFF) >/dev/null; \
-          then \
-	      mv $@.tmp $@; \
-	  else \
-              echo "*** $@: Result (test_findConstants.ans) differs from expected answer in $(srcdir)"; \
-	      echo "    (You should compare the files manually to verify the result, then copy it to"; \
-	      echo "     $(srcdir) if it looks OK.) First 100 lines of the difference are:"; \
-	      $(FIND_CONSTANTS_DIFF) |head -n100 |sed "s/^/findConstants> /"; \
-	      exit 1 ; \
-	fi'
+	@$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_findConstants.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstants.ans >>$@.tmp 2>&1 ;\
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 test_findConstantsABI.result: findConstantsABI
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstantsABI.ans 2>$@.tmp; \
+	@$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_findConstantsABI.ans 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstantsABI.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+test_virtualMachineSemantics.result: virtualMachineSemantics
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_virtualMachineSemantics.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_virtualMachineSemantics.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
@@ -325,6 +345,13 @@ test_disassemble.result: disassemble
 #	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
 #	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 #	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+test_disassembleBuffer.result: disassembleBuffer
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310 >test_disassembleBuffer.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassembleBuffer.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 # disassemble will exit non-zero if the assembly doesn't result in an encoding identical to the original
 # We're using the buffer2.bin from projects/BinQ for now because it's 64-bit; the one in our own srcdir is 32-bit and
@@ -401,8 +428,9 @@ MOSTLYCLEANFILES = \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans test_rot13.ans\
-	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans
+	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
+	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
+	test_virtualMachineSemantics.ans
 
 mostlyclean-local: mostlyclean-binarysamples
 

@@ -11,8 +11,7 @@
 #include <inttypes.h>
 #include <sstream>
 
-#include "integerOps.h"
-#include "findConstants.h"
+#include "VirtualMachineSemantics.h"
 
 /* See header file for full documentation. */
 
@@ -152,20 +151,6 @@ SgAsmx86Instruction::get_successors(bool *complete) {
     return retval;
 }
 
-/* Used by get_successors() for basic blocks. Override superclass method so that they don't try to traverse the AST, which
- * hasn't been created yet. */
-class BlockSuccessorsPolicy: public FindConstantsPolicy {
-public:
-    void startInstruction(SgAsmInstruction* insn) {
-        addr = insn->get_address();
-        newIp = number<32>(addr);
-        if (rsets.find(addr)==rsets.end())
-            rsets[addr].setToBottom();
-        currentRset = rsets[addr];
-        currentInstruction = isSgAsmx86Instruction(insn);
-    }
-};
-
 /* "this" is only used to select the virtual function */
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
@@ -176,9 +161,9 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
      * successors, a thorough analysis might be able to narrow it down to a single successor. */
     if (!*complete || successors.size()>1) {
-        typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
+        typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
         try {
-            BlockSuccessorsPolicy policy;
+            VirtualMachineSemantics::Policy policy;
             Semantics semantics(policy);
             for (size_t i=0; i<insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
@@ -186,15 +171,15 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 #if 0
                 std::ostringstream s;
                 s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.currentRset
+                  <<policy.state
                   <<"    ip = " <<policy.readIP() <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            XVariablePtr<32> newip = policy.readIP();
-            if (newip->get().name==0) {
+            VirtualMachineSemantics::ValueType<32> newip = policy.readIP();
+            if (newip.name==0) {
                 successors.clear();
-                successors.insert(newip->get().offset);
+                successors.insert(newip.offset);
                 *complete = true; /*this is the complete set of successors*/
             }
         } catch(const Semantics::Exception& e) {
@@ -225,42 +210,31 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
  * DisassemblerX86 primary methods, mostly defined by the superclass.
  *========================================================================================================================*/
 
-Disassembler *
+bool
 DisassemblerX86::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     if (isSgAsmDOSFileHeader(header))
-        return new DisassemblerX86(header);
+        return 2==get_wordsize();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family)
-        return new DisassemblerX86(header);
+        return 4==get_wordsize();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family)
-        return new DisassemblerX86(header);
-    return NULL;
+        return 8==get_wordsize();
+    return false;
 }
 
 void
-DisassemblerX86::init(SgAsmGenericHeader *header)
+DisassemblerX86::init(size_t wordsize)
 {
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    if (isSgAsmDOSFileHeader(header)) {
-        insnSize = x86_insnsize_16;
-        set_wordsize(2);
-        set_alignment(1);
-        set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
-        insnSize = x86_insnsize_32;
-        set_wordsize(4);
-        set_alignment(1);
-        set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-        insnSize = x86_insnsize_64;
-        set_wordsize(8);
-        set_alignment(1);
-        set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    } else {
-        ROSE_ASSERT(!"unknown x86 sub-architecture");
-        abort();
+    switch (wordsize) {
+        case 2: insnSize = x86_insnsize_16; break;
+        case 4: insnSize = x86_insnsize_32; break;
+        case 8: insnSize = x86_insnsize_64; break;
+        default: ROSE_ASSERT(!"unknown x86 instruction size");
     }
+    set_wordsize(wordsize);
+    set_alignment(1);
+    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */

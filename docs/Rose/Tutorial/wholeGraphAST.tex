@@ -1,6 +1,8 @@
-\chapter{General AST Graph Generation}
+\chapter{Advanced AST Graph Generation}
+%\chapter{General AST Graph Generation}
 \label{Tutorial:chapterGeneralASTGraphGeneration}
-
+\fixme{This chapter brings more confusions. I suggest to remove it until it
+is done right . -Leo}
 \paragraph{What To Learn From This Example}
 This example shows a maximally complete representation of the AST 
 (often in more detail that is useful).
@@ -51,7 +53,10 @@ We cover the visualization of both the AST and the {\em Graph of all IR nodes}.
    \end{itemize}
 \end{itemize}
 
-
+% DQ (4/14/2010): I have removed this overly complex example for now!
+% we want to present the newer mechanism to tailoring the whole AST graphs using switches.
+\fixme{Removed this example since the newer mechanism for tailoring the whole AST graphs needs to be presented.}
+\commentout{
 \section{Whole Graph Generation}
 
 This example shows how to generate and visualize the AST from any input program.
@@ -139,5 +144,5 @@ tree (AST). Each IR node is a C++ class, see SAGE III reference for details,
 the edges represent the values of data members in the class (pointers which connect
 the IR nodes to other IR nodes).  The edges are labeled with the names of the 
 data members in the classes representing the IR nodes.
-
+}
 

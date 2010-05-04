@@ -224,16 +224,14 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 }
 
 SgVariableDeclaration*
-SageBuilder::buildVariableDeclaration \
- (const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration(const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
 {
   SgName name2(name);
   return buildVariableDeclaration(name2,type, varInit,scope);
 }
 
 SgVariableDeclaration*
-SageBuilder::buildVariableDeclaration \
- (const char* name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration(const char* name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
 {
   SgName name2(name);
   return buildVariableDeclaration(name2,type, varInit,scope);
@@ -834,8 +832,7 @@ SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration
 
 template <class actualFunction>
 actualFunction *
-SageBuilder::buildDefiningFunctionDeclaration_T \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 //	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
 {
   if (scope == NULL)
@@ -871,8 +868,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T \
     func = new actualFunction(name,func_type,NULL);
     ROSE_ASSERT(func);
 
-    func->set_firstNondefiningDeclaration\
-	(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
+    func->set_firstNondefiningDeclaration(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
 
     // fix up defining declarations before current statement
     func_symbol->get_declaration()->set_definingDeclaration(func);
@@ -914,12 +910,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T \
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
-//	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
+SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist,
+                                              SgScopeStatement* scope)
 {
-  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration> \
- (name,return_type,paralist,scope);
+  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration>(name,return_type,paralist,scope);
   return func;
 }
 
@@ -945,16 +939,14 @@ SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 {
   SgName sg_name(name);
   return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 {
   SgName sg_name(name);
   return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
@@ -1743,7 +1735,7 @@ SgNullExpression* SageBuilder::buildNullExpression() {
   return e;
 }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
+SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
 {
   SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
   ROSE_ASSERT(result);   
@@ -2822,6 +2814,73 @@ SgNullStatement* SageBuilder::buildNullStatement_nfi()
   setOneSourcePositionNull(result);
   return result;
 }
+
+// DQ (4/30/2010): Added support for building asm statements.
+//! Build an asm statement
+SgAsmStmt* SageBuilder::buildAsmStatement( std::string s )
+{
+  SgAsmStmt* result = NULL;
+  result = new SgAsmStmt();
+  ROSE_ASSERT(result);
+  result->set_assemblyCode(s);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+// DQ (4/30/2010): Added support for building asm statements.
+//! Build an asm statement
+SgAsmStmt* SageBuilder::buildAsmStatement_nfi( std::string s )
+{
+  SgAsmStmt* result = NULL;
+  result = new SgAsmStmt();
+  ROSE_ASSERT(result);
+  result->set_assemblyCode(s);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgAsmStmt*
+SageBuilder::buildMultibyteNopStatement( int n )
+   {
+// Multi-byte NOP instructions.
+// Note: I can't seem to get the memonic versions to work properly
+#define NOP_1_BYTE_STRING "nop"
+#define NOP_2_BYTE_STRING ".byte 0x66,0x90"
+#define NOP_3_BYTE_STRING "nopl (%eax)"
+#define NOP_4_BYTE_STRING "nopl 0x01(%eax)"
+#define NOP_5_BYTE_STRING ".byte 0x0f,0x1f,0x44,0x00,0x00"
+#define NOP_6_BYTE_STRING ".byte 0x66,0x0f,0x1f,0x44,0x00,0x00"
+#define NOP_7_BYTE_STRING ".byte 0x0f,0x1f,0x80,0x00,0x00,0x00,0x00"
+#define NOP_8_BYTE_STRING ".byte 0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00"
+#define NOP_9_BYTE_STRING ".byte 0x66,0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00"
+
+     ROSE_ASSERT(n > 0);
+
+     SgAsmStmt* nopStatement = NULL;
+
+     switch (n)
+        {
+          case 1: nopStatement = buildAsmStatement(NOP_1_BYTE_STRING); break;
+          case 2: nopStatement = buildAsmStatement(NOP_2_BYTE_STRING); break;
+          case 3: nopStatement = buildAsmStatement(NOP_3_BYTE_STRING); break;
+          case 4: nopStatement = buildAsmStatement(NOP_4_BYTE_STRING); break;
+          case 5: nopStatement = buildAsmStatement(NOP_5_BYTE_STRING); break;
+          case 6: nopStatement = buildAsmStatement(NOP_6_BYTE_STRING); break;
+          case 7: nopStatement = buildAsmStatement(NOP_7_BYTE_STRING); break;
+          case 8: nopStatement = buildAsmStatement(NOP_8_BYTE_STRING); break;
+          case 9: nopStatement = buildAsmStatement(NOP_9_BYTE_STRING); break;
+
+          default:
+             {
+               printf ("Only supporting values of multi-byte nop's up to 9 bytes long. \n");
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return nopStatement;
+   }
+
+
 
 //! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
 // This does not work properly since the global scope expects declaration statement, not just SgNullStatement
@@ -3961,7 +4020,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           testfile.close();
           ofstream outputfile(inputFileName.c_str(),ios::out); 
        // DQ (2/6/2009): I think this comment is helpful to put into the file (helps explain why the file exists).
-       // outputfile<<"// Output file generated so that StringUtility::getAbsolutePathFromRelativePath() will see a vaild file ... unparsed file will have rose_ prefix "<<endl;
+          outputfile<<"// Output file generated so that StringUtility::getAbsolutePathFromRelativePath() will see a vaild file ... unparsed file will have rose_ prefix "<<endl;
           outputfile.close();
         }
        else // file already exists , load and parse it
@@ -4004,6 +4063,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
         }
 #endif
 
+  // DQ (4/15/2010): Turn on verbose mode
+     arglist.push_back("-rose:verbose 2");
+
   // This handles the case where the original command line may have referenced multiple files.
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist,/* binaryMode = */ false);
      CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
@@ -4013,8 +4075,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // AS(10/04/08) Because of refactoring we require the determineFileType function to be called 
   // to construct the node.
   // SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
-     //SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
-     // TH (2009-07-15): changed to more generig isSgFile, this also supports SgBinaryComposite
+  // SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
+  // TH (2009-07-15): changed to more generig isSgFile, this also supports SgBinaryComposite
      SgFile* result = determineFileType(arglist, nextErrorCode, project);
      ROSE_ASSERT(result != NULL);
 

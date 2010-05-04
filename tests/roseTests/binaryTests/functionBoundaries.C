@@ -65,25 +65,18 @@ class ShowFunctions : public SgSimpleProcessing {
  * user-defined pattern instead. */
 class MyDisassembler: public DisassemblerX86 {
 public:
-    /* This is called when ROSE needs to create a new Disassembler. We want it to be used in the exact same situations as the
-     * super class, so we use the can_disassemble() method from the super class.  If the super class says it can disassemble a
-     * particular binary header then we can also disassemble that same header. */
-    virtual Disassembler *can_disassemble(SgAsmGenericHeader *hdr) const {
-// DQ (2/9/2010): Comment out this problematic construct for now when compiling ROSE with ROSE.
+    MyDisassembler(size_t wordsize)
+        : DisassemblerX86(wordsize) {
+
+// DQ (4/18/2010): This code does not compile with ROSE (commented out to both mark 
+// it as such and allow tests of compiling the rest of ROSE using ROSE to proceed).
 #ifndef CXX_IS_ROSE_ANALYSIS
-        Disassembler *d = DisassemblerX86::can_disassemble(hdr);
-        if (!d) return NULL;
-        delete d;
-        d = new MyDisassembler;
         Partitioner *p = new Partitioner;
         unsigned h = p->get_search();
         h &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
         p->set_search(h);
         p->add_function_detector(user_pattern);
-        d->set_partitioner(p);
-        return d;
-#else
-        return NULL;
+        set_partitioner(p);
 #endif
     }
 private:
@@ -109,9 +102,12 @@ main(int argc, char *argv[])
 {
 #if 0
     /* Here's an example of how to influence the default disassembly. When ROSE needs a disassembler it calls
-     * Disassembler::create(), which asks MyDisassembler if it can handle that kind of architecture. If it can, then ROSE uses
-     * it for disassembly. */
-    Disassembler::register_subclass(new MyDisassembler);
+     * Disassembler::lookup(), which asks MyDisassembler if it can handle that kind of architecture. If it can, then ROSE uses
+     * it for disassembly.  We register three instances of MyDisassembler because we know that DisassemblerX86 can handle
+     * these three word sizes. */
+    Disassembler::register_subclass(new MyDisassembler(2));
+    Disassembler::register_subclass(new MyDisassembler(4));
+    Disassembler::register_subclass(new MyDisassembler(8));
 #endif
 
     SgProject *project = frontend(argc, argv);

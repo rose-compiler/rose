@@ -11,6 +11,9 @@ F77_TESTCODES_TO_PASS = \
     exampleA251f.f \
     schedule.f
 
+# DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
+F77_TESTCODES_TO_PASS += testNewOFP.f
+
 F90_TESTCODES_TO_PASS = \
   paralledo.f90 \
   collapse.f90 \
@@ -67,27 +70,28 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 
 if ROSE_USE_SSL_SUPPORT
 	@echo "Fortran tests for ROSE OpenMP parser"
-	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (SSL support disables this rule)" 
-	@echo "***********************************************************************************************************"
-
+	@echo "*******************************************************************************************************************"
+	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (SSL support disables this rule) ******" 
+	@echo "*******************************************************************************************************************"
 else	
 check-local:
 	@echo "Fortran tests for ROSE OpenMP parser"
 	@$(MAKE) $(PASSING_F77_TEST_OBJECTS)
 	@$(MAKE) $(PASSING_F90_TEST_OBJECTS)
-	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule completes (terminated normally)" 
 	@echo "***********************************************************************************************************"
-
+	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule completes (terminated normally) *******" 
+	@echo "***********************************************************************************************************"
 endif	
 else
 check-local:
 	@echo "Fortran tests for ROSE OpenMP parser"
-	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (FORTRAN NOT CONFIGURED)" 
+	@echo "***********************************************************************************************************"
+	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (FORTRAN NOT CONFIGURED) ******" 
 	@echo "***********************************************************************************************************"
 
 endif	
 
 EXTRA_DIST = $(ALL_TESTCODES)
 clean-local:
-	rm -f *.o rose_*.* *.out
+	rm -f *.o rose_*.* *.out *.dot
 	rm -rf QMTest

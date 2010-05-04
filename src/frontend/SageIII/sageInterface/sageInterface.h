@@ -104,21 +104,28 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 // DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined 
 // function into the list used to edit the outlined code subtree to fixup references (from symbols 
 // in the original file to the symbols in the newer separate file).
-// typedef rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
+// typedef rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
 // void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
-#ifdef _MSC_VER
+
+// CH (4/9/2010): Use boost::hash instead 
+//#ifdef _MSC_VER
+#if 0 
 inline size_t hash_value(SgNode* t) {return (size_t)t;}
 #endif
 
 struct hash_nodeptr
    {
-#ifndef _MSC_VER
-	   rose_hash::hash<char*> hasher;
+// CH (4/9/2010): Use boost::hash instead 
+//#ifndef _MSC_VER
+#if 0
+	   //rose_hash::hash<char*> hasher;
 #endif
      public:
           size_t operator()(SgNode* node) const
              {
-#ifdef _MSC_VER
+// CH (4/9/2010): Use boost::hash instead 
+//#ifdef _MSC_VER
+#if 0
 				 return (size_t) hash_value(node);
 #else
 				 return (size_t) node;
@@ -126,7 +133,7 @@ struct hash_nodeptr
 		  }
    };
 
- void supplementReplacementSymbolMap ( rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
+ void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
 
 //------------------------------------------------------------------------
 //@{
@@ -1083,6 +1090,11 @@ void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 //! prepend a list of statements to the beginning of the current scope,
 //! handling side effects as appropriate
 void prependStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
+
+//! Check if a scope statement has a simple children statement list
+//! so insert additional statements under the scope is straightforward and unambiguous . 
+//! for example, SgBasicBlock has a simple statement list while IfStmt does not.
+bool  hasSimpleChildrenList (SgScopeStatement* scope);
 
 //! Insert a statement before or after the target statement within the target's scope
 void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true);

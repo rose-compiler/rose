@@ -4,9 +4,8 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
-set( libastVisualization_SRC astGraph.C AstAttributeDOT.C wholeAST.C copyGraph.C walrus.C )
-add_library( libastVisualization STATIC ${libastVisualization_SRC}  )
-add_dependencies( libastVisualization ROSETTA )
+#add_library( libastVisualization STATIC ${libastVisualization_SRC}  )
+#add_dependencies( libastVisualization ROSETTA )
 
 ########### install files ###############
 

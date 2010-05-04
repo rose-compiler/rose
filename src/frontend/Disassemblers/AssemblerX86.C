@@ -311,13 +311,13 @@ AssemblerX86::InsnDefn::to_str() const
         strcat(buf, " + ");
     }
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffLLU")
-	printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffLLU");
-	ROSE_ASSERT(false);
-#else
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffLLU")
+//	printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffLLU");
+//	ROSE_ASSERT(false);
+//#else
     ROSE_ASSERT(opcode <= 0xffffffffffLLU);
-#endif
+//#endif
     if (opcode > 0xffffffff)
         sprintf(buf+strlen(buf), "%02X", (unsigned)((opcode>>32) & 0xff));
     if (opcode > 0xffffff)
@@ -1436,13 +1436,14 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
         retval.push_back(rex_byte);
     
     /* Output opcode */
-#ifdef _MSC_VER
-#pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffllu")
-	printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffllu");
-	ROSE_ASSERT(false);
-#else
+//#ifdef _MSC_VER
+//#pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffllu")
+//	printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffllu");
+	//ROSE_ASSERT(false);
+//	ROSE_ASSERT(opcode<=0xffffffffffllu);
+//#else
     ROSE_ASSERT(opcode<=0xffffffffffllu);
-#endif
+//#endif
     if (opcode > 0xffffffff)
         retval.push_back((opcode>>32) & 0xff);
     if (opcode > 0xffffff)

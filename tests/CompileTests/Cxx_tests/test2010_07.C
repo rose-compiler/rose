@@ -5,7 +5,10 @@
 // #include "processSupport.h"
 
 #include "assert.h"
+
+#ifndef __APPLE__
 #include "roseInternal.h"
+#endif
 
 // void __assert_fail(const char*, const char*, unsigned int, const char*); // Not defined on OS X
 // extern "C" void __assert_fail();
@@ -20,7 +23,9 @@ struct Y
    {
      void foo1()
         {
+#ifndef __APPLE__
           ROSE_ASSERT (!"Inside of struct Y::foo1 (using ROSE_ASSERT)");
+#endif
           assert (!"Inside of struct Y::foo1 (using assert)");
         }
    };

@@ -100,7 +100,7 @@ and limitations on how their software may be used.
    \item {\bf g++} : version $>=$ 3.4.x  \\
      In order to use OpenMP or gFortran g++ $>=$ 4.2.x is required.
 
-   \item {\bf BOOST} : version $>=$ 1.35.0  \\
+   \item {\bf BOOST} : version $>=$ 1.36.0  \\
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
      for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
      for download and installation instructions. 
@@ -147,7 +147,7 @@ to version 3.3, might be related.
 
 Note that on our Mac OSX (version 10.5.6), all of our testing of ROSE uses the following packages:
 \begin{itemize}
-   \item {\bf boost\_1\_35\_0.tar.gz}:
+   \item {\bf boost\_1\_42\_0.tar.gz}:
      All installations of ROSE (any platform) require boost.
 
    \item {\bf doxygen-1.5.6.src.tar.gz}:
@@ -175,7 +175,7 @@ Note that on our Mac OSX (version 10.5.6), all of our testing of ROSE uses the f
 
 As an extra detail, our .bashrc file for Mac OSX is:
 \begin{verbatim}
-export DYLD_LIBRARY_PATH="/Users/dquinlan/local/boost_1_35_0_installTree-gxx-4.0.1/lib"
+export DYLD_LIBRARY_PATH="/Users/dquinlan/local/boost_1_42_0_installTree-gxx-4.0.1/lib"
 export PATH="/Users/dquinlan/local/doxygen-install/bin:$PATH"
 export PATH="/Users/dquinlan/local/graphviz-install/bin:$PATH"
 export PATH="/Users/dquinlan/local/texlive-install/2007/bin/i386-darwin/:$PATH"
@@ -338,7 +338,7 @@ The following is a quick guide on how to install BOOST. For more details please
 refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}.
 {\em Note that the install process is different for boost versions starting with 1.39.}
 
-For Boost versions 1.35 through 1.38:
+For Boost versions 1.36 through 1.38:
 \begin{enumerate}
      \item Download BOOST. \\
        Download BOOST at \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}.
@@ -427,7 +427,7 @@ these can be ignored.
 
      \item Add the Boost library path into your LD\_LIBRARY\_PATH.\\
            For example: {\tt
-           LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/home/youraccount/opt/boost\_1\_35\_0/lib}
+           LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/home/youraccount/opt/boost\_1\_36\_0/lib}
      \item Run the {\tt configure} script. \\
            Type {\tt \{AbsoluteOrRelativePath\}/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} 
            to run the ROSE {\tt configure} script.  The path to the configure script 
@@ -468,7 +468,7 @@ steps are the same as those of building a distribution version.
 
 % DQ (11/12/2008): This is where we need to accumulate the symptoms of what goes wrong.
 
-   There are a number of famous ways to screw up yur installation of ROSE.
+   There are a number of famous ways to screw up your installation of ROSE.
 \begin{enumerate}
    \item Message: {\tt configure: error: Could not link against boost\_filesystem-gcc41-mt} \\
    This message from running the {\tt configure} command in ROSE (an initial step in building
@@ -874,3 +874,40 @@ and select the project, {\em rose compiler}, from the pull down menu.
 % End of scope in indentation
 }
 
+\subsection{Installation Details for Specific Platforms}
+
+   These are comments collected from users about what 
+platform specific details they have discovered and shared.
+
+\subsubsection{OSX}
+   OSX does not appear to come with wget and it should be installed
+separately so that ROSE can find and download it's required EDG 
+binaries from the web (ROSE web site).
+
+\paragraph{OSX 10.5}
+   We only build EDG binaries for the default GNU 4.0 compiler.
+
+\paragraph{OSX 10.6}
+   The non-standard STL hashmap implementation in OSX 10.6 is broken and so ROSE
+can fail when using this OS.  We are working on a fix to use more standard
+features of STL.
+
+\subsubsection{Fedora 11}
+   Some trivia with regard to libtool and building the SVN version of Rose:
+Fedora (11), at least, has a package, libtool-ltdl-devel that is needed (and separate from
+the libtool package) to make autoconfiguration work right.  The symptom is that the
+post-configure build enters libltdl, and finds no Makefile and fails immediately.
+Before running Rose's "./build", make sure the libtool-ltdl-devel RPM is installed.
+
+\subsubsection{Intel C++ Compiler}
+The Intel compiler can run out of space compiling some of the larger files in ROSE.
+Although not previously seen by anyone on the ROSE team, one user has reported
+that the Intel compiler option {\em -override-limits} was required.  As used on
+the followign configure line:
+{\em /usr/casc/aleamr/yana-local/rose/build/rose-sourcetree/configure CXX=icpc CC=icc CXXFLAGS=-override-limits --prefix=`pwd` --with-boost=<path to boost>}
+More information is on this option and when to use it is at:
+{\em http://software.intel.com/en-us/articles/internal-threshold-was-exceeded}.
+The problem that this appears to fix is that on some machines the ROSE 
+file AST\_FILE\_IO.C will fail with the error {\em memory limit error},
+this flag to the Intel compiler will fix this (the mcpcom process goes above 
+2.5g memory for this file).

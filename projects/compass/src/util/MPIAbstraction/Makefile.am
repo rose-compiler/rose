@@ -19,6 +19,8 @@ libMPIAbstraction_la_SOURCES = Recognizer.C Recognizer.h
 
 noinst_PROGRAMS = testMPIAbstraction
 
+# CH (2/22/2010): put $(ROSE_LIBS_WITH_PATH) ahead to avoid the linker to find boost libraries in usr/lib first
+# this problem still need to be solved in the future
 LDADD = $(ROSE_LIBS_WITH_PATH) \
     libMPIAbstraction.la ../C-API/libC-API.la 
 #LDADD = libMPIAbstraction.la ../C-API/libC-API.la \
