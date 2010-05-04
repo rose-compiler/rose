@@ -10,7 +10,7 @@ void
 SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
-z    if (idx>=0) {
+    if (idx>=0) {
         snprintf(p, sizeof(p),"%sFormat[%zd].", prefix, idx);
     } else {
         snprintf(p, sizeof(p),"%sFormat.", prefix);
