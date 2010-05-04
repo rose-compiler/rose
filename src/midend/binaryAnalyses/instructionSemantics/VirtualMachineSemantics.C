@@ -141,12 +141,28 @@ void
 State::print(std::ostream &o) const 
 {
     std::string prefix = "    ";
+
+    /* Print registers in columns of minimal width */
+    size_t ssi=0;
+    std::stringstream *ss = new std::stringstream[n_gprs + n_segregs + n_flags];
     for (size_t i=0; i<n_gprs; ++i)
-        o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << gpr[i] << std::endl;
+        ss[ssi++] <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i];
     for (size_t i=0; i<n_segregs; ++i)
-        o <<prefix << segregToString((X86SegmentRegister)i) << " = " << segreg[i] << std::endl;
+        ss[ssi++] <<segregToString((X86SegmentRegister)i) <<"=" <<segreg[i];
     for (size_t i=0; i<n_flags; ++i)
-        o <<prefix << flagToString((X86Flag)i) << " = " << flag[i] << std::endl;
+        ss[ssi++] <<flagToString((X86Flag)i) <<"=" <<flag[i];
+    size_t colwidth = 0;
+    for (size_t i=0; i<ssi; i++)
+        colwidth = std::max(colwidth, ss[i].str().size());
+    for (size_t i=0; i<ssi; i++) {
+        if (0==i%4) o <<(i?"\n":"") <<prefix;
+        std::string s = ss[i].str();
+        if (s.size()<colwidth+1) s.resize(colwidth+1, ' ');
+        o <<s;
+    }
+    o <<"\n";
+
+    /* Print memory contents */
     o <<prefix << "memory = ";
     if (mem.empty()) {
         o <<"{}\n";
@@ -171,11 +187,13 @@ State::rename(RenameMap &rmap)
         (*mi).rename(rmap);
 }
 
-void
-State::canonicalize()
+State
+State::normalize() const
 {
+    State retval = *this;
     RenameMap rmap;
-    rename(rmap);
+    retval.rename(rmap);
+    return retval;
 }
 
 #if 0
@@ -207,13 +225,26 @@ State::SHA1() const
 }
 #endif
 
+void
+State::discard_popped_memory() 
+{
+    Memory new_mem;
+    const ValueType<32> &sp = gpr[x86_gpr_sp];
+    for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
+        const ValueType<32> &addr = (*mi).address;
+        if (addr.name!=sp.name || addr.negate!=sp.negate || (int32_t)addr.offset>=(int32_t)sp.offset)
+            new_mem.push_back(*mi);
+    }
+    mem = new_mem;
+}
 
 /*************************************************************************************************************************
  *                                                          Policy
  *************************************************************************************************************************/
 
 bool
-Policy::on_stack(const ValueType<32> &value) {
+Policy::on_stack(const ValueType<32> &value)
+{
     //std::cerr <<"VirtualMachineSemantics::on_stack(value=" <<value <<"):\n";
     const ValueType<32> sp_inverted = invert(state.gpr[x86_gpr_sp]);
     //std::cerr <<"  stack pointer = " <<state.gpr[x86_gpr_sp] <<"; inverted = " <<sp_inverted <<"\n";
@@ -234,6 +265,5 @@ Policy::on_stack(const ValueType<32> &value) {
     }
     return false;
 }
-
 
 } /*namespace*/

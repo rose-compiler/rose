@@ -135,12 +135,15 @@ struct State {
     void print(std::ostream &o) const;
     void rename(RenameMap&);
 
-    /* Remap all named constants to lowest possible names.  This can be used before comparing states from two different
-     * policies. */
-    void canonicalize();
+    /** Remap all named constants to lowest possible names.  This can be used before comparing states from two different
+     *  policies. */
+    State normalize() const;
+
+    /** Discard stack memory below stack pointer */
+    void discard_popped_memory();
 
 #if 0
-    /* Returns the SHA1 hash of a state. */
+    /** Returns the SHA1 hash of a state. */
     std::string SHA1() const;
 #endif
 
@@ -155,9 +158,24 @@ private:
     SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
     ValueType<32> ip;                   /**< Initially cur_insn->get_address(), then updated during processInstruction() */
     State state;                        /**< Complete machine state updated by each processInstruction() */
+    bool p_discard_popped_memory;       /**< Property that determines how the stack behaves.  When set, any time the stack
+                                         * pointer is adjusted, memory below the stack pointer and having the same address
+                                         * name as the stack pointer is removed (the memory location becomes undefined). The
+                                         * default is false, that is, no special treatment for the stack. */
 
 public:
-    Policy(): cur_insn(NULL) {}
+    Policy(): cur_insn(NULL), p_discard_popped_memory(false) {}
+
+    /** Changes how the policy treats the stack.  See the p_discard_popped_memory property data member for details. */
+    void set_discard_popped_memory(bool b) {
+        p_discard_popped_memory = b;
+    }
+
+    /** Returns the current setting for the property that determines how the stack behaves. See the
+     *  p_set_discard_popped_memory property data member for details. */
+    bool get_discard_popped_memory() const {
+        return p_discard_popped_memory;
+    }
 
     /* Accessors */
     const State& get_state() const { return state; }
@@ -192,6 +210,10 @@ public:
      *  need not have a known value. */
     bool on_stack(const ValueType<32> &value);
 
+    /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
+     *  instruction if the p_discard_popped_memory property is set. */
+    void discard_popped_memory();
+
     /*************************************************************************************************************************
      * Functions invoked by the X86InstructionSemantics class for every processed instructions
      *************************************************************************************************************************/
@@ -204,6 +226,8 @@ public:
 
     /* Called at the end of X86InstructionSemantics::processInstruction() */
     void finishInstruction(SgAsmInstruction*) {
+        if (p_discard_popped_memory)
+            state.discard_popped_memory();
         cur_insn = NULL;
     }
 
@@ -316,8 +340,8 @@ public:
     }
 
     /** Reads a value from memory. */
-    template <size_t Len>
-    ValueType<Len> readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) {
+    template <size_t Len> ValueType<Len>
+    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) {
         MemoryCell melmt(addr, ValueType<32>(0), Len/8);
         for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
             if (melmt.must_alias(*mi))
@@ -327,15 +351,27 @@ public:
     }
 
     /** Writes a value to memory. */
-    template <size_t Len>
-    void writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
-        MemoryCell melmt(addr, data, Len/8);
+    template <size_t Len> void
+    writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+        MemoryCell new_elmt(addr, data, Len/8);
         Memory new_memory;
         for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            if (!melmt.may_alias(*mi))
+            if (new_elmt.must_alias(*mi)) {
+                /* discard memory value; replaced with new value below */
+            } else if (!new_elmt.may_alias(*mi)) {
+                /* safe to save old memory value if new address cannot alias it */
                 new_memory.push_back(*mi);
+            } else if (p_discard_popped_memory &&
+                       state.gpr[x86_gpr_sp]!=state.gpr[x86_gpr_bp] &&
+                       state.gpr[x86_gpr_sp].name!=state.gpr[x86_gpr_bp].name &&
+                       ((addr.name==state.gpr[x86_gpr_sp].name && (*mi).address.name==state.gpr[x86_gpr_bp].name) ||
+                        (addr.name==state.gpr[x86_gpr_bp].name && (*mi).address.name==state.gpr[x86_gpr_sp].name))) {
+                /* assume that mem referenced via stack pointer does not alias mem referenced with frame pointer. This isn't
+                 * safe generally, but is usually the case for well-behaved programs. */
+                new_memory.push_back(*mi);
+            }
         }
-        new_memory.push_back(melmt);
+        new_memory.push_back(new_elmt);
         std::sort(new_memory.begin(), new_memory.end());
         state.mem = new_memory;
     }
