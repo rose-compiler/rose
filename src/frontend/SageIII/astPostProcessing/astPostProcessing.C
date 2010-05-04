@@ -49,6 +49,7 @@ void AstPostProcessing (SgNode* node)
             // Only postprocess the AST if it was generated, and not were we just did the parsing.
             // postProcessingSupport(node);
 
+            // printf ("In AstPostProcessing(): project->get_exit_after_parser() = %s \n",project->get_exit_after_parser() ? "true" : "false");
                if (project->get_exit_after_parser() == false)
                   {
                     postProcessingSupport (node);
@@ -89,6 +90,18 @@ void AstPostProcessing (SgNode* node)
                     postProcessingSupport (node);
                   }
                
+               break;
+             }
+
+       // Test for a binary executable, object file, etc.
+          case V_SgBinaryComposite:
+             {
+               SgBinaryComposite* file = isSgBinaryComposite(node);
+               ROSE_ASSERT(file != NULL);
+
+               printf ("AstPostProcessing of SgBinaryFile \n");
+               ROSE_ASSERT(false);
+
                break;
              }
 
@@ -519,4 +532,16 @@ void postProcessingSupport (SgNode* node)
 
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
         cout << "/* AST Postprocessing finished */" << endl;
+
+
+
+  // DQ (5/3/2010): Added support for binary analysis specific post-processing.
+     SgProject* project = isSgProject(node);
+     if (project != NULL && project->get_binary_only() == true)
+        {
+          printf ("Inside of postProcessingSupport(): Processing binary project \n");
+
+       // addEdgesInAST();
+        }
+
    }

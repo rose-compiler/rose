@@ -1,6 +1,10 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
 #include "sage3basic.h"
 
+// DQ (5/1/2010): This is required to support the function: SgAsmInstruction* SageBuilderAsm::buildMultibyteNopInstruction(int n)
+#include "x86InstructionEnum.h"
+
+
 using namespace std;
 
 SgAsmx86Instruction* SageBuilderAsm::buildx86Instruction( X86InstructionKind kind )
@@ -192,6 +196,84 @@ SageBuilderAsm::buildAsmTypeVector()
      return new SgAsmTypeVector();
    }
 
+
+SgAsmInstruction*
+SageBuilderAsm::buildMultibyteNopInstruction(int n)
+   {
+  // DQ (5/1/2010): Support for building multi-byte NOP instructions.
+  // this is x86 specific which is OK for now.
+  // SgAsmInstruction* instruction = NULL;
+
+     ROSE_ASSERT(n > 0);
+     ROSE_ASSERT(n <= 9);
+
+     uint64_t ip                             = 0; /* Virtual address for start of instruction */
+     std::string mnemonic                    = "nop";
+     X86InstructionKind kind                 = x86_nop;
+     X86InstructionSize insnSize             = x86_insnsize_32; /* Default size of instructions, based on architecture; see init() */
+     X86InstructionSize effectiveOperandSize = x86_insnsize_32;
+     X86InstructionSize effectiveAddressSize = x86_insnsize_32;
+
+     bool lock                               = false;
+     X86RepeatPrefix repeatPrefix            = x86_repeat_none;
+     X86SegmentRegister segOverride          = x86_segreg_none;
+     bool branchPredictionEnabled            = false;
+     X86BranchPrediction branchPrediction    = x86_branch_prediction_none;
+
+  // SgUnsignedCharList insnbuf(0x90);
+     SgUnsignedCharList insnbuf;
+     size_t insnbufat                        = size_t(n);  /* Index of next byte to be read from or write to insnbuf */
+
+     SgAsmx86Instruction *instruction = NULL;
+
+     instruction = new SgAsmx86Instruction(ip, mnemonic, kind, insnSize, effectiveOperandSize, effectiveAddressSize);
+     ROSE_ASSERT(instruction != NULL);
+
+  // Here we are building a simpler version of multi-byte nop using repeated prefixes.
+     for (int i = 1; i < n; i++)
+        {
+          insnbuf.push_back(0x66);
+        }
+
+     insnbuf.push_back(0x90);
+
+#if 0
+  // This switch will implement proper multi-byte NOPs (not implemented yet).
+     switch(n)
+        {
+          case 1:
+             {
+            // instruction->set_raw_bytes(SgUnsignedCharList(&(insnbuf[0]), &(insnbuf[0])+insnbufat));
+               insnbuf.push_front(0x66);
+               break;
+             }
+
+       // case 2: instruction = makeInstruction(x86_nop, "nop", modrm); break;
+
+          default:
+             {
+               printf ("Error: SageBuilderAsm::buildMultibyteNopInstruction(n=%d) not supported \n",n);
+               ROSE_ASSERT(false);
+             }
+        }
+#endif
+
+     instruction->set_raw_bytes(SgUnsignedCharList(&(insnbuf[0]), &(insnbuf[0])+insnbufat));
+     ROSE_ASSERT(instruction != NULL);
+
+     instruction->set_lockPrefix(lock);
+     instruction->set_repeatPrefix(repeatPrefix);
+
+     instruction->set_segmentOverride(segOverride);
+     if (branchPredictionEnabled)
+          instruction->set_branchPrediction(branchPrediction);
+
+     SgAsmOperandList *operands = new SgAsmOperandList();
+     instruction->set_operandList(operands);
+     operands->set_parent(instruction);
+
+     return instruction;
+   }
 
 
 

@@ -28,7 +28,8 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         task_orphaned.c \
         task_underIf.c \
         task_wait.c \
-        task_wait2.c
+        task_wait2.c \
+	twoRegions.c 
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -52,6 +53,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         lastprivate.c \
         lastprivate0.c \
         lockarray.c \
+	loop1.c \
         nestedpar.c \
         nestedpar1.c \
         masterSingle.c \
@@ -95,13 +97,13 @@ if !OS_MACOSX
 endif
 
 # C++ test codes which can only be compiled
-CXX_TESTCODES_REQUIRED_TO_COMPILE = 
+CXX_TESTCODES_REQUIRED_TO_COMPILE = \
+	memberFunction.cpp 
 
 # C++ test codes which can be compiled and linked to final executables
 CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	hello1.cpp \
 	helloNested.cpp \
-	memberFunction.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
 	objectLastprivate.cpp \

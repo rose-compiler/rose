@@ -949,8 +949,10 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
   SgGraphNode*
 findNode(SgGraph* graph, std::string nid)
 {
-#ifdef _MSC_VER
-#pragma message ("WARNING: commenting out use of hashmap in graph support for MSVC.")
+// CH (4/16/2010): Use boost:unordered instead
+//#ifdef _MSC_VER
+#if 0
+//#pragma message ("WARNING: commenting out use of hashmap in graph support for MSVC.")
     return NULL;
 #else
   const rose_graph_string_integer_hash_multimap& nidToInt  = graph->get_string_to_node_index_multimap();
