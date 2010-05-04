@@ -800,10 +800,6 @@ std::string SgAsmGenericSection::to_string(SectionPurpose val)
     case SP_SYMTAB:      return "symbol table";                   
     case SP_OTHER:       return "other";                          
   };
-#ifndef _MSC_VER
   snprintf(buf, sizeof(buf), "unknown section purpose (%zu)", (size_t)val);
-#else
-  _snprintf(buf, sizeof(buf), "unknown section purpose (%zu)", (size_t)val);
-#endif
   return buf;
 }

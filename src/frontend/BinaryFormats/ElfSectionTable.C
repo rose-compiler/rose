@@ -474,7 +474,6 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
       case SHT_GNU_versym: return "SHT_GNU_versym";
       default:{
 	char buf[128];
-#ifndef _MSC_VER
 	if(t>=SHT_LOOS && t <= SHT_HIOS) {
 	  snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
 	  return buf;
@@ -488,22 +487,7 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
 	  snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
 	  return buf;
         }
-#else
-    if(t>=SHT_LOOS && t <= SHT_HIOS) {
-	  _snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
-	  return buf;
-	} else if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
-	  _snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
-	  return buf;
-	} else if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
-	  _snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
-	  return buf;
-	} else {
-	  _snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
-	  return buf;
-        }
-#endif
-			  }
+      }
     };
 }
 
@@ -537,32 +521,20 @@ SgAsmElfSectionTableEntry::to_string(SectionFlags val)
 
   if(os){
     char buf[64];
-#ifndef _MSC_VER
     snprintf(buf,sizeof(buf),"os flags(%2x)", os >> 20);
-#else
-	_snprintf(buf,sizeof(buf),"os flags(%2x)", os >> 20);
-#endif
-	str += buf;    
+    str += buf;    
   }
 
   if(proc){
     char buf[64];
-#ifndef _MSC_VER
-	snprintf(buf,sizeof(buf),"proc flags(%1x)", proc >> 28);
-#else
-	_snprintf(buf,sizeof(buf),"proc flags(%1x)", proc >> 28);
-#endif
-	str += buf;    
+    snprintf(buf,sizeof(buf),"proc flags(%1x)", proc >> 28);
+    str += buf;    
   }
 
   if(rest){
     char buf[64];
-#ifndef _MSC_VER
     snprintf(buf,sizeof(buf),"unknown(%x)", rest);
-#else
-	_snprintf(buf,sizeof(buf),"unknown(%x)", rest);
-#endif
-	str += buf;
+    str += buf;
   }
 
   return str;

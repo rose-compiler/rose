@@ -192,32 +192,20 @@ SgAsmElfSegmentTableEntry::to_string(SegmentFlags val)
 
   if(os){
     char buf[64];
-#ifndef _MSC_VER
     snprintf(buf,sizeof(buf),"os flags(%2x)", os >> 20);
-#else
-    _snprintf(buf,sizeof(buf),"os flags(%2x)", os >> 20);
-#endif
-	str += buf;    
+    str += buf;    
   }
 
   if(proc){
     char buf[64];
-#ifndef _MSC_VER
     snprintf(buf,sizeof(buf),"proc flags(%1x)", proc >> 28);
-#else
-    _snprintf(buf,sizeof(buf),"proc flags(%1x)", proc >> 28);
-#endif
-	str += buf;    
+    str += buf;    
   }
 
   if(rest){
     char buf[64];
-#ifndef _MSC_VER
     snprintf(buf,sizeof(buf),"unknown(%x)", rest);
-#else
-    _snprintf(buf,sizeof(buf),"unknown(%x)", rest);
-#endif
-	str += buf;
+    str += buf;
   }
 
   return str;
