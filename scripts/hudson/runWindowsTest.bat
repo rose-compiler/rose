@@ -23,6 +23,9 @@ cmake.exe --version
 @echo PHASE 1 : cmake configuration
 @echo -----------------------------
 
+if [ -d win-build ]; then
+  rm -rf win-build
+fi
 mkdir win-build
 cd win-build
 
