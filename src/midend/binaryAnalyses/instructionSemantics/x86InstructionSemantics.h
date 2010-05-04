@@ -1861,8 +1861,8 @@ struct X86InstructionSemantics {
                         throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(-4));
-                policy.writeGPR(x86_gpr_sp, newSp);
                 policy.writeMemory(x86_segreg_ss, newSp, read32(operands[0]), policy.true_());
+                policy.writeGPR(x86_gpr_sp, newSp);
                 break;
             }
 
