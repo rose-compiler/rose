@@ -9,7 +9,10 @@
 #include <semaphore.h>
 #include "fileoffsetbits.h"
 #include "rosedll.h"
-
+//tps (05/04/2010): Added compatibility
+#ifdef _MSC_VER
+  #define snprintf _snprintf
+#endif
 // DQ (4/21/2009): Note that this header file will include the STL string header file 
 // which will include sys/stat.h, so the _FILE_OFFSET_BITS macro must be already set 
 // to avoid an ODR violation when using ROSE on 32-bit systems.
