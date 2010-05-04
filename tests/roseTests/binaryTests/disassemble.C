@@ -85,14 +85,36 @@ block_semantics(SgAsmBlock *blk)
 
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
+    policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
-
     try {
         const SgAsmStatementPtrList &stmts = blk->get_statementList();
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
             ROSE_ASSERT(insn!=NULL);
+#if 0
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<"  Initial conditions:\n"
+                      <<policy.get_state().normalize();
+#endif
             semantics.processInstruction(insn);
+#if 0
+            {
+                std::stringstream s;
+                s <<policy.get_state().normalize();
+                std::cout <<"  Final conditions:\n" <<s.str();
+                size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
+                char *digest = new char[digest_sz];
+                gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
+                std::string digest_str;
+                for (size_t i=digest_sz; i>0; --i) {
+                    digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+                    digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+                }
+                delete[] digest; digest=NULL;
+                std::cout <<"  hash=" <<digest_str <<"\n";
+            }
+#endif
         }
     } catch (const Semantics::Exception&) {
         return "";
@@ -100,9 +122,7 @@ block_semantics(SgAsmBlock *blk)
 
     /* Compute digest based on print form of policy state, then convert to ASCII */
     std::stringstream s;
-    VirtualMachineSemantics::State final_state = policy.get_state();
-    final_state.canonicalize();
-    s <<final_state;
+    s <<policy.get_state().normalize();
     size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
     char *digest = new char[digest_sz];
     gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
