@@ -2,6 +2,64 @@
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
+/** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
+ *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
+ *  result in a meaningful basic block.  For instance, consider the following block:
+ *
+ *  \code
+ *      1: mov eax, 1
+ *      2: mov eax, 2
+ *      3: mov eax, 1
+ *      4: mov eax, 2
+ *  \endcode
+ *
+ *  The subsequences <2,3> and <3,4> are both no-ops when considered independently.  However, we cannot remove all four
+ *  instructions because the sequence <1,2,3,4> is not a no-op.
+ *
+ *  Therefore, this function takes the list returned by find_noop_subsequences and greedily selects the longest non-overlapping
+ *  sequences, and returns a vector indexed by instruction position and containing a boolean to indicate whether that
+ *  instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
+ *  no-op instructions. */
+static std::vector<bool>
+build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
+{
+    /* Sort subsequences into buckets by length */
+    size_t retval_size = 0;
+    std::map<size_t/*size*/, std::vector <size_t/*offset*/> > sorted;
+    for (std::vector<std::pair<size_t, size_t> >::const_iterator ni=noops.begin(); ni!=noops.end(); ++ni) {
+        sorted[(*ni).second].push_back((*ni).first);
+        retval_size = std::max(retval_size, (*ni).first + (*ni).second);
+    }
+    
+    /* Allocate a return value */
+    if (0==retval_size) {
+        std::vector<bool> empty;
+        return empty;
+    }
+    std::vector<bool> retval(retval_size, false);
+
+    /* Process in order from largest to smallest */
+    for (std::map<size_t, std::vector<size_t> >::reverse_iterator szi=sorted.rbegin(); szi!=sorted.rend(); ++szi) {
+        size_t sz = (*szi).first;
+        for (std::vector<size_t>::const_iterator idxi=(*szi).second.begin(); idxi<(*szi).second.end(); ++idxi) {
+            size_t idx = *idxi;
+            
+            /* Are any instructions in this range already marked as no-ops?  If so, then skip this one. */
+            bool overlaps = false;
+            for (size_t i=0; i<sz && !overlaps; ++i)
+                overlaps = retval[idx+i];
+            if (overlaps)
+                break;
+            
+            /* Mark these instructions as no-ops */
+            for (size_t i=0; i<sz; ++i)
+                retval[idx+i] = true;
+        }
+    }
+    
+    return retval;
+}
+
 void
 AsmUnparser::unparse(std::ostream &o, SgAsmInstruction *insn)
 {
@@ -52,18 +110,19 @@ AsmUnparser::unparse(std::ostream &o, SgAsmBlock *blk)
         pre(o, blk); /*only for SgAsmBlock nodes that are basic blocks*/
 
         /* Remove no-op sequences from the listing. */
-        std::vector<bool> is_noop(insns.size(), false);
+        std::vector<bool> is_noop;
         if (blk_detect_noop_seq || blk_remove_noop_seq || blk_show_noop_seq) {
             typedef std::vector<std::pair<size_t, size_t> > NoopSequences; /* array of index,size pairs */
-            NoopSequences noops = insns.front()->find_noop_subsequences(insns, true);
+            NoopSequences noops = insns.front()->find_noop_subsequences(insns, true, true);
             if (!noops.empty()) {
-                if (blk_show_noop_seq) o <<"Noops:";
-                for (NoopSequences::iterator ni=noops.begin(); ni!=noops.end(); ++ni) {
-                    if (blk_show_noop_seq) o <<" (" <<(*ni).first <<"," <<(*ni).second <<")";
-                    for (size_t i=0; i<(*ni).second; ++i)
-                        is_noop[(*ni).first+i] = true;
+                if (blk_show_noop_seq) {
+                    o <<"Noops:";
+                    for (NoopSequences::iterator ni=noops.begin(); ni!=noops.end(); ++ni)
+                        o <<" (" <<(*ni).first <<"," <<(*ni).second <<")";
+                    o <<"\n";
                 }
-                if (blk_show_noop_seq) o <<"\n";
+                is_noop = build_noop_index(noops);
+                is_noop.resize(insns.size(), false);
                 if (blk_remove_noop_seq && blk_show_noop_warning) {
                     size_t nerased = 0;
                     for (size_t i=0; i<insns.size(); ++i)
@@ -77,7 +136,7 @@ AsmUnparser::unparse(std::ostream &o, SgAsmBlock *blk)
 
         /* The instructions */
         for (size_t i=0; i<insns.size(); i++) {
-            insn_is_noop_seq = is_noop[i];
+            insn_is_noop_seq = is_noop.empty() ? false : is_noop[i];
             if (!blk_remove_noop_seq || !insn_is_noop_seq)
                 unparse(o, insns[i]);
         }
