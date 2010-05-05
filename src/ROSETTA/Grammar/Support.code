@@ -2288,7 +2288,7 @@ bool SgFunctionModifier::isGnuAttributeWeakReference() const { return checkBit(e
 void SgFunctionModifier::setGnuAttributeWeakReference()      { setBit(e_gnu_attribute__weakref__,p_modifierVector); }
 void SgFunctionModifier::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__,p_modifierVector); }
 
-// TV (08/04/2010): Support for CUDA functions modifiers
+// TV (04/08/2010): Support for CUDA functions modifiers
 
 bool SgFunctionModifier::isCudaDevice() const { return checkBit(e_cuda_device,p_modifierVector); }
 void SgFunctionModifier::setCudaDevice()      { setBit(e_cuda_device,p_modifierVector); }
@@ -2319,50 +2319,6 @@ void SgFunctionModifier::unsetOpenclWorkGroupSizeHint()     { unsetBit(e_opencl_
 bool SgFunctionModifier::hasOpenclWorkGroupSizeReq() const { return checkBit(e_opencl_work_group_size_req, p_modifierVector); }
 void SgFunctionModifier::setOpenclWorkGroupSizeReq()       { setBit(e_opencl_work_group_size_req,p_modifierVector);}
 void SgFunctionModifier::unsetOpenclWorkGroupSizeReq()     { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
-
-// TV (08/04/2010): Support for CUDA functions modifiers
-
-bool SgFunctionModifier::isCudaDevice() const { return checkBit(e_cuda_device,p_modifierVector); }
-void SgFunctionModifier::setCudaDevice()      { setBit(e_cuda_device,p_modifierVector); }
-void SgFunctionModifier::unsetCudaDevice()    { unsetBit(e_cuda_device,p_modifierVector); }
-
-bool SgFunctionModifier::isCudaKernel() const { return checkBit(e_cuda_kernel,p_modifierVector); }
-void SgFunctionModifier::setCudaKernel()      { setBit(e_cuda_kernel,p_modifierVector); }
-void SgFunctionModifier::unsetCudaKernel()    { unsetBit(e_cuda_kernel,p_modifierVector); }
-
-bool SgFunctionModifier::isCudaHost() const { return checkBit(e_cuda_host,p_modifierVector); }
-void SgFunctionModifier::setCudaHost()      { setBit(e_cuda_host,p_modifierVector); }
-void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVector); }
-
-// TV (05/03/2010): Support for OpenCL functions modifiers
-       
-bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }
-void SgFunctionModifier::setOpenclKernel()      { setBit(e_opencl_kernel, p_modifierVector); }
-void SgFunctionModifier::unsetOpenclKernel()   { unsetBit(e_opencl_kernel, p_modifierVector); }
-          
-bool SgFunctionModifier::hasOpenclVecTypeHint() const { return checkBit(e_opencl_vec_type_hint, p_modifierVector); }
-void SgFunctionModifier::setOpenclVecTypeHint(SgType * type) {
-	setBit(e_opencl_vec_type_hint,p_modifierVector);
-	p_opencl_vec_type = type;
-}
-void SgFunctionModifier::unsetOpenclVecTypeHint() { unsetBit(e_opencl_vec_type_hint, p_modifierVector); }
-
-bool SgFunctionModifier::hasOpenclWorkGroupSizeHint() const { return checkBit(e_opencl_work_group_size_hint, p_modifierVector); }
-void SgFunctionModifier::setOpenclWorkGroupSizeHint(SgFunctionModifier::opencl_work_group_size_t work_group_size) {
-	setBit(e_opencl_work_group_size_hint,p_modifierVector);
-	p_opencl_work_group_size = work_group_size;
-}
-void SgFunctionModifier::unsetOpenclWorkGroupSizeHint() { unsetBit(e_opencl_work_group_size_hint, p_modifierVector); }
-
-bool SgFunctionModifier::hasOpenclWorkGroupSizeReq() const { return checkBit(e_opencl_work_group_size_req, p_modifierVector); }
-void SgFunctionModifier::setOpenclWorkGroupSizeReq(SgFunctionModifier::opencl_work_group_size_t work_group_size) {
-	setBit(e_opencl_work_group_size_req,p_modifierVector);
-	p_opencl_work_group_size = work_group_size;
-}
-void SgFunctionModifier::unsetOpenclWorkGroupSizeReq() { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
-
-SgType * SgFunctionModifier::getOpenclVecTypeHint() const { return p_opencl_vec_type; }
-SgFunctionModifier::opencl_work_group_size_t SgFunctionModifier::getOpenclWorkGroupSize() const { return p_opencl_work_group_size; }
 
 
 std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
