@@ -419,6 +419,9 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList 
   // maintain the type table 
   SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
   ROSE_ASSERT(fTable);
+  // set its parent to global , deferred until the function is inserted to a scope
+ // ROSE_ASSERT (fTable->get_parent() != NULL);
+ //   fTable->set_parent();
 
   SgType* typeInTable = fTable->lookup_function_type(typeName);
   if (typeInTable==NULL)
