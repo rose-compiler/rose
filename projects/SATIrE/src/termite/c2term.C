@@ -23,8 +23,8 @@ using namespace std;
 void usage(const char* me) 
 {
   cerr << "Usage: " << me
-     << " [FRONTEND OPTIONS] [OPTIONS] src1.c src2.cpp ... [-o termfile.pl]\n"
-     << "  Parse one or more source files and convert them into a TERMITE file."
+  <<" [FRONTEND OPTIONS] [--dot] [--pdf] src1.c src2.cpp ... [-o termfile.pl]\n"
+  <<"  Parse one or more source files and convert them into a TERMITE file."
        << "\n  Header files will be included in the term representation.\n\n"
 
        << "Options:\n"
