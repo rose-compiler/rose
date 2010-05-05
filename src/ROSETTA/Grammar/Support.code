@@ -720,7 +720,6 @@ HEADER_FUNCTION_MODIFIER_START
              	unsigned long int x, y, z;
              };
 
-
        // Copy constructor
           $CLASSNAME ( const $CLASSNAME & X );
 
@@ -2321,6 +2320,50 @@ bool SgFunctionModifier::hasOpenclWorkGroupSizeReq() const { return checkBit(e_o
 void SgFunctionModifier::setOpenclWorkGroupSizeReq()       { setBit(e_opencl_work_group_size_req,p_modifierVector);}
 void SgFunctionModifier::unsetOpenclWorkGroupSizeReq()     { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
 
+// TV (08/04/2010): Support for CUDA functions modifiers
+
+bool SgFunctionModifier::isCudaDevice() const { return checkBit(e_cuda_device,p_modifierVector); }
+void SgFunctionModifier::setCudaDevice()      { setBit(e_cuda_device,p_modifierVector); }
+void SgFunctionModifier::unsetCudaDevice()    { unsetBit(e_cuda_device,p_modifierVector); }
+
+bool SgFunctionModifier::isCudaKernel() const { return checkBit(e_cuda_kernel,p_modifierVector); }
+void SgFunctionModifier::setCudaKernel()      { setBit(e_cuda_kernel,p_modifierVector); }
+void SgFunctionModifier::unsetCudaKernel()    { unsetBit(e_cuda_kernel,p_modifierVector); }
+
+bool SgFunctionModifier::isCudaHost() const { return checkBit(e_cuda_host,p_modifierVector); }
+void SgFunctionModifier::setCudaHost()      { setBit(e_cuda_host,p_modifierVector); }
+void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVector); }
+
+// TV (05/03/2010): Support for OpenCL functions modifiers
+       
+bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }
+void SgFunctionModifier::setOpenclKernel()      { setBit(e_opencl_kernel, p_modifierVector); }
+void SgFunctionModifier::unsetOpenclKernel()   { unsetBit(e_opencl_kernel, p_modifierVector); }
+          
+bool SgFunctionModifier::hasOpenclVecTypeHint() const { return checkBit(e_opencl_vec_type_hint, p_modifierVector); }
+void SgFunctionModifier::setOpenclVecTypeHint(SgType * type) {
+	setBit(e_opencl_vec_type_hint,p_modifierVector);
+	p_opencl_vec_type = type;
+}
+void SgFunctionModifier::unsetOpenclVecTypeHint() { unsetBit(e_opencl_vec_type_hint, p_modifierVector); }
+
+bool SgFunctionModifier::hasOpenclWorkGroupSizeHint() const { return checkBit(e_opencl_work_group_size_hint, p_modifierVector); }
+void SgFunctionModifier::setOpenclWorkGroupSizeHint(SgFunctionModifier::opencl_work_group_size_t work_group_size) {
+	setBit(e_opencl_work_group_size_hint,p_modifierVector);
+	p_opencl_work_group_size = work_group_size;
+}
+void SgFunctionModifier::unsetOpenclWorkGroupSizeHint() { unsetBit(e_opencl_work_group_size_hint, p_modifierVector); }
+
+bool SgFunctionModifier::hasOpenclWorkGroupSizeReq() const { return checkBit(e_opencl_work_group_size_req, p_modifierVector); }
+void SgFunctionModifier::setOpenclWorkGroupSizeReq(SgFunctionModifier::opencl_work_group_size_t work_group_size) {
+	setBit(e_opencl_work_group_size_req,p_modifierVector);
+	p_opencl_work_group_size = work_group_size;
+}
+void SgFunctionModifier::unsetOpenclWorkGroupSizeReq() { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
+
+SgType * SgFunctionModifier::getOpenclVecTypeHint() const { return p_opencl_vec_type; }
+SgFunctionModifier::opencl_work_group_size_t SgFunctionModifier::getOpenclWorkGroupSize() const { return p_opencl_work_group_size; }
+
 
 std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
    {
@@ -2376,7 +2419,7 @@ void SgFunctionModifier::reset()
   // Set this bit to indicate the default value (we want a value of all zero bits to be an error)
      setDefault();
    }
-
+   
 SOURCE_FUNCTION_MODIFIER_END
 
 
@@ -2888,7 +2931,6 @@ void SgTypeModifier::unsetGnuAttributeNonnull()     { unsetBit(e_gnu_attribute__
 bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
-
 
 std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
    {
@@ -4575,9 +4617,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
           static std::string build_classpath();
 
       //! Divide up the handling of different languages
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-#endif
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);

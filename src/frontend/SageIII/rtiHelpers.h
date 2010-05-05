@@ -321,7 +321,6 @@ static std::string toStringForRTI(const SgFunctionModifier::opencl_work_group_si
   return os.str();
 }
 
-
 #if 0
 // None of these seem to be used
 
