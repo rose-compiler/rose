@@ -311,7 +311,7 @@ SgGraph::addEdge( SgGraphEdge* edge )
 //#ifdef _MSC_VER
 #if 0
 // tps (12/09/09) : Cannot compile this right now.
-#pragma message("rose_graph_support.C: Problem compiling multimap")
+//#pragma message("rose_graph_support.C: Problem compiling multimap")
 #else
 		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
 #endif
@@ -394,7 +394,7 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
 		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
 #else
 // tps (12/09/09) Does not work under Windows right now.
-#pragma message ("rose_graph_support.C: multimap does currently not work.")
+//#pragma message ("rose_graph_support.C: multimap does currently not work.")
 #endif
 		  //	 p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_second,node_index_first),redge));
 #endif
@@ -539,7 +539,7 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
 // CH (4/9/2010): Use boost::unordered instead 
 //#ifdef _MSC_VER
 #if 0
-#pragma message ("WARNING: std::hash_map::resize() function not available in MSVC.")
+//#pragma message ("WARNING: std::hash_map::resize() function not available in MSVC.")
 	 printf ("std::hash_map::resize() function not available in MSVC. \n");
 	 ROSE_ASSERT(false);
 #else

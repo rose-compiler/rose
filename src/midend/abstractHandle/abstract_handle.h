@@ -109,14 +109,13 @@ namespace AbstractHandle{
   //Get parent node, used for generate parent handle automatically
   virtual abstract_node* getParent() const;
 
-// CH (4/7/2010): At least MSVC 9.0 can compile the following code
-//#ifndef _MSC_VER
+#ifdef _MSC_VER
 // DQ (11/27/2009): MSVC does not appear to support covariant types, but no message is required.
-// #pragma message ("WARNING: MSVC does not handle covariant return types properly.")
-//#else
+ #pragma message ("WARNING: MSVC does not handle covariant return types properly.")
+#else
   //Get the raw IR node associated with the current abstract node
   virtual void * getNode() const {return NULL;};
-//#endif
+#endif
 
   //Find a node from a string for a abstract handle's string format, starting from this node
   // eg. find a file node from a string like SourceFile<name,/home/liao6/names.cpp>
