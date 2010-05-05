@@ -414,7 +414,7 @@ std::vector< std::pair< size_t, size_t > >
 SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                             bool relax_stack_semantics/*false*/)
 {
-    static const bool verbose = true;
+    static const bool verbose = false;
     
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
@@ -466,7 +466,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     for (size_t i=0; i<nstates-1; i++) {
         for (size_t j=i+1; j<nstates; j++) {
             if (state[i]==state[j]) {
-                if (verbose) std::cerr <<"  found sequence of " <<(j-i) <<" instructions at index " <<i <<"\n";
+                if (verbose) std::cerr <<"  at instruction #"<<i <<": no-op of length " <<(j-i) <<"\n";
                 retval.push_back(std::make_pair(i, j-i));
             }
         }
