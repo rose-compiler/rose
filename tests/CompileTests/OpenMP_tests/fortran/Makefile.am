@@ -20,13 +20,13 @@ F90_TESTCODES_TO_PASS = \
   critical.f90 \
   continuation.f90
 
-if !OS_VENDOR_DEBIAN
-# This fails for Debian 5.0 systems (at least 32-bit, all compilers (4.3 tested), I think)
-if !ROSE_USING_GFORTRAN_VERSION_4_0
-# These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
-     F90_TESTCODES_TO_PASS += exampleA134f.f90
-endif
-endif
+#if !OS_VENDOR_DEBIAN
+## This fails for Debian 5.0 systems (at least 32-bit, all compilers (4.3 tested), I think)
+#if !ROSE_USING_GFORTRAN_VERSION_4_0
+## These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
+#     F90_TESTCODES_TO_PASS += exampleA134f.f90
+#endif
+#endif
 
 # see bug 350, wrong position for C$OMP END PARALLEL
 # case insensitive in symobl lookup for Fortran
