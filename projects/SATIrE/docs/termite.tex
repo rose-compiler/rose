@@ -102,14 +102,14 @@ The \texttt{c2term} program invokes the commercial EDG C++ front end
 embedded into the ROSE compiler to parse one or more source files. The
 abstract syntax tree (AST) is then translated into the ROSE immediate
 representation which in turn is converted into the textual term
-linearization. The program passes additional options to the EDG front
+serialization. The program passes additional options to the EDG front
 end.
 
 The opposite direction is managed by the \texttt{term2c} conversion
-utility. It works by reading in a term file and then rebuilds the ROSE
-intermediate representation. Finally, this data structure is passed to
-the ROSE unparser. The EDG front end is not involved in this step any
-more.
+utility. It works by reading in a term file and then rebuilding the
+ROSE intermediate representation. Finally, this data structure is
+passed to the ROSE unparser. The EDG front end is not involved in this
+step any more.
 
 \paragraph{$>$ term2c}
 % DO NOT REMOVE THE FOLLOWING LINE:
@@ -133,7 +133,7 @@ or analyzers on the fly without having to recompile the whole project.
 While the commercial EDG front end offers a high-quality C++ parser,
 license restrictions encumber its free distribution together with
 other tools. Most notably, the ROSE compiler redistributes only a
-32-Bit precompiled binary version of the EDG front end. It is,
+32-bit precompiled binary version of the EDG front end. It is,
 however, possible to buy other licenses from the Edison Design Group.
 
 If C++ support is not needed, there is a free alternative available
@@ -142,25 +142,26 @@ a front end for C-like languages called \texttt{clang} is published
 under a BSD-style license. The \texttt{clang} front end can be
 downloaded at \url{http://clang.llvm.org/}. The front end is written
 in C++ and creates an intermediate representation very similar to that
-of ROSE and therefore makes a good candidate to replace the
-EDG front end in SATIrE. The C99 and Objective C languages are
-supported very well by \texttt{clang}, whereas C++ support is a
-feature that was announced to be available in a few years.
+of ROSE and therefore makes a good candidate to replace the EDG front
+end in SATIrE. The C99 and Objective C languages are supported very
+well by \texttt{clang}, whereas C++ support is still under
+development.
 
 In order to connect SATIrE with the \texttt{clang} front end, we
 decided to take the route via the Termite representation. This way,
 the front end is cleanly decoupled from the rest of the system and
 uses the Termite terms as a stable interface. The Termite term
 generator is implemented as a pass over the \texttt{clang}
-intermediate representation and is available under the
+intermediate representation and is available via the
 \verb|-emit-term| command line option. The term generator is not
 integrated with upstream \texttt{clang}, but distributed as a patch
 against a current SVN version together with SATIrE. 
 
-To build the \texttt{clang} front end a special \verb|make clang|
-target is available at the toplevel which fetches the needed version
-of \texttt{clang} from the subversion repository, applies the patch,
-and compiles and installs the patched front end to \verb|$prefix/bin|.
+To build the \texttt{clang} front end for use with SATIrE a special
+\verb|make clang| target is available at the toplevel which fetches
+the needed version of \texttt{clang} from the subversion repository,
+applies the patch, and compiles and installs the patched front end to
+\verb|$prefix/bin|.
 
 \subsubsection{Uparsing Termite terms without SATIrE}
 Invoking the \texttt{term2c} program is sometimes too cumbersome, for
