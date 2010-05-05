@@ -61,6 +61,16 @@ namespace SageInterface
   //! find sequences of NOP instructions in a SgAsmBlock
      std::vector<std::vector<SgAsmInstruction*> > find_NOP_sequences ( SgAsmBlock* asmBlock );
 
+  // DQ (5/1/2010): We need a whole set of interface functions similar to this.
+ //! Support for insertion of instruction relative to a target instruction.
+     void insertInstruction(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction, bool insertBefore);
+
+ //! Insert a instruction before a target instruction
+     void insertInstructionBefore(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction);
+
+ //! Remove a instruction
+     void removeInstruction(SgAsmStatement* instruction);
+
    }
 
 // endif for ROSE_SAGE_INTERFACE_ASM

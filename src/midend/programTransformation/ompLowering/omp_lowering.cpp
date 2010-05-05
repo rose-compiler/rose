@@ -9,7 +9,7 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-#define ENABLE_XOMP 1  // test middle layer of runtime library
+#define ENABLE_XOMP 1  // Enable the middle layer (XOMP) of OpenMP runtime libraries
   //! Generate a symbol set from an initialized name list, 
   //filter out struct/class typed names
 static void convertAndFilter (const SgInitializedNamePtrList input, ASTtools::VarSymSet_t& output)
@@ -463,8 +463,34 @@ namespace OmpSupport
   }
   GOMP_loop_end ();                                          
   //  GOMP_loop_end_nowait (); 
+  //
+  // More explanation: -------------------------------------------
+     // Omni uses the following translation 
+     _ompc_dynamic_sched_init(_p_loop_lower,_p_loop_upper,_p_loop_stride,5);
+      while(_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper)){
+        for (_p_loop_index = _p_loop_lower; (_p_loop_index) < _p_loop_upper; _p_loop_index += _p_loop_stride) {
+          k_3++;
+        }
+      }
+    // In order to merge two kinds of translations into one scheme.
+    // we split 
+      while(_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper)){
+        for (_p_loop_index = _p_loop_lower; (_p_loop_index) < _p_loop_upper; _p_loop_index += _p_loop_stride) {
+          k_3++;
+        }
+      }
+
+  // to 
+     if (_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper)){
+       do {
+        for (_p_loop_index = _p_loop_lower; (_p_loop_index) < _p_loop_upper; _p_loop_index += _p_loop_stride) {
+          k_3++;
+        }
+       } while (_ompc_dynamic_sched_next(&_p_loop_lower,&_p_loop_upper));
+     }
+  // and XOMP layer will compensate for the difference.
   */
-  static void transOmpFor_nonStaticOrOrderedSchedule(SgOmpForStatement * target,  
+  static void transOmpFor_others(SgOmpForStatement * target,  
       SgVariableDeclaration* index_decl, SgVariableDeclaration* lower_decl,  SgVariableDeclaration* upper_decl, 
       SgBasicBlock* bb1)
   {
@@ -604,7 +630,7 @@ namespace OmpSupport
   // < --> <= and > --> >=, 
   // GCC-GOMP use compiler-generated statements to schedule loop iterations using static schedule
   // All other schedule policies use runtime calls instead.
-  // We translate static schedule here and non-static ones in transOmpFor_nonStaticOrOrderedSchedule()
+  // We translate static schedule here and non-static ones in transOmpFor_others()
   // 
   // Static schedule, including:
   //1. default (static even) case
@@ -676,9 +702,14 @@ namespace OmpSupport
     //  ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
 
     // Declare local loop control variables: _p_loop_index _p_loop_lower _p_loop_upper , no change to the original stride
-    SgVariableDeclaration* index_decl =  buildVariableDeclaration("_p_index",  buildIntType(), NULL,bb1); 
-    SgVariableDeclaration* lower_decl =  buildVariableDeclaration("_p_lower",  buildIntType(), NULL,bb1); 
-    SgVariableDeclaration* upper_decl =  buildVariableDeclaration("_p_upper",  buildIntType(), NULL,bb1); 
+    SgType* loop_var_type  = NULL ;
+    if (sizeof(void*) ==8 ) // xomp interface expects long* for some runtime calls. 
+     loop_var_type = buildLongType();
+   else 
+     loop_var_type = buildIntType();
+    SgVariableDeclaration* index_decl =  buildVariableDeclaration("_p_index", loop_var_type , NULL,bb1); 
+    SgVariableDeclaration* lower_decl =  buildVariableDeclaration("_p_lower", loop_var_type , NULL,bb1); 
+    SgVariableDeclaration* upper_decl =  buildVariableDeclaration("_p_upper", loop_var_type , NULL,bb1); 
 
     appendStatement(index_decl, bb1);
     appendStatement(lower_decl, bb1);
@@ -688,32 +719,33 @@ namespace OmpSupport
     if (hasClause(target, V_SgOmpOrderedClause))
       hasOrder = true;
 
+    // Grab or calculate chunk_size
+    SgExpression* my_chunk_size = NULL; 
+    bool hasSpecifiedSize = false;
+    Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
+    if (clauses.size() !=0)
+    {
+      SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
+      ROSE_ASSERT(s_clause);
+      SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
+      // ROSE_ASSERT(s_kind == SgOmpClause::e_omp_schedule_static);
+      SgExpression* orig_chunk_size = s_clause->get_chunk_size();  
+    //  ROSE_ASSERT(orig_chunk_size->get_parent() != NULL);
+      if (orig_chunk_size)
+      {
+        hasSpecifiedSize = true;
+        my_chunk_size = orig_chunk_size;
+      }
+    }
+
     //  step 3. Translation for omp for 
     //if (hasClause(target, V_SgOmpScheduleClause)) 
-    if (!useStaticSchedule(target) || hasOrder) 
+    if (!useStaticSchedule(target) || hasOrder || hasSpecifiedSize) 
     {
-      transOmpFor_nonStaticOrOrderedSchedule( target,   index_decl, lower_decl,   upper_decl, bb1);
+      transOmpFor_others( target,   index_decl, lower_decl,   upper_decl, bb1);
     }
     else 
     {
-      // Grab or calculate chunk_size
-      SgExpression* my_chunk_size = NULL; 
-      bool hasSpecifiedSize = false;
-      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
-      if (clauses.size() !=0)
-      {
-        SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
-        ROSE_ASSERT(s_clause);
-        SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
-        ROSE_ASSERT(s_kind == SgOmpClause::e_omp_schedule_static);
-        SgExpression* orig_chunk_size = s_clause->get_chunk_size();  
-      //  ROSE_ASSERT(orig_chunk_size->get_parent() != NULL);
-        if (orig_chunk_size)
-        {
-          hasSpecifiedSize = true;
-          my_chunk_size = orig_chunk_size;
-        }
-      }
       // ---------------------------------------------------------------
       // calculate chunksize for static scheduling , if the chunk size is not specified.
       if (!hasSpecifiedSize)

@@ -88,6 +88,13 @@ HEADER_NAMESPACE_SYMBOL_START
           void post_construction_initialization();
 HEADER_NAMESPACE_SYMBOL_END
 
+
+HEADER_ASM_BINARY_ADDRESS_SYMBOL_START
+HEADER_ASM_BINARY_ADDRESS_SYMBOL_END
+
+HEADER_ASM_BINARY_DATA_SYMBOL_START
+HEADER_ASM_BINARY_DATA_SYMBOL_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -866,6 +873,50 @@ SgNamespaceSymbol::post_construction_initialization()
 
 SOURCE_NAMESPACE_SYMBOL_END
 
+
+SOURCE_ASM_BINARY_ADDRESS_SYMBOL_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     return NULL;
+   }
+
+SgName
+$CLASSNAME::get_name() const
+   {
+     return SgName("undefined_binary_address_symbol");
+   }
+
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+
+SOURCE_ASM_BINARY_ADDRESS_SYMBOL_END
+
+SOURCE_ASM_BINARY_DATA_SYMBOL_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     return NULL;
+   }
+
+SgName
+$CLASSNAME::get_name() const
+   {
+     return SgName("undefined_binary_data_variable_symbol");
+   }
+
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+
+SOURCE_ASM_BINARY_DATA_SYMBOL_END
 
 
 
