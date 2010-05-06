@@ -1964,6 +1964,10 @@ IsBinaryOp( const AstNodePtr& _exp, OperatorEnum* opr,
    case V_SgLshiftOp:
         if (opr != 0)  *opr = BOP_BIT_LSHIFT;
         break;
+   case V_SgModOp: // Liao 5/4/2010, based on Qing's suggestion
+        if (opr != 0)  *opr = BOP_MOD;
+        break;
+
     default:
        return false;
   }

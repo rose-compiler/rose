@@ -90,6 +90,8 @@ BUILD_BINARY_PROTO(Subtract)
      SgAsmTypeDoubleQuadWord* buildAsmTypeDoubleQuadWord();
      SgAsmTypeVector*         buildAsmTypeVector();
 
+  // DQ (5/1/2010): Support for building multi-byte NOP instructions.
+     SgAsmInstruction* buildMultibyteNopInstruction(int n);
 
 #if 1
   // DQ (10/28/2009): These functions are not similar in name to the 

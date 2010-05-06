@@ -1,32 +1,7 @@
 #!/bin/sh -ex
 
-# We need to be using compiler specific versions of Boost.
-# Set the path to the compiler specific version of Boost.
-# export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
-
-# enable MPI
-MYVER=mpich2/1.1.1p1
-MYBIN=/nfs/apps/${MYVER}/bin
-MYLIB=/nfs/apps/${MYVER}/lib
-PATH=${MYBIN}:${PATH}
-LD_LIBRARY_PATH=${MYLIB}:${LD_LIBRARY_PATH}
-export PATH
-export LD_LIBRARY_PATH
-
-export OMP_NUM_THREADS=1
-
-export mpdvar=$(ps ax | grep mpd | wc -l )
-#echo $mpdvar
-if (($mpdvar >= 2)); then
-:
-#   echo "MPD RUNNING"
- elif (($mpdvar < 2)); then
-#   echo "Starting MPD"
-   mpd &
-#   echo "MPD started."
-fi
-
-export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
+# tps : 04/26/2010 - Added support for OpenGL for 64bit
+export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
 
 echo "*******************************************************************"
 echo "         Output variables required by Hudson runTest script."
@@ -41,6 +16,7 @@ echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"
 echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"
 echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"
 echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"
+echo "ROSE_TEST_OPENGL_PATH             = ${ROSE_TEST_OPENGL_PATH}"
 echo "*******************************************************************"
 
 # Output the name of the machine where the build is being run (helpful for debugging).
@@ -50,13 +26,7 @@ start_time_seconds="$(date +%s)"
 echo ""
 echo "*****************************************************************************"
 echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time"
-# echo "Build Disk Usage Report:"
-# df . || pwd
 echo "*****************************************************************************"
-
-# Provide a disk usage report to support debugging when Hudson has a problem.
-# echo "Disk usage report #1 (to support debugging when Hudson has a problem):"
-# df /export
 
 if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
@@ -106,8 +76,6 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 fi
 # ************************************************************************
 fi
-
-
 
 if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	rm -rf ROSE-build-cmake
@@ -159,8 +127,10 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
  # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
  # exit 1
 
-	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-qt=${ROSE_TEST_QT_PATH} --with-roseQt --with-sqlite3=${ROSE_TEST_SQLITE_PATH} --with-rted=${ROSE_TEST_RTED_PATH}"
-	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-mpi --with-gcc-omp CC=mpicc CXX=mpicxx"
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-qt=${ROSE_TEST_QT_PATH} --with-roseQt --with-sqlite3=${ROSE_TEST_SQLITE_PATH} --with-rted=${ROSE_TEST_RTED_PATH} LDFLAGS=-L${ROSE_TEST_OPENGL_PATH}/lib CPPFLAGS=-I${ROSE_TEST_OPENGL_PATH}/include"
+	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
+		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch"
+	fi
 fi
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
@@ -180,6 +150,7 @@ if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
    echo "export ROSE_TEST_SQLITE_PATH=$ROSE_TEST_SQLITE_PATH" >> HudsonEnvironment
    echo "export ROSE_TEST_RTED_PATH=$ROSE_TEST_RTED_PATH" >> HudsonEnvironment
    echo "export ROSE_TEST_QT_PATH=$ROSE_TEST_QT_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_OPENGL_PATH=$ROSE_TEST_OPENGL_PATH" >> HudsonEnvironment
 
    echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
    cat $PWD/HudsonEnvironment
@@ -202,7 +173,6 @@ git submodule status
 if test -e ROSE-install ; then chmod -R u+w ROSE-install ; fi
 rm -rf ROSE-install
 
-
 if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
 rm -rf ROSE-build
 mkdir ROSE-build
@@ -211,17 +181,6 @@ echo "Starting configure step"
 # ../configure ${CONFIGURE_FLAGS}
 ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
 echo "Done with configure step"
-
-if test $ROSE_TEST_BUILD_STYLE = edg ; then
-	make -j8 upload_edg_binary && \
-	make -Csrc/frontend/CxxFrontend deploy_tarballs
-      if [ $? -ne 0 ]  ; then
-        echo "fatal error when build edg binaries , aborting..."
-        exit 3
-      fi
-
-	exit 0
-fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
@@ -254,6 +213,7 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
    grep -n "Making all in " filtered_make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
    echo "Done with compile time spew"
 else
+#-------------normal compilation ------------
    echo "Test compile step"
 
    make -j8
@@ -269,47 +229,22 @@ echo "Done with compile step"
 end_time_make_seconds="$(date +%s)"
 elapsed_make_time_seconds="$(expr $end_time_make_seconds - $start_time_make_seconds)"
 
-# Note that if "$elapsed_make_time_seconds < 60" then it is an error to evaluate the expression "$elapsed_make_time_seconds / 60".
-# elapsed_make_time_minutes="$(expr $elapsed_make_time_seconds / 60)"
-# elapsed_make_time_modulo_seconds="$(expr $elapsed_make_time_seconds % 60)"
-# if test $elapsed_make_time_seconds > 60; then
-#   elapsed_make_time_modulo_seconds="$(expr ($elapsed_make_time_seconds) / 60)"
-# else
-#   elapsed_make_time_modulo_seconds="$elapsed_make_time_seconds"
-# fi
-# elapsed_make_time_modulo_seconds="0"
 echo "***********************************************************************************************************"
-# echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
 echo "Elapsed time for make test: $elapsed_make_time_seconds sec"
 echo "***********************************************************************************************************"
-
-# DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
-# echo "Exiting as a test to simplify elapsed time tests."
-# exit 1
-
-# Provide a disk usage report to support debugging when Hudson has a problem.
-# echo "Disk usage report #4 (to support debugging when Hudson has a problem):"
-# df /export
 
 # GCC 4.3 and 4.4 do not currently pass make check
 # Known unresolved issues:
 #  - RTED test failures due to obsolete STL headers used in test suite
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
 
    start_time_make_check_seconds="$(date +%s)"
 
- # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
- # make -j8 check
    echo "Starting make check step"
- # Andreas suggests that the use of "tee" is not passing error through to Hudson.
- # make -j8 check 2>&1 | tee make_check_output.txt;
 
    make -j8 check
- # sleep 5
 
- # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
- # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make check'  , aborting..."
         exit 3
@@ -317,22 +252,12 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    end_time_make_check_seconds="$(date +%s)"
    elapsed_make_check_time_seconds="$(expr $end_time_make_check_seconds - $start_time_make_check_seconds)"
- # elapsed_make_check_time_minutes="$(expr $elapsed_make_check_time_seconds / 60)"
- # if test $elapsed_make_check_time_seconds > 60; then
- #    elapsed_make_check_time_minutes="$(expr ($elapsed_make_check_time_seconds) / 60)"
- # else
- #    elapsed_make_check_time_minutes="$elapsed_make_check_time_seconds"
- # fi
- # elapsed_make_check_time_minutes="0"
    echo "***********************************************************************************************************"
- # echo "Elapsed time for make check test: $elapsed_make_check_time_minutes min $elapsed_make_check_time_seconds sec"
    echo "Elapsed time for make check test: $elapsed_make_check_time_seconds sec"
    echo "***********************************************************************************************************"
 
    echo "Done with make check step"
- # grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
- # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
    echo "Starting make distcheck step"
 
    start_time_make_distcheck_seconds="$(date +%s)"
@@ -369,16 +294,12 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_minutes min $elapsed_make_distcheck_time_seconds sec"
    echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_seconds sec"
    echo "***********************************************************************************************************************"
-fi
+#fi
 
-# Provide a disk usage report to support debugging when Hudson has a problem.
-# echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
-# df /export
-
-# DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
+# DQ (12/16/2009): This appears to work everywhere but on the 4.3.2 systems, verify this.
 # Finally run the "make docs" test (on just the 4.2.4 version of gcc).
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
-   echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
+#   echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
  # make -j8 docs || exit 0
  # make docs || exit 0
@@ -400,17 +321,10 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
 
    end_time_make_docs_seconds="$(date +%s)"
    elapsed_make_docs_time_seconds="$(expr $end_time_make_docs_seconds - $start_time_make_docs_seconds)"
- # elapsed_make_docs_time_minutes="$(expr $elapsed_make_docs_time_seconds / 60)"
- # elapsed_make_docs_time_minutes="0"
    echo "********************************************************************************************************"
- # echo "Elapsed time for make docs test: $elapsed_make_docs_time_minutes min $elapsed_make_docs_time_seconds sec"
    echo "Elapsed time for make docs test: $elapsed_make_docs_time_seconds sec"
    echo "********************************************************************************************************"
-fi
-
-# Provide a disk usage report to support debugging when Hudson has a problem.
-# echo "Disk usage report #6 (to support debugging when Hudson has a problem):"
-# df /export
+#fi
 
 end_time_seconds="$(date +%s)"
 elapsed_hudson_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
@@ -425,15 +339,6 @@ echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes
 echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
 # echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_modulo_seconds sec"
 echo "***********************************************************************************************"
-
-# DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
-# echo "Exiting as a test to simplify elapsed time tests."
-# exit 1
-
-#end_time=`date`
-#echo "**************************************************************************************************"
-#echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time end_time = $end_time"
-#echo "**************************************************************************************************"
 
 # DQ (2/12/2010): Added the ROSE version number to the base of the output
 echo "Version numbers of ROSE and the different parts of ROSE."
