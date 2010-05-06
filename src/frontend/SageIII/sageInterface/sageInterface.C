@@ -7569,6 +7569,15 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
       fixClassDeclaration(isSgClassDeclaration(stmt),scope);
   else if (isSgLabelStatement(stmt)) 
       fixLabelStatement(isSgLabelStatement(stmt),scope);      
+  else if (isSgFunctionDeclaration(stmt))
+  {  //fix function type table's parent edge
+    // Liao 5/4/2010
+    SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
+    ROSE_ASSERT(fTable);
+    if (fTable->get_parent() == NULL)
+      fTable->set_parent(getGlobalScope(scope));
+
+  }
 
   // fix scope pointer for statements explicitly storing scope pointer 
   switch (stmt->variantT())
