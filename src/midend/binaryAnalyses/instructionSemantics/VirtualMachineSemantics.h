@@ -12,10 +12,19 @@
 #include <vector>
 
 
-/* A policy for x86InstructionSemantics.
+/** A policy for x86InstructionSemantics.
  *
- * This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature to the
- * FindConstantsPolicy except much simpler, much faster, and much more memory-lean. */
+ *  This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature to the
+ *  FindConstantsPolicy except much simpler, much faster, and much more memory-lean.  The main classes are:
+ * 
+ *  <ul>
+ *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
+ *    <li>State: represents the state of the virtual machine, its registers and memory.</li>
+ *    <li>ValueType: the values stored in registers and memory and used for memory addresses.</li>
+ *  </ul>
+ *
+ *  Each value is either a known value or an unknown value. An unknown value consists of a base name and offset and whether
+ *  the value is negated. */
 namespace VirtualMachineSemantics {
 
 extern uint64_t name_counter;
@@ -93,28 +102,37 @@ struct MemoryCell {
     ValueType<32> address;
     ValueType<32> data;
     size_t nbytes;
+    bool clobbered;             /* Set to invalidate possible aliases during writeMemory() */
 
     template <size_t Len>
     MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes)
-        : address(address), data(data), nbytes(nbytes) {}
+        : address(address), data(data), nbytes(nbytes), clobbered(false) {}
 
     void rename(RenameMap&);
 
-    /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns fals
-     *  only if this memory location cannot overlap with @p other memory location. */
+    bool is_clobbered() const { return clobbered; }
+    void clobber() { clobbered = true; }
+
+    /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns false
+     *  only if this memory location cannot overlap with @p other memory location. Two addresses that are identical alias one
+     *  another. */
     bool may_alias(const MemoryCell &other) const;
 
     /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap". */
     bool must_alias(const MemoryCell &other) const;
     
     friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
-        return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes;
+        return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes && a.clobbered==b.clobbered;
+    }
+    friend bool operator!=(const MemoryCell &a, const MemoryCell &b) {
+        return !(a==b);
     }
     friend bool operator<(const MemoryCell &a, const MemoryCell &b) {
         return a.address < b.address;
     }
     friend std::ostream& operator<<(std::ostream &o, const MemoryCell &me) {
         o <<"size=" <<me.nbytes <<"; addr=" <<me.address <<"; value=" <<me.data;
+        if (me.clobbered) o <<" (CLOBBERED)"; /*clobbered by a write to possibly aliased memory*/
         return o;
     }
 };
@@ -132,24 +150,66 @@ struct State {
     ValueType<1> flag[n_flags];
     Memory mem;
 
+    /** Removes memory cells that are identical to the supplied original memory.  When a memory cell is read via readMemory(),
+     *  a cell is created in the state and given the next available undefined (named) value. It is also created in the
+     *  orig_mem. This function deletes any memory in this state that is identical to the orig_mem. This correctly handles
+     *  cases like the following, which is a no-op but creates a new cell in memory.
+     *  \code
+     *    xchg ds:[0x1234], eax
+     *    xchg ds:[0x1234], eax
+     *  \code
+     *
+     *  Note that squelch() must be called on the original, non-normalized state because it compares this state with the
+     *  non-normalized original memory.  For instance, to print the current value of the state sans original memory contents,
+     *  one would do this:
+     *  \code
+     *    std::cout <<policy.get_state().squelch(policy.orig_mem).normalize();
+     *    std::cout <<policy.get_state(true).normalize(); // equivalent to above
+     *  \endcode
+     * 
+     *  The term "squelch" comes from electronics, and is a circuit that turns off the volume of a radio when the signal level
+     *  falls below the "squelch threshold" so that the listener does not hear static.  In our case, the "static" are the
+     *  memory cells that were created to hold explicit values but which are the same values as those that were originally
+     *  implicit. */
+    State squelch(const Memory &orig_mem) const;
+
+    /** Print the state in a human-friendly way. */
     void print(std::ostream &o) const;
+
+    /** Renames the unknown values of the state according to the supplied map, adjusting the map in the process.  This is used
+     *  internally by normalization functions. */
     void rename(RenameMap&);
 
     /** Remap all named constants to lowest possible names.  This can be used before comparing states from two different
      *  policies. */
     State normalize() const;
 
+    /** Tests registers of two states for equality. */
+    bool equal_registers(const State&) const;
+    
+    /** Tests memory of two states for equality. Does not compare memory cells marked as clobbered. */
+    bool equal_memory_without_clobbered(const State&) const;
+    
+    /** Tests memory of two states for equality. The clobbered memory cells are also compared. */
+    bool equal_memory_with_clobbered(const State&) const;
+
+    /** Tests equality of two states without looking at clobbered memory locations. */
+    bool equal_without_clobbered(const State&) const;
+
+    /** Tests equality of two states including the clobbered memory locations. */
+    bool equal_with_clobbered(const State&) const;
+
     /** Discard stack memory below stack pointer */
     void discard_popped_memory();
 
-#if 0
+#if 0 /*requires libgcrypt*/
     /** Returns the SHA1 hash of a state. */
     std::string SHA1() const;
 #endif
 
     friend std::ostream& operator<<(std::ostream&, const State&);
-    friend bool operator==(const State&, const State&);
-    friend bool operator!=(const State&, const State&);
+    friend bool operator==(const State &s1, const State &s2) { return s1.equal_with_clobbered(s2); }
+    friend bool operator!=(const State &s1, const State &s2) { return !(s1==s2); }
 };
 
 /** A policy that is supplied to the semantic analysis constructor. */
@@ -158,6 +218,19 @@ private:
     SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
     ValueType<32> ip;                   /**< Initially cur_insn->get_address(), then updated during processInstruction() */
     State state;                        /**< Complete machine state updated by each processInstruction() */
+    Memory orig_mem;                    /**< Within the state, every register has an initial explicit unknown (named) value.
+                                         *   Giving every possible memory location an explicit unknown value is prohibitively
+                                         *   expensive, so memory is given implicit unknown values. When we access a memory
+                                         *   value from the state via readMemory(), and that memory location has never been
+                                         *   read before, then we give it an explicit unknown value in the state and here in
+                                         *   orig_mem.  This allows sequences like:
+                                         *   \code
+                                         *       mov eax, ss:[esp+4]
+                                         *       mov ebx, ss:[esp+4]
+                                         *   \endcode
+                                         *
+                                         *   to result in both eax and ebx having the same value. We also fall back on this
+                                         *   orig_mem when comparing two states for equality. */
     bool p_discard_popped_memory;       /**< Property that determines how the stack behaves.  When set, any time the stack
                                          * pointer is adjusted, memory below the stack pointer and having the same address
                                          * name as the stack pointer is removed (the memory location becomes undefined). The
@@ -178,10 +251,14 @@ public:
     }
 
     /* Accessors */
-    const State& get_state() const { return state; }
-    State& get_state() { return state; }
+    State get_state(bool do_squelch=false) const {
+        return do_squelch ? state.squelch(orig_mem) : state;
+    }
     const ValueType<32>& get_ip() const { return ip; }
-    
+
+    /** Print the normalized state of this policy, omitting memory locations that have initial values. */
+    void print(std::ostream&) const;
+    friend std::ostream& operator<<(std::ostream&, const Policy&);
 
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
@@ -342,25 +419,43 @@ public:
     /** Reads a value from memory. */
     template <size_t Len> ValueType<Len>
     readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) {
-        MemoryCell melmt(addr, ValueType<32>(0), Len/8);
+        MemoryCell new_cell(addr, ValueType<32>(), Len/8);
+
+        /* Read memory from current memory state if possible. */
         for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            if (melmt.must_alias(*mi))
+            if (new_cell.must_alias(*mi)) {
+                /* If memory cell is present but invalid then we must have seen a previous writeMemory() to a possible
+                 * alias. We should mark the memory as no longer clobbered and return a new undefined value.  Otherwise return
+                 * the existing value. */
+                if ((*mi).is_clobbered()) *mi = new_cell;
                 return (*mi).data;
+            }
         }
-        return ValueType<Len>();
+
+        /* If original memory has a value then use that, saving it in our state also. */
+        for (Memory::iterator mi=orig_mem.begin(); mi!=orig_mem.end(); ++mi) {
+            if (new_cell.must_alias(*mi)) {
+                ROSE_ASSERT(!(*mi).is_clobbered()); /*original memory is always valid*/
+                state.mem.push_back(*mi);
+                return (*mi).data;
+            }
+        }
+        
+        /* Create a new value and add it to both the original memory and the current state. */
+        state.mem.push_back(new_cell);
+        orig_mem.push_back(new_cell);
+        return new_cell.data;
     }
 
     /** Writes a value to memory. */
     template <size_t Len> void
     writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
-        MemoryCell new_elmt(addr, data, Len/8);
-        Memory new_memory;
+        MemoryCell new_cell(addr, data, Len/8);
+        bool saved = false; /* has new_cell been saved into memory? */
         for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            if (new_elmt.must_alias(*mi)) {
-                /* discard memory value; replaced with new value below */
-            } else if (!new_elmt.may_alias(*mi)) {
-                /* safe to save old memory value if new address cannot alias it */
-                new_memory.push_back(*mi);
+            if (new_cell.must_alias(*mi)) {
+                *mi = new_cell;
+                saved = true;
             } else if (p_discard_popped_memory &&
                        state.gpr[x86_gpr_sp]!=state.gpr[x86_gpr_bp] &&
                        state.gpr[x86_gpr_sp].name!=state.gpr[x86_gpr_bp].name &&
@@ -368,12 +463,16 @@ public:
                         (addr.name==state.gpr[x86_gpr_bp].name && (*mi).address.name==state.gpr[x86_gpr_sp].name))) {
                 /* assume that mem referenced via stack pointer does not alias mem referenced with frame pointer. This isn't
                  * safe generally, but is usually the case for well-behaved programs. */
-                new_memory.push_back(*mi);
+            } else if (new_cell.may_alias(*mi)) {
+                (*mi).clobber();
+            } else {
+                /* memory cell *mi is not aliased to cell being written */
             }
         }
-        new_memory.push_back(new_elmt);
-        std::sort(new_memory.begin(), new_memory.end());
-        state.mem = new_memory;
+        if (!saved) {
+            state.mem.push_back(new_cell);
+            std::sort(state.mem.begin(), state.mem.end());
+        }
     }
 
 
@@ -547,6 +646,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) {
         if (a.name || b.name) return ValueType<Len1>();
+        if (0==b.offset) throw std::string("division by zero");
         return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
     }
 
@@ -554,6 +654,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) {
         if (a.name || b.name) return ValueType<Len2>();
+        if (0==b.offset) throw std::string("division by zero");
         return IntegerOps::signExtend<Len1, 64>(a.offset) % IntegerOps::signExtend<Len2, 64>(b.offset);
     }
 
@@ -576,6 +677,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) {
         if (a.name || b.name) return ValueType<Len2>();
+        if (0==b.offset) throw std::string("division by zero");
         return a.offset % b.offset;
     }
 

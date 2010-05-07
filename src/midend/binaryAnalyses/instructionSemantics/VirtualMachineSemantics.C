@@ -24,30 +24,13 @@ operator<<(std::ostream &o, const State &e)
     return o;
 }
 
-bool
-operator==(const State &a, const State &b)
+std::ostream&
+operator<<(std::ostream &o, const Policy &p)
 {
-    for (size_t i=0; i<a.n_gprs; ++i)
-        if (a.gpr[i]!=b.gpr[i]) return false;
-    for (size_t i=0; i<a.n_segregs; ++i)
-        if (a.segreg[i]!=b.segreg[i]) return false;
-    for (size_t i=0; i<a.n_flags; ++i)
-        if (a.flag[i]!=b.flag[i]) return false;
-    if (a.mem.size()!=b.mem.size()) return false;
-    for (size_t i=0; i<a.mem.size(); i++) {
-        if (a.mem[i].nbytes!=b.mem[i].nbytes ||
-            a.mem[i].address!=b.mem[i].address ||
-            a.mem[i].data!=b.mem[i].data)
-            return false;
-    }
-    return true;
+    p.print(o);
+    return o;
 }
 
-bool
-operator!=(const State &a, const State &b)
-{
-    return !(a==b);
-}
 
 
     
@@ -120,7 +103,6 @@ MemoryCell::may_alias(const MemoryCell &other) const {
 
 bool
 MemoryCell::must_alias(const MemoryCell &other) const {
-    if (!may_alias(other)) return false;
     return this->address == other.address;
 }
 
@@ -162,16 +144,74 @@ State::print(std::ostream &o) const
     }
     o <<"\n";
 
-    /* Print memory contents */
-    o <<prefix << "memory = ";
-    if (mem.empty()) {
-        o <<"{}\n";
-    } else {
-        o <<"{\n";
-        for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi)
-            o <<prefix <<"    " <<(*mi) <<"\n";
-        o <<prefix << "}\n";
+    /* Print memory contents. Skip unmodified memory if orig_mem is non-null. */
+    o <<prefix << "memory:\n";
+    for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi)
+        o <<prefix <<"    " <<(*mi) <<"\n";
+}
+
+bool
+State::equal_registers(const State &other) const 
+{
+    for (size_t i=0; i<n_gprs; ++i)
+        if (gpr[i]!=other.gpr[i]) return false;
+    for (size_t i=0; i<n_segregs; ++i)
+        if (segreg[i]!=other.segreg[i]) return false;
+    for (size_t i=0; i<n_flags; ++i)
+        if (flag[i]!=other.flag[i]) return false;
+    return true;
+}
+
+bool
+State::equal_memory_without_clobbered(const State &other) const
+{
+    size_t i=0, j=0;
+    for (/*void*/; i<mem.size() && j<other.mem.size(); ++i, ++j) {
+        while (i<mem.size() && mem[i].clobbered) i++;
+        while (j<other.mem.size() && other.mem[j].clobbered) j++;
+        if (mem[i]!=other.mem[j]) return false;
     }
+    if (i<mem.size() || j<other.mem.size())
+        return false;
+    return true;
+}
+
+bool
+State::equal_memory_with_clobbered(const State &other) const
+{
+    if (mem.size()!=other.mem.size())
+        return false;
+    for (size_t i=0; i<mem.size(); ++i)
+        if (mem[i]!=other.mem[i]) return false;
+    return true;
+}
+
+bool
+State::equal_without_clobbered(const State &other) const
+{
+    return equal_registers(other) && equal_memory_without_clobbered(other);
+}
+
+bool
+State::equal_with_clobbered(const State &other) const
+{
+    return equal_registers(other) && equal_memory_with_clobbered(other);
+}
+
+State
+State::squelch(const Memory &orig_mem) const
+{
+    State retval = *this;
+    retval.mem.clear();
+
+    for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
+        bool is_original = false;
+        for (Memory::const_iterator omi=orig_mem.begin(); omi!=orig_mem.end() && !is_original; ++omi)
+            is_original = *omi == *mi;
+        if (!is_original)
+            retval.mem.push_back(*mi);
+    }
+    return retval;
 }
 
 void
@@ -241,6 +281,12 @@ State::discard_popped_memory()
 /*************************************************************************************************************************
  *                                                          Policy
  *************************************************************************************************************************/
+
+void
+Policy::print(std::ostream &o) const
+{
+    state.squelch(orig_mem).normalize().print(o);
+}
 
 bool
 Policy::on_stack(const ValueType<32> &value)
