@@ -13,8 +13,12 @@ noinst_HEADERS = \
    coverage_funcsC.h \
    inputCode_collectComments.h
 
+# Liao 5/7/2010  We want to have a few installable programs as tools for users
+bin_PROGRAMS = buildCallGraph
+
 #varSubstCopy , disabled this one Liao, and sorted the list
-TUTORIAL_EXAMPLES = \
+# tutorial examples which will not be installed to ROSE_INS/bin
+NOINST_TUTORIAL_EXAMPLES = \
    abstractHandle1 \
    abstractHandle2 \
    accumulatorAttributeTraversal \
@@ -39,8 +43,6 @@ TUTORIAL_EXAMPLES = \
    binaryFileRead \
    sb_callgraphAnalysis \
    buildCFG \
-   buildCG \
-   callGraphAnalysis \
    changeFunction \
    charmSupport \
    classHierarchyGraph \
@@ -112,9 +114,9 @@ TUTORIAL_EXAMPLES = \
 
 # DQ (3/21/2009): Separate those that compile under Cygwin from those that don't.
 if ROSE_BUILD_OS_IS_CYGWIN
-  noinst_PROGRAMS = $(TUTORIAL_EXAMPLES)
+  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES)
 else
-  noinst_PROGRAMS = $(TUTORIAL_EXAMPLES) sharedMemoryTraversals
+  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES) sharedMemoryTraversals
   sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 endif
 
@@ -213,7 +215,7 @@ binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 
 bin_example_SOURCES = bin_example.C
 
-buildCG_SOURCES = buildCG.C
+buildCallGraph_SOURCES = buildCallGraph.C
 
 charmSupport_SOURCES = CharmSupport.C
 
@@ -228,8 +230,6 @@ codeCoverage_SOURCES = codeCoverage.C coverageCodeFromShmuel.c
 interveneAtVariables_SOURCES = interveneAtVariables.C
 
 changeFunction_SOURCES = changeFunction.C
-
-callGraphAnalysis_SOURCES = callGraphAnalysis.C
 
 classHierarchyGraph_SOURCES = classHierarchyGraph.C
 
@@ -427,7 +427,6 @@ testCharmSupport: charmSupport
 
 testBuildCFG: buildCFG
 #	./buildCFG $(srcdir)/inputCode_1.C
-#	./buildCFG $(srcdir)/inputCode_CallGraphAnalysis.C
 	./buildCFG $(srcdir)/inputCode_ControlFlowGraphAnalysis.C
 	@echo "Building postscript file from foo.dot ..."
 #	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
@@ -455,16 +454,7 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e vcfg.pdf; then exit 1; fi
 endif
 
-# Both this and the testCallGraphAnalysis rule generate a file called callGraph.ps
-testBuildCG: buildCG
-	./buildCG $(srcdir)/inputCode_BuildCG.C
-	@echo "Building postscript file from DATABASE.dot ..."
-#	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e callGraph.pdf; then exit 1; fi
-endif
+testBuildCG: callGraph.pdf
 
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
@@ -487,17 +477,6 @@ testChangeFunction: changeFunction
 
 testInterveneAtVariables: interveneAtVariables
 	./interveneAtVariables -rose:verbose 0 -c $(srcdir)/inputCode_interveneAtVariables.C
-
-testCallGraphAnalysis: callGraphAnalysis
-	./callGraphAnalysis -c $(srcdir)/inputCode_CallGraphAnalysis.C
-	@echo "Building postscript file from inputCode_CallGraphAnalysis.C.callgraph.dot ..."
-#	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.ps
-#	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e callGraph.pdf; then exit 1; fi
-endif
 
 testTemplateExample1: identityTranslator
 	./identityTranslator -c $(srcdir)/inputCode_templateExample1.C
@@ -1177,15 +1156,10 @@ codeCoverage.out: codeCoverage $(srcdir)/inputCode_ExampleCodeCoverage.C
 	./ExampleCodeCoverage_GeneratedBinary > codeCoverage.out
 	split -80 $(srcdir)/codeCoverage.C codeCoverage.
 
-# DQ (4/10/2006): Not clear on which CG program we want!
-callGraph.pdf: callGraphAnalysis buildCG
+callGraph.pdf: buildCallGraph
 	@echo "Generate call graph from processing of input code (callGraph) ..."
-#	./callGraphAnalysis -c $(srcdir)/inputCode_CallGraphAnalysis.C
-	./buildCG $(ROSE_FLAGS) -c $(srcdir)/inputCode_CallGraphAnalysis.C
-#	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.ps
-#	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
-#	$(top_srcdir)/scripts/dotgen DATABASE.dot callGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
+	./buildCallGraph $(ROSE_FLAGS) -c $(srcdir)/inputCode_BuildCG.C
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_BuildCG.C_callGraph.dot callGraph.pdf
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e callGraph.pdf; then exit 1; fi
@@ -1307,9 +1281,7 @@ rose_inputCode_codeGenerationFormatControl.C: codeGenerationFormatControl
 
 dataFlowGraph.pdf: dataFlowGraph
 	@echo "Generate the data flow graph from processing of input code (dataFlowGraph) ..."
-	./callGraphAnalysis $(ROSE_FLAGS) -c $(srcdir)/inputCode_dataFlowGraphAnalysis.C
-#	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot dataFlowGraph.ps
-#	$(top_srcdir)/scripts/dotgen inputCode_dataFlowGraphAnalysis.C.dot dataFlowGraph.ps
+	./dataFlowGraph $(ROSE_FLAGS) -c $(srcdir)/inputCode_dataFlowGraphAnalysis.C
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dataFlowGraphAnalysis.C.dot dataFlowGraph.pdf
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
@@ -1404,7 +1376,6 @@ EXTRA_DIST = CMakeLists.txt \
    exampleMakefile.in \
    slicingExample.C \
    inputCode_ExampleCharmSupport.C \
-   inputCode_CallGraphAnalysis.C \
    inputCode_templateExample1.C \
    inputCode_templateExample2.C \
    inputCode_dataBaseExample1.C \
@@ -1449,7 +1420,7 @@ EXTRA_DIST = CMakeLists.txt \
 
 CLEANFILES = rose_bin_example.s callgraph.gml
 
-docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
+docs: $(noinst_PROGRAMS) $(bin_PROGRAMS) $(generatedCodeExamples)
 	@echo ""
 #	DQ (5/20/2007): Added to support Rich's work with outlining and the HPC Toolkit
 	cd outliner; $(MAKE) docs
