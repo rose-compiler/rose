@@ -37,8 +37,11 @@ testbug125: bug125
 testqualifiedName: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 
-testTranslator2010_01_test: testTranslator2010_01 
-	./testTranslator2010_01 -rose:verbose 2
+#testTranslator2010_01_test: testTranslator2010_01 
+#	./testTranslator2010_01 -rose:verbose 2
+# a few translators without input parameters to run	
+check_PROGRAMS = testTranslator2010_01
+TESTS = $(check_PROGRAMS)
 
 EXTRA_DIST = CMakeLists.txt inputbug125.C
 

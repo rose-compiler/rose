@@ -1,4 +1,4 @@
-// This is a tranaslator that demonstrates (or demonstrated) a bug in ROSE.
+// This is a translator that demonstrates (or demonstrated) a bug in ROSE.
 // This is is provided as part of regression tests on translators that 
 // demonstrate bugs in ROSE and is different from the tests/CompileTests
 // directory which demonstrates input codes that demonstrate bugs in ROSE.
@@ -23,18 +23,18 @@ main(int argc, char **argv)
      ROSE_ASSERT(globalScope != NULL);
 #endif
 
-#if 0
+#if 1
      SgFunctionDeclaration *func = buildDefiningFunctionDeclaration("a_function", buildVoidType(), buildFunctionParameterList(), globalScope);
      appendStatement(func, globalScope);
 #endif
 
-#if 1
+#if 0
   // Output an optional graph of the AST (just the tree, when active)
      printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
      generateDOT ( *project );
 #endif
 
-#if 1
+#if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);

@@ -23,7 +23,9 @@ class LoopTreeBuild : public ProcessAstTree
               cur = result;
            } 
            else  {
-             std::cerr << "Warning: treating non-Fortran loop as a single statement\n";
+             std::cerr << "Warning: treating non-Fortran loop at:"
+               << getAstLocation(loop)
+               <<" as a single statement\n";
              ProcessStmt(fa, loop);
            }
         }

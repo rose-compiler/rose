@@ -10,6 +10,7 @@
 
 #ifdef _MSC_VER
 #include <time.h>
+#include <windows.h>	// GetSystemTimeAsFileTime()
 #else
 // This header file is not available in MSVC.
 #include <sys/time.h>
@@ -102,14 +103,24 @@ inline double getTime() {
   timeval tv;
 
 #ifdef _MSC_VER
-#pragma message ("WARNING: Linux gettimeofday() not available in MSVC.")
-  printf ("WARNING: Linux gettimeofday() not available in MSVC. \n");
-  tv.tv_sec  = 0;
-  tv.tv_usec = 0;
+    // CH (4/16/2010): Use WinAPI to get the value wanted
+	FILETIME ft;
+	GetSystemTimeAsFileTime(&ft);
+	__int64 tmpres = 0;
+	tmpres |= ft.dwHighDateTime;
+	tmpres <<= 32;
+	tmpres |= ft.dwLowDateTime;
+	tmpres -= 11644473600000000Ui64;
+	tmpres /= 10;
+	return double(tmpres) / 1000000;
+//#pragma message ("WARNING: Linux gettimeofday() not available in MSVC.")
+//  printf ("WARNING: Linux gettimeofday() not available in MSVC. \n");
+//  tv.tv_sec  = 0;
+//  tv.tv_usec = 0;
 #else
   gettimeofday(&tv, NULL);
-#endif
   return tv.tv_sec + tv.tv_usec * 1.e-6;
+#endif
 }
 
 
