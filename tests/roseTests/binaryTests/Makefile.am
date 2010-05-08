@@ -219,7 +219,8 @@ test_static.result: $(STATIC_TEST_TARGETS)
 # dynamic tests depend on the static test because we're not sure what output files will be generated and we don't want
 # the output of dynamic tests causing havoc for the static tests.
 test_dynamic.result: test_static.result
-	@$(MAKE) test_sample_binaries.result
+#	DQ (5/8/10): This make rule does not exist, how does this work?
+#	@$(MAKE) test_sample_binaries.result
 	@touch $@
 
 test_execFormatsTest.result: execFormatsTest

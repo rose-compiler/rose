@@ -539,15 +539,17 @@ void postProcessingSupport (SgNode* node)
      SgProject* project = isSgProject(node);
      if (project != NULL)
         {
+#if 0
        // printf ("In postProcessingSupport(): project->get_exit_after_parser() = %s \n",project->get_exit_after_parser() ? "true" : "false");
        // printf ("In postProcessingSupport(): project->get_binary_only()       = %s \n",project->get_binary_only() ? "true" : "false");
           if (project->get_binary_only() == true)
              {
                printf ("Inside of postProcessingSupport(): Processing binary project \n");
-               ROSE_ASSERT(false);
+            // ROSE_ASSERT(false);
 
             // addEdgesInAST();
              }
+#endif
         }
 
    }
