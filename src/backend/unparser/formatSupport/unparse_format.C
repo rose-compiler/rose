@@ -65,8 +65,8 @@ UnparseFormat::~UnparseFormat()
 //    But sometimes , an extra empty line (line 2)
 //    must be preserved after an empty line (line 1) ending with '\' preceeding it.
 //    e.g.
-// #define BZ_ITER(nn) \   
-//    int nn;\       
+// #define BZ_ITER(nn) 
+//    int nn;
 //
 //    BZ_ITER(i);
 //    For the example above, caller to this function has to pass num>1 to ensure an insertion 
@@ -75,18 +75,30 @@ UnparseFormat::~UnparseFormat()
 void
 UnparseFormat::insert_newline(int num, int indent)
    {
-     if (chars_on_line == 0) {
-        --num;
-     }
+     if (chars_on_line == 0)
+        {
+          --num;
+        }
+
      for (int i = 0 ; i < num; i++)
-             (*os) << endl;
-     if (num > 0) {
+        {
+#if 1
+          (*os) << endl;
+#else
+       // DQ (5/7/2010): Test the line number value as a prelude to an option that would rest 
+       // the Sg_File_Info objects in AST to match that of the unparsed code.
+          (*os) << "// (line=" << currentLine << ")" << endl;
+#endif
+        }
+
+     if (num > 0)
+        {
           currentIndent = 0;
           chars_on_line = 0;
           currentLine+=num;
-     }
+        }
 
-     if (indent > currentIndent) 
+     if (indent > currentIndent)
          indent -= currentIndent;
      else
          indent = 0;
@@ -166,8 +178,8 @@ UnparseFormat& UnparseFormat::operator << ( string out)
      // BUT:	  
      // two consecutive '\n' might be essential for the correctness of a program
      // e.g. 
-     //       # define BZ_ITER(nn) \ 
-     //         int nn; \
+     //       # define BZ_ITER(nn) 
+     //         int nn; 
      //
      //      BZ_ITER(I);
      // In the example above, the extra new line after int nn; \ must be preserved!
@@ -177,18 +189,18 @@ UnparseFormat& UnparseFormat::operator << ( string out)
      // case is encountered and call a special version of insert_newline() to always insert a line. 	  
           if ( *p == '\n') 
              {
-	       bool mustInsert=false;
-	       if ((p-head)>1)
-	       {
-		 char ahead1 = *(p-2);
-		 char ahead2 = *(p-1);
-		 if ((ahead1=='\\') && (ahead2=='\n'))
-		   mustInsert = true;
-	       }
-	       if (mustInsert)
-                insert_newline(2,-1);
-	       else
-                insert_newline();
+               bool mustInsert=false;
+               if ((p-head)>1)
+                  {
+                    char ahead1 = *(p-2);
+                    char ahead2 = *(p-1);
+                    if ((ahead1=='\\') && (ahead2=='\n'))
+                    mustInsert = true;
+                  }
+               if (mustInsert)
+                    insert_newline(2,-1);
+                 else
+                    insert_newline();
              }
             else
              {
@@ -410,8 +422,8 @@ UnparseFormat& UnparseFormat:: operator << (void* pointer)
 #endif
 
 
-          void UnparseFormat::set_linewrap( int w) { linewrap = w; } // no wrapping if linewrap <= 0
-          int UnparseFormat::get_linewrap() const { return linewrap; }
+void UnparseFormat::set_linewrap( int w) { linewrap = w; } // no wrapping if linewrap <= 0
+int UnparseFormat::get_linewrap() const { return linewrap; }
 
 void
 UnparseFormat::outputHiddenListData(Unparser* unp, SgScopeStatement* inputScope )
@@ -618,6 +630,10 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
           (*this) << "]" << node->class_name();
         }
    }
+
+
+
+
 
 #if 0
 // DQ (3/18/2006): This appears to be old code, I think we can remove it at some point.
@@ -981,6 +997,7 @@ UnparseOrigFormat::special_cases(SgLocatedNode* node)
    }
 #endif
 
+
 #if 0
 // DQ (3/18/2006): This appears to be old code, I think we can remove it at some point.
 
@@ -1013,10 +1030,6 @@ int UnparseOrigFormat::getLine(SgLocatedNode *node, SgUnparse_Info& info, Format
   }
   return r;
 }
-
-
-
-
 #endif
 
 
