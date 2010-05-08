@@ -397,9 +397,9 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
 
      enum language_enum
         {
-          e_none = 0,
-          e_c    = 1, 
-          e_cxx = 2, 
+          e_none    = 0,
+          e_c       = 1, 
+          e_cxx     = 2, 
           e_fortran = 3, 
           e_last_language 
         };

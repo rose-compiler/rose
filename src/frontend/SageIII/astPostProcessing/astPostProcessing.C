@@ -537,11 +537,17 @@ void postProcessingSupport (SgNode* node)
 
   // DQ (5/3/2010): Added support for binary analysis specific post-processing.
      SgProject* project = isSgProject(node);
-     if (project != NULL && project->get_binary_only() == true)
+     if (project != NULL)
         {
-          printf ("Inside of postProcessingSupport(): Processing binary project \n");
+       // printf ("In postProcessingSupport(): project->get_exit_after_parser() = %s \n",project->get_exit_after_parser() ? "true" : "false");
+       // printf ("In postProcessingSupport(): project->get_binary_only()       = %s \n",project->get_binary_only() ? "true" : "false");
+          if (project->get_binary_only() == true)
+             {
+               printf ("Inside of postProcessingSupport(): Processing binary project \n");
+               ROSE_ASSERT(false);
 
-       // addEdgesInAST();
+            // addEdgesInAST();
+             }
         }
 
    }
