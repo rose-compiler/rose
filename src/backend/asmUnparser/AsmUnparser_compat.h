@@ -2,7 +2,6 @@
 #ifndef ROSE_ASM_UNPARSER_COMPAT_H
 #define ROSE_ASM_UNPARSER_COMPAT_H
 
-#include "sage3basic.h"
 #include "AsmUnparser.h"
 
 /** Returns the string representation of an assembly instruction, sans address. */
