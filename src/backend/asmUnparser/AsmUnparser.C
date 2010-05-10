@@ -49,7 +49,7 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
             for (size_t i=0; i<sz && !overlaps; ++i)
                 overlaps = retval[idx+i];
             if (overlaps)
-                break;
+                continue;
             
             /* Mark these instructions as no-ops */
             for (size_t i=0; i<sz; ++i)
@@ -75,8 +75,6 @@ AsmUnparser::unparse(std::ostream &o, SgAsmInstruction *insn)
         o <<StringUtility::addrToString(insn->get_address()) <<":";
     }
     o <<"   " <<unparseInstruction(insn);
-    if (!insn->has_effect())
-        o <<"; no-effect";
     if (!insn->get_comment().empty())
         o << "/* " <<insn->get_comment() << "*/";
     if (insn_linefeed)
