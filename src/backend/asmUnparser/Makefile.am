@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libroseAsmUnparser.la
 libroseAsmUnparser_la_DEPENDENCIES =
 libroseAsmUnparser_la_SOURCES = AsmUnparser.C AsmUnparser_compat.C unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C
 
-dist_include_HEADERS = AsmUnparser.h AsmUnparser_compat.C
+dist_include_HEADERS = AsmUnparser.h AsmUnparser_compat.h
 
 include_HEADERS = 
 
