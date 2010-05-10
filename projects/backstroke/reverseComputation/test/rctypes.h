@@ -32,7 +32,7 @@ int Pop(FlagStack* fs)
     return ret;
 }
 
-void Push(FlagStack* fs, int val)
+int Push(FlagStack* fs, int val)
 {
     fs->offset <<= 1;
     if (fs->offset == 0)
@@ -42,6 +42,7 @@ void Push(FlagStack* fs, int val)
     }	
     if (val)
 	fs->data[fs->index] |= fs->offset;
+    return val;
 }
 
 void FlagTop(FlagStack* fs)

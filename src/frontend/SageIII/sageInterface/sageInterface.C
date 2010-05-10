@@ -7661,38 +7661,79 @@ PreprocessingInfo* SageInterface::attachComment(
            SgLocatedNode* target, const string& content,
            PreprocessingInfo::RelativePositionType  position /*=PreprocessingInfo::before*/,
            PreprocessingInfo::DirectiveType dtype /* PreprocessingInfo::CpreprocessorUnknownDeclaration */)
-{
-  ROSE_ASSERT(target); //dangling comment is not allowed
+   {
+     ROSE_ASSERT(target); //dangling comment is not allowed
 
-  PreprocessingInfo* result = NULL;
-  PreprocessingInfo::DirectiveType mytype=dtype;
-  string comment;
+     PreprocessingInfo* result = NULL;
+     PreprocessingInfo::DirectiveType mytype=dtype;
+     string comment;
 
-  // infer comment type from target's language
-  if (mytype==0)
-  {
-    if (is_C_language()||is_C99_language ())
-    {
-       mytype = PreprocessingInfo::C_StyleComment;
-       comment = "/* "+ content + " */";
-    }
-    else if (is_Cxx_language ())
-    {
-      mytype = PreprocessingInfo::CplusplusStyleComment;
-      comment = "// "+ content;
-    }
-    else  // TODO :What about Fortran?
-    {
-      cout<<"Un-handled programming languages when building source comments.. "<<endl;
-      ROSE_ASSERT(false);
-    }
-  }
+  // DQ (5/5/2010): infer comment type from target's language
+     if (mytype == PreprocessingInfo::CpreprocessorUnknownDeclaration)
+        {
+       // This is a rather expensive way to detect the language type (chases pointers back to the SgFile object).
+          if (is_C_language() || is_C99_language())
+             {
+               mytype = PreprocessingInfo::C_StyleComment;
+            // comment = "/* "+ content + " */";
+             }
+            else
+             {
+               if (is_Cxx_language())
+                  {
+                    mytype = PreprocessingInfo::CplusplusStyleComment;
+                 // comment = "// "+ content;
+                  }
+                 else  // TODO :What about Fortran?
+                  {
+                    if (is_Fortran_language())
+                       {
+                         mytype = PreprocessingInfo::CplusplusStyleComment;
+                      // comment = "// "+ content;
+                       }
+                      else  // TODO :What about Fortran?
+                       {
+                         cout<<"Un-handled programming languages when building source comments.. "<<endl;
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+        }
 
-  result = new PreprocessingInfo (mytype,comment, "transformation-generated", 0, 0, 0, position);
-  ROSE_ASSERT(result);
-  target->addToAttachedPreprocessingInfo(result);
-  return result;
- }
+  // Once the langauge type is set (discovered automatically or more directly specified by the user).
+     bool resetPositionInfo = false;
+     switch (mytype)
+        {
+          case PreprocessingInfo::C_StyleComment:        comment = "/* " + content + " */"; break;
+          case PreprocessingInfo::CplusplusStyleComment: comment = "// " + content;         break;
+          case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
+          case PreprocessingInfo::CpreprocessorLineDeclaration:
+               comment = "#myline " + content;
+               mytype = PreprocessingInfo::CplusplusStyleComment;
+               resetPositionInfo = true;
+               break;
+
+          default:
+             {
+               printf ("Error: default in switch reached in SageInterface::attachComment() PreprocessingInfo::DirectiveType == %d \n",mytype);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     result = new PreprocessingInfo (mytype,comment, "transformation-generated", 0, 0, 0, position);
+
+  // If this is a Cpp Line declaration then we have to set the position to match the statement.
+  // if (mytype == PreprocessingInfo::CpreprocessorLineDeclaration)
+     if (resetPositionInfo == true)
+        {
+       // Call the Sg_File_Info::operator=() member function.
+          *(result->get_file_info()) = *(target->get_file_info());
+        }
+
+     ROSE_ASSERT(result);
+     target->addToAttachedPreprocessingInfo(result);
+     return result;
+   }
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {

@@ -1,10 +1,10 @@
-#ifndef ROSE_PROJECT_REVERSE_COMPUTATION_H
-#define ROSE_PROJECT_REVERSE_COMPUTATION_H
+#ifndef ROSE_REVERSE_COMPUTATION_REVERSE_H
+#define ROSE_REVERSE_COMPUTATION_REVERSE_H
 
 #include <rose.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/tuple/tuple.hpp>
+//#include <boost/tuple/tuple.hpp>
 
 #define foreach BOOST_FOREACH
 
@@ -24,36 +24,44 @@ class EventReverser
 {
     SgFunctionDeclaration* func_decl_;
     string function_name_;
-    vector<string> branch_flags_;
-    vector<string> while_counters_;
+    //vector<string> branch_flags_;
+    vector<string> loop_counters_;
     map<string, SgType*> state_vars_;
     int flag_;
     int flag_saved_;
-    string flag_name_saved_;
     string flagstack_name_;
     int counter_;
     vector<FuncDeclPair> output_func_pairs_;
+
     static set<SgFunctionDeclaration*> func_processed_;
 
-    public:
+public:
     EventReverser(SgFunctionDeclaration* func_decl) 
-	: func_decl_(func_decl), 
+      : func_decl_(func_decl), 
 	function_name_(func_decl_->get_name()), 
-	flag_(1), flag_saved_(0), counter_(0) 
+	flagstack_name_(function_name_ + "_flag"),
+	flag_(1), 
+	flag_saved_(0), 
+	counter_(0)
     {
-	flagstack_name_ = "flags";
     }
+
+    // All functions generated. If the reverser meets a function call, it may reverse 
+    // that function then add the resulted function pair into the function pair collection. 
     vector<FuncDeclPair> outputFunctions();
 
     // Get all variables' declarations including all kinds of states
     vector<SgStatement*> getVarDeclarations()
     {
 	vector<SgStatement*> decls;
-	foreach(const string& flag, branch_flags_)
-	    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
+	//foreach(const string& flag, branch_flags_)
+	//    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
 
-	foreach(const string& counter, while_counters_)
-	    decls.push_back(buildVariableDeclaration(counter, buildIntType()));
+	foreach(const string& counter, loop_counters_)
+	    decls.push_back(buildVariableDeclaration(
+			counter, 
+			buildIntType(), 
+			buildAssignInitializer(buildIntVal(0))));
 
 	pair<string, SgType*> state_var;
 	foreach(state_var, state_vars_)
@@ -78,10 +86,14 @@ class EventReverser
 	return inits;
     }
 
-    private:
+private:
     static const ExpPair NULL_EXP_PAIR;
     static const StmtPair NULL_STMT_PAIR;
 
+    // **********************************************************************************
+    // Main functions, which process expressions and statements
+    // ==================================================================================
+    
     // Just reverse an expression
     SgExpression* reverseExpression(SgExpression* exp);
 
@@ -90,6 +102,10 @@ class EventReverser
 
     // Get the forward and reverse version of an statement 
     StmtPair instrumentAndReverseStatement(SgStatement* stmt);
+
+    // **********************************************************************************
+    // Auxiliary functions
+    // ==================================================================================
 
     // Tell whether an expression is a state variable. We only reverse the "states".
     // Normally the state is passed into functions as arguments, or they are class members
@@ -108,6 +124,18 @@ class EventReverser
 	return NULL;
     }
 
+    // Generate a name containing the function name and counter
+    SgName generateVar(const string& name, SgType* type = buildIntType())
+    {
+	string var_name = function_name_ + "_" + name + "_" + lexical_cast<string>(counter_++);
+	state_vars_[var_name] = type;
+	return var_name;
+    }
+
+    // **********************************************************************************
+    // The following function is for state saving
+    // ==================================================================================
+    
     // Get the variable name which saves the branch state
     SgExpression* getStateVar(SgExpression* var)
     {
@@ -116,18 +144,23 @@ class EventReverser
 	return buildVarRefExp(name);
     }
 
+    // **********************************************************************************
+    // The following functions are for if statement
+    // ==================================================================================
+    
     // Return the statement which saves the branch state
     SgExpression* putBranchFlagExp(bool flag = true)
     {
-	/* 
-	   if (branch_flags_.empty())
-	   branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
-	   SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
-	   return buildExprStatement(buildBinaryExpression<SgIorAssignOp>(flag_var, buildIntVal(flag_)));
-	   */
-	return buildFunctionCallExp("Push", buildVoidType(), 
-		buildExprListExp(buildVarRefExp("flags"), buildIntVal(flag)));
+	return buildFunctionCallExp("Push", buildIntType(), 
+		buildExprListExp(buildVarRefExp(flagstack_name_), buildIntVal(flag)));
     }
+
+    SgExpression* putBranchFlagExp(SgExpression* exp)
+    {
+	return buildFunctionCallExp("Push", buildIntType(), 
+		buildExprListExp(buildVarRefExp(flagstack_name_), exp));
+    }
+
     SgStatement* putBranchFlagStmt(bool flag = true)
     {
 	return buildExprStatement(putBranchFlagExp(flag));
@@ -136,58 +169,39 @@ class EventReverser
     // Return the statement which checks the branch flag
     SgExpression* checkBranchFlagExp()
     {
-	/* 
-	   SgVarRefExp* flag_var = buildVarRefExp(branch_flags_.back());
-	   SgStatement* flag_check = buildExprStatement(buildBinaryExpression<SgBitAndOp>(flag_var, buildIntVal(flag_)));
-
-	   flag_ <<= 1;
-	   if (flag_ == 0)
-	   {
-	// the current flag has been used up, we need a new one.
-	flag_ = 1;
-	branch_flags_.push_back(function_name_ + "_branch_flag_" + lexical_cast<string>(counter_++));
-	}
-
-	return flag_check;
-	*/
 	return buildFunctionCallExp("Pop", buildVoidType(), 
 		buildExprListExp(buildVarRefExp(flagstack_name_)));
     }
+
     SgStatement* checkBranchFlagStmt()
     {
 	return buildExprStatement(checkBranchFlagExp());
     }
 
+#if 0
     SgExpression* newBranchFlag()
     {
 	return buildFunctionCallExp("Push", buildVoidType(), 
 		buildExprListExp(buildVarRefExp(flagstack_name_)));
     }
+#endif
 
-    void saveBranchFlag() 
-    {
-	/* 
-	   if (branch_flags_.empty())
-	   branch_flags_.push_back(function_name_ + "_branch_flag" + lexical_cast<string>(counter_++));
-	   flag_saved_ = flag_;
-	   flag_name_saved_ = branch_flags_.back();
-	   */
-    }
+    // **********************************************************************************
 
-    SgName generateVar(const string& name, SgType* type = buildIntType())
+    SgStatement* initLoopCounter()
     {
-	string var_name = function_name_ + "_" + name + "_" + lexical_cast<string>(counter_++);
-	state_vars_[var_name] = type;
-	return var_name;
-    }
-
-    SgStatement* initWhileCounter()
-    {
-	while_counters_.push_back(function_name_ + "_while_counter_" + lexical_cast<string>(counter_++));
+	loop_counters_.push_back(function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++));
 	return buildExprStatement(
 		buildBinaryExpression<SgAssignOp>(
-		    buildVarRefExp(while_counters_.back()), 
+		    buildVarRefExp(loop_counters_.back()), 
 		    buildIntVal(0)));
+    }
+
+    SgExpression* getLoopCounter()
+    {
+	string counter_name = function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++);
+	loop_counters_.push_back(counter_name);
+	return buildVarRefExp(counter_name);
     }
 };
 
