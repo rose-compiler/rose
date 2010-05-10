@@ -226,10 +226,10 @@ test_static.result: $(STATIC_TEST_TARGETS)
 
 # Dynamicly-generated tests start here and their definitions are inserted below by the "build" script.  We make the
 # dynamic tests depend on the static test because we're not sure what output files will be generated and we don't want
-# the output of dynamic tests causing havoc for the static tests.
+# the output of dynamic tests causing havoc for the static tests.  The test_sample_binaries.result (along with a whole
+# slew of other targets) is created by the "build" script and placed in the generated Makefile.in.
 test_dynamic.result: test_static.result
-#	DQ (5/8/10): This make rule does not exist, how does this work?
-#	@$(MAKE) test_sample_binaries.result
+	@$(MAKE) test_sample_binaries.result
 	@touch $@
 
 test_execFormatsTest.result: execFormatsTest
