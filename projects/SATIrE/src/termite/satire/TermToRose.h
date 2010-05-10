@@ -204,8 +204,9 @@ public:
       *decl = dynamic_cast<DeclType*>(declarationMap[id]);
       ROSE_ASSERT(*decl != NULL);
     } else if (fail) {
-      std::cerr<<"**ERROR: Symbol lookup failed: ("
-	       <<((SgNode*)decl)->class_name()<<"*) "<<id<<std::endl;
+      std::cerr << "**ERROR: Symbol lookup failed: (";
+      if (*decl != NULL) std::cerr << ((SgNode*)*decl)->class_name() <<"*) ";
+      std::cerr << id << std::endl;
       ROSE_ASSERT(false);
       *decl = NULL;
     }
@@ -220,8 +221,9 @@ public:
       *type = dynamic_cast<TypeType*>(t);
       ROSE_ASSERT(*type != NULL || t == NULL); // allow NULL pointer
     } else if (fail) {
-      std::cerr<<"**ERROR: Symbol lookup failed: ("
-	       <<((SgNode*)type)->class_name()<<"*)"<<id<<std::endl;
+      std::cerr<<"**ERROR: Symbol lookup failed: (";
+      if (*type != NULL) std::cerr << ((SgNode*)*type)->class_name() <<"*)";
+      std::cerr << id << std::endl;
       ROSE_ASSERT(false);
       *type = NULL;
     }
