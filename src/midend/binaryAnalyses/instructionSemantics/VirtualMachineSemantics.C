@@ -17,23 +17,7 @@ operator<<(std::ostream &o, const ValueType<Len> &e) {
     return o;
 }
 
-std::ostream&
-operator<<(std::ostream &o, const State &e)
-{
-    e.print(o);
-    return o;
-}
 
-std::ostream&
-operator<<(std::ostream &o, const Policy &p)
-{
-    p.print(o);
-    return o;
-}
-
-
-
-    
 /*************************************************************************************************************************
  *                                                         ValueType
  *************************************************************************************************************************/
@@ -150,6 +134,31 @@ State::print(std::ostream &o) const
         o <<prefix <<"    " <<(*mi) <<"\n";
 }
 
+void
+State::print_diff_registers(std::ostream &o, const State &other) const
+{
+    std::string prefix = "    ";
+
+    for (size_t i=0; i<n_gprs; ++i) {
+        if (gpr[i]!=other.gpr[i]) {
+            o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<": "
+              <<gpr[i] <<" -> " <<other.gpr[i] <<"\n";
+        }
+    }
+    for (size_t i=0; i<n_segregs; ++i) {
+        if (segreg[i]!=other.segreg[i]) {
+            o <<prefix <<segregToString((X86SegmentRegister)i) <<": "
+              <<segreg[i] <<" -> " <<other.segreg[i] <<"\n";
+        }
+    }
+    for (size_t i=0; i<n_flags; ++i) {
+        if (flag[i]!=other.flag[i]) {
+            o <<prefix <<flagToString((X86Flag)i) <<": "
+              <<flag[i] <<" -> " <<other.flag[i] <<"\n";
+        }
+    }
+}
+
 bool
 State::equal_registers(const State &other) const 
 {
@@ -162,57 +171,24 @@ State::equal_registers(const State &other) const
     return true;
 }
 
+#if 0
 bool
-State::equal_memory_without_clobbered(const State &other) const
+State::equal_memory_written(const State &other) const
 {
+    /* Assumes memory is sorted by address */
     size_t i=0, j=0;
     for (/*void*/; i<mem.size() && j<other.mem.size(); ++i, ++j) {
-        while (i<mem.size() && mem[i].clobbered) i++;
-        while (j<other.mem.size() && other.mem[j].clobbered) j++;
+        while (i<mem.size() && (mem[i].is_clobbered() || !mem[i].is_written()))
+            ++i;
+        while (j<other.mem.size() && (other.mem[j].is_clobbered() || !other.mem[j].is_written()))
+            ++j;
         if (mem[i]!=other.mem[j]) return false;
     }
     if (i<mem.size() || j<other.mem.size())
         return false;
     return true;
 }
-
-bool
-State::equal_memory_with_clobbered(const State &other) const
-{
-    if (mem.size()!=other.mem.size())
-        return false;
-    for (size_t i=0; i<mem.size(); ++i)
-        if (mem[i]!=other.mem[i]) return false;
-    return true;
-}
-
-bool
-State::equal_without_clobbered(const State &other) const
-{
-    return equal_registers(other) && equal_memory_without_clobbered(other);
-}
-
-bool
-State::equal_with_clobbered(const State &other) const
-{
-    return equal_registers(other) && equal_memory_with_clobbered(other);
-}
-
-State
-State::squelch(const Memory &orig_mem) const
-{
-    State retval = *this;
-    retval.mem.clear();
-
-    for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
-        bool is_original = false;
-        for (Memory::const_iterator omi=orig_mem.begin(); omi!=orig_mem.end() && !is_original; ++omi)
-            is_original = *omi == *mi;
-        if (!is_original)
-            retval.mem.push_back(*mi);
-    }
-    return retval;
-}
+#endif
 
 void
 State::rename(RenameMap &rmap) 
@@ -282,31 +258,85 @@ State::discard_popped_memory()
  *                                                          Policy
  *************************************************************************************************************************/
 
+/* Returns memory that needs to be compared by equal_states() */
+Memory
+Policy::memory_for_equality(const State &state)
+{
+    State tmp_state = state;
+    Memory retval;
+    for (Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+        if ((*mi).is_written() && (*mi).data!=mem_read<32>(orig_state, (*mi).address))
+            retval.push_back(*mi);
+    }
+    return retval;
+}
+
+bool
+Policy::equal_states(const State &s1, const State &s2)
+{
+    if (!s1.equal_registers(s2))
+        return false;
+    Memory m1 = memory_for_equality(s1);
+    Memory m2 = memory_for_equality(s2);
+    if (m1.size()!=m2.size())
+        return false;
+    for (size_t i=0; i<m1.size(); ++i) {
+        if (m1[i].nbytes != m2[i].nbytes ||
+            m1[i].address!= m2[i].address ||
+            m1[i].data   != m2[i].data)
+            return false;
+    }
+    return true;
+}
+
 void
 Policy::print(std::ostream &o) const
 {
-    state.squelch(orig_mem).normalize().print(o);
+    cur_state.print(o);
+}
+
+void
+Policy::print_diff(std::ostream &o, const State &s1, const State &s2)
+{
+    s1.print_diff_registers(o, s2);
+
+    /* Get all addresses that have been written and are not currently clobbered. */
+    std::set<ValueType<32> > addresses;
+    for (Memory::const_iterator mi=s1.mem.begin(); mi!=s1.mem.end(); ++mi) {
+        if (!(*mi).is_clobbered() && (*mi).is_written())
+            addresses.insert((*mi).address);
+    }
+    for (Memory::const_iterator mi=s2.mem.begin(); mi!=s2.mem.end(); ++mi) {
+        if (!(*mi).is_clobbered() && (*mi).is_written())
+            addresses.insert((*mi).address);
+    }
+ 
+    State tmp_s1 = s1;
+    State tmp_s2 = s2;
+    size_t nmemdiff = 0;
+    for (std::set<ValueType<32> >::const_iterator ai=addresses.begin(); ai!=addresses.end(); ++ai) {
+        ValueType<32> v1 = mem_read<32>(tmp_s1, *ai);
+        ValueType<32> v2 = mem_read<32>(tmp_s2, *ai);
+        if (v1 != v2) {
+            if (0==nmemdiff++) o <<"    memory:\n";
+            o <<"      " <<*ai <<": " <<v1 <<" -> " <<v2 <<"\n";
+        }
+    }
 }
 
 bool
 Policy::on_stack(const ValueType<32> &value)
 {
-    //std::cerr <<"VirtualMachineSemantics::on_stack(value=" <<value <<"):\n";
-    const ValueType<32> sp_inverted = invert(state.gpr[x86_gpr_sp]);
-    //std::cerr <<"  stack pointer = " <<state.gpr[x86_gpr_sp] <<"; inverted = " <<sp_inverted <<"\n";
-    for (Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-        //std::cerr <<"  mem entry " <<(*mi) <<":\n";
+    const ValueType<32> sp_inverted = invert(cur_state.gpr[x86_gpr_sp]);
+    for (Memory::const_iterator mi=cur_state.mem.begin(); mi!=cur_state.mem.end(); ++mi) {
         if ((*mi).nbytes!=4 || !((*mi).data==value)) continue;
         const ValueType<32> &addr = (*mi).address;
 
         /* Is addr >= sp? */
         ValueType<32> carries = 0;
         ValueType<32> diff = addWithCarries(addr, sp_inverted, true_(), carries/*out*/);
-        //std::cerr <<"    [" <<addr <<"] + [" <<sp_inverted <<"] = [" <<diff <<"] carry=" <<carries <<"\n";
         ValueType<1> sf = extract<31,32>(diff);
         ValueType<1> of = xor_(extract<31,32>(carries), extract<30,31>(carries));
-        //std::cerr <<"    sf=" <<sf <<", of=" <<of <<"\n";
-        //std::cerr <<"    on stack? "<<(sf==of ? "yes" : "no") <<"\n";
         if (sf==of) return true;
     }
     return false;

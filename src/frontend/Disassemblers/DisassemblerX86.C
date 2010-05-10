@@ -171,12 +171,12 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 #if 0
                 std::ostringstream s;
                 s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.state
-                  <<"    ip = " <<policy.readIP() <<"\n";
+                  <<policy.get_state()
+                  <<"    ip = " <<policy.get_ip() <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            VirtualMachineSemantics::ValueType<32> newip = policy.readIP();
+            const VirtualMachineSemantics::ValueType<32> &newip = policy.get_ip();
             if (newip.name==0) {
                 successors.clear();
                 successors.insert(newip.offset);
@@ -371,7 +371,6 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
     VirtualMachineSemantics::Policy policy;
     Semantics semantics(policy);
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
-    VirtualMachineSemantics::State original_state = policy.get_state();
     rose_addr_t next_ip = insns.front()->get_address();
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
@@ -386,8 +385,6 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
         return true;
     }
 
-    VirtualMachineSemantics::State final_state = policy.get_state();
-
     /* If the final instruction pointer is not the fall-through address of the final instruction then return true. In other
      * words, a sequence ending with a JMP (for instance) has an effect, but an internal JMP has no effect.  This is to
      * support instruction sequences from non-contiguous basic blocks. */
@@ -396,7 +393,7 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
         return true;
 
     /* Instructions have an effect if the state changed. State does not include the instruction pointer. */
-    return !(final_state==original_state);
+    return !policy.equal_states(policy.get_orig_state(), policy.get_state());
 }
 
 /** Determines what subsequences of an instruction sequence have no cumulative effect.  The return value is a vector of pairs
@@ -447,7 +444,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
             }
             next_ip = policy.get_ip().known_value();
             state.push_back(policy.get_state());
-            if (verbose) std::cerr <<"  state:\n" <<policy.get_state().normalize();
+            if (verbose) std::cerr <<"  state:\n" <<policy.get_state();
         }
     } catch (const Semantics::Exception&) {
         /* Perhaps we can find at least a few no-op subsequences... */
@@ -465,7 +462,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     if (verbose) std::cerr <<"  number of states: " <<nstates <<"\n";
     for (size_t i=0; i<nstates-1; i++) {
         for (size_t j=i+1; j<nstates; j++) {
-            if (state[i]==state[j]) {
+            if (policy.equal_states(state[i], state[j])) {
                 if (verbose) std::cerr <<"  at instruction #"<<i <<": no-op of length " <<(j-i) <<"\n";
                 retval.push_back(std::make_pair(i, j-i));
             }

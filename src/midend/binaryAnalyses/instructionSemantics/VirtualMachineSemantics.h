@@ -29,7 +29,7 @@ namespace VirtualMachineSemantics {
 
 extern uint64_t name_counter;
 
-typedef std::map<uint64_t/*oldname*/, uint64_t/*newname*/> RenameMap;
+typedef std::map<size_t, size_t> RenameMap;
 
 /** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
 template<size_t nBits>
@@ -72,10 +72,11 @@ struct ValueType {
         return offset;
     }
 
+    /** Renames a named value. */
+    void rename(RenameMap&);
+
     /** Print the value */
     void print(std::ostream &o) const;
-
-    void rename(RenameMap&);
 
     friend bool operator==(const ValueType &a, const ValueType &b) {
         return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
@@ -97,21 +98,42 @@ struct ValueType {
 template<size_t Len>
 std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e);
 
-/** Represents one location in memory. Has an address data and size. Memory granularity is 32-bits. */
+/** Represents one location in memory. Has an address data and size in bytes.
+ *
+ *  When a state is created, every register and memory location will be given a unique named value. However, it's not
+ *  practicle to store a named value for every possible memory address, yet we want the following example to work correctly:
+ *  \code
+ *  1: mov eax, ds:[edx]    // first read returns V1
+ *  2: mov eax, ds:[edx]    // subsequent reads from same address also return V1
+ *  3: mov ds:[ecx], eax    // write to unknown address clobbers all memory
+ *  4: mov eax, ds:[edx]    // read from same address as above returns V2
+ *  5: mov eax, ds:[edx]    // subsequent reads from same address also return V2
+ *  \endcode
+ *
+ *  Furthermore, the read from ds:[edx] at #1 above, retroactively stores V1 in the original memory state. That way if we need
+ *  to do additional analyses starting from the same initial state it will be available to use.
+ *
+ *  To summarize: every memory address is given a unique named value. These values are implicit until the memory location is
+ *  actually read.
+ *
+ *  See also readMemory() and writeMemory(). */
 struct MemoryCell {
     ValueType<32> address;
     ValueType<32> data;
     size_t nbytes;
     bool clobbered;             /* Set to invalidate possible aliases during writeMemory() */
+    bool written;               /* Set to true by writeMemory */
 
     template <size_t Len>
     MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes)
-        : address(address), data(data), nbytes(nbytes), clobbered(false) {}
+        : address(address), data(data), nbytes(nbytes), clobbered(false), written(false) {}
 
     void rename(RenameMap&);
 
     bool is_clobbered() const { return clobbered; }
-    void clobber() { clobbered = true; }
+    void set_clobbered() { clobbered = true; }
+    bool is_written() const { return written; }
+    void set_written() { written = true; }
 
     /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns false
      *  only if this memory location cannot overlap with @p other memory location. Two addresses that are identical alias one
@@ -122,7 +144,7 @@ struct MemoryCell {
     bool must_alias(const MemoryCell &other) const;
     
     friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
-        return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes && a.clobbered==b.clobbered;
+        return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes && a.clobbered==b.clobbered && a.written==b.written;
     }
     friend bool operator!=(const MemoryCell &a, const MemoryCell &b) {
         return !(a==b);
@@ -131,8 +153,9 @@ struct MemoryCell {
         return a.address < b.address;
     }
     friend std::ostream& operator<<(std::ostream &o, const MemoryCell &me) {
-        o <<"size=" <<me.nbytes <<"; addr=" <<me.address <<"; value=" <<me.data;
-        if (me.clobbered) o <<" (CLOBBERED)"; /*clobbered by a write to possibly aliased memory*/
+        o <<me.address <<": " <<me.data <<" " <<me.nbytes <<" byte" <<(1==me.nbytes?"":"s");
+        if (!me.written) o <<" read-only";
+        if (me.clobbered) o <<" clobbered";
         return o;
     }
 };
@@ -150,66 +173,28 @@ struct State {
     ValueType<1> flag[n_flags];
     Memory mem;
 
-    /** Removes memory cells that are identical to the supplied original memory.  When a memory cell is read via readMemory(),
-     *  a cell is created in the state and given the next available undefined (named) value. It is also created in the
-     *  orig_mem. This function deletes any memory in this state that is identical to the orig_mem. This correctly handles
-     *  cases like the following, which is a no-op but creates a new cell in memory.
-     *  \code
-     *    xchg ds:[0x1234], eax
-     *    xchg ds:[0x1234], eax
-     *  \code
-     *
-     *  Note that squelch() must be called on the original, non-normalized state because it compares this state with the
-     *  non-normalized original memory.  For instance, to print the current value of the state sans original memory contents,
-     *  one would do this:
-     *  \code
-     *    std::cout <<policy.get_state().squelch(policy.orig_mem).normalize();
-     *    std::cout <<policy.get_state(true).normalize(); // equivalent to above
-     *  \endcode
-     * 
-     *  The term "squelch" comes from electronics, and is a circuit that turns off the volume of a radio when the signal level
-     *  falls below the "squelch threshold" so that the listener does not hear static.  In our case, the "static" are the
-     *  memory cells that were created to hold explicit values but which are the same values as those that were originally
-     *  implicit. */
-    State squelch(const Memory &orig_mem) const;
-
     /** Print the state in a human-friendly way. */
     void print(std::ostream &o) const;
 
-    /** Renames the unknown values of the state according to the supplied map, adjusting the map in the process.  This is used
-     *  internally by normalization functions. */
-    void rename(RenameMap&);
-
-    /** Remap all named constants to lowest possible names.  This can be used before comparing states from two different
-     *  policies. */
-    State normalize() const;
+    /** Print info about how registers differ. */
+    void print_diff_registers(std::ostream &o, const State&) const;
 
     /** Tests registers of two states for equality. */
     bool equal_registers(const State&) const;
     
-    /** Tests memory of two states for equality. Does not compare memory cells marked as clobbered. */
-    bool equal_memory_without_clobbered(const State&) const;
-    
-    /** Tests memory of two states for equality. The clobbered memory cells are also compared. */
-    bool equal_memory_with_clobbered(const State&) const;
-
-    /** Tests equality of two states without looking at clobbered memory locations. */
-    bool equal_without_clobbered(const State&) const;
-
-    /** Tests equality of two states including the clobbered memory locations. */
-    bool equal_with_clobbered(const State&) const;
-
     /** Discard stack memory below stack pointer */
     void discard_popped_memory();
 
-#if 0 /*requires libgcrypt*/
-    /** Returns the SHA1 hash of a state. */
-    std::string SHA1() const;
-#endif
+    /** Renames everything in the state according to the rename map. */
+    void rename(RenameMap&);
 
-    friend std::ostream& operator<<(std::ostream&, const State&);
-    friend bool operator==(const State &s1, const State &s2) { return s1.equal_with_clobbered(s2); }
-    friend bool operator!=(const State &s1, const State &s2) { return !(s1==s2); }
+    /** Creates a new state by normalizing an existing state. */
+    State normalize() const;
+
+    friend std::ostream& operator<<(std::ostream &o, const State& state) {
+        state.print(o);
+        return o;
+    }
 };
 
 /** A policy that is supplied to the semantic analysis constructor. */
@@ -217,7 +202,8 @@ class Policy {
 private:
     SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
     ValueType<32> ip;                   /**< Initially cur_insn->get_address(), then updated during processInstruction() */
-    State state;                        /**< Complete machine state updated by each processInstruction() */
+    State orig_state;                   /**< Original machine state, initialized by constructor and mem_write. */
+    State cur_state;                    /**< Current machine state updated by each processInstruction() */
     Memory orig_mem;                    /**< Within the state, every register has an initial explicit unknown (named) value.
                                          *   Giving every possible memory location an explicit unknown value is prohibitively
                                          *   expensive, so memory is given implicit unknown values. When we access a memory
@@ -237,7 +223,36 @@ private:
                                          * default is false, that is, no special treatment for the stack. */
 
 public:
-    Policy(): cur_insn(NULL), p_discard_popped_memory(false) {}
+    Policy(): cur_insn(NULL), p_discard_popped_memory(false) {
+        cur_state = orig_state;
+    }
+
+    /** Return the current state. */
+    const State& get_state() const { return cur_state; }
+    const State& get_orig_state() const { return orig_state; }
+    const ValueType<32>& get_ip() const { return ip; }
+
+    /** Returns a copy of the state after removing memory that is not pertinent to an equal_states() comparison. */
+    Memory memory_for_equality(const State&);
+
+    /** Returns a copy of the current state after removing memory that is not pertinent to an equal_states() comparison. */
+    Memory memory_for_equality() { return memory_for_equality(cur_state); }
+
+    /** Compares two states for equality. The comarison looks at all register values and the memory locations that are
+     *  different than their original value (but excluding differences due to clobbering). It does not compare memory that has
+     *  only been read.  */
+    bool equal_states(const State&, const State&);
+
+    /** Print the state of this policy. */
+    void print(std::ostream&) const;
+    friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
+        p.print(o);
+        return o;
+    }
+    
+    /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The stack pointer
+     *  need not have a known value. */
+    bool on_stack(const ValueType<32> &value);
 
     /** Changes how the policy treats the stack.  See the p_discard_popped_memory property data member for details. */
     void set_discard_popped_memory(bool b) {
@@ -250,15 +265,18 @@ public:
         return p_discard_popped_memory;
     }
 
-    /* Accessors */
-    State get_state(bool do_squelch=false) const {
-        return do_squelch ? state.squelch(orig_mem) : state;
-    }
-    const ValueType<32>& get_ip() const { return ip; }
+    /** Print only the differences between two states. */
+    void print_diff(std::ostream&, const State&, const State&);
 
-    /** Print the normalized state of this policy, omitting memory locations that have initial values. */
-    void print(std::ostream&) const;
-    friend std::ostream& operator<<(std::ostream&, const Policy&);
+    /** Print the difference between a state and the initial state. */
+    void print_diff(std::ostream &o, const State &state) {
+        print_diff(o, orig_state, state);
+    }
+
+    /** Print the difference between the current state and the initial state. */
+    void print_diff(std::ostream &o) {
+        print_diff(o, orig_state, cur_state);
+    }
 
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
@@ -283,13 +301,88 @@ public:
         return ValueType<ToLen>(a);
     }
     
-    /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The stack pointer
-     *  need not have a known value. */
-    bool on_stack(const ValueType<32> &value);
-
     /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
      *  instruction if the p_discard_popped_memory property is set. */
     void discard_popped_memory();
+
+    /** Reads a value from memory in a way that always returns the same value provided there are not intervening writes that
+     *  would clobber the value either directly or by aliasing.  Also, if appropriate, the value is added to the original
+     *  memory state (thus changing the value at that address from an implicit named value to an explicit named value).
+     *
+     *  It is safe to call this function and supply the policy's original state as the state argument.
+     *
+     *  The documentation for MemoryCell has an example that demonstrates the desired behavior of mem_read() and mem_write(). */
+    template <size_t Len> ValueType<Len> mem_read(State &state, const ValueType<32> &addr) {
+        MemoryCell new_cell(addr, ValueType<32>(), Len/8);
+        bool aliased = false; /*is new_cell aliased by any existing writes?*/
+
+        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+            if (new_cell.must_alias(*mi)) {
+                if ((*mi).clobbered) {
+                    (*mi).clobbered = false;
+                    (*mi).data = new_cell.data;
+                    return new_cell.data;
+                } else {
+                    return (*mi).data;
+                }
+            } else if (new_cell.may_alias(*mi) && (*mi).written) {
+                aliased = true;
+            }
+        }
+
+        if (!aliased && &state!=&orig_state) {
+            /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that state. Therefore
+             * use the value from the initial memory state (creating it if necessary). */    
+            for (Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
+                if (new_cell.must_alias(*mi)) {
+                    ROSE_ASSERT(!(*mi).clobbered);
+                    ROSE_ASSERT(!(*mi).written);
+                    state.mem.push_back(*mi);
+                    std::sort(state.mem.begin(), state.mem.end());
+                    return (*mi).data;
+                }
+            }
+
+            orig_state.mem.push_back(new_cell);
+            std::sort(orig_state.mem.begin(), orig_state.mem.end());
+        }
+
+        /* Create the cell in the current state. */
+        state.mem.push_back(new_cell);
+        std::sort(state.mem.begin(), state.mem.end());
+        return new_cell.data;
+    }
+
+    /** Writes a value to memory. If the address written to is an alias for other addresses then the other addresses will be
+     *  clobbered. Subsequent reads from clobbered addresses will return new values. See also, mem_read(). */
+    template <size_t Len> void mem_write(State &state, const ValueType<32> &addr, const ValueType<Len> &data) {
+        ROSE_ASSERT(&state!=&orig_state);
+        MemoryCell new_cell(addr, data, Len/8);
+        new_cell.set_written();
+        bool saved = false; /* has new_cell been saved into memory? */
+        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+            if (new_cell.must_alias(*mi)) {
+                *mi = new_cell;
+                saved = true;
+            } else if (p_discard_popped_memory &&
+                       state.gpr[x86_gpr_sp]!=state.gpr[x86_gpr_bp] &&
+                       state.gpr[x86_gpr_sp].name!=state.gpr[x86_gpr_bp].name &&
+                       ((addr.name==state.gpr[x86_gpr_sp].name && (*mi).address.name==state.gpr[x86_gpr_bp].name) ||
+                        (addr.name==state.gpr[x86_gpr_bp].name && (*mi).address.name==state.gpr[x86_gpr_sp].name))) {
+                /* assume that mem referenced via stack pointer does not alias mem referenced with frame pointer. This isn't
+                 * safe generally, but is usually the case for well-behaved programs. */
+            } else if (new_cell.may_alias(*mi)) {
+                (*mi).set_clobbered();
+            } else {
+                /* memory cell *mi is not aliased to cell being written */
+            }
+        }
+        if (!saved) {
+            state.mem.push_back(new_cell);
+            std::sort(state.mem.begin(), state.mem.end());
+        }
+    }
+
 
     /*************************************************************************************************************************
      * Functions invoked by the X86InstructionSemantics class for every processed instructions
@@ -304,7 +397,7 @@ public:
     /* Called at the end of X86InstructionSemantics::processInstruction() */
     void finishInstruction(SgAsmInstruction*) {
         if (p_discard_popped_memory)
-            state.discard_popped_memory();
+            cur_state.discard_popped_memory();
         cur_insn = NULL;
     }
 
@@ -366,7 +459,7 @@ public:
 
     /** Called only for the INT instruction. */
     void interrupt(uint8_t num) {
-        state = State(); /*reset entire machine state*/
+        cur_state = State(); /*reset entire machine state*/
     }
 
 
@@ -377,22 +470,22 @@ public:
 
     /** Returns value of the specified 32-bit general purpose register. */
     ValueType<32> readGPR(X86GeneralPurposeRegister r) {
-        return state.gpr[r];
+        return cur_state.gpr[r];
     }
 
     /** Places a value in the specified 32-bit general purpose register. */
     void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
-        state.gpr[r] = value;
+        cur_state.gpr[r] = value;
     }
 
     /** Reads a value from the specified 16-bit segment register. */
     ValueType<16> readSegreg(X86SegmentRegister sr) {
-        return state.segreg[sr];
+        return cur_state.segreg[sr];
     }
 
     /** Places a value in the specified 16-bit segment register. */
     void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
-        state.segreg[sr] = value;
+        cur_state.segreg[sr] = value;
     }
 
     /** Returns the value of the instruction pointer as it would be during the execution of the instruction. In other words,
@@ -408,71 +501,24 @@ public:
 
     /** Returns the value of a specific control/status/system flag. */
     ValueType<1> readFlag(X86Flag f) {
-        return state.flag[f];
+        return cur_state.flag[f];
     }
 
     /** Changes the value of the specified control/status/system flag. */
     void writeFlag(X86Flag f, const ValueType<1> &value) {
-        state.flag[f] = value;
+        cur_state.flag[f] = value;
     }
 
     /** Reads a value from memory. */
     template <size_t Len> ValueType<Len>
     readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) {
-        MemoryCell new_cell(addr, ValueType<32>(), Len/8);
-
-        /* Read memory from current memory state if possible. */
-        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            if (new_cell.must_alias(*mi)) {
-                /* If memory cell is present but invalid then we must have seen a previous writeMemory() to a possible
-                 * alias. We should mark the memory as no longer clobbered and return a new undefined value.  Otherwise return
-                 * the existing value. */
-                if ((*mi).is_clobbered()) *mi = new_cell;
-                return (*mi).data;
-            }
-        }
-
-        /* If original memory has a value then use that, saving it in our state also. */
-        for (Memory::iterator mi=orig_mem.begin(); mi!=orig_mem.end(); ++mi) {
-            if (new_cell.must_alias(*mi)) {
-                ROSE_ASSERT(!(*mi).is_clobbered()); /*original memory is always valid*/
-                state.mem.push_back(*mi);
-                return (*mi).data;
-            }
-        }
-        
-        /* Create a new value and add it to both the original memory and the current state. */
-        state.mem.push_back(new_cell);
-        orig_mem.push_back(new_cell);
-        return new_cell.data;
+        return mem_read<Len>(cur_state, addr);
     }
 
     /** Writes a value to memory. */
     template <size_t Len> void
     writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
-        MemoryCell new_cell(addr, data, Len/8);
-        bool saved = false; /* has new_cell been saved into memory? */
-        for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-            if (new_cell.must_alias(*mi)) {
-                *mi = new_cell;
-                saved = true;
-            } else if (p_discard_popped_memory &&
-                       state.gpr[x86_gpr_sp]!=state.gpr[x86_gpr_bp] &&
-                       state.gpr[x86_gpr_sp].name!=state.gpr[x86_gpr_bp].name &&
-                       ((addr.name==state.gpr[x86_gpr_sp].name && (*mi).address.name==state.gpr[x86_gpr_bp].name) ||
-                        (addr.name==state.gpr[x86_gpr_bp].name && (*mi).address.name==state.gpr[x86_gpr_sp].name))) {
-                /* assume that mem referenced via stack pointer does not alias mem referenced with frame pointer. This isn't
-                 * safe generally, but is usually the case for well-behaved programs. */
-            } else if (new_cell.may_alias(*mi)) {
-                (*mi).clobber();
-            } else {
-                /* memory cell *mi is not aliased to cell being written */
-            }
-        }
-        if (!saved) {
-            state.mem.push_back(new_cell);
-            std::sort(state.mem.begin(), state.mem.end());
-        }
+        mem_write<Len>(cur_state, addr, data);
     }
 
 
