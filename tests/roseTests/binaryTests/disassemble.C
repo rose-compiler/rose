@@ -83,16 +83,15 @@ block_semantics(SgAsmBlock *blk)
     if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front()))
         return "";
 
-#if 0
-    std::cerr <<"block_semantics(" <<StringUtility::addrToString(blk->get_address()) <<"):\n";
-#endif
-
     VirtualMachineSemantics::RenameMap rmap;
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
+#if 0
+    std::cerr <<"block_semantics(" <<StringUtility::addrToString(blk->get_address()) <<"):\n";
     std::cerr <<"  Initial state:\n" <<policy.get_state() <<"\n";
+#endif
 
     try {
         const SgAsmStatementPtrList &stmts = blk->get_statementList();
