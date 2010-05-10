@@ -5238,13 +5238,16 @@ std::vector<NodeType*> SageInterface::querySubTree(SgNode* top, VariantT variant
 #endif
 
  SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
-{
+{ 
+  // Avoid hassle from directly linked true/false body under a if statement, etc
+  currentStmt = ensureBasicBlockAsParent (currentStmt);
 // reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
   return ROSE::getNextStatement(currentStmt);
 }
 
   SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt)
 {
+  currentStmt = ensureBasicBlockAsParent (currentStmt);
  
   return ROSE::getPreviousStatement(currentStmt);
 }

@@ -8,6 +8,7 @@ c99loop.c \
 doall.c \
 doall_2.c \
 firstprivate.c \
+ifAndFor.c \
 inner_only.c \
 jacobi_seq.c \
 lastprivate.c \
@@ -32,7 +33,6 @@ true_l2.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 class_member.C \
-for-while-for.C \
 ifstmt.C \
 iterator2.C \
 iteratorloop.C \
