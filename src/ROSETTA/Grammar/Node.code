@@ -821,20 +821,10 @@ namespace rose_hash
      //using namespace __gnu_cxx;
 #endif
 
-#if 1
        using boost::unordered_map;
        using boost::unordered_multimap;
        using boost::unordered_set;
        using boost::hash;
-#else
-#define unordered_map hash_map
-#define unordered_multimap hash_multimap
-#define unordered_set hash_set
-       using __gnu_cxx::hash_map;
-       using __gnu_cxx::hash_multimap;
-       using __gnu_cxx::hash_set;
-       using __gnu_cxx::hash;
-#endif
 
 #if 0       
    // CH (4/8/2010): Typedef wrappers of hash_map types
