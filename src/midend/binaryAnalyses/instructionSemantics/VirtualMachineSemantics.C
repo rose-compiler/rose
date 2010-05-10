@@ -13,7 +13,7 @@ uint64_t name_counter;
 
 template <size_t Len> std::ostream&
 operator<<(std::ostream &o, const ValueType<Len> &e) {
-    e.print(o);
+    e.print(o, NULL/*do not rename*/);
     return o;
 }
 
@@ -23,15 +23,25 @@ operator<<(std::ostream &o, const ValueType<Len> &e) {
  *************************************************************************************************************************/
 
 template <size_t Len> void
-ValueType<Len>::print(std::ostream &o) const {
+ValueType<Len>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const {
     uint64_t sign_bit = (uint64_t)1 << (Len-1);  /* e.g., 80000000 */
     uint64_t val_mask = sign_bit - 1;            /* e.g., 7fffffff */
     uint64_t negative = Len>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0; /*magnitude of negative value*/
 
     if (name!=0) {
         /* This is a named value rather than a constant. */
+        uint64_t renamed = name;
+        if (rmap) {
+            RenameMap::iterator found = rmap->find(name);
+            if (found==rmap->end()) {
+                renamed = rmap->size()+1;
+                rmap->insert(std::make_pair(name, renamed));
+            } else {
+                renamed = found->second;
+            }
+        }
         const char *sign = negate ? "-" : "";
-        o <<sign <<"v" <<std::dec <<name;
+        o <<sign <<"v" <<std::dec <<renamed;
         if (negative) {
             o <<"-0x" <<std::hex <<negative;
         } else if (offset) {
@@ -46,19 +56,20 @@ ValueType<Len>::print(std::ostream &o) const {
     }
 }
 
-template<size_t Len> void
-ValueType<Len>::rename(RenameMap &rmap)
+template<size_t Len> ValueType<Len>
+ValueType<Len>::rename(RenameMap *rmap) const
 {
-    if (name!=0) {
-        RenameMap::iterator ri=rmap.find(name);
-        if (ri==rmap.end()) {
-            uint64_t new_name = rmap.size()+1;
-            rmap.insert(std::make_pair(name, new_name));
-            name = new_name;
+    ValueType<Len> retval = *this;
+    if (rmap && name>0) {
+        RenameMap::iterator found = rmap->find(name);
+        if (found==rmap->end()) {
+            retval.name = rmap->size()+1;
+            rmap->insert(std::make_pair(name, retval.name));
         } else {
-            name = ri->second;
+            retval.name = found->second;
         }
     }
+    return retval;
 }
 
 
@@ -91,12 +102,12 @@ MemoryCell::must_alias(const MemoryCell &other) const {
 }
 
 void
-MemoryCell::rename(RenameMap &rmap)
+MemoryCell::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 {
-    address.rename(rmap);
-    data.rename(rmap);
+    o <<address.rename(rmap) <<": " <<data.rename(rmap) <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s");
+    if (!written) o <<" read-only";
+    if (clobbered) o <<" clobbered";
 }
-
 
 
 /*************************************************************************************************************************
@@ -104,7 +115,7 @@ MemoryCell::rename(RenameMap &rmap)
  *************************************************************************************************************************/
 
 void
-State::print(std::ostream &o) const 
+State::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const 
 {
     std::string prefix = "    ";
 
@@ -112,11 +123,11 @@ State::print(std::ostream &o) const
     size_t ssi=0;
     std::stringstream *ss = new std::stringstream[n_gprs + n_segregs + n_flags];
     for (size_t i=0; i<n_gprs; ++i)
-        ss[ssi++] <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i];
+        ss[ssi++] <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i].rename(rmap);
     for (size_t i=0; i<n_segregs; ++i)
-        ss[ssi++] <<segregToString((X86SegmentRegister)i) <<"=" <<segreg[i];
+        ss[ssi++] <<segregToString((X86SegmentRegister)i) <<"=" <<segreg[i].rename(rmap);
     for (size_t i=0; i<n_flags; ++i)
-        ss[ssi++] <<flagToString((X86Flag)i) <<"=" <<flag[i];
+        ss[ssi++] <<flagToString((X86Flag)i) <<"=" <<flag[i].rename(rmap);
     size_t colwidth = 0;
     for (size_t i=0; i<ssi; i++)
         colwidth = std::max(colwidth, ss[i].str().size());
@@ -130,31 +141,34 @@ State::print(std::ostream &o) const
 
     /* Print memory contents. Skip unmodified memory if orig_mem is non-null. */
     o <<prefix << "memory:\n";
-    for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi)
-        o <<prefix <<"    " <<(*mi) <<"\n";
+    for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
+        o <<prefix <<"    ";
+        (*mi).print(o, rmap);
+        o <<"\n";
+    }
 }
 
 void
-State::print_diff_registers(std::ostream &o, const State &other) const
+State::print_diff_registers(std::ostream &o, const State &other, RenameMap *rmap/*=NULL*/) const
 {
     std::string prefix = "    ";
 
     for (size_t i=0; i<n_gprs; ++i) {
         if (gpr[i]!=other.gpr[i]) {
             o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<": "
-              <<gpr[i] <<" -> " <<other.gpr[i] <<"\n";
+              <<gpr[i].rename(rmap) <<" -> " <<other.gpr[i].rename(rmap) <<"\n";
         }
     }
     for (size_t i=0; i<n_segregs; ++i) {
         if (segreg[i]!=other.segreg[i]) {
             o <<prefix <<segregToString((X86SegmentRegister)i) <<": "
-              <<segreg[i] <<" -> " <<other.segreg[i] <<"\n";
+              <<segreg[i].rename(rmap) <<" -> " <<other.segreg[i].rename(rmap) <<"\n";
         }
     }
     for (size_t i=0; i<n_flags; ++i) {
         if (flag[i]!=other.flag[i]) {
             o <<prefix <<flagToString((X86Flag)i) <<": "
-              <<flag[i] <<" -> " <<other.flag[i] <<"\n";
+              <<flag[i].rename(rmap) <<" -> " <<other.flag[i].rename(rmap) <<"\n";
         }
     }
 }
@@ -190,28 +204,6 @@ State::equal_memory_written(const State &other) const
 }
 #endif
 
-void
-State::rename(RenameMap &rmap) 
-{
-    for (size_t i=0; i<n_gprs; ++i)
-        gpr[i].rename(rmap);
-    for (size_t i=0; i<n_segregs; ++i)
-        segreg[i].rename(rmap);
-    for (size_t i=0; i<n_flags; ++i)
-        flag[i].rename(rmap);
-    for (Memory::iterator mi=mem.begin(); mi!=mem.end(); ++mi)
-        (*mi).rename(rmap);
-}
-
-State
-State::normalize() const
-{
-    State retval = *this;
-    RenameMap rmap;
-    retval.rename(rmap);
-    return retval;
-}
-
 #if 0
 std::string
 State::SHA1() const
@@ -224,7 +216,8 @@ State::SHA1() const
     }
 
     /* Simple version just hashes the print form of the state */
-    std::stringstream s; print(s);
+    RenameMap rmap;
+    std::stringstream s; print(s, &rmap);
     size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
     char *digest = new char[digest_sz];
     gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
@@ -290,15 +283,15 @@ Policy::equal_states(const State &s1, const State &s2)
 }
 
 void
-Policy::print(std::ostream &o) const
+Policy::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 {
-    cur_state.print(o);
+    cur_state.print(o, rmap);
 }
 
 void
-Policy::print_diff(std::ostream &o, const State &s1, const State &s2)
+Policy::print_diff(std::ostream &o, const State &s1, const State &s2, RenameMap *rmap/*=NULL*/)
 {
-    s1.print_diff_registers(o, s2);
+    s1.print_diff_registers(o, s2, rmap);
 
     /* Get all addresses that have been written and are not currently clobbered. */
     std::set<ValueType<32> > addresses;
@@ -319,7 +312,7 @@ Policy::print_diff(std::ostream &o, const State &s1, const State &s2)
         ValueType<32> v2 = mem_read<32>(tmp_s2, *ai);
         if (v1 != v2) {
             if (0==nmemdiff++) o <<"    memory:\n";
-            o <<"      " <<*ai <<": " <<v1 <<" -> " <<v2 <<"\n";
+            o <<"      " <<(*ai).rename(rmap) <<": " <<v1.rename(rmap) <<" -> " <<v2.rename(rmap) <<"\n";
         }
     }
 }

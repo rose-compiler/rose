@@ -29,7 +29,7 @@ namespace VirtualMachineSemantics {
 
 extern uint64_t name_counter;
 
-typedef std::map<size_t, size_t> RenameMap;
+typedef std::map<uint64_t, uint64_t> RenameMap;
 
 /** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
 template<size_t nBits>
@@ -72,11 +72,15 @@ struct ValueType {
         return offset;
     }
 
-    /** Renames a named value. */
-    void rename(RenameMap&);
+    /** Returns a new, optionally renamed, value.  If the rename map, @p rmap, is non-null and this value is a named value,
+     *  then its name will be transformed by looking up the name in the map and using the value found there. If the name is
+     *  not in the map then a new entry is created in the map.  Remapped names start counting from one.  For example, if
+     *  "v904885611+0xfc" is the first value to be renamed, it will become "v1+0xfc". */
+    ValueType<nBits> rename(RenameMap *rmap=NULL) const;
 
-    /** Print the value */
-    void print(std::ostream &o) const;
+    /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See the rename()
+     *  method for details. */
+    void print(std::ostream &o, RenameMap *rmap=NULL) const;
 
     friend bool operator==(const ValueType &a, const ValueType &b) {
         return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
@@ -128,8 +132,6 @@ struct MemoryCell {
     MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes)
         : address(address), data(data), nbytes(nbytes), clobbered(false), written(false) {}
 
-    void rename(RenameMap&);
-
     bool is_clobbered() const { return clobbered; }
     void set_clobbered() { clobbered = true; }
     bool is_written() const { return written; }
@@ -142,6 +144,10 @@ struct MemoryCell {
 
     /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap". */
     bool must_alias(const MemoryCell &other) const;
+
+    /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
+     *  have a shorter name.  See the ValueType<>::rename() method for details. */
+    void print(std::ostream&, RenameMap *rmap=NULL) const;
     
     friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
         return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes && a.clobbered==b.clobbered && a.written==b.written;
@@ -153,9 +159,7 @@ struct MemoryCell {
         return a.address < b.address;
     }
     friend std::ostream& operator<<(std::ostream &o, const MemoryCell &me) {
-        o <<me.address <<": " <<me.data <<" " <<me.nbytes <<" byte" <<(1==me.nbytes?"":"s");
-        if (!me.written) o <<" read-only";
-        if (me.clobbered) o <<" clobbered";
+        me.print(o, NULL);
         return o;
     }
 };
@@ -173,23 +177,19 @@ struct State {
     ValueType<1> flag[n_flags];
     Memory mem;
 
-    /** Print the state in a human-friendly way. */
-    void print(std::ostream &o) const;
+    /** Print the state in a human-friendly way.  If a rename map is specified then named values will be renamed to have a
+     *  shorter name.  See the ValueType<>::rename() method for details. */
+    void print(std::ostream &o, RenameMap *rmap=NULL) const;
 
-    /** Print info about how registers differ. */
-    void print_diff_registers(std::ostream &o, const State&) const;
+    /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to have a
+     *  shorter name.  See the ValueType<>::rename() method for details. */
+    void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
 
     /** Tests registers of two states for equality. */
     bool equal_registers(const State&) const;
     
     /** Discard stack memory below stack pointer */
     void discard_popped_memory();
-
-    /** Renames everything in the state according to the rename map. */
-    void rename(RenameMap&);
-
-    /** Creates a new state by normalizing an existing state. */
-    State normalize() const;
 
     friend std::ostream& operator<<(std::ostream &o, const State& state) {
         state.print(o);
@@ -243,10 +243,11 @@ public:
      *  only been read.  */
     bool equal_states(const State&, const State&);
 
-    /** Print the state of this policy. */
-    void print(std::ostream&) const;
+    /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to have a
+     *  shorter name.  See the ValueType<>::rename() method for details. */
+    void print(std::ostream&, RenameMap *rmap=NULL) const;
     friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
-        p.print(o);
+        p.print(o, NULL);
         return o;
     }
     
@@ -265,17 +266,20 @@ public:
         return p_discard_popped_memory;
     }
 
-    /** Print only the differences between two states. */
-    void print_diff(std::ostream&, const State&, const State&);
+    /** Print only the differences between two states.  If a rename map is specified then named values will be renamed to have a
+     *  shorter name.  See the ValueType<>::rename() method for details. */
+    void print_diff(std::ostream&, const State&, const State&, RenameMap *rmap=NULL);
 
-    /** Print the difference between a state and the initial state. */
-    void print_diff(std::ostream &o, const State &state) {
-        print_diff(o, orig_state, state);
+    /** Print the difference between a state and the initial state.  If a rename map is specified then named values will be
+     *  renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
+    void print_diff(std::ostream &o, const State &state, RenameMap *rmap=NULL) {
+        print_diff(o, orig_state, state, rmap);
     }
 
-    /** Print the difference between the current state and the initial state. */
-    void print_diff(std::ostream &o) {
-        print_diff(o, orig_state, cur_state);
+    /** Print the difference between the current state and the initial state.  If a rename map is specified then named values
+     *  will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
+    void print_diff(std::ostream &o, RenameMap *rmap=NULL) {
+        print_diff(o, orig_state, cur_state, rmap);
     }
 
     /** Sign extend from @p FromLen bits to @p ToLen bits. */

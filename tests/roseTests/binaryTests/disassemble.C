@@ -83,10 +83,17 @@ block_semantics(SgAsmBlock *blk)
     if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front()))
         return "";
 
+#if 0
+    std::cerr <<"block_semantics(" <<StringUtility::addrToString(blk->get_address()) <<"):\n";
+#endif
+
+    VirtualMachineSemantics::RenameMap rmap;
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
+    std::cerr <<"  Initial state:\n" <<policy.get_state() <<"\n";
+
     try {
         const SgAsmStatementPtrList &stmts = blk->get_statementList();
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
@@ -97,10 +104,17 @@ block_semantics(SgAsmBlock *blk)
     } catch (const Semantics::Exception&) {
         return "";
     }
+#if 0
+    std::cerr <<"  Final state:\n" <<policy.get_state() <<"\n";
+    std::cerr <<"  Diff:\n";
+    policy.print_diff(std::cerr);
+    std::cerr <<"  Normalized diff:\n";
+    policy.print_diff(std::cerr, &rmap);
+#endif
 
     /* Compute digest based on print form of policy state, then convert to ASCII */
     std::stringstream s;
-    policy.print_diff(s);
+    policy.print_diff(s, &rmap);
     size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
     char *digest = new char[digest_sz];
     gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
