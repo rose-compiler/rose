@@ -92,29 +92,7 @@ block_semantics(SgAsmBlock *blk)
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
             ROSE_ASSERT(insn!=NULL);
-#if 0
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<"  Initial conditions:\n"
-                      <<policy.get_state().normalize();
-#endif
             semantics.processInstruction(insn);
-#if 0
-            {
-                std::stringstream s;
-                s <<policy.get_state().normalize();
-                std::cout <<"  Final conditions:\n" <<s.str();
-                size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
-                char *digest = new char[digest_sz];
-                gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
-                std::string digest_str;
-                for (size_t i=digest_sz; i>0; --i) {
-                    digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
-                    digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
-                }
-                delete[] digest; digest=NULL;
-                std::cout <<"  hash=" <<digest_str <<"\n";
-            }
-#endif
         }
     } catch (const Semantics::Exception&) {
         return "";
@@ -122,7 +100,7 @@ block_semantics(SgAsmBlock *blk)
 
     /* Compute digest based on print form of policy state, then convert to ASCII */
     std::stringstream s;
-    s <<policy.get_state().normalize();
+    policy.print_diff(s);
     size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
     char *digest = new char[digest_sz];
     gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
@@ -134,6 +112,17 @@ block_semantics(SgAsmBlock *blk)
     delete[] digest; digest=NULL;
     return digest_str;
 }
+
+/* Unparser that outputs some extra information */
+class MyAsmUnparser: public AsmUnparser {
+public:
+    MyAsmUnparser() {
+        blk_detect_noop_seq = true;
+    }
+    virtual void pre(std::ostream &o, SgAsmBlock *blk) {
+        o <<StringUtility::addrToString(blk->get_address()) <<": semantics = " <<block_semantics(blk) <<"\n";
+    }
+};
 
 /* Generate the "label" attribute for a function node in a *.dot file. */
 static std::string
@@ -437,18 +426,18 @@ public:
                 *s++ = '\0';
             }
             
-            printf("adding function: 0x%08"PRIx64" <%s>\n", func_entry_va, function_name);
+            printf("adding function: 0x%08"PRIx64" <%s>", func_entry_va, function_name);
             Partitioner::Function *func = p->add_function(func_entry_va, SgAsmFunctionDeclaration::FUNC_USERDEF, rest);
 
             /* Attributes */
             while (s && *s) {
                 while (isspace(*s)) s++;
                 if (!strncmp(s, "noreturn", 8)) {
-                    fprintf(stderr, "noreturn\n");
+                    fprintf(stderr, " noreturn");
                     func->returns = false;
                     s += 8;
                 } else if (!strncmp(s, "return", 6)) {
-                    fprintf(stderr, "return\n");
+                    fprintf(stderr, " return");
                     func->returns = true;
                     s += 6;
                 } else if (*s) {
@@ -456,6 +445,7 @@ public:
                     s = NULL;
                 }
             }
+            printf("\n");
         }
         fclose(f);
     }
@@ -472,6 +462,7 @@ main(int argc, char *argv[])
     bool do_quiet = false;
     bool do_skip_dos = false;
     bool do_show_extents = false;
+    bool do_show_coverage = false;
     bool do_show_functions = false;
     const char *blocks_filename = NULL;
     int exit_status = 0;
@@ -501,6 +492,8 @@ main(int argc, char *argv[])
             do_skip_dos = true;
         } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
             show_bad = true;
+        } else if (!strcmp(argv[i], "--show-coverage")) {       /* show disassembly coverage */
+            do_show_coverage = true;
         } else if (!strcmp(argv[i], "--show-functions")) {      /* show function summary */
             do_show_functions = true;
         } else if (!strcmp(argv[i], "--show-extents")) {        /* show parts of file that were not disassembled */
@@ -516,6 +509,11 @@ main(int argc, char *argv[])
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--quiet")) {               /* do not emit instructions to stdout */
             do_quiet = true;
+        } else if (i+1<argc &&
+                   (!strcmp(argv[i], "-rose:disassembler_search") || !strcmp(argv[i], "-rose:partitioner_search"))) {
+            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
+            new_argv[new_argc++] = argv[i++];
+            new_argv[new_argc++] = argv[i];
         } else if (argv[i][0]=='-') {
             printf("switch passed along to ROSE proper: %s\n", argv[i]);
             new_argv[new_argc++] = argv[i];
@@ -575,12 +573,8 @@ main(int argc, char *argv[])
         if (do_show_functions)
             ShowFunctions().show(interp);
         if (!do_quiet) {
-#if 0
-            fputs(unparseAsmInterpretation(interp).c_str(), stdout);
-#else
-            AsmUnparser unparser;
+            MyAsmUnparser unparser;
             unparser.unparse(std::cout, interp);
-#endif
             fputs("\n\n", stdout);
         }
 
@@ -602,12 +596,18 @@ main(int argc, char *argv[])
         printf("used this memory map:\n");
         interp->get_map()->dump(stdout, "    ");
 
-        /* Figure out what part of the memory mapping does not have instructions. */
-        if (do_show_extents) {
+        /* Figure out what part of the memory mapping does not have instructions. We do this by getting the extents (in
+         * virtual address space) for the memory map used by the disassembler, then subtracting out the bytes referred to by
+         * each instruction.  We cannot just take the sum of the sizes of the sections minus the sum of the sizes of
+         * instructions because (1) sections may overlap in the memory map and (2) instructions may overlap in the virtual
+         * address space.
+         *
+         * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
+         * total number of bytes represented in the disassembly memory map. Although this is stored in the AST, we don't
+         * actually use it anywhere. */
+        if (do_show_extents || do_show_coverage) {
             ExtentMap extents=interp->get_map()->va_extents();
-
-         // DQ (4/29/2010): Adding support for computing coverage of disassembled functions over the lenghts of sections where we attempt to disassemble functions.
-            double extendSizeBefore = (double) extents.size();
+            size_t disassembled_map_size = extents.size();
 
             std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
             for (size_t j=0; j<insns.size(); j++) {
@@ -615,15 +615,17 @@ main(int argc, char *argv[])
                 extents.erase(insn->get_address(), insn->get_raw_bytes().size());
             }
             size_t unused = extents.size();
-            if (unused>0) {
+            if (do_show_extents && unused>0) {
                 printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
                 extents.dump_extents(stdout, "    ", NULL, 0);
             }
 
-         // DQ (4/29/2010): Adding support for computing coverage of disassembled functions over the lenghts of sections where we attempt to disassemble functions.
-            double extendSizeAfter = (double) unused;
-            interp->set_percentageCoverage(extendSizeBefore/extendSizeAfter);
-            interp->set_coverageComputed(true);
+            if (do_show_coverage && disassembled_map_size>0) {
+                double disassembled_coverage = 100.0 * (disassembled_map_size - unused) / disassembled_map_size;
+                interp->set_percentageCoverage(disassembled_coverage);
+                interp->set_coverageComputed(true);
+                printf("Disassembled coverage: %0.1f%%\n", disassembled_coverage);
+            }
         }
 
         /* Generate dot files */
