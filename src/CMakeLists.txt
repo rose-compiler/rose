@@ -301,6 +301,7 @@ set( roseAsmUnparser_SRC
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseArmAsm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparsePowerpcAsm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser.C
+     ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser_compat.C
    )
 
 set( libastMerge_SRC     
