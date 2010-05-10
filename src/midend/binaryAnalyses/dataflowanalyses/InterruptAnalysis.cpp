@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "InterruptAnalysis.h"
 //#include "string.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 
 using namespace std;
