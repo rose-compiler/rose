@@ -333,24 +333,24 @@ test_shiftResizeSection.result: shiftResizeSection
 FIND_CONSTANTS_FILTER=perl -p -e '/====/ && ($$seq=0); s/\bv(\d+)\b/$$map{$$1} ||= "V" . ++$$seq/ge'
 test_findConstants.result: findConstants
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_findConstants.ans 2>$@.tmp; \
+	@($(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_findConstants.ans) 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstants.ans >>$@.tmp 2>&1 ;\
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 test_findConstantsABI.result: findConstantsABI
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_findConstantsABI.ans 2>$@.tmp; \
+	@($(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_findConstantsABI.ans) 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstantsABI.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 test_virtualMachineSemantics.result: virtualMachineSemantics
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_virtualMachineSemantics.ans 2>$@.tmp; \
+	@($(VALGRIND) ./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_virtualMachineSemantics.ans) 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_virtualMachineSemantics.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
@@ -381,7 +381,7 @@ test_assembler.result: disassemble
 
 # another assembler test
 test_testAssembler.result: testAssembler
-	@echo "  TESTNG $@"
+	@echo "  TESTING $@"
 	@$(VALGRIND) ./testAssembler $(BINARY_SAMPLES)/buffer2.bin >test_testAssembler.ans 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_testAssembler.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
