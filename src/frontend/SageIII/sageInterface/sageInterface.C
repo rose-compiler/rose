@@ -5238,14 +5238,13 @@ std::vector<NodeType*> SageInterface::querySubTree(SgNode* top, VariantT variant
 #endif
 
  SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
-{
+{ 
 // reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
   return ROSE::getNextStatement(currentStmt);
 }
 
   SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt)
 {
- 
   return ROSE::getPreviousStatement(currentStmt);
 }
 

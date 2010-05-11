@@ -1252,6 +1252,16 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement )
                          previousStatement = *previousStatementIterator;
                        }
                   }
+                  // Liao 5/10/2010, special case when a true/false body of a if statement is not a basic block
+                  // since getStatementList() is not defined for a if statement. 
+                  // We define the previous statement of the true/false body to be the if statement
+                  // This is consistent with the later handling that when a statement is the first in a parent, 
+                  // treat the parent as the previous statement
+                 else if (isSgIfStmt(scope))
+                  {
+                    previousStatement = isSgStatement(targetStatement->get_parent());
+                    ROSE_ASSERT (isSgIfStmt(previousStatement) != NULL);
+                  }
                  else
                   {
                     SgStatementPtrList & statementList = scope->getStatementList();
