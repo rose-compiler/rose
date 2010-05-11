@@ -19,16 +19,17 @@ include_HEADERS =
 
 ALL_TESTCODES =
 
-TEST_Objects=test0.c test1.c test2.c test3.c 
+TEST_Objects=test0.C test1.C test2.C test3.C 
 
 $(TEST_Objects): reverse
-	@cp $(srcdir)/test/$(@:.o=.c) $(@:.o=.c)
-	./reverse -I$(srcdir)/test -c $(@:.o=.c) -rose:C99 -DROSE_LANGUAGE_MODE=0       		
-	@g++ -I$(srcdir)/test rose_$(@:.o=.c) -o $(@:.o=.c).o -w
-	./$(@:.o=.c).o		
+	@cp $(srcdir)/test/$(@:.o=.C) $(@:.o=.C)
+#./reverse -I$(srcdir)/test -c $(@:.o=.C) -DROSE_LANGUAGE_MODE=0       		
+	./reverse -I$(srcdir)/test -c $(@:.o=.C)      		
+	@g++ -I$(srcdir)/test rose_$(@:.o=.C) -o $(@:.o=.C).o -w
+	./$(@:.o=.C).o		
 
 check-local:
-#@$(MAKE) $(TEST_Objects)
+	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/reverseComputation: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
