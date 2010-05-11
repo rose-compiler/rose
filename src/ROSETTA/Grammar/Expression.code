@@ -1007,12 +1007,12 @@ HEADER_PSEUDO_DESTRUCTOR_REF_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_PSEUDO_DESTRUCTOR_REF_END
 
-HEADER_KERNEL_EXEC_CONFIG_START
-HEADER_KERNEL_EXEC_CONFIG_END
+HEADER_CUDA_KERNEL_EXEC_CONFIG_START
+HEADER_CUDA_KERNEL_EXEC_CONFIG_END
 
-HEADER_KERNEL_CALL_EXPRESSION_START
+HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
-HEADER_KERNEL_CALL_EXPRESSION_END
+HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
 
 // #########################################################
 // #########################################################
@@ -5375,13 +5375,13 @@ SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
 
 
-SOURCE_KERNEL_EXEC_CONFIG_START
-SOURCE_KERNEL_EXEC_CONFIG_END
+SOURCE_CUDA_KERNEL_EXEC_CONFIG_START
+SOURCE_CUDA_KERNEL_EXEC_CONFIG_END
 
-SOURCE_KERNEL_CALL_EXPRESSION_START
+SOURCE_CUDA_KERNEL_CALL_EXPRESSION_START
 
 void
-SgKernelCallExp::post_construction_initialization() 
+SgCudaKernelCallExp::post_construction_initialization() 
    {
      if (p_function != NULL)
           p_function->set_parent(this);
@@ -5390,7 +5390,7 @@ SgKernelCallExp::post_construction_initialization()
    }
 
 void
-SgKernelCallExp::append_arg(SgExpression* what)
+SgCudaKernelCallExp::append_arg(SgExpression* what)
    {
      assert(this != NULL);
 
@@ -5409,7 +5409,7 @@ SgKernelCallExp::append_arg(SgExpression* what)
        p_args->append_expression(what);
    }
    
-SgType* SgKernelCallExp::get_type() const
+SgType* SgCudaKernelCallExp::get_type() const
    {
 	SgType* returnType = NULL;
 
@@ -5460,4 +5460,4 @@ SgType* SgKernelCallExp::get_type() const
    }
 
    
-SOURCE_KERNEL_CALL_EXPRESSION_END
+SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END

@@ -180,6 +180,10 @@ long double __builtin_sinl   (long double __builtin__x);
 float       __builtin_sqrtf  (float       __builtin__x);
 long double __builtin_sqrtl  (long double __builtin__x);
 
+/* DQ (5/4/2010): Reported problem under Ubuntu 9.10 with GCC 4.4.1 and Boost 1.42.
+*/
+int __builtin_fpclassify (int, int, int, int, int, ...);
+
 /* GCC provides built-in versions of the ISO C99 floating point comparison macros that
     avoid raising exceptions for unordered operands. They have the same names as the
     standard macros ( isgreater, isgreaterequal, isless, islessequal, islessgreater, and

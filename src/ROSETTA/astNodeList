@@ -417,8 +417,8 @@ SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol
 SgIorAssignOp
-SgKernelExecConfig
-SgKernelCallExp
+SgCudaKernelExecConfig
+SgCudaKernelCallExp
 SgLabelRefExp
 SgLabelStatement
 SgLabelSymbol

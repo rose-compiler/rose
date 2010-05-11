@@ -27,7 +27,6 @@
 #include "sqlite3x.h"
 #endif
 
-
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 class Properties : public AstAttribute
 {
@@ -62,7 +61,7 @@ typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
 
 // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
 // extern SgFunctionTypeTable Sgfunc_type_table;
-
+// This header has to be here since it uses type SgFunctionDeclarationPtrList 
 #include "ClassHierarchyGraph.h"
 
 
@@ -82,9 +81,6 @@ namespace CallTargetSet
   // member function (non/polymorphic) call
   std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
 };
-
-
-
 
 class FunctionData
 {
@@ -116,40 +112,40 @@ class FunctionData
     //@}
 };
 
-
+//! A function object to be used as a predicate to filter out functions in a call graph
 struct dummyFilter : public std::unary_function<bool,SgFunctionDeclaration*>
 {
   bool operator() (SgFunctionDeclaration* node) const;
 }; 
 
-class GetOneFuncDeclarationPerFunction :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
-{
-  public:
-    result_type operator()(SgNode* node );
-};
-
-
-
 class CallGraphBuilder
 {
   public:
     CallGraphBuilder( SgProject *proj);
-
+    //! Default builder filtering nothing in the call graph
     void buildCallGraph();
-
+    //! Builder accepting user defined predicate to filter certain functions
     template<typename Predicate>
       void buildCallGraph(Predicate pred);
-
+    //! Grab the call graph built
     SgIncidenceDirectedGraph *getGraph(); 
     //void classifyCallGraph();
   private:
     SgProject *project;
     SgIncidenceDirectedGraph *graph;
 };
-
+//! Generate a dot graph named 'fileName' from a call graph
 void GenerateDotGraph ( SgIncidenceDirectedGraph *graph, std::string fileName );
 
+//Iterate over all edges in graph until an edge from->to is found. If not such edge
+//exists return NULL
+SgGraphEdge*
+findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to);
 
+SgGraphNode* findNode(SgGraph* graph, std::string nid);
+
+
+//! Find a matching graph node based on a function declaration
 SgGraphNode* 
 findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration);
 
@@ -161,14 +157,6 @@ findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, std::string name );
 
 SgGraphNode* 
 findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, std::string name, int );
-
-//Iterate over all edges in graph until an edge from->to is found. If not such edge
-//exsists return NULL
-SgGraphEdge*
-findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to);
-
-
-SgGraphNode* findNode(SgGraph* graph, std::string nid);
 
 #ifdef HAVE_SQLITE3
 sqlite3x::sqlite3_connection* open_db(std::string gDB  );
@@ -182,6 +170,11 @@ void solveVirtualFunctions (  sqlite3x::sqlite3_connection& gDB, std::string dbH
 
 #endif
 
+class GetOneFuncDeclarationPerFunction :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
+{
+  public:
+    result_type operator()(SgNode* node );
+};
 
 template<typename Predicate>
   void
