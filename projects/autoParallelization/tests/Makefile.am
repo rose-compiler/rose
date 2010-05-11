@@ -8,6 +8,7 @@ c99loop.c \
 doall.c \
 doall_2.c \
 firstprivate.c \
+functionCall.c \
 ifAndFor.c \
 inner_only.c \
 jacobi_seq.c \
@@ -18,6 +19,7 @@ outer_only.c \
 output_dep.c \
 output_dep2.c \
 output_dep3.c \
+plusAssign.c \
 plusplus.c \
 private.c \
 reduction.c \
