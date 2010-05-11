@@ -214,6 +214,9 @@ linkcolor=black,
 % Perhaps it should be moved.
 \input{RTED}
 
+% TV (04/27/2010): Heterogeneous computing chapter (For now: CUDA and OpenCL)
+\input{heterogeneous}
+
 % This is ROSE/tests/tests.tex
 \input{tests}
 
