@@ -287,19 +287,25 @@ Partitioner::BasicBlock*
 Partitioner::discard(BasicBlock *bb)
 {
     if (bb!=NULL) {
+        /* Erase the block from the list of known blocks. */
+        BasicBlocks::iterator bbi=blocks.find(address(bb));
+        ROSE_ASSERT(bbi!=blocks.end());
+        ROSE_ASSERT(bbi->second==bb);
+        blocks.erase(bbi);
+
+        /* Erase the instruction-to-block link in the insn2block map. */
         for (size_t i=0; i<bb->insns.size(); ++i) {
             SgAsmInstruction *insn = bb->insns[i];
             std::map<rose_addr_t, BasicBlock*>::iterator bbi = insn2block.find(insn->get_address());
             ROSE_ASSERT(bbi!=insn2block.end());
             ROSE_ASSERT(bbi->second==bb);
-            bbi->second = NULL; /*faster than erasing*/
+            bbi->second = NULL; /*much faster than erasing, as determined by real testing*/
         }
+
+        delete bb;
     }
-    delete bb;
     return NULL;
 }
-
-size_t Partitioner::BasicBlock::nblocks;
 
 /* Returns instruction with highest address */
 SgAsmInstruction *
@@ -309,7 +315,7 @@ Partitioner::BasicBlock::last_insn() const
     return insns.back();
 }
 
-/* Release all blocks from a function. */
+/* Release all blocks from a function. Do not delete the blocks. */
 void
 Partitioner::Function::clear_blocks()
 {
@@ -318,7 +324,7 @@ Partitioner::Function::clear_blocks()
     blocks.clear();
 }
 
-/* Return block with highest address */
+/* Return this function's block having the highest address. */
 Partitioner::BasicBlock *
 Partitioner::Function::last_block() const
 {
@@ -339,15 +345,12 @@ Partitioner::clear()
     }
     functions.clear();
 
-    /* Delete all basic blocks */
-    std::set<BasicBlock*> blocks;
-    for (std::map<rose_addr_t, BasicBlock*>::const_iterator ibi=insn2block.begin(); ibi!=insn2block.end(); ++ibi) {
-        if (ibi->second)
-            blocks.insert(ibi->second);
-    }
-    for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
-        delete *bi;
+    /* Delete all basic blocks. We don't need to call Partitioner::discard() to fix up ptrs because all functions that might
+     * have pointed to this block have already been deleted, and the insn2block map has also been cleared. */
     insn2block.clear();
+    for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
+        delete bi->second;
+    blocks.clear();
 
     /* Release (do not delete) all instructions */
     insns.clear();
@@ -453,10 +456,12 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         if (insn2block[va]!=NULL)
             break; /*we've reached another block*/
         SgAsmInstruction *insn = ii->second;
-        va += insn->get_raw_bytes().size();
-        if (!bb)
+        if (!bb) {
             bb = new BasicBlock;
+            blocks.insert(std::make_pair(va, bb));
+        }
         append(bb, insn);
+        va += insn->get_raw_bytes().size();
         if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
@@ -596,8 +601,6 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
         add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
     }
 }
-
-
 
 /* Use symbol tables to determine function entry points. */
 void
@@ -1164,8 +1167,8 @@ Partitioner::analyze_cfg()
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
         fprintf(stderr, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
                 pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
-                BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
+                blocks.size(), 1==blocks.size()?"":"s",
+                blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -1201,8 +1204,8 @@ Partitioner::analyze_cfg()
     }
     fprintf(stderr, "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-            BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
-            BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
+            blocks.size(), 1==blocks.size()?"":"s",
+            blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 }
 
 void
