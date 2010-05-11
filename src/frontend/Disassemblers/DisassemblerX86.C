@@ -66,6 +66,19 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
     return true;
 }
 
+/** True if @p insns ends with a RET instruction. Eventually this could do something more sophisticated. */
+bool
+SgAsmx86Instruction::is_function_return(const std::vector<SgAsmInstruction*> &insns) {
+    if (insns.empty())
+        return false;
+    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
+    if (!last_insn)
+        return false;
+    if (last_insn->get_kind()==x86_ret || last_insn->get_kind()==x86_retf)
+        return true;
+    return false;
+}
+
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(bool *complete) {
     Disassembler::AddressSet retval;

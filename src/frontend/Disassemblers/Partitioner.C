@@ -167,6 +167,10 @@ Partitioner::update_analyses(BasicBlock *bb)
     if (!bb->insns.front()->is_function_call(bb->insns, &(bb->cache.call_target)))
         bb->cache.call_target = NO_TARGET;
 
+    /* Function return analysis */
+    bb->cache.function_return = !bb->cache.sucs_complete &&
+                                bb->insns.front()->is_function_return(bb->insns);
+
     bb->validate_cache();
 }
 
@@ -406,8 +410,32 @@ Partitioner::append(Function* f, BasicBlock *bb)
     ROSE_ASSERT(bb);
     if (bb->function==f) return;
     ROSE_ASSERT(bb->function==NULL);
+    rose_addr_t bb_va = address(bb);
     bb->function = f;
-    f->blocks[address(bb)] = bb;
+    f->blocks[bb_va] = bb;
+
+    /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
+     * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
+     * function calls to this function are eventually discovered.  This includes recursive calls since we may have already
+     * discovered the recursive call but not followed the fall-through address. */
+    update_analyses(bb);
+    if (bb->cache.function_return && !f->returns) {
+        f->returns = true;
+        if (debug) fprintf(debug, "[returns-to");
+        for (BasicBlocks::iterator bbi=blocks.begin(); bbi!=blocks.end(); ++bbi) {
+            if (bbi->second->function!=NULL) {
+                const Disassembler::AddressSet &sucs = successors(bb, NULL);
+                for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                    if (*si==bb_va) {
+                        if (debug) fprintf(debug, " F%08"PRIx64, bbi->second->function->entry_va);
+                        bbi->second->function->pending = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (debug) fprintf(debug, "]");
+    }
 }
 
 /* Remove a basic block from a function */

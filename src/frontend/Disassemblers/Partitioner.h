@@ -105,6 +105,9 @@ protected:
                                                  *   since the final determination requires non-local analysis. If this block
                                                  *   does not end with a call or if the target of the call cannot be statically
                                                  *   determined, then the value is set to Partitioner::NO_TARGET. */
+        bool function_return;                   /**< Does this block serve as the return of a function?  For example, does it
+                                                 *   end with an x86 RET instruction that returns to the CALL fall-through
+                                                 *   address? */
     };
 
     /** Represents a basic block within the Partitioner. Each basic block will eventually become an SgAsmBlock node in the
@@ -139,7 +142,7 @@ protected:
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunctionDeclaration in the
      *  AST. */
     struct Function {
-        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(true) {}
+        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(false) {}
         Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(true) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
             : reason(r), name(name), pending(true), entry_va(entry_va), returns(true) {}
