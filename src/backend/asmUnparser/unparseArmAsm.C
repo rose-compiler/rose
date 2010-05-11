@@ -1,7 +1,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 static std::string unparseArmRegister(
          SgAsmArmRegisterReferenceExpression::arm_register_enum code) {

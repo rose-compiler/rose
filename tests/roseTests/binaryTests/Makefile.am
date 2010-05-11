@@ -5,7 +5,7 @@ SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
 		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
 		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
-		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans
+		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans test_testAssembler.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -24,7 +24,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
-		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics
+		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -91,7 +91,7 @@ virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(R
 
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+disassemble_LDADD = -lgcrypt $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassemble a file containing bare instructions
 disassembleBuffer_SOURCES = disassembleBuffer.C
@@ -110,6 +110,11 @@ expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Program that encodes/decodes data similar to ROT-13 but acceping binary data
 rot13_SOURCES=rot13.C
+
+# Program to test the assembler (see also "disassemble --assemble")
+testAssembler_SOURCES=testAssembler.C
+testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 
 ###############################################################################################################################
 # DEMOS
@@ -179,7 +184,11 @@ demo_disassembleBuffer: disassembleBuffer demo_disassemble
 	@echo; echo; echo "Demo for $<"; echo
 	./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310
 
-demo_testBinCFG: testBinCFG demo_disassembleBuffer
+demo_testAssembler: testAssembler demo_disassembleBuffer
+	@echo; echo; echo "Demo for $<"; echo
+	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
+
+demo_testBinCFG: testBinCFG demo_testAssembler
 	: no demo yet for testBinCFG
 
 demo_expandCoreDump: expandCoreDump demo_testBinCFG
@@ -217,7 +226,8 @@ test_static.result: $(STATIC_TEST_TARGETS)
 
 # Dynamicly-generated tests start here and their definitions are inserted below by the "build" script.  We make the
 # dynamic tests depend on the static test because we're not sure what output files will be generated and we don't want
-# the output of dynamic tests causing havoc for the static tests.
+# the output of dynamic tests causing havoc for the static tests.  The test_sample_binaries.result (along with a whole
+# slew of other targets) is created by the "build" script and placed in the generated Makefile.in.
 test_dynamic.result: test_static.result
 	@$(MAKE) test_sample_binaries.result
 	@touch $@
@@ -259,15 +269,19 @@ test_testElfWordSize.result: testElfWordSize test_testElfStrtab.result test_test
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' < $@.tmp; exit 1; fi
 
+test_testElfSchulz_flags = -rose:partitioner_search -leftovers
 test_testElfSchulz.result: test_testElfSchulz-1.result test_testElfSchulz-2.result
 	@echo "  TESTING $@ (not currently tested)"
 	@touch $@
 
 test_testElfSchulz-1.result: testElfSchulz
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample1.so >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./schulz-sample1.so.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample1-p.so >>$@.tmp 2>&1; \
+	@$(VALGRIND) ./testElfSchulz $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample1.so >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              ./schulz-sample1.so.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample1-p.so >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff -u schulz-sample1{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample1-p.so schulz-sample1.so.new >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
@@ -275,9 +289,12 @@ test_testElfSchulz-1.result: testElfSchulz
 
 test_testElfSchulz-2.result: testElfSchulz
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample2.so >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./schulz-sample2.so.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample2-p.so >>$@.tmp 2>&1; \
+	@$(VALGRIND) ./testElfSchulz $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample2.so >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              ./schulz-sample2.so.new >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
+                              $(BINARY_SAMPLES)/schulz-sample2-p.so >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff -u schulz-sample2{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
 	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample2-p.so schulz-sample2.so.new >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
@@ -362,6 +379,14 @@ test_assembler.result: disassemble
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
+# another assembler test
+test_testAssembler.result: testAssembler
+	@echo "  TESTNG $@"
+	@$(VALGRIND) ./testAssembler $(BINARY_SAMPLES)/buffer2.bin >test_testAssembler.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_testAssembler.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
 test_testEtherInsns.result: testEtherInsns
 	@echo "  TESTING $@ (cannot be run automatically; requires human interaction)"
 	@touch $@
@@ -399,6 +424,8 @@ test_functionBoundaries_3.result: functionBoundaries $(BINARY_SAMPLES)/i686-test
 test_functionBoundaries.result: test_functionBoundaries_1.result test_functionBoundaries_2.result test_functionBoundaries_3.result
 	@touch $@
 
+
+
 # The rules in this section of the makefile are generated by the "build" script based on the selection of binary samples
 # (usually from the binaries/samples directory) available at that time.  We do it this way for a number of reasons:
 #
@@ -430,7 +457,7 @@ MOSTLYCLEANFILES = \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
 	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
 	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
-	test_virtualMachineSemantics.ans
+	test_virtualMachineSemantics.ans test_testAssembler.ans
 
 mostlyclean-local: mostlyclean-binarysamples
 

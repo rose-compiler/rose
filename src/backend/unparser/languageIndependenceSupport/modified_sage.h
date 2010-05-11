@@ -17,20 +17,23 @@ class SgConstructorInitializer;
 
 class Unparser;
 
-class Unparse_MOD_SAGE {
- private:
-  Unparser* unp;
- public:
-  Unparse_MOD_SAGE(Unparser* unp):unp(unp){};
-  virtual ~Unparse_MOD_SAGE() {};
+class Unparse_MOD_SAGE
+   {
+     private:
+          Unparser* unp;
 
-  int cur_get_linewrap ();
+     public:
+          Unparse_MOD_SAGE(Unparser* unp):unp(unp){};
+          virtual ~Unparse_MOD_SAGE() {};
 
- void cur_set_linewrap (int nr);
+          int cur_get_linewrap ();
 
-     void curprint(std::string str);
-     void curprint_newline();
-     //! functions that test for overloaded operator function (modified_sage.C)
+          void cur_set_linewrap (int nr);
+
+          void curprint(std::string str);
+          void curprint_newline();
+
+      //! functions that test for overloaded operator function (modified_sage.C)
       //! Pattern matching on a single IR node (usually the SgMemberFunctionRefExp)
           bool isOperator(SgExpression* expr);
           bool isBinaryEqualsOperator(SgExpression* expr);
@@ -68,7 +71,7 @@ class Unparse_MOD_SAGE {
       //! auxiliary functions (some code from original modified_sage.C)
           bool NoDereference(SgExpression* expr);
           bool isCast_ConstCharStar(SgType* type);
-         bool PrintStartParen(SgExpression* expr, SgUnparse_Info& info);
+          bool PrintStartParen(SgExpression* expr, SgUnparse_Info& info);
           bool RemovePareninExprList(SgExprListExp* expr_list);
           bool isOneElementList(SgConstructorInitializer* con_init);
 
@@ -97,11 +100,7 @@ class Unparse_MOD_SAGE {
        // DQ (2/4/2006): Removed since this is not used
        // DQ (4/3/2004): Added to output modifiers (e.g. register) in formal function arguments
        // void printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse_Info& info );
-
-
-
-
-};
+   };
 
 #endif
 
