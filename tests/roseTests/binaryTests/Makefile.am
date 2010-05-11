@@ -356,12 +356,12 @@ test_virtualMachineSemantics.result: virtualMachineSemantics
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 test_disassemble.result: disassemble
-	@echo "  TESTING $@ (commented out by DQ on 10/24/09)"
-#	@$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
-#	 [ $$? -eq 0 ] && mv i686-test1.O0.bin.dump test_disassemble.ans; \
-#	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
-#	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-#	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && mv i686-test1.O0.bin.dump test_disassemble.ans; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 test_disassembleBuffer.result: disassembleBuffer
 	@echo "  TESTING $@"
