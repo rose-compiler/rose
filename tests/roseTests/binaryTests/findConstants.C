@@ -49,8 +49,8 @@
     struct TestPolicy: public VirtualMachineSemantics::Policy {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<state
-                      <<"    ip = " <<new_ip <<"\n";
+                      <<get_state()
+                      <<"    ip = " <<get_ip() <<"\n";
         }
     };
 #else
@@ -103,8 +103,8 @@ analyze_interp(SgAsmInterpretation *interp)
 
             /* Get next instruction of this block */
 #if 3==POLICY_SELECTOR
-            if (policy.new_ip.name) break;
-            rose_addr_t next_addr = policy.new_ip.offset;
+            if (!policy.get_ip().is_known()) break;
+            rose_addr_t next_addr = policy.get_ip().known_value();
 #else
             if (policy.newIp->get().name) break;
             rose_addr_t next_addr = policy.newIp->get().offset;

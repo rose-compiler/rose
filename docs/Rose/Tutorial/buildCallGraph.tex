@@ -8,12 +8,12 @@
 
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
-   \lstinputlisting{\TutorialExampleDirectory/buildCG.C}
+   \lstinputlisting{\TutorialExampleDirectory/buildCallGraph.C}
 \end{latexonly}
 
 % Do this when processing latex to build html (using latex2html)
 \begin{htmlonly}
-   \verbatiminput{\TutorialExampleDirectory/buildCG.C}
+   \verbatiminput{\TutorialExampleDirectory/buildCallGraph.C}
 \end{htmlonly}
 
 % end of scope in font size
@@ -32,10 +32,15 @@ function calls in a function, where a function in the graph is represented by a 
 an edge (arrow). To make a call graph this process is  redone for every called function until all edges are followed
 and there are no ungraphed functions. ROSE has an in-build mechanism for generating call graphs. 
 
+ROSE provides support for generating call graphs, as defined in
+\textit{src/midend/programAnalysis/CallGraphAnalysis/CallGraph.h}.
    Figure~\ref{Tutorial:exampleBuildCG} shows the code required to generate
 the call graph for each function of an application.  Using the input code shown in
 figure~\ref{Tutorial:exampleInputCode_BuildCG} the first function's call graph is
 shown in figure~\ref{Tutorial:exampleBuildCGGraph}.
+A standalone tool named \textit{buildCallGraph} is installed under
+\textit{ROSE\_INSTALL/bin} so users can use it to generate call graphs in
+dot format.
 
 \begin{figure}[!h]
 {\indent
@@ -69,8 +74,8 @@ shown in figure~\ref{Tutorial:exampleBuildCGGraph}.
 \label{Tutorial:exampleBuildCGGraph}
 \end{figure}
 
-   Figure~\ref{Tutorial:exampleBuildCGGraph} shows the call graph for the
-function in the input code in figure~\ref{Tutorial:exampleInputCode_BuildCG}.
+%   Figure~\ref{Tutorial:exampleBuildCGGraph} shows the call graph for the
+%function in the input code in figure~\ref{Tutorial:exampleInputCode_BuildCG}.
 
 
 

@@ -95,6 +95,12 @@ HEADER_BINARY_INSTRUCTION_START
 		void append_sources( SgAsmInstruction* instruction );
 		virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) {return false;}
+		virtual bool has_effect();
+		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+					bool relax_stack_semantics=false);
+		virtual std::vector<std::pair<size_t,size_t> >
+		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool *complete);
 HEADER_BINARY_INSTRUCTION_END
@@ -722,16 +728,29 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 	  static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
 
         /** Displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric byte values,
-         *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. */
-	static void hexdump(FILE *f, rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt);
+         *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. There are
+	 *  other versions that output containers of data.  The hexdump comes in three flavors: output to a C++ stream,
+	 *  output to a C FILE, and output to an std::string.  The FILE and string versions are implemented in terms of the
+	 *  stream version. */
+	static void hexdump(std::ostream&, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+	static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
+			    bool multiline=true);
+	static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
+			    bool multiline=true);
 
-        /** Container version of basic hexdump function.  If @p multiline is true (the default) then the prefix is output
-         *  before the first line and the output is terminated by a line feed in addition to the normal emitting of the prefix
-         *  between internal line feeds. */
-        static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data,
-                            bool multiline=true);
-        static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data,
-                            bool multiline=true);
+	/* Same, but returning a string instead. */
+	static std::string hexdump(rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+	static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
+			           bool multiline=true);
+	static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
+			           bool multiline=true);
+
+	/* Same, but output to a FILE* instead. */
+	static void hexdump(FILE*, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+	static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
+			    bool multiline=true);
+	static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
+			    bool multiline=true);
 
        /* Return byte order of caller */
           static SgAsmExecutableFileFormat::ByteOrder host_order();
@@ -3838,6 +3857,12 @@ HEADER_BINARY_X86_INSTRUCTION_START
 		/* These virtual functions are implemented in DisassemblerX86.C */
 		virtual bool terminatesBasicBlock();
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
+		virtual bool has_effect();
+		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+				        bool relax_stack_semantics=false);
+		virtual std::vector<std::pair<size_t,size_t> >
+		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool* complete);
 HEADER_BINARY_X86_INSTRUCTION_END
