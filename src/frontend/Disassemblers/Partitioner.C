@@ -410,9 +410,8 @@ Partitioner::append(Function* f, BasicBlock *bb)
     ROSE_ASSERT(bb);
     if (bb->function==f) return;
     ROSE_ASSERT(bb->function==NULL);
-    rose_addr_t bb_va = address(bb);
     bb->function = f;
-    f->blocks[bb_va] = bb;
+    f->blocks[address(bb)] = bb;
 
     /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
      * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
@@ -424,9 +423,9 @@ Partitioner::append(Function* f, BasicBlock *bb)
         if (debug) fprintf(debug, "[returns-to");
         for (BasicBlocks::iterator bbi=blocks.begin(); bbi!=blocks.end(); ++bbi) {
             if (bbi->second->function!=NULL) {
-                const Disassembler::AddressSet &sucs = successors(bb, NULL);
+                const Disassembler::AddressSet &sucs = successors(bbi->second, NULL);
                 for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                    if (*si==bb_va) {
+                    if (*si==f->entry_va) {
                         if (debug) fprintf(debug, " F%08"PRIx64, bbi->second->function->entry_va);
                         bbi->second->function->pending = true;
                         break;
@@ -626,7 +625,17 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
             }
         }
         
-        add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+        Function *plt_func = add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+
+        /* FIXME: Assume that most PLT functions return. We make this assumption for now because the PLT table contains an
+         *        indirect jump through the .plt.got data area and we don't yet do static analysis of the data.  Because of
+         *        that, all the PLT functons will contain only a basic block with the single indirect jump, and no return
+         *        (e.g., x86 RET or RETF) instruction, and therefore the function would not normally be marked as returning.
+         *        [RPM 2010-05-11] */
+        if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
+            "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
+            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name)
+            plt_func->returns = true;
     }
 }
 
