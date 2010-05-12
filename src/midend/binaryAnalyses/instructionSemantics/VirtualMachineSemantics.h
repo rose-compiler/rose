@@ -391,6 +391,23 @@ public:
         return new_cell.data;
     }
 
+    /** See memory_reference_type(). */
+    enum MemRefType { MRT_STACK_PTR, MRT_FRAME_PTR, MRT_OTHER_PTR };
+
+    /** Determines if the specified address is related to the current stack or frame pointer. This is used by mem_write() when
+     *  we're operating under the assumption that memory written via stack pointer is different than memory written via frame
+     *  pointer, and that memory written by either pointer is different than all other memory. */
+    MemRefType memory_reference_type(const State &state, const ValueType<32> &addr) const {
+        if (addr.name) {
+            if (addr.name==state.gpr[x86_gpr_sp].name) return MRT_STACK_PTR;
+            if (addr.name==state.gpr[x86_gpr_bp].name) return MRT_FRAME_PTR;
+            return MRT_OTHER_PTR;
+        }
+        if (addr==state.gpr[x86_gpr_sp]) return MRT_STACK_PTR;
+        if (addr==state.gpr[x86_gpr_bp]) return MRT_FRAME_PTR;
+        return MRT_OTHER_PTR;
+    }
+    
     /** Writes a value to memory. If the address written to is an alias for other addresses then the other addresses will be
      *  clobbered. Subsequent reads from clobbered addresses will return new values. See also, mem_read(). */
     template <size_t Len> void mem_write(State &state, const ValueType<32> &addr, const ValueType<Len> &data) {
@@ -398,17 +415,18 @@ public:
         MemoryCell new_cell(addr, data, Len/8);
         new_cell.set_written();
         bool saved = false; /* has new_cell been saved into memory? */
+
+        /* Is new memory reference through the stack pointer or frame pointer? */
+        MemRefType new_mrt = memory_reference_type(state, addr);
+
+        /* Overwrite and/or clobber existing memory locations. */
         for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
             if (new_cell.must_alias(*mi)) {
                 *mi = new_cell;
                 saved = true;
-            } else if (p_discard_popped_memory &&
-                       state.gpr[x86_gpr_sp]!=state.gpr[x86_gpr_bp] &&
-                       state.gpr[x86_gpr_sp].name!=state.gpr[x86_gpr_bp].name &&
-                       ((addr.name==state.gpr[x86_gpr_sp].name && (*mi).address.name==state.gpr[x86_gpr_bp].name) ||
-                        (addr.name==state.gpr[x86_gpr_bp].name && (*mi).address.name==state.gpr[x86_gpr_sp].name))) {
-                /* assume that mem referenced via stack pointer does not alias mem referenced with frame pointer. This isn't
-                 * safe generally, but is usually the case for well-behaved programs. */
+            } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).address)) {
+                /* Assume that memory referenced through the stack pointer does not alias that which is referenced through the
+                 * frame pointer, and neither of them alias memory that is referenced other ways. */
             } else if (new_cell.may_alias(*mi)) {
                 (*mi).set_clobbered();
             } else {
