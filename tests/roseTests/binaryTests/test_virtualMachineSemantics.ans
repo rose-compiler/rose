@@ -2918,9 +2918,9 @@
     sp=V5+0x4        bp=V6            si=V7            di=V8            
     es=V9            cs=V10            ss=V11            ds=V12            
     fs=V13            gs=V14            cf=0x0               ?1=V16            
-    pf=0x1               ?3=V18            af=0x0               ?5=V20            
+    pf=0x1               ?3=V18            af=0x1               ?5=V20            
     zf=0x0               sf=0x1               tf=V23            if=V24            
-    df=V25            of=0x1               iopl0=V27         iopl1=V28         
+    df=V25            of=0x0               iopl0=V27         iopl1=V28         
     nt=V29            ?15=V30           
     memory:
         V5: V4 4 bytes read-only clobbered
@@ -2930,10 +2930,10 @@
     ax=0xffffffff (-0x1) cx=V2            dx=V4+0x10ba     bx=V4+0x119a     
     sp=V5+0x4        bp=V6            si=V7            di=V8            
     es=V9            cs=V10            ss=V11            ds=V12            
-    fs=V13            gs=V14            cf=0x1               ?1=V16            
+    fs=V13            gs=V14            cf=0x0               ?1=V16            
     pf=0x1               ?3=V18            af=0x0               ?5=V20            
     zf=0x1               sf=0x0               tf=V23            if=V24            
-    df=V25            of=0x1               iopl0=V27         iopl1=V28         
+    df=V25            of=0x0               iopl0=V27         iopl1=V28         
     nt=V29            ?15=V30           
     memory:
         V5: V4 4 bytes read-only clobbered
@@ -2943,10 +2943,10 @@
     ax=0xffffffff (-0x1) cx=V2            dx=V4+0x10ba     bx=V4+0x119a     
     sp=V5+0x4        bp=V6            si=V7            di=V8            
     es=V9            cs=V10            ss=V11            ds=V12            
-    fs=V13            gs=V14            cf=0x1               ?1=V16            
+    fs=V13            gs=V14            cf=0x0               ?1=V16            
     pf=0x1               ?3=V18            af=0x0               ?5=V20            
     zf=0x1               sf=0x0               tf=V23            if=V24            
-    df=V25            of=0x1               iopl0=V27         iopl1=V28         
+    df=V25            of=0x0               iopl0=V27         iopl1=V28         
     nt=V29            ?15=V30           
     memory:
         V5: V4 4 bytes read-only clobbered
@@ -2956,10 +2956,10 @@
     ax=0xffffffff (-0x1) cx=V2            dx=V4+0x10ba     bx=V4+0x119a     
     sp=V5            bp=V6            si=V7            di=V8            
     es=V9            cs=V10            ss=V11            ds=V12            
-    fs=V13            gs=V14            cf=0x1               ?1=V16            
+    fs=V13            gs=V14            cf=0x0               ?1=V16            
     pf=0x1               ?3=V18            af=0x0               ?5=V20            
     zf=0x1               sf=0x0               tf=V23            if=V24            
-    df=V25            of=0x1               iopl0=V27         iopl1=V28         
+    df=V25            of=0x0               iopl0=V27         iopl1=V28         
     nt=V29            ?15=V30           
     memory:
         V5: 0x8048570 4 bytes
