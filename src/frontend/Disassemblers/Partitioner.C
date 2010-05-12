@@ -1043,9 +1043,9 @@ void
 Partitioner::discover_first_block(Function *func) 
 {
     if (debug) {
-        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": ",
+        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64,
                 SgAsmFunctionDeclaration::reason_str(true, func->reason).c_str(),
-                func->entry_va, func->name.c_str());
+                func->entry_va, func->name.c_str(), func->entry_va);
     }
     BasicBlock *bb = find_bb_containing(func->entry_va);
 

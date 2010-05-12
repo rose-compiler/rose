@@ -168,6 +168,11 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
 {
+#if 0
+    fprintf(stderr, "SgAsmx86Instruction::get_successors(B%08"PRIx64" for %zd instruction%s):\n", 
+            insns.front()->get_address(), insns.size(), 1==insns.size()?"":"s");
+#endif
+
     Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
@@ -183,7 +188,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 semantics.processInstruction(insn);
 #if 0
                 std::ostringstream s;
-                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
+                s << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
                   <<policy.get_state()
                   <<"    ip = " <<policy.get_ip() <<"\n";
                 fputs(s.str().c_str(), stderr);
@@ -198,13 +203,14 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
 #if 0
-            fprintf(stderr, "semantic analysis failed: %s\n", e.mesg.c_str());
+            fprintf(stderr, "    semantic analysis failed: %s\n", e.mesg.c_str());
 #endif
         }
     }
 
     /* Assume that a CALL instruction eventually executes a RET that causes execution to resume at the address following the
-     * CALL. This is true 99% of the time. */
+     * CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may prune away this fall-through address
+     * under certain circumstances. [RPM 2010-05-09] */
     {
         ROSE_ASSERT(insns.size()>0);
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
@@ -212,6 +218,15 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall)
             successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
     }
+
+#if 0
+    fprintf(stderr, "  successors:");
+    for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+        fprintf(stderr, " 0x%08"PRIx64, *si);
+    if (!*complete) fprintf(stderr, "...");
+    fprintf(stderr, "\n");
+#endif
+
     return successors;
 }
 
