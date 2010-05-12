@@ -7549,8 +7549,8 @@ int SageInterface::fixVariableReferences(SgNode* root)
       // This function can be called any time, not just final fixing stage
       if (realSymbol==NULL) 
       {
-        cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
-        ROSE_ASSERT(realSymbol);
+        //cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
+        //ROSE_ASSERT(realSymbol);
       }
       else {
         // release placeholder initname and symbol
