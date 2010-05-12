@@ -80,7 +80,38 @@ struct ValueType {
 
     /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See the rename()
      *  method for details. */
-    void print(std::ostream &o, RenameMap *rmap=NULL) const;
+    void print(std::ostream &o, RenameMap *rmap=NULL) const {
+        uint64_t sign_bit = (uint64_t)1 << (nBits-1); /* e.g., 80000000 */
+        uint64_t val_mask = sign_bit - 1;             /* e.g., 7fffffff */
+        uint64_t negative = nBits>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0; /*magnitude of negative value*/
+
+        if (name!=0) {
+            /* This is a named value rather than a constant. */
+            uint64_t renamed = name;
+            if (rmap) {
+                RenameMap::iterator found = rmap->find(name);
+                if (found==rmap->end()) {
+                    renamed = rmap->size()+1;
+                    rmap->insert(std::make_pair(name, renamed));
+                } else {
+                    renamed = found->second;
+                }
+            }
+            const char *sign = negate ? "-" : "";
+            o <<sign <<"v" <<std::dec <<renamed;
+            if (negative) {
+                o <<"-0x" <<std::hex <<negative;
+            } else if (offset) {
+                o <<"+0x" <<std::hex <<offset;
+            }
+        } else {
+            /* This is a constant */
+            ROSE_ASSERT(!negate);
+            o  <<"0x" <<std::hex <<offset;
+            if (negative)
+                o <<" (-0x" <<std::hex <<negative <<")";
+        }
+    }
 
     friend bool operator==(const ValueType &a, const ValueType &b) {
         return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
@@ -100,7 +131,10 @@ struct ValueType {
 };
 
 template<size_t Len>
-std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e);
+std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
+    e.print(o, NULL);
+    return o;
+}
 
 /** Represents one location in memory. Has an address data and size in bytes.
  *
@@ -569,9 +603,9 @@ public:
         int n_unknown = (a.name?1:0) + (b.name?1:0) + (c.name?1:0);
         if (n_unknown <= 1) {
             /* At most, one of the operands is an unknown value. See add() for more details. */
-            uint64_t sum = a.name + b.name + c.name;
+            uint64_t sum = a.offset + b.offset + c.offset;
             carry_out = 0==n_unknown ? ValueType<Len>((a.offset ^ b.offset ^ sum)>>1) : ValueType<Len>();
-            return ValueType<Len>(sum, a.offset+b.offset+c.offset, a.negate||b.negate||c.negate);
+            return ValueType<Len>(a.name+b.name+c.name, sum, a.negate||b.negate||c.negate);
         } else if (a.name==b.name && !c.name && a.negate!=b.negate) {
             /* A and B are known or have bases that cancel out, and C is known */
             uint64_t sum = a.offset + b.offset + c.offset;

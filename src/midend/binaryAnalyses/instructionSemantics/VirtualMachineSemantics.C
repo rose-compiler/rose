@@ -8,53 +8,9 @@ namespace VirtualMachineSemantics {
 uint64_t name_counter;
 
 /*************************************************************************************************************************
- *                                                      Global Functions
- *************************************************************************************************************************/
-
-template <size_t Len> std::ostream&
-operator<<(std::ostream &o, const ValueType<Len> &e) {
-    e.print(o, NULL/*do not rename*/);
-    return o;
-}
-
-
-/*************************************************************************************************************************
  *                                                         ValueType
  *************************************************************************************************************************/
 
-template <size_t Len> void
-ValueType<Len>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const {
-    uint64_t sign_bit = (uint64_t)1 << (Len-1);  /* e.g., 80000000 */
-    uint64_t val_mask = sign_bit - 1;            /* e.g., 7fffffff */
-    uint64_t negative = Len>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0; /*magnitude of negative value*/
-
-    if (name!=0) {
-        /* This is a named value rather than a constant. */
-        uint64_t renamed = name;
-        if (rmap) {
-            RenameMap::iterator found = rmap->find(name);
-            if (found==rmap->end()) {
-                renamed = rmap->size()+1;
-                rmap->insert(std::make_pair(name, renamed));
-            } else {
-                renamed = found->second;
-            }
-        }
-        const char *sign = negate ? "-" : "";
-        o <<sign <<"v" <<std::dec <<renamed;
-        if (negative) {
-            o <<"-0x" <<std::hex <<negative;
-        } else if (offset) {
-            o <<"+0x" <<std::hex <<offset;
-        }
-    } else {
-        /* This is a constant */
-        ROSE_ASSERT(!negate);
-        o  <<"0x" <<std::hex <<offset;
-        if (negative)
-            o <<" (-0x" <<std::hex <<negative <<")";
-    }
-}
 
 template<size_t Len> ValueType<Len>
 ValueType<Len>::rename(RenameMap *rmap) const
