@@ -496,7 +496,7 @@ INPUT                  = \
 			 @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
-			 @top_srcdir@/src/backend/asmUnparser/unparseAsm.C \
+			 @top_srcdir@/src/backend/asmUnparser/AsmUnparser.C \
                          @top_srcdir@/src/backend/unparser/unparser.docs \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \

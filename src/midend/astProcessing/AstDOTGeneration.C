@@ -15,7 +15,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
