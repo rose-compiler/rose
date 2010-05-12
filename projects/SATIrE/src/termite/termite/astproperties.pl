@@ -450,9 +450,11 @@ pragma_text(Pragma, Text) :-
   var(Pragma), !,
   Pragma = pragma_declaration(
                pragma(pragma_annotation(Text),
-		      analysis_result(null), null),
+		      analysis_result(null),
+		      file_info(compilerGenerated,0,0)),
 			      default_annotation(null, preprocessor_info([])),
-			      analysis_result(null, null), null).
+			      analysis_result(null, null),
+			      file_info(compilerGenerated,0,0)).
 
 % +Pragma -Text
 pragma_text(pragma_declaration(pragma(pragma_annotation(String), _,_), _,_,_),
