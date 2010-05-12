@@ -71,7 +71,7 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 
         // if the left-hand side of the assign-op is the state
         // (note that only in this situation do we consider to reverse this expression)
-        if (SgExpression* var = isStateVar(bin_op->get_lhs_operand_i()))
+        if (SgExpression* model_var = isStateVar(bin_op->get_lhs_operand_i()))
         {
             // The operators +=, -=, *=, <<=, ^= can be reversed without state saving,
             // if the rhs operand is a constant value or state variable.
@@ -87,13 +87,13 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgMinusAssignOp>(
-                                var, rhs_operand));
+                                model_var, rhs_operand));
 
                 if (isSgMinusAssignOp(exp))
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgPlusAssignOp>(
-                                var, rhs_operand));
+                                model_var, rhs_operand));
 
                 // we must ensure that the rhs operand of *= is not ZERO
                 if (isSgMultAssignOp(exp) && !isZero(isSgValueExp(rhs_operand)))
@@ -101,19 +101,19 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgDivAssignOp>(
-                                var, rhs_operand));
+                                model_var, rhs_operand));
 
                 if (isSgLshiftAssignOp(exp))
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgRshiftAssignOp>(
-                                var, rhs_operand));
+                                model_var, rhs_operand));
 
                 if (isSgXorAssignOp(exp))
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgXorAssignOp>(
-                                var, rhs_operand));
+                                model_var, rhs_operand));
             }
 
             // the following operations which alter the value of the lhs operand
@@ -131,20 +131,20 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                     isSgLshiftAssignOp(exp) ||
                     isSgRshiftAssignOp(exp))
             {
-                SgBinaryOp* exp_copy = isSgBinaryOp(copyExpression(exp));
+                SgBinaryOp* exp_copy = isSgBinaryOp(exp);
                 exp_copy->set_rhs_operand_i(fwd_rhs_exp);
 
-                SgExpression* state_var = getStateVar(var);
+                SgExpression* state_var = getStateVar(model_var);
 
                 // Save the state (we cannot use the default forward expression any more).
                 // Here we use comma operator expression to implement state saving.
                 SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                        buildBinaryExpression<SgAssignOp>(state_var, var),
+                        buildBinaryExpression<SgAssignOp>(state_var, model_var),
                         exp_copy);
 
                 // retrieve the state
                 SgExpression* rev_exp = buildBinaryExpression<SgAssignOp>(
-                        copyExpression(var),
+                        copyExpression(model_var),
                         copyExpression(state_var));
 
                 // If the rhs operand expression can be reversed, we have to deal with 
@@ -246,7 +246,7 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 
         // if the left-hand side of the assign-op is the state
         // (note that only in this situation do we consider to reverse this expression)
-        if (SgExpression* var = isStateVar(unary_op->get_operand_i()))
+        if (SgExpression* model_var = isStateVar(unary_op->get_operand_i()))
         {
             // ++ and -- can both be reversed without state saving
             if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
@@ -256,7 +256,7 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                 else pp_mode = SgUnaryOp::prefix;
                 return ExpPair(
                         fwd_exp,
-                        buildMinusMinusOp(var, pp_mode));
+                        buildMinusMinusOp(model_var, pp_mode));
             }
 
             if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(exp))
@@ -266,7 +266,7 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                 else mm_mode = SgUnaryOp::prefix;
                 return ExpPair(
                         fwd_exp,
-                        buildPlusPlusOp(var, mm_mode));
+                        buildPlusPlusOp(model_var, mm_mode));
             }
         }
 
@@ -988,6 +988,7 @@ int fixVariableReferences2(SgNode* root)
         {
             SgName varName=initname->get_name();
             SgSymbol* realSymbol = NULL;
+            cout << varName << endl;
 
             // CH (5/7/2010): Before searching SgVarRefExp objects, we should first deal with class/structure
             // members. Or else, it is possible that we assign the wrong symbol to those members if there is another
