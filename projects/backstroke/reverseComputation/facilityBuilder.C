@@ -10,36 +10,35 @@ using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
 
-SgFunctionDeclaration* buildInitializationFunction()
+SgFunctionDeclaration* buildInitializationFunction(SgClassType* model_type)
 {
-    SgType* model_type = buildStructDeclaration("model")->get_type();
-
     SgInitializedName* model_obj = buildInitializedName("m", buildPointerType(model_type));
     SgFunctionParameterList* para_list = buildFunctionParameterList(model_obj);
     SgFunctionDeclaration* func_decl = 
-	buildDefiningFunctionDeclaration(
-		"initialize",
-		buildVoidType(),
-		para_list);
+        buildDefiningFunctionDeclaration(
+                "initialize",
+                buildVoidType(),
+                para_list);
+
     pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
 
     // Initialize int member
     SgArrowExp* int_var = buildBinaryExpression<SgArrowExp>(
-	    buildVarRefExp(model_obj),
-	    buildVarRefExp(INT_MEM_NAME)); 
+            buildVarRefExp(model_obj),
+            buildVarRefExp(INT_MEM_NAME)); 
     SgAssignOp* assign_0_to_int = buildBinaryExpression<SgAssignOp>(int_var, buildIntVal(0xFFFF));
     appendStatement(buildExprStatement(assign_0_to_int));
 
     // Initialize int array member
     SgArrowExp* int_array_var = buildBinaryExpression<SgArrowExp>(
-	    buildVarRefExp(model_obj),
-	    buildVarRefExp(INT_ARRAY_MEM_NAME)); 
+            buildVarRefExp(model_obj),
+            buildVarRefExp(INT_ARRAY_MEM_NAME)); 
     SgExprListExp* memset_para = buildExprListExp(
-	    int_array_var,
-	    buildIntVal(0xFFFF),
-	    buildBinaryExpression<SgDivideOp>(
-		buildSizeOfOp(copyExpression(int_array_var)),
-		buildSizeOfOp(buildIntType())));
+            int_array_var,
+            buildIntVal(0xFFFF),
+            buildBinaryExpression<SgDivideOp>(
+                buildSizeOfOp(copyExpression(int_array_var)),
+                buildSizeOfOp(buildIntType())));
     SgStatement* stmt = buildExprStatement(assign_0_to_int);
     appendStatement(buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para));
 
@@ -47,26 +46,24 @@ SgFunctionDeclaration* buildInitializationFunction()
     return func_decl;
 }
 
-SgFunctionDeclaration* buildCompareFunction()
+SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
 {
-    SgType* model_type = buildStructDeclaration("model")->get_type();
-
     SgInitializedName* model_obj1 = buildInitializedName("m1", buildPointerType(model_type));
     SgInitializedName* model_obj2 = buildInitializedName("m2", buildPointerType(model_type));
     SgFunctionParameterList* para_list = buildFunctionParameterList(model_obj1, model_obj2);
     SgFunctionDeclaration* func_decl = 
-	buildDefiningFunctionDeclaration(
-		"compare",
-		buildIntType(),
-		para_list);
+        buildDefiningFunctionDeclaration(
+                "compare",
+                buildIntType(),
+                para_list);
     pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
 
     SgArrowExp* int_var1 = buildBinaryExpression<SgArrowExp>(
-	    buildVarRefExp(model_obj1),
-	    buildVarRefExp(INT_MEM_NAME)); 
+            buildVarRefExp(model_obj1),
+            buildVarRefExp(INT_MEM_NAME)); 
     SgArrowExp* int_var2 = buildBinaryExpression<SgArrowExp>(
-	    buildVarRefExp(model_obj2),
-	    buildVarRefExp(INT_MEM_NAME)); 
+            buildVarRefExp(model_obj2),
+            buildVarRefExp(INT_MEM_NAME)); 
     SgNotEqualOp* compare_int_exp = buildBinaryExpression<SgNotEqualOp>(int_var1, int_var2);
     SgIfStmt* if_compare_int_stmt = buildIfStmt(compare_int_exp, buildReturnStmt(buildIntVal(0)), NULL);
     appendStatement(if_compare_int_stmt);
@@ -82,10 +79,10 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
 {
     // build the main function which performs the test
     SgFunctionDeclaration* func_decl = 
-	buildDefiningFunctionDeclaration(
-		"main",
-		buildIntType(),
-		buildFunctionParameterList());
+        buildDefiningFunctionDeclaration(
+                "main",
+                buildIntType(),
+                buildFunctionParameterList());
     pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
 
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -94,8 +91,8 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
 
     // reset the seed of the random number generator
     SgExprListExp* get_clock = buildExprListExp(
-	    buildFunctionCallExp("time", buildIntType(), 
-		buildExprListExp(buildIntVal(0))));
+            buildFunctionCallExp("time", buildIntType(), 
+                buildExprListExp(buildIntVal(0))));
     SgStatement* reset_seed = buildFunctionCallStmt("srand", buildVoidType(), get_clock);
     SgType* model_type = buildStructDeclaration("model")->get_type();
 
@@ -105,10 +102,10 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
 
     // Initialize them
     SgExprListExp* para1 = buildExprListExp(
-	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")));
+            buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")));
     SgExprStatement* init1 = buildFunctionCallStmt("initialize", buildVoidType(), para1);
     SgExprListExp* para2 = buildExprListExp(
-	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
+            buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
     SgExprStatement* init2 = buildFunctionCallStmt("initialize", buildVoidType(), para2);
 
     // Output PASS or FAIL information
@@ -122,8 +119,8 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
     SgExprStatement* call_event = buildFunctionCallStmt("event", buildVoidType(), para1);
     SgExprStatement* call_event_fwd = buildFunctionCallStmt("event_forward", buildVoidType(), para2);
     SgExprListExp* para_comp = buildExprListExp(
-	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
-	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
+            buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
+            buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
     SgExpression* call_compare_exp = buildFunctionCallExp("compare", buildVoidType(), para_comp);
     SgExprListExp* para_assert = buildExprListExp(call_compare_exp);
     SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), para_assert);
@@ -131,7 +128,7 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
 
     // First, input all initializing statements.
     foreach (SgStatement* stmt, inits) 
-	appendStatement(stmt);
+        appendStatement(stmt);
 
     appendStatement(reset_seed);
     appendStatement(var1);
@@ -160,36 +157,36 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
 
     for (int i = 0; i < events_num; ++i)
     {
-	// Call event_forward and event_reverse then check if the model's value changes
-	SgStatement* call_event_fwd = buildFunctionCallStmt(
-		"event" + lexical_cast<string>(i) + "_forward", 
-		buildVoidType(), 
-		isSgExprListExp(copyExpression(para1)));
-	SgStatement* call_event_rev = buildFunctionCallStmt(
-		"event" + lexical_cast<string>(i) + "_reverse", 
-		buildVoidType(), 
-		isSgExprListExp(copyExpression(para1)));
+        // Call event_forward and event_reverse then check if the model's value changes
+        SgStatement* call_event_fwd = buildFunctionCallStmt(
+                "event" + lexical_cast<string>(i) + "_forward", 
+                buildVoidType(), 
+                isSgExprListExp(copyExpression(para1)));
+        SgStatement* call_event_rev = buildFunctionCallStmt(
+                "event" + lexical_cast<string>(i) + "_reverse", 
+                buildVoidType(), 
+                isSgExprListExp(copyExpression(para1)));
 
-	SgExprListExp* para_comp = buildExprListExp(
-	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
-	    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
-	SgExpression* call_compare_exp = buildFunctionCallExp("compare", buildIntType(), para_comp);
-	SgExprListExp* para_assert = buildExprListExp(call_compare_exp);
-	SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), para_assert);
+        SgExprListExp* para_comp = buildExprListExp(
+                buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
+                buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
+        SgExpression* call_compare_exp = buildFunctionCallExp("compare", buildIntType(), para_comp);
+        SgExprListExp* para_assert = buildExprListExp(call_compare_exp);
+        SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), para_assert);
 
-	SgExprListExp* para_print = buildExprListExp(
-		buildStringVal("event%d PASS!\\n"), 
-		buildPlusPlusOp(buildVarRefExp("counter"), SgUnaryOp::postfix));
-	SgExprStatement* print_pass = buildFunctionCallStmt("printf", buildVoidType(), para_print);
-	//SgStatement* incr_counter = buildExprStatement(
-	//	buildPlusPlusOp(buildVarRefExp("counter", SgUnaryOp::prefix)));
-		
-	appendStatement(copyStatement(init1));
-	appendStatement(copyStatement(init2));
-	appendStatement(call_event_fwd);
-	appendStatement(call_event_rev);
-	appendStatement(test_compare);
-	appendStatement(print_pass);
+        SgExprListExp* para_print = buildExprListExp(
+                buildStringVal("event%d PASS!\\n"), 
+                buildPlusPlusOp(buildVarRefExp("counter"), SgUnaryOp::postfix));
+        SgExprStatement* print_pass = buildFunctionCallStmt("printf", buildVoidType(), para_print);
+        //SgStatement* incr_counter = buildExprStatement(
+        //	buildPlusPlusOp(buildVarRefExp("counter", SgUnaryOp::prefix)));
+
+        appendStatement(copyStatement(init1));
+        appendStatement(copyStatement(init2));
+        appendStatement(call_event_fwd);
+        appendStatement(call_event_rev);
+        appendStatement(test_compare);
+        appendStatement(print_pass);
     }
 
     appendStatement(test_pass);

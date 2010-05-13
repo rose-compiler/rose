@@ -9,14 +9,15 @@ using std::vector;
 
 class SgFunctionDeclaration;
 class SgStatement;
+class SgClassType;
 
-const string INT_MEM_NAME = "m_int";
-const string INT_ARRAY_MEM_NAME = "m_int_array";
+const string INT_MEM_NAME = "i_";
+const string INT_ARRAY_MEM_NAME = "a_";
 const int ARRAY_SIZE = 100;
 
-SgFunctionDeclaration* buildCompareFunction();
+SgFunctionDeclaration* buildCompareFunction(SgClassType*);
 SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int events_num);
-SgFunctionDeclaration* buildInitializationFunction();
+SgFunctionDeclaration* buildInitializationFunction(SgClassType*);
 
 
 #endif
