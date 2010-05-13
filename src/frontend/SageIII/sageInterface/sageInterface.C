@@ -7484,7 +7484,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
 {
   ROSE_ASSERT(root);
   int counter=0;
-
+  Rose_STL_Container<SgNode*> nodeList;
 
   SgVarRefExp* varRef=NULL;
   Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
@@ -7555,12 +7555,50 @@ int SageInterface::fixVariableReferences(SgNode* root)
       else {
         // release placeholder initname and symbol
         ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
+#if 1
+        // CH (5/12/2010):
+        // To delete a symbol node, first check if there is any node in memory
+        // pool which points to this symbol node. Only if no such node exists, 
+        // this symbol together with its initialized name can be deleted.
+        //
+        bool toDelete = true;
+
+        SgSymbol* symbolToDelete = varRef->get_symbol();
+        varRef->set_symbol(isSgVariableSymbol(realSymbol));
+        counter ++;
+
+        if (nodeList.empty())
+        {
+            VariantVector vv(V_SgVarRefExp);
+            nodeList = NodeQuery::queryMemoryPool(vv);
+        }
+        foreach(SgNode* node, nodeList)
+        {
+            if (SgVarRefExp* var = isSgVarRefExp(node))
+            {
+                if (var->get_symbol() == symbol_to_delete)
+                {
+                    toDelete = false;
+                    break;
+                }
+            }
+        }
+        if (toDelete)
+        {
+            delete initname; // TODO deleteTree(), release File_Info nodes etc.
+            delete symbolToDelete;
+        }
+
+#else
+        // release placeholder initname and symbol
+        ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
 
         delete initname; // TODO deleteTree(), release File_Info nodes etc.
         delete (varRef->get_symbol());
 
         varRef->set_symbol(isSgVariableSymbol(realSymbol));
         counter ++;
+#endif
       }
     }
   } // end for
