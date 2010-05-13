@@ -7501,6 +7501,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
       SgName varName=initname->get_name();
       SgSymbol* realSymbol = NULL;
 
+#if 0
       // CH (5/7/2010): Before searching SgVarRefExp objects, we should first deal with class/structure
       // members. Or else, it is possible that we assign the wrong symbol to those members if there is another
       // variable with the same name in parent scopes. Those members include normal member referenced using . or ->
@@ -7543,6 +7544,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
             realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
       }
       else
+#endif
           realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
 
       // should find a real symbol at this final fixing stage!
@@ -7555,7 +7557,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
       else {
         // release placeholder initname and symbol
         ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
-#if 1
+#if 0
         // CH (5/12/2010):
         // To delete a symbol node, first check if there is any node in memory
         // pool which points to this symbol node. Only if no such node exists, 
@@ -7591,8 +7593,6 @@ int SageInterface::fixVariableReferences(SgNode* root)
         }
 
 #else
-        // release placeholder initname and symbol
-        ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
 
         delete initname; // TODO deleteTree(), release File_Info nodes etc.
         delete (varRef->get_symbol());
