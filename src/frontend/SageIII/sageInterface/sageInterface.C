@@ -7572,11 +7572,12 @@ int SageInterface::fixVariableReferences(SgNode* root)
             VariantVector vv(V_SgVarRefExp);
             nodeList = NodeQuery::queryMemoryPool(vv);
         }
-        foreach(SgNode* node, nodeList)
+        for (Rose_STL_Container<SgNode*>::iterator i = nodeList.begin();
+                i != nodeList.end(); ++i)
         {
-            if (SgVarRefExp* var = isSgVarRefExp(node))
+            if (SgVarRefExp* var = isSgVarRefExp(*i))
             {
-                if (var->get_symbol() == symbol_to_delete)
+                if (var->get_symbol() == symbolToDelete)
                 {
                     toDelete = false;
                     break;
