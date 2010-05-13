@@ -582,6 +582,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     unparseLanguageSpecificStatement(stmt,info);
                     break;
              }
+
+       // DQ (5/8/2010): Reset the source code position in the AST.
+          if (unp->get_resetSourcePosition() == true)
+             {
+               unp->resetSourcePosition(stmt);
+             }
         }
 
   // DQ (11/3/2007): Save the original scope so that we can restore it at the end (since we don't use a new SgUnparse_Info object).

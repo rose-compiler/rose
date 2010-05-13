@@ -108,9 +108,9 @@ main(int argc, char* argv[])
     if (!successors.empty()) {
         for (Disassembler::AddressSet::iterator si=successors.begin(); si!=successors.end(); ++si)
             printf(" 0x%08"PRIx64, *si);
-        fputc('\n', stdout);
+        fputs("\n\n", stdout);
     } else {
-        fputs(" buffer is self contained.\n", stdout);
+        fputs(" buffer is self contained.\n\n", stdout);
     }
 
     /* A partitioner can reorganize the instructions into an AST if you desire.  This is necessary if you plan to use any
