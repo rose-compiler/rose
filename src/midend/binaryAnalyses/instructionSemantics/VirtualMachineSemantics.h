@@ -239,7 +239,12 @@ private:
     mutable State orig_state;           /**< Original machine state, initialized by constructor and mem_write. This data
                                          *   member is mutable because a mem_read() operation, although conceptually const,
                                          *   may cache the value that was read so that subsquent reads from the same address
-                                         *   will return the same value. */
+                                         *   will return the same value. This member is initialized by the first call to
+                                         *   startInstruction() (as called by X86InstructionSemantics::processInstruction())
+                                         *   which allows the user to initialize the original conditions using the same
+                                         *   interface that's used to process instructions.  In other words, if one wants the
+                                         *   stack pointer to contain a specific original value, then one may initialize the
+                                         *   stack pointer by calling writeGPR() before processing the first instruction. */
     mutable State cur_state;            /**< Current machine state updated by each processInstruction(). This data member is
                                          *   mutable because a mem_read() operation, although conceptually const, may cache
                                          *   the value that was read so that subsequent reads from the same address will
@@ -261,10 +266,12 @@ private:
                                          * pointer is adjusted, memory below the stack pointer and having the same address
                                          * name as the stack pointer is removed (the memory location becomes undefined). The
                                          * default is false, that is, no special treatment for the stack. */
+    size_t ninsns;                      /**< Total number of instructions processed. This is incremented by startInstruction(),
+                                         *   which is the first thing called by X86InstructionSemantics::processInstruction(). */
 
 public:
-    Policy(): cur_insn(NULL), p_discard_popped_memory(false) {
-        cur_state = orig_state;
+    Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0) {
+        orig_state = cur_state; /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
     }
 
     /** Return the current state. */
@@ -456,6 +463,8 @@ public:
 
     /* Called at the beginning of X86InstructionSemantics::processInstruction() */
     void startInstruction(SgAsmInstruction *insn) {
+        if (0==ninsns++)
+            orig_state = cur_state;
         cur_insn = insn;
         ip = ValueType<32>(insn->get_address());
     }
