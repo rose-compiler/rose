@@ -14,18 +14,16 @@ void StressCheckEpsFail(real8* newSxx, real8* newSyy, real8* newSzz,
 {
   int i, index;
   for (i = 0 ; i < length ; i++) {
-   // index = zoneset[i] ;
+    index = zoneset[i] ;
 
-    //if (eps[index] > eps_failure_model){
-    if (eps[zoneset[i]] > eps_failure_model){
+    if (eps[index] > eps_failure_model){
       newSxx[i] = 0.0 ;
       newSyy[i] = 0.0 ;
       newSzz[i] = 0.0 ;
       newTxy[i] = 0.0 ;
       newTxz[i] = 0.0 ;
       newTyz[i] = 0.0 ;
-    //  eps[index] = eps_failure_model * 1.01;
-      eps[zoneset[i]] = eps_failure_model * 1.01;
+      eps[index] = eps_failure_model * 1.01;
     }
   }
 }

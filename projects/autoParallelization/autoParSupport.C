@@ -15,6 +15,7 @@ namespace AutoParallelization
   bool enable_debug;
   bool enable_patch;
   bool enable_diff;
+  bool b_unique_indirect_index;
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
@@ -35,6 +36,15 @@ namespace AutoParallelization
     }
     else
       enable_patch= false;
+
+    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","unique_indirect_index",true))
+    {
+      cout<<"Assuming all arrays used as indirect indices have unique elements (no overlapping) ..."<<endl;
+      b_unique_indirect_index= true;
+    }
+    else
+      b_unique_indirect_index= false;
+
 
     if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_diff",true))
     {
@@ -64,6 +74,7 @@ namespace AutoParallelization
       cout<<"Auto parallelization-specific options"<<endl;
       cout<<"\t-rose:autopar:enable_debug          run automatic parallelization in a debugging mode"<<endl;
       cout<<"\t-rose:autopar:enable_patch          additionally generate patch files for translations"<<endl;
+      cout<<"\t-rose:autopar:unique_indirect_index assuming all arrays used as indirect indices have unique elements (no overlapping)"<<endl;
       cout<<"\t-annot filename                     specify annotation file for semantics of abstractions"<<endl;
       cout<<"\t-dumpannot                          dump annotation file content"<<endl;
       cout <<"---------------------------------------------------------------"<<endl;
@@ -926,7 +937,8 @@ namespace AutoParallelization
   // * two array references, but SCALAR_DEP or SCALAR_BACK_DEP dependencies
   // OmpAttribute provides scoped variables
   // ArrayInterface and ArrayAnnotation support optional annotation based high level array abstractions
-  void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>& remainings, OmpSupport::OmpAttribute* att, ArrayInterface* array_interface/*=0*/, ArrayAnnotation* annot/*=0*/)
+  void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>& remainings, OmpSupport::OmpAttribute* att, 
+        std::map<SgNode*, bool> &  indirect_table, ArrayInterface* array_interface/*=0*/, ArrayAnnotation* annot/*=0*/)
   {
     //LoopTreeDepGraph * depgraph =  comp.GetDepGraph(); 
     LoopTreeDepGraph::NodeIterator nodes = depgraph->GetNodeIterator();
@@ -952,6 +964,7 @@ namespace AutoParallelization
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
+
           if (src_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(src_node);
@@ -1018,6 +1031,18 @@ namespace AutoParallelization
             if (hit1!=scoped_vars.end() || (hit2!=scoped_vars.end()))
               continue;
           }
+
+          //x. Eliminate dependencies caused by a pair of indirect indexed array reference,
+          //   if users provide the semantics that all indirect indexed array references have 
+          //   unique element accesses (via -rose:autopar:unique_indirect_index )
+          //   Since each iteration will access a unique element of the array, no loop carried data dependences
+          //  Lookup the table, rule out a dependence relationship if both source and sink are one of the unique array reference expressions.
+          //  AND both references to the same array symbol , and uses the same index variable!!
+           if (b_unique_indirect_index ) 
+           { 
+             if (indirect_table[src_node] && indirect_table[snk_node])
+               continue;
+           }
           // x. Eliminate loop-independent dependencies: 
           // loop independent dependencies: privatization can eliminate most of them
           if (info.CarryLevel()!=0) 
@@ -1029,11 +1054,142 @@ namespace AutoParallelization
     } // end of iterate dependence graph 
   }// end DependenceElimination()
 
+/*
+ Uniforming multiple forms of array indirect accessing into a single form: 
+        arrayX[arrayY...[loop_index]]
+
+  Common forms of array references using indirect indexing: 
+ 
+  Form 1:  naive one
+        ... array_X [array_Y [current_loop_index]] ..
+
+  Form 2:  used more often in real code from Jeff
+       indirect_loop_index  = array_Y [current_loop_index] ;
+        ...  array_X[indirect_loop_index] ...
+
+
+  Form 3: multiple dimensions, multiple levels of indirections, 
+        TODO later on as required from lab applications
+
+  We uniform them into a single form (Form 2) to simplify later recognition of indirect indexed array refs
+
+Algorithm: Replace the index variable with its right hand value of its reaching definition,
+ if the index variable is not an enclosing loop index variable.
+
+ TODO This process can be later put into a function to run until a stable fix point is reached. 
+
+*/
+ static void uniformIndirectIndexedArrayRefs (SgForStatement* for_loop)
+ {
+  
+ }
+  /*
+  Algorithm:  
+    find all array variables within the loop in consideration
+    for each array variable, do the following to tell if such an array is accessed via an indirect index
+        SgPntrArrRefExp  :
+            lhs_operatnd: SgVarRefExp, SgVariableSymbol, SgInitializedName  SgArrayType
+            rhs_operand: SgVarRefExp, SgVariableSymbol, SgInitializedName, i
+        Check a lookup table to see if this kind of reference is already recognized
+              two keys: array symbol, index expression, bool
+        if not, do the actual pattern recognition
+            // in a function  
+             if is an index variable
+                 find the reaching definition of the index based on data flow analysis
+                 current loop's index ?
+                 higher level loop's index?
+                one assignment to another array with the current  (?? higher level is considered at its own level) loop index
+             if is another array reference
+            Found an array reference using indirect index,
+         store it in a look up table : SySymbol (array being accessed ) , index Ref Exp, true/false 
+   */
+
+  static bool isIndirectIndexedArrayRef (SgForStatement* for_loop, SgPntrArrRefExp *aRef)
+  {
+    bool rtval = false;
+    ROSE_ASSERT (for_loop != NULL);
+    ROSE_ASSERT (aRef != NULL);
+    // grab the loop index variable
+    SgInitializedName * loop_index_name = NULL;
+    bool isCanonical = SageInterface::isCanonicalForLoop (for_loop, &loop_index_name);
+    bool hasIndirecting = false;
+    ROSE_ASSERT (isCanonical == true);
+
+    // grab the array index  from arrayX[arrayY...[loop_index]]
+    SgPntrArrRefExp* innerMostArrExp =  aRef;
+    while (isSgPntrArrRefExp(innerMostArrExp->get_rhs_operand_i()))
+    {
+       innerMostArrExp = isSgPntrArrRefExp(innerMostArrExp->get_rhs_operand_i());
+       hasIndirecting = true;
+    }
+
+    SgExpression* array_index_exp = innerMostArrExp->get_rhs_operand_i();
+
+    switch (array_index_exp->variantT() )
+    {
+      case V_SgPntrArrRefExp: 
+        {
+          cerr<<"Error: isIndirectIndexedArrayRef(). inner most loop index should not be of an array type anymore! "<<endl;
+          ROSE_ASSERT (false);
+          break;
+        }
+      case V_SgVarRefExp: 
+        {
+          SgVarRefExp * varRef = isSgVarRefExp(array_index_exp);
+          // We only concern about the indirection based on the current loop's loop index variable
+          // since we consider all loop levels one by one
+          if (hasIndirecting && (varRef->get_symbol()->get_declaration() == loop_index_name))
+            rtval = true; 
+          break;
+        }
+      default:
+        cerr<<"Warning: isIndirectIndexedArrayRef(): unhandled array index type: "<< array_index_exp->class_name()<<endl;
+        ROSE_ASSERT (false);
+        break;
+    }
+
+    return rtval;
+  }
+  
+  // collect array references with indirect indexing within a loop, save the result in a lookup table
+  /*
+  Algorithm:  
+    find all array variables within the loop in consideration
+    for each array variable, do the following to tell if such an array is accessed via an indirect index
+       Check a lookup table to see if this kind of reference is already recognized
+              two keys: array symbol, index expression, bool
+        if not, do the actual pattern recognition
+           Found an array reference using indirect index,
+         store it in a look up table : SySymbol (array being accessed ) , index Ref Exp, true/false 
+   */
+  static void collectIndirectIndexedArrayReferences(SgNode* loop,  std::map<SgNode*, bool>& indirect_array_table)
+  {
+    ROSE_ASSERT (loop != NULL);
+    SgForStatement* for_loop = isSgForStatement(loop);
+    ROSE_ASSERT (for_loop != NULL);
+
+    Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(for_loop->get_loop_body(), V_SgPntrArrRefExp); 
+    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+    {
+      SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i));
+      if (isIndirectIndexedArrayRef(for_loop, aRef))
+      {
+        indirect_array_table[aRef] = true; 
+        cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString() <<endl;
+      }
+    }
+  }
+
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
     ROSE_ASSERT(loop&& array_interface && annot);
     ROSE_ASSERT(isSgForStatement(loop));
     bool isParallelizable = true;
+
+    // collect array references with indirect indexing within a loop, save the result in a lookup table
+    // This work is context sensitive (depending on the outer loops), so we declare the table for each loop.
+    std::map<SgNode*, bool> indirect_array_table;
+    collectIndirectIndexedArrayReferences (loop, indirect_array_table);
 
     // X. Compute dependence graph for the target loop
     SgNode* sg_node = loop;
@@ -1055,7 +1211,7 @@ namespace AutoParallelization
 
     //X. Eliminate irrelevant dependence relations.
     vector<DepInfo>  remainingDependences;
-    DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute,array_interface, annot);
+    DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute, indirect_array_table,  array_interface, annot);
     if (remainingDependences.size()>0)
     {
       isParallelizable = false;
