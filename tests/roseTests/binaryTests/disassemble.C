@@ -81,13 +81,13 @@ block_semantics(SgAsmBlock *blk)
 {
     if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front()))
         return "";
+    const SgAsmStatementPtrList &stmts = blk->get_statementList();
 
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
     try {
-        const SgAsmStatementPtrList &stmts = blk->get_statementList();
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
             ROSE_ASSERT(insn!=NULL);
@@ -96,6 +96,28 @@ block_semantics(SgAsmBlock *blk)
     } catch (const Semantics::Exception&) {
         return "";
     }
+
+    /* If the last instruction is a x86 CALL or FARCALL then change the return address that's at the top of the stack so that
+     * two identical blocks located at different memory addresses generate equal hashes (at least as far as the function call
+     * is concerned. */
+    bool ignore_final_ip = true;
+    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
+    if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
+        VirtualMachineSemantics::RenameMap rmap;
+        std::cerr <<unparseInstructionWithAddress(last_insn) <<"\n  Before:\n";
+        policy.print_diff(std::cerr, &rmap);
+        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), policy.number<32>(0), policy.true_());
+        std::cerr <<"  After:\n";
+        policy.print_diff(std::cerr, &rmap);
+        ignore_final_ip = false;
+    }
+
+    /* Set original IP to a constant value so that hash is never dependent on the true original IP.  If the final IP doesn't
+     * matter, then make it the same as the original so that the difference between the original and final does not include the
+     * IP (SHA1 is calculated in terms of the difference). */
+    policy.get_orig_state().ip = policy.number<32>(0);
+    if (ignore_final_ip)
+        policy.get_state().ip = policy.get_orig_state().ip;
     return policy.SHA1();
 }
 

@@ -190,7 +190,6 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 std::ostringstream s;
                 s << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
                   <<policy.get_state()
-                  <<"    ip = " <<policy.get_ip() <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
@@ -420,7 +419,9 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
     if (!allow_branch && policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size())
         return true;
 
-    /* Instructions have an effect if the state changed. State does not include the instruction pointer. */
+    /* Instructions have an effect if the state changed.  We want the comparison to be independent of the instruction pointer,
+     * so we'll set the IP of both the initial and final states to the same (unknown) value. */ 
+    policy.get_orig_state().ip = policy.get_state().ip = VirtualMachineSemantics::ValueType<32>();
     return !policy.equal_states(policy.get_orig_state(), policy.get_state());
 }
 
@@ -440,7 +441,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
                                             bool relax_stack_semantics/*false*/)
 {
     static const bool verbose = false;
-    
+
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
@@ -449,10 +450,15 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
 
+    /* When comparing states, we don't want to compare the instruction pointers. Therefore, we'll change the IP value of
+     * each state to be the same. */
+    const VirtualMachineSemantics::ValueType<32> common_ip;
+    
     /* Save the state before and after each instruction.  states[i] is the state before insn[i] and states[i+1] is the state
      * after insn[i]. */
     std::vector<VirtualMachineSemantics::State> state;
     state.push_back(policy.get_state());
+    state.back().ip = common_ip;
     rose_addr_t next_ip = insns.front()->get_address();
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
@@ -472,6 +478,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
             }
             next_ip = policy.get_ip().known_value();
             state.push_back(policy.get_state());
+            state.back().ip = common_ip;
             if (verbose) std::cerr <<"  state:\n" <<policy.get_state();
         }
     } catch (const Semantics::Exception&) {

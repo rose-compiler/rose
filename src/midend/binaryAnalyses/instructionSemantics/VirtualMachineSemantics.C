@@ -81,13 +81,14 @@ State::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 
     /* Print registers in columns of minimal width */
     size_t ssi=0;
-    std::stringstream *ss = new std::stringstream[n_gprs + n_segregs + n_flags];
+    std::stringstream *ss = new std::stringstream[n_gprs + n_segregs + n_flags + 1]; /*1 for IP register*/
     for (size_t i=0; i<n_gprs; ++i)
         ss[ssi++] <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i].rename(rmap);
     for (size_t i=0; i<n_segregs; ++i)
         ss[ssi++] <<segregToString((X86SegmentRegister)i) <<"=" <<segreg[i].rename(rmap);
     for (size_t i=0; i<n_flags; ++i)
         ss[ssi++] <<flagToString((X86Flag)i) <<"=" <<flag[i].rename(rmap);
+    ss[ssi++] <<"ip=" <<ip.rename(rmap);
     size_t colwidth = 0;
     for (size_t i=0; i<ssi; i++)
         colwidth = std::max(colwidth, ss[i].str().size());
@@ -99,7 +100,7 @@ State::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
     }
     o <<"\n";
 
-    /* Print memory contents. Skip unmodified memory if orig_mem is non-null. */
+    /* Print memory contents. */
     o <<prefix << "memory:\n";
     for (Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
         o <<prefix <<"    ";
@@ -131,6 +132,9 @@ State::print_diff_registers(std::ostream &o, const State &other, RenameMap *rmap
               <<flag[i].rename(rmap) <<" -> " <<other.flag[i].rename(rmap) <<"\n";
         }
     }
+    if (ip!=other.ip) {
+        o <<prefix <<"ip: " <<ip.rename(rmap) <<" -> " <<other.ip.rename(rmap) <<"\n";
+    }
 }
 
 bool
@@ -142,6 +146,7 @@ State::equal_registers(const State &other) const
         if (segreg[i]!=other.segreg[i]) return false;
     for (size_t i=0; i<n_flags; ++i)
         if (flag[i]!=other.flag[i]) return false;
+    if (ip!=other.ip) return false;
     return true;
 }
 
@@ -164,7 +169,7 @@ State::discard_popped_memory()
 
 /* Returns memory that needs to be compared by equal_states() */
 Memory
-Policy::memory_for_equality(const State &state)
+Policy::memory_for_equality(const State &state) const
 {
     State tmp_state = state;
     Memory retval;
@@ -176,7 +181,7 @@ Policy::memory_for_equality(const State &state)
 }
 
 bool
-Policy::equal_states(const State &s1, const State &s2)
+Policy::equal_states(const State &s1, const State &s2) const
 {
     if (!s1.equal_registers(s2))
         return false;
@@ -229,7 +234,7 @@ Policy::print_diff(std::ostream &o, const State &s1, const State &s2, RenameMap 
 }
 
 bool
-Policy::on_stack(const ValueType<32> &value)
+Policy::on_stack(const ValueType<32> &value) const
 {
     const ValueType<32> sp_inverted = invert(cur_state.gpr[x86_gpr_sp]);
     for (Memory::const_iterator mi=cur_state.mem.begin(); mi!=cur_state.mem.end(); ++mi) {

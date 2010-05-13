@@ -202,14 +202,15 @@ typedef std::vector<MemoryCell> Memory;
 
 /** Represents the entire state of the machine. However, the instruction pointer is not included in the state. */
 struct State {
-    static const size_t n_gprs = 8;
-    static const size_t n_segregs = 6;
-    static const size_t n_flags = 16;
+    static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
+    static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
+    static const size_t n_flags = 16;           /**< Number of flag registers in this state. */
 
-    ValueType<32> gpr[n_gprs];
-    ValueType<16> segreg[n_segregs];
-    ValueType<1> flag[n_flags];
-    Memory mem;
+    ValueType<32> ip;                           /**< Instruction pointer. */
+    ValueType<32> gpr[n_gprs];                  /**< General-purpose registers */
+    ValueType<16> segreg[n_segregs];            /**< Segmentation registers. */
+    ValueType<1> flag[n_flags];                 /**< Control/status flags (i.e., FLAG register). */
+    Memory mem;                                 /**< Core memory. */
 
     /** Print the state in a human-friendly way.  If a rename map is specified then named values will be renamed to have a
      *  shorter name.  See the ValueType<>::rename() method for details. */
@@ -235,7 +236,6 @@ struct State {
 class Policy {
 private:
     SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
-    ValueType<32> ip;                   /**< Initially cur_insn->get_address(), then updated during processInstruction() */
     mutable State orig_state;           /**< Original machine state, initialized by constructor and mem_write. This data
                                          *   member is mutable because a mem_read() operation, although conceptually const,
                                          *   may cache the value that was read so that subsquent reads from the same address
@@ -245,23 +245,11 @@ private:
                                          *   interface that's used to process instructions.  In other words, if one wants the
                                          *   stack pointer to contain a specific original value, then one may initialize the
                                          *   stack pointer by calling writeGPR() before processing the first instruction. */
-    mutable State cur_state;            /**< Current machine state updated by each processInstruction(). This data member is
+    mutable State cur_state;            /**< Current machine state updated by each processInstruction().  The instruction
+                                         *   pointer is updated before we process each instruction. This data member is
                                          *   mutable because a mem_read() operation, although conceptually const, may cache
                                          *   the value that was read so that subsequent reads from the same address will
                                          *   return the same value. */
-    Memory orig_mem;                    /**< Within the state, every register has an initial explicit unknown (named) value.
-                                         *   Giving every possible memory location an explicit unknown value is prohibitively
-                                         *   expensive, so memory is given implicit unknown values. When we access a memory
-                                         *   value from the state via readMemory(), and that memory location has never been
-                                         *   read before, then we give it an explicit unknown value in the state and here in
-                                         *   orig_mem.  This allows sequences like:
-                                         *   \code
-                                         *       mov eax, ss:[esp+4]
-                                         *       mov ebx, ss:[esp+4]
-                                         *   \endcode
-                                         *
-                                         *   to result in both eax and ebx having the same value. We also fall back on this
-                                         *   orig_mem when comparing two states for equality. */
     bool p_discard_popped_memory;       /**< Property that determines how the stack behaves.  When set, any time the stack
                                          * pointer is adjusted, memory below the stack pointer and having the same address
                                          * name as the stack pointer is removed (the memory location becomes undefined). The
@@ -274,21 +262,31 @@ public:
         orig_state = cur_state; /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
     }
 
-    /** Return the current state. */
+    /** Returns the current state. */
     const State& get_state() const { return cur_state; }
+    State& get_state() { return cur_state; }
+
+    /** Returns the original state.  The original state is initialized to be equal to the current state twice: once by the
+     *  constructor, and then again when the first instruction is processed. */
     const State& get_orig_state() const { return orig_state; }
-    const ValueType<32>& get_ip() const { return ip; }
+    State& get_orig_state() { return orig_state; }
+
+    /** Returns the current instruction pointer. */
+    const ValueType<32>& get_ip() const { return cur_state.ip; }
+
+    /** Returns the original instruction pointer. See also get_orig_state(). */
+    const ValueType<32>& get_orig_ip() const { return orig_state.ip; }
 
     /** Returns a copy of the state after removing memory that is not pertinent to an equal_states() comparison. */
-    Memory memory_for_equality(const State&);
+    Memory memory_for_equality(const State&) const;
 
     /** Returns a copy of the current state after removing memory that is not pertinent to an equal_states() comparison. */
-    Memory memory_for_equality() { return memory_for_equality(cur_state); }
+    Memory memory_for_equality() const { return memory_for_equality(cur_state); }
 
     /** Compares two states for equality. The comarison looks at all register values and the memory locations that are
      *  different than their original value (but excluding differences due to clobbering). It does not compare memory that has
-     *  only been read.  */
-    bool equal_states(const State&, const State&);
+     *  only been read. */
+    bool equal_states(const State&, const State&) const;
 
     /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to have a
      *  shorter name.  See the ValueType<>::rename() method for details. */
@@ -300,7 +298,7 @@ public:
     
     /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The stack pointer
      *  need not have a known value. */
-    bool on_stack(const ValueType<32> &value);
+    bool on_stack(const ValueType<32> &value) const;
 
     /** Changes how the policy treats the stack.  See the p_discard_popped_memory property data member for details. */
     void set_discard_popped_memory(bool b) {
@@ -335,7 +333,7 @@ public:
 
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
-    ValueType<ToLen> signExtend(const ValueType<FromLen> &a) {
+    ValueType<ToLen> signExtend(const ValueType<FromLen> &a) const {
         if (a.name) return ValueType<ToLen>();
         return IntegerOps::signExtend<FromLen, ToLen>(a.offset);
     }
@@ -343,7 +341,7 @@ public:
     /** Extracts certain bits from the specified value and shifts them to the low-order positions in the result.  The bits of
      *  the result include bits from BeginAt (inclusive) through EndAt (exclusive).  The lsb is number zero. */
     template <size_t BeginAt, size_t EndAt, size_t Len>
-    ValueType<EndAt-BeginAt> extract(const ValueType<Len> &a) {
+    ValueType<EndAt-BeginAt> extract(const ValueType<Len> &a) const {
         if (0==BeginAt) return ValueType<EndAt-BeginAt>(a);
         if (a.name) return ValueType<EndAt-BeginAt>();
         return (a.offset >> BeginAt) & (IntegerOps::SHL1<uint64_t, EndAt-BeginAt>::value - 1);
@@ -352,7 +350,7 @@ public:
     /** Return a newly sized value by either truncating the most significant bits or by adding more most significant bits that
      *  are set to zeros. */
     template <size_t FromLen, size_t ToLen>
-    ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) {
+    ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) const {
         return ValueType<ToLen>(a);
     }
     
@@ -463,10 +461,10 @@ public:
 
     /* Called at the beginning of X86InstructionSemantics::processInstruction() */
     void startInstruction(SgAsmInstruction *insn) {
+        cur_state.ip = ValueType<32>(insn->get_address());
         if (0==ninsns++)
             orig_state = cur_state;
         cur_insn = insn;
-        ip = ValueType<32>(insn->get_address());
     }
 
     /* Called at the end of X86InstructionSemantics::processInstruction() */
@@ -483,23 +481,23 @@ public:
      *************************************************************************************************************************/
 
     /** True value */
-    ValueType<1> true_() {
+    ValueType<1> true_() const {
         return 1;
     }
 
     /** False value */
-    ValueType<1> false_() {
+    ValueType<1> false_() const {
         return 0;
     }
 
     /** Undefined Boolean */
-    ValueType<1> undefined_() {
+    ValueType<1> undefined_() const {
         return ValueType<1>();
     }
 
     /** Used to build a known constant. */
     template <size_t Len>
-    ValueType<Len> number(uint64_t n) {
+    ValueType<Len> number(uint64_t n) const {
         return n;
     }
 
@@ -510,17 +508,17 @@ public:
      *************************************************************************************************************************/
 
     /** Called only for CALL instructions before assigning new value to IP register. */
-    ValueType<32> filterCallTarget(const ValueType<32> &a) {
+    ValueType<32> filterCallTarget(const ValueType<32> &a) const {
         return a;
     }
 
     /** Called only for RET instructions before adjusting the IP register. */
-    ValueType<32> filterReturnTarget(const ValueType<32> &a) {
+    ValueType<32> filterReturnTarget(const ValueType<32> &a) const {
         return a;
     }
 
     /** Called only for JMP instructions before adjusting the IP register. */
-    ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) {
+    ValueType<32> filterIndirectJumpTarget(const ValueType<32> &a) const {
         return a;
     }
 
@@ -544,7 +542,7 @@ public:
      *************************************************************************************************************************/
 
     /** Returns value of the specified 32-bit general purpose register. */
-    ValueType<32> readGPR(X86GeneralPurposeRegister r) {
+    ValueType<32> readGPR(X86GeneralPurposeRegister r) const {
         return cur_state.gpr[r];
     }
 
@@ -554,7 +552,7 @@ public:
     }
 
     /** Reads a value from the specified 16-bit segment register. */
-    ValueType<16> readSegreg(X86SegmentRegister sr) {
+    ValueType<16> readSegreg(X86SegmentRegister sr) const {
         return cur_state.segreg[sr];
     }
 
@@ -565,17 +563,17 @@ public:
 
     /** Returns the value of the instruction pointer as it would be during the execution of the instruction. In other words,
      *  it points to the first address past the end of the current instruction. */
-    ValueType<32> readIP() {
-        return ip;
+    ValueType<32> readIP() const {
+        return cur_state.ip;
     }
 
     /** Changes the value of the instruction pointer. */
     void writeIP(const ValueType<32> &value) {
-        ip = value;
+        cur_state.ip = value;
     }
 
     /** Returns the value of a specific control/status/system flag. */
-    ValueType<1> readFlag(X86Flag f) {
+    ValueType<1> readFlag(X86Flag f) const {
         return cur_state.flag[f];
     }
 
@@ -586,7 +584,7 @@ public:
 
     /** Reads a value from memory. */
     template <size_t Len> ValueType<Len>
-    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) {
+    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) const {
         return mem_read<Len>(cur_state, addr);
     }
 
@@ -604,7 +602,7 @@ public:
 
     /** Adds two values. */
     template <size_t Len>
-    ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) {
+    ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
         if (a.name==b.name && (!a.name || a.negate!=b.negate)) {
             /* [V1+x] + [-V1+y] = [x+y]  or
              * [x] + [y] = [x+y] */
@@ -636,7 +634,7 @@ public:
      */
     template <size_t Len>
     ValueType<Len> addWithCarries(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> &c,
-                                  ValueType<Len> &carry_out) {
+                                  ValueType<Len> &carry_out) const {
         int n_unknown = (a.name?1:0) + (b.name?1:0) + (c.name?1:0);
         if (n_unknown <= 1) {
             /* At most, one of the operands is an unknown value. See add() for more details. */
@@ -656,7 +654,7 @@ public:
 
     /** Computes bit-wise AND of two values. */
     template <size_t Len>
-    ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) {
+    ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
         if ((!a.name && 0==a.offset) || (!b.name && 0==b.offset)) return 0;
         if (a.name || b.name) return ValueType<Len>();
         return a.offset & b.offset;
@@ -664,14 +662,14 @@ public:
 
     /** Returns true_, false_, or undefined_ depending on whether argument is zero. */
     template <size_t Len>
-    ValueType<1> equalToZero(const ValueType<Len> &a) {
+    ValueType<1> equalToZero(const ValueType<Len> &a) const {
         if (a.name) return undefined_();
         return a.offset ? false_() : true_();
     }
 
     /** One's complement */
     template <size_t Len>
-    ValueType<Len> invert(const ValueType<Len> &a) {
+    ValueType<Len> invert(const ValueType<Len> &a) const {
         if (a.name) return ValueType<Len>(a.name, ~a.offset, !a.negate);
         return ~a.offset;
     }
@@ -679,14 +677,14 @@ public:
     /** Concatenate the values of @p a and @p b so that the result has @p b in the high-order bits and @p a in the low order
      *  bits. */
     template<size_t Len1, size_t Len2>
-    ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) {
+    ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len1+Len2>();
         return a.offset | (b.offset << Len1);
     }
 
     /** Returns second or third arg depending on value of first arg. */
     template <size_t Len>
-    ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) {
+    ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
         if (ifTrue==ifFalse) return ifTrue;
         if (sel.name) return ValueType<Len>();
         return sel.offset ? ifTrue : ifFalse;
@@ -694,7 +692,7 @@ public:
 
     /** Returns position of least significant set bit; zero when no bits are set. */
     template <size_t Len>
-    ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) {
+    ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) const {
         if (a.name) return ValueType<Len>();
         for (size_t i=0; i<Len; ++i) {
             if (a.offset & ((uint64_t)1 << i))
@@ -705,7 +703,7 @@ public:
 
     /** Returns position of most significant set bit; zero when no bits are set. */
     template <size_t Len>
-    ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) {
+    ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) const {
         if (a.name) return ValueType<Len>();
         for (size_t i=Len; i>0; --i) {
             if (a.offset & ((uint64_t)1 << (i-1)))
@@ -716,56 +714,56 @@ public:
 
     /** Two's complement. */
     template <size_t Len>
-    ValueType<Len> negate(const ValueType<Len> &a) {
+    ValueType<Len> negate(const ValueType<Len> &a) const {
         if (a.name) return ValueType<Len>(a.name, -a.offset, !a.negate);
         return -a.offset;
     }
 
     /** Computes bit-wise OR of two values. */
     template <size_t Len>
-    ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) {
+    ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
         if (a.name || b.name) return ValueType<Len>();
         return a.offset | b.offset;
     }
 
     /** Rotate bits to the left. */
     template <size_t Len, size_t SALen>
-    ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) {
+    ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
     }
 
     /** Rotate bits to the right. */
     template <size_t Len, size_t SALen>
-    ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) {
+    ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
     }
 
     /** Returns arg shifted left. */
     template <size_t Len, size_t SALen>
-    ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) {
+    ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
     }
 
     /** Returns arg shifted right logically (no sign bit). */
     template <size_t Len, size_t SALen>
-    ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) {
+    ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
     }
 
     /** Returns arg shifted right arithmetically (with sign bit). */
     template <size_t Len, size_t SALen>
-    ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) {
+    ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
         if (a.name || sa.name) return ValueType<Len>();
         return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
     }
 
     /** Divides two signed values. */
     template <size_t Len1, size_t Len2>
-    ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) {
+    ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len1>();
         if (0==b.offset) throw std::string("division by zero");
         return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
@@ -773,7 +771,7 @@ public:
 
     /** Calculates modulo with signed values. */
     template <size_t Len1, size_t Len2>
-    ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) {
+    ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len2>();
         if (0==b.offset) throw std::string("division by zero");
         return IntegerOps::signExtend<Len1, 64>(a.offset) % IntegerOps::signExtend<Len2, 64>(b.offset);
@@ -781,14 +779,14 @@ public:
 
     /** Multiplies two signed values. */
     template <size_t Len1, size_t Len2>
-    ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) {
+    ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len1+Len2>();
         return IntegerOps::signExtend<Len1, 64>(a.offset) * IntegerOps::signExtend<Len2, 64>(b.offset);
     }
 
     /** Divides two unsigned values. */
     template <size_t Len1, size_t Len2>
-    ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) {
+    ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len1>();
         if (0==b.offset) throw std::string("division by zero");
         return a.offset / b.offset;
@@ -796,7 +794,7 @@ public:
 
     /** Calculates modulo with unsigned values. */
     template <size_t Len1, size_t Len2>
-    ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) {
+    ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len2>();
         if (0==b.offset) throw std::string("division by zero");
         return a.offset % b.offset;
@@ -804,14 +802,14 @@ public:
 
     /** Multiply two unsigned values. */
     template <size_t Len1, size_t Len2>
-    ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) {
+    ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len1+Len2>();
         return a.offset * b.offset;
     }
 
     /** Computes bit-wise XOR of two values. */
     template <size_t Len>
-    ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) {
+    ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
         if (a==b) return 0;
         if (a.name || b.name) return ValueType<Len>();
         return a.offset ^ b.offset;

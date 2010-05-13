@@ -262,7 +262,6 @@ Partitioner::pops_return_address(rose_addr_t va)
                 std::ostringstream s;
                 s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
                   <<policy.get_state()
-                  <<"    ip = " <<policy.get_ip() <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
