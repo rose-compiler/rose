@@ -3,6 +3,10 @@
 #include <ostream>
 #include <strstream>
 
+#ifdef HAVE_GCRYPT_H
+#include <gcrypt.h>
+#endif
+
 namespace VirtualMachineSemantics {
 
 uint64_t name_counter;
@@ -141,55 +145,6 @@ State::equal_registers(const State &other) const
     return true;
 }
 
-#if 0
-bool
-State::equal_memory_written(const State &other) const
-{
-    /* Assumes memory is sorted by address */
-    size_t i=0, j=0;
-    for (/*void*/; i<mem.size() && j<other.mem.size(); ++i, ++j) {
-        while (i<mem.size() && (mem[i].is_clobbered() || !mem[i].is_written()))
-            ++i;
-        while (j<other.mem.size() && (other.mem[j].is_clobbered() || !other.mem[j].is_written()))
-            ++j;
-        if (mem[i]!=other.mem[j]) return false;
-    }
-    if (i<mem.size() || j<other.mem.size())
-        return false;
-    return true;
-}
-#endif
-
-#if 0
-std::string
-State::SHA1() const
-{
-    /* No need to call this every time. */
-    static bool did_start_gcry = false;
-    if (!did_start_gcry) {
-        gcry_check_version(NULL);
-        did_start_gcry = true;
-    }
-
-    /* Simple version just hashes the print form of the state */
-    RenameMap rmap;
-    std::stringstream s; print(s, &rmap);
-    size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
-    char *digest = new char[digest_sz];
-    gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
-    
-    /* Convert to ASCII string */
-    std::string digest_str;
-    for (size_t i=digest_sz; i>0; --i) {
-        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
-        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
-    }
-
-    delete[] digest;
-    return digest_str;
-}
-#endif
-
 void
 State::discard_popped_memory() 
 {
@@ -245,7 +200,7 @@ Policy::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 }
 
 void
-Policy::print_diff(std::ostream &o, const State &s1, const State &s2, RenameMap *rmap/*=NULL*/)
+Policy::print_diff(std::ostream &o, const State &s1, const State &s2, RenameMap *rmap/*=NULL*/) const
 {
     s1.print_diff_registers(o, s2, rmap);
 
@@ -290,5 +245,38 @@ Policy::on_stack(const ValueType<32> &value)
     }
     return false;
 }
+
+std::string
+Policy::SHA1() const
+{
+#ifdef HAVE_GCRYPT_H
+    /* libgcrypt requires gcry_check_version() to be called "before any other function in the library", but doesn't include an
+     * API function for determining if this has already been performed. It also doesn't indicate what happens when it's called
+     * more than once, or how expensive the call is.  Therefore, instead of calling it every time through this function, we'll
+     * just call it the first time. */
+    static bool initialized = false;
+    if (!initialized) {
+        gcry_check_version(NULL);
+        initialized = true;
+    }
+    
+    std::stringstream s;
+    RenameMap rmap;
+    print_diff(s, &rmap);
+    size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
+    char *digest = new char[digest_sz];
+    gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
+    std::string digest_str;
+    for (size_t i=digest_sz; i>0; --i) {
+        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+    }
+    delete[] digest; digest=NULL;
+    return digest_str;
+#else
+    return "";
+#endif
+}
+
 
 } /*namespace*/

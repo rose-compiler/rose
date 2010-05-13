@@ -236,8 +236,14 @@ class Policy {
 private:
     SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
     ValueType<32> ip;                   /**< Initially cur_insn->get_address(), then updated during processInstruction() */
-    State orig_state;                   /**< Original machine state, initialized by constructor and mem_write. */
-    State cur_state;                    /**< Current machine state updated by each processInstruction() */
+    mutable State orig_state;           /**< Original machine state, initialized by constructor and mem_write. This data
+                                         *   member is mutable because a mem_read() operation, although conceptually const,
+                                         *   may cache the value that was read so that subsquent reads from the same address
+                                         *   will return the same value. */
+    mutable State cur_state;            /**< Current machine state updated by each processInstruction(). This data member is
+                                         *   mutable because a mem_read() operation, although conceptually const, may cache
+                                         *   the value that was read so that subsequent reads from the same address will
+                                         *   return the same value. */
     Memory orig_mem;                    /**< Within the state, every register has an initial explicit unknown (named) value.
                                          *   Giving every possible memory location an explicit unknown value is prohibitively
                                          *   expensive, so memory is given implicit unknown values. When we access a memory
@@ -302,19 +308,23 @@ public:
 
     /** Print only the differences between two states.  If a rename map is specified then named values will be renamed to have a
      *  shorter name.  See the ValueType<>::rename() method for details. */
-    void print_diff(std::ostream&, const State&, const State&, RenameMap *rmap=NULL);
+    void print_diff(std::ostream&, const State&, const State&, RenameMap *rmap=NULL) const ;
 
     /** Print the difference between a state and the initial state.  If a rename map is specified then named values will be
      *  renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-    void print_diff(std::ostream &o, const State &state, RenameMap *rmap=NULL) {
+    void print_diff(std::ostream &o, const State &state, RenameMap *rmap=NULL) const {
         print_diff(o, orig_state, state, rmap);
     }
 
     /** Print the difference between the current state and the initial state.  If a rename map is specified then named values
      *  will be renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-    void print_diff(std::ostream &o, RenameMap *rmap=NULL) {
+    void print_diff(std::ostream &o, RenameMap *rmap=NULL) const {
         print_diff(o, orig_state, cur_state, rmap);
     }
+
+    /** Returns the SHA1 hash of the difference between the current state and the original state.  If libgcrypt is not
+     *  available then the return value will be an empty string. */
+    std::string SHA1() const;
 
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
@@ -350,7 +360,7 @@ public:
      *  It is safe to call this function and supply the policy's original state as the state argument.
      *
      *  The documentation for MemoryCell has an example that demonstrates the desired behavior of mem_read() and mem_write(). */
-    template <size_t Len> ValueType<Len> mem_read(State &state, const ValueType<32> &addr) {
+    template <size_t Len> ValueType<Len> mem_read(State &state, const ValueType<32> &addr) const {
         MemoryCell new_cell(addr, ValueType<32>(), Len/8);
         bool aliased = false; /*is new_cell aliased by any existing writes?*/
 

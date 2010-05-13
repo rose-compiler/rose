@@ -4,7 +4,6 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include <gcrypt.h>
 #include <ostream>
 
 #include "AsmUnparser.h"
@@ -83,16 +82,10 @@ block_semantics(SgAsmBlock *blk)
     if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front()))
         return "";
 
-    VirtualMachineSemantics::RenameMap rmap;
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
-#if 0
-    std::cerr <<"block_semantics(" <<StringUtility::addrToString(blk->get_address()) <<"):\n";
-    std::cerr <<"  Initial state:\n" <<policy.get_state() <<"\n";
-#endif
-
     try {
         const SgAsmStatementPtrList &stmts = blk->get_statementList();
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
@@ -103,27 +96,7 @@ block_semantics(SgAsmBlock *blk)
     } catch (const Semantics::Exception&) {
         return "";
     }
-#if 0
-    std::cerr <<"  Final state:\n" <<policy.get_state() <<"\n";
-    std::cerr <<"  Diff:\n";
-    policy.print_diff(std::cerr);
-    std::cerr <<"  Normalized diff:\n";
-    policy.print_diff(std::cerr, &rmap);
-#endif
-
-    /* Compute digest based on print form of policy state, then convert to ASCII */
-    std::stringstream s;
-    policy.print_diff(s, &rmap);
-    size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
-    char *digest = new char[digest_sz];
-    gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
-    std::string digest_str;
-    for (size_t i=digest_sz; i>0; --i) {
-        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
-        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
-    }
-    delete[] digest; digest=NULL;
-    return digest_str;
+    return policy.SHA1();
 }
 
 /* Unparser that outputs some extra information */
@@ -479,8 +452,6 @@ main(int argc, char *argv[])
     bool do_show_functions = false;
     const char *blocks_filename = NULL;
     int exit_status = 0;
-
-    gcry_check_version(NULL);
 
     /* Parse and remove the command-line switches intended for this executable, but leave the switches we don't
      * understand so they can be handled by ROSE's frontend(). */

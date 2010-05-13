@@ -91,7 +91,7 @@ virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(R
 
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
-disassemble_LDADD = -lgcrypt $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassemble a file containing bare instructions
 disassembleBuffer_SOURCES = disassembleBuffer.C
