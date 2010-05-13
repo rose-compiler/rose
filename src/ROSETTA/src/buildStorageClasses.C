@@ -810,6 +810,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmPEImportILTEntry::ILTEntryType" ) ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionType") ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
+                 ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||
                  false 
               )
        {
@@ -865,6 +866,8 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgGraphNodeDirectedGraphEdgeMultimapPtrList" ) ||
               // DQ (9/9/2008): Added support for string table transformations.
                  ( varTypeString == "SgAsmGenericStrtab::referenced_t" ) ||
+              // TV (05/03/2010): Added support for 'SgFunctionModifier::opencl_work_group_size_t' which's  a struct of 3 longs !
+                 ( varTypeString == "SgFunctionModifier::opencl_work_group_size_t") ||
                  false
               )
        {

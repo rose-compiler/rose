@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 #include "ItemTreeNode.h"
 #include "AsmTreeNode.h"
 
