@@ -4448,6 +4448,20 @@ Section [40]:
 0x080483fa: 8d bf 00 00 00 00 |......|   lea    edi, [edi + 0x00000000]
             (successors: 0x08048400)
 
+0x08048440: e8 d3 ff ff ff    |..... |   call   0x08048418
+            (successors: 0x08048418)
+
+0x08048445: c7 44 24 04 2f 84 |.D$./.|
+0x0804844b: 04 08             |..    |   mov    DWORD PTR ss:[esp + 0x04], 0x0804842f
+0x0804844d: c7 04 24 0a 00 00 |..$...|
+0x08048453: 00                |.     |   mov    DWORD PTR ss:[esp], 0x0000000a
+0x08048454: e8 97 fe ff ff    |..... |   call   0x080482f0
+            (successors: 0x080482f0 0x08048459)
+
+0x08048459: c9                |.     |   leave  
+0x0804845a: c3                |.     |   ret    
+            (successors:...)
+
 0x080484c8: 90                |.     |   nop    
 0x080484c9: 8d b4 26 00 00 00 |..&...|
 0x080484cf: 00                |.     |   lea    esi, [esi + 0x00000000]
@@ -6315,6 +6329,9 @@ Section [40]:
 0x0804931b: e9 c0 ff ff ff    |..... |   jmp    0x080492e0
             (successors: 0x080492e0)
 
+0x08049320: ff 25 c0 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c0]
+            (successors:...)
+
 0x08049326: 68 18 00 00 00    |h.... |   push   0x00000018
 0x0804932b: e9 b0 ff ff ff    |..... |   jmp    0x080492e0
             (successors: 0x080492e0)
@@ -6356,6 +6373,46 @@ Section [40]:
 0x080493f4: 8d b6 00 00 00 00 |......|   lea    esi, [esi + 0x00000000]
 0x080493fa: 8d bf 00 00 00 00 |......|   lea    edi, [edi + 0x00000000]
             (successors: 0x08049400)
+
+0x08049416: c9                |.     |   leave  
+0x08049417: c3                |.     |   ret    
+            (successors:...)
+
+0x08049423: c7 04 24 00 00 00 |..$...|
+0x08049429: 00                |.     |   mov    DWORD PTR ss:[esp], 0x00000000
+0x0804942a: e8 f1 fe ff ff    |..... |   call   0x08049320
+            (successors: 0x08049320 0x0804942f)
+
+0x08049440: e8 d3 ff ff ff    |..... |   call   0x08049418
+            (successors: 0x08049418)
+
+0x08049445: c7 44 24 04 2f 84 |.D$./.|
+0x0804944b: 04 08             |..    |   mov    DWORD PTR ss:[esp + 0x04], 0x0804842f
+0x0804944d: c7 04 24 0a 00 00 |..$...|
+0x08049453: 00                |.     |   mov    DWORD PTR ss:[esp], 0x0000000a
+0x08049454: e8 97 fe ff ff    |..... |   call   0x080492f0
+            (successors: 0x080492f0)
+
+0x08049459: c9                |.     |   leave  
+0x0804945a: c3                |.     |   ret    
+            (successors:...)
+
+0x0804947f: b8 00 00 00 00    |..... |   mov    eax, 0x00000000
+0x08049484: c9                |.     |   leave  
+0x08049485: c3                |.     |   ret    
+            (successors:...)
+
+0x08049486: 90                |.     |   nop    
+0x08049487: 90                |.     |   nop    
+0x08049488: 90                |.     |   nop    
+0x08049489: 90                |.     |   nop    
+0x0804948a: 90                |.     |   nop    
+0x0804948b: 90                |.     |   nop    
+0x0804948c: 90                |.     |   nop    
+0x0804948d: 90                |.     |   nop    
+0x0804948e: 90                |.     |   nop    
+0x0804948f: 90                |.     |   nop    
+            (successors: 0x08049490)
 
 0x080494c8: 90                |.     |   nop    
 0x080494c9: 8d b4 26 00 00 00 |..&...|
@@ -7981,7 +8038,7 @@ Section [40]:
 0x08048423: c7 04 24 00 00 00 |..$...|
 0x08048429: 00                |.     |   mov    DWORD PTR ss:[esp], 0x00000000
 0x0804842a: e8 f1 fe ff ff    |..... |   call   0x08048320
-            (successors: 0x08048320 0x0804842f)
+            (successors: 0x08048320)
 
 0x0804842f: ============================ Function (symbol, pattern) <handler>
 0x0804842f: 55                |U     |   push   ebp
@@ -7989,21 +8046,7 @@ Section [40]:
 0x08048432: 83 ec 08          |...   |   sub    esp, 0x08
 0x08048435: ff 05 d8 96 04 08 |......|   inc    DWORD PTR ds:[0x080496d8]
 0x0804843b: e8 d8 ff ff ff    |..... |   call   0x08048418
-            (successors: 0x08048418 0x08048440)
-
-0x08048440: e8 d3 ff ff ff    |..... |   call   0x08048418
-            (successors: 0x08048418 0x08048445)
-
-0x08048445: c7 44 24 04 2f 84 |.D$./.|
-0x0804844b: 04 08             |..    |   mov    DWORD PTR ss:[esp + 0x04], 0x0804842f
-0x0804844d: c7 04 24 0a 00 00 |..$...|
-0x08048453: 00                |.     |   mov    DWORD PTR ss:[esp], 0x0000000a
-0x08048454: e8 97 fe ff ff    |..... |   call   0x080482f0
-            (successors: 0x080482f0 0x08048459)
-
-0x08048459: c9                |.     |   leave  
-0x0804845a: c3                |.     |   ret    
-            (successors:...)
+            (successors: 0x08048418)
 
 0x0804845b: ============================ Function (symbol, pattern) <main>
 0x0804845b: 55                |U     |   push   ebp
@@ -8177,10 +8220,6 @@ Section [40]:
 0x08049300: ff 25 b8 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b8]
             (successors:...)
 
-0x08049320: ============================ Function (call target) unknown name
-0x08049320: ff 25 c0 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c0]
-            (successors:...)
-
 0x08049330: ============================ Function (call target) unknown name
 0x08049330: ff 25 c4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c4]
             (successors:...)
@@ -8199,7 +8238,7 @@ Section [40]:
             (successors: 0x0804937f 0x08049384)
 
 0x0804937f: e8 ac ff ff ff    |..... |   call   0x08049330
-            (successors: 0x08049330 0x08049384)
+            (successors: 0x08049330)
 
 0x08049384: 58                |X     |   pop    eax
 0x08049385: 5b                |[     |   pop    ebx
@@ -8281,23 +8320,14 @@ Section [40]:
 0x0804940a: c7 04 24 b4 85 04 |..$...|
 0x08049410: 08                |.     |   mov    DWORD PTR ss:[esp], 0x080485b4
 0x08049411: e8 ea fe ff ff    |..... |   call   0x08049300
-            (successors: 0x08049300 0x08049416)
-
-0x08049416: c9                |.     |   leave  
-0x08049417: c3                |.     |   ret    
-            (successors:...)
+            (successors: 0x08049300)
 
 0x08049418: ============================ Function (call target, pattern) unknown name
 0x08049418: 55                |U     |   push   ebp
 0x08049419: 89 e5             |..    |   mov    ebp, esp
 0x0804941b: 83 ec 08          |...   |   sub    esp, 0x08
 0x0804941e: e8 e1 ff ff ff    |..... |   call   0x08049404
-            (successors: 0x08049404 0x08049423)
-
-0x08049423: c7 04 24 00 00 00 |..$...|
-0x08049429: 00                |.     |   mov    DWORD PTR ss:[esp], 0x00000000
-0x0804942a: e8 f1 fe ff ff    |..... |   call   0x08049320
-            (successors: 0x08049320 0x0804942f)
+            (successors: 0x08049404)
 
 0x0804942f: ============================ Function (pattern) unknown name
 0x0804942f: 55                |U     |   push   ebp
@@ -8305,21 +8335,7 @@ Section [40]:
 0x08049432: 83 ec 08          |...   |   sub    esp, 0x08
 0x08049435: ff 05 d8 96 04 08 |......|   inc    DWORD PTR ds:[0x080496d8]
 0x0804943b: e8 d8 ff ff ff    |..... |   call   0x08049418
-            (successors: 0x08049418 0x08049440)
-
-0x08049440: e8 d3 ff ff ff    |..... |   call   0x08049418
-            (successors: 0x08049418 0x08049445)
-
-0x08049445: c7 44 24 04 2f 84 |.D$./.|
-0x0804944b: 04 08             |..    |   mov    DWORD PTR ss:[esp + 0x04], 0x0804842f
-0x0804944d: c7 04 24 0a 00 00 |..$...|
-0x08049453: 00                |.     |   mov    DWORD PTR ss:[esp], 0x0000000a
-0x08049454: e8 97 fe ff ff    |..... |   call   0x080492f0
-            (successors: 0x080492f0 0x08049459)
-
-0x08049459: c9                |.     |   leave  
-0x0804945a: c3                |.     |   ret    
-            (successors:...)
+            (successors: 0x08049418)
 
 0x0804945b: ============================ Function (pattern) unknown name
 0x0804945b: 55                |U     |   push   ebp
@@ -8333,25 +8349,7 @@ Section [40]:
 0x08049473: c7 04 24 0a 00 00 |..$...|
 0x08049479: 00                |.     |   mov    DWORD PTR ss:[esp], 0x0000000a
 0x0804947a: e8 71 fe ff ff    |.q... |   call   0x080492f0
-            (successors: 0x080492f0 0x0804947f)
-
-0x0804947f: b8 00 00 00 00    |..... |   mov    eax, 0x00000000
-0x08049484: c9                |.     |   leave  
-0x08049485: c3                |.     |   ret    
-            (successors:...)
-
-0x08049486: ============================ Function (padding) unknown name
-0x08049486: 90                |.     |   nop    
-0x08049487: 90                |.     |   nop    
-0x08049488: 90                |.     |   nop    
-0x08049489: 90                |.     |   nop    
-0x0804948a: 90                |.     |   nop    
-0x0804948b: 90                |.     |   nop    
-0x0804948c: 90                |.     |   nop    
-0x0804948d: 90                |.     |   nop    
-0x0804948e: 90                |.     |   nop    
-0x0804948f: 90                |.     |   nop    
-            (successors: 0x08049490)
+            (successors: 0x080492f0)
 
 0x08049490: ============================ Function (pattern) unknown name
 0x08049490: 55                |U     |   push   ebp
