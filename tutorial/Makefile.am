@@ -14,7 +14,9 @@ noinst_HEADERS = \
    inputCode_collectComments.h
 
 # Liao 5/7/2010  We want to have a few installable programs as tools for users
-bin_PROGRAMS = buildCallGraph
+bin_PROGRAMS = \
+   buildCallGraph \
+   defuseAnalysis
 
 #varSubstCopy , disabled this one Liao, and sorted the list
 # tutorial examples which will not be installed to ROSE_INS/bin
@@ -63,7 +65,6 @@ NOINST_TUTORIAL_EXAMPLES = \
    dataFlowGraph \
    debuggingIRnodeToString \
    debuggingSourceCodePositionInformation \
-   defuseAnalysis \
    dwarfAnalysis \
    dwarfInstructionAddressToSourceLineAnalysis \
    findVariableDeclarations \
@@ -1081,9 +1082,9 @@ endif
 
 defuseAnalysis_pic1.pdf: defuseAnalysis
 	@echo "Building an example DefUse ..."
-	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C
+	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C &>defuseAnalysis.out
 	@echo "DefUseAnalysis: Building postscript file from foo.dot ..."
-	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf &>defuseAnalysis_pic1.out
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e defuseAnalysis_pic1.pdf; then exit 1; fi
@@ -1444,7 +1445,7 @@ cleanDocs:
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg  *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
-	rm -rf $(generatedCodeExamples)
+	rm -rf $(generatedCodeExamples) *.out
 #	rm -f exampleTranslator exampleTranslatorMultiLib
 #	rm -f inputCode_ExampleCodeCoverage
 
