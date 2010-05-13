@@ -108,6 +108,21 @@ class EventReverser
     // Get the forward and reverse version of an statement 
     StmtPair instrumentAndReverseStatement(SgStatement* stmt);
 
+    ExpPair processUnaryOp(SgUnaryOp* unary_op);
+    ExpPair processBinaryOp(SgBinaryOp* bin_op);
+    ExpPair processConditionalExp(SgConditionalExp* cond_exp);
+    ExpPair processFunctionCallExp(SgFunctionCallExp* func_exp);
+
+    StmtPair processExprStatement(SgExprStatement* exp_stmt);
+    StmtPair processBasicBlock(SgBasicBlock* body);
+    StmtPair processVariableDeclaration(SgVariableDeclaration* var_decl);
+    StmtPair processIfStmt(SgIfStmt* if_stmt);
+    StmtPair processForStatement(SgForStatement* for_stmt);
+    StmtPair processForInitStatement(SgForInitStatement* for_init_stmt);
+    StmtPair processWhileStmt(SgWhileStmt* while_stmt);
+    StmtPair processDoWhileStmt(SgDoWhileStmt* do_while_stmt);
+    StmtPair processSwitchStatement(SgSwitchStatement* switch_stmt);
+    
     // **********************************************************************************
     // Auxiliary functions
     // ==================================================================================
@@ -182,12 +197,12 @@ class EventReverser
     SgStatement* putBranchFlagStmt(bool flag = true)
     {
         return buildExprStatement(
-            buildFunctionCallExp(
-                "pushFlag", 
-                buildIntType(), 
-                buildExprListExp(
-                    buildVarRefExp(flagstack_name_), 
-                    buildIntVal(flag))));
+                buildFunctionCallExp(
+                    "pushFlag", 
+                    buildIntType(), 
+                    buildExprListExp(
+                        buildVarRefExp(flagstack_name_), 
+                        buildIntVal(flag))));
     }
 
     // Return the statement which checks the branch flag
@@ -229,11 +244,11 @@ class EventReverser
     }
 
     /***************************************************************************
-    *
-    * The following two functions are used to temporarily turn part of a stack 
-    * into a queue since the flags are FIFO for and/or and conditional operators. 
-    *
-    ****************************************************************************/ 
+     *
+     * The following two functions are used to temporarily turn part of a stack 
+     * into a queue since the flags are FIFO for and/or and conditional operators. 
+     *
+     ****************************************************************************/ 
     void beginQueue() { ++branch_mark_; }
     void endQueue() { --branch_mark_; }
 };
