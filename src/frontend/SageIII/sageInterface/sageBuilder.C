@@ -1932,6 +1932,18 @@ SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression
   return expList;
 }
 
+// CH (5/11/2010): Seems that this function is useful.
+SgExprListExp * SageBuilder::buildExprListExp(const std::vector<SgExpression*>& exprs)
+{
+  SgExprListExp* expList = new SgExprListExp();
+  ROSE_ASSERT(expList);
+  setOneSourcePositionForTransformation(expList);
+  for (size_t i = 0; i < exprs.size(); ++i) {
+    appendExpression(expList, exprs[i]);
+  }
+  return expList;
+}
+
 SgExprListExp * SageBuilder::buildExprListExp_nfi()
 {
   SgExprListExp* expList = new SgExprListExp();

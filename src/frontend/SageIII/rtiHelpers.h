@@ -315,6 +315,12 @@ static std::string toStringForRTI(const SgName& n) {
   return n.getString();
 }
 
+static std::string toStringForRTI(const SgFunctionModifier::opencl_work_group_size_t & x) {
+  std::ostringstream os;
+  os << " ( " << x.x << ", "  << x.y << ", " << x.z << " ) ";
+  return os.str();
+}
+
 #if 0
 // None of these seem to be used
 
