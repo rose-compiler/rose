@@ -59,26 +59,29 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
     // if this expression is a binary one
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
     {
+        if (isSgAndOp(exp) || isSgOrOp(exp))
+            beginQueue();   // Flags are FIFO now
+
         // a binary operation contains two expressions which need to be processed first
         SgExpression *fwd_lhs_exp, *fwd_rhs_exp, *rev_lhs_exp, *rev_rhs_exp;
-        tie(fwd_rhs_exp, rev_rhs_exp) = instrumentAndReverseExpression(bin_op->get_rhs_operand_i());
-        tie(fwd_lhs_exp, rev_lhs_exp) = instrumentAndReverseExpression(bin_op->get_lhs_operand_i());
+        tie(fwd_rhs_exp, rev_rhs_exp) = instrumentAndReverseExpression(bin_op->get_rhs_operand());
+        tie(fwd_lhs_exp, rev_lhs_exp) = instrumentAndReverseExpression(bin_op->get_lhs_operand());
 
         // the default forward version. Unless state saving is needed, we use the following one.
         SgBinaryOp* fwd_exp = isSgBinaryOp(copyExpression(exp));
-        fwd_exp->set_lhs_operand_i(fwd_lhs_exp);
-        fwd_exp->set_rhs_operand_i(fwd_rhs_exp);
+        fwd_exp->set_lhs_operand(fwd_lhs_exp);
+        fwd_exp->set_rhs_operand(fwd_rhs_exp);
 
         // if the left-hand side of the assign-op is the state
         // (note that only in this situation do we consider to reverse this expression)
-        if (SgExpression* model_var = isStateVar(bin_op->get_lhs_operand_i()))
+        if (SgExpression* model_var = isStateVar(bin_op->get_lhs_operand()))
         {
             // The operators +=, -=, *=, <<=, ^= can be reversed without state saving,
             // if the rhs operand is a constant value or state variable.
             // (*= and <<= may be optional, since the possibility of overflow).
             // Also note that the expression in the 'sizeof' operator will not be evaluated,
             // which we don't have to process. For example, i += sizeof(++i) equals to i += sizeof(i)
-            SgExpression* rhs_operand = bin_op->get_rhs_operand_i();
+            SgExpression* rhs_operand = bin_op->get_rhs_operand();
             if (isStateVar(rhs_operand) || 
                     isSgValueExp(rhs_operand) ||
                     isSgSizeOfOp(rhs_operand))
@@ -87,13 +90,15 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgMinusAssignOp>(
-                                model_var, rhs_operand));
+                                copyExpression(model_var), 
+                                copyExpression(rhs_operand)));
 
                 if (isSgMinusAssignOp(exp))
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgPlusAssignOp>(
-                                model_var, rhs_operand));
+                                copyExpression(model_var), 
+                                copyExpression(rhs_operand)));
 
                 // we must ensure that the rhs operand of *= is not ZERO
                 if (isSgMultAssignOp(exp) && !isZero(isSgValueExp(rhs_operand)))
@@ -101,19 +106,22 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgDivAssignOp>(
-                                model_var, rhs_operand));
+                                copyExpression(model_var), 
+                                copyExpression(rhs_operand)));
 
                 if (isSgLshiftAssignOp(exp))
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgRshiftAssignOp>(
-                                model_var, rhs_operand));
+                                copyExpression(model_var), 
+                                copyExpression(rhs_operand)));
 
                 if (isSgXorAssignOp(exp))
                     return ExpPair(
                             fwd_exp,
                             buildBinaryExpression<SgXorAssignOp>(
-                                model_var, rhs_operand));
+                                copyExpression(model_var), 
+                                copyExpression(rhs_operand)));
             }
 
             // the following operations which alter the value of the lhs operand
@@ -131,16 +139,20 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                     isSgLshiftAssignOp(exp) ||
                     isSgRshiftAssignOp(exp))
             {
-                SgBinaryOp* exp_copy = isSgBinaryOp(exp);
-                exp_copy->set_rhs_operand_i(fwd_rhs_exp);
+                //SgBinaryOp* exp_copy = isSgBinaryOp(copyExpression(exp));
+                //exp_copy->set_rhs_operand(fwd_rhs_exp);
 
                 SgExpression* state_var = getStateVar(model_var);
 
                 // Save the state (we cannot use the default forward expression any more).
                 // Here we use comma operator expression to implement state saving.
-                SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                        buildBinaryExpression<SgAssignOp>(state_var, model_var),
-                        exp_copy);
+                fwd_exp = buildBinaryExpression<SgCommaOpExp>(
+                        buildBinaryExpression<SgAssignOp>(
+                            state_var, 
+                            copyExpression(model_var)),
+                        fwd_exp);
+                //exp_copy);
+                ROSE_ASSERT(state_var->get_parent());
 
                 // retrieve the state
                 SgExpression* rev_exp = buildBinaryExpression<SgAssignOp>(
@@ -164,12 +176,16 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
         if (SgAndOp* and_op = isSgAndOp(exp))
         {
             if (rev_rhs_exp == NULL)
+            {
+                endQueue();     // Flags are LIFO now
                 return ExpPair(fwd_exp, rev_lhs_exp);
+            }
 
             // Forward event should record the lhs value of the or operator.
             SgExpression* fwd_exp = buildBinaryExpression<SgAndOp>(
                     putBranchFlagExp(fwd_lhs_exp),
                     fwd_rhs_exp);
+            endQueue();     // Flags are LIFO now
 
             SgExpression* rev_exp;
             // We also have to check if rev_lhs_exp == NULL
@@ -191,12 +207,16 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
         if (SgOrOp* or_op = isSgOrOp(exp))
         {
             if (rev_rhs_exp == NULL)
+            {
+                endQueue();     // Flags are LIFO now
                 return ExpPair(fwd_exp, rev_lhs_exp);
+            }
 
             // Forward event should record the lhs value of the or operator.
             SgExpression* fwd_exp = buildBinaryExpression<SgOrOp>(
                     putBranchFlagExp(fwd_lhs_exp),
                     fwd_rhs_exp);
+            endQueue();     // Flags are LIFO now
 
             SgExpression* rev_exp;
             // We also have to check if rev_lhs_exp == NULL
@@ -211,6 +231,7 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
                         checkBranchFlagExp(),
                         buildIntVal(0),
                         rev_rhs_exp);
+
             return ExpPair(fwd_exp, rev_exp);
         }
 
@@ -242,31 +263,37 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
         // Its forward expression is like ++(s = a, a = 5), where s is for state saving.
         SgUnaryOp* fwd_exp = isSgUnaryOp(copyExpression(exp));
         ROSE_ASSERT(fwd_exp);
-        fwd_exp->set_operand_i(fwd_operand_exp);
+        fwd_exp->set_operand(fwd_operand_exp);
 
         // if the left-hand side of the assign-op is the state
         // (note that only in this situation do we consider to reverse this expression)
-        if (SgExpression* model_var = isStateVar(unary_op->get_operand_i()))
+        if (SgExpression* model_var = isStateVar(unary_op->get_operand()))
         {
             // ++ and -- can both be reversed without state saving
             if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
             {
                 SgUnaryOp::Sgop_mode pp_mode = pp_op->get_mode();
-                if (pp_mode == SgUnaryOp::prefix) pp_mode = SgUnaryOp::postfix;
-                else pp_mode = SgUnaryOp::prefix;
+                if (pp_mode == SgUnaryOp::prefix) 
+                    pp_mode = SgUnaryOp::postfix;
+                else 
+                    pp_mode = SgUnaryOp::prefix;
+
                 return ExpPair(
                         fwd_exp,
-                        buildMinusMinusOp(model_var, pp_mode));
+                        buildMinusMinusOp(copyExpression(model_var), pp_mode));
             }
 
             if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(exp))
             {
                 SgUnaryOp::Sgop_mode mm_mode = mm_op->get_mode();
-                if (mm_mode == SgUnaryOp::prefix) mm_mode = SgUnaryOp::postfix;
-                else mm_mode = SgUnaryOp::prefix;
+                if (mm_mode == SgUnaryOp::prefix) 
+                    mm_mode = SgUnaryOp::postfix;
+                else 
+                    mm_mode = SgUnaryOp::prefix;
+
                 return ExpPair(
                         fwd_exp,
-                        buildPlusPlusOp(model_var, mm_mode));
+                        buildPlusPlusOp(copyExpression(model_var), mm_mode));
             }
         }
 
@@ -283,11 +310,16 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
         SgExpression *rev_cond_exp, *rev_true_exp, *rev_false_exp;
 
         tie(fwd_cond_exp, rev_cond_exp) = instrumentAndReverseExpression(cond_exp->get_conditional_exp());
+
+        beginQueue();   // Flags are FIFO now
+        fwd_cond_exp = putBranchFlagExp(fwd_cond_exp);
         tie(fwd_true_exp, rev_true_exp) = instrumentAndReverseExpression(cond_exp->get_true_exp());
         tie(fwd_false_exp, rev_false_exp) = instrumentAndReverseExpression(cond_exp->get_false_exp());
+        endQueue();     // Flags are LIFO now
 
-        fwd_true_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(true), fwd_true_exp);
-        fwd_false_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(false),fwd_false_exp);
+        //fwd_true_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(true), fwd_true_exp);
+        //fwd_false_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(false),fwd_false_exp);
+
 
         // Since the conditional operator does not allow NULL expressions appear to its 2nd and 3rd
         // operand, we have to pull a place holder which does nothing if the reverse expression of that
@@ -346,6 +378,7 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
             //SgExprListExp* fwd_para_list = buildExprListExp();
 
 
+            // FIXME We will use new interface buildExprListExp(const vector<SgExpression*>&) later.
             SgExprListExp* fwd_para_list = new SgExprListExp();
             setOneSourcePositionForTransformation(fwd_para_list);
             foreach (SgExpression* e, fwd_args)
@@ -543,9 +576,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
         tie(fwd_cond_exp, rev_post_exp) = instrumentAndReverseStatement(cond);
 
         return StmtPair(
-                //buildBasicBlock(
-            buildIfStmt(fwd_cond_exp, fwd_true_body, fwd_false_body),
-            //NewBranchFlag()),
+                buildIfStmt(fwd_cond_exp, fwd_true_body, fwd_false_body),
                 buildBasicBlock(
                     buildIfStmt(rev_cond_exp, rev_true_body, rev_false_body),
                     rev_post_exp));
@@ -838,6 +869,18 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
                 buildSwitchStatement(item_selector, rev_body));
     }
 
+#if 0
+    if (SgBreakStmt* break_stmt = isSgBreakStmt(stmt))
+        return copyStatement(break_stmt);
+
+    if (SgContinueStmt* continue_stmt = isSgContinueStmt(stmt))
+        return copyStatement(continue_stmt);
+
+    if (SgReturnStmt* return_stmt = isSgReturnStmt(stmt))
+        return copyStatement(return_stmt);
+#endif
+
+    // The following output should include break, continue and other ones.
     return StmtPair(
             copyStatement(stmt),
             copyStatement(stmt));
@@ -855,7 +898,11 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
     SgFunctionDeclaration* fwd_func_decl = 
         buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
                 isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList())));
+    SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
+    fwd_func_def->set_body(isSgBasicBlock(fwd_body));
+    fwd_body->set_parent(fwd_func_def);
 
+#if 0
     pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
 
     SgStatementPtrList fwd_stmt_list = isSgBasicBlock(fwd_body)->get_statements();
@@ -863,12 +910,17 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
         appendStatement(stmt);
 
     popScopeStack();
+#endif
 
     func_name = func_decl_->get_name() + "_reverse";
     SgFunctionDeclaration* rev_func_decl = 
         buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
                 isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
+    SgFunctionDefinition* rev_func_def = rev_func_decl->get_definition();
+    rev_func_def->set_body(isSgBasicBlock(rev_body));
+    rev_body->set_parent(rev_func_def);
 
+#if 0
     pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
 
     SgStatementPtrList rev_stmt_list = isSgBasicBlock(rev_body)->get_statements();
@@ -876,6 +928,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
         appendStatement(stmt);
 
     popScopeStack();
+#endif
 
     output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rev_func_decl));
     return output_func_pairs_;
@@ -954,7 +1007,7 @@ void reverserTraversal::visit(SgNode* n)
 
 
 // Put the functions generated in place
-void insertFunctionInPlace(SgFunctionDeclaration* func, const vector<SgFunctionDeclaration*> all_funcs)
+void insertFunctionInPlace(SgFunctionDeclaration* func, const vector<SgFunctionDeclaration*>& all_funcs)
 {
     string func_name = func->get_name();
     replace_last(func_name, "_forward", "");
@@ -971,7 +1024,7 @@ int fixVariableReferences2(SgNode* root)
 {
     ROSE_ASSERT(root);
     int counter=0;
-
+    Rose_STL_Container<SgNode*> nodeList;
 
     SgVarRefExp* varRef=NULL;
     Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
@@ -988,7 +1041,7 @@ int fixVariableReferences2(SgNode* root)
         {
             SgName varName=initname->get_name();
             SgSymbol* realSymbol = NULL;
-            cout << varName << endl;
+            //cout << varName << endl;
 
             // CH (5/7/2010): Before searching SgVarRefExp objects, we should first deal with class/structure
             // members. Or else, it is possible that we assign the wrong symbol to those members if there is another
@@ -997,12 +1050,12 @@ int fixVariableReferences2(SgNode* root)
             //
             if (SgArrowExp* arrowExp = isSgArrowExp(varRef->get_parent()))
             {
-                if (varRef == arrowExp->get_rhs_operand_i())
+                if (varRef == arrowExp->get_rhs_operand())
                 {
                     // make sure the lhs operand has been fixed
-                    counter += fixVariableReferences2(arrowExp->get_lhs_operand_i());
+                    counter += fixVariableReferences2(arrowExp->get_lhs_operand());
 
-                    SgPointerType* ptrType = isSgPointerType(arrowExp->get_lhs_operand_i()->get_type());
+                    SgPointerType* ptrType = isSgPointerType(arrowExp->get_lhs_operand()->get_type());
                     ROSE_ASSERT(ptrType);
                     SgClassType* clsType = isSgClassType(ptrType->get_base_type());
                     ROSE_ASSERT(clsType);
@@ -1016,12 +1069,12 @@ int fixVariableReferences2(SgNode* root)
             }
             else if (SgDotExp* dotExp = isSgDotExp(varRef->get_parent()))
             {
-                if (varRef == dotExp->get_rhs_operand_i())
+                if (varRef == dotExp->get_rhs_operand())
                 {
                     // make sure the lhs operand has been fixed
-                    counter += fixVariableReferences2(dotExp->get_lhs_operand_i());
+                    counter += fixVariableReferences2(dotExp->get_lhs_operand());
 
-                    SgClassType* clsType = isSgClassType(dotExp->get_lhs_operand_i()->get_type());
+                    SgClassType* clsType = isSgClassType(dotExp->get_lhs_operand()->get_type());
                     ROSE_ASSERT(clsType);
                     SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
                     decl = isSgClassDeclaration(decl->get_definingDeclaration());
@@ -1045,12 +1098,35 @@ int fixVariableReferences2(SgNode* root)
                 // release placeholder initname and symbol
                 ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
 
-                //delete initname; // TODO deleteTree(), release File_Info nodes etc.
-                //delete (varRef->get_symbol());
-                //to_delete.push_back(varRef->get_symbol());
+                bool flag = false;
 
+                SgSymbol* symbol_to_delete = varRef->get_symbol();
                 varRef->set_symbol(isSgVariableSymbol(realSymbol));
                 counter ++;
+
+                if (nodeList.empty())
+                {
+                    VariantVector vv(V_SgVarRefExp);
+                    nodeList = NodeQuery::queryMemoryPool(vv);
+                }
+                foreach(SgNode* node, nodeList)
+                {
+                    if (SgVarRefExp* var = isSgVarRefExp(node))
+                    {
+                        if (var->get_symbol() == symbol_to_delete)
+                        {
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if (!flag)
+                {
+                    cout <<initname->get_name().str() << endl;
+                    delete initname; // TODO deleteTree(), release File_Info nodes etc.
+                    delete symbol_to_delete;
+                }
+
             }
         }
     } // end for
@@ -1081,12 +1157,12 @@ int main( int argc, char * argv[] )
     pushScopeStack(isSgScopeStatement(globalScope));
 
     reverser.traverseInputFiles(project,preorder);
+    cout << "Traverse complete\n";
 
     ROSE_ASSERT(reverser.model_type);
 
     //SgStatement* init_func = buildInitializationFunction();
-    appendStatement(buildInitializationFunction(reverser.model_type));
-    appendStatement(buildCompareFunction(reverser.model_type));
+
 
     for (size_t i = 0; i < reverser.var_decls.size(); ++i)
         prependStatement(reverser.var_decls[i]);
@@ -1094,12 +1170,20 @@ int main( int argc, char * argv[] )
         insertFunctionInPlace(reverser.funcs_gen[i], reverser.all_funcs);
     //appendStatement(reverser.funcs[i]);
 
+    appendStatement(buildInitializationFunction(reverser.model_type));
+    appendStatement(buildCompareFunction(reverser.model_type));
     appendStatement(buildMainFunction(reverser.var_inits, reverser.events_num));
+
+    cout << "Start to fix variables references\n";
     fixVariableReferences2(globalScope);
+    cout << "Fix finished\n";
 
     popScopeStack();
 
+    // FIXME
+    // Write or find a function to clear all nodes in memory pool who don't have parents.
 
+    AstTests::runAllTests(project);
     return backend(project);
 }
 

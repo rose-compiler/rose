@@ -33,6 +33,10 @@ class EventReverser
     int counter_;
     vector<FuncDeclPair> output_func_pairs_;
 
+    // This mark is for and/or and conditional expression, in which the special stack
+    // interfaces are used.
+    int branch_mark_;
+
     static set<SgFunctionDeclaration*> func_processed_;
 
     public:
@@ -42,7 +46,8 @@ class EventReverser
         flagstack_name_(function_name_ + "_flag"),
         flag_(1), 
         flag_saved_(0), 
-        counter_(0)
+        counter_(0),
+        branch_mark_(-1)
     {
     }
 
@@ -118,7 +123,7 @@ class EventReverser
         }
         else if (SgPntrArrRefExp* ref_exp = isSgPntrArrRefExp(exp))
         {
-            if (isSgArrowExp(ref_exp->get_lhs_operand_i()))
+            if (isSgArrowExp(ref_exp->get_lhs_operand()))
                 return ref_exp;
         }
         return NULL;
@@ -148,22 +153,41 @@ class EventReverser
     // The following functions are for if statement
     // ==================================================================================
 
+
+#if 0
     // Return the statement which saves the branch state
     SgExpression* putBranchFlagExp(bool flag = true)
     {
-        return buildFunctionCallExp("pushFlag", buildIntType(), 
-                buildExprListExp(buildVarRefExp(flagstack_name_), buildIntVal(flag)));
+        return buildFunctionCallExp(
+                "pushFlag", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(flagstack_name_), 
+                    buildIntVal(flag), 
+                    buildIntVal(branch_mark_)));
     }
+#endif
 
     SgExpression* putBranchFlagExp(SgExpression* exp)
     {
-        return buildFunctionCallExp("pushFlag", buildIntType(), 
-                buildExprListExp(buildVarRefExp(flagstack_name_), exp));
+        return buildFunctionCallExp(
+                "pushFlag", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(flagstack_name_), 
+                    exp, 
+                    buildIntVal(branch_mark_)));
     }
 
     SgStatement* putBranchFlagStmt(bool flag = true)
     {
-        return buildExprStatement(putBranchFlagExp(flag));
+        return buildExprStatement(
+            buildFunctionCallExp(
+                "pushFlag", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(flagstack_name_), 
+                    buildIntVal(flag))));
     }
 
     // Return the statement which checks the branch flag
@@ -203,6 +227,15 @@ class EventReverser
         loop_counters_.push_back(counter_name);
         return buildVarRefExp(counter_name);
     }
+
+    /***************************************************************************
+    *
+    * The following two functions are used to temporarily turn part of a stack 
+    * into a queue since the flags are FIFO for and/or and conditional operators. 
+    *
+    ****************************************************************************/ 
+    void beginQueue() { ++branch_mark_; }
+    void endQueue() { --branch_mark_; }
 };
 
 
