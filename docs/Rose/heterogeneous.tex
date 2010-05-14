@@ -58,14 +58,9 @@ Where:
 \end{itemize}
 We catched it by adding two new nodes in the IR: 
 \begin{itemize}
-	\item \emph{SgKernelCallExp} at the same level than \emph{SgFunctionCallExp}
-	\item \emph{SgKernelExecConfig}, an attribute of \emph{SgKernelCallExp}, catch the execution configuration (grid, blocks, shared memory dynamic allocation and stream).
+	\item \emph{SgCudaKernelCallExp} at the same level than \emph{SgFunctionCallExp}
+	\item \emph{SCudagKernelExecConfig}, an attribute of \emph{SgCudaKernelCallExp}, catch the execution configuration (grid, blocks, shared memory dynamic allocation and stream).
 \end{itemize}
-%\begin{figure}[h]
-%	\includegraphics[height=4.5cm]{new_nodes.png}
-%	\caption{New nodes for kernels call support.}
-%	\label{heterogeneous:figCudaKernNodes}
-%\end{figure}
 
 			\subsubsection{Build-in Types, Variables and Functions}
 			
