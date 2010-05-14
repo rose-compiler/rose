@@ -66,6 +66,19 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
     return true;
 }
 
+/** True if @p insns ends with a RET instruction. Eventually this could do something more sophisticated. */
+bool
+SgAsmx86Instruction::is_function_return(const std::vector<SgAsmInstruction*> &insns) {
+    if (insns.empty())
+        return false;
+    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
+    if (!last_insn)
+        return false;
+    if (last_insn->get_kind()==x86_ret || last_insn->get_kind()==x86_retf)
+        return true;
+    return false;
+}
+
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(bool *complete) {
     Disassembler::AddressSet retval;
@@ -155,6 +168,11 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
 {
+#if 0
+    fprintf(stderr, "SgAsmx86Instruction::get_successors(B%08"PRIx64" for %zd instruction%s):\n", 
+            insns.front()->get_address(), insns.size(), 1==insns.size()?"":"s");
+#endif
+
     Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
@@ -170,9 +188,8 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 semantics.processInstruction(insn);
 #if 0
                 std::ostringstream s;
-                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
+                s << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
                   <<policy.get_state()
-                  <<"    ip = " <<policy.get_ip() <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
@@ -185,13 +202,14 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
 #if 0
-            fprintf(stderr, "semantic analysis failed: %s\n", e.mesg.c_str());
+            fprintf(stderr, "    semantic analysis failed: %s\n", e.mesg.c_str());
 #endif
         }
     }
 
     /* Assume that a CALL instruction eventually executes a RET that causes execution to resume at the address following the
-     * CALL. This is true 99% of the time. */
+     * CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may prune away this fall-through address
+     * under certain circumstances. [RPM 2010-05-09] */
     {
         ROSE_ASSERT(insns.size()>0);
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
@@ -199,6 +217,15 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall)
             successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
     }
+
+#if 0
+    fprintf(stderr, "  successors:");
+    for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+        fprintf(stderr, " 0x%08"PRIx64, *si);
+    if (!*complete) fprintf(stderr, "...");
+    fprintf(stderr, "\n");
+#endif
+
     return successors;
 }
 
@@ -392,7 +419,9 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
     if (!allow_branch && policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size())
         return true;
 
-    /* Instructions have an effect if the state changed. State does not include the instruction pointer. */
+    /* Instructions have an effect if the state changed.  We want the comparison to be independent of the instruction pointer,
+     * so we'll set the IP of both the initial and final states to the same (unknown) value. */ 
+    policy.get_orig_state().ip = policy.get_state().ip = VirtualMachineSemantics::ValueType<32>();
     return !policy.equal_states(policy.get_orig_state(), policy.get_state());
 }
 
@@ -412,7 +441,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
                                             bool relax_stack_semantics/*false*/)
 {
     static const bool verbose = false;
-    
+
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
@@ -421,10 +450,15 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
 
+    /* When comparing states, we don't want to compare the instruction pointers. Therefore, we'll change the IP value of
+     * each state to be the same. */
+    const VirtualMachineSemantics::ValueType<32> common_ip;
+    
     /* Save the state before and after each instruction.  states[i] is the state before insn[i] and states[i+1] is the state
      * after insn[i]. */
     std::vector<VirtualMachineSemantics::State> state;
     state.push_back(policy.get_state());
+    state.back().ip = common_ip;
     rose_addr_t next_ip = insns.front()->get_address();
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
@@ -444,6 +478,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
             }
             next_ip = policy.get_ip().known_value();
             state.push_back(policy.get_state());
+            state.back().ip = common_ip;
             if (verbose) std::cerr <<"  state:\n" <<policy.get_state();
         }
     } catch (const Semantics::Exception&) {

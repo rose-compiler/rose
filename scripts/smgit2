@@ -2096,8 +2096,12 @@ sub do_merge {
   };
 
   execute $merge unless -f "@{[top_of_rose]}/.git/MERGE_HEAD";
-  execute $merge, submodules;
-  execute sub {git "add", map {$_->[0]} submodules or die};
+  if (submodules) { # merge in supermodule may have removed the submodules!
+    execute $merge, submodules if submodules;
+    execute sub {git "add", map {$_->[0]} submodules or die};
+  } else {
+    print STDERR "$arg0: WARNING: merge removed all submodules!\n";
+  }
 
   if (commit_has_effect) {
     execute sub {
