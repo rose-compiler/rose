@@ -4,7 +4,6 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include <gcrypt.h>
 #include <ostream>
 
 #include "AsmUnparser.h"
@@ -82,20 +81,13 @@ block_semantics(SgAsmBlock *blk)
 {
     if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front()))
         return "";
+    const SgAsmStatementPtrList &stmts = blk->get_statementList();
 
-#if 0
-    std::cerr <<"block_semantics(" <<StringUtility::addrToString(blk->get_address()) <<"):\n";
-#endif
-
-    VirtualMachineSemantics::RenameMap rmap;
     typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
     VirtualMachineSemantics::Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
-    std::cerr <<"  Initial state:\n" <<policy.get_state() <<"\n";
-
     try {
-        const SgAsmStatementPtrList &stmts = blk->get_statementList();
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
             ROSE_ASSERT(insn!=NULL);
@@ -104,27 +96,29 @@ block_semantics(SgAsmBlock *blk)
     } catch (const Semantics::Exception&) {
         return "";
     }
-#if 0
-    std::cerr <<"  Final state:\n" <<policy.get_state() <<"\n";
-    std::cerr <<"  Diff:\n";
-    policy.print_diff(std::cerr);
-    std::cerr <<"  Normalized diff:\n";
-    policy.print_diff(std::cerr, &rmap);
-#endif
 
-    /* Compute digest based on print form of policy state, then convert to ASCII */
-    std::stringstream s;
-    policy.print_diff(s, &rmap);
-    size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
-    char *digest = new char[digest_sz];
-    gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
-    std::string digest_str;
-    for (size_t i=digest_sz; i>0; --i) {
-        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
-        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+    /* If the last instruction is a x86 CALL or FARCALL then change the return address that's at the top of the stack so that
+     * two identical blocks located at different memory addresses generate equal hashes (at least as far as the function call
+     * is concerned. */
+    bool ignore_final_ip = true;
+    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
+    if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
+        VirtualMachineSemantics::RenameMap rmap;
+        std::cerr <<unparseInstructionWithAddress(last_insn) <<"\n  Before:\n";
+        policy.print_diff(std::cerr, &rmap);
+        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), policy.number<32>(0), policy.true_());
+        std::cerr <<"  After:\n";
+        policy.print_diff(std::cerr, &rmap);
+        ignore_final_ip = false;
     }
-    delete[] digest; digest=NULL;
-    return digest_str;
+
+    /* Set original IP to a constant value so that hash is never dependent on the true original IP.  If the final IP doesn't
+     * matter, then make it the same as the original so that the difference between the original and final does not include the
+     * IP (SHA1 is calculated in terms of the difference). */
+    policy.get_orig_state().ip = policy.number<32>(0);
+    if (ignore_final_ip)
+        policy.get_state().ip = policy.get_orig_state().ip;
+    return policy.SHA1();
 }
 
 /* Unparser that outputs some extra information */
@@ -480,8 +474,6 @@ main(int argc, char *argv[])
     bool do_show_functions = false;
     const char *blocks_filename = NULL;
     int exit_status = 0;
-
-    gcry_check_version(NULL);
 
     /* Parse and remove the command-line switches intended for this executable, but leave the switches we don't
      * understand so they can be handled by ROSE's frontend(). */

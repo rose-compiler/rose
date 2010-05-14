@@ -80,9 +80,10 @@ protected:
 
     struct Function;
 
-    /** Analysis that can be cached in a block. Some analyses are expensive enough that we can cache them in a block. Analyses
-     *  are either locally computed (by examining only the block where they're cached) or non-locally computed (by examining
-     *  other related basic blocks.  Non-local analyses are not cached locally, but they might be cached in other blocks. */
+    /** Analysis that can be cached in a block. Some analyses are expensive enough that they should be cached in a block.
+     *  Analyses are either locally computed (by examining only the block where they're cached) or non-locally computed (by
+     *  examining other related basic blocks.  Non-local analyses are not cached locally, but they might be cached in other
+     *  blocks. */
     class BlockAnalysisCache {
     public:
         BlockAnalysisCache(): age(0), sucs_complete(false), call_target(NO_TARGET) {}
@@ -104,23 +105,32 @@ protected:
                                                  *   since the final determination requires non-local analysis. If this block
                                                  *   does not end with a call or if the target of the call cannot be statically
                                                  *   determined, then the value is set to Partitioner::NO_TARGET. */
+        bool function_return;                   /**< Does this block serve as the return of a function?  For example, does it
+                                                 *   end with an x86 RET instruction that returns to the CALL fall-through
+                                                 *   address? */
     };
 
-    /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
+    /** Represents a basic block within the Partitioner. Each basic block will eventually become an SgAsmBlock node in the
+     *  AST. However, if the SgAsmFunctionDeclaration::FUNC_LEFTOVER bit is set in the Partitioner::set_search() method then
+     *  blocks that were not assigned to any function to not result in an SgAsmBlock node. */
     struct BasicBlock {
-        BasicBlock(): function(NULL) {
-            /* Keep track of the number of blocks allocated so we can print that info for debugging output. The number
-             * of blocks isn't otherwise directly available. */
-            ++nblocks;
-        }
-        ~BasicBlock() {
-            --nblocks; /* for debugging output */
-        }
+        /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
+         *  to establish to this block.  Instead, call Partitioner::find_bb_containing(). */
+        BasicBlock(): function(NULL) {}
+
+        /** Destructor. This destructor should not be called directly since there are other pointers to this block that the
+         *  block does not know about. Instead, call Partitioner::discard(). */
+        ~BasicBlock() {}
+
+        /** Returns true if the block analysis cache is up to date. */
         bool valid_cache() const { return cache.age==insns.size(); }
+
+        /** Marks the block analysis cache as being outdated. */
         void invalidate_cache() { cache.age=0; }
+
+        /** Marks the block analysis cache as being up to date. */
         void validate_cache() { cache.age=insns.size(); }
 
-        static size_t nblocks;                  /**< Number of blocks allocated; only used for debugging */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
@@ -132,11 +142,11 @@ protected:
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunctionDeclaration in the
      *  AST. */
     struct Function {
-        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(true) {}
-        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(true) {}
+        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(false) {}
+        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(false) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
-            : reason(r), name(name), pending(true), entry_va(entry_va), returns(true) {}
-        void clear_blocks();                    /**< Remove all blocks from this function */
+            : reason(r), name(name), pending(true), entry_va(entry_va), returns(false) {}
+        void clear_blocks();                    /**< Remove all blocks from this function w/out deleting the blocks. */
         BasicBlock* last_block() const;         /**< Return pointer to block with highest address */
         unsigned reason;                        /**< SgAsmFunctionDeclaration::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
@@ -224,6 +234,8 @@ public:
     /** Turns on/off the allowing of discontiguous basic blocks.  When set, a basic block may contain instructions that are
      *  discontiguous in memory. Such blocks are created when find_bb_containing() encounters an unconditional jump whose only
      *  successor is known and the successor would not be part of any other block.
+     *
+     *  Here's an example of a discontiguous basic block.
      *
      *  \code
      *    0x00473bf0: 83 c0 18          |...   |   add    eax, 0x18
@@ -375,6 +387,7 @@ protected:
     Disassembler::InstructionMap insns;                 /**< Set of all instructions to partition. */
     std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block */
     Functions functions;                                /**< All known functions, pending and complete */
+    BasicBlocks blocks;                                 /**< All known basic blocks */
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */

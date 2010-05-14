@@ -167,6 +167,10 @@ Partitioner::update_analyses(BasicBlock *bb)
     if (!bb->insns.front()->is_function_call(bb->insns, &(bb->cache.call_target)))
         bb->cache.call_target = NO_TARGET;
 
+    /* Function return analysis */
+    bb->cache.function_return = !bb->cache.sucs_complete &&
+                                bb->insns.front()->is_function_return(bb->insns);
+
     bb->validate_cache();
 }
 
@@ -258,7 +262,6 @@ Partitioner::pops_return_address(rose_addr_t va)
                 std::ostringstream s;
                 s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
                   <<policy.get_state()
-                  <<"    ip = " <<policy.get_ip() <<"\n";
                 fputs(s.str().c_str(), stderr);
 #endif
             }
@@ -287,19 +290,25 @@ Partitioner::BasicBlock*
 Partitioner::discard(BasicBlock *bb)
 {
     if (bb!=NULL) {
+        /* Erase the block from the list of known blocks. */
+        BasicBlocks::iterator bbi=blocks.find(address(bb));
+        ROSE_ASSERT(bbi!=blocks.end());
+        ROSE_ASSERT(bbi->second==bb);
+        blocks.erase(bbi);
+
+        /* Erase the instruction-to-block link in the insn2block map. */
         for (size_t i=0; i<bb->insns.size(); ++i) {
             SgAsmInstruction *insn = bb->insns[i];
             std::map<rose_addr_t, BasicBlock*>::iterator bbi = insn2block.find(insn->get_address());
             ROSE_ASSERT(bbi!=insn2block.end());
             ROSE_ASSERT(bbi->second==bb);
-            bbi->second = NULL; /*faster than erasing*/
+            bbi->second = NULL; /*much faster than erasing, as determined by real testing*/
         }
+
+        delete bb;
     }
-    delete bb;
     return NULL;
 }
-
-size_t Partitioner::BasicBlock::nblocks;
 
 /* Returns instruction with highest address */
 SgAsmInstruction *
@@ -309,7 +318,7 @@ Partitioner::BasicBlock::last_insn() const
     return insns.back();
 }
 
-/* Release all blocks from a function. */
+/* Release all blocks from a function. Do not delete the blocks. */
 void
 Partitioner::Function::clear_blocks()
 {
@@ -318,7 +327,7 @@ Partitioner::Function::clear_blocks()
     blocks.clear();
 }
 
-/* Return block with highest address */
+/* Return this function's block having the highest address. */
 Partitioner::BasicBlock *
 Partitioner::Function::last_block() const
 {
@@ -339,15 +348,12 @@ Partitioner::clear()
     }
     functions.clear();
 
-    /* Delete all basic blocks */
-    std::set<BasicBlock*> blocks;
-    for (std::map<rose_addr_t, BasicBlock*>::const_iterator ibi=insn2block.begin(); ibi!=insn2block.end(); ++ibi) {
-        if (ibi->second)
-            blocks.insert(ibi->second);
-    }
-    for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
-        delete *bi;
+    /* Delete all basic blocks. We don't need to call Partitioner::discard() to fix up ptrs because all functions that might
+     * have pointed to this block have already been deleted, and the insn2block map has also been cleared. */
     insn2block.clear();
+    for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
+        delete bi->second;
+    blocks.clear();
 
     /* Release (do not delete) all instructions */
     insns.clear();
@@ -405,6 +411,29 @@ Partitioner::append(Function* f, BasicBlock *bb)
     ROSE_ASSERT(bb->function==NULL);
     bb->function = f;
     f->blocks[address(bb)] = bb;
+
+    /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
+     * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
+     * function calls to this function are eventually discovered.  This includes recursive calls since we may have already
+     * discovered the recursive call but not followed the fall-through address. */
+    update_analyses(bb);
+    if (bb->cache.function_return && !f->returns) {
+        f->returns = true;
+        if (debug) fprintf(debug, "[returns-to");
+        for (BasicBlocks::iterator bbi=blocks.begin(); bbi!=blocks.end(); ++bbi) {
+            if (bbi->second->function!=NULL) {
+                const Disassembler::AddressSet &sucs = successors(bbi->second, NULL);
+                for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                    if (*si==f->entry_va) {
+                        if (debug) fprintf(debug, " F%08"PRIx64, bbi->second->function->entry_va);
+                        bbi->second->function->pending = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (debug) fprintf(debug, "]");
+    }
 }
 
 /* Remove a basic block from a function */
@@ -453,10 +482,12 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         if (insn2block[va]!=NULL)
             break; /*we've reached another block*/
         SgAsmInstruction *insn = ii->second;
-        va += insn->get_raw_bytes().size();
-        if (!bb)
+        if (!bb) {
             bb = new BasicBlock;
+            blocks.insert(std::make_pair(va, bb));
+        }
         append(bb, insn);
+        va += insn->get_raw_bytes().size();
         if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
@@ -593,11 +624,19 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
             }
         }
         
-        add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+        Function *plt_func = add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+
+        /* FIXME: Assume that most PLT functions return. We make this assumption for now because the PLT table contains an
+         *        indirect jump through the .plt.got data area and we don't yet do static analysis of the data.  Because of
+         *        that, all the PLT functons will contain only a basic block with the single indirect jump, and no return
+         *        (e.g., x86 RET or RETF) instruction, and therefore the function would not normally be marked as returning.
+         *        [RPM 2010-05-11] */
+        if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
+            "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
+            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name)
+            plt_func->returns = true;
     }
 }
-
-
 
 /* Use symbol tables to determine function entry points. */
 void
@@ -1012,9 +1051,9 @@ void
 Partitioner::discover_first_block(Function *func) 
 {
     if (debug) {
-        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": ",
+        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64,
                 SgAsmFunctionDeclaration::reason_str(true, func->reason).c_str(),
-                func->entry_va, func->name.c_str());
+                func->entry_va, func->name.c_str(), func->entry_va);
     }
     BasicBlock *bb = find_bb_containing(func->entry_va);
 
@@ -1164,8 +1203,8 @@ Partitioner::analyze_cfg()
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
         fprintf(stderr, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
                 pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
-                BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
+                blocks.size(), 1==blocks.size()?"":"s",
+                blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -1201,8 +1240,8 @@ Partitioner::analyze_cfg()
     }
     fprintf(stderr, "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-            BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
-            BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
+            blocks.size(), 1==blocks.size()?"":"s",
+            blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 }
 
 void

@@ -1,72 +1,53 @@
 // Example ROSE Translator: used within ROSE/tutorial
 
 #include "rose.h"
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/trim.hpp>
 
 using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 
-
-
 class visitorTraversal : public AstSimpleProcessing
 {
 public:
     virtual void visit(SgNode* n);
-
-private:
-	SgFunctionRefExp* trackVarRefToFindFunction(SgVarRefExp* ref);
 };
 
 void visitorTraversal::visit(SgNode* n)
 {
-	SgExpression* exp = NULL;
-	SgFunctionDeclaration* func_decl = NULL;
+    SgExpression* exp = NULL;
 
-	// there are two ways to assign the event handler to the event member of lp object
-	// first check if it is assigned by initializer
-	SgAssignInitializer* ai = isSgAssignInitializer(n);
-	if(ai && get_name(ai->get_type()) == "event_f")
-		exp = ai->get_operand();
-	else {
-		// then check if it is through assign operator
-		SgAssignOp* ao = isSgAssignOp(n);
-		if(ao && get_name(ao->get_type()) == "event_f")  
-			exp = ao->get_rhs_operand();
-	}
+    // there are two ways to assign the event handler to the event member of lp object
+    // first check if it is assigned by initializer
+    if (SgAssignInitializer* init = isSgAssignInitializer(n))
+    {
+	if(get_name(init->get_type()) == "event_f")
+	    exp = init->get_operand();
+    }
+    // then check if it is through assign operator
+    else if (SgAssignOp* asn_op = isSgAssignOp(n))
+    {
+	if(get_name(asn_op->get_type()) == "event_f")  
+	    exp = asn_op->get_rhs_operand();
+    }
 
+    if (exp == NULL) return;
 
-	SgFunctionRefExp* fexp = NULL;
-	//SgVarRefExp* vrexp = NULL;
+    SgFunctionRefExp* func_exp = NULL;
 
-	// if there is a cast, we get the operand of it
-	SgCastExp* cexp = isSgCastExp(exp);
-	if(cexp) 
-		//exp = cexp->get_operand();
+    // if there is a cast, we get the operand of it
+    if(SgCastExp* cexp = isSgCastExp(exp)) 
+	func_exp = isSgFunctionRefExp(cexp->get_operand());
+    else
+	func_exp = isSgFunctionRefExp(exp);
 
-	//// then exp is either the function itself or another function pointer variable
-	//SgVarRefExp* vrexp = isSgVarRefExp(exp);
-	//if(vrexp)
-
-		fexp = isSgFunctionRefExp(cexp->get_operand());
-	else
-		fexp = isSgFunctionRefExp(exp);
-	
-	if(fexp) {
-		func_decl = fexp->getAssociatedFunctionDeclaration();
-		cout << get_name(func_decl) << endl;
-	}
+    SgFunctionDeclaration* func_decl = NULL;
+    if(func_exp) 
+    {
+	func_decl = func_exp->getAssociatedFunctionDeclaration();
+	cout << get_name(func_decl) << endl;
+    }
 }
 
-/* 
-visitorTraversal::SgFunctionRefExp* trackVarRefToFindFunction(SgVarRefExp* ref)
-{
-	get_symbol()->get_declaration()->get_definition()
-}
-*/
-
-// Typical main function for ROSE translator
 int main( int argc, char * argv[] )
 {
     // Build the AST used by ROSE
