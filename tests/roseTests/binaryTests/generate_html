@@ -30,6 +30,7 @@ for fdot in *-F*.dot; do
 	    echo "ok"
 	else
 	    echo "fail"
+            sleep 1 || exit 1 #give time for another Ctrl-C if desired
 	    errors="$errors $node"
 	fi
     fi
