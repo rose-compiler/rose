@@ -1132,6 +1132,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
              // now get the end value depending on the definition node's type
              if (isSgAssignOp(vec[0]))
                the_end_value = isSgAssignOp(vec[0])->get_rhs_operand_i();
+             else if (isSgAssignInitializer(vec[0]))
+             {
+               the_end_value = isSgAssignInitializer(vec[0])->get_operand_i();
+             }
              else
              {
                cerr<<"Error: uniformIndirectIndexedArrayRefs() unhandled definition type: "<< vec[0]->class_name()<<endl;
