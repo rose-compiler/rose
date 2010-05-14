@@ -89,7 +89,8 @@ SgAsmx86Instruction::get_successors(bool *complete) {
         case x86_farcall:
         case x86_jmp:
         case x86_farjmp: {
-            /* Unconditional branch to operand-specified address */
+            /* Unconditional branch to operand-specified address. We cannot assume that a CALL instruction returns to the
+             * fall-through address. */
             rose_addr_t va;
             if (x86GetKnownBranchTarget(this, va/*out*/)) {
                 retval.insert(va);
@@ -177,7 +178,8 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
-     * successors, a thorough analysis might be able to narrow it down to a single successor. */
+     * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
+     * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
     if (!*complete || successors.size()>1) {
         typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
         try {
@@ -205,17 +207,6 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             fprintf(stderr, "    semantic analysis failed: %s\n", e.mesg.c_str());
 #endif
         }
-    }
-
-    /* Assume that a CALL instruction eventually executes a RET that causes execution to resume at the address following the
-     * CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may prune away this fall-through address
-     * under certain circumstances. [RPM 2010-05-09] */
-    {
-        ROSE_ASSERT(insns.size()>0);
-        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
-        ROSE_ASSERT(last_insn!=NULL);
-        if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall)
-            successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
     }
 
 #if 0

@@ -164,7 +164,9 @@ Partitioner::update_analyses(BasicBlock *bb)
     bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete));
 
     /* Call target analysis */
-    if (!bb->insns.front()->is_function_call(bb->insns, &(bb->cache.call_target)))
+    bb->cache.call_target = NO_TARGET;
+    bb->cache.is_function_call = bb->insns.front()->is_function_call(bb->insns, &(bb->cache.call_target));
+    if (!bb->cache.is_function_call)
         bb->cache.call_target = NO_TARGET;
 
     /* Function return analysis */
@@ -194,18 +196,17 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
     if (complete) *complete = bb->cache.sucs_complete;
 
     /* Run non-local analyses if necessary. These are never cached here in this block. */
-    if (bb->cache.call_target!=NO_TARGET) {
-        if (pops_return_address(bb->cache.call_target)) {
-            retval.clear();
-            retval.insert(bb->cache.call_target);
-            if (complete) *complete = true;
-        } else {
+
+    /* If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
+     * successor. */
+    if (bb->cache.is_function_call) {
+        rose_addr_t fall_through_va = bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size();
+        if (bb->cache.call_target!=NO_TARGET) {
             BasicBlock *target_bb = find_bb_containing(bb->cache.call_target, false);
-            if (target_bb && target_bb->function && !target_bb->function->returns) {
-                retval.clear();
-                retval.insert(bb->cache.call_target);
-                if (complete) *complete = true;
-            }
+            if (target_bb && target_bb->function && target_bb->function->returns)
+                retval.insert(fall_through_va);
+        } else {
+            retval.insert(fall_through_va); /*true 99% of the time*/
         }
     }
 
@@ -1146,47 +1147,35 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
             if (debug) fprintf(debug, " abandon");
             throw AbandonFunctionDiscovery();
         }
-    } else if (NO_TARGET!=(target_va=call_target(bb))) {
-        if (pops_return_address(target_va)) {
-            /* Although this looks like a function call from the perspective of the caller, the called block pops the
-             * return value off the stack and therefore we should treat the CALL instruction as an unconditional branch.
-             * We add this current block to the function and discovery continues at the branch target. */
-            if (debug) fprintf(debug, "[!call]");
-            append(f, bb);
-            if (target_va!=f->entry_va)
-                discover_blocks(f, target_va);
-        } else {
-            /* The target address appears to be a valid function entry point. */
-            if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
+    } else if ((target_va=call_target(bb))!=NO_TARGET) {
+        /* Call to a known target */
+        if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
 
-            /* Does a function exist already at the call target? */
-            BasicBlock *target_bb = find_bb_containing(target_va);
-            Function *target_func = target_bb ? target_bb->function : NULL;
+        append(f, bb);
 
-            /* If the call target is in the middle of an existing function (i.e., not its entry address) then mark that
-             * function as pending so that the target block can be removed and the target function's blocks rediscovered. */
-            if (target_func && target_func!=f && target_va!=target_func->entry_va) {
-                target_func->pending = true;
-                target_func = NULL;
-            }
+        BasicBlock *target_bb = find_bb_containing(target_va);
+        Function *target_func = target_bb ? target_bb->function : NULL;
 
-            /* Optionally create a new function (or add reason flags). */
-            if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
-                target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
-
-            /* Current block is discovered. If the target function returns then we also continue the discovery proccess at the
-             * call's fall-through address. */       
-            append(f, bb);
-            if (target_func && target_func->returns) {
-                const Disassembler::AddressSet& suc = successors(bb);
-                for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-                    if (*si!=target_va && *si!=f->entry_va)
-                        discover_blocks(f, *si);
-                }
-            }
+        /* If the call target is in the middle of some other existing function (i.e., not its entry address) then mark
+         * that function as pending so that the target block can be removed and the target function's blocks rediscovered.
+         * In other words, treat the target block as if it where a conflict like above. */
+        if (target_func && target_func!=f && target_va!=target_func->entry_va) {
+            target_func->pending = true;
+            target_func = NULL;
         }
+
+        /* Optionally create a new function (or add reason flags). */
+        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
+            target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+        
+        /* Discovery continues at the non call-target successors, if any, according to analysis in successors(). */
+        const Disassembler::AddressSet &suc = successors(bb);
+        for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
+            if (*si != target_va)
+                discover_blocks(f, *si);
+        }
+
     } else {
-        /* This block does not end with a function call. Add this block to the function and discover the successors. */
         append(f, bb);
         const Disassembler::AddressSet& suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {

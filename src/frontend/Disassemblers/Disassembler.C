@@ -814,5 +814,15 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     std::vector<SgAsmInstruction*> block;
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
         block.push_back(ii->second);
-    return block.front()->get_successors(block, complete);
+    Disassembler::AddressSet successors = block.front()->get_successors(block, complete);
+
+    /* For the purposes of disassembly, assume that a CALL instruction eventually executes a RET that causes execution to
+     * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may
+     * make other assumptions, which is why this code is not in SgAsmx86Instruction::get_successors(). [RPM 2010-05-09] */
+    rose_addr_t target;
+    SgAsmInstruction *last_insn = block.back();
+    if (last_insn->is_function_call(block, &target))
+        successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
+
+    return successors;
 }

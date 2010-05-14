@@ -86,11 +86,13 @@ protected:
      *  blocks. */
     class BlockAnalysisCache {
     public:
-        BlockAnalysisCache(): age(0), sucs_complete(false), call_target(NO_TARGET) {}
+        BlockAnalysisCache(): age(0), sucs_complete(false), is_function_call(false), call_target(NO_TARGET) {}
         void clear() {
             age = 0;
             sucs.clear();
             sucs_complete = false;
+            is_function_call = false;
+            call_target = NO_TARGET;
         }
 
         size_t age;                             /**< Non zero implies locally computed successors are cached. The actual value
@@ -100,6 +102,7 @@ protected:
                                                  *   computed over other blocks (i.e., non-local analyses) are never cached. */
         Disassembler::AddressSet sucs;          /**< Locally computed cached successors. */
         bool sucs_complete;                     /**< True if locally computed successors are fully known. */
+        bool is_function_call;                  /**< True if this block ends with a CALL-like instruction. */
         rose_addr_t call_target;                /**< Target of a CALL instruction if this block ends with what appears to be a
                                                  *   function call (whether, in fact, it truly is a function call is immaterial
                                                  *   since the final determination requires non-local analysis. If this block
