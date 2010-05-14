@@ -1060,30 +1060,109 @@ namespace AutoParallelization
 
   Common forms of array references using indirect indexing: 
  
-  Form 1:  naive one
+  Form 1:  naive one (the normalized/uniformed form)
         ... array_X [array_Y [current_loop_index]] ..
 
   Form 2:  used more often in real code from Jeff
        indirect_loop_index  = array_Y [current_loop_index] ;
         ...  array_X[indirect_loop_index] ...
 
-
   Form 3: multiple dimensions, multiple levels of indirections, 
         TODO later on as required from lab applications
 
   We uniform them into a single form (Form 2) to simplify later recognition of indirect indexed array refs
-
+   For Form 2: if the rhs operand is a variable
+      find the reaching definition of the index based on data flow analysis
+        case 1: if it is the current loop's index variable, nothing to do further. stop
+        case 2: outside the current loop's scope: for example higher level loop's index. stop
+        case 3: the definition is within the  current loop ?  
+                 replace the rhs operand with its reaching definition's right hand value.
+                one assignment to another array with the current  (?? higher level is considered at its own level) loop index
+ 
 Algorithm: Replace the index variable with its right hand value of its reaching definition,
- if the index variable is not an enclosing loop index variable.
+           or if the definition 's scope is within the current  loop's body   
 
  TODO This process can be later put into a function to run until a stable fix point is reached. 
 
 */
  static void uniformIndirectIndexedArrayRefs (SgForStatement* for_loop)
  {
-  
+   ROSE_ASSERT (for_loop != NULL);
+   ROSE_ASSERT (for_loop->get_loop_body() != NULL);
+   SgInitializedName * loop_index_name = NULL;
+   bool isCanonical = SageInterface::isCanonicalForLoop (for_loop, &loop_index_name);
+   ROSE_ASSERT (isCanonical == true);
+
+   // prepare def/use analysis, it should already exist as part of initialize_analysis()
+   //SgProject * project = getProject();
+   ROSE_ASSERT (defuse != NULL);  
+   Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(for_loop->get_loop_body(), V_SgPntrArrRefExp);
+   for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+   {
+     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i));
+     ROSE_ASSERT (aRef != NULL); 
+     SgExpression* rhs = aRef-> get_rhs_operand_i();
+     switch (rhs->variantT())
+     {
+       case V_SgVarRefExp:
+         {
+           SgVarRefExp * varRef = isSgVarRefExp(rhs);
+           // do nothing if it is already the current loop's index
+           if (varRef->get_symbol()->get_declaration() == loop_index_name) 
+           {
+             cout<<"Debug:Found a direct indexed array reference:"<< aRef->unparseToString()<<endl;
+             break;
+           }
+           // TODO: recursively substitute the value until reaching the end of a def chain
+           // find out the reaching definition of the variable
+           SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
+           vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
+           // We only uniform a variable reference with a single reaching definition for simplicity for now
+           ROSE_ASSERT (vec.size()>0);
+           if (vec.size()>1) break;
+           SgStatement* def_stmt = SageInterface::getEnclosingStatement(vec[0]);
+           // only try to substitute the varRef with the value if the scope of def_stmt is within the loop body
+           if (SageInterface::isAncestor(for_loop->get_loop_body(), def_stmt))
+            {
+              cout<<"Debug: Found a candidate rhs value of a reaching definition:"<< vec[0]->unparseToString()
+              <<" "<< vec[0]->class_name() <<endl;
+              if (isSgAssignOp(vec[0]))
+              {
+#if 1 
+                SgExpression* new_rhs = SageInterface::deepCopy<SgExpression>(isSgAssignOp(vec[0])->get_rhs_operand_i());
+                aRef->set_rhs_operand_i(new_rhs);
+                new_rhs->set_parent(aRef);
+                delete rhs; 
+#endif
+              }
+              else
+              {
+                cerr<<"uniformIndirectIndexedArrayRefs() unhandled rhs of a reaching definition."<< vec[0]->class_name()<<endl;
+                ROSE_ASSERT(false);
+              }
+            } 
+           break;
+         } // end case V_SgVarRefExp:
+       case V_SgPntrArrRefExp: // uniform form already, do nothing
+       case V_SgIntVal: // element access using number, do nothing
+         // ignore array index arithmetics 
+         // since we narrow down the simplest case for indirection without additional calculation
+       case V_SgSubtractOp:
+       case V_SgAddOp:
+       case V_SgPlusPlusOp:
+       case V_SgMultiplyOp:
+         break;
+       default:
+         cerr<<"Warning: uniformIndirectIndexedArrayRefs(): unhandled array access expression type: "<< rhs->class_name()<<endl;
+         break;
+
+     }
+   }
+
  }
-  /*
+  /* Check if an array reference expression is an indirect indexed with respect to a loop
+   * This function should be called after all array references are uniformed already.
+   *
   Algorithm:  
     find all array variables within the loop in consideration
     for each array variable, do the following to tell if such an array is accessed via an indirect index
@@ -1094,12 +1173,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
               two keys: array symbol, index expression, bool
         if not, do the actual pattern recognition
             // in a function  
-             if is an index variable
-                 find the reaching definition of the index based on data flow analysis
-                 current loop's index ?
-                 higher level loop's index?
-                one assignment to another array with the current  (?? higher level is considered at its own level) loop index
-             if is another array reference
+            if is another array reference
             Found an array reference using indirect index,
          store it in a look up table : SySymbol (array being accessed ) , index Ref Exp, true/false 
    */
@@ -1142,9 +1216,18 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
             rtval = true; 
           break;
         }
+      case V_SgIntVal: 
+        // ignore array index arithmetics 
+        // since we narrow down the simplest case for indirection without additional calculation
+      case V_SgSubtractOp:
+      case V_SgAddOp:
+      case V_SgPlusPlusOp:
+      case V_SgMultiplyOp:
+         break;
       default:
+        // This should not matter. We output something anyway for improvements.
         cerr<<"Warning: isIndirectIndexedArrayRef(): unhandled array index type: "<< array_index_exp->class_name()<<endl;
-        ROSE_ASSERT (false);
+      //  ROSE_ASSERT (false);
         break;
     }
 
@@ -1175,7 +1258,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       if (isIndirectIndexedArrayRef(for_loop, aRef))
       {
         indirect_array_table[aRef] = true; 
-        cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString() <<endl;
+        cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString()
+        << "@" << aRef <<endl;
       }
     }
   }
@@ -1185,12 +1269,17 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     ROSE_ASSERT(loop&& array_interface && annot);
     ROSE_ASSERT(isSgForStatement(loop));
     bool isParallelizable = true;
+   
 
     // collect array references with indirect indexing within a loop, save the result in a lookup table
     // This work is context sensitive (depending on the outer loops), so we declare the table for each loop.
     std::map<SgNode*, bool> indirect_array_table;
+   if (b_unique_indirect_index) // uniform and collect indirect indexed array only when needed
+   {
+    // uniform array reference expressions
+    uniformIndirectIndexedArrayRefs(isSgForStatement(loop));
     collectIndirectIndexedArrayReferences (loop, indirect_array_table);
-
+   }
     // X. Compute dependence graph for the target loop
     SgNode* sg_node = loop;
     LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, array_interface, annot);
