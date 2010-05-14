@@ -24,3 +24,28 @@ void StressCheckEpsFail( double eps_failure_model)
   }
 }
 
+// a multi level definition chain 
+void StressCheckEpsFaili2( double eps_failure_model)
+{
+  int i, index1;
+  for (i = 0 ; i < length ; i++) {
+    index1 = zoneset[i] ;
+    int index2 = index1; 
+    eps[index1] = eps_failure_model * 1.01;
+    eps[index2] = 1.01;
+  }
+}
+// a multi dimensional case
+void foo()
+{
+  int n=100, m=100;
+  double b[n][m]; 
+  int i,j,index, zoneset[m];
+  for (i=0;i<n;i++)
+    for (j=0;j<m;j++)
+    {
+      index = zoneset[j];
+      b[i][index]=b[i-1][index -1];
+    }
+}
+

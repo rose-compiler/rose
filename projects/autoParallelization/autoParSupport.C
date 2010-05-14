@@ -1067,8 +1067,7 @@ namespace AutoParallelization
        indirect_loop_index  = array_Y [current_loop_index] ;
         ...  array_X[indirect_loop_index] ...
 
-  Form 3: multiple dimensions, multiple levels of indirections, 
-        TODO later on as required from lab applications
+  Cases of multiple dimensions, multiple levels of indirections are also handled.  
 
   We uniform them into a single form (Form 2) to simplify later recognition of indirect indexed array refs
    For Form 2: if the rhs operand is a variable
@@ -1106,7 +1105,49 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
      {
        case V_SgVarRefExp:
          {
-           SgVarRefExp * varRef = isSgVarRefExp(rhs);
+           // SgVarRefExp * varRef = isSgVarRefExp(rhs);
+           // trace back to the 'root' value of rhs according to def/use analysis
+           // Initialize the end value to the current rhs of the array reference expression
+           SgExpression * the_end_value = rhs; 
+           while (isSgVarRefExp(the_end_value))
+           {
+             SgVarRefExp * varRef = isSgVarRefExp(the_end_value);
+             SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
+
+             // stop tracing if it is already the current loop's index
+             if (initName  == loop_index_name) break;
+
+             // get the reaching definitions of the variable
+             vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
+             ROSE_ASSERT (vec.size()>0);
+
+             // stop tracing if there are more than one reaching definitions
+             if (vec.size()>1) break;
+
+             // stop if the defining statement is out side of the scope of the loop body
+             SgStatement* def_stmt = SageInterface::getEnclosingStatement(vec[0]);
+             if  (! SageInterface::isAncestor(for_loop->get_loop_body(), def_stmt)) 
+               break;
+
+             // now get the end value depending on the definition node's type
+             if (isSgAssignOp(vec[0]))
+               the_end_value = isSgAssignOp(vec[0])->get_rhs_operand_i();
+             else
+             {
+               cerr<<"Error: uniformIndirectIndexedArrayRefs() unhandled definition type: "<< vec[0]->class_name()<<endl;
+               ROSE_ASSERT(false);
+             }
+           }
+            //replace rhs with its root value if rhs != end_value
+            if (rhs != the_end_value)
+            {
+              SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
+              //TODO use replaceExpression() instead
+              aRef->set_rhs_operand_i(new_rhs);
+              new_rhs->set_parent(aRef);
+              delete rhs; 
+            }
+#if 0           
            // do nothing if it is already the current loop's index
            if (varRef->get_symbol()->get_declaration() == loop_index_name) 
            {
@@ -1120,6 +1161,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
            // We only uniform a variable reference with a single reaching definition for simplicity for now
            ROSE_ASSERT (vec.size()>0);
            if (vec.size()>1) break;
+
            SgStatement* def_stmt = SageInterface::getEnclosingStatement(vec[0]);
            // only try to substitute the varRef with the value if the scope of def_stmt is within the loop body
            if (SageInterface::isAncestor(for_loop->get_loop_body(), def_stmt))
@@ -1128,12 +1170,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
               <<" "<< vec[0]->class_name() <<endl;
               if (isSgAssignOp(vec[0]))
               {
-#if 1 
                 SgExpression* new_rhs = SageInterface::deepCopy<SgExpression>(isSgAssignOp(vec[0])->get_rhs_operand_i());
                 aRef->set_rhs_operand_i(new_rhs);
                 new_rhs->set_parent(aRef);
                 delete rhs; 
-#endif
               }
               else
               {
@@ -1141,6 +1181,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
                 ROSE_ASSERT(false);
               }
             } 
+#endif              
            break;
          } // end case V_SgVarRefExp:
        case V_SgPntrArrRefExp: // uniform form already, do nothing
@@ -1153,11 +1194,12 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
        case V_SgMultiplyOp:
          break;
        default:
+       {
          cerr<<"Warning: uniformIndirectIndexedArrayRefs(): unhandled array access expression type: "<< rhs->class_name()<<endl;
          break;
-
-     }
-   }
+       }
+     } // end switch
+   } //end for
 
  }
   /* Check if an array reference expression is an indirect indexed with respect to a loop
