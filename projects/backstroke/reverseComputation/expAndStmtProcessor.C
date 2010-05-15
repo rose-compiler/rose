@@ -32,10 +32,58 @@ bool isZero(SgValueExp* value)
 }
 
 
+ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
+{
+    SgExpression *fwd_operand_exp, *rev_operand_exp;
+    tie(fwd_operand_exp, rev_operand_exp) = instrumentAndReverseExpression(unary_op->get_operand());
+
+    // The default forward version should instrument its operand.
+    // For example, ++(a = 5), where a is a state variable.
+    // Its forward expression is like ++(s = a, a = 5), where s is for state saving.
+    SgUnaryOp* fwd_exp = isSgUnaryOp(copyExpression(unary_op));
+    ROSE_ASSERT(fwd_exp);
+    fwd_exp->set_operand(fwd_operand_exp);
+
+    // if the left-hand side of the assign-op is the state
+    // (note that only in this situation do we consider to reverse this expression)
+    if (SgExpression* model_var = isStateVar(unary_op->get_operand()))
+    {
+        // ++ and -- can both be reversed without state saving
+        if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(unary_op))
+        {
+            SgUnaryOp::Sgop_mode pp_mode = pp_op->get_mode();
+            if (pp_mode == SgUnaryOp::prefix) 
+                pp_mode = SgUnaryOp::postfix;
+            else 
+                pp_mode = SgUnaryOp::prefix;
+
+            return ExpPair(
+                    fwd_exp,
+                    buildMinusMinusOp(copyExpression(model_var), pp_mode));
+        }
+
+        if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(unary_op))
+        {
+            SgUnaryOp::Sgop_mode mm_mode = mm_op->get_mode();
+            if (mm_mode == SgUnaryOp::prefix) 
+                mm_mode = SgUnaryOp::postfix;
+            else 
+                mm_mode = SgUnaryOp::prefix;
+
+            return ExpPair(
+                    fwd_exp,
+                    buildPlusPlusOp(copyExpression(model_var), mm_mode));
+        }
+    }
+
+    SgExpression* rev_exp = rev_operand_exp;
+    return ExpPair(fwd_exp, rev_exp);
+}
+
 ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 {
     if (isSgAndOp(bin_op) || isSgOrOp(bin_op))
-        beginQueue();   // Flags are FIFO now
+        beginFIFO();   // Flags are FIFO now
 
     // a binary operation contains two expressions which need to be processed first
     SgExpression *fwd_lhs_exp, *fwd_rhs_exp, *rev_lhs_exp, *rev_rhs_exp;
@@ -117,6 +165,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             //SgBinaryOp* exp_copy = isSgBinaryOp(copyExpression(bin_op));
             //exp_copy->set_rhs_operand(fwd_rhs_exp);
 
+#if 0
             SgExpression* state_var = getStateVar(model_var);
 
             // Save the state (we cannot use the default forward expression any more).
@@ -126,14 +175,20 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                         state_var, 
                         copyExpression(model_var)),
                     fwd_exp);
-            //exp_copy);
-            ROSE_ASSERT(state_var->get_parent());
 
             // retrieve the state
             SgExpression* rev_exp = buildBinaryExpression<SgAssignOp>(
                     copyExpression(model_var),
                     copyExpression(state_var));
+#else
+            fwd_exp = buildBinaryExpression<SgCommaOpExp>(
+                    pushStateVar(copyExpression(model_var)),
+                    fwd_exp);
 
+            SgExpression* rev_exp = buildBinaryExpression<SgAssignOp>(
+                    copyExpression(model_var),
+                    popStateVar());
+#endif
             // If the rhs operand expression can be reversed, we have to deal with 
             // both sides at the same time. For example: b = ++a, where a and b are 
             // both state variables.
@@ -152,7 +207,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
     {
         if (rev_rhs_exp == NULL)
         {
-            endQueue();     // Flags are LIFO now
+            endFIFO();     // Flags are LIFO now
             return ExpPair(fwd_exp, rev_lhs_exp);
         }
 
@@ -160,7 +215,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
         SgExpression* fwd_exp = buildBinaryExpression<SgAndOp>(
                 putBranchFlagExp(fwd_lhs_exp),
                 fwd_rhs_exp);
-        endQueue();     // Flags are LIFO now
+        endFIFO();     // Flags are LIFO now
 
         SgExpression* rev_exp;
         // We also have to check if rev_lhs_exp == NULL
@@ -183,7 +238,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
     {
         if (rev_rhs_exp == NULL)
         {
-            endQueue();     // Flags are LIFO now
+            endFIFO();     // Flags are LIFO now
             return ExpPair(fwd_exp, rev_lhs_exp);
         }
 
@@ -191,7 +246,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
         SgExpression* fwd_exp = buildBinaryExpression<SgOrOp>(
                 putBranchFlagExp(fwd_lhs_exp),
                 fwd_rhs_exp);
-        endQueue();     // Flags are LIFO now
+        endFIFO();     // Flags are LIFO now
 
         SgExpression* rev_exp;
         // We also have to check if rev_lhs_exp == NULL
@@ -227,54 +282,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
     return ExpPair(fwd_exp, rev_exp);
 }
 
-ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
-{
-    SgExpression *fwd_operand_exp, *rev_operand_exp;
-    tie(fwd_operand_exp, rev_operand_exp) = instrumentAndReverseExpression(unary_op->get_operand());
-
-    // The default forward version should instrument its operand.
-    // For example, ++(a = 5), where a is a state variable.
-    // Its forward expression is like ++(s = a, a = 5), where s is for state saving.
-    SgUnaryOp* fwd_exp = isSgUnaryOp(copyExpression(unary_op));
-    ROSE_ASSERT(fwd_exp);
-    fwd_exp->set_operand(fwd_operand_exp);
-
-    // if the left-hand side of the assign-op is the state
-    // (note that only in this situation do we consider to reverse this expression)
-    if (SgExpression* model_var = isStateVar(unary_op->get_operand()))
-    {
-        // ++ and -- can both be reversed without state saving
-        if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(unary_op))
-        {
-            SgUnaryOp::Sgop_mode pp_mode = pp_op->get_mode();
-            if (pp_mode == SgUnaryOp::prefix) 
-                pp_mode = SgUnaryOp::postfix;
-            else 
-                pp_mode = SgUnaryOp::prefix;
-
-            return ExpPair(
-                    fwd_exp,
-                    buildMinusMinusOp(copyExpression(model_var), pp_mode));
-        }
-
-        if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(unary_op))
-        {
-            SgUnaryOp::Sgop_mode mm_mode = mm_op->get_mode();
-            if (mm_mode == SgUnaryOp::prefix) 
-                mm_mode = SgUnaryOp::postfix;
-            else 
-                mm_mode = SgUnaryOp::prefix;
-
-            return ExpPair(
-                    fwd_exp,
-                    buildPlusPlusOp(copyExpression(model_var), mm_mode));
-        }
-    }
-
-    SgExpression* rev_exp = rev_operand_exp;
-    return ExpPair(fwd_exp, rev_exp);
-}
-
 ExpPair EventReverser::processConditionalExp(SgConditionalExp* cond_exp)
 {
     // Since conditional expression is quite like a if statement,
@@ -284,11 +291,11 @@ ExpPair EventReverser::processConditionalExp(SgConditionalExp* cond_exp)
 
     tie(fwd_cond_exp, rev_cond_exp) = instrumentAndReverseExpression(cond_exp->get_conditional_exp());
 
-    beginQueue();   // Flags are FIFO now
+    beginFIFO();   // Flags are FIFO now
     fwd_cond_exp = putBranchFlagExp(fwd_cond_exp);
     tie(fwd_true_exp, rev_true_exp) = instrumentAndReverseExpression(cond_exp->get_true_exp());
     tie(fwd_false_exp, rev_false_exp) = instrumentAndReverseExpression(cond_exp->get_false_exp());
-    endQueue();     // Flags are LIFO now
+    endFIFO();     // Flags are LIFO now
 
     //fwd_true_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(true), fwd_true_exp);
     //fwd_false_exp = buildBinaryExpression<SgCommaOpExp>(putBranchFlagExp(false),fwd_false_exp);
@@ -534,12 +541,40 @@ StmtPair EventReverser::processIfStmt(SgIfStmt* if_stmt)
                 rev_post_exp));
 }
 
+StmtPair EventReverser::processForInitStatement(SgForInitStatement* for_init_stmt)
+{
+    // In C standard, the initialization part in for loop can either be a /declaration/ or
+    // /expression;/. However, it's only regarded as a statement in Rose.
+
+    SgForInitStatement* fwd_stmt = NULL;
+    SgBasicBlock* rev_stmt = NULL;
+
+    foreach (SgStatement* stmt, for_init_stmt->get_init_stmt())
+    {
+        SgStatement *fwd_stmt_i, *rev_stmt_i;
+        tie(fwd_stmt_i, rev_stmt_i) = instrumentAndReverseStatement(stmt);
+
+        if (fwd_stmt == NULL)
+        {
+            // Since there is no builder function for SgForInitStatement, we build it by ourselves
+            fwd_stmt = new SgForInitStatement();
+            setOneSourcePositionForTransformation(fwd_stmt);
+        }
+        fwd_stmt->append_init_stmt(fwd_stmt_i);
+
+        if (rev_stmt_i)
+        {
+            if (rev_stmt == NULL)
+                rev_stmt = buildBasicBlock();
+            rev_stmt->prepend_statement(rev_stmt_i);
+        }
+    }
+
+    return StmtPair(fwd_stmt, rev_stmt);
+}
+
 StmtPair EventReverser::processForStatement(SgForStatement* for_stmt)
 {
-    // Currently, we just process the normal simple "for" use:
-    // for (int i = 0; i < n; ++i)
-    // FIXME: the complicated use of for needs to be dealt with in future.
-
     SgForInitStatement* init = for_stmt->get_for_init_stmt();
     SgStatement* test = for_stmt->get_test();
     SgExpression* incr = for_stmt->get_increment();
@@ -561,30 +596,15 @@ StmtPair EventReverser::processForStatement(SgForStatement* for_stmt)
 
     // if (isSimpleForLoop()) do ...
 
-    SgExpression* counter = getLoopCounter();
+    //SgExpression* counter = getLoopCounter();
 
-#if 0
-    // We decide not to initialize the counter here, but finish it before entering this function
-    SgStatement* init_counter = buildExprStatement(
-            buildBinaryExpression<SgAssignOp>(
-                copyExpression(counter),
-                buildIntVal(0)));
-#endif
-    //fwd_init->append_init_statement(init_counter);
-    if (SgBasicBlock* fwd_block_body = isSgBasicBlock(fwd_body))
-        fwd_block_body->append_statement(buildExprStatement(
-                    buildPlusPlusOp(counter, SgUnaryOp::prefix)));
-    else
-        fwd_body = buildBasicBlock(
-                copyStatement(init),
-                fwd_body, 
-                buildExprStatement(
-                    buildPlusPlusOp(counter, SgUnaryOp::prefix)));
-    SgForStatement* fwd_for = buildForStatement(fwd_init, fwd_test, fwd_incr, fwd_body);
-    //SgForStatement* fwd_for = buildForStatement(init, test, incr, body);
+    SgStatement* fwd_stmt = buildForStatement(fwd_init, fwd_test, fwd_incr, fwd_body);
+    // Add the loop counter related statements (counter declaration, increase, and store)
+    // to a forward for statement.
+    fwd_stmt = assembleLoopCounter(fwd_stmt);
 
-    // Reversing for loop is a litter more complicated. We have to disorder every statement including
-    // those in for()
+
+    // We have to disorder every statement including those in for()
 
     // Make the reverse incr part the first statement of the body.
     if (rev_incr)
@@ -604,104 +624,15 @@ StmtPair EventReverser::processForStatement(SgForStatement* for_stmt)
             rev_body = buildBasicBlock(rev_body, rev_test);
     }
 
-    // build a simple for loop like: for (int i = 0; i < N; ++i)
-    SgStatement* rev_for = buildForStatement(
-            buildVariableDeclaration("i", buildIntType(), buildAssignInitializer(buildIntVal(0))),
-            buildExprStatement(buildBinaryExpression<SgLessThanOp>
-                (buildVarRefExp("i"), copyExpression(counter))),
-            buildPlusPlusOp(buildVarRefExp("i"), SgUnaryOp::prefix),
-            rev_body);
+    SgStatement* rev_stmt = buildBasicBlock(rev_test, buildForLoop(rev_body), rev_init);
 
-    rev_for = buildBasicBlock(rev_test, rev_for, rev_init);
-
-#if 0
-    //fwd_for->append_init_stmt(init_counter);
-    //fwd_for = buildBasicBlock();
-    /* 
-       foreach(SgStatement* stmt, init->get_init_stmt())
-       isSgBasicBlock(fwd_body)->append_statement(stmt);
-       isSgBasicBlock(fwd_body)->append_statement(init);
-       */
-    rev_init = copyStatement(init);
-    rev_test = copyStatement(test);
-    rev_incr = copyExpression(incr);
-    //SgForStatement* fwd_for = buildForStatement(fwd_init, fwd_test, fwd_incr, fwd_body);
-    SgForStatement* rev_for = buildForStatement(NULL, rev_test, rev_incr, rev_body);
-    //SgForInitStatement for_init = rev_for->get_
-    //fwd_for->set_for_init_stmt(init);
-    rev_for->set_for_init_stmt(isSgForInitStatement(rev_init));
-#endif
-
-    return StmtPair(fwd_for, rev_for);
-}
-
-StmtPair EventReverser::processForInitStatement(SgForInitStatement* for_init_stmt)
-{
-    // In C standard, the initialization part in for loop can either be a /declaration/ or
-    // /expression;/. However, it's only regarded as a statement in Rose.
-    if (for_init_stmt->get_init_stmt().size() == 0)
-        return StmtPair(NULL, NULL);
-    if (for_init_stmt->get_init_stmt().size() == 1)
-        return instrumentAndReverseStatement(for_init_stmt->get_init_stmt().front());
-    else
-    {
-        vector<SgVariableDeclaration*> fwd_decls;
-        vector<SgExprStatement*> rev_exps;
-
-        foreach (SgStatement* stmt, for_init_stmt->get_init_stmt())
-        {
-            SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt);
-            ROSE_ASSERT(var_decl);
-
-            SgStatement *fwd_stmt_i, *rev_stmt_i;
-            tie(fwd_stmt_i, rev_stmt_i) = processVariableDeclaration(var_decl);
-            fwd_decls.push_back(isSgVariableDeclaration(fwd_stmt_i));
-            if (rev_stmt_i)
-                rev_exps.push_back(isSgExprStatement(rev_stmt_i));
-        }
-
-        for (int i = 1; i < fwd_decls.size(); ++i)
-        {
-            SgInitializedName* init_name = fwd_decls[i]->get_variables()[0];
-            SgAssignInitializer* init = isSgAssignInitializer(init_name->get_initializer());
-            fwd_decls[0]->append_variable(init_name, init);
-        }
-        return StmtPair(copyStatement(for_init_stmt), NULL);
-        return StmtPair(fwd_decls[0], NULL);
-#if 0
-
-        SgInitializedName* init_name = names[0];
-        SgVariableDefinition* var_def = var_decl->get_definition();
-        SgAssignInitializer* init = isSgAssignInitializer(init_name->get_initializer());
-
-        // If not defined
-        if (!init)
-            return StmtPair(copyStatement(var_decl), NULL);
-
-        SgExpression *fwd_exp, *rev_exp;
-        tie(fwd_exp, rev_exp) = instrumentAndReverseExpression(init->get_operand());
-
-        SgStatement *fwd_stmt, *rev_stmt = NULL;
-        fwd_stmt = buildVariableDeclaration(
-                init_name->get_name(),
-                init_name->get_type(),
-                buildAssignInitializer(fwd_exp));
-        if (rev_exp)
-            rev_stmt = buildExprStatement(rev_exp);
-        return StmtPair(fwd_stmt, rev_stmt);
-
-
-
-        return StmtPair(copyStatement(for_init_stmt), NULL);
-#endif
-    }
+    return StmtPair(fwd_stmt, rev_stmt);
 }
 
 StmtPair EventReverser::processWhileStmt(SgWhileStmt* while_stmt)
 {
     // We use an external counter to record the loop number.
-    // In the reverse version, we use "for" loop according to the 
-    // counter.
+    // In the reverse version, we use "for" loop with the counter.
 
     SgStatement* cond = while_stmt->get_condition();
     SgStatement* body = while_stmt->get_body();
@@ -710,22 +641,10 @@ StmtPair EventReverser::processWhileStmt(SgWhileStmt* while_stmt)
     tie(fwd_cond, rev_cond) = instrumentAndReverseStatement(cond);
     tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
-    SgName counter_name = generateVar("while_counter");
-    // initialize the counter
-    SgStatement* fwd_pre_exp = buildExprStatement(
-            buildBinaryExpression<SgAssignOp>(
-                buildVarRefExp(counter_name), 
-                buildIntVal(0)));
-    // increase the counter by 1
-    SgStatement* incr_counter = buildExprStatement(
-            buildPlusPlusOp(
-                buildVarRefExp(counter_name), 
-                SgUnaryOp::prefix));
-
-    if (SgBasicBlock* body = isSgBasicBlock(fwd_body))
-        body->append_statement(incr_counter);
-    else if (fwd_body)
-        fwd_body = buildBasicBlock(fwd_body, incr_counter);
+    SgStatement* fwd_stmt = buildWhileStmt(fwd_cond, fwd_body);
+    // Add the loop counter related statements (counter declaration, increase, and store)
+    // to a forward while statement.
+    fwd_stmt = assembleLoopCounter(fwd_stmt);
 
     if (rev_cond != NULL)
     {
@@ -735,25 +654,9 @@ StmtPair EventReverser::processWhileStmt(SgWhileStmt* while_stmt)
             rev_body = buildBasicBlock(rev_body, rev_cond);
     }
 
-    // compare the counter to 0
-    SgStatement* test = buildExprStatement(
-            buildBinaryExpression<SgGreaterThanOp>(
-                buildVarRefExp(counter_name), 
-                buildIntVal(0))); 
-    // decrease the counter by 1
-    SgExpression* incr = buildMinusMinusOp(
-            buildVarRefExp(counter_name), 
-            SgUnaryOp::prefix);
-    // for loop
-    SgStatement* rev_for_body = buildForStatement(NULL, test, incr, rev_body);
-    if (rev_cond != NULL)
-        rev_for_body = buildBasicBlock(rev_for_body, rev_cond);
+    SgStatement* rev_stmt = buildBasicBlock(buildForLoop(rev_body), rev_cond);
 
-    return StmtPair(
-            buildBasicBlock(
-                fwd_pre_exp,
-                buildWhileStmt(fwd_cond, fwd_body)),
-            rev_for_body);
+    return StmtPair(fwd_stmt, rev_stmt);
 }
 
 StmtPair EventReverser::processDoWhileStmt(SgDoWhileStmt* do_while_stmt)
@@ -767,22 +670,10 @@ StmtPair EventReverser::processDoWhileStmt(SgDoWhileStmt* do_while_stmt)
     tie(fwd_cond, rev_cond) = instrumentAndReverseStatement(cond);
     tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
 
-    SgName counter_name = generateVar("while_counter");
-    // initialize the counter
-    SgStatement* fwd_pre_exp = buildExprStatement(
-            buildBinaryExpression<SgAssignOp>(
-                buildVarRefExp(counter_name), 
-                buildIntVal(0)));
-    // increase the counter by 1
-    SgStatement* incr_counter = buildExprStatement(
-            buildPlusPlusOp(
-                buildVarRefExp(counter_name), 
-                SgUnaryOp::prefix));
-
-    if (SgBasicBlock* body = isSgBasicBlock(fwd_body))
-        body->append_statement(incr_counter);
-    else if (fwd_body)
-        fwd_body = buildBasicBlock(fwd_body, incr_counter);
+    SgStatement* fwd_stmt = buildDoWhileStmt(fwd_body, fwd_cond);
+    // Add the loop counter related statements (counter declaration, increase, and store)
+    // to a forward do while statement.
+    fwd_stmt = assembleLoopCounter(fwd_stmt);
 
     if (rev_cond != NULL)
     {
@@ -792,23 +683,9 @@ StmtPair EventReverser::processDoWhileStmt(SgDoWhileStmt* do_while_stmt)
             rev_body = buildBasicBlock(rev_cond, rev_body);
     }
 
-    // compare the counter to 0
-    SgStatement* test = buildExprStatement(
-            buildBinaryExpression<SgGreaterThanOp>(
-                buildVarRefExp(counter_name), 
-                buildIntVal(0))); 
-    // decrease the counter by 1
-    SgExpression* incr = buildMinusMinusOp(
-            buildVarRefExp(counter_name), 
-            SgUnaryOp::prefix);
-    // for loop
-    SgStatement* rev_for_body = buildForStatement(NULL, test, incr, rev_body);
+    SgStatement* rev_stmt = buildBasicBlock(buildForLoop(rev_body), rev_cond);
 
-    return StmtPair(
-            buildBasicBlock(
-                fwd_pre_exp,
-                buildDoWhileStmt(fwd_body, fwd_cond)),
-            rev_for_body);
+    return StmtPair(fwd_stmt, rev_stmt);
 }
 
 StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)

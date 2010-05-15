@@ -1,7 +1,7 @@
 #ifndef reverse_rctypes_h
 #define reverse_rctypes_h
 
-#ifdef RC_USING_C_ONLY
+#if 0
 
 #include <stdlib.h>
 #include <memory.h>
@@ -62,23 +62,23 @@ void destroyFlagStack(FlagStack* fs)
 #include <vector>
 #include <queue>
 
-class FlagStack
+class IntStack
 {
-    std::vector<int> flags_;
+    std::vector<int> values_;
     std::vector<int> marks_;
 
 public:
     int pop()
     {
-	int flag = flags_.back();
-	flags_.pop_back();
+	int flag = values_.back();
+	values_.pop_back();
 	return flag;
     }
 
     /*  
     int push(int flag)
     {
-	flags_.push_back(flag);
+	values_.push_back(flag);
 	return flag;
     }
     */
@@ -91,19 +91,19 @@ public:
 		marks_.resize((mark + 1) * 2);
 	    if (mark == 0)
 	    {
-		flags_.push_back(flag);
-		marks_[mark] = flags_.size() - 1;
+		values_.push_back(flag);
+		marks_[mark] = values_.size() - 1;
 	    }
 	    else
 	    {
 		int parent = mark - 1;
-		flags_.insert(flags_.begin() + marks_[parent], flag);
+		values_.insert(values_.begin() + marks_[parent], flag);
 		updateMarks(marks_[parent]);
 		marks_[mark] = marks_[parent];
 	    }
 	}
 	else
-	    flags_.push_back(flag);
+	    values_.push_back(flag);
 	return flag;
     }
 
@@ -115,19 +115,19 @@ public:
     }
 };
 
-inline int popFlag(FlagStack* fs)
+inline int pop(IntStack* fs)
 {
     return fs->pop();
 }
 
-inline int pushFlag(FlagStack* fs, int val, int mark = -1)
+inline int push(IntStack* fs, int val, int mark = -1)
 {
     return fs->push(val, mark);
 }
 
-FlagStack* buildFlagStack()
+IntStack* buildIntStack()
 {
-    return new FlagStack;
+    return new IntStack;
 }
 
 /**********************************************************************************

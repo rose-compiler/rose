@@ -29,10 +29,19 @@ void event0(struct model *m)
 
 void event0(struct model* m)
 {
-    //int i = 0, j = 0;
-    for (int i = 0, j = 0; i < 10; ++i)
-    ++m->i_;
-}
+
+    for (int i = 0; i < 10; ++i)
+	for (int j = 0; j < 10; ++j)
+	{
+        m->i_ = m->i_+1;
+
+    while (m->i_ > 0) m->i_ -= 10;
+    do ++m->i_; while(m->i_++ < 100);
+	}
+
+
+
+    }
 
 
 

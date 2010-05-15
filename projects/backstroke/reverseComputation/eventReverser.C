@@ -35,18 +35,19 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
     // if the expression is a unary one
     if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
         return processUnaryOp(unary_op);
- 
+
     // process the conditional expression (?:).
     if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
         return processConditionalExp(cond_exp);
- 
+
     // process the function call expression
     if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
         return processFunctionCallExp(func_exp);
- 
+
     //if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
 
     return ExpPair(copyExpression(exp), NULL);
+    //return ExpPair(copyExpression(exp), buildNullExpression());
     //return ExpPair(copyExpression(exp), copyExpression(exp));
 }
 
@@ -62,11 +63,11 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
     // if it's a block, process each statement inside
     if (SgBasicBlock* body = isSgBasicBlock(stmt))
         return processBasicBlock(body);
-    
+
     // if it's a local variable declaration
     if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
         return processVariableDeclaration(var_decl);
- 
+
     // if it's a if statement, process it according to the rule
     if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
         return processIfStmt(if_stmt);
@@ -103,6 +104,87 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
             copyStatement(stmt));
 }
 
+// This function add the loop counter related statements (counter declaration, increase, and store)
+// to a forward for statement. 
+SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
+{
+    string counter_name = function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++);
+
+    SgStatement* counter_decl = buildVariableDeclaration(
+            counter_name, 
+            buildIntType(), 
+            buildAssignInitializer(buildIntVal(0)));
+
+#if 1
+    SgStatement* incr_counter = buildExprStatement(
+            buildPlusPlusOp(buildVarRefExp(counter_name), SgUnaryOp::prefix));
+
+    if (SgForStatement* for_stmt = isSgForStatement(loop_stmt))
+    {
+        SgStatement* loop_body = for_stmt->get_loop_body();
+        if (SgBasicBlock* block_body = isSgBasicBlock(loop_body))
+            block_body->append_statement(incr_counter);
+        else
+        {
+            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            for_stmt->set_loop_body(block_body);
+            block_body->set_parent(for_stmt);
+        }
+    }
+    else if (SgWhileStmt* while_stmt = isSgWhileStmt(loop_stmt))
+    {
+        SgStatement* loop_body = while_stmt->get_body();
+        if (SgBasicBlock* block_body = isSgBasicBlock(loop_body))
+            block_body->append_statement(incr_counter);
+        else
+        {
+            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            while_stmt->set_body(block_body);
+            block_body->set_parent(while_stmt);
+        }
+    }
+    else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(loop_stmt))
+    {
+        SgStatement* loop_body = do_while_stmt->get_body();
+        if (SgBasicBlock* block_body = isSgBasicBlock(loop_body))
+            block_body->append_statement(incr_counter);
+        else
+        {
+            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            do_while_stmt->set_body(block_body);
+            block_body->set_parent(do_while_stmt);
+        }
+    }
+#endif
+
+    SgStatement* push_counter = buildFunctionCallStmt(
+            "push", 
+            buildIntType(), 
+            buildExprListExp(
+                buildVarRefExp(counter_stack_name_),
+                buildVarRefExp(counter_name))); 
+
+    return buildBasicBlock(counter_decl, loop_stmt, push_counter);
+}
+
+SgStatement* EventReverser::buildForLoop(SgStatement* loop_body)
+{
+    // build a simple for loop like: for (int i = N; i > 0; --i)
+
+    // FIXME test the validation of this name.
+    string counter_name = "i";
+
+    SgStatement* init = buildVariableDeclaration(
+            counter_name, buildIntType(), buildAssignInitializer(popLoopCounter()));
+    SgStatement* test = buildExprStatement(
+            buildBinaryExpression<SgGreaterThanOp>(
+                buildVarRefExp(counter_name), 
+                buildIntVal(0)));
+    SgExpression* incr = buildMinusMinusOp(buildVarRefExp(counter_name), SgUnaryOp::prefix);
+
+    SgStatement* for_stmt = buildForStatement(init, test, incr, loop_body);
+    return for_stmt;
+}
 
 vector<FuncDeclPair> EventReverser::outputFunctions()
 {
@@ -183,7 +265,7 @@ void reverserTraversal::visit(SgNode* n)
                 iends_with(func_name, "forward"))
             return;
 
-        cout << func_name << endl;
+        //cout << func_name << endl;
 
 
         EventReverser reverser(func_decl);
@@ -339,7 +421,7 @@ int fixVariableReferences2(SgNode* root)
                 }
                 if (!flag)
                 {
-                    cout <<initname->get_name().str() << endl;
+                    //cout <<initname->get_name().str() << endl;
                     delete initname; // TODO deleteTree(), release File_Info nodes etc.
                     delete symbol_to_delete;
                 }
