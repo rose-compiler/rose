@@ -86,13 +86,16 @@ protected:
      *  blocks. */
     class BlockAnalysisCache {
     public:
-        BlockAnalysisCache(): age(0), sucs_complete(false), is_function_call(false), call_target(NO_TARGET) {}
+        BlockAnalysisCache(): age(0), sucs_complete(false), is_function_call(false), call_target(NO_TARGET),
+                              function_return(false), alias_for(0) {}
         void clear() {
             age = 0;
             sucs.clear();
             sucs_complete = false;
             is_function_call = false;
             call_target = NO_TARGET;
+            function_return = false;
+            alias_for = 0;
         }
 
         size_t age;                             /**< Non zero implies locally computed successors are cached. The actual value
@@ -111,6 +114,9 @@ protected:
         bool function_return;                   /**< Does this block serve as the return of a function?  For example, does it
                                                  *   end with an x86 RET instruction that returns to the CALL fall-through
                                                  *   address? */
+        rose_addr_t alias_for;                  /**< If non-zero, then this block is an alias for the specified block.  CFG
+                                                 *   edges that pointed to this block should instead point to the specified
+                                                 *   block. */
     };
 
     /** Represents a basic block within the Partitioner. Each basic block will eventually become an SgAsmBlock node in the
@@ -357,6 +363,7 @@ protected:
     virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
+    virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
     
     
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
@@ -453,10 +460,9 @@ protected:
      *
      *  If a block declaration appears inside a function declaration, then ROSE will assign the block to the function.
      *
-     *  The block 'alias' attribute is used to indicate that two basic blocks perform the exact same operation.  The addresses
-     *  specified for the alias attribute should be addresses of other basic blocks, called the "source" blocks.  The source
-     *  blocks need not be declared.  Whenever ROSE encounters a request for a basic block at a "source" address, the declared
-     *  basic block will be used in its place.
+     *  The block 'alias' attribute is used to indicate that two basic blocks perform the exact same operation.  The specified
+     *  address is the address of the basic block to use instead of this basic block.  All control-flow edges pointing to this
+     *  block will be rewritten to point to the specified address instead.
      *
      *  Example file:
      *  \code

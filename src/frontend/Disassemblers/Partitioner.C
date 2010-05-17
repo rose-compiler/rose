@@ -192,7 +192,11 @@ Disassembler::AddressSet
 Partitioner::successors(BasicBlock *bb, bool *complete)
 {
     update_analyses(bb); /*make sure cache is current*/
-    Disassembler::AddressSet retval = bb->cache.sucs;
+
+    /* Follow alias_for links. */
+    Disassembler::AddressSet retval;
+    for (Disassembler::AddressSet::const_iterator si=bb->cache.sucs.begin(); si!=bb->cache.sucs.end(); ++si)
+        retval.insert(canonic_block(*si));
     if (complete) *complete = bb->cache.sucs_complete;
 
     /* Run non-local analyses if necessary. These are never cached here in this block. */
@@ -504,6 +508,20 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
     }
     ROSE_ASSERT(!bb || bb->insns.size()>0);
     return bb;
+}
+
+/** Folows alias_for links in basic blocks. The input value is the virtual address of a basic block (which need not exist). We
+ *  recursively look up the specified block and follow its alias_for link until either the block does not exist or it has no
+ *  alias_for. */
+rose_addr_t
+Partitioner::canonic_block(rose_addr_t va)
+{
+    for (size_t i=0; i<100; i++) {
+        BasicBlock *bb = find_bb_containing(va, false);
+        if (!bb || address(bb)!=va || !bb->cache.alias_for) return va;
+        va = bb->cache.alias_for;
+    }
+    ROSE_ASSERT(!"possible alias loop");
 }
 
 /* Adds or updates a function definition. */

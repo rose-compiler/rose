@@ -256,11 +256,7 @@ Partitioner::IPDParser::parse_Alias()
     if (!is_symbol("alias")) return false;
     match_symbol("alias");
     rose_addr_t alias_va = match_number();
-#if 0
-    cur_block->set_alias(alias_va);
-#else
-    std::cerr <<"alias " <<StringUtility::addrToString(alias_va) <<"\n";
-#endif
+    cur_block->cache.alias_for = alias_va;
     return true;
 }
 
