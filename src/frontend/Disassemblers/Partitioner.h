@@ -347,6 +347,7 @@ protected:
 
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
     virtual BasicBlock* find_bb_containing(rose_addr_t, bool create=true); /* Find basic block containing instruction address */
+    virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */

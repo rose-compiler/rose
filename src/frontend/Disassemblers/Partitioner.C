@@ -510,6 +510,28 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
     return bb;
 }
 
+/** Makes sure the block at the specified address exists.  This is similar to find_bb_containing() except it makes sure that
+ *  @p va starts a new basic block if it was previously in the middle of a block.  If an existing block had to be truncated to
+ *  start this new block then the original block's function is marked as pending rediscovery. */
+Partitioner::BasicBlock *
+Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
+{
+    BasicBlock *bb = find_bb_containing(va, create);
+    if (va==address(bb))
+        return bb;
+    if (!create)
+        return NULL;
+    if (debug)
+        fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
+    if (bb->function!=NULL)
+        bb->function->pending = true;
+    truncate(bb, va);
+    bb = find_bb_containing(va);
+    ROSE_ASSERT(bb!=NULL);
+    ROSE_ASSERT(va==address(bb));
+    return bb;
+}
+
 /** Folows alias_for links in basic blocks. The input value is the virtual address of a basic block (which need not exist). We
  *  recursively look up the specified block and follow its alias_for link until either the block does not exist or it has no
  *  alias_for. */
@@ -1122,25 +1144,16 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         return;
     }
 
-    BasicBlock *bb = find_bb_containing(va);
+    /* Find basic block at address, creating it if necessary. */
+    BasicBlock *bb = find_bb_starting(va);
     ROSE_ASSERT(bb!=NULL);
 
-    /* Truncate an existing basic block if necessary since basic blocks can have only one entry address. The block we
-     * truncated now probably has different successors. If it was part of a function, then we need to be sure to recalculate
-     * which basic blocks are part of that function (i.e., set that function's "pending" status).  If the function is the one
-     * we're currently working on, then our to-do list of outstanding blocks for this function (contained in various levels of
-     * the stack) are possibly outdated -- we abandon this function and try the whole thing again later. */
-    if (va!=address(bb)) {
-        if (debug) fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
-        truncate(bb, va);
-        if (bb->function!=NULL) bb->function->pending = true;
-        if (bb->function==f) {
-            if (debug) fprintf(debug, " abandon");
-            throw AbandonFunctionDiscovery();
-        }
-        bb = find_bb_containing(va);
-        ROSE_ASSERT(bb!=NULL);
-        ROSE_ASSERT(va==address(bb));
+    /* If the current function has been somehow marked as pending then we might as well give up discovering its blocks because
+     * some of its blocks' successors may have changed.  This can happen, for instance, if the create_bb() called above had to
+     * split one of this function's blocks. */
+    if (f->pending) {
+        if (debug) fprintf(debug, " abandon");
+        throw AbandonFunctionDiscovery();
     }
 
     /* Don't reprocess blocks for this function. However, we need to reprocess the first block because it was added by
@@ -1177,20 +1190,22 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         /* If the call target is in the middle of some other existing function (i.e., not its entry address) then mark
          * that function as pending so that the target block can be removed and the target function's blocks rediscovered.
          * In other words, treat the target block as if it where a conflict like above. */
-        if (target_func && target_func!=f && target_va!=target_func->entry_va) {
+        if (target_func && target_func!=f && target_va!=target_func->entry_va)
             target_func->pending = true;
-            target_func = NULL;
-        }
 
         /* Optionally create a new function (or add reason flags). */
         if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
             target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
         
-        /* Discovery continues at the non call-target successors, if any, according to analysis in successors(). */
+        /* Discovery continues at the successors. Do not follow the call-target if it's in a different function, but make
+         * sure that the block is created anyway. */
         const Disassembler::AddressSet &suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-            if (*si != target_va)
+            if (*si!=target_va || !target_func || target_func==f) {
                 discover_blocks(f, *si);
+            } else {
+                find_bb_starting(*si);
+            }
         }
 
     } else {
