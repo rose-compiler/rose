@@ -15,6 +15,16 @@
 
 /* See header file for full documentation of all methods in this file. */
 
+/* This has no other home, so it's here for now. */
+rose_addr_t
+SgAsmBlock::get_fallthrough_va()
+{
+    ROSE_ASSERT(!get_statementList().empty());
+    SgAsmInstruction *last = isSgAsmInstruction(get_statementList().back());
+    ROSE_ASSERT(last!=NULL);
+    return last->get_address() + last->get_raw_bytes().size();
+}
+
 /* This has no other home, so it's here for now. Virtual method should be overridden by subclasses. */
 std::set<rose_addr_t>
 SgAsmInstruction::get_successors(bool *complete) {
