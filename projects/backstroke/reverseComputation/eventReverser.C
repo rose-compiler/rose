@@ -449,7 +449,8 @@ int main( int argc, char * argv[] )
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "#include <time.h>\n"
-        "#include <assert.h>\n";
+        "#include <assert.h>\n"
+        "#include <memory.h>\n";
     addTextForUnparser(globalScope,includes,AstUnparseAttribute::e_before); 
 
     pushScopeStack(isSgScopeStatement(globalScope));
