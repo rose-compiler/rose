@@ -361,17 +361,17 @@ SgAsmx86Instruction::has_effect()
 /** Determines whether a sequence of instructions has an effect besides advancing the flow of control.
  *
  *  The specified list of instructions should be (part of) a basic block and the instructions are given in the order they would
- *  be executed. If this function determines that the instructions are not executed sequentially as specified, then they are
- *  assumed to have an effect and a tru value is returned.
+ *  be executed. This function does not check that the instructions are actualy executed sequentially as specified, it just
+ *  evaluates the machine state as if they had been executed sequentially.  This can be useful when a basic block was built
+ *  from control-flow information that is not available to this function.
  *
  *  An empty sequence of instructions has no effect (i.e., return value is false).
  *
- *  If allow_branch is false (the default) then the sequence is not a no-op if the final instruction of the sequence does not
- *  fall through to the next address.  For instance, if the final instruction is a JE then one of three things happens:
- *
- *  1. If the JE is conditional then it is not a no-op.
- *  2. If the JE always falls through then it is a no-op regardless of the allow_branch setting.
- *  3. If the JE always branches, then it is a no-op only if allow_branch is set.
+ *  If the final instruction of the sequence results in an undetermined instruction pointer then the sequence is considered to
+ *  have an effect (this situation usually results from a conditional jump).  If the final instruction results in a known
+ *  value for the instruction pointer, and the known value is the fall-through address then the final instruction is
+ *  considered to have no effect.  If the final instruction results in a known instruction pointer that is not the
+ *  fall-through address then the final instruction has an effect only if allow_branch is false.
  *
  *  If relax_stack_semantics is true then each time the stack pointer is increased the memory locations below
  *  the new stack value are discarded.  Typically, well behaved programs do not read stack data that is below the stack
@@ -389,15 +389,12 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
     VirtualMachineSemantics::Policy policy;
     Semantics semantics(policy);
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
-    rose_addr_t next_ip = insns.front()->get_address();
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
             if (!insn) return true;
-            if (insn->get_address()!=next_ip) return true;
             semantics.processInstruction(insn);
             if (!policy.get_ip().is_known()) return true;
-            next_ip = policy.get_ip().known_value();
         }
     } catch (const Semantics::Exception&) {
         return true;
@@ -450,7 +447,6 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     std::vector<VirtualMachineSemantics::State> state;
     state.push_back(policy.get_state());
     state.back().ip = common_ip;
-    rose_addr_t next_ip = insns.front()->get_address();
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
@@ -458,33 +454,30 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
                 std::cerr <<"  insn #" <<(state.size()-1)
                           <<" " <<(insn ? unparseInstructionWithAddress(insn) : "<none>") <<"\n";
             if (!insn) return retval;
-            if (insn->get_address()!=next_ip) {
-                if (verbose) std::cerr <<"  expected insn at " <<StringUtility::addrToString(next_ip) <<"!\n";
-                break;
-            }
             semantics.processInstruction(insn);
-            if (!policy.get_ip().is_known()) {
-                if (verbose) std::cerr <<"  next IP value is unknown: " <<policy.get_ip() <<" Abandoned!\n";
-                break;
-            }
-            next_ip = policy.get_ip().known_value();
             state.push_back(policy.get_state());
-            state.back().ip = common_ip;
             if (verbose) std::cerr <<"  state:\n" <<policy.get_state();
         }
     } catch (const Semantics::Exception&) {
         /* Perhaps we can find at least a few no-op subsequences... */
     }
 
-    /* If the last state instruction pointer is not the fall-through address of the last instruction then remove it from the
-     * state list because the last instruction cannot possibly be part of a no-op sequence in that case. */
-    if (!allow_branch &&
-        (!policy.get_ip().is_known() ||
-         policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size()))
+    /* If the last instruction resulted in indeterminant instruction pointer then discard it from the list of states because
+     * it has an effect (it's probably a conditional jump).  It's up to the caller whether a final instruction that
+     * unconditionally branches has an effect. */
+    if (!policy.get_ip().is_known()) {
         state.pop_back();
+    } else if (!allow_branch &&
+               policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size()) {
+        state.pop_back();
+    }
+
+    /* Change the IP register so its the same for all states so it doesn't contribute to state differences. */
+    const size_t nstates = state.size();
+    for (size_t i=0; i<nstates; i++)
+        state[i].ip = common_ip;
 
     /* Find pairs of equivalent states. */
-    const size_t nstates = state.size();
     if (verbose) std::cerr <<"  number of states: " <<nstates <<"\n";
     for (size_t i=0; i<nstates-1; i++) {
         for (size_t j=i+1; j<nstates; j++) {
