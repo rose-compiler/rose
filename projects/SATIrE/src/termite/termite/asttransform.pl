@@ -30,7 +30,7 @@ C/C++/Objective C ASTs given in the TERMITE term representation
 as exported by SATIrE.
 
 @version   @PACKAGE_VERSION@
-@copyright Copyright (C) 2007-2009 Adrian Prantl
+@copyright Copyright (C) 2007-2010 Adrian Prantl
 @author    Adrian Prantl <adrian@complang.tuwien.ac.at>
 @license 
 
@@ -474,7 +474,7 @@ unparse1(UI, while_stmt(E1, E2, _, _, _)) :- !,
 
 unparse1(UI, do_while_stmt(E1, E2, _, _, _)) :- !, 
   write('do '),
-  unparse(UI, E1), 
+  unparse_sem(UI, E1), 
   write('while ('), unparse(UI, E2), writeln(');').
 
 unparse1(UI, if_stmt(E1, E2, E3, _, _, _)) :- !, 
