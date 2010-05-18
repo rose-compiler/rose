@@ -61,30 +61,34 @@ terms from the standard input an output. If performance and stability
 are sought for, it is also possible to call Termite programs
 transparently from a SATIrE analyzer.
 
-\subsection{As a standalone process}
+\subsection{Using Termite for a standalone process}
 The most flexible and convenient way to work with the Termite library
 is by using it to define filter operations on streams of source
 code. This way one can follow the UNIX tradition of having a
 collection of small self-contained programs that can be combined to
 create larger work flows. Depending on the expected input and
-generated output, the following signatures of Termite programs can be
-distinguished:
-\begin{enumerate}
-\item Source-to-source transformer: This is a program that reads in an
+generated output, several types of Termite programs can be
+distinguished. Typical examples are:
+\begin{description}
+\item[A source-to-source transformer] is a program that reads in an
   AST, then performs some transformation and outputs the transformed
   AST. (Example: loop unrolling)
-\item Analyzer: This is a program that reads in an AST, performs some
+\item[An analyzer] is a program that reads in an AST, performs some
   analysis and outputs the analysis result as attributes of the
   AST. (Example: loop bound analysis)
-\item Visualization: This is a program that reads in an AST and
-  outputs something e.g.~in a GUI window or a postscript
-  file. (Example: Call-graph $\rightarrow$ Dotty)
-\item Source Generator: This program reads in a specification and
-  outputs an AST.
-\end{enumerate}
+\item[A visualization] is a program that reads in an AST and
+  outputs a visualization, e.\,g., in a GUI window or a PostScript
+  file. (Example: Call-graph $\rightarrow$ Graphviz (DOT))
+\item[A source generator] is a program that reads in a specification
+  and outputs an AST in termite format.
+\item[A compiler] is a program that translates an AST into a different
+  language,                                                     e.\,g.,
+  melmac\footnote{\url{http://www.complang.tuwien.ac.at/gergo/melmac/}}
+  or wcetcc.
+\end{description}
 In order to generate a Termite term from one or more source files a
-compiler front end must be invoked. Currently there are two
-possibilities, both of which are available in the SATIrE distribution.
+compiler front end must be invoked. Two possibilities are supported
+and available in the SATIrE distribution:
 
 \subsubsection{EDG C/C++ front end from the ROSE compiler}
 If SATIrE was configured with the ROSE connection
@@ -120,14 +124,19 @@ step any more.
 
 Since both converters use standard input and output per default it is
 possible to concatenate multiple Termite programs with the help of
-UNIX pipes.
+UNIX pipes. This way it is possible to build new chains of program
+transformations or analyzers on the fly without having to recompile
+the whole project.
 
 \paragraph{Example:}
 \begin{verbatim}
 c2term a.c b.c | ./transform1.pl | term2c -s '.transformed'
 \end{verbatim}
-This way it is possible to build new chains of program transformations
-or analyzers on the fly without having to recompile the whole project.
+In this example pipeline, two C source file are joined into one
+project which is dumped to a stream in the Termite format. The stream
+is then transformed by a Prolog program. Finally the two source files
+are unparsed by the \verb|term2c| converter with the new suffix
+``.transformed'' attached to the file names.
 
 \subsubsection{Using the Clang C/Objective C front end}
 While the commercial EDG front end offers a high-quality C++ parser,
