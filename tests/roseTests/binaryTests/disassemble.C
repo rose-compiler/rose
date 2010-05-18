@@ -169,7 +169,9 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
     using namespace StringUtility;
 
     struct Unparser: public AsmUnparser {
-        Unparser() {
+        std::set<std::string> semantics_seen;
+        SgAsmFunctionDeclaration *cur_func;
+        Unparser(): cur_func(NULL) {
             insn_show_bytes = false;
             insn_linefeed = false;
             blk_detect_noop_seq = true;
@@ -187,8 +189,16 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
             o <<"</td></tr>";
         }
         virtual void pre(std::ostream &o, SgAsmBlock *b) {
-            o <<"B" <<StringUtility::addrToString(b->get_address()) <<" [ label=<<table border=\"0\">"
-              <<"<tr><td align=\"left\" bgcolor=\"green\">" <<block_semantics(b) <<"</td></tr>";
+            std::string semantics_color = "green";
+            std::string semantics_sha1 = block_semantics(b);
+            if (semantics_seen.find(semantics_sha1)!=semantics_seen.end()) {
+                semantics_color = "orange";
+            } else {
+                semantics_seen.insert(semantics_sha1);
+            }
+            o <<"B" <<StringUtility::addrToString(b->get_address()) <<" [ label=<<table border=\"0\"";
+            if (b->get_address()==cur_func->get_entry_va()) o <<" bgcolor=\"lightskyblue1\"";
+            o <<"><tr><td align=\"left\" bgcolor=\"" <<semantics_color <<"\">" <<semantics_sha1 <<"</td></tr>";
         }
         virtual void post(std::ostream &o, SgAsmBlock*b) {
             SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(b->get_parent());
@@ -201,9 +211,13 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
                     o <<", color=red"; /*red implies that we don't have complete information for successors*/
                 }
             } else if (func && b->get_address()==func->get_entry_va()) {
-                o <<", color=darkgreen";
+                o <<", color=blue"; /*function entry node*/
             }
             o <<" ];\n";
+        }
+        virtual void pre(std::ostream&, SgAsmFunctionDeclaration *func) {
+            semantics_seen.clear();
+            cur_func = func;
         }
     } unparser;
 
@@ -211,24 +225,28 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
 
     if (verbose) {
         sout <<"  subgraph clusterF" <<addrToString(func->get_entry_va()) <<" {\n"
-             <<"    style=filled; color=gray95;\n"
+             <<"    style=filled; color=gray90;\n"
              <<"    " <<label_attr.c_str() <<";\n";
 
         /* Write the node definitions (basic blocks of this function) */
-        std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
-        for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi)
-            unparser.unparse(sout, *bbi);
+        unparser.unparse(sout, func);
 
-        /* Write the edge definitions for internal flow control */
+        /* Write the edge definitions for internal flow control. Fall-through edges are black, non-fall-throughs are orange. */
+        std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
         for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
             const SgAddressList &sucs = (*bbi)->get_cached_successors();
+            rose_addr_t fall_through_va = (*bbi)->get_fallthrough_va();
             for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
                 SgAsmBlock *target_block = cfg.block(*si);
                 SgAsmFunctionDeclaration *target_func = target_block ?
                                                         isSgAsmFunctionDeclaration(target_block->get_parent()) : NULL;
-                if (target_func==func)
+                if (target_func==func) {
                     sout <<"    B" <<addrToString((*bbi)->get_address())
-                         <<" -> B" <<addrToString(*si) <<";\n";
+                         <<" -> B" <<addrToString(*si);
+                    if (*si!=fall_through_va)
+                        sout <<" [ color=orange ]"; /* black for fall-through; orange for other */
+                    sout <<";\n";
+                }
             }
         }
         sout <<"  };\n"; /*subgraph*/
@@ -279,7 +297,8 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
                 }
                 node_defined.insert(dst_addr);
             }
-            sout <<"B" <<addrToString(src_bb->get_address()) <<" -> B" <<addrToString(dst_addr) <<";\n";
+            sout <<"B" <<addrToString(src_bb->get_address()) <<" -> B" <<addrToString(dst_addr)
+                 <<" [ color=blue ];\n";
         }
     }
 
@@ -295,7 +314,7 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
             }
             sout <<"B" <<addrToString(src_addr)
                  <<" -> B" <<addrToString(func->get_entry_va())
-                 <<" [ label=\"" <<ei->second <<" call" <<(1==ei->second?"":"s") <<"\" ];\n";
+                 <<" [ color=blue, label=\"" <<ei->second <<" call" <<(1==ei->second?"":"s") <<"\" ];\n";
         }
     }
 
