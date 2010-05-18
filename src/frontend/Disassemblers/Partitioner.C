@@ -204,9 +204,10 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
     /* If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
      * successor. */
     if (bb->cache.is_function_call) {
-        rose_addr_t fall_through_va = bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size();
-        if (bb->cache.call_target!=NO_TARGET) {
-            BasicBlock *target_bb = find_bb_containing(bb->cache.call_target, false);
+        rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size());
+        rose_addr_t call_target_va = call_target(bb);
+        if (call_target_va!=NO_TARGET) {
+            BasicBlock *target_bb = find_bb_containing(call_target_va, false);
             if (target_bb && target_bb->function && target_bb->function->returns)
                 retval.insert(fall_through_va);
         } else {
@@ -224,7 +225,8 @@ rose_addr_t
 Partitioner::call_target(BasicBlock *bb)
 {
     update_analyses(bb); /*make sure cache is current*/
-    return bb->cache.call_target;
+    if (bb->cache.call_target==NO_TARGET) return NO_TARGET;
+    return canonic_block(bb->cache.call_target);
 }
 
 /* Returns true if the basic block at the specified virtual address appears to pop the return address from the top of the
@@ -517,6 +519,8 @@ Partitioner::BasicBlock *
 Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
 {
     BasicBlock *bb = find_bb_containing(va, create);
+    if (!bb)
+        return NULL;
     if (va==address(bb))
         return bb;
     if (!create)
@@ -539,8 +543,9 @@ rose_addr_t
 Partitioner::canonic_block(rose_addr_t va)
 {
     for (size_t i=0; i<100; i++) {
-        BasicBlock *bb = find_bb_containing(va, false);
-        if (!bb || address(bb)!=va || !bb->cache.alias_for) return va;
+        BasicBlock *bb = find_bb_starting(va, false);
+        if (!bb || !bb->cache.alias_for) return va;
+        if (debug) fprintf(debug, "[B%08"PRIx64"->B%08"PRIx64"]", va, bb->cache.alias_for);
         va = bb->cache.alias_for;
     }
     ROSE_ASSERT(!"possible alias loop");
@@ -1183,29 +1188,27 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
 
         append(f, bb);
-
         BasicBlock *target_bb = find_bb_containing(target_va);
-        Function *target_func = target_bb ? target_bb->function : NULL;
+
+        /* Find the target function, optionally creating it or adding reason flags to it. */
+        Function *target_func = NULL;
+        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)) {
+            target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+        } else {
+            target_func = target_bb ? target_bb->function : NULL;
+        }
 
         /* If the call target is in the middle of some other existing function (i.e., not its entry address) then mark
          * that function as pending so that the target block can be removed and the target function's blocks rediscovered.
          * In other words, treat the target block as if it where a conflict like above. */
         if (target_func && target_func!=f && target_va!=target_func->entry_va)
             target_func->pending = true;
-
-        /* Optionally create a new function (or add reason flags). */
-        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
-            target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
         
-        /* Discovery continues at the successors. Do not follow the call-target if it's in a different function, but make
-         * sure that the block is created anyway. */
+        /* Discovery continues at the successors. */
         const Disassembler::AddressSet &suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-            if (*si!=target_va || !target_func || target_func==f) {
+            if (*si!=f->entry_va)
                 discover_blocks(f, *si);
-            } else {
-                find_bb_starting(*si);
-            }
         }
 
     } else {

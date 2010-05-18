@@ -204,7 +204,7 @@ Partitioner::IPDParser::parse_BlockDecl()
     size_t ninsns = match_number();
     try {
         /* Create new block */
-        cur_block = partitioner->find_bb_containing(va);
+        cur_block = partitioner->find_bb_starting(va);
         if (!cur_block)
             throw Exception("cannot obtain basic block at " + addrToString(va));
         if (cur_block->insns.size()<ninsns)
