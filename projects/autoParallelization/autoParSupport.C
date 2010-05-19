@@ -1268,8 +1268,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       if (isIndirectIndexedArrayRef(for_loop, aRef))
       {
         indirect_array_table[aRef] = true; 
-        cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString()
-        << "@" << aRef <<endl;
+       // cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString()
+       // << "@" << aRef <<endl;
       }
     }
   }
