@@ -109,10 +109,76 @@ Section~\ref{interesting_node_filter}.
 \end{itemize}
 
 \section{Drawing a graph of the CFG}
+Figure~\ref{Tutorial:BuildVirtualCFG} shows a translator to dump 
+full (debug) virtual control flow graphs for all functions within input
+source files. It also dumps a simplified version (interesting) version of 
+virtual control flow graphs. A standalone tool named \textit{virtualCFG} is
+installed under \textit{ROSE\_INSTALL\_TREE/bin} for users to generate dot
+files of virtual CFGs. 
 
-FIXME, add example from tutorial/virtualCFG.C
+%---------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TutorialExampleDirectory/virtualCFG.C}
+    \end{latexonly}
 
-\includegraphics{\TutorialExampleBuildDirectory/vcfg.pdf}
+    \begin{htmlonly}
+    \verbatiminput{\TutorialExampleDirectory/virtualCFG.C}
+    \end{htmlonly}
+
+    % end of scope in font size
+  }
+  % End of scope in indentation
+}
+\label{Tutorial:BuildVirtualCFG}
+\caption{Example source code showing visualization of virtual control flow graph.}
+\end{figure}
+
+
+
+The example input code is given in
+Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. Debug and interesting virtualCFG 
+are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF} and
+Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF}, respectively.
+
+%---------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+
+
+    \begin{latexonly}
+    \lstinputlisting{\TutorialExampleDirectory/inputCode_ControlFlowGraphAnalysis.C}
+    \end{latexonly}
+
+    \begin{htmlonly}
+    \verbatiminput{\TutorialExampleDirectory/inputCode_ControlFlowGraphAnalysis.C}
+    \end{htmlonly}
+
+    % end of scope in font size
+  }
+  % End of scope in indentation
+}
+\label{Tutorial:exampleInputCode_virtualCFG}
+\caption{Example source code used as input to build virtual control graphs.}
+\end{figure}
+
+%---------------------------------------------------------------------------
+\begin{figure}
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_debug.pdf}
+\caption{The debug virtual control flow graph showing all virtual CFG nodes
+and edges}
+\label{tutorial:exampleOutputCodeDebugPDF}
+\end{figure}
+
+
+\begin{figure}
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_interesting.pdf}
+\caption{The virtual control flow graph showing only interesting virtual CFG nodes and edges}
+\label{tutorial:exampleOutputCodeInterestingPDF}
+\end{figure}
 
 \section{Index values}
 \label{cfg_index_values}
