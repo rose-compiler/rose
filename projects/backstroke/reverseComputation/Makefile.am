@@ -4,14 +4,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # This file does not compile using ROSE (skip testing it for now)
 if !ROSE_USING_ROSE_ANALYSIS
-   bin_PROGRAMS = reverse
-   reverse_SOURCES = reverse.cpp facilityBuilder.C
+   bin_PROGRAMS = reverse 
+   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C
 endif
 
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = reverse.h facilityBuilder.h test
+EXTRA_DIST = eventReverser.h facilityBuilder.h test
 
 CLEANFILES = 
 
