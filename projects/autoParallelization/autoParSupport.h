@@ -28,6 +28,7 @@
 //Other standard C++ headers
 #include <vector>
 #include <string>
+#include <map>
 namespace AutoParallelization
 {
   //Handle annotation, debugging flags
@@ -39,6 +40,7 @@ namespace AutoParallelization
   extern bool enable_debug; 
   extern bool enable_patch; // an option to control the generation of patch files
   extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.
+  extern bool b_unique_indirect_index; // assume all arrays used as indirect indices has unique elements(no overlapping)
 
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
   bool initialize_analysis(SgProject* project=NULL,bool debug=false);
@@ -76,7 +78,8 @@ namespace AutoParallelization
 
   // Eliminate irrelevant dependencies for a loop node 'sg_node'
   // Save the remaining dependencies which prevent parallelization
-  void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>&remain, OmpSupport::OmpAttribute* attribute, ArrayInterface* array_interface=0, ArrayAnnotation* annot=0);
+  void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>&remain, OmpSupport::OmpAttribute* attribute, 
+       std::map<SgNode*, bool> & indirectTable, ArrayInterface* array_interface=0, ArrayAnnotation* annot=0);
 
 #if 0 // refactored into the OmpSupport namespace
   //Generate and insert OpenMP pragmas according to OmpAttribute
