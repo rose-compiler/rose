@@ -1,9 +1,10 @@
 #ifndef reverse_rctypes_h
 #define reverse_rctypes_h
 
+#include <stdlib.h>
+
 #if 0
 
-#include <stdlib.h>
 #include <memory.h>
 
 typedef struct FlagStack
