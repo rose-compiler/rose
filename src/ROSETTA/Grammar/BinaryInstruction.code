@@ -56,11 +56,13 @@ HEADER_INTERPRETATION_START
 
       //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
       //! to the size of the section which are disassembled (in bytes) (uses coverageComputed and percentageCoverage data members).
-          int get_disassembledInstructionCoverageMetricForDisassembledSections() const;
+          // PC (05/16/2010): Commented out as no definition exists
+          // int get_disassembledInstructionCoverageMetricForDisassembledSections() const;
 
       //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
       //! to the size of the address range of the top of the first block in memory to the end of the last block in memory.
-          double get_disassembledInstructionCoverageMetricForAddressRangeOfFunctionBlocks() const;
+          // PC (05/16/2010): Commented out as no definition exists
+          // double get_disassembledInstructionCoverageMetricForAddressRangeOfFunctionBlocks() const;
 
           void set_coverageComputed( bool x )
              {
@@ -948,7 +950,8 @@ HEADER_GENERIC_SECTION_START
 		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
 		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
 
-		bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
+		// PC (05/16/2010): Commented out as no definition exists
+		// bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
 		static std::string to_string(SgAsmGenericSection::SectionPurpose);
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
@@ -3988,7 +3991,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 
       //! Compute the percentage of coverage based on the length of blocks in this disassembled function (in bytes) compared 
       //! to the size of the address range of the top of the first block in memory to the end of the last block in memory.
-          double get_disassembledInstructionCoverageMetricForAddressRangeOfBlocks() const;
+          // PC (05/16/2010): Commented out as no definition exists
+          // double get_disassembledInstructionCoverageMetricForAddressRangeOfBlocks() const;
 
 HEADER_BINARY_FUNCTION_DECLARATION_END
 
