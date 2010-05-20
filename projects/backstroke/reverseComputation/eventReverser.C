@@ -441,9 +441,10 @@ int fixVariableReferences2(SgNode* root)
 
 int main( int argc, char * argv[] )
 {
-    SgProject* project = frontend(argc,argv);
+    vector<string> args(argv, argv+argc);
+    bool klee = CommandlineProcessing::isOption(args, "-backstroke:", "klee", true);
+    SgProject* project = frontend(args);
     reverserTraversal reverser;
-    bool klee = true;
 
     SgGlobal *globalScope = getFirstGlobalScope(project);
     string includes = "#include \"rctypes.h\"\n"
