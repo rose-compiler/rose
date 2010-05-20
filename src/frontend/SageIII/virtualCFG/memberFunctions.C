@@ -79,6 +79,7 @@ static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vecto
       isSgFunctionDefinition(stmt))
     hasLabel = true;
   if (!hasLabel) return;
+
   CFGNode cfgNode(stmt, index);
   // Find all gotos to this CFG node, functionwide
   SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(stmt, true);
@@ -92,26 +93,32 @@ static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vecto
       makeEdge(CFGNode(isSgGotoStatement(*i), 0), cfgNode, result);
     }
   }
-  Rose_STL_Container<SgNode*> allComputedGotos = NodeQuery::querySubTree(thisFunction, V_SgComputedGotoStatement);
-  for (Rose_STL_Container<SgNode*>::const_iterator i = allComputedGotos.begin(); i != allComputedGotos.end(); ++i) {
-    const Rose_STL_Container<SgExpression*>& labels = isSgComputedGotoStatement(*i)->get_labelList()->get_expressions();
-    for (Rose_STL_Container<SgExpression*>::const_iterator j = labels.begin(); j != labels.end(); ++j) {
-      SgLabelRefExp* lRef = isSgLabelRefExp(*j);
-      ROSE_ASSERT (lRef);
-      SgLabelSymbol* sym = lRef->get_symbol();
-      ROSE_ASSERT(sym);
-      if (getCFGTargetOfFortranLabelSymbol(sym) == cfgNode) {
-        makeEdge(CFGNode(isSgComputedGotoStatement(*i), 1), cfgNode, result);
+
+  // Liao 5/20/2010, NodeQuery::querySubTree() is very expensive when used to generate virtual CFG on the fly
+  // I have to skip unnecessary queries here
+  if (SageInterface::is_Fortran_language()) 
+  {
+    Rose_STL_Container<SgNode*> allComputedGotos = NodeQuery::querySubTree(thisFunction, V_SgComputedGotoStatement);
+    for (Rose_STL_Container<SgNode*>::const_iterator i = allComputedGotos.begin(); i != allComputedGotos.end(); ++i) {
+      const Rose_STL_Container<SgExpression*>& labels = isSgComputedGotoStatement(*i)->get_labelList()->get_expressions();
+      for (Rose_STL_Container<SgExpression*>::const_iterator j = labels.begin(); j != labels.end(); ++j) {
+        SgLabelRefExp* lRef = isSgLabelRefExp(*j);
+        ROSE_ASSERT (lRef);
+        SgLabelSymbol* sym = lRef->get_symbol();
+        ROSE_ASSERT(sym);
+        if (getCFGTargetOfFortranLabelSymbol(sym) == cfgNode) {
+          makeEdge(CFGNode(isSgComputedGotoStatement(*i), 1), cfgNode, result);
+        }
       }
     }
-  }
-  Rose_STL_Container<SgNode*> allArithmeticIfs = NodeQuery::querySubTree(thisFunction, V_SgArithmeticIfStatement);
-  for (Rose_STL_Container<SgNode*>::const_iterator i = allArithmeticIfs.begin(); i != allArithmeticIfs.end(); ++i) {
-    SgArithmeticIfStatement* aif = isSgArithmeticIfStatement(*i);
-    if (getCFGTargetOfFortranLabelRef(aif->get_less_label()) == cfgNode ||
-        getCFGTargetOfFortranLabelRef(aif->get_equal_label()) == cfgNode ||
-        getCFGTargetOfFortranLabelRef(aif->get_greater_label()) == cfgNode) {
-      makeEdge(CFGNode(aif, 1), cfgNode, result);
+    Rose_STL_Container<SgNode*> allArithmeticIfs = NodeQuery::querySubTree(thisFunction, V_SgArithmeticIfStatement);
+    for (Rose_STL_Container<SgNode*>::const_iterator i = allArithmeticIfs.begin(); i != allArithmeticIfs.end(); ++i) {
+      SgArithmeticIfStatement* aif = isSgArithmeticIfStatement(*i);
+      if (getCFGTargetOfFortranLabelRef(aif->get_less_label()) == cfgNode ||
+          getCFGTargetOfFortranLabelRef(aif->get_equal_label()) == cfgNode ||
+          getCFGTargetOfFortranLabelRef(aif->get_greater_label()) == cfgNode) {
+        makeEdge(CFGNode(aif, 1), cfgNode, result);
+      }
     }
   }
 }
