@@ -443,6 +443,7 @@ int main( int argc, char * argv[] )
 {
     SgProject* project = frontend(argc,argv);
     reverserTraversal reverser;
+    bool klee = true;
 
     SgGlobal *globalScope = getFirstGlobalScope(project);
     string includes = "#include \"rctypes.h\"\n"
@@ -451,6 +452,8 @@ int main( int argc, char * argv[] )
         "#include <time.h>\n"
         "#include <assert.h>\n"
         "#include <memory.h>\n";
+    if (klee)
+      includes += "#include <klee.h>\n";
     addTextForUnparser(globalScope,includes,AstUnparseAttribute::e_before); 
 
     pushScopeStack(isSgScopeStatement(globalScope));
@@ -471,7 +474,7 @@ int main( int argc, char * argv[] )
 
     appendStatement(buildInitializationFunction(reverser.model_type));
     appendStatement(buildCompareFunction(reverser.model_type));
-    appendStatement(buildMainFunction(reverser.var_inits, reverser.events_num));
+    appendStatement(buildMainFunction(reverser.var_inits, reverser.events_num, klee));
 
 
     popScopeStack();
