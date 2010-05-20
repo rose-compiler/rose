@@ -66,6 +66,9 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (BaseClassModifier      ,"BaseClassModifier"      , "BaseClassModifierTag" );
      NEW_TERMINAL_MACRO (DeclarationModifier    ,"DeclarationModifier"    , "DeclarationModifierTag" );
 
+  // TV (05/03/2010): OpenCL Access Mode Support
+     NEW_TERMINAL_MACRO (OpenclAccessModeModifier, "OpenclAccessModeModifier", "OPENCL_ACCESS_MODE" );
+
   // DQ (7/22/2006): I have decided to not list this as a modifier, since it is not a part of the C or C++ grammar.
   // NEW_TERMINAL_MACRO (AsmOperandModifier     ,"AsmOperandModifier"     , "AsmOperandModifierTag" );
 
@@ -77,7 +80,8 @@ Grammar::setUpSupport ()
           ModifierNodes           | ConstVolatileModifier  | StorageModifier    |
           AccessModifier          | FunctionModifier       | UPC_AccessModifier |
           SpecialFunctionModifier | ElaboratedTypeModifier | LinkageModifier    |
-          BaseClassModifier       | TypeModifier           | DeclarationModifier, "Modifier", "ModifierTag", false);
+          BaseClassModifier       | TypeModifier           | DeclarationModifier|
+          OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
 
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
 
@@ -238,7 +242,7 @@ Grammar::setUpSupport ()
 
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
-          DataStatementValue,
+          DataStatementValue    ,
           "Support", "SupportTag", false);
 //#endif
 
@@ -1684,7 +1688,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionModifier.setDataPrototype("std::string", "gnu_attribute_named_alias", "=\"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+  // TV (05/03/2010): 
+     FunctionModifier.setDataPrototype("SgType *", "opencl_vec_type", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    
+     FunctionModifier.setDataPrototype("SgFunctionModifier::opencl_work_group_size_t", "opencl_work_group_size", "",//"= {1, 1, 1}",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    
      SpecialFunctionModifier.setDataPrototype("SgBitVector","modifierVector", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1986,6 +1996,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 #endif
 
+  // TV (05/03/2010): OpenCL Access Mode Support
+  
+    OpenclAccessModeModifier.setFunctionPrototype ( "HEADER_OPENCL_ACCESS_MODE_MODIFIER", "../Grammar/Support.code" );
+    
+    OpenclAccessModeModifier.setDataPrototype("SgOpenclAccessModeModifier::access_mode_modifier_enum", "modifier","= SgOpenclAccessModeModifier::e_unknown",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -2147,6 +2164,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/Support.code");
 #endif
+
+  // TV (05/03/2010): OpenCL Access Mode Support
+
+    OpenclAccessModeModifier.setFunctionSource ( "SOURCE_OPENCL_ACCESS_MODE_MODIFIER", "../Grammar/Support.code" );
 
    }
 
