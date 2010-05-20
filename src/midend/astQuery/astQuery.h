@@ -118,10 +118,10 @@ namespace AstQueryNamespace
   void Merge(Rose_STL_Container<int> & mergeWith, Rose_STL_Container<int>  mergeTo );
   void Merge(Rose_STL_Container<std::string> & mergeWith, Rose_STL_Container<std::string>  mergeTo );
 
-  // DQ & AS (3/14/2007): Added to support us of astQuery with functions returing void* (not clear why void 
+  // DQ & AS (3/14/2007): Added to support us of astQuery with functions returning void* (not clear why void 
   // does not work, except that void is not really a return type but instead is a signal that there is no 
   // return type).  This is used in the generation of the list of return types (used for testing in AST 
-  // Consistancy tests).
+  // Consistency tests).
   void Merge(void* mergeWith, void* mergeTo );
 
   template<typename ResultType>
