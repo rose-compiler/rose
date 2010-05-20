@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 #include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerArm.h"
@@ -37,10 +37,41 @@ SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_blo
 
 /* This has no other home, so it's here for now. */
 bool
-SgAsmInstruction::terminatesBasicBlock() {
+SgAsmInstruction::terminatesBasicBlock()
+{
     abort();
     // tps (12/9/2009) : MSC requires a return value
     return false;
+}
+
+/** Virtual method to determine if a single instruction has an effect. Unless subclass redefines, assume all instructions have
+ *  an effect. See SgAsmx86Instruction implementation for complete documentation. */
+bool
+SgAsmInstruction::has_effect()
+{
+    return true;
+}
+
+/** Virtual method to determine if an instruction sequence has an effect. Unless subclass redefines, assume all instruction
+ *  sequences have an effect. See SgAsmx86Instruction implementation for complete documentation. */
+bool
+SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/,
+                             bool relax_stack_semantics/*false*/)
+{
+    return true;
+}
+
+/** Virtual method to find subsequences of an instruction sequence that are effectively no-ops. Unless subclass redefines,
+ *  assume that the sequence has no no-op subsequences. See SgAsmx86Instruction implementation for complete documentation.
+ *  
+ *  FIXME: Instead of leaving this unimplemented, we could implement it in terms of has_effect() and let the subclasses
+ *         reimplement it only if they can do so more efficiently (which they probably can). [RPM 2010-04-30] */
+std::vector<std::pair<size_t,size_t> >
+SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+                                         bool relax_stack_semantics/*false*/)
+{
+    std::vector<std::pair<size_t, size_t> > retval;
+    return retval;
 }
 
 /* List of disassembler subclasses */
@@ -697,8 +728,17 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     /* Disassemble all that we've mapped, according to aggressiveness settings. */
     InstructionMap retval = disassembleBuffer(map, worklist, successors, bad);
 
-    /* Mark the parts of the file corresponding to the instructions as having been referenced, since this is part of parsing. */
+#if 0
+    /* Mark the parts of the file corresponding to the instructions as having been referenced, since this is part of parsing.
+     *
+     * NOTE: I turned this off because it's slow if there's a lot of instructions (e.g., about 20s/million instructions on my
+     *       machine). If the user really needs to know this information they can probably calculate it using an ExtentMap and
+     *       traversing the instructions in the final AST.  Another problem is that since the disassembler runs before the
+     *       partitioner, and the partitioner might throw away unused instructions, calculating the references here in the
+     *       disassembler is not accurate.  [RPM 2010-04-30] */
     mark_referenced_instructions(interp, map, retval);
+#endif
+
     return retval;
 }
         
@@ -712,6 +752,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     const SgAsmGenericFilePtrList &files = interp->get_files();
     bool was_tracking;
 
+    /* Re-read each instruction so the file has a chance to track the reference. */
     try {
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmInstruction *insn = ii->second;
@@ -722,22 +763,28 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
             while (nbytes>0) {
                 /* Find the map element and the file that goes with that element (if any) */
                 if (!me || va<me->get_va() || va>=me->get_va()+me->get_size()) {
-                    if (file)
+                    if (file) {
                         file->set_tracking_references(was_tracking);
-                    file = NULL;
-                    me = map->find(va);
-                    ROSE_ASSERT(me!=NULL);
-                    if (me->is_anonymous())
-                        break;
-                    for (size_t i=0; i<files.size(); i++) {
-                        if (&(files[i]->get_data()[0]) == me->get_base()) {
-                            file = files[i];
-                            was_tracking = file->get_tracking_references();
-                            file->set_tracking_references(true);
-                            break;
-                        }
+                        file = NULL;
                     }
-                    ROSE_ASSERT(file);
+                    me = map->find(va);
+                    if (!me) {
+                        /* This byte of the instruction is not mapped. Perhaps the next one is. */
+                        ++va;
+                        --nbytes;
+                        continue;
+                    }
+                    if (!me->is_anonymous()) {
+                        for (size_t i=0; i<files.size(); i++) {
+                            if (&(files[i]->get_data()[0]) == me->get_base()) {
+                                file = files[i];
+                                was_tracking = file->get_tracking_references();
+                                file->set_tracking_references(true);
+                                break;
+                            }
+                        }
+                        ROSE_ASSERT(file);
+                    }
                 }
 
                 /* Read the file */

@@ -2,7 +2,7 @@
 #define ASTBIN_TRAVERSAL_H
 
 #include "RoseBin_support.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 #include <fstream>
 
 class AST_BIN_Traversal

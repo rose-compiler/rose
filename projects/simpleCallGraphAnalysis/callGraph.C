@@ -2,9 +2,6 @@
 #include <rose.h>
 
 #include <AstInterface.h>
-// #include <CFGImpl.h>
-// #include <string>
-// #include <iostream>
 #include <GraphDotOutput.h>
 #include <VirtualGraphCreate.h>
 
@@ -16,7 +13,7 @@ class FunctionData
      public:
           FunctionData ( SgFunctionDeclaration* functionDeclaration );
 
-       // Relavant data for call graph
+       // Relevant data for call graph
           SgFunctionDeclaration* functionDeclaration;
           Rose_STL_Container<SgFunctionDeclaration*> functionList;
    };

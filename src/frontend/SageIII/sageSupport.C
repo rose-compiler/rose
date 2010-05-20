@@ -3082,25 +3082,84 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           }
         }
 
-
-     if (get_C_only() == true || get_C99_only() == true)
-        {
-       // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
-       // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
-       // if (get_requires_cplusplus_macro() == true)
-          if (get_sourceFileUsesCppFileExtension() == true)
+        
+  // TV (05/07/2010): OpenCL and CUDA mode (need to be modify: we may need both C++ mode and Cuda)
+     bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true);
+     bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true);
+     
+     if (enable_cuda || enable_opencl) {
+	makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+     	if (enable_cuda) {
+     		commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
+     		printf ("CUDA\n");
+     	}
+     	else if (enable_opencl) {
+     		commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
+     		printf ("OpenCL\n");
+     	}
+	else {
+		printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
+     		ROSE_ASSERT(false);
+     	}
+     }
+     else {
+          if (get_C_only() == true || get_C99_only() == true)
              {
-            // The value here should be 1 to match that of GNU gcc (the C++ standard requires this to be "199711L")
-            // initString += " -D__cplusplus=0 ";
-               commandLine.push_back("-D__cplusplus=1");
+            // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
+            // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
+            // if (get_requires_cplusplus_macro() == true)
+               if (get_sourceFileUsesCppFileExtension() == true)
+                  {
+                 // The value here should be 1 to match that of GNU gcc (the C++ standard requires this to be "199711L")
+                 // initString += " -D__cplusplus=0 ";
+                    commandLine.push_back("-D__cplusplus=1");
+                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
+                       {
+                         commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
+                      // no standard includes when -nostdinc is specified
+                       }
+                      else
+                       {
+                         if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
+                            {
+                              commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
+                              makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+                            }
+                           else
+                            {
+                              makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
+                            }
+                       }
+     
+                 // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
+                    commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+                  }
+                 else
+                  {
+                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
+                       {
+                         commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
+                      // no standard includes when -nostdinc is specified
+                       }
+                      else
+                       {
+                         makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+                       }
+            
+                 // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
+                    commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
+                  }
+             }
+            else
+             {
                if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
                   {
-                    commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
+                    commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
                  // no standard includes when -nostdinc is specified
                   }
                  else
                   {
-                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
+                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc\\+\\+",false) == true ) // Option name is a RE
                        {
                          commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
                          makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
@@ -3110,50 +3169,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                          makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
                        }
                   }
-
+     
             // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
              }
-            else
-             {
-               if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
-                  {
-                    commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
-                 // no standard includes when -nostdinc is specified
-                  }
-                 else
-                  {
-                    makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
-                  }
-       
-            // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
-               commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
-             }
-        }
-       else
-        {
-          if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
-             {
-               commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
-            // no standard includes when -nostdinc is specified
-             }
-            else
-             {
-               if ( CommandlineProcessing::isOption(argv,"-","nostdinc\\+\\+",false) == true ) // Option name is a RE
-                  {
-                    commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
-                    makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
-                  }
-                 else
-                  {
-                    makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
-                  }
-             }
-
-       // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
-          commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
-        }
-
+     }
+     
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()

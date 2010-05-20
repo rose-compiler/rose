@@ -419,6 +419,9 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList 
   // maintain the type table 
   SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
   ROSE_ASSERT(fTable);
+  // set its parent to global , deferred until the function is inserted to a scope
+ // ROSE_ASSERT (fTable->get_parent() != NULL);
+ //   fTable->set_parent();
 
   SgType* typeInTable = fTable->lookup_function_type(typeName);
   if (typeInTable==NULL)
@@ -1929,6 +1932,18 @@ SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression
   return expList;
 }
 
+// CH (5/11/2010): Seems that this function is useful.
+SgExprListExp * SageBuilder::buildExprListExp(const std::vector<SgExpression*>& exprs)
+{
+  SgExprListExp* expList = new SgExprListExp();
+  ROSE_ASSERT(expList);
+  setOneSourcePositionForTransformation(expList);
+  for (size_t i = 0; i < exprs.size(); ++i) {
+    appendExpression(expList, exprs[i]);
+  }
+  return expList;
+}
+
 SgExprListExp * SageBuilder::buildExprListExp_nfi()
 {
   SgExprListExp* expList = new SgExprListExp();
@@ -2496,6 +2511,15 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
     loop_body->set_parent(result);
   if (increment) 
     increment->set_parent(result);
+
+  // CH (5/13/2010): If the initialize_stmt is an object of SgForInitStatement, we can directly put it 
+  // into for statement. Or else, there will be two semicolons after unparsing.
+  if (SgForInitStatement* for_init_stmt = isSgForInitStatement(initialize_stmt))
+  {
+    result->set_for_init_stmt(for_init_stmt);
+    for_init_stmt->set_parent(result);
+    return result;
+  }
 
   SgForInitStatement* init_stmt = new SgForInitStatement();
   ROSE_ASSERT(init_stmt);

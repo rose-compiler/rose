@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 #include "Disassembler.h"
 #include "sageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
@@ -34,7 +34,6 @@
 #define V2DWORDT (SgAsmTypeVector::createType(2, DWORDT))
 #define V2FLOATT (SgAsmTypeVector::createType(2, FLOATT))
 #define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
-
 
 Disassembler::AddressSet
 SgAsmPowerpcInstruction::get_successors(bool *complete) {

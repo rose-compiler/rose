@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 
 #include "sageInterfaceAsm.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 // These function in this file are expected to become a part of the 
 // Binary Analysis and Transformation interfaces in the nes ROSE API.
@@ -619,65 +619,51 @@ SageInterface::find ( SgNode* astNode, SgNode* target, EquivalenceTestFunctionTy
 
 
 // DQ (4/28/2010): Added support for interface to detect NOP's.  This function is for a single instruction.
+// Not only detects x86 NOP instructions, but any instruction whose only effect is to advance the instruction
+// pointer to the fall-through address.  Works for any architecture. See SgAsmx86Instruction::has_effect() for details.
 bool
 SageInterface::isNOP ( SgAsmInstruction* asmInstruction )
    {
-
-  // Test an instruction for if it has no side-effect to the state (is so then it is a NOP). 
-  // This is a more general test than if it is equivelent to the NOP memonic instruction.
-     bool returnValue = false;
-
-  // This is the most trivial case of detecting a NOP instruction.
-  // This will detect single and multi-byte NOP instructions.
-     if (isInstructionKind(asmInstruction,x86_nop) == true)
-        {
-          returnValue = true;
-        }
-       else
-        {
-       // We also want to handle more complex cases of NOP instructions (later).
-        }
-
-     return returnValue;
+       return !asmInstruction->has_effect();
    }
 
 // DQ (4/28/2010): Added support for interface to detect NOP's.  This function is for a list of instructions.
+// Not only detects x86 NOP instructions, but any sequence of instructions whose only effect is to advance the instruction
+// pointer to the fall-through address.  Works for any architecture. See SgAsmx86Instruction::has_effect() for details.
 bool
 SageInterface::isNOP ( const std::vector<SgAsmInstruction*> & asmInstructionList )
    {
-  // This is an initial implementation to be improved on later using the instruction semantics and looking at
-  // combinations of instructions.
-     std::vector<SgAsmInstruction*>::const_iterator i = asmInstructionList.begin();
-
-  // Let's disallow an empty list (since it is niether true nor false).
-     ROSE_ASSERT(i != asmInstructionList.end());
-
-  // Test a sequence of instructions for it they (as a set) have no side-effects to the state (is so then it is a NOP sequence).
-     bool returnValue = true;
-
-  // This is the simple case of a sequence of instructions where each is a NOP.
-     while (returnValue == true && i != asmInstructionList.end())
-        {
-          returnValue = isNOP(*i);
-          i++;
-        }
-
-     return returnValue;
+       if (asmInstructionList.empty())
+           return true;
+       return !asmInstructionList.front()->has_effect(asmInstructionList);
    }
 
 // DQ (4/28/2010): Added support for interface to detect NOP's.  This function detects NOP sequences in a SgAsmBlock.
+// Not only detects x86 NOP instructions, but any subsequence of instructions whose only effect is to advance the instruction
+// pointer to the fall-through address.  Works for any architecture. See SgAsmx86Instruction::find_noop_subsequences()
+// for details.
 std::vector<std::vector<SgAsmInstruction*> >
-SageInterface::find_NOP_sequences ( const SgAsmBlock* & asmBlock )
+SageInterface::find_NOP_sequences (SgAsmBlock* asmBlock)
    {
-  // find sequences of NOP instructions in a SgAsmBlock
-     std::vector<std::vector<SgAsmInstruction*> > returnSequence;
+       std::vector<std::vector<SgAsmInstruction*> > retval;
+       std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(asmBlock, V_SgAsmInstruction);
+       if (insns.empty()) return retval;
 
-     printf ("This SageInterface::find_NOP_sequences ( const SgAsmBlock* & asmBlock ) function is not implemented yet \n");
-     ROSE_ASSERT(false);
+       /* Find the subsequences (index,size pairs) */
+       typedef std::vector<std::pair<size_t, size_t> > Subsequences;
+       Subsequences sequences = insns.front()->find_noop_subsequences(insns);
 
-     return returnSequence;
+       /* Build the return value */
+       retval.reserve(sequences.size());
+       for (Subsequences::const_iterator si=sequences.begin(); si!=sequences.end(); ++si) {
+           retval.resize(retval.size()+1);
+           std::vector<SgAsmInstruction*> &back = retval.back();
+           for (size_t i=(*si).first; i<(*si).second; ++i)
+               back.push_back(insns[i]);
+       }
+       
+       return retval;
    }
-
 
 void
 SageInterface::insertInstruction(SgAsmInstruction* targetInstruction, SgAsmInstruction* newInstruction, bool insertBefore)

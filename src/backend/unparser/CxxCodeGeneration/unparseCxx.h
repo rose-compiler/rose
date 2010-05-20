@@ -393,6 +393,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (8/13/2007): This should go into the Unparser class
       //! begin the unparser (unparser.C)
        // void run_unparser();
+       
+       // TV (05/06/2010): SgCudaKernelCallExp
+       virtual void unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info);
 
 };
 

@@ -7,27 +7,27 @@ Functions detected from binary executable:
 
     Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name
     --- ---------- ---------- ------------ --------- -------- --------------------------------
-      1 0x080482c8 0x080482df     8/23     ....SP.....  unknown _init
-      2 0x080482df 0x0804854b    49/183    .........DL  unknown ***uncategorized blocks***
+      1 0x080482c8 0x080482df     8/23     .C..SP.....  unknown _init
+      2 0x080482df 0x0804854b    55/210    .........DL  unknown ***uncategorized blocks***
       3 0x080482f0 0x080482f6     1/6      .C.I.......  unknown signal@plt
-      4 0x08048300 0x08048306     1/6      ...I.......  unknown puts@plt
-      5 0x08048310 0x08048316     1/6      ...I.......  unknown __libc_start_main@plt
+      4 0x08048300 0x08048306     1/6      .C.I.......  unknown puts@plt
+      5 0x08048310 0x08048316     1/6      .C.I.......  unknown __libc_start_main@plt
       6 0x08048320 0x08048326     1/6      .C.I.......  unknown _exit@plt
       7 0x08048330 0x08048336     1/6      .C.I.......  unknown __gmon_start__@plt
       8 0x08048340 0x08048362    14/34     E...S......  unknown _start
       9 0x08048362 0x08048364     2/2      ........N..  unknown
-     10 0x08048364 0x08048388    15/36     ....SP.....  unknown call_gmon_start
+     10 0x08048364 0x08048388    15/36     .C..SP.....  unknown call_gmon_start
      11 0x08048388 0x08048390     8/8      ........N..  unknown
-     12 0x08048390 0x080483ce    20/62     ....SP.....  unknown __do_global_dtors_aux
+     12 0x08048390 0x080483ce    20/62     .C..SP.....  unknown __do_global_dtors_aux
      13 0x080483d0 0x08048404    12/28     .C..SP...D.  unknown frame_dummy
-     14 0x08048404 0x08048418     7/20     ....SP.....  unknown bar
+     14 0x08048404 0x08048418     7/20     .C..SP.....  unknown bar
      15 0x08048418 0x0804842f     6/23     .C..SP.....  unknown foo
-     16 0x0804842f 0x0804845b    11/44     ....SP.....  unknown handler
+     16 0x0804842f 0x08048440     5/17     ....SP.....  unknown handler
      17 0x0804845b 0x08048486    12/43     ....SP.....  unknown main
      18 0x08048486 0x08048490    10/10     ........N..  unknown
      19 0x08048490 0x080484c8    22/56     ....SP.....  unknown __libc_csu_init
      20 0x08048500 0x08048558    24/60     ....SP...D.  unknown __libc_csu_fini
      21 0x08048558 0x08048560     8/8      ........N..  unknown
      22 0x08048560 0x08048590    19/48     .C..SP.....  unknown __do_global_ctors_aux
-     23 0x08048590 0x080485aa    12/26     ....SP.....  unknown _fini
+     23 0x08048590 0x080485aa    12/26     .C..SP.....  unknown _fini
     --- ---------- ---------- ------------ --------- -------- --------------------------------

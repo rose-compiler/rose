@@ -7,25 +7,26 @@ Functions detected from binary executable:
 
     Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name
     --- ---------- ---------- ------------ --------- -------- --------------------------------
-      1 0x080482c8 0x080482df     8/23     .....P.....  unknown
-      2 0x080482df 0x0804856b    77/253    .........DL  unknown ***uncategorized blocks***
+      1 0x080482c8 0x080482df     8/23     .C...P.....  unknown
+      2 0x080482df 0x0804856b    78/255    .........DL  unknown ***uncategorized blocks***
       3 0x080482f0 0x080482f6     1/6      ...I.......  unknown signal@plt
-      4 0x08048300 0x08048306     1/6      ...I.......  unknown puts@plt
-      5 0x08048310 0x08048316     1/6      ...I.......  unknown __libc_start_main@plt
+      4 0x08048300 0x08048306     1/6      .C.I.......  unknown puts@plt
+      5 0x08048310 0x08048316     1/6      .C.I.......  unknown __libc_start_main@plt
       6 0x08048320 0x08048326     1/6      .C.I.......  unknown _exit@plt
       7 0x08048330 0x08048336     1/6      .C.I.......  unknown __gmon_start__@plt
       8 0x08048340 0x08048362    14/34     E..........  unknown
       9 0x08048362 0x08048364     2/2      ........N..  unknown
-     10 0x08048364 0x08048388    15/36     .....P.....  unknown
+     10 0x08048364 0x08048388    15/36     .C...P.....  unknown
      11 0x08048388 0x08048390     8/8      ........N..  unknown
-     12 0x08048390 0x080483ce    20/62     .....P.....  unknown
+     12 0x08048390 0x080483ce    20/62     .C...P.....  unknown
      13 0x080483d0 0x08048404    12/28     .C...P...D.  unknown
      14 0x08048440 0x08048456     8/22     .....P.....  unknown
-     15 0x08048460 0x08048480     8/32     .....P.....  unknown
-     16 0x08048480 0x080484b0    20/48     .....P.....  unknown
-     17 0x080484b0 0x080484e8    22/56     .....P.....  unknown
-     18 0x08048520 0x08048578    24/60     .....P...D.  unknown
-     19 0x08048578 0x08048580     8/8      ........N..  unknown
-     20 0x08048580 0x080485b0    19/48     .C...P.....  unknown
-     21 0x080485b0 0x080485ca    12/26     .....P.....  unknown
+     15 0x08048460 0x0804847e     7/30     .....P.....  unknown
+     16 0x08048480 0x080484a4     8/36     .....P.....  unknown
+     17 0x080484a4 0x080484b0    12/12     ........N..  unknown
+     18 0x080484b0 0x080484e8    22/56     .....P.....  unknown
+     19 0x08048520 0x08048578    24/60     .....P...D.  unknown
+     20 0x08048578 0x08048580     8/8      ........N..  unknown
+     21 0x08048580 0x080485b0    19/48     .C...P.....  unknown
+     22 0x080485b0 0x080485ca    12/26     .C...P.....  unknown
     --- ---------- ---------- ------------ --------- -------- --------------------------------
