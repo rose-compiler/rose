@@ -848,6 +848,13 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "PHP_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // TV (05/17/2010) Cuda support
+     File.setDataPrototype         ( "bool", "Cuda_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TV (05/17/2010) OpenCL support
+     File.setDataPrototype         ( "bool", "OpenCL_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
      File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
