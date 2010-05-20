@@ -48,6 +48,9 @@ TUTORIAL_NAME = $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
 
 pdf-local: $(TUTORIAL_NAME)
 
+tutorial:$(TUTORIAL_NAME)
+	cp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf tutorial.pdf
+
 make-web-pages: $(TUTORIAL_NAME)
 	mkdir -p ../ROSE_WebPages/ROSE_Tutorial
 	cp -fp $(TUTORIAL_NAME) ../ROSE_WebPages/ROSE_Tutorial/
