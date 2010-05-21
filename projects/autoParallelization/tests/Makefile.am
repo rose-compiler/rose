@@ -29,6 +29,7 @@ reduction_fake.c \
 regression01.c \
 scalar_privatization.c \
 shared.c \
+slowInput.c \
 Stress-1.c \
 plusPlusOp.c \
 true_dep.c \
