@@ -182,14 +182,20 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
           if (referencedScope == NULL)
              {
-               printf ("ERROR: namespaceDeclaration has no valid definition \n");
-               namespaceDeclaration->get_startOfConstruct()->display("ERROR: namespaceDeclaration has no valid definition");
+            // DQ (5/21/2010): Handle case of using "std" (predefined namespace in C++), but it not having been explicitly defined (see test2005_57.C).
+               if (namespaceDeclaration->get_name() != "std")
+                  {
+                    printf ("ERROR: namespaceDeclaration has no valid definition \n");
+                    namespaceDeclaration->get_startOfConstruct()->display("ERROR: namespaceDeclaration has no valid definition");
 
-            // DQ (5/20/2010): Added assertion to trap this case.
-               ROSE_ASSERT(false);
+                 // DQ (5/20/2010): Added assertion to trap this case.
+                    printf ("Exiting because referencedScope could not be identified.\n");
+                    ROSE_ASSERT(false);
+                  }
              }
 
-       // Note that std can have a null definition, so ignore this for now!
+       // Note that "std", as a predefined namespace, can have a null definition, so we can't 
+       // insist that we inject all symbols in namespaces that we can't see explicitly.
           if (referencedScope != NULL)
              {
                ROSE_ASSERT(referencedScope != NULL);
