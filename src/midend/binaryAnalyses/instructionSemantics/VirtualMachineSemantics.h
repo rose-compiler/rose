@@ -722,6 +722,7 @@ public:
     /** Computes bit-wise OR of two values. */
     template <size_t Len>
     ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
+        if (a==b) return a;
         if (a.name || b.name) return ValueType<Len>();
         return a.offset | b.offset;
     }
