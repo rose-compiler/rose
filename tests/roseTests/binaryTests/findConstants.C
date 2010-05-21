@@ -6,6 +6,7 @@
 #include "rose.h"
 #include "findConstants.h"
 #include "VirtualMachineSemantics.h"
+#include "SymbolicSemantics.h"
 #include <set>
 #include <inttypes.h>
 
@@ -51,6 +52,23 @@
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<get_state()
                       <<"    ip = " <<get_ip() <<"\n";
+        }
+    };
+#elif  4==POLICY_SELECTOR
+#   define TestValueTemplate SymbolicSemantics::ValueType
+    struct TestPolicy: public SymbolicSemantics::Policy {
+        void dump(SgAsmInstruction *insn) {
+#if 0
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<get_state()
+                      <<"    ip = " <<get_ip() <<"\n";
+#else
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            get_state().print(std::cout);
+            std::cout <<"    ip = ";
+            std::cout <<get_ip();
+            std::cout <<"\n";
+#endif
         }
     };
 #else
@@ -105,6 +123,9 @@ analyze_interp(SgAsmInterpretation *interp)
 #if 3==POLICY_SELECTOR
             if (!policy.get_ip().is_known()) break;
             rose_addr_t next_addr = policy.get_ip().known_value();
+#elif 4==POLICY_SELECTOR
+            if (!policy.get_ip().is_known()) break;
+            rose_addr_t next_addr = policy.get_ip().value();
 #else
             if (policy.newIp->get().name) break;
             rose_addr_t next_addr = policy.newIp->get().offset;

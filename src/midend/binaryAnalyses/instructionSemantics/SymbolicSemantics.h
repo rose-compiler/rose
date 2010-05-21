@@ -1,5 +1,5 @@
-#ifndef Rose_VirtualMachineSemantics_H
-#define Rose_VirtualMachineSemantics_H
+#ifndef Rose_SymbolicSemantics_H
+#define Rose_SymbolicSemantics_H
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -14,119 +14,172 @@
 
 /** A policy for x86InstructionSemantics.
  *
- *  This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature to the
- *  FindConstantsPolicy except much simpler, much faster, and much more memory-lean.  The main classes are:
+ *  This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature to
+ *  VirtualMachineSemantics, but with a different type of ValueType: instead of values being a constant or variable with
+ *  offset, values here are expression trees.
  * 
  *  <ul>
  *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
  *    <li>State: represents the state of the virtual machine, its registers and memory.</li>
  *    <li>ValueType: the values stored in registers and memory and used for memory addresses.</li>
  *  </ul>
- *
- *  Each value is either a known value or an unknown value. An unknown value consists of a base name and offset and whether
- *  the value is negated. */
-namespace VirtualMachineSemantics {
+ */
+namespace SymbolicSemantics {
 
 extern uint64_t name_counter;
 
+enum Operator {
+    OP_ADD,                     /**< Addition */
+    OP_AND,                     /**< Boolean AND */
+    OP_ASR,                     /**< Arithmetic shift right */
+    OP_CONCAT,                  /**< Concatenation */
+    OP_EXTRACT,                 /**< Extract subsequence of bits */
+    OP_INVERT,                  /**< Boolean inversion */
+    OP_ITE,                     /**< If-then-else */
+    OP_LSSB,                    /**< Least significant set bit or zero */
+    OP_MSSB,                    /**< Most significant set bit or zero */
+    OP_NEGATE,                  /**< Arithmetic negation */
+    OP_NOOP,                    /**< No operation (used by default constructor) */
+    OP_OR,                      /**< Boolean OR */
+    OP_ROL,                     /**< Rotate left */
+    OP_ROR,                     /**< Rotate right */
+    OP_SDIV,                    /**< Signed division */
+    OP_SEXTEND,                 /**< Signed extention at msb */
+    OP_SHL,                     /**< Shift left, introducing zeros at lsb */
+    OP_SHR,                     /**< Shift right, introducing zeros at msb */
+    OP_SMOD,                    /**< Signed modulus */
+    OP_SMUL,                    /**< Signed multiplication */
+    OP_UDIV,                    /**< Signed division */
+    OP_UEXTEND,                 /**< Unsigned extention at msb */
+    OP_UMOD,                    /**< Unsigned modulus */
+    OP_UMUL,                    /**< Unsigned multiplication */
+    OP_XOR,                     /**< Boolean exclusive OR */
+    OP_ZEROP,                   /**< Equal to zero */
+};
+
+const char *to_str(Operator o);
+    
 typedef std::map<uint64_t, uint64_t> RenameMap;
 
-/** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
+class TreeNode {
+protected:
+    size_t nbits;                       /**< Number of significant bits. */
+public:
+    TreeNode(size_t nbits): nbits(nbits) { assert(nbits>0); }
+    virtual ~TreeNode() {}
+    virtual void print(std::ostream&, RenameMap *rmap=NULL) const = 0;
+    virtual bool equal_to(const TreeNode *other) const { return other && nbits==other->nbits; }
+    virtual bool is_known() const = 0;
+    size_t get_nbits() const { return nbits; }
+};
+
+class InternalNode: public TreeNode {
+private:
+    Operator op;
+    std::vector<TreeNode*> children;
+public:
+    InternalNode(size_t nbits, Operator op, TreeNode *a)
+        : TreeNode(nbits), op(op) {
+        assert(a!=NULL);
+        children.push_back(a);
+    }
+    InternalNode(size_t nbits, Operator op, TreeNode *a, TreeNode *b)
+        : TreeNode(nbits), op(op) {
+        assert(a!=NULL && b!=NULL);
+        children.push_back(a);
+        children.push_back(b);
+    }
+    InternalNode(size_t nbits, Operator op, TreeNode *a, TreeNode *b, TreeNode *c)
+        : TreeNode(nbits), op(op) {
+        assert(a!=NULL && b!=NULL && c!=NULL);
+        children.push_back(a);
+        children.push_back(b);
+        children.push_back(c);
+    }
+    virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
+    virtual bool equal_to(const TreeNode *other_) const;
+    virtual bool is_known() const {
+        return false; /*if it's known, then it would have been folded to a leaf*/
+    }
+};
+
+class LeafNode: public TreeNode {
+private:
+    bool known;                         /**< True if the value is known; false for variables. */
+    union {
+        uint64_t ival;                  /**< Integer (unsigned) value when 'known' is true; unused msb are zero */
+        uint64_t name;                  /**< Variable ID number when 'known' is false. */
+    };
+public:
+    LeafNode(): TreeNode(32), known(true), ival(0) {}
+    static LeafNode *create_variable(size_t nbits);
+    static LeafNode *create_integer(size_t nbits, uint64_t n);
+    virtual bool is_known() const;
+    uint64_t value() const;
+    virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
+    virtual bool equal_to(const TreeNode *other_) const;
+};
+
+/* ValueType cannot directly be a TreeNode because ValueType's bit size is a template argument while tree node sizes are
+ * stored as a data member.  Therefore, ValueType will always point to a TreeNode.  Most of the methods that are invoked on
+ * ValueType just call the same methods for TreeNode. */
 template<size_t nBits>
 struct ValueType {
-    uint64_t name;                      /**< Zero for constants; non-zero ID number for everything else. */
-    uint64_t offset;                    /**< The constant (if name==0) or an offset w.r.t. an unknown (named) base value. */
-    bool negate;                        /**< Switch between name+offset and (-name)+offset; should be false for constants. */
+    TreeNode *expr;
 
     /** Construct a value that is unknown and unique. */
-    ValueType(): name(++name_counter), offset(0), negate(false) {}
-
-    /** Copy-construct a value, truncating or extending at msb the source value. */
+    ValueType() {
+        expr = LeafNode::create_variable(nBits);
+    }
+    
+#if 0
+    /** Copy-construct a value, truncating or extending at msb the source value.  This is a shallow copy. */
     template <size_t Len>
     ValueType(const ValueType<Len> &other) {
-        name = other.name;
-        offset = other.offset & IntegerOps::GenMask<uint64_t, nBits>::value; /*make sure high-order bits are zeroed out*/
-        negate = other.negate;
+        expr = unsignedExtend<Len, nBits>(other).expr;
     }
+#endif
 
     /** Construct a ValueType with a known value. */
-    ValueType(uint64_t n)   /*implicit*/
-        : name(0), offset(n), negate(false) {
-        this->offset &= IntegerOps::GenMask<uint64_t, nBits>::value;
+    explicit ValueType(uint64_t n) {
+        expr = LeafNode::create_integer(nBits, n);
     }
 
-    /** Low-level constructor used internally. */
-    ValueType(uint64_t name, uint64_t offset, bool negate=false)
-        : name(name), offset(offset), negate(negate) {
-        this->offset &= IntegerOps::GenMask<uint64_t, nBits>::value;
+    /** Construct a ValueType from a TreeNode. */
+    explicit ValueType(TreeNode *node) {
+        assert(node->get_nbits()==nBits);
+        expr = node;
     }
-
-    /** Returns true if the value is known, false if the value only has a name. */
-    bool is_known() const {
-        return 0==name;
-    }
-
-    /** Returns the value if it is known. */
-    uint64_t known_value() const {
-        ROSE_ASSERT(is_known());
-        return offset;
-    }
-
+    
+#if 0
     /** Returns a new, optionally renamed, value.  If the rename map, @p rmap, is non-null and this value is a named value,
      *  then its name will be transformed by looking up the name in the map and using the value found there. If the name is
      *  not in the map then a new entry is created in the map.  Remapped names start counting from one.  For example, if
      *  "v904885611+0xfc" is the first value to be renamed, it will become "v1+0xfc". */
     ValueType<nBits> rename(RenameMap *rmap=NULL) const;
+#endif
 
     /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See the rename()
      *  method for details. */
     void print(std::ostream &o, RenameMap *rmap=NULL) const {
-        uint64_t sign_bit = (uint64_t)1 << (nBits-1); /* e.g., 80000000 */
-        uint64_t val_mask = sign_bit - 1;             /* e.g., 7fffffff */
-        uint64_t negative = nBits>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0; /*magnitude of negative value*/
-
-        if (name!=0) {
-            /* This is a named value rather than a constant. */
-            uint64_t renamed = name;
-            if (rmap) {
-                RenameMap::iterator found = rmap->find(name);
-                if (found==rmap->end()) {
-                    renamed = rmap->size()+1;
-                    rmap->insert(std::make_pair(name, renamed));
-                } else {
-                    renamed = found->second;
-                }
-            }
-            const char *sign = negate ? "-" : "";
-            o <<sign <<"v" <<std::dec <<renamed;
-            if (negative) {
-                o <<"-0x" <<std::hex <<negative;
-            } else if (offset) {
-                o <<"+0x" <<std::hex <<offset;
-            }
-        } else {
-            /* This is a constant */
-            ROSE_ASSERT(!negate);
-            o  <<"0x" <<std::hex <<offset;
-            if (negative)
-                o <<" (-0x" <<std::hex <<negative <<")";
-        }
+        expr->print(o, rmap);
     }
 
-    friend bool operator==(const ValueType &a, const ValueType &b) {
-        return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
+    /** Returns true if this value is provably equal to the @p other value. */
+    bool equal_to(const ValueType<nBits> &other) const {
+        return expr->equal_to(other.expr);
     }
 
-    friend bool operator!=(const ValueType &a, const ValueType &b) {
-        return !(a==b);
+    /** Returns true if the value is a known constant. */
+    bool is_known() const {
+        return expr->is_known();
     }
-
-    friend bool operator<(const ValueType &a, const ValueType &b) {
-        if (a.name<b.name) return true;
-        if (b.name<a.name) return false;
-        if (a.name && a.negate<b.negate) return true;
-        if (a.name && b.negate<a.negate) return false;
-        return a.offset < b.offset;
+    
+    /** Returns the value of a known constant. Assumes this value is a known constant. */
+    uint64_t value() const {
+        LeafNode *leaf = dynamic_cast<LeafNode*>(expr);
+        assert(leaf);
+        return leaf->value();
     }
 };
 
@@ -181,21 +234,7 @@ struct MemoryCell {
 
     /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
      *  have a shorter name.  See the ValueType<>::rename() method for details. */
-    void print(std::ostream&, RenameMap *rmap=NULL) const;
-    
-    friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
-        return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes && a.clobbered==b.clobbered && a.written==b.written;
-    }
-    friend bool operator!=(const MemoryCell &a, const MemoryCell &b) {
-        return !(a==b);
-    }
-    friend bool operator<(const MemoryCell &a, const MemoryCell &b) {
-        return a.address < b.address;
-    }
-    friend std::ostream& operator<<(std::ostream &o, const MemoryCell &me) {
-        me.print(o, NULL);
-        return o;
-    }
+    void print(std::ostream &o, RenameMap *rmap=NULL) const;
 };
 
 typedef std::vector<MemoryCell> Memory;
@@ -223,14 +262,16 @@ struct State {
     /** Tests registers of two states for equality. */
     bool equal_registers(const State&) const;
     
-    /** Discard stack memory below stack pointer */
-    void discard_popped_memory();
-
-    friend std::ostream& operator<<(std::ostream &o, const State& state) {
-        state.print(o);
-        return o;
+    /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
+     *  instruction if the policy's p_discard_popped_memory property is set. */
+    void discard_popped_memory() {
+        /*FIXME: not implemented yet. [RPM 2010-05-24]*/
     }
+
 };
+
+std::ostream& operator<<(std::ostream &o, const MemoryCell& mc);
+std::ostream& operator<<(std::ostream &o, const State& state);
 
 /** A policy that is supplied to the semantic analysis constructor. */
 class Policy {
@@ -259,7 +300,8 @@ private:
 
 public:
     Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0) {
-        orig_state = cur_state; /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
+        /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
+        orig_state = cur_state;
     }
 
     /** Returns the current state. */
@@ -331,33 +373,42 @@ public:
      *  available then the return value will be an empty string. */
     std::string SHA1() const;
 
+    /** Extend (or shrink) from @p FromLen bits to @p ToLen bits by adding or removing high-order bits from the input. Added
+     *  bits are always zeros. */
+    template <size_t FromLen, size_t ToLen>
+    ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
+        if (a.is_known())
+            return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.value());
+        if (FromLen==ToLen)
+            return ValueType<ToLen>(a.expr);
+        return ValueType<ToLen>(new InternalNode(ToLen, OP_UEXTEND, a.expr, LeafNode::create_integer(8, ToLen)));
+    }
+    
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
-    ValueType<ToLen> signExtend(const ValueType<FromLen> &a) const {
-        if (a.name) return ValueType<ToLen>();
-        return IntegerOps::signExtend<FromLen, ToLen>(a.offset);
+    ValueType<ToLen> signedExtend(const ValueType<FromLen> &a) const {
+        if (a.is_known())
+            return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.value()));
+        if (FromLen==ToLen)
+            return ValueType<ToLen>(a.expr);
+        if (FromLen > ToLen)
+            return ValueType<ToLen>(new InternalNode(ToLen, OP_UEXTEND, a.expr, LeafNode::create_integer(8, ToLen))); /*yes, unsigned*/
+        return ValueType<ToLen>(new InternalNode(ToLen, OP_SEXTEND, a.expr, LeafNode::create_integer(8, ToLen)));
     }
 
     /** Extracts certain bits from the specified value and shifts them to the low-order positions in the result.  The bits of
      *  the result include bits from BeginAt (inclusive) through EndAt (exclusive).  The lsb is number zero. */
     template <size_t BeginAt, size_t EndAt, size_t Len>
     ValueType<EndAt-BeginAt> extract(const ValueType<Len> &a) const {
-        if (0==BeginAt) return ValueType<EndAt-BeginAt>(a);
-        if (a.name) return ValueType<EndAt-BeginAt>();
-        return (a.offset >> BeginAt) & (IntegerOps::SHL1<uint64_t, EndAt-BeginAt>::value - 1);
-    }
-
-    /** Return a newly sized value by either truncating the most significant bits or by adding more most significant bits that
-     *  are set to zeros. */
-    template <size_t FromLen, size_t ToLen>
-    ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) const {
-        return ValueType<ToLen>(a);
+        if (0==BeginAt)
+            return unsignedExtend<Len,EndAt-BeginAt>(a);
+        if (a.is_known())
+            return ValueType<EndAt-BeginAt>(a.value());
+        return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, OP_EXTRACT, a.expr,
+                                                         LeafNode::create_integer(8, BeginAt),
+                                                         LeafNode::create_integer(8, EndAt-BeginAt)));
     }
     
-    /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
-     *  instruction if the p_discard_popped_memory property is set. */
-    void discard_popped_memory();
-
     /** Reads a value from memory in a way that always returns the same value provided there are not intervening writes that
      *  would clobber the value either directly or by aliasing.  Also, if appropriate, the value is added to the original
      *  memory state (thus changing the value at that address from an implicit named value to an explicit named value).
@@ -374,9 +425,9 @@ public:
                 if ((*mi).clobbered) {
                     (*mi).clobbered = false;
                     (*mi).data = new_cell.data;
-                    return new_cell.data;
+                    return unsignedExtend<32, Len>(new_cell.data);
                 } else {
-                    return (*mi).data;
+                    return unsignedExtend<32, Len>((*mi).data);
                 }
             } else if (new_cell.may_alias(*mi) && (*mi).written) {
                 aliased = true;
@@ -391,19 +442,16 @@ public:
                     ROSE_ASSERT(!(*mi).clobbered);
                     ROSE_ASSERT(!(*mi).written);
                     state.mem.push_back(*mi);
-                    std::sort(state.mem.begin(), state.mem.end());
-                    return (*mi).data;
+                    return unsignedExtend<32, Len>((*mi).data);
                 }
             }
 
             orig_state.mem.push_back(new_cell);
-            std::sort(orig_state.mem.begin(), orig_state.mem.end());
         }
 
         /* Create the cell in the current state. */
         state.mem.push_back(new_cell);
-        std::sort(state.mem.begin(), state.mem.end());
-        return new_cell.data;
+        return unsignedExtend<32,Len>(new_cell.data);
     }
 
     /** See memory_reference_type(). */
@@ -413,6 +461,7 @@ public:
      *  we're operating under the assumption that memory written via stack pointer is different than memory written via frame
      *  pointer, and that memory written by either pointer is different than all other memory. */
     MemRefType memory_reference_type(const State &state, const ValueType<32> &addr) const {
+#if 0 /*FIXME: not implemented yet [RPM 2010-05-24]*/
         if (addr.name) {
             if (addr.name==state.gpr[x86_gpr_sp].name) return MRT_STACK_PTR;
             if (addr.name==state.gpr[x86_gpr_bp].name) return MRT_FRAME_PTR;
@@ -420,6 +469,7 @@ public:
         }
         if (addr==state.gpr[x86_gpr_sp]) return MRT_STACK_PTR;
         if (addr==state.gpr[x86_gpr_bp]) return MRT_FRAME_PTR;
+#endif
         return MRT_OTHER_PTR;
     }
     
@@ -427,7 +477,7 @@ public:
      *  clobbered. Subsequent reads from clobbered addresses will return new values. See also, mem_read(). */
     template <size_t Len> void mem_write(State &state, const ValueType<32> &addr, const ValueType<Len> &data) {
         ROSE_ASSERT(&state!=&orig_state);
-        MemoryCell new_cell(addr, data, Len/8);
+        MemoryCell new_cell(addr, unsignedExtend<Len, 32>(data), Len/8);
         new_cell.set_written();
         bool saved = false; /* has new_cell been saved into memory? */
 
@@ -448,10 +498,8 @@ public:
                 /* memory cell *mi is not aliased to cell being written */
             }
         }
-        if (!saved) {
+        if (!saved)
             state.mem.push_back(new_cell);
-            std::sort(state.mem.begin(), state.mem.end());
-        }
     }
 
 
@@ -482,12 +530,12 @@ public:
 
     /** True value */
     ValueType<1> true_() const {
-        return 1;
+        return ValueType<1>(1);
     }
 
     /** False value */
     ValueType<1> false_() const {
-        return 0;
+        return ValueType<1>((uint64_t)0);
     }
 
     /** Undefined Boolean */
@@ -498,7 +546,7 @@ public:
     /** Used to build a known constant. */
     template <size_t Len>
     ValueType<Len> number(uint64_t n) const {
-        return n;
+        return ValueType<Len>(n);
     }
 
 
@@ -527,7 +575,7 @@ public:
 
     /** Called only for the RDTSC instruction. */
     ValueType<64> rdtsc() {
-        return 0;
+        return ValueType<64>((uint64_t)0);
     }
 
     /** Called only for the INT instruction. */
@@ -603,19 +651,7 @@ public:
     /** Adds two values. */
     template <size_t Len>
     ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
-        if (a.name==b.name && (!a.name || a.negate!=b.negate)) {
-            /* [V1+x] + [-V1+y] = [x+y]  or
-             * [x] + [y] = [x+y] */
-            return a.offset + b.offset;
-        } else if (!a.name || !b.name) {
-            /* [V1+x] + [y] = [V1+x+y]   or
-             * [x] + [V2+y] = [V2+x+y]   or
-             * [-V1+x] + [y] = [-V1+x+y] or
-             * [x] + [-V2+y] = [-V2+x+y] */
-            return ValueType<Len>(a.name+b.name, a.offset+b.offset, a.negate || b.negate);
-        } else {
-            return ValueType<Len>();
-        }
+        return ValueType<Len>(new InternalNode(Len, OP_ADD, a.expr, b.expr));
     }
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
@@ -635,242 +671,144 @@ public:
     template <size_t Len>
     ValueType<Len> addWithCarries(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> &c,
                                   ValueType<Len> &carry_out) const {
-        int n_unknown = (a.name?1:0) + (b.name?1:0) + (c.name?1:0);
-        if (n_unknown <= 1) {
-            /* At most, one of the operands is an unknown value. See add() for more details. */
-            uint64_t sum = a.offset + b.offset + c.offset;
-            carry_out = 0==n_unknown ? ValueType<Len>((a.offset ^ b.offset ^ sum)>>1) : ValueType<Len>();
-            return ValueType<Len>(a.name+b.name+c.name, sum, a.negate||b.negate||c.negate);
-        } else if (a.name==b.name && !c.name && a.negate!=b.negate) {
-            /* A and B are known or have bases that cancel out, and C is known */
-            uint64_t sum = a.offset + b.offset + c.offset;
-            carry_out = ValueType<Len>((a.offset ^ b.offset ^ sum)>>1);
-            return ValueType<Len>(sum);
-        } else {
-            carry_out = ValueType<Len>();
-            return ValueType<Len>();
-        }
+        ValueType<Len> sum = add<Len>(a, add<Len>(b, unsignedExtend<1,Len>(c)));
+        carry_out = xor_<Len>(unsignedExtend<Len-1, Len>(extract<1, Len>(a)),
+                              xor_<Len>(unsignedExtend<Len-1, Len>(extract<1, Len>(b)), 
+                                        unsignedExtend<Len-1, Len>(extract<1, Len>(sum))));
+        return sum;
     }
 
     /** Computes bit-wise AND of two values. */
     template <size_t Len>
     ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-        if ((!a.name && 0==a.offset) || (!b.name && 0==b.offset)) return 0;
-        if (a.name || b.name) return ValueType<Len>();
-        return a.offset & b.offset;
+        return ValueType<Len>(new InternalNode(Len, OP_AND, a.expr, b.expr));
     }
 
     /** Returns true_, false_, or undefined_ depending on whether argument is zero. */
     template <size_t Len>
     ValueType<1> equalToZero(const ValueType<Len> &a) const {
-        if (a.name) return undefined_();
-        return a.offset ? false_() : true_();
+        return ValueType<1>(new InternalNode(1, OP_ZEROP, a.expr));
     }
 
     /** One's complement */
     template <size_t Len>
     ValueType<Len> invert(const ValueType<Len> &a) const {
-        if (a.name) return ValueType<Len>(a.name, ~a.offset, !a.negate);
-        return ~a.offset;
+        return ValueType<Len>(new InternalNode(Len, OP_INVERT, a.expr));
     }
 
     /** Concatenate the values of @p a and @p b so that the result has @p b in the high-order bits and @p a in the low order
      *  bits. */
     template<size_t Len1, size_t Len2>
     ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1+Len2>();
-        return a.offset | (b.offset << Len1);
+        return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, OP_CONCAT, a.expr, b.expr));
     }
 
-    /** Returns second or third arg depending on value of first arg. */
+    /** Returns second or third arg depending on value of first arg. "ite" means "if-then-else". */
     template <size_t Len>
     ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
-        if (ifTrue==ifFalse) return ifTrue;
-        if (sel.name) return ValueType<Len>();
-        return sel.offset ? ifTrue : ifFalse;
+        return ValueType<Len>(new InternalNode(Len, OP_ITE, sel.expr, ifTrue.expr, ifFalse.expr));
     }
 
     /** Returns position of least significant set bit; zero when no bits are set. */
     template <size_t Len>
     ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) const {
-        if (a.name) return ValueType<Len>();
-        for (size_t i=0; i<Len; ++i) {
-            if (a.offset & ((uint64_t)1 << i))
-                return i;
-        }
-        return 0;
+        return ValueType<Len>(new InternalNode(Len, OP_LSSB, a.expr));
     }
 
     /** Returns position of most significant set bit; zero when no bits are set. */
     template <size_t Len>
     ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) const {
-        if (a.name) return ValueType<Len>();
-        for (size_t i=Len; i>0; --i) {
-            if (a.offset & ((uint64_t)1 << (i-1)))
-                return i-1;
-        }
-        return 0;
+        return ValueType<Len>(new InternalNode(Len, OP_MSSB, a.expr));
     }
 
     /** Two's complement. */
     template <size_t Len>
     ValueType<Len> negate(const ValueType<Len> &a) const {
-        if (a.name) return ValueType<Len>(a.name, -a.offset, !a.negate);
-        return -a.offset;
+        return ValueType<Len>(new InternalNode(Len, OP_NEGATE, a.expr));
     }
 
     /** Computes bit-wise OR of two values. */
     template <size_t Len>
     ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-        if (a==b) return a;
-        if (!a.name && !b.name) return a.offset | b.offset;
-        if (!a.name && a.offset==IntegerOps::GenMask<uint64_t, Len>::value) return a;
-        if (!b.name && b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return b;
-        return ValueType<Len>();
+        return ValueType<Len>(new InternalNode(Len, OP_OR, a.expr, b.expr));
     }
 
     /** Rotate bits to the left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (!a.name && !sa.name) return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
-        if (!sa.name && 0==sa.offset % Len) return a;
-        return ValueType<Len>();
+        return ValueType<Len>(new InternalNode(Len, OP_ROL, a.expr, sa.expr));
     }
 
     /** Rotate bits to the right. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (!a.name && !sa.name) return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
-        if (!sa.name && 0==sa.offset % Len) return a;
-        return ValueType<Len>();
+        return ValueType<Len>(new InternalNode(Len, OP_ROR, a.expr, sa.expr));
     }
 
     /** Returns arg shifted left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (!a.name && !sa.name) return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
-        if (!sa.name) {
-            if (0==sa.offset) return a;
-            if (sa.offset>=Len) return 0;
-        }
-        return ValueType<Len>();
+        return ValueType<Len>(new InternalNode(Len, OP_SHL, a.expr, sa.expr));
     }
 
     /** Returns arg shifted right logically (no sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (!a.name && !sa.name) return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
-        if (!sa.name) {
-            if (0==sa.offset) return a;
-            if (sa.offset>=Len) return 0;
-        }
-        return ValueType<Len>();
+        return ValueType<Len>(new InternalNode(Len, OP_SHR, a.expr, sa.expr));
     }
 
     /** Returns arg shifted right arithmetically (with sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (!a.name && !sa.name) return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
-        if (!sa.name && 0==sa.offset) return a;
-        return ValueType<Len>();
+        return ValueType<Len>(new InternalNode(Len, OP_ASR, a.expr, sa.expr));
+    }
+
+    /** Sign extends a value. */
+    template <size_t From, size_t To>
+    ValueType<To> signExtend(const ValueType<From> &a) {
+        return signedExtend<From, To>(a);
     }
 
     /** Divides two signed values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
-            if (!a.name) return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
-            if (1==b.offset) return a;
-            if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return negate(a);
-            /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
-        }
-        return ValueType<Len1>();
+        return ValueType<Len1>(new InternalNode(Len1, OP_SDIV, a.expr, b.expr));
     }
 
     /** Calculates modulo with signed values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len2>();
-        if (0==b.offset) throw std::string("division by zero");
-        return IntegerOps::signExtend<Len1, 64>(a.offset) % IntegerOps::signExtend<Len2, 64>(b.offset);
-        /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
+        return ValueType<Len2>(new InternalNode(Len2, OP_SMOD, a.expr, b.expr));
     }
 
     /** Multiplies two signed values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (!a.name && !b.name)
-            return IntegerOps::signExtend<Len1, 64>(a.offset) * IntegerOps::signExtend<Len2, 64>(b.offset);
-        if (!b.name) {
-            if (0==b.offset) return 0;
-            if (1==b.offset) return signExtend<Len1, Len1+Len2>(a);
-            if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return signExtend<Len1, Len1+Len2>(negate(a));
-        }
-        if (!a.name) {
-            if (0==a.offset) return 0;
-            if (1==a.offset) return signExtend<Len2, Len1+Len2>(b);
-            if (a.offset==IntegerOps::GenMask<uint64_t,Len1>::value) return signExtend<Len2, Len1+Len2>(negate(b));
-        }
-        return ValueType<Len1+Len2>();
+        return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, OP_SMUL, a.expr, b.expr));
     }
 
     /** Divides two unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
-            if (!a.name) return a.offset / b.offset;
-            if (1==b.offset) return a;
-            /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
-        }
-        return ValueType<Len1>();
+        return ValueType<Len1>(new InternalNode(Len1, OP_UDIV, a.expr, b.expr));
     }
 
     /** Calculates modulo with unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
-            if (!a.name) return a.offset % b.offset;
-            /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
-        }
-        if (extendByMSB<Len1,64>(a)==extendByMSB<Len2,64>(b)) return b;
-        return ValueType<Len2>();
+        return ValueType<Len2>(new InternalNode(Len2, OP_UMOD, a.expr, b.expr));
     }
 
     /** Multiply two unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (!a.name && !b.name)
-            return a.offset * b.offset;
-        if (!b.name) {
-            if (0==b.offset) return 0;
-            if (1==b.offset) return extendByMSB<Len1, Len1+Len2>(a);
-        }
-        if (!a.name) {
-            if (0==a.offset) return 0;
-            if (1==a.offset) return extendByMSB<Len2, Len1+Len2>(b);
-        }
-        return ValueType<Len1+Len2>();
+        return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, OP_UMUL, a.expr, b.expr));
     }
 
     /** Computes bit-wise XOR of two values. */
     template <size_t Len>
     ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-        if (!a.name && !b.name)
-            return a.offset ^ b.offset;
-        if (a==b)
-            return 0;
-        if (!b.name) {
-            if (0==b.offset) return a;
-            if (b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return invert(a);
-        }
-        if (!a.name) {
-            if (0==a.offset) return b;
-            if (a.offset==IntegerOps::GenMask<uint64_t, Len>::value) return invert(b);
-        }
-        return ValueType<Len>();
+        return ValueType<Len>(new InternalNode(Len, OP_XOR, a.expr, b.expr));
     }
 };
     
