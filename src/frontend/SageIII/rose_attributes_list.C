@@ -207,7 +207,7 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 // AS(012006) Added to support macros
 PreprocessingInfo::rose_macro_call*
 PreprocessingInfo::get_macro_call()
@@ -524,7 +524,7 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
 
    }
 
-#endif
+// #endif
 
 PreprocessingInfo::PreprocessingInfo()
    {
