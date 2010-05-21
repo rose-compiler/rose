@@ -30,54 +30,54 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
 {
   SymbolicVal r;
   switch (t) {
-  case SYMOP_PLUS: 
-     {
-      PlusApplicator op; 
-      r = ApplyBinOP(op, v1, v2);
-      if (DebugOp())
-         std::cerr << v1.toString() << " + " << v2.toString() << " = " << r.toString() << std::endl;  
-      return r;
-     }
-  case SYMOP_MULTIPLY: 
-    {
-      MultiplyApplicator op; 
-      r = ApplyBinOP(op, v1, v2);
-      if (DebugOp())
-         std::cerr << v1.toString() << " * " << v2.toString() << " = " << r.toString() << std::endl;  
-      return r;
-    }
-  case SYMOP_MIN: 
+    case SYMOP_PLUS: 
+      {
+        PlusApplicator op; 
+        r = ApplyBinOP(op, v1, v2);
+        if (DebugOp())
+          std::cerr << v1.toString() << " + " << v2.toString() << " = " << r.toString() << std::endl;  
+        return r;
+      }
+    case SYMOP_MULTIPLY: 
+      {
+        MultiplyApplicator op; 
+        r = ApplyBinOP(op, v1, v2);
+        if (DebugOp())
+          std::cerr << v1.toString() << " * " << v2.toString() << " = " << r.toString() << std::endl;  
+        return r;
+      }
+    case SYMOP_MIN: 
       r = Min(v1,v2);
       if (DebugOp())
-         std::cerr << "Min( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
+        std::cerr << "Min( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
       return r;
-  case SYMOP_MAX: return Max(v1, v2);
-      r = Max(v1,v2);
-      if (DebugOp())
-         std::cerr << "Max( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
-      return r;
-  case SYMOP_POW: 
-     {
-      int val2;
-      int vu1, vd1;
-      if (!v2.isConstInt(val2))
-         assert(false);
-      if (v1 == 1 || val2 == 1)
-         r =  v1;
-      else if (val2 == -1 && v1.isConstInt(vu1, vd1)) 
-         r = new SymbolicConst(vd1, vu1);
-      else   
-         r = new SymbolicPow(v1, val2);
-      if (DebugOp())
-         std::cerr << "Pow( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
-      return r;
-     }
-  default:
-    assert(false);
+    case SYMOP_MAX: return Max(v1, v2);
+                    r = Max(v1,v2);
+                    if (DebugOp())
+                      std::cerr << "Max( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
+                    return r;
+    case SYMOP_POW: 
+                    {
+                      int val2;
+                      int vu1, vd1;
+                      if (!v2.isConstInt(val2))
+                        assert(false);
+                      if (v1 == 1 || val2 == 1)
+                        r =  v1;
+                      else if (val2 == -1 && v1.isConstInt(vu1, vd1)) 
+                        r = new SymbolicConst(vd1, vu1);
+                      else   
+                        r = new SymbolicPow(v1, val2);
+                      if (DebugOp())
+                        std::cerr << "Pow( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
+                      return r;
+                    }
+    default:
+                    assert(false);
   }
-	// tps (12/07/2009) This part is never reached
-	assert(false);
-	return r;
+  // tps (12/07/2009) This part is never reached
+  assert(false);
+  return r;
 }
 
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2)
