@@ -1562,7 +1562,7 @@ int main( int argc, char * argv[] )
   // SgProject* project = frontend(argc,argv);
      vector<string> argvList(argv, argv + argc);
      argvList.insert(argvList.begin() + 1, "-DROSE_SKIP_COMPILATION_OF_WAVE");
-     SgProject* sageProject = frontend(argvList);
+     SgProject* project = frontend(argvList);
 
      Doxygen::annotate(project);
 
