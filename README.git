@@ -14,7 +14,7 @@ Alternative to smgit2 to checkin:
    git add EDG
    cd TOPDIR
    git commit -a -m " "
-   git push origin/<YOUR BRANCH>
+   git push origin <YOUR BRANCH>
 
 #################### Sources of information on git ####################
 
