@@ -39,6 +39,10 @@ if test $USE_HASKELL = 1; then
 		AC_MSG_ERROR([runghc could not be found in Haskell bin directory $GHCBIN])
 	fi
 	AC_MSG_RESULT([$GHCBIN])
+
+ # DQ (5/21/2010): Added macro to rose_config.h file so that we can know when to skip Wave support (see rose_attributes_list.h).
+ # AC_DEFINE([ROSE_USE_HASKELL_SUPPORT], [], [Whether to use HASKELL interface or not within ROSE])
+
 else
 	AC_MSG_RESULT([no])
 fi
