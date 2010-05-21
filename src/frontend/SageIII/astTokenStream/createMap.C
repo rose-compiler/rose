@@ -146,14 +146,14 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
 }
 
 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
 //get the token stream provided in the constructor
 token_container& createMap::get_tokenStream()
 {
     return tokenStream;
 };
-#endif
+// #endif
 
 //get the linearized AST provided in the constructor
 std::vector<SgNode*>&               createMap::get_linearizedAST()
