@@ -723,51 +723,69 @@ public:
     template <size_t Len>
     ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
         if (a==b) return a;
-        if (a.name || b.name) return ValueType<Len>();
-        return a.offset | b.offset;
+        if (!a.name && !b.name) return a.offset | b.offset;
+        if (!a.name && a.offset==IntegerOps::GenMask<uint64_t, Len>::value) return a;
+        if (!b.name && b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return b;
+        return ValueType<Len>();
     }
 
     /** Rotate bits to the left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
+        if (!sa.name && 0==sa.offset % Len) return a;
+        return ValueType<Len>();
     }
 
     /** Rotate bits to the right. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
+        if (!sa.name && 0==sa.offset % Len) return a;
+        return ValueType<Len>();
     }
 
     /** Returns arg shifted left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
+        if (!sa.name) {
+            if (0==sa.offset) return a;
+            if (sa.offset>=Len) return 0;
+        }
+        return ValueType<Len>();
     }
 
     /** Returns arg shifted right logically (no sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
+        if (!sa.name) {
+            if (0==sa.offset) return a;
+            if (sa.offset>=Len) return 0;
+        }
+        return ValueType<Len>();
     }
 
     /** Returns arg shifted right arithmetically (with sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
+        if (!sa.name && 0==sa.offset) return a;
+        return ValueType<Len>();
     }
 
     /** Divides two signed values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1>();
-        if (0==b.offset) throw std::string("division by zero");
-        return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
+        if (!b.name) {
+            if (0==b.offset) throw std::string("division by zero");
+            if (!a.name) return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
+            if (1==b.offset) return a;
+            if (IntegerOps::signExtend<Len2, 64>(b.offset)==-1) return negate(a);
+            /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
+        }
+        return ValueType<Len1>();
     }
 
     /** Calculates modulo with signed values. */
@@ -781,39 +799,76 @@ public:
     /** Multiplies two signed values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1+Len2>();
-        return IntegerOps::signExtend<Len1, 64>(a.offset) * IntegerOps::signExtend<Len2, 64>(b.offset);
+        if (!a.name && !b.name)
+            return IntegerOps::signExtend<Len1, 64>(a.offset) * IntegerOps::signExtend<Len2, 64>(b.offset);
+        if (!b.name) {
+            if (0==b.offset) return 0;
+            if (1==b.offset) return SignExtend<Len1, Len1+Len2>(a);
+            if (IntegerOps::signExtend<Len2, 64>(b.offset)==-1) return SignExtend<Len1, Len1+Len2>(negate(a));
+        }
+        if (!a.name) {
+            if (0==a.offset) return 0;
+            if (1==a.offset) return signExtend<Len2, Len1+Len2>(b);
+            if (IntegerOps::signExtend<Len1, 64>(a.offset)==-1) return signExtend<Len2, Len1+Len2>(negate(b));
+        }
+        return ValueType<Len1+Len2>();
     }
 
     /** Divides two unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1>();
-        if (0==b.offset) throw std::string("division by zero");
-        return a.offset / b.offset;
+        if (!b.name) {
+            if (0==b.offset) throw std::string("division by zero");
+            if (!a.name) return a.offset / b.offset;
+            if (1==b.offset) return a;
+            /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
+        }
+        return ValueType<Len1>();
     }
 
     /** Calculates modulo with unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len2>();
-        if (0==b.offset) throw std::string("division by zero");
-        return a.offset % b.offset;
+        if (!b.name) {
+            if (0==b.offset) throw std::string("division by zero");
+            if (!a.name) return a.offset % b.offset;
+        }
+        if (a==b) return b;
+        return ValueType<Len2>();
     }
 
     /** Multiply two unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1+Len2>();
-        return a.offset * b.offset;
+        if (!a.name && !b.name)
+            return a.offset * b.offset;
+        if (!b.name) {
+            if (0==b.offset) return 0;
+            if (1==b.offset) return extendByMSB<Len1, Len1+Len2>(a);
+        }
+        if (!a.name) {
+            if (0==a.offset) return 0;
+            if (1==a.offset) return extendByMSB<Len2, Len1+Len2>(b);
+        }
+        return ValueType<Len1+Len2>();
     }
 
     /** Computes bit-wise XOR of two values. */
     template <size_t Len>
     ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-        if (a==b) return 0;
-        if (a.name || b.name) return ValueType<Len>();
-        return a.offset ^ b.offset;
+        if (!a.name && !b.name)
+            return a.offset ^ b.offset;
+        if (a==b)
+            return 0;
+        if (!b.name) {
+            if (0==b.offset) return a;
+            if (b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return complement(a);
+        }
+        if (!a.name) {
+            if (0==a.offset) return b;
+            if (a.offset==IntegerOps::GenMask<uint64_t, Len>::value) return complement(b);
+        }
+        return ValueType<Len>();
     }
 };
     
