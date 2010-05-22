@@ -8660,9 +8660,10 @@ SgInitializedName::get_declaration() const
        // DQ (6/21/2005): I think this should always be true!
        // assert(d != NULL);
 
-          if (d != NULL) {
+          if (d != NULL)
+             {
                return d;
-        }
+             }
         }
 
      return NULL;

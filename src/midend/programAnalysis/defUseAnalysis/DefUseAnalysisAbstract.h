@@ -41,6 +41,7 @@ class DefUseAnalysisAbstract : public Support {
   //  bool searchMulti(const multitype* multi, SgInitializedName* initName, SgNode* node);
   bool searchVector(std::vector <filteredCFGNodeType> done, 
 		    filteredCFGNodeType cfgNode);
+
   SgInitializedName* getInitName(SgNode* l_expr);  
 
   SgExpression* resolveCast(SgExpression* expr);
