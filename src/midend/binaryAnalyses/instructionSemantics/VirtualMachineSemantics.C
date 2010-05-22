@@ -9,6 +9,7 @@
 
 namespace VirtualMachineSemantics {
 
+
 uint64_t name_counter;
 
 /*************************************************************************************************************************
@@ -112,6 +113,9 @@ State::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 void
 State::print_diff_registers(std::ostream &o, const State &other, RenameMap *rmap/*=NULL*/) const
 {
+#ifndef CXX_IS_ROSE_ANALYSIS
+ // DQ (5/22/2010): This code does not compile using ROSE, it needs to be investigated to be reduced to an bug report.
+
     std::string prefix = "    ";
 
     for (size_t i=0; i<n_gprs; ++i) {
@@ -135,11 +139,13 @@ State::print_diff_registers(std::ostream &o, const State &other, RenameMap *rmap
     if (ip!=other.ip) {
         o <<prefix <<"ip: " <<ip.rename(rmap) <<" -> " <<other.ip.rename(rmap) <<"\n";
     }
+#endif
 }
 
 bool
 State::equal_registers(const State &other) const 
 {
+#ifndef CXX_IS_ROSE_ANALYSIS
     for (size_t i=0; i<n_gprs; ++i)
         if (gpr[i]!=other.gpr[i]) return false;
     for (size_t i=0; i<n_segregs; ++i)
@@ -147,6 +153,7 @@ State::equal_registers(const State &other) const
     for (size_t i=0; i<n_flags; ++i)
         if (flag[i]!=other.flag[i]) return false;
     if (ip!=other.ip) return false;
+#endif
     return true;
 }
 
@@ -173,16 +180,19 @@ Policy::memory_for_equality(const State &state) const
 {
     State tmp_state = state;
     Memory retval;
+#ifndef CXX_IS_ROSE_ANALYSIS
     for (Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
         if ((*mi).is_written() && (*mi).data!=mem_read<32>(orig_state, (*mi).address))
             retval.push_back(*mi);
     }
+#endif
     return retval;
 }
 
 bool
 Policy::equal_states(const State &s1, const State &s2) const
 {
+#ifndef CXX_IS_ROSE_ANALYSIS
     if (!s1.equal_registers(s2))
         return false;
     Memory m1 = memory_for_equality(s1);
@@ -195,6 +205,7 @@ Policy::equal_states(const State &s1, const State &s2) const
             m1[i].data   != m2[i].data)
             return false;
     }
+#endif
     return true;
 }
 
@@ -207,6 +218,7 @@ Policy::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 void
 Policy::print_diff(std::ostream &o, const State &s1, const State &s2, RenameMap *rmap/*=NULL*/) const
 {
+#ifndef CXX_IS_ROSE_ANALYSIS
     s1.print_diff_registers(o, s2, rmap);
 
     /* Get all addresses that have been written and are not currently clobbered. */
@@ -231,11 +243,13 @@ Policy::print_diff(std::ostream &o, const State &s1, const State &s2, RenameMap 
             o <<"      " <<(*ai).rename(rmap) <<": " <<v1.rename(rmap) <<" -> " <<v2.rename(rmap) <<"\n";
         }
     }
+#endif
 }
 
 bool
 Policy::on_stack(const ValueType<32> &value) const
 {
+#ifndef CXX_IS_ROSE_ANALYSIS
     const ValueType<32> sp_inverted = invert(cur_state.gpr[x86_gpr_sp]);
     for (Memory::const_iterator mi=cur_state.mem.begin(); mi!=cur_state.mem.end(); ++mi) {
         if ((*mi).nbytes!=4 || !((*mi).data==value)) continue;
@@ -248,6 +262,7 @@ Policy::on_stack(const ValueType<32> &value) const
         ValueType<1> of = xor_(extract<31,32>(carries), extract<30,31>(carries));
         if (sf==of) return true;
     }
+#endif
     return false;
 }
 
