@@ -351,7 +351,7 @@ test_virtualMachineSemantics.result: virtualMachineSemantics
 	@echo "  TESTING $@"
 	@($(VALGRIND) ./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
 	    $(FIND_CONSTANTS_FILTER) >test_virtualMachineSemantics.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_virtualMachineSemantics.ans >>$@.tmp 2>&1; \
+	 [ $$? -eq 0 ] && diff -uw {$(srcdir),.}/test_virtualMachineSemantics.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 

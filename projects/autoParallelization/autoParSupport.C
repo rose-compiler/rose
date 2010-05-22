@@ -1081,8 +1081,6 @@ namespace AutoParallelization
 Algorithm: Replace the index variable with its right hand value of its reaching definition,
            or if the definition 's scope is within the current  loop's body   
 
- TODO This process can be later put into a function to run until a stable fix point is reached. 
-
 */
  static void uniformIndirectIndexedArrayRefs (SgForStatement* for_loop)
  {
@@ -1151,41 +1149,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
               new_rhs->set_parent(aRef);
               delete rhs; 
             }
-#if 0           
-           // do nothing if it is already the current loop's index
-           if (varRef->get_symbol()->get_declaration() == loop_index_name) 
-           {
-             cout<<"Debug:Found a direct indexed array reference:"<< aRef->unparseToString()<<endl;
-             break;
-           }
-           // TODO: recursively substitute the value until reaching the end of a def chain
-           // find out the reaching definition of the variable
-           SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
-           vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
-           // We only uniform a variable reference with a single reaching definition for simplicity for now
-           ROSE_ASSERT (vec.size()>0);
-           if (vec.size()>1) break;
-
-           SgStatement* def_stmt = SageInterface::getEnclosingStatement(vec[0]);
-           // only try to substitute the varRef with the value if the scope of def_stmt is within the loop body
-           if (SageInterface::isAncestor(for_loop->get_loop_body(), def_stmt))
-            {
-              cout<<"Debug: Found a candidate rhs value of a reaching definition:"<< vec[0]->unparseToString()
-              <<" "<< vec[0]->class_name() <<endl;
-              if (isSgAssignOp(vec[0]))
-              {
-                SgExpression* new_rhs = SageInterface::deepCopy<SgExpression>(isSgAssignOp(vec[0])->get_rhs_operand_i());
-                aRef->set_rhs_operand_i(new_rhs);
-                new_rhs->set_parent(aRef);
-                delete rhs; 
-              }
-              else
-              {
-                cerr<<"uniformIndirectIndexedArrayRefs() unhandled rhs of a reaching definition."<< vec[0]->class_name()<<endl;
-                ROSE_ASSERT(false);
-              }
-            } 
-#endif              
+     
            break;
          } // end case V_SgVarRefExp:
        case V_SgPntrArrRefExp: // uniform form already, do nothing
@@ -1304,8 +1268,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       if (isIndirectIndexedArrayRef(for_loop, aRef))
       {
         indirect_array_table[aRef] = true; 
-        cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString()
-        << "@" << aRef <<endl;
+       // cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString()
+       // << "@" << aRef <<endl;
       }
     }
   }
