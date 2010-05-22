@@ -16,14 +16,8 @@ libbinaryMidend_la_SOURCES = \
      dataflowanalyses/RoseBin_Emulate.cpp \
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
      instructionSemantics/findConstants.C \
+     instructionSemantics/VirtualMachineSemantics.C \
      GraphAlgorithms.C
-
-# DQ (5/21/2010): Removed from being tested using analysis by ROSE itself (for now).
-# instructionSemantics/VirtualMachineSemantics.C
-
-if !ROSE_USING_ROSE_ANALYSIS
-libbinaryMidend_la_SOURCES += instructionSemantics/VirtualMachineSemantics.C
-endif
 
 if ROSE_USE_SQLITE_DATABASE
 libbinaryMidend_la_SOURCES += \
