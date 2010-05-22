@@ -4682,7 +4682,8 @@ V_SgForStatement);
     return result;
   }
 
-
+#if 0 // Liao 5/21/2010. This is a bad function in terms of performance
+      // vectors are created/destroyed multiple times 
   vector<SgReturnStmt*> SageInterface::findReturnStmts(SgStatement* scope) {
  // DQ (9/25/2007): Moved from std::list to std::vector uniformally in ROSE. 
  // But we still need the copy since the return type is IR node specific.
@@ -4695,7 +4696,7 @@ V_SgForStatement);
     return result;
   }
 
-
+#endif 
 static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result) {
     ROSE_ASSERT (top);
     if (isSgSwitchStatement(top)) return; // Don't descend into nested switches
@@ -8650,8 +8651,10 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   {
     int result = 0;
     ROSE_ASSERT(func&&s);
-    vector<SgReturnStmt* > stmts = findReturnStmts(func); 
-    vector<SgReturnStmt*>::iterator i;
+  //  vector<SgReturnStmt* > stmts = findReturnStmts(func); 
+    Rose_STL_Container <SgNode* > stmts = NodeQuery::querySubTree(func, V_SgReturnStmt);
+    //vector<SgReturnStmt*>::iterator i;
+    Rose_STL_Container<SgNode*>::iterator i;
     for (i=stmts.begin();i!=stmts.end();i++)
     {
       SgReturnStmt* cur_stmt = isSgReturnStmt(*i); 
