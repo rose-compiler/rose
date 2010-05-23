@@ -13,6 +13,8 @@
 #include "VirtualMachineSemantics.h"
 #include "bincfg.h"
 
+#ifndef CXX_IS_ROSE_ANALYSIS
+
 /* Traversal prints information about each SgAsmFunctionDeclaration node. */
 class ShowFunctions : public SgSimpleProcessing {
 public:
@@ -668,3 +670,5 @@ main(int argc, char *argv[])
     int ecode = backend(project);
     return ecode>0 ? ecode : exit_status;
 }
+
+#endif
