@@ -241,6 +241,8 @@ case "$enableval" in
       support_fortran_language=yes
       support_php_language=yes
       support_binaries=yes
+      support_cuda_language=yes
+      support_opencl_language=yes
       AC_MSG_RESULT(all)
      ;;
   none | no) LANGUAGES_TO_BUILD="none"
@@ -249,6 +251,8 @@ case "$enableval" in
       support_fortran_language=no
       support_php_language=no
       support_binaries=no
+      support_cuda_language=no
+      support_opencl_language=no
       AC_MSG_RESULT(none)
      ;;
   *)for a_language in `echo $enableval|sed -e 's/,/ /g' ` ; do
@@ -268,6 +272,12 @@ case "$enableval" in
         binaries) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD binaries"
            support_binaries=yes
            ;;
+        cuda) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+           support_cuda_language=yes
+           ;;
+        opencl) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+           support_opencl_language=yes
+           ;;
         *) AC_MSG_ERROR([Unrecognized language $a_language]) ;;
       esac
   done
@@ -284,6 +294,8 @@ echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
+echo "support_cuda_language    = $support_cuda_language"
+echo "support_opencl_language  = $support_opencl_language"
 
 AC_MSG_CHECKING([for language specific options to generate a minimal ROSE configuration])
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only C language support is required
@@ -292,6 +304,8 @@ if test "x$support_c_only" = "xyes"; then
    support_fortran_language=no
    support_php_language=no
    support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off fortran:off php:off)
 fi
@@ -330,6 +344,8 @@ if test "x$support_fortran_only" = "xyes"; then
    support_cxx_language=no
    support_php_language=no
    support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off php:off binary-analysis-tests:off)
 
@@ -362,6 +378,8 @@ echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
+echo "support_cuda_language    = $support_cuda_language"
+echo "support_opencl_language  = $support_opencl_language"
 
 # Set the macros that will appears in the rose_config.h header file.
 if test "x$support_c_language" = "xyes"; then
@@ -394,12 +412,26 @@ else
    echo "Support for binary analysis support is disabled..."
 fi
 
+if test "x$support_cuda_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
+else
+   echo "Support for CUDA language support is disabled..."
+fi
+
+if test "x$support_opencl_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
+else
+   echo "Support for OpenCL language support is disabled..."
+fi
+
 # Set the automake conditional macros that will be used in Makefiles.
 AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
 
 # echo "Exiting after handling initial language specification..."
 # exit 1
@@ -2253,6 +2285,8 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
+tests/roseTests/cudaTests/Makefile
+tests/roseTests/openclTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
