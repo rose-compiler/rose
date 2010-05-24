@@ -181,9 +181,12 @@ ERROR
 
 my $relevant_commit;
 
+if (@ARGV > 1 && $ARGV[0] eq "for") {
+	$relevant_commit = $ARGV[1];
+}
 # If the user cannot generate the binary content themselves, revert to the most specific commit
 # that is common to both the user's branch and the canonical repository
-if (needs_canonical_repo($repo->wc_path)) {
+elsif (needs_canonical_repo($repo->wc_path)) {
 	my $canon_ref = find_canonical_ref;
 	$relevant_commit = merge_base("HEAD", $canon_ref);
 } else {
