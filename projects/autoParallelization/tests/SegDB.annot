@@ -1,0 +1,632 @@
+operator a64l(const char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator abs(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator acos(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator acosf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator acosh(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator acoshf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator asin(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator asinf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator asinh(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator asinhf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atan(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atan2(double val1, double val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator atan2f(float val1, float val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator atanf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atanh(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atanhf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atof(const char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atoi(const char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atol(const char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atoll(const char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator atoq(const char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator basename(char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator cbrt(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator cbrtf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator ceil(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator ceilf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator cos(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator cosf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator cosh(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator coshf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator dirname(char * val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator erf(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator erfc(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator erfcf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator erff(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator exp(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator exp10(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator exp10f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator exp2(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator exp2f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator expf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator expm1(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator expm1f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator fabs(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator fabsf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator fdim(double val1, double val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator fdimf(float val1, float val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator finite(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator finitef(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator floor(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator floorf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator fma(double val1, double val2, double val3)
+   {
+    modify none; read{val1, val2, val3}; alias none;
+   }
+operator fmaf(float val1, float val2, float val3)
+   {
+    modify none; read{val1, val2, val3}; alias none;
+   }
+operator fmax(double val1, double val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator fmaxf(float val1, float val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator fmin(double val1, double val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator fminf(float val1, float val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator fmod(double val1, double val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator fmodf(float val1, float val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator gamma(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator gammaf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator hypot(double val1, double val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator hypotf(float val1, float val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator ilogb(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator ilogbf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isalnum(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isalpha(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isascii(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isastream(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isatty(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isblank(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator iscntrl(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isdigit(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isgraph(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isinf(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isinff(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator islower(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isnan(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isnanf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isprint(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator ispunct(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isspace(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isupper(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator isxdigit(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator j0(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator j0f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator j1(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator j1f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator jn(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator jnf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator ldexp(double val, int exp)
+   {
+    modify none; read{val, exp}; alias none;
+   }
+operator ldexpf(float val, int exp)
+   {
+    modify none; read{val, exp}; alias none;
+   }
+operator lgamma(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator lgammaf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator llrint(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator llrintf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator llround(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator llroundf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator log(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator log10(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator log10f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator log1p(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator log1pf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator log2(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator log2f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator logb(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator logbf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator logf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator lrint(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator lrintf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator lround(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator lroundf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator nan(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator nanf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator nearbyint(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator nearbyintf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator pow(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator pow10(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator pow10f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator powf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator remainder(double val1, double val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator remainderf(float val1, float val2)
+   {
+    modify none; read{val1, val2}; alias none;
+   }
+operator rint(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator rintf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator round(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator roundf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator sin(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator sinf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator sinh(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator sinhf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator sqrt(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator sqrtf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator strcasecmp(const char * str1, const char * str2)
+   {
+    modify none; read{str1, str2}; alias none;
+   }
+operator strchr(const char * val, int ch)
+   {
+    modify none; read{val, ch}; alias none;
+   }
+operator strcmp(const char * str1, const char * str2)
+   {
+    modify none; read{str1, str2}; alias none;
+   }
+operator strcspn(const char * str1, const char * str2)
+   {
+    modify none; read{str1, str2}; alias none;
+   }
+operator strlen(const char * str)
+   {
+    modify none; read{str}; alias none;
+   }
+operator strpbrk(const char * str1, const char * str2)
+   {
+    modify none; read{str1, str2}; alias none;
+   }
+operator strrchr(const char * val, int ch)
+   {
+    modify none; read{val, ch}; alias none;
+   }
+operator strspn(const char * str1, const char * str2)
+   {
+    modify none; read{str1, str2}; alias none;
+   }
+operator strstr(const char * str1, const char * str2)
+   {
+    modify none; read{str1, str2}; alias none;
+   }
+operator tan(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator tanf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator tanh(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator tanhf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator tgamma(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator tgammaf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator toascii(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator tolower(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator toupper(int val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator trunc(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator truncf(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator y0(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator y0f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator y1(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator y1f(float val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator yn(double val)
+   {
+    modify none; read{val}; alias none;
+   }
+operator ynf(float val)
+   {
+    modify none; read{val}; alias none;
+   }

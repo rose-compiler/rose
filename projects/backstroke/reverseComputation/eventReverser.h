@@ -25,13 +25,19 @@ class EventReverser
     SgFunctionDeclaration* func_decl_;
     string function_name_;
     //vector<string> branch_flags_;
-    vector<string> loop_counters_;
-    map<string, SgType*> state_vars_;
-    int flag_;
-    int flag_saved_;
-    string flagstack_name_;
+    //vector<string> loop_counters_;
+    //map<string, SgType*> state_vars_;
+
+    string flag_stack_name_;
+    string int_stack_name_;
+    string counter_stack_name_;
+
     int counter_;
     vector<FuncDeclPair> output_func_pairs_;
+
+    // This mark is for and/or and conditional expression, in which the special stack
+    // interfaces are used.
+    int branch_mark_;
 
     static set<SgFunctionDeclaration*> func_processed_;
 
@@ -39,10 +45,11 @@ class EventReverser
     EventReverser(SgFunctionDeclaration* func_decl) 
         : func_decl_(func_decl), 
         function_name_(func_decl_->get_name()), 
-        flagstack_name_(function_name_ + "_flag"),
-        flag_(1), 
-        flag_saved_(0), 
-        counter_(0)
+        flag_stack_name_(function_name_ + "_branch_flags"),
+        int_stack_name_(function_name_ + "_int_values"),
+        counter_stack_name_(function_name_ + "_loop_counters"),
+        counter_(0),
+        branch_mark_(-1)
     {
     }
 
@@ -57,6 +64,7 @@ class EventReverser
         //foreach(const string& flag, branch_flags_)
         //    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
 
+#if 0
         foreach(const string& counter, loop_counters_)
             decls.push_back(buildVariableDeclaration(
                         counter, 
@@ -68,21 +76,36 @@ class EventReverser
         {
             decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
         }
+#endif
 
-        SgType* stack_type = buildPointerType(buildStructDeclaration("FlagStack")->get_type());
-        decls.push_back(
-                buildVariableDeclaration(flagstack_name_, stack_type));
+        SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
+        decls.push_back(buildVariableDeclaration(flag_stack_name_, stack_type));
+        decls.push_back(buildVariableDeclaration(int_stack_name_, stack_type));
+        decls.push_back(buildVariableDeclaration(counter_stack_name_, stack_type));
+
         return decls;
     }
 
     vector<SgStatement*> getVarInitializers()
     {
         vector<SgStatement*> inits;
+        SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
+
         // Initialize the flag stack object.
-        SgType* stack_type = buildPointerType(buildStructDeclaration("FlagStack")->get_type());
         inits.push_back(buildAssignStatement(
-                    buildVarRefExp(flagstack_name_),
-                    buildFunctionCallExp("buildFlagStack", stack_type)));
+                    buildVarRefExp(flag_stack_name_),
+                    buildFunctionCallExp("buildIntStack", stack_type)));
+
+        // Initialize the integer stack object.
+        inits.push_back(buildAssignStatement(
+                    buildVarRefExp(int_stack_name_),
+                    buildFunctionCallExp("buildIntStack", stack_type)));
+
+        // Initialize the loop counter stack object.
+        inits.push_back(buildAssignStatement(
+                    buildVarRefExp(counter_stack_name_),
+                    buildFunctionCallExp("buildIntStack", stack_type)));
+
         return inits;
     }
 
@@ -103,6 +126,21 @@ class EventReverser
     // Get the forward and reverse version of an statement 
     StmtPair instrumentAndReverseStatement(SgStatement* stmt);
 
+    ExpPair processUnaryOp(SgUnaryOp* unary_op);
+    ExpPair processBinaryOp(SgBinaryOp* bin_op);
+    ExpPair processConditionalExp(SgConditionalExp* cond_exp);
+    ExpPair processFunctionCallExp(SgFunctionCallExp* func_exp);
+
+    StmtPair processExprStatement(SgExprStatement* exp_stmt);
+    StmtPair processBasicBlock(SgBasicBlock* body);
+    StmtPair processVariableDeclaration(SgVariableDeclaration* var_decl);
+    StmtPair processIfStmt(SgIfStmt* if_stmt);
+    StmtPair processForStatement(SgForStatement* for_stmt);
+    StmtPair processForInitStatement(SgForInitStatement* for_init_stmt);
+    StmtPair processWhileStmt(SgWhileStmt* while_stmt);
+    StmtPair processDoWhileStmt(SgDoWhileStmt* do_while_stmt);
+    StmtPair processSwitchStatement(SgSwitchStatement* switch_stmt);
+
     // **********************************************************************************
     // Auxiliary functions
     // ==================================================================================
@@ -118,12 +156,13 @@ class EventReverser
         }
         else if (SgPntrArrRefExp* ref_exp = isSgPntrArrRefExp(exp))
         {
-            if (isSgArrowExp(ref_exp->get_lhs_operand_i()))
+            if (isSgArrowExp(ref_exp->get_lhs_operand()))
                 return ref_exp;
         }
         return NULL;
     }
 
+#if 0
     // Generate a name containing the function name and counter
     SgName generateVar(const string& name, SgType* type = buildIntType())
     {
@@ -131,11 +170,13 @@ class EventReverser
         state_vars_[var_name] = type;
         return var_name;
     }
+#endif
 
     // **********************************************************************************
     // The following function is for state saving
     // ==================================================================================
 
+#if 0
     // Get the variable name which saves the branch state
     SgExpression* getStateVar(SgExpression* var)
     {
@@ -143,34 +184,57 @@ class EventReverser
         state_vars_[name] = var->get_type();
         return buildVarRefExp(name);
     }
+#endif
+
+    SgExpression* pushStateVar(SgExpression* var)
+    {
+        return buildFunctionCallExp(
+                "push", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(int_stack_name_), 
+                    var)); 
+    }
+
+    SgExpression* popStateVar()
+    {
+        return buildFunctionCallExp("pop", buildVoidType(), 
+                buildExprListExp(buildVarRefExp(int_stack_name_)));
+    }
+
 
     // **********************************************************************************
-    // The following functions are for if statement
+    // The following functions are for logic and/or expression, conditional expression, 
+    // and if statement
     // ==================================================================================
-
-    // Return the statement which saves the branch state
-    SgExpression* putBranchFlagExp(bool flag = true)
-    {
-        return buildFunctionCallExp("pushFlag", buildIntType(), 
-                buildExprListExp(buildVarRefExp(flagstack_name_), buildIntVal(flag)));
-    }
 
     SgExpression* putBranchFlagExp(SgExpression* exp)
     {
-        return buildFunctionCallExp("pushFlag", buildIntType(), 
-                buildExprListExp(buildVarRefExp(flagstack_name_), exp));
+        return buildFunctionCallExp(
+                "push", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(flag_stack_name_), 
+                    exp, 
+                    buildIntVal(branch_mark_)));
     }
 
     SgStatement* putBranchFlagStmt(bool flag = true)
     {
-        return buildExprStatement(putBranchFlagExp(flag));
+        return buildExprStatement(
+                buildFunctionCallExp(
+                    "push", 
+                    buildIntType(), 
+                    buildExprListExp(
+                        buildVarRefExp(flag_stack_name_), 
+                        buildIntVal(flag))));
     }
 
     // Return the statement which checks the branch flag
     SgExpression* checkBranchFlagExp()
     {
-        return buildFunctionCallExp("popFlag", buildVoidType(), 
-                buildExprListExp(buildVarRefExp(flagstack_name_)));
+        return buildFunctionCallExp("pop", buildVoidType(), 
+                buildExprListExp(buildVarRefExp(flag_stack_name_)));
     }
 
     SgStatement* checkBranchFlagStmt()
@@ -178,16 +242,26 @@ class EventReverser
         return buildExprStatement(checkBranchFlagExp());
     }
 
-#if 0
-    SgExpression* newBranchFlag()
-    {
-        return buildFunctionCallExp("Push", buildVoidType(), 
-                buildExprListExp(buildVarRefExp(flagstack_name_)));
-    }
-#endif
 
     // **********************************************************************************
+    // The following functions are for "for", "while", and "do-while" statement
+    // ==================================================================================
 
+    // This function add the loop counter related statements (counter declaration, increase, and store)
+    // to a forward loop statement. 
+    SgStatement* assembleLoopCounter(SgStatement* loop_stmt);
+
+    // This function wrap the loop body with a for statement. Note that we retrieve the loop count
+    // from the stack and assign it to the counter in the initilization part in for.
+    SgStatement* buildForLoop(SgStatement* loop_body);
+
+    SgExpression* popLoopCounter()
+    {
+        return buildFunctionCallExp("pop", buildVoidType(), 
+                buildExprListExp(buildVarRefExp(counter_stack_name_)));
+    }
+
+#if 0
     SgStatement* initLoopCounter()
     {
         loop_counters_.push_back(function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++));
@@ -203,6 +277,14 @@ class EventReverser
         loop_counters_.push_back(counter_name);
         return buildVarRefExp(counter_name);
     }
+#endif
+
+    // **********************************************************************************
+    // The following two functions are used to temporarily turn part of a stack
+    // into a queue since the flags are FIFO for and/or and conditional operators.
+    // ==================================================================================
+    void beginFIFO() { ++branch_mark_; }
+    void endFIFO() { --branch_mark_; }
 };
 
 

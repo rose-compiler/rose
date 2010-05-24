@@ -3573,7 +3573,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
         {
           bool nodeFound = false;
 #if 0
-       // This is the really nieve implementation, but simple.
+       // This is the really naive implementation, but simple.
           vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
           for (unsigned int i = 0; i < v.size(); i++)
              {
@@ -3595,7 +3595,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 #endif
 
        // DQ (3/12/2007): This is the latest implementation, here we look for the child set 
-       // in a staticlly defined childMap. This should be a more efficient implementation.
+       // in a statically defined childMap. This should be a more efficient implementation.
        // Since it uses a static map it is a problem when the function if called twice.
           std::map<SgNode*,std::set<SgNode*> >::iterator it = childMap.find(parent);
 

@@ -86,11 +86,16 @@ protected:
      *  blocks. */
     class BlockAnalysisCache {
     public:
-        BlockAnalysisCache(): age(0), sucs_complete(false), call_target(NO_TARGET) {}
+        BlockAnalysisCache(): age(0), sucs_complete(false), is_function_call(false), call_target(NO_TARGET),
+                              function_return(false), alias_for(0) {}
         void clear() {
             age = 0;
             sucs.clear();
             sucs_complete = false;
+            is_function_call = false;
+            call_target = NO_TARGET;
+            function_return = false;
+            alias_for = 0;
         }
 
         size_t age;                             /**< Non zero implies locally computed successors are cached. The actual value
@@ -100,6 +105,7 @@ protected:
                                                  *   computed over other blocks (i.e., non-local analyses) are never cached. */
         Disassembler::AddressSet sucs;          /**< Locally computed cached successors. */
         bool sucs_complete;                     /**< True if locally computed successors are fully known. */
+        bool is_function_call;                  /**< True if this block ends with a CALL-like instruction. */
         rose_addr_t call_target;                /**< Target of a CALL instruction if this block ends with what appears to be a
                                                  *   function call (whether, in fact, it truly is a function call is immaterial
                                                  *   since the final determination requires non-local analysis. If this block
@@ -108,6 +114,9 @@ protected:
         bool function_return;                   /**< Does this block serve as the return of a function?  For example, does it
                                                  *   end with an x86 RET instruction that returns to the CALL fall-through
                                                  *   address? */
+        rose_addr_t alias_for;                  /**< If non-zero, then this block is an alias for the specified block.  CFG
+                                                 *   edges that pointed to this block should instead point to the specified
+                                                 *   block. */
     };
 
     /** Represents a basic block within the Partitioner. Each basic block will eventually become an SgAsmBlock node in the
@@ -338,6 +347,7 @@ protected:
 
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
     virtual BasicBlock* find_bb_containing(rose_addr_t, bool create=true); /* Find basic block containing instruction address */
+    virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
@@ -354,6 +364,7 @@ protected:
     virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
+    virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
     
     
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
@@ -378,6 +389,168 @@ protected:
 
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
+
+    /** This is the parser for the instruction partitioning data (IPD) files.  These files are text-based descriptions of the
+     *  functions and basic blocks used by the partitioner and allow the user to seed the partitioner with additional information
+     *  that is not otherwise available to the partitioner.
+     *
+     *  For instance, the analyst may know that a function begins at a certain virtual address but for some reason the partitioner
+     *  does not discover this address in its normal mode of operation.  The analyst can create an IPD file that describes the
+     *  function so that the Partitioning process finds the function.
+     *
+     *  An IPD file is able to:
+     *  <ul>
+     *    <li>specify an entry address of a function that is otherwise not detected.</li>
+     *    <li>give a name to a function that doesn't have one.</li>
+     *    <li>specify whether the function ever returns to the caller.</li>
+     *    <li>list additional basic blocks that appear in the function.</li>
+     *    <li>specify the address of a basic block that is otherwise not detected.</li>
+     *    <li>indicate that a basic block is semantically equivalent to another basic block.</li>
+     *    <li>override the control-flow successors for a basic block.</li>
+     *  </ul>
+     *
+     *  The language non-terminals are:
+     *  \code
+     *     File := Declaration+
+     *     Declaration := FuncDecl | BlockDecl
+     *
+     *     FuncDecl := 'function' Address [Name] [FuncBody]
+     *     FuncBody := '{' FuncStmtList '}'
+     *     FuncStmtList := FuncStmt [';' FuncStmtList]
+     *     FuncStmt := ( Empty | BlockDecl | ReturnSpec )
+     *     ReturnSpec := 'return' | 'returns' | 'noreturn'
+     *
+     *     BlockDecl := 'block' Address Integer [BlockBody]
+     *     BlockBody := '{' BlockStmtList '}'
+     *     BlockStmtList := BlockStmt [';' BlockStmtList]
+     *     BlockStmt := ( Empty | Alias | Successors ) ';'
+     *     Alias := 'alias' Address
+     *     Successors := ('successor' | 'successors') [SuccessorAddrList]
+     *     SuccessorAddrList := AddressList | AddressList '...' | '...'
+     *
+     *     AddressList := Address ( ',' AddressList )*
+     *     Address: Integer
+     *     Integer: DECIMAL_INTEGER | OCTAL_INTEGER | HEXADECIMAL_INTEGER
+     *     Name: STRING
+     *  \endcode
+     *
+     *  Language terminals:
+     *  \code
+     *     HEXADECIMAL_INTEGER: as in C, for example: 0x08045fe2
+     *     OCTAL_INTEGER: as in C, for example, 0775
+     *     DECIMAL_INTEGER: as in C, for example, 1234
+     *     STRING: double quoted. Use backslash to escape embedded double quotes
+     *  \endcode
+     *
+     *  Comments begin with a hash ('#') and continue to the end of the line.  The hash character is not treated specially inside
+     *  quoted strings.
+     *
+     *  Semantics
+     *
+     *  A block declaration specifies the virtual memory address of the block's first instruction. The integer after the
+     *  address specifies the number of instructions in the block.  If the specified length is less than the number of
+     *  instructions that ROSE would otherwise place in the block at that address, then ROSE will create a block of exactly
+     *  the specified size. Likewise, if the specified address is midway into a block that ROSE would otherwise create, ROSE
+     *  will create a block at the specified address anyway, causing the previous instructions to be in a separate
+     *  block (or blocks).  If the specified block size is larger than what ROSE would otherwise place in the block, the block
+     *  will be created with fewer instructions but the BlockBody will be ignored.
+     *
+     *  A function declaration specifies the virtual memory address of the entry point of a function. The body may specify
+     *  whether the function returns. As of this writing [2010-05-13] a function declarated as non-returning will be marked as
+     *  returning if ROSE discovers that a basic block of the function returns.
+     *
+     *  If a block declaration appears inside a function declaration, then ROSE will assign the block to the function.
+     *
+     *  The block 'alias' attribute is used to indicate that two basic blocks perform the exact same operation.  The specified
+     *  address is the address of the basic block to use instead of this basic block.  All control-flow edges pointing to this
+     *  block will be rewritten to point to the specified address instead.
+     *
+     *  Example file:
+     *  \code
+     *     function 0x805116 "func11" {             # declare a new function named "func11"
+     *         returns;                             # this function returns to callers
+     *         block 0x805116 {                     # block at 0x805116 is part of func11
+     *             alias 0x8052116, 0x8052126       # use block 0x805116 in place of 0x8052116 and 0x8052126
+     *         }
+     *     }
+     *  \endcode
+     *
+     *  Example usage: The easiest way to parse an IPD file is to read it into memory and then call the parse() method.  The
+     *  following code demonstrates the use of mmap to read the file into memory, parse it, and release it from memory.  For
+     *  simplicity, we do not check for errors in this example.
+     *  \code
+     *    Partitioner p;
+     *    int fd = open("test.ipd", O_RDONLY);
+     *    struct stat sb;
+     *    fstat(fd, &sb);
+     *    const char *content = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+     *    Partitioner::IPDParser(p, content, sb.st_size).parse();
+     *    munmap(content, sb.st_size);
+     *  \endcode
+     */
+    class IPDParser {
+    private:
+        Partitioner *partitioner;               /**< Partitioner to be initialized. */
+        const char *input;                      /**< Input to be parsed. */
+        size_t len;                             /**< Length of input, not counting NUL termination (if any). */
+        size_t at;                              /**< Current parse position w.r.t. "input". */
+        Function *cur_func;                     /**< Non-null when inside a FuncBody nonterminal. */
+        BasicBlock *cur_block;                  /**< Non-null when inside a BlockBody nonterminal. */
+
+    public:
+        IPDParser(Partitioner *p, const char *input, size_t len)
+            : partitioner(p), input(input), len(len), at(0), cur_func(NULL), cur_block(NULL) {}
+
+        struct Exception {                      /**< Exception thrown when something cannot be parsed. */
+            Exception(const std::string &s): lnum(0), mesg(s) {}
+            unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
+            std::string mesg;                   /**< Error message. */
+        };
+
+        void parse();                           /**< Top-level parsing function. */
+
+
+        /*************************************************************************************************************************
+         * Lexical analysis functions.
+         *************************************************************************************************************************/
+
+        void skip_space();
+
+        /* The is_* functions return true if the next token after white space and comments is of the specified type. */
+        bool is_terminal(const char *to_match);
+        bool is_symbol(const char *to_match);
+        bool is_string();
+        bool is_number();
+
+        /* The match_* functions skip over white space and comments and attempt to match (and consume) the next token. If the next
+         * token is not as expected then an exception is thrown. */
+        void match_terminal(const char *to_match);
+        void match_symbol(const char *to_match);
+        std::string match_symbol();
+        std::string match_string();
+        rose_addr_t match_number();
+
+
+        /*************************************************************************************************************************
+         * Parsing functions (see rules above). Each returns true if the construct is present and was parsed, false if the
+         * construct was not present. They throw an exception if the construct was partially present but an error occurred during
+         * parsing.
+         *************************************************************************************************************************/
+
+        bool parse_File();
+        bool parse_Declaration();
+        bool parse_FuncDecl();
+        bool parse_FuncBody();
+        bool parse_FuncStmtList();
+        bool parse_FuncStmt();
+        bool parse_ReturnSpec();
+        bool parse_BlockDecl();
+        bool parse_BlockBody();
+        bool parse_BlockStmtList();
+        bool parse_BlockStmt();
+        bool parse_Alias();
+        bool parse_Successors();
+    };
 
     /*************************************************************************************************************************
      *                                                     Data Members
