@@ -195,6 +195,11 @@ if (@ARGV > 0 && $ARGV[0] eq "diff") {
 	exit 0;
 }
 
+if (@ARGV > 0 && $ARGV[0] eq "show-rev") {
+	print "$relevant_commit\n";
+	exit 0;
+}
+
 my $hash = Digest::MD5->new;
 add_significance_data($relevant_commit, $hash);
 print $hash->hexdigest . "\n";
