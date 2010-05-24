@@ -2512,6 +2512,15 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   if (increment) 
     increment->set_parent(result);
 
+  // CH (5/13/2010): If the initialize_stmt is an object of SgForInitStatement, we can directly put it 
+  // into for statement. Or else, there will be two semicolons after unparsing.
+  if (SgForInitStatement* for_init_stmt = isSgForInitStatement(initialize_stmt))
+  {
+    result->set_for_init_stmt(for_init_stmt);
+    for_init_stmt->set_parent(result);
+    return result;
+  }
+
   SgForInitStatement* init_stmt = new SgForInitStatement();
   ROSE_ASSERT(init_stmt);
   setOneSourcePositionForTransformation(init_stmt);

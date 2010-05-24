@@ -902,7 +902,6 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 */
   std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code, const std::string& fortranLabel = "");
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
-  std::vector<SgReturnStmt*> findReturnStmts(SgStatement* scope);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw); 
   
   //! Find a declaration given its name, scope, and defining or nondefining flag. 
