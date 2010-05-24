@@ -190,6 +190,11 @@ if (needs_canonical_repo($repo->wc_path)) {
 	$relevant_commit = "HEAD";
 }
 
+if (@ARGV > 0 && $ARGV[0] eq "diff") {
+	$repo->command_noisy("diff", @ARGV[1..$#ARGV], $relevant_commit);
+	exit 0;
+}
+
 my $hash = Digest::MD5->new;
 add_significance_data($relevant_commit, $hash);
 print $hash->hexdigest . "\n";
