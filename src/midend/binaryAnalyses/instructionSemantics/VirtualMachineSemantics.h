@@ -223,7 +223,8 @@ struct State {
     /** Tests registers of two states for equality. */
     bool equal_registers(const State&) const;
     
-    /** Discard stack memory below stack pointer */
+    /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
+     *  instruction if the policy's p_discard_popped_memory property is set. */
     void discard_popped_memory();
 
     friend std::ostream& operator<<(std::ostream &o, const State& state) {
@@ -354,10 +355,6 @@ public:
         return ValueType<ToLen>(a);
     }
     
-    /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
-     *  instruction if the p_discard_popped_memory property is set. */
-    void discard_popped_memory();
-
     /** Reads a value from memory in a way that always returns the same value provided there are not intervening writes that
      *  would clobber the value either directly or by aliasing.  Also, if appropriate, the value is added to the original
      *  memory state (thus changing the value at that address from an implicit named value to an explicit named value).
