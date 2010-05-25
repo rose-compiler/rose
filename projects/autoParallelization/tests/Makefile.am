@@ -36,6 +36,7 @@ Stress-1.c \
 plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
+true_dep_scalar.c \
 true_l2.c 
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
