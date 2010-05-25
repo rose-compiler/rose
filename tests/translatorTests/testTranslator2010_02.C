@@ -35,7 +35,6 @@ void visitorTraversal::visit (SgNode*n)
       SgBasicBlock *block = isSgBasicBlock(s->get_parent());
 
    // SgStatement *st = s->get_conditional();
-   // printf ("st is a %s \n",st->class_name().c_str());
       SgExpression *st = isSgExprStatement(s->get_conditional())->get_expression();
       if (!st)
             printf("That was not an expr!\n");
