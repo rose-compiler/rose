@@ -9,6 +9,7 @@ complexCondition.c \
 doall.c \
 doall_2.c \
 firstprivate.c \
+foo.c \
 functionCall.c \
 ifAndFor.c \
 indirectIndex.c \
