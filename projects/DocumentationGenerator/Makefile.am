@@ -62,6 +62,8 @@ sage_doxygen_documentation.h: prepareDocFiles docs/SgNode.docs
 	@echo "Modify the *.docs files (to add an IR node so that all comments will be attached to the AST) and build sage_doxygen_documentation.h"
 	$(srcdir)/prepareDocFiles docs
 
+testHeaderFilesROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	$(VALGRIND) $(top_builddir)/tests/testTranslator -H --edg:no_warnings   -c $(INCLUDES) $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 testDocsROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 	$(VALGRIND) ./createDocumentationForROSE --edg:no_warnings   -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C

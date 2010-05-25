@@ -443,6 +443,10 @@ int main( int argc, char * argv[] )
      vector<string> newArgv = argvList;
      newArgv.insert(newArgv.begin() + 1, "-rose:collectAllCommentsAndDirectives");
 
+  // DQ (5/21/2010): Added macro to turn off the compilation of Wave when 
+  // compiling ROSE source codes (only effects required header files).
+     newArgv.insert(newArgv.begin() + 1, "-DROSE_SKIP_COMPILATION_OF_WAVE");
+
   // Build the AST used by ROSE
      SgProject* sageProject = frontend(newArgv);
 

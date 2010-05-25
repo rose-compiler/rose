@@ -5,6 +5,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 anti_dep.c \
 array_scalar.c \
 c99loop.c \
+complexCondition.c \
 doall.c \
 doall_2.c \
 firstprivate.c \
