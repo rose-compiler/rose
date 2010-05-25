@@ -14,7 +14,10 @@ noinst_HEADERS = \
    inputCode_collectComments.h
 
 # Liao 5/7/2010  We want to have a few installable programs as tools for users
-bin_PROGRAMS = buildCallGraph
+bin_PROGRAMS = \
+   buildCallGraph \
+   defuseAnalysis \
+   virtualCFG 
 
 #varSubstCopy , disabled this one Liao, and sorted the list
 # tutorial examples which will not be installed to ROSE_INS/bin
@@ -63,7 +66,6 @@ NOINST_TUTORIAL_EXAMPLES = \
    dataFlowGraph \
    debuggingIRnodeToString \
    debuggingSourceCodePositionInformation \
-   defuseAnalysis \
    dwarfAnalysis \
    dwarfInstructionAddressToSourceLineAnalysis \
    findVariableDeclarations \
@@ -103,7 +105,6 @@ NOINST_TUTORIAL_EXAMPLES = \
    traverseIRnodeTypes \
    typeInfoFromFunctionParameters \
    typeTransformation \
-   virtualCFG \
    virtualFunctionIdentification \
    visitorMemoryPoolTraversal \
    visitorTraversal \
@@ -446,13 +447,7 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e controlFlowGraph_testfile1.pdf; then exit 1; fi
 endif
 
-testVirtualCFG: virtualCFG
-	./virtualCFG $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
-	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e vcfg.pdf; then exit 1; fi
-endif
+testVirtualCFG: vcfg_debug.pdf
 
 testBuildCG: callGraph.pdf
 
@@ -762,7 +757,7 @@ generatedCodeExamples = \
    rose_inputCode_LoopOptimization_lufac.C \
    rose_inputCode_LoopOptimization_tridvpk.C \
    controlFlowGraph.pdf \
-   vcfg.pdf \
+   vcfg_debug.pdf \
    debuggingIRnodeToString.out \
    debuggingSourceCodePositionInformation.out \
    commandlineProcessing.out \
@@ -1070,20 +1065,21 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e controlFlowGraph.pdf; then exit 1; fi
 endif
 
-vcfg.pdf: virtualCFG
+vcfg_debug.pdf: virtualCFG
 	@echo "Building an example virtual Control Flow Graph (virtualCFG) ..."
-	./virtualCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
-	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
+	./virtualCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C 
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.debug.dot vcfg_debug.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.interesting.dot vcfg_interesting.pdf
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e vcfg.pdf; then exit 1; fi
+	if ! test -e vcfg_debug.pdf; then exit 1; fi
 endif
 
 defuseAnalysis_pic1.pdf: defuseAnalysis
 	@echo "Building an example DefUse ..."
-	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C
+	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C &>defuseAnalysis.out
 	@echo "DefUseAnalysis: Building postscript file from foo.dot ..."
-	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf &>defuseAnalysis_pic1.out
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e defuseAnalysis_pic1.pdf; then exit 1; fi
@@ -1444,7 +1440,7 @@ cleanDocs:
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg  *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
-	rm -rf $(generatedCodeExamples)
+	rm -rf $(generatedCodeExamples) *.out
 #	rm -f exampleTranslator exampleTranslatorMultiLib
 #	rm -f inputCode_ExampleCodeCoverage
 

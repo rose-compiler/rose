@@ -75,7 +75,7 @@ SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
     return func_decl;
 }
 
-SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int events_num)
+SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int events_num, bool klee)
 {
     // build the main function which performs the test
     SgFunctionDeclaration* func_decl = 
@@ -151,22 +151,34 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
     for (int i = 0; i < events_num; ++i)
     {
         // Initialize two model objects
-        SgExprListExp* para1 = buildExprListExp(
-                buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")));
-        SgExprStatement* init1 = buildFunctionCallStmt("initialize", buildVoidType(), para1);
-        SgExprListExp* para2 = buildExprListExp(
-                buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
-        SgExprStatement* init2 = buildFunctionCallStmt("initialize", buildVoidType(), para2);
+        SgExprStatement *init1, *init2;
+
+        if (klee)
+        {
+            SgExprListExp* para1 = buildExprListExp(
+                    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
+                    buildSizeOfOp(buildVarRefExp("m1")),
+                    buildStringVal("m1"));
+            init1 = buildFunctionCallStmt("klee_make_symbolic", buildVoidType(), para1);
+            init2 = buildAssignStatement(buildVarRefExp("m2"), buildVarRefExp("m1"));
+        } else {
+            SgExprListExp* para1 = buildExprListExp(
+                    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")));
+            init1 = buildFunctionCallStmt("initialize", buildVoidType(), para1);
+            SgExprListExp* para2 = buildExprListExp(
+                    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
+            init2 = buildFunctionCallStmt("initialize", buildVoidType(), para2);
+        }
 
         // Call event_forward and event_reverse then check if the model's value changes
         SgStatement* call_event_fwd = buildFunctionCallStmt(
                 "event" + lexical_cast<string>(i) + "_forward", 
                 buildVoidType(), 
-                isSgExprListExp(copyExpression(para1)));
+                buildExprListExp(buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1"))));
         SgStatement* call_event_rev = buildFunctionCallStmt(
                 "event" + lexical_cast<string>(i) + "_reverse", 
                 buildVoidType(), 
-                isSgExprListExp(copyExpression(para1)));
+                buildExprListExp(buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1"))));
 
         SgExprListExp* para_comp = buildExprListExp(
                 buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),

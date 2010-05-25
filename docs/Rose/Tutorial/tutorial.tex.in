@@ -6,6 +6,8 @@
 
 \usepackage{listings}
 % \lstloadlanguages{APP}
+\lstset{ numbers=left,
+}
 
 \usepackage{html}
 \usepackage{color}
