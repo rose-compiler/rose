@@ -332,6 +332,11 @@ public:
      *  available then the return value will be an empty string. */
     std::string SHA1() const;
 
+    /** Obtains the binary SHA1 hash of the difference between the current state and the original state.  The hash is returned
+     *  through the @p digest argument, which must be at least 20 bytes long.  Returns true if the hash can be computed. If
+     *  libgcrypt is not available then the first 20 bytes of @p digest will be set to zero and a false value is returned. */
+    bool SHA1(unsigned char *digest) const;
+
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
     ValueType<ToLen> signExtend(const ValueType<FromLen> &a) const {
