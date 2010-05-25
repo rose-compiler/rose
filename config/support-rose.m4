@@ -951,6 +951,12 @@ ROSE_SUPPORT_YICES
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_YICES,test ! "$with_yices" = no)
 
+# Call supporting macro to internal Satisfiability (SAT) Solver
+ROSE_SUPPORT_SAT
+
+# Setup Automake conditional in --- (not yet ready for use)
+AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
+
 # Call supporting macro to Intel Pin Dynamic Instrumentation
 ROSE_SUPPORT_INTEL_PIN
 
@@ -2153,6 +2159,7 @@ projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
+projects/SatSolver/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2278,6 +2285,7 @@ docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
+docs/Rose/ROSE_Exam.tex
 docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
