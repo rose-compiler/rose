@@ -144,7 +144,7 @@ bool
 LeafNode::equal_to(const TreeNode *other_) const
 {
     if (!TreeNode::equal_to(other_)) return false;
-    LeafNode *other = dynamic_cast<LeafNode*>(other);
+    const LeafNode *other = dynamic_cast<const LeafNode*>(other_);
     if (!other) return false;
     if (known!=other->known) return false;
     if (known)

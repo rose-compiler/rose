@@ -473,7 +473,6 @@
     ?15=V25[1]
     ip=134513390[32]
     memory:
-        V1[32]: V15[32] 1 byte read-only
         V1[32]: (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 1 byte
     ip = 134513390[32]
 0x80482ee:add    BYTE PTR ds:[eax], al
@@ -491,28 +490,25 @@
     ds=V12[16]
     fs=V13[16]
     gs=V14[16]
-    cf=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8])
+    cf=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8])
     ?1=V16[1]
-    pf=(invert[1] (xor[1] (xor[1] (xor[1] (uextend[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 2[8] 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 3[8] 1[8]))) (xor[1] (xor[1] (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 4[8] 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 5[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 6[8] 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])))))
+    pf=(invert[1] (xor[1] (xor[1] (xor[1] (uextend[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 2[8] 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 3[8] 1[8]))) (xor[1] (xor[1] (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 4[8] 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 5[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 6[8] 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])))))
     ?3=V17[1]
-    af=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 3[8] 1[8])
+    af=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 3[8] 1[8])
     ?5=V18[1]
-    zf=(zerop[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])))
-    sf=(extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])
+    zf=(zerop[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])))
+    sf=(extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])
     tf=V19[1]
     if=V20[1]
     df=V21[1]
-    of=(xor[1] (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8]) (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 6[8] 1[8]))
+    of=(xor[1] (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8]) (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 6[8] 1[8]))
     iopl0=V22[1]
     iopl1=V23[1]
     nt=V24[1]
     ?15=V25[1]
     ip=134513392[32]
     memory:
-        V1[32]: V15[32] 1 byte read-only
-        V1[32]: (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 1 byte
-        V1[32]: V26[32] 1 byte read-only
-        V1[32]: (uextend[32] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 1 byte
+        V1[32]: (uextend[32] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 1 byte
     ip = 134513392[32]
 0x80482f0:jmp    DWORD PTR ds:[0x080496d4]
     ax=V1[32]
@@ -529,30 +525,27 @@
     ds=V12[16]
     fs=V13[16]
     gs=V14[16]
-    cf=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8])
+    cf=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8])
     ?1=V16[1]
-    pf=(invert[1] (xor[1] (xor[1] (xor[1] (uextend[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 2[8] 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 3[8] 1[8]))) (xor[1] (xor[1] (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 4[8] 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 5[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 6[8] 1[8]) (extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])))))
+    pf=(invert[1] (xor[1] (xor[1] (xor[1] (uextend[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 2[8] 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 3[8] 1[8]))) (xor[1] (xor[1] (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 4[8] 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 5[8] 1[8])) (xor[1] (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 6[8] 1[8]) (extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])))))
     ?3=V17[1]
-    af=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 3[8] 1[8])
+    af=(extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 3[8] 1[8])
     ?5=V18[1]
-    zf=(zerop[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])))
-    sf=(extract[1] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])
+    zf=(zerop[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])))
+    sf=(extract[1] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 7[8] 1[8])
     tf=V19[1]
     if=V20[1]
     df=V21[1]
-    of=(xor[1] (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8]) (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] V26[32] 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 6[8] 1[8]))
+    of=(xor[1] (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 7[8] 1[8]) (extract[1] (xor[8] (uextend[8] (extract[7] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) 1[8] 7[8]) 8[8]) (xor[8] (uextend[8] (extract[7] (uextend[8] V1[32] 8[8]) 1[8] 7[8]) 8[8]) (uextend[8] (extract[7] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 1[8] 7[8]) 8[8]))) 6[8] 1[8]))
     iopl0=V22[1]
     iopl1=V23[1]
     nt=V24[1]
     ?15=V25[1]
-    ip=V27[32]
+    ip=V26[32]
     memory:
-        V1[32]: V15[32] 1 byte read-only
-        V1[32]: (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 1 byte
-        V1[32]: V26[32] 1 byte read-only
-        V1[32]: (uextend[32] (add[8] (uextend[8] V26[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 1 byte
-        134518484[32]: V27[32] 4 bytes read-only
-    ip = V27[32]
+        V1[32]: (uextend[32] (add[8] (uextend[8] (uextend[32] (add[8] (uextend[8] V15[32] 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 8[8]) (add[8] (uextend[8] V1[32] 8[8]) 0[8])) 32[8]) 1 byte
+        134518484[32]: V26[32] 4 bytes read-only
+    ip = V26[32]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -5526,7 +5519,6 @@
     ip=134513804[32]
     memory:
         (add[32] V5[32] -4[32]): V6[32] 4 bytes
-        134518520[32]: V31[32] 4 bytes read-only
         134518520[32]: (add[32] V31[32] (add[32] 1[32] 0[32])) 4 bytes
     ip = 134513804[32]
 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4
@@ -5563,7 +5555,6 @@
     ip=134513811[32]
     memory:
         (add[32] V5[32] -4[32]): V6[32] 4 bytes
-        134518520[32]: V31[32] 4 bytes read-only
         134518520[32]: (add[32] V31[32] (add[32] 1[32] 0[32])) 4 bytes
         (add[32] (add[32] V5[32] -4[32]) (add[32] (invert[32] 8[32]) (uextend[32] (invert[1] 0[1]) 32[8]))): 134514132[32] 4 bytes
     ip = 134513811[32]
@@ -5601,7 +5592,6 @@
     ip=134513408[32]
     memory:
         (add[32] V5[32] -4[32]): V6[32] 4 bytes
-        134518520[32]: V31[32] 4 bytes read-only
         134518520[32]: (add[32] V31[32] (add[32] 1[32] 0[32])) 4 bytes
         (add[32] (add[32] V5[32] -4[32]) (add[32] (invert[32] 8[32]) (uextend[32] (invert[1] 0[1]) 32[8]))): 134514132[32] 4 bytes
         (add[32] (add[32] (add[32] V5[32] -4[32]) (add[32] (invert[32] 8[32]) (uextend[32] (invert[1] 0[1]) 32[8]))) -4[32]): 134513816[32] 4 bytes
