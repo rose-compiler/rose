@@ -10,6 +10,7 @@ if ROSE_USE_SAT
   sat_SOURCES = sat.C
 
   EXTRA_DIST = sat.h dimacsParser.h
+
 endif
 
 CLEANFILES = 
