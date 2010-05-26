@@ -15,6 +15,90 @@
 
 #ifndef CXX_IS_ROSE_ANALYSIS
 
+/* Convert a SHA1 digest to a string. */
+std::string
+digest_to_str(const unsigned char digest[20])
+{
+    std::string digest_str;
+    for (size_t i=20; i>0; --i) {
+        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+    }
+    return digest_str;
+}
+
+/** Computes the SHA1 digest for the semantics of a single basic block. Returns true if the hash was computed, false
+ *  otherwise.  When the hash is not computed, @p digest is set to all zeros. */
+bool
+block_hash(SgAsmBlock *blk, unsigned char digest[20]) 
+{
+    if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front())) {
+        memset(digest, 0, 20);
+        return false;
+    }
+    const SgAsmStatementPtrList &stmts = blk->get_statementList();
+
+    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
+    VirtualMachineSemantics::Policy policy;
+    policy.set_discard_popped_memory(true);
+    Semantics semantics(policy);
+    try {
+        for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
+            ROSE_ASSERT(insn!=NULL);
+            semantics.processInstruction(insn);
+        }
+    } catch (const Semantics::Exception&) {
+        memset(digest, 0, 20);
+        return false;
+    }
+
+    /* If the last instruction is a x86 CALL or FARCALL then change the return address that's at the top of the stack so that
+     * two identical blocks located at different memory addresses generate equal hashes (at least as far as the function call
+     * is concerned. */
+    bool ignore_final_ip = true;
+    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
+    if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
+        VirtualMachineSemantics::RenameMap rmap;
+        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), policy.number<32>(0), policy.true_());
+        ignore_final_ip = false;
+    }
+
+    /* Set original IP to a constant value so that hash is never dependent on the true original IP.  If the final IP doesn't
+     * matter, then make it the same as the original so that the difference between the original and final does not include the
+     * IP (SHA1 is calculated in terms of the difference). */
+    policy.get_orig_state().ip = policy.number<32>(0);
+    if (ignore_final_ip)
+        policy.get_state().ip = policy.get_orig_state().ip;
+    return policy.SHA1(digest);
+}
+
+/* Compute a hash value for a function. Return false if the hash cannot be computed. */
+bool
+function_hash(SgAsmFunctionDeclaration *func, unsigned char digest[20])
+{
+    memset(digest, 0, 20);
+    std::set<std::string> seen;
+    const SgAsmStatementPtrList &stmts = func->get_statementList();
+    for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+        SgAsmBlock *bb = isSgAsmBlock(*si);
+        ROSE_ASSERT(bb!=NULL);
+        unsigned char bb_digest[20];
+        if (block_hash(bb, bb_digest)) {
+            std::string key = digest_to_str(bb_digest);
+            if (seen.find(key)==seen.end()) {
+                seen.insert(key);
+                for (size_t i=0; i<20; i++)
+                    digest[i] ^= bb_digest[i];
+            }
+        } else {
+            memset(digest, 0, 20);
+            return false;
+        }
+    }
+    return true;
+}
+
 /* Traversal prints information about each SgAsmFunctionDeclaration node. */
 class ShowFunctions : public SgSimpleProcessing {
 public:
@@ -30,10 +114,10 @@ public:
         printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
         printf("      H = insn sequence head    I = imported/dyn-linked   L = leftover blocks\n");
         printf("\n");
-        printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name\n");
-        printf("    --- ---------- ---------- ------------ ---------- -------- --------------------------------\n");
+        printf("    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Kind     Hash             Name\n");
+        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
         traverse(node, preorder);
-        printf("    --- ---------- ---------- ------------ ---------- -------- --------------------------------\n");
+        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
     }
     void visit(SgNode *node) {
         SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
@@ -72,6 +156,14 @@ public:
               default:                                     fputs("    other", stdout); break;
             }
 
+            /* First 16 bytes of the function hash */
+            unsigned char sha1[20];
+            if (function_hash(defn, sha1)) {
+                printf(" %-16s", digest_to_str(sha1).substr(0, 16).c_str());
+            } else {
+                printf(" %-16s", "");
+            }
+            
             /* Function name if known */
             if (defn->get_name()!="")
                 printf(" %s", defn->get_name().c_str());
@@ -80,48 +172,6 @@ public:
     }
 };
 
-/* Compute a SHA1 hash for the semantics of a basic block */
-std::string
-block_semantics(SgAsmBlock *blk) 
-{
-    if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front()))
-        return "";
-    const SgAsmStatementPtrList &stmts = blk->get_statementList();
-
-    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
-    VirtualMachineSemantics::Policy policy;
-    policy.set_discard_popped_memory(true);
-    Semantics semantics(policy);
-    try {
-        for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
-            ROSE_ASSERT(insn!=NULL);
-            semantics.processInstruction(insn);
-        }
-    } catch (const Semantics::Exception&) {
-        return "";
-    }
-
-    /* If the last instruction is a x86 CALL or FARCALL then change the return address that's at the top of the stack so that
-     * two identical blocks located at different memory addresses generate equal hashes (at least as far as the function call
-     * is concerned. */
-    bool ignore_final_ip = true;
-    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
-    if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
-        VirtualMachineSemantics::RenameMap rmap;
-        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), policy.number<32>(0), policy.true_());
-        ignore_final_ip = false;
-    }
-
-    /* Set original IP to a constant value so that hash is never dependent on the true original IP.  If the final IP doesn't
-     * matter, then make it the same as the original so that the difference between the original and final does not include the
-     * IP (SHA1 is calculated in terms of the difference). */
-    policy.get_orig_state().ip = policy.number<32>(0);
-    if (ignore_final_ip)
-        policy.get_state().ip = policy.get_orig_state().ip;
-    return policy.SHA1();
-}
-
 /* Unparser that outputs some extra information */
 class MyAsmUnparser: public AsmUnparser {
 public:
@@ -129,7 +179,18 @@ public:
         blk_detect_noop_seq = true;
     }
     virtual void pre(std::ostream &o, SgAsmBlock *blk) {
-        o <<StringUtility::addrToString(blk->get_address()) <<": semantics = " <<block_semantics(blk) <<"\n";
+        unsigned char sha1[20];
+        if (block_hash(blk, sha1)) {
+            o <<StringUtility::addrToString(blk->get_address()) 
+              <<": " <<digest_to_str(sha1) <<"\n";
+        }
+    }
+    virtual void pre(std::ostream &o, SgAsmFunctionDeclaration *func) {
+        unsigned char sha1[20];
+        if (function_hash(func, sha1)) {
+            o <<StringUtility::addrToString(func->get_entry_va())
+              <<": ============================ " <<digest_to_str(sha1) <<"\n";
+        }
     }
 };
 
@@ -146,7 +207,11 @@ function_label_attr(SgAsmFunctionDeclaration *func)
             retval += std::string(" <") + func->get_name() + ">";
         retval += std::string("\\n(") + func->reason_str(false) + ")";
         sprintf(buf, "\\n%zu instructions", SageInterface::querySubTree<SgAsmInstruction>(func, V_SgAsmInstruction).size());
-        retval += std::string(buf) + "\"";
+
+        unsigned char sha1[20];
+        if (function_hash(func, sha1))
+            retval += std::string(buf) + "\\n" + digest_to_str(sha1).substr(0, 16) + "...";
+        retval += "\"";
     }
     return retval;
 }
@@ -192,15 +257,17 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
         }
         virtual void pre(std::ostream &o, SgAsmBlock *b) {
             std::string semantics_color = "green";
-            std::string semantics_sha1 = block_semantics(b);
-            if (semantics_seen.find(semantics_sha1)!=semantics_seen.end()) {
+            unsigned char sha1[20];
+            block_hash(b, sha1);
+            std::string sha1_str = digest_to_str(sha1);
+            if (semantics_seen.find(sha1_str)!=semantics_seen.end()) {
                 semantics_color = "orange";
             } else {
-                semantics_seen.insert(semantics_sha1);
+                semantics_seen.insert(sha1_str);
             }
             o <<"B" <<StringUtility::addrToString(b->get_address()) <<" [ label=<<table border=\"0\"";
             if (b->get_address()==cur_func->get_entry_va()) o <<" bgcolor=\"lightskyblue1\"";
-            o <<"><tr><td align=\"left\" bgcolor=\"" <<semantics_color <<"\">" <<semantics_sha1 <<"</td></tr>";
+            o <<"><tr><td align=\"left\" bgcolor=\"" <<semantics_color <<"\">" <<sha1_str <<"</td></tr>";
         }
         virtual void post(std::ostream &o, SgAsmBlock*b) {
             SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(b->get_parent());
