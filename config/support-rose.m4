@@ -1281,6 +1281,36 @@ ROSE_SUPPORT_VISUALIZATION
 # Setup Automake conditional in src/roseIndependentSupport/visualization/Makefile.am
 AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no))
 
+
+# *****************************************************************
+# Option to control internal support of CUDA (GPU langauge support)
+# *****************************************************************
+
+# DQ (4/28/2010): This is part of optional support for CUDA.
+AC_MSG_CHECKING([for enabled CUDA support])
+AC_ARG_ENABLE(cuda, AS_HELP_STRING([--enable-cuda], [Support for CUDA graphics processor language support (from Nvidia)]))
+AM_CONDITIONAL(ROSE_USE_CUDA_SUPPORT, [test "x$enable_cuda" = xyes])
+if test "x$enable_cuda" = "xyes"; then
+  AC_MSG_WARN([Using incomplete CUDA langauge support in ROSE.])
+  AC_DEFINE([ROSE_USE_CUDA_SUPPORT], [], [Whether to use CUDA language support or not within ROSE])
+fi
+ROSE_USE_CUDA_SUPPORT=7
+AC_SUBST(ROSE_USE_CUDA_SUPPORT)
+
+# *******************************************************************
+# Option to control internal support of OpenCL (GPU langauge support)
+# *******************************************************************
+
+# DQ (4/28/2010): This is part of optional support for OpenCL.
+AC_MSG_CHECKING([for enabled OpenCL support])
+AC_ARG_ENABLE(opencl, AS_HELP_STRING([--enable-opencl], [Support for opencl graphics processor language support]))
+AM_CONDITIONAL(ROSE_USE_OPENCL_SUPPORT, [test "x$enable_opencl" = xyes])
+if test "x$enable_opencl" = "xyes"; then
+  AC_MSG_WARN([Using incomplete OpenCL langauge support in ROSE.])
+  AC_DEFINE([ROSE_USE_OPENCL_SUPPORT], [], [Whether to use OpenCL language support or not within ROSE])
+fi
+AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
+
 # allow either user or developer level documentation using Doxygen
 ROSE_SUPPORT_DOXYGEN
 
@@ -1783,6 +1813,10 @@ AC_ARG_WITH(ether,
 AC_SUBST(ETHER_PREFIX)
 AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
+# libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
+AC_CHECK_HEADERS(gcrypt.h)
+AC_CHECK_LIB(gcrypt,gcry_check_version)
+
 
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
@@ -2116,6 +2150,9 @@ projects/backstroke/reverseComputation/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
+projects/HeaderFilesInclusion/Makefile
+projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
+projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2223,6 +2260,7 @@ tutorial/database/Makefile
 tutorial/roseHPCT/Makefile
 tutorial/outliner/Makefile
 tutorial/intelPin/Makefile
+tutorial/binaryAnalysis/Makefile
 exampleTranslators/Makefile
 exampleTranslators/AstCopyReplTester/Makefile
 exampleTranslators/DOTGenerator/Makefile

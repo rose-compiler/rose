@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libroseDisassemblers.la
 libroseDisassemblers_la_DEPENDENCIES =
 
 libroseDisassemblers_la_SOURCES = \
-	Partitioner.C \
+	Partitioner.C IPDParser.C \
         Disassembler.C DisassemblerArm.C DisassemblerPowerpc.C DisassemblerX86.C \
 	Assembler.C AssemblerX86.C AssemblerX86Init.C \
 	AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C \
