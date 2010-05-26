@@ -955,6 +955,8 @@ AM_CONDITIONAL(ROSE_USE_YICES,test ! "$with_yices" = no)
 ROSE_SUPPORT_SAT
 
 # Setup Automake conditional in --- (not yet ready for use)
+echo "with_sat = $with_sat"
+# exit 1
 AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
 
 # Call supporting macro to Intel Pin Dynamic Instrumentation
