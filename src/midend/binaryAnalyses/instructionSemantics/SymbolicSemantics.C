@@ -97,7 +97,7 @@ LeafNode::create_integer(size_t nbits, uint64_t n)
     LeafNode *retval = new LeafNode();
     retval->nbits = nbits;
     retval->known = true;
-    retval->ival = n;
+    retval->ival = n & (((uint64_t)1<<nbits)-1);
     return retval;
 }
     
