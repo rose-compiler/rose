@@ -12,8 +12,8 @@ INCLUDE(${QT_USE_FILE})
 
 
 # Type of build:
-set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 #Compiler Flags
 if(UNIX)

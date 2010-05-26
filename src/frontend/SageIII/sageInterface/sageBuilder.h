@@ -414,6 +414,7 @@ SgConditionalExp * buildConditionalExp_nfi(SgExpression* test, SgExpression* a, 
 
 //! Build a SgExprListExp, used for function call parameter list etc.
 SgExprListExp * buildExprListExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
+SgExprListExp * buildExprListExp(const std::vector<SgExpression*>& exprs);
 SgExprListExp * buildExprListExp_nfi();
 SgExprListExp * buildExprListExp_nfi(const std::vector<SgExpression*>& exprs);
 
@@ -754,6 +755,14 @@ SgReturnStmt* buildReturnStmt_nfi(SgExpression* expression);
 //! Build a NULL statement
 SgNullStatement* buildNullStatement();
 SgNullStatement* buildNullStatement_nfi();
+
+// DQ (4/30/2010): Added support for building asm statements.
+//! Build a NULL statement
+SgAsmStmt* buildAsmStatement(std::string s);
+SgAsmStmt* buildAsmStatement_nfi(std::string s);
+
+// DQ (4/30/2010): Added support for building nop statement using asm statement
+SgAsmStmt* buildMultibyteNopStatement( int n );
 
 //Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
 //This does not work properly since the global scope expects declaration statement, not just SgNullStatement

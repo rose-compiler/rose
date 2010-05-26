@@ -11,7 +11,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 # tps: (11/25/2009): This seems wrong
 #install(FILES  unparseAsm.h DESTINATION src/frontend/PHPFrontend/CMakeLists.txt )
-install(FILES  unparseAsm.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  AsmUnparser.h AsmUnparser_compat.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

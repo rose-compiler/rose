@@ -27,77 +27,79 @@ class UnwrapCond : public SymbolicVisitor
     }
   // apply on a symbolic expression  
   void VisitExpr( const  SymbolicExpr& v) 
-   { 
-     //SymbolicVal cur = left; // so that when left is overwritten v is still valid
-     SymbolicVal cur;
-     SymbolicExpr::OpdIterator iter = v.GetOpdIterator(); // Operand iterator
-     while ( !iter.ReachEnd()) {
-         cur = v.Term2Val(iter.Current());
-         if (FindVal( cur, pivot))
+  { 
+    //SymbolicVal cur = left; // so that when left is overwritten v is still valid
+    SymbolicVal cur;
+    SymbolicExpr::OpdIterator iter = v.GetOpdIterator(); // Operand iterator
+    while ( !iter.ReachEnd()) {
+      cur = v.Term2Val(iter.Current());
+      if (FindVal( cur, pivot))
+        break;
+      ++iter;
+    }
+    if (iter.ReachEnd()) return;
+    SymbolicTerm p = iter.Current(); // Store the matched operand containing pivot into p
+    switch (v.GetOpType()) {
+      case SYMOP_MULTIPLY:
+        for (iter.Advance(); !iter.ReachEnd(); iter++) {
+          if (FindVal( v.Term2Val(iter.Current()), pivot))
             break;
-         ++iter;
-     }
-     if (iter.ReachEnd()) return;
-     SymbolicTerm p = iter.Current(); // Store the matched operand containing pivot into p
-     switch (v.GetOpType()) {
-     case SYMOP_MULTIPLY:
-          for (iter.Advance(); !iter.ReachEnd(); iter++) {
-             if (FindVal( v.Term2Val(iter.Current()), pivot))
-                break;
-          }
-          if (!iter.ReachEnd()) return;
-	  // this assertion is wrong since p might be a unary expression with its internal operand ==pivot
-	  // I have handled SgCastExp cases in SymbolicValGenerator::GetSymbolicVal() 
-	  // I keep this assertion here to expose other unhandled cases, Liao, 11/20/2008
-          //printf("debug: before assertion ...");
-          assert(p == pivot); 	   
-          left = 1;
-          for (iter=v.GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {
-              if (iter.Current() != p )
-                 left = left * v.Term2Val(iter.Current());
-          }
-          succ = true;
-          break;
-     case SYMOP_PLUS:
-           for (iter.Reset(); iter.Current() != p; iter++) 
-                 right = right - v.Term2Val(iter.Current());
-           cur.Visit(this);
-           if (!succ) 
+        }
+        if (!iter.ReachEnd()) return;
+        // this assertion is wrong since p might be a unary expression with its internal operand ==pivot
+        // I have handled SgCastExp cases in SymbolicValGenerator::GetSymbolicVal() 
+        // I keep this assertion here to expose other unhandled cases, Liao, 11/20/2008
+        //printf("debug: before assertion ...");
+        // Turned off this assertion to allow more complex condition expressions like b*b-1 and so on
+        // Liao, 5/24/2010
+        // assert(p == pivot); 	   
+        left = 1;
+        for (iter=v.GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {
+          if (iter.Current() != p )
+            left = left * v.Term2Val(iter.Current());
+        }
+        succ = true;
+        break;
+      case SYMOP_PLUS:
+        for (iter.Reset(); iter.Current() != p; iter++) 
+          right = right - v.Term2Val(iter.Current());
+        cur.Visit(this);
+        if (!succ) 
+          return;
+        for (iter.Advance(); !iter.ReachEnd(); ++iter) {
+          SymbolicVal curv = v.Term2Val(iter.Current());
+          if (FindVal(curv, pivot)) {
+            SymbolicVal leftsave = left;
+            curv.Visit(this);
+            if (!succ)
               return;
-           for (iter.Advance(); !iter.ReachEnd(); ++iter) {
-               SymbolicVal curv = v.Term2Val(iter.Current());
-               if (FindVal(curv, pivot)) {
-                  SymbolicVal leftsave = left;
-                  curv.Visit(this);
-                  if (!succ)
-                    return;
-                  left = left + leftsave;
-               } 
-               else 
-                 right = right - curv;
-           }
-           break;
-     case SYMOP_MAX:
-           if (rel==REL_LT || rel==REL_EQ || rel==REL_LE) {
-              cur.Visit(this);
-           }
-           break;
-     case SYMOP_MIN:
-           if (rel==REL_GT || rel==REL_EQ || rel==REL_GE) { 
-              cur.Visit(this);
-           }
-           else if (rel == REL_LE || rel == REL_LT) {
-              for (iter.Reset(); !iter.ReachEnd(); iter++) {
-                 if (p != iter.Current()) 
-                    right = Min(right,v.Term2Val(*iter));
-              }
-              cur.Visit(this);
-           }
-           break;
-     default:
-           assert(false);
-     } 
-   }
+            left = left + leftsave;
+          } 
+          else 
+            right = right - curv;
+        }
+        break;
+      case SYMOP_MAX:
+        if (rel==REL_LT || rel==REL_EQ || rel==REL_LE) {
+          cur.Visit(this);
+        }
+        break;
+      case SYMOP_MIN:
+        if (rel==REL_GT || rel==REL_EQ || rel==REL_GE) { 
+          cur.Visit(this);
+        }
+        else if (rel == REL_LE || rel == REL_LT) {
+          for (iter.Reset(); !iter.ReachEnd(); iter++) {
+            if (p != iter.Current()) 
+              right = Min(right,v.Term2Val(*iter));
+          }
+          cur.Visit(this);
+        }
+        break;
+      default:
+        assert(false);
+    } 
+  }
  public:
   UnwrapCond( const SymbolicVar &var) : pivot(var) {}
   VarRestr operator()( const SymbolicCond &cond)

@@ -50,6 +50,7 @@ sub is_dependent_file {
 # canonical_repo_branch below.
 my @canonical_repos = qw(
 	file:///usr/casc/overture/ROSE/git/ROSE.git
+	http://rosecompiler.org/rose.git
 );
 
 # Given a remote repository URL, returns the name of the canonical branch iff
@@ -64,7 +65,6 @@ sub canonical_repo_branch {
 
 # Given a path to the working copy, returns true iff this is an external user.
 sub needs_canonical_repo {
-	return 0; # TODO fix this!!
 	my ($wcpath) = @_;
 	# Whether this is an external user is defined by whether the user does not have
 	# the EDG submodule checked out.
@@ -183,11 +183,9 @@ my $relevant_commit;
 
 # If the user cannot generate the binary content themselves, revert to the most specific commit
 # that is common to both the user's branch and the canonical repository
-# needs_canonical_repo() always returns 0 for now.
-# So we always assume a LLNL internal users are using the repository
 if (needs_canonical_repo($repo->wc_path)) {
 	my $canon_ref = find_canonical_ref;
-	$relevant_commit = $repo->merge_base("HEAD", $canon_ref);
+	$relevant_commit = merge_base("HEAD", $canon_ref);
 } else {
 	$relevant_commit = "HEAD";
 }

@@ -12,7 +12,7 @@ class httpRequest
   int i;
  };
 
-#define LARGE_NUMBER 1000
+#define LARGE_NUMBER 100
 //#define LARGE_NUMBER 1000000
 list<httpRequest> request_queue (LARGE_NUMBER);
 
