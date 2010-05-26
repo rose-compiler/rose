@@ -124,7 +124,7 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C \
-	Stress2.cc clibfunc.annot SegDB.annot
+	Stress2.cc clibfunc.annot SegDB.annot doall_2.c inner_only.c
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc *.patch
