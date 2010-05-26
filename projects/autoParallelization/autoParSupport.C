@@ -90,6 +90,7 @@ namespace AutoParallelization
       ROSE_ASSERT(project != NULL);
       defuse = new DefUseAnalysis(project);
     }
+
     ROSE_ASSERT(defuse != NULL);
     // int result = ;
     defuse->run(debug);
@@ -1008,7 +1009,13 @@ namespace AutoParallelization
           //   * scalar-to-array dependence.  
           //    We essentially assume no aliasing between arrays and scalars here!!
           //    I cannot think of a case in which a scalar and array element can access the same memory location otherwise.
-          //    TODO: double check this scalar-to-array dependence issue
+          // According to Qing:  
+          //   A scalar dep is simply the dependence between two scalar variables.
+          //   There is no dependence between a scalar variable and an array variable. 
+          //   The GlobalDep function simply computes dependences between two scalar 
+          //   variable references (to the same variable)
+          //   inside a loop, and the scalar variable is not considered private.
+          // We have autoscoping to take care of scalars, so we can safely skip them 
           bool isArray1=false, isArray2=false; 
           AstInterfaceImpl faImpl=AstInterfaceImpl(sg_node);
           AstInterface fa(&faImpl);
@@ -1129,13 +1136,19 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
            {
              SgVarRefExp * varRef = isSgVarRefExp(the_end_value);
              SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
-
+             ROSE_ASSERT (initName != NULL);
              // stop tracing if it is already the current loop's index
              if (initName  == loop_index_name) break;
 
              // get the reaching definitions of the variable
              vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
-             ROSE_ASSERT (vec.size()>0);
+             if (vec.size() == 0)
+             {
+                 cerr<<"Error: cannot find a reaching definition for an initialized name:"<<endl;
+                 cerr<<"initName:"<<initName->get_name().getString()<<endl;
+                // ROSE_ASSERT (vec.size()>0);
+                break; 
+             }
 
              // stop tracing if there are more than one reaching definitions
              if (vec.size()>1) break;
