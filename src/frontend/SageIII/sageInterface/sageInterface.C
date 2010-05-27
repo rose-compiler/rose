@@ -5594,7 +5594,9 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
       SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast)); 
       removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
       init.push_back(ninit);
-      ninit->set_parent(loop);
+      ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
+      // ninit->set_parent(loop); 
+       ninit->set_parent(loop->get_for_init_stmt ()); 
     }  
   } 
   return true;
