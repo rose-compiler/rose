@@ -34,6 +34,23 @@ main (int argc, char *argv[])
     argvList.push_back("-rose:openmp:parse_only");
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
+
+#if 1 // This has to happen before analyses are called.
+       // For each loop 
+       VariantVector vv (V_SgForStatement); 
+        Rose_STL_Container<SgNode*> loops = NodeQuery::queryMemoryPool(vv); 
+
+      // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
+       // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
+         for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
+                     iter!= loops.end(); iter++ )
+         {
+           SgForStatement* cur_loop = isSgForStatement(*iter);
+           ROSE_ASSERT(cur_loop);
+           SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+         }
+
+#endif
   //Prepare liveness analysis etc.
   initialize_analysis (project,false);   
   // For each source file in the project
@@ -59,11 +76,12 @@ main (int argc, char *argv[])
         if (defn->get_file_info()->get_filename()!=sageFile->get_file_info()->get_filename())
           continue;
         SgBasicBlock *body = defn->get_body();  
-        // For each loop 
+       // For each loop 
         Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(defn,V_SgForStatement); 
         if (loops.size()==0) continue;
 
-       // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
+#if 0 // Moved to be executed before running liveness analysis.
+      // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
        // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
          for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
                      iter!= loops.end(); iter++ )
@@ -72,7 +90,7 @@ main (int argc, char *argv[])
            ROSE_ASSERT(cur_loop);
            SageInterface::normalizeForLoopInitDeclaration(cur_loop);
          }
-
+#endif
         // X. Replace operators with their equivalent counterparts defined 
         // in "inline" annotations
         AstInterfaceImpl faImpl_1(body);
