@@ -6,11 +6,10 @@ INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lz
 
 if ROSE_USE_SAT
-#  bin_PROGRAMS = sat
-#  sat_SOURCES = sat.C main.C
+  bin_PROGRAMS = sat
+  sat_SOURCES = sat.C main.C
 
-#  EXTRA_DIST = sat.h dimacsParser.h
-
+  EXTRA_DIST = sat.h dimacsParser.h
 endif
 
 CLEANFILES = 
