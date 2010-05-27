@@ -47,6 +47,9 @@ rm -rf autom4te.cache
 # my own libtool installation)
 # DQ (2/10/2009): Must use "/Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy --ltdl --automake"
 # the first time.
+if [ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]; then
+    /Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy -ltdl --automake
+fi
 
 # This only detects the file in the current directory (not in directories given by the PATH variable).
 # if test -x libtoolize; then
