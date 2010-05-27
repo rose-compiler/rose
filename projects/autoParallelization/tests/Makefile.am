@@ -27,7 +27,10 @@ reduction.c \
 reduction_2.c \
 reduction_fake.c \
 regression01.c \
+scalar_anti.c \
+scalar_output.c \
 scalar_privatization.c \
+scalar_true.c \
 shared.c \
 slowInput.c \
 Stress-1.c \
