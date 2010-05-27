@@ -34,40 +34,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-# Debugging output is provided using the -x option as in "#! /bin/sh -x"
-
 # DQ (12/22/2005): remove the autoconf caches
 rm -rf autom4te.cache
-
-# JJW (10/5/2008): force glibtoolize on Mac, even for external releases where
-# it wouldn't otherwise be needed (the files are there, they just don't work
-# when linking in Java)
-# JJW (11/8/2008): force libtoolize everywhere, and prefer libtoolize to
-# glibtoolize if it is present (libltdl is missing on ninjai, so I need to use
-# my own libtool installation)
-# DQ (2/10/2009): Must use "/Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy --ltdl --automake"
-# the first time.
-if [ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]; then
-    /Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy -ltdl --automake
-fi
-
-# This only detects the file in the current directory (not in directories given by the PATH variable).
-# if test -x libtoolize; then
-#   echo "libtoolize exists!"
-# else
-#   echo "libtoolize does not exist!"
-# fi
-
-# Original code:
-# if which libtoolize > /dev/null; then
-#    libtoolize --force --copy --ltdl --automake
-# elif which glibtoolize > /dev/null; then
-#    glibtoolize --force --copy --ltdl --automake
-# fi
-
-libtoolize_name=""
-test_libtoolize_version=""
-run_libtoolize=""
 
 # Output the name of the machine where the build is being run (helpful for debugging).
 machine_name=`uname -n`
@@ -83,96 +51,48 @@ echo "******************************************"
 echo "Testing version of libtool (libtoolize)..."
 echo "******************************************"
 
-# Look for this name first...
-libtoolize_name=libtoolize
-
-# DQ (9/29/2009): Check if libtoolize is available in the user's path, else check for glibtoolize (less common, I think).
-if which $libtoolize_name > /dev/null; then
-   echo "Found libtoolize program, running it to generate libtool locally in ROSE."
-   test_libtoolize_version=yes
+# Look for libtoolize, glibtoolize in various places.
+libtoolize_name=
+if [ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]; then
+    # See README.OSX
+    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
+elif which libtoolize > /dev/null; then
+    libtoolize_name=$(which libtoolize)
+elif which glibtoolize >/dev/null; then
+    libtoolize_name=$(which glibtoolize)
 else
-   libtoolize_name=glibtoolize
-   if which $libtoolize_name > /dev/null; then
-      echo "Found glibtoolize program, running it to generate libtool locally in ROSE."
-      test_libtoolize_version=yes
-   else
     # If the user is running build then libtool should be available.
-      echo "Can't find libtool support (libtoolize)...(using the version that comes with ROSE)"
-      test_libtoolize_version=no
-
-      libtoolize_name=libtoolize_not_available
-
-     # Make it an error to run this build script if libtool is unavailable, however
-     # it the future it might be fine to not require libtool since we included a 
-     # version in ROSE. So this is a temporary measure.
-       echo "Error: Neither libtoolize nor glibtoolize were found in the user's path."
-       exit 1;
-   fi
+    echo "$0: neither libtoolize nor glibtoolize were found in the user's path."
+    exit 1;
 fi
 
-# Specify what version we require (at least)
-LIBTOOL_VERSION_MAJOR_PREREQ=1
-LIBTOOL_VERSION_MINOR_PREREQ=5
-LIBTOOL_VERSION_PATCH_PREREQ=6
+# Version required and version actually present.
+LIBTOOL_VERSION_PREREQ=1.5.6
+LIBTOOL_VERSION=$($libtoolize_name --version |head -n1 |perl -pe 's/.*?([0-9\.]{5,}).*/$1/')
 
-LIBTOOL_VERSION_MAJOR=`echo|$libtoolize_name --version | head -1 | sed s/"libtoolize (GNU libtool) "//g | cut -f1 -d \) | cut -d\. -f1`
-LIBTOOL_VERSION_MINOR=`echo|$libtoolize_name --version | head -1 | sed s/"libtoolize (GNU libtool) "//g | cut -f1 -d \) | cut -d\. -f2`
-LIBTOOL_VERSION_PATCH=`echo|$libtoolize_name --version | head -1 | sed s/"libtoolize (GNU libtool) "//g | cut -f1 -d \) | cut -d\. -f3`
+# Returns ok (0) if $need is at least as large as $have, where both are version numbers
+# of the form X.Y.Z where X, Y, and Z are non-negative integers. Returns not-ok (1) otherwise.
+version_ok () {
+    local have="$1" need="$2"
+    local have_major=$(echo $have |cut -d. -f1)
+    local have_minor=$(echo $have |cut -d. -f2)
+    local have_patch=$(echo $have |cut -d. -f3)
+    local need_major=$(echo $need |cut -d. -f1)
+    local need_minor=$(echo $need |cut -d. -f2)
+    local need_patch=$(echo $need |cut -d. -f3)
+    [ ${have_major:-0} -gt $need_major ] && return 0
+    [ ${have_major:-0} -lt $need_major ] && return 1
+    [ ${have_minor:-0} -gt $need_minor ] && return 0
+    [ ${have_minor:-0} -lt $need_minor ] && return 1
+    [ ${have_patch:-0} -ge $need_patch ] && return 0
+    return 1
+}
 
-echo "Libtool version is $LIBTOOL_VERSION_MAJOR.$LIBTOOL_VERSION_MINOR.$LIBTOOL_VERSION_PATCH (ROSE requires at least $LIBTOOL_VERSION_MAJOR_PREREQ.$LIBTOOL_VERSION_MINOR_PREREQ.$LIBTOOL_VERSION_PATCH_PREREQ)"
-
-if test $test_libtoolize_version = "yes"; then
-
- # Run libtoolize unless the version in ROSE is the latest version.
-   run_libtoolize=yes
-
- # Report the current version of libtool to be used...
- # echo "Libtool version is $LIBTOOL_VERSION_MAJOR.$LIBTOOL_VERSION_MINOR.$LIBTOOL_VERSION_PATCH (ROSE requires at least $LIBTOOL_VERSION_MAJOR_PREREQ.$LIBTOOL_VERSION_MINOR_PREREQ.$LIBTOOL_VERSION_PATCH_PREREQ)"
-
-   if test $LIBTOOL_VERSION_MAJOR -eq $LIBTOOL_VERSION_MAJOR_PREREQ; then
-    # echo "Libtool major version number is correct: LIBTOOL_VERSION_MAJOR = $LIBTOOL_VERSION_MAJOR (requires $LIBTOOL_VERSION_MAJOR_PREREQ)"
-      if test $LIBTOOL_VERSION_MINOR -eq $LIBTOOL_VERSION_MINOR_PREREQ; then
-       # echo "Libtool minor version number is correct: LIBTOOL_VERSION_MINOR = $LIBTOOL_VERSION_MINOR (requires $LIBTOOL_VERSION_MINOR_PREREQ)"
-         if test $LIBTOOL_VERSION_PATCH -eq $LIBTOOL_VERSION_PATCH_PREREQ; then
-          # echo "Libtool patch version number is correct: LIBTOOL_VERSION_PATCH = $LIBTOOL_VERSION_PATCH (requires $LIBTOOL_VERSION_PATCH_PREREQ)"
-            :
-         else
-          # Allow patch version 7 and greater to pass (I don't think there is anything between 1.9.6 and 1.10, but just in case)
-            if test $LIBTOOL_VERSION_PATCH -lt $LIBTOOL_VERSION_PATCH_PREREQ; then
-               echo "Warning: Libtool patch version number too old:    LIBTOOL_VERSION_PATCH = $LIBTOOL_VERSION_PATCH (requires $LIBTOOL_VERSION_PATCH_PREREQ)"
-               run_libtoolize=no
-             # exit 1;
-            fi
-         fi
-      else
-       # Allow minor version 10 and greater to pass (minor version values of 10 are avalable)
-         if test $LIBTOOL_VERSION_MINOR -lt $LIBTOOL_VERSION_MINOR_PREREQ; then
-            echo "Warning: Libtool minor version number too old:    LIBTOOL_VERSION_MINOR = $LIBTOOL_VERSION_MINOR (requires $LIBTOOL_VERSION_MINOR_PREREQ)"
-            run_libtoolize=no
-          # exit 1;
-         fi
-      fi
-   else
-    # Allow major version numbers greater than 1 (when they are available) to pass
-      if test $LIBTOOL_VERSION_MAJOR -lt $LIBTOOL_VERSION_MAJOR_PREREQ; then
-         echo "Warning: Libtool major version number too old:    LIBTOOL_VERSION_MAJOR = $LIBTOOL_VERSION_MAJOR (requires $LIBTOOL_VERSION_MAJOR_PREREQ)"
-         run_libtoolize=no
-       # exit 1;
-      fi
-   fi
-
- # Run the libtoolize to copy the local version into place for use by ROSE.
- # But only if it is newer then (or the same as) version 1.5.6.
-   if test $run_libtoolize = "yes"; then
-      echo "Running libtoolize: $libtoolize_name --force --copy --ltdl --automake"
-      $libtoolize_name --force --copy --ltdl --automake
-   else
-    # Note that the internal SVN repository does not have a version of libtool included in ROSE,
-    # but the external SVN repository does include a version of libtool distributed with ROSE.
-    # This is done to save users from finding the correct version of libtool if it is locally 
-    # unavailable. This is a relatively common practice within projects using libtool.
-      echo "Skipping libtoolize: \"$libtoolize_name --force --copy --ltdl --automake\" (using version distributed with in ROSE, if present)"
-   fi
+# Run libtoolize unless the version in ROSE is the latest version.
+if version_ok $LIBTOOL_VERSION $LIBTOOL_VERSION_PREREQ; then
+    (set -x; $libtoolize_name --force --copy --ltdl --automake)
+else
+    echo "$0: warning: libtool version is too old ($LIBTOOL_VERSION, but need $LIBTOOL_VERSION_PREREQ); skipping libtoolize"
 fi
 
 # echo "Exiting ./build script as a test!"
