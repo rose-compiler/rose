@@ -671,11 +671,12 @@ public:
     template <size_t Len>
     ValueType<Len> addWithCarries(const ValueType<Len> &a, const ValueType<Len> &b, const ValueType<1> &c,
                                   ValueType<Len> &carry_out) const {
-        ValueType<Len> sum = add<Len>(a, add<Len>(b, unsignedExtend<1,Len>(c)));
-        carry_out = xor_<Len>(unsignedExtend<Len-1, Len>(extract<1, Len>(a)),
-                              xor_<Len>(unsignedExtend<Len-1, Len>(extract<1, Len>(b)), 
-                                        unsignedExtend<Len-1, Len>(extract<1, Len>(sum))));
-        return sum;
+        ValueType<Len+1> aa = unsignedExtend<Len, Len+1>(a);
+        ValueType<Len+1> bb = unsignedExtend<Len, Len+1>(b);
+        ValueType<Len+1> cc = unsignedExtend<1,   Len+1>(c);
+        ValueType<Len+1> sumco = add<Len+1>(aa, add<Len+1>(bb, cc));
+        carry_out = extract<1, Len+1>(xor_<Len+1>(aa, xor_<Len+1>(bb, sumco)));
+        return add<Len>(a, add<Len>(b, unsignedExtend<1, Len>(c)));
     }
 
     /** Computes bit-wise AND of two values. */
