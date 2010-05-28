@@ -25,8 +25,10 @@ to_str(Operator o)
         case OP_ROR: return "ror";
         case OP_SDIV: return "sdiv";
         case OP_SEXTEND: return "sextend";
-        case OP_SHL: return "shl";
-        case OP_SHR: return "shr";
+        case OP_SHL0: return "shl0";
+        case OP_SHL1: return "shl1";
+        case OP_SHR0: return "shr0";
+        case OP_SHR1: return "shr1";
         case OP_SMOD: return "smod";
         case OP_SMUL: return "smul";
         case OP_UDIV: return "udiv";

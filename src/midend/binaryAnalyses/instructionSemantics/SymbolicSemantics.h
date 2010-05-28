@@ -28,12 +28,15 @@ namespace SymbolicSemantics {
 
 extern uint64_t name_counter;
 
+/** Operators for internal nodes of the expression tree. Commutative operators generally take one or more operands. Operators
+ *  such as shifting, extending, and truncating have the size operand appearing before the bit vector on which to operate
+ *  (this makes the output more human-readable since the size operand is often a constant). */
 enum Operator {
     OP_ADD,                     /**< Addition. One or more operands, all the same width. */
     OP_AND,                     /**< Boolean AND. One or more operands, all the same width. */
-    OP_ASR,                     /**< Arithmetic shift right. Operand A shifted by B bits; 0 <= B < width(A). */
+    OP_ASR,                     /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). */
     OP_CONCAT,                  /**< Concatenation. Operand A becomes high-order bits. Any number of operands. */
-    OP_EXTRACT,                 /**< Extract subsequence of bits. Extract bits [B..C) of A. 0 <= B < C <= width(A). */
+    OP_EXTRACT,                 /**< Extract subsequence of bits. Extract bits [A..B) of C. 0 <= A < B <= width(C). */
     OP_INVERT,                  /**< Boolean inversion. One operand. */
     OP_ITE,                     /**< If-then-else. A must be one bit. Returns B if A is set, C otherwise. */
     OP_LSSB,                    /**< Least significant set bit or zero. One operand. */
@@ -41,18 +44,18 @@ enum Operator {
     OP_NEGATE,                  /**< Arithmetic negation. One operand. */
     OP_NOOP,                    /**< No operation. Used only by the default constructor. */
     OP_OR,                      /**< Boolean OR. One or more operands, all the same width. */
-    OP_ROL,                     /**< Rotate left. Rotate bits of A left by B bits.  0 <= B < width(A). */
-    OP_ROR,                     /**< Rotate right. Rotate bits of A right by B bits. 0 <= B < width(A).  */
+    OP_ROL,                     /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). */
+    OP_ROR,                     /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B).  */
     OP_SDIV,                    /**< Signed division. Two operands, A/B. Result width is width(A). */
-    OP_SEXTEND,                 /**< Signed extension at msb. Extend A to B bits by replicating A's most significant bit. */
-    OP_SHL0,                    /**< Shift left, introducing zeros at lsb. Bits of A are shifted by B, where 0 <= B < width(A). */
-    OP_SHL1,                    /**< Shift left, introducing ones at lsb. Bits of A are shifted by B, where 0 <= B < width(A). */
-    OP_SHR0,                    /**< Shift right, introducing zeros at msb. Bits of A are shifted by B, where 0 <= B < width(A). */
-    OP_SHR1,                    /**< Shift right, introducing ones at msb. Bits of A are shifted by B, where 0 <= B < width(A). */
+    OP_SEXTEND,                 /**< Signed extension at msb. Extend B to A bits by replicating B's most significant bit. */
+    OP_SHL0,                    /**< Shift left, introducing zeros at lsb. Bits of B are shifted by A, where 0 <= A < width(B). */
+    OP_SHL1,                    /**< Shift left, introducing ones at lsb. Bits of B are shifted by A, where 0 <= A < width(B). */
+    OP_SHR0,                    /**< Shift right, introducing zeros at msb. Bits of B are shifted by A, where 0 <= A < width(B). */
+    OP_SHR1,                    /**< Shift right, introducing ones at msb. Bits of B are shifted by A, where 0 <= A < width(B). */
     OP_SMOD,                    /**< Signed modulus. Two operands, A%B. Result width is width(B). */
     OP_SMUL,                    /**< Signed multiplication. Two operands A*B. Result width is width(A)+width(B). */
     OP_UDIV,                    /**< Signed division. Two operands, A/B. Result width is width(A). */
-    OP_UEXTEND,                 /**< Unsigned extention at msb. Extend A to B bits by introducing zeros at the msb. */
+    OP_UEXTEND,                 /**< Unsigned extention at msb. Extend B to A bits by introducing zeros at the msb of B. */
     OP_UMOD,                    /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
     OP_UMUL,                    /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
     OP_XOR,                     /**< Boolean exclusive OR. One or more operands, all the same width. */
@@ -383,7 +386,7 @@ public:
             return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.value());
         if (FromLen==ToLen)
             return ValueType<ToLen>(a.expr);
-        return ValueType<ToLen>(new InternalNode(ToLen, OP_UEXTEND, a.expr, LeafNode::create_integer(8, ToLen)));
+        return ValueType<ToLen>(new InternalNode(ToLen, OP_UEXTEND, LeafNode::create_integer(8, ToLen), a.expr));
     }
 
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
@@ -395,9 +398,9 @@ public:
             return ValueType<ToLen>(a.expr);
         if (FromLen > ToLen) {
             /* shrink using unsigned extend */
-            return ValueType<ToLen>(new InternalNode(ToLen, OP_UEXTEND, a.expr, LeafNode::create_integer(8, ToLen)));
+            return ValueType<ToLen>(new InternalNode(ToLen, OP_UEXTEND, LeafNode::create_integer(8, ToLen), a.expr));
         }
-        return ValueType<ToLen>(new InternalNode(ToLen, OP_SEXTEND, a.expr, LeafNode::create_integer(8, ToLen)));
+        return ValueType<ToLen>(new InternalNode(ToLen, OP_SEXTEND, LeafNode::create_integer(8, ToLen), a.expr));
     }
 
     /** Extracts certain bits from the specified value and shifts them to the low-order positions in the result.  The bits of
@@ -408,9 +411,10 @@ public:
             return unsignedExtend<Len,EndAt-BeginAt>(a);
         if (a.is_known())
             return ValueType<EndAt-BeginAt>(a.value());
-        return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, OP_EXTRACT, a.expr,
+        return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, OP_EXTRACT,
                                                          LeafNode::create_integer(8, BeginAt),
-                                                         LeafNode::create_integer(8, EndAt)));
+                                                         LeafNode::create_integer(8, EndAt), 
+                                                         a.expr));
     }
 
     /** Reads a value from memory in a way that always returns the same value provided there are not intervening writes that
@@ -741,31 +745,31 @@ public:
     /** Rotate bits to the left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        return ValueType<Len>(new InternalNode(Len, OP_ROL, a.expr, sa.expr));
+        return ValueType<Len>(new InternalNode(Len, OP_ROL, sa.expr, a.expr));
     }
 
     /** Rotate bits to the right. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        return ValueType<Len>(new InternalNode(Len, OP_ROR, a.expr, sa.expr));
+        return ValueType<Len>(new InternalNode(Len, OP_ROR, sa.expr, a.expr));
     }
 
     /** Returns arg shifted left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        return ValueType<Len>(new InternalNode(Len, OP_SHL0, a.expr, sa.expr));
+        return ValueType<Len>(new InternalNode(Len, OP_SHL0, sa.expr, a.expr));
     }
 
     /** Returns arg shifted right logically (no sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        return ValueType<Len>(new InternalNode(Len, OP_SHR0, a.expr, sa.expr));
+        return ValueType<Len>(new InternalNode(Len, OP_SHR0, sa.expr, a.expr));
     }
 
     /** Returns arg shifted right arithmetically (with sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        return ValueType<Len>(new InternalNode(Len, OP_ASR, a.expr, sa.expr));
+        return ValueType<Len>(new InternalNode(Len, OP_ASR, sa.expr, a.expr));
     }
 
     /** Sign extends a value. */
