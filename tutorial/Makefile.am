@@ -767,6 +767,7 @@ generatedCodeExamples = \
    charmSupport.out \
    codeCoverage.out \
    callGraph.pdf \
+   liveness.pdf \
    classHierarchyGraph.pdf \
    rose_inputCode_templateExample1.C \
    rose_inputCode_templateExample2.C \
