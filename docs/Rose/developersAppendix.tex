@@ -191,11 +191,7 @@ Please configure this copy with your name and email before starting work.
 	  \item add all files under the current directory to the project \textit{git add .}
 	  \item remove $<$file$>$ from the project \textit{git rm $<$file$>$}
    \end{itemize}     
-\item Committing and pushing: intermediate changes can be committed locally. A set of local commits can be pushed to the central repository when ready.
-   \begin{itemize}
-          \item Commit changes to the local repository: \textit{git commit -a} 
-          \item Push all commits of the current local branch to a branch of the central repository:\\ \textit{git push origin HEAD:branch-name}
-   \end{itemize}   
+
 \item Pulling and Merging: It is recommended to synchronize the master branches often and merge new commits from others to 
    your local branch.
    \begin{itemize}
@@ -203,6 +199,18 @@ Please configure this copy with your name and email before starting work.
           \item Merge new commits to your local branch: \textit{git checkout branch-name; git merge master}
    \end{itemize}   
 
+
+\item Committing and pushing: intermediate changes can be committed locally. A set of local commits can be pushed to the central repository when ready.
+   \begin{itemize}
+          \item Commit changes to the local repository: \textit{git commit -a} . You can commit your changes as often as you like here. 
+          \item Push all commits of the current local branch to a branch of
+          the central repository:\\ \textit{git push origin
+          HEAD:branch-name} . Please always try to synchronize with the
+          remote master branch (using git pull and merge as mentioned
+          above) before pushing commits. \textbf{Note}: It is highly recommended not to push too often than
+          needed since each git push will trigger a large set of
+          Hudson tests which tax our own workstations and many other test machines.
+   \end{itemize}   
 \item Info on the repository:
    \begin{itemize}
           \item show a diff of the changes made since your last commit \textit{git diff}
