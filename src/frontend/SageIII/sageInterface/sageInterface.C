@@ -11082,7 +11082,7 @@ LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, boo
   //return !abortme;
 }
 
-//!get liveIn and liveOut variables for a for loop
+//!Get liveIn and liveOut variables for a for loop
 void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgInitializedName*>& liveIns, std::set<SgInitializedName*> & liveOuts)
 {
   ROSE_ASSERT(liv != NULL);
@@ -11090,9 +11090,15 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
   SgForStatement *forstmt = loop;
   std::vector<SgInitializedName*> liveIns0, liveOuts0; // store the original one
 
-  // Jeremiah's hidden constructor parameter value '2' to grab the right one
+  // Jeremiah's hidden constructor parameter value '2' to grab the node for forStmt's 
   // Several CFG nodes are used for the same SgForStatement, only one of the is needed.
-  CFGNode cfgnode(forstmt,2);
+  // We have to check the full control flow graph to find all SgForStatement's nodes,
+  // check the index numbers from 0 , find the one with two out edges (true, false)
+  // The CFG node should have a caption like" <SgForStatement> @ 8: 1",
+  // which means this is a CFG node for a for statement at source line 8, with an index 1.
+  // For SgForStatement, there are 5 cfg nodes, 0 and 4 are for begin and end CFG nodes
+  // 1: after init statement, 2: after test expression (the remaining one after filtering), 3: before increment  
+  CFGNode cfgnode(forstmt,2); 
   FilteredCFGNode<IsDFAFilter> filternode= FilteredCFGNode<IsDFAFilter> (cfgnode);
   // This one does not return the one we want even its getNode returns the
   // right for statement

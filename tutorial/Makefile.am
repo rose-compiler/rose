@@ -17,6 +17,7 @@ noinst_HEADERS = \
 bin_PROGRAMS = \
    buildCallGraph \
    defuseAnalysis \
+   livenessAnalysis \
    virtualCFG 
 
 #varSubstCopy , disabled this one Liao, and sorted the list
@@ -217,6 +218,8 @@ binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 bin_example_SOURCES = bin_example.C
 
 buildCallGraph_SOURCES = buildCallGraph.C
+
+livenessAnalysis_SOURCES = livenessAnalysis.C
 
 charmSupport_SOURCES = CharmSupport.C
 
@@ -1161,6 +1164,15 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e callGraph.pdf; then exit 1; fi
 endif
 
+liveness.pdf: livenessAnalysis
+	@echo "Generate liveness information from processing of input code ..."
+	./livenessAnalysis $(ROSE_FLAGS) -c $(srcdir)/inputCode_livenessAnalysis.c
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_livenessAnalysis.c_liveness.dot liveness.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+	if ! test -e liveness.pdf; then exit 1; fi
+endif
+
+
 classHierarchyGraph.pdf: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
 	@echo "Building postscript file from classHier.dot ..."
@@ -1386,6 +1398,7 @@ EXTRA_DIST = CMakeLists.txt \
    inputCode_scopeInformation.C \
    inputCode_BuildCG.C \
    inputCode_inlineTransformations.C \
+   inputCode_livenessAnalysis.c \
    inputCode_NestedQuery.C \
    inputCode_ControlFlowGraphAnalysis.C \
    inputCode_addComments.C \
@@ -1409,7 +1422,8 @@ EXTRA_DIST = CMakeLists.txt \
    buffer2.bin \
    inputCode_seedBugsExample_arrayIndexing.C \
    inputCode_dwarfAnalysis.C \
-   inputCode_reductionRecognition.C
+   inputCode_reductionRecognition.C \
+   livenessAnalysis-2.C
 
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
@@ -1432,7 +1446,7 @@ docs: $(noinst_PROGRAMS) $(bin_PROGRAMS) $(generatedCodeExamples)
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
-	rm -f rose_*.C rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST 
+	rm -f rose_*.C rose_*.c rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST 
 	rm -f ExampleCodeCoverage_GeneratedBinary 
 	rm -f inputCode_AST_PDF_Generator.C 
 	rm -f rose_inputCode_dwarfAnalysis.s inputCode_dwarfAnalysis rose_inputCode_dwarfAnalysis
