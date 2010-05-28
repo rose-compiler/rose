@@ -433,13 +433,7 @@ int fixVariableReferences2(SgNode* root)
 }
 
 
-
-
-
-
-
-
-
+#if 1
 int main( int argc, char * argv[] )
 {
     vector<string> args(argv, argv+argc);
@@ -491,4 +485,10 @@ int main( int argc, char * argv[] )
 #endif
     return backend(project);
 }
+#else
+#include "CFG.C"
+#endif
+
+
+
 
