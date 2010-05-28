@@ -266,8 +266,8 @@ Policy::on_stack(const ValueType<32> &value) const
     return false;
 }
 
-std::string
-Policy::SHA1() const
+bool
+Policy::SHA1(unsigned char digest[20]) const
 {
 #ifdef HAVE_GCRYPT_H
     /* libgcrypt requires gcry_check_version() to be called "before any other function in the library", but doesn't include an
@@ -283,20 +283,27 @@ Policy::SHA1() const
     std::stringstream s;
     RenameMap rmap;
     print_diff(s, &rmap);
-    size_t digest_sz = gcry_md_get_algo_dlen(GCRY_MD_SHA1);
-    char *digest = new char[digest_sz];
+    ROSE_ASSERT(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
     gcry_md_hash_buffer(GCRY_MD_SHA1, digest, s.str().c_str(), s.str().size());
-    std::string digest_str;
-    for (size_t i=digest_sz; i>0; --i) {
-        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
-        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
-    }
-    delete[] digest; digest=NULL;
-    return digest_str;
+    return true;
 #else
-    return "";
+    memset(digest, 0, 20);
+    return false;
 #endif
 }
 
+std::string
+Policy::SHA1() const
+{
+    std::string digest_str;
+    unsigned char digest[20];
+    if (SHA1(digest)) {
+        for (size_t i=sizeof digest; i>0; --i) {
+            digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+            digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+        }
+    }
+    return digest_str;
+}
 
 } /*namespace*/

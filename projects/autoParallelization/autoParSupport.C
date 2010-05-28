@@ -90,6 +90,7 @@ namespace AutoParallelization
       ROSE_ASSERT(project != NULL);
       defuse = new DefUseAnalysis(project);
     }
+
     ROSE_ASSERT(defuse != NULL);
     // int result = ;
     defuse->run(debug);
@@ -954,13 +955,10 @@ namespace AutoParallelization
         for (; !edges.ReachEnd(); ++edges) 
         { 
           LoopTreeDepGraph::Edge *e= *edges;
-          //cout<<"dependence edge: "<<e->toString()<<endl;
+          // cout<<"Debug: dependence edge: "<<e->toString()<<endl;
           DepInfo info =e->GetInfo();
 
-          // x. Eliminate dependence relationship if
-          // either of the source or sink variables are thread-local: 
-          // (within the scope of the loop's scope)
-          SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
+         SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
@@ -976,8 +974,15 @@ namespace AutoParallelization
                 continue;
             } //end if(var_ref)
           } // end if (src_node)
+
           SgNode* snk_node = AstNodePtr2Sage(info.SnkRef());
           SgInitializedName* snk_name=NULL;
+#if 1           
+          // x. Eliminate dependence relationship if one of the pair is thread local
+          // -----------------------------------------------
+          // either of the source or sink variables are thread-local: 
+          // (within the scope of the loop's scope)
+          // There is no loop carried dependence in this case 
           if (snk_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(snk_node);
@@ -989,12 +994,28 @@ namespace AutoParallelization
                 continue;
             } //end if(var_ref)
           } // end if (snk_node)
+#endif
+          //x. Eliminate a dependence if it is empty entry
+          // -----------------------------------------------
           // Ignore possible empty depInfo entry
           if (src_node==NULL||snk_node==NULL)
             continue;
-          //x. Eliminate a dependence if 
-          // both the source and sink variables are array references (not scalar) 
+
+          //x. Eliminate a dependence if scalar type dependence involving array references.
+          // -----------------------------------------------
+          // At least one of the source and sink variables are array references (not scalar) 
           // But the dependence type is scalar type
+          //   * array-to-array, but scalar type dependence
+          //   * scalar-to-array dependence.  
+          //    We essentially assume no aliasing between arrays and scalars here!!
+          //    I cannot think of a case in which a scalar and array element can access the same memory location otherwise.
+          // According to Qing:  
+          //   A scalar dep is simply the dependence between two scalar variables.
+          //   There is no dependence between a scalar variable and an array variable. 
+          //   The GlobalDep function simply computes dependences between two scalar 
+          //   variable references (to the same variable)
+          //   inside a loop, and the scalar variable is not considered private.
+          // We have autoscoping to take care of scalars, so we can safely skip them 
           bool isArray1=false, isArray2=false; 
           AstInterfaceImpl faImpl=AstInterfaceImpl(sg_node);
           AstInterface fa(&faImpl);
@@ -1010,12 +1031,14 @@ namespace AutoParallelization
             isArray1= fa.IsArrayAccess(info.SrcRef());
             isArray2= fa.IsArrayAccess(info.SnkRef());
           }
-          if (isArray1 && isArray2)
+          //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
+          if (isArray1 || isArray2)
           {
             if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
               continue;
           }
           //x. Eliminate dependencies caused by autoscoped variables
+          // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
           if(att&& (src_name || snk_name)) // either src or snk might be an array reference 
           {
@@ -1033,6 +1056,7 @@ namespace AutoParallelization
           }
 
           //x. Eliminate dependencies caused by a pair of indirect indexed array reference,
+          // -----------------------------------------------
           //   if users provide the semantics that all indirect indexed array references have 
           //   unique element accesses (via -rose:autopar:unique_indirect_index )
           //   Since each iteration will access a unique element of the array, no loop carried data dependences
@@ -1044,6 +1068,7 @@ namespace AutoParallelization
                continue;
            }
           // x. Eliminate loop-independent dependencies: 
+          // -----------------------------------------------
           // loop independent dependencies: privatization can eliminate most of them
           if (info.CarryLevel()!=0) 
             continue;
@@ -1111,13 +1136,19 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
            {
              SgVarRefExp * varRef = isSgVarRefExp(the_end_value);
              SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
-
+             ROSE_ASSERT (initName != NULL);
              // stop tracing if it is already the current loop's index
              if (initName  == loop_index_name) break;
 
              // get the reaching definitions of the variable
              vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
-             ROSE_ASSERT (vec.size()>0);
+             if (vec.size() == 0)
+             {
+                 cerr<<"Error: cannot find a reaching definition for an initialized name:"<<endl;
+                 cerr<<"initName:"<<initName->get_name().getString()<<endl;
+                // ROSE_ASSERT (vec.size()>0);
+                break; 
+             }
 
              // stop tracing if there are more than one reaching definitions
              if (vec.size()>1) break;

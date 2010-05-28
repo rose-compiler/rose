@@ -43,6 +43,36 @@ if test $USE_HASKELL = 1; then
  # DQ (5/21/2010): Added macro to rose_config.h file so that we can know when to skip Wave support (see rose_attributes_list.h).
  # AC_DEFINE([ROSE_USE_HASKELL_SUPPORT], [], [Whether to use HASKELL interface or not within ROSE])
 
+ # DQ (5/27/2010): We only support a specific version of GHC, since version 6.12 does not
+ # include the required packages.
+   echo "ghc_version = "`ghc --version`
+   ghc_major_version_number=`ghc --version | tr -d \ | cut -d\n -f3 | cut -d\. -f1`
+   ghc_minor_version_number=`ghc --version | tr -d \ | cut -d\n -f3 | cut -d\. -f2`
+   ghc_patch_version_number=`ghc --version | tr -d \ | cut -d\n -f3 | cut -d\. -f3`
+
+   echo "ghc_major_version_number = $ghc_major_version_number"
+   echo "ghc_minor_version_number = $ghc_minor_version_number"
+   echo "ghc_patch_version_number = $ghc_patch_version_number"
+
+   echo "*************************************"
+   echo "ghc packages required in ROSE: base, haskell98, syb, mtl, containers (see the Build-Depends entry in projects/haskellport/rose.cabal.in.in)."
+   echo "ghc packages supported:"
+   ghc -v
+   echo "*************************************"
+
+   if test "x$ghc_major_version_number" = "x6"; then
+      echo "Recognized an accepted major version number."
+      if test "x$ghc_minor_version_number" = "x10"; then
+         echo "Recognized an accepted minor version number."
+      else
+         echo "ERROR: Could not identify an acceptable Haskell gch minor version number (ROSE requires 6.10.x)."
+         exit 1
+      fi
+   else
+      echo "ERROR: Could not identify an acceptable Haskell gch major version number (ROSE requires 6.10.x)."
+      exit 1
+   fi
+
 else
 	AC_MSG_RESULT([no])
 fi

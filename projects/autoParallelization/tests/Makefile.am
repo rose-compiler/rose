@@ -7,12 +7,11 @@ array_scalar.c \
 c99loop.c \
 complexCondition.c \
 doall.c \
-doall_2.c \
 firstprivate.c \
+foo.c \
 functionCall.c \
 ifAndFor.c \
 indirectIndex.c \
-inner_only.c \
 jacobi_seq.c \
 lastprivate.c \
 livenessTest.c \
@@ -28,13 +27,17 @@ reduction.c \
 reduction_2.c \
 reduction_fake.c \
 regression01.c \
+scalar_anti.c \
+scalar_output.c \
 scalar_privatization.c \
+scalar_true.c \
 shared.c \
 slowInput.c \
 Stress-1.c \
 plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
+true_dep_scalar.c \
 true_l2.c 
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
@@ -82,10 +85,13 @@ CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 ../autoPar:
 	$(MAKE) -C ../. autoPar
 
+
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out)
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) >> log.out 
+#$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out) # pipeline buries return code
+
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) | fold >$(@:.o=.out)
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) >> log.out
 rose_interp1_elem.C: ../autoPar interp1_elem.C
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
 rose_doall_vector.C: ../autoPar doall_vector.C
@@ -100,6 +106,11 @@ rose_Stress2.cc: ../autoPar Stress2.cc
 test_diff.out : ../autoPar $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:autopar:enable_diff -c $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
 
+# Too files are singled out since their output will be put in tutorial text
+doall_2.out: ../autoPar doall_2.c 
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/doall_2.c > doall_2.out
+inner_only.out: ../autoPar inner_only.c 
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/inner_only.c > inner_only.out
 check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)
@@ -109,12 +120,14 @@ check-local:
 	@$(MAKE) rose_doall_vector2.C > doall_vector2.out
 	@$(MAKE) rose_Stress2.cc > Stress2.out
 	@$(MAKE) test_diff.out
+	@$(MAKE) inner_only.out
+	@$(MAKE) doall_2.out
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C \
-	Stress2.cc clibfunc.annot SegDB.annot
+	Stress2.cc clibfunc.annot SegDB.annot doall_2.c inner_only.c
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc *.patch
