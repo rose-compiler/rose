@@ -20,7 +20,7 @@ latexFiles = \
    partialRedundancyElimination.tex codeGenerationFormatControl.tex copyHelp.tex \
    roseHPCT.tex sharedMemoryTraversals.tex distributedMemoryTraversals.tex bugSeeding.tex \
    modifiers.tex howToContribute.tex virtualCFG.tex binaryConstruction.tex reductionRecognition.tex \
-   haskell.tex
+   haskell.tex livenessAnalysis.tex
 
 # This is an evolving list, but these are a few of the required files
 generatedCodeExamples = \
