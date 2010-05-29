@@ -126,7 +126,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             for_stmt->set_loop_body(block_body);
             block_body->set_parent(for_stmt);
         }
@@ -138,7 +138,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             while_stmt->set_body(block_body);
             block_body->set_parent(while_stmt);
         }
@@ -150,7 +150,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             do_while_stmt->set_body(block_body);
             block_body->set_parent(do_while_stmt);
         }
