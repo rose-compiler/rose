@@ -642,7 +642,6 @@ namespace AutoParallelization
     // reduction variables with relaxed constrains (not liveOut) may be wrongfully recognized 
     // as firstprivate, so we recognize reduction variables before recognizing 
     // firstprivate and exclude reduction variables first.
-    // std::vector<SgInitializedName*> temp2;
     //set_difference(liveIns0.begin(), liveIns0.end(), reductionResults.begin(),reductionResults.end(),
     //inserter(temp2, temp2.begin()));
     // set_difference(temp2.begin(), temp2.end(), liveOuts.begin(),liveOuts.end(),
@@ -658,9 +657,10 @@ namespace AutoParallelization
     if(enable_debug)
       cout<<"Debug dump firstprivate:"<<endl;
       
-     set_difference(liveIns0.begin(), liveIns0.end(), liveOuts0.begin(),liveOuts0.end(),
-    inserter(temp2, temp2.begin()));
-     set_difference(temp2.begin(), temp2.end(), depVars.begin(), depVars.end(),
+    std::vector<SgInitializedName*> temp2;
+    set_difference(liveIns0.begin(), liveIns0.end(), liveOuts0.begin(),liveOuts0.end(),
+        inserter(temp2, temp2.begin()));
+    set_difference(temp2.begin(), temp2.end(), depVars.begin(), depVars.end(),
         inserter(firstprivateVars, firstprivateVars.begin()));
     for (std::vector<SgInitializedName*>::iterator iter = firstprivateVars.begin(); iter!= firstprivateVars.end();iter++) 
     {
