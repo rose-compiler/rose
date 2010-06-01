@@ -70,9 +70,11 @@ if ! OLD_COMPILER_VERSION
 endif
 endif
 
-#if ROSE_USE_SAT
-   SUBDIRS += SatSolver
-#endif
+# DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
+# be missing at configure time.
+# if ROSE_USE_SAT
+SUBDIRS += SatSolver
+# endif
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU
