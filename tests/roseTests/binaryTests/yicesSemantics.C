@@ -48,14 +48,13 @@ struct TestPolicy: public SymbolicSemantics::Policy {
         ssize_t nread = getline(&line, &line_alloc, yices_output);
         ROSE_ASSERT(nread>0);
         int status = pclose(yices_output);
-        ROSE_ASSERT(0==status);
 
         /* First line should be the word "sat" or "unsat" */
         if (!strcmp(line, "sat\n"))
             return true; /*registers potentially changed from initial conditions*/
         if (!strcmp(line, "unsat\n"))
             return false; /*registers could not have changed from initial conditions*/
-        std::cout <<"    *********************: " <<line;
+        std::cout <<"    exit status=" <<status <<" input=" <<line;
         execl("/bin/cat", "cat", "-n", "x.yices", NULL);
         abort(); /*probably not reached*/
     }
