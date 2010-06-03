@@ -142,6 +142,7 @@ sub merge_base {
 sub find_canonical_ref {
 	my @remotes = $repo->command("remote");
 	my %remotes;
+	my @canon_ref_candidates;
 	for my $remote (@remotes) {
 		my $url = $repo->config("remote.$remote.url");
 		$remotes{$remote} = $url;
@@ -156,8 +157,11 @@ Please ensure that your remotes are up to date (use "git fetch $remote").
 ERROR
 				exit 1;
 			}
-			return $canon_ref;
+			push @canon_ref_candidates, $canon_ref;
 		}
+	}
+	if (@canon_ref_candidates) {
+		return $repo->command_oneline("rev-list", @canon_ref_candidates);
 	}
 	print STDERR <<ERROR;
 Unable to find a remote tracking a canonical repository.  Please add a
