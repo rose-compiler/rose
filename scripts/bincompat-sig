@@ -148,7 +148,8 @@ sub find_canonical_ref {
 		my $branch = canonical_repo_branch($url);
 		if (defined $branch) {
 			my $canon_ref = "refs/remotes/$remote/$branch";
-			if (! -e $repo->repo_path . "/" . $canon_ref) {
+			my $canon_ref_commit = eval { $repo->command_oneline([ "rev-parse", $canon_ref ], STDERR => 0) };
+			unless (defined $canon_ref_commit) {
 				print STDERR <<ERROR;
 The remote tracking ref $canon_ref does not exist in this repository.
 Please ensure that your remotes are up to date (use "git fetch $remote").
