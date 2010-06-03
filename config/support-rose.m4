@@ -1343,6 +1343,125 @@ if test "x$enable_opencl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
+# *****************************************************************************
+# Option to control internal support of FadaLib (Fuzzy Array Dataflow Analysis)
+# *****************************************************************************
+
+# TV (05/25/2010): Check for FadaLib
+
+AC_ARG_WITH(
+	[fada],
+	AS_HELP_STRING([--with-fada@<:@=DIR@:>@], [use FadaLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
+		exit 1
+	else
+		has_fada_path="yes"
+		fada_path="$withval"
+	fi
+	],
+	[has_fada_path="no"]
+)
+
+# TV (05/25/2010): Check for PipLib
+
+AC_ARG_WITH(
+	[pip],
+	AS_HELP_STRING([--with-pip@<:@=DIR@:>@], [use PipLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
+		exit 1
+	else
+		has_pip_path="yes"
+		pip_path="$withval"
+	fi
+	],
+	[has_pip_path="no"]
+)
+
+# TV (05/25/2010): Optional support for FadaLib.
+
+AC_MSG_CHECKING([for enabled FadaLib support])
+AC_ARG_ENABLE(
+	fadalib,
+	AS_HELP_STRING(
+		[--enable-fadalib],
+		[Support for FadaLib (Fuzzy Array Dataflow Analysis)]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_FADALIB,
+	[test "x$enable_fadalib" = "xyes"])
+if test "x$enable_fadalib" = "xyes"; then
+	if test "x$has_fada_path" = "xyes"; then
+#		FADA_LDFLAGS=" $fada_path/lib/libfada.a"
+		FADA_LDFLAGS=" -L$fada_path/lib/ -lfada"
+		FADA_CPPFLAGS="-I$fada_path/include"
+	fi
+	if test "x$has_pip_path" = "xyes"; then
+#		PIP_LDFLAGS=" $pip_path/lib/libpiplib64.a"
+		PIP_LDFLAGS=" -L$pip_path/lib -lpiplib64"
+		PIP_CPPFLAGS="-I$pip_path/include"
+	fi
+	if test "x$has_fada_path" = "xyes" && test "x$has_pip_path" = "xyes"; then
+		AC_DEFINE([ROSE_USE_FADALIB], [], [Whether to use FadaLib (Fuzzy Array Dataflow Analysis) support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_FADALIB)
+AC_SUBST(FADA_LDFLAGS)
+AC_SUBST(FADA_CPPFLAGS)
+AC_SUBST(PIP_LDFLAGS)
+AC_SUBST(PIP_CPPFLAGS)
+
+# TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
+
+AC_ARG_WITH(
+	[ppl],
+	AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+		exit 1
+	else
+		has_ppl_path="yes"
+		ppl_path="$withval"
+	fi
+	],
+	[has_ppl_path="no"]
+)
+
+AC_ARG_ENABLE(
+	ppl,
+	AS_HELP_STRING(
+		[--enable-ppl],
+		[Support for Parma Polyhedral Library (PPL)]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_PPL,
+	[test "x$enable_fadalib" = "xyes"])
+if test "x$enable_fadalib" = "xyes"; then
+	if test "x$has_ppl_path" = "xyes"; then
+		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
+		PPL_CPPFLAGS="-I$ppl_path/include"
+		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_PPL)
+AC_SUBST(PPL_LDFLAGS)
+AC_SUBST(PPL_CPPFLAGS)
+
 # allow either user or developer level documentation using Doxygen
 ROSE_SUPPORT_DOXYGEN
 
@@ -2185,6 +2304,8 @@ projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
+projects/PolyhedralDependenceAnalysis/Makefile
+projects/PolyhedralDependenceAnalysis/tests/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
