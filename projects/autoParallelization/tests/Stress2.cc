@@ -14,7 +14,6 @@ typedef double real8 ;
 #if 1
 /************************************************************************
  * Function  : StressJaumRot
- * Author(s) : Ivan Otero
  * Purpose   : Increment the stress by an amount corresponding to
  *             the rotation terms in the Jaumann stress rate.
  ************************************************************************/
@@ -58,7 +57,6 @@ void StressJaumRot(real8* newSxx, real8* newSyy, real8* newSzz,
 
 /************************************************************************
  * Function  : StressIncrIsoElas
- * Author(s) : Ivan Otero
  * Purpose   : Increment the deviatoric stresses assuming
  *             isotropic elastic behavior.  Also update the
  *             corresponding value of  sqrt(3/2) * J2.
@@ -103,7 +101,6 @@ void StressIncrIsoElas(real8* newSxx, real8* newSyy, real8* newSzz,
 
 /************************************************************************
  * Function  : StressScale
- * Author(s) : Al Nichols
  * Purpose   : 
  ************************************************************************/
 void StressScale(real8* Sxx, real8* Syy, real8* Szz, 
@@ -147,7 +144,6 @@ void StressScale(real8* Sxx, real8* Syy, real8* Szz,
 
 /************************************************************************
  * Function  : StressCheckYieldJ2
- * Author(s) : Ivan Otero
  * Purpose   : Correct stress with radial return if current (trial) stress
  *             lies outside the current (mises) yield surface.
  ************************************************************************/
@@ -178,7 +174,6 @@ void StressCheckYieldJ2(real8* newSxx, real8* newSyy, real8* newSzz,
 
 /************************************************************************
  * Function  : StressCheckEpsFail
- * Author(s) : Ivan Otero
  * Purpose   : 
  ************************************************************************/
 void StressCheckEpsFail(real8* newSxx, real8* newSyy, real8* newSzz, 
@@ -251,7 +246,6 @@ void StressZero(real8* newSxx, real8* newSyy, real8* newSzz,
 #if 1
 /************************************************************************
  * Function  : StressStrainWork
- * Author(s) : Ivan Otero
  * Purpose   : 
  ************************************************************************/
 void StressStrainWork(real8* deltz, real8* delts,
@@ -293,7 +287,6 @@ void StressStrainWork(real8* deltz, real8* delts,
 
 /************************************************************************
  * Function  : StressFailureModel
- * Author(s) : Ivan Otero
  * Purpose   : 
  ************************************************************************/
 void StressFailureModel(real8 *newSxx, real8 *newSyy, real8 *newSzz, 
@@ -312,7 +305,6 @@ void StressFailureModel(real8 *newSxx, real8 *newSyy, real8 *newSzz,
 
 /************************************************************************
  * Function  : StressCalcShearRatio
- * Author(s) : Albert Nichols
  * Purpose   : 
  ************************************************************************/
 void StressCalcShearRatio(const real8* shearMod, real8* shearRatio,
@@ -332,7 +324,6 @@ void StressCalcShearRatio(const real8* shearMod, real8* shearRatio,
 
 /************************************************************************
  * Function  : StressStrainHeat
- * Author(s) : Albert Nichols
  * Purpose   : 
  ************************************************************************/
 void StressStrainHeat(const real8* deltz, real8* deltzh, real8* deltrh,
@@ -403,7 +394,6 @@ void StressStrainHeat(const real8* deltz, real8* deltzh, real8* deltrh,
 
 //************************************************************************
 ///
-/// @author Benjamin Liu
 /// @note The principal components of the total stress tensor are returned.
 /// @param pstress Principal stresses, from largest to smallest
 /// @param sx xx-component of deviatoric stress tensor
