@@ -1,0 +1,171 @@
+\documentclass[10pt]{book}
+% \usepackage{epsfig}
+% \usepackage{psfig}
+% \usepackage{pdftex}
+% \usepackage{graphicx}
+% \usepackage{amsmath}
+%\usepackage{html,color,makeidx}
+
+%\usepackage{amsmath}
+\usepackage{verbatim}
+%\usepackage{moreverb}
+%\usepackage{graphics}    
+% \usepackage{epsfig}    
+%\usepackage{multicol}
+%\usepackage{color}
+%\usepackage{subfigure}
+
+%\usepackage{multirow}
+
+% Fixme margin note package (turn on draft mode)
+% \usepackage[final]{fixme}
+
+\usepackage[draft]{fixme}
+
+\usepackage{listings}
+% \lstloadlanguages{APP}
+
+\usepackage{html}
+\usepackage{color}
+
+\usepackage{multicol}
+\usepackage{multirow}
+
+% \usepackage{psfig}
+\usepackage{graphicx}
+
+% \psfigdriver{dvips}
+
+\newcommand{\mySmallFontSize}{\scriptsize}
+\newcommand{\mySmallestFontSize}{\tiny}
+
+% New commands to represent the location of example files (used in latex documentation)
+% \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
+% \newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
+% \newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/AstRewriteExamples}
+
+% \newcommand{\DatabaseExampleDirectory}{/home/dquinlan/ROSE/NEW_ROSE/ExampleTranslator/DocumentedExamples/DataBaseExamples}
+
+\newcommand{\TranslatorExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
+\newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
+\newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/AstRewriteExamples}
+\newcommand{\TutorialExampleDirectory}{@top_srcdir@/tutorial}
+\newcommand{\TutorialExampleBuildDirectory}{@top_builddir@/tutorial}
+
+\newcommand{\DatabaseExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/dataBaseExamples}
+
+% Software version number
+\newcommand{\VersionNumber}{@VERSION@}
+
+
+% Latex trick to allow us to comment out large sections of documentation
+\newcommand{\commentout}[1]{}
+
+% change the title of the Fixme List
+\renewcommand{\listfixmename}{Things to Fix in Documentation of ROSE}
+
+\newcommand{\comm}[2]{\bigskip
+                      \begin{tabular}{|p{11cm}|}\hline
+                      \multicolumn{1}{|c|}{{\bf Comment by #1}}\\ \hline
+                      #2\\ \hline
+                      \end{tabular}
+                      \bigskip
+                     }
+
+\def\verbatimfile#1{\begingroup
+                    \@verbatim \frenchspacing \@vobeyspaces
+                    \input#1 \endgroup
+}
+
+
+
+\newcounter{lineno}
+
+% Taken from verbatimfiles.sty on web
+\makeatletter %JCL
+
+\def\verbatimlisting#1{\setcounter{lineno}{0}%
+    \begingroup \@verbatim \frenchspacing \@vobeyspaces \parindent=20pt
+    \everypar{\stepcounter{lineno}\llap{\thelineno\ \ }}\input#1
+    \endgroup
+}
+
+\makeatother %JCL
+
+% \endinput
+
+
+\addtolength{\oddsidemargin}{-1.0in}
+\addtolength{\evensidemargin}{-1.0in}
+\addtolength{\textwidth}{2.0in}
+%\addtolength{\textwidth}{1.0in}
+%\addtolength{\topmargin}{-0.5in}
+%\addtolength{\textheight}{1.5in}
+
+% \pagenumbering{roman}
+% \pagestyle{empty}
+% \setcounter{page}{0}
+% \thispagestyle{empty}
+
+\sloppy
+
+%---------------------------------------------------------------------
+% Begin Document
+%---------------------------------------------------------------------
+
+\begin{document}
+%\bibliographystyle{plain}
+%
+
+% This draft mode eliminates the figures (leaves boxes for where they would be)
+%\psdraft
+
+\title{ {\bf \textcolor{red}{ ROSE Exam }} \\
+Developing a Skill Set for ROSE
+}
+
+\author{ }
+
+% \textcolor{blue}{Compiler infrastructure for tools is a bit} \\
+% \textcolor{blue}{like a cannon, sometime more than you really need,} \\ 
+% \textcolor{blue}{but often all that it takes to solve the problem} \\
+
+% Replaced with relative links
+% \htmladdnormallink{ROSE User Manual (postscript version)}{file://@top_pwd@/docs/Rose/ROSE-@VERSION@-UserManual.ps}
+% \htmladdnormallink{ROSE Tutorial (postscript version)}{file://@top_pwd@/docs/Rose/Tutorial/ROSE-@VERSION@-Tutorial.ps}
+% \htmladdnormallink{ROSE User Manual (html version)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_UserManual/manual.html}
+% \htmladdnormallink{ROSE Tutorial (html version)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_Tutorial/tutorial.html} 
+% \htmladdnormallink{ROSE HTML Reference (html only)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html} 
+
+% This doesn't seem to work.  References to this label are not resolved.
+% \label{Rose:postscriptVersionOfUserManual}
+
+\begin{htmlonly}
+   \centering \includegraphics[width=3in]{../compass_rose.gif}
+\end{htmlonly}
+
+\maketitle
+
+\begin{htmlonly}
+   \centering \includegraphics[width=5in]{../compass_rose.gif}
+\end{htmlonly}
+
+\begin{center}
+\today
+\end{center}
+
+\input{rose_exam_introduction}
+
+% Part one of the ROSE Exam.
+\input{rose_exam_1}
+
+\input{rose_exam_traversals_1.tex}
+
+% }
+
+\end{document}
+
+
+
+
+
