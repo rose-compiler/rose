@@ -38,7 +38,7 @@ AC_DEFUN([ROSE_SUPPORT_YICES],[
     fi
 
     dnl Sanity check... If the user told us to use yices, then we must find either an executable or the library.
-    if test "x$YICES" = x -a "x$HAVE_LIBYICES" = x; then
+    if test "$ac_cv_use_yices" != no -a -z "$YICES" -a -z "$HAVE_LIBYICES"; then
 	AC_MSG_ERROR([found neither yices executable nor libyices.a for --with-yices])
     fi
 
