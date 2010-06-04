@@ -256,6 +256,12 @@ More functionality within ROSE is available if one has additional (freely availa
           mpicc is a compiler for MPI development. If ROSE is configures with MPI
           enabled, one can utilize features in ROSE that allow for distributed
           parallel AST traversals.
+   \item {\bf Haskell (ghc) Compiler}: \\
+          ROSE supports Haskell bindings so that ROSE tools can be written in Haskell.
+          ROSE does not parse of permit source-to-source analysis and transformation of
+          Haskell langauge.  So we support Haskell but only in this specific way.
+          See directions below for how to install the Haskell (ghc) compiler.
+
 \end{itemize}
 
 % \subsection{Installation and Testing }
@@ -761,6 +767,21 @@ into the file.  (Of course use some other secret word than mr45-j9z.)
 Then follow the directions to build the {\tt .mpd.conf} file.  The use of the 
 MPI configure option will allow additional code in ROSE to be compiled and 
 additional tests to be run.
+
+\subsection{Haskell Support}
+   Haskell (ghc) is available at {\it http://www.haskell.org/ghc/}.
+To install ghc (from the binary distribution) run "configure" and 
+"make install". Specifically (for example): \\
+{\tt configure --prefix=/home/dquinlan/local/Haskell/ghc-6.12.2\_install}
+and
+{\tt make install}.
+Then modify the path in your .bashrc to include: \\
+   {\tt /home/dquinlan/local/Haskell/ghc-6.12.2\_install/bin}
+
+That should be all that is required.  ROSE will detect
+the existence of "ghc" at "configure" time and setup
+what is required internally.
+
 
 
 \subsection{Testing ROSE}
