@@ -13,7 +13,7 @@ if test ! "$with_IntelPin" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_yices $with_IntelPin"
+echo "In ROSE SUPPORT MACRO: with_IntelPin $with_IntelPin"
 
 if test "$with_IntelPin" = no; then
    # If --with-IntelPin is not specified, then don't use it.

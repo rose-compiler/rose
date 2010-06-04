@@ -132,14 +132,25 @@ RYices::out_binary(std::ostream &o, const char *opname, const SymbolicSemantics:
     o <<")";
 }
 
-/** Output for if-then-else operator. */
+/** Output for if-then-else operator.  The condition must be cast from a 1-bit vector to a number, therefore, the input
+ *  \code
+ *      (OP_ITE COND S1 S2)
+ *  \endcode
+ *
+ *  will be rewritten as
+ *  \code
+ *      (ite (= COND 0b1) S1 S2)
+ *  \code
+ */
 void
 RYices::out_ite(std::ostream &o, const SymbolicSemantics::InternalNode *in)
 {
     assert(in && 3==in->size());
     assert(in->child(0)->get_nbits()==1);
-    o <<"(ite ";
-    for (size_t i=0; i<3; i++) {
+    o <<"(ite (=";
+    out_expr(o, in->child(0));
+    o <<" 0b1)";
+    for (size_t i=1; i<3; i++) {
         o <<" ";
         out_expr(o, in->child(i));
     }
@@ -215,26 +226,20 @@ RYices::out_sext(std::ostream &o, const SymbolicSemantics::InternalNode *in)
     o <<" " <<extend_by <<")";
 }
 
-/** Output for unsigned-extend.  Yices apparently doesn't have a single command to extend a vector by adding zeros to the msb
- *  side.  Therefore, we do it by using bv-sign-extend and concat. Therefore ROSE's (OP_UEXT NewSize Vector) is rewritten to
+/** Output for unsigned-extend.  ROSE's (OP_UEXT NewSize Vector) is rewritten to
  *
- *  (bv-concat
- *    (bv-sign-extend           ;; number of bits to add is NewSize-OldSize
- *      0b0                     ;; will be adding zero bits to msb side of Vector
- *      [NewSize-(OldSize+1)])
- *    Vector
- *  )
+ *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
 void
 RYices::out_uext(std::ostream &o, const SymbolicSemantics::InternalNode *in)
 {
     using namespace SymbolicSemantics;
     assert(in && 2==in->size());
-    assert(in->child(0)->is_known()); /*Yices bv-sign-extend needs a number for the second operand*/
-    assert(in->child(0)->get_value() > (in->child(1)->get_nbits()+1));
-    size_t extend_by = in->child(0)->get_value() - (in->child(1)->get_nbits()+1);
+    assert(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
+    assert(in->child(0)->get_value() > in->child(1)->get_nbits());
+    size_t extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
 
-    o <<"(bv-concat (bv-sign-extend 0b0 " <<extend_by <<") ";
+    o <<"(bv-concat (mk-bv " <<extend_by <<" 0) ";
     out_expr(o, in->child(1));
     o <<")";
 }
@@ -245,11 +250,11 @@ RYices::out_shift(std::ostream &o, const char *opname, const SymbolicSemantics::
 {
     assert(opname && *opname);
     assert(in && 2==in->size());
+    assert(in->child(0)->is_known()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
+
     o <<"(" <<opname <<(newbits?"1":"0") <<" ";
     out_expr(o, in->child(1));
-    o <<" ";
-    out_expr(o, in->child(0));
-    o <<")";
+    o <<" " <<in->child(0)->get_value() <<")";
 }
 
 /** Output for arithmetic right shift.  Yices doesn't have a sign-extending right shift, therefore we implement it in terms of
@@ -280,14 +285,23 @@ RYices::out_asr(std::ostream &o, const SymbolicSemantics::InternalNode *in)
     o <<" " <<shift_amount <<"))";
 }
 
-/** Output for zero comparison. */
+/** Output for zero comparison. Result should be a single bit:
+ *  \code
+ *      (OP_ZEROP X)
+ *  \endcode
+ *
+ *  becomes
+ *  \code
+ *      (ite (= (mk-bv [sizeof(X)] 0) [X]) 0b1 0b0)
+ *  \endcode
+ */
 void
 RYices::out_zerop(std::ostream &o, const SymbolicSemantics::InternalNode *in)
 {
     assert(in && 1==in->size());
-    o <<"(= ";
+    o <<"(ite (= (mk-bv " <<in->child(0)->get_nbits() <<" 0) ";
     out_expr(o, in->child(0));
-    o <<" (mk-bv " <<in->child(0)->get_nbits() <<" 0))";
+    o <<") 0b1 0b0)";
 }
 
 /** Output for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicSemantics define the result width to be the sum of the input
