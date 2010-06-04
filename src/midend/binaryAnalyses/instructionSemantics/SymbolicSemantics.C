@@ -12,12 +12,17 @@ to_str(Operator o)
         case OP_ADD: return "add";
         case OP_AND: return "and";
         case OP_ASR: return "asr";
+        case OP_BV_AND: return "bv-and";
+        case OP_BV_OR: return "bv-or";
+        case OP_BV_XOR: return "bv-xor";
         case OP_CONCAT: return "concat";
+        case OP_EQ: return "eq";
         case OP_EXTRACT: return "extract";
         case OP_INVERT: return "invert";
         case OP_ITE: return "ite";
         case OP_LSSB: return "lssb";
         case OP_MSSB: return "mssb";
+        case OP_NE: return "ne";
         case OP_NEGATE: return "negate";
         case OP_NOOP: return "nop";
         case OP_OR: return "or";
@@ -25,15 +30,16 @@ to_str(Operator o)
         case OP_ROR: return "ror";
         case OP_SDIV: return "sdiv";
         case OP_SEXTEND: return "sextend";
-        case OP_SHL: return "shl";
-        case OP_SHR: return "shr";
+        case OP_SHL0: return "shl0";
+        case OP_SHL1: return "shl1";
+        case OP_SHR0: return "shr0";
+        case OP_SHR1: return "shr1";
         case OP_SMOD: return "smod";
         case OP_SMUL: return "smul";
         case OP_UDIV: return "udiv";
         case OP_UEXTEND: return "uextend";
         case OP_UMOD: return "umod";
         case OP_UMUL: return "umul";
-        case OP_XOR: return "xor";
         case OP_ZEROP: return "zerop";
     }
     ROSE_ASSERT(!"list is not complete"); /*do not add as default since that would turn off compiler warnings*/
@@ -108,12 +114,19 @@ LeafNode::is_known() const
 }
 
 uint64_t
-LeafNode::value() const
+LeafNode::get_value() const
 {
     assert(known);
     return ival;
 }
 
+uint64_t
+LeafNode::get_name() const
+{
+    assert(!known);
+    return name;
+}
+    
 void
 LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
 {
@@ -207,5 +220,5 @@ State::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
         o <<"\n";
     }
 }
-
+    
 }
