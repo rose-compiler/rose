@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = ex.c
+EXTRA_DIST = ex.c cuda_traversal.hpp
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)

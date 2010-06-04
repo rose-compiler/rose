@@ -310,6 +310,7 @@ class CudaTraversal : public AstSimpleProcessing {
 		SgFunctionDeclaration * p_kernel;
 		SgFunctionDeclaration * p_caller;
 		SgFunctionCallExp * p_kernel_call_site;
+		
 };
 
 #endif /* __CUDA_TRAVERSAL_ */
