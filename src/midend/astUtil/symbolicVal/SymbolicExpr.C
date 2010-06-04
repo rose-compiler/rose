@@ -375,32 +375,34 @@ class OPVisitor  : public SymbolicVisitor
 {
   SymbolicVal v1, v2, result;
   OPApplicator& op;
-   void Default()
-   { result = TermVisitor(v1,op).ApplyOP(v2); }
+
+  void Default()
+  { result = TermVisitor(v1,op).ApplyOP(v2); }
+
   void VisitConst( const SymbolicConst &v)
-      { 
-          int valu, vald;
-          if (v.GetIntVal(valu, vald)) {
-            IntVisitor intOp(v1,valu, vald,op);
-            result = intOp.ApplyOP(v2); 
-          }
-          else
-             Default();
-      }
+  { 
+    int valu, vald;
+    if (v.GetIntVal(valu, vald)) {
+      IntVisitor intOp(v1,valu, vald,op);
+      result = intOp.ApplyOP(v2); 
+    }
+    else
+      Default();
+  }
 
   void VisitExpr( const  SymbolicExpr& v)
-      { if (op.GetOpType() == v.GetOpType())
-           result = CombineVisitor(v1, v,op).ApplyOP(v2);
-        else if (op.GetOpType() < v.GetOpType()) 
-           result = DistributeVisitor(v1,v,op).ApplyOP(v2);
-        else
-           Default();
-      }
- public:
+  { if (op.GetOpType() == v.GetOpType())
+    result = CombineVisitor(v1, v,op).ApplyOP(v2);
+    else if (op.GetOpType() < v.GetOpType()) 
+      result = DistributeVisitor(v1,v,op).ApplyOP(v2);
+    else
+      Default();
+  }
+  public:
   OPVisitor( OPApplicator& _op) : op(_op) {}
   SymbolicVal operator()( const SymbolicVal &_v1, const SymbolicVal &_v2)
-   { v2 = _v2; v1 = _v1;  result = SymbolicVal();
-     v1.Visit(this); return result; }
+  { v2 = _v2; v1 = _v1;  result = SymbolicVal();
+    v1.Visit(this); return result; }
 };
 
 
