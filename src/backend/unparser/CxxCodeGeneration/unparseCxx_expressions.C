@@ -147,6 +147,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case ASM_OP:                  { unparseAsmOp (expr, info); break; }
           case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
           case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
+          case KERN_CALL:               { unparseCudaKernelCall(expr, info); break; }
 
           default:
              {
@@ -4124,3 +4125,74 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
           unp->u_type->unparseType(objt, info);
         }
    }
+
+// TV (05/06/2010): CUDA, Kernel call unparse
+
+void Unparse_ExprStmt::unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info) {
+
+     SgCudaKernelCallExp* kernel_call = isSgCudaKernelCallExp(expr);
+     ROSE_ASSERT(kernel_call != NULL);
+     
+     unparseExpression(kernel_call->get_function(), info);
+     
+     SgCudaKernelExecConfig * exec_config = isSgCudaKernelExecConfig(kernel_call->get_exec_config());
+     ROSE_ASSERT(exec_config != NULL);
+     
+     curprint ("<<<");
+     
+     SgExpression * grid_exp = exec_config->get_grid();
+     ROSE_ASSERT(grid_exp != NULL);
+     SgConstructorInitializer * con_init = isSgConstructorInitializer(grid_exp);
+     if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
+          unparseOneElemConInit(con_init, info);
+     else
+          unparseExpression(grid_exp, info);
+     curprint (",");
+     
+     SgExpression * blocks_exp = exec_config->get_blocks();
+     ROSE_ASSERT(blocks_exp != NULL);
+     con_init = isSgConstructorInitializer(blocks_exp);
+     if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
+          unparseOneElemConInit(con_init, info);
+     else
+          unparseExpression(blocks_exp, info);
+     
+     SgExpression * shared_exp = exec_config->get_shared();
+     if (shared_exp != NULL) {
+          curprint (",");
+          con_init = isSgConstructorInitializer(shared_exp);
+          if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
+               unparseOneElemConInit(con_init, info);
+          else
+               unparseExpression(shared_exp, info);
+          
+          SgExpression * stream_exp = exec_config->get_stream();
+          if (stream_exp != NULL) {
+               curprint (",");
+               con_init = isSgConstructorInitializer(stream_exp);
+               if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
+                    unparseOneElemConInit(con_init, info);
+               else
+                    unparseExpression(stream_exp, info);
+          }
+     }
+          
+     curprint (">>>");
+     
+     curprint ( "(");
+     if ( kernel_call->get_args() != NULL) {
+          SgExpressionPtrList& list = kernel_call->get_args()->get_expressions();
+          SgExpressionPtrList::iterator arg = list.begin();
+          while (arg != list.end()) {
+               con_init = isSgConstructorInitializer(*arg);
+               if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
+                    unparseOneElemConInit(con_init, info);
+               else
+                    unparseExpression((*arg), info);
+               arg++;
+               if (arg != list.end())
+                    curprint ( ",");
+          }
+     }
+     curprint ( ")");
+}

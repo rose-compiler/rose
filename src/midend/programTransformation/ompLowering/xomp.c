@@ -1,9 +1,13 @@
 #include "rose_config.h"
 #include "libxomp.h"
 
-#ifdef GCC_GOMP_OPENMP_LIB_PATH 
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY 
+
 // GOMP header
 #include "libgomp_g.h"
+// GOMP has higher precedence if both runtime libraries' path are specified
+#undef USE_ROSE_OMNI_OPENMP_SUPPORT
+
 #else
 // Omni header
 #include "libompc.h"
@@ -16,6 +20,7 @@ extern bool omp_get_thread_num();
 #include <stdio.h> // for getenv()
 #include <assert.h>
 
+#if 0
 enum omp_rtl_enum {
   e_undefined,
   e_gomp,
@@ -55,11 +60,12 @@ static enum omp_rtl_enum get_rtl_type()
   return t;
 }
 
+#endif
 
 //Runtime library initialization routine
 void XOMP_init (int argc, char ** argv)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_init (argc, argv);
 #endif    
@@ -68,7 +74,7 @@ void XOMP_init (int argc, char ** argv)
 // Runtime library termination routine
 void XOMP_terminate (int exitcode)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_terminate (exitcode);
 #endif    
@@ -77,7 +83,7 @@ void XOMP_terminate (int exitcode)
 void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
 {
 
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_parallel_start (func, data, numThread);
   func(data);
 #else   
@@ -87,7 +93,7 @@ void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
 
 void XOMP_parallel_end (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_parallel_end ();
 #else   
 #endif    
@@ -97,7 +103,7 @@ void XOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
                        long arg_size, long arg_align, bool if_clause, unsigned untied)
 {
 
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 //// only gcc 4.4.x has task support
 // It is fine to have older gcc to compile this, just remember to link with gcc 4.4 and beyond
 //#if __GNUC__ > 4 || \
@@ -113,7 +119,7 @@ void XOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 }
 void XOMP_taskwait (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 //#if __GNUC__ > 4 || \
 //  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
 //                     (__GNUC_MINOR__ == 4 && \
@@ -129,7 +135,7 @@ void XOMP_taskwait (void)
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
    _ompc_static_sched_init (lower, upper, stride, chunk_size);
@@ -139,7 +145,7 @@ void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size)
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_size)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
    // used for the ordered clause
@@ -156,7 +162,7 @@ void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_s
 
 void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_dynamic_sched_init (lower, upper, stride, chunk_size);
 #endif    
@@ -165,7 +171,7 @@ void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size)
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_size)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
    // used for the ordered clause
@@ -181,7 +187,7 @@ void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_
 void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size)
 {
 
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_guided_sched_init (lower, upper, stride, chunk_size);
 #endif    
@@ -189,7 +195,7 @@ void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size)
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_size)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
    // used for the ordered clause
@@ -204,7 +210,7 @@ void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_s
 
 void XOMP_loop_runtime_init(int lower, int upper, int stride)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_runtime_sched_init (lower, upper, stride);
 #endif    
@@ -212,7 +218,7 @@ void XOMP_loop_runtime_init(int lower, int upper, int stride)
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
    // used for the ordered clause
@@ -226,7 +232,7 @@ void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride)
 // if (start), 
 bool XOMP_loop_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_static_start (start, end, incr, chunk_size, istart, iend);
 #else   
   return _ompc_static_sched_next(istart, iend);
@@ -235,7 +241,7 @@ bool XOMP_loop_static_start (long start, long end, long incr, long chunk_size,lo
 
 bool XOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_dynamic_start (start, end, incr, chunk_size, istart, iend);
 #else   
   return _ompc_dynamic_sched_next(istart, iend);
@@ -244,7 +250,7 @@ bool XOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size,l
 }
 bool XOMP_loop_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_guided_start (start, end, incr, chunk_size, istart, iend);
 #else   
   return _ompc_guided_sched_next(istart, iend);
@@ -253,7 +259,7 @@ bool XOMP_loop_guided_start (long start, long end, long incr, long chunk_size,lo
 }
 bool XOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_runtime_start (start, end, incr, istart, iend);
 #else   
   return _ompc_runtime_sched_next(istart, iend);
@@ -264,7 +270,7 @@ bool XOMP_loop_runtime_start (long start, long end, long incr, long *istart, lon
  // loop ordered start
 bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_ordered_static_start (start, end, incr, chunk_size, istart, iend);
 #else   
   return _ompc_static_sched_next (istart, iend); 
@@ -273,7 +279,7 @@ bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk
 
 bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_ordered_dynamic_start (start, end, incr, chunk_size, istart, iend);
 #else   
   return _ompc_dynamic_sched_next (istart, iend); 
@@ -282,7 +288,7 @@ bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chun
 
 bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_ordered_guided_start (start, end, incr, chunk_size, istart, iend);
 #else   
   return _ompc_guided_sched_next (istart, iend); 
@@ -291,7 +297,7 @@ bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk
 
 bool XOMP_loop_ordered_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_ordered_runtime_start (start, end, incr, istart, iend);
 #else   
 #endif    
@@ -301,7 +307,7 @@ bool XOMP_loop_ordered_runtime_start (long start, long end, long incr, long *ist
 // next
 bool XOMP_loop_static_next (long * l, long *u)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_static_next (l, u);
 #else   
    return _ompc_static_sched_next(l, u);
@@ -310,7 +316,7 @@ bool XOMP_loop_static_next (long * l, long *u)
 
 bool XOMP_loop_dynamic_next (long *l, long *u)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_dynamic_next (l, u);
 #else   
    return _ompc_dynamic_sched_next(l, u);
@@ -320,7 +326,7 @@ bool XOMP_loop_dynamic_next (long *l, long *u)
 
 bool XOMP_loop_guided_next (long *l, long *u)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_guided_next (l, u);
 #else   
    return _ompc_guided_sched_next(l, u);
@@ -330,7 +336,7 @@ bool XOMP_loop_guided_next (long *l, long *u)
 
 bool XOMP_loop_runtime_next (long *l, long *u)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_runtime_next (l, u);
 #else   
    return _ompc_runtime_sched_next(l, u);
@@ -340,7 +346,7 @@ bool XOMP_loop_runtime_next (long *l, long *u)
 
 bool XOMP_loop_ordered_static_next (long *a, long * b)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   bool rt = GOMP_loop_ordered_static_next (a, b);
 //  printf ("debug xomp: a =%d, b = %d \n",*a, *b);
   return rt;
@@ -351,7 +357,7 @@ bool XOMP_loop_ordered_static_next (long *a, long * b)
 
 bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
  return GOMP_loop_ordered_dynamic_next (a, b);
 #else   
   return _ompc_dynamic_sched_next (a,b);
@@ -359,7 +365,7 @@ bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
 }
 bool XOMP_loop_ordered_guided_next (long *a, long *b)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
  return GOMP_loop_ordered_guided_next (a, b);
 #else   
   return _ompc_guided_sched_next (a,b);
@@ -367,7 +373,7 @@ bool XOMP_loop_ordered_guided_next (long *a, long *b)
 }
 bool XOMP_loop_ordered_runtime_next (long *a, long *b)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
  return GOMP_loop_ordered_runtime_next (a, b);
 #else   
   return _ompc_runtime_sched_next (a,b);
@@ -376,7 +382,7 @@ bool XOMP_loop_ordered_runtime_next (long *a, long *b)
 
 void XOMP_loop_end (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_loop_end();
 #else   
 #endif    
@@ -384,7 +390,7 @@ void XOMP_loop_end (void)
 
 void XOMP_loop_end_nowait (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_loop_end_nowait();
 #else   
 #endif    
@@ -392,7 +398,7 @@ void XOMP_loop_end_nowait (void)
 
 void XOMP_barrier (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_barrier();
 #else   
   _ompc_barrier();
@@ -411,7 +417,7 @@ void XOMP_barrier (void)
 // be consistent with OMNI
 void XOMP_critical_start (void** data)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
     GOMP_critical_name_start(data);
 #else   
     _ompc_enter_critical(data);
@@ -420,7 +426,7 @@ void XOMP_critical_start (void** data)
 
 void XOMP_critical_end (void** data)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
     GOMP_critical_name_end(data);
 #else   
     _ompc_exit_critical(data);
@@ -429,7 +435,7 @@ void XOMP_critical_end (void** data)
 
 extern bool XOMP_single(void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_single_start();
 #else   
   _ompc_do_single();
@@ -438,7 +444,7 @@ extern bool XOMP_single(void)
 
 extern bool XOMP_master(void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return (omp_get_thread_num() ==0);
 #else   
   return _ompc_is_master ();
@@ -447,7 +453,7 @@ extern bool XOMP_master(void)
 
 void XOMP_atomic_start (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_atomic_start();
 #else   
   _ompc_atomic_lock();
@@ -457,7 +463,7 @@ void XOMP_atomic_start (void)
 void XOMP_atomic_end (void)
 {
 
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
    GOMP_atomic_end();
 #else   
   _ompc_atomic_unlock();
@@ -466,7 +472,7 @@ void XOMP_atomic_end (void)
 
 void XOMP_flush_all ()
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   __sync_synchronize();
 #else   
   _ompc_flush(0,0);
@@ -475,7 +481,7 @@ void XOMP_flush_all ()
 
 void XOMP_flush_one(char * startAddress, int nbyte)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   __sync_synchronize();
 #else   
   _ompc_flush(startAddress,nbyte);
@@ -484,7 +490,7 @@ void XOMP_flush_one(char * startAddress, int nbyte)
 
 void XOMP_ordered_start (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
    GOMP_ordered_start();
 #else   
 #endif
@@ -492,7 +498,7 @@ void XOMP_ordered_start (void)
 }
 void XOMP_ordered_end (void)
 {
-#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_ordered_end();
 #else   
 

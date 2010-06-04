@@ -145,6 +145,12 @@ Grammar::setUpExpressions ()
 
   // DQ (7/22/2006): Support for ASM operands that are contained in an SgAsmStmt
      NEW_TERMINAL_MACRO (AsmOp,                  "AsmOp",                      "ASM_OP" );
+  
+  // TV (04/22/2010): CUDA support
+     // sgCudaKernelExecConfig is the '<<< grid, block, shared_size, stream >>>' part of a kernel call
+     NEW_TERMINAL_MACRO (CudaKernelExecConfig,     "CudaKernelExecConfig",     "EXEC_CONF" );
+     // sgCudaKernelCallExp is a node for CUDA support, it catch kernel's call.
+     NEW_TERMINAL_MACRO (CudaKernelCallExp,        "CudaKernelCallExp",        "KERN_CALL" );
 
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
@@ -229,7 +235,8 @@ Grammar::setUpExpressions ()
           VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
           ColonShapeExp       | AsteriskShapeExp        | /*UseOnlyExpression |*/ ImpliedDo         | IOItemExpression         |
        /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
-          UnknownArrayOrFunctionReference               | PseudoDestructorRefExp,
+          UnknownArrayOrFunctionReference               | PseudoDestructorRefExp                    |
+          CudaKernelCallExp   | CudaKernelExecConfig, /* TV (04/22/2010): CUDA support */
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -686,6 +693,9 @@ Grammar::setUpExpressions ()
 #endif
 
 #endif
+
+     CudaKernelExecConfig.editSubstitute ( "PRECEDENCE_VALUE", " 0" );
+     CudaKernelCallExp.editSubstitute ( "PRECEDENCE_VALUE", " 0" );
 
 
      UnaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
@@ -1441,6 +1451,25 @@ Grammar::setUpExpressions ()
      DesignatedInitializer.setDataPrototype("SgExprListExp*", "designatorList", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+
+ // TV (04/22/2010): CUDA support
+ 
+     CudaKernelExecConfig.setFunctionPrototype ( "HEADER_CUDA_KERNEL_EXEC_CONFIG", "../Grammar/Expression.code" );
+     
+     CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "grid",   "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "blocks", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "shared", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "stream", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     CudaKernelCallExp.setFunctionPrototype ( "HEADER_CUDA_KERNEL_CALL_EXPRESSION", "../Grammar/Expression.code" );
+     
+     CudaKernelCallExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     CudaKernelCallExp.editSubstitute       ( "LIST_NAME", "arg" );
+  
+     CudaKernelCallExp.setDataPrototype ( "SgExpression*", "function", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     CudaKernelCallExp.setDataPrototype ( "SgExprListExp*", "args", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     CudaKernelCallExp.setDataPrototype ( "SgCudaKernelExecConfig*", "exec_config", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      // ***********************************************************************
      // ***********************************************************************
      //                       Source Code Declaration
@@ -1770,5 +1799,12 @@ Grammar::setUpExpressions ()
 
      PseudoDestructorRefExp.setFunctionSource ( "SOURCE_GET_TYPE_CLASS_DECL", "../Grammar/Expression.code" );
      PseudoDestructorRefExp.setFunctionSource ( "SOURCE_PSEUDO_DESTRUCTOR_REF", "../Grammar/Expression.code" );
+
+  // TV (04/22/2010): CUDA support
+
+     CudaKernelExecConfig.setFunctionSource ( "SOURCE_CUDA_KERNEL_EXEC_CONFIG","../Grammar/Expression.code" );
+     CudaKernelExecConfig.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     CudaKernelExecConfig.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     CudaKernelCallExp.setFunctionSource ( "SOURCE_CUDA_KERNEL_CALL_EXPRESSION","../Grammar/Expression.code" );
 
    }

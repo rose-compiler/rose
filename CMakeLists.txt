@@ -1,6 +1,7 @@
 # Please be careful about where to put your tests and variable settings
 # The order matters!!
 
+
 #----- put platform independent settings in this section-----------------
 cmake_minimum_required(VERSION 2.6)
 project (ROSE CXX C)
@@ -91,7 +92,8 @@ if (WIN32)
 # /Ob0 disable inline expansion
 # /MP multiple processors compilation
 # /0s small files
-set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR- /EHsc /wd4541" )
+set( CMAKE_BUILD_TYPE Release )
+set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR- /EHsc /wd4541 " )
 set( CMAKE_C_FLAGS "   /wd4541 " )
 else (WIN32)
 set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
