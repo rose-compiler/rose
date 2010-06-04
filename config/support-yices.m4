@@ -43,7 +43,7 @@ AC_DEFUN([ROSE_SUPPORT_YICES],[
     fi
 
     dnl C preprocessor defines
-    AC_DEFINE_UNQUOTED(YICES,         [$YICES],         [Full path name of the yices executable if found.])
+    AC_DEFINE_UNQUOTED(YICES,         ["$YICES"],       [Full path name of the yices executable if found.])
     AC_DEFINE_UNQUOTED(HAVE_LIBYICES, [$HAVE_LIBYICES], [Defined if libyices.a exists.])
 
     dnl Makefile substitutions

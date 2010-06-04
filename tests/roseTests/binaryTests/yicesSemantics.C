@@ -1,62 +1,22 @@
 #include "rose.h"
-#include "RYices.h"
+#include "SymbolicSemantics.h"
+#include "YicesSolver.h"
 
 struct TestPolicy: public SymbolicSemantics::Policy {
     /* Compare all registers to see if they are all the same. */
     bool register_diff(SgAsmInstruction *insn, const SymbolicSemantics::State &orig_state) {
         using namespace SymbolicSemantics;
 
-        InternalNode *assertion = new InternalNode(1, OP_OR);
-        std::ofstream yices_input("x.yices", std::ios::trunc);
-        yices_input <<";; " <<unparseInstructionWithAddress(insn) <<"\n";
+        /* Build the assertion expression */
+        InternalNode *assertion = new InternalNode(1, SymbolicExpr::OP_OR);
+        for (size_t i=0; i<State::n_gprs; i++)
+            assertion->add_child(new InternalNode(1, SymbolicExpr::OP_NE, orig_state.gpr[i].expr, get_state().gpr[i].expr));
+        for (size_t i=0; i<State::n_segregs; i++)
+            assertion->add_child(new InternalNode(1, SymbolicExpr::OP_NE, orig_state.segreg[i].expr, get_state().segreg[i].expr));
+        for (size_t i=0; i<State::n_flags; i++)
+            assertion->add_child(new InternalNode(1, SymbolicExpr::OP_NE, orig_state.flag[i].expr, get_state().flag[i].expr));
 
-        /* General purpose registers */
-        for (size_t i=0; i<State::n_gprs; i++) {
-            yices_input <<";;   " <<gprToString((X86GeneralPurposeRegister)i) <<"\n";
-            yices_input <<";;     orig = " <<orig_state.gpr[i] <<"\n";
-            yices_input <<";;     cur  = " <<get_state().gpr[i] <<"\n";
-            assertion->add_child(new InternalNode(1, OP_NE, orig_state.gpr[i].expr, get_state().gpr[i].expr));
-        }
-
-        /* Segment registers */
-        for (size_t i=0; i<State::n_segregs; i++) {
-            yices_input <<";;   " <<segregToString((X86SegmentRegister)i) <<"\n";
-            yices_input <<";;     orig = " <<orig_state.segreg[i] <<"\n";
-            yices_input <<";;     cur  = " <<get_state().segreg[i] <<"\n";
-            assertion->add_child(new InternalNode(1, OP_NE, orig_state.segreg[i].expr, get_state().segreg[i].expr));
-        }
-
-        /* Flags */
-        for (size_t i=0; i<State::n_flags; i++) {
-            yices_input <<";;   " <<flagToString((X86Flag)i) <<"\n";
-            yices_input <<";;     orig = " <<orig_state.flag[i] <<"\n";
-            yices_input <<";;     cur  = " <<get_state().flag[i] <<"\n";
-            assertion->add_child(new InternalNode(1, OP_NE, orig_state.flag[i].expr, get_state().flag[i].expr));
-        }
-
-        RYices::Definitions defns;
-        RYices::out(yices_input, assertion, &defns);
-        yices_input <<"\n(check)\n";
-        yices_input.close();
-
-        /* Run yices and get the first line of stdout. */
-        const char *yices_cmd = "/home/matzke/junk/SMT-solvers/yices-1.0.28/bin/yices -tc x.yices";
-        FILE *yices_output = popen(yices_cmd, "r");
-        ROSE_ASSERT(yices_output!=NULL);
-        static char *line=NULL;
-        static size_t line_alloc=0;
-        ssize_t nread = getline(&line, &line_alloc, yices_output);
-        ROSE_ASSERT(nread>0);
-        int status = pclose(yices_output);
-
-        /* First line should be the word "sat" or "unsat" */
-        if (!strcmp(line, "sat\n"))
-            return true; /*registers potentially changed from initial conditions*/
-        if (!strcmp(line, "unsat\n"))
-            return false; /*registers could not have changed from initial conditions*/
-        std::cout <<"    exit status=" <<status <<" input=" <<line;
-        execl("/bin/cat", "cat", "-n", "x.yices", NULL);
-        abort(); /*probably not reached*/
+        return YicesSolver().satisfiable(assertion);
     }
 };
 
