@@ -142,21 +142,26 @@ sub merge_base {
 sub find_canonical_ref {
 	my @remotes = $repo->command("remote");
 	my %remotes;
+	my @canon_ref_candidates;
 	for my $remote (@remotes) {
 		my $url = $repo->config("remote.$remote.url");
 		$remotes{$remote} = $url;
 		my $branch = canonical_repo_branch($url);
 		if (defined $branch) {
 			my $canon_ref = "refs/remotes/$remote/$branch";
-			if (! -e $repo->repo_path . "/" . $canon_ref) {
+			my $canon_ref_commit = eval { $repo->command_oneline([ "rev-parse", $canon_ref ], STDERR => 0) };
+			unless (defined $canon_ref_commit) {
 				print STDERR <<ERROR;
 The remote tracking ref $canon_ref does not exist in this repository.
 Please ensure that your remotes are up to date (use "git fetch $remote").
 ERROR
 				exit 1;
 			}
-			return $canon_ref;
+			push @canon_ref_candidates, $canon_ref;
 		}
+	}
+	if (@canon_ref_candidates) {
+		return $repo->command_oneline("rev-list", @canon_ref_candidates);
 	}
 	print STDERR <<ERROR;
 Unable to find a remote tracking a canonical repository.  Please add a
@@ -181,13 +186,26 @@ ERROR
 
 my $relevant_commit;
 
+if (@ARGV > 1 && $ARGV[0] eq "for") {
+	$relevant_commit = $ARGV[1];
+}
 # If the user cannot generate the binary content themselves, revert to the most specific commit
 # that is common to both the user's branch and the canonical repository
-if (needs_canonical_repo($repo->wc_path)) {
+elsif (needs_canonical_repo($repo->wc_path)) {
 	my $canon_ref = find_canonical_ref;
 	$relevant_commit = merge_base("HEAD", $canon_ref);
 } else {
 	$relevant_commit = "HEAD";
+}
+
+if (@ARGV > 0 && $ARGV[0] eq "diff") {
+	$repo->command_noisy("diff", @ARGV[1..$#ARGV], $relevant_commit);
+	exit 0;
+}
+
+if (@ARGV > 0 && $ARGV[0] eq "show-rev") {
+	print "$relevant_commit\n";
+	exit 0;
 }
 
 my $hash = Digest::MD5->new;

@@ -35,6 +35,7 @@ typedef uint64_t rose_addr_t; /* address and size (file and memory) */
 #include "rose_config.h"
 #include "virtualCFG.h" 
 #include "virtualBinCFG.h" 
+#include "staticCFG.h"
 
 
 #endif

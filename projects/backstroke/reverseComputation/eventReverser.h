@@ -30,6 +30,7 @@ class EventReverser
 
     string flag_stack_name_;
     string int_stack_name_;
+    string float_stack_name_;
     string counter_stack_name_;
 
     int counter_;
@@ -47,6 +48,7 @@ class EventReverser
         function_name_(func_decl_->get_name()), 
         flag_stack_name_(function_name_ + "_branch_flags"),
         int_stack_name_(function_name_ + "_int_values"),
+        float_stack_name_(function_name_ + "_float_values"),
         counter_stack_name_(function_name_ + "_loop_counters"),
         counter_(0),
         branch_mark_(-1)
@@ -82,6 +84,9 @@ class EventReverser
         decls.push_back(buildVariableDeclaration(flag_stack_name_, stack_type));
         decls.push_back(buildVariableDeclaration(int_stack_name_, stack_type));
         decls.push_back(buildVariableDeclaration(counter_stack_name_, stack_type));
+        
+        // Float type stack
+        decls.push_back(buildVariableDeclaration(float_stack_name_, stack_type));
 
         return decls;
     }
@@ -162,6 +167,25 @@ class EventReverser
         return NULL;
     }
 
+    // Check if there is another used variable with the same name in the current scope.
+    // If yes, alter the name until it does not conflict with other variable names.
+    void validateName(string& name, SgNode* root)
+    {
+        Rose_STL_Container<SgNode*> ref_list = NodeQuery::querySubTree(root, V_SgVarRefExp);
+        foreach (SgNode* node, ref_list)
+        {
+            if (SgVarRefExp* var_ref = isSgVarRefExp(node))
+            {
+                if (var_ref->get_symbol()->get_name() == name)
+                {
+                    name += "_";
+                    validateName(name, root);
+                    break;
+                }
+            }
+        }
+    }
+
 #if 0
     // Generate a name containing the function name and counter
     SgName generateVar(const string& name, SgType* type = buildIntType())
@@ -186,7 +210,8 @@ class EventReverser
     }
 #endif
 
-    SgExpression* pushStateVar(SgExpression* var)
+    // Push an integer into integer stack. Can be used to save states. 
+    SgExpression* pushIntVal(SgExpression* var)
     {
         return buildFunctionCallExp(
                 "push", 
@@ -196,18 +221,37 @@ class EventReverser
                     var)); 
     }
 
-    SgExpression* popStateVar()
+    // Pop the stack and get the value.
+    SgExpression* popIntVal()
     {
         return buildFunctionCallExp("pop", buildVoidType(), 
                 buildExprListExp(buildVarRefExp(int_stack_name_)));
     }
 
+    // Push a float into float stack. Can be used to save states. 
+    SgExpression* pushFloatVal(SgExpression* var)
+    {
+        return buildFunctionCallExp(
+                "push", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(float_stack_name_), 
+                    var)); 
+    }
+
+    // Pop the stack and get the value.
+    SgExpression* popFloatVal()
+    {
+        return buildFunctionCallExp("pop", buildVoidType(), 
+                buildExprListExp(buildVarRefExp(float_stack_name_)));
+    }
 
     // **********************************************************************************
     // The following functions are for logic and/or expression, conditional expression, 
     // and if statement
     // ==================================================================================
 
+    // For and/or & conditional expressions. The value pushed is either 0 or 1. 
     SgExpression* putBranchFlagExp(SgExpression* exp)
     {
         return buildFunctionCallExp(
