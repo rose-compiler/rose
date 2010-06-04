@@ -948,8 +948,13 @@ AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
 
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_YICES,test ! "$with_yices" = no)
+# Call supporting macro to internal Satisfiability (SAT) Solver
+ROSE_SUPPORT_SAT
+
+# Setup Automake conditional in --- (not yet ready for use)
+echo "with_sat = $with_sat"
+# exit 1
+AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
 
 # Call supporting macro to Intel Pin Dynamic Instrumentation
 ROSE_SUPPORT_INTEL_PIN
@@ -1817,7 +1822,6 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
-
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -2153,6 +2157,7 @@ projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
+projects/SatSolver/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2278,6 +2283,7 @@ docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
+docs/Rose/ROSE_Exam.tex
 docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex

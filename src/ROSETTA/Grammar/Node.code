@@ -2065,7 +2065,15 @@ HEADER_START
 
       /*! \brief Find the in edges of a CFG node -- internal version. */
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#if 0
+      /*! \brief Find the out edges of a CFG node from a static CFG -- internal version. */
+          virtual std::vector<SgDirectedGraphEdge*> cfgOutEdges(unsigned int index, StaticCFG::CFG* cfg)
+          { return cfg->getOutEdges(this, index); }
 
+      /*! \brief Find the in edges of a CFG node from a static CFG -- internal version. */
+          virtual std::vector<SgDirectedGraphEdge*> cfgInEdges(unsigned int index, StaticCFG::CFG* cfg)
+          { return cfg->getInEdges(this, index); }
+#endif
       /* */
 
        // DQ (1/31/2006): These must be built to be static access member functions (so they can't be built by ROSETTA).

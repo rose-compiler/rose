@@ -399,6 +399,12 @@ unsigned int SgForStatement::cfgFindChildIndex(SgNode* n)
                        }
                       else
                        {
+                         cerr<<"Error: SgForStatement::cfgFindChildIndex(): cannot find a matching child for SgNode n:";
+                         cerr<<n->class_name()<<endl;
+                         if (isSgLocatedNode(n))
+                         {
+                           isSgLocatedNode(n)->get_file_info()->display();
+                         }
                          ROSE_ASSERT (!"Bad child in for statement");
                        }
                   }

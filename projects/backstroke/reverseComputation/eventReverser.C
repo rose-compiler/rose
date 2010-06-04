@@ -109,6 +109,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
 {
     string counter_name = function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++);
+    validateName(counter_name, loop_stmt);
 
     SgStatement* counter_decl = buildVariableDeclaration(
             counter_name, 
@@ -126,7 +127,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             for_stmt->set_loop_body(block_body);
             block_body->set_parent(for_stmt);
         }
@@ -138,7 +139,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             while_stmt->set_body(block_body);
             block_body->set_parent(while_stmt);
         }
@@ -150,7 +151,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             do_while_stmt->set_body(block_body);
             block_body->set_parent(do_while_stmt);
         }
@@ -171,8 +172,8 @@ SgStatement* EventReverser::buildForLoop(SgStatement* loop_body)
 {
     // build a simple for loop like: for (int i = N; i > 0; --i)
 
-    // FIXME test the validation of this name.
     string counter_name = "i";
+    validateName(counter_name, loop_body);
 
     SgStatement* init = buildVariableDeclaration(
             counter_name, buildIntType(), buildAssignInitializer(popLoopCounter()));
@@ -190,8 +191,8 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
 {
     SgBasicBlock* body = func_decl_->get_definition()->get_body();
     // Function body is a basic block, which is a kind of statement.
-    SgStatement *fwd_body, *rev_body;
-    tie(fwd_body, rev_body) = instrumentAndReverseStatement(body);
+    SgStatement *fwd_body, *rvs_body;
+    tie(fwd_body, rvs_body) = instrumentAndReverseStatement(body);
 
     SgName func_name = func_decl_->get_name() + "_forward";
     SgFunctionDeclaration* fwd_func_decl = 
@@ -212,24 +213,24 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
 #endif
 
     func_name = func_decl_->get_name() + "_reverse";
-    SgFunctionDeclaration* rev_func_decl = 
+    SgFunctionDeclaration* rvs_func_decl = 
         buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
                 isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
-    SgFunctionDefinition* rev_func_def = rev_func_decl->get_definition();
-    rev_func_def->set_body(isSgBasicBlock(rev_body));
-    rev_body->set_parent(rev_func_def);
+    SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
+    rvs_func_def->set_body(isSgBasicBlock(rvs_body));
+    rvs_body->set_parent(rvs_func_def);
 
 #if 0
-    pushScopeStack(isSgScopeStatement(rev_func_decl->get_definition()->get_body()));
+    pushScopeStack(isSgScopeStatement(rvs_func_decl->get_definition()->get_body()));
 
-    SgStatementPtrList rev_stmt_list = isSgBasicBlock(rev_body)->get_statements();
-    foreach (SgStatement* stmt, rev_stmt_list)
+    SgStatementPtrList rvs_stmt_list = isSgBasicBlock(rvs_body)->get_statements();
+    foreach (SgStatement* stmt, rvs_stmt_list)
         appendStatement(stmt);
 
     popScopeStack();
 #endif
 
-    output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rev_func_decl));
+    output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
     return output_func_pairs_;
 }
 
@@ -432,16 +433,12 @@ int fixVariableReferences2(SgNode* root)
 }
 
 
-
-
-
-
-
-
-
+#if 1
 int main( int argc, char * argv[] )
 {
-    SgProject* project = frontend(argc,argv);
+    vector<string> args(argv, argv+argc);
+    bool klee = CommandlineProcessing::isOption(args, "-backstroke:", "klee", true);
+    SgProject* project = frontend(args);
     reverserTraversal reverser;
 
     SgGlobal *globalScope = getFirstGlobalScope(project);
@@ -451,6 +448,8 @@ int main( int argc, char * argv[] )
         "#include <time.h>\n"
         "#include <assert.h>\n"
         "#include <memory.h>\n";
+    if (klee)
+      includes += "#include <klee.h>\n";
     addTextForUnparser(globalScope,includes,AstUnparseAttribute::e_before); 
 
     pushScopeStack(isSgScopeStatement(globalScope));
@@ -471,7 +470,7 @@ int main( int argc, char * argv[] )
 
     appendStatement(buildInitializationFunction(reverser.model_type));
     appendStatement(buildCompareFunction(reverser.model_type));
-    appendStatement(buildMainFunction(reverser.var_inits, reverser.events_num));
+    appendStatement(buildMainFunction(reverser.var_inits, reverser.events_num, klee));
 
 
     popScopeStack();
@@ -486,4 +485,10 @@ int main( int argc, char * argv[] )
 #endif
     return backend(project);
 }
+#else
+#include "CFG.C"
+#endif
+
+
+
 
