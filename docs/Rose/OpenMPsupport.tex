@@ -644,12 +644,13 @@ only the end of the loop, respectively.
 %\fixme{Do captions need to end with periods?} No 
 \caption{OpenMP variable classification based on liveness analysis}
         \centering
-\begin{tabular}{||l||c|c||} \hline
-\textbf{Data-sharing attribute} & \textbf{Live-in} & \textbf{Live-out} \\ \hline
-{\bfseries\scriptsize{shared}} & Yes & Yes \\ \hline
-{\bfseries\scriptsize{private}} & No & No       \\ \hline
-{\bfseries\scriptsize{firstprivate}} & Yes & No \\ \hline
-{\bfseries\scriptsize{lastprivate}} & No & Yes  \\ \hline
+\begin{tabular}{||l||c|c|c||} \hline
+\textbf{Data-sharing attribute} & \textbf{Live-in} & \textbf{Live-out} &
+\textbf{Written} \\ \hline
+% {\bfseries\scriptsize{shared}} & Yes & Yes  & No\\ \hline
+{\bfseries\scriptsize{private}} & No & No & Yes       \\ \hline
+{\bfseries\scriptsize{firstprivate}} & Yes & No & No \\ \hline
+{\bfseries\scriptsize{lastprivate}} & No & Yes  & Yes  \\ \hline
 \end{tabular} 
 % LNCS requires table captions to put at the top!!!
 %\caption{Variable classification based on liveness analysis}
