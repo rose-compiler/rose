@@ -1974,7 +1974,12 @@ Grammar::setUpBinaryInstructions ()
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFunctionDeclaration.setDataPrototype("rose_addr_t", "entry_va", "= 0",  /*entry point virtual address*/
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-                                             
+     // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
+     // are addresses or references to data will have symbols in a function symbol table.  All other 
+     // values are assumed to be literals and will not have associated symbols.
+     AsmFunctionDeclaration.setDataPrototype("SgSymbolTable*", "symbol_table", "= NULL",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE,
+                                             NO_COPY_DATA);
 
 
 
@@ -2010,6 +2015,12 @@ Grammar::setUpBinaryInstructions ()
      AsmValueExpression.setDataPrototype("unsigned short", "bit_offset", "= 0",         /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmValueExpression.setDataPrototype("unsigned short", "bit_size", "= 0",           /*doxygen*/
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
+  // are addresses or references to data will have symbols in a function symbol table.  All other 
+  // values are assumed to be literals and will not have associated symbols.
+     AsmValueExpression.setDataPrototype("SgSymbol*", "symbol", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

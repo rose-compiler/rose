@@ -65,6 +65,7 @@ TESTCODE_CURRENTLY_FAILING = \
      test2006_136.c \
      test2009_06.c \
      test2009_20.c \
+     test2010_02.c \
      Yarden_client.c
 
 noinst_headers = test2006_134.h

@@ -8,6 +8,9 @@ c99loop.c \
 doall.c \
 doall_2.c \
 firstprivate.c \
+functionCall.c \
+ifAndFor.c \
+indirectIndex.c \
 inner_only.c \
 jacobi_seq.c \
 lastprivate.c \
@@ -17,6 +20,7 @@ outer_only.c \
 output_dep.c \
 output_dep2.c \
 output_dep3.c \
+plusAssign.c \
 plusplus.c \
 private.c \
 reduction.c \
@@ -25,6 +29,8 @@ reduction_fake.c \
 regression01.c \
 scalar_privatization.c \
 shared.c \
+slowInput.c \
+Stress-1.c \
 plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
@@ -32,10 +38,10 @@ true_l2.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 class_member.C \
-for-while-for.C \
 ifstmt.C \
 iterator2.C \
-iteratorloop.C
+iteratorloop.C \
+test20100223.C 
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
@@ -60,8 +66,8 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # Turned of the debug flag to have a cleaner screen output, Liao, 9/16/2009
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:autopar:enable_debug
-ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:enable_patch #-rose:autopar:enable_debug
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index #-rose:autopar:enable_debug
+ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index -rose:autopar:enable_patch #-rose:autopar:enable_debug
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -107,7 +113,7 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C \
-	Stress2.cc clibfunc.annot
+	Stress2.cc clibfunc.annot SegDB.annot
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc *.patch

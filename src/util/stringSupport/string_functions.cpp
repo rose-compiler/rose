@@ -2,6 +2,9 @@
 // the automake manual request that we use <> instead of ""
 #include <rose_config.h>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
 
@@ -473,6 +476,14 @@ StringUtility::numberToString ( double x )
      char numberString[128];
      sprintf (numberString,"%2.2f",x);
   // printf ("numberString = %s \n",numberString);
+     return string(numberString);
+   }
+
+string
+StringUtility::addrToString( uint64_t x )
+   {
+     char numberString[128];
+     sprintf(numberString, "0x%08"PRIx64, x);
      return string(numberString);
    }
 
