@@ -223,7 +223,8 @@ struct State {
     /** Tests registers of two states for equality. */
     bool equal_registers(const State&) const;
     
-    /** Discard stack memory below stack pointer */
+    /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
+     *  instruction if the policy's p_discard_popped_memory property is set. */
     void discard_popped_memory();
 
     friend std::ostream& operator<<(std::ostream &o, const State& state) {
@@ -331,6 +332,11 @@ public:
      *  available then the return value will be an empty string. */
     std::string SHA1() const;
 
+    /** Obtains the binary SHA1 hash of the difference between the current state and the original state.  The hash is returned
+     *  through the @p digest argument, which must be at least 20 bytes long.  Returns true if the hash can be computed. If
+     *  libgcrypt is not available then the first 20 bytes of @p digest will be set to zero and a false value is returned. */
+    bool SHA1(unsigned char *digest) const;
+
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
     ValueType<ToLen> signExtend(const ValueType<FromLen> &a) const {
@@ -354,10 +360,6 @@ public:
         return ValueType<ToLen>(a);
     }
     
-    /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
-     *  instruction if the p_discard_popped_memory property is set. */
-    void discard_popped_memory();
-
     /** Reads a value from memory in a way that always returns the same value provided there are not intervening writes that
      *  would clobber the value either directly or by aliasing.  Also, if appropriate, the value is added to the original
      *  memory state (thus changing the value at that address from an implicit named value to an explicit named value).
@@ -723,51 +725,69 @@ public:
     template <size_t Len>
     ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
         if (a==b) return a;
-        if (a.name || b.name) return ValueType<Len>();
-        return a.offset | b.offset;
+        if (!a.name && !b.name) return a.offset | b.offset;
+        if (!a.name && a.offset==IntegerOps::GenMask<uint64_t, Len>::value) return a;
+        if (!b.name && b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return b;
+        return ValueType<Len>();
     }
 
     /** Rotate bits to the left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::rotateLeft<Len>(a.offset, sa.offset);
+        if (!sa.name && 0==sa.offset % Len) return a;
+        return ValueType<Len>();
     }
 
     /** Rotate bits to the right. */
     template <size_t Len, size_t SALen>
     ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::rotateRight<Len>(a.offset, sa.offset);
+        if (!sa.name && 0==sa.offset % Len) return a;
+        return ValueType<Len>();
     }
 
     /** Returns arg shifted left. */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::shiftLeft<Len>(a.offset, sa.offset);
+        if (!sa.name) {
+            if (0==sa.offset) return a;
+            if (sa.offset>=Len) return 0;
+        }
+        return ValueType<Len>();
     }
 
     /** Returns arg shifted right logically (no sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::shiftRightLogical<Len>(a.offset, sa.offset);
+        if (!sa.name) {
+            if (0==sa.offset) return a;
+            if (sa.offset>=Len) return 0;
+        }
+        return ValueType<Len>();
     }
 
     /** Returns arg shifted right arithmetically (with sign bit). */
     template <size_t Len, size_t SALen>
     ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-        if (a.name || sa.name) return ValueType<Len>();
-        return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
+        if (!a.name && !sa.name) return IntegerOps::shiftRightArithmetic<Len>(a.offset, sa.offset);
+        if (!sa.name && 0==sa.offset) return a;
+        return ValueType<Len>();
     }
 
     /** Divides two signed values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1>();
-        if (0==b.offset) throw std::string("division by zero");
-        return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
+        if (!b.name) {
+            if (0==b.offset) throw std::string("division by zero");
+            if (!a.name) return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
+            if (1==b.offset) return a;
+            if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return negate(a);
+            /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
+        }
+        return ValueType<Len1>();
     }
 
     /** Calculates modulo with signed values. */
@@ -776,44 +796,83 @@ public:
         if (a.name || b.name) return ValueType<Len2>();
         if (0==b.offset) throw std::string("division by zero");
         return IntegerOps::signExtend<Len1, 64>(a.offset) % IntegerOps::signExtend<Len2, 64>(b.offset);
+        /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
     }
 
     /** Multiplies two signed values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1+Len2>();
-        return IntegerOps::signExtend<Len1, 64>(a.offset) * IntegerOps::signExtend<Len2, 64>(b.offset);
+        if (!a.name && !b.name)
+            return IntegerOps::signExtend<Len1, 64>(a.offset) * IntegerOps::signExtend<Len2, 64>(b.offset);
+        if (!b.name) {
+            if (0==b.offset) return 0;
+            if (1==b.offset) return signExtend<Len1, Len1+Len2>(a);
+            if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return signExtend<Len1, Len1+Len2>(negate(a));
+        }
+        if (!a.name) {
+            if (0==a.offset) return 0;
+            if (1==a.offset) return signExtend<Len2, Len1+Len2>(b);
+            if (a.offset==IntegerOps::GenMask<uint64_t,Len1>::value) return signExtend<Len2, Len1+Len2>(negate(b));
+        }
+        return ValueType<Len1+Len2>();
     }
 
     /** Divides two unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1>();
-        if (0==b.offset) throw std::string("division by zero");
-        return a.offset / b.offset;
+        if (!b.name) {
+            if (0==b.offset) throw std::string("division by zero");
+            if (!a.name) return a.offset / b.offset;
+            if (1==b.offset) return a;
+            /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
+        }
+        return ValueType<Len1>();
     }
 
     /** Calculates modulo with unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len2>();
-        if (0==b.offset) throw std::string("division by zero");
-        return a.offset % b.offset;
+        if (!b.name) {
+            if (0==b.offset) throw std::string("division by zero");
+            if (!a.name) return a.offset % b.offset;
+            /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
+        }
+        if (extendByMSB<Len1,64>(a)==extendByMSB<Len2,64>(b)) return b;
+        return ValueType<Len2>();
     }
 
     /** Multiply two unsigned values. */
     template <size_t Len1, size_t Len2>
     ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-        if (a.name || b.name) return ValueType<Len1+Len2>();
-        return a.offset * b.offset;
+        if (!a.name && !b.name)
+            return a.offset * b.offset;
+        if (!b.name) {
+            if (0==b.offset) return 0;
+            if (1==b.offset) return extendByMSB<Len1, Len1+Len2>(a);
+        }
+        if (!a.name) {
+            if (0==a.offset) return 0;
+            if (1==a.offset) return extendByMSB<Len2, Len1+Len2>(b);
+        }
+        return ValueType<Len1+Len2>();
     }
 
     /** Computes bit-wise XOR of two values. */
     template <size_t Len>
     ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-        if (a==b) return 0;
-        if (a.name || b.name) return ValueType<Len>();
-        return a.offset ^ b.offset;
+        if (!a.name && !b.name)
+            return a.offset ^ b.offset;
+        if (a==b)
+            return 0;
+        if (!b.name) {
+            if (0==b.offset) return a;
+            if (b.offset==IntegerOps::GenMask<uint64_t, Len>::value) return invert(a);
+        }
+        if (!a.name) {
+            if (0==a.offset) return b;
+            if (a.offset==IntegerOps::GenMask<uint64_t, Len>::value) return invert(b);
+        }
+        return ValueType<Len>();
     }
 };
     

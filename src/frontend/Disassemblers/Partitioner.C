@@ -187,7 +187,7 @@ Partitioner::update_analyses(BasicBlock *bb)
  *  that needs them and must be recomputed for each call.  However, they can be cached at either the block or function that's
  *  analyzed, so recomputing them here in this block is probably not too expensive.
  *
- *  Successor information is encapsulated in the BlockAnalysisCache object of the basic block. */
+ *  All successor addresses are translated according to the alias_for links in existing blocks via calls to canonic_block(). */
 Disassembler::AddressSet
 Partitioner::successors(BasicBlock *bb, bool *complete)
 {
