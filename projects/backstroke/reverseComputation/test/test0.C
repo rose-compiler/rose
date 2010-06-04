@@ -1,4 +1,4 @@
-#include <stdlib.h>
+//#include <stdlib.h>
 struct model ;
 
 struct model 
@@ -27,7 +27,37 @@ void event0(struct model *m)
   }
 }
 #endif
+void event1(struct model* m)
+{
+#if 0
+    int i = 10;
+    int j = 20;
+    m->i_ += i;
+    m->i_ -= j;
+#endif
+    //m->i_ += m->i_;
+#if 0
+    if (int i = 2)
+        m->i_ += i;
+#endif
+    int j = 5;
+    while (int i = j--)
+        m->i_ += i;
+    for (int i = 10; int j = i--;)
+        m->i_ ++;
+    
+#if 0
+    m->i_ -= m->i_;
+    m->i_ = -m->i_;
+    m->i_ = i - m->i_;
+    m->i_ = i + m->i_;
+    m->i_ = m->i_ - i;
+    m->i_ = m->i_ + i;
+#endif
+}
 
+
+#if 0
 void event0(struct model* m)
 {
 #if 0
@@ -44,13 +74,19 @@ void event0(struct model* m)
     do ++m->i_; while(m->i_++ < 100);
 	}
 #endif
-    ++m->f_;
-    while ((m->i_  = 5)> 0) m->i_ -= 10;
 
-#if 0
+    int i = 10;
+    m->i_ += i;
+    
+
+
+    ++m->f_;
+    while (m->i_  > 0) m->i_ -= 10;
+
+#if 1
     //m->i_ = 3;
-    int i = 1;
-    int j;
+    i = 1;
+    //int j;
 
     for(int i = 1, j = 0; j < 5; ++j)
     {
@@ -61,32 +97,38 @@ void event0(struct model* m)
 
 
 
+    for (int i = 0; i < 10; ++i)
     switch(i)
     {
-	int j;
+#if 1
+	int k;
+	//default:
 	case 0:
 	    ++m->i_;
 	    break;
+#if 0
 	    --m->i_;
 	    m->i_ *= 5;
+#endif
 	case 1:
-	    {
-	    m->i_ *= 3;
+	    m->i_ += 3;
 	    break;
-	    }
+#endif
 	case 2:
+	case 3:
+#if 0
 	    m->i_++ ;
-	    m->i_ *= 2;
+	    m->i_ += 2;
 	    break;
-	    
-	default:
-	    break;
+#endif	    
+	    //break;
     }
 #endif
 
 
 
 }
+#endif
 
 
 

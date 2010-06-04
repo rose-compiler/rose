@@ -127,7 +127,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             for_stmt->set_loop_body(block_body);
             block_body->set_parent(for_stmt);
         }
@@ -139,7 +139,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             while_stmt->set_body(block_body);
             block_body->set_parent(while_stmt);
         }
@@ -151,7 +151,7 @@ SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
             block_body->append_statement(incr_counter);
         else
         {
-            SgBasicBlock* block_body = buildBasicBlock(loop_body, incr_counter);
+            block_body = buildBasicBlock(loop_body, incr_counter);
             do_while_stmt->set_body(block_body);
             block_body->set_parent(do_while_stmt);
         }
@@ -248,6 +248,7 @@ class reverserTraversal : public AstSimpleProcessing
         vector<SgFunctionDeclaration*> all_funcs;
         vector<SgStatement*> var_decls;
         vector<SgStatement*> var_inits;
+        vector<string> event_names;
         SgClassType* model_type;
         int events_num;
 };
@@ -267,7 +268,7 @@ void reverserTraversal::visit(SgNode* n)
             return;
 
         //cout << func_name << endl;
-
+        event_names.push_back(func_name);
 
         EventReverser reverser(func_decl);
         vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
@@ -470,7 +471,7 @@ int main( int argc, char * argv[] )
 
     appendStatement(buildInitializationFunction(reverser.model_type));
     appendStatement(buildCompareFunction(reverser.model_type));
-    appendStatement(buildMainFunction(reverser.var_inits, reverser.events_num, klee));
+    appendStatement(buildMainFunction(reverser.var_inits, reverser.event_names, klee));
 
 
     popScopeStack();

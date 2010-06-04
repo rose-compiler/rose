@@ -1,4 +1,5 @@
 #include "eventReverser.h"
+#include "utilities.h"
 #include <boost/tuple/tuple.hpp>
 
 
@@ -35,8 +36,9 @@ bool isZero(SgValueExp* value)
 
 ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 {
+    SgExpression *operand = unary_op->get_operand();
     SgExpression *fwd_operand_exp, *rvs_operand_exp;
-    tie(fwd_operand_exp, rvs_operand_exp) = instrumentAndReverseExpression(unary_op->get_operand());
+    tie(fwd_operand_exp, rvs_operand_exp) = instrumentAndReverseExpression(operand);
 
     // The default forward version should instrument its operand.
     // For example, ++(a = 5), where a is a state variable.
@@ -47,10 +49,10 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 
     // if the left-hand side of the assign-op is the state
     // (note that only in this situation do we consider to reverse this expression)
-    if (SgExpression* model_var = isStateVar(unary_op->get_operand()))
+    //if (SgExpression* model_var = isStateVar(unary_op->get_operand()))
     {
         // Make sure the type is integer type.
-        if (model_var->get_type()->isIntegerType())
+        if (operand->get_type()->isIntegerType())
         {
             // ++ and -- can both be reversed without state saving
             if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(unary_op))
@@ -63,7 +65,7 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 
                 return ExpPair(
                         fwd_exp,
-                        buildMinusMinusOp(copyExpression(model_var), pp_mode));
+                        buildMinusMinusOp(copyExpression(operand), pp_mode));
             }
 
             if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(unary_op))
@@ -76,20 +78,20 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 
                 return ExpPair(
                         fwd_exp,
-                        buildPlusPlusOp(copyExpression(model_var), mm_mode));
+                        buildPlusPlusOp(copyExpression(operand), mm_mode));
             }
         }
         // If the type is float point type (float & double), we use state saving.
-        else if (model_var->get_type()->isFloatType())
+        else if (operand->get_type()->isFloatType())
         {
             if (isSgPlusPlusOp(unary_op) || isSgMinusMinusOp(unary_op))
             {
                 SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                        pushFloatVal(copyExpression(model_var)),
+                        pushFloatVal(copyExpression(operand)),
                         fwd_exp);
 
                 SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                        copyExpression(model_var),
+                        copyExpression(operand),
                         popFloatVal());
 
                 return ExpPair(fwd_exp, rvs_exp);
@@ -118,10 +120,12 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 
     // if the left-hand side of the assign-op is the state
     // (note that only in this situation do we consider to reverse this expression)
+#if 0
     if (SgExpression* model_var = isStateVar(bin_op->get_lhs_operand()))
+#endif
     {
         // The operators +=, -=, *=, <<=, ^= can be reversed without state saving,
-        // if the rhs operand is a constant value or state variable.
+        // ////////////// if the rhs operand is a constant value or state variable.
         // (*= and <<= may be optional, since the possibility of overflow).
         // Also note that the expression in the 'sizeof' operator will not be evaluated,
         // which we don't have to process. For example, i += sizeof(++i) equals to i += sizeof(i)
@@ -132,48 +136,68 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
         // Make sure the type is integer type.
         if (lhs_operand->get_type()->isIntegerType())
         {
+            // Now try to reverse this operation whatever the rhs operand is.
+#if 0
             if (isStateVar(rhs_operand) || 
                     isSgValueExp(rhs_operand) ||
                     isSgSizeOfOp(rhs_operand))
+#endif
             {
-                if (isSgPlusAssignOp(bin_op))
-                    return ExpPair(
-                            fwd_exp,
-                            buildBinaryExpression<SgMinusAssignOp>(
-                                copyExpression(model_var), 
-                                copyExpression(rhs_operand)));
+                // We must make sure that the rhs operand does not contain the lhs operand.
+                // Or else, this operation is not constructive. For example, a += a or a += a + b.
+                
+                bool constructive = true;
+                Rose_STL_Container<SgNode*> node_list = NodeQuery::querySubTree(rhs_operand, V_SgExpression);
+                foreach (SgNode* node, node_list)
+                {
+                    if (areSameVariable(isSgExpression(node), lhs_operand))
+                    {
+                        constructive = false;
+                        break;
+                    }
+                }
 
-                if (isSgMinusAssignOp(bin_op))
-                    return ExpPair(
-                            fwd_exp,
-                            buildBinaryExpression<SgPlusAssignOp>(
-                                copyExpression(model_var), 
-                                copyExpression(rhs_operand)));
+                if (constructive)
+                {
+                    if (isSgPlusAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgMinusAssignOp>(
+                                    copyExpression(lhs_operand), 
+                                    copyExpression(rhs_operand)));
+
+                    if (isSgMinusAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgPlusAssignOp>(
+                                    copyExpression(lhs_operand), 
+                                    copyExpression(rhs_operand)));
 
 #if 0
-                // we must ensure that the rhs operand of *= is not ZERO
-                if (isSgMultAssignOp(bin_op) && !isZero(isSgValueExp(rhs_operand)))
-                    // if the rhs_operand is a value and the value is not 0
-                    return ExpPair(
-                            fwd_exp,
-                            buildBinaryExpression<SgDivAssignOp>(
-                                copyExpression(model_var), 
-                                copyExpression(rhs_operand)));
+                    // we must ensure that the rhs operand of *= is not ZERO
+                    if (isSgMultAssignOp(bin_op) && !isZero(isSgValueExp(rhs_operand)))
+                        // if the rhs_operand is a value and the value is not 0
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgDivAssignOp>(
+                                    copyExpression(model_var), 
+                                    copyExpression(rhs_operand)));
 
-                if (isSgLshiftAssignOp(bin_op))
-                    return ExpPair(
-                            fwd_exp,
-                            buildBinaryExpression<SgRshiftAssignOp>(
-                                copyExpression(model_var), 
-                                copyExpression(rhs_operand)));
+                    if (isSgLshiftAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgRshiftAssignOp>(
+                                    copyExpression(model_var), 
+                                    copyExpression(rhs_operand)));
 #endif
 
-                if (isSgXorAssignOp(bin_op))
-                    return ExpPair(
-                            fwd_exp,
-                            buildBinaryExpression<SgXorAssignOp>(
-                                copyExpression(model_var), 
-                                copyExpression(rhs_operand)));
+                    if (isSgXorAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgXorAssignOp>(
+                                    copyExpression(lhs_operand), 
+                                    copyExpression(rhs_operand)));
+                }
             }
         }
 
@@ -212,11 +236,11 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                     copyExpression(state_var));
 #else
             fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    pushIntVal(copyExpression(model_var)),
+                    pushIntVal(copyExpression(lhs_operand)),
                     fwd_exp);
 
             SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                    copyExpression(model_var),
+                    copyExpression(lhs_operand),
                     popIntVal());
 #endif
             // If the rhs operand expression can be reversed, we have to deal with 
@@ -460,9 +484,26 @@ StmtPair EventReverser::processBasicBlock(SgBasicBlock* body)
     SgBasicBlock* fwd_body = buildBasicBlock();
     SgBasicBlock* rvs_body = buildBasicBlock();
 
-    vector<SgStatement*> rvs_forward_stmts;
+    vector<SgStatement*> fwd_stmts;
+    vector<SgStatement*> rvs_stmts;
+
     foreach(SgStatement* s, body->get_statements())
     {
+        // Put the declarations of local variables in the beginning of reverse 
+        // basic block and retrieve their values. Store values of all local 
+        // variables in the end of of forward basic block.
+        // Also refer to the function "processVariableDeclaration"
+
+        if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(s))
+        {
+            SgStatement *store_var, *decl_var;
+            tie(store_var, decl_var) = pushAndPopLocalVar(var_decl);
+
+            fwd_stmts.push_back(store_var);
+            rvs_stmts.push_back(decl_var);
+        }
+
+
         SgStatement *fwd_stmt, *rvs_stmt;
         tie(fwd_stmt, rvs_stmt) = instrumentAndReverseStatement(s);
         if (fwd_stmt)
@@ -472,23 +513,42 @@ StmtPair EventReverser::processBasicBlock(SgBasicBlock* body)
                 isSgBreakStmt(rvs_stmt) ||
                 isSgContinueStmt(rvs_stmt))
         {
-            rvs_body->append_statement(rvs_stmt);
+            // It's is unclear whether these special statements 
+            // should be added in the reverse version. In switch
+            // statement, 'break' should be retained. 
+            //rvs_body->append_statement(rvs_stmt);
+            delete rvs_stmt;
             break;
         }
-        //else if (isSgVariableDeclaration(rvs_stmt))
-        //rvs_forward_stmts.push_back(rvs_stmt);
         else if (rvs_stmt)
             rvs_body->prepend_statement(rvs_stmt);
     }
-    //for (vector<SgStatement*>::reverse_iterator it = rvs_forward_stmts.rbegin();
-    //it != rvs_forward_stmts.rend(); ++it)
-    //    rvs_body->prepend_statement(*it);
+
+    foreach (SgStatement* stmt, fwd_stmts)
+        fwd_body->append_statement(stmt);
+
+#if 0
+    for (vector<SgStatement*>::reverse_iterator it = rvs_stmts.rbegin();
+            it != rvs_stmts.rend(); ++it)
+        rvs_body->prepend_statement(*it);
+#endif
+    foreach (SgStatement* stmt, rvs_stmts)
+        rvs_body->prepend_statement(stmt);
+
 
     return StmtPair(fwd_body, rvs_body);
 }
 
 StmtPair EventReverser::processVariableDeclaration(SgVariableDeclaration* var_decl)
 {
+    // A local variable declaration may have side effect, like 
+    //    int i = ++m->i;
+    // Its reverse statement actually has two parts: declaration and reverse statement of 
+    // its initialization part. The first part should always be put in the beginning of a 
+    // basic block, but the second part should be positioned in reverse order just like
+    // other reverse statements. We just return the second part here, and generate the
+    // first part in the basic block processor. 
+
     // I found that the number of variables of each variable declaration is always 1,
     // since Rose will seperate multi-vars into several declarations.
     // For example,  
@@ -498,6 +558,7 @@ StmtPair EventReverser::processVariableDeclaration(SgVariableDeclaration* var_de
     //           int j;
     //           int k;
     // Therefore, currently we just use the first element of its variables returned below.
+
     const SgInitializedNamePtrList& names = var_decl->get_variables();
     ROSE_ASSERT(names.size() == 1);
 
@@ -508,6 +569,7 @@ StmtPair EventReverser::processVariableDeclaration(SgVariableDeclaration* var_de
     // If not defined
     if (!init)
         return StmtPair(copyStatement(var_decl), NULL);
+        //return StmtPair(copyStatement(var_decl), copyStatement(var_decl));
 
     SgExpression *fwd_exp, *rvs_exp;
     tie(fwd_exp, rvs_exp) = instrumentAndReverseExpression(init->get_operand());
@@ -517,8 +579,15 @@ StmtPair EventReverser::processVariableDeclaration(SgVariableDeclaration* var_de
             init_name->get_name(),
             init_name->get_type(),
             buildAssignInitializer(fwd_exp));
+#if 1
     if (rvs_exp)
         rvs_stmt = buildExprStatement(rvs_exp);
+#else
+    rvs_stmt = buildVariableDeclaration(
+            init_name->get_name(),
+            init_name->get_type(),
+            rvs_exp ? buildAssignInitializer(rvs_exp) : NULL);
+#endif
     return StmtPair(fwd_stmt, rvs_stmt);
 }
 
@@ -530,7 +599,7 @@ StmtPair EventReverser::processIfStmt(SgIfStmt* if_stmt)
     // Currently we use a stack to store those flags in case that the if statement is 
     // inside a loop. The stack is written in C. For "if()else if()... else",
     // the current strategy does not make the optimal space use.
-    // FIXME: Note that sometimes we don't have to use flags. for example, 
+    // FIXME: Note that sometimes we don't have to use flags. For example, 
     // if the condition is decided by model state.
 
     SgStatement *fwd_true_body, *fwd_false_body;
@@ -542,37 +611,61 @@ StmtPair EventReverser::processIfStmt(SgIfStmt* if_stmt)
     tie(fwd_true_body, rvs_true_body) = instrumentAndReverseStatement(true_body);
     tie(fwd_false_body, rvs_false_body) = instrumentAndReverseStatement(false_body);
 
+    SgBasicBlock* fwd_true_block_body =  isSgBasicBlock(fwd_true_body);
+    SgBasicBlock* fwd_false_block_body = isSgBasicBlock(fwd_false_body);
+
     // putBranchFlag is used to store which branch is chosen
-    if (SgBasicBlock* body = isSgBasicBlock(fwd_true_body))
-        body->append_statement(putBranchFlagStmt(true));
-    else if (fwd_true_body)
-        fwd_true_body = buildBasicBlock(
-                fwd_true_body, 
-                putBranchFlagStmt(true));
+    if (fwd_true_block_body == NULL)
+        fwd_true_block_body = buildBasicBlock(fwd_true_body);
+    fwd_true_block_body->append_statement(putBranchFlagStmt(true));
 
-    if (SgBasicBlock* body = isSgBasicBlock(fwd_false_body))
-        body->append_statement(putBranchFlagStmt(false));
-    else if (fwd_false_body)
-        fwd_false_body = buildBasicBlock(
-                fwd_false_body, 
-                putBranchFlagStmt(false));
-    else
-        fwd_false_body = putBranchFlagStmt(false);
+    if (fwd_false_block_body == NULL)
+        fwd_false_block_body = buildBasicBlock(fwd_false_body);
+    fwd_false_block_body->append_statement(putBranchFlagStmt(false));
 
-    SgStatement* cond = if_stmt->get_conditional();
 
-    SgStatement *fwd_cond_exp, *rvs_post_exp;
     SgExpression* rvs_cond_exp = checkBranchFlagExp();
 
-    // do not switch the position of the following statement to the one above;
-    // make sure the current flag is used before generating new statement
-    tie(fwd_cond_exp, rvs_post_exp) = instrumentAndReverseStatement(cond);
+    // Do not switch the position of the following two statements to the one above;
+    // make sure the current flag is used before generating new statement.
+    SgStatement* cond = if_stmt->get_conditional();
+    SgStatement *fwd_cond_stmt, *rvs_post_stmt;
+    tie(fwd_cond_stmt, rvs_post_stmt) = instrumentAndReverseStatement(cond);
+
+
+    // In C++ standard, the condition part of a selection statement can have the following
+    // two forms:
+    //     expression
+    //     type-specifier-seq declarator = assignment-expression
+    // Sometimes we want to use the local variable declared in condition, when we have to store
+    // and retrieve its value in forward and reverse if statement.
+    
+    if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(cond))
+    {
+        SgStatement *store_var, *decl_var;
+        tie(store_var, decl_var) = pushAndPopLocalVar(var_decl);
+
+        fwd_true_block_body->append_statement(store_var);
+        fwd_false_block_body->append_statement(copyStatement(store_var));
+
+        if (SgBasicBlock* block = isSgBasicBlock(rvs_true_body))
+            block->prepend_statement(decl_var);
+        else
+            rvs_true_body = buildBasicBlock(decl_var, rvs_true_body);
+
+        decl_var = copyStatement(decl_var);
+
+        if (SgBasicBlock* block = isSgBasicBlock(rvs_false_body))
+            block->prepend_statement(decl_var);
+        else
+            rvs_false_body = buildBasicBlock(decl_var, rvs_false_body);
+    }
 
     return StmtPair(
-            buildIfStmt(fwd_cond_exp, fwd_true_body, fwd_false_body),
+            buildIfStmt(fwd_cond_stmt, fwd_true_block_body, fwd_false_block_body),
             buildBasicBlock(
                 buildIfStmt(rvs_cond_exp, rvs_true_body, rvs_false_body),
-                rvs_post_exp));
+                rvs_post_stmt));
 }
 
 StmtPair EventReverser::processForInitStatement(SgForInitStatement* for_init_stmt)
@@ -686,12 +779,38 @@ StmtPair EventReverser::processWhileStmt(SgWhileStmt* while_stmt)
     tie(fwd_cond, rvs_cond) = instrumentAndReverseStatement(cond);
     tie(fwd_body, rvs_body) = instrumentAndReverseStatement(body);
 
+
+    // In C++ standard, the condition part of a loop statement can have the following
+    // two forms:
+    //     expression
+    //     type-specifier-seq declarator = assignment-expression
+    // Sometimes we want to use the local variable declared in condition, when we have to store
+    // and retrieve its value in forward and reverse if statement.
+
+    if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(cond))
+    {
+        SgStatement *store_var, *decl_var;
+        tie(store_var, decl_var) = pushAndPopLocalVar(var_decl);
+
+        if (SgBasicBlock* block = isSgBasicBlock(fwd_body))
+            block->append_statement(store_var);
+        else
+            fwd_body = buildBasicBlock(fwd_body, store_var);
+
+        if (SgBasicBlock* block = isSgBasicBlock(rvs_body))
+            block->prepend_statement(decl_var);
+        else
+            rvs_body = buildBasicBlock(decl_var, rvs_body);
+    }
+
     SgStatement* fwd_stmt = buildWhileStmt(fwd_cond, fwd_body);
     // Add the loop counter related statements (counter declaration, increase, and store)
     // to a forward while statement.
     fwd_stmt = assembleLoopCounter(fwd_stmt);
 
-    if (rvs_cond != NULL)
+    //ROSE_ASSERT(isSgBasicBlock(isfwd_stmt
+
+    if (rvs_cond)
     {
         if (SgBasicBlock* body = isSgBasicBlock(rvs_body))
             body->append_statement(rvs_cond);
@@ -699,7 +818,7 @@ StmtPair EventReverser::processWhileStmt(SgWhileStmt* while_stmt)
             rvs_body = buildBasicBlock(rvs_body, rvs_cond);
     }
 
-    SgStatement* rvs_stmt = buildBasicBlock(buildForLoop(rvs_body), rvs_cond);
+    SgStatement* rvs_stmt = buildBasicBlock(rvs_cond, buildForLoop(rvs_body));
 
     return StmtPair(fwd_stmt, rvs_stmt);
 }
@@ -728,90 +847,186 @@ StmtPair EventReverser::processDoWhileStmt(SgDoWhileStmt* do_while_stmt)
             rvs_body = buildBasicBlock(rvs_cond, rvs_body);
     }
 
-    SgStatement* rvs_stmt = buildBasicBlock(buildForLoop(rvs_body), rvs_cond);
+    SgStatement* rvs_stmt = buildBasicBlock(rvs_cond, buildForLoop(rvs_body));
 
     return StmtPair(fwd_stmt, rvs_stmt);
+}
+
+// Return whether a basic block contains a break statement. 
+// Just for 'processSwitchStatement' function below.
+bool hasBreakStmt(SgBasicBlock* body)
+{
+    ROSE_ASSERT(body);
+
+    if (body->get_statements().empty())
+        return false;
+
+    // Recursively retrieve the last SgBasicBlock statement in case of {...{...{...}}}.
+    SgStatement* stmt = body->get_statements().back();
+    SgBasicBlock* another_body = isSgBasicBlock(stmt);
+    while (another_body)
+    {
+        body = another_body;
+        another_body = isSgBasicBlock(another_body->get_statements().back());
+    }
+    return isSgBreakStmt(body->get_statements().back());
 }
 
 StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
 {
     SgStatement* item_selector = switch_stmt->get_item_selector();
     SgBasicBlock* body = isSgBasicBlock(switch_stmt->get_body());
+
+    SgBasicBlock *fwd_body, *rvs_body;
+    SgExpression *fwd_item_selector_exp, *rvs_item_selector_exp;
+
     const SgStatementPtrList& stmts = body->get_statements();
     SgStatementPtrList fwd_stmts, rvs_stmts;
 
-    // this part should be refined in case that there is no 'break' in one case.
+    // Sometimes we cannot process a case option instantly because of lacking break statement.
+    // Then we put those corresponding reverse statements in the following wait list and process 
+    // them when we meet a break or the end of switch statement.
+    vector<pair<SgCaseOptionStmt*, SgStatement*> > case_wait_list;
+
+    // Assume that after dead code elimination, if there is one 'break' in a case option
+    // statement, it must be the last statement.
     foreach (SgStatement* s, stmts)
     {
+        SgBasicBlock* body = NULL;
+
         if (SgCaseOptionStmt* case_opt_stmt = isSgCaseOptionStmt(s))
         {
-            SgBasicBlock* case_body = isSgBasicBlock(case_opt_stmt->get_body());
-            if (case_body == NULL)
-                case_body = buildBasicBlock();
+            body = isSgBasicBlock(case_opt_stmt->get_body());
+            ROSE_ASSERT(body);
 
-            SgStatement *fwd_case_body, *rvs_case_body;
-            tie(fwd_case_body, rvs_case_body) = instrumentAndReverseStatement(case_body);
+            SgStatement *fwd_body, *rvs_body;
+            tie(fwd_body, rvs_body) = instrumentAndReverseStatement(body);
 
             fwd_stmts.push_back(buildCaseOptionStmt(
                         case_opt_stmt->get_key(),
-                        fwd_case_body));
-            rvs_stmts.push_back(buildCaseOptionStmt(
-                        case_opt_stmt->get_key(),
-                        rvs_case_body));
+                        fwd_body));
+            case_wait_list.push_back(make_pair(case_opt_stmt, rvs_body));
         }
 
-        if (SgDefaultOptionStmt* default_opt_stmt = isSgDefaultOptionStmt(s))
+        else if (SgDefaultOptionStmt* default_opt_stmt = isSgDefaultOptionStmt(s))
         { 
-            SgBasicBlock* default_body = isSgBasicBlock(default_opt_stmt->get_body());
-            if (default_body != NULL)
-            {
-                StmtPair body_pair = instrumentAndReverseStatement(default_body);
-                SgBasicBlock* fwd_default_body = isSgBasicBlock(body_pair.first);
-                SgBasicBlock* rvs_default_body = isSgBasicBlock(body_pair.second);
+            body = isSgBasicBlock(default_opt_stmt->get_body());
+            ROSE_ASSERT(body);
 
-                //fwd_default_body->prepend_statement(putBranchFlagStmt());
-                fwd_stmts.push_back(buildDefaultOptionStmt(fwd_default_body));
-                rvs_stmts.push_back(buildDefaultOptionStmt(rvs_default_body));
+            SgStatement *fwd_body, *rvs_body;
+            tie(fwd_body, rvs_body) = instrumentAndReverseStatement(body);
+
+            fwd_stmts.push_back(buildDefaultOptionStmt(fwd_body));
+            // Use NULL to express a default statement.
+            case_wait_list.push_back(make_pair((SgCaseOptionStmt*)NULL, rvs_body));
+        }
+
+        // Declarations may appear in switch statement.
+        if (body == NULL) continue;
+
+        if (!hasBreakStmt(body))
+        {
+            // If the last case or default statament does not contain a break, we have to process wait list.
+            if (s != stmts.back())
+                continue;
+        }
+
+        // For those case options which don't have a break, we take care of them specially.
+        // We have to go down until a break found or the end of the switch statement, then 
+        // stack all reverse statements. 
+        if (!case_wait_list.empty())
+        {
+            SgBasicBlock* rvs_body = buildBasicBlock();
+            for (int i = 0; i < case_wait_list.size(); ++i)
+            {
+                SgCaseOptionStmt* case_opt_stmt;
+                SgStatement* prev_rvs_body;
+                tie(case_opt_stmt, prev_rvs_body) = case_wait_list[case_wait_list.size() - i - 1];
+
+                // For the case option which is empty, we group it to the next non-empty one
+                // to avoid code duplication.
+                if ((i != 0) && isSgBasicBlock(prev_rvs_body)->get_statements().empty())
+                {
+                    ROSE_ASSERT(!rvs_stmts.empty());
+                    rvs_stmts.insert(
+                            rvs_stmts.end() - 1, 
+                            buildCaseOptionStmt(
+                                case_opt_stmt->get_key(),
+                                NULL));
+                    continue;
+                }
+
+                rvs_body->append_statement(prev_rvs_body);
+
+                SgBasicBlock* rvs_body_copy = isSgBasicBlock(copyStatement(rvs_body));
+                rvs_body_copy->append_statement(buildBreakStmt());
+
+                if (case_opt_stmt)
+                    rvs_stmts.push_back(buildCaseOptionStmt(
+                                case_opt_stmt->get_key(),
+                                rvs_body_copy));
+                else
+                    rvs_stmts.push_back(buildDefaultOptionStmt(rvs_body_copy));
             }
+
+            // Clear unused nodes.
+            for (int i = 0; i < case_wait_list.size(); ++i)
+                delete case_wait_list[i].second;
+            delete rvs_body;
+            case_wait_list.clear();
         }
     }
 
-    SgBasicBlock* fwd_body = buildBasicBlock();
+    fwd_body = buildBasicBlock();
     foreach(SgStatement* s, fwd_stmts)
         fwd_body->append_statement(s);
 
-    SgBasicBlock* rvs_body = buildBasicBlock();
+    rvs_body = buildBasicBlock();
     foreach(SgStatement* s, rvs_stmts)
         rvs_body->append_statement(s); 
 
     SgExpression* item_selector_exp = isSgExprStatement(item_selector)->get_expression();
-    SgExpression *fwd_item_selector_exp, *rvs_item_selector_exp;
     tie(fwd_item_selector_exp, rvs_item_selector_exp) = instrumentAndReverseExpression(item_selector_exp);
 
-    // Use a temporary variable to store the value passed into switch statement, and push it into stack
-    // after the switch statement.
-    string var_name = function_name_ + "_switch_item_" + lexical_cast<string>(counter_++);
-    validateName(var_name, fwd_item_selector_exp);
-    validateName(var_name, fwd_body);
+    bool save_selector = true;
 
-    SgStatement* var_decl = buildVariableDeclaration(
-            var_name, 
-            buildIntType(), 
-            buildAssignInitializer(fwd_item_selector_exp));
+    // Here an analysis should be performed to detect if the value of the selector will be modified
+    // inside the switch body. If not, we don't have to save it.
+    //
+    if (save_selector)
+    {
+        // Use a temporary variable to store the value passed into switch statement, and push it into stack
+        // after the switch statement.
+        string var_name = function_name_ + "_switch_item_" + lexical_cast<string>(counter_++);
+        validateName(var_name, fwd_item_selector_exp);
+        validateName(var_name, fwd_body);
 
-    SgStatement* fwd_item_selector = buildExprStatement(buildVarRefExp(var_name));
-    SgStatement* rvs_item_selector = buildExprStatement(popIntVal());
+        SgStatement* var_decl = buildVariableDeclaration(
+                var_name, 
+                buildIntType(), 
+                buildAssignInitializer(fwd_item_selector_exp));
 
-    // We push the switch selector value into integer stack, not flag stack, since the latter only accpets 0 or 1
-    // which can then be optimized.
-    SgStatement* fwd_stmt = buildBasicBlock(
-            var_decl,
-            buildSwitchStatement(fwd_item_selector, fwd_body),
-            buildExprStatement(pushIntVal(buildVarRefExp(var_name))));
+        SgStatement* fwd_item_selector = buildExprStatement(buildVarRefExp(var_name));
+        SgStatement* rvs_item_selector = buildExprStatement(popIntVal());
 
-    SgStatement* rvs_stmt = buildSwitchStatement(rvs_item_selector, rvs_body);
-    if (rvs_item_selector_exp)
-        rvs_stmt = buildBasicBlock(rvs_stmt, buildExprStatement(rvs_item_selector_exp));
+        // We push the switch selector value into integer stack, not flag stack, since the latter only accpets 0 or 1
+        // which can then be stored in a bit stack.
+        // Also note that we store the selector after switch statement for correct stack access order.
+        SgStatement* fwd_stmt = buildBasicBlock(
+                var_decl,
+                buildSwitchStatement(fwd_item_selector, fwd_body),
+                buildExprStatement(pushIntVal(buildVarRefExp(var_name))));
 
-    return StmtPair(fwd_stmt, rvs_stmt);
+        SgStatement* rvs_stmt = buildSwitchStatement(rvs_item_selector, rvs_body);
+        if (rvs_item_selector_exp)
+            rvs_stmt = buildBasicBlock(rvs_stmt, buildExprStatement(rvs_item_selector_exp));
+
+        return StmtPair(fwd_stmt, rvs_stmt);
+    }
+    else
+    {
+        SgStatement* fwd_stmt = buildSwitchStatement(fwd_item_selector_exp, fwd_body);
+        SgStatement* rvs_stmt = buildSwitchStatement(copyExpression(fwd_item_selector_exp), rvs_body);
+        return StmtPair(fwd_stmt, rvs_stmt);
+    }
 }

@@ -106,6 +106,11 @@ class EventReverser
                     buildVarRefExp(int_stack_name_),
                     buildFunctionCallExp("buildIntStack", stack_type)));
 
+        // Initialize the integer stack object.
+        inits.push_back(buildAssignStatement(
+                    buildVarRefExp(float_stack_name_),
+                    buildFunctionCallExp("buildIntStack", stack_type)));
+
         // Initialize the loop counter stack object.
         inits.push_back(buildAssignStatement(
                     buildVarRefExp(counter_stack_name_),
@@ -244,6 +249,24 @@ class EventReverser
     {
         return buildFunctionCallExp("pop", buildVoidType(), 
                 buildExprListExp(buildVarRefExp(float_stack_name_)));
+    }
+
+    // For a local variable, return two statements to store its value and 
+    // declare and assign the retrieved value to it.
+    StmtPair pushAndPopLocalVar(SgVariableDeclaration* var_decl)
+    {
+        const SgInitializedNamePtrList& names = var_decl->get_variables();
+        ROSE_ASSERT(names.size() == 1);
+        SgInitializedName* init_name = names[0];
+
+        SgStatement* store_var = buildExprStatement(
+                pushIntVal(buildVarRefExp(init_name)));
+
+        SgStatement* decl_var = buildVariableDeclaration(
+                init_name->get_name(),
+                init_name->get_type(),
+                buildAssignInitializer(popIntVal()));
+        return StmtPair(store_var, decl_var);
     }
 
     // **********************************************************************************

@@ -16,7 +16,7 @@ const string INT_ARRAY_MEM_NAME = "a_";
 const int ARRAY_SIZE = 100;
 
 SgFunctionDeclaration* buildCompareFunction(SgClassType*);
-SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int events_num, bool klee);
+SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, const vector<string> event_names, bool klee);
 SgFunctionDeclaration* buildInitializationFunction(SgClassType*);
 
 
