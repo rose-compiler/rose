@@ -128,7 +128,7 @@ class EventReverser
     // ==================================================================================
 
     // Just reverse an expression
-    SgExpression* reverseExpression(SgExpression* exp);
+    //SgExpression* reverseExpression(SgExpression* exp);
 
     // Get the forward and reverse version of an expression
     ExpPair instrumentAndReverseExpression(SgExpression* exp);
@@ -173,7 +173,7 @@ class EventReverser
     }
 
     // Check if there is another used variable with the same name in the current scope.
-    // If yes, alter the name until it does not conflict with other variable names.
+    // If yes, alter the name until it does not conflict with any other variable name.
     void validateName(string& name, SgNode* root)
     {
         Rose_STL_Container<SgNode*> ref_list = NodeQuery::querySubTree(root, V_SgVarRefExp);

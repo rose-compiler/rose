@@ -46,9 +46,9 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 
     //if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
 
-    return ExpPair(copyExpression(exp), NULL);
+    //return ExpPair(copyExpression(exp), NULL);
     //return ExpPair(copyExpression(exp), buildNullExpression());
-    //return ExpPair(copyExpression(exp), copyExpression(exp));
+    return ExpPair(copyExpression(exp), copyExpression(exp));
 }
 
 

@@ -40,11 +40,29 @@ void event1(struct model* m)
     if (int i = 2)
         m->i_ += i;
 #endif
-    int j = 5;
+    int j = 4;
     while (int i = j--)
         m->i_ += i;
     for (int i = 10; int j = i--;)
         m->i_ ++;
+
+#if 1
+    j = 2;
+    int i = j % 2;
+    //switch (int i = j%2)
+    switch (i)
+    {
+        case 0:
+            m->i_ += i++;
+            m->i_ -= i++;
+            break;
+        case 1:
+            m->i_ -= i;
+            break;
+        default:
+            break;
+    }
+#endif
     
 #if 0
     m->i_ -= m->i_;

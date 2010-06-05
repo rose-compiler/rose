@@ -3,37 +3,6 @@
 #include <boost/tuple/tuple.hpp>
 
 
-#define ISZERO(value, ValType) \
-    if (ValType* val = is##ValType(value)) \
-return val->get_value() == 0;
-
-bool isZero(SgValueExp* value)
-{
-    if (!value)
-        return true;
-    //ROSE_ASSERT(false);
-
-    ISZERO(value, SgBoolValExp);
-    ISZERO(value, SgCharVal);
-    ISZERO(value, SgDoubleVal);
-    ISZERO(value, SgEnumVal);
-    ISZERO(value, SgFloatVal);
-    ISZERO(value, SgIntVal);
-    ISZERO(value, SgLongDoubleVal);
-    ISZERO(value, SgLongIntVal);
-    ISZERO(value, SgLongLongIntVal);
-    ISZERO(value, SgShortVal);
-    ISZERO(value, SgUnsignedCharVal);
-    ISZERO(value, SgUnsignedIntVal);
-    ISZERO(value, SgUnsignedLongLongIntVal);
-    ISZERO(value, SgUnsignedLongVal);
-    ISZERO(value, SgUnsignedShortVal);
-
-    ROSE_ASSERT(false);
-    return true;
-}
-
-
 ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 {
     SgExpression *operand = unary_op->get_operand();
@@ -43,12 +12,12 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
     // The default forward version should instrument its operand.
     // For example, ++(a = 5), where a is a state variable.
     // Its forward expression is like ++(s = a, a = 5), where s is for state saving.
+    
     SgUnaryOp* fwd_exp = isSgUnaryOp(copyExpression(unary_op));
-    ROSE_ASSERT(fwd_exp);
     fwd_exp->set_operand(fwd_operand_exp);
 
-    // if the left-hand side of the assign-op is the state
-    // (note that only in this situation do we consider to reverse this expression)
+    ////// If the left-hand side of the assign-op is the state
+    ////// (note that only in this situation do we consider to reverse this expression)
     //if (SgExpression* model_var = isStateVar(unary_op->get_operand()))
     {
         // Make sure the type is integer type.
@@ -56,30 +25,18 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
         {
             // ++ and -- can both be reversed without state saving
             if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(unary_op))
-            {
-                SgUnaryOp::Sgop_mode pp_mode = pp_op->get_mode();
-                if (pp_mode == SgUnaryOp::prefix) 
-                    pp_mode = SgUnaryOp::postfix;
-                else 
-                    pp_mode = SgUnaryOp::prefix;
-
                 return ExpPair(
                         fwd_exp,
-                        buildMinusMinusOp(copyExpression(operand), pp_mode));
-            }
+                        buildMinusMinusOp(
+                            copyExpression(operand), 
+                            reverseOpMode(pp_op->get_mode())));
 
             if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(unary_op))
-            {
-                SgUnaryOp::Sgop_mode mm_mode = mm_op->get_mode();
-                if (mm_mode == SgUnaryOp::prefix) 
-                    mm_mode = SgUnaryOp::postfix;
-                else 
-                    mm_mode = SgUnaryOp::prefix;
-
                 return ExpPair(
                         fwd_exp,
-                        buildPlusPlusOp(copyExpression(operand), mm_mode));
-            }
+                        buildPlusPlusOp(
+                            copyExpression(operand), 
+                            reverseOpMode(mm_op->get_mode())));
         }
         // If the type is float point type (float & double), we use state saving.
         else if (operand->get_type()->isFloatType())
@@ -105,6 +62,7 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 
 ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 {
+    // To deal with the short circuit problem, we set a flag to begin FIFO, end LIFO.
     if (isSgAndOp(bin_op) || isSgOrOp(bin_op))
         beginFIFO();   // Flags are FIFO now
 
@@ -145,6 +103,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             {
                 // We must make sure that the rhs operand does not contain the lhs operand.
                 // Or else, this operation is not constructive. For example, a += a or a += a + b.
+                // This can also be done by def-use analysis.
                 
                 bool constructive = true;
                 Rose_STL_Container<SgNode*> node_list = NodeQuery::querySubTree(rhs_operand, V_SgExpression);
@@ -159,6 +118,9 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 
                 if (constructive)
                 {
+#if 0
+                    lhs_operand = rvs_lhs_exp;
+                    rhs_operand = rvs_rhs_exp;
                     if (isSgPlusAssignOp(bin_op))
                         return ExpPair(
                                 fwd_exp,
@@ -172,6 +134,36 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                                 buildBinaryExpression<SgPlusAssignOp>(
                                     copyExpression(lhs_operand), 
                                     copyExpression(rhs_operand)));
+
+                    if (isSgXorAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgXorAssignOp>(
+                                    copyExpression(lhs_operand), 
+                                    copyExpression(rhs_operand)));
+
+#endif
+
+                    if (isSgPlusAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgMinusAssignOp>(
+                                    rvs_lhs_exp, 
+                                    rvs_rhs_exp));
+
+                    if (isSgMinusAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgPlusAssignOp>(
+                                    rvs_lhs_exp, 
+                                    rvs_rhs_exp));
+
+                    if (isSgXorAssignOp(bin_op))
+                        return ExpPair(
+                                fwd_exp,
+                                buildBinaryExpression<SgXorAssignOp>(
+                                    rvs_lhs_exp, 
+                                    rvs_rhs_exp));
 
 #if 0
                     // we must ensure that the rhs operand of *= is not ZERO
@@ -191,12 +183,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                                     copyExpression(rhs_operand)));
 #endif
 
-                    if (isSgXorAssignOp(bin_op))
-                        return ExpPair(
-                                fwd_exp,
-                                buildBinaryExpression<SgXorAssignOp>(
-                                    copyExpression(lhs_operand), 
-                                    copyExpression(rhs_operand)));
                 }
             }
         }
@@ -463,6 +449,7 @@ StmtPair EventReverser::processExprStatement(SgExprStatement* exp_stmt)
     SgExpression* exp = exp_stmt->get_expression();
     SgExpression *fwd_exp, *rvs_exp;
     tie(fwd_exp, rvs_exp) = instrumentAndReverseExpression(exp);
+
     if (fwd_exp && rvs_exp)
         return StmtPair(
                 buildExprStatement(fwd_exp), 
@@ -708,6 +695,9 @@ StmtPair EventReverser::processForInitStatement(SgForInitStatement* for_init_stm
 
 StmtPair EventReverser::processForStatement(SgForStatement* for_stmt)
 {
+    // FIXME If the condition is a variable declaration: for (int i = 10; int j = i--;);
+    // FIXME break and continue.
+    
     SgForInitStatement* init = for_stmt->get_for_init_stmt();
     SgStatement* test = for_stmt->get_test();
     SgExpression* incr = for_stmt->get_increment();
@@ -852,33 +842,17 @@ StmtPair EventReverser::processDoWhileStmt(SgDoWhileStmt* do_while_stmt)
     return StmtPair(fwd_stmt, rvs_stmt);
 }
 
-// Return whether a basic block contains a break statement. 
-// Just for 'processSwitchStatement' function below.
-bool hasBreakStmt(SgBasicBlock* body)
-{
-    ROSE_ASSERT(body);
-
-    if (body->get_statements().empty())
-        return false;
-
-    // Recursively retrieve the last SgBasicBlock statement in case of {...{...{...}}}.
-    SgStatement* stmt = body->get_statements().back();
-    SgBasicBlock* another_body = isSgBasicBlock(stmt);
-    while (another_body)
-    {
-        body = another_body;
-        another_body = isSgBasicBlock(another_body->get_statements().back());
-    }
-    return isSgBreakStmt(body->get_statements().back());
-}
 
 StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
 {
+    // FIXME If the selector is a variable declaration: switch(int i = j){}
+    
     SgStatement* item_selector = switch_stmt->get_item_selector();
     SgBasicBlock* body = isSgBasicBlock(switch_stmt->get_body());
 
     SgBasicBlock *fwd_body, *rvs_body;
     SgExpression *fwd_item_selector_exp, *rvs_item_selector_exp;
+    SgStatement *fwd_item_selector, *rvs_item_selector;
 
     const SgStatementPtrList& stmts = body->get_statements();
     SgStatementPtrList fwd_stmts, rvs_stmts;
@@ -985,8 +959,11 @@ StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
     foreach(SgStatement* s, rvs_stmts)
         rvs_body->append_statement(s); 
 
+    ROSE_ASSERT(isSgExprStatement(item_selector));
     SgExpression* item_selector_exp = isSgExprStatement(item_selector)->get_expression();
     tie(fwd_item_selector_exp, rvs_item_selector_exp) = instrumentAndReverseExpression(item_selector_exp);
+
+    //tie(fwd_item_selector, rvs_item_selector) = instrumentAndReverseStatement(item_selector);
 
     bool save_selector = true;
 
