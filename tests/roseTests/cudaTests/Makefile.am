@@ -45,4 +45,4 @@ clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) test* rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot
 
 distclean-local:
-	rm -rf Templates.DB 
+	rm -rf Templates.DB rose_*.C
