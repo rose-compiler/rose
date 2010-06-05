@@ -42,7 +42,7 @@ printNodeList ( const Rose_STL_Container<SgNode*> & localList )
 
 //! push astNode into nodeList if its variantT type match one of those from targetVariantVector
 void
-pushNewNode ( NodeQuerySynthesizedAttributeType & nodeList, 
+pushNewNode ( NodeQuerySynthesizedAttributeType* nodeList, 
               const VariantVector & targetVariantVector,
               SgNode * astNode )
    {
@@ -56,8 +56,8 @@ pushNewNode ( NodeQuerySynthesizedAttributeType & nodeList,
             // printf ("Loop over target node vector: node = %s \n",getVariantName(*i).c_str());
                if (astNode->variantT() == *i)
                   {
-                 // printf ("Adding node to list! \n");
-                    nodeList.push_back(astNode);
+                  //printf ("Adding node to list! \n");
+                    nodeList->push_back(astNode);
                   }
              }
         }
@@ -80,17 +80,17 @@ mergeList ( NodeQuerySynthesizedAttributeType & nodeList, const Rose_STL_Contain
 
 
 // DQ (4/7/2004): Added to support more general lookup of data in the AST (vector of variants)
-NodeQuerySynthesizedAttributeType
+void*
 querySolverGrammarElementFromVariantVector ( 
    SgNode * astNode, 
-   VariantVector targetVariantVector )
+   VariantVector targetVariantVector,  NodeQuerySynthesizedAttributeType* returnNodeList )
    {
   // This function extracts type nodes that would not be traversed so that they can
   // accumulated to a list.  The specific nodes collected into the list is controlled
   // by targetVariantVector.
 
      ROSE_ASSERT (astNode != NULL);
-     NodeQuerySynthesizedAttributeType returnNodeList;
+     
 
      Rose_STL_Container<SgNode*> nodesToVisitTraverseOnlyOnce;
 
@@ -105,9 +105,8 @@ querySolverGrammarElementFromVariantVector (
        if( isSgType(iItr->first) != NULL  )
          if(std::find(succContainer.begin(),succContainer.end(),iItr->first) == succContainer.end() )
            pushNewNode (returnNodeList,targetVariantVector,iItr->first);
-
-     
-     return returnNodeList;
+ 
+    return NULL;  
    } /* End function querySolverUnionFields() */
 
 }//END NAMESPACE NODEQUERY
