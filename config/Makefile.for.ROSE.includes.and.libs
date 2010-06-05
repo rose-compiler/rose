@@ -151,7 +151,9 @@ else
 # DQ (3/15/2009): Use the usual static linking when not using Intel Pin (what we used to do).
 # DQ (3/13/2009): Fixup libdwarf support in ROSE to always use the dynamic (shared) library.
 # ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(dwarf_path) -L$(dwarf_path) -ldwarf -lelf
-  ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
+# DQ (6/5/2010): Fixed to use the value set in the configure step (requires the dynamic library).
+# ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
+  ROSE_DWARF_LIBS_WITH_PATH = @DWARF_LINK@
 endif
 endif
 
