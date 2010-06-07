@@ -66,12 +66,12 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
     if (isSgAndOp(bin_op) || isSgOrOp(bin_op))
         beginFIFO();   // Flags are FIFO now
 
-    // a binary operation contains two expressions which need to be processed first
+    // A binary operation contains two expressions which need to be processed first.
     SgExpression *fwd_lhs_exp, *fwd_rhs_exp, *rvs_lhs_exp, *rvs_rhs_exp;
-    tie(fwd_rhs_exp, rvs_rhs_exp) = instrumentAndReverseExpression(bin_op->get_rhs_operand());
     tie(fwd_lhs_exp, rvs_lhs_exp) = instrumentAndReverseExpression(bin_op->get_lhs_operand());
+    tie(fwd_rhs_exp, rvs_rhs_exp) = instrumentAndReverseExpression(bin_op->get_rhs_operand());
 
-    // the default forward version. Unless state saving is needed, we use the following one.
+    // The default forward version. Unless state saving is needed, we use the following one.
     SgBinaryOp* fwd_exp = isSgBinaryOp(copyExpression(bin_op));
     fwd_exp->set_lhs_operand(fwd_lhs_exp);
     fwd_exp->set_rhs_operand(fwd_rhs_exp);
@@ -118,32 +118,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 
                 if (constructive)
                 {
-#if 0
-                    lhs_operand = rvs_lhs_exp;
-                    rhs_operand = rvs_rhs_exp;
-                    if (isSgPlusAssignOp(bin_op))
-                        return ExpPair(
-                                fwd_exp,
-                                buildBinaryExpression<SgMinusAssignOp>(
-                                    copyExpression(lhs_operand), 
-                                    copyExpression(rhs_operand)));
-
-                    if (isSgMinusAssignOp(bin_op))
-                        return ExpPair(
-                                fwd_exp,
-                                buildBinaryExpression<SgPlusAssignOp>(
-                                    copyExpression(lhs_operand), 
-                                    copyExpression(rhs_operand)));
-
-                    if (isSgXorAssignOp(bin_op))
-                        return ExpPair(
-                                fwd_exp,
-                                buildBinaryExpression<SgXorAssignOp>(
-                                    copyExpression(lhs_operand), 
-                                    copyExpression(rhs_operand)));
-
-#endif
-
                     if (isSgPlusAssignOp(bin_op))
                         return ExpPair(
                                 fwd_exp,
@@ -183,6 +157,127 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                                     copyExpression(rhs_operand)));
 #endif
 
+                }
+            }
+
+            // FIXME
+            // Reverse constructive assignment, like a = a + b (if a is a variable, it's equal to
+            // a += b. Leave it to preprocessor or handle it now?), a = b - a. The reverse expressions
+            // are a -= b and a = b - a. For integer plus and minus, order does not matter. Which means
+            // a = (a + b) + c is also constructive which equals to a = a + (b + c).
+            // We still don't consider the following case: a = 2 * a + b, although it can be reversed as
+            // a = (a - b) / 2 if there is no overflow. This issue will be handled in the future.
+
+            if (isSgAssignOp(bin_op))
+            {
+#if 0
+                // Handle the case a = -a.
+                if (SgMinusOp* minus_op = isSgMinusOp(rvs_rhs_exp))
+                    if (areSameVariable(minus_op->get_operand(), lhs_operand))
+                        return ExpPair(fwd_exp, copyExpression(fwd_exp));
+#endif
+
+                // We have to record the sign of each variable.
+                typedef pair<SgExpression*, bool> VarWithSign;
+                vector<VarWithSign> vars;
+
+                queue<VarWithSign> to_process;
+                to_process.push(VarWithSign(rvs_rhs_exp, true));
+                while (!to_process.empty())
+                {
+                    VarWithSign var = to_process.front();
+                    SgExpression* exp = var.first;
+                    bool is_plus = var.second;
+                    to_process.pop();
+
+                    if (SgAddOp* add_op = isSgAddOp(exp))
+                    {
+                        to_process.push(VarWithSign(add_op->get_lhs_operand(), is_plus));
+                        to_process.push(VarWithSign(add_op->get_rhs_operand(), is_plus));
+                    }
+                    else if (SgSubtractOp* sub_op = isSgSubtractOp(exp))
+                    {
+                        to_process.push(VarWithSign(sub_op->get_lhs_operand(), is_plus));
+                        to_process.push(VarWithSign(sub_op->get_rhs_operand(), !is_plus));
+                    }
+                    else if (SgUnaryAddOp* plus_op = isSgUnaryAddOp(exp))
+                        to_process.push(VarWithSign(plus_op->get_operand(), is_plus));
+                    else if (SgMinusOp* minus_op = isSgMinusOp(exp))
+                        to_process.push(VarWithSign(minus_op->get_operand(), !is_plus));
+                    else
+                        vars.push_back(var);
+                }
+
+                int count = 0;
+                int index = -1;
+                for (int i = 0; i < vars.size(); ++i)
+                {
+                    if (areSameVariable(vars[i].first, lhs_operand))
+                    {
+                        ++count;
+                        index = i;
+                    }
+                }
+
+                if (count == 1)
+                {
+                    vars[index].first = lhs_operand;
+
+                    SgExpression* rvs_exp = NULL;
+                    for (int i = 0; i < vars.size(); ++i)
+                    {
+                        if (i == index) continue;
+
+                        if (rvs_exp == NULL)
+                        {
+                            if (vars[i].second)
+                                rvs_exp = copyExpression(vars[i].first);
+                            else
+                                rvs_exp = buildUnaryExpression<SgMinusOp>(copyExpression(vars[i].first));
+                        }
+                        else
+                        {
+                            if (vars[i].second)
+                                rvs_exp = buildBinaryExpression<SgAddOp>(
+                                        rvs_exp, 
+                                        copyExpression(vars[i].first));
+                            else
+                                rvs_exp = buildBinaryExpression<SgSubtractOp>(\
+                                        rvs_exp, 
+                                        copyExpression(vars[i].first));
+                        }
+                    }
+
+                    if (vars[index].second)
+                    {
+                        // a = b + a  ->  a = a - b
+                        if (rvs_exp)
+                            rvs_exp = buildBinaryExpression<SgSubtractOp>(
+                                    copyExpression(lhs_operand), 
+                                    rvs_exp);
+                        // a = +a
+                        else
+                            rvs_exp = copyExpression(lhs_operand);
+                    }
+                    else
+                    {
+                        // a = b - a  ->  a = b - a
+                        if (rvs_exp)
+                            rvs_exp = buildBinaryExpression<SgSubtractOp>(
+                                    rvs_exp,
+                                    copyExpression(lhs_operand)); 
+                        // a = -a
+                        else
+                            rvs_exp = buildUnaryExpression<SgMinusOp>(
+                                    copyExpression(lhs_operand));
+                    
+                    }
+
+                    rvs_exp = buildBinaryExpression<SgAssignOp>(
+                            copyExpression(lhs_operand),
+                            rvs_exp);
+
+                    return ExpPair(fwd_exp, rvs_exp);
                 }
             }
         }

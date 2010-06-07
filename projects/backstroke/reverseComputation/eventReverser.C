@@ -14,13 +14,6 @@ set<SgFunctionDeclaration*> EventReverser::func_processed_;
 const ExpPair EventReverser::NULL_EXP_PAIR = ExpPair(NULL, NULL);
 const StmtPair EventReverser::NULL_STMT_PAIR = StmtPair(NULL, NULL);
 
-
-SgExpression* EventReverser::reverseExpression(SgExpression* exp)
-{
-    return NULL;
-}
-
-
 ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 {
     // We can just make copy of statements.

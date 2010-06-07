@@ -149,4 +149,21 @@ void event0(struct model* m)
 #endif
 
 
+void event2(struct model* m)
+{
+    int i = 2, j = 3, k = 4;
 
+    m->i_ = -m->i_;
+
+    m->i_ = ++i + j + m->i_;
+
+    m->i_ = i + j + m->i_;
+    m->i_ = i + m->i_ + j;
+    m->i_ = i + (m->i_ + j);
+    m->i_ = i + j - m->i_;
+    m->i_ = i - (j + m->i_);
+    m->i_ = (i - (j - (k - m->i_)));
+
+    m->i_ = i - 2 * m->i_ - m->i_;
+    m->i_ = i - 2 * m->i_;
+}
