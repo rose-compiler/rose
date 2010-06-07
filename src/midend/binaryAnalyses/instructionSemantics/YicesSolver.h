@@ -3,7 +3,8 @@
 
 #include "SMTSolver.h"
 
-/** Interface to the Yices Satisfiability Modulo Theory (SMT) Solver. */
+/** Interface to the Yices Satisfiability Modulo Theory (SMT) Solver.  ROSE should be configured with --with-yices in order
+ *  for the satisfiable() virtual method to work. */
 class YicesSolver: public SMTSolver {
 public:
     virtual void generate_file(std::ostream&, const SymbolicExpr::TreeNode *expr, Definitions*);

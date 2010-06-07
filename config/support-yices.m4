@@ -6,8 +6,8 @@ AC_DEFUN([ROSE_SUPPORT_YICES],[
                 [AC_HELP_STRING([[[[--with-yices[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
                                 [Use the Yices Satisfiability Modulo Theories (SMT) solver. The PREFIX, if specified,
                                  should be the prefix used to install Yices, such as "/usr/local". ROSE searches for
-				 an executable named "/bin/yices" under the specified prefix.  The default is the empty
-				 prefix.])],
+                                 an executable named "/bin/yices" under the specified prefix.  The default is the empty
+                                 prefix.])],
                 [ac_cv_use_yices=$withval],
                 [ac_cv_use_yices=no])
     AC_CACHE_CHECK([whether to use yices], [ac_cv_use_yices], [ac_cv_use_yices=no])
@@ -23,34 +23,29 @@ AC_DEFUN([ROSE_SUPPORT_YICES],[
     HAVE_LIBYICES=
     if test $ac_cv_use_yices = yes; then
         YICES_PREFIX=
-	AC_PATH_PROG(YICES, yices)
-	AC_CHECK_LIB(yices, yicesl_version)
-    elif test -n "$ac_cv_use_yices"; then
-	YICES_PREFIX="$ac_cv_use_yices"
-	AC_PATH_PROG(YICES, yices, [], [$YICES_PREFIX/bin])
-	AC_MSG_CHECKING([for libyices.a])
-	if test -f "$YICES_PREFIX/lib/libyices.a"; then
-	    AC_MSG_RESULT([$YICES_PREFIX/lib/libyices.a])
-	    HAVE_LIBYICES=1
-        else
-	    AC_MSG_RESULT(no)
-        fi
+        AC_PATH_PROG(YICES, yices)
+        AC_CHECK_LIB(yices, yicesl_version)
+    elif test -n "$ac_cv_use_yices" -a "$ac_cv_use_yices" != no; then
+        YICES_PREFIX="$ac_cv_use_yices"
+        AC_PATH_PROG(YICES, yices, [], [$YICES_PREFIX/bin])
+        AC_MSG_CHECKING([for libyices.a])
+        AC_CHECK_FILE(["$YICES_PREFIX/lib/libyices.a"],
+                      [AC_MSG_RESULT([$YICES_PREFIX/lib/libyices.a])
+                       AC_DEFINE(HAVE_LIBYICES)],
+                      [AC_MSG_RESULT(no)])
     fi
 
     dnl Sanity check... If the user told us to use yices, then we must find either an executable or the library.
     if test "$ac_cv_use_yices" != no -a -z "$YICES" -a -z "$HAVE_LIBYICES"; then
-	AC_MSG_ERROR([found neither yices executable nor libyices.a for --with-yices])
+        AC_MSG_ERROR([found neither yices executable nor libyices.a for --with-yices])
     fi
 
-    dnl C preprocessor defines
-    AC_DEFINE_UNQUOTED(YICES,         ["$YICES"],       [Full path name of the yices executable if found.])
-    AC_DEFINE_UNQUOTED(HAVE_LIBYICES, [$HAVE_LIBYICES], [Defined if libyices.a exists.])
-
-    dnl Makefile substitutions
+    dnl Results
+    if test -n "$YICES"; then
+        AC_DEFINE_UNQUOTED(YICES, ["$YICES"], [Absolute name of yices executable, or the empty string.])
+    fi
     AC_SUBST(YICES)
     AC_SUBST(YICES_PREFIX)
-
-    dnl Define automake conditionals
     AM_CONDITIONAL(HAVE_LIBYICES, [test -n "$HAVE_LIBYICES"])
     AM_CONDITIONAL(HAVE_YICES,    [test -n "$YICES"])
 ])
