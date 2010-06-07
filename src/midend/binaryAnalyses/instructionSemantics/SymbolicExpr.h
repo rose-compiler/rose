@@ -30,14 +30,22 @@ namespace SymbolicExpr {
         OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B).  */
         OP_SDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
         OP_SEXTEND,             /**< Signed extension at msb. Extend B to A bits by replicating B's most significant bit. */
+        OP_SGE,                 /**< Signed greater-than-or-equal. Two operands of equal width. Result is Boolean. */
+        OP_SGT,                 /**< Signed greater-than. Two operands of equal width. Result is Boolean. */
         OP_SHL0,                /**< Shift left, introducing zeros at lsb. Bits of B are shifted by A, where 0 <= A < width(B). */
         OP_SHL1,                /**< Shift left, introducing ones at lsb. Bits of B are shifted by A, where 0 <= A < width(B). */
         OP_SHR0,                /**< Shift right, introducing zeros at msb. Bits of B are shifted by A, where 0 <= A < width(B). */
         OP_SHR1,                /**< Shift right, introducing ones at msb. Bits of B are shifted by A, where 0 <= A < width(B). */
+        OP_SLE,                 /**< Signed less-than-or-equal. Two operands of equal width. Result is Boolean. */
+        OP_SLT,                 /**< Signed less-than. Two operands of equal width. Result is Boolean. */
         OP_SMOD,                /**< Signed modulus. Two operands, A%B. Result width is width(B). */
         OP_SMUL,                /**< Signed multiplication. Two operands A*B. Result width is width(A)+width(B). */
         OP_UDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
         OP_UEXTEND,             /**< Unsigned extention at msb. Extend B to A bits by introducing zeros at the msb of B. */
+        OP_UGE,                 /**< Unsigned greater-than-or-equal. Two operands of equal width. Boolean result. */
+        OP_UGT,                 /**< Unsigned greater-than. Two operands of equal width. Result is Boolean. */
+        OP_ULE,                 /**< Unsigned less-than-or-equal. Two operands of equal width. Result is Boolean. */
+        OP_ULT,                 /**< Unsigned less-than. Two operands of equal width. Result is Boolean (1-bit vector). */
         OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
         OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
         OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */

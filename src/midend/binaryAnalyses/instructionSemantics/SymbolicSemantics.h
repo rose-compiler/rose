@@ -24,7 +24,10 @@
  *    <li>State: represents the state of the virtual machine, its registers and memory.</li>
  *    <li>ValueType: the values stored in registers and memory and used for memory addresses.</li>
  *  </ul>
- */
+ *
+ *  If an SMT solver is supplied as a Policy constructor argument then that SMT solver will be used to answer various
+ *  questions such as when two memory addresses can alias one another.  When an SMT solver is lacking, the questions will be
+ *  answered by very naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
     typedef SymbolicExpr::RenameMap RenameMap;
@@ -122,11 +125,12 @@ namespace SymbolicSemantics {
 
         /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns false
          *  only if this memory location cannot overlap with @p other memory location. Two addresses that are identical alias one
-         *  another. */
-        bool may_alias(const MemoryCell &other) const;
+         *  another. The @p solver is optional but recommended (absence of a solver will result in a naive definition). */
+        bool may_alias(const MemoryCell &other, SMTSolver *solver) const;
 
-        /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap". */
-        bool must_alias(const MemoryCell &other) const;
+        /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap".
+         *  The @p solver is optional but recommended (absence of a solver will result in a naive definition). */
+        bool must_alias(const MemoryCell &other, SMTSolver *solver) const;
 
         /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
          *  have a shorter name.  See the ValueType<>::rename() method for details. */
@@ -169,7 +173,7 @@ namespace SymbolicSemantics {
     std::ostream& operator<<(std::ostream &o, const MemoryCell& mc);
     std::ostream& operator<<(std::ostream &o, const State& state);
 
-    /** A policy that is supplied to the semantic analysis constructor. */
+    /** A policy that is supplied to the semantic analysis constructor. See documentation for the SymbolicSemantics namespace. */
     class Policy {
     private:
         SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
@@ -349,7 +353,7 @@ namespace SymbolicSemantics {
             bool aliased = false; /*is new_cell aliased by any existing writes?*/
 
             for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-                if (new_cell.must_alias(*mi)) {
+                if (new_cell.must_alias(*mi, solver)) {
                     if ((*mi).clobbered) {
                         (*mi).clobbered = false;
                         (*mi).data = new_cell.data;
@@ -357,7 +361,7 @@ namespace SymbolicSemantics {
                     } else {
                         return unsignedExtend<32, Len>((*mi).data);
                     }
-                } else if (new_cell.may_alias(*mi) && (*mi).written) {
+                } else if ((*mi).written && new_cell.may_alias(*mi, solver)) {
                     aliased = true;
                 }
             }
@@ -366,7 +370,7 @@ namespace SymbolicSemantics {
                 /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that state.
                  * Therefore use the value from the initial memory state (creating it if necessary). */
                 for (Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
-                    if (new_cell.must_alias(*mi)) {
+                    if (new_cell.must_alias(*mi, solver)) {
                         ROSE_ASSERT(!(*mi).clobbered);
                         ROSE_ASSERT(!(*mi).written);
                         state.mem.push_back(*mi);
@@ -414,13 +418,13 @@ namespace SymbolicSemantics {
 
             /* Overwrite and/or clobber existing memory locations. */
             for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-                if (new_cell.must_alias(*mi)) {
+                if (new_cell.must_alias(*mi, solver)) {
                     *mi = new_cell;
                     saved = true;
                 } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).address)) {
                     /* Assume that memory referenced through the stack pointer does not alias that which is referenced through the
                      * frame pointer, and neither of them alias memory that is referenced other ways. */
-                } else if (new_cell.may_alias(*mi)) {
+                } else if (new_cell.may_alias(*mi, solver)) {
                     (*mi).set_clobbered();
                 } else {
                     /* memory cell *mi is not aliased to cell being written */

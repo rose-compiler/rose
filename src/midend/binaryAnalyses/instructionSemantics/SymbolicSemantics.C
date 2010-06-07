@@ -17,16 +17,63 @@ operator<<(std::ostream &o, const MemoryCell &mc)
     return o;
 }
 
+/* Address X and Y may alias each other if X+datasize(X)>=Y or X<Y+datasize(Y) where datasize(A) is the number of bytes stored
+ * at address A. In other words, if the following expression is satisfiable, then the memory cells might alias one another.
+ *
+ * \code
+ *     ((X.addr + X.nbytes > Y.addr) && (X.addr < Y.addr + Y.nbytes)) ||
+ *     ((Y.addr + Y.nbytes > X.addr) && (Y.addr < X.addr + X.nbytes))
+ * \code
+ *
+ * Or, equivalently written in LISP style
+ *
+ * \code
+ *     (and (or (> (+ X.addr X.nbytes) Y.addr) (< X.addr (+ Y.addr Y.nbytes)))
+ *          (or (> (+ Y.addr Y.nbytes) X.addr) (< Y.addr (+ X.addr X.nbytes))))
+ * \endcode
+ */
 bool
-MemoryCell::may_alias(const MemoryCell &other) const
+MemoryCell::may_alias(const MemoryCell &other, SMTSolver *solver/*NULL*/) const
 {
-    return must_alias(other); /*FIXME: need to tighten this up some. [RPM 2010-05-24]*/
+    bool retval = must_alias(other, solver); /*this might be faster to solve*/
+    if (retval)
+        return retval;
+    
+    if (solver) {
+        TreeNode *x_addr   = this->address.expr;
+        TreeNode *x_nbytes = LeafNode::create_integer(32, this->nbytes);
+        TreeNode *y_addr   = other.address.expr;
+        TreeNode *y_nbytes = LeafNode::create_integer(32, other.nbytes);
+
+        TreeNode *x_end = new InternalNode(32, SymbolicExpr::OP_ADD, x_addr, x_nbytes);
+        TreeNode *y_end = new InternalNode(32, SymbolicExpr::OP_ADD, y_addr, y_nbytes);
+        
+        TreeNode *and1 = new InternalNode(1, SymbolicExpr::OP_AND,
+                                          new InternalNode(1, SymbolicExpr::OP_UGT, x_end, y_addr), 
+                                          new InternalNode(1, SymbolicExpr::OP_ULT, x_addr, y_end));
+        TreeNode *and2 = new InternalNode(1, SymbolicExpr::OP_AND, 
+                                          new InternalNode(1, SymbolicExpr::OP_UGT, y_end, x_addr), 
+                                          new InternalNode(1, SymbolicExpr::OP_ULT, y_addr, x_end));
+
+        TreeNode *assertion = new InternalNode(1, SymbolicExpr::OP_OR, and1, and2);
+        retval = solver->satisfiable(assertion);
+        delete assertion;
+    }
+
+    return retval;
 }
 
 bool
-MemoryCell::must_alias(const MemoryCell &other) const
+MemoryCell::must_alias(const MemoryCell &other, SMTSolver *solver/*NULL*/) const
 {
-    return address.equal_to(other.address);
+    if (solver) {
+        InternalNode *assertion = new InternalNode(1, SymbolicExpr::OP_NE, address.expr, other.address.expr);
+        bool satisfied = solver->satisfiable(assertion);
+        delete assertion;
+        return !satisfied;
+    } else {
+        return address.equal_to(other.address);
+    }
 }
 
 void

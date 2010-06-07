@@ -3,6 +3,9 @@
 #include "YicesSolver.h"
 
 struct TestPolicy: public SymbolicSemantics::Policy {
+    YicesSolver smt_solver;
+    TestPolicy(): SymbolicSemantics::Policy(&smt_solver) {}
+
     /* Compare all registers to see if they are all the same. */
     bool register_diff(SgAsmInstruction *insn, const SymbolicSemantics::State &orig_state) {
         using namespace SymbolicSemantics;
@@ -16,7 +19,7 @@ struct TestPolicy: public SymbolicSemantics::Policy {
         for (size_t i=0; i<State::n_flags; i++)
             assertion->add_child(new InternalNode(1, SymbolicExpr::OP_NE, orig_state.flag[i].expr, get_state().flag[i].expr));
 
-        return YicesSolver().satisfiable(assertion);
+        return smt_solver.satisfiable(assertion);
     }
 };
 
