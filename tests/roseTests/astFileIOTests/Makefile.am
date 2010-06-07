@@ -74,7 +74,7 @@ $(TEST_Objects): astFileIO astFileRead
 #	./$(@:.o=)
 
 # EXTRA_DIST = $(TESTCODES) test2001_05.h
-EXTRA_DIST = 
+EXTRA_DIST = input_tiny_01.C input_tiny_02.C
 
 test2001_01.C.binary: test2001_01.o
 
