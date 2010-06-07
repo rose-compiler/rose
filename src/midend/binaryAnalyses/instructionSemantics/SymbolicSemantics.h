@@ -224,6 +224,12 @@ namespace SymbolicSemantics {
             solver = NULL;
         }
 
+        /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations. */
+        void set_solver(SMTSolver *s) { solver = s; }
+
+        /** Returns the solver that is currently being used. */
+        SMTSolver *get_solver() const { return solver; }
+
         /** Returns the current state. */
         const State& get_state() const { return cur_state; }
         State& get_state() { return cur_state; }

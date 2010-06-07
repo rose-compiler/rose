@@ -1,29 +1,81 @@
+/* For each function (SgAsmFunctionDeclaration) process each instruction (SgAsmInstruction) through the instruction semantics
+ * layer using the FindConstantsPolicy. Output consists of each instruction followed by the registers and memory locations
+ * with constant or pseudo-constant values. */
+
+#define __STDC_FORMAT_MACROS
 #include "rose.h"
+#include "findConstants.h"
+#include "VirtualMachineSemantics.h"
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
+#include <set>
+#include <inttypes.h>
 
-struct TestPolicy: public SymbolicSemantics::Policy {
-    YicesSolver smt_solver;
-    TestPolicy(): SymbolicSemantics::Policy(&smt_solver) {}
+#if 1==POLICY_SELECTOR
+#   define TestValueTemplate XVariablePtr
+    struct TestPolicy: public FindConstantsPolicy {
+        void startInstruction(SgAsmInstruction *insn) {
+            addr = insn->get_address();
+            newIp = number<32>(addr);
+            if (rsets.find(addr)==rsets.end())
+                rsets[addr].setToBottom();
+            currentRset = rsets[addr];
+            currentInstruction = isSgAsmx86Instruction(insn);
+        }
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<currentRset
+                      <<"    ip = " <<newIp <<"\n";
+        }
+    };
 
-    /* Compare all registers to see if they are all the same. */
-    bool register_diff(SgAsmInstruction *insn, const SymbolicSemantics::State &orig_state) {
-        using namespace SymbolicSemantics;
+#elif  2==POLICY_SELECTOR
+#   define TestValueTemplate XVariablePtr
+    struct TestPolicy: public FindConstantsABIPolicy {
+        void startInstruction(SgAsmInstruction *insn) {
+            addr = insn->get_address();
+            newIp = number<32>(addr);
+            if (rsets.find(addr)==rsets.end())
+                rsets[addr].setToBottom();
+            currentRset = rsets[addr];
+            currentInstruction = isSgAsmx86Instruction(insn);
+        }
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<currentRset
+                      <<"    ip = " <<newIp <<"\n";
+        }
+    };
+#elif  3==POLICY_SELECTOR
+#   define TestValueTemplate VirtualMachineSemantics::ValueType
+    struct TestPolicy: public VirtualMachineSemantics::Policy {
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
+                      <<get_state()
+                      <<"    ip = " <<get_ip() <<"\n";
+        }
+    };
+#elif  4==POLICY_SELECTOR
+#   define TestValueTemplate SymbolicSemantics::ValueType
+    struct TestPolicy: public SymbolicSemantics::Policy {
+        TestPolicy() {
+#           if 1==SOLVER_SELECTOR
+                set_solver(new YicesSolver);
+#           endif
+        }
+        void dump(SgAsmInstruction *insn) {
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            get_state().print(std::cout);
+            std::cout <<"    ip = ";
+            std::cout <<get_ip();
+            std::cout <<"\n";
+        }
+    };
+#else
+#error "Invalid policy selector"
+#endif
+typedef X86InstructionSemantics<TestPolicy, TestValueTemplate> Semantics;
 
-        /* Build the assertion expression */
-        InternalNode *assertion = new InternalNode(1, SymbolicExpr::OP_OR);
-        for (size_t i=0; i<State::n_gprs; i++)
-            assertion->add_child(new InternalNode(1, SymbolicExpr::OP_NE, orig_state.gpr[i].expr, get_state().gpr[i].expr));
-        for (size_t i=0; i<State::n_segregs; i++)
-            assertion->add_child(new InternalNode(1, SymbolicExpr::OP_NE, orig_state.segreg[i].expr, get_state().segreg[i].expr));
-        for (size_t i=0; i<State::n_flags; i++)
-            assertion->add_child(new InternalNode(1, SymbolicExpr::OP_NE, orig_state.flag[i].expr, get_state().flag[i].expr));
-
-        return smt_solver.satisfiable(assertion);
-    }
-};
-
-typedef X86InstructionSemantics<TestPolicy, SymbolicSemantics::ValueType> Semantics;
 
 /* Analyze a single interpretation a block at a time */
 static void
@@ -48,7 +100,7 @@ analyze_interp(SgAsmInterpretation *interp)
 
         TestPolicy policy;
         Semantics semantics(policy);
-        SymbolicSemantics::State prev_state = policy.get_state();
+
 
         /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
          * the instruction pointer or the instruction pointer refers to an instruction that doesn't exist or which has already
@@ -57,12 +109,7 @@ analyze_interp(SgAsmInterpretation *interp)
             /* Analyze current instruction */
             try {
                 semantics.processInstruction(insn);
-                if (!policy.register_diff(insn, prev_state)) {
-                    printf("%-75s no-change\n", unparseInstructionWithAddress(insn).c_str());
-                } else {
-                    std::cout <<unparseInstructionWithAddress(insn) <<"\n";
-                }
-                prev_state = policy.get_state();
+                policy.dump(insn);
             } catch (const Semantics::Exception &e) {
                 std::cout <<e.mesg <<": " <<unparseInstructionWithAddress(e.insn) <<"\n";
                 break;
@@ -73,8 +120,16 @@ analyze_interp(SgAsmInterpretation *interp)
                 break;
 
             /* Get next instruction of this block */
+#if 3==POLICY_SELECTOR
+            if (!policy.get_ip().is_known()) break;
+            rose_addr_t next_addr = policy.get_ip().known_value();
+#elif 4==POLICY_SELECTOR
             if (!policy.get_ip().is_known()) break;
             rose_addr_t next_addr = policy.get_ip().value();
+#else
+            if (policy.newIp->get().name) break;
+            rose_addr_t next_addr = policy.newIp->get().offset;
+#endif
             si = insns.find(next_addr);
             if (si==insns.end()) break;
             insn = si->second;
@@ -82,7 +137,6 @@ analyze_interp(SgAsmInterpretation *interp)
         }
     }
 }
-
 
 /* Analyze only interpretations that point only to 32-bit x86 instructions. */
 class AnalyzeX86Functions: public SgSimpleProcessing {

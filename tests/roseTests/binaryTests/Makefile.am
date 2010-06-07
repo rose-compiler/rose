@@ -77,27 +77,28 @@ shiftResizeSection_SOURCES = shiftResizeSection.C
 shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions
-findConstants_SOURCES = findConstants.C
+findConstants_SOURCES = semantics.C
 findConstants_CPPFLAGS = -DPOLICY_SELECTOR=1
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions using an ABI
-findConstantsABI_SOURCES = findConstants.C
+findConstantsABI_SOURCES = semantics.C
 findConstantsABI_CPPFLAGS = -DPOLICY_SELECTOR=2
 findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Uses VirtualMachineSemantics semantic analysis policy
-virtualMachineSemantics_SOURCES = findConstants.C
+virtualMachineSemantics_SOURCES = semantics.C
 virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
 virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Use SymbolicSemantics semantic analysis policy
-symbolicSemantics_SOURCES = findConstants.C
-symbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4
+symbolicSemantics_SOURCES = semantics.C
+symbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=0
 symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-# Use SymbolicSemantics with Yices output
-yicesSemantics_SOURCES = yicesSemantics.C
+# Use SymbolicSemantics with YicesSolver
+yicesSemantics_SOURCES = semantics.C
+yicesSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
 yicesSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
