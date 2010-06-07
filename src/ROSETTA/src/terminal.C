@@ -1313,8 +1313,10 @@ Terminal::buildPointerInMemoryPoolCheck ()
                          s += "                  else \n" ;
                          s += "                    { \n" ;
                          s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
-                         s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
+                      // s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
+                         s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " = \" << p_" + varNameString + " << \" --> \" << std::flush;\n" ;
                          s += "                       std::cout << \" not valid \" << std::endl;\n" ;
+                      // s += "                       ROSE_ASSERT(false); \n" ;
                          s += "                    } \n" ;
                          s += "             } \n" ;
                          s += "\n" ;
@@ -1342,6 +1344,7 @@ Terminal::buildPointerInMemoryPoolCheck ()
                          s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                       std::cout << \" entry not valid \" << std::endl;\n" ;
+                      // s += "                       ROSE_ASSERT(false); \n" ;
                          s += "                    } \n" ;
                          s += "             } \n" ;
 #if 1
@@ -1377,6 +1380,7 @@ Terminal::buildPointerInMemoryPoolCheck ()
                          s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                       std::cout << \" entry not valid \" << std::endl;\n" ;
+                      // s += "                       ROSE_ASSERT(false); \n" ;
                          s += "                    } \n" ;
                          s += "             } \n" ;
 #if 1
@@ -1415,6 +1419,7 @@ Terminal::buildPointerInMemoryPoolCheck ()
                          s += "                            std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                            std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                            std::cout << \" entry not valid \" << std::endl;\n" ;
+                      // s += "                            ROSE_ASSERT(false); \n" ;
                          s += "                         } \n" ;
                          s += "                  } \n" ;
 #if 1
@@ -1459,6 +1464,7 @@ Terminal::buildPointerInMemoryPoolCheck ()
                          s += "                            std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                            std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                            std::cout << \" entry not valid \" << std::endl;\n" ;
+                      // s += "                            ROSE_ASSERT(false); \n" ;
                          s += "                         } \n" ;
                          s += "                  } \n" ;
 #if 1
