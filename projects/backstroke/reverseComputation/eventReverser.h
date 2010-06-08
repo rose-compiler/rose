@@ -106,6 +106,11 @@ class EventReverser
                     buildVarRefExp(int_stack_name_),
                     buildFunctionCallExp("buildIntStack", stack_type)));
 
+        // Initialize the integer stack object.
+        inits.push_back(buildAssignStatement(
+                    buildVarRefExp(float_stack_name_),
+                    buildFunctionCallExp("buildIntStack", stack_type)));
+
         // Initialize the loop counter stack object.
         inits.push_back(buildAssignStatement(
                     buildVarRefExp(counter_stack_name_),
@@ -123,7 +128,7 @@ class EventReverser
     // ==================================================================================
 
     // Just reverse an expression
-    SgExpression* reverseExpression(SgExpression* exp);
+    //SgExpression* reverseExpression(SgExpression* exp);
 
     // Get the forward and reverse version of an expression
     ExpPair instrumentAndReverseExpression(SgExpression* exp);
@@ -168,7 +173,7 @@ class EventReverser
     }
 
     // Check if there is another used variable with the same name in the current scope.
-    // If yes, alter the name until it does not conflict with other variable names.
+    // If yes, alter the name until it does not conflict with any other variable name.
     void validateName(string& name, SgNode* root)
     {
         Rose_STL_Container<SgNode*> ref_list = NodeQuery::querySubTree(root, V_SgVarRefExp);
@@ -244,6 +249,24 @@ class EventReverser
     {
         return buildFunctionCallExp("pop", buildVoidType(), 
                 buildExprListExp(buildVarRefExp(float_stack_name_)));
+    }
+
+    // For a local variable, return two statements to store its value and 
+    // declare and assign the retrieved value to it.
+    StmtPair pushAndPopLocalVar(SgVariableDeclaration* var_decl)
+    {
+        const SgInitializedNamePtrList& names = var_decl->get_variables();
+        ROSE_ASSERT(names.size() == 1);
+        SgInitializedName* init_name = names[0];
+
+        SgStatement* store_var = buildExprStatement(
+                pushIntVal(buildVarRefExp(init_name)));
+
+        SgStatement* decl_var = buildVariableDeclaration(
+                init_name->get_name(),
+                init_name->get_type(),
+                buildAssignInitializer(popIntVal()));
+        return StmtPair(store_var, decl_var);
     }
 
     // **********************************************************************************

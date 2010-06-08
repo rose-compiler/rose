@@ -75,7 +75,7 @@ SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
     return func_decl;
 }
 
-SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int events_num, bool klee)
+SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, const vector<string> event_names, bool klee)
 {
     // build the main function which performs the test
     SgFunctionDeclaration* func_decl = 
@@ -148,7 +148,8 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
     SgStatement* counter = buildVariableDeclaration("counter", buildIntType(), buildAssignInitializer(buildIntVal(0)));
     appendStatement(counter);
 
-    for (int i = 0; i < events_num; ++i)
+    foreach (const string& event, event_names)
+    //for (int i = 0; i < events_num; ++i)
     {
         // Initialize two model objects
         SgExprStatement *init1, *init2;
@@ -172,11 +173,11 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int 
 
         // Call event_forward and event_reverse then check if the model's value changes
         SgStatement* call_event_fwd = buildFunctionCallStmt(
-                "event" + lexical_cast<string>(i) + "_forward", 
+                event + "_forward", 
                 buildVoidType(), 
                 buildExprListExp(buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1"))));
         SgStatement* call_event_rev = buildFunctionCallStmt(
-                "event" + lexical_cast<string>(i) + "_reverse", 
+                event + "_reverse", 
                 buildVoidType(), 
                 buildExprListExp(buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1"))));
 
