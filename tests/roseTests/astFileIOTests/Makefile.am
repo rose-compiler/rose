@@ -171,16 +171,29 @@ test-read-large: $(TEST_LARGE_LIST_BINARIES)
 #	@echo "$(READ_TRANSLATOR) $(TEST_Binaries:.binary=)"
 	$(READ_TRANSLATOR) $(TEST_Binaries:.C.binary=.C) temp_output_large.C
 
+test-read-huge: 
+	$(READ_TRANSLATOR) temp_output_large.C temp_output_large.C temp_output_large.C temp_output_large.C temp_output_huge.C
+
+test-read-really-huge: 
+	$(READ_TRANSLATOR) temp_output_huge.C temp_output_huge.C temp_output_huge.C temp_output_huge.C temp_output_really_huge.C
+
+
 FailingTests = test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C
 FailingTests_Binaries = $(FailingTests:.C=.o)
 failingTest: $(FailingTests_Binaries)
 	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
 
-testParallelMerge: parallelMerge
+testParallelMerge-short: parallelMerge
 	rm -rf data temp
 	mkdir data
 	mkdir temp
-	parallelMerge
+	parallelMerge $(TEST_SHORT_LIST) temp_output_parallel_short.C
+
+testParallelMerge-medium: parallelMerge
+	rm -rf data temp
+	mkdir data
+	mkdir temp
+	parallelMerge $(TEST_MEDIUM_LIST) temp_output_parallel_medium.C
 
 
 # DQ (3/1/2010): This is the sart of a general command to process all the
@@ -226,6 +239,8 @@ check-local:
 	$(MAKE) test-read-tiny
 	$(MAKE) test-read-short
 	$(MAKE) test-read-medium
+#	Test the parallel merge mechanism using different numbers of threads.
+	$(MAKE) testParallelMerge-short
 #	This is a bit too large of a test to run on most people's machines so skip it for now.
 #	$(MAKE) test-read-large
 	@echo ""
