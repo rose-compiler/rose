@@ -175,7 +175,7 @@ namespace ELF{
 #endif
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
-#define COMPILE_DEBUG_STATEMENTS 0
+#define COMPILE_DEBUG_STATEMENTS 1
 
 // Endian access wrappers in src/frontend/SageIII/sageInterface
 //#include "endianWrappers.h"
