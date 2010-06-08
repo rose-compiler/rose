@@ -180,7 +180,7 @@ testParallelMerge: parallelMerge
 	rm -rf data temp
 	mkdir data
 	mkdir temp
-	parallelMerge
+	./parallelMerge $(TEST_MEDIUM_LIST) temp_output_medium.C
 
 
 # DQ (3/1/2010): This is the sart of a general command to process all the

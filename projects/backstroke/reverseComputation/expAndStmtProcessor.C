@@ -76,6 +76,57 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
     fwd_exp->set_lhs_operand(fwd_lhs_exp);
     fwd_exp->set_rhs_operand(fwd_rhs_exp);
 
+    if (isSgAddOp(bin_op) ||
+            isSgAndOp(bin_op) ||
+            isSgBitAndOp(bin_op) ||
+            isSgBitOrOp(bin_op) ||
+            isSgBitXorOp(bin_op) ||
+            isSgCommaOpExp(bin_op) ||
+            isSgDivideOp(bin_op) ||
+            isSgEqualityOp(bin_op) ||
+            isSgGreaterOrEqualOp(bin_op) ||
+            isSgGreaterThanOp(bin_op) ||
+            isSgLessOrEqualOp(bin_op) ||
+            isSgLessThanOp(bin_op) ||
+            isSgLshiftOp(bin_op) ||
+            isSgModOp(bin_op) ||
+            isSgMultiplyOp(bin_op) ||
+            isSgNotEqualOp(bin_op) ||
+            isSgOrOp(bin_op) ||
+            isSgRshiftOp(bin_op) ||
+            isSgSubtractOp(bin_op))
+    {}
+    // For binary operations which don't modify the value of any variable, their 
+    // reverse expressions should reorder the evaluation of each operand, in case that
+    // reordering leads to differebt result. For example, ++a + (a *= 2)  ->  (a = pop()) + a--.  
+    // Therefore, we first check if the order of evaluations matters. If yes, for commutative
+    // operations, like add, sub(can be regarded as add), multiply, etc, we can just reorder their
+    // operands, and for other operations, we may have to save the value, and use comma operator to 
+    // reorder the evaluation of their operands. If no, we can just remain the original operation,
+    // but replace its operands with reverse ones.
+#if 0
+    if (canBeReordered(rvs_lhs_exp, rvs_rhs_exp))
+    {
+
+    }
+
+    if (isSgAddOp(bin_op))
+        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_rhs_exp, rvs_lhs_exp));
+    if (isSgMultiplyOp(bin_op))
+        return ExpPair(fwd_exp, buildBinaryExpression<SgMultiplyOp>(rvs_rhs_exp, rvs_lhs_exp));
+    if (isSgSubtractOp(bin_op))
+        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(
+                    buildUnaryExpression<SgUnaryAddOp>(rvs_lhs_exp), 
+                    rvs_rhs_exp));
+
+    if (SgAddOp* add_op = isSgAddOp(bin_op))
+        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_lhs_exp, rvs_rhs_exp));
+    if (SgAddOp* add_op = isSgAddOp(bin_op))
+        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_lhs_exp, rvs_rhs_exp));
+    if (SgAddOp* add_op = isSgAddOp(bin_op))
+        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_lhs_exp, rvs_rhs_exp));
+#endif
+
     // if the left-hand side of the assign-op is the state
     // (note that only in this situation do we consider to reverse this expression)
 #if 0
@@ -334,6 +385,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
     }
     // The arrow expression should be regarded as a variable.
     // FIXME What if the rhs operand is a member function?
+    // FIXME (++m)->i ?
     if (isSgArrowExp(bin_op))
         return ExpPair(copyExpression(bin_op), copyExpression(bin_op));
 
