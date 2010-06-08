@@ -16,10 +16,18 @@ StatementInheritedAttribute ExtractFunctionArguments::evaluateInheritedAttribute
 		return StatementInheritedAttribute(statement);
 	}
 
+
+
+	return parentStatementAttribute;
+}
+
+/** Perform the actual instrumentatation to extract the function arguments. This is a post-order traversal. */
+SynthetizedAttribute ExtractFunctionArguments::evaluateSynthesizedAttribute(SgNode* astNode, StatementInheritedAttribute parentStatementAttribute, SynthesizedAttributesList)
+{
 	//We're looking for function calls to rewrite
 	SgFunctionCallExp* functionCall = isSgFunctionCallExp(astNode);
 	if (functionCall == NULL)
-		return parentStatementAttribute;
+		return false; //The return value is just a dummy
 
 	SgFunctionDeclaration* functionDeclaration = functionCall->getAssociatedFunctionDeclaration();
 	SgExprListExp* functionArgs = functionCall->get_args();
@@ -27,12 +35,14 @@ StatementInheritedAttribute ExtractFunctionArguments::evaluateInheritedAttribute
 
 	SgExpressionPtrList& argumentList = functionArgs->get_expressions();
 
-	printf("Found a function call to function %s\n", functionDeclaration->get_name().str());
+	printf("\nExtracting arguments from function call to function %s, location %d:%d\n", functionDeclaration->get_name().str(),
+			functionCall->get_file_info()->get_line(), functionCall->get_file_info()->get_col());
 
 	//Go over all the function arguments, pull them out
-	for (size_t i = 0; i < argumentList.size(); i++)
+	for (SgExpressionPtrList::const_iterator argIter = argumentList.begin();
+			argIter != argumentList.end(); argIter++)
 	{
-		SgExpression* arg = argumentList[i];
+		SgExpression* arg = *argIter;
 
 		//No need to pull out parameters that are not complex expressions and
 		//thus don't have side effects
@@ -50,11 +60,22 @@ StatementInheritedAttribute ExtractFunctionArguments::evaluateInheritedAttribute
 		printf("Found %s, of return type %s.\n", arg->class_name().c_str(), argType->unparseToCompleteString().c_str());
 		printf("Temporary variable name is %s.\n", name.str());
 
-		SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, argType);
+		//Copy the argument expression and convert it to an intialization for the temporary variable
+		SgTreeCopy copyHelp;
+		SgExpression* argumentExpressionCopy = isSgExpression(arg->copy(copyHelp));
+		ROSE_ASSERT(argumentExpressionCopy != NULL);
+		SgAssignInitializer* initializer = new SgAssignInitializer(argumentExpressionCopy, argType);
+
+		//Insert the declaration for the temporary variable right before this statement
+		SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, argType, initializer);
 		ROSE_ASSERT(tempVarDeclaration != NULL);
 		SageInterface::insertStatement(parentStatementAttribute.statement, tempVarDeclaration);
+		printf("%s\n", tempVarDeclaration->unparseToString().c_str());
+
+		//Replace the function argument with a reference to the variable in question
+		functionArgs->replace_expression(arg, SageBuilder::buildVarRefExp(tempVarDeclaration));
 	}
 
-	return parentStatementAttribute;
+	//Return a dummy value
+	return false;
 }
-

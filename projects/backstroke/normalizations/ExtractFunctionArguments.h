@@ -2,6 +2,8 @@
 
 #include "rose.h"
 
+typedef bool SynthetizedAttribute;
+
 class StatementInheritedAttribute
 {
 public:
@@ -17,13 +19,16 @@ public:
 	}
 };
 
-class ExtractFunctionArguments : public AstTopDownProcessing<StatementInheritedAttribute>
+class ExtractFunctionArguments : public AstTopDownBottomUpProcessing<StatementInheritedAttribute, SynthetizedAttribute>
 {
 public:
 
     /** Perform the function argument extraction on all function calls in the given subtree of the AST. */
 	void NormalizeTree(SgNode* tree);
 
-	/** Update the scope based on the parent scope. */
+	/** Update the scope based on the parent scope. This is a pre-order traversal. */
 	StatementInheritedAttribute evaluateInheritedAttribute(SgNode* astNode, StatementInheritedAttribute parentValue);
+
+	/** Perform the actual instrumentatation to extract the function arguments. This is a post-order traversal. */
+	SynthetizedAttribute evaluateSynthesizedAttribute(SgNode* astNode, StatementInheritedAttribute parentValue, SynthesizedAttributesList);
 };
