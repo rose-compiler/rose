@@ -373,7 +373,7 @@ main ( int argc, char * argv[] )
 
      printf ("Size of AST (after merge of static data) = %zu \n",numberOfNodes());
 
-#if 0
+#if 1
   // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
   // of the AST and force sharing of these pieces and delete the redundany copies.
      printf ("Calling AstMergeSupport() \n");
@@ -417,14 +417,14 @@ main ( int argc, char * argv[] )
   // Custom test of AST (for problems that appears to be specific to writing out the merged AST).
   // testAST(globalProject);
 
-#if 0
+#if 1
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
      generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
 #endif
 
-#if 0
+#if 1
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);

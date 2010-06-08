@@ -254,7 +254,7 @@ clean-local:
 	rm -f *.dot *.C_identity inputBug317  inputBug327  inputForLoopLocator  lexPhase2003_01  math  test2010_03  test2010_04  test2010_05  test2010_06  test_CplusplusMacro_Cpp
 #	Remove some generated files by the parallel merge.
 	rm -f *.txt
-	rm -rf tmp? data
+	rm -rf tmp? data temp_output_*
 
 distclean-local:
 	rm -rf Templates.DB 
