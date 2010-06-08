@@ -1,10 +1,10 @@
 #include "rose.h"
 #include "SMTSolver.h"
 
-#include <fcntl.h>
+#include <fcntl.h> /*for O_RDWR, etc.*/
 
 bool
-SMTSolver::satisfiable(const SymbolicExpr::TreeNode *tn)
+SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
 {
     /* Generate the input file for the solver. */
     char config_name[L_tmpnam];
@@ -56,7 +56,7 @@ SMTSolver::satisfiable(const SymbolicExpr::TreeNode *tn)
         execl("/bin/cat", "cat", "-n", config_name, NULL);
         abort(); /*probably not reached*/
     }
-    
+
     unlink(config_name);
     return retval;
 }

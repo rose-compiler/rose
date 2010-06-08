@@ -16,8 +16,8 @@ libbinaryMidend_la_SOURCES = \
      dataflowanalyses/RoseBin_Emulate.cpp \
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
      instructionSemantics/findConstants.C \
+     instructionSemantics/InsnSemanticsExpr.C \
      instructionSemantics/SMTSolver.C \
-     instructionSemantics/SymbolicExpr.C \
      instructionSemantics/SymbolicSemantics.C \
      instructionSemantics/YicesSolver.C \
      instructionSemantics/VirtualMachineSemantics.C \
@@ -45,8 +45,8 @@ include_HEADERS = \
    dataflowanalyses/RoseBin_Emulate.h \
    dataflowanalyses/RoseBin_VariableAnalysis.h \
    instructionSemantics/findConstants.h \
+   instructionSemantics/InsnSemanticsExpr.h \
    instructionSemantics/SMTSolver.h \
-   instructionSemantics/SymbolicExpr.h \
    instructionSemantics/SymbolicSemantics.h \
    instructionSemantics/VirtualMachineSemantics.h \
    instructionSemantics/YicesSolver.h \

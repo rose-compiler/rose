@@ -60,7 +60,9 @@
     struct TestPolicy: public SymbolicSemantics::Policy {
         TestPolicy() {
 #           if 1==SOLVER_SELECTOR
-                set_solver(new YicesSolver);
+                YicesSolver *solver = new YicesSolver;
+                //solver->set_debug(stdout);
+                set_solver(solver);
 #           endif
         }
         void dump(SgAsmInstruction *insn) {

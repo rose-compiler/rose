@@ -30,43 +30,60 @@
  *  answered by very naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-    typedef SymbolicExpr::RenameMap RenameMap;
-    typedef SymbolicExpr::LeafNode LeafNode;
-    typedef SymbolicExpr::InternalNode InternalNode;
-    typedef SymbolicExpr::TreeNode TreeNode;
+    typedef InsnSemanticsExpr::RenameMap RenameMap;
+    typedef InsnSemanticsExpr::LeafNode LeafNode;
+    typedef InsnSemanticsExpr::InternalNode InternalNode;
+    typedef InsnSemanticsExpr::TreeNode TreeNode;
 
     /* ValueType cannot directly be a TreeNode because ValueType's bit size is a template argument while tree node sizes are
      * stored as a data member.  Therefore, ValueType will always point to a TreeNode.  Most of the methods that are invoked on
      * ValueType just call the same methods for TreeNode. */
     template<size_t nBits>
     struct ValueType {
-        TreeNode *expr;
+
+        TreeNode *expr; /*reference counted*/
 
         /** Construct a value that is unknown and unique. */
         ValueType() {
             expr = LeafNode::create_variable(nBits);
+            expr->inc_nrefs();
+        }
+
+        ValueType(const ValueType &other) {
+            expr = other.expr;
+            expr->inc_nrefs();
+        }
+
+        ValueType& operator=(const ValueType &other) {
+            expr->dec_nrefs();
+            expr->deleteDeeply();
+            expr = other.expr;
+            expr->inc_nrefs();
+            return *this;
         }
 
         /** Construct a ValueType with a known value. */
         explicit ValueType(uint64_t n) {
             expr = LeafNode::create_integer(nBits, n);
+            expr->inc_nrefs();
         }
 
         /** Construct a ValueType from a TreeNode. */
         explicit ValueType(TreeNode *node) {
             assert(node->get_nbits()==nBits);
             expr = node;
+            expr->inc_nrefs();
+        }
+
+        ~ValueType() {
+            expr->dec_nrefs();
+            expr->deleteDeeply();
         }
 
         /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See the rename()
          *  method for details. */
         void print(std::ostream &o, RenameMap *rmap=NULL) const {
             expr->print(o, rmap);
-        }
-
-        /** Returns true if this value is provably equal to the @p other value. */
-        bool equal_to(const ValueType<nBits> &other) const {
-            return expr->equal_to(other.expr);
         }
 
         /** Returns true if the value is a known constant. */
@@ -308,11 +325,11 @@ namespace SymbolicSemantics {
             if (FromLen==ToLen)
                 return ValueType<ToLen>(a.expr);
             if (FromLen>ToLen)
-                return ValueType<ToLen>(new InternalNode(ToLen, SymbolicExpr::OP_EXTRACT,
+                return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
                                                          LeafNode::create_integer(32, 0),
-                                                         LeafNode::create_integer(32, ToLen), 
+                                                         LeafNode::create_integer(32, ToLen),
                                                          a.expr));
-            return ValueType<ToLen>(new InternalNode(ToLen, SymbolicExpr::OP_UEXTEND,
+            return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_UEXTEND,
                                                      LeafNode::create_integer(32, ToLen), a.expr));
         }
 
@@ -324,11 +341,11 @@ namespace SymbolicSemantics {
             if (FromLen==ToLen)
                 return ValueType<ToLen>(a.expr);
             if (FromLen > ToLen)
-                return ValueType<ToLen>(new InternalNode(ToLen, SymbolicExpr::OP_EXTRACT, 
-                                                         LeafNode::create_integer(32, 0), 
-                                                         LeafNode::create_integer(32, ToLen), 
+                return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
+                                                         LeafNode::create_integer(32, 0),
+                                                         LeafNode::create_integer(32, ToLen),
                                                          a.expr));
-            return ValueType<ToLen>(new InternalNode(ToLen, SymbolicExpr::OP_SEXTEND,
+            return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_SEXTEND,
                                                      LeafNode::create_integer(32, ToLen), a.expr));
         }
 
@@ -340,9 +357,9 @@ namespace SymbolicSemantics {
                 return unsignedExtend<Len,EndAt-BeginAt>(a);
             if (a.is_known())
                 return ValueType<EndAt-BeginAt>(a.value());
-            return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, SymbolicExpr::OP_EXTRACT,
+            return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
                                                              LeafNode::create_integer(32, BeginAt),
-                                                             LeafNode::create_integer(32, EndAt), 
+                                                             LeafNode::create_integer(32, EndAt),
                                                              a.expr));
         }
 
@@ -598,7 +615,7 @@ namespace SymbolicSemantics {
             } else if (b.is_known() && 0==b.value()) {
                 return a;
             }
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_ADD, a.expr, b.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ADD, a.expr, b.expr));
         }
 
         /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
@@ -629,13 +646,13 @@ namespace SymbolicSemantics {
         /** Computes bit-wise AND of two values. */
         template <size_t Len>
         ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_BV_AND, a.expr, b.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_AND, a.expr, b.expr));
         }
 
         /** Returns true_, false_, or undefined_ depending on whether argument is zero. */
         template <size_t Len>
         ValueType<1> equalToZero(const ValueType<Len> &a) const {
-            return ValueType<1>(new InternalNode(1, SymbolicExpr::OP_ZEROP, a.expr));
+            return ValueType<1>(new InternalNode(1, InsnSemanticsExpr::OP_ZEROP, a.expr));
         }
 
         /** One's complement */
@@ -643,74 +660,74 @@ namespace SymbolicSemantics {
         ValueType<Len> invert(const ValueType<Len> &a) const {
             if (a.is_known())
                 return ValueType<Len>(LeafNode::create_integer(Len, ~a.value()));
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_INVERT, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_INVERT, a.expr));
         }
 
         /** Concatenate the values of @p a and @p b so that the result has @p b in the high-order bits and @p a in the low order
          *  bits. */
         template<size_t Len1, size_t Len2>
         ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, SymbolicExpr::OP_CONCAT, a.expr, b.expr));
+            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_CONCAT, a.expr, b.expr));
         }
 
         /** Returns second or third arg depending on value of first arg. "ite" means "if-then-else". */
         template <size_t Len>
         ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_ITE, sel.expr, ifTrue.expr, ifFalse.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ITE, sel.expr, ifTrue.expr, ifFalse.expr));
         }
 
         /** Returns position of least significant set bit; zero when no bits are set. */
         template <size_t Len>
         ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_LSSB, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_LSSB, a.expr));
         }
 
         /** Returns position of most significant set bit; zero when no bits are set. */
         template <size_t Len>
         ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_MSSB, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_MSSB, a.expr));
         }
 
         /** Two's complement. */
         template <size_t Len>
         ValueType<Len> negate(const ValueType<Len> &a) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_NEGATE, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_NEGATE, a.expr));
         }
 
         /** Computes bit-wise OR of two values. */
         template <size_t Len>
         ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_BV_OR, a.expr, b.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_OR, a.expr, b.expr));
         }
 
         /** Rotate bits to the left. */
         template <size_t Len, size_t SALen>
         ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_ROL, sa.expr, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROL, sa.expr, a.expr));
         }
 
         /** Rotate bits to the right. */
         template <size_t Len, size_t SALen>
         ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_ROR, sa.expr, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROR, sa.expr, a.expr));
         }
 
         /** Returns arg shifted left. */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_SHL0, sa.expr, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHL0, sa.expr, a.expr));
         }
 
         /** Returns arg shifted right logically (no sign bit). */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_SHR0, sa.expr, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHR0, sa.expr, a.expr));
         }
 
         /** Returns arg shifted right arithmetically (with sign bit). */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_ASR, sa.expr, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ASR, sa.expr, a.expr));
         }
 
         /** Sign extends a value. */
@@ -722,43 +739,43 @@ namespace SymbolicSemantics {
         /** Divides two signed values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len1>(new InternalNode(Len1, SymbolicExpr::OP_SDIV, a.expr, b.expr));
+            return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_SDIV, a.expr, b.expr));
         }
 
         /** Calculates modulo with signed values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len2>(new InternalNode(Len2, SymbolicExpr::OP_SMOD, a.expr, b.expr));
+            return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_SMOD, a.expr, b.expr));
         }
 
         /** Multiplies two signed values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, SymbolicExpr::OP_SMUL, a.expr, b.expr));
+            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_SMUL, a.expr, b.expr));
         }
 
         /** Divides two unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len1>(new InternalNode(Len1, SymbolicExpr::OP_UDIV, a.expr, b.expr));
+            return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_UDIV, a.expr, b.expr));
         }
 
         /** Calculates modulo with unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len2>(new InternalNode(Len2, SymbolicExpr::OP_UMOD, a.expr, b.expr));
+            return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_UMOD, a.expr, b.expr));
         }
 
         /** Multiply two unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, SymbolicExpr::OP_UMUL, a.expr, b.expr));
+            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_UMUL, a.expr, b.expr));
         }
 
         /** Computes bit-wise XOR of two values. */
         template <size_t Len>
         ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-            return ValueType<Len>(new InternalNode(Len, SymbolicExpr::OP_BV_XOR, a.expr, b.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_XOR, a.expr, b.expr));
         }
     };
 

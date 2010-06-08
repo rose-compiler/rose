@@ -3,18 +3,18 @@
 
 /* See SMTSolver::get_command() */
 std::string
-YicesSolver::get_command(const std::string &config_name) 
+YicesSolver::get_command(const std::string &config_name)
 {
 #ifdef YICES
     return std::string(YICES) + " -tc " + config_name;
 #else
-    return "false YICES not defined"
+    return "false YICES not defined";
 #endif
 }
 
 /* See SMTSolver::generate_file() */
 void
-YicesSolver::generate_file(std::ostream &o, const SymbolicExpr::TreeNode *tn, Definitions *defns)
+YicesSolver::generate_file(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn, Definitions *defns)
 {
     Definitions *allocated = NULL;
     if (!defns)
@@ -29,11 +29,11 @@ YicesSolver::generate_file(std::ostream &o, const SymbolicExpr::TreeNode *tn, De
 
 /** Traverse an expression and produce Yices "define" statements for variables. */
 void
-YicesSolver::out_define(std::ostream &o, const SymbolicExpr::TreeNode *tn, Definitions *defns)
+YicesSolver::out_define(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn, Definitions *defns)
 {
     ROSE_ASSERT(defns!=NULL);
-    const SymbolicExpr::LeafNode *ln = dynamic_cast<const SymbolicExpr::LeafNode*>(tn);
-    const SymbolicExpr::InternalNode *in = dynamic_cast<const SymbolicExpr::InternalNode*>(tn);
+    const InsnSemanticsExpr::LeafNode *ln = dynamic_cast<const InsnSemanticsExpr::LeafNode*>(tn);
+    const InsnSemanticsExpr::InternalNode *in = dynamic_cast<const InsnSemanticsExpr::InternalNode*>(tn);
 
     if (ln) {
         if (!ln->is_known() && defns->find(ln->get_name())==defns->end()) {
@@ -49,7 +49,7 @@ YicesSolver::out_define(std::ostream &o, const SymbolicExpr::TreeNode *tn, Defin
 
 /** Generate a Yices "assert" statement for an expression. */
 void
-YicesSolver::out_assert(std::ostream &o, const SymbolicExpr::TreeNode *tn)
+YicesSolver::out_assert(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
 {
     o <<"(assert ";
     out_expr(o, tn);
@@ -58,9 +58,9 @@ YicesSolver::out_assert(std::ostream &o, const SymbolicExpr::TreeNode *tn)
 
 /** Output a decimal number. */
 void
-YicesSolver::out_number(std::ostream &o, const SymbolicExpr::TreeNode *tn)
+YicesSolver::out_number(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
 {
-    const SymbolicExpr::LeafNode *ln = dynamic_cast<const SymbolicExpr::LeafNode*>(tn);
+    const InsnSemanticsExpr::LeafNode *ln = dynamic_cast<const InsnSemanticsExpr::LeafNode*>(tn);
     ROSE_ASSERT(ln!=NULL);
     ROSE_ASSERT(ln->is_known());
     o <<ln->get_value();
@@ -68,9 +68,9 @@ YicesSolver::out_number(std::ostream &o, const SymbolicExpr::TreeNode *tn)
 
 /** Output for one expression. */
 void
-YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::TreeNode *tn)
+YicesSolver::out_expr(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
 {
-    using namespace SymbolicExpr;
+    using namespace InsnSemanticsExpr;
     const LeafNode *ln = dynamic_cast<const LeafNode*>(tn);
     const InternalNode *in = dynamic_cast<const InternalNode*>(tn);
     if (ln) {
@@ -128,7 +128,7 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::TreeNode *tn)
 
 /** Output for unary operators. */
 void
-YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_unary(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in)
 {
     assert(opname && *opname);
     assert(in && 1==in->size());
@@ -140,7 +140,7 @@ YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::
 
 /** Output for binary operators. */
 void
-YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_binary(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in)
 {
     assert(opname && *opname);
     assert(in && 2==in->size());
@@ -163,7 +163,7 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr:
  *  \code
  */
 void
-YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_ite(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 {
     assert(in && 3==in->size());
     assert(in->child(0)->get_nbits()==1);
@@ -180,7 +180,7 @@ YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InternalNode *in)
 /** Output for left-associative, binary operators. The identity_element is sign-extended and used as the second operand
  *  if only one operand is supplied. */
 void
-YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InternalNode *in, bool identity_element)
+YicesSolver::out_la(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in, bool identity_element)
 {
     assert(opname && *opname);
     assert(in && in->size()>=1);
@@ -196,8 +196,8 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
             o <<")";
         }
     } else {
-        SymbolicExpr::LeafNode *ident = SymbolicExpr::LeafNode::create_integer(in->child(0)->get_nbits(),
-                                                                               identity_element ? (uint64_t)(-1) : 0);
+        InsnSemanticsExpr::LeafNode *ident = InsnSemanticsExpr::LeafNode::create_integer(in->child(0)->get_nbits(),
+                                                                                         identity_element ? (uint64_t)(-1) : 0);
         out_expr(o, ident);
         o <<")";
     }
@@ -205,7 +205,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
 
 /** Output for left-associative operators. */
 void
-YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_la(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in)
 {
     if (in->size()==1) {
         out_unary(o, opname, in);
@@ -216,9 +216,9 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
 
 /** Output for extract. Yices bv-extract first two arguments must be constants. */
 void
-YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_extract(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 {
-    using namespace SymbolicExpr;
+    using namespace InsnSemanticsExpr;
 
     assert(in && 3==in->size());
     assert(in->child(0)->is_known());
@@ -235,7 +235,7 @@ YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InternalNode *in)
  *  argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size) and the
  *  size of the second operand (the bit vector to be extended). */
 void
-YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_sext(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 {
     assert(in && 2==in->size());
     assert(in->child(0)->is_known()); /*Yices bv-sign-extend needs a number for the second operand*/
@@ -251,9 +251,9 @@ YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InternalNode *in)
  *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
 void
-YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_uext(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 {
-    using namespace SymbolicExpr;
+    using namespace InsnSemanticsExpr;
     assert(in && 2==in->size());
     assert(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
     assert(in->child(0)->get_value() > in->child(1)->get_nbits());
@@ -266,7 +266,7 @@ YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InternalNode *in)
 
 /** Output for shift operators. */
 void
-YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::InternalNode *in, bool newbits)
+YicesSolver::out_shift(std::ostream &o, const char *opname, const InsnSemanticsExpr::InternalNode *in, bool newbits)
 {
     assert(opname && *opname);
     assert(in && 2==in->size());
@@ -287,9 +287,9 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::
  * where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
  */
 void
-YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_asr(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 {
-    using namespace SymbolicExpr;
+    using namespace InsnSemanticsExpr;
     assert(in && 2==in->size());
     const TreeNode *vector = in->child(1);
     uint64_t vector_size = vector->get_nbits();
@@ -316,7 +316,7 @@ YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InternalNode *in)
  *  \endcode
  */
 void
-YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_zerop(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 {
     assert(in && 1==in->size());
     o <<"(ite (= (mk-bv " <<in->child(0)->get_nbits() <<" 0) ";
@@ -324,7 +324,7 @@ YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InternalNode *in)
     o <<") 0b1 0b0)";
 }
 
-/** Output for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicExpr define the result width to be the sum of the input
+/** Output for multiply. The OP_SMUL and OP_UMUL nodes of InsnSemanticsExpr define the result width to be the sum of the input
  *  widths. Yices' bv-mul operator requires that both operands are the same size and the result is the size of each operand.
  *  Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *  \code
@@ -332,7 +332,7 @@ YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InternalNode *in)
  *  \endcode
  */
 void
-YicesSolver::out_mult(std::ostream &o, const SymbolicExpr::InternalNode *in)
+YicesSolver::out_mult(std::ostream &o, const InsnSemanticsExpr::InternalNode *in)
 {
     o <<"(bv-mul (bv-sign-extend ";
     out_expr(o, in->child(0));

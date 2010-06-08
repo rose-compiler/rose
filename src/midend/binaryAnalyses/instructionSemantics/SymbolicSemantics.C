@@ -9,7 +9,7 @@ operator<<(std::ostream &o, const State &state)
     state.print(o);
     return o;
 }
-    
+
 std::ostream &
 operator<<(std::ostream &o, const MemoryCell &mc)
 {
@@ -38,26 +38,26 @@ MemoryCell::may_alias(const MemoryCell &other, SMTSolver *solver/*NULL*/) const
     bool retval = must_alias(other, solver); /*this might be faster to solve*/
     if (retval)
         return retval;
-    
+
     if (solver) {
         TreeNode *x_addr   = this->address.expr;
         TreeNode *x_nbytes = LeafNode::create_integer(32, this->nbytes);
         TreeNode *y_addr   = other.address.expr;
         TreeNode *y_nbytes = LeafNode::create_integer(32, other.nbytes);
 
-        TreeNode *x_end = new InternalNode(32, SymbolicExpr::OP_ADD, x_addr, x_nbytes);
-        TreeNode *y_end = new InternalNode(32, SymbolicExpr::OP_ADD, y_addr, y_nbytes);
-        
-        TreeNode *and1 = new InternalNode(1, SymbolicExpr::OP_AND,
-                                          new InternalNode(1, SymbolicExpr::OP_UGT, x_end, y_addr), 
-                                          new InternalNode(1, SymbolicExpr::OP_ULT, x_addr, y_end));
-        TreeNode *and2 = new InternalNode(1, SymbolicExpr::OP_AND, 
-                                          new InternalNode(1, SymbolicExpr::OP_UGT, y_end, x_addr), 
-                                          new InternalNode(1, SymbolicExpr::OP_ULT, y_addr, x_end));
+        TreeNode *x_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, x_addr, x_nbytes);
+        TreeNode *y_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, y_addr, y_nbytes);
 
-        TreeNode *assertion = new InternalNode(1, SymbolicExpr::OP_OR, and1, and2);
+        TreeNode *and1 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
+                                          new InternalNode(1, InsnSemanticsExpr::OP_UGT, x_end, y_addr),
+                                          new InternalNode(1, InsnSemanticsExpr::OP_ULT, x_addr, y_end));
+        TreeNode *and2 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
+                                          new InternalNode(1, InsnSemanticsExpr::OP_UGT, y_end, x_addr),
+                                          new InternalNode(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
+
+        TreeNode *assertion = new InternalNode(1, InsnSemanticsExpr::OP_OR, and1, and2);
         retval = solver->satisfiable(assertion);
-        delete assertion;
+        assertion->deleteDeeply();
     }
 
     return retval;
@@ -66,14 +66,7 @@ MemoryCell::may_alias(const MemoryCell &other, SMTSolver *solver/*NULL*/) const
 bool
 MemoryCell::must_alias(const MemoryCell &other, SMTSolver *solver/*NULL*/) const
 {
-    if (solver) {
-        InternalNode *assertion = new InternalNode(1, SymbolicExpr::OP_NE, address.expr, other.address.expr);
-        bool satisfied = solver->satisfiable(assertion);
-        delete assertion;
-        return !satisfied;
-    } else {
-        return address.equal_to(other.address);
-    }
+    return address.expr->equal_to(other.address.expr, solver);
 }
 
 void
@@ -119,5 +112,5 @@ State::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
         o <<"\n";
     }
 }
-    
+
 }
