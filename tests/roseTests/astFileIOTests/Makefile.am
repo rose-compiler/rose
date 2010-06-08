@@ -187,13 +187,13 @@ testParallelMerge-short: parallelMerge
 	rm -rf data temp
 	mkdir data
 	mkdir temp
-	parallelMerge $(TEST_SHORT_LIST) temp_output_parallel_short.C
+	./parallelMerge $(TEST_SHORT_LIST) temp_output_parallel_short.C
 
 testParallelMerge-medium: parallelMerge
 	rm -rf data temp
 	mkdir data
 	mkdir temp
-	parallelMerge $(TEST_MEDIUM_LIST) temp_output_parallel_medium.C
+	./parallelMerge $(TEST_MEDIUM_LIST) temp_output_parallel_medium.C
 
 
 # DQ (3/1/2010): This is the sart of a general command to process all the

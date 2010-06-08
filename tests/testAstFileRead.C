@@ -373,11 +373,14 @@ main ( int argc, char * argv[] )
 
      printf ("Size of AST (after merge of static data) = %zu \n",numberOfNodes());
 
-#if 0
+#if 1
   // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
   // of the AST and force sharing of these pieces and delete the redundany copies.
-     int mergeErrorCode = AstMergeSupport(globalProject);
-     ROSE_ASSERT(mergeErrorCode == 0);
+     printf ("Calling AstMergeSupport() \n");
+  // int mergeErrorCode = AstMergeSupport(globalProject);
+     bool skipFrontendSpecificIRnodes = true;
+     mergeAST(globalProject,skipFrontendSpecificIRnodes);
+  // ROSE_ASSERT(mergeErrorCode == 0);
 #else
      printf ("Skipping call to AstMergeSupport() \n");
 #endif
