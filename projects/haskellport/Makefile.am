@@ -102,7 +102,15 @@ cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal Setup.hs $(SRC_NONGENERA
 			fi ; \
 		done ; \
 	fi
-	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS)
+#	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --extra-lib-dirs=$dwarf_path
+#	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --extra-lib-dirs=@dwarf_path@
+#	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --extra-lib-dirs=@DWARF_LINK@
+	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3
+# if ROSE_USE_DWARF
+# 	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --gcc-option=@dwarf_path@/libdwarf.so --gcc-option=-lelf
+# else
+# 	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3
+# endif
 	touch $@
 else
 cabal-configure-stamp:

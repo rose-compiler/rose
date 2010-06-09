@@ -11,7 +11,7 @@ endif
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = eventReverser.h facilityBuilder.h test
+EXTRA_DIST = eventReverser.h facilityBuilder.h utilities.h test
 
 CLEANFILES = 
 

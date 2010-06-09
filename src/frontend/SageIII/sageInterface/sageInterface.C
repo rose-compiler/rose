@@ -5111,12 +5111,16 @@ void SageInterface::removeStatement(SgStatement* stmt)
 //! Deep delete a sub AST tree. It uses postorder traversal to delete each child node.
 void SageInterface::deepDelete(SgNode* root)
 {
+#if 0  
    struct Visitor: public AstSimpleProcessing {
     virtual void visit(SgNode* n) {
         delete (n);
      }
     };
   Visitor().traverse(root, postorder);
+#else
+  deleteAST(root);
+#endif  
 }
 #endif
 
@@ -10469,7 +10473,6 @@ SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*
 void
 SageInterface::deleteAST ( SgNode* node )
    {
-
      class DeleteAST : public SgSimpleProcessing
         {
           public:
