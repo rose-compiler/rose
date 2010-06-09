@@ -23,9 +23,9 @@
  *  to the partitioner() method. The first phase considers all disassembled instructions and other available information such as
  *  symbol tables and tries to determine which addresses are entry points for functions.  For instance, if the symbol table
  *  contains function symbols, then the address stored in the symbol table is assumed to be the entry point of a function.  ROSE
- *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the
- *  "-rose:partitioner_search" command-line switch.  ROSE also supports user-defined search methods that can be registered with
- * an existing partitioner (see add_function_detector()).
+ *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the set_search() method.
+ *  ROSE also supports user-defined search methods that can be registered with add_function_detector().  The three phases are
+ *  initialized and influenced by the contents of an optional configuration file specified with the set_config() method.
  *
  *  The second phase for assigning blocks to functions is via analysis of the control-flow graph.  In a nutshell, ROSE
  *  traverses the CFG starting with the entry address of each function, adding blocks to the function as it goes. When it
@@ -36,6 +36,16 @@
  *  no-op or zero padding occuring between the previously detected functions. This could also be user-extended to add blocks to
  *  functions that ROSE detected during CFG analysis (such as unreferenced basic blocks, no-ops, etc. that occur within the
  *  extent of a function.)
+ *
+ *  By default, ROSE constructs a Partitioner to use for partitioning instructions of binary files during frontend() parsing
+ *  (this happens in Disassembler::disassembleInterpretation()).  This Partitioner's settings are controlled by two
+ *  command-line switches whose documentation can be seen by running any ROSE program with the --help switch.  These
+ *  command-line switches operate by setting property values in the SgFile node and then transferring them to the Partitioner
+ *  when the Partitioner is constructed.
+ *  <ul>
+ *    <li>-rose:partitioner_search initializes the detection methods by calling set_search(), and parse_switches()</li>
+ *    <li>-rose:partitioner_config specifies an IPD file by calling set_config().</li>
+ *  </ul>
  *
  *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
  *  information via a call to the build_ast() method, which constructs a ROSE AST.  Any instructions that were not assigned to
@@ -209,7 +219,7 @@ public:
 
     /** Returns a list of the currently defined functions.
      *
-     *  \deprecated This function has been replaced by seed_functions() and analyze_cfg(). */
+     *  \deprecated This function has been replaced by pre_cfg(), analyze_cfg(), and post_cfg() */
     FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
                                    BasicBlockStarts &bb_starts/*out*/) const;
 

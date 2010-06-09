@@ -13,6 +13,7 @@
 #include "VirtualMachineSemantics.h"
 #include "bincfg.h"
 
+/*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
 /* Convert a SHA1 digest to a string. */
