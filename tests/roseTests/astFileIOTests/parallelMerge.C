@@ -263,7 +263,7 @@ int main ( int argc, char * argv[] )
     vector<pair<int, double> > time_used;
     //ofstream ifs("timer.txt");
     int min_thread_num = 2;
-    int max_thread_num = 4;
+    int max_thread_num = 10;
     for (int i = min_thread_num; i <= max_thread_num; i += 1)
     {
         XTimer t;

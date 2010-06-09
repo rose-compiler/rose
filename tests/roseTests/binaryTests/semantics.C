@@ -7,6 +7,7 @@
 #include "findConstants.h"
 #include "VirtualMachineSemantics.h"
 #include "SymbolicSemantics.h"
+#include "YicesSolver.h"
 #include <set>
 #include <inttypes.h>
 
@@ -57,18 +58,19 @@
 #elif  4==POLICY_SELECTOR
 #   define TestValueTemplate SymbolicSemantics::ValueType
     struct TestPolicy: public SymbolicSemantics::Policy {
+        TestPolicy() {
+#           if 1==SOLVER_SELECTOR
+                YicesSolver *solver = new YicesSolver;
+                //solver->set_debug(stdout);
+                set_solver(solver);
+#           endif
+        }
         void dump(SgAsmInstruction *insn) {
-#if 0
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<get_state()
-                      <<"    ip = " <<get_ip() <<"\n";
-#else
             std::cout <<unparseInstructionWithAddress(insn) <<"\n";
             get_state().print(std::cout);
             std::cout <<"    ip = ";
             std::cout <<get_ip();
             std::cout <<"\n";
-#endif
         }
     };
 #else

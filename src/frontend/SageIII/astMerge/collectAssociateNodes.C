@@ -442,7 +442,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     functionDeclaration->get_startOfConstruct()->display("Location of problem function declaration: debug");
                     printf ("SgNode::get_globalFunctionTypeTable() = %p get_function_type_table()->size() = %d \n",SgNode::get_globalFunctionTypeTable(),SgNode::get_globalFunctionTypeTable()->get_function_type_table()->size());
 #endif
+#if 0
+                 // DQ (6/8/2010): Commented out as a test...
                     ROSE_ASSERT(functionDeclaration->get_startOfConstruct()->isCompilerGenerated() == true);
+#else
+                    printf ("Commented out test (assertion) of functionDeclaration->get_startOfConstruct()->isCompilerGenerated() == true \n");
+#endif
                   }
                  else
                   {

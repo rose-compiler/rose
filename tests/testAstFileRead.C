@@ -203,8 +203,8 @@ main ( int argc, char * argv[] )
   // AST file so that we can do a merge of the static information of the AST.
      vector<AstFileSpecificInfo*> AstFileInfoArray;
 
-     int currentNumberOfNodes  = 0;
-     int previousNumberOfNodes = 0;
+     size_t currentNumberOfNodes  = 0;
+     size_t previousNumberOfNodes = 0;
 
   // DQ (6/5/2010): Trigger debugging output!
   // ROSE_DEBUG = 2;
@@ -230,7 +230,7 @@ main ( int argc, char * argv[] )
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
-          printf ("file #%d = %s AST size = %d memory usage = %d Sg_File_Info::numberOfNodes() = %d \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
+          printf ("file #%5d = %20s AST size = %12zu memory usage = %12zu Sg_File_Info::numberOfNodes() = %12zu \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
 
        // TestFreepointerInMemoryPool::test();
 
@@ -348,7 +348,7 @@ main ( int argc, char * argv[] )
              }
         }
 
-     printf ("Size of AST = %d \n",numberOfNodes());
+     printf ("Size of AST = %zu \n",numberOfNodes());
 
 #if 0
      for (int i= 0; i < numFiles; ++i)
@@ -371,7 +371,24 @@ main ( int argc, char * argv[] )
 
      mergeStaticASTFileInformation(AstFileInfoArray);
 
-     printf ("Size of AST (after merge) = %d \n",numberOfNodes());
+     printf ("Size of AST (after merge of static data) = %zu \n",numberOfNodes());
+
+#if 0
+  // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
+  // of the AST and force sharing of these pieces and delete the redundany copies.
+     printf ("Calling AstMergeSupport() \n");
+  // int mergeErrorCode = AstMergeSupport(globalProject);
+  // bool skipFrontendSpecificIRnodes = true;
+     SgProject::set_verbose(3);
+     bool skipFrontendSpecificIRnodes = false;
+     mergeAST(globalProject,skipFrontendSpecificIRnodes);
+  // ROSE_ASSERT(mergeErrorCode == 0);
+     SgProject::set_verbose(0);
+#else
+     printf ("Skipping call to mergeAST() \n");
+#endif
+
+     printf ("Size of AST (after final merge to eliminate redundancy) = %zu \n",numberOfNodes());
 
 #if 1
   // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
@@ -403,14 +420,14 @@ main ( int argc, char * argv[] )
   // Custom test of AST (for problems that appears to be specific to writing out the merged AST).
   // testAST(globalProject);
 
-#if 0
+#if 1
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
      generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
 #endif
 
-#if 0
+#if 1
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
@@ -424,7 +441,7 @@ main ( int argc, char * argv[] )
 
   // string mergedFileName = "mergedFile.C";
      string mergedFileName = outputFileName;
-     printf ("mergedFileName = %s numberOfNodes() = %d \n",(mergedFileName + ".binary").c_str(),numberOfNodes());
+     printf ("mergedFileName = %s numberOfNodes() = %zu \n",(mergedFileName + ".binary").c_str(),numberOfNodes());
 
   // printf ("Calling AST_FILE_IO::reset() \n");
      AST_FILE_IO::reset();
