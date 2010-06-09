@@ -141,6 +141,7 @@ void event21(struct model *m)
 }
 
 
+#if 1
 void event22(struct model *m)
 {
   m -> model::i_ && ((rand() > 1073741823?++m -> model::i_ : m -> model::i_++));
@@ -149,18 +150,20 @@ void event22(struct model *m)
 
 void event23(struct model *m)
 {
-  m -> model::i_ || ((rand() > 1073741823?++m -> model::i_ : m -> model::i_++));
+  //m -> model::i_ || ((rand() > 1073741823?++m -> model::i_ : m -> model::i_++));
 }
 
 
 void event24(struct model *m)
 {
-  m -> model::i_ = (++m -> model::i_?++m -> model::i_ : (m -> model::i_ = 3723));
+    int i = 0;
+  //m -> model::i_ = (++m -> model::i_?++m -> model::i_ : (m -> model::i_ = 3723));
+  //m -> model::i_ += i;// + (m -> model::i_?m -> model::i_ : (m -> model::i_ ));
 }
-
 
 void event25(struct model *m)
 {
+
   m -> model::i_ && ((++m -> model::i_?++m -> model::i_ : (m -> model::i_ = 3723)));
 }
 
@@ -259,4 +262,4 @@ void event41(struct model *m)
 {
   m -> model::i_ || ((rand() > 1073741823?m -> model::i_ && 3723 : m -> model::i_ || 3723));
 }
-
+#endif
