@@ -2613,6 +2613,11 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                               sourceFile->initializeGlobalScope();
                             }
                            else
+                              if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension)   == true )
+                                   file->set_Cuda_only(true);
+                              else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension)   == true )
+                                   file->set_OpenCL_only(true);
+                              else
                             {
                            // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
 
@@ -3083,19 +3088,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
         
-  // TV (05/07/2010): OpenCL and CUDA mode (need to be modify: we may need both C++ mode and Cuda)
-     bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true);
-     bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true);
+  // TV (05/07/2010): OpenCL and CUDA mode (Caution: we may need both C++ language mode and Cuda)
+     bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true) || get_Cuda_only();
+     bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
      
      if (enable_cuda || enable_opencl) {
 	makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
-     	if (enable_cuda) {
+     	if (enable_cuda && !enable_opencl) {
      		commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
-     		printf ("CUDA\n");
      	}
-     	else if (enable_opencl) {
+     	else if (enable_opencl && !enable_cuda) {
      		commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
-     		printf ("OpenCL\n");
      	}
 	else {
 		printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
