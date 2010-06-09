@@ -378,9 +378,12 @@ main ( int argc, char * argv[] )
   // of the AST and force sharing of these pieces and delete the redundany copies.
      printf ("Calling AstMergeSupport() \n");
   // int mergeErrorCode = AstMergeSupport(globalProject);
-     bool skipFrontendSpecificIRnodes = true;
+  // bool skipFrontendSpecificIRnodes = true;
+     SgProject::set_verbose(3);
+     bool skipFrontendSpecificIRnodes = false;
      mergeAST(globalProject,skipFrontendSpecificIRnodes);
   // ROSE_ASSERT(mergeErrorCode == 0);
+     SgProject::set_verbose(0);
 #else
      printf ("Skipping call to mergeAST() \n");
 #endif
@@ -417,14 +420,14 @@ main ( int argc, char * argv[] )
   // Custom test of AST (for problems that appears to be specific to writing out the merged AST).
   // testAST(globalProject);
 
-#if 0
+#if 1
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
      generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
 #endif
 
-#if 0
+#if 1
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
