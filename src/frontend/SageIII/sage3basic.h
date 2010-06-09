@@ -186,9 +186,12 @@
 // an upper bound on the number of IR nodes of each type!!!
 // #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
 
-// DQ (3/7/2010): There is some sort of problem that in the AST File I/O that only
-// happens on block boundaries.  I am changing this to a very small number to support
-// debugging this problem.
+// Typical values used to testing the AST File I/O are 1 or 2, but larger values
+// are required for better performance.  At some point the value should be evaluated
+// as even a value of 1000 is likely a bit small for larger whole applications.
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1
+// #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 2
 #define DEFAULT_CLASS_ALLOCATION_POOL_SIZE 1000
 
 // DQ (3/7/2010):Added error checking.
