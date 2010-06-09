@@ -288,6 +288,15 @@ public:
         return debug;
     }
 
+    /** Specifies the name of a configuration file to read to initialize the partitioner. The file is read by the clear()
+     *  method, which is called by partition(). See documentation for the IPDParser class for details.  An empty string
+     *  prevents parsing of any file. */
+    void set_config(const std::string &file_name) { config_file_name = file_name; }
+
+    /** Returns the name of the configuration file used to initialize this partitioner.  An empty string means no
+     *  configuration file is used. See documentation for the IPDParser class for details. */
+    const std::string& get_config() const { return config_file_name; }
+
     /*************************************************************************************************************************
      *                                                High-level Functions
      *************************************************************************************************************************/
@@ -316,7 +325,8 @@ public:
     /** Top-level function to run the partitioner on some instructions and build an AST */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
-    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. */
+    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. Then read the
+     *  specified IPD file (see set_config()). This method is called by partition(). */
     virtual void clear();
 
     /** Adds additional instructions to be processed. New instructions are only added at addresses that don't already have an
