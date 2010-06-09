@@ -21,10 +21,12 @@ noinst_PROGRAMS = \
     buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
-    buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration
+    buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
+    deepDelete
 
 
 # list of test SAGE AST builders 
+deepDelete_SOURCES               = deepDelete.C 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
 buildNondefiningFunction_SOURCES = buildNondefiningFunction.C
 findMain_SOURCES                 = findMain.C
@@ -73,6 +75,9 @@ if ROSE_USE_LONG_MAKE_CHECK_RULE
 else
 endif
 # Be sure to include proper suffixes, like .C
+# TODO: handle side effects when deleting AST nodes
+failing_generatedCodeExamples = rose_inputdeepDelete.C  
+
 generatedCodeExamples = \
   rose_inputBlank1.C \
   rose_inputBlank2.C \
@@ -118,6 +123,8 @@ generatedCodeExamples = \
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
 
+rose_inputdeepDelete.C:deepDelete
+	./deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputdeepDelete.C
 rose_inputBlank1.C:buildFunctionDeclaration
 	./buildFunctionDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputBlank1.C
 rose_inputBlank2.C:buildNondefiningFunction
@@ -252,7 +259,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f inputreplaceMacroCalls.C \
        inputbuildAbstractHandle.C inputloopUnrolling.C inputgetDependentDecls.C \
        inputloopInterchange.C inputloopTiling.C inputbuildStructDeclaration2.C \
-       inputbuildTypedefDeclaration.C
+       inputbuildTypedefDeclaration.C inputdeepDelete.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
