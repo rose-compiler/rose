@@ -1,0 +1,89 @@
+Vanderbruggen Tristan
+06/02/2010
+
+#### Brief ####
+
+This project address a subset of C:
+	- Nested for-loop with affine bound ("for (i = a; i < b; i++)")
+	- Computation on n-dimensionnal arrays ("tab0[i][j] = var + tab1[3*i][2*(j + n)];")
+For some examples, see the 'tests' directory.
+
+#### How to build ? ####
+
+To build this project you need to configure ROSE with the following options:
+	--with-pip=PATH
+	--with-fada=PATH
+	--with-ppl=PATH
+	--enable-fadalib=yes
+	--enable-ppl=yes
+Libraries links :
+	- PipLib:  http://www.piplib.org/
+	- FadaLib: http://www.prism.uvsq.fr/~bem/fadalib/
+	- PPL:     http://www.cs.unipr.it/ppl/
+
+#### Implementation #####
+
+All this project is develloped in C++ in an object-oriented style.
+Two 'namespace' are defined: RoseToFada and FadaToPPL.
+
+> RoseToFada:
+	The dependence analysis is done with FadaLib (FADA: Fuzzy Array Dependence Analysis). In this namespace are
+defined some functions to translate a program from SageIII to Fada representation. 
+FadaLib have 3 kind/level of input:
+	- Parsing a C program;
+	- Constructing an AST
+	- Using directly FadaCore API
+At this moment, only the second way (create the AST) is implemented, but the third can provide suffisant abstraction
+to address object-oriented and non-standard loops inputs...
+	The output (Fada AST) of theses functions can be use without the following part, see FADA related works for 
+more informations.
+
+> FadaToPPL:
+	Parma Polyhedral Library (PPL) is a C++, object-oriented polyhedron manipulation library.
+	In this namespace, you can found a polyhedral representation of dependences and a generator that create this
+representation from FadaLib output.
+
+#### Theory #####
+
+More about "polyhedral representation of dependences":
+	Definitions:
+		- Global variables: scalar variables from global scope (ex: array size), theirs noted G
+		- Statement:
+			* an iteration domain D, define by a polyhedron 
+				(ie: {z | f(z) >= 0} where f is an affine form (N pow(n) -> N) )
+			* Some 'read' and 'write' variables
+		- Dependance:
+			* 2 statements (that can be the same)
+				- with D1 and D2 there respective iteration domain
+			* a dependence function f: D1 x G -> D2 an affine application
+			
+	The polyhedral representation of this dependence is a polyhedron P in D1 x D2 x G:
+		- z in P => z in f & z in D1 & z in D2
+
+#### Related works ####
+
+	FADA:
+		http://www.prism.uvsq.fr/~bem/fadalib/
+
+	Parma Polyhedral Library:
+		http://www.cs.unipr.it/ppl/
+	
+	Dependence Analysis and Program transformation with Polyhedron:
+		http://gcc.gnu.org/wiki/Graphite
+		Some efficient solution to the affine scheduling problem, Part I, One-dimensional Time, Paul Feautrier, 1993
+		Dependence Analysis and Parallelizing Transformations, S. Rajopadhye
+
+#### TODO #####
+
+	- automatic search of libs paths
+	- FadaCore connection
+	- separate conditionnal compilation of Fada and PPL (presently all the project need both Fada and PPL)
+	
+	- Dealing with parameter introduice by Fada 
+		* test/exemple2.c: access to pseudo 2-dimensionnal array like [i*n+j] is out of the scope of this analysis
+		but is the most common usage in C.
+		* a "frontend" that check and "normalize" program can be a solution.
+	
+	- Valid schedules space generation with Farkas multiplier method.
+	- Valid mapping space generation, method to define...
+	
