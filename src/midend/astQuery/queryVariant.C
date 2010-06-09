@@ -109,5 +109,36 @@ querySolverGrammarElementFromVariantVector (
     return NULL;  
    } /* End function querySolverUnionFields() */
 
+NodeQuerySynthesizedAttributeType
+querySolverGrammarElementFromVariantVector ( 
+   SgNode * astNode, 
+   VariantVector targetVariantVector )
+   {
+  // This function extracts type nodes that would not be traversed so that they can
+  // accumulated to a list.  The specific nodes collected into the list is controlled
+  // by targetVariantVector.
+
+     ROSE_ASSERT (astNode != NULL);
+     NodeQuerySynthesizedAttributeType returnNodeList;
+
+     Rose_STL_Container<SgNode*> nodesToVisitTraverseOnlyOnce;
+
+     pushNewNode (returnNodeList,targetVariantVector,astNode);
+
+     vector<SgNode*>               succContainer      = astNode->get_traversalSuccessorContainer();
+     vector<pair<SgNode*,string> > allNodesInSubtree  = astNode->returnDataMemberPointers();
+
+     if( succContainer.size() != allNodesInSubtree.size() )
+     for(vector<pair<SgNode*,string> >::iterator iItr = allNodesInSubtree.begin(); iItr!= allNodesInSubtree.end();
+         ++iItr )
+       if( isSgType(iItr->first) != NULL  )
+         if(std::find(succContainer.begin(),succContainer.end(),iItr->first) == succContainer.end() )
+           pushNewNode (returnNodeList,targetVariantVector,iItr->first);
+
+     
+     return returnNodeList;
+   } /* End function querySolverUnionFields() */
+
+
 }//END NAMESPACE NODEQUERY
 
