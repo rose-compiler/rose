@@ -390,6 +390,11 @@ protected:
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
 
+    /*************************************************************************************************************************
+     *                                   IPD Parser for initializing the Partitioner
+     *************************************************************************************************************************/
+public:
+
     /** This is the parser for the instruction partitioning data (IPD) files.  These files are text-based descriptions of the
      *  functions and basic blocks used by the partitioner and allow the user to seed the partitioner with additional information
      *  that is not otherwise available to the partitioner.
@@ -493,16 +498,24 @@ protected:
         Partitioner *partitioner;               /**< Partitioner to be initialized. */
         const char *input;                      /**< Input to be parsed. */
         size_t len;                             /**< Length of input, not counting NUL termination (if any). */
+        std::string input_name;                 /**< Optional name of input (usually a file name). */
         size_t at;                              /**< Current parse position w.r.t. "input". */
         Function *cur_func;                     /**< Non-null when inside a FuncBody nonterminal. */
         BasicBlock *cur_block;                  /**< Non-null when inside a BlockBody nonterminal. */
 
     public:
-        IPDParser(Partitioner *p, const char *input, size_t len)
-            : partitioner(p), input(input), len(len), at(0), cur_func(NULL), cur_block(NULL) {}
+        IPDParser(Partitioner *p, const char *input, size_t len, const std::string &input_name="")
+            : partitioner(p), input(input), len(len), input_name(input_name), at(0), cur_func(NULL), cur_block(NULL) {}
 
-        struct Exception {                      /**< Exception thrown when something cannot be parsed. */
-            Exception(const std::string &s): lnum(0), mesg(s) {}
+        class Exception {                      /**< Exception thrown when something cannot be parsed. */
+        public:
+            Exception(const std::string &mesg)
+                : lnum(0), mesg(mesg) {}
+            Exception(const std::string &mesg, const std::string &name, unsigned lnum=0)
+                : name(name), lnum(lnum), mesg(mesg) {}
+            std::string format() const;         /**< Format exception object into an error message; used by operator<<. */
+
+            std::string name;                   /**< Optional name of input */
             unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
             std::string mesg;                   /**< Error message. */
         };
@@ -513,7 +526,7 @@ protected:
         /*************************************************************************************************************************
          * Lexical analysis functions.
          *************************************************************************************************************************/
-
+    private:
         void skip_space();
 
         /* The is_* functions return true if the next token after white space and comments is of the specified type. */
@@ -536,7 +549,7 @@ protected:
          * construct was not present. They throw an exception if the construct was partially present but an error occurred during
          * parsing.
          *************************************************************************************************************************/
-
+    private:
         bool parse_File();
         bool parse_Declaration();
         bool parse_FuncDecl();
@@ -565,9 +578,12 @@ protected:
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory */
+    std::string config_file_name;                       /**< Optional name of IPD file to read before partitioning */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
+
+std::ostream& operator<<(std::ostream &o, const Partitioner::IPDParser::Exception &e);
 
 #endif
