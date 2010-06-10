@@ -90,8 +90,10 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           printf ("**************************************************************** \n");
         }
 
+  // DQ (6/8/2010): Commented out this assertion... as a test...
   // DQ (5/31/2007): Force this to be true for testing AST merge
-     ROSE_ASSERT(skipFrontendSpecificIRnodes == true);
+  // ROSE_ASSERT(skipFrontendSpecificIRnodes == true);
+     printf ("Commented out this assertion... (skipFrontendSpecificIRnodes == true) as a test... \n");
 
   // Generate the filename to be used as a base for generated dot files (graphs)
      string filename = SageInterface::generateProjectName(project);

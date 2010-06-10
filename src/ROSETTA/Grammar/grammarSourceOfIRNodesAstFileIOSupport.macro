@@ -100,6 +100,15 @@ $CLASSNAME_getNumberOfValidNodesAndSetGlobalIndexInFreepointer( unsigned long nu
           pointer = ($CLASSNAME*)(*block);
           for (int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; ++i )
              {
+            // DQ (6/6/2010): In reading in multiple files, when the extendMemoryPoolForFileIO() function is called,
+            // we have entries with pointer[i].get_freepointer() set to NULL at the end of any newly allocated memory pool.
+            // These are rare and so are a problem that is difficult to reproduce except when the CLASSNAME_CLASS_ALLOCATION_POOL_SIZE
+            // is set to 1 to test the pool extention at the price of performance.  In this case we want to reset the
+            // elements of the memory pool that have freepointer set to either AST_FileIO::IS_VALID_POINTER() or NULL.
+            // This should not be a problem if the AST resd reset the freepointer to AST_FileIO::IS_VALID_POINTER()
+            // properly; so this will have to be checked next.
+            // if ( pointer[i].get_freepointer() == AST_FileIO::IS_VALID_POINTER() )
+            // if ( (pointer[i].get_freepointer() == AST_FileIO::IS_VALID_POINTER()) || (pointer[i].get_freepointer() == NULL) )
                if ( pointer[i].get_freepointer() == AST_FileIO::IS_VALID_POINTER() )
                   {
                     pointer[i].set_freepointer(($CLASSNAME*)(globalIndex));
@@ -128,6 +137,9 @@ $CLASSNAME_resetValidFreepointers( )
           pointer = ($CLASSNAME*)(*block);
           for (int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; ++i )
              {
+            // DQ (6/6/2010): This would seem to mark all of the rest of the entries in a memory block of the memory pool to be valid
+            // even when they are not really used as valid IR nodes.  Debug this case when we have everything working for size 1
+            // memory blocks!.
                if ( pointer[i].get_freepointer() != NULL )
                   {
                     pointer[i].set_freepointer(AST_FileIO::IS_VALID_POINTER()) ;
@@ -140,16 +152,24 @@ $CLASSNAME_resetValidFreepointers( )
                        }
                     else
                        {
+                         printf ("In $CLASSNAME_resetValidFreepointers(): Resetting the freepointer of %p = %s from %p to %p \n",pointerOfLinkedList,pointer[i].class_name().c_str(),pointer[i].get_freepointer(),&(pointer[i]));
                          pointerOfLinkedList->set_freepointer(&(pointer[i]));
+                      // DQ (6/6/2010): Temporary debugging...
+                         ROSE_ASSERT(false);
                        }
                     pointerOfLinkedList = &(pointer[i]);
                   }
               }
         }
+
      if ( pointerOfLinkedList != NULL )
         {
+          printf ("In $CLASSNAME_resetValidFreepointers(): Resetting the freepointer of %p = %s from %p to %p \n",pointerOfLinkedList,pointerOfLinkedList->class_name().c_str(),pointerOfLinkedList->get_freepointer(),(void*)NULL);
           pointerOfLinkedList->set_freepointer(NULL);
+       // DQ (6/6/2010): Temporary debugging...
+          ROSE_ASSERT(false);
         }
+
      return ;
    }
 
@@ -163,6 +183,8 @@ $CLASSNAME_resetValidFreepointers( )
 void
 $CLASSNAME_clearMemoryPool( )
    {
+  // printf ("Inside of $CLASSNAME_clearMemoryPool() \n");
+
      $CLASSNAME* pointer = NULL, *tempPointer = NULL;
      std::vector < unsigned char* > :: const_iterator block;
      if ( $CLASSNAME_Memory_Block_List.empty() == false )
@@ -188,12 +210,12 @@ $CLASSNAME_clearMemoryPool( )
                 ++block;
              }
 #endif
-  // JH (08/08/2006) However, since the deletion may leave the memory pool
-  // not in the the strict ordering we want it to be, we still reset the 
-  // freepointers, in order to have a linked list, without any jumps
+       // JH (08/08/2006) However, since the deletion may leave the memory pool
+       // not in the the strict ordering we want it to be, we still reset the 
+       // freepointers, in order to have a linked list, without any jumps
           block = $CLASSNAME_Memory_Block_List.begin() ;
-          $CLASSNAME_Current_Link = ($CLASSNAME*) (*block); 
-           
+          $CLASSNAME_Current_Link = ($CLASSNAME*) (*block);
+
        // second, we reset the freepointers,in order to yield a valid linked list
           while ( block != $CLASSNAME_Memory_Block_List.end() )
              {
@@ -256,27 +278,60 @@ void
 $CLASSNAME_extendMemoryPoolForFileIO( )
   {
     $CLASSNAME* pointer = NULL;
+    bool firstEntry = true;
     int blockIndex = $CLASSNAME_Memory_Block_List.size();
     unsigned long newPoolSize = AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) +
                                 AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME);
+#if 0
+    printf ("blockIndex = %d newPoolSize = %zu AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) = %zu AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME) = %zu $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = %d \n",
+         blockIndex,newPoolSize,AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME),AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME),$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE);
+#endif
+
     while ( (unsigned long) (blockIndex * $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE) < newPoolSize)
       {
+#if 0
+        printf ("     Allocating a new block: blockIndex = %d \n",blockIndex);
+#endif
         pointer = ($CLASSNAME*) ROSE_MALLOC ( $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
         assert( pointer != NULL );
+
         $CLASSNAME_Memory_Block_List.push_back( (unsigned char*)(pointer) );
+
         if ( 0 < blockIndex )
            {
-             (($CLASSNAME*)($CLASSNAME_Memory_Block_List[blockIndex-1]))[ $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE - 1 ].set_freepointer(pointer);
+          // Set the freepointer of the last entry in the previous block to point to the new block list (just allocated).
+          // This is a key bugfix for ROSE.  We don't want to modify the previously read AST so avoid resetting the 
+          // the freepointer of the last entry in list (from the previous AST).  So just skip the first iteration.
+          // (($CLASSNAME*)($CLASSNAME_Memory_Block_List[blockIndex-1]))[ $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE - 1 ].set_freepointer(pointer);
+          // if ( $CLASSNAME_Current_Link != NULL )
+          // if ( firstEntry == false )
+             if ( $CLASSNAME_Current_Link != NULL )
+                {
+               // DQ (6/6/2010): Avoid setting the free point of any node from the previously read AST.
+               // Note that $CLASSNAME_Current_Link will be NULL or VALID depending on if there is a 
+               // next entry in the memory pool and we don't need the freepointer to point to it.
+               // This fixes (I hope) a critical problem that prevented multiple binary file AST's from
+               // being read in from disk and was a block to the expanded use of AST merge.
+                  (($CLASSNAME*)($CLASSNAME_Memory_Block_List[blockIndex-1]))[ $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE - 1 ].set_freepointer(pointer);
+                }
+             firstEntry = false;
            }
+
         if ( $CLASSNAME_Current_Link == NULL )
            {
+          // Set the Current_Link so that the the new operator will use the just allocated block list.
              $CLASSNAME_Current_Link = pointer;
            }
+
         for (int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1; ++i)
            {
+          // Set the freepointer of each entry in the newly allocated block to point to the next entry in the same block (forms a link list).
              pointer [ i ].set_freepointer(&(pointer[i+1]));
            }
+
+     // Set the freepointer of the last entry in the newly allocated block to NULL.
         pointer[ $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE -1 ].set_freepointer(NULL);
+
         blockIndex++;
       }
   }

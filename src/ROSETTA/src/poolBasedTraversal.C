@@ -133,8 +133,8 @@ Grammar::buildMemoryPoolBasedTraversalSupport()
 
      s += "   }\n\n";
 
-     s += string("\n\nint memoryUsage ()\n   {\n");
-     s += "     int count = 0; \n\n";
+     s += string("\n\nsize_t memoryUsage ()\n   {\n");
+     s += "     size_t count = 0; \n\n";
 
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
@@ -146,8 +146,8 @@ Grammar::buildMemoryPoolBasedTraversalSupport()
      s += "     return count;\n";
      s += "   }\n";
 
-     s += string("\n\nint numberOfNodes ()\n   {\n");
-     s += "     int count = 0; \n\n";
+     s += string("\n\nsize_t numberOfNodes ()\n   {\n");
+     s += "     size_t count = 0; \n\n";
 
      for (unsigned int i=0; i < terminalList.size(); i++)
         {

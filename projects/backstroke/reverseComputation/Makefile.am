@@ -5,13 +5,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # This file does not compile using ROSE (skip testing it for now)
 if !ROSE_USING_ROSE_ANALYSIS
    bin_PROGRAMS = reverse 
-   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C
+   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C utilities.C
 endif
 
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = eventReverser.h facilityBuilder.h test
+EXTRA_DIST = eventReverser.h facilityBuilder.h utilities.h test
 
 CLEANFILES = 
 
@@ -29,7 +29,9 @@ $(TEST_Objects): reverse
 	./$(@:.o=.C).o		
 
 check-local:
-#@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/reverseComputation: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
+
+mytest:
+	@$(MAKE) $(TEST_Objects)

@@ -9,6 +9,7 @@
    src/ROSETTA/Grammar/grammarAST_FileIoHeader.code
 */
 
+
 #define REGISTER_ATTRIBUTE_FOR_FILE_IO(CLASS_TO_BE_REGISTERED ) AST_FILE_IO::registerAttribute<CLASS_TO_BE_REGISTERED> ( ) ;
 
 typedef AstSpecificDataManagingClass AstData;
@@ -16,6 +17,24 @@ typedef AstSpecificDataManagingClass AstData;
 class AST_FILE_IO
    {
      public:
+
+#if 1
+  // This class is used only for debugging...
+     class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
+        {
+          public:
+            // int counter;
+
+               void visit ( SgNode* node )
+                  {
+                    ROSE_ASSERT(node != NULL);
+                 // printf ("MemoryCheckingTraversalForAstFileIO::visit: node = %s \n",node->class_name().c_str());
+                    ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+                    node->checkDataMemberPointersIfInMemoryPool();
+                  }
+        };
+#endif
+
        typedef AstAttribute* (AstAttribute::*CONSTRUCTOR)( void );
   /* We are using the V_Sg... enumeration. Additionally, we introduce totalNumberOfIRNodes the number
      of non terminals and terminals .

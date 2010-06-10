@@ -90,7 +90,7 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
  void addMessageStatement( SgStatement* stmt, std::string message );
 
 // DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
-//! Function to delete AST subtree, user must take care of any dangling pointers that result.
+//! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
  void deleteAST(SgNode* node);
 
 // DQ (2/25/2009): Added new function to support outliner.
@@ -1122,7 +1122,7 @@ void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgState
 //! Remove a statement
 void removeStatement(SgStatement* stmt);
 
-//! Deep delete a sub AST tree. It uses postorder traversal to delete each child node.
+//! Deep delete a sub AST tree. It uses postorder traversal to delete each child node. Users must take care of any dangling pointers, symbols or types that result. This is identical to deleteAST()
 void deepDelete(SgNode* root);
 
 //! Replace a statement with another. Move preprocessing information from oldStmt to newStmt if requested.
