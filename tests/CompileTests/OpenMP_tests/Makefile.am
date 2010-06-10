@@ -41,6 +41,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	firstlastprivate.c \
 	flush.c \
 	flush_exampleA_21_1c.c \
+	full_verify.c \
 	get_max_threads.c \
 	hello.c \
 	hello-1.c \

@@ -7974,26 +7974,10 @@ StringUtility::numberToString(++breakLabelCounter),
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
 
-//----------------------------
-// Sometimes, the preprocessing info attached to a declaration has to be
-// moved 'up' if another declaration is inserted before it.
-// This is a workaround for the broken LowLevelRewrite::insert() and the private
-// LowLevelRewrite::reassociatePreprocessorDeclarations()
-//
-// input: 
-//     *stmt_dst: the new inserted declaration 
-//     *stmt_src: the existing declaration with preprocessing information
-// tasks:
-//     judge if stmt_src has propressingInfo with headers, ifdef, etc..
-//     add them into stmt_dst
-//     delete them from stmt_dst   
-// More general usage: move preprocessingInfo of stmt_src to stmt_dst, should used before any
-//           LoweLevel::remove(stmt_src)
-void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src,
-      PreprocessingInfo::RelativePositionType src_position/*=PreprocessingInfo::undef*/,
-      PreprocessingInfo::RelativePositionType dst_position/*=PreprocessingInfo::undef*/)
+void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,                         
+                            PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
 {
-  ROSE_ASSERT(stmt_src != NULL);
+   ROSE_ASSERT(stmt_src != NULL);
   ROSE_ASSERT(stmt_dst != NULL);
   AttachedPreprocessingInfoType* infoList=stmt_src->getAttachedPreprocessingInfo();
   AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
@@ -8017,17 +8001,36 @@ void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement 
         (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
        )
     { 
-      if (src_position == PreprocessingInfo::undef) 
+      // move all source preprocessing info if the desired source type is not specified or matching
+      // a specified desired source type
+      if ( src_position == PreprocessingInfo::undef || info->getRelativePosition()==src_position) 
       {
-        stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+        if (usePrepend)
+          // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
+          // to indicate appending or prepending by reusing the type of relative position.
+          // this is very confusing for users
+          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+        else
+          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+
         (*infoToRemoveList).push_back(*i);
-      } else if (info->getRelativePosition()==src_position)
+      } 
+#if 0      
+      else if (info->getRelativePosition()==src_position)
       {
-        if (dst_position != PreprocessingInfo::undef) 
-          info->setRelativePosition(dst_position);
-        stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+
+        if (usePrepend)
+        {
+        }
+        else
+          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+          
         (*infoToRemoveList).push_back(*i);
       } // if src_position
+#endif
+      // adjust dst position if needed
+      if (dst_position != PreprocessingInfo::undef) 
+        info->setRelativePosition(dst_position);
     } // end if 
   }// end for
 
@@ -8035,6 +8038,30 @@ void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement 
   AttachedPreprocessingInfoType::iterator j;
   for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
     infoList->erase( find(infoList->begin(),infoList->end(),*j) );
+ 
+}
+
+//----------------------------
+// Sometimes, the preprocessing info attached to a declaration has to be
+// moved 'up' if another declaration is inserted before it.
+// This is a workaround for the broken LowLevelRewrite::insert() and the private
+// LowLevelRewrite::reassociatePreprocessorDeclarations()
+//
+// input: 
+//     *stmt_dst: the new inserted declaration 
+//     *stmt_src: the existing declaration with preprocessing information
+// tasks:
+//     judge if stmt_src has propressingInfo with headers, ifdef, etc..
+//     add them into stmt_dst
+//     delete them from stmt_dst   
+// More general usage: move preprocessingInfo of stmt_src to stmt_dst, should used before any
+//           LoweLevel::remove(stmt_src)
+void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src,
+      PreprocessingInfo::RelativePositionType src_position/*=PreprocessingInfo::undef*/,
+      PreprocessingInfo::RelativePositionType dst_position/*=PreprocessingInfo::undef*/,
+      bool usePrepend /*= false */)
+{
+  movePreprocessingInfo (stmt_src, stmt_dst, src_position, dst_position, usePrepend);
 } // moveUpPreprocessingInfo()
 
 
