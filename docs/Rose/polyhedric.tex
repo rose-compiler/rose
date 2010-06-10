@@ -26,7 +26,7 @@ following part. It means that support of conditionals and while-loops is not imp
 	
 		\subsection{PMDAtoMDA}
 	
-	Pseudo-multidimensional array are currently used, but this representation is out of the scope of FADAlib
+	Pseudo-multidimensional array are frequently used, but this representation is out of the scope of FADAlib
 (array index are not an affine application: a[i * n + j]).\\
 	The component PMDAtoMDA can traverse a function in Rose IR and add an attribute to all pseudo-multidimensional
 array. This attribute can generate (in Rose IR) each component of the correspondant access vector.\\
@@ -43,7 +43,7 @@ array of dimension [X, m, n] (i, j, k can be any affine form of the iterators).
 	It's an experimental implementation of the Farkas Multipliers Method to obtains the space (polyhedron) of 
 valid schedule with respect to the dependances found by the Fuzzy Array Dependence Analysis.
 
-	\section{What need I to compile this project with Rose ?}
+	\section{What I need to compile this project with Rose ?}
 
 	Pseudo-multidimensional array related part has no extra-dependences.
 	

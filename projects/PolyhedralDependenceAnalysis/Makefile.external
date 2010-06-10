@@ -9,7 +9,7 @@ LD_DIR=-L$(BOOST_HOME)/lib -L$(FADA_HOME)/lib -L$(ROSE_HOME)$(ROSE_SUFFIX)/lib -
 
 INCLUDE=-I$(BOOST_HOME)/include -I$(ROSE_HOME)$(ROSE_SUFFIX)/include -I$(PIP_HOME)/include -I$(FADA_HOME)/include -I$(PPL_HOME)/include 
 
-all: RoseToFada/TestRoseToFada Tests/TestRoseToPPL Tests/TestSchedulePPL PMDAtoMDA/TestPMDAtoMDA
+all: RoseToFada/TestRoseToFada RoseToPPL/TestRoseToPPL Schedule/TestSchedulePPL PMDAtoMDA/TestPMDAtoMDA
 	
 # PMDAtoMDA: Extraction of Access Verctor for  Pseudo-Multidimensional Array (use Rose)
 
@@ -29,13 +29,13 @@ RoseToFada/RoseToFadaAST.o: RoseToFada/RoseToFadaAST.cpp RoseToFada/RoseToFadaAS
 # FadaToPPL: Translate Fuzzy Array Dependence Analysis results to a set of dependendences (between SgStatement) express in 
 #     Polyhedral Model with Parma Polyhedral Library (PPL) (use RoseToFadaCommon)
 
-RoseToPPL/FadaToPPL.o: RoseToPPL/FadaToPPL.cpp FadaToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
+RoseToPPL/FadaToPPL.o: RoseToPPL/FadaToPPL.cpp RoseToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
 	$(CC) $(CFLAGS) $(INCLUDE) -IRoseToPPL -ICommon -c $< -o $@
 	
 # Schedule: Implements the Farkas Multipliers Method to obtains the space (polyhedron) of valid schedule 
 #     (use FadaToPPL and RoseToFadaCommon)
 
-Schedule/Schedule.o: Schedule/Schedule.cpp Schedule/Schedule.hpp FadaToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
+Schedule/Schedule.o: Schedule/Schedule.cpp Schedule/Schedule.hpp RoseToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
 	$(CC) $(CFLAGS) $(INCLUDE) -ISchedule -IRoseToPPL -IRoseToFadaAST -ICommon -c $< -o $@
 
 # *********************************************************************************************************
