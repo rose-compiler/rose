@@ -3,6 +3,8 @@
 
 #include "FadaToPPL.hpp"
 
+#include <iterator>
+
 //#define __VERBOSE_
 //#define __VERBOSE_PLUS_
 
@@ -21,7 +23,8 @@ PolyhedricDependence::PolyhedricDependence(SgStatement * source, SgStatement * d
 	p_destination(destination),
 	p_source_iterators(),
 	p_destination_iterators(),
-	p_globals()
+	p_globals(),
+	p_minimized_constraints(NULL)
 {
 	int cpt = 0;
 	std::vector<std::string *>::iterator it;
@@ -81,6 +84,55 @@ Parma_Polyhedra_Library::Variable * PolyhedricDependence::getGlobal(std::string 
 		res = &(it->second);
 	else
 		res = NULL;
+	return res;
+}
+
+SgStatement * PolyhedricDependence::getSource() { return p_source; }
+SgStatement * PolyhedricDependence::getDestination() { return p_destination; }
+
+int PolyhedricDependence::getNbrConstraints() {
+	if (!p_minimized_constraints) {
+		p_minimized_constraints = createConstraints();
+	}
+	return std::distance(p_minimized_constraints->begin(), p_minimized_constraints->end());
+}
+
+Parma_Polyhedra_Library::Constraint_System * PolyhedricDependence::getConstraints() {
+	if (!p_minimized_constraints) {
+		p_minimized_constraints = createConstraints();
+	}
+	return p_minimized_constraints;
+}
+
+Parma_Polyhedra_Library::Constraint_System * PolyhedricDependence::createConstraints() {
+
+	Parma_Polyhedra_Library::Constraint_System * res = new Parma_Polyhedra_Library::Constraint_System();
+	const Parma_Polyhedra_Library::Constraint_System & constraints = p_polyhedron->minimized_constraints();
+	
+	Parma_Polyhedra_Library::Constraint_System::const_iterator constraint_it;
+	for (constraint_it = constraints.begin(); constraint_it != constraints.end(); constraint_it++) {
+		if ((*constraint_it).is_equality()) {
+			Parma_Polyhedra_Library::Linear_Expression exp;
+			
+			std::map<std::string, Parma_Polyhedra_Library::Variable>::iterator it_var;
+			for (it_var = p_source_iterators.begin(); it_var != p_source_iterators.end(); it_var++) {
+				exp += constraint_it->coefficient(it_var->second) * it_var->second;
+			}
+			for (it_var = p_destination_iterators.begin(); it_var != p_destination_iterators.end(); it_var++) {
+				exp += constraint_it->coefficient(it_var->second) * it_var->second;
+			}
+			for (it_var = p_globals.begin(); it_var != p_globals.end(); it_var++) {
+				exp += constraint_it->coefficient(it_var->second) * it_var->second;
+			}
+			exp += constraint_it->inhomogeneous_term();
+			
+			res->insert(exp <= 0);
+			res->insert(exp >= 0);
+		}			
+		else
+			res->insert(*constraint_it);
+	}
+	
 	return res;
 }
 

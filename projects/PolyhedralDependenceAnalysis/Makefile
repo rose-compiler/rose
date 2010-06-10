@@ -2,49 +2,78 @@
 CC=gcc
 CFLAGS=-Wno-deprecated -g
 
+ROSE_SUFFIX=#"-test-PolyDeps"
+
 LDFLAGS=-lstdc++ -lfada -lrose -lpiplib64 -lppl
-LD_DIR=-L$(BOOST_HOME)/lib -L$(FADA_HOME)/lib -L$(ROSE_HOME)/lib -L$(PIP_HOME)/lib -L$(PPL_HOME)/lib
+LD_DIR=-L$(BOOST_HOME)/lib -L$(FADA_HOME)/lib -L$(ROSE_HOME)$(ROSE_SUFFIX)/lib -L$(PIP_HOME)/lib -L$(PPL_HOME)/lib
 
-INCLUDE=-I$(BOOST_HOME)/include -I$(ROSE_HOME)/include -I$(PIP_HOME)/include -I$(FADA_HOME)/include -I$(PPL_HOME)/include 
+INCLUDE=-I$(BOOST_HOME)/include -I$(ROSE_HOME)$(ROSE_SUFFIX)/include -I$(PIP_HOME)/include -I$(FADA_HOME)/include -I$(PPL_HOME)/include 
 
-all: TestRoseToFada TestRoseToPPL
-
-# RoseToFadaCommon
+all: RoseToFada/TestRoseToFada Tests/TestRoseToPPL Tests/TestSchedulePPL PMDAtoMDA/TestPMDAtoMDA
 	
-RoseToFadaCommon.o: RoseToFadaCommon.cpp RoseToFadaCommon.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+# PMDAtoMDA: Extraction of Access Verctor for  Pseudo-Multidimensional Array (use Rose)
 
-# RoseToFadaAST
-	
-RoseToFadaAST.o: RoseToFadaAST.cpp RoseToFadaAST.hpp RoseToFadaCommon.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-	
-# FadaToPPL
+PMDAtoMDA/PMDAtoMDA.o: PMDAtoMDA/PMDAtoMDA.cpp PMDAtoMDA/PMDAtoMDA.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -IPMDAtoMDA -c $< -o $@
 
-FadaToPPL.o: FadaToPPL.cpp FadaToPPL.hpp RoseToFadaCommon.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+# RoseToFadaCommon: Some common features used to share data between RoseToFadaAST and following components (use Rose and Fada)
+	
+Common/RoseToFadaCommon.o: Common/RoseToFadaCommon.cpp Common/RoseToFadaCommon.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -ICommon -c $< -o $@
+
+# RoseToFada: Translate SageIII AST to FadaAST (use PMDAtoMDA and RoseToFadaCommon)
+	
+RoseToFada/RoseToFadaAST.o: RoseToFada/RoseToFadaAST.cpp RoseToFada/RoseToFadaAST.hpp Common/RoseToFadaCommon.hpp PMDAtoMDA/PMDAtoMDA.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -IRoseToFada -ICommon -IPMDAtoMDA -c $< -o $@
+	
+# FadaToPPL: Translate Fuzzy Array Dependence Analysis results to a set of dependendences (between SgStatement) express in 
+#     Polyhedral Model with Parma Polyhedral Library (PPL) (use RoseToFadaCommon)
+
+RoseToPPL/FadaToPPL.o: RoseToPPL/FadaToPPL.cpp FadaToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -IRoseToPPL -ICommon -c $< -o $@
+	
+# Schedule: Implements the Farkas Multipliers Method to obtains the space (polyhedron) of valid schedule 
+#     (use FadaToPPL and RoseToFadaCommon)
+
+Schedule/Schedule.o: Schedule/Schedule.cpp Schedule/Schedule.hpp FadaToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -ISchedule -IRoseToPPL -IRoseToFadaAST -ICommon -c $< -o $@
 
 # *********************************************************************************************************
+	
+# TestPMDAtoMDA
+
+PMDAtoMDA/TestPMDAtoMDA.o: PMDAtoMDA/TestPMDAtoMDA.cpp PMDAtoMDA/PMDAtoMDA.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -IPMDAtoMDA -c $< -o $@
+
+PMDAtoMDA/TestPMDAtoMDA: PMDAtoMDA/TestPMDAtoMDA.o PMDAtoMDA/PMDAtoMDA.o
+	$(CC) $^ $(LD_DIR) $(LDFLAGS) -o $@
 
 # TestRoseToFada
 
-TestRoseToFada.o: TestRoseToFada.cpp RoseToFadaAST.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+RoseToFada/TestRoseToFada.o: RoseToFada/TestRoseToFada.cpp RoseToFada/RoseToFadaAST.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -IPMDAtoMDA -ICommon -IRoseToFadaAST -c $< -o $@
 
-TestRoseToFada: TestRoseToFada.o RoseToFadaCommon.o RoseToFadaAST.o
+RoseToFada/TestRoseToFada: RoseToFada/TestRoseToFada.o RoseToFada/RoseToFadaAST.o Common/RoseToFadaCommon.o PMDAtoMDA/PMDAtoMDA.o
 	$(CC) $^ $(LD_DIR) $(LDFLAGS) -o $@
 
 # TestRoseToPPL
 
-TestRoseToPPL.o: TestRoseToPPL.cpp FadaToPPL.hpp RoseToFadaAST.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+RoseToPPL/TestRoseToPPL.o: RoseToPPL/TestRoseToPPL.cpp RoseToPPL/FadaToPPL.hpp RoseToFada/RoseToFadaAST.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -IPMDAtoMDA -ICommon -IRoseToFada -IRoseToPPL -c $< -o $@
 	
-TestRoseToPPL: TestRoseToPPL.o FadaToPPL.o RoseToFadaCommon.o RoseToFadaAST.o
+RoseToPPL/TestRoseToPPL: RoseToPPL/TestRoseToPPL.o RoseToPPL/FadaToPPL.o RoseToFada/RoseToFadaAST.o Common/RoseToFadaCommon.o PMDAtoMDA/PMDAtoMDA.o
 	$(CC) $^ $(LD_DIR) $(LDFLAGS) -o $@
 
+# TestSchedulePPL
+
+Schedule/TestSchedulePPL.o: Schedule/TestSchedulePPL.cpp Schedule/Schedule.hpp RoseToPPL/FadaToPPL.hpp RoseToFada/RoseToFadaAST.hpp
+	$(CC) $(CFLAGS) $(INCLUDE) -IPMDAtoMDA -ICommon -IRoseToFada -IRoseToPPL -ISchedule -c $< -o $@
+
+Schedule/TestSchedulePPL: Schedule/TestSchedulePPL.o Schedule/Schedule.o RoseToPPL/FadaToPPL.o RoseToFada/RoseToFadaAST.o Common/RoseToFadaCommon.o PMDAtoMDA/PMDAtoMDA.o
+	$(CC) $^ $(LD_DIR) $(LDFLAGS) -o $@
 
 clean:
-	rm -rf *.o
+	rm -f PMDAtoMDA/*.o Common/*.o RoseToFada/*.o RoseToPPL/*.o Schedule/*.o Tests/*.o
 	
 clean_all: clean
-	rm -rf FadaTest 
+	rm -f PMDAtoMDA/TestPMDAtoMDA RoseToFada/TestRoseToFada RoseToPPL/TestRoseToPPL Schedule/TestSchedulePPL
