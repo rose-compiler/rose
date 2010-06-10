@@ -8703,6 +8703,36 @@ SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttri
       }
     }
   } // end clause allocations 
+
+ /*
+  handle dangling #endif  attached to the loop
+  1. original 
+ #ifdef _OPENMP
+  #pragma omp parallel for  private(i,k)
+ #endif 
+   for () ...
+
+  2. after splitting
+
+ #ifdef _OPENMP
+  #pragma omp parallel 
+  #pragma omp for  private(i,k)
+ #endif 
+   for () ...
+  
+  3. We need to move #endif to omp parallel statement 's after position
+   transOmpParallel () will take care of it later on
+
+    #ifdef _OPENMP
+      #pragma omp parallel 
+      #pragma omp for  private(i) reduction(+ : j)
+      for (i = 1; i < 1000; i++)
+        if ((key_array[i - 1]) > (key_array[i]))
+          j++;
+    #endif
+  This is no perfect solution until we handle preprocessing information as structured statements in AST
+ */
+   movePreprocessingInfo(body, first_stmt, PreprocessingInfo::before, PreprocessingInfo::after, true);
   return first_stmt;
 }
 

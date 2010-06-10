@@ -17,6 +17,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif.c \
 	endif3.c \
 	firstPrivateArray.c \
+	full_verify.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
         master.c \
@@ -141,7 +142,6 @@ TESTCODE_CURRENTLY_FAILING = \
         critical_dead.c \
 	endif2.c \
         expressions.c \
-	full_verify.c \
         macroCalls.c \
         parallelsections.c \
         recursive.c \
