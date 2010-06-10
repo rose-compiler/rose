@@ -76,7 +76,7 @@ class AstFileSpecificInfo
 AstFileSpecificInfo::AstFileSpecificInfo(int base, int bound)
    {
   // This is the only data set by the construction (because this data must be generated 
-  // as each AST file is read from disk, so that e get the base and bound for each AST 
+  // as each AST file is read from disk, so that we get the base and bound for each AST 
   // file's set of Sg_File_Info in the memory pool).
      baseOfASTFileInfo  = base;
      boundOfASTFileInfo = bound;
@@ -127,12 +127,14 @@ class TestFreepointerInMemoryPool : public ROSE_VisitTraversal
 void
 TestFreepointerInMemoryPool::visit(SgNode * node)
    {
-      if (node->get_freepointer() == AST_FileIO::IS_VALID_POINTER())
+   // if (node->get_freepointer() == AST_FileIO::IS_VALID_POINTER())
+      if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER())
         {
           SgNode* parent = node->get_parent();
-          string parentName = parent != NULL ? node->class_name() : "null";
+       // string parentName = parent != NULL ? node->class_name() : "null";
+          string parentName = parent != NULL ? parent->class_name() : "null";
 
-          printf ("Node does not have valid freepointer node = %p = %s (parent = %p = %s)\n",node,node->class_name().c_str(),parent,parentName.c_str());
+          printf ("Node does not have valid freepointer node = %p = %s (parent = %p = %s) node->get_freepointer() = %p \n",node,node->class_name().c_str(),parent,parentName.c_str(),node->get_freepointer());
        // if (isSgType(node) != NULL)
        //      printf ("Node does not have valid freepointer node = %p = %s (parent = %p = %s)\n",node,node->class_name().c_str(),parent,parentName.c_str());
         }
@@ -168,7 +170,7 @@ main ( int argc, char * argv[] )
 #endif
 
   // Internal debugging support (e.g. new and delete operators).
-     ROSE_DEBUG = 2;
+  // ROSE_DEBUG = 2;
 
      int numFiles = argc - 2;
      vector<std::string> fileNames;
@@ -201,27 +203,42 @@ main ( int argc, char * argv[] )
   // AST file so that we can do a merge of the static information of the AST.
      vector<AstFileSpecificInfo*> AstFileInfoArray;
 
-     int currentNumberOfNodes  = 0;
-     int previousNumberOfNodes = 0;
+     size_t currentNumberOfNodes  = 0;
+     size_t previousNumberOfNodes = 0;
+
+  // DQ (6/5/2010): Trigger debugging output!
+  // ROSE_DEBUG = 2;
+  // SgProject::set_verbose(3);
 
   // cout  << endl << "Here we call the AST_FILE_IO :: readASTFromFile ..." << endl;
+     SgProject* tmp_previous_globalProject = NULL;
      for (int i= 0; i < numFiles; ++i)
         {
-          cout  << "Here we will read .... " << fileNames[i] << endl;
+       // cout  << "Here we will read .... " << fileNames[i] << endl;
           AST_FILE_IO :: readASTFromFile ( fileNames[i] + ".binary" );
-          cout  << "Here we just read .... " << fileNames[i] << endl;
+       // cout  << "Here we just read .... " << fileNames[i] << endl;
+
+          AstData* tmp_ast = AST_FILE_IO::getAst(i);
+          SgProject* tmp_globalProject = tmp_ast->getRootOfAst();
+          ROSE_ASSERT(tmp_globalProject->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+          if (tmp_previous_globalProject != NULL)
+             {
+               ROSE_ASSERT(tmp_previous_globalProject->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+             }
+          tmp_previous_globalProject = tmp_globalProject;
+          
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
-          printf ("file #%d = %s AST size = %d memory usage = %d Sg_File_Info::numberOfNodes() = %d \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
+          printf ("file #%5d = %20s AST size = %12zu memory usage = %12zu Sg_File_Info::numberOfNodes() = %12zu \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
 
-          TestFreepointerInMemoryPool::test();
+       // TestFreepointerInMemoryPool::test();
 
 #if 0
        // DQ (2/24/2010): This is a significant bottleneck to the performance on large codes since it is n^2 in the size of the AST.
           AstTests::runAllTests(ast->getRootOfAst());
 #endif
-#if 1
+#if 0
           printf ("In loop reading AST files: SgNode::get_globalFunctionTypeTable() = %p \n",SgNode::get_globalFunctionTypeTable());
           printf ("file #%d AST Sg_File_Info::numberOfNodes() = %d \n",i,currentNumberOfNodes);
 #endif
@@ -233,19 +250,32 @@ main ( int argc, char * argv[] )
 
        // Track the positions of the base and bound of the Sg_File_Info list in the memory pool.
           previousNumberOfNodes = currentNumberOfNodes;
-        }
 
-  // cout  << endl << "AST_FILE_IO :: readASTFromFile done ... " << endl;
+       // printf ("At base of loop over the input files... i = %d \n",i);
+        }
+#if 1
+     cout  << endl << "AST_FILE_IO :: readASTFromFile done ... " << endl;
+#endif
 
   // SgFunctionTypeTable* globalFunctionTypeTable = NULL;
      SgProject*           globalProject                 = NULL;
 
      ROSE_ASSERT(AstFileInfoArray.size() == (size_t)numFiles);
 
+  // DQ (6/5/2010): Trigger debugging output!
+  // ROSE_DEBUG = 2;
+
      AstData* ast = NULL;
      for (int i= 0; i < numFiles; ++i)
         {
           ast = AST_FILE_IO::getAst(i);
+#if 0
+       // DQ (6/6/2010): Turned off to limit output in debugging...
+       // DQ (6/5/2010): Unclear if I can use this test here!
+          printf ("Running AstTests::runAllTests() BEFORE calling AST_FILE_IO::setStaticDataOfAst(ast)\n");
+          AstTests::runAllTests(ast->getRootOfAst());
+          printf ("DONE: Running AstTests::runAllTests() BEFORE calling AST_FILE_IO::setStaticDataOfAst(ast)\n");
+#endif
           AST_FILE_IO::setStaticDataOfAst(ast);
 
        // TestFreepointerInMemoryPool::test();
@@ -261,6 +291,8 @@ main ( int argc, char * argv[] )
        // We need to make a second call to fixup the information in the AstFileSpecificInfo objects once we have called AST_FILE_IO::setStaticDataOfAst() for each AST.
           AstFileInfoArray[i]->fixupAstFileSpecificInfo(SgNode::get_globalFunctionTypeTable(),Sg_File_Info::get_fileidtoname_map(),Sg_File_Info::get_nametofileid_map());
 
+       // printf ("DONE with call to AstFileInfoArray[%d]->fixupAstFileSpecificInfo() \n",i);
+
        // Save references to all the function type tables.
           functionTableArray.push_back(SgNode::get_globalFunctionTypeTable());
 
@@ -270,19 +302,33 @@ main ( int argc, char * argv[] )
 
        // testAST(ast->getRootOfAst());
 
-#if 1
+#if 0
        // TestFreepointerInMemoryPool::test();
 
+          printf ("Call to AstTests::runAllTests() ast->getRootOfAst() = %p = %s \n",ast->getRootOfAst(),ast->getRootOfAst()->class_name().c_str());
+          SgProject* temp_project = ast->getRootOfAst();
+       // ROSE_ASSERT(temp_project->numberOfFiles() == 1);
+          ROSE_ASSERT(temp_project->numberOfDirectories() == 0);
+          SgFile* temp_file = (*temp_project)[0];
+          printf ("temp_file->get_filename() = %s \n",temp_file->getFileName().c_str());
+
+       // DQ (6/5/2010): Turn on to support debugging...
        // DQ (2/24/2010): This is a significant bottleneck to the performance on large codes since it is n^2 in the size of the AST.
-          AstTests::runAllTests(ast->getRootOfAst());
+       // AstTests::runAllTests(ast->getRootOfAst());
+
+          printf ("DONE with call to AstTests::runAllTests() \n");
 #endif
 #if 0
        // To read and merge the separate AST files, we don't have to call the backend.
           backend(ast->getRootOfAst());
 #endif
+
+       // printf ("globalProject = %p \n",globalProject);
+
           if (globalProject == NULL)
              {
                globalProject = ast->getRootOfAst();
+               ROSE_ASSERT(globalProject->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
              }
             else
              {
@@ -294,14 +340,15 @@ main ( int argc, char * argv[] )
 
             // Add the file to the global project. This also sets the parent of the input file. Is this a side-effect that we want?
                globalProject->set_file(*localFile);
-#if 1
+#if 0
                printf ("globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
 #endif
+               ROSE_ASSERT(globalProject->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
 //             delete localProject;
              }
         }
 
-     printf ("Size of AST = %d \n",numberOfNodes());
+     printf ("Size of AST = %zu \n",numberOfNodes());
 
 #if 0
      for (int i= 0; i < numFiles; ++i)
@@ -324,27 +371,67 @@ main ( int argc, char * argv[] )
 
      mergeStaticASTFileInformation(AstFileInfoArray);
 
-     printf ("Size of AST (after merge) = %d \n",numberOfNodes());
+     printf ("Size of AST (after merge of static data) = %zu \n",numberOfNodes());
+
+#if 0
+  // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
+  // of the AST and force sharing of these pieces and delete the redundany copies.
+     printf ("Calling AstMergeSupport() \n");
+  // int mergeErrorCode = AstMergeSupport(globalProject);
+  // bool skipFrontendSpecificIRnodes = true;
+     SgProject::set_verbose(3);
+     bool skipFrontendSpecificIRnodes = false;
+     mergeAST(globalProject,skipFrontendSpecificIRnodes);
+  // ROSE_ASSERT(mergeErrorCode == 0);
+     SgProject::set_verbose(0);
+#else
+     printf ("Skipping call to mergeAST() \n");
+#endif
+
+     printf ("Size of AST (after final merge to eliminate redundancy) = %zu \n",numberOfNodes());
 
 #if 1
   // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
   // performance on large codes (it is n^2 in the size of the AST if run for each file separately).
-     AstTests::runAllTests(ast->getRootOfAst());
+  // AstTests::runAllTests(ast->getRootOfAst());
+     AstTests::runAllTests(globalProject);
 #endif
 
 #if 0
   // Output an example of the value of p_freepointer.
-     printf ("AST_FILE_IO::areFreepointersContainingGlobalIndices() = %s \n",AST_FILE_IO::areFreepointersContainingGlobalIndices() ? "treu" : "false");
-     printf ("BEFORE resetValidAstAfterWriting(): globalProject->get_freepointer() = %p \n",globalProject->get_freepointer());
+     printf ("AST_FILE_IO::areFreepointersContainingGlobalIndices() = %s \n",AST_FILE_IO::areFreepointersContainingGlobalIndices() ? "true" : "false");
+     printf ("BEFORE resetValidAstAfterWriting(): globalProject = %p globalProject->get_freepointer() = %p \n",globalProject,globalProject->get_freepointer());
   // AST_FILE_IO :: resetValidAstAfterWriting();
-     printf ("AFTER resetValidAstAfterWriting(): globalProject->get_freepointer() = %p \n",globalProject->get_freepointer());
+     printf ("AFTER resetValidAstAfterWriting(): globalProject = %p globalProject->get_freepointer() = %p \n",globalProject,globalProject->get_freepointer());
 
   // Initialization for file I/O.
   // AST_FILE_IO::clearAllMemoryPools();
 #endif
 
+  // DQ (6/6/2010): New test that detects fundamental problem. The extention of the memory pools triggered by
+  // reading in a second file causes the SgProject IR node from the reading of the first file to be set to
+  // the next node to be used (the SgProject for the second file.  It is not reset when reading the 
+  // second file's SgProject and so remains.  
+  //    1) Why do we have to extend the memory pool? Wouldn't this happen naturally via the new operator?
+  //       ANSWER: We need to compute the address of future IR nodes from the global index numbers. So
+  //               they all need to be pre-allocated!!!
+     ROSE_ASSERT(globalProject->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+
   // Custom test of AST (for problems that appears to be specific to writing out the merged AST).
   // testAST(globalProject);
+
+#if 1
+  // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
+  // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
+  // generateDOT ( *globalProject );
+     generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
+#endif
+
+#if 1
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
+     generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+#endif
 
 #if 1
   // DQ (2/26/2010): Output an example of the value of p_freepointer for debugging.
@@ -354,9 +441,9 @@ main ( int argc, char * argv[] )
 
   // string mergedFileName = "mergedFile.C";
      string mergedFileName = outputFileName;
-     printf ("mergedFileName = %s numberOfNodes() = %d \n",mergedFileName.c_str(),numberOfNodes());
+     printf ("mergedFileName = %s numberOfNodes() = %zu \n",(mergedFileName + ".binary").c_str(),numberOfNodes());
 
-     printf ("Calling AST_FILE_IO::reset() \n");
+  // printf ("Calling AST_FILE_IO::reset() \n");
      AST_FILE_IO::reset();
 
   // printf ("Calling AST_FILE_IO::resetValidAstAfterWriting() \n");
@@ -364,10 +451,10 @@ main ( int argc, char * argv[] )
   // AST_FILE_IO::display("Before writing the merged AST");
 
   // Now write out the merged AST.
-     printf ("Calling AST_FILE_IO::startUp()... \n");
+  // printf ("Calling AST_FILE_IO::startUp()... \n");
      AST_FILE_IO::startUp(globalProject);
 
-     printf ("Writing the AST to disk... \n");
+  // printf ("Writing the AST to disk... \n");
      AST_FILE_IO::writeASTToFile ( mergedFileName + ".binary" );
 #endif
 

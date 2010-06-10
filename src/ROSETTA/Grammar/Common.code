@@ -54,11 +54,13 @@ HEADER_START
              }
 #endif
 
+       // DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+       // using values that overflow signed values of int.
        // DQ (1/2/2006): Compute the amount of memory allocated for this type within the AST.
       /*! \brief Returns the total number of IR nodes of this type */
-          static int numberOfNodes ();
+          static size_t numberOfNodes();
       /*! \brief Returns the size in bytes of the total memory allocated for all IR nodes of this type */
-          static int memoryUsage ();
+          static size_t memoryUsage();
 
       // End of scope which started in IR nodes specific code 
       /* */

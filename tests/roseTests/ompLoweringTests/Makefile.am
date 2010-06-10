@@ -131,6 +131,7 @@ CXX_TEST_OBJECT_REQUIRED_TO_RUN = ${CXX_TESTCODES_REQUIRED_TO_RUN:.cpp=.o}
 # TODO task-wait hangs for gcc 4.4.1 (not for Intel icc), skip the execution for now	
 #	task_wait.o
 # TODO: npb, validation suite, developer tests, epcc
+# full_verify.c complex #if #endif
 TESTCODE_CURRENTLY_FAILING = \
         collapse.c \
         copyin.c \
@@ -140,6 +141,7 @@ TESTCODE_CURRENTLY_FAILING = \
         critical_dead.c \
 	endif2.c \
         expressions.c \
+	full_verify.c \
         macroCalls.c \
         parallelsections.c \
         recursive.c \

@@ -106,6 +106,11 @@ class EventReverser
                     buildVarRefExp(int_stack_name_),
                     buildFunctionCallExp("buildIntStack", stack_type)));
 
+        // Initialize the integer stack object.
+        inits.push_back(buildAssignStatement(
+                    buildVarRefExp(float_stack_name_),
+                    buildFunctionCallExp("buildIntStack", stack_type)));
+
         // Initialize the loop counter stack object.
         inits.push_back(buildAssignStatement(
                     buildVarRefExp(counter_stack_name_),
@@ -123,7 +128,7 @@ class EventReverser
     // ==================================================================================
 
     // Just reverse an expression
-    SgExpression* reverseExpression(SgExpression* exp);
+    //SgExpression* reverseExpression(SgExpression* exp);
 
     // Get the forward and reverse version of an expression
     ExpPair instrumentAndReverseExpression(SgExpression* exp);
@@ -167,24 +172,6 @@ class EventReverser
         return NULL;
     }
 
-    // Check if there is another used variable with the same name in the current scope.
-    // If yes, alter the name until it does not conflict with other variable names.
-    void validateName(string& name, SgNode* root)
-    {
-        Rose_STL_Container<SgNode*> ref_list = NodeQuery::querySubTree(root, V_SgVarRefExp);
-        foreach (SgNode* node, ref_list)
-        {
-            if (SgVarRefExp* var_ref = isSgVarRefExp(node))
-            {
-                if (var_ref->get_symbol()->get_name() == name)
-                {
-                    name += "_";
-                    validateName(name, root);
-                    break;
-                }
-            }
-        }
-    }
 
 #if 0
     // Generate a name containing the function name and counter
@@ -213,12 +200,21 @@ class EventReverser
     // Push an integer into integer stack. Can be used to save states. 
     SgExpression* pushIntVal(SgExpression* var)
     {
-        return buildFunctionCallExp(
-                "push", 
-                buildIntType(), 
-                buildExprListExp(
-                    buildVarRefExp(int_stack_name_), 
-                    var)); 
+        if (branch_mark_ < 0)
+            return buildFunctionCallExp(
+                    "push", 
+                    buildIntType(), 
+                    buildExprListExp(
+                        buildVarRefExp(int_stack_name_), 
+                        var));
+        else
+            return buildFunctionCallExp(
+                    "push", 
+                    buildIntType(), 
+                    buildExprListExp(
+                        buildVarRefExp(int_stack_name_), 
+                        var,
+                        buildIntVal(branch_mark_)));
     }
 
     // Pop the stack and get the value.
@@ -244,6 +240,24 @@ class EventReverser
     {
         return buildFunctionCallExp("pop", buildVoidType(), 
                 buildExprListExp(buildVarRefExp(float_stack_name_)));
+    }
+
+    // For a local variable, return two statements to store its value and 
+    // declare and assign the retrieved value to it.
+    StmtPair pushAndPopLocalVar(SgVariableDeclaration* var_decl)
+    {
+        const SgInitializedNamePtrList& names = var_decl->get_variables();
+        ROSE_ASSERT(names.size() == 1);
+        SgInitializedName* init_name = names[0];
+
+        SgStatement* store_var = buildExprStatement(
+                pushIntVal(buildVarRefExp(init_name)));
+
+        SgStatement* decl_var = buildVariableDeclaration(
+                init_name->get_name(),
+                init_name->get_type(),
+                buildAssignInitializer(popIntVal()));
+        return StmtPair(store_var, decl_var);
     }
 
     // **********************************************************************************

@@ -1172,10 +1172,11 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
              vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
              if (vec.size() == 0)
              {
-                 cerr<<"Error: cannot find a reaching definition for an initialized name:"<<endl;
-                 cerr<<"initName:"<<initName->get_name().getString()<<endl;
-                // ROSE_ASSERT (vec.size()>0);
-                break; 
+               cerr<<"Warning: cannot find a reaching definition for an initialized name:"<<endl;
+               cerr<<"initName:"<<initName->get_name().getString()<<"@";
+               cerr<<varRef->get_file_info()->get_line()<<":"<< varRef->get_file_info()->get_col() <<endl;
+               // ROSE_ASSERT (vec.size()>0);
+               break; 
              }
 
              // stop tracing if there are more than one reaching definitions
@@ -1194,21 +1195,32 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
                the_end_value = isSgAssignInitializer(vec[0])->get_operand_i();
              }
              else
-             {
-               cerr<<"Error: uniformIndirectIndexedArrayRefs() unhandled definition type: "<< vec[0]->class_name()<<endl;
-               ROSE_ASSERT(false);
+             {  
+               if (!isSgMinusMinusOp(vec[0])) // (! && !)
+               {
+                 cerr<<"Warning: uniformIndirectIndexedArrayRefs() ignoring a reaching definition of a type: "
+                   << vec[0]->class_name()<<"@";
+                 if (isSgLocatedNode(vec[0]))
+                 {
+                   SgLocatedNode* lnode = isSgLocatedNode(vec[0]);
+                   cerr<<lnode->get_file_info()->get_line()<<":"<< lnode->get_file_info()->get_col() ;
+                 }
+                 cerr<<endl;
+               }
+               //ROSE_ASSERT(false);
+               break;
              }
+           } // end while() to trace down to root definition expression
+           //replace rhs with its root value if rhs != end_value
+           if (rhs != the_end_value)
+           {
+             SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
+             //TODO use replaceExpression() instead
+             aRef->set_rhs_operand_i(new_rhs);
+             new_rhs->set_parent(aRef);
+             delete rhs; 
            }
-            //replace rhs with its root value if rhs != end_value
-            if (rhs != the_end_value)
-            {
-              SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
-              //TODO use replaceExpression() instead
-              aRef->set_rhs_operand_i(new_rhs);
-              new_rhs->set_parent(aRef);
-              delete rhs; 
-            }
-     
+
            break;
          } // end case V_SgVarRefExp:
        case V_SgPntrArrRefExp: // uniform form already, do nothing
@@ -1217,14 +1229,16 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
          // since we narrow down the simplest case for indirection without additional calculation
        case V_SgSubtractOp:
        case V_SgAddOp:
+       case V_SgMinusMinusOp:
        case V_SgPlusPlusOp:
+       case V_SgModOp:
        case V_SgMultiplyOp:
          break;
        default:
-       {
-         cerr<<"Warning: uniformIndirectIndexedArrayRefs(): unhandled array access expression type: "<< rhs->class_name()<<endl;
-         break;
-       }
+         {
+           cerr<<"Warning: uniformIndirectIndexedArrayRefs(): ignoring an array access expression type: "<< rhs->class_name()<<endl;
+           break;
+         }
      } // end switch
    } //end for
 

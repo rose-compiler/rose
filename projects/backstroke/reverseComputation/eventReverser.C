@@ -2,6 +2,7 @@
 
 #include "eventReverser.h"
 #include "facilityBuilder.h"
+#include "utilities.h"
 #include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -13,13 +14,6 @@ using namespace boost;
 set<SgFunctionDeclaration*> EventReverser::func_processed_;
 const ExpPair EventReverser::NULL_EXP_PAIR = ExpPair(NULL, NULL);
 const StmtPair EventReverser::NULL_STMT_PAIR = StmtPair(NULL, NULL);
-
-
-SgExpression* EventReverser::reverseExpression(SgExpression* exp)
-{
-    return NULL;
-}
-
 
 ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 {
@@ -46,9 +40,9 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 
     //if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
 
-    return ExpPair(copyExpression(exp), NULL);
+    //return ExpPair(copyExpression(exp), NULL);
     //return ExpPair(copyExpression(exp), buildNullExpression());
-    //return ExpPair(copyExpression(exp), copyExpression(exp));
+    return ExpPair(copyExpression(exp), copyExpression(exp));
 }
 
 
@@ -239,17 +233,19 @@ class reverserTraversal : public AstSimpleProcessing
 {
     public:
         reverserTraversal() 
-            : events_num(0),  
-            model_type(0),
-            AstSimpleProcessing()
+            : AstSimpleProcessing(),
+            events_num(0),  
+            model_type(0)
     {}
         virtual void visit(SgNode* n);
+
+        int events_num;
+        SgClassType* model_type;
         vector<SgFunctionDeclaration*> funcs_gen;
         vector<SgFunctionDeclaration*> all_funcs;
         vector<SgStatement*> var_decls;
         vector<SgStatement*> var_inits;
-        SgClassType* model_type;
-        int events_num;
+        vector<string> event_names;
 };
 
 
@@ -267,7 +263,7 @@ void reverserTraversal::visit(SgNode* n)
             return;
 
         //cout << func_name << endl;
-
+        event_names.push_back(func_name);
 
         EventReverser reverser(func_decl);
         vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
@@ -470,7 +466,7 @@ int main( int argc, char * argv[] )
 
     appendStatement(buildInitializationFunction(reverser.model_type));
     appendStatement(buildCompareFunction(reverser.model_type));
-    appendStatement(buildMainFunction(reverser.var_inits, reverser.events_num, klee));
+    appendStatement(buildMainFunction(reverser.var_inits, reverser.event_names, klee));
 
 
     popScopeStack();
