@@ -174,7 +174,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
     static const bool debug = false;
 
     if (debug) {
-        std::cerr <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addressToString(insns.front()->get_address())
+        std::cerr <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
                   <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<std::endl;
     }
 
@@ -212,7 +212,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 semantics.processInstruction(insn);
                 if (debug) {
                     std::cerr << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
-                              <<policy.get_state()
+                              <<policy.get_state();
                 }
             }
             const RegisterType &newip = policy.get_ip();
@@ -231,7 +231,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
     if (debug) {
         std::cerr <<"  successors:";
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            std::cerr <<" " <<StringUtility::addressToString(*si);
+            std::cerr <<" " <<StringUtility::addrToString(*si);
         if (!*complete) std::cerr <<"...";
         std::cerr <<std::endl;
     }
