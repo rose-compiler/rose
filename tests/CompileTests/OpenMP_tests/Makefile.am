@@ -85,6 +85,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	rice1.c \
 	section.c \
 	set_num_threads.c \
+	shared.c \
 	single.c \
 	single2.c \
 	single_copyprivate.c \

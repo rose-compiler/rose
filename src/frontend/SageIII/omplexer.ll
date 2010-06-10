@@ -52,7 +52,7 @@ task		{ return ( TASK ); }
 taskwait	{ return ( TASKWAIT ); }
 untied          { return ( UNTIED );}
 if		{ return ( IF); }
-num_threads     { return ( NUM_THREADS); }
+_num_threads     { return ( NUM_THREADS); } /* Some users use num_threads, which cause conflicts here. use _num_threads instead */
 ordered         { return ( ORDERED  ); }
 schedule        { return ( SCHEDULE ); }
 static          { return ( STATIC ); }
