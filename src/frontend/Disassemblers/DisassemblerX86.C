@@ -171,10 +171,12 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
 {
-#if 0
-    fprintf(stderr, "SgAsmx86Instruction::get_successors(B%08"PRIx64" for %zd instruction%s):\n", 
-            insns.front()->get_address(), insns.size(), 1==insns.size()?"":"s");
-#endif
+    static const bool debug = false;
+
+    if (debug) {
+        std::cerr <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addressToString(insns.front()->get_address())
+                  <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<std::endl;
+    }
 
     Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
@@ -208,12 +210,10 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             for (size_t i=0; i<insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
                 semantics.processInstruction(insn);
-#if 0
-                std::ostringstream s;
-                s << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.get_state()
-                fputs(s.str().c_str(), stderr);
-#endif
+                if (debug) {
+                    std::cerr << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
+                              <<policy.get_state()
+                }
             }
             const RegisterType &newip = policy.get_ip();
             if (newip.is_known()) {
@@ -223,19 +223,18 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             }
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
-#if 0
-            fprintf(stderr, "    semantic analysis failed: %s\n", e.mesg.c_str());
-#endif
+            if (debug)
+                std::cerr <<e <<"\n";
         }
     }
 
-#if 0
-    fprintf(stderr, "  successors:");
-    for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-        fprintf(stderr, " 0x%08"PRIx64, *si);
-    if (!*complete) fprintf(stderr, "...");
-    fprintf(stderr, "\n");
-#endif
+    if (debug) {
+        std::cerr <<"  successors:";
+        for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+            std::cerr <<" " <<StringUtility::addressToString(*si);
+        if (!*complete) std::cerr <<"...";
+        std::cerr <<std::endl;
+    }
 
     return successors;
 }
