@@ -1,4 +1,5 @@
-#! /bin/sh
+#! /bin/bash
+# This script needs /bin/bash rather than /bin/sh
 
 
 # This is the default location for build to use as a reference
