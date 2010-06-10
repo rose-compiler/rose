@@ -1798,6 +1798,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          }
      }
 
+  // RPM (6/9/2010): Partitioner configuration
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
+         set_partitionerConfigurationFileName(stringParameter);
+     }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -4335,6 +4340,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
+          argument == "-rose:partitioner_config" ||
           false)
         {
           result = true;
@@ -7273,6 +7279,15 @@ SgFile::usage ( int status )
 "                             the usual C notation) can be used to set/clear multiple\n"
 "                             search bits at one time. See doxygen comments for the\n"
 "                             Partitioner::parse_switches class method for full details.\n"
+"     -rose:partitioner_config FILENAME\n"
+"                             File containing configuration information for the\n"
+"                             instruction/block/function partitioner. This config\n"
+"                             file can be used to override block successors,\n"
+"                             alias two or more blocks that have identical\n"
+"                             semantics, assign particular blocks to functions,\n"
+"                             override function return analysis, provide or\n"
+"                             override function names, etc. See documentation for\n"
+"                             the IPDParser class for details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparse_line_directives\n"
