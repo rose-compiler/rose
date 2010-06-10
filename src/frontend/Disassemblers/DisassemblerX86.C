@@ -6,12 +6,14 @@
 #include "Disassembler.h"
 #include "sageBuilderAsm.h"
 #include "DisassemblerX86.h"
+#include "SymbolicSemantics.h"
+#include "VirtualMachineSemantics.h"
+#include "YicesSolver.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <sstream>
 
-#include "VirtualMachineSemantics.h"
 
 /* See header file for full documentation. */
 
@@ -181,9 +183,27 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
      * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
      * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
     if (!*complete || successors.size()>1) {
-        typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
+
+#if 0
+        /* Use the most robust semantic analysis available.  Warning: this can be very slow, especially when an SMT solver is
+         * involved! */
+# ifdef YICES
+        YicesSolver x;
+        SMTSolver *solver = &x;
+# else
+        SMTSolver *solver = NULL;
+# endif
+        typedef SymbolicSemantics::Policy Policy;
+        typedef SymbolicSemantics::ValueType<32> RegisterType;
+        typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
+        Policy policy(solver);
+#else
+        typedef VirtualMachineSemantics::Policy Policy;
+        typedef VirtualMachineSemantics::ValueType<32> RegisterType;
+        typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+        Policy policy;
+#endif
         try {
-            VirtualMachineSemantics::Policy policy;
             Semantics semantics(policy);
             for (size_t i=0; i<insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
@@ -195,10 +215,10 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            const VirtualMachineSemantics::ValueType<32> &newip = policy.get_ip();
-            if (newip.name==0) {
+            const RegisterType &newip = policy.get_ip();
+            if (newip.is_known()) {
                 successors.clear();
-                successors.insert(newip.offset);
+                successors.insert(newip.known_value());
                 *complete = true; /*this is the complete set of successors*/
             }
         } catch(const Semantics::Exception& e) {
