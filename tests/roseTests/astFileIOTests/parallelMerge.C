@@ -70,13 +70,13 @@ class AstStorage
     AstStorage(const vector<string>& filenames)
         : counter_(0) 
     {
-        for (int i = 0; i < filenames.size(); ++i)
+        for (size_t i = 0; i < filenames.size(); ++i)
             //astFiles_.push(filenames[i]);
             astFiles_.push_back(filenames[i]);
     }
 
     // Fetch several files to merge. The number of files is passed in.
-    vector<string> GetFiles(int n)
+    vector<string> GetFiles(size_t n)
     {
         boost::mutex::scoped_lock scoped_lock(mutex_);
 
@@ -87,7 +87,7 @@ class AstStorage
 
         vector<string> files;
         int step = astFiles_.size() / n;
-        for (int i = 0; i < n; ++i)
+        for (size_t i = 0; i < n; ++i)
         {
             if (!astFiles_.empty())
             {
@@ -96,7 +96,7 @@ class AstStorage
                 astFiles_.pop();
                 files.push_back(filename);
 #endif
-                int idx = i * step - i;
+                size_t idx = i * step - i;
                 assert(idx < astFiles_.size());
                 files.push_back(astFiles_[idx]);
                 astFiles_.erase(astFiles_.begin() + idx);
@@ -163,17 +163,17 @@ void MergeAst(AstStorage* storage, int n = 2)
     vector<string> filenames = storage->GetFiles(n);
     while (!filenames.empty())
     {
-        int nfile = filenames.size();
+        //int nfile = filenames.size();
 
         // string arg = "./mergeAST ";
         string args = "../../../tests/testAstFileRead ";
 
-        for (int i = 0; i < filenames.size(); ++i)
+        for (size_t i = 0; i < filenames.size(); ++i)
         {
             args += filenames[i] + " ";
         }
 
-        printf (">>>>>>>>>>>>>>>>>>>>commandline to run process = %s \n",args.c_str());
+        //printf (">>>>>>>>>>>>>>>>>>>>commandline to run process = %s \n",args.c_str());
         if (::system(args.c_str()) != 0)
         {
             //storage->Clear();
@@ -240,9 +240,9 @@ void MergeAstFiles(const vector<string>& astFiles, const string& output, int nth
 
     MergeAst(&storage, nthread);
 
-    cout << "Generating output ...\n";
+    //cout << "Generating output ...\n";
     storage.GenerateOutput(output);
-    cout << "Done!\n";
+    //cout << "Done!\n";
 }
 
 int main ( int argc, char * argv[] )
@@ -254,7 +254,7 @@ int main ( int argc, char * argv[] )
         assert(false);
     }
 
-    int numFiles = argc - 1;
+    //int numFiles = argc - 1;
     std::vector<std::string> fileNames(argv + 1, argv + argc - 1);
 
     //string output = "output.txt";
@@ -275,8 +275,9 @@ int main ( int argc, char * argv[] )
         //cout << i << " : " << t.elapsed() << endl;
     }
 
-    for (int i = 0; i < time_used.size(); ++i)
-        cout << time_used[i].first << ": " << time_used[i].second << endl;
+    cout << "Thread Num\tTime Used" << endl; 
+    for (size_t i = 0; i < time_used.size(); ++i)
+        cout << time_used[i].first << "\t" << time_used[i].second << endl;
 
     return 0;
 }

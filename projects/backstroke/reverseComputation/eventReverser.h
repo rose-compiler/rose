@@ -172,24 +172,6 @@ class EventReverser
         return NULL;
     }
 
-    // Check if there is another used variable with the same name in the current scope.
-    // If yes, alter the name until it does not conflict with any other variable name.
-    void validateName(string& name, SgNode* root)
-    {
-        Rose_STL_Container<SgNode*> ref_list = NodeQuery::querySubTree(root, V_SgVarRefExp);
-        foreach (SgNode* node, ref_list)
-        {
-            if (SgVarRefExp* var_ref = isSgVarRefExp(node))
-            {
-                if (var_ref->get_symbol()->get_name() == name)
-                {
-                    name += "_";
-                    validateName(name, root);
-                    break;
-                }
-            }
-        }
-    }
 
 #if 0
     // Generate a name containing the function name and counter
@@ -218,12 +200,21 @@ class EventReverser
     // Push an integer into integer stack. Can be used to save states. 
     SgExpression* pushIntVal(SgExpression* var)
     {
-        return buildFunctionCallExp(
-                "push", 
-                buildIntType(), 
-                buildExprListExp(
-                    buildVarRefExp(int_stack_name_), 
-                    var)); 
+        if (branch_mark_ < 0)
+            return buildFunctionCallExp(
+                    "push", 
+                    buildIntType(), 
+                    buildExprListExp(
+                        buildVarRefExp(int_stack_name_), 
+                        var));
+        else
+            return buildFunctionCallExp(
+                    "push", 
+                    buildIntType(), 
+                    buildExprListExp(
+                        buildVarRefExp(int_stack_name_), 
+                        var,
+                        buildIntVal(branch_mark_)));
     }
 
     // Pop the stack and get the value.

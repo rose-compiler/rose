@@ -297,17 +297,22 @@ MangledNameMapTraversal::visit ( SgNode* node)
                              isSgTemplateInstantiationDirectiveStatement(declaration) == NULL && 
                              isSgPragmaDeclaration(declaration) == NULL)
                             {
-                              SgSymbol* symbol = declaration->search_for_symbol_from_symbol_table();
-                              if (symbol == NULL)
+                           // DQ (6/8/2010): Only do this test for non compiler generated variable...(e.g. __default_member_function_pointer_name 
+                           // is compiler generated to handle function pointers where no member function id specified).
+                              if (declaration->get_startOfConstruct()->isCompilerGenerated() == false)
                                  {
-                                // Output more information to support debugging!
-                                   printf ("declaration = %p = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
-                                   SgScopeStatement* scope = declaration->get_scope();
-                                   ROSE_ASSERT(scope != NULL);
-                                   printf ("     scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
-                                   declaration->get_startOfConstruct()->display("declaration->search_for_symbol_from_symbol_table() == NULL");
+                                   SgSymbol* symbol = declaration->search_for_symbol_from_symbol_table();
+                                   if (symbol == NULL)
+                                      {
+                                     // Output more information to support debugging!
+                                        printf ("declaration = %p = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+                                        SgScopeStatement* scope = declaration->get_scope();
+                                        ROSE_ASSERT(scope != NULL);
+                                        printf ("     scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+                                        declaration->get_startOfConstruct()->display("declaration->search_for_symbol_from_symbol_table() == NULL");
+                                      }
+                                   ROSE_ASSERT(symbol != NULL);
                                  }
-                              ROSE_ASSERT(symbol != NULL);
                             }
                        }
 #endif
