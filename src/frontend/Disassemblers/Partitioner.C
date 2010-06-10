@@ -377,7 +377,7 @@ Partitioner::clear()
         fstat(fd, &sb);
         char *config = new char[sb.st_size];
         ssize_t nread = read(fd, config, sb.st_size);
-        if (nread<0 || (size_t)nread<sb.st_size)
+        if (nread<0 || nread<sb.st_size)
             throw IPDParser::Exception(strerror(errno), config_file_name);
         IPDParser(this, config, sb.st_size, config_file_name).parse();
         delete[] config;

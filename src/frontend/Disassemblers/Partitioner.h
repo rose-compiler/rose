@@ -534,6 +534,7 @@ public:
             Exception(const std::string &mesg, const std::string &name, unsigned lnum=0)
                 : name(name), lnum(lnum), mesg(mesg) {}
             std::string format() const;         /**< Format exception object into an error message; used by operator<<. */
+            friend std::ostream& operator<<(std::ostream&, const Exception &e);
 
             std::string name;                   /**< Optional name of input */
             unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
@@ -603,7 +604,5 @@ protected:
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
-
-std::ostream& operator<<(std::ostream &o, const Partitioner::IPDParser::Exception &e);
 
 #endif
