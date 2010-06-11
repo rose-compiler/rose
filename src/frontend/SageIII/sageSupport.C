@@ -8264,7 +8264,12 @@ static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* at
   ROSE_ASSERT(target&&att);
   // build variable list
   std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(key);
-  ROSE_ASSERT(varlist.size()!=0);
+#if 0  
+  // Liao 6/10/2010 we relax this assertion to workaround 
+  //  shared(num_threads),  a clause keyword is used as a variable 
+  //  we skip variable list of shared() for now so shared clause will have empty variable list
+#endif  
+   ROSE_ASSERT(varlist.size()!=0);
   std::vector<std::pair<std::string,SgNode* > >::iterator iter;
   for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
   {

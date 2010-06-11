@@ -146,6 +146,7 @@ TESTCODE_CURRENTLY_FAILING = \
         parallelsections.c \
         recursive.c \
         section.c \
+	shared.c \
         single_copyprivate.c \
         threadProcessor.c \
         variables.c
