@@ -697,9 +697,18 @@ static std::auto_ptr<SgNode> resolveVar(const char* var) {
 }
 */
 
-static bool addVar(const char* var) {
-	ompattribute->addVariable(omptype,var);
-	return true;
+static bool addVar(const char* var) 
+{
+#if 0  
+  // Liao, 6/10/2010
+  //We don't handle shared clause yet
+  // Another reason is the IS benchmark of npb 3.2 has a pragma like shared(num_threads)
+  // which crushes since num_threads happens to be a keyword for an OpenMP clause
+  if (omptype == e_shared)
+    return true;
+#endif    
+  ompattribute->addVariable(omptype,var);
+  return true;
 }
 
 // The ROSE's string-based AST construction is not stable,
