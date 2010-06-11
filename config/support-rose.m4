@@ -2310,7 +2310,11 @@ projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
-projects/PolyhedralDependenceAnalysis/tests/Makefile
+projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
+projects/PolyhedralDependenceAnalysis/Common/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
+projects/PolyhedralDependenceAnalysis/Schedule/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
