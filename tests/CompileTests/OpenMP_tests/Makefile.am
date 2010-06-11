@@ -85,6 +85,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	rice1.c \
 	section.c \
 	set_num_threads.c \
+	shared.c \
 	single.c \
 	single2.c \
 	single_copyprivate.c \
@@ -106,6 +107,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	threadprivate3.c \
 	threadprivate.c \
 	threadProcessor.c \
+	upperCase.c \
 	variables.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
@@ -124,7 +126,6 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
-	shared.c \
 	macroCalls.c 
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
