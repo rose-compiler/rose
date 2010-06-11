@@ -29,10 +29,10 @@ For example, num_threads could be a clause name or a variable in the variable li
 
 We introduce a flag to indicate the context: within a variable list like (a,y,y) or outside of it
   We check '(' or ')' to set it to true or false as parsing proceed */
-static bool b_within_variable_list = false;
+extern bool b_within_variable_list ; /* = false; */
 
 /*conditionally return either a clause token or ID_EXPRESSION, depending on the context.
-This should only be used with clause names, nothing else */
+  We should use it for any OpenMP keyword which could potentially used by users as a variable within a variable list.*/
 static int cond_return (int input);
 /* pass user specified string to buf, indicate the size using 'result', 
    and shift the current position pointer of user input afterwards 
@@ -57,9 +57,8 @@ id              [a-zA-Z_][a-zA-Z0-9_]*
 
 %%
 {digit}{digit}* { omp_lval.itype = atoi(strdup(yytext)); return (ICONSTANT); }
-omp             { return ( OMP); }
-parallel        { return ( PARALLEL); }
-
+omp             { return cond_return ( OMP); }
+parallel        { return cond_return ( PARALLEL); }
 task		{ return cond_return ( TASK ); }
 taskwait	{ return cond_return ( TASKWAIT ); }
 untied          { return cond_return ( UNTIED );}
@@ -79,17 +78,17 @@ num_threads     { /*Can be either a clause name or a variable name */
 ordered         { return cond_return ( ORDERED  ); }
 schedule        { return cond_return ( SCHEDULE ); }
 
-static          { return ( STATIC ); } 
-dynamic         { return ( DYNAMIC ); } /* TODO there is chance that users use runtime, dynamic as variables also. we should treat them as regular ID_EXPRESSION and handle them in Bison */
-guided          { return ( GUIDED ); }
-runtime         { return ( RUNTIME ); }
+static          { return ( STATIC ); }  /*keyword in C/C++ */
+dynamic         { return cond_return ( DYNAMIC ); } 
+guided          { return cond_return ( GUIDED ); }
+runtime         { return cond_return ( RUNTIME ); }
 auto            { return ( AUTO ); } /*keyword in C/C++ ?*/
 
 sections        { return cond_return  ( SECTIONS ); }
 section         { return cond_return ( SECTION ); }
 single          { return cond_return ( SINGLE ); }
 nowait          { return cond_return ( NOWAIT); }
-for             { return ( FOR ); }
+for             { return ( FOR ); } /*keyword in C/C++ */
 collapse	{ return cond_return ( COLLAPSE ); }
 master          { return cond_return ( MASTER ); }
 critical        { return cond_return ( CRITICAL ); }
@@ -102,14 +101,14 @@ copyprivate     { return cond_return ( COPYPRIVATE ); }
 firstprivate    { return cond_return ( FIRSTPRIVATE ); }
 lastprivate     { return cond_return ( LASTPRIVATE ); }
 default         { return cond_return ( DEFAULT ); }
-shared          { return ( SHARED ); } /*Can be either a clause, or value of default (value) TODO treat as ID_EXPRESSION and handle it in Bison*/
-none            { return ( NONE ); } /*Not a clause, but still could be variable, TODO treat as ID_EXPRESSION */
+shared          { return cond_return ( SHARED ); } 
+none            { return cond_return ( NONE ); } 
 reduction       { return cond_return ( REDUCTION ); }
 copyin          { return cond_return ( COPYIN ); }
 
 "="             { return('='); }
-"("		{ b_within_variable_list = true; return ('('); }
-")"		{ b_within_variable_list = false; return (')'); }
+"("		{ return ('('); }
+")"		{ return (')'); }
 ","		{ return (','); }
 ":"		{ return (':'); }
 "+"		{ return ('+'); }
