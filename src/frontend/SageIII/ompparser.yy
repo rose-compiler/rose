@@ -665,7 +665,8 @@ unary_expr
 */
 
 /* in C++ (we use the C++ version) */ 
-variable_list	: ID_EXPRESSION   { if (!addVar((const char*)$1)) YYABORT; }
+variable_list	: ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; }
+                | 
 		| variable_list ',' ID_EXPRESSION { if (!addVar((const char*)$3)) YYABORT; }
 		;
 
