@@ -63,6 +63,7 @@ static SgNode* gNode;
 
 // The current expression node being generated 
 static SgExpression* current_exp = NULL;
+bool b_within_variable_list  = false; 
 %}
 
 /* The %union declaration specifies the entire collection of possible data types for semantic values. these names are used in the %token and %type declarations to pick one of the types for a terminal or nonterminal symbol
@@ -166,7 +167,7 @@ unique_parallel_clause
 		| COPYIN
 		  { ompattribute->addClause(e_copyin);
 		    omptype = e_copyin;
-		  } '(' variable_list ')'
+		  } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		; 
 
 for_directive	: /* # pragma */ OMP FOR
@@ -288,7 +289,7 @@ single_clause	: unique_single_clause
 unique_single_clause : COPYPRIVATE 
 			{ ompattribute->addClause(e_copyprivate);
 			  omptype = e_copyprivate; }
-			'(' variable_list ')'
+			'(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 
 task_directive: /* #pragma */ OMP TASK 
                  {ompattribute = buildOmpAttribute(e_task,gNode,true);
@@ -424,7 +425,7 @@ flush_varsopt   : /* empty */
 		| flush_vars
 		;
 
-flush_vars	: '(' variable_list ')'
+flush_vars	: '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		;
 
 ordered_directive
@@ -436,7 +437,7 @@ threadprivate_directive
 		: /* # pragma */ OMP THREADPRIVATE
 		  { ompattribute = buildOmpAttribute(e_threadprivate,gNode, true); 
                     omptype = e_threadprivate; }
-		 '(' variable_list ')'
+		 '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		;
 
 data_default_clause
@@ -453,29 +454,29 @@ data_default_clause
 		 ;
 data_privatization_clause :  PRIVATE
                   { ompattribute->addClause(e_private); omptype = e_private;}
-		  '(' variable_list ')'
+		  '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		;
 
 data_privatization_in_clause: FIRSTPRIVATE
                   { ompattribute->addClause(e_firstprivate); 
 		    omptype = e_firstprivate;}
-		  '(' variable_list ')'
+		  '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		;
 
 data_privatization_out_clause: LASTPRIVATE
                   { ompattribute->addClause(e_lastprivate); 
 		    omptype = e_lastprivate;}
-		  '(' variable_list ')'
+		  '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		;
 
 data_sharing_clause: SHARED
                   { ompattribute->addClause(e_shared); omptype = e_shared; }
-		   '(' variable_list ')'
+		   '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		;
 
 data_reduction_clause: REDUCTION
 		  { ompattribute->addClause(e_reduction);}
-		  '(' reduction_operator ':' variable_list ')' 
+		  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
 		;
 
 reduction_operator
@@ -687,27 +688,8 @@ void omp_parser_init(SgNode* aNode, const char* str) {
 	gNode = aNode;
 }
 
-/* // do it in OmpAttribute::addVariable() instead
-static std::auto_ptr<SgNode> resolveVar(const char* var) {
-       
-	std::auto_ptr<SgNode> node(gNode->resolveVariable(var));
-
-	if (!node.get())
-		printf("No such var <%s>!\n", var);
-	return node;
-}
-*/
-
 static bool addVar(const char* var) 
 {
-#if 0  
-  // Liao, 6/10/2010
-  //We don't handle shared clause yet
-  // Another reason is the IS benchmark of npb 3.2 has a pragma like shared(num_threads)
-  // which crushes since num_threads happens to be a keyword for an OpenMP clause
-  if (omptype == e_shared)
-    return true;
-#endif    
   ompattribute->addVariable(omptype,var);
   return true;
 }
@@ -720,104 +702,4 @@ static bool addExpression(const char* expr) {
       ompattribute->addExpression(omptype,std::string(expr),current_exp);
 	return true;
 }
-
-
-/**
- * @file
- * Parser for OpenMP-pragmas.
- */
-
-#if 0
-int main()
-{
-        yyparse();
-        printf("you win!\n");
-        return (0);
-}
-#endif
-
-/* The following rules have been removed from the standard-grammar because
-   they specify how to extend the C++ grammar with OpenMP pragmas in some
-   allowed contexts only. In ROSE we cannot change the C++ grammar (EDG front-end).
-   Therefore, the context-tests, which are specified by the following rules have to
-   be performed on the ROSE AST.
-
-// extended in above grammar with all openmp-directives
-openmp-directive: barrier-directive
-		| flush-directive
-		;
-
-statement: .. standard statements ..
-	openmp-construct
-	;
-
-openmp-construct: parallel-construct 
-		| for-construct 
-		| sections-construct 
-		| single-construct 
-		| parallel-for-construct 
-		| parallel-sections-construct 
-		| master-construct 
-		| critical-construct 
-		| atomic-construct 
-		| ordered-construct
-		;
-
-structured-block: statement 
-		; 
-parallel-construct
-		: parallel-directive structured-block 
-		;
-
-for-construct	: for-directive iteration-statement
-		;
-
-sections-construct
-		: sections-directive section-scope
-		;
-
-section-scope	: '{' section-sequence '}' 
-		;
-
-section-sequence: section-directiveopt structured-block 
-		| section-sequence section-directive structured-block 
-		;
-
-section-directiveopt
-		: // empty 
-		| section-directive
-		;
-
-single-construct: single-directive structured-block
-		;
-
-
-parallel-for-construct
-		: parallel-for-directive iteration-statement
-		;
-
-parallel-sections-construct
-		: parallel-sections-directive 
-		| section-scope
-		;
-
-master-construct: master-directive structured-block
-		;
-
-critical-construct
-		: critical-directive structured-block
-		;
-
-atomic-construct: atomic-directive expression-statement
-		;
-
-ordered-construct
-		: ordered-directive structured-block
-		;
-
-declaration	: -- standard declarations --
-		| threadprivate-directive
-		;
-
-*/
 
