@@ -1,0 +1,89 @@
+\chapter{Dependence analysis and Polyhedric Model}
+
+\label{polyhedric:polyhedric}
+
+	This chapter reffers to the project PolyhedralDependenceAnalysis.
+
+	\section{What can I find in this project ?}
+	
+	Each subsection is related to a subdirectory in the project.
+	
+		\subsection{RoseToFada}
+	
+	The project's subdirectory RoseToFada contains a translator from Rose IR (SageIII) to FadaLib IR.\\
+	FADAlib \cite{FADAweb} is an implementation of Fuzzy Array Dependence Analysis \cite{FADA}. FADA is an 
+analysis for non static control programs (or irregular programs).\\
+	Here, we reduce the scope of the transformation to static control programs \cite{Feautrier} to fit with 
+following part. It means that support of conditionals and while-loops is not implement (but can be).\\
+	Also, the translation don't address structure and complex-types.\\
+	
+	So, the subset of C that is address by this analysis contains only:
+\begin{itemize}
+	\item for-loop: for (i = a; i <= b; i++)
+	\item scalar variable
+	\item array reference with index that are affine application: a[i + 2*j][3*i + 5]
+\end{itemize}
+	
+		\subsection{PMDAtoMDA}
+	
+	Pseudo-multidimensional array are frequently used, but this representation is out of the scope of FADAlib
+(array index are not an affine application: a[i * n + j]).\\
+	The component PMDAtoMDA can traverse a function in Rose IR and add an attribute to all pseudo-multidimensional
+array. This attribute can generate (in Rose IR) each component of the correspondant access vector.\\
+	But, that no magic and highly constraint: we need tab[i * n * m + j * n + k] instead of tab[i][j][k] for an
+array of dimension [X, m, n] (i, j, k can be any affine form of the iterators).
+	
+		\subsection{RoseToPPL}
+		
+	Parma Polyhedral Library \cite{PPL} is a C++, object-oriented polyhedron manipulation library.\\
+	This component generate a polyhedral representation of dependences from FadaLib analysis.
+	
+		\subsection{Schedule}
+		
+	It's an experimental implementation of the Farkas Multipliers Method to obtains the space (polyhedron) of 
+valid schedule with respect to the dependances found by the Fuzzy Array Dependence Analysis.
+
+	\section{What I need to compile this project with Rose ?}
+
+	Pseudo-multidimensional array related part has no extra-dependences.
+	
+	\subsection{RoseToFada}
+	
+		FadaLib \cite{FADAweb} is needed and depend from PipLib (Parametric Integer Programming Library)
+\cite{PIP}.
+		You need to add following options to configure script:
+\begin{verbatim}
+--with-pip=PATH
+--with-fada=PATH
+--enable-fadalib=yes
+\end{verbatim}
+	
+	\subsection{RoseToPPL and Schedule}
+
+		Theses components depend from RoseToFada.\\
+		Both use Parma Polyhedral Library \cite{PPL} to represent polyhedrons.\\
+		You need to add following options to configure script:
+\begin{verbatim}
+--with-ppl=PATH
+--enable-ppl=yes
+\end{verbatim}
+		
+
+	\section{And now some maths !}
+
+\begin{verbatim}
+More about "polyhedral representation of dependences":
+	Definitions:
+		- Global variables: scalar variables from global scope (ex: array size), theirs noted G
+		- Statement:
+			* an iteration domain D, define by a polyhedron 
+				(ie: {z | f(z) >= 0} where f is an affine form (N pow(n) -> N) )
+			* Some 'read' and 'write' variables
+		- Dependance:
+			* 2 statements (that can be the same)
+				- with D1 and D2 there respective iteration domain
+			* a dependence function f: D1 x G -> D2 an affine application
+			
+	The polyhedral representation of this dependence is a polyhedron P in D1 x D2 x G:
+		- z in P => z in f & z in D1 & z in D2
+\end{verbatim}
