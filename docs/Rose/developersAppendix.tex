@@ -150,12 +150,14 @@ Please configure this copy with your name and email before starting work.
 
 \item Configuration:
   \begin{itemize}
-          \item set your name \textit{git config --global user.name 'John Doe' }
-	  \item set your email \textit{git config --global user.email johndoe@example.com}
-	  \item tells git-branch and git-checkout to setup new branches so that git-pull(1)
-    will appropriately merge from that remote branch \textit{git config branch.autosetupmerge true}
+          \item Set your name: \textit{git config --global user.name 'John Doe' }
+	  \item Set your email: \textit{git config --global user.email johndoe@example.com}
+	  \item Tell git-branch and git-checkout to setup new branches so that git-pull(1)
+    will appropriately merge from that remote branch: \textit{git config branch.autosetupmerge true}
           \item This setting tells git to convert the newlines to the system’s standard
 	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
+	 \item Tell git to automatically push to the remotely tracked branch: 
+	 	\textit{git config push.default 'tracking'}
    \end{itemize}       
 \item Get content in the repository:
   \begin{itemize}
