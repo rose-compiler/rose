@@ -661,15 +661,11 @@ class SgSharedVector {
     }
         
     /**** Iterators ****/
-    // FIXME
-
- // DQ (8/29/2008): Added iterator support for an STL style interface exected by ROSE.
     iterator begin() { return iterator(p_pool); };
-    iterator end() { return iterator(p_pool+p_size+1); };
+    iterator end() { return iterator(p_pool+p_size); };
 
     const_iterator  begin() const { return const_iterator(p_pool); };
- // const_iterator  end() const { return const_iterator((pointer)(p_pool+size+1)); };
-    const_iterator  end() const { return const_iterator(p_pool+p_size+1); };
+    const_iterator  end() const { return const_iterator(p_pool+p_size); };
 
     /**** Element Reference ****/
     reference operator[](size_type n) {
