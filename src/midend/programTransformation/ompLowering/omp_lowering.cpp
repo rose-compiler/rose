@@ -949,6 +949,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     AttachedPreprocessingInfoType save_buf1, save_buf2, save_buf_inside;
     cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
     cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
+   
+    // some #endif may be attached to the body, we should not move it with the body into
+    // the outlined funcion!!
+     // cutPreprocessingInfo(body, PreprocessingInfo::before, save_buf_body) ;
+
     // 1/15/2009, Liao, also handle the last #endif, which is attached inside of the target
     cutPreprocessingInfo(target, PreprocessingInfo::inside, save_buf_inside) ;
      // generated an outlined function as the task
@@ -1003,6 +1008,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
    pastePreprocessingInfo(s2, PreprocessingInfo::after, save_buf2); 
    // paste the preprocessing info with inside position to the outlined function's body
    pastePreprocessingInfo(outlined_func->get_definition()->get_body(), PreprocessingInfo::inside, save_buf_inside); 
+
+    // some #endif may be attached to the body, we should not move it with the body into
+    // the outlined funcion!!
+   // move dangling #endif etc from the body to the end of s2
+   movePreprocessingInfo(body,s2,PreprocessingInfo::before, PreprocessingInfo::after); 
 
    // SageInterface::deepDelete(target);
     // Postprocessing  to ensure the AST is legal 

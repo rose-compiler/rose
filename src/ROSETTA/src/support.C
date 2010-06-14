@@ -1190,6 +1190,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunctionDeclaration::FUNC_DEFAULT",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
+     File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
   // ******************************************************************************
