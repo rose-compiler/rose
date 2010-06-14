@@ -2,11 +2,17 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_LLVM
 
-INCLUDES = $(ROSE_INCLUDES) $(ROSE_LLVM_INCLUDES) $(srcdir)/../include
+#HEADERSDIR = $(srcdir)/../include
+
+INCLUDES = $(ROSE_INCLUDES) $(ROSE_LLVM_INCLUDES) -I$(srcdir)/../include
 
 bin_PROGRAMS = roseLLVM
 
 roseLLVM_SOURCES = main.cpp VisitorTraversal.cpp
+
+AM_CXXFLAGS = -D_DEBUG -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS 
+#noinst_HEADERS = $(HEADERSDIR)/llvm-interface.h \
+#				 $(HEADERSDIR)/VisitorTraversal.h
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ROSE_LLVM_LIB_WITH_PATH)
 

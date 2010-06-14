@@ -1,10 +1,15 @@
-#include <rose.h>
+#include "rose.h"
 #include <iostream>
+#include "VisitorTraversal.h"
+#include "llvm-interface.h"
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    cout << "llvmsupport v0.1\n";
+    SgProject *project = frontend(argc, argv);
+    ROSE_ASSERT(project != NULL);
+    VisitorTraversal Traversal;
+    Traversal.traverseInputFiles(project, preorder);
     return 0;
 }
