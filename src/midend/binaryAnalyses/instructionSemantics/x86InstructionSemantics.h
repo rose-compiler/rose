@@ -36,6 +36,11 @@ struct X86InstructionSemantics {
 
     struct Exception {
         Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+            o <<"instruction semantics: " <<e.mesg;
+            if (e.insn) o <<" [" <<unparseInstructionWithAddress(e.insn) <<"]";
+            return o;
+        }
         std::string mesg;
         SgAsmInstruction *insn;
     };

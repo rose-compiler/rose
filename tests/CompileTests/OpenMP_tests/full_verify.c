@@ -4,6 +4,8 @@
 // 6/9/2010, Liao
 //
 #include <stdio.h>
+
+
 #define NUM_KEYS 1000
 int key_array[NUM_KEYS], key_buff_ptr_global[NUM_KEYS]; 
 

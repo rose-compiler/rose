@@ -3,6 +3,12 @@
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
 
+std::ostream&
+operator<<(std::ostream &o, const SMTSolver::Exception &e)
+{
+    return o <<"SMT solver: " <<e.mesg;
+}
+
 bool
 SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
 {

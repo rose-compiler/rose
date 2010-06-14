@@ -1,12 +1,54 @@
 
 #include "RoseToFadaAST.hpp"
 #include "RoseToFadaCommon.hpp"
+#include "PMDAtoMDA.hpp"
 
 using namespace fada;
 
 namespace RoseToFada {
 
+/***/
+
 int statement_counter;
+
+inline std::pair<std::string, std::vector<Expression*> *> parseSgPntrArrRefExp(SgPntrArrRefExp * array_ref_exp) {
+	std::pair<std::string, std::vector<Expression*> *> res;
+	res.second = new std::vector<Expression*>();
+	
+	SgPntrArrRefExp * tmp = array_ref_exp;
+	do {
+		if (tmp->attributeExists("PseudoMultiDimensionalArray")) {
+			MultiDimArrays::PseudoMultiDimensionalArrayAttribute * attribute = 
+				dynamic_cast<MultiDimArrays::PseudoMultiDimensionalArrayAttribute *>
+					(tmp->getAttribute("PseudoMultiDimensionalArray"));
+
+			if (!attribute) {
+				std::cerr << "Error with PseudoMultiDimensionalArray in RoseToFadaAST !" << std::endl;
+				ROSE_ASSERT(false);
+			}
+
+			for (int i = 0; i < attribute->nbrComponent(); i++)
+				res.second->insert(res.second->begin(), parseSgExpressionToFadaExpression(attribute->buildComponent(i)));
+		}
+		else {
+			res.second->insert(res.second->begin(), parseSgExpressionToFadaExpression(tmp->get_rhs_operand_i()));
+		}
+		array_ref_exp = tmp;
+	} while (tmp = isSgPntrArrRefExp(tmp->get_lhs_operand_i()));			
+					
+	SgVarRefExp * var_ref_exp = isSgVarRefExp(array_ref_exp->get_lhs_operand_i());
+	if (var_ref_exp == NULL) {
+		Sg_File_Info * info = array_ref_exp->get_file_info();
+		std::cerr << "Error in SgPntrArrRefExp: " << info->get_filenameString() << " l." << info->get_line() << std::endl;
+		ROSE_ASSERT(false);
+	}
+	
+	res.first = var_ref_exp->get_symbol()->get_name().getString();
+	
+	return res;
+}
+
+/***/
 
 Statement * parseSgFunctionDeclarationToFadaAST(SgFunctionDeclaration * n) {
 	statement_counter = 0;
@@ -99,27 +141,15 @@ Assignment * parseSgExpressionToFadaAssignment(SgExpression * exp) {
 				case V_SgPntrArrRefExp:
 				{
 					SgPntrArrRefExp * array_ref_exp = isSgPntrArrRefExp(lhs_exp);
-					std::vector<Expression*> * access = new std::vector<Expression*>();
-						access->push_back(parseSgExpressionToFadaExpression(array_ref_exp->get_rhs_operand_i()));
 					
-					SgPntrArrRefExp * tmp = array_ref_exp; 
-					while (tmp = isSgPntrArrRefExp(tmp->get_lhs_operand_i())) {
-						access->insert(access->begin(), parseSgExpressionToFadaExpression(tmp->get_rhs_operand_i()));
-						array_ref_exp = tmp;
-					}					
-					
-					SgVarRefExp * var_ref_exp = isSgVarRefExp(array_ref_exp->get_lhs_operand_i());
-					if (var_ref_exp == NULL) {
-						Sg_File_Info * info = array_ref_exp->get_file_info();
-						std::cerr << "Error in SgPntrArrRefExp: " << info->get_filenameString() << " l." << info->get_line() << std::endl;
-						ROSE_ASSERT(false);
-					}
+					std::pair<std::string, std::vector<Expression*> *> res_parse = parseSgPntrArrRefExp(array_ref_exp);
 					
 					assign = new Assignment(
-						var_ref_exp->get_symbol()->get_name().getString(),
-						(FADA_Index*)access,
+						res_parse.first,
+						(FADA_Index*)res_parse.second,
 						parseSgExpressionToFadaExpression(assign_op->get_rhs_operand_i())
 					);
+					
 					break;
 				}
 				case V_SgVarRefExp:
@@ -150,31 +180,17 @@ Assignment * parseSgExpressionToFadaAssignment(SgExpression * exp) {
 				case V_SgPntrArrRefExp:
 				{
 					SgPntrArrRefExp * array_ref_exp = isSgPntrArrRefExp(operand_exp);
-				
-					std::vector<Expression*> * access = new std::vector<Expression*>();
-						access->push_back(parseSgExpressionToFadaExpression(array_ref_exp->get_rhs_operand_i()));
 					
-					SgPntrArrRefExp * tmp = array_ref_exp; 
-					while (tmp = isSgPntrArrRefExp(tmp->get_lhs_operand_i())) {
-						access->insert(access->begin(), parseSgExpressionToFadaExpression(tmp->get_rhs_operand_i()));
-						array_ref_exp = tmp;
-					}
-					
-					SgVarRefExp * var_ref_exp = isSgVarRefExp(array_ref_exp->get_lhs_operand_i());
-					if (var_ref_exp == NULL) {
-						Sg_File_Info * info = array_ref_exp->get_file_info();
-						std::cerr << "Error in SgPntrArrRefExp: " << info->get_filenameString() << " l." << info->get_line() << std::endl;
-						ROSE_ASSERT(false);
-					}
-					
+					std::pair<std::string, std::vector<Expression*> *> res_parse = parseSgPntrArrRefExp(array_ref_exp);
+										
 					assign = new Assignment(
-						var_ref_exp->get_symbol()->get_name().getString(),
-						(FADA_Index*)access,
+						res_parse.first,
+						(FADA_Index*)res_parse.second,
 						new Expression(
 							new Expression(
 								FADA_array,
-								var_ref_exp->get_symbol()->get_name().getString(),
-								access
+								res_parse.first,
+								res_parse.second
 							),
 							FADA_ADD,
 							new Expression("1")
@@ -214,31 +230,17 @@ Assignment * parseSgExpressionToFadaAssignment(SgExpression * exp) {
 				case V_SgPntrArrRefExp:
 				{
 					SgPntrArrRefExp * array_ref_exp = isSgPntrArrRefExp(operand_exp);
-				
-					std::vector<Expression*> * access = new std::vector<Expression*>();
-						access->push_back(parseSgExpressionToFadaExpression(array_ref_exp->get_rhs_operand_i()));
 					
-					SgPntrArrRefExp * tmp = array_ref_exp; 
-					while (tmp = isSgPntrArrRefExp(tmp->get_lhs_operand_i())) {
-						access->insert(access->begin(), parseSgExpressionToFadaExpression(tmp->get_rhs_operand_i()));
-						array_ref_exp = tmp;
-					}
-					
-					SgVarRefExp * var_ref_exp = isSgVarRefExp(array_ref_exp->get_lhs_operand_i());
-					if (var_ref_exp == NULL) {
-						Sg_File_Info * info = array_ref_exp->get_file_info();
-						std::cerr << "Error in SgPntrArrRefExp: " << info->get_filenameString() << " l." << info->get_line() << std::endl;
-						ROSE_ASSERT(false);
-					}
-					
+					std::pair<std::string, std::vector<Expression*> *> res_parse = parseSgPntrArrRefExp(array_ref_exp);
+										
 					assign = new Assignment(
-						var_ref_exp->get_symbol()->get_name().getString(),
-						(FADA_Index*)access,
+						res_parse.first,
+						(FADA_Index*)res_parse.second,
 						new Expression(
 							new Expression(
 								FADA_array,
-								var_ref_exp->get_symbol()->get_name().getString(),
-								access
+								res_parse.first,
+								res_parse.second
 							),
 							FADA_SUB,
 							new Expression("1")
@@ -334,26 +336,13 @@ Expression * parseSgExpressionToFadaExpression(SgExpression * exp) {
 		case V_SgPntrArrRefExp:
 		{
 			SgPntrArrRefExp * array_ref_exp = isSgPntrArrRefExp(exp);
-			std::vector<Expression*> * access = new std::vector<Expression*>();
-				access->push_back(parseSgExpressionToFadaExpression(array_ref_exp->get_rhs_operand_i()));
-				
-			SgPntrArrRefExp * tmp = array_ref_exp; 
-			while (tmp = isSgPntrArrRefExp(tmp->get_lhs_operand_i())) {
-				access->insert(access->begin(), parseSgExpressionToFadaExpression(tmp->get_rhs_operand_i()));
-				array_ref_exp = tmp;
-			}
-			
-			SgVarRefExp * var_ref_exp = isSgVarRefExp(array_ref_exp->get_lhs_operand_i());
-			if (var_ref_exp == NULL) {
-				Sg_File_Info * info = array_ref_exp->get_file_info();
-				std::cerr << "Error in SgPntrArrRefExp: " << info->get_filenameString() << " l." << info->get_line() << std::endl;
-				ROSE_ASSERT(false);
-			}
+					
+			std::pair<std::string, std::vector<Expression*> *> res_parse = parseSgPntrArrRefExp(array_ref_exp);
 			
 			res_exp = new Expression(
 				FADA_array,
-				var_ref_exp->get_symbol()->get_name().getString(),
-				access
+				res_parse.first,
+				res_parse.second
 			);
 			break;
 		}
@@ -401,11 +390,6 @@ std::string getSgForStatementIterator(SgForStatement * for_stmt) {
 		ROSE_ASSERT(false);
 	}
 	return var_ref_exp->get_symbol()->get_name().getString();
-	
-/*  *** TODO check that for is Normalized ! ***
-	SgStatement * cond_stmt = for_stmt->get_test();
-	SgExpression * incr_stmt = for_stmt->get_increment();
-*/
 }
 
 fada::Expression * getSgForStatementInitExp(SgForStatement * for_stmt) {
