@@ -103,7 +103,7 @@ class StorageClassMemoryManagement
      to be when called!
 ****************************************************************************************/
 
-// Prototype for the EasyStorage classes, with no instatntiation! 
+// Prototype for the EasyStorage classes, with no instantiation! 
 template <class TYPE>
 class EasyStorage;
 
@@ -548,7 +548,7 @@ class EasyStorage <rose_graph_node_edge_hash_multimap> :
 
 
 
-/* EasyStorageMapEntry concerning an std::string and an AstAttribut
+/* EasyStorageMapEntry concerning an std::string and an AstAttribute
   Remarks: 
 */
 template <>
@@ -609,7 +609,7 @@ class EasyStorage<PreprocessingInfo*>  :
    };
 
 
-// EasyStorage for storing a list or vector of std::strings 
+// EasyStorage for storing a stl-like container of ProprocessingInfo
 template <template <class A> class CONTAINER >
 class EasyStorage <CONTAINER<PreprocessingInfo*> > 
    : public StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> >
@@ -630,7 +630,7 @@ class EasyStorage <CONTAINER<PreprocessingInfo*> >
    };
 
 
-// EasyStorage for storing a list or vector of std::strings 
+// EasyStorage for storing a vector of PreprocessingInfo
 template <>
 class EasyStorage <std::vector<PreprocessingInfo*> > 
    : public StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> >
@@ -651,7 +651,7 @@ class EasyStorage <std::vector<PreprocessingInfo*> >
    };
 
 
-// EasyStorage for storing a list or vector of std::strings 
+// EasyStorage for storing AttachedProprocessingInfoType
 template <>
 class EasyStorage <AttachedPreprocessingInfoType*> 
    : public StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> >
