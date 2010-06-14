@@ -16,6 +16,9 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 		SgForStatement* forStatement = isSgForStatement(*iter);
 		ROSE_ASSERT(forStatement != NULL);
 
+		//Ensure the for statement has a basic block
+		SageInterface::ensureBasicBlockAsBodyOfFor(forStatement);
+
 		//Check if the test expression will have to be rewritten. If so, we need
 		//to move it out of the for loop. This means we also have to move the initialize out
 		//of the for loop
@@ -63,56 +66,24 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 		}
 	}
 
-	StatementInheritedAttribute scope(NULL);
-	traverse(tree, scope);
+	//Get all functions in function evaluation order
+	vector<FunctionCallInfo> functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
+
+	//Go through all the function calls and replace the arguments of each one
+	for (vector<FunctionCallInfo>::const_iterator fnCallIter = functionCalls.begin(); fnCallIter != functionCalls.end(); fnCallIter++)
+	{
+		const FunctionCallInfo& functionCallInfo = *fnCallIter;
+		RewriteFunctionCallArguments(functionCallInfo);
+	}
 }
 
 
-StatementInheritedAttribute ExtractFunctionArguments::evaluateInheritedAttribute(SgNode* astNode, StatementInheritedAttribute parentStatementAttribute)
+/** Given the information about a function call (obtained through a traversal), extract its arguments
+  * into temporary variables where it is necessary. */
+void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo)
 {
-	printf("Inherited Attribute Visiting Node Type %s: %s\n", astNode->class_name().c_str(), astNode->unparseToString().c_str());
-	StatementInheritedAttribute newAttribute = parentStatementAttribute;
-
-	//return parentStatementAttribute;
-	//Detect if we're inside the initializer of a for loop
-	SgForInitStatement* forInitializer = isSgForInitStatement(astNode);
-	if (forInitializer != NULL)
-	{
-		//We can't have a for loop inside the initializer of another for loop
-		ROSE_ASSERT(parentStatementAttribute.forInitializer == NULL);
-		newAttribute.forInitializer = forInitializer;
-		return newAttribute;
-	}
-
-	//We can't insert anything inside the initializer of a for loop. So don't update the insertion statement
-	if (parentStatementAttribute.forInitializer != NULL)
-	{
-		return newAttribute;
-	}
-
-	//Update wether we're in a for statement
-	SgForStatement* forStatement = isSgForStatement(astNode);
-	if (forStatement != NULL)
-		newAttribute.forStatement = forStatement;
-
-	//Update the location at which we can insert temporary variables
-	SgStatement* statement = isSgStatement(astNode);
-	if (statement != NULL)
-		newAttribute.tempVarInsertertLocation = statement;
-
-	return newAttribute;
-}
-
-
-/** Perform the actual instrumentatation to extract the function arguments. This is a post-order traversal. */
-SynthetizedAttribute ExtractFunctionArguments::evaluateSynthesizedAttribute(SgNode* astNode, StatementInheritedAttribute parentStatementAttribute, SynthesizedAttributesList)
-{
-	//printf("Synthesized Attribute Visiting Node Type %s: %s\n", astNode->class_name().c_str(), astNode->unparseToString().c_str());
-	//We're looking for function calls to rewrite
-	SgFunctionCallExp* functionCall = isSgFunctionCallExp(astNode);
-	if (functionCall == NULL)
-		return false; //The return value is just a dummy
-
+	SgFunctionCallExp* functionCall = functionCallInfo.functionCall;
+	
 	SgFunctionDeclaration* functionDeclaration = functionCall->getAssociatedFunctionDeclaration();
 	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionDeclaration != NULL && functionArgs != NULL);
@@ -123,8 +94,7 @@ SynthetizedAttribute ExtractFunctionArguments::evaluateSynthesizedAttribute(SgNo
 			functionCall->get_file_info()->get_line(), functionCall->get_file_info()->get_col());
 
 	//Go over all the function arguments, pull them out
-	for (SgExpressionPtrList::const_iterator argIter = argumentList.begin();
-			argIter != argumentList.end(); argIter++)
+	for (SgExpressionPtrList::const_iterator argIter = argumentList.begin(); argIter != argumentList.end(); argIter++)
 	{
 		SgExpression* arg = *argIter;
 
@@ -135,18 +105,41 @@ SynthetizedAttribute ExtractFunctionArguments::evaluateSynthesizedAttribute(SgNo
 
 		printf("Found %s, of return type %s.\n", arg->class_name().c_str(), arg->get_type()->unparseToCompleteString().c_str());
 
-		//Get a temporary variable that evaluates to the given expression
-		SgScopeStatement* scope = parentStatementAttribute.tempVarInsertertLocation->get_scope();
-		SgVariableDeclaration* tempVarDeclaration = CreateTempVariableForExpression(arg, scope);
+		//Build a declaration for the temporary variable
+		SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
+		SgType *expressionType = arg->get_type();
+		SgName name = GenerateUniqueVariableName(scope).c_str();
+		SgAssignInitializer* initializer = NULL;
 
-		//Insert the temporary variable declaration before the current statement
-		SageInterface::insertStatement(parentStatementAttribute.tempVarInsertertLocation, tempVarDeclaration);
+		if (functionCallInfo.initializeTempVarAtDeclaration)
+		{
+			SgTreeCopy copyHelp;
+			SgExpression* argCopy = isSgExpression(arg->copy(copyHelp));
+			ROSE_ASSERT(argCopy != NULL);
+			initializer = SageBuilder::buildAssignInitializer(argCopy, expressionType);
+		}
+
+		SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, expressionType, initializer);
+
+		//Insert the temporary variable declaration
+		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo.tempVarDeclarationInsertionMode);
+
+		//Insert an evaluation for the temporary variable (if required)
+		if (functionCallInfo.tempVarEvaluationLocation != NULL)
+		{
+			SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
+			SgTreeCopy copyHelp;
+			SgExpression* argCopy = isSgExpression(arg->copy(copyHelp));
+			ROSE_ASSERT(argCopy != NULL);
+			SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, argCopy);
+			SgStatement* assignmentStatement = SageBuilder::buildExprStatement(assignment);
+
+			InsertStatement(assignmentStatement, functionCallInfo.tempVarEvaluationLocation, functionCallInfo.tempVarEvaluationInsertionMode);
+		}
+
+		//Replace the argument with the new temporary variable
 		SageInterface::replaceExpression(arg, SageBuilder::buildVarRefExp(tempVarDeclaration));
-		printf("%s\n", tempVarDeclaration->unparseToString().c_str());
 	}
-
-	//Return a dummy value
-	return false;
 }
 
 
@@ -294,4 +287,134 @@ string ExtractFunctionArguments::GenerateUniqueVariableName(SgScopeStatement* sc
 	ostringstream name;
 	name << "__" << baseName << counter << "__";
 	return name.str();
+}
+
+/** Insert a new statement in the specified location. The actual insertion can occur either before or after the location
+  * depending on the insertion mode. */
+void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStatement* location, FunctionCallInfo::InsertionMode insertionMode)
+{
+	switch (insertionMode)
+	{
+		case FunctionCallInfo::INSERT_BEFORE:
+			SageInterface::insertStatementBefore(location, newStatement);
+			break;
+		case FunctionCallInfo::APPEND_SCOPE:
+		{
+			SgScopeStatement* scopeStatement = isSgScopeStatement(location);
+			ROSE_ASSERT(scopeStatement != NULL);
+			SageInterface::appendStatement(newStatement, scopeStatement);
+			break;
+		}
+		case FunctionCallInfo::INVALID:
+		default:
+			ROSE_ASSERT(false);
+	}
+}
+
+/** Traverses the subtree of the given AST node and finds all function calls in
+ * function-evaluation order. */
+/*static*/std::vector<FunctionCallInfo> FunctionEvaluationOrderTraversal::GetFunctionCalls(SgNode* root)
+{
+	FunctionEvaluationOrderTraversal t;
+	FunctionCallInheritedAttribute rootAttribute;
+	t.traverse(root, rootAttribute);
+
+	return t.functionCalls;
+}
+
+/** Visits AST nodes in pre-order */
+FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInheritedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute)
+{
+	FunctionCallInheritedAttribute result = parentAttribute;
+	SgForStatement* parentForLoop = isSgForStatement(parentAttribute.currentLoop);
+
+	if (isSgForStatement(astNode))
+		result.currentLoop = isSgForStatement(astNode);
+	else if (isSgWhileStmt(astNode))
+		result.currentLoop = isSgWhileStmt(astNode);
+	else if (isSgDoWhileStmt(astNode))
+		result.currentLoop = isSgDoWhileStmt(astNode);
+	else if (isSgForInitStatement(astNode))
+	{
+		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
+		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INIT;
+		ROSE_ASSERT(isSgForStatement(result.currentLoop));
+	}
+	else if (parentForLoop != NULL && parentForLoop->get_test() == astNode)
+	{
+		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
+		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_TEST;
+	}
+	else if (parentForLoop != NULL && parentForLoop->get_increment() == astNode)
+	{
+		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
+		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT;
+	}
+
+
+	if (isSgStatement(astNode))
+		result.lastStatement = isSgStatement(astNode);
+
+	return result;
+}
+
+/** Visits AST nodes in post-order. This is function-evaluation order. */
+SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute, SynthesizedAttributesList)
+{
+	SgFunctionCallExp* functionCall = isSgFunctionCallExp(astNode);
+	if (functionCall == NULL)
+		return false; //dummy return value
+
+	FunctionCallInfo functionCallInfo(functionCall);
+
+	//Handle for loops (being inside the body of a for loop doesn't need special handling)
+	SgForStatement* forLoop = isSgForStatement(parentAttribute.currentLoop);
+	if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INIT)
+	{
+		//The variables needed for the initialization of a for loop should be declared and
+		//evaluated outside the for loop
+		ROSE_ASSERT(forLoop != NULL);
+		functionCallInfo.tempVarDeclarationLocation = forLoop;
+		functionCallInfo.initializeTempVarAtDeclaration = true;
+		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
+	}
+	else if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_TEST)
+	{
+		//The variables for the test expression of a for loop need to be declared and initialized outside the for loop,
+		//because the test is evaluated before the for loop is entered. They also need to be reassigned at the bottom
+		//Of the for loop
+		ROSE_ASSERT(forLoop != NULL);
+		functionCallInfo.tempVarDeclarationLocation = forLoop;
+		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
+		functionCallInfo.initializeTempVarAtDeclaration = true;
+
+		SgBasicBlock* loopBody = isSgBasicBlock(forLoop->get_loop_body());
+		ROSE_ASSERT(loopBody != NULL); //At this point, the for loop should have been preprocessed to have a basic block
+		functionCallInfo.tempVarEvaluationLocation = loopBody;
+		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
+	}
+	else if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT)
+	{
+		//The variables for an increment expression need to be declared outside the for loop, but initialized
+		//at the bottom of the loop body
+		ROSE_ASSERT(forLoop != NULL);
+		functionCallInfo.tempVarDeclarationLocation = forLoop;
+		functionCallInfo.initializeTempVarAtDeclaration = false;
+
+		SgBasicBlock* loopBody = isSgBasicBlock(forLoop->get_loop_body());
+		ROSE_ASSERT(loopBody != NULL);
+		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
+	}
+
+
+	else
+	{
+		//Assume we're in a basic block. Then just insert right before the current statement
+		functionCallInfo.tempVarDeclarationLocation = parentAttribute.lastStatement;
+		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
+		functionCallInfo.initializeTempVarAtDeclaration = true;
+	}
+
+	functionCalls.push_back(functionCallInfo);
+	return false; //dummy return value
 }
