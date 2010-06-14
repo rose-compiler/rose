@@ -1798,6 +1798,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          }
      }
 
+  // RPM (6/9/2010): Partitioner configuration
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
+         set_partitionerConfigurationFileName(stringParameter);
+     }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -4335,6 +4340,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
+          argument == "-rose:partitioner_config" ||
           false)
         {
           result = true;
@@ -7273,6 +7279,15 @@ SgFile::usage ( int status )
 "                             the usual C notation) can be used to set/clear multiple\n"
 "                             search bits at one time. See doxygen comments for the\n"
 "                             Partitioner::parse_switches class method for full details.\n"
+"     -rose:partitioner_config FILENAME\n"
+"                             File containing configuration information for the\n"
+"                             instruction/block/function partitioner. This config\n"
+"                             file can be used to override block successors,\n"
+"                             alias two or more blocks that have identical\n"
+"                             semantics, assign particular blocks to functions,\n"
+"                             override function return analysis, provide or\n"
+"                             override function names, etc. See documentation for\n"
+"                             the IPDParser class for details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparse_line_directives\n"
@@ -8249,7 +8264,12 @@ static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* at
   ROSE_ASSERT(target&&att);
   // build variable list
   std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(key);
-  ROSE_ASSERT(varlist.size()!=0);
+#if 0  
+  // Liao 6/10/2010 we relax this assertion to workaround 
+  //  shared(num_threads),  a clause keyword is used as a variable 
+  //  we skip variable list of shared() for now so shared clause will have empty variable list
+#endif  
+   ROSE_ASSERT(varlist.size()!=0);
   std::vector<std::pair<std::string,SgNode* > >::iterator iter;
   for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
   {
@@ -8703,6 +8723,36 @@ SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttri
       }
     }
   } // end clause allocations 
+
+ /*
+  handle dangling #endif  attached to the loop
+  1. original 
+ #ifdef _OPENMP
+  #pragma omp parallel for  private(i,k)
+ #endif 
+   for () ...
+
+  2. after splitting
+
+ #ifdef _OPENMP
+  #pragma omp parallel 
+  #pragma omp for  private(i,k)
+ #endif 
+   for () ...
+  
+  3. We need to move #endif to omp parallel statement 's after position
+   transOmpParallel () will take care of it later on
+
+    #ifdef _OPENMP
+      #pragma omp parallel 
+      #pragma omp for  private(i) reduction(+ : j)
+      for (i = 1; i < 1000; i++)
+        if ((key_array[i - 1]) > (key_array[i]))
+          j++;
+    #endif
+  This is no perfect solution until we handle preprocessing information as structured statements in AST
+ */
+   movePreprocessingInfo(body, first_stmt, PreprocessingInfo::before, PreprocessingInfo::after, true);
   return first_stmt;
 }
 
