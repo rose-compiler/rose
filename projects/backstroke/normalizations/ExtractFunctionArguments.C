@@ -79,11 +79,11 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 
 
 /** Given the information about a function call (obtained through a traversal), extract its arguments
-  * into temporary variables where it is necessary. */
+ * into temporary variables where it is necessary. */
 void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo)
 {
 	SgFunctionCallExp* functionCall = functionCallInfo.functionCall;
-	
+
 	SgFunctionDeclaration* functionDeclaration = functionCall->getAssociatedFunctionDeclaration();
 	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionDeclaration != NULL && functionArgs != NULL);
@@ -107,19 +107,7 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 
 		//Build a declaration for the temporary variable
 		SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
-		SgType *expressionType = arg->get_type();
-		SgName name = GenerateUniqueVariableName(scope).c_str();
-		SgAssignInitializer* initializer = NULL;
-
-		if (functionCallInfo.initializeTempVarAtDeclaration)
-		{
-			SgTreeCopy copyHelp;
-			SgExpression* argCopy = isSgExpression(arg->copy(copyHelp));
-			ROSE_ASSERT(argCopy != NULL);
-			initializer = SageBuilder::buildAssignInitializer(argCopy, expressionType);
-		}
-
-		SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, expressionType, initializer);
+		SgVariableDeclaration* tempVarDeclaration = CreateTempVariableForExpression(arg, scope, functionCallInfo.initializeTempVarAtDeclaration);
 
 		//Insert the temporary variable declaration
 		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo.tempVarDeclarationInsertionMode);
@@ -194,24 +182,29 @@ bool ExtractFunctionArguments::SubtreeNeedsNormalization(SgNode* top)
 }
 
 
-/** Given an expression, generates a temporary variable that evaluates to that expression
- * and replaces the expression by a reference to that temporary variable.
+/** Given an expression, generates a temporary variable whose initializer optionally evaluates
+ * that expression. The temporary variable created is a const reference to avoid potentially calling
+ * extra copy constructors.
  * @param expression Expression which will be replaced by a variable
+ * @param scope scope in which the temporary variable will be generated
  * @return declaration of the temporary variable. Its initializer evaluates the original expression. */
-SgVariableDeclaration* ExtractFunctionArguments::CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope)
+SgVariableDeclaration* ExtractFunctionArguments::CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
 {
-	//TODO: this currently doesn't correctly handle const or aliased expressions
-	//Also, a copy constructor is onvoked extra times compared to the original code
+	SgType *expressionType = expression->get_type();
 
 	//Generate a unique variable name
-	SgType *expressionType = expression->get_type();
 	SgName name = GenerateUniqueVariableName(scope).c_str();
 
+	SgAssignInitializer* initializer = NULL;
+
 	//Copy the expression and convert it to an intialization for the temporary variable
-	SgTreeCopy copyHelp;
-	SgExpression* expressionCopy = isSgExpression(expression->copy(copyHelp));
-	ROSE_ASSERT(expressionCopy != NULL);
-	SgAssignInitializer* initializer = new SgAssignInitializer(expressionCopy, expressionType);
+	if (initializeInDeclaration)
+	{
+		SgTreeCopy copyHelp;
+		SgExpression* expressionCopy = isSgExpression(expression->copy(copyHelp));
+		ROSE_ASSERT(expressionCopy != NULL);
+		initializer = new SgAssignInitializer(expressionCopy, expressionType);
+	}
 
 	SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, expressionType, initializer);
 	ROSE_ASSERT(tempVarDeclaration != NULL);
@@ -255,8 +248,8 @@ void ExtractFunctionArguments::HoistStatementOutsideOfForLoop(SgForStatement* fo
 		{
 			SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
 			SgExpression* rhs = assignInitializer->get_operand();
-			SgVariableDeclaration* tempVariable = CreateTempVariableForExpression(rhs, forLoop->get_scope());
-			SageInterface::insertStatement(forLoop, tempVariable);
+			SgVariableDeclaration* tempVariable = CreateTempVariableForExpression(rhs, forLoop->get_scope(), true);
+			SageInterface::insertStatementBefore(forLoop, tempVariable);
 			SageInterface::replaceExpression(rhs, SageBuilder::buildVarRefExp(tempVariable));
 		}
 
@@ -289,8 +282,9 @@ string ExtractFunctionArguments::GenerateUniqueVariableName(SgScopeStatement* sc
 	return name.str();
 }
 
+
 /** Insert a new statement in the specified location. The actual insertion can occur either before or after the location
-  * depending on the insertion mode. */
+ * depending on the insertion mode. */
 void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStatement* location, FunctionCallInfo::InsertionMode insertionMode)
 {
 	switch (insertionMode)
@@ -321,6 +315,7 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
 
 	return t.functionCalls;
 }
+
 
 /** Visits AST nodes in pre-order */
 FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInheritedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute)
@@ -357,6 +352,7 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 
 	return result;
 }
+
 
 /** Visits AST nodes in post-order. This is function-evaluation order. */
 SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute, SynthesizedAttributesList)

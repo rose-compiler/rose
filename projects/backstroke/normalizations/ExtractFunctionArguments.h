@@ -115,12 +115,13 @@ private:
 	  * into temporary variables where it is necessary. */
 	void RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo);
 
-	/** Given an expression, generates a temporary variable whose initializer evaluates
+	/** Given an expression, generates a temporary variable whose initializer optionally evaluates
 	  * that expression.
+	  * TODO: Move this into utility.
 	  * @param expression Expression which will be replaced by a variable
 	  * @param scope scope in which the temporary variable will be generated
 	  * @return declaration of the temporary variable. Its initializer evaluates the original expression. */
-	static SgVariableDeclaration* CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope);
+	static SgVariableDeclaration* CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration);
 
 	/** Take a statement that is located somewhere inside the for loop and move it right before the
 	  * for looop. If the statement is a variable declaration, the declaration is left in its original
