@@ -261,8 +261,10 @@ test_dynamic.result: test_static.result
 
 test_testAstIO.result: testAstIO
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./testAstIO $(BINARY_SAMPLES)/i686-test1.O0.bin
-	@touch $@
+	@if $(VALGRIND) ./testAstIO $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
+	  then mv $@.tmp $@; \
+	  else sed 's/^/$@> /' <$@.tmp; exit 1; \
+         fi
 
 test_execFormatsTest.result: execFormatsTest
 	@echo "  TESTING $@ (not currently tested)"
