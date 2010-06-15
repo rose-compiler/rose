@@ -128,28 +128,38 @@ $CLASSNAME::visitRepresentativeNode(ROSE_VisitTraversal & traversal)
    }
 
 
-int
-$CLASSNAME::numberOfNodes ()
+// DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+// using values that overflow signed values of int.
+size_t
+$CLASSNAME::numberOfNodes()
    {
   // This function traverses the memory pool for an IR node and
   // counts the number of IR nodes of a particular Sage III IR 
   // nodes type.
 
-     int count = 0;
+     size_t count = 0;
      if ($CLASSNAME_Memory_Block_List.empty() == false)
         {
-       // Generate an array of memory pools
+       // Generate an array of memory pools (this is actually a STL vector, 
+       // but it is contiguious, so OK to treat this way).
           $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
 
-       // Build a local variable for better performance
+       // Build a local variable for better performance (make it a loop invariant variable).
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 
-       // Iterate over the memory pools
+       // Iterate over all of the memory pools for this IR node.
           for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
              {
-            // objectArray[i] is a single memory pool
+            // objectArray[i] is a single memory pool, iterate over all the 
+            // IR nodes and only count those that are valid IR nodes used in 
+            // the AST (i.e. allocated IR nodes).
                for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
                   {
+                 // This is indexing the STL vector of C/C++ style arrays as a doubly 
+                 // indexed array access. It is OK since we have leveraged the semantics 
+                 // of STL vector memory as contigous and cast the memory as an array
+                 // of arrays to use the 2D array indexing.  Hope this is not confusing,
+                 // but it s very fast as an implementation.
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
                          count++;
@@ -163,13 +173,15 @@ $CLASSNAME::numberOfNodes ()
      return count;
    }
 
-int
-$CLASSNAME::memoryUsage ()
+// DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+// using values that overflow signed values of int.
+size_t
+$CLASSNAME::memoryUsage()
    {
   // This function is required because we need the class name as a type when we call sizeof
   // There might be another way to implement this if we have a traversal that only called a 
   // representative object (one call for each type of Sage IIIIR node).
-     int memory = numberOfNodes() * sizeof($CLASSNAME);
+     size_t memory = numberOfNodes() * sizeof($CLASSNAME);
 
      return memory;
    }
