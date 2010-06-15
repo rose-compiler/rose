@@ -1011,6 +1011,14 @@ class EasyStorage < std::map<SgNode*, std::string> >
    };
 
 
+template<class BASIC_TYPE>
+class EasyStorage<SgSharedVector<BASIC_TYPE> >: public StorageClassMemoryManagement<BASIC_TYPE> {
+    typedef StorageClassMemoryManagement<BASIC_TYPE> Base;
+  public:
+    EasyStorage() {}
+    void storeDataInEasyStorageClass(const SgSharedVector<BASIC_TYPE>& data_);
+    SgSharedVector<BASIC_TYPE> rebuildDataStoredInEasyStorageClass() const;
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #endif  // STORAGE_CLASS_MEMORY_MANAGEMENT_H
