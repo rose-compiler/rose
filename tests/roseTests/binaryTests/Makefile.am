@@ -25,7 +25,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
-		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler \
+		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler testAstIO \
 		symbolicSemantics yicesSemantics
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
@@ -127,6 +127,10 @@ rot13_SOURCES=rot13.C
 testAssembler_SOURCES=testAssembler.C
 testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Program to test that we can write and then read an AST for a binary executable
+testAstIO_SOURCES=testAstIO.C
+testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 ###############################################################################################################################
 # DEMOS
 #
@@ -219,6 +223,9 @@ demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
 demo_rot13: rot13
 	: no demo yet for rot13
 
+demo_testAstIO: testAstIO
+	: no demo yet for $<
+
 
 ###############################################################################################################################
 # TESTS
@@ -248,6 +255,13 @@ test_static.result: $(STATIC_TEST_TARGETS)
 # slew of other targets) is created by the "build" script and placed in the generated Makefile.in.
 test_dynamic.result: test_static.result
 	@$(MAKE) test_sample_binaries.result
+	@touch $@
+
+# Static tests...
+
+test_testAstIO.result: testAstIO
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./testAstIO $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@touch $@
 
 test_execFormatsTest.result: execFormatsTest
