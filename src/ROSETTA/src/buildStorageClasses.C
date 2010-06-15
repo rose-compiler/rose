@@ -1046,7 +1046,7 @@ std::string Terminal::buildStorageClassHeader ()
  *    AttachedPreprocessingInfoType, and pointers to STL containers containing pointers to IR nodes (and 
  *    pointers to other IR nodes, of course).
  *  * The pointer to an STL container that stores pointers to other IR nodes is still shared in my version.
- *    Thus, we copy the pointers, repalce the pointers by its global indices in the container, store the 
+ *    Thus, we copy the pointers, replace the pointers by its global indices in the container, store the 
  *    container and copy back the original ones.
  */
 string Terminal::buildStorageClassPickOutIRNodeDataSource ()
