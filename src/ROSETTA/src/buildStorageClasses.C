@@ -743,6 +743,10 @@ Terminal::evaluateType(std::string& varTypeString)
         {
           returnType = STL_MAP;
         }
+     else if (varTypeString == "ExtentMap")
+        {
+          returnType = STL_MAP;
+        }
      else if ( 15 < length && varTypeString.substr(0,14) == "std::multimap<" && varTypeString.rfind(">" ) == length-1 )
         {
           returnType = STL_MULTIMAP;
