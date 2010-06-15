@@ -28,6 +28,18 @@ public:
     { graph_ = graph; }
 };
 
+template <class EdgeT>
+class CFGEdgeAttribute : public AstAttribute
+{
+    EdgeT edge_;
+public:
+    CFGEdgeAttribute(const EdgeT& e) : edge_(e) {}
+    void setEdge(const EdgeT& e)
+    { edge_ = e; }
+    EdgeT getEdge() const
+    { return edge_; }
+};
+
 void CFG::clearNodesAndEdges()
 {
     if (graph_ != NULL)
@@ -35,7 +47,10 @@ void CFG::clearNodesAndEdges()
         foreach (SgGraphNode* node, graph_->computeNodeSet())
         {
             foreach (SgDirectedGraphEdge* edge, graph_->computeEdgeSetOut(node))
+            {
+                delete edge->getAttribute("info");
                 delete edge;
+            }
             delete node->getAttribute("info");
             delete node;
         }
@@ -216,7 +231,9 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
             graph_->addNode(to);
         }
 
-        graph_->addDirectedEdge(new SgDirectedGraphEdge(from, to));
+        SgDirectedGraphEdge* new_edge = new SgDirectedGraphEdge(from, to);
+        new_edge->addNewAttribute("info", new CFGEdgeAttribute<EdgeT>(edge));
+        graph_->addDirectedEdge(new_edge);
     }
 
     foreach (const EdgeT& edge, outEdges)
@@ -329,9 +346,22 @@ void CFG::printNode(std::ostream & o, SgGraphNode* node)
 
 void CFG::printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge)
 {
-    CFGEdge e(toCFGNode(edge->get_from()), toCFGNode(edge->get_to()));
-    o << e.source().id() << " -> " << e.target().id() << " [label=\"" << escapeString(e.toString()) <<
-        "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
+    // Note that CFGEdge will do some checks which forbid us to use it to represent an InterestingEdge. 
+    AstAttribute* attr = edge->getAttribute("info");
+    if (CFGEdgeAttribute<CFGEdge>* edge_attr = dynamic_cast<CFGEdgeAttribute<CFGEdge>*>(attr))
+    {
+        CFGEdge e = edge_attr->getEdge();
+        o << e.source().id() << " -> " << e.target().id() << " [label=\"" << escapeString(e.toString()) <<
+            "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
+    }
+    else if (CFGEdgeAttribute<InterestingEdge>* edge_attr = dynamic_cast<CFGEdgeAttribute<InterestingEdge>*>(attr))
+    {
+        InterestingEdge e = edge_attr->getEdge();
+        o << e.source().id() << " -> " << e.target().id() << " [label=\"" << escapeString(e.toString()) <<
+            "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
+    }
+    else
+        ROSE_ASSERT(false);
 }
 
 

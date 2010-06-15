@@ -4,11 +4,21 @@ struct model ;
 struct model 
 {
   int i_;
+  int j_;
   float f_;
   int a_[1000];
 }
 
 ;
+
+
+// Swap
+void event0(struct model* m)
+{
+    int t = m->i_;
+    m->i_ = m->j_;
+    m->j_ = t;
+}
 
 #if 0
 void event0(struct model *m)

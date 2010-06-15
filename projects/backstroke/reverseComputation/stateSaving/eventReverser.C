@@ -3,7 +3,6 @@
 #include "eventReverser.h"
 #include "facilityBuilder.h"
 #include "utilities.h"
-#include <DefUseAnalysis.h>
 #include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -233,15 +232,13 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
 class reverserTraversal : public AstSimpleProcessing
 {
     public:
-        reverserTraversal(DFAnalysis* du) 
+        reverserTraversal() 
             : AstSimpleProcessing(),
-            defuse(du),
             events_num(0),  
             model_type(0)
     {}
         virtual void visit(SgNode* n);
 
-        DFAnalysis* defuse;
         int events_num;
         SgClassType* model_type;
         vector<SgFunctionDeclaration*> funcs_gen;
@@ -268,7 +265,7 @@ void reverserTraversal::visit(SgNode* n)
         //cout << func_name << endl;
         event_names.push_back(func_name);
 
-        EventReverser reverser(func_decl, defuse);
+        EventReverser reverser(func_decl);
         vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
         foreach(const FuncDeclPair& func_pair, func_pairs)
         {
@@ -431,15 +428,21 @@ int fixVariableReferences2(SgNode* root)
     return counter;
 }
 
+
 #if 1
 int main( int argc, char * argv[] )
 {
+    int i = 0;
+    const int& r = 1;
+    int j = 0;
+    cout << &i << ' ' << & j << endl;
+
+    return 0;
+
     vector<string> args(argv, argv+argc);
     bool klee = CommandlineProcessing::isOption(args, "-backstroke:", "klee", true);
     SgProject* project = frontend(args);
-    DFAnalysis* defuse = NULL;//new DefUseAnalysis(project);
-
-    reverserTraversal reverser(defuse);
+    reverserTraversal reverser;
 
     SgGlobal *globalScope = getFirstGlobalScope(project);
     string includes = "#include \"rctypes.h\"\n"

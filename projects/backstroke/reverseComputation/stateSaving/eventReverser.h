@@ -23,11 +23,6 @@ typedef std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> FuncDeclPair;
 class EventReverser
 {
     SgFunctionDeclaration* func_decl_;
-
-    // Optimization tools
-    DFAnalysis* defuse_;
-
-
     string function_name_;
     //vector<string> branch_flags_;
     //vector<string> loop_counters_;
@@ -47,13 +42,9 @@ class EventReverser
 
     static set<SgFunctionDeclaration*> func_processed_;
 
-
-
     public:
-    EventReverser(SgFunctionDeclaration* func_decl,
-            DFAnalysis* analysis) 
+    EventReverser(SgFunctionDeclaration* func_decl) 
         : func_decl_(func_decl), 
-        defuse_(analysis),
         function_name_(func_decl_->get_name()), 
         flag_stack_name_(function_name_ + "_branch_flags"),
         int_stack_name_(function_name_ + "_int_values"),
@@ -169,12 +160,10 @@ class EventReverser
     // in C++. 
     SgExpression* isStateVar(SgExpression* exp)
     {
-        // a->b
         if (SgArrowExp* arr_exp = isSgArrowExp(exp))
         {
             return arr_exp;
         }
-        // a[b]
         else if (SgPntrArrRefExp* ref_exp = isSgPntrArrRefExp(exp))
         {
             if (isSgArrowExp(ref_exp->get_lhs_operand()))

@@ -1,17 +1,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = stateSaving
+# SUBDIRS = eventDetection
 
 # This file does not compile using ROSE (skip testing it for now)
 if !ROSE_USING_ROSE_ANALYSIS
-   bin_PROGRAMS = reverse 
-   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C utilities.C
+   bin_PROGRAMS = stateSaving 
+   stateSaving_SOURCES = stateSaver.C utilities.C
 endif
 
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = eventReverser.h facilityBuilder.h utilities.h test
+EXTRA_DIST = utilities.h
 
 CLEANFILES = 
 
@@ -19,14 +19,13 @@ include_HEADERS =
 
 ALL_TESTCODES =
 
-TEST_Objects=test0.C test1.C test2.C test3.C 
+TEST_Objects=test0.C 
 
-$(TEST_Objects): reverse
+$(TEST_Objects):stateSaving 
 	@cp $(srcdir)/test/$(@:.o=.C) $(@:.o=.C)
-#./reverse -I$(srcdir)/test -c $(@:.o=.C) -DROSE_LANGUAGE_MODE=0       		
-	./reverse -I$(srcdir)/test -c $(@:.o=.C)      		
-	@g++ -I$(srcdir)/test rose_$(@:.o=.C) -o $(@:.o=.C).o -w
-	./$(@:.o=.C).o		
+	./stateSaving -I$(srcdir)/test -c $(@:.o=.C)      		
+#@g++ -I$(srcdir)/../test rose_$(@:.o=.C) -o $(@:.o=.C).o -w
+#	./$(@:.o=.C).o		
 
 check-local:
 	@echo "*********************************************************************************************************"
