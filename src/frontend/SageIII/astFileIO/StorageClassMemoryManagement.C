@@ -338,12 +338,12 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock()
     * AstAttributeMechanism
     therefore an NULL pointer will be recreated ( this is realized by setting sizeOfData
     to -1 and check while rebuilt)
-  * the actual pointer is pointing to the next position to bestored in. Except for the case, the
+  * the actual pointer is pointing to the next position to be stored in. Except for the case, the
     memmory pool is not allocated at all, then the actual pointer is NULL. Therefore, we use
     the actual pointer for checking if the pool is valid (everytime you see (actual != NULL) )
   * every storting is mainly separated in 2 parts: 
     * the setup with the call of setPositionAndSizeAndReturnOffset
-    * the storing of the data, checking, wheather it fits in the achtual memory block or not 
+    * the storing of the data, checking, whether it fits in the actual memory block or not 
       ( done by ( 0 < offset ) )
       * the case it does not fit is separated in 2 or 3 parts
         * filling the actual memory block 
@@ -351,7 +351,7 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock()
           whole memory block
         * storing of the rest ( runs sometimes just to storing data ) 
     * more complex data (PreprocessingInfo, maps, AstAttributeMechanism) contain 
-      EasyStorage classes themself. Therefore, we must provide explicit member fumctions
+      EasyStorage classes themself. Therefore, we must provide explicit member functions
       deleting the static data of those. These functions call also the corresponing one 
       of the parent class (if the class is an inheritated class). 
 ***************************************************************************************/
