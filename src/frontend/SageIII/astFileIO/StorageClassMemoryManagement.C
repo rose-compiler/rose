@@ -3895,4 +3895,64 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: readFromFile (st
 //#endif
 //end of condition new_graph
 
+/*
+   ****************************************************************************************
+   **      Implementations for EasyStorageMapEntry <SgSharedVector<TYPE> >               **
+   ****************************************************************************************
+*/
+
+template <class TYPE>
+void EasyStorage <SgSharedVector<TYPE> > :: storeDataInEasyStorageClass(const SgSharedVector<TYPE>& data_)
+{
+    typename SgSharedVector<TYPE>::const_iterator dat = data_.begin();
+    long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
+
+    if (0 < offset) {
+        /* The new data does not fit in the actual block, but store what we can in the actual block. */
+        if (offset < Base::getSizeOfData() && Base::actual != NULL) {
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+        }
+
+        /* Put data in additional blocks if it did not fit in the previous block. */
+        while (Base::blockSize < (unsigned long)(offset)) {
+            Base::actual = Base::getNewMemoryBlock();
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+            offset -= Base::blockSize;
+        }
+
+        /* get a new memory block because we've filled up previous blocks */
+        Base::actual = Base::getNewMemoryBlock();
+    }
+
+    /* put (the rest of) the data in a (new) memory block */
+    for (/*void*/; dat != data_.end(); ++dat, ++Base::actual)
+        *Base::actual = *dat;
+}
+
+template <class TYPE>
+SgSharedVector<TYPE> EasyStorage <SgSharedVector<TYPE> > :: rebuildDataStoredInEasyStorageClass() const
+{
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+    assert(Base::actualBlock <= 1);
+    assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
+#endif
+
+    if (Base::actual!=NULL && Base::getSizeOfData()>0) {
+        TYPE *pool = new TYPE[Base::getSizeOfData()];
+        TYPE *pointer = Base::getBeginningOfDataBlock();
+        for (long i=0; i<Base::getSizeOfData(); ++i)
+            pool[i] = pointer[i];
+        return SgSharedVector<TYPE>(pool, Base::getSizeOfData());
+    }
+
+    return SgSharedVector<TYPE>();
+}
 
