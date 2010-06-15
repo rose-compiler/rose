@@ -30,9 +30,4 @@ namespace llvm
     class FunctionType;
 }
 
-using namespace llvm;
-
-/// Module holds the LLVM IR
-llvm::Module *TheModule;
-
 #endif

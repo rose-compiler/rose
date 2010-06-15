@@ -10,7 +10,7 @@ bin_PROGRAMS = roseLLVM
 
 roseLLVM_SOURCES = main.cpp VisitorTraversal.cpp
 
-AM_CXXFLAGS = -D_DEBUG -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS 
+AM_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 #noinst_HEADERS = $(HEADERSDIR)/llvm-interface.h \
 #				 $(HEADERSDIR)/VisitorTraversal.h
 
