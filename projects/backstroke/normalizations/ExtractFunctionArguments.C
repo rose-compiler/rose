@@ -16,8 +16,11 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 		SgForStatement* forStatement = isSgForStatement(*iter);
 		ROSE_ASSERT(forStatement != NULL);
 
+		//Ensure the for statement has a basic block
+		SageInterface::ensureBasicBlockAsBodyOfFor(forStatement);
+
 		//Check if the test expression will have to be rewritten. If so, we need
-		//to move it out of the for loop. This means we also have to move the initialize out
+		//to move it out of the for loop. This means we also have to move the initializer out
 		//of the for loop
 		if (SubtreeNeedsNormalization(forStatement->get_test()))
 		{
@@ -41,8 +44,9 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 
 		//If the increment expression needs normalization, move it to the bottom of the loop.
 		//This means we can't have any continue statements in the loop!
-		SageInterface::moveForStatementIncrementIntoBody(forStatement);
-		/*if (SubtreeNeedsNormalization(forStatement->get_increment()))
+		//We should use SageInterface::moveForStatementIncrementIntoBody(forStatement) if we want
+		//to support continue statements
+		if (SubtreeNeedsNormalization(forStatement->get_increment()))
 		{
 			//The function SageInterface::moveForStatementIncrementIntoBody is broken as of right now
 			SgExpression* incrementExpression = forStatement->get_increment();
@@ -61,11 +65,7 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 				fprintf(stderr, "Function argument evaluation does not currently support 'continue' inside loops. Exiting");
 				exit(1);
 			}
-		}*/
-
-
-		//Ensure the for statement has a basic block
-		SageInterface::ensureBasicBlockAsBodyOfFor(forStatement);
+		}
 	}
 
 	//Get all functions in function evaluation order
