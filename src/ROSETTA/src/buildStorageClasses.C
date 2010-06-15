@@ -931,14 +931,16 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmGenericFormat::fileDetails" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
                  ( varTypeString == "SgGraphNodeDirectedGraphEdgeMultimapPtrList" ) ||
-              // DQ (9/9/2008): Added support for string table transformations.
-                 ( varTypeString == "SgAsmGenericStrtab::referenced_t" ) ||
               // TV (05/03/2010): Added support for 'SgFunctionModifier::opencl_work_group_size_t' which's  a struct of 3 longs !
                  ( varTypeString == "SgFunctionModifier::opencl_work_group_size_t") ||
                  false
               )
        {
           returnType = BASIC_DATA_TYPE;
+       }
+     else if (varTypeString == "SgAsmGenericStrtab::referenced_t")
+       {
+         return SGCLASS_POINTER_LIST;
        }
      else
        {
