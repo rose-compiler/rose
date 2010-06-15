@@ -16,9 +16,6 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 		SgForStatement* forStatement = isSgForStatement(*iter);
 		ROSE_ASSERT(forStatement != NULL);
 
-		//Ensure the for statement has a basic block
-		SageInterface::ensureBasicBlockAsBodyOfFor(forStatement);
-
 		//Check if the test expression will have to be rewritten. If so, we need
 		//to move it out of the for loop. This means we also have to move the initialize out
 		//of the for loop
@@ -44,7 +41,8 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 
 		//If the increment expression needs normalization, move it to the bottom of the loop.
 		//This means we can't have any continue statements in the loop!
-		if (SubtreeNeedsNormalization(forStatement->get_increment()))
+		SageInterface::moveForStatementIncrementIntoBody(forStatement);
+		/*if (SubtreeNeedsNormalization(forStatement->get_increment()))
 		{
 			//The function SageInterface::moveForStatementIncrementIntoBody is broken as of right now
 			SgExpression* incrementExpression = forStatement->get_increment();
@@ -63,7 +61,11 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 				fprintf(stderr, "Function argument evaluation does not currently support 'continue' inside loops. Exiting");
 				exit(1);
 			}
-		}
+		}*/
+
+
+		//Ensure the for statement has a basic block
+		SageInterface::ensureBasicBlockAsBodyOfFor(forStatement);
 	}
 
 	//Get all functions in function evaluation order
@@ -244,28 +246,34 @@ void ExtractFunctionArguments::HoistStatementOutsideOfForLoop(SgForStatement* fo
 		if (initializer == NULL)
 			continue;
 
-		else if (isSgAssignInitializer(initializer))
-		{
-			SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
-			SgExpression* rhs = assignInitializer->get_operand();
-			SgVariableDeclaration* tempVariable = CreateTempVariableForExpression(rhs, forLoop->get_scope(), true);
-			SageInterface::insertStatementBefore(forLoop, tempVariable);
-			SageInterface::replaceExpression(rhs, SageBuilder::buildVarRefExp(tempVariable));
-		}
+		bool isAggregateInitializer = isSgAggregateInitializer(initializer);
 
-		else if (isSgConstructorInitializer(initializer))
-		{
-			//TODO
-			ROSE_ASSERT(false);
-		}
+		SgTreeCopy treeCopy;
+		SgType* tempVarType = initializer->get_type();
 
-		else if (isSgAggregateInitializer(initializer))
+		//Create a new temporary variable that has the same initializer
+		SgInitializer* initializerCopy = isSgInitializer(initializer->copy(treeCopy));
+		SgName varName = GenerateUniqueVariableName(forLoop->get_scope());
+		SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(varName, tempVarType, initializerCopy);
+		SageInterface::insertStatementBefore(forLoop, tempVarDeclaration);
+
+		//Change this variable to be a copy of the temporary
+		SgAssignInitializer* assignFromTempVar = SageBuilder::buildAssignInitializer(SageBuilder::buildVarRefExp(tempVarDeclaration),
+				tempVarType);
+		SageInterface::replaceExpression(initializer, assignFromTempVar);
+
+		//This is an initialize of the form int x[] = {2, 3}
+		//We need to keep the temporary variable as an array, but change the type of x to be a pointer
+		if (isAggregateInitializer)
 		{
-			//What do we do here?
-			ROSE_ASSERT(false);
+			SgType* originalType = initializedName->get_type();
+			ROSE_ASSERT(isSgArrayType(originalType));
+			SgType* baseType = isSgArrayType(tempVarType)->get_base_type();
+			SgType* pointerizedArrayType = SageBuilder::buildPointerType(baseType);
+			initializedName->set_type(pointerizedArrayType);
+			delete originalType;
 		}
 	}
-
 }
 
 
@@ -307,7 +315,9 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
 
 /** Traverses the subtree of the given AST node and finds all function calls in
  * function-evaluation order. */
-/*static*/std::vector<FunctionCallInfo> FunctionEvaluationOrderTraversal::GetFunctionCalls(SgNode* root)
+
+
+		  /*static*/std::vector<FunctionCallInfo> FunctionEvaluationOrderTraversal::GetFunctionCalls(SgNode* root)
 {
 	FunctionEvaluationOrderTraversal t;
 	FunctionCallInheritedAttribute rootAttribute;
