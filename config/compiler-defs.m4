@@ -137,11 +137,15 @@ dnl predefined by a specific compiler
   AM_CONDITIONAL(ROSE_USING_ROSE,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator || test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
   AM_CONDITIONAL(ROSE_USING_ROSE_TRANSLATOR,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator)
 
-# DQ (2/21/2010): If er are testing AST File I/O then set the flag to indicate that we are testing the code generation as well.
+# DQ (2/21/2010): If we are testing AST File I/O then set the flag to indicate that we are testing the code generation as well.
 # AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration)
   AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
+# AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO || test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis)
 
-  AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis)
+# DQ (5/29/2010): Set ROSE_USING_ROSE_ANALYSIS automake conditional whenever ROSE_USING_ROSE_CODE_GENERATION is set
+# AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis)
+  AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis || test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
+
   AM_CONDITIONAL(ROSE_USING_ROSE_AST_FILE_IO,test "x$compilerName" = xroseAstFileIO || test "x$compilerName" = xtestAstFileIO)
 
   echo "compilerName = $compilerName"

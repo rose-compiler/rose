@@ -74,7 +74,7 @@ $(TEST_Objects): astFileIO astFileRead
 #	./$(@:.o=)
 
 # EXTRA_DIST = $(TESTCODES) test2001_05.h
-EXTRA_DIST = 
+EXTRA_DIST = input_tiny_01.C input_tiny_02.C
 
 test2001_01.C.binary: test2001_01.o
 
@@ -95,12 +95,20 @@ test-read: test2001_01.C.binary test2001_02.C.binary test2001_03.C.binary
 ##	$(READ_TRANSLATOR) $(TEST_Binaries_short:.binary=)
 #	$(READ_TRANSLATOR) `$(TEST_Binaries_shortTrunk)`
 
+TEST_TINY_LIST = input_tiny_01.C input_tiny_02.C
+# TEST_TINY_LIST_BINARIES = $(TEST_TINY_LIST:.C=.o)
+
+test-read-tiny: 
+	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir) -c $(srcdir)/input_tiny_01.C
+	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir) -c $(srcdir)/input_tiny_02.C
+	$(READ_TRANSLATOR) $(TEST_TINY_LIST) temp_output_tiny.C
+
 TEST_SHORT_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_08.C test2003_10.C test2003_12.C test2003_14.C
 # TEST_SHORT_LIST_BINARIES = $(TEST_SHORT_LIST:.C=.C.binary)
 TEST_SHORT_LIST_BINARIES = $(TEST_SHORT_LIST:.C=.o)
 
 test-read-short: $(TEST_SHORT_LIST_BINARIES)
-	$(READ_TRANSLATOR) $(TEST_SHORT_LIST)
+	$(READ_TRANSLATOR) $(TEST_SHORT_LIST) temp_output_short.C
 
 # 34
 TEST_MEDIUM_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_08.C test2003_10.C test2003_12.C test2003_14.C \
@@ -153,7 +161,7 @@ TEST_MEDIUM_LIST += $(ALT_TEST_MEDIUM_LIST_EXTRA)
 TEST_MEDIUM_LIST_BINARIES = $(TEST_MEDIUM_LIST:.C=.o)
 
 test-read-medium: $(TEST_MEDIUM_LIST_BINARIES)
-	$(READ_TRANSLATOR) $(TEST_MEDIUM_LIST)
+	$(READ_TRANSLATOR) $(TEST_MEDIUM_LIST) temp_output_medium.C
 
 TEST_LARGE_LIST_BINARIES = $(TESTCODES:.C=.o)
 TEST_Binaries = $(TESTCODES:.C=.C.binary)
@@ -161,17 +169,31 @@ TEST_Binaries = $(TESTCODES:.C=.C.binary)
 test-read-large: $(TEST_LARGE_LIST_BINARIES)
 	ls -s $(TEST_Binaries)
 #	@echo "$(READ_TRANSLATOR) $(TEST_Binaries:.binary=)"
-	$(READ_TRANSLATOR) $(TEST_Binaries:.C.binary=.C)
+	$(READ_TRANSLATOR) $(TEST_Binaries:.C.binary=.C) temp_output_large.C
+
+test-read-huge: 
+	$(READ_TRANSLATOR) temp_output_large.C temp_output_large.C temp_output_large.C temp_output_large.C temp_output_huge.C
+
+test-read-really-huge: 
+	$(READ_TRANSLATOR) temp_output_huge.C temp_output_huge.C temp_output_huge.C temp_output_huge.C temp_output_really_huge.C
+
 
 FailingTests = test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C
 FailingTests_Binaries = $(FailingTests:.C=.o)
 failingTest: $(FailingTests_Binaries)
 	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
 
-testParallelMerge: parallelMerge
+testParallelMerge-short: parallelMerge
+	rm -rf data temp
 	mkdir data
 	mkdir temp
-	parallelMerge
+	./parallelMerge $(TEST_SHORT_LIST) temp_output_parallel_short.C
+
+testParallelMerge-medium: parallelMerge
+	rm -rf data temp
+	mkdir data
+	mkdir temp
+	./parallelMerge $(TEST_MEDIUM_LIST) temp_output_parallel_medium.C
 
 
 # DQ (3/1/2010): This is the sart of a general command to process all the
@@ -193,7 +215,7 @@ ls_binaries_short:
 
 # This tests the compression of the AST internally, a step that makes it contiguious in 
 # memory by copying it to intermediate storage and then rebuilding it from scratch.
-# Putting the AST into blocks of contiguious storage is what the binary file I/O mechanis fast.
+# Putting the AST into blocks of contiguious storage is what makes the binary file I/O mechanism fast.
 # This is a great test of all but the the binary file I/O part (which is the simpler part).
 testCompression: astCompressionTest
 	./astCompressionTest -c $(srcdir)/test2001_01.C
@@ -213,9 +235,14 @@ locForRoseFile:
 
 check-local:
 	$(MAKE) $(TEST_Objects)
-#	$(MAKE) test-read
-#	$(MAKE) test-read-short
-#	$(MAKE) test-read-medium
+	$(MAKE) test-read
+	$(MAKE) test-read-tiny
+	$(MAKE) test-read-short
+	$(MAKE) test-read-medium
+#	Test the parallel merge mechanism using different numbers of threads.
+	$(MAKE) testParallelMerge-short
+#	This is a bit too large of a test to run on most people's machines so skip it for now.
+#	$(MAKE) test-read-large
 	@echo ""
 	@echo "*******************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astFileIOTests: make check rule complete (terminated normally) ***"
@@ -227,7 +254,7 @@ clean-local:
 	rm -f *.dot *.C_identity inputBug317  inputBug327  inputForLoopLocator  lexPhase2003_01  math  test2010_03  test2010_04  test2010_05  test2010_06  test_CplusplusMacro_Cpp
 #	Remove some generated files by the parallel merge.
 	rm -f *.txt
-	rm -rf tmp? data
+	rm -rf tmp? data temp_output_*
 
 distclean-local:
 	rm -rf Templates.DB 

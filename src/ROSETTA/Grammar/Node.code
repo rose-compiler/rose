@@ -1525,10 +1525,14 @@ void traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor );
 // This traversal helps support intrnal tools that call static member functions.
 void traverseRepresentativeNodes ( ROSE_VisitTraversal & traversal );
 
+// DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+// using values that overflow signed values of int.
 // DQ (1/2/2006): Support for computing the total number of IR nodes in use within an AST
 // computation is done based on the memory pools (so it is exact).
-int numberOfNodes();
-int memoryUsage();
+// int numberOfNodes();
+// int memoryUsage();
+size_t numberOfNodes();
+size_t memoryUsage();
 
 // DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
 //     (this function prototype is replicated in the ROSE/src/unparser/unparser.h)

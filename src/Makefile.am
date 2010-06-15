@@ -158,9 +158,17 @@ librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIB
 		    $(BOOST_WAVE_LIB) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
 		    $(OPT_SQLITE3_LDFLAGS) 
+
+# DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
+if ROSE_USE_DWARF
+   librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
+endif
+
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined
+
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
+
 librose_la_DEPENDENCIES = $(libroseLibraries)
 
 # if ROSE_USE_OPEN_FORTRAN_PARSER

@@ -3,13 +3,16 @@
  * */
 #include <stdio.h>
 int a[100];
-
+#if 1
 void foo2()
 {
   int i;
   int tmp;
   tmp = 10;
-#pragma omp parallel for private (i) firstprivate (tmp)  
+  // It would be wrong to parallelize the following loop
+  // since the true dependence between tmp in an iteration
+  // and tmp in the following iteration.
+  // Even firstprivate cannot help this.
   for (i=0;i<100;i++)
   {
     a[i] = tmp;
@@ -23,16 +26,17 @@ void foo2()
   printf ("a[80]=%d\n", a[80]);
   printf ("a[99]=%d\n", a[99]);
 }
+#endif 
 
 void foo()
 {
   int i;
   int tmp;
   tmp = 10;
+  // This should be parallelized using firstprivate
   for (i=0;i<100;i++)
   {
     a [i ] =tmp;
-    tmp =a[i]+i;
   }
   i = tmp; 
 }

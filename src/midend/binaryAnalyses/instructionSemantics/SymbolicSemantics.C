@@ -3,165 +3,70 @@
 
 namespace SymbolicSemantics {
 
-uint64_t name_counter;
-
-const char *
-to_str(Operator o)
-{
-    switch (o) {
-        case OP_ADD: return "add";
-        case OP_AND: return "and";
-        case OP_ASR: return "asr";
-        case OP_CONCAT: return "concat";
-        case OP_EXTRACT: return "extract";
-        case OP_INVERT: return "invert";
-        case OP_ITE: return "ite";
-        case OP_LSSB: return "lssb";
-        case OP_MSSB: return "mssb";
-        case OP_NEGATE: return "negate";
-        case OP_NOOP: return "nop";
-        case OP_OR: return "or";
-        case OP_ROL: return "rol";
-        case OP_ROR: return "ror";
-        case OP_SDIV: return "sdiv";
-        case OP_SEXTEND: return "sextend";
-        case OP_SHL: return "shl";
-        case OP_SHR: return "shr";
-        case OP_SMOD: return "smod";
-        case OP_SMUL: return "smul";
-        case OP_UDIV: return "udiv";
-        case OP_UEXTEND: return "uextend";
-        case OP_UMOD: return "umod";
-        case OP_UMUL: return "umul";
-        case OP_XOR: return "xor";
-        case OP_ZEROP: return "zerop";
-    }
-    ROSE_ASSERT(!"list is not complete"); /*do not add as default since that would turn off compiler warnings*/
-}
-
 std::ostream &
 operator<<(std::ostream &o, const State &state)
 {
     state.print(o);
     return o;
 }
-    
+
 std::ostream &
 operator<<(std::ostream &o, const MemoryCell &mc)
 {
     mc.print(o, NULL);
     return o;
 }
-    
-void
-InternalNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
-{
-    o <<"(" <<to_str(op) <<"[" <<nbits <<"]";
-    for (size_t i=0; i<children.size(); i++) {
-        o <<" ";
-        children[i]->print(o, rmap);
-    }
-    o <<")";
-}
 
+/* Address X and Y may alias each other if X+datasize(X)>=Y or X<Y+datasize(Y) where datasize(A) is the number of bytes stored
+ * at address A. In other words, if the following expression is satisfiable, then the memory cells might alias one another.
+ *
+ * \code
+ *     ((X.addr + X.nbytes > Y.addr) && (X.addr < Y.addr + Y.nbytes)) ||
+ *     ((Y.addr + Y.nbytes > X.addr) && (Y.addr < X.addr + X.nbytes))
+ * \code
+ *
+ * Or, equivalently written in LISP style
+ *
+ * \code
+ *     (and (or (> (+ X.addr X.nbytes) Y.addr) (< X.addr (+ Y.addr Y.nbytes)))
+ *          (or (> (+ Y.addr Y.nbytes) X.addr) (< Y.addr (+ X.addr X.nbytes))))
+ * \endcode
+ */
 bool
-InternalNode::equal_to(const TreeNode *other_) const
+MemoryCell::may_alias(const MemoryCell &other, SMTSolver *solver/*NULL*/) const
 {
-    if (!TreeNode::equal_to(other_)) return false;
-    const InternalNode *other = dynamic_cast<const InternalNode*>(other_);
-    if (!other) return false;
-    if (op!=other->op) return false;
-    if (children.size()!=other->children.size()) return false;
-    for (size_t i=0; i<children.size(); ++i) {
-        if (!children[i]->equal_to(other->children[i]))
-            return false;
-    }
-    return true;
-}
+    bool retval = must_alias(other, solver); /*this might be faster to solve*/
+    if (retval)
+        return retval;
 
-/* class method */
-LeafNode *
-LeafNode::create_variable(size_t nbits)
-{
-    LeafNode *retval = new LeafNode();
-    retval->nbits = nbits;
-    retval->known = false;
-    retval->name = name_counter++;
+    if (solver) {
+        TreeNode *x_addr   = this->address.expr;
+        TreeNode *x_nbytes = LeafNode::create_integer(32, this->nbytes);
+        TreeNode *y_addr   = other.address.expr;
+        TreeNode *y_nbytes = LeafNode::create_integer(32, other.nbytes);
+
+        TreeNode *x_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, x_addr, x_nbytes);
+        TreeNode *y_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, y_addr, y_nbytes);
+
+        TreeNode *and1 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
+                                          new InternalNode(1, InsnSemanticsExpr::OP_UGT, x_end, y_addr),
+                                          new InternalNode(1, InsnSemanticsExpr::OP_ULT, x_addr, y_end));
+        TreeNode *and2 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
+                                          new InternalNode(1, InsnSemanticsExpr::OP_UGT, y_end, x_addr),
+                                          new InternalNode(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
+
+        TreeNode *assertion = new InternalNode(1, InsnSemanticsExpr::OP_OR, and1, and2);
+        retval = solver->satisfiable(assertion);
+        assertion->deleteDeeply();
+    }
+
     return retval;
 }
 
-/* class method */
-LeafNode *
-LeafNode::create_integer(size_t nbits, uint64_t n)
-{
-    LeafNode *retval = new LeafNode();
-    retval->nbits = nbits;
-    retval->known = true;
-    retval->ival = n & (((uint64_t)1<<nbits)-1);
-    return retval;
-}
-    
 bool
-LeafNode::is_known() const
+MemoryCell::must_alias(const MemoryCell &other, SMTSolver *solver/*NULL*/) const
 {
-    return known;
-}
-
-uint64_t
-LeafNode::value() const
-{
-    assert(known);
-    return ival;
-}
-
-void
-LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
-{
-    if (known) {
-        if (nbits>1 && (ival & ((uint64_t)1<<(nbits-1)))) {
-            uint64_t sign_extended = ival | ~(((uint64_t)1<<nbits)-1);
-            o <<(int64_t)sign_extended;
-        } else {
-            o <<ival;
-        }
-    } else {
-        uint64_t renamed = name;
-        if (rmap) {
-            RenameMap::iterator found = rmap->find(name);
-            if (found==rmap->end()) {
-                renamed = rmap->size();
-                rmap->insert(std::make_pair(name, renamed));
-            } else {
-                renamed = found->second;
-            }
-        }
-        o <<"v" <<renamed;
-    }
-    o <<"[" <<nbits <<"]";
-}
-
-bool
-LeafNode::equal_to(const TreeNode *other_) const
-{
-    if (!TreeNode::equal_to(other_)) return false;
-    const LeafNode *other = dynamic_cast<const LeafNode*>(other_);
-    if (!other) return false;
-    if (known!=other->known) return false;
-    if (known)
-        return ival == other->ival;
-    return name == other->name;
-}
-
-bool
-MemoryCell::may_alias(const MemoryCell &other) const
-{
-    return must_alias(other); /*FIXME: need to tighten this up some. [RPM 2010-05-24]*/
-}
-
-bool
-MemoryCell::must_alias(const MemoryCell &other) const
-{
-    return address.equal_to(other.address);
+    return address.expr->equal_to(other.address.expr, solver);
 }
 
 void

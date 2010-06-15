@@ -16,6 +16,8 @@ jacobi_seq.c \
 lastprivate.c \
 livenessTest.c \
 matrixmultiply.c \
+minusMinus.c \
+multiReduction.c \
 outer_only.c \
 output_dep.c \
 output_dep2.c \

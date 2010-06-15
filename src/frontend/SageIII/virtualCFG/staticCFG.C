@@ -51,7 +51,7 @@ int CFG::getIndex(SgGraphNode* node)
     return info->getIndex();
 }
 
-void CFG::buildCFG()
+void CFG::buildFullCFG()
 {
     all_nodes_.clear();
     clearNodesAndEdges();
@@ -110,6 +110,7 @@ void CFG::buildFilteredCFG()
         all_nodes_[VirtualCFG::CFGNode(p.first.getNode(), 0)] = p.second;
 }
 
+#if 0
 void CFG::buildCFG(CFGNode n)
 {
     ROSE_ASSERT(n.getNode());
@@ -170,6 +171,7 @@ void CFG::buildCFG(CFGNode n)
     }
 #endif
 }
+#endif
 
 template <class NodeT, class EdgeT>
 void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored)
@@ -247,6 +249,7 @@ SgGraphNode* CFG::cfgForEnd(SgNode* node)
     return all_nodes_[node->cfgForEnd()];
 }
 
+#if 0
 std::vector<SgDirectedGraphEdge*> CFG::getOutEdges(SgNode* node, int index)
 {
     VirtualCFG::CFGNode n(node, index);
@@ -260,6 +263,7 @@ std::vector<SgDirectedGraphEdge*> CFG::getInEdges(SgNode* node, int index)
     std::set<SgDirectedGraphEdge*> edges = graph_->computeEdgeSetIn(all_nodes_[n]);
     return std::vector<SgDirectedGraphEdge*>(edges.begin(), edges.end());
 }
+#endif
 
 std::vector<SgDirectedGraphEdge*> CFG::getOutEdges(SgGraphNode* node)
 {
