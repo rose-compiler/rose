@@ -2141,7 +2141,7 @@ int SAGE_DEBUG = 0;  // default value is zero
 
 // JJW (1/19/2007): Added global variable for whether virtual CFG is
 // interprocedural
-bool interproceduralControlFlowGraph = false;
+bool interproceduralControlFlowGraph = true;
 
 // ###############################
 // Start of source code for SgNode

@@ -234,6 +234,16 @@ std::vector<CFGEdge> SgGlobal::cfgInEdges(unsigned int idx) {
 }
 
 unsigned int
+SgGlobal::cfgIndexForEnd() const {
+  return 0;
+}
+
+bool 
+SgGlobal::cfgIsIndexInteresting(unsigned int idx) const {
+  return false;
+}
+
+unsigned int
 SgBasicBlock::cfgIndexForEnd() const {
   return this->get_statements().size();
 }
