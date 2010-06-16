@@ -3003,12 +3003,12 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
 	  interproceduralControlFlowGraph ?
 	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
 	if (decl)
-	  makeEdge(CFGNode(this, idx), decl->cfgForBeginning(),
-                   result);
-        else
-          makeEdge(CFGNode(this, idx),
-                   CFGNode(this, 3), result);
-        break;
+	  makeEdge(CFGNode(this, idx), decl->get_definition()->cfgForBeginning(),
+		   result);
+	else
+	  makeEdge(CFGNode(this, idx),
+		   CFGNode(this, 3), result);
+	break;
       }
       case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
@@ -3026,13 +3026,13 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
 	SgFunctionDeclaration* decl =
 	  interproceduralControlFlowGraph ?
 	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
-        if (decl)
-          makeEdge(decl->cfgForEnd(), CFGNode(this, idx),
-                   result);
-        else
-          makeEdge(CFGNode(this, 2),
-                   CFGNode(this, idx), result);
-        break;
+	if (decl)
+	  makeEdge(decl->get_definition()->cfgForEnd(), CFGNode(this, idx),
+		   result);
+	else
+	  makeEdge(CFGNode(this, 2),
+		   CFGNode(this, idx), result);
+	break;
       }
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
     }
