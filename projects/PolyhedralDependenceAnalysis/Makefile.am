@@ -15,5 +15,5 @@ endif
 
 endif
 
-EXTRA_DIST = README Makefile
+EXTRA_DIST = README Makefile.external
 
