@@ -26,12 +26,16 @@ namespace VirtualCFG {
 
   string CFGNode::toString() const {
     if (isSgFunctionDefinition(node)) {
+        ostringstream s;
       switch (index) {
-	case 0: return "Start";
-	case 1: return "After parameters";
-	case 2: return "End";
-	default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
+          case 0: s << "Start: "; break; 
+          case 1: s << "After parameters: "; break;
+          case 2: s << "End: "; break;
+          default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
+      s << (std::string) ((SgFunctionDefinition *)node)
+        ->get_declaration()->get_name(); 
+      return s.str();
     } else {
       return toStringForDebugging();
     }
