@@ -113,6 +113,9 @@ namespace VirtualCFG {
         case eckArithmeticIfGreater:
           s << "greater";
           break;
+    case eckInterprocedural:
+          s << "interprocedural";
+          break;
 	default:
 	  s << "unknown";
 	  break;
@@ -326,6 +329,10 @@ namespace VirtualCFG {
       } else {
 	return eckFalse;
       }
+    } else if (isSgFunctionCallExp(srcNode) && srcIndex == 2) {
+        return eckInterprocedural;
+    } else if (isSgFunctionDefinition(tgtNode) && tgtIndex == 0) {
+        return eckInterprocedural;
     } else {
       // No key
       return eckUnconditional;
