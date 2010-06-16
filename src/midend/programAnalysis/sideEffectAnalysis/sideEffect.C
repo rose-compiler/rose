@@ -10,6 +10,9 @@
 #include "GlobalDatabaseConnection.h"
 #include "TableDefinitions.h"
 
+#include <mysql++.h>
+using namespace mysqlpp;
+using namespace std;
 
 DEFINE_TABLE_PROJECTS();
 DEFINE_TABLE_GRAPHDATA();
@@ -52,12 +55,14 @@ DEFINE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
 typedef DatabaseGraph<simpleFuncTableRowdata, callEdgeRowdata, 
 		      boost::vecS, boost::vecS, boost::bidirectionalS> CallGraph;
 typedef CallGraph::dbgType Graph;
-typedef graph_traits < CallGraph >::vertex_descriptor callVertex;
-typedef property_map<CallGraph, vertex_index_t>::const_type callVertexIndexMap;
+typedef boost::graph_traits < CallGraph >::vertex_descriptor callVertex;
+typedef boost::property_map<CallGraph, boost::vertex_index_t>::const_type callVertexIndexMap;
 
 typedef DatabaseGraph<varNodeRowdata, callEdgeRowdata, 
 		      boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
 
+#if 0
+// milki (06/16/2010) Already defined in src/ROSETTA/Grammar/Support.code:3259
 struct eqstr
 {
   bool operator()(const char* s1, const char* s2) const
@@ -65,6 +70,7 @@ struct eqstr
     return strcmp(s1, s2) == 0;
   }
 };
+#endif
 
 struct eqint
 {
@@ -93,15 +99,15 @@ struct pairltstr
 };
 
 // boost::unordered_multimap<Key, Data, HashFcn, EqualKey, Alloc>
-typedef boost::unordered_multimap<const char*, const char *, hash<const char*>, eqstr> map_type;
+typedef boost::unordered_multimap<const char*, const char *, boost::hash<const char*>, eqstr> map_type;
 
 // boost::unordered_map<Key, Data, HashFcn, EqualKey, Alloc>
-typedef boost::unordered_map<const char *, int, hash<const char *>, eqstr> str_int_map;
-typedef boost::unordered_map<const char *, const char *, hash<const char *>, eqstr> str_str_map;
-typedef boost::unordered_map<const char *, str_int_map *, hash<const char *>, eqstr> str_map_map;
+typedef boost::unordered_map<const char *, int, boost::hash<const char *>, eqstr> str_int_map;
+typedef boost::unordered_map<const char *, const char *, boost::hash<const char *>, eqstr> str_str_map;
+typedef boost::unordered_map<const char *, str_int_map *, boost::hash<const char *>, eqstr> str_map_map;
 
-typedef boost::unordered_map<int, const char *, hash<int>, eqint> int_str_map;
-typedef boost::unordered_map<const char *, int_str_map *, hash<const char *>, eqstr> int_map_map;
+typedef boost::unordered_map<int, const char *, boost::hash<int>, eqint> int_str_map;
+typedef boost::unordered_map<const char *, int_str_map *, boost::hash<const char *>, eqstr> int_map_map;
 
 class SideEffect : public SideEffectAnalysis {
 
@@ -161,8 +167,8 @@ class SideEffect : public SideEffectAnalysis {
   deque<callVertex> vertexStack;
   
   // CH (4/9/2010): Use boost::unordered_set instead
-  //hash_set<int, hash<int>, eqint> shadowStack;
-  boost::unordered_set<int, hash<int>, eqint> shadowStack;
+  //hash_set<int, boost::hash<int>, eqint> shadowStack;
+  boost::unordered_set<int, boost::hash<int>, eqint> shadowStack;
   
   int *lowlink;
   int *dfn;
@@ -2168,37 +2174,37 @@ SideEffect::createMultiGraph(CallGraph *callgraph, long projectId,
 
   CallMultiGraph *multigraph = new CallMultiGraph( projectId, GTYPE_SIMPLECALLGRAPH, db );
 
-  typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+  typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
   pair<edge_iter, edge_iter> ep;
 
   for (ep = edges(*callgraph); ep.first != ep.second; ++ep.first) {
-    int scope = get( edge_dbg_data, *callgraph, *ep.first ).get_scope();
+    int scope = get( boost::edge_dbg_data, *callgraph, *ep.first ).get_scope();
     if ( scope == SCOPE_PARAM ) {
 #ifdef DEBUG_OUTPUT
-      cout << "****** edge: " << get( vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName() << " to " << get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName() << endl;
+      cout << "****** edge: " << get( boost::vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName() << " to " << get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName() << endl;
 #endif
 
-      string srcFunc(get( vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName());
-      string actual(get( edge_dbg_data, *callgraph, *ep.first ).get_actual());
+      string srcFunc(get( boost::vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName());
+      string actual(get( boost::edge_dbg_data, *callgraph, *ep.first ).get_actual());
 
       //      varNodeRowdata src( UNKNOWNID, projectId, srcFunc, actual );
       varNodeRowdata src( ++nextId, projectId, srcFunc, actual );
 
-      typedef graph_traits < CallMultiGraph >::vertex_descriptor Vertex;
+      typedef boost::graph_traits < CallMultiGraph >::vertex_descriptor Vertex;
       Vertex v;
 		 
       string name1(srcFunc + ":" + actual);
       v = multigraph->insertVertex( src, name1 );
 #ifdef DEBUG_OUTPUT
-      cout << "Inserted vertex: " << get( vertex_dbg_data, *multigraph, v).get_functionName() << endl;
+      cout << "Inserted vertex: " << get( boost::vertex_dbg_data, *multigraph, v).get_functionName() << endl;
 #endif
 
-      string tarFunc(get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName());
+      string tarFunc(get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName());
       const char *param;
       int ordinal;
 
-      ordinal = get( edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
-      //      tarFunc =get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName();
+      ordinal = get( boost::edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
+      //      tarFunc =get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName();
 
       param = lookupFormalByPos(tarFunc.c_str(), ordinal);
       assert(param != NULL);
@@ -2210,37 +2216,37 @@ SideEffect::createMultiGraph(CallGraph *callgraph, long projectId,
       string name2(tarFunc + ":" + param);
       v = multigraph->insertVertex( tar, name2 );
 #ifdef DEBUG_OUTPUT
-      cout << "Inserted vertex: " << get( vertex_dbg_data, *multigraph, v).get_functionName() << endl;
+      cout << "Inserted vertex: " << get( boost::vertex_dbg_data, *multigraph, v).get_functionName() << endl;
 #endif
 
-      callEdgeRowdata edge( get( edge_dbg_data, *callgraph, *ep.first ) );
+      callEdgeRowdata edge( get( boost::edge_dbg_data, *callgraph, *ep.first ) );
       edge.set_id( ++nextId );
 
-      typedef graph_traits < CallMultiGraph >::edge_descriptor Edge;
+      typedef boost::graph_traits < CallMultiGraph >::edge_descriptor Edge;
       typedef std::pair<bool, Edge> dbgEdgeReturn; 
       multigraph->insertEdge( src, tar, edge );
-      typedef property_map<CallMultiGraph, vertex_index_t>::type
+      typedef boost::property_map<CallMultiGraph, boost::vertex_index_t>::type
 	VertexIndexMap;
-      typedef property_map<CallMultiGraph, edge_index_t>::type
+      typedef boost::property_map<CallMultiGraph, boost::edge_index_t>::type
 	EdgeIndexMap;
-      EdgeIndexMap index_map = get(edge_index, *multigraph);
+      EdgeIndexMap index_map = get(boost::edge_index, *multigraph);
 
     }
   }
 
 #ifdef DEBUG_OUTPUT
   for (ep = edges(*multigraph); ep.first != ep.second; ++ep.first) {
-      cout << "****** mgraph edge: " << get( vertex_dbg_data, *multigraph, boost::source(*(ep.first), *multigraph) ).get_functionName() << " to " << get( vertex_dbg_data, *multigraph, boost::target(*(ep.first), *multigraph) ).get_functionName() << endl;
+      cout << "****** mgraph edge: " << get( boost::vertex_dbg_data, *multigraph, boost::source(*(ep.first), *multigraph) ).get_functionName() << " to " << get( boost::vertex_dbg_data, *multigraph, boost::target(*(ep.first), *multigraph) ).get_functionName() << endl;
   }
 #endif 
 
   return multigraph;
 }
 
-class solve_rmod : public base_visitor<solve_rmod> {
+class solve_rmod : public boost::base_visitor<solve_rmod> {
 
  public:
-  typedef on_finish_vertex event_filter;
+  typedef boost::on_finish_vertex event_filter;
   
   solve_rmod(SideEffect *setSideEffect) : 
     mReachedFixedPoint(false),
@@ -2249,17 +2255,17 @@ class solve_rmod : public base_visitor<solve_rmod> {
 
   template <class Vertex, class G>
   void operator()(Vertex m, G& g) {
-    string mFunc = get( vertex_dbg_data, g, m).get_functionName();
-    string mVarName = get( vertex_dbg_data, g, m).get_varName();
+    string mFunc = get( boost::vertex_dbg_data, g, m).get_functionName();
+    string mVarName = get( boost::vertex_dbg_data, g, m).get_varName();
 
-    typedef typename graph_traits<G>::out_edge_iterator out_edge_iter;
+    typedef typename boost::graph_traits<G>::out_edge_iterator out_edge_iter;
     pair<out_edge_iter, out_edge_iter> ep;
 
     // union the RMODs of any target neighbors
     for (ep = out_edges(m, g); ep.first != ep.second; ++ep.first) {
       Vertex n = boost::target(*(ep.first), g);
-      string nFunc = get( vertex_dbg_data, g, n).get_functionName();
-      string nVarName = get( vertex_dbg_data, g, n).get_varName();
+      string nFunc = get( boost::vertex_dbg_data, g, n).get_functionName();
+      string nVarName = get( boost::vertex_dbg_data, g, n).get_varName();
 
       pair<map_type::const_iterator, map_type::const_iterator> p = 
 	mSideEffectPtr->lookupRMOD(nFunc.c_str());
@@ -2318,19 +2324,19 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   assert(multigraph != NULL);
 
   // (1) find strongly connected components of the multigraph
-  typedef property_map<CallMultiGraph, vertex_index_t>::const_type
+  typedef boost::property_map<CallMultiGraph, boost::vertex_index_t>::const_type
     VertexIndexMap;
-  VertexIndexMap index_map = get(vertex_index, *multigraph);
-  typedef graph_traits < CallMultiGraph >::vertex_descriptor vertex;
-  typedef graph_traits < CallMultiGraph >::edge_descriptor edge;
-  typedef graph_traits < CallMultiGraph >::vertex_iterator vertex_iterator;
-  typedef property_traits < VertexIndexMap >::value_type size_type;
-  typedef graph_traits <
+  VertexIndexMap index_map = get(boost::vertex_index, *multigraph);
+  typedef boost::graph_traits < CallMultiGraph >::vertex_descriptor vertex;
+  typedef boost::graph_traits < CallMultiGraph >::edge_descriptor edge;
+  typedef boost::graph_traits < CallMultiGraph >::vertex_iterator vertex_iterator;
+  typedef boost::property_traits < VertexIndexMap >::value_type size_type;
+  typedef boost::graph_traits <
     CallMultiGraph >::adjacency_iterator adjacency_iterator;
   
   typedef size_type cg_vertex;
   std::vector < cg_vertex > component_number_vec(num_vertices(*multigraph));
-  iterator_property_map < cg_vertex *, VertexIndexMap, cg_vertex, cg_vertex& >
+  boost::iterator_property_map < cg_vertex *, VertexIndexMap, cg_vertex, cg_vertex& >
     component_number(&component_number_vec[0], index_map);
   
   //  const char *name;
@@ -2349,7 +2355,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     cout << "component: " << s << endl;
     for (size_type i = 0; i < components[s].size(); ++i) {
       vertex u = components[s][i];
-      cout << "func: " << get( vertex_dbg_data, *multigraph, u).get_functionName() << endl;
+      cout << "func: " << get( boost::vertex_dbg_data, *multigraph, u).get_functionName() << endl;
     }
   }
 #endif
@@ -2370,8 +2376,8 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     vertex rep = components[s][0];
     //    reps[component_number[rep]] = rep;
     
-    //    simpleFuncTableRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
-    varNodeRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
+    //    simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *multigraph, rep ) );
+    varNodeRowdata v( get( boost::vertex_dbg_data, *multigraph, rep ) );
 
 #ifdef DEBUG_OUTPUT
     cout << "Adding " << rep << " " << v.get_functionName() << endl;
@@ -2384,8 +2390,8 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
 
     for (size_type i = 0; i < components[s].size(); ++i) {
 
-      //      simpleFuncTableRowdata v2( get( vertex_dbg_data, *multigraph, components[s][i] ) );
-      varNodeRowdata v2( get( vertex_dbg_data, *multigraph, components[s][i] ) );
+      //      simpleFuncTableRowdata v2( get( boost::vertex_dbg_data, *multigraph, components[s][i] ) );
+      varNodeRowdata v2( get( boost::vertex_dbg_data, *multigraph, components[s][i] ) );
 
       pair<map_type::const_iterator, map_type::const_iterator> p = 
 	lookupIMOD(v2.get_functionName().c_str());
@@ -2406,8 +2412,8 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     vertex rep = components[s][0];
     //    reps[component_number[rep]] = rep;
     
-    //    simpleFuncTableRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
-    varNodeRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
+    //    simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *multigraph, rep ) );
+    varNodeRowdata v( get( boost::vertex_dbg_data, *multigraph, rep ) );
 
     pair<map_type::const_iterator, map_type::const_iterator> p = 
       lookupIMOD(v.get_functionName().c_str());
@@ -2418,7 +2424,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   }
 #endif
 
-  typedef graph_traits<CallMultiGraph>::out_edge_iterator out_edge_iter;
+  typedef boost::graph_traits<CallMultiGraph>::out_edge_iterator out_edge_iter;
   pair<out_edge_iter, out_edge_iter> ep;
 
   // now collapse the edges
@@ -2433,15 +2439,15 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
       cout << "Retrieving " << derivedRep << endl;
 #endif
 
-      //      simpleFuncTableRowdata src( get( vertex_dbg_data, *derivedG, derivedRep ) );
-      varNodeRowdata src( get( vertex_dbg_data, *derivedG, derivedRep ) );
+      //      simpleFuncTableRowdata src( get( boost::vertex_dbg_data, *derivedG, derivedRep ) );
+      varNodeRowdata src( get( boost::vertex_dbg_data, *derivedG, derivedRep ) );
 
       for (ep = out_edges(origRep, *multigraph); ep.first != ep.second; ++ep.first) {
 	vertex rep2 = reps[component_number[boost::target(*(ep.first), *multigraph)]];
-	//	simpleFuncTableRowdata tar( get( vertex_dbg_data, *derivedG, rep2 ) );
-	varNodeRowdata tar( get( vertex_dbg_data, *derivedG, rep2 ) );
+	//	simpleFuncTableRowdata tar( get( boost::vertex_dbg_data, *derivedG, rep2 ) );
+	varNodeRowdata tar( get( boost::vertex_dbg_data, *derivedG, rep2 ) );
 
-	callEdgeRowdata edge( get( edge_dbg_data, *multigraph, *ep.first ) );
+	callEdgeRowdata edge( get( boost::edge_dbg_data, *multigraph, *ep.first ) );
 	derivedG->insertEdge( src, tar, edge );
 
       }
@@ -2464,7 +2470,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   for (cg_vertex s = 0; s < components.size(); ++s) {
    
     vertex rep = components[s][0];
-    string repName = get( vertex_dbg_data, *multigraph, rep ).get_functionName();
+    string repName = get( boost::vertex_dbg_data, *multigraph, rep ).get_functionName();
  
     pair<map_type::const_iterator, map_type::const_iterator> p = 
       lookupRMOD(repName.c_str());
@@ -2472,7 +2478,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     for (size_type i = 1; i < components[s].size(); ++i) {
       
       vertex v = components[s][i];
-      string nodeName = get( vertex_dbg_data, *multigraph, v ).get_functionName();
+      string nodeName = get( boost::vertex_dbg_data, *multigraph, v ).get_functionName();
 
       for (map_type::const_iterator i = p.first; i != p.second; ++i)
 	insertRMOD( nodeName.c_str(), (*i).second );
@@ -2488,9 +2494,9 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
 //      function.  where we would have unioned IMOD sets here we should instead
 //      detect if there is an edge from a caller to __lmod, in which case
 //      we need to add the corresponding actual to callers imodplus set.
-class solve_imodplus : public base_visitor<solve_imodplus> {
+class solve_imodplus : public boost::base_visitor<solve_imodplus> {
  public:
-  typedef on_finish_vertex event_filter;
+  typedef boost::on_finish_vertex event_filter;
   
   solve_imodplus(SideEffect *setSideEffect) :
     mReachedFixedPoint(false),
@@ -2499,16 +2505,16 @@ class solve_imodplus : public base_visitor<solve_imodplus> {
 
   template <class Vertex, class G>
   void operator()(Vertex p, G& g) {
-    string pFunc = get( vertex_dbg_data, g, p).get_functionName();
+    string pFunc = get( boost::vertex_dbg_data, g, p).get_functionName();
 
-    typedef typename graph_traits<G>::out_edge_iterator out_edge_iter;
+    typedef typename boost::graph_traits<G>::out_edge_iterator out_edge_iter;
     pair<out_edge_iter, out_edge_iter> ep;
 
     // NB:  this could be much more efficient
     for (ep = out_edges(p, g); ep.first != ep.second; ++ep.first) {
       callVertex q = boost::target(*(ep.first), g);
-      string qFunc = get( vertex_dbg_data, g, q).get_functionName();
-      int paramNum = get( edge_dbg_data, g, (*ep.first) ).get_ordinal();
+      string qFunc = get( boost::vertex_dbg_data, g, q).get_functionName();
+      int paramNum = get( boost::edge_dbg_data, g, (*ep.first) ).get_ordinal();
 
       if (paramNum == -1)
 	continue;
@@ -2519,7 +2525,7 @@ class solve_imodplus : public base_visitor<solve_imodplus> {
       // actual to the caller's IMOD+ set.
       if (!strcmp(qFunc.c_str(), LMODFUNC)) {
 	
-	string actual = get( edge_dbg_data, g, (*ep.first) ).get_actual();
+	string actual = get( boost::edge_dbg_data, g, (*ep.first) ).get_actual();
 	if (mSideEffectPtr->insertIMODPlus(pFunc.c_str(), actual.c_str()))
 	  mReachedFixedPoint = false;
 
@@ -2535,7 +2541,7 @@ class solve_imodplus : public base_visitor<solve_imodplus> {
       // union b_e(RMOD(q)) [ NB:  restricted to params ]
       for (map_type::const_iterator i = itpair.first; i != itpair.second; ++i) {
 	if ( mSideEffectPtr->lookupFormal(qFunc.c_str(), (*i).second) == paramNum ) {
-	  string actual = get( edge_dbg_data, g, (*ep.first) ).get_actual();
+	  string actual = get( boost::edge_dbg_data, g, (*ep.first) ).get_actual();
 
 #ifdef DEBUG_OUTPUT
 	  cout << "INSERTING IMODPLUS FROM RMOD: " << actual.c_str() << " in " << pFunc.c_str() << " from " << qFunc.c_str() << " param # " << paramNum << " formal" << (*i).second << endl;
@@ -2577,7 +2583,7 @@ static int nextdfn;
 deque<callVertex> vertexStack;
 
 // hash_set<Key, HashFcn, EqualKey, Alloc>
-hash_set<int, hash<int>, eqint> shadowStack;
+hash_set<int, boost::hash<int>, eqint> shadowStack;
 
 int *lowlink;
 int *dfn;
@@ -2587,8 +2593,8 @@ int
 SideEffect::onStack(int num)
 {
   // CH (4/9/2010): Use boost::unordered_set instead
-  //hash_set<int, hash<int>, eqint>::const_iterator it = 
-    boost::unordered_set<int, hash<int>, eqint>::const_iterator it = 
+  //hash_set<int, boost::hash<int>, eqint>::const_iterator it = 
+    boost::unordered_set<int, boost::hash<int>, eqint>::const_iterator it = 
     shadowStack.find(num);
 
   return ( it != shadowStack.end() );
@@ -2626,9 +2632,9 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 
   // foreach q adjacent to p
   // NB:  i think this means (p,q) is in the graph
-  typedef graph_traits<CallGraph>::out_edge_iterator out_edge_iter;
+  typedef boost::graph_traits<CallGraph>::out_edge_iterator out_edge_iter;
 
-  typedef graph_traits<CallGraph>::adjacency_iterator adj_it;
+  typedef boost::graph_traits<CallGraph>::adjacency_iterator adj_it;
   pair<adj_it, adj_it> adj_pair;
   for (adj_pair = adjacent_vertices(p, *g); adj_pair.first != adj_pair.second;
 	 ++adj_pair.first) {
@@ -2636,7 +2642,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
     //      tricky part:  keeping indexing consistent across graphs
     callVertex q = *(adj_pair.first);
     int qIndex = get( index_map, q );
-    string qName(get( vertex_dbg_data, *g, q ).get_functionName());
+    string qName(get( boost::vertex_dbg_data, *g, q ).get_functionName());
 #ifdef DEBUG_OUTPUT
     cout << "q: " << qName << " adjacent to p: " << pName;
 #endif
@@ -2645,7 +2651,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 #ifdef DEBUG_OUTPUT
       cout << " tree edge " << endl;
 #endif
-      string qName(get( vertex_dbg_data, *g, q ).get_functionName());
+      string qName(get( boost::vertex_dbg_data, *g, q ).get_functionName());
       searchGMOD(g, qName, q, index_map);
       lowlink[ pIndex ] = min(lowlink[ pIndex ], lowlink[ qIndex ]);
     }
@@ -2775,7 +2781,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 		     inserter(intersection, intersection.begin()),
 		     ltstr());
 
-      string uName(get( vertex_dbg_data, *g, u ).get_functionName());
+      string uName(get( boost::vertex_dbg_data, *g, u ).get_functionName());
 #ifdef DEBUG_OUTPUT
       cout << "    Popping " << uName << endl;
 #endif
@@ -2813,7 +2819,7 @@ SideEffect::solveGMOD(CallGraph *g)
   for(; i > 0; i--)
     dfn[i-1] = 0;
 
-  callVertexIndexMap index_map = get(vertex_index, *g);
+  callVertexIndexMap index_map = get(boost::vertex_index, *g);
 
   // search root (main)
   string mainFunc = getCallRootName();
@@ -2824,9 +2830,9 @@ SideEffect::solveGMOD(CallGraph *g)
 }
 
 
-class solve_dmod : public base_visitor<solve_dmod> {
+class solve_dmod : public boost::base_visitor<solve_dmod> {
  public:
-  typedef on_examine_edge event_filter;
+  typedef boost::on_examine_edge event_filter;
 
   solve_dmod(SideEffect *setSideEffect) :
     mReachedFixedPoint(false),
@@ -2835,19 +2841,19 @@ class solve_dmod : public base_visitor<solve_dmod> {
 
   template <class Edge, class G>
   void operator()(Edge e, G& g) {
-    string site = get( edge_dbg_data, g, e ).get_site();
+    string site = get( boost::edge_dbg_data, g, e ).get_site();
 
     // union b_e(GMOD(q))
     // NB:  this could be much more efficient
     callVertex q = boost::target( e, g );
-    string qFunc = get( vertex_dbg_data, g, q ).get_functionName();
+    string qFunc = get( boost::vertex_dbg_data, g, q ).get_functionName();
 
     pair<map_type::const_iterator, map_type::const_iterator> itpair = 
       mSideEffectPtr->lookupGMOD(qFunc.c_str());
 
-    int paramNum = get( edge_dbg_data, g, e ).get_ordinal();
-    //    int scope = get( edge_dbg_data, g, e ).get_scope();
-    string actual = get( edge_dbg_data, g, e ).get_actual();
+    int paramNum = get( boost::edge_dbg_data, g, e ).get_ordinal();
+    //    int scope = get( boost::edge_dbg_data, g, e ).get_scope();
+    string actual = get( boost::edge_dbg_data, g, e ).get_actual();
 
     int inserted = 0;    
 
@@ -2910,9 +2916,9 @@ class solve_dmod : public base_visitor<solve_dmod> {
   SideEffect *mSideEffectPtr;
 };
 
-struct print_dmod : public base_visitor<print_dmod> {
+class print_dmod : public boost::base_visitor<print_dmod> {
  public:
-  typedef on_examine_edge event_filter;
+  typedef boost::on_examine_edge event_filter;
 
   print_dmod(SideEffect *setSideEffect) :
     mSideEffectPtr(setSideEffect)
@@ -2920,14 +2926,14 @@ struct print_dmod : public base_visitor<print_dmod> {
 
   template <class Edge, class G>
   void operator()(Edge e, G& g) {
-    string site = get( edge_dbg_data, g, e ).get_site();
+    string site = get( boost::edge_dbg_data, g, e ).get_site();
 
     pair<map_type::const_iterator, map_type::const_iterator> itpair = 
       mSideEffectPtr->lookupDMOD(site.c_str());
 
     callVertex q = boost::target( e, g );
-    string qFunc = get( vertex_dbg_data, g, q ).get_functionName();
-    string actual = get( edge_dbg_data, g, e ).get_actual();
+    string qFunc = get( boost::vertex_dbg_data, g, q ).get_functionName();
+    string actual = get( boost::edge_dbg_data, g, e ).get_actual();
 
     cout << "DMOD(" << site << ") [tar: " << qFunc << " actual: " << actual << "] = ";
     for (map_type::const_iterator i = itpair.first; i != itpair.second; ++i) 
@@ -2950,22 +2956,22 @@ createSimpleCallGraph(CallGraph *callgraph, long projectId,
 
   assert( simpleCallgraph != NULL );
 
-  typedef graph_traits<CallGraph>::vertex_iterator vertex_iter;
+  typedef boost::graph_traits<CallGraph>::vertex_iterator vertex_iter;
   pair<vertex_iter, vertex_iter> vp;
 
   for (vp = vertices(*callgraph); vp.first != vp.second; ++vp.first) {
 
-      simpleFuncTableRowdata v( get( vertex_dbg_data, *callgraph, *vp.first ) );
+      simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *callgraph, *vp.first ) );
       simpleCallgraph->insertVertex( v, v.get_functionName() );
 
   }
 
-  typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+  typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
   pair<edge_iter, edge_iter> ep;
 
   for (ep = edges(*callgraph); ep.first != ep.second; ++ep.first) {
     
-    int paramNum = get( edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
+    int paramNum = get( boost::edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
 
     // we only want to take one edge between a caller and callee.
     // for a call edge with one or more parameters take the first
@@ -2973,10 +2979,10 @@ createSimpleCallGraph(CallGraph *callgraph, long projectId,
     // of a void function, there is a dummy parameter with a paramNum of -1.
     if ( ( paramNum == 0 ) || ( paramNum == -1 ) ) {
       
-      simpleFuncTableRowdata src( get( vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ) );
-      simpleFuncTableRowdata tar( get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ) );
+      simpleFuncTableRowdata src( get( boost::vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ) );
+      simpleFuncTableRowdata tar( get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ) );
 
-      callEdgeRowdata edge( get( edge_dbg_data, *callgraph, *ep.first ) );
+      callEdgeRowdata edge( get( boost::edge_dbg_data, *callgraph, *ep.first ) );
       simpleCallgraph->insertEdge( src, tar, edge );      
 
     }
@@ -3041,7 +3047,7 @@ sanitizeFileName(string fileName)
 {
   string sanitized(fileName);
 
-  for(int i = 0; i < sanitized.size(); ++i) {
+  for(unsigned int i = 0; i < sanitized.size(); ++i) {
     if ( (sanitized[i] == '.') || (sanitized[i] == '-') )
       sanitized[i] = '_';
   }
@@ -3252,13 +3258,13 @@ SideEffect::calcSideEffect(SgProject* project)
     // loop over each individual callgraph to insert the vertices
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::vertex_iterator vertex_iter;
+      typedef boost::graph_traits<CallGraph>::vertex_iterator vertex_iter;
       pair<vertex_iter, vertex_iter> vp;
 
       // loop over the vertices in this callgraph.  
       for (vp = vertices(*callgraphs[i]); vp.first != vp.second; ++vp.first) {
 
-	simpleFuncTableRowdata v( get( vertex_dbg_data, *callgraphs[i], *vp.first ) );
+	simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *callgraphs[i], *vp.first ) );
 
 	// keep track of which file defines a given function.
 	// this vertex was defined in this file if it is a source to any
@@ -3267,7 +3273,7 @@ SideEffect::calcSideEffect(SgProject* project)
 	// currently i do not handle static functions.
 	// signal if we ever have a case where a function is defined
 	// multiple times; we'll have to handle it.
-	typedef graph_traits<CallGraph>::adjacency_iterator adj_it;
+	typedef boost::graph_traits<CallGraph>::adjacency_iterator adj_it;
 	pair<adj_it, adj_it> adj_pair;
 	adj_pair = adjacent_vertices(*(vp.first), *callgraphs[i]); 
 	
@@ -3303,7 +3309,7 @@ SideEffect::calcSideEffect(SgProject* project)
     // loop over each individual callgraph to insert the edges
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+      typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
       pair<edge_iter, edge_iter> ep;
       
       // loop over the edges in the callgraph
@@ -3741,20 +3747,22 @@ int
 SideEffect::calcSideEffect(SgProject& project) 
 {
   // get the list of files associated with this project
-  SgFilePtrListPtr fileList = project.get_fileList();
+  SgFilePtrList fileList = project.get_fileList();
 
   list<SgNode*> *nodeList = new list<SgNode*>;
 
-  list<string> sourceFileNames = project.get_sourceFileNameList();
+  vector<string> sourceFileNamesV = project.get_sourceFileNameList();
+  list<string> sourceFileNames(sourceFileNamesV.begin(),sourceFileNamesV.end());
+
 
   // sql doesn't like hyphens and dots, change them to underscores
   string sanitizedOutputFileName = sanitizeFileName(project.get_outputFileName());
 
-  vector<string> nodeListFileNames(fileList->size());
+  vector<string> nodeListFileNames(fileList.size());
 
   int i = 0;
-  for(SgFilePtrList::iterator it = fileList->begin();
-      it != fileList->end();
+  for(SgFilePtrList::iterator it = fileList.begin();
+      it != fileList.end();
       ++i, ++it) {
     nodeListFileNames[i] = (*it)->getFileName();
     nodeList->push_back((SgNode*)*it);
@@ -4022,13 +4030,13 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     // loop over each individual callgraph to insert the vertices
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::vertex_iterator vertex_iter;
+      typedef boost::graph_traits<CallGraph>::vertex_iterator vertex_iter;
       pair<vertex_iter, vertex_iter> vp;
 
       // loop over the vertices in this callgraph.  
       for (vp = vertices(*callgraphs[i]); vp.first != vp.second; ++vp.first) {
 
-	simpleFuncTableRowdata v( get( vertex_dbg_data, *callgraphs[i], *vp.first ) );
+	simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *callgraphs[i], *vp.first ) );
 
 	// keep track of which file defines a given function.
 	// this vertex was defined in this file if it is a source to any
@@ -4037,7 +4045,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	// currently i do not handle static functions.
 	// signal if we ever have a case where a function is defined
 	// multiple times; we'll have to handle it.
-	typedef graph_traits<CallGraph>::adjacency_iterator adj_it;
+	typedef boost::graph_traits<CallGraph>::adjacency_iterator adj_it;
 	pair<adj_it, adj_it> adj_pair;
 	adj_pair = adjacent_vertices(*(vp.first), *callgraphs[i]); 
 	
@@ -4073,13 +4081,13 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     // loop over each individual callgraph to insert the edges
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+      typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
       pair<edge_iter, edge_iter> ep;
       
       // loop over the edges in the callgraph
       for (ep = edges(*callgraphs[i]); ep.first != ep.second; ++ep.first) {
 	
-	simpleFuncTableRowdata src(get(vertex_dbg_data, *callgraphs[i], 
+	simpleFuncTableRowdata src(get(boost::vertex_dbg_data, *callgraphs[i], 
 				       boost::source(*(ep.first), *callgraphs[i])));
 
 
@@ -4111,7 +4119,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 	}
 
-	simpleFuncTableRowdata tar(get(vertex_dbg_data, *callgraphs[i], 
+	simpleFuncTableRowdata tar(get(boost::vertex_dbg_data, *callgraphs[i], 
 				       boost::target(*(ep.first), *callgraphs[i])));
 
 	// insert target vertex
@@ -4126,7 +4134,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 	}
 
-	callEdgeRowdata edge(get(edge_dbg_data, *callgraphs[i], *ep.first));
+	callEdgeRowdata edge(get(boost::edge_dbg_data, *callgraphs[i], *ep.first));
 	edge.set_id(++nextAggCallGraphId);
 
 	callgraph->insertEdge(src, tar, edge);

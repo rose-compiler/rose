@@ -77,33 +77,40 @@ namespace boost {
 //-----------------------------------------------------------------------------
 //! graph database storage class 
 template<class VertexType, class EdgeType, 
-	class BoostVertexList = vecS, class BoostEdgeList = vecS, class BoostDirection = bidirectionalS,
-	class BoostVertexProperty = GraphvizVertexProperty, class BoostEdgeProperty = GraphvizEdgeProperty, class BoostGraphProperty = GraphvizGraphProperty >
+	class BoostVertexList = boost::vecS, class BoostEdgeList = boost::vecS, class BoostDirection = boost::bidirectionalS,
+	class BoostVertexProperty = boost::GraphvizVertexProperty, class BoostEdgeProperty = boost::GraphvizEdgeProperty, class BoostGraphProperty = boost::GraphvizGraphProperty >
 class DatabaseGraph : 
-	public adjacency_list<
+	public boost::adjacency_list<
 		BoostVertexList, BoostEdgeList, BoostDirection,
-		property< vertex_index1_t, std::size_t, property<vertex_name_t, std::string,  property<vertex_color_t, default_color_type,
-			property<vertex_dbg_data_t, VertexType, BoostVertexProperty > > > >,
-		property<edge_dbg_data_t, 	EdgeType, 	BoostEdgeProperty>,
-		property<graph_dbg_data_t, 	int, BoostGraphProperty>
+		boost::property< boost::vertex_index1_t, std::size_t,
+            boost::property<boost::vertex_name_t, std::string,
+            boost::property<boost::vertex_color_t, boost::default_color_type,
+			boost::property<boost::vertex_dbg_data_t, VertexType,
+            BoostVertexProperty > > > >,
+		boost::property<boost::edge_dbg_data_t, EdgeType, BoostEdgeProperty>,
+		boost::property<boost::graph_dbg_data_t, int, BoostGraphProperty>
 	>
 {
 
 public:
 	
 	//! boost graph typedefs
-        typedef adjacency_list<
-		//vecS, vecS, bidirectionalS,
+        typedef boost::adjacency_list<
+		//boost::vecS, boost::vecS, bidirectionalS,
 		BoostVertexList, BoostEdgeList, BoostDirection,
-		property< vertex_index1_t, std::size_t, property<vertex_name_t, std::string,  property<vertex_color_t, default_color_type,
-			property<vertex_dbg_data_t, VertexType, BoostVertexProperty > > > >,
-		property<edge_dbg_data_t, 	EdgeType, BoostEdgeProperty>,
-		property<graph_dbg_data_t, 	int, BoostGraphProperty>
+		boost::property< boost::vertex_index1_t, std::size_t,
+        boost::property<boost::vertex_name_t, std::string,
+        boost::property<boost::vertex_color_t, boost::default_color_type,
+			boost::property<boost::vertex_dbg_data_t, VertexType,
+            BoostVertexProperty > > > >,
+		boost::property<boost::edge_dbg_data_t, 	EdgeType,
+        BoostEdgeProperty>,
+		boost::property<boost::graph_dbg_data_t, 	int, BoostGraphProperty>
 	> dbgType;
-	typedef typename graph_traits< dbgType >::vertex_descriptor dbgVertex;
-	typedef typename graph_traits< dbgType >::vertex_iterator 	dbgVertexIterator;
-	typedef typename graph_traits< dbgType >::edge_descriptor  	dbgEdge;
-	typedef typename graph_traits< dbgType >::edge_iterator  		dbgEdgeIterator;
+	typedef typename boost::graph_traits< dbgType >::vertex_descriptor dbgVertex;
+	typedef typename boost::graph_traits< dbgType >::vertex_iterator 	dbgVertexIterator;
+	typedef typename boost::graph_traits< dbgType >::edge_descriptor  	dbgEdge;
+	typedef typename boost::graph_traits< dbgType >::edge_iterator  		dbgEdgeIterator;
 	typedef typename std::pair<bool, dbgEdge>										dbgEdgeReturn;
 	//typedef boost::property<boost::vertex_dbg_data_t, VertexType, boost::GraphvizVertexProperty> 	vertexDbgData;
 	//typedef boost::property<boost::edge_dbg_data_t, 	EdgeType, 	boost::GraphvizEdgeProperty> 		edgeDbgData;
@@ -234,12 +241,12 @@ DatabaseGraph<DBG_TEMPLATE_CLASSES>::insertVertex(VertexType& e1, string name)
 		// already there... , only set name etc.
 	} else {
 		vdesc = add_vertex( *this );
-		put( vertex_dbg_data, *this, vdesc, e1 );
-		put( vertex_index1, *this, vdesc, e1.get_id() );
+		put( boost::vertex_dbg_data, *this, vdesc, e1 );
+		put( boost::vertex_index1, *this, vdesc, e1.get_id() );
 	}
-	put( vertex_name, *this, vdesc, name );
+	put( boost::vertex_name, *this, vdesc, name );
 	// WARNING - dont use get( attr, G, vdesc)["label"] !!! , that's not for writing
-	get( vertex_attribute, *this )[vdesc]["label"] = name;
+	get( boost::vertex_attribute, *this )[vdesc]["label"] = name;
 	//cerr << " added vertex || " << get(vertex_index1, *this, vdesc) << " " << name<< endl; // debug
 	//return e1.get_id();
 	return vdesc;
@@ -255,12 +262,12 @@ DatabaseGraph<DBG_TEMPLATE_CLASSES>::insertVertex(VertexType& e1, string name, i
 		// already there... , only set name etc.
 	} else {
 		vdesc = add_vertex( *this );
-		put( vertex_dbg_data, *this, vdesc, e1 );
-		put( vertex_index1, *this, vdesc, e1.get_id() );
+		put( boost::vertex_dbg_data, *this, vdesc, e1 );
+		put( boost::vertex_index1, *this, vdesc, e1.get_id() );
 	}
 	//vdesc = add_vertex( *this );
-	put( vertex_name, *this, vdesc, name );
-	get( vertex_attribute, *this )[vdesc]["label"] = name;
+	put( boost::vertex_name, *this, vdesc, name );
+	get( boost::vertex_attribute, *this )[vdesc]["label"] = name;
 	//cerr << " added vertex sg || " << get(vertex_index1, *this, vdesc) << " " << name<< endl; // debug
 	//return e1.get_id();
 	return vdesc;
@@ -294,7 +301,7 @@ DatabaseGraph<DBG_TEMPLATE_CLASSES>::insertEdge(VertexType& e1, VertexType& e2, 
 	    cerr << " add edge || failed!!! " << endl;
 	    return ret;
 	  }
-	  put( edge_dbg_data, *this, eres.first, value );
+	  put( boost::edge_dbg_data, *this, eres.first, value );
 	  ei = eres.first;
 	  //cerr << " added edge || " << get(vertex_index1, *this, boost::target(ei,*this))<<","<< get(vertex_index1, *this, boost::source(ei,*this)) << endl; // debug
 	  //cerr << "   for vertex |1 " << get(vertex_index1, *this, boost::target(ei,*this)) << " " << get(vertex_attribute, *this, boost::target(ei,*this))["label"] << endl; // debug
@@ -388,10 +395,10 @@ DBG_TEMPLATE_DEF void DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDOTFile(string
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchVertex(VertexType &node, dbgVertex &vdesc) const
 {
-	typename graph_traits< dbgType >::vertex_iterator vi,vend;
+	typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
 	tie(vi,vend) = vertices( *this );
 	for(; vi!=vend; vi++) {
-		if( get( vertex_dbg_data,  *this , *vi).get_id() == node.get_id() ) {
+		if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == node.get_id() ) {
 			vdesc = *vi;
 			return true;
 		}
@@ -408,10 +415,10 @@ DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchEdge(EdgeType &
 {
   
 
-	typename graph_traits< dbgType >::edge_iterator ei,eend;
+	typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
 	tie(ei,eend) = edges( *this );
 	for(; ei!=eend; ei++) {
-		if( get( edge_dbg_data,  *this , *ei).get_id() == edge.get_id() ) {
+		if( get( boost::edge_dbg_data,  *this , *ei).get_id() == edge.get_id() ) {
 			edesc = *ei;
 			return true;
 		}
@@ -429,7 +436,7 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::nodeIsUsed(VertexType 
 	dbgVertex vi;
 	if(! searchVertex(node, vi) ) return false;
 	
-	typename graph_traits< dbgType >::in_edge_iterator ii,iend;
+	typename boost::graph_traits< dbgType >::in_edge_iterator ii,iend;
 	tie(ii,iend) = in_edges(vi, *this );
 	if( ii == iend ) return false;
 	return true;
@@ -518,17 +525,17 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 		// get only used functions
 		Query query1 = mpGDB->getQuery();
 		query1 << "SELECT DISTINCT sourceId FROM " << cgEdges.getName() << " WHERE graphId='" << gid <<"' ORDER BY sourceId ASC; ";
-		Result *res = mpGDB->select( query1.preview().c_str() );
+		StoreQueryResult *res = mpGDB->select( query1.str().c_str() );
 		assert( res );
-		for(Result::iterator i=res->begin(); i!= res->end(); i++) {
+		for(StoreQueryResult::iterator i=res->begin(); i!= res->end(); i++) {
 			funcids.push_back( (*i)[0] );
 		}
 
 		Query query2 = mpGDB->getQuery();
 		query2 << "SELECT DISTINCT targetId FROM " << cgEdges.getName() << " WHERE graphId='" << gid <<"' ORDER BY targetId ASC ; ";
-		res = mpGDB->select( query2.preview().c_str() );
+		res = mpGDB->select( query2.str().c_str() );
 		assert( res );
-		for(Result::iterator i=res->begin(); i!= res->end(); i++) {
+		for(StoreQueryResult::iterator i=res->begin(); i!= res->end(); i++) {
 			long newid = (*i)[0];
 			list<long>::iterator fiditer = find( funcids.begin(), funcids.end(), newid );
 			if(fiditer == funcids.end() ) {
@@ -541,12 +548,12 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 		// get all nodes in the graph
 		Query query1 = mpGDB->getQuery();
 		query1 << "SELECT DISTINCT nodeId,name FROM " << cgNodes.getName() << " WHERE graphId='" << gid <<"' ORDER BY nodeId ASC; ";
-		Result *res = mpGDB->select( query1.preview().c_str() );
+		StoreQueryResult *res = mpGDB->select( query1.str().c_str() );
 		assert( res );
-		for(Result::iterator i=res->begin(); i!= res->end(); i++) {
+		for(StoreQueryResult::iterator i=res->begin(); i!= res->end(); i++) {
 			funcids.push_back( (*i)[0] );
 			if(mNameColumn <= 0) {
-				nodeNames[ (int)((*i)[0]) ] = (*i)[1];
+				nodeNames[ (int)((*i)[0]) ] = (std::string)(*i)[1];
 			}
 		}
 	}
@@ -569,10 +576,10 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 		string recolname = fieldsVertexTable[ mSubgraphReferenceColumn ];
 		Query query1 = mpGDB->getQuery();
 		query1 << "SELECT DISTINCT "<< recolname << " FROM " << nodeinst.table() << " ; ";
-		//cout << " D1 "<< query1.preview() << endl; // debug
-		Result *res = mpGDB->select( query1.preview().c_str() );
+		//cout << " D1 "<< query1.str() << endl; // debug
+		StoreQueryResult *res = mpGDB->select( query1.str().c_str() );
 		assert( res );
-		for(Result::iterator i=res->begin(); i!= res->end(); i++) {
+		for(StoreQueryResult::iterator i=res->begin(); i!= res->end(); i++) {
 			// retrieve each entry, and add it to the subgraphs map
 			int sid = (*i)[0];
 			// id have to be >0
@@ -580,8 +587,8 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 			
 			Query query2 = mpGDB->getQuery();
 			query2 << "SELECT "<< fieldlist << " FROM " << mpSubgraphNameRowdata->getTableName() << " WHERE id="<< sid << "; ";
-			//cout << " D2 "<< query1.preview() << endl; // debug
-			Result *res = mpGDB->select( query2.preview().c_str() );
+			//cout << " D2 "<< query1.str() << endl; // debug
+			StoreQueryResult *res = mpGDB->select( query2.str().c_str() );
 			assert( res );
 			Row sqlrow = (*res->begin());
 			std::ostringstream subgraphName;
@@ -599,25 +606,25 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 		long id = (*i);
 		std::ostringstream select;
 		select << "SELECT "<< row.field_list() <<" FROM " << row.table() << " WHERE id='" << id <<"' ; ";
-		Result *res = mpGDB->select( select.str().c_str() );
+		StoreQueryResult *res = mpGDB->select( select.str().c_str() );
 		assert( res->size() == 1);
 		string nodename;
 		Row sqlrow = (*res->begin());
 		//cout << " X " << sqlrow[0] << " " << sqlrow[1] << " " << sqlrow[2] << endl;
 		if(mNameColumn>0) {
-			nodename	= sqlrow[ mNameColumn ]; // get column with index mNameColumn from first sql row
+			nodename	= (std::string)sqlrow[ mNameColumn ]; // get column with index mNameColumn from first sql row
 		} else {
 			nodename	= nodeNames[ id ];
 		}
 
 		// create boost vertex
-		typename graph_traits< dbgType >::vertex_descriptor vdesc;
+		typename boost::graph_traits< dbgType >::vertex_descriptor vdesc;
 		vdesc = add_vertex( *this );
-		put( vertex_name, *this, vdesc, nodename );
+		put( boost::vertex_name, *this, vdesc, nodename );
 		VertexType content(sqlrow);
-		put( vertex_dbg_data, *this, vdesc, content );
-		put( vertex_index1, *this, vdesc, id );
-		get( vertex_attribute, *this )[vdesc]["label"] = nodename;
+		put( boost::vertex_dbg_data, *this, vdesc, content );
+		put( boost::vertex_index1, *this, vdesc, id );
+		get( boost::vertex_attribute, *this )[vdesc]["label"] = nodename;
 		if(mInitSubgraphs) {
 			// TODO
 		}
@@ -630,20 +637,20 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 		// add boost edges
 		{
 		bool parFound = false, succFound = false;
-		typename graph_traits< dbgType >::vertex_iterator vi,vend;
+		typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
 		tie(vi,vend) = vertices( *this );
-		typename graph_traits< dbgType >::vertex_descriptor par=*vi, succ=*vi;
+		typename boost::graph_traits< dbgType >::vertex_descriptor par=*vi, succ=*vi;
 
 		for(; vi!=vend; vi++) {
 			//cout << " SRCH " << mNodes[j].value_list() << endl;
 			//if( C[j].first.get_id() == edges[i].get_sourceId() ) {
 				//gpar = C[j].first;
 				//gsuccessor = C[j].first;
-			if( get( vertex_dbg_data,  *this , *vi).get_id() == edges[i].get_sourceId() ) {
+			if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == edges[i].get_sourceId() ) {
 				par = *vi;
 				parFound = true;
 			}
-			if( get( vertex_dbg_data,  *this , *vi).get_id() == edges[i].get_targetId() ) {
+			if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == edges[i].get_targetId() ) {
 				succ = *vi;
 				succFound = true;
 			}
@@ -670,12 +677,12 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 		  long id = edges[i].get_edgeId();
 		  std::ostringstream select;
 		  select << "SELECT "<< row.field_list() <<" FROM " << row.table() << " WHERE id='" << id <<"' ; ";
-		  Result *res = mpGDB->select( select.str().c_str() );
+		  StoreQueryResult *res = mpGDB->select( select.str().c_str() );
 		  assert( res->size() == 1);
 		  Row sqlrow = (*res->begin());
 		  
 		  EdgeType content(sqlrow);
-		  put( edge_dbg_data, *this, eres.first, content );
+		  put( boost::edge_dbg_data, *this, eres.first, content );
 		  
 		}
 		}
@@ -686,7 +693,7 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 		/*typedef graph_traits<boostGraph>::vertex_descriptor boostVert;
 
 		cerr << " BOOST TTT topo start " << endl;
-		//typedef adjacency_list<vecS, vecS, directedS, property<vertex_color_t, default_color_type> > Graph;
+		//typedef adjacency_list<boost::vecS, boost::vecS, directedS, property<vertex_color_t, default_color_type> > Graph;
 		//typedef boostGraph Graph;
 
 		typedef boost::graph_traits<boostGraph>::vertex_descriptor Vertex;
@@ -793,12 +800,12 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDatabase( void 
 	mpGDB->execute( delnodes.str().c_str() );
 	
 	// save node IDs
-	typename graph_traits< dbgType >::vertex_iterator vi,vend;
+	typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
 	tie(vi,vend) = vertices( *this );
 	for(; vi!=vend; vi++) {
 		graphnodeRowdata node( UNKNOWNID, gid, 
-				get( vertex_dbg_data, *this, *vi).get_id(), 
-				get( vertex_name, *this, *vi) );
+				get( boost::vertex_dbg_data, *this, *vi).get_id(), 
+				get( boost::vertex_name, *this, *vi) );
 		cgNodes.insert( &node ); 
 	}
 
@@ -810,13 +817,13 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDatabase( void 
 	mpGDB->execute( deledges.str().c_str() );
 	
 	// save edges
-	typename graph_traits< dbgType >::edge_iterator ei,eend;
+	typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
 	tie(ei,eend) = edges( *this );
 	for(; ei!=eend; ei++) {
 		graphedgeRowdata edge( UNKNOWNID, gid, 
-				get( edge_dbg_data, *this, *ei ).get_id(),
-				get( vertex_dbg_data, *this, boost::source( *ei, *this ) ).get_id(),
-				get( vertex_dbg_data, *this, boost::target( *ei, *this ) ).get_id()
+				get( boost::edge_dbg_data, *this, *ei ).get_id(),
+				get( boost::vertex_dbg_data, *this, boost::source( *ei, *this ) ).get_id(),
+				get( boost::vertex_dbg_data, *this, boost::target( *ei, *this ) ).get_id()
 			);
 		cgEdges.insert( &edge ); 
 	}
