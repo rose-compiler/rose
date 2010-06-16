@@ -155,6 +155,7 @@ void event2(struct model* m)
 
     m->i_ = -m->i_;
 
+    m->i_ = ++i + m->i_;
     m->i_ = ++i + j + m->i_;
 
     m->i_ = i + j + m->i_;
@@ -164,6 +165,12 @@ void event2(struct model* m)
     m->i_ = i - (j + m->i_);
     m->i_ = (i - (j - (k - m->i_)));
 
-    m->i_ = i - 2 * m->i_ - m->i_;
-    m->i_ = i - 2 * m->i_;
+    //m->i_ = i - 2 * m->i_ - m->i_;
+    //m->i_ = i - 2 * m->i_;
+
+    m->i_ += ++i / (j = 2);
+#if 0
+    m->i_ += push(++i / (push(i), i = 1));
+    m->i_ -= (i = pop(), i--, pop());
+#endif
 }

@@ -92,7 +92,7 @@ namespace SymbolicSemantics {
         }
 
         /** Returns the value of a known constant. Assumes this value is a known constant. */
-        uint64_t value() const {
+        uint64_t known_value() const {
             LeafNode *leaf = dynamic_cast<LeafNode*>(expr);
             assert(leaf);
             return leaf->get_value();
@@ -321,7 +321,7 @@ namespace SymbolicSemantics {
         template <size_t FromLen, size_t ToLen>
         ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
             if (a.is_known())
-                return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.value());
+                return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.known_value());
             if (FromLen==ToLen)
                 return ValueType<ToLen>(a.expr);
             if (FromLen>ToLen)
@@ -337,7 +337,7 @@ namespace SymbolicSemantics {
         template <size_t FromLen, size_t ToLen>
         ValueType<ToLen> signedExtend(const ValueType<FromLen> &a) const {
             if (a.is_known())
-                return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.value()));
+                return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.known_value()));
             if (FromLen==ToLen)
                 return ValueType<ToLen>(a.expr);
             if (FromLen > ToLen)
@@ -356,7 +356,7 @@ namespace SymbolicSemantics {
             if (0==BeginAt)
                 return unsignedExtend<Len,EndAt-BeginAt>(a);
             if (a.is_known())
-                return ValueType<EndAt-BeginAt>(a.value());
+                return ValueType<EndAt-BeginAt>(a.known_value());
             return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
                                                              LeafNode::create_integer(32, BeginAt),
                                                              LeafNode::create_integer(32, EndAt),
@@ -608,11 +608,11 @@ namespace SymbolicSemantics {
         ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
             if (a.is_known()) {
                 if (b.is_known()) {
-                    return ValueType<Len>(LeafNode::create_integer(Len, a.value()+b.value()));
-                } else if (0==a.value()) {
+                    return ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()));
+                } else if (0==a.known_value()) {
                     return b;
                 }
-            } else if (b.is_known() && 0==b.value()) {
+            } else if (b.is_known() && 0==b.known_value()) {
                 return a;
             }
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ADD, a.expr, b.expr));
@@ -659,7 +659,7 @@ namespace SymbolicSemantics {
         template <size_t Len>
         ValueType<Len> invert(const ValueType<Len> &a) const {
             if (a.is_known())
-                return ValueType<Len>(LeafNode::create_integer(Len, ~a.value()));
+                return ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()));
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_INVERT, a.expr));
         }
 

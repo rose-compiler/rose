@@ -2,6 +2,7 @@
 
 #include "eventReverser.h"
 #include "facilityBuilder.h"
+#include "utilities.h"
 #include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -232,18 +233,19 @@ class reverserTraversal : public AstSimpleProcessing
 {
     public:
         reverserTraversal() 
-            : events_num(0),  
-            model_type(0),
-            AstSimpleProcessing()
+            : AstSimpleProcessing(),
+            events_num(0),  
+            model_type(0)
     {}
         virtual void visit(SgNode* n);
+
+        int events_num;
+        SgClassType* model_type;
         vector<SgFunctionDeclaration*> funcs_gen;
         vector<SgFunctionDeclaration*> all_funcs;
         vector<SgStatement*> var_decls;
         vector<SgStatement*> var_inits;
         vector<string> event_names;
-        SgClassType* model_type;
-        int events_num;
 };
 
 
