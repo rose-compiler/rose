@@ -16,10 +16,7 @@ using namespace std;
 void
 LowLevelRewrite::remove(SgStatement* astNode)
 {
-	//6/15/2010 - These functions have been gutted and just call through to SageInterface
-	//The implmementations were not updated to work correctly with the new AST
-	//This class as a whole is deprecated.
-	SageInterface::removeStatement(astNode);
+     removeStatement(astNode);
 }
 
 
@@ -1562,11 +1559,6 @@ void
 LowLevelRewrite::
 removeStatement ( SgStatement* astNode )
    {
-	//6/15/2010 - These functions have been gutted and just call through to SageInterface
-	//The implmementations were not updated to work correctly with the new AST
-	//This class as a whole is deprecated.
-	SageInterface::removeStatement(astNode);
-#if 0
   // DQ (11/7/2003): Call Qing's implementation of remove_statement written at the SAGE III level
 
   // This function only supports the removal of a whole statement (not an expression within a statement)
@@ -1582,17 +1574,16 @@ removeStatement ( SgStatement* astNode )
      if (parentStatement != NULL)
         {
           bool isRemovable = isRemovableStatement(targetStatement);
-
+#if 0
           printf ("In parentStatement = %s remove targetStatement = %s (isRemovable = %s) \n",
                parentStatement->sage_class_name(),
                targetStatement->sage_class_name(),
                isRemovable ? "true" : "false");
-
+#endif
 
           if ( isRemovable == true )
                parentStatement->remove_statement(targetStatement);
         }
-#endif
    }
 
 
