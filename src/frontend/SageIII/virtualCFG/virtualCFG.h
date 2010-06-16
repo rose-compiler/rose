@@ -48,7 +48,8 @@ namespace VirtualCFG {
     eckComputedGotoCaseLabel, //! Case in computed goto -- number needs to be computed separately
     eckArithmeticIfLess, //! Edge for the arithmetic if expression being less than zero
     eckArithmeticIfEqual, //! Edge for the arithmetic if expression being equal to zero
-    eckArithmeticIfGreater //! Edge for the arithmetic if expression being greater than zero
+    eckArithmeticIfGreater, //! Edge for the arithmetic if expression being greater than zero
+    eckInterprocedural //! Edge spanning two procedures
   };
 
   //! A node in the control flow graph.  Each CFG node corresponds to an AST
