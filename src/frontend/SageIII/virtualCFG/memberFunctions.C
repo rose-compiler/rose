@@ -2987,7 +2987,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
 	  interproceduralControlFlowGraph ?
 	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
 	if (decl)
-	  makeEdge(CFGNode(this, idx), decl->cfgForBeginning(),
+	  makeEdge(CFGNode(this, idx), decl->get_definition()->cfgForBeginning(),
 		   result);
 	else
 	  makeEdge(CFGNode(this, idx),
@@ -3011,7 +3011,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
 	  interproceduralControlFlowGraph ?
 	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
 	if (decl)
-	  makeEdge(decl->cfgForEnd(), CFGNode(this, idx),
+	  makeEdge(decl->get_definition()->cfgForEnd(), CFGNode(this, idx),
 		   result);
 	else
 	  makeEdge(CFGNode(this, 2),
