@@ -10,9 +10,8 @@
 
 
 // mysql interface
-#include <sqlplus.hh>
+#include <mysql++.h>
 
-#include "TableAccess.h"
 #include "TableAccessMacros.h"
 
 //! if this define equals one, the whole database is dropped during initialization (for debugging)
@@ -54,13 +53,13 @@ public:
 	int execute(const char *query);
 	
 	//! execute a SQL query and check for success, returning the resulting rows
-	Result *select(const char *query);
+    mysqlpp::StoreQueryResult *select(const char *query);
 
 	//! get a query object for the database
-	Query getQuery( void ) { return connection.query(); };
+    mysqlpp::Query getQuery( void ) { return connection.query(); };
 
 	//! execute the insert_id command
-	int getInsertId() { return connection.insert_id(); };
+	int getInsertId() { return connection.query().insert_id(); };
 	
 	// debugging functions
 
@@ -74,19 +73,19 @@ private:
 	bool connected;
 
 	//! mysql++ db connection object
-	Connection connection;
+    mysqlpp::Connection connection;
 
 	//! database name for database login
-	string dbName;
+	std::string dbName;
 
 	//! hostname for database login
-	string dbHost;
+	std::string dbHost;
 
 	//! username for database login
-	string dbUsername;
+	std::string dbUsername;
 
 	//! password for database login
-	string dbPwd;
+	std::string dbPwd;
 
 	//! port for database login
 	unsigned int dbPort;
@@ -101,9 +100,10 @@ private:
 	bool dbTe;
 
 	//! socket name for database connection
-	string dbSock;
+	std::string dbSock;
 
 	//! client flag for database connection
+    //! Deprecated in MySQL 5.0+
 	unsigned int dbFlag;
 
 private:

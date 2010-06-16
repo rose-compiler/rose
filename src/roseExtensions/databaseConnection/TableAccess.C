@@ -10,7 +10,7 @@
 #include "GlobalDatabaseConnection.h"
 
 // mysql interface
-#include <sqlplus.hh>
+#include <mysql++.h>
 
 
 //-----------------------------------------------------------------------------

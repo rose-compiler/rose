@@ -11,7 +11,7 @@
 #define DATABASEGRAPH_H
 
 // for graph output as .dot file
-#include "/home/thuerey1/local/include/config.h"
+#include "rose_config.h"
 #include <algorithm>
 
 // database access, dont redefine tables 
