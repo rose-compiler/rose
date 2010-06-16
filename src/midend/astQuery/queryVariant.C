@@ -123,7 +123,7 @@ querySolverGrammarElementFromVariantVector (
 
      Rose_STL_Container<SgNode*> nodesToVisitTraverseOnlyOnce;
 
-     pushNewNode (returnNodeList,targetVariantVector,astNode);
+     pushNewNode (&returnNodeList,targetVariantVector,astNode);
 
      vector<SgNode*>               succContainer      = astNode->get_traversalSuccessorContainer();
      vector<pair<SgNode*,string> > allNodesInSubtree  = astNode->returnDataMemberPointers();
@@ -133,7 +133,7 @@ querySolverGrammarElementFromVariantVector (
          ++iItr )
        if( isSgType(iItr->first) != NULL  )
          if(std::find(succContainer.begin(),succContainer.end(),iItr->first) == succContainer.end() )
-           pushNewNode (returnNodeList,targetVariantVector,iItr->first);
+           pushNewNode (&returnNodeList,targetVariantVector,iItr->first);
 
      
      return returnNodeList;
