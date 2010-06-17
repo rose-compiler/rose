@@ -509,8 +509,8 @@ void linuxSyscall(LinuxMachineState& ms) {
 
     case 91: { // munmap
       uint32_t start = ms.gprs[x86_gpr_bx];
-      uint32_t length = ms.gprs[x86_gpr_cx];
 #ifdef DEBUG
+      uint32_t length = ms.gprs[x86_gpr_cx];
       fprintf(stdout, "munmap(0x%08"PRIX32", 0x%08"PRIX32")\n", start, length);
 #endif
       Page& p = ms.memory.findPage(start);
@@ -643,7 +643,7 @@ void linuxSyscall(LinuxMachineState& ms) {
 	if (result == -1) {
 	  user_result = -errno;
 	  break;
-	} else if (result < len) {
+	} else if ((uint32_t)result < len) {
 	  user_result += result;
 	  break;
 	} else {
@@ -664,7 +664,7 @@ void linuxSyscall(LinuxMachineState& ms) {
       size_t old_size = ms.gprs[x86_gpr_cx];
       size_t new_size = ms.gprs[x86_gpr_dx];
       unsigned long flags = ms.gprs[x86_gpr_si];
-      fprintf(stderr, "mremap(0x%08X, 0x%08X, 0x%08X, 0x%08X)\n", old_address, old_size, new_size, flags);
+      fprintf(stderr, "mremap(0x%08X, 0x%08zX, 0x%08zX, 0x%08lX)\n", old_address, old_size, new_size, flags);
 #if 0
       Segment* seg = st.memory.find_segment_ending_at(old_address + old_size);
       if (!seg) {
@@ -763,7 +763,7 @@ sigaction_done:
       if (result == NULL) {
 	ms.gprs[x86_gpr_ax] = (uint32_t)(-errno);
       } else {
-	int length = strnlen(sysbuf, size);
+	size_t length = strnlen(sysbuf, size);
 	ms.gprs[x86_gpr_ax] = length >= size ? size : length + 1;
 	ms.memory.writeMultiple((const uint8_t*)sysbuf, length, buf);
       }
@@ -932,10 +932,12 @@ sigaction_done:
     }
 
     case 240: { // futex
+#if 0
       uint32_t futex = ms.gprs[x86_gpr_bx];
       int op = ms.gprs[x86_gpr_cx];
       int val = ms.gprs[x86_gpr_dx];
       uint32_t timeout = ms.gprs[x86_gpr_si];
+#endif
       ms.gprs[x86_gpr_ax] = (uint32_t)(-ENOSYS);
       break;
     }
@@ -971,7 +973,7 @@ sigaction_done:
 
     case 258: { // set_tid_address
       uint32_t addr = ms.gprs[x86_gpr_bx];
-      uint32_t val = ms.memory.read<4>(addr);
+      pid_t val = ms.memory.read<4>(addr);
       if (val != getpid()) {
 	ms.gprs[x86_gpr_ax] = (uint32_t)(-EINVAL);
       } else {

@@ -2,6 +2,7 @@
 
 #include "rose.h"
 #include "x86InstructionSemantics.h"
+#include "integerOps.h"
 #include "simulate.h"
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
@@ -36,38 +37,47 @@ struct EmulationPolicy {
     EmulationPolicy(): ms(), id(ms.memory) {}
 
     void setupExecutableContents(SgAsmInterpretation* interp) {
-        SgAsmGenericHeader* header = interp->get_header();
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        ROSE_ASSERT(1==headers.size()); /*original code did not support dynamic linking; we still don't [RPM 2010-06] */
+        SgAsmGenericHeader* header = headers[0];
         ROSE_ASSERT (header);
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(header);
         ROSE_ASSERT (elfHeader);
-        SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
-        ROSE_ASSERT (asmFile);
-        SgAsmGenericFile* genFile = asmFile->get_genericFile();
-        ROSE_ASSERT (genFile);
-        const SgAsmElfSegmentTableEntryPtrList& segments = elfHeader->get_segment_table()->get_entries()->get_entries();
-        for (size_t i = 0; i < segments.size(); ++i) {
-            SgAsmElfSegmentTableEntry* ent = segments[i];
-            if (ent->get_type() != SgAsmElfSegmentTableEntry::PT_LOAD) continue;
-            bool willAllowRead = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM;
-            bool willAllowWrite = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM;
-            bool willAllowExec = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_EPERM;
-            uint32_t vaddr = (uint32_t)ent->get_vaddr();
-            uint64_t offset = ent->get_offset();
-            uint32_t filesz = (uint32_t)ent->get_filesz();
-            uint32_t memsz = (uint32_t)ent->get_memsz();
-            fprintf(stderr, "Loading at 0x%"PRIx32" with file size 0x%"PRIx32" and memory size 0x%"PRIx32"\n", vaddr, filesz, memsz);
-            SgFileContentList contentList = genFile->content(offset, filesz);
-            for (uint32_t j = 0; j < memsz + PAGE_SIZE; j += PAGE_SIZE) {
-                ms.memory.mapZeroPageIfNeeded(j + vaddr);
-            }
-            ms.memory.writeMultiple(&contentList[0], filesz, vaddr);
-            for (uint32_t j = filesz; j < memsz; j += PAGE_SIZE) {
-                ms.memory.mapZeroPageIfNeeded(j + vaddr);
-            }
-            for (uint32_t j = 0; j < filesz; j += PAGE_SIZE) {
-                ms.memory.findPage(j + vaddr).allow_read = willAllowRead;
-                ms.memory.findPage(j + vaddr).allow_write = willAllowWrite;
-                ms.memory.findPage(j + vaddr).allow_execute = willAllowExec;
+        SgAsmGenericFile* genFile = isSgAsmGenericFile(header->get_parent());
+        ROSE_ASSERT(genFile);
+
+        /* Find an appropriate disassembler */
+        id.init_disassembler(header);
+
+        /* Set up mappings for all ELF Segments of this ELF Header. An ELF Segment is represented by an SgAsmGenericSection
+         * with a non-null segment table entry. */
+        SgAsmGenericSectionPtrList mapped_sections = header->get_mapped_sections();
+        for (size_t i=0; i<mapped_sections.size(); ++i) {
+            SgAsmElfSection *segment = isSgAsmElfSection(mapped_sections[i]);
+            SgAsmElfSegmentTableEntry *ent = segment ? segment->get_segment_entry() : NULL;
+            if (ent && ent->get_type()==SgAsmElfSegmentTableEntry::PT_LOAD) {
+                bool willAllowRead = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM;
+                bool willAllowWrite = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM;
+                bool willAllowExec = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM;
+                uint32_t vaddr = (uint32_t)ent->get_vaddr();
+                uint64_t offset = ent->get_offset();
+                uint32_t filesz = (uint32_t)ent->get_filesz();
+                uint32_t memsz = (uint32_t)ent->get_memsz();
+                fprintf(stderr, "Loading at 0x%"PRIx32" with file size 0x%"PRIx32" and memory size 0x%"PRIx32"\n",
+                        vaddr, filesz, memsz);
+                SgFileContentList contentList = genFile->content(offset, filesz);
+                for (uint32_t j = 0; j < memsz + PAGE_SIZE; j += PAGE_SIZE) {
+                    ms.memory.mapZeroPageIfNeeded(j + vaddr);
+                }
+                ms.memory.writeMultiple(&contentList[0], filesz, vaddr);
+                for (uint32_t j = filesz; j < memsz; j += PAGE_SIZE) {
+                    ms.memory.mapZeroPageIfNeeded(j + vaddr);
+                }
+                for (uint32_t j = 0; j < filesz; j += PAGE_SIZE) {
+                    ms.memory.findPage(j + vaddr).allow_read = willAllowRead;
+                    ms.memory.findPage(j + vaddr).allow_write = willAllowWrite;
+                    ms.memory.findPage(j + vaddr).allow_execute = willAllowExec;
+                }
             }
         }
     }
@@ -128,6 +138,7 @@ struct EmulationPolicy {
 
     Value<1> true_() {return 1;}
     Value<1> false_() {return 0;}
+    Value<1> undefined_() {return 1;} /* used e.g., by AND to set value of AF */
 
     template <size_t Len>
     Value<Len> and_(Value<Len> a, Value<Len> b) {
@@ -147,6 +158,11 @@ struct EmulationPolicy {
     template <size_t Len>
     Value<Len> invert(Value<Len> a) {
         return ~a.val();
+    }
+
+    template <size_t Len>
+    Value<Len> negate(Value<Len> a) {
+        return -a.val();
     }
 
     template <size_t Len>
@@ -177,9 +193,29 @@ struct EmulationPolicy {
         return e.val();
     }
 
+    template <size_t Len, size_t SALen>
+    Value<Len> shiftLeft(Value<Len> a, Value<SALen> sa) {
+        return IntegerOps::shiftLeft<Len>(a.val(), sa.val());
+    }
+
+    template <size_t Len, size_t SALen>
+    Value<Len> shiftRight(Value<Len> a, Value<SALen> sa) {
+        return IntegerOps::shiftRightLogical<Len>(a.val(), sa.val());
+    }
+
+    template <size_t Len, size_t SALen>
+    Value<Len> shiftRightArithmetic(Value<Len> a, Value<SALen> sa) {
+        return IntegerOps::shiftRightArithmetic<Len>(a.val(), sa.val());
+    }
+
     template <size_t Len1, size_t Len2>
     Value<Len1> rotateLeft(Value<Len1> a, Value<Len2> b) {
         return (a.val() << b.val()) | (a.val() >> (Len1 - b.val()));
+    }
+
+    template <size_t Len1, size_t Len2>
+    Value<Len1> rotateRight(Value<Len1> a, Value<Len2> b) {
+        return IntegerOps::rotateRight<Len1>(a.val(), b.val());
     }
 
     template <size_t Len1, size_t Len2>
@@ -214,19 +250,24 @@ struct EmulationPolicy {
 
     template <size_t From, size_t To>
     Value<To> signExtend(Value<From> a) {
-        uint64_t result = a.val() | ((a.val() & (SHL1<From - 1>::value)) ? (SHL1<To>::value - SHL1<From>::value) : 0);
-        return result;
+        return IntegerOps::signExtend<From, To, uint64_t>(a.val());
     }
 
     template <size_t Len>
     Value<Len> leastSignificantSetBit(Value<Len> a) {
-        for (int i = 0; i < Len; ++i) {if (a.val() & shl1(i)) return i;}
+        for (size_t i=0; i<Len; ++i) {
+            if (a.val() & ((uint64_t)1<<i))
+                return i;
+        }
         return 0;
     }
 
     template <size_t Len>
     Value<Len> mostSignificantSetBit(Value<Len> a) {
-        for (int i = Len - 1; i >= 0; --i) {if (a.val() & shl1(i)) return i;}
+        for (size_t i=Len; i>0; --i) {
+            if (a.val() & ((uint64_t)1<<(i-1)))
+                return i-1;
+        }
         return 0;
     }
 
@@ -324,6 +365,18 @@ struct EmulationPolicy {
         linuxSyscall(ms);
     }
 
+    Value<32> filterCallTarget(Value<32> a) {
+        return a;
+    }
+
+    Value<32> filterReturnTarget(Value<32> a) {
+        return a;
+    }
+
+    Value<32> filterIndirectJumpTarget(Value<32> a) {
+        return a;
+    }
+
     void startBlock(uint64_t addr) {
     }
 
@@ -347,7 +400,7 @@ int main(int argc, char** argv) {
     EmulationPolicy policy;
     targetForSignals = &policy.ms;
     setup(policy.ms, argc - 1, argv + 1);
-    X86InstructionSemantics<EmulationPolicy> t(policy);
+    X86InstructionSemantics<EmulationPolicy, Value> t(policy);
     while (true) {
         if (policy.ms.ip == 0x00536967) { /* "\0Sig" in big-endian notation */
             simulate_sigreturn(policy.ms);
@@ -356,7 +409,7 @@ int main(int argc, char** argv) {
         try {
             /* fprintf(stderr, "Running instruction at 0x%08"PRIX32"\n", policy.ms.ip); */
             t.processInstruction(policy.id[policy.ms.ip]);
-        } catch (OverflowOfInstructionVector) {
+        } catch (...) {
             fprintf(stderr, "Bad instruction address 0x%08"PRIX32"\n", policy.ms.ip);
             abort();
         }

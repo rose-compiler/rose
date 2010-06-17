@@ -119,7 +119,8 @@ void simulate_signal_check(LinuxMachineState& ms, uint32_t sourceAddr) {
 SgAsmx86Instruction* IncrementalDisassembler::disassembleNewInstruction(uint64_t addr) {
   std::pair<std::vector<uint8_t>, SgAsmx86Instruction*>& insnData = insnMap[addr];
   std::vector<uint8_t> insnBuf = memory.readAsFarAsPossibleForExec(addr, 15);
-  insnData.second = X86Disassembler::disassemble(X86Disassembler::Parameters(addr, x86_insnsize_32), &insnBuf[0], insnBuf.size(), 0, NULL);
+
+  insnData.second = isSgAsmx86Instruction(disassembler->disassembleOne(&insnBuf[0], addr, insnBuf.size(), addr, NULL));
   ROSE_ASSERT (insnData.second);
   insnData.first = insnData.second->get_raw_bytes();
   return insnData.second;
