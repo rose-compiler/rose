@@ -755,14 +755,12 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
-     std::cerr << "looking for out-edges to SgFunDef " << std::endl;
+     std::cerr << "looking for out-edges to SgFunDef ";
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
      std::cerr << "found " << returnSites.size() << std::endl;
-     for (unsigned int i = 0; i < returnSites.size(); ++i) {
-       if (SageInterface::isAncestor(returnSites[i], this ))
-         makeEdge(CFGNode(this, idx), returnSites[i]->cfgForBeginning(), result);
-     }
+     for (unsigned int i = 0; i < returnSites.size(); ++i) 
+         makeEdge(CFGNode(this, idx), returnSites[i]->cfgForEnd(), result);
      break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
@@ -775,14 +773,12 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx) {
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: {
-     std::cerr << "looking for in-edges to SgFunDef " << std::endl;
+     std::cerr << "looking for in-edges to SgFunDef ";
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
      std::cerr << "found " << callExprs.size() << std::endl;
-     for (unsigned int i = 0; i < callExprs.size(); ++i) {
-       if (SageInterface::isAncestor(this,callExprs[i] ))
+     for (unsigned int i = 0; i < callExprs.size(); ++i) 
          makeEdge(callExprs[i]->cfgForEnd(), CFGNode(this, idx), result);
-     }
      break;
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
