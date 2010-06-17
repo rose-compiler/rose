@@ -249,8 +249,12 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
      * the default partitioner. */
     Partitioner *partitioner = new Partitioner;
     partitioner->set_search(isSgFile(file)->get_partitionerSearchHeuristics());
-    disassembler->set_partitioner(partitioner);
 
+    /* Partitioner configuration file specified with "-rose:partitioner_config" is stored in SgFile. Use it rather than
+     * the default configuration file. */
+    partitioner->set_config(isSgFile(file)->get_partitionerConfigurationFileName());
+
+    disassembler->set_partitioner(partitioner);
     disassembler->disassemble(interp, NULL, NULL);
 
     delete disassembler;

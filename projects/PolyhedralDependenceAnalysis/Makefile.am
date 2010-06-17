@@ -1,22 +1,19 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # . is necessary to ensure building the translator before building the tests
-SUBDIRS = . tests
+SUBDIRS = PMDAtoMDA
 
-CXXFLAGS += $(PIP_CPPFLAGS) $(FADA_CPPFLAGS) $(PPL_CPPFLAGS)
+if ROSE_USE_FADALIB
 
-INCLUDES = $(ROSE_INCLUDES)
+SUBDIRS += Common RoseToFada
 
-bin_PROGRAMS = TestRoseToFada TestRoseToPPL
+if ROSE_USE_PPL
 
-TestRoseToFada_SOURCES = TestRoseToFada.cpp RoseToFadaCommon.cpp RoseToFadaAST.cpp
-TestRoseToFada_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(PIP_LDFLAGS) $(FADA_LDFLAGS)
+SUBDIRS += RoseToPPL Schedule
 
-TestRoseToPPL_SOURCES = TestRoseToPPL.cpp RoseToFadaCommon.cpp RoseToFadaAST.cpp FadaToPPL.cpp
-TestRoseToPPL_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(PIP_LDFLAGS) $(FADA_LDFLAGS) $(PPL_LDFLAGS)
+endif
 
-EXTRA_DIST = RoseToFadaAST.hpp RoseToFadaCommon.hpp FadaToPPL.hpp
+endif
 
-clean-local:
-	rm -rf TestRoseToFada TestRoseToPPL *.o
+EXTRA_DIST = README Makefile.external
 
