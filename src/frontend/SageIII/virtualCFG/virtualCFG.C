@@ -335,7 +335,7 @@ namespace VirtualCFG {
       }
     } else if (isSgFunctionCallExp(srcNode) && srcIndex == 2) {
         return eckInterprocedural;
-    } else if (isSgFunctionDefinition(tgtNode) && tgtIndex == 0) {
+    } else if (isSgFunctionCallExp(tgtNode) && tgtIndex == 3) {
         return eckInterprocedural;
     } else {
       // No key
