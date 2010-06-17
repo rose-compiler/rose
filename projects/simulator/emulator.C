@@ -1,4 +1,3 @@
-#undef DEBUG
 
 #include "rose.h"
 #include "x86InstructionSemantics.h"
@@ -19,8 +18,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#undef DEBUG
-
 using namespace std;
 
 extern void simulate_signal_check(LinuxMachineState& ms, uint32_t sourceAddr);
@@ -34,8 +31,14 @@ struct EmulationPolicy {
     LinuxMachineState ms;
     IncrementalDisassembler id;
 
-    EmulationPolicy(): ms(), id(ms.memory) {}
+    EmulationPolicy(): ms(), id(ms.memory) {
+        /* Build a disassembler for 32-bit x86 (see tests/roseTests/binaryTests/disassembleBuffer.C for an example) */
+        SgAsmGenericFile *file = new SgAsmGenericFile();
+        SgAsmElfFileHeader *elf = new SgAsmElfFileHeader(file); /*creates an i386 header by default*/
+        id.init_disassembler(elf);
+    }
 
+#if 0 /*not actually ever used*/
     void setupExecutableContents(SgAsmInterpretation* interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         ROSE_ASSERT(1==headers.size()); /*original code did not support dynamic linking; we still don't [RPM 2010-06] */
@@ -81,6 +84,7 @@ struct EmulationPolicy {
             }
         }
     }
+#endif
 
     void setupArgs(const vector<string>& args) {
         /* Set up an initial stack */
@@ -387,30 +391,34 @@ struct EmulationPolicy {
         if (ms.signalQueue.anySignalsWaiting()) {
             simulate_signal_check(ms, insn->get_address());
         }
-#ifdef DEBUG
-        fprintf(stderr, "Starting instruction at %"PRIX64": %s\n", insn->get_address(), unparseInstruction(insn).c_str());
-#endif
     }
 
     void finishInstruction(SgAsmInstruction* insn) {}
 };
 
 int main(int argc, char** argv) {
+    typedef X86InstructionSemantics<EmulationPolicy, Value> Semantics;
+
     ROSE_ASSERT (argc >= 2);
     EmulationPolicy policy;
     targetForSignals = &policy.ms;
     setup(policy.ms, argc - 1, argv + 1);
-    X86InstructionSemantics<EmulationPolicy, Value> t(policy);
+    Semantics t(policy);
+    size_t ninsns = 0;
+
     while (true) {
         if (policy.ms.ip == 0x00536967) { /* "\0Sig" in big-endian notation */
             simulate_sigreturn(policy.ms);
             continue;
         }
         try {
-            /* fprintf(stderr, "Running instruction at 0x%08"PRIX32"\n", policy.ms.ip); */
+#if 0
+            fprintf(stderr, "\033[K\n[%07zu] %s\033[K\r\033[1A",
+                    ninsns++, unparseInstructionWithAddress(policy.id[policy.ms.ip]).c_str()),
+#endif
             t.processInstruction(policy.id[policy.ms.ip]);
-        } catch (...) {
-            fprintf(stderr, "Bad instruction address 0x%08"PRIX32"\n", policy.ms.ip);
+        } catch (const Semantics::Exception &e) {
+            std::cerr <<e <<"\n\n";
             abort();
         }
     }
