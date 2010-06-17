@@ -8,6 +8,14 @@ using namespace std;
 /** Perform the function argument extraction on all function calls in the given subtree of the AST. */
 void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 {
+	//Check that there are no continue statements in the code and report an error if there are
+	Rose_STL_Container<SgNode*> continueStatements = NodeQuery::querySubTree(tree, V_SgContinueStmt);
+	if (continueStatements.size() > 0)
+	{
+		fprintf(stderr, "Function argument evaluation does not currently support 'continue' inside loops. Exiting");
+		exit(1);
+	}
+
 	//First, preprocess all for loops
 	Rose_STL_Container<SgNode*> forLoops = NodeQuery::querySubTree(tree, V_SgForStatement);
 
@@ -57,14 +65,6 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 
 			SgStatement* incrementStatement = SageBuilder::buildExprStatement(incrementExpression);
 			SageInterface::appendStatement(incrementStatement, loopBody);
-
-			//Check that there are no continue statements in the code and report an error if there are
-			Rose_STL_Container<SgNode*> continueStatements = NodeQuery::querySubTree(forStatement, V_SgContinueStmt);
-			if (continueStatements.size() > 0)
-			{
-				fprintf(stderr, "Function argument evaluation does not currently support 'continue' inside loops. Exiting");
-				exit(1);
-			}
 		}
 	}
 
@@ -272,6 +272,8 @@ void ExtractFunctionArguments::HoistStatementOutsideOfForLoop(SgForStatement* fo
 			SgType* pointerizedArrayType = SageBuilder::buildPointerType(baseType);
 			initializedName->set_type(pointerizedArrayType);
 			delete originalType;
+
+			//We could insert an explicit cast here to get rid of a ROSE warning during unparsing, but it's not necessary
 		}
 	}
 }
@@ -303,7 +305,12 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
 		case FunctionCallInfo::APPEND_SCOPE:
 		{
 			SgScopeStatement* scopeStatement = isSgScopeStatement(location);
+			if (scopeStatement == NULL)
+			{
+				scopeStatement = isSgScopeStatement(SageInterface::ensureBasicBlockAsParent(location));
+			}
 			ROSE_ASSERT(scopeStatement != NULL);
+
 			SageInterface::appendStatement(newStatement, scopeStatement);
 			break;
 		}
@@ -332,6 +339,7 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 {
 	FunctionCallInheritedAttribute result = parentAttribute;
 	SgForStatement* parentForLoop = isSgForStatement(parentAttribute.currentLoop);
+	SgWhileStmt* parentWhileLoop = isSgWhileStmt(parentAttribute.currentLoop);
 
 	if (isSgForStatement(astNode))
 		result.currentLoop = isSgForStatement(astNode);
@@ -341,19 +349,24 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 		result.currentLoop = isSgDoWhileStmt(astNode);
 	else if (isSgForInitStatement(astNode))
 	{
-		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
-		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INIT;
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INIT;
 		ROSE_ASSERT(isSgForStatement(result.currentLoop));
 	}
 	else if (parentForLoop != NULL && parentForLoop->get_test() == astNode)
 	{
-		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
-		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_TEST;
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_TEST;
 	}
 	else if (parentForLoop != NULL && parentForLoop->get_increment() == astNode)
 	{
-		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
-		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT;
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT;
+	}
+	else if (parentWhileLoop != NULL && parentWhileLoop->get_condition() == astNode)
+	{
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_WHILE_CONDITION;
 	}
 
 
@@ -375,7 +388,7 @@ SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttrib
 
 	//Handle for loops (being inside the body of a for loop doesn't need special handling)
 	SgForStatement* forLoop = isSgForStatement(parentAttribute.currentLoop);
-	if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INIT)
+	if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INIT)
 	{
 		//The variables needed for the initialization of a for loop should be declared and
 		//evaluated outside the for loop
@@ -384,7 +397,7 @@ SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttrib
 		functionCallInfo.initializeTempVarAtDeclaration = true;
 		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 	}
-	else if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_TEST)
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_TEST)
 	{
 		//The variables for the test expression of a for loop need to be declared and initialized outside the for loop,
 		//because the test is evaluated before the for loop is entered. They also need to be reassigned at the bottom
@@ -394,28 +407,33 @@ SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttrib
 		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 		functionCallInfo.initializeTempVarAtDeclaration = true;
 
-		SgBasicBlock* loopBody = isSgBasicBlock(forLoop->get_loop_body());
-		ROSE_ASSERT(loopBody != NULL); //At this point, the for loop should have been preprocessed to have a basic block
-		functionCallInfo.tempVarEvaluationLocation = loopBody;
+		functionCallInfo.tempVarEvaluationLocation = forLoop->get_loop_body();
 		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
 	}
-	else if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT)
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT)
 	{
-		//The variables for an increment expression need to be declared outside the for loop, but initialized
-		//at the bottom of the loop body
-		ROSE_ASSERT(forLoop != NULL);
-		functionCallInfo.tempVarDeclarationLocation = forLoop;
-		functionCallInfo.initializeTempVarAtDeclaration = false;
+		//This should have been preprocessed to be at the bottom of the loop
+		ROSE_ASSERT(false);
+	}
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_WHILE_CONDITION)
+	{
+		SgWhileStmt* whileLoop = isSgWhileStmt(parentAttribute.currentLoop);
+		ROSE_ASSERT(whileLoop != NULL);
+		//The variables for the test expression of a while-loop need to be declared and initialized outside the for loop,
+		//because the test is evaluated before the while-loop is entered. They also need to be reassigned at the bottom
+		//Of the loop
+		functionCallInfo.tempVarDeclarationLocation = whileLoop;
+		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
+		functionCallInfo.initializeTempVarAtDeclaration = true;
 
-		SgBasicBlock* loopBody = isSgBasicBlock(forLoop->get_loop_body());
-		ROSE_ASSERT(loopBody != NULL);
+		functionCallInfo.tempVarEvaluationLocation = whileLoop->get_body();
 		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
 	}
-
 
 	else
 	{
 		//Assume we're in a basic block. Then just insert right before the current statement
+		ROSE_ASSERT(parentAttribute.loopStatus = FunctionCallInheritedAttribute::NOT_IN_LOOP);
 		functionCallInfo.tempVarDeclarationLocation = parentAttribute.lastStatement;
 		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 		functionCallInfo.initializeTempVarAtDeclaration = true;
