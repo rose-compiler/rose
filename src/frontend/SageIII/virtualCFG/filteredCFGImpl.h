@@ -140,8 +140,8 @@ namespace VirtualCFG
         o << id << " [label=\""  << escapeString(n.
                                                 toString()) << "\", color=\"" << nodeColor <<
             "\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\", " 
-            << "group=\"" << "foo" << "\"];\n";
-        //SageInterface::removeStatement(NULL);
+            << "group=\"" << SageInterface::getEnclosingFunctionDeclaration(n.getNode())->get_name().getString()
+            << "\"];\n";
     }
 
     template < typename EdgeT >
