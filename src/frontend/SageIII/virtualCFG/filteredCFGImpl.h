@@ -1,3 +1,6 @@
+#ifndef FILTEREDCFGIMPL_H_
+#define FILTEREDCFGIMPL_H_
+
 //#include <rose.h>
 #include "filteredCFG.h"
 #include <sstream>
@@ -136,7 +139,9 @@ namespace VirtualCFG
 
         o << id << " [label=\""  << escapeString(n.
                                                 toString()) << "\", color=\"" << nodeColor <<
-            "\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\"];\n";
+            "\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\", " 
+            << "group=\"" << "foo" << "\"];\n";
+        //SageInterface::removeStatement(NULL);
     }
 
     template < typename EdgeT >
@@ -224,3 +229,5 @@ namespace VirtualCFG
     }
 
 }
+
+#endif //! define FILTEREDCFGIMPL_H_
