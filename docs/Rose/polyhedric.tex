@@ -432,23 +432,23 @@ $$\Theta_{S_{2}}(i, j, n) = \alpha_{S_{2}}^{1} \times i + \alpha_{S_{2}}^{2} \ti
 	The application of Farkas Lemma give us:
 \begin{itemize}
 	\item for $S_{2} \rightarrow S_{1}$:
-	$$ \Theta_{S_{1}}(i', n) - \Theta_{S_{2}}(i, j, n) - 1 =
+	$$ \Theta_{S_{2}}(i, j, n) - \Theta_{S_{1}}(i', n) - 1 =
 	\lambda_{0}^{S_{2} \rightarrow S_{1}} + \sum_{k = 1}^{6} \lambda_{k}^{S_{2} \rightarrow S_{1}} . Row_{k}^{\mathbb{P}}(i, j, i', n) $$
 	$$ \left\{
 	\begin{array}{l}
 	\begin{array}{rcl}
-			- \alpha_{S_{2}}^{1} & = &
+			\alpha_{S_{2}}^{1} & = &
 				\lambda_{1}^{S_{2} \rightarrow S_{1}}
 				- \lambda_{2}^{S_{2} \rightarrow S_{1}}
 				+ \lambda_{5}^{S_{2} \rightarrow S_{1}}
 				- \lambda_{6}^{S_{2} \rightarrow S_{1}}\\
-			- \alpha_{S_{2}}^{2} & = &
+			\alpha_{S_{2}}^{2} & = &
 				\lambda_{3}^{S_{2} \rightarrow S_{1}}
 				- \lambda_{4}^{S_{2} \rightarrow S_{1}} \\
-			\alpha_{S_{1}}^{1} & = &
+			- \alpha_{S_{1}}^{1} & = &
 				\lambda_{6}^{S_{2} \rightarrow S_{1}}
 				- \lambda_{5}^{S_{2} \rightarrow S_{1}} \\
-			\beta_{S_{1}}^{1} - \beta_{S_{2}}^{1} & = &
+			\beta_{S_{2}}^{1} - \beta_{S_{1}}^{1} & = &
 				\lambda_{2}^{S_{2} \rightarrow S_{1}} \\
 			\kappa_{S_{1}} - \kappa_{S_{2}} - 1 & = &
 				\lambda_{0}^{S_{2} \rightarrow S_{1}}
@@ -458,25 +458,25 @@ $$\Theta_{S_{2}}(i, j, n) = \alpha_{S_{2}}^{1} \times i + \alpha_{S_{2}}^{2} \ti
 	\end{array}
 	\right. $$
 	\item for $S_{2} \rightarrow S_{2}$:
-	$$ \Theta_{S_{2}}(i', j', n) - \Theta_{S_{2}}(i, j, n) - 1 =
+	$$ \Theta_{S_{2}}(i, j, n) - \Theta_{S_{2}}(i', j', n) - 1 =
 	\lambda_{0}^{S_{2} \rightarrow S_{2}} + \sum_{k = 1}^{6} \lambda_{k}^{S_{2} \rightarrow S_{2}} . Row_{k}^{\mathbb{P}}(i, j, i', j', n) $$
 	$$ \left\{
 	\begin{array}{l}
 		\begin{array}{rcl}
-			 - \alpha_{S_{2}}^{1} & = &
+			 \alpha_{S_{2}}^{1} & = &
 				\lambda_{1}^{S_{2} \rightarrow S_{2}}
 				- \lambda_{2}^{S_{2} \rightarrow S_{2}}
 				+ \lambda_{5}^{S_{2} \rightarrow S_{2}}
 				- \lambda_{6}^{S_{2} \rightarrow S_{2}} \\
-			- \alpha_{S_{2}}^{2} & = &
+			\alpha_{S_{2}}^{2} & = &
 				- \lambda_{3}^{S_{2} \rightarrow S_{2}}
 				+ \lambda_{4}^{S_{2} \rightarrow S_{2}}
 				+ \lambda_{7}^{S_{2} \rightarrow S_{2}}
 				- \lambda_{8}^{S_{2} \rightarrow S_{2}} \\
-			\alpha_{S_{2}}^{1} & = &
+			- \alpha_{S_{2}}^{1} & = &
 				- \lambda_{5}^{S_{2} \rightarrow S_{2}}
 				+ \lambda_{6}^{S_{2} \rightarrow S_{2}} \\
-			\alpha_{S_{2}}^{2} & = &
+			- \alpha_{S_{2}}^{2} & = &
 				- \lambda_{7}^{S_{2} \rightarrow S_{2}}
 				+ \lambda_{8}^{S_{2} \rightarrow S_{2}} \\
 			0 & = & \lambda_{2}^{S_{2} \rightarrow S_{2}} 
