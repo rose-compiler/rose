@@ -759,8 +759,13 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
      std::cerr << "found " << returnSites.size() << std::endl;
-     for (unsigned int i = 0; i < returnSites.size(); ++i) 
+     for (unsigned int i = 0; i < returnSites.size(); ++i) { 
+         if (((SgFunctionCallExp *) 
+             returnSites[i])->getAssociatedFunctionDeclaration() ==
+             this->get_declaration()) {
          makeEdge(CFGNode(this, idx), returnSites[i]->cfgForEnd(), result);
+         }
+     }
      break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
