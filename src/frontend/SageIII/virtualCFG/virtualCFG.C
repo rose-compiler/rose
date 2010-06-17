@@ -25,8 +25,8 @@ namespace VirtualCFG {
   }
 
   string CFGNode::toString() const {
+      ostringstream s;
     if (isSgFunctionDefinition(node)) {
-        ostringstream s;
       switch (index) {
           case 0: s << "Start: "; break; 
           case 1: s << "After parameters: "; break;
@@ -35,10 +35,10 @@ namespace VirtualCFG {
       }
       s << (std::string) ((SgFunctionDefinition *)node)
         ->get_declaration()->get_name(); 
-      return s.str();
     } else {
-      return toStringForDebugging();
+      s << toStringForDebugging();
     }
+    return s.str();
   }
 
   string CFGNode::toStringForDebugging() const {
