@@ -59,7 +59,8 @@ struct FunctionCallInheritedAttribute
 	SgStatement* lastStatement;
 
 	/** Is the current node inside a for loop structure (not the body). */
-	enum { INSIDE_FOR_INIT, INSIDE_FOR_TEST, INSIDE_FOR_INCREMENT, INSIDE_WHILE_CONDITION, NOT_IN_LOOP }
+	enum { INSIDE_FOR_INIT, INSIDE_FOR_TEST, INSIDE_FOR_INCREMENT, INSIDE_WHILE_CONDITION,
+			INSIDE_DO_WHILE_CONDITION, NOT_IN_LOOP }
 	loopStatus;
 
 	/** Default constructor. Initializes everything to NULL. */

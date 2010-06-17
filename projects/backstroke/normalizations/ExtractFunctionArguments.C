@@ -24,9 +24,6 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 		SgForStatement* forStatement = isSgForStatement(*iter);
 		ROSE_ASSERT(forStatement != NULL);
 
-		//Ensure the for statement has a basic block
-		SageInterface::ensureBasicBlockAsBodyOfFor(forStatement);
-
 		//Check if the test expression will have to be rewritten. If so, we need
 		//to move it out of the for loop. This means we also have to move the initializer out
 		//of the for loop
@@ -340,6 +337,7 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 	FunctionCallInheritedAttribute result = parentAttribute;
 	SgForStatement* parentForLoop = isSgForStatement(parentAttribute.currentLoop);
 	SgWhileStmt* parentWhileLoop = isSgWhileStmt(parentAttribute.currentLoop);
+	SgDoWhileStmt* parentDoWhileLoop = isSgDoWhileStmt(parentAttribute.currentLoop);
 
 	if (isSgForStatement(astNode))
 		result.currentLoop = isSgForStatement(astNode);
@@ -368,7 +366,11 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
 		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_WHILE_CONDITION;
 	}
-
+	else if (parentDoWhileLoop != NULL && parentDoWhileLoop->get_condition() == astNode)
+	{
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_DO_WHILE_CONDITION;
+	}
 
 	if (isSgStatement(astNode))
 		result.lastStatement = isSgStatement(astNode);
@@ -429,14 +431,32 @@ SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttrib
 		functionCallInfo.tempVarEvaluationLocation = whileLoop->get_body();
 		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
 	}
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_DO_WHILE_CONDITION)
+	{
+		SgDoWhileStmt* doWhileLoop = isSgDoWhileStmt(parentAttribute.currentLoop);
+		ROSE_ASSERT(doWhileLoop);
+		//Temprary variables should be declared before the loop, but initialized at the botom of the loop body
+		functionCallInfo.tempVarDeclarationLocation = doWhileLoop;
+		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
+		functionCallInfo.initializeTempVarAtDeclaration = false;
 
-	else
+		functionCallInfo.tempVarEvaluationLocation = doWhileLoop->get_body();
+		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
+	}
+
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP)
 	{
 		//Assume we're in a basic block. Then just insert right before the current statement
 		ROSE_ASSERT(parentAttribute.loopStatus = FunctionCallInheritedAttribute::NOT_IN_LOOP);
 		functionCallInfo.tempVarDeclarationLocation = parentAttribute.lastStatement;
 		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 		functionCallInfo.initializeTempVarAtDeclaration = true;
+	}
+
+	else
+	{
+		//Unhandled condition?!
+		ROSE_ASSERT(false);
 	}
 
 	functionCalls.push_back(functionCallInfo);
