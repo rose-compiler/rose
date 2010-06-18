@@ -16,7 +16,7 @@ SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, S
 #include "astUnparseAttribute.h"
 #include <set>
 
-//#include "LivenessAnalysis.h"
+#include "LivenessAnalysis.h"
 #include "abstract_handle.h"
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
@@ -1257,7 +1257,6 @@ bool isUseByAddressVariableRef(SgVarRefExp* ref);
 void collectUseByAddressVariableRefs (const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
 
 //!Call liveness analysis on an entire project
-class LivenessAnalysis;
 LivenessAnalysis * call_liveness_analysis(SgProject* project, bool debug=false);
 
 //!get liveIn and liveOut variables for a for loop from liveness analysis result liv.
