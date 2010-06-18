@@ -36,6 +36,9 @@ public:
     /** Obtain current debugging setting. */
     FILE *get_debug() const { return debug; }
 
+    /** Tracks the number of times an SMT solver was called. Actually, the number of calls to satisfiable() */
+    static size_t total_calls;
+
 private:
     FILE *debug;
 };

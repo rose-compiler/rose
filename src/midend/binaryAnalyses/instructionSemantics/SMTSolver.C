@@ -9,9 +9,13 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
     return o <<"SMT solver: " <<e.mesg;
 }
 
+size_t SMTSolver::total_calls;
+
 bool
 SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
 {
+    total_calls++;
+
     /* Generate the input file for the solver. */
     char config_name[L_tmpnam];
     while (1) {
@@ -35,7 +39,8 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
-            fprintf(debug, "    %5zu: %s", ++n, line.c_str());
+            if (!line.empty())
+                fprintf(debug, "    %5zu: %s\n", ++n, line.c_str());
         }
     }
 
@@ -58,7 +63,7 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     } else if (!strcmp(line, "unsat\n")) {
         retval = false;
     } else {
-        std::cout <<"    exit status=" <<status <<" input=" <<line;
+        std::cout <<"    input=" <<config_name <<", status=" <<status <<", result=" <<line;
         execl("/bin/cat", "cat", "-n", config_name, NULL);
         abort(); /*probably not reached*/
     }
