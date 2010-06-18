@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 using namespace std;
-
+using namespace boost;
 
 /** Perform the function argument extraction on all function calls in the given subtree of the AST. */
 void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
@@ -106,7 +106,10 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 
 		//Build a declaration for the temporary variable
 		SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
-		SgVariableDeclaration* tempVarDeclaration = CreateTempVariableForExpression(arg, scope, functionCallInfo.initializeTempVarAtDeclaration);
+		tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> tempVarInfo = CreateTempVariableForExpression(arg, scope, functionCallInfo.initializeTempVarAtDeclaration);
+		SgVariableDeclaration* tempVarDeclaration = tempVarInfo.get<0>();
+		SgAssignOp* tempVarAssignment = tempVarInfo.get<1>();
+		SgExpression* tempVarReference = tempVarInfo.get<2>();
 
 		//Insert the temporary variable declaration
 		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo.tempVarDeclarationInsertionMode);
@@ -114,18 +117,16 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		//Insert an evaluation for the temporary variable (if required)
 		if (functionCallInfo.tempVarEvaluationLocation != NULL)
 		{
-			SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
-			SgTreeCopy copyHelp;
-			SgExpression* argCopy = isSgExpression(arg->copy(copyHelp));
-			ROSE_ASSERT(argCopy != NULL);
-			SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, argCopy);
-			SgStatement* assignmentStatement = SageBuilder::buildExprStatement(assignment);
-
+			SgStatement* assignmentStatement = SageBuilder::buildExprStatement(tempVarAssignment);
 			InsertStatement(assignmentStatement, functionCallInfo.tempVarEvaluationLocation, functionCallInfo.tempVarEvaluationInsertionMode);
+		}
+		else
+		{
+			delete tempVarAssignment;
 		}
 
 		//Replace the argument with the new temporary variable
-		SageInterface::replaceExpression(arg, SageBuilder::buildVarRefExp(tempVarDeclaration));
+		SageInterface::replaceExpression(arg, tempVarReference);
 	}
 }
 
@@ -182,33 +183,68 @@ bool ExtractFunctionArguments::SubtreeNeedsNormalization(SgNode* top)
 
 
 /** Given an expression, generates a temporary variable whose initializer optionally evaluates
- * that expression. The temporary variable created is a const reference to avoid potentially calling
- * extra copy constructors.
- * @param expression Expression which will be replaced by a variable
- * @param scope scope in which the temporary variable will be generated
- * @return declaration of the temporary variable. Its initializer evaluates the original expression. */
-SgVariableDeclaration* ExtractFunctionArguments::CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
+  * that expression. Then, the var reference expression returned can be used instead of the original
+  * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
+  * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
+  * reference types correctly by using pointer types for the temporary.
+  * @param expression Expression which will be replaced by a variable
+  * @param scope scope in which the temporary variable will be generated
+  * @return declaration of the temporary variable, an assignment op to
+  *			reevaluate the expression, and a a variable reference expression to use instead of
+  *         the original expression. Delete the results that you don't need! */
+boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> ExtractFunctionArguments::CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
 {
-	SgType *expressionType = expression->get_type();
+	SgTreeCopy copyHelp;
+	SgType* expressionType = expression->get_type();
+	SgType* variableType = expressionType;
 
-	//Generate a unique variable name
-	SgName name = GenerateUniqueVariableName(scope).c_str();
-
-	SgAssignInitializer* initializer = NULL;
-
-	//Copy the expression and convert it to an intialization for the temporary variable
-	if (initializeInDeclaration)
+	//If the expression has a reference type, we need to use a pointer type for the temporary variable.
+	//Else, re-assigning the variable is not possible
+	bool isReferenceType = isSgReferenceType(expressionType);
+	if (isReferenceType)
 	{
-		SgTreeCopy copyHelp;
-		SgExpression* expressionCopy = isSgExpression(expression->copy(copyHelp));
-		ROSE_ASSERT(expressionCopy != NULL);
-		initializer = new SgAssignInitializer(expressionCopy, expressionType);
+		SgType* expressionBaseType = isSgReferenceType(expressionType)->get_base_type();
+		variableType = SageBuilder::buildPointerType(expressionBaseType);
 	}
 
-	SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, expressionType, initializer);
+	//Generate a unique variable name
+	string name = GenerateUniqueVariableName(scope);
+
+	//Initialize the temporary variable to an evaluation of the expression
+	SgAssignInitializer* initializer = NULL;
+	SgExpression* tempVarInitExpression = isSgExpression(expression->copy(copyHelp));
+	ROSE_ASSERT(tempVarInitExpression != NULL);
+	if (isReferenceType)
+	{
+		//FIXME: the next line is hiding a bug in ROSE. Remove this line and talk to Dan about the resulting assert
+		tempVarInitExpression->set_lvalue(false);
+
+		tempVarInitExpression = SageBuilder::buildAddressOfOp(tempVarInitExpression);
+	}
+
+	//Optionally initialize the variable in its declaration
+	if (initializeInDeclaration)
+	{
+		SgExpression* initExpressionCopy = isSgExpression(tempVarInitExpression->copy(copyHelp));
+		initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
+	}
+
+	SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
 	ROSE_ASSERT(tempVarDeclaration != NULL);
 
-	return tempVarDeclaration;
+	//Now create the assignment op for reevaluating the expression
+	SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
+	SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
+
+	//Build the variable reference expression that can be used in place of the original expresion
+	SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
+	if (isReferenceType)
+	{
+		//The temp variable is a pointer type, so dereference it before usint it
+		varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
+	}
+
+	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
 }
 
 

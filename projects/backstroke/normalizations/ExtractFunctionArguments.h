@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rose.h"
+#include <boost/tuple/tuple.hpp>
 
 typedef bool SynthetizedAttribute;
 
@@ -117,12 +118,17 @@ private:
 	void RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo);
 
 	/** Given an expression, generates a temporary variable whose initializer optionally evaluates
-	  * that expression.
-	  * TODO: Move this into utility.
+	  * that expression. Then, the var reference expression returned can be used instead of the original
+	  * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
+	  * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
+	  * reference types correctly by using pointer types for the temporary.
 	  * @param expression Expression which will be replaced by a variable
 	  * @param scope scope in which the temporary variable will be generated
-	  * @return declaration of the temporary variable. Its initializer evaluates the original expression. */
-	static SgVariableDeclaration* CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration);
+	  * @return declaration of the temporary variable, an assignment op to
+	  *			reevaluate the expression, and a a variable reference expression to use instead of
+	  *         the original expression. Delete the results that you don't need! */
+	static boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression* > CreateTempVariableForExpression(SgExpression* expression,
+		SgScopeStatement* scope, bool initializeInDeclaration);
 
 	/** Take a statement that is located somewhere inside the for loop and move it right before the
 	  * for looop. If the statement is a variable declaration, the declaration is left in its original
