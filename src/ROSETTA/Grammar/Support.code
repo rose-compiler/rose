@@ -4013,8 +4013,8 @@ HEADER_INITIALIZED_NAME_START
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
 
           SgStorageModifier & get_storageModifier();
 

@@ -194,10 +194,6 @@ class mutex
 //! declaration of variable to control internal output of debugging information (default = 0)
 extern int SAGE_DEBUG;
 
-// JJW (1/19/2007): Added global variable for whether virtual CFG is
-// interprocedural
-extern bool interproceduralControlFlowGraph;
-
 // Introduce a way to change from std::list to std::vector easily as a test to improve performance of traversals.
 // This is now moved to ROSE/util/commandLineProcessing/setup.h so that all of ROSE will see it.
 // define Rose_STL_Container std::list
@@ -2031,10 +2027,10 @@ HEADER_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
 
       /*! \brief Find the out edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural = false);
 
       /*! \brief Find the in edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural = false);
 #if 0
       /*! \brief Find the out edges of a CFG node from a static CFG -- internal version. */
           virtual std::vector<SgDirectedGraphEdge*> cfgOutEdges(unsigned int index, StaticCFG::CFG* cfg)
@@ -2138,10 +2134,6 @@ SOURCE_START
 
 // declaration of variable to control internal output of debuging information
 int SAGE_DEBUG = 0;  // default value is zero
-
-// JJW (1/19/2007): Added global variable for whether virtual CFG is
-// interprocedural
-bool interproceduralControlFlowGraph = true;
 
 // ###############################
 // Start of source code for SgNode
