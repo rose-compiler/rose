@@ -346,7 +346,7 @@ void CFG::printNode(std::ostream & o, SgGraphNode* node)
 
 void CFG::printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge)
 {
-    // Note that CFGEdge will do some checks which forbid us to use it to represent an InterestingEdge. 
+    // Note that CFGEdge will do some checks which forbids us to use it to represent an InterestingEdge. 
     AstAttribute* attr = edge->getAttribute("info");
     if (CFGEdgeAttribute<CFGEdge>* edge_attr = dynamic_cast<CFGEdgeAttribute<CFGEdge>*>(attr))
     {
