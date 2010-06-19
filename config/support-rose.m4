@@ -241,6 +241,8 @@ case "$enableval" in
       support_fortran_language=yes
       support_php_language=yes
       support_binaries=yes
+      support_cuda_language=yes
+      support_opencl_language=yes
       AC_MSG_RESULT(all)
      ;;
   none | no) LANGUAGES_TO_BUILD="none"
@@ -249,6 +251,8 @@ case "$enableval" in
       support_fortran_language=no
       support_php_language=no
       support_binaries=no
+      support_cuda_language=no
+      support_opencl_language=no
       AC_MSG_RESULT(none)
      ;;
   *)for a_language in `echo $enableval|sed -e 's/,/ /g' ` ; do
@@ -268,6 +272,12 @@ case "$enableval" in
         binaries) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD binaries"
            support_binaries=yes
            ;;
+        cuda) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+           support_cuda_language=yes
+           ;;
+        opencl) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+           support_opencl_language=yes
+           ;;
         *) AC_MSG_ERROR([Unrecognized language $a_language]) ;;
       esac
   done
@@ -284,6 +294,8 @@ echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
+echo "support_cuda_language    = $support_cuda_language"
+echo "support_opencl_language  = $support_opencl_language"
 
 AC_MSG_CHECKING([for language specific options to generate a minimal ROSE configuration])
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only C language support is required
@@ -292,6 +304,8 @@ if test "x$support_c_only" = "xyes"; then
    support_fortran_language=no
    support_php_language=no
    support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off fortran:off php:off)
 fi
@@ -330,6 +344,8 @@ if test "x$support_fortran_only" = "xyes"; then
    support_cxx_language=no
    support_php_language=no
    support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off php:off binary-analysis-tests:off)
 
@@ -362,6 +378,8 @@ echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
+echo "support_cuda_language    = $support_cuda_language"
+echo "support_opencl_language  = $support_opencl_language"
 
 # Set the macros that will appears in the rose_config.h header file.
 if test "x$support_c_language" = "xyes"; then
@@ -394,12 +412,26 @@ else
    echo "Support for binary analysis support is disabled..."
 fi
 
+if test "x$support_cuda_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
+else
+   echo "Support for CUDA language support is disabled..."
+fi
+
+if test "x$support_opencl_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
+else
+   echo "Support for OpenCL language support is disabled..."
+fi
+
 # Set the automake conditional macros that will be used in Makefiles.
 AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
 
 # echo "Exiting after handling initial language specification..."
 # exit 1
@@ -1316,6 +1348,125 @@ if test "x$enable_opencl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
+# *****************************************************************************
+# Option to control internal support of FadaLib (Fuzzy Array Dataflow Analysis)
+# *****************************************************************************
+
+# TV (05/25/2010): Check for FadaLib
+
+AC_ARG_WITH(
+	[fada],
+	AS_HELP_STRING([--with-fada@<:@=DIR@:>@], [use FadaLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
+		exit 1
+	else
+		has_fada_path="yes"
+		fada_path="$withval"
+	fi
+	],
+	[has_fada_path="no"]
+)
+
+# TV (05/25/2010): Check for PipLib
+
+AC_ARG_WITH(
+	[pip],
+	AS_HELP_STRING([--with-pip@<:@=DIR@:>@], [use PipLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
+		exit 1
+	else
+		has_pip_path="yes"
+		pip_path="$withval"
+	fi
+	],
+	[has_pip_path="no"]
+)
+
+# TV (05/25/2010): Optional support for FadaLib.
+
+AC_MSG_CHECKING([for enabled FadaLib support])
+AC_ARG_ENABLE(
+	fadalib,
+	AS_HELP_STRING(
+		[--enable-fadalib],
+		[Support for FadaLib (Fuzzy Array Dataflow Analysis)]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_FADALIB,
+	[test "x$enable_fadalib" = "xyes"])
+if test "x$enable_fadalib" = "xyes"; then
+	if test "x$has_fada_path" = "xyes"; then
+#		FADA_LDFLAGS=" $fada_path/lib/libfada.a"
+		FADA_LDFLAGS=" -L$fada_path/lib/ -lfada"
+		FADA_CPPFLAGS="-I$fada_path/include"
+	fi
+	if test "x$has_pip_path" = "xyes"; then
+#		PIP_LDFLAGS=" $pip_path/lib/libpiplib64.a"
+		PIP_LDFLAGS=" -L$pip_path/lib -lpiplib64"
+		PIP_CPPFLAGS="-I$pip_path/include"
+	fi
+	if test "x$has_fada_path" = "xyes" && test "x$has_pip_path" = "xyes"; then
+		AC_DEFINE([ROSE_USE_FADALIB], [], [Whether to use FadaLib (Fuzzy Array Dataflow Analysis) support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_FADALIB)
+AC_SUBST(FADA_LDFLAGS)
+AC_SUBST(FADA_CPPFLAGS)
+AC_SUBST(PIP_LDFLAGS)
+AC_SUBST(PIP_CPPFLAGS)
+
+# TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
+
+AC_ARG_WITH(
+	[ppl],
+	AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+		exit 1
+	else
+		has_ppl_path="yes"
+		ppl_path="$withval"
+	fi
+	],
+	[has_ppl_path="no"]
+)
+
+AC_ARG_ENABLE(
+	ppl,
+	AS_HELP_STRING(
+		[--enable-ppl],
+		[Support for Parma Polyhedral Library (PPL)]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_PPL,
+	[test "x$enable_fadalib" = "xyes"])
+if test "x$enable_fadalib" = "xyes"; then
+	if test "x$has_ppl_path" = "xyes"; then
+		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
+		PPL_CPPFLAGS="-I$ppl_path/include"
+		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_PPL)
+AC_SUBST(PPL_LDFLAGS)
+AC_SUBST(PPL_CPPFLAGS)
+
 # allow either user or developer level documentation using Doxygen
 ROSE_SUPPORT_DOXYGEN
 
@@ -2155,10 +2306,17 @@ projects/backstroke/reverseComputation/stateSaving/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
+projects/backstroke/normalizations/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
+projects/PolyhedralDependenceAnalysis/Makefile
+projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
+projects/PolyhedralDependenceAnalysis/Common/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
+projects/PolyhedralDependenceAnalysis/Schedule/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2259,6 +2417,8 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
+tests/roseTests/cudaTests/Makefile
+tests/roseTests/openclTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
