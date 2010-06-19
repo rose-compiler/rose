@@ -42,6 +42,14 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    SUBDIRS += binaryTests
 endif
 
+if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
+   SUBDIRS += cudaTests
+endif
+
+if ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
+   SUBDIRS += openclTests
+endif
+
 check-local:
 	@echo "**********************************************************************************"
 	@echo "****** ROSE/tests/roseTests: make check rule complete (terminated normally) ******"

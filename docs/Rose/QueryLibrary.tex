@@ -83,7 +83,7 @@ This permits compositional queries using simple function composition.
 namespace NodeQuery
 {
 //** Functions that visits every node in a subtee of the AST and returns a
-//std::list<SgNode*>s. It is the subtree of the first parameter of the
+//Rose_STL_Container<SgNode*>s. It is the subtree of the first parameter of the
 //interface which is traversed**//
 
   template<typename NodeFunctional>
@@ -108,24 +108,24 @@ namespace NodeQuery
   querySubTree( SgNode*, VariantVector,
      AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
 
-//** Functions that visits every node in a std::list<SgNode*>'s and returns a 
-//std::list<SgNode*>s **//
+//** Functions that visits every node in a Rose_STL_Container<SgNode*>'s and returns a 
+//Rose_STL_Container<SgNode*>s **//
   
   queryNodeList( NodeQuerySynthesizedAttributeType,
      TypeOfQueryTypeOneParameter elementReturnType)
 
-  queryNodeList( std::list<SgNode*>, roseFunctionPointerOneParameter )
+  queryNodeList( Rose_STL_Container<SgNode*>, roseFunctionPointerOneParameter )
 
-  queryNodeList( std::list<SgNode*>, SgNode*, roseFunctionPointerTwoParameters)
+  queryNodeList( Rose_STL_Container<SgNode*>, SgNode*, roseFunctionPointerTwoParameters)
 
-  queryNodeList( std::list<SgNode*>, SgNode*, TypeOfQueryTypeTwoParameters)
+  queryNodeList( Rose_STL_Container<SgNode*>, SgNode*, TypeOfQueryTypeTwoParameters)
  
-  queryNodeList( std::list<SgNode*>, VariantT)
+  queryNodeList( Rose_STL_Container<SgNode*>, VariantT)
 
-  queryNodeList( std::list<SgNode*>, VariantVector*)
+  queryNodeList( Rose_STL_Container<SgNode*>, VariantVector*)
 
 //** Functions that visit only the nodes in the memory pool that is
-//specified in a VariantVector and returns a std::list<SgNode*>s **// 
+//specified in a VariantVector and returns a Rose_STL_Container<SgNode*>s **// 
 
   template<typename NodeFunctional>
   queryMemoryPool( NodeFunctional, VariantVector* = NULL)
@@ -241,7 +241,7 @@ parameter to the user defined function.
 
 The name query provides exactly the same interfaces as the NodeQuery except
 for two differences; the user defined functions returns a
-std::list<std::string>s and the C-Style functions take a std::string as a
+Rose\_STL\_Container<std::string>s and the C-Style functions take a std::string as a
 second parameter. The predefined functions implemented in this interface are:
 
 {\mySmallFontSize
@@ -280,7 +280,7 @@ namespace NameQuery{
 
 The number query provides exactly the same interfaces as the NodeQuery except
 for two differences; the user defined functions returns a
-std::list<int>s and the C-Style functions take an 'int' as a
+Rose\_STL\_Container<int>s and the C-Style functions take an 'int' as a
 second parameter. The predefined functions implemented in this interface are:
 
 {\mySmallFontSize
@@ -337,15 +337,15 @@ domain $D$ and map to a range $R$.  Thus fundamentally,
 % both the AST and a list of SgNode pointers.
 \begin{itemize}
      \item Abstract Syntax Tree (AST)
-     \item STL list of SgNode pointers ({\tt list<SgNode*>})
+     \item STL list of SgNode pointers ({\tt Rose\_STL\_Container<SgNode*>})
 \end{itemize}
 
 \subsection{Range of Operators: $R$}
     The range of the operators defined in the Query Library is:
 \begin{itemize}
-     \item STL list of SgNode pointers ({\tt list<SgNode*>})
-     \item STL list of strings ({\tt list<string>})
-     \item STL list of integers ({\tt list<int>})
+     \item STL list of SgNode pointers ({\tt Rose\_STL\_Container<SgNode*>})
+     \item STL list of strings ({\tt Rose\_STL\_Container<string>})
+     \item STL list of integers ({\tt Rose\_STL\_Container<int>})
 \end{itemize}
 
 Since lists of SgNode pointers are both in the domain and range of the Query Library
@@ -354,8 +354,8 @@ section shows several cases of common queries and how simple they are to express
 using the Query Library operators.  Importantly, the Query Library is extensible
 by the user through the construction of simple global functions of the type:
 \begin{itemize}
-     \item {\tt list<SgNode*> userQueryFunction ( SgNode* );}
-     \item {\tt list<SgNode*> userQueryFunction ( SgNode*, SgNode* );}
+     \item {\tt Rose\_STL\_Container<SgNode*> userQueryFunction ( SgNode* );}
+     \item {\tt Rose\_STL\_Container<SgNode*> userQueryFunction ( SgNode*, SgNode* );}
 \end{itemize}
 
 \section{Overview of Query Library}
@@ -463,30 +463,30 @@ second parameter to the 'roseFunctionPointerTwoParameters'. As in the
 one-parameter case you may refer to predefined functions.
 
 The class NodeQuery also have an extended functionality with a query
-on a list<SgNode*>. This functionality is also replicated in the
+on a Rose\_STL\_Container<SgNode*>. This functionality is also replicated in the
 NameQuery and NumberQuery. This will allow you to query the result
 from a NodeQuery. The interface to this query is also through a few
 overloaded static member-functions in the class NodeQuery.
 \begin{verbatim}
   static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
-         list<SgNode*> nodeList, roseFunctionPointerOneParameter
+         Rose_STL_Container<SgNode*> nodeList, roseFunctionPointerOneParameter
          querySolverFunction);
 
   static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
-         list<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
+         Rose_STL_Container<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
 	  
   static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
-         list<SgNode*> nodeList,  SgNode* targetNode, 
+         Rose_STL_Container<SgNode*> nodeList,  SgNode* targetNode, 
          roseFunctionPointerTwoParameters querySolverFunction);  
 
   static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
-         list<SgNode*> nodeList,  SgNode* targetNode, 
+         Rose_STL_Container<SgNode*> nodeList,  SgNode* targetNode, 
          TypeOfQueryTypeTwoParameters elementReturnType);
 \end{verbatim}
 The syntax of this interface is almost identical to the interface to a query
 of an subTree of an AST.  The only difference is that you input a
-list<SgNode*> as an first argument instead of a subTree of an AST. You
-do not specify a subTree, since the scope of the query is the list<SgNode*> itself.  
+Rose\_STL\_Container<SgNode*> as an first argument instead of a subTree of an AST. You
+do not specify a subTree, since the scope of the query is the Rose\_STL\_Container<SgNode*> itself.  
 
 \subsection{Pre-Defined Function Documentation}
 \label{FunctionDocumentation}
@@ -556,7 +556,7 @@ And make a call to the function by supplying any c or c++ code at the commandlin
  
 The class NumberQuery of the QueryLib library has the purpose of
 counting properties in the scope of the query and returns a list of
-strings (list<string>). The scope of the query is
+strings (Rose\_STL\_Container<string>). The scope of the query is
 the AST. The interface to the NumberQuery library is through a few
 overloaded static member-functions in the class NumberQuery.
 
@@ -602,30 +602,30 @@ second parameter to the 'roseFunctionPointerTwoParameters'. As in the
 one-parameter case you may refer to predefined functions.
 
 The class NumberQuery also have an extended functionality with a query
-on a list<SgNode*>. This functionality is also replicated in the
+on a Rose\_STL\_Container<SgNode*>. This functionality is also replicated in the
 NodeQuery and NameQuery. This will allow you to query the result
 from a NodeQuery. The interface to this query is also through a few
 overloaded static member-functions in the class NumberQuery.
 \begin{verbatim}
   static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
-         list<SgNode*> nodeList, roseFunctionPointerOneParameter
+         Rose_STL_Container<SgNode*> nodeList, roseFunctionPointerOneParameter
          querySolverFunction);
 
   static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
-         list<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
+         Rose_STL_Container<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
 	  
   static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
-         list<SgNode*> nodeList, string matchingNumber, 
+         Rose_STL_Container<SgNode*> nodeList, string matchingNumber, 
          roseFunctionPointerTwoParameters querySolverFunction);  
 
   static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
-         list<SgNode*> nodeList, string matchingNumber, 
+         Rose_STL_Container<SgNode*> nodeList, string matchingNumber, 
          TypeOfQueryTypeTwoParameters elementReturnType);
 \end{verbatim}
 The syntax of this interface is almost identical to the interface to a query
 of an subTree of an AST.  The only difference is that you input a
-list<SgNode*> as an first argument instead of a subTree of an AST. You
-do not specify a subTree, since the scope of the query is the list<SgNode*> itself.  
+Rose\_STL\_Container<SgNode*> as an first argument instead of a subTree of an AST. You
+do not specify a subTree, since the scope of the query is the Rose\_STL\_Container<SgNode*> itself.  
 
 
 \subsection{Pre-Defined Function Documentation}
@@ -688,7 +688,7 @@ And make a call to the function by supplying any c or c++ code at the commandlin
 
 The class NameQuery of the QueryLib library has the purpose of
 finding the names in the scope of the query and returns a list of
-strings (list<string>). The scope of the query is
+strings (Rose\_STL\_Container<string>). The scope of the query is
 the AST. The interface to the NameQuery library is through a few
 overloaded static member-functions in the class NodeQuery.
 
@@ -733,30 +733,30 @@ second parameter to the 'roseFunctionPointerTwoParameters'. As in the
 one-parameter case you may refer to predefined functions.
 
 The class NameQuery also have an extended functionality with a query
-on a list<SgNode*>. This functionality is also replicated in the
+on a Rose\_STL\_Container<SgNode*>. This functionality is also replicated in the
 NodeQuery and NumberQuery. This will allow you to query the result
 from a NodeQuery. The interface to this query is also through a few
 overloaded static member-functions in the class NameQuery.
 \begin{verbatim}
   static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
-         list<SgNode*> nodeList, roseFunctionPointerOneParameter
+         Rose_STL_Container<SgNode*> nodeList, roseFunctionPointerOneParameter
          querySolverFunction);
 
   static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
-         list<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
+         Rose_STL_Container<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
 	  
   static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
-         list<SgNode*> nodeList, string targetName, 
+         Rose_STL_Container<SgNode*> nodeList, string targetName, 
          roseFunctionPointerTwoParameters querySolverFunction);  
 
   static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
-         list<SgNode*> nodeList, string targetName, 
+         Rose_STL_Container<SgNode*> nodeList, string targetName, 
          TypeOfQueryTypeTwoParameters elementReturnType);
 \end{verbatim}
 The syntax of this interface is almost identical to the interface to a query
 of an subTree of an AST.  The only difference is that you input a
-list<SgNode*> as an first argument instead of a subTree of an AST. You
-do not specify a subTree, since the scope of the query is the list<SgNode*> itself.  
+Rose\_STL\_Container<SgNode*> as an first argument instead of a subTree of an AST. You
+do not specify a subTree, since the scope of the query is the Rose\_STL\_Container<SgNode*> itself.  
  
 
 
@@ -1039,7 +1039,7 @@ int main ( int argc, char * argv[] ) {
  
   //Finds all member function definitions from member function declarations 
   testList = NodeQuery::querySubTree(project,NodeQuery::MemberFunctionDeclarations);
-  typedef list<SgNode*>::iterator testListIterator;
+  typedef Rose_STL_Container<SgNode*>::iterator testListIterator;
   
   for (testListIterator  listElement = testList.begin(); listElement != testList.end(); ++listElement) 
     {
@@ -1278,15 +1278,15 @@ parameters your query function needs. If you are to use the NameQuery
 library your choice is one or two parameters. The form of you function
 in the one-parameter case should be
 \begin{verbatim}
-list<string> functionNameOneParameter(SgNode* param1);
+Rose_STL_Container<string> functionNameOneParameter(SgNode* param1);
 \end{verbatim}
 In the two parameter case
 \begin{verbatim}
-list<string> functionNameTwoParameters(SgNode* param1, string param2);
+Rose_STL_Container<string> functionNameTwoParameters(SgNode* param1, string param2);
 \end{verbatim}
 An example of a one-parameter function is
 \begin{verbatim}
-list<string> queryNameMemberFunctionDeclarationNames(SgNode* astNode)
+Rose_STL_Container<string> queryNameMemberFunctionDeclarationNames(SgNode* astNode)
 {
   ROSE_ASSERT(astNode != 0);
   list<string> returnNameList;

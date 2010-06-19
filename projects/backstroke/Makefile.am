@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = eventDetection reverseComputation restrictedLanguage
+SUBDIRS = eventDetection reverseComputation restrictedLanguage normalizations
 
 # bin_PROGRAMS = reverse
 # reverse_SOURCES = reverse.cpp

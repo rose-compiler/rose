@@ -3,7 +3,10 @@
 #include <omp.h>
 #endif 
 int counter=0;
+
+#ifdef _OPENMP
 #pragma omp threadprivate(counter)
+#endif 
 int main(void)
 {
  int i;

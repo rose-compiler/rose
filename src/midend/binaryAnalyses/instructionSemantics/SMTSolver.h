@@ -6,17 +6,24 @@
 /** Interface to Satisfiability Modulo Theory (SMT) solvers. */
 class SMTSolver {
 public:
+    struct Exception {
+        Exception(const std::string &mesg): mesg(mesg) {}
+        friend std::ostream& operator<<(std::ostream&, const SMTSolver::Exception&);
+        std::string mesg;
+    };
+    
     typedef std::set<uint64_t> Definitions;     /**< Free variables that have been defined. */
 
     SMTSolver(): debug(NULL) {}
 
     virtual ~SMTSolver() {}
 
-    /** Determines if the specified expression is satisfiable. */
+    /** Determines if the specified expression is satisfiable. Throws Exception if satisfiability cannot be determined. */
     virtual bool satisfiable(const InsnSemanticsExpr::TreeNode *expr);
 
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
-     *  override this to generate some other kind of input. */
+     *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
+     *  is necessary to determine the satisfiability. */
     virtual void generate_file(std::ostream&, const InsnSemanticsExpr::TreeNode *expr, Definitions*) = 0;
 
     /** Given the name of a configuration file, return the command that is needed to run the solver. The first line
