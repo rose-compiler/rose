@@ -299,8 +299,8 @@ void reverserTraversal::visit(SgNode* n)
     // Get the model structure type which will be used in other functions, like initialization.
     if (SgClassDeclaration* model_decl = isSgClassDeclaration(n))
     {
-        //if (model_decl->get_qualified_name() == "model")
-        model_type = model_decl->get_type();
+        if (model_decl->get_name() == "model")
+            model_type = model_decl->get_type();
     }
 }
 
@@ -431,7 +431,6 @@ int fixVariableReferences2(SgNode* root)
     return counter;
 }
 
-#if 1
 int main( int argc, char * argv[] )
 {
     vector<string> args(argv, argv+argc);
@@ -485,9 +484,6 @@ int main( int argc, char * argv[] )
 #endif
     return backend(project);
 }
-#else
-#include "CFG.C"
-#endif
 
 
 

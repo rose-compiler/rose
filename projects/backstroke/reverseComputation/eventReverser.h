@@ -49,9 +49,9 @@ class EventReverser
 
 
 
-    public:
+public:
     EventReverser(SgFunctionDeclaration* func_decl,
-            DFAnalysis* analysis) 
+            DFAnalysis* analysis = NULL) 
         : func_decl_(func_decl), 
         defuse_(analysis),
         function_name_(func_decl_->get_name()), 
@@ -128,7 +128,7 @@ class EventReverser
         return inits;
     }
 
-    private:
+private:
     static const ExpPair NULL_EXP_PAIR;
     static const StmtPair NULL_STMT_PAIR;
 
@@ -183,6 +183,11 @@ class EventReverser
         return NULL;
     }
 
+    bool toSave(SgExpression* exp)
+    {
+        return true;
+    }
+
 
 #if 0
     // Generate a name containing the function name and counter
@@ -211,7 +216,8 @@ class EventReverser
     // Push an integer into integer stack. Can be used to save states. 
     SgExpression* pushIntVal(SgExpression* var)
     {
-        if (branch_mark_ < 0)
+        // Cannot use branch mark here!!!
+        if (1)//(branch_mark_ < 0)
             return buildFunctionCallExp(
                     "push", 
                     buildIntType(), 

@@ -1,7 +1,11 @@
 #include "utilities.h"
+#include <sageInterface.h>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
+using namespace SageInterface;
+using namespace boost;
 
 #define foreach BOOST_FOREACH
 
@@ -63,7 +67,7 @@ void validateName(string& name, SgNode* root)
     }
 }
 
-// Identify if two variables are the same. A variable may be a SgVarRefExp object
+// If two variables are the same. A variable may be a SgVarRefExp object
 // or a SgArrowExp object.
 bool areSameVariable(SgExpression* exp1, SgExpression* exp2)
 {
@@ -77,6 +81,12 @@ bool areSameVariable(SgExpression* exp1, SgExpression* exp2)
     if (arrow_exp1 && arrow_exp2)
         return areSameVariable(arrow_exp1->get_lhs_operand(), arrow_exp2->get_lhs_operand()) &&
          areSameVariable(arrow_exp1->get_rhs_operand(), arrow_exp2->get_rhs_operand());
+
+    SgDotExp* dot_exp1 = isSgDotExp(exp1);
+    SgDotExp* dot_exp2 = isSgDotExp(exp2);
+    if (dot_exp1 && dot_exp2)
+        return areSameVariable(dot_exp1->get_lhs_operand(), dot_exp2->get_lhs_operand()) &&
+         areSameVariable(dot_exp1->get_rhs_operand(), dot_exp2->get_rhs_operand());
 
     return false;
 }
@@ -116,3 +126,103 @@ bool canBeReordered(SgExpression* exp1, SgExpression* exp2)
 {
     return false;
 }
+
+// If a type is a STL container type.
+bool isSTLContainer(SgType* type)
+{
+    SgType* real_type = type->stripTypedefsAndModifiers();
+    SgClassType* class_t = isSgClassType(real_type);
+    if (class_t == NULL)
+        return false;
+
+    // Check the namespace.
+    if (SgNamespaceDefinitionStatement* ns_def = enclosingNamespaceScope(class_t->get_declaration()))
+    {
+        if (ns_def->get_namespaceDeclaration()->get_name() != "std")
+            return false;
+    }
+    else
+        return false;
+
+    // Check the class name
+    string name = class_t->get_name();
+    if (starts_with(name, "vector <") ||
+        starts_with(name, "deque <") ||
+        starts_with(name, "list <") ||
+        starts_with(name, "set <") ||
+        starts_with(name, "multiset <") ||
+        starts_with(name, "map <") ||
+        starts_with(name, "multimap <") ||
+        starts_with(name, "stack <") ||
+        starts_with(name, "queue <") ||
+        starts_with(name, "priority_queue <") ||
+        //starts_with(name, "pair <") ||
+        starts_with(name, "valarray <") ||
+        starts_with(name, "complex <") ||
+        starts_with(name, "bitset <"))
+        return true;
+
+    return false;
+}
+
+// Get the defined copy constructor in a given class. Returns NULL if the copy constructor is implicit.
+std::vector<SgMemberFunctionDeclaration*> 
+getCopyConstructors(SgClassDeclaration* class_decl)
+{
+#if 0
+    SgClassDeclaration* class_decl = 
+        isSgClassDeclaration(class_t->get_declaration()->get_definingDeclaration());
+#endif
+    ROSE_ASSERT(class_decl);
+
+    vector<SgMemberFunctionDeclaration*> copy_ctors;
+
+    // The C++ Standard says: A non-template constructor for class X is a copy constructor
+    // if its first parameter if of type X&, const X&, volatile X& or const volatile X&, 
+    // and either there are no other parameters or else all other parameters have default
+    // arguments.
+
+    SgClassDefinition* class_def = class_decl->get_definition();
+    foreach (SgDeclarationStatement* decl, class_def->get_members())
+    {
+        if (SgMemberFunctionDeclaration* mem_decl = isSgMemberFunctionDeclaration(decl))
+        {
+            if (mem_decl->get_specialFunctionModifier().isConstructor())
+            {
+                SgInitializedNamePtrList para_list = mem_decl->get_args();
+                if (para_list.empty())
+                    continue;
+
+                // The type of the first argument.
+                SgType* t = para_list[0]->get_type();
+                // Strip all typedefs and modifiers.
+                t = t->stripTypedefsAndModifiers();
+
+                if (SgReferenceType* ref_t = isSgReferenceType(t))
+                {
+                    t = ref_t->get_base_type();
+                    // Note that we have to strip the type twice.
+                    t = t->stripTypedefsAndModifiers();
+
+                    if (t == class_decl->get_type())
+                    {
+                        bool flag = true;
+                        for (size_t i = 1; i < para_list.size(); ++i)
+                        {
+                            if (para_list[i]->get_initializer() == NULL)
+                            {
+                                flag = false;
+                                break;
+                            }
+                        }
+                        if (flag)
+                            copy_ctors.push_back(mem_decl);
+                    }
+                }
+            }
+        }
+    }
+
+    return copy_ctors;
+}
+
