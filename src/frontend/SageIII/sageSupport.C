@@ -7051,6 +7051,11 @@ SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
        // lib path is available if --with-gomp_omp_runtime_library=XXX is used
           if (USE_ROSE_GOMP_OPENMP_LIBRARY)
              {
+               // add libxomp.a , Liao 6/12/2010,  TODO,support the same for other OpenMP rtl such as Omni
+               string xomp_lib_path(ROSE_INSTALLATION_PATH);
+               ROSE_ASSERT (xomp_lib_path.size() != 0);
+               linkingCommand.push_back(xomp_lib_path+"/lib/libxomp.a"); // static linking for simplicity
+
                string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
                ROSE_ASSERT (gomp_lib_path.size() != 0);
                linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
