@@ -1,5 +1,4 @@
 #include "facilityBuilder.h"
-#include "utilities.h"
 #include <rose.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -10,45 +9,6 @@ using namespace std;
 using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
-
-SgStatement* initializeMember(SgExpression* exp)
-{
-    SgType* exp_type = exp->get_type();
-    SgType* real_type = exp_type->stripTypedefsAndModifiers();
-
-    if (isSgArrayType(real_type))
-    {
-        // Initialize int array member
-        SgExprListExp* memset_para = buildExprListExp(
-                copyExpression(exp),
-                buildIntVal(0xFFFF),
-                buildSizeOfOp(exp));
-        return buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para);
-    }
-    else if (isSTLContainer(real_type))
-        return NULL;
-    else if (SgClassType* class_t = isSgClassType(real_type))
-    {
-        SgBasicBlock* block = buildBasicBlock();
-        SgClassDeclaration* class_decl = isSgClassDeclaration(class_t->get_declaration()->get_definingDeclaration());
-        SgDeclarationStatementPtrList members = class_decl->get_definition()->get_members();
-        foreach (SgDeclarationStatement* decl, members)
-        {
-            if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl))
-            {
-                SgVarRefExp* member_var = buildVarRefExp(var_decl->get_variables()[0]);
-                SgExpression* var = buildBinaryExpression<SgDotExp>(exp, member_var);
-                appendStatement(initializeMember(var), block);
-            }
-        }
-        return block;
-    }
-    else
-    {
-        SgAssignOp* init = buildBinaryExpression<SgAssignOp>(exp, buildIntVal(0xFFFF));
-        return buildExprStatement(init);
-    }
-}
 
 SgFunctionDeclaration* buildInitializationFunction(SgClassType* model_type)
 {
@@ -62,24 +22,6 @@ SgFunctionDeclaration* buildInitializationFunction(SgClassType* model_type)
 
     pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
 
-    // Automatically initialize its members
-    SgClassDeclaration* model_decl = isSgClassDeclaration(model_type->get_declaration()->get_definingDeclaration());
-    ROSE_ASSERT(model_decl);
-    ROSE_ASSERT(model_decl->get_definition());
-    SgDeclarationStatementPtrList members = model_decl->get_definition()->get_members();
-    foreach (SgDeclarationStatement* decl, members)
-    {
-        if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl))
-        {
-            SgVarRefExp* member_var = buildVarRefExp(var_decl->get_variables()[0]);
-            SgExpression* var = buildBinaryExpression<SgArrowExp>(
-                        buildVarRefExp(model_obj), member_var);
-            if (SgStatement* init = initializeMember(var))
-                appendStatement(init);
-        }
-    }
-
-#if 0
     // Initialize int member
     SgArrowExp* int_var = buildBinaryExpression<SgArrowExp>(
             buildVarRefExp(model_obj),
@@ -99,29 +41,9 @@ SgFunctionDeclaration* buildInitializationFunction(SgClassType* model_type)
             buildIntVal(0xFFFF),
             size_exp);
     appendStatement(buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para));
-#endif
 
     popScopeStack();
     return func_decl;
-}
-
-SgStatement* compareValue(SgExpression* var1, SgExpression* var2)
-{
-    SgType* var_type = var1->get_type();
-    if (isSgArrayType(var_type))
-    {
-        SgExprListExp* memcmp_para = buildExprListExp(
-                var1, var2,
-                buildSizeOfOp(var1));
-        SgStatement* cmp = buildFunctionCallStmt("memcmp", buildPointerType(buildVoidType()), memcmp_para);
-        return buildIfStmt(cmp, buildReturnStmt(buildIntVal(0)), NULL);
-    }
-    else
-    {
-        SgNotEqualOp* compare_exp = buildBinaryExpression<SgNotEqualOp>(var1, var2);
-        return buildIfStmt(compare_exp, buildReturnStmt(buildIntVal(0)), NULL);
-    }
-    return NULL;
 }
 
 SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
@@ -136,24 +58,15 @@ SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
                 para_list);
     pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
 
-    // Automatically initialize its members
-    SgClassDeclaration* model_decl = isSgClassDeclaration(model_type->get_declaration()->get_definingDeclaration());
-    ROSE_ASSERT(model_decl);
-    ROSE_ASSERT(model_decl->get_definition());
-    SgDeclarationStatementPtrList members = model_decl->get_definition()->get_members();
-    foreach (SgDeclarationStatement* decl, members)
-    {
-        if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl))
-        {
-            SgVarRefExp* member_var = buildVarRefExp(var_decl->get_variables()[0]);
-            SgExpression* var1 = buildBinaryExpression<SgArrowExp>(
-                        buildVarRefExp(model_obj1), member_var);
-            SgExpression* var2 = buildBinaryExpression<SgArrowExp>(
-                        buildVarRefExp(model_obj2), member_var);
-            if (SgStatement* comp = compareValue(var1, var2))
-                appendStatement(comp);
-        }
-    }
+    SgArrowExp* int_var1 = buildBinaryExpression<SgArrowExp>(
+            buildVarRefExp(model_obj1),
+            buildVarRefExp(INT_MEM_NAME)); 
+    SgArrowExp* int_var2 = buildBinaryExpression<SgArrowExp>(
+            buildVarRefExp(model_obj2),
+            buildVarRefExp(INT_MEM_NAME)); 
+    SgNotEqualOp* compare_int_exp = buildBinaryExpression<SgNotEqualOp>(int_var1, int_var2);
+    SgIfStmt* if_compare_int_stmt = buildIfStmt(compare_int_exp, buildReturnStmt(buildIntVal(0)), NULL);
+    appendStatement(if_compare_int_stmt);
 
     // return 1 if two models are equal
     appendStatement(buildReturnStmt(buildIntVal(1)));

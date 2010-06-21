@@ -156,13 +156,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             // (r(b), r(a), pop())  seperately. Note that r(b) or r(a) may also 
             // push values so we have to make the value contain FIFO temporarily.
 
-            // UPDATED: In the situation above, we don't have to store the value of the 
-            // expression. The return value of the reverse expression does not have to be
-            // the same as the original expression.
-
-#if 0
-
-            //FIXME The following code has some problem, which cannot remove a node thoroughly.
 
             SgExpression *new_fwd_lhs_exp, *new_fwd_rhs_exp, *new_rvs_lhs_exp, *new_rvs_rhs_exp;
             beginFIFO();   // Flags are FIFO now
@@ -193,7 +186,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             endFIFO();     // Flags are LIFO now
 
             return ExpPair(new_fwd_exp, rvs_exp);
-#endif
         }
 #endif
     }
@@ -226,33 +218,16 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                 // We must make sure that the rhs operand does not contain the lhs operand.
                 // Or else, this operation is not constructive. For example, a += a or a += a + b.
                 // This can also be done by def-use analysis.
-
-                // Note that sometimes we don't save a local variable. Even for a state variable, we may not 
-                // restore it everytime it is modified. This can make the constructive operations not 
-                // constructive. One solution is that we add a prerequisite to the following transformation
-                // which needs that all variables except modified one need to exist or contain the proper
-                // value.
-
+                
                 bool constructive = true;
                 Rose_STL_Container<SgNode*> node_list = NodeQuery::querySubTree(rhs_operand, V_SgExpression);
                 foreach (SgNode* node, node_list)
                 {
-                    SgExpression* exp = isSgExpression(node);
-                    ROSE_ASSERT(exp);
-                    if (areSameVariable(exp, lhs_operand))
+                    if (areSameVariable(isSgExpression(node), lhs_operand))
                     {
                         constructive = false;
                         break;
                     }
-                    
-#if 0
-                    // Once we have the SSA, we can maintain a table in which which variables are available.
-                    if (!isAvailable(exp))
-                    {
-                        constructive = false;
-                        break;
-                    }
-#endif
                 }
 
                 if (constructive)
@@ -306,12 +281,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             // a = (a + b) + c is also constructive which equals to a = a + (b + c).
             // We still don't consider the following case: a = 2 * a + b, although it can be reversed as
             // a = (a - b) / 2 if there is no overflow. This issue will be handled in the future.
-
-            // Note that sometimes we don't save a local variable. Even for a state variable, we may not 
-            // restore it everytime it is modified. This can make the constructive operations not 
-            // constructive. One solution is that we add a prerequisite to the following transformation
-            // which needs that all variables except modified one need to exist or contain the proper
-            // value.
 
             if (isSgAssignOp(bin_op))
             {
@@ -480,44 +449,19 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                     copyExpression(model_var),
                     copyExpression(state_var));
 #else
+            fwd_exp = buildBinaryExpression<SgCommaOpExp>(
+                    pushIntVal(copyExpression(lhs_operand)),
+                    fwd_exp);
 
-
-            // FIXME An important analysis should be performed here based on the 
-            // value graph built. If we can track the destroyed value which is held
-            // by another live variable, we don't have to push it into stack, but 
-            // directly assign that value to this assignee. The "swap" example is a 
-            // classic one: 
-            //     void swap(int& a, int& b) { int t = a; a = b; b = t; }
-            // It's reverse function is like:
-            //     void swap(int& a, int& b) { int t = b; b = a; a = t; }
-                 
-            SgExpression* rvs_exp = NULL;
-            // The following function returns the expression which holds the proper value.
-            //if (SgExpression* exp = valueCanBeRecovered())
-            if (false)
-            {
-                fwd_exp = isSgBinaryOp(copyExpression(bin_op));
-                rvs_exp = buildBinaryExpression<SgAssignOp>(
-                        copyExpression(lhs_operand),
-                        NULL);//exp);
-            }
-            else if (toSave(lhs_operand))
-            {
-                fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                        pushIntVal(copyExpression(lhs_operand)),
-                        fwd_exp);
-                rvs_exp = buildBinaryExpression<SgAssignOp>(
-                        copyExpression(lhs_operand),
-                        popIntVal());
-            }
+            SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
+                    copyExpression(lhs_operand),
+                    popIntVal());
 #endif
             // If the rhs operand expression can be reversed, we have to deal with 
             // both sides at the same time. For example: b = ++a, where a and b are 
             // both state variables.
-            if (rvs_exp && rvs_rhs_exp)
+            if (rvs_rhs_exp)
                 rvs_exp = buildBinaryExpression<SgCommaOpExp>(rvs_rhs_exp, rvs_exp);
-            else if (rvs_rhs_exp)
-                rvs_exp = rvs_rhs_exp;
             return ExpPair(fwd_exp, rvs_exp);
         }
     }
