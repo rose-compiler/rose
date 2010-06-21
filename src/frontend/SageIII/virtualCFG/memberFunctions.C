@@ -755,7 +755,6 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
-     std::cerr << "looking for out-edges to SgFunDef ";
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
      std::cerr << "found " << returnSites.size() << std::endl;
@@ -778,7 +777,6 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: {
-     std::cerr << "looking for in-edges to SgFunDef ";
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
      std::cerr << "found " << callExprs.size() << std::endl;
