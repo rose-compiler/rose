@@ -22,10 +22,15 @@ else
    omni_omp_runtime_support_path=$with_omni_omp_runtime_support
    echo "Setup Omni OpenMP support in ROSE! path = $omni_omp_runtime_support_path"
    AC_DEFINE([USE_ROSE_OMNI_OPENMP_SUPPORT],1,[Controls use of ROSE support for OpenMP Translator targeting Omni RTL.])
+   AC_DEFINE_UNQUOTED([OMNI_OPENMP_LIB_PATH],"$omni_omp_runtime_support_path",[Location (unquoted) of the Omni OpenMP run time library.])
 fi
 
 AC_SUBST(omni_omp_runtime_support_path)
 
 # End macro ROSE_SUPPORT_OMNI_OPENMP.
+AM_CONDITIONAL(ROSE_USE_OMNI_OPENMP,test ! "$with_omni_omp_runtime_support" = no)
+
 ]
 )
+
+

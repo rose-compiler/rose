@@ -1057,10 +1057,6 @@ ROSE_SUPPORT_EDG_DEBUGGING
 # 
 ROSE_SUPPORT_OMNI_OPENMP
 
-# Configuration commandline support for OMP project using ROSE
-#AM_CONDITIONAL(ROSE_USE_OPENMP,test ! "$with_omp_runtime_support" = no)
-AM_CONDITIONAL(ROSE_USE_OMNI_OPENMP,test ! "$with_omni_omp_runtime_support" = no)
-
 # call supporting macro for GCC 4.4.x gomp OpenMP runtime library
 # AM_CONDITIONAL is already included into the macro
 ROSE_WITH_GOMP_OPENMP_LIBRARY
