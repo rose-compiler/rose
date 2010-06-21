@@ -46,17 +46,20 @@ const int roseTargetCacheLineSize = 32;
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
+
 // DQ (4/17/2010): This function must be define if C++ support in ROSE is disabled.
 std::string edgVersionString()
-   {
+{
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-      string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
+  string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
 #else
-     string edg_version = "unknown (EDG is disabled)";
+  string edg_version = "unknown (EDG is disabled)";
 #endif
+  return edg_version;
+}
 
-     return edg_version;
-   }
+
+
 
 // DQ (4/17/2010): Added OFP version number support.
 // DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
