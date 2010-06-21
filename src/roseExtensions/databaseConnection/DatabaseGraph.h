@@ -417,7 +417,8 @@ DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchEdge(EdgeType &
 
 	typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
 	tie(ei,eend) = edges( *this );
-	for(; ei!=eend; ei++) {
+	// milki (06/23/2010) edge_iterators use preincrement
+	for(; ei!=eend; ++ei) {
 		if( get( boost::edge_dbg_data,  *this , *ei).get_id() == edge.get_id() ) {
 			edesc = *ei;
 			return true;
@@ -819,7 +820,8 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDatabase( void 
 	// save edges
 	typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
 	tie(ei,eend) = edges( *this );
-	for(; ei!=eend; ei++) {
+	// milki (6/23/2010) edge_iterators use preincrement
+	for(; ei!=eend; ++ei) {
 		graphedgeRowdata edge( UNKNOWNID, gid, 
 				get( boost::edge_dbg_data, *this, *ei ).get_id(),
 				get( boost::vertex_dbg_data, *this, boost::source( *ei, *this ) ).get_id(),

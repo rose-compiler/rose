@@ -17,9 +17,6 @@ bool debugOut = true; // output information about traversal to stderr
 //-----------------------------------------------------------------------------
 // define traversal classes 
 
-#include "/home/thuerey1/local/include/config.h"
-
-
 // Build an inherited attribute storing the current function defintion scope
 class MyInheritedAttribute
 {

@@ -3,6 +3,8 @@
 
 #include "sideEffect.h"
 
+using namespace std;
+
 class testSideEffectAttribute
 {
  public:
@@ -22,8 +24,8 @@ class testSideEffectAttribute
   bool getValid() { return mValid; }
 
  private:
-  string              mParentName;
   bool                mValid;
+  string              mParentName;
 };
 
 class testSideEffectTraversal
@@ -114,8 +116,8 @@ class testSideEffectTraversal
   }
   
  private:
-  int mUniquifier;
   SideEffectAnalysis *mSideEffectPtr;
+  int mUniquifier;
 };
 
 
@@ -202,8 +204,8 @@ class testNodeSideEffectTraversal
   }
   
  private:
-  int mUniquifier;
   SideEffectAnalysis *mSideEffectPtr;
+  int mUniquifier;
 };
 
 

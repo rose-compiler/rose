@@ -9,6 +9,7 @@
 #define TABLEACCESS_H
 
 #include <iostream>
+#include <cstdio>
 #include <sstream>
 #include <mysql++.h>
 #include <cstring>
@@ -417,7 +418,7 @@ int TableAccess<Rowdata>::remove(Rowdata *data)
 	}
 
 	char cmdstr[256];
-	snprintf(cmdstr, 256,"DELETE FROM %s WHERE id='%d';", data->table(), data->get_id() );
+  snprintf(cmdstr, 256,"DELETE FROM %s WHERE id='%d';", data->table(), data->get_id() );
 #if DEBUG_SQL==1
 	std::cout << "TableAccess<T>::remove : " << cmdstr << std::endl; // debug
 #endif

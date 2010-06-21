@@ -9,7 +9,7 @@ if ROSE_USE_MYSQL_DATABASE
 #                  correct set.h (the g++ set.h instead of the C++ mySQL set.h)
 # INCLUDES = $(ROSE_INCLUDES) -I/usr/include/g++-3 -I@MySQL_path@/include -I@MySQL_path@/include/mysql
 # INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
-INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql -idirafter /home/thuerey1/local/include
+INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql 
 
 # LDADD    = $(ROSE_LIBS) $(top_builddir)/projects/dataBase/librosedatabase.a @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lm -lfl -lz
 
@@ -30,7 +30,9 @@ simplecallgraph_example_SOURCES = simplecallgraph_example.C
 
 DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/dataBase/librosedatabase.a @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lz
+# milki (06/23/2010) MYSQL database support moved to src/roseExtensions
+#LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/dataBase/librosedatabase.a @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lz
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # DEPENDENCIES = \
 #     $(top_builddir)/QueryLibs/NameQuery/libnamequery.a \
@@ -44,7 +46,10 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/dataBase/lib
 #     $(top_builddir)/projects/dataBase/librosedatabase.a
 
 # Add extra option to compile boost with g++
-AM_CXXFLAGS = -ftemplate-depth-30
+# milki (06/23/2010) Increased depth due to template instantiation
+# errors
+#AM_CXXFLAGS = -ftemplate-depth-30
+AM_CXXFLAGS = -ftemplate-depth-32
 
 check-local:
 	rm -f testCode.o
