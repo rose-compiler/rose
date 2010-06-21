@@ -80,9 +80,9 @@ namespace VirtualCFG {
     //! An identifying index within the AST node given by getNode()
     unsigned int getIndex() const {return index;}
     //! Outgoing control flow edges from this node
-    std::vector<CFGEdge> outEdges() const;
+    std::vector<CFGEdge> outEdges(bool interprocedural = false) const;
     //! Incoming control flow edges to this node
-    std::vector<CFGEdge> inEdges() const;
+    std::vector<CFGEdge> inEdges(bool interprocedural = false) const;
     //! Test whether this node satisfies a (fairly arbitrary) standard for
     //! "interestingness".  There are many administrative nodes in the raw CFG
     //! (nodes that do not correspond to operations in the program), and this
@@ -263,8 +263,8 @@ namespace VirtualCFG {
     std::string id() const {return n.id();}
     SgNode* getNode() const {return n.getNode();}
     unsigned int getIndex() const {return n.getIndex();}
-    std::vector<InterestingEdge> outEdges() const;
-    std::vector<InterestingEdge> inEdges() const;
+    std::vector<InterestingEdge> outEdges(bool interprocedural = false) const;
+    std::vector<InterestingEdge> inEdges(bool interprocedural = false) const;
     bool isInteresting() const {return true;}
     bool operator==(const InterestingNode& o) const {return n == o.n;}
     bool operator!=(const InterestingNode& o) const {return !(*this == o);}
