@@ -757,7 +757,6 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 2: { 
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
-     std::cerr << "found " << returnSites.size() << std::endl;
      for (unsigned int i = 0; i < returnSites.size(); ++i) { 
          if (isSgFunctionCallExp(returnSites[i])->getAssociatedFunctionDeclaration() ==
              this->get_declaration()) {
@@ -778,7 +777,6 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
     case 0: {
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
-     std::cerr << "found " << callExprs.size() << std::endl;
      for (unsigned int i = 0; i < callExprs.size(); ++i) 
          makeEdge(callExprs[i]->cfgForEnd(), CFGNode(this, idx), result);
      break;
