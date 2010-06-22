@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# This is the launcher for smgit2.  It just runs the "smgit2" perl script that it finds in the "origin/master"
+# This is the launcher for smgit.  It just runs the "smgit" perl script that it finds in the "origin/master"
 # branch of the Git repository containing your current working directory.
 #
-# For convenience, install this launcher shell script as "smgit2" somewhere in your $PATH (I put it in ~/bin
-# on my system).  Then whenever you run a command like "smgit2 status" this launcher will make sure you're
-# using the most recent, fully tested version of smgit2.
+# For convenience, install this launcher shell script as "smgit" somewhere in your $PATH (I put it in ~/bin
+# on my system).  Then whenever you run a command like "smgit status" this launcher will make sure you're
+# using the most recent, fully tested version of smgit.
 ####################################################################################################################
 
 # Parse command-line options for the launcher
@@ -19,7 +19,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 
-# Find top-level ROSE repo. These two functions are copied straight from smgit2 (only the "die" is modified)
+# Find top-level ROSE repo. These two functions are copied straight from smgit (only the "die" is modified)
 rose=$(perl -e '
     use Cwd;
     use strict;
@@ -42,7 +42,7 @@ rose=$(perl -e '
 	return $s if is_top_of_rose $s;
 	pop @comps;
       }
-      die "smgit2_launcher: cannot find top of ROSE source tree (cwd=@{[getcwd]})\n";
+      die "smgit_launcher: cannot find top of ROSE source tree (cwd=@{[getcwd]})\n";
     }
 
     print top_of_rose;
@@ -57,22 +57,22 @@ if [ ! -d "$rose" ]; then
     echo "        git submodule init"
     echo "        ${EDITOR-vi} .git/config # edit the URL for the EDG submodule"
     echo "        git submodule update"
-    echo "    After you do this, this smgit2 launcher script should work."
+    echo "    After you do this, this smgit launcher script should work."
     echo
-    echo "    Alternatively, you can run a temporary copy of the smgit2 perl script"
-    echo "    (i.e., scripts/smgit2) found in most any existing ROSE Git repository. The"
+    echo "    Alternatively, you can run a temporary copy of the smgit perl script"
+    echo "    (i.e., scripts/smgit) found in most any existing ROSE Git repository. The"
     echo "    command is:"
-    echo "        smgit2 clone ROSE_REPO_URL rose"
+    echo "        smgit clone ROSE_REPO_URL rose"
     #     --------------------------------------------------------------------------------
     exit 1
 fi
 
-# Run smgit2 if possible
-if (cd $rose && git rev-parse $branch:scripts/smgit2) >/dev/null 2>&1; then
-    echo "smgit2_launcher: running smgit2 from $branch..."
-    exec perl <(cd $rose && git show $branch:scripts/smgit2) "$@"
+# Run smgit if possible
+if (cd $rose && git rev-parse $branch:scripts/smgit) >/dev/null 2>&1; then
+    echo "smgit_launcher: running smgit from $branch..."
+    exec perl <(cd $rose && git show $branch:scripts/smgit) "$@"
     exit 1
 else
-    echo "smgit2_launcher: cannot find the real smgit2 perl script" >&2
+    echo "smgit_launcher: cannot find the real smgit perl script" >&2
     exit 1
 fi
