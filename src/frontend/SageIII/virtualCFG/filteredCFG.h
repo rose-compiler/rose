@@ -131,6 +131,11 @@ namespace VirtualCFG
                                                                  std::string graphName,
                                                                  FilteredCFGNode <
                                                                  FilterFunction > start);
+
+    template < typename FilterFunction > std::ostream & interproceduralCfgToDot(std::ostream & o,
+                                                                 std::string graphName,
+                                                                 FilteredCFGNode <
+                                                                 FilterFunction > start);
 }
 
 #include "filteredCFGImpl.h"
