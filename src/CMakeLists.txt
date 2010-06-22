@@ -196,6 +196,7 @@ set(rose_support_src
 
 set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Partitioner.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDParser.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerPowerpc.C 
@@ -300,7 +301,8 @@ set( roseAsmUnparser_SRC
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseX86Asm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseArmAsm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparsePowerpcAsm.C 
-     ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseAsm.C
+     ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser.C
+     ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser_compat.C
    )
 
 set( libastMerge_SRC     
@@ -434,6 +436,10 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemanticsExpr.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/VirtualMachineSemantics.C
 )
 

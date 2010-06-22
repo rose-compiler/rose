@@ -821,20 +821,10 @@ namespace rose_hash
      //using namespace __gnu_cxx;
 #endif
 
-#if 1
        using boost::unordered_map;
        using boost::unordered_multimap;
        using boost::unordered_set;
        using boost::hash;
-#else
-#define unordered_map hash_map
-#define unordered_multimap hash_multimap
-#define unordered_set hash_set
-       using __gnu_cxx::hash_map;
-       using __gnu_cxx::hash_multimap;
-       using __gnu_cxx::hash_set;
-       using __gnu_cxx::hash;
-#endif
 
 #if 0       
    // CH (4/8/2010): Typedef wrappers of hash_map types
@@ -1535,10 +1525,14 @@ void traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor );
 // This traversal helps support intrnal tools that call static member functions.
 void traverseRepresentativeNodes ( ROSE_VisitTraversal & traversal );
 
+// DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+// using values that overflow signed values of int.
 // DQ (1/2/2006): Support for computing the total number of IR nodes in use within an AST
 // computation is done based on the memory pools (so it is exact).
-int numberOfNodes();
-int memoryUsage();
+// int numberOfNodes();
+// int memoryUsage();
+size_t numberOfNodes();
+size_t memoryUsage();
 
 // DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
 //     (this function prototype is replicated in the ROSE/src/unparser/unparser.h)
@@ -2075,7 +2069,15 @@ HEADER_START
 
       /*! \brief Find the in edges of a CFG node -- internal version. */
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#if 0
+      /*! \brief Find the out edges of a CFG node from a static CFG -- internal version. */
+          virtual std::vector<SgDirectedGraphEdge*> cfgOutEdges(unsigned int index, StaticCFG::CFG* cfg)
+          { return cfg->getOutEdges(this, index); }
 
+      /*! \brief Find the in edges of a CFG node from a static CFG -- internal version. */
+          virtual std::vector<SgDirectedGraphEdge*> cfgInEdges(unsigned int index, StaticCFG::CFG* cfg)
+          { return cfg->getInEdges(this, index); }
+#endif
       /* */
 
        // DQ (1/31/2006): These must be built to be static access member functions (so they can't be built by ROSETTA).

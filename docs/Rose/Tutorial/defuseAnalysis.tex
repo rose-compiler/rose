@@ -3,6 +3,7 @@
 The dataflow analysis in Rose is based on the control flow graph (CFG).
 One type of dataflow analysis is called def-use analysis, which is explained next.
 
+%-------------------------------------
 \section{Def-Use Analysis}
 
 The definition-usage (def-use) analysis allows to query the definition
@@ -15,7 +16,6 @@ For instance, the CFG for the following program
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
-
 
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
@@ -32,20 +32,24 @@ For instance, the CFG for the following program
 % End of scope in indentation
 }
 \caption{Example input code.}
-\label{Tutorial:exampledefuseCode}
+\label{Tutorial:exampledefuseInput}
 \end{figure}
 
 is illustrated in Figure ~\ref{Tutorial:exampledefuse}.
 
 \subsection{Def-use Example implementation}
 
-The following code shows an example of how the def-use analysis is called:
+Fig.~\ref{Tutorial:defuseCode} shows an example program of how the def-use analysis
+is called. It generates a dot graph showing def/use information within
+a control flow graph. 
+It also outputs reaching definition information for each variable
+references of an input code. This program (named as \textit{defuseAnalysis})
+is installed under \textit{ROSE\_INST/bin} as a standalone tool for users
+to experiment the def/use analysis of ROSE.
 
-%\begin{figure}[!h]
+\begin{figure}[!h]
 {\indent
 {\mySmallFontSize
-
-
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
    \lstinputlisting{\TutorialExampleDirectory/defuseAnalysis.C}
@@ -60,9 +64,38 @@ The following code shows an example of how the def-use analysis is called:
 }
 % End of scope in indentation
 }
-%\caption{Example source code.}
-%\label{Tutorial:defuseCode}
-%\end{figure}
+\caption{Example source code using def use analysis}
+\label{Tutorial:defuseCode}
+\end{figure}
+
+
+Figure~\ref{Tutorial:defuse.output} shows the screen output of the
+code(Fig.~\ref{Tutorial:defuseCode}) running on the input
+code(Fig.~\ref{Tutorial:exampledefuseInput}). 
+Each variable reference in the input code has at least one reaching definition node. The associated definition
+statement is also printed out.   
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/defuseAnalysis.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/defuseAnalysis.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of the program}
+\label{Tutorial:defuse.output}
+\end{figure}
 
 
 \subsection{Accessing the Def-Use Results}
@@ -114,5 +147,6 @@ the run function. After that, the described functions above help to evaluate
 definition and usage for each CFN.
 
 
-
+%--------------------
+\input{livenessAnalysis}
 

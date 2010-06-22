@@ -3563,6 +3563,13 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
      static std::map<SgNode*,std::set<SgNode*> > childMap;
 
      ROSE_ASSERT(node != NULL);
+
+     if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
+        {
+          printf ("Error: In TestChildPointersInMemoryPool::visit() for node = %s at %p \n",node->class_name().c_str(),node);
+        }
+     ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+
      SgNode *parent = node->get_parent();
 
 #if ROSE_USE_VALGRIND
@@ -3573,7 +3580,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
         {
           bool nodeFound = false;
 #if 0
-       // This is the really nieve implementation, but simple.
+       // This is the really naive implementation, but simple.
           vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
           for (unsigned int i = 0; i < v.size(); i++)
              {
@@ -3595,7 +3602,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 #endif
 
        // DQ (3/12/2007): This is the latest implementation, here we look for the child set 
-       // in a staticlly defined childMap. This should be a more efficient implementation.
+       // in a statically defined childMap. This should be a more efficient implementation.
        // Since it uses a static map it is a problem when the function if called twice.
           std::map<SgNode*,std::set<SgNode*> >::iterator it = childMap.find(parent);
 
@@ -3614,6 +3621,9 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
              }
             else
              {
+            // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
+               if (parent->get_freepointer() == AST_FileIO::IS_VALID_POINTER() )
+                  {
             // build the set (and do the test)
                childMap[parent] = std::set<SgNode*>();
                it = childMap.find(parent);
@@ -3629,6 +3639,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 #endif
 
 #if 0
+             // DQ (6/5/2010): Turn this on to support debugging of the AST File I/O support for reading files (tests/testAstFileRead.C).
+
                /* DEBUGGING (RPM 2008-10-10)
                 * If the call to parent->returnDataMemberPointers() fails it could be due to the fact that the parent has been
                 * deleted without deleting its children. This can happen if the parent's definition in one of the *.C files
@@ -3641,9 +3653,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 
                if (parent->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
                   {
-                    printf ("Error: In TestChildPointersInMemoryPool::visit() for %s at %p \n",parent->class_name().c_str(),parent);
+                    printf ("Error: In TestChildPointersInMemoryPool::visit() for parent = %s at %p \n",parent->class_name().c_str(),parent);
                   }
 #endif
+
                vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
 #if 0
                if (isSgTypedefSeq(node) != NULL)
@@ -3661,6 +3674,9 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          {
                            nodeFound = true;
                          }
+                  }
+
+            // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
                   }
              }
 

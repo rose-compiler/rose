@@ -17,6 +17,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif.c \
 	endif3.c \
 	firstPrivateArray.c \
+	full_verify.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
         master.c \
@@ -28,7 +29,8 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         task_orphaned.c \
         task_underIf.c \
         task_wait.c \
-        task_wait2.c
+        task_wait2.c \
+	twoRegions.c 
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -52,6 +54,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         lastprivate.c \
         lastprivate0.c \
         lockarray.c \
+	loop1.c \
         nestedpar.c \
         nestedpar1.c \
         masterSingle.c \
@@ -95,13 +98,13 @@ if !OS_MACOSX
 endif
 
 # C++ test codes which can only be compiled
-CXX_TESTCODES_REQUIRED_TO_COMPILE = 
+CXX_TESTCODES_REQUIRED_TO_COMPILE = \
+	memberFunction.cpp 
 
 # C++ test codes which can be compiled and linked to final executables
 CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	hello1.cpp \
 	helloNested.cpp \
-	memberFunction.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
 	objectLastprivate.cpp \
@@ -129,6 +132,7 @@ CXX_TEST_OBJECT_REQUIRED_TO_RUN = ${CXX_TESTCODES_REQUIRED_TO_RUN:.cpp=.o}
 # TODO task-wait hangs for gcc 4.4.1 (not for Intel icc), skip the execution for now	
 #	task_wait.o
 # TODO: npb, validation suite, developer tests, epcc
+# full_verify.c complex #if #endif
 TESTCODE_CURRENTLY_FAILING = \
         collapse.c \
         copyin.c \
@@ -142,6 +146,7 @@ TESTCODE_CURRENTLY_FAILING = \
         parallelsections.c \
         recursive.c \
         section.c \
+	shared.c \
         single_copyprivate.c \
         threadProcessor.c \
         variables.c

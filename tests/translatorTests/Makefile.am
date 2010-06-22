@@ -18,12 +18,15 @@ LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = \
        bug125 \
        qualifiedName \
-       testTranslator2010_01
+       testTranslator2010_01 \
+       testTranslator2010_02
 
 # Example translators used in regression tests
 bug125_SOURCES = bug125.C
 qualifiedName_SOURCES = qualifiedName.C
+
 testTranslator2010_01_SOURCES = testTranslator2010_01.C
+testTranslator2010_02_SOURCES = testTranslator2010_02.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -37,14 +40,21 @@ testbug125: bug125
 testqualifiedName: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 
-testTranslator2010_01_test: testTranslator2010_01 
-	./testTranslator2010_01 -rose:verbose 2
+#testTranslator2010_01_test: testTranslator2010_01 
+#	./testTranslator2010_01 -rose:verbose 2
+# a few translators without input parameters to run	
+check_PROGRAMS = testTranslator2010_01
+TESTS = $(check_PROGRAMS)
 
-EXTRA_DIST = CMakeLists.txt inputbug125.C
+testTranslator2010_02_test: testTranslator2010_02 
+	./testTranslator2010_02 -rose:verbose 2 $(srcdir)/input_testTranslator2010_2.C
+
+EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C
 
 check-local:
 #	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
 	@$(MAKE) testbug125 testqualifiedName
+	@$(MAKE) testTranslator2010_02_test
 	@echo "****************************************************************************************"
 	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************"

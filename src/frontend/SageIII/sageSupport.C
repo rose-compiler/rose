@@ -1798,6 +1798,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          }
      }
 
+  // RPM (6/9/2010): Partitioner configuration
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
+         set_partitionerConfigurationFileName(stringParameter);
+     }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -2613,6 +2618,11 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                               sourceFile->initializeGlobalScope();
                             }
                            else
+                              if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension)   == true )
+                                   file->set_Cuda_only(true);
+                              else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension)   == true )
+                                   file->set_OpenCL_only(true);
+                              else
                             {
                            // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
 
@@ -3082,25 +3092,82 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           }
         }
 
-
-     if (get_C_only() == true || get_C99_only() == true)
-        {
-       // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
-       // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
-       // if (get_requires_cplusplus_macro() == true)
-          if (get_sourceFileUsesCppFileExtension() == true)
+        
+  // TV (05/07/2010): OpenCL and CUDA mode (Caution: we may need both C++ language mode and Cuda)
+     bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true) || get_Cuda_only();
+     bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
+     
+     if (enable_cuda || enable_opencl) {
+	makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+     	if (enable_cuda && !enable_opencl) {
+     		commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
+     	}
+     	else if (enable_opencl && !enable_cuda) {
+     		commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
+     	}
+	else {
+		printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
+     		ROSE_ASSERT(false);
+     	}
+     }
+     else {
+          if (get_C_only() == true || get_C99_only() == true)
              {
-            // The value here should be 1 to match that of GNU gcc (the C++ standard requires this to be "199711L")
-            // initString += " -D__cplusplus=0 ";
-               commandLine.push_back("-D__cplusplus=1");
+            // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
+            // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
+            // if (get_requires_cplusplus_macro() == true)
+               if (get_sourceFileUsesCppFileExtension() == true)
+                  {
+                 // The value here should be 1 to match that of GNU gcc (the C++ standard requires this to be "199711L")
+                 // initString += " -D__cplusplus=0 ";
+                    commandLine.push_back("-D__cplusplus=1");
+                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
+                       {
+                         commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
+                      // no standard includes when -nostdinc is specified
+                       }
+                      else
+                       {
+                         if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
+                            {
+                              commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
+                              makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+                            }
+                           else
+                            {
+                              makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
+                            }
+                       }
+     
+                 // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
+                    commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+                  }
+                 else
+                  {
+                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
+                       {
+                         commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
+                      // no standard includes when -nostdinc is specified
+                       }
+                      else
+                       {
+                         makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+                       }
+            
+                 // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
+                    commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
+                  }
+             }
+            else
+             {
                if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
                   {
-                    commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
+                    commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
                  // no standard includes when -nostdinc is specified
                   }
                  else
                   {
-                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
+                    if ( CommandlineProcessing::isOption(argv,"-","nostdinc\\+\\+",false) == true ) // Option name is a RE
                        {
                          commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
                          makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
@@ -3110,50 +3177,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                          makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
                        }
                   }
-
+     
             // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
              }
-            else
-             {
-               if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
-                  {
-                    commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
-                 // no standard includes when -nostdinc is specified
-                  }
-                 else
-                  {
-                    makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
-                  }
-       
-            // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
-               commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
-             }
-        }
-       else
-        {
-          if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
-             {
-               commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
-            // no standard includes when -nostdinc is specified
-             }
-            else
-             {
-               if ( CommandlineProcessing::isOption(argv,"-","nostdinc\\+\\+",false) == true ) // Option name is a RE
-                  {
-                    commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
-                    makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
-                  }
-                 else
-                  {
-                    makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
-                  }
-             }
-
-       // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
-          commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
-        }
-
+     }
+     
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
@@ -4311,6 +4340,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
+          argument == "-rose:partitioner_config" ||
           false)
         {
           result = true;
@@ -7016,18 +7046,36 @@ SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
   // Additional libraries to be linked with
   // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
      if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering()))
-        {
+     {
+
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
+       // add libxomp.a , Liao 6/12/2010
+       string xomp_lib_path(ROSE_INSTALLATION_PATH);
+       ROSE_ASSERT (xomp_lib_path.size() != 0);
+       linkingCommand.push_back(xomp_lib_path+"/lib/libxomp.a"); // static linking for simplicity
+
        // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-          if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-             {
-               string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-               ROSE_ASSERT (gomp_lib_path.size() != 0);
-               linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-               linkingCommand.push_back("-lpthread");
-             }
+         string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
+         ROSE_ASSERT (gomp_lib_path.size() != 0);
+         linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); 
+         linkingCommand.push_back("-lpthread");
+#else
+  // GOMP has higher priority when both GOMP and OMNI are specified (wrongfully)
+  #ifdef OMNI_OPENMP_LIB_PATH
+           // a little redundant code to defer supporting 'ROSE_INSTALLATION_PATH' in cmake
+           string xomp_lib_path(ROSE_INSTALLATION_PATH);
+           ROSE_ASSERT (xomp_lib_path.size() != 0);
+           linkingCommand.push_back(xomp_lib_path+"/lib/libxomp.a"); 
+
+           string omni_lib_path(OMNI_OPENMP_LIB_PATH);
+           ROSE_ASSERT (omni_lib_path.size() != 0);
+           linkingCommand.push_back(omni_lib_path+"/libgompc.a"); 
+           linkingCommand.push_back("-lpthread");
+  #else
+     printf("Warning: OpenMP lowering is requested but no target runtime library is specified!\n");
+  #endif
 #endif
-        }
+     }
 
      if ( get_verbose() > 0 )
         {
@@ -7249,6 +7297,15 @@ SgFile::usage ( int status )
 "                             the usual C notation) can be used to set/clear multiple\n"
 "                             search bits at one time. See doxygen comments for the\n"
 "                             Partitioner::parse_switches class method for full details.\n"
+"     -rose:partitioner_config FILENAME\n"
+"                             File containing configuration information for the\n"
+"                             instruction/block/function partitioner. This config\n"
+"                             file can be used to override block successors,\n"
+"                             alias two or more blocks that have identical\n"
+"                             semantics, assign particular blocks to functions,\n"
+"                             override function return analysis, provide or\n"
+"                             override function names, etc. See documentation for\n"
+"                             the IPDParser class for details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparse_line_directives\n"
@@ -8225,7 +8282,12 @@ static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* at
   ROSE_ASSERT(target&&att);
   // build variable list
   std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(key);
-  ROSE_ASSERT(varlist.size()!=0);
+#if 0  
+  // Liao 6/10/2010 we relax this assertion to workaround 
+  //  shared(num_threads),  a clause keyword is used as a variable 
+  //  we skip variable list of shared() for now so shared clause will have empty variable list
+#endif  
+   ROSE_ASSERT(varlist.size()!=0);
   std::vector<std::pair<std::string,SgNode* > >::iterator iter;
   for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
   {
@@ -8679,6 +8741,36 @@ SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttri
       }
     }
   } // end clause allocations 
+
+ /*
+  handle dangling #endif  attached to the loop
+  1. original 
+ #ifdef _OPENMP
+  #pragma omp parallel for  private(i,k)
+ #endif 
+   for () ...
+
+  2. after splitting
+
+ #ifdef _OPENMP
+  #pragma omp parallel 
+  #pragma omp for  private(i,k)
+ #endif 
+   for () ...
+  
+  3. We need to move #endif to omp parallel statement 's after position
+   transOmpParallel () will take care of it later on
+
+    #ifdef _OPENMP
+      #pragma omp parallel 
+      #pragma omp for  private(i) reduction(+ : j)
+      for (i = 1; i < 1000; i++)
+        if ((key_array[i - 1]) > (key_array[i]))
+          j++;
+    #endif
+  This is no perfect solution until we handle preprocessing information as structured statements in AST
+ */
+   movePreprocessingInfo(body, first_stmt, PreprocessingInfo::before, PreprocessingInfo::after, true);
   return first_stmt;
 }
 

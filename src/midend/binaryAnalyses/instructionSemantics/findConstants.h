@@ -679,30 +679,25 @@ struct FindConstantsPolicy {
         currentRset.flag[f] = value;
     }
 
+    /* Only used by number<>(uint64_t) below, but gcc-4.0.1 on OSX (Apple Inc. build 5484) does not like this struct to be
+     * defined inside that function.  It results in strange warnings about an unrelated function in
+     * x86InstructionSemantics.C having no return value. [RPM 2010-05-27] */
+    template <size_t Len>
+    struct NumberConstraint: public NullaryConstraint<Len> {
+        uint64_t val;
+        NumberConstraint(XVariablePtr<Len> var, uint64_t val)
+            : NullaryConstraint<Len>(var), val(val)
+            {}
+        virtual uint64_t compute() const {
+            return val;
+        }
+    };
+        
     template <size_t Len>
     XVariablePtr<Len> number(uint64_t n) {
-
-#ifndef ROSE_APPLE_OS_VENDOR
-     // DQ (4/17/2010): This appears to fail to compile on MAC OSX 10.5.
-        struct NumberConstraint: public NullaryConstraint<Len> {
-            uint64_t val;
-            NumberConstraint(XVariablePtr<Len> var, uint64_t val)
-                : NullaryConstraint<Len>(var), val(val)
-                {}
-            virtual uint64_t compute() const {
-                return val;
-            }
-        };
         XVariablePtr<Len> var = new XVariable<Len>();
-        (new NumberConstraint(var, n))->activate();
+        (new NumberConstraint<Len>(var, n))->activate();
         return var;
-#else
-        printf ("ERROR: code commented out for APPLE OSX \n");
-        ROSE_ASSERT(false);
-
-        return 0;
-#endif
-
     }
 
     // Only safe when MSBs don't matter (i.e., you can't extract bits from something and then use this to put in zeros -- the
@@ -817,6 +812,7 @@ struct FindConstantsPolicy {
     template <size_t Len, size_t SCLen>
     UNARY_COMPUTATION(generateMask, SCLen, Len, {return IntegerOps::genMask<uint64_t>(a);})
 
+#if 1
     template <size_t Len>
     BINARY_COMPUTATION_SPECIAL(add, Len, Len, Len, {
             if (le1.name == 0 || le2.name == 0) {
@@ -830,6 +826,12 @@ struct FindConstantsPolicy {
             }
             result->set(LatticeElement<Len>::nonconstant(result->myName, result->def));
         })
+#else
+    template <size_t Len>
+    BINARY_COMPUTATION(add, Len, Len, Len, {return (a & b);})
+
+#endif
+
 
     template <size_t Len>
     TERNARY_COMPUTATION_SPECIAL(add3, Len, Len, 1, Len, {

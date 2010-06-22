@@ -1,31 +1,51 @@
-AC_DEFUN([ROSE_SUPPORT_YICES],
-[
-# Begin macro ROSE_SUPPORT_YICES.
-
 # Inclusion of test for YICES SMT Solver Package and it's location.
+AC_DEFUN([ROSE_SUPPORT_YICES],[
 
-AC_MSG_CHECKING(for yices)
-AC_ARG_WITH(yices,
-[  --with-yices=PATH	Specify the prefix where Yices SMT solver is installed],
-,
-if test ! "$with_yices" ; then
-   with_yices=no
-fi
-)
+    dnl Parse configure command-line switches for Yices and/or obtain the value from the cache.
+    AC_ARG_WITH([yices],
+                [AC_HELP_STRING([[[[--with-yices[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
+                                [Use the Yices Satisfiability Modulo Theories (SMT) solver. The PREFIX, if specified,
+                                 should be the prefix used to install Yices, such as "/usr/local". ROSE searches for
+                                 an executable named "/bin/yices" under the specified prefix.  The default is the empty
+                                 prefix.])],
+                [ac_cv_use_yices=$withval],
+                [ac_cv_use_yices=no])
+    AC_CACHE_CHECK([whether to use yices], [ac_cv_use_yices], [ac_cv_use_yices=no])
 
-echo "In ROSE SUPPORT MACRO: with_yices $with_yices"
 
-if test "$with_yices" = no; then
-   # If yices is not specified, then don't use it.
-   echo "Skipping use of Yices SMT Solver support!"
-else
-   yices_path=$with_yices
-   echo "Setup Yices support in ROSE! path = $yices_path"
-   AC_DEFINE([USE_ROSE_YICES_SUPPORT],1,[Controls use of ROSE support for Yices Satisfiability Modulo Theories (SMT) Solver Package.])
-fi
+    dnl Find the yices executable and/or library. These variables are AC_DEFINE'd
+    dnl   YICES_PREFIX         -- prefix specified (or found) from --with-yices switch
+    dnl   YICES                -- the full path name of the "yices" executable
+    dnl   HAVE_LIBYICES        -- defined as "1" if libyices.a exists
+    dnl
+    YICES_PREFIX=
+    YICES=
+    HAVE_LIBYICES=
+    if test $ac_cv_use_yices = yes; then
+        YICES_PREFIX=
+        AC_PATH_PROG(YICES, yices)
+        AC_CHECK_LIB(yices, yicesl_version)
+    elif test -n "$ac_cv_use_yices" -a "$ac_cv_use_yices" != no; then
+        YICES_PREFIX="$ac_cv_use_yices"
+        AC_PATH_PROG(YICES, yices, [], [$YICES_PREFIX/bin])
+        AC_MSG_CHECKING([for libyices.a])
+        AC_CHECK_FILE(["$YICES_PREFIX/lib/libyices.a"],
+                      [AC_MSG_RESULT([$YICES_PREFIX/lib/libyices.a])
+                       AC_DEFINE(HAVE_LIBYICES)],
+                      [AC_MSG_RESULT(no)])
+    fi
 
-AC_SUBST(yices_path)
+    dnl Sanity check... If the user told us to use yices, then we must find either an executable or the library.
+    if test "$ac_cv_use_yices" != no -a -z "$YICES" -a -z "$HAVE_LIBYICES"; then
+        AC_MSG_ERROR([found neither yices executable nor libyices.a for --with-yices])
+    fi
 
-# End macro ROSE_SUPPORT_YICES.
-]
-)
+    dnl Results
+    if test -n "$YICES"; then
+        AC_DEFINE_UNQUOTED(YICES, ["$YICES"], [Absolute name of yices executable, or the empty string.])
+    fi
+    AC_SUBST(YICES)
+    AC_SUBST(YICES_PREFIX)
+    AM_CONDITIONAL(HAVE_LIBYICES, [test -n "$HAVE_LIBYICES"])
+    AM_CONDITIONAL(HAVE_YICES,    [test -n "$YICES"])
+])

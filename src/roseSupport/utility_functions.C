@@ -46,17 +46,20 @@ const int roseTargetCacheLineSize = 32;
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
+
 // DQ (4/17/2010): This function must be define if C++ support in ROSE is disabled.
 std::string edgVersionString()
-   {
+{
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-      string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
+  string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
 #else
-     string edg_version = "unknown (EDG is disabled)";
+  string edg_version = "unknown (EDG is disabled)";
 #endif
+  return edg_version;
+}
 
-     return edg_version;
-   }
+
+
 
 // DQ (4/17/2010): Added OFP version number support.
 // DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
@@ -397,9 +400,9 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
 
      enum language_enum
         {
-          e_none = 0,
-          e_c    = 1, 
-          e_cxx = 2, 
+          e_none    = 0,
+          e_c       = 1, 
+          e_cxx     = 2, 
           e_fortran = 3, 
           e_last_language 
         };
@@ -1251,6 +1254,16 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement )
                        {
                          previousStatement = *previousStatementIterator;
                        }
+                  }
+                  // Liao 5/10/2010, special case when a true/false body of a if statement is not a basic block
+                  // since getStatementList() is not defined for a if statement. 
+                  // We define the previous statement of the true/false body to be the if statement
+                  // This is consistent with the later handling that when a statement is the first in a parent, 
+                  // treat the parent as the previous statement
+                 else if (isSgIfStmt(scope))
+                  {
+                    previousStatement = isSgStatement(targetStatement->get_parent());
+                    ROSE_ASSERT (isSgIfStmt(previousStatement) != NULL);
                   }
                  else
                   {

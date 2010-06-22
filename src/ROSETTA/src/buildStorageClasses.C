@@ -431,9 +431,27 @@ Grammar::generateStorageClassesFiles()
      std::string staticConstructorSource; 
      staticConstructorSource += "AstSpecificDataManagingClass::AstSpecificDataManagingClass( SgProject* root )\n";
      staticConstructorSource += "   {\n";
+#if 0
+  // DQ (6/5/2010): Added more error checking!!!
+     staticConstructorSource += "\n";
+     staticConstructorSource += "  // Debugging tests.\n";
+     staticConstructorSource += "     printf (\"At the TOP of AstSpecificDataManagingClass::AstSpecificDataManagingClass(SgProject*) \\n\"); \n";
+     staticConstructorSource += "     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_C1; \n";
+     staticConstructorSource += "     memoryCheckingTraversal_C1.traverseMemoryPool(); \n";
+     staticConstructorSource += "\n";
+#endif
      staticConstructorSource += "     rootOfAst = root;\n";
      staticConstructorSource += "     astIndex = AST_FILE_IO::getNumberOfAsts(); \n";
      staticConstructorSource += buildStaticDataMemberListClassConstructor(*rootNode);
+#if 0
+  // DQ (6/5/2010): Added more error checking!!!
+     staticConstructorSource += "\n";
+     staticConstructorSource += "  // Debugging tests.\n";
+     staticConstructorSource += "     printf (\"At the BOTTOM of AstSpecificDataManagingClass::AstSpecificDataManagingClass(SgProject*) \\n\"); \n";
+     staticConstructorSource += "     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_C2; \n";
+     staticConstructorSource += "     memoryCheckingTraversal_C2.traverseMemoryPool(); \n";
+     staticConstructorSource += "\n";
+#endif
      staticConstructorSource += "   }\n\n";
      StorageClassSourceFile << staticConstructorSource;
 
@@ -463,6 +481,17 @@ Grammar::generateStorageClassesFiles()
      std::string staticDataConstructorSource; 
      staticDataConstructorSource += "AstSpecificDataManagingClass::AstSpecificDataManagingClass(const AstSpecificDataManagingClassStorageClass& source)\n";
      staticDataConstructorSource += "   {\n";
+#if 0
+  // DQ (6/5/2010): Added more error checking!!!
+     staticDataConstructorSource += "\n";
+     staticDataConstructorSource += "        { \n";
+     staticDataConstructorSource += "       // Debugging tests.\n";
+     staticDataConstructorSource += "          printf (\"At the TOP of AstSpecificDataManagingClass::AstSpecificDataManagingClass(AstSpecificDataManagingClassStorageClass&) \\n\"); \n";
+     staticDataConstructorSource += "          MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal; \n";
+     staticDataConstructorSource += "          memoryCheckingTraversal.traverseMemoryPool(); \n";
+     staticDataConstructorSource += "        } \n";
+     staticDataConstructorSource += "\n";
+#endif
      staticDataConstructorSource += "     for(int i =  0; i < " +  myStream.str() + " + 1; ++ i )\n";
      staticDataConstructorSource += "        {\n";
      staticDataConstructorSource += "          listOfAccumulatedPoolSizes[i] = source.listOfAccumulatedPoolSizes[i];\n";
@@ -471,11 +500,49 @@ Grammar::generateStorageClassesFiles()
      staticDataConstructorSource += "     AST_FILE_IO::addNewAst(this);\n";
   // DQ (2/20/2010): Remove extraneous output from AST File I/O (required to be clean for use in Autoconf tests).
   // staticDataConstructorSource += "     std::cout << \"Extending memory pools ...\" << std::flush;\n";
+#if 0
+  // DQ (6/5/2010): Added more error checking!!!
+     staticDataConstructorSource += "\n";
+     staticDataConstructorSource += "        { \n";
+     staticDataConstructorSource += "       // Debugging tests.\n";
+     staticDataConstructorSource += "          printf (\"After AST_FILE_IO::addNewAst(this) in AstSpecificDataManagingClass::AstSpecificDataManagingClass(AstSpecificDataManagingClassStorageClass&) \\n\"); \n";
+     staticDataConstructorSource += "          MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal; \n";
+     staticDataConstructorSource += "          memoryCheckingTraversal.traverseMemoryPool(); \n";
+     staticDataConstructorSource += "        } \n";
+     staticDataConstructorSource += "\n";
+#endif
+     staticDataConstructorSource += "\n";
+     staticDataConstructorSource += "  // Note that this call is required to define the locations of IR nodes as addresses \n";
+     staticDataConstructorSource += "  // which will be used to reset pointers from global IDs to pointer valuses within the \n";
+     staticDataConstructorSource += "  // AST FILE I/O (reading binary ASTs) \n";
      staticDataConstructorSource += "     AST_FILE_IO::extendMemoryPoolsForRebuildingAST();\n";
+     staticDataConstructorSource += "\n";
+#if 0
+  // DQ (6/5/2010): Added more error checking!!!
+     staticDataConstructorSource += "\n";
+     staticDataConstructorSource += "        { \n";
+     staticDataConstructorSource += "       // Debugging tests.\n";
+     staticDataConstructorSource += "          printf (\"After AST_FILE_IO::extendMemoryPoolsForRebuildingAST() in AstSpecificDataManagingClass::AstSpecificDataManagingClass(AstSpecificDataManagingClassStorageClass&) \\n\"); \n";
+     staticDataConstructorSource += "          MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal; \n";
+     staticDataConstructorSource += "          memoryCheckingTraversal.traverseMemoryPool(); \n";
+     staticDataConstructorSource += "        } \n";
+     staticDataConstructorSource += "\n";
+#endif
   // DQ (2/20/2010): Remove extraneous output from AST File I/O (required to be clean for use in Autoconf tests).
   // staticDataConstructorSource += "     std::cout << \" done\" << std::endl;\n";
      staticDataConstructorSource += "     rootOfAst = (SgProject*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex (source.rootOfAst));\n";
      staticDataConstructorSource += generateStaticDataConstructorSource(*rootNode);
+#if 0
+  // DQ (6/5/2010): Added more error checking!!!
+     staticDataConstructorSource += "\n";
+     staticDataConstructorSource += "        { \n";
+     staticDataConstructorSource += "       // Debugging tests.\n";
+     staticDataConstructorSource += "          printf (\"At the BOTTOM of AstSpecificDataManagingClass::AstSpecificDataManagingClass(AstSpecificDataManagingClassStorageClass&) \\n\"); \n";
+     staticDataConstructorSource += "          MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal; \n";
+     staticDataConstructorSource += "          memoryCheckingTraversal.traverseMemoryPool(); \n";
+     staticDataConstructorSource += "        } \n";
+     staticDataConstructorSource += "\n";
+#endif
      staticDataConstructorSource += "   }\n\n";
      StorageClassSourceFile << staticDataConstructorSource;
 
@@ -810,6 +877,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmPEImportILTEntry::ILTEntryType" ) ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionType") ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
+                 ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||
                  false 
               )
        {
@@ -865,6 +933,8 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgGraphNodeDirectedGraphEdgeMultimapPtrList" ) ||
               // DQ (9/9/2008): Added support for string table transformations.
                  ( varTypeString == "SgAsmGenericStrtab::referenced_t" ) ||
+              // TV (05/03/2010): Added support for 'SgFunctionModifier::opencl_work_group_size_t' which's  a struct of 3 longs !
+                 ( varTypeString == "SgFunctionModifier::opencl_work_group_size_t") ||
                  false
               )
        {

@@ -108,15 +108,17 @@ main(int argc, char* argv[])
     if (!successors.empty()) {
         for (Disassembler::AddressSet::iterator si=successors.begin(); si!=successors.end(); ++si)
             printf(" 0x%08"PRIx64, *si);
-        fputc('\n', stdout);
+        fputs("\n\n", stdout);
     } else {
-        fputs(" buffer is self contained.\n", stdout);
+        fputs(" buffer is self contained.\n\n", stdout);
     }
 
     /* A partitioner can reorganize the instructions into an AST if you desire.  This is necessary if you plan to use any
      * ROSE's analysis or output functions since they operate exclusively on the tree representation. */
     SgAsmBlock *block = MyPartitioner().partition(insns, vaddr, "test_function");
 
-    /* Produce human-readable output. */
-    std::cout <<unparseAsmStatement(block);
+    /* Produce human-readable output.  The output can be customized by subclassing AsmUnparser (see disassemble.C for an
+     * example). This method of output is also more efficient than calling the old unparseAsmStatement() since there's no need
+     * to buffer the string representation in memory first. */
+    AsmUnparser().unparse(std::cout, block);
 }

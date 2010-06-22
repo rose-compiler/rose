@@ -41,6 +41,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	firstlastprivate.c \
 	flush.c \
 	flush_exampleA_21_1c.c \
+	full_verify.c \
 	get_max_threads.c \
 	hello.c \
 	hello-1.c \
@@ -52,6 +53,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	limits_threads.c \
 	linebreak.c \
 	lockarray.c \
+	loop1.c \
 	lu_factorization.c \
 	master.c \
 	masterSingle.c \
@@ -83,6 +85,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	rice1.c \
 	section.c \
 	set_num_threads.c \
+	shared.c \
 	single.c \
 	single2.c \
 	single_copyprivate.c \
@@ -99,10 +102,12 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_underIf.c \
 	task_wait.c \
 	task_wait2.c \
+	twoRegions.c \
 	threadprivate2.c \
 	threadprivate3.c \
 	threadprivate.c \
 	threadProcessor.c \
+	upperCase.c \
 	variables.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
