@@ -812,7 +812,7 @@ struct FindConstantsPolicy {
     template <size_t Len, size_t SCLen>
     UNARY_COMPUTATION(generateMask, SCLen, Len, {return IntegerOps::genMask<uint64_t>(a);})
 
-#if 0
+#if 1
     template <size_t Len>
     BINARY_COMPUTATION_SPECIAL(add, Len, Len, Len, {
             if (le1.name == 0 || le2.name == 0) {
