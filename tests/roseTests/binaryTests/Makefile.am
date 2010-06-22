@@ -496,8 +496,8 @@ MOSTLYCLEANFILES = \
 	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
 	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
 	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans test_yicesSemantics.ans
-
-mostlyclean-local: mostlyclean-binarysamples
+# Liao6/21/2010, commented out since mostlyclean-binarysamples is not defined
+#mostlyclean-local: mostlyclean-binarysamples
 
 
 ###############################################################################################################################
