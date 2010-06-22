@@ -48,8 +48,8 @@ namespace VirtualCFG
         {
             return n.getIndex();
         }
-        std::vector < FilteredCFGEdge < FilterFunction > >outEdges(bool interprocedural) const;
-        std::vector < FilteredCFGEdge < FilterFunction > >inEdges(bool interprocedural)const;
+        std::vector < FilteredCFGEdge < FilterFunction > >outEdges(bool interprocedural = false) const;
+        std::vector < FilteredCFGEdge < FilterFunction > >inEdges(bool interprocedural = false) const;
         bool isInteresting() const
         {
             return true;
