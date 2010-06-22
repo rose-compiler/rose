@@ -20,11 +20,13 @@ namespace VirtualCFG
         const FindEnd & findEnd;
         const DontAddChildren & dontAddChildren;
         const Join & join;
+        bool interprocedural;
 
           MakeClosure(const FindSuccessors & findSuccessors, const FindEnd & findEnd,
                       const DontAddChildren & dontAddChildren,
-                      const Join & join):findSuccessors(findSuccessors), findEnd(findEnd),
-            dontAddChildren(dontAddChildren), join(join)
+                      const Join & join, bool interprocedural) :
+            findSuccessors(findSuccessors), findEnd(findEnd),
+            dontAddChildren(dontAddChildren), join(join), interprocedural(interprocedural)
         {
         }
 
@@ -39,7 +41,7 @@ namespace VirtualCFG
               visitedPaths.push_back(p);
             if (dontAddChildren(end))
                   return;
-              std::vector < CFGEdge > edges = findSuccessors(end);
+              std::vector < CFGEdge > edges = findSuccessors(end, interprocedural);
             for (unsigned int i = 0; i < edges.size(); ++i)
             {
                 go(join(p, edges[i]));
@@ -67,10 +69,11 @@ namespace VirtualCFG
                                                             findSuccessors,
                                                             const FindEnd & findEnd,
                                                             const AddChildren & addChildren,
-                                                            const Join & join)
+                                                            const Join & join,
+                                                            bool interprocedural)
     {
         MakeClosure < FindSuccessors, FindEnd, AddChildren, Join,
-            FilteredEdge > mc(findSuccessors, findEnd, addChildren, join);
+            FilteredEdge > mc(findSuccessors, findEnd, addChildren, join, interprocedural);
         for (unsigned int i = 0; i < p.size(); ++i)
             mc.go(p[i]);
         return mc.filter();
@@ -78,34 +81,36 @@ namespace VirtualCFG
 
     template < typename FilteredEdge, typename Filter >
         std::vector < FilteredEdge > makeClosure(const std::vector < CFGEdge > &orig,
-                                            std::vector < CFGEdge > (CFGNode::*closure) ()const,
+                                            std::vector < CFGEdge > (CFGNode::*closure) (bool)const,
                                             CFGNode(CFGPath::*otherSide) ()const,
                                             CFGPath(*merge) (const CFGPath &, const CFGPath &),
-                                            const Filter & filter)
+                                            const Filter & filter,
+                                            bool interprocedural)
     {
         std::vector < CFGPath > paths(orig.begin(), orig.end());
         return makeClosure < FilteredEdge > (paths, std::mem_fun_ref(closure),
-                                             std::mem_fun_ref(otherSide), filter, merge);
+                                             std::mem_fun_ref(otherSide), filter, merge, interprocedural);
     }
 
 
     // Class Impl
     template < typename FilterFunction > std::vector < FilteredCFGEdge < FilterFunction >
-        >FilteredCFGNode < FilterFunction >::outEdges()const
+        >FilteredCFGNode < FilterFunction >::outEdges(bool interprocedural)const
     {
         return makeClosure < FilteredCFGEdge < FilterFunction > >(n.outEdges(),
                                                                   &CFGNode::outEdges,
                                                                   &CFGPath::target, &mergePaths,
-                                                                  filter);
+                                                                  filter, interprocedural);
     }
     // Class Impl
     template < typename FilterFunction > std::vector < FilteredCFGEdge < FilterFunction >
-        >FilteredCFGNode < FilterFunction >::inEdges() const
+        >FilteredCFGNode < FilterFunction >::inEdges(bool interprocedural) const
     {
         return makeClosure < FilteredCFGEdge < FilterFunction > >(n.inEdges(),
                                                                   &CFGNode::inEdges,
                                                                   &CFGPath::source,
-                                                                  &mergePathsReversed, filter);
+                                                                  &mergePathsReversed, filter,
+                                                                  interprocedural);
     }
     // ---------------------------------------------
     // DOT OUT IMPL
