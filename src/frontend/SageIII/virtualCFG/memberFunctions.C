@@ -759,8 +759,7 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
      std::cerr << "found " << returnSites.size() << std::endl;
      for (unsigned int i = 0; i < returnSites.size(); ++i) { 
-         if (((SgFunctionCallExp *) 
-             returnSites[i])->getAssociatedFunctionDeclaration() ==
+         if (isSgFunctionCallExp(returnSites[i])->getAssociatedFunctionDeclaration() ==
              this->get_declaration()) {
          makeEdge(CFGNode(this, idx), returnSites[i]->cfgForEnd(), result);
          }
