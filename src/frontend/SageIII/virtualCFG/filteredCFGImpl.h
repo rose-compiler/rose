@@ -119,9 +119,11 @@ namespace VirtualCFG
         std::multimap < SgNode *, NodeT > exploredNodes;
         std::set < SgNode * >nodesPrinted;
         std::ostream & o;
+        bool interprocedural;
 
       public:
-      CfgToDotImpl(std::ostream & o):exploredNodes(), nodesPrinted(), o(o)
+      CfgToDotImpl(std::ostream & o, bool interprocedural = false) :
+        exploredNodes(), nodesPrinted(), o(o), interprocedural(interprocedural)
         {
         }
         void processNodes(NodeT n);
@@ -171,13 +173,13 @@ namespace VirtualCFG
         }
         exploredNodes.insert(make_pair(n.getNode(), n));
         printNodePlusEdges<NodeT, EdgeT>(o, n);
-        std::vector < EdgeT > outEdges = n.outEdges();
+        std::vector < EdgeT > outEdges = n.outEdges(interprocedural);
         for (unsigned int i = 0; i < outEdges.size(); ++i)
         {
             ROSE_ASSERT(outEdges[i].source() == n);
             processNodes(outEdges[i].target());
         }
-        std::vector < EdgeT > inEdges = n.inEdges();
+        std::vector < EdgeT > inEdges = n.inEdges(interprocedural);
         for (unsigned int i = 0; i < inEdges.size(); ++i)
         {
             ROSE_ASSERT(inEdges[i].target() == n);
@@ -228,4 +230,16 @@ namespace VirtualCFG
         return o;
     }
 
+    template < typename FilterFunction > std::ostream & interproceduralCfgToDot(std::ostream & o,
+                                                                 std::string graphName,
+                                                                 FilteredCFGNode <
+                                                                 FilterFunction > start)
+    {
+        o << "digraph " << graphName << " {\n";
+        CfgToDotImpl < FilteredCFGNode < FilterFunction >,
+            FilteredCFGEdge < FilterFunction > ,false>impl(o, true);
+        impl.processNodes(start);
+        o << "}\n";
+        return o;
+    }
 }
