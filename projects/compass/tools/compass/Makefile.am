@@ -14,7 +14,7 @@ libCompassCheckers.la: $(libCompassCheckers_la_OBJECTS) $(libCompassCheckers_la_
 bin_PROGRAMS = compassMain
 
 compassMain_SOURCES = compassMain.C checkers.h
-compassMain_LDADD = -lCompassCheckers $(ROSE_LIBS)
+compassMain_LDADD = -lCompassCheckers $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
 
 compassMain_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassCheckers.la 
 
