@@ -11,6 +11,9 @@ namespace VirtualCFG {
   std::ostream& cfgToDotForDebugging(std::ostream& o, std::string graphName, CFGNode start);
   std::ostream& cfgToDotForDebugging(std::ostream& o, std::string graphName, InterestingNode start);
 
+  std::ostream& interproceduralCfgToDotForDebugging(std::ostream& o, std::string graphName, CFGNode start);
+  std::ostream& interproceduralCfgToDotForDebugging(std::ostream& o, std::string graphName, InterestingNode start);
+
   //! Dump the filtered dot graph of a virtual control flow graph starting from SgNode (start)
   void cfgToDot (SgNode* start, const std::string& file_name);
   
@@ -19,6 +22,9 @@ namespace VirtualCFG {
 
   //! Dump the full dot graph of a virtual control flow graph starting from SgNode (start)
   void cfgToDotForDebugging(SgNode* start, const std::string& file_name);
+
+  //! Dump the interprocedural dot graph of a virtual control from graph starting from SgNode (start)
+  void interproceduralCfgToDotForDebugging(SgNode* start, const std::string& file_name);
 }
 
 // endif for CFG_TO_DOT_H
