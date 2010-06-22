@@ -169,4 +169,29 @@ ostream& cfgToDotForDebugging(ostream& o, string graphName,
   return o;
 }
 
+//dump the full dot graph of a virtual control flow graph starting from SgNode (start)
+void interproceduralCfgToDotForDebugging(SgNode* start, const std::string& file_name)
+{
+  ROSE_ASSERT (start != NULL);
+  ofstream ofile (file_name.c_str(), ios::out);
+  interproceduralCfgToDotForDebugging(ofile, "defaultName", start->cfgForBeginning());
+}  
+
+ostream& interproceduralCfgToDotForDebugging(ostream& o, string graphName,
+			      InterestingNode start) {
+  o << "digraph " << graphName << " {\n";
+  CfgToDotImpl<InterestingNode, InterestingEdge, true> impl(o, true);
+  impl.processNodes(start);
+  o << "}\n";
+  return o;
+}
+
+ostream& interproceduralCfgToDotForDebugging(ostream& o, string graphName, CFGNode start) {
+  o << "digraph " << graphName << " {\n";
+  CfgToDotImpl<CFGNode, CFGEdge, true> impl(o, true);
+  impl.processNodes(start);
+  o << "}\n";
+  return o;
+}
+
 } //end of namespace
