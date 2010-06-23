@@ -189,7 +189,7 @@ void CFG::buildCFG(CFGNode n)
 #endif
 
 template <class NodeT, class EdgeT>
-void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored)
+void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored, bool interprocedural)
 {
     ROSE_ASSERT(n.getNode());
 
@@ -243,7 +243,7 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         buildCFG<NodeT, EdgeT>(edge.target(), all_nodes, explored);
     }
 
-    std::vector<EdgeT> inEdges = n.inEdges();
+    std::vector<EdgeT> inEdges = n.inEdges(interprocedural);
     foreach (const EdgeT& edge, inEdges)
     {
         ROSE_ASSERT(edge.target() == n);
