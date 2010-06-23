@@ -97,7 +97,7 @@ namespace VirtualCFG
     template < typename FilterFunction > std::vector < FilteredCFGEdge < FilterFunction >
         >FilteredCFGNode < FilterFunction >::outEdges(bool interprocedural)const
     {
-        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.outEdges(),
+        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.outEdges(interprocedural),
                                                                   &CFGNode::outEdges,
                                                                   &CFGPath::target, &mergePaths,
                                                                   filter, interprocedural);
@@ -106,7 +106,7 @@ namespace VirtualCFG
     template < typename FilterFunction > std::vector < FilteredCFGEdge < FilterFunction >
         >FilteredCFGNode < FilterFunction >::inEdges(bool interprocedural) const
     {
-        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.inEdges(),
+        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.inEdges(interprocedural),
                                                                   &CFGNode::inEdges,
                                                                   &CFGPath::source,
                                                                   &mergePathsReversed, filter,
@@ -156,11 +156,13 @@ namespace VirtualCFG
     }
 
     template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
-                                                                        NodeT n);
+                                                                        NodeT n,
+                                                                        bool inteprocedural = false);
 
     template < typename NodeT, typename EdgeT ,bool Debug>
         void CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(NodeT n)
     {
+        std::cerr << "ip in processN is " << interprocedural << std::endl;
         ROSE_ASSERT(n.getNode());
         std::pair < typename std::multimap < SgNode *, NodeT >::const_iterator,
             typename std::multimap < SgNode *, NodeT >::const_iterator > ip =
@@ -172,7 +174,7 @@ namespace VirtualCFG
                 return;
         }
         exploredNodes.insert(make_pair(n.getNode(), n));
-        printNodePlusEdges<NodeT, EdgeT>(o, n);
+        printNodePlusEdges<NodeT, EdgeT>(o, n, interprocedural);
         std::vector < EdgeT > outEdges = n.outEdges(interprocedural);
         for (unsigned int i = 0; i < outEdges.size(); ++i)
         {
@@ -188,16 +190,18 @@ namespace VirtualCFG
     }
 
     template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
-                                                                        NodeT n)
+                                                                        NodeT n,
+                                                                        bool interprocedural)
     {
+        std::cerr << "ip in printN+E2 is " << interprocedural << std::endl;
         printNode(o, n);
-        std::vector < EdgeT > outEdges = n.outEdges();
+        std::vector < EdgeT > outEdges = n.outEdges(interprocedural);
         for (unsigned int i = 0; i < outEdges.size(); ++i)
         {
             printEdge(o, outEdges[i], false);
         }
 				#ifdef DEBUG
-        std::vector < EdgeT > inEdges = n.inEdges();
+        std::vector < EdgeT > inEdges = n.inEdges(interprocedural);
         for (unsigned int i = 0; i < inEdges.size(); ++i)
         {
             printEdge(o, inEdges[i], true);
