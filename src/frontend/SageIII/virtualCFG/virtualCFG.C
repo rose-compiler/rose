@@ -333,9 +333,13 @@ namespace VirtualCFG {
       } else {
 	return eckFalse;
       }
-    } else if (isSgFunctionCallExp(srcNode) && srcIndex == 2) {
+    } else if (isSgFunctionCallExp(srcNode) && 
+               srcIndex == 2 && 
+               !isSgFunctionCallExp(tgtNode)) {
         return eckInterprocedural;
-    } else if (isSgFunctionCallExp(tgtNode) && tgtIndex == 3) {
+    } else if (isSgFunctionCallExp(tgtNode) && 
+               tgtIndex == 3 && 
+               !isSgFunctionCallExp(srcNode)) {
         return eckInterprocedural;
     } else {
       // No key
