@@ -10561,7 +10561,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                if ((*i)->get_scope() != targetBlock)
                   {
                     //(*i)->set_scope(targetBlock);
-                    printf ("Warning: test failing (*i)->get_scope() == targetBlock \n");
+                    printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
                   }
                //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }
