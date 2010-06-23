@@ -162,7 +162,6 @@ namespace VirtualCFG
     template < typename NodeT, typename EdgeT ,bool Debug>
         void CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(NodeT n)
     {
-        std::cerr << "ip in processN is " << interprocedural << std::endl;
         ROSE_ASSERT(n.getNode());
         std::pair < typename std::multimap < SgNode *, NodeT >::const_iterator,
             typename std::multimap < SgNode *, NodeT >::const_iterator > ip =
@@ -193,7 +192,6 @@ namespace VirtualCFG
                                                                         NodeT n,
                                                                         bool interprocedural)
     {
-        std::cerr << "ip in printN+E2 is " << interprocedural << std::endl;
         printNode(o, n);
         std::vector < EdgeT > outEdges = n.outEdges(interprocedural);
         for (unsigned int i = 0; i < outEdges.size(); ++i)
