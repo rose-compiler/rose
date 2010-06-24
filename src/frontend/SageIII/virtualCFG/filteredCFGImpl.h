@@ -157,7 +157,7 @@ namespace VirtualCFG
 
     template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
                                                                         NodeT n,
-                                                                        bool inteprocedural = false);
+                                                                        bool interprocedural = false);
 
     template < typename NodeT, typename EdgeT ,bool Debug>
         void CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(NodeT n)
