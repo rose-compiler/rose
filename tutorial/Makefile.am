@@ -18,6 +18,7 @@ bin_PROGRAMS = \
    buildCallGraph \
    defuseAnalysis \
    livenessAnalysis \
+   interproceduralCFG \
    virtualCFG 
 
 #varSubstCopy , disabled this one Liao, and sorted the list
@@ -298,6 +299,8 @@ wholeGraphFilterOnPersistantAttributes_SOURCES = wholeGraphFilterOnPersistantAtt
 graphGenerationOfSubtree_SOURCES = graphGenerationOfSubtree.C
 
 virtualCFG_SOURCES = virtualCFG.C
+
+interproceduralCFG_SOURCES = interproceduralCFG.C
 
 virtualFunctionIdentification_SOURCES = virtualFunctionIdentification.C
 
