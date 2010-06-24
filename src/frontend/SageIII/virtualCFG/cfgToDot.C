@@ -40,7 +40,7 @@ inline void printEdge(ostream& o, const EdgeT& e, bool isInEdge) {
 }
 
 template <typename NodeT, typename EdgeT, bool Debug>
-void printNodePlusEdges(ostream& o, NodeT n);
+void printNodePlusEdges(ostream& o, NodeT n, bool interprocedural);
 
 #if 0 //redefinition, already defined in filteredCFGImpl.h, Liao, 3/6/2009
 template <typename NodeT, typename EdgeT, bool Debug>
@@ -68,14 +68,14 @@ void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(NodeT n) {
 }
 #endif
 template <typename NodeT, typename EdgeT, bool Debug>
-void printNodePlusEdges(ostream& o, NodeT n) {
+void printNodePlusEdges(ostream& o, NodeT n, bool interprocedural) {
   printNode<NodeT, Debug>(o, n);
-  vector<EdgeT> outEdges = n.outEdges();
+  vector<EdgeT> outEdges = n.outEdges(interprocedural);
   for (unsigned int i = 0; i < outEdges.size(); ++i) {
     printEdge<EdgeT, Debug>(o, outEdges[i], false);
   }
   if (Debug) {
-    vector<EdgeT> inEdges = n.inEdges();
+    vector<EdgeT> inEdges = n.inEdges(interprocedural);
     for (unsigned int i = 0; i < inEdges.size(); ++i) {
       printEdge<EdgeT, Debug>(o, inEdges[i], true);
     }
