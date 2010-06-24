@@ -755,6 +755,7 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
+     if (! interprocedural) break;
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
      for (unsigned int i = 0; i < returnSites.size(); ++i) { 
@@ -775,6 +776,7 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: {
+     if (! interprocedural) break;
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
      for (unsigned int i = 0; i < callExprs.size(); ++i) 
@@ -3010,21 +3012,26 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+    ROSE_ASSERT(this);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 2: {
-	SgFunctionDeclaration* decl =
-	  interprocedural ?
-	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
-	if (decl)
-	  makeEdge(CFGNode(this, idx), decl->get_definition()->cfgForBeginning(),
-		   result);
-	else
-	  makeEdge(CFGNode(this, idx),
-		   CFGNode(this, 3), result);
-	break;
+                if (interprocedural) {
+                  SgFunctionDeclaration* decl = this->getAssociatedFunctionDeclaration();
+                  ROSE_ASSERT(decl);
+                  SgFunctionDefinition* def = decl->get_definition();
+                  if (def == NULL) {
+                    std::cerr << "no definition for function in SgFunCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
+                    break;
+                  }
+                  makeEdge(CFGNode(this, idx), def->cfgForBeginning(),
+                      result);
+                }
+                else
+                  makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
+                break;
       }
       case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
@@ -3033,22 +3040,27 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgInEdges(unsigned int idx, bool interprocedural) {
+    ROSE_ASSERT(this);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
       case 1: makeEdge(this->get_function()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
-	SgFunctionDeclaration* decl =
-	  interprocedural ?
-	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
-	if (decl)
-	  makeEdge(decl->get_definition()->cfgForEnd(), CFGNode(this, idx),
-		   result);
-	else
-	  makeEdge(CFGNode(this, 2),
-		   CFGNode(this, idx), result);
-	break;
+                if (interprocedural) {
+                  SgFunctionDeclaration* decl = this->getAssociatedFunctionDeclaration();
+                  ROSE_ASSERT(decl);
+                  SgFunctionDefinition* def = decl->get_definition();
+                  if (def == NULL) {
+                    std::cerr << "no definition for function in SgFunCallExp::cfgInEdges: " << decl->get_name().str() << std::endl;
+                    break;
+                  }
+                  makeEdge(decl->get_definition()->cfgForEnd(), CFGNode(this, idx),
+                      result);
+                }
+                else
+                  makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
+                break;
       }
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
     }
