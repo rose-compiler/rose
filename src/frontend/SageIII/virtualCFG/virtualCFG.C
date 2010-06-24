@@ -33,8 +33,7 @@ namespace VirtualCFG {
           case 2: s << "End: "; break;
           default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
-      s << (std::string) ((SgFunctionDefinition *)node)
-        ->get_declaration()->get_name(); 
+      s << isSgFunctionDefinition(node)->get_declaration()->get_name().str(); 
     } else {
       s << toStringForDebugging();
     }
