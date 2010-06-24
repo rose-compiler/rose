@@ -2,76 +2,24 @@
 \label{Tutorial:chapterCustomGraphs}
 
 \paragraph{What To Learn From This Example}
-This example shows how to generate custom graphs (typically used for analysis results).
+This example shows how to generate custom graphs using \textit{SgGraph} class.
 
-     The mechanisms used internally to build different graphs of program data
-are also made externally available. This section shows how new graphs of 
-program information can be built or existing graphs customized.
-More information about generation of specialized AST graphs to support debugging 
-can be found in \ref{Tutorial:chapterGeneralASTGraphGeneration}.
+Rose provides a collection type \textit{SgGraph} to store a graph. Two specific graphs
+are also provided which are derived from \textit{SgGraph}: \textit{SgIncidenceDirectedGraph} and
+\textit{SgIncidenceUndirectedGraph}.
 
-Figure~\ref{tutorial:exampleCustomGraph} shows a graph representing the
-highest levels of the ROSE directory tree built using the code shown
-in figure~\ref{Tutorial:exampleCustomGraphCode}.  This example is build
-explicitly in the example code, the script {\em lsdot} in the 
-{\em ROSE/scripts/} directory builds such a graph of the directory tree 
-automatically for any directory structure and is used to present the ROSE 
-source directory tree in the {\em ROSE User Manual}.
+Nodes and edges in a \textit{SgGraph} are represented by \textit{SgGraphNode} and \textit{SgGraphEdge} separately. 
+A \textit{SgGraph} is built by adding \textit{SgGraphNode}s and \textit{SgGraphEdge}s using its member function
+\textit{addNode} and \textit{addEdge}. You can get all nodes and edges of a \textit{SgGraph} by calling its functions
+\textit{computeNodeSet} and \textit{computeEdgeSet} separately.
+More interfaces of \textit{SgGraph} and its subclasses can be found in doxygen of Rose.
 
-% \fixme{Add examples from the ROSE/projects/HighLevelGrammars subproject.}
+Since \textit{SgGraph} is for Rose use, each node in it holds a pointer to \textit{SgNode}, which is 
+the default attribute of a \textit{SgGraphNode}. If you want to add more attributes inside, you
+can use \textit{SgGraphNode}'s member function \textit{addNewAttribute} by providing a name and an \textit{AstAttribute}
+object to add a new attribute to a node. Normally, you have to build your own 
+attribute class which should be derived from class \textit{AstAttribute}. Three attribute
+classes are provided by Rose: \textit{AstRegExAttribute}, \textit{AstTextAttribute}, and \textit{MetricAttribute}. 
+For more information about them, please refer to Rose's doxygen. 
 
-\begin{figure}[!h]
-% Use the includegraphics command from the graphicx package with pdflatex.
-%\centerline{\epsfig{file=\TutorialExampleBuildDirectory/customGraph.ps,
-%                    height=0.3\linewidth,width=1.0\linewidth,angle=0}}
-\includegraphics[scale=0.4]{\TutorialExampleBuildDirectory/customGraph}
-\caption{Graph of top level of ROSE directory  tree.}
-\label{tutorial:exampleCustomGraph}
-\end{figure}
-
-
-% {\bf {\em This tutorial example is not finished yet! }}
-
-\begin{figure}[!h]
-{\indent
-{\mySmallFontSize
-
-% Do this when processing latex to generate non-html (not using latex2html)
-\begin{latexonly}
-   \lstinputlisting{\TutorialExampleDirectory/customGraphGeneration.C}
-\end{latexonly}
-
-% Do this when processing latex to build html (using latex2html)
-\begin{htmlonly}
-   \verbatiminput{\TutorialExampleDirectory/customGraphGeneration.C}
-\end{htmlonly}
-
-% end of scope in font size
-}
-% End of scope in indentation
-}
-\caption{Example source code to read an input program and generate an AST graph.}
-\label{Tutorial:exampleCustomGraphCode}
-\end{figure}
-
-
-Figure~\ref{tutorial:exampleCustomGraphWithFiltering} shows the same graph
-but with filtering to tailor the graph by removing nodes.  The removal of any
-node from the graph automatically removes all edged pointing to that node removed
-and all edges pointing away from the node being removed.  This mechanism is
-provided as a way to customized graphs automatically generated using ROSE
-(e.g. call graphs, control flow graphs, etc.).
-
-\begin{figure}[!h]
-% Use the includegraphics command from the graphicx package with pdflatex.
-%\centerline{\epsfig{file=\TutorialExampleBuildDirectory/customGraphWithFiltering.ps,
-%                    height=0.3\linewidth,width=1.0\linewidth,angle=0}}
-% \includegraphics[trim=0.0in 0in 0in 0in,scale=0.5]{\TutorialExampleBuildDirectory/customGraphWithFiltering.png}
-% \epsfig{file=\TutorialExampleBuildDirectory/customGraphWithFiltering.eps}
-% \epsfig{\TutorialExampleBuildDirectory/customGraphWithFiltering.eps}
-%\includegraphics{\TutorialExampleBuildDirectory/customGraphWithFiltering}
-\includegraphics[trim=0.0in 0.0in 0in 0in,scale=0.4]{\TutorialExampleBuildDirectory/customGraphWithFiltering}
-\caption{Graph of top level of ROSE directory tree with filtering of subtree.}
-\label{tutorial:exampleCustomGraphWithFiltering}
-\end{figure}
 

@@ -1,6 +1,13 @@
 class AClass
 {
 public:
+	AClass()
+	{
+	}
+
+	AClass(int x, int y)
+	{
+	}
 	
 	int& foo(int& x)
 	{
@@ -24,9 +31,6 @@ int main(int argc, char** argv)
 	int& b = a;
 
 	AClass aObject;
-
-	//globalFunc(aObject.bar(a * 2) - 1, aObject.foo(a));
-
 
 	//Function calls in both the initializer and the test,
 	//with declaration in the initializer
@@ -52,11 +56,29 @@ int main(int argc, char** argv)
 		break;
 	}
 
-	//Test with multiple variable declarations in the initializer, each of which needs to be rewritten
-	/*for( int z = (aObject.bar(3), aObject.bar(3)), k = 3; ;)
-	{
+	//Constructor initialization inside the for loop
+	for (AClass localA(3, globalFunc(a, b)); aObject.bar(aObject.foo(a)); )
 		break;
-	}*/
+
+	//Aggregate initializer inside the for loop
+	for (int hello[] = {aObject.bar(a), 3}; aObject.bar(aObject.foo(a)); )
+	{
+		hello[0] = 7;
+		break;
+	}
+
+	//More complex aggregate initializer inside the for loop
+	for (int hello[][2] = { {1,aObject.bar(aObject.foo(a))}, {1,2}}; aObject.bar(aObject.foo(a)); )
+	{
+		hello[0][0] = 7;
+		break;
+	}
+
+	//Moving the increment expression
+	for (; ; aObject.bar(aObject.foo(a)))
+	{
+		globalFunc(1, 2);
+	}
 
 	return 0;
 }
