@@ -2313,6 +2313,7 @@ projects/PolyhedralDependenceAnalysis/Common/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
 projects/PolyhedralDependenceAnalysis/Schedule/Makefile
+projects/simulator/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
