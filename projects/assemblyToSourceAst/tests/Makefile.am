@@ -9,6 +9,7 @@ all: $(inputs)
 $(inputs): %: $(srcdir)/%.c
 	$(CC) -nostdlib -static -m32 -O3 -s -o $(srcdir)/$@ $<
 
+EXTRA_DIST= test0.c test1.c test2.c
 clean-local:
 	rm -f $(inputs)
 
