@@ -226,3 +226,27 @@ getCopyConstructors(SgClassDeclaration* class_decl)
     return copy_ctors;
 }
 
+// Returns a boolean value to indicate whether the return value of the given expression is used.
+bool isReturnValueUsed(SgExpression* exp)
+{
+    SgNode* parent_node = exp->get_parent();
+
+    // If the expression is a full expression in an expression statement.
+    if (isSgExprStatement(parent_node))
+        return false;
+
+    if (SgCommaOpExp* comma_op = isSgCommaOpExp(parent_node))
+    {
+        if (comma_op->get_lhs_operand() == exp)
+            return false;
+        if (comma_op->get_rhs_operand() == exp)
+            return isReturnValueUsed(comma_op);
+    }
+
+#if 0
+    if (SgExpression* parent_exp = isSgExpression(parent_node))
+        return true;
+#endif
+
+    return true;
+}
