@@ -37,6 +37,13 @@ namespace ns
 // Swap
 void event0(struct model* m)
 {
+    (m->i_ += 3) += 3;
+    //(++m->i_)++;
+    m->i_++;
+    //(++m->i_) += 10; 
+    //m->i_ += ++++m->j_;
+    //m->i_ += (m->j_ += 10);
+    //++(m->i_ = 10);
     int t = m->i_;
     m->i_ = m->j_;
     m->j_ = t;

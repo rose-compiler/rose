@@ -1,11 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = stateSaving
+SUBDIRS = stateSaving normalization
 
 # This file does not compile using ROSE (skip testing it for now)
 if !ROSE_USING_ROSE_ANALYSIS
    bin_PROGRAMS = reverse 
-   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C utilities.C
+   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C utilities.C main.C
 endif
 
 INCLUDES = $(ROSE_INCLUDES)

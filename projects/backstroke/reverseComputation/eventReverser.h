@@ -2,19 +2,7 @@
 #define ROSE_REVERSE_COMPUTATION_REVERSE_H
 
 #include <rose.h>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-//#include <boost/tuple/tuple.hpp>
 
-#define foreach BOOST_FOREACH
-
-//using std::vector;
-//using std::pair;
-//using std::string;
-using namespace std;
-using namespace boost;
-using namespace SageBuilder;
-using namespace SageInterface;
 
 typedef std::pair<SgExpression*, SgExpression*> ExpPair;
 typedef std::pair<SgStatement*, SgStatement*> StmtPair;
@@ -28,105 +16,38 @@ class EventReverser
     DFAnalysis* defuse_;
 
 
-    string function_name_;
-    //vector<string> branch_flags_;
-    //vector<string> loop_counters_;
-    //map<string, SgType*> state_vars_;
+    std::string function_name_;
+    //std::vector<string> branch_flags_;
+    //std::vector<string> loop_counters_;
+    //std::map<string, SgType*> state_vars_;
 
-    string flag_stack_name_;
-    string int_stack_name_;
-    string float_stack_name_;
-    string counter_stack_name_;
+    std::string flag_stack_name_;
+    std::string int_stack_name_;
+    std::string float_stack_name_;
+    std::string counter_stack_name_;
 
     int counter_;
-    vector<FuncDeclPair> output_func_pairs_;
+    std::vector<FuncDeclPair> output_func_pairs_;
 
     // This mark is for and/or and conditional expression, in which the special stack
     // interfaces are used.
     int branch_mark_;
 
-    static set<SgFunctionDeclaration*> func_processed_;
+    static std::set<SgFunctionDeclaration*> func_processed_;
 
 
 
 public:
     EventReverser(SgFunctionDeclaration* func_decl,
-            DFAnalysis* analysis = NULL) 
-        : func_decl_(func_decl), 
-        defuse_(analysis),
-        function_name_(func_decl_->get_name()), 
-        flag_stack_name_(function_name_ + "_branch_flags"),
-        int_stack_name_(function_name_ + "_int_values"),
-        float_stack_name_(function_name_ + "_float_values"),
-        counter_stack_name_(function_name_ + "_loop_counters"),
-        counter_(0),
-        branch_mark_(-1)
-    {
-    }
+            DFAnalysis* analysis = NULL);
 
     // All functions generated. If the reverser meets a function call, it may reverse 
     // that function then add the resulted function pair into the function pair collection. 
-    vector<FuncDeclPair> outputFunctions();
+    std::vector<FuncDeclPair> outputFunctions();
 
     // Get all variables' declarations including all kinds of states
-    vector<SgStatement*> getVarDeclarations()
-    {
-        vector<SgStatement*> decls;
-        //foreach(const string& flag, branch_flags_)
-        //    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
-
-#if 0
-        foreach(const string& counter, loop_counters_)
-            decls.push_back(buildVariableDeclaration(
-                        counter, 
-                        buildIntType(), 
-                        buildAssignInitializer(buildIntVal(0))));
-
-        pair<string, SgType*> state_var;
-        foreach(state_var, state_vars_)
-        {
-            decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
-        }
-#endif
-
-        SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
-        decls.push_back(buildVariableDeclaration(flag_stack_name_, stack_type));
-        decls.push_back(buildVariableDeclaration(int_stack_name_, stack_type));
-        decls.push_back(buildVariableDeclaration(counter_stack_name_, stack_type));
-        
-        // Float type stack
-        decls.push_back(buildVariableDeclaration(float_stack_name_, stack_type));
-
-        return decls;
-    }
-
-    vector<SgStatement*> getVarInitializers()
-    {
-        vector<SgStatement*> inits;
-        SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
-
-        // Initialize the flag stack object.
-        inits.push_back(buildAssignStatement(
-                    buildVarRefExp(flag_stack_name_),
-                    buildFunctionCallExp("buildIntStack", stack_type)));
-
-        // Initialize the integer stack object.
-        inits.push_back(buildAssignStatement(
-                    buildVarRefExp(int_stack_name_),
-                    buildFunctionCallExp("buildIntStack", stack_type)));
-
-        // Initialize the integer stack object.
-        inits.push_back(buildAssignStatement(
-                    buildVarRefExp(float_stack_name_),
-                    buildFunctionCallExp("buildIntStack", stack_type)));
-
-        // Initialize the loop counter stack object.
-        inits.push_back(buildAssignStatement(
-                    buildVarRefExp(counter_stack_name_),
-                    buildFunctionCallExp("buildIntStack", stack_type)));
-
-        return inits;
-    }
+    std::vector<SgStatement*> getVarDeclarations();
+    std::vector<SgStatement*> getVarInitializers();
 
 private:
     static const ExpPair NULL_EXP_PAIR;
@@ -167,26 +88,9 @@ private:
     // Tell whether an expression is a state variable. We only reverse the "states".
     // Normally the state is passed into functions as arguments, or they are class members
     // in C++. 
-    SgExpression* isStateVar(SgExpression* exp)
-    {
-        // a->b
-        if (SgArrowExp* arr_exp = isSgArrowExp(exp))
-        {
-            return arr_exp;
-        }
-        // a[b]
-        else if (SgPntrArrRefExp* ref_exp = isSgPntrArrRefExp(exp))
-        {
-            if (isSgArrowExp(ref_exp->get_lhs_operand()))
-                return ref_exp;
-        }
-        return NULL;
-    }
+    SgExpression* isStateVar(SgExpression* exp);
 
-    bool toSave(SgExpression* exp)
-    {
-        return true;
-    }
+    bool toSave(SgExpression* exp);
 
 
 #if 0
@@ -214,68 +118,20 @@ private:
 #endif
 
     // Push an integer into integer stack. Can be used to save states. 
-    SgExpression* pushIntVal(SgExpression* var)
-    {
-        // Cannot use branch mark here!!!
-        if (1)//(branch_mark_ < 0)
-            return buildFunctionCallExp(
-                    "push", 
-                    buildIntType(), 
-                    buildExprListExp(
-                        buildVarRefExp(int_stack_name_), 
-                        var));
-        else
-            return buildFunctionCallExp(
-                    "push", 
-                    buildIntType(), 
-                    buildExprListExp(
-                        buildVarRefExp(int_stack_name_), 
-                        var,
-                        buildIntVal(branch_mark_)));
-    }
+    SgExpression* pushIntVal(SgExpression* var);
 
     // Pop the stack and get the value.
-    SgExpression* popIntVal()
-    {
-        return buildFunctionCallExp("pop", buildVoidType(), 
-                buildExprListExp(buildVarRefExp(int_stack_name_)));
-    }
+    SgExpression* popIntVal();
 
     // Push a float into float stack. Can be used to save states. 
-    SgExpression* pushFloatVal(SgExpression* var)
-    {
-        return buildFunctionCallExp(
-                "push", 
-                buildIntType(), 
-                buildExprListExp(
-                    buildVarRefExp(float_stack_name_), 
-                    var)); 
-    }
+    SgExpression* pushFloatVal(SgExpression* var);
 
     // Pop the stack and get the value.
-    SgExpression* popFloatVal()
-    {
-        return buildFunctionCallExp("pop", buildVoidType(), 
-                buildExprListExp(buildVarRefExp(float_stack_name_)));
-    }
+    SgExpression* popFloatVal();
 
     // For a local variable, return two statements to store its value and 
     // declare and assign the retrieved value to it.
-    StmtPair pushAndPopLocalVar(SgVariableDeclaration* var_decl)
-    {
-        const SgInitializedNamePtrList& names = var_decl->get_variables();
-        ROSE_ASSERT(names.size() == 1);
-        SgInitializedName* init_name = names[0];
-
-        SgStatement* store_var = buildExprStatement(
-                pushIntVal(buildVarRefExp(init_name)));
-
-        SgStatement* decl_var = buildVariableDeclaration(
-                init_name->get_name(),
-                init_name->get_type(),
-                buildAssignInitializer(popIntVal()));
-        return StmtPair(store_var, decl_var);
-    }
+    StmtPair pushAndPopLocalVar(SgVariableDeclaration* var_decl);
 
     // **********************************************************************************
     // The following functions are for logic and/or expression, conditional expression, 
@@ -283,40 +139,14 @@ private:
     // ==================================================================================
 
     // For and/or & conditional expressions. The value pushed is either 0 or 1. 
-    SgExpression* putBranchFlagExp(SgExpression* exp)
-    {
-        return buildFunctionCallExp(
-                "push", 
-                buildIntType(), 
-                buildExprListExp(
-                    buildVarRefExp(flag_stack_name_), 
-                    exp, 
-                    buildIntVal(branch_mark_)));
-    }
+    SgExpression* putBranchFlagExp(SgExpression* exp);
 
-    SgStatement* putBranchFlagStmt(bool flag = true)
-    {
-        return buildExprStatement(
-                buildFunctionCallExp(
-                    "push", 
-                    buildIntType(), 
-                    buildExprListExp(
-                        buildVarRefExp(flag_stack_name_), 
-                        buildIntVal(flag))));
-    }
+    SgStatement* putBranchFlagStmt(bool flag = true);
 
     // Return the statement which checks the branch flag
-    SgExpression* checkBranchFlagExp()
-    {
-        return buildFunctionCallExp("pop", buildVoidType(), 
-                buildExprListExp(buildVarRefExp(flag_stack_name_)));
-    }
+    SgExpression* checkBranchFlagExp();
 
-    SgStatement* checkBranchFlagStmt()
-    {
-        return buildExprStatement(checkBranchFlagExp());
-    }
-
+    SgStatement* checkBranchFlagStmt();
 
     // **********************************************************************************
     // The following functions are for "for", "while", and "do-while" statement
@@ -330,11 +160,7 @@ private:
     // from the stack and assign it to the counter in the initilization part in for.
     SgStatement* buildForLoop(SgStatement* loop_body);
 
-    SgExpression* popLoopCounter()
-    {
-        return buildFunctionCallExp("pop", buildVoidType(), 
-                buildExprListExp(buildVarRefExp(counter_stack_name_)));
-    }
+    SgExpression* popLoopCounter();
 
 #if 0
     SgStatement* initLoopCounter()
