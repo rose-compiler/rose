@@ -29,7 +29,7 @@ and robustness required to handle large scale DOE applications.
 \subsection{Call Graph Analysis}
 
    Global {\it call graphs} are available, examples are in the ROSE Tutorial.
-ROSE supports two modes of building the call graph, with and without SGLite 
+ROSE supports two modes of building the call graph, with and without SQLite 
 database support (controled from the ROSE configure commandline). The use of SQLite
 database support permits information to be accumulated into a named database file
 over the compilation of many files as required to support large multi-file projects
@@ -157,9 +157,9 @@ Commands required to install MySQL and set it up for use:
 % /usr/bin/automake -a
 % /usr/bin/autoconf
 
-% ./configure --prefix=/usr/casc/overture/MySQL/MySQL_Install
-%             --with-mysql=/usr/casc/overture/MySQL/MySQL_Install
-%             --with-mysql-lib=/usr/casc/overture/MySQL/MySQL_Install
+% ./configure --prefix=/nfs/casc/overture/MySQL/MySQL_Install
+%             --with-mysql=/nfs/casc/overture/MySQL/MySQL_Install
+%             --with-mysql-lib=/nfs/casc/overture/MySQL/MySQL_Install
 % make
 % make install
 
@@ -170,10 +170,10 @@ Commands required to install MySQL and set it up for use:
 % Start daemon (first)
 %      We might want to run this in Qing's machines to simplify the access 
 %      to the database through any other machies.
-% cd /usr/casc/overture/MySQL/mysql-4.0.17 ; /usr/casc/overture/MySQL/mysql-4.0.17/bin/mysqld_safe &
+% cd /nfs/casc/overture/MySQL/mysql-4.0.17 ; /nfs/casc/overture/MySQL/mysql-4.0.17/bin/mysqld_safe &
 
 % Set the password for access to the database
-% /usr/casc/overture/MySQL/mysql-4.0.17/bin/mysqladmin -u root password 'rose-dq'
+% /nfs/casc/overture/MySQL/mysql-4.0.17/bin/mysqladmin -u root password 'rose-dq'
 
 % Add a user (so everyone does not have to be root)
 %     DELETE * FROM user WHERE user = '';
@@ -183,15 +183,19 @@ Commands required to install MySQL and set it up for use:
 %     FLUSH PRIVILEGES;
 %          Forces MySQL to reload privledged information (user table in mysql)
 %
-% /usr/casc/overture/MySQL/MySQL_Install/bin/mysql -u root -prose-dq mysql -e "DELETE FROM user WHERE user = ''; GRANT ALL ON db.* TO dquinlan@'%.llnl.gov' IDENTIFIED BY 'rosepwd'; FLUSH PRIVILEGES; SELECT * FROM user;"
+% /nfs/casc/overture/MySQL/MySQL_Install/bin/mysql -u root -prose-dq mysql -e "DELETE FROM user WHERE user = ''; GRANT ALL ON db.* TO dquinlan@'%.llnl.gov' IDENTIFIED BY 'rosepwd'; FLUSH PRIVILEGES; SELECT * FROM user;"
 
 % cd to ROSE Compile Tree
-%     set --with-MySQL=/usr/casc/overture/MySQL/MySQL_Install (specify loaction of MySQL)
+%     set --with-MySQL=/nfs/casc/overture/MySQL/MySQL_Install (specify loaction of MySQL)
 %     set --with-MySQL_username=roseuser (consistant with roseuser@'%.llnl.gov' specificed above)
 %     set --with-MySQL_password=rosepwd (consistant with IDENTIFIED BY 'rosepwd' specified above)
 %     set --with-MySQL_database_name=database-dq (choose unique name for database)
 %
-%  /home/dquinlan/ROSE/NEW_ROSE/configure --with-GNU_HEADERS --with-FLTK_include=/home/thuerey1/local/include --with-FLTK_libs=/home/thuerey1/local/lib --with-GraphViz_include=/home/thuerey1/local/include/graphviz --with-GraphViz_libs=/home/thuerey1/local/lib/graphviz --with-MySQL=/usr/casc/overture/MySQL/MySQL_Install --with-MySQL_username=roseuser --with-MySQL_password=rosepwd --with-MySQL_database_name=database-dq --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/LINUX-3.3.2-FULL_OPTIONS
+%  /home/dquinlan/ROSE/NEW_ROSE/configure --with-GNU_HEADERS
+%  --with-FLTK_include=/home/thuerey1/local/include
+%  --with-FLTK_libs=/home/thuerey1/local/lib
+%  --with-GraphViz_include=/home/thuerey1/local/include/graphviz
+%  --with-GraphViz_libs=/home/thuerey1/local/lib/graphviz --with-MySQL=/nfs/casc/overture/MySQL/MySQL_Install --with-MySQL_username=roseuser --with-MySQL_password=rosepwd --with-MySQL_database_name=database-dq --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/LINUX-3.3.2-FULL_OPTIONS
 
 % How to login to mysql (directly):
 % mysql -h localhost --user root -p
@@ -210,7 +214,11 @@ Commands required to install MySQL and set it up for use:
 % SHOW TABLES;
 
 % Run configure using command:
-% /home/dquinlan/ROSE/NEW_ROSE/configure --with-GNU_HEADERS --with-FLTK_include=/home/thuerey1/local/include --with-FLTK_libs=/home/thuerey1/local/lib --with-GraphViz_include=/home/thuerey1/local/include/graphviz --with-GraphViz_libs=/home/thuerey1/local/lib/graphviz --with-MySQL=/usr/casc/overture/MySQL/MySQL_Install --with-MySQL_username=dquinlan --with-MySQL_server=tux49 --with-MySQL_password=rosepwd --with-MySQL_database_name=database-dq --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/LINUX-3.3.2-FULL_OPTIONS
+% /home/dquinlan/ROSE/NEW_ROSE/configure --with-GNU_HEADERS
+% --with-FLTK_include=/home/thuerey1/local/include
+%  --with-FLTK_libs=/home/thuerey1/local/lib
+%  --with-GraphViz_include=/home/thuerey1/local/include/graphviz
+%  --with-GraphViz_libs=/home/thuerey1/local/lib/graphviz --with-MySQL=/nfs/casc/overture/MySQL/MySQL_Install --with-MySQL_username=dquinlan --with-MySQL_server=tux49 --with-MySQL_password=rosepwd --with-MySQL_database_name=database-dq --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/LINUX-3.3.2-FULL_OPTIONS
 
 % Things to Install Tomorrow (with Nils):
 %    Boost
