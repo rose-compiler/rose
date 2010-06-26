@@ -43,7 +43,7 @@ The Video:
 
 Commands used one to setup and maintain GIT and not used by users afterward:
    Command to use git-svn support (checkes out a git-based SVN repository):
-      git svn clone file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
+      git svn clone file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
 
    To update git repository from SVN use (from in the git repository):
       git svn fetch
@@ -155,10 +155,10 @@ directory is: /export/tmp.hudson-rose/hudson/workspace/ROSE-matrix
 
 A currently problem is that it seems that Hudson is cycling through the
 branches and testing each one.  The branches are a set larger than what is
-in our main GIT repository in /usr/casc, and it has bee identified
+in our main GIT repository in /nfs/casc, and it has bee identified
 to be the branches that are in tux283:/export/tmp.hudson-rose/hudson/workspace/ROSE-matrix
 This repository is being backed up and pruned to represent the smaller
-number of branches our main GIT repository in /usr/casc.
+number of branches our main GIT repository in /nfs/casc.
 
 Note from Andreas:
    If you ever run into this problem again, go into that directory 

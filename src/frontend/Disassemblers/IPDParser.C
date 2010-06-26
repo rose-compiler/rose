@@ -145,7 +145,12 @@ Partitioner::IPDParser::match_number()
     if (!is_number())
         throw Exception("expected number");
     char *rest;
-    rose_addr_t retval = strtoull(input+at, &rest, 0);
+#ifdef _MSC_VER
+		//tps - added Win specific function
+    rose_addr_t retval = _strtoui64(input+at, &rest, 0);
+#else
+	rose_addr_t retval = strtoull(input+at, &rest, 0);
+#endif
     at = rest-input;
     return retval;
 }
