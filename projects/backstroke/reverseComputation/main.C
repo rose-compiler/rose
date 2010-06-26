@@ -1,244 +1,29 @@
-// Example ROSE Translator: used within ROSE/tutorial
-
 #include "eventReverser.h"
 #include "facilityBuilder.h"
-#include "utilities.h"
-#include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 using namespace boost;
-
-
-set<SgFunctionDeclaration*> EventReverser::func_processed_;
-const ExpPair EventReverser::NULL_EXP_PAIR = ExpPair(NULL, NULL);
-const StmtPair EventReverser::NULL_STMT_PAIR = StmtPair(NULL, NULL);
-
-ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
-{
-    // We can just make copy of statements.
-    // Before processing this expression, we replace it with its copy. This can avoid
-    // to modify the expression passed in, or the same node appears in AST more than once.
-    //exp = copyExpression(exp);
-
-    // if this expression is a binary one
-    if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
-        return processBinaryOp(bin_op);
-
-    // if the expression is a unary one
-    if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
-        return processUnaryOp(unary_op);
-
-    // process the conditional expression (?:).
-    if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
-        return processConditionalExp(cond_exp);
-
-    // process the function call expression
-    if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
-        return processFunctionCallExp(func_exp);
-
-    //if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
-
-    //return ExpPair(copyExpression(exp), NULL);
-    //return ExpPair(copyExpression(exp), buildNullExpression());
-    return ExpPair(copyExpression(exp), copyExpression(exp));
-}
-
-
-StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
-{
-    if (stmt == NULL)
-        return NULL_STMT_PAIR;
-
-    if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
-        return processExprStatement(exp_stmt);
-
-    // if it's a block, process each statement inside
-    if (SgBasicBlock* body = isSgBasicBlock(stmt))
-        return processBasicBlock(body);
-
-    // if it's a local variable declaration
-    if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
-        return processVariableDeclaration(var_decl);
-
-    // if it's a if statement, process it according to the rule
-    if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
-        return processIfStmt(if_stmt);
-
-    if (SgForStatement* for_stmt = isSgForStatement(stmt))
-        return processForStatement(for_stmt);
-
-    if (SgForInitStatement* for_init_stmt = isSgForInitStatement(stmt))
-        return processForInitStatement(for_init_stmt);
-
-    if (SgWhileStmt* while_stmt = isSgWhileStmt(stmt))
-        return processWhileStmt(while_stmt);
-
-    if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(stmt))
-        return processDoWhileStmt(do_while_stmt);
-
-    if (SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt))
-        return processSwitchStatement(switch_stmt);
-
-#if 0
-    if (SgBreakStmt* break_stmt = isSgBreakStmt(stmt))
-        return copyStatement(break_stmt);
-
-    if (SgContinueStmt* continue_stmt = isSgContinueStmt(stmt))
-        return copyStatement(continue_stmt);
-
-    if (SgReturnStmt* return_stmt = isSgReturnStmt(stmt))
-        return copyStatement(return_stmt);
-#endif
-
-    // The following output should include break, continue and other ones.
-    return StmtPair(
-            copyStatement(stmt),
-            copyStatement(stmt));
-}
-
-// This function add the loop counter related statements (counter declaration, increase, and store)
-// to a forward for statement. 
-SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
-{
-    string counter_name = function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++);
-    validateName(counter_name, loop_stmt);
-
-    SgStatement* counter_decl = buildVariableDeclaration(
-            counter_name, 
-            buildIntType(), 
-            buildAssignInitializer(buildIntVal(0)));
-
-#if 1
-    SgStatement* incr_counter = buildExprStatement(
-            buildPlusPlusOp(buildVarRefExp(counter_name), SgUnaryOp::prefix));
-
-    if (SgForStatement* for_stmt = isSgForStatement(loop_stmt))
-    {
-        SgStatement* loop_body = for_stmt->get_loop_body();
-        if (SgBasicBlock* block_body = isSgBasicBlock(loop_body))
-            block_body->append_statement(incr_counter);
-        else
-        {
-            block_body = buildBasicBlock(loop_body, incr_counter);
-            for_stmt->set_loop_body(block_body);
-            block_body->set_parent(for_stmt);
-        }
-    }
-    else if (SgWhileStmt* while_stmt = isSgWhileStmt(loop_stmt))
-    {
-        SgStatement* loop_body = while_stmt->get_body();
-        if (SgBasicBlock* block_body = isSgBasicBlock(loop_body))
-            block_body->append_statement(incr_counter);
-        else
-        {
-            block_body = buildBasicBlock(loop_body, incr_counter);
-            while_stmt->set_body(block_body);
-            block_body->set_parent(while_stmt);
-        }
-    }
-    else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(loop_stmt))
-    {
-        SgStatement* loop_body = do_while_stmt->get_body();
-        if (SgBasicBlock* block_body = isSgBasicBlock(loop_body))
-            block_body->append_statement(incr_counter);
-        else
-        {
-            block_body = buildBasicBlock(loop_body, incr_counter);
-            do_while_stmt->set_body(block_body);
-            block_body->set_parent(do_while_stmt);
-        }
-    }
-#endif
-
-    SgStatement* push_counter = buildFunctionCallStmt(
-            "push", 
-            buildIntType(), 
-            buildExprListExp(
-                buildVarRefExp(counter_stack_name_),
-                buildVarRefExp(counter_name))); 
-
-    return buildBasicBlock(counter_decl, loop_stmt, push_counter);
-}
-
-SgStatement* EventReverser::buildForLoop(SgStatement* loop_body)
-{
-    // build a simple for loop like: for (int i = N; i > 0; --i)
-
-    string counter_name = "i";
-    validateName(counter_name, loop_body);
-
-    SgStatement* init = buildVariableDeclaration(
-            counter_name, buildIntType(), buildAssignInitializer(popLoopCounter()));
-    SgStatement* test = buildExprStatement(
-            buildBinaryExpression<SgGreaterThanOp>(
-                buildVarRefExp(counter_name), 
-                buildIntVal(0)));
-    SgExpression* incr = buildMinusMinusOp(buildVarRefExp(counter_name), SgUnaryOp::prefix);
-
-    SgStatement* for_stmt = buildForStatement(init, test, incr, loop_body);
-    return for_stmt;
-}
-
-vector<FuncDeclPair> EventReverser::outputFunctions()
-{
-    SgBasicBlock* body = func_decl_->get_definition()->get_body();
-    // Function body is a basic block, which is a kind of statement.
-    SgStatement *fwd_body, *rvs_body;
-    tie(fwd_body, rvs_body) = instrumentAndReverseStatement(body);
-
-    SgName func_name = func_decl_->get_name() + "_forward";
-    SgFunctionDeclaration* fwd_func_decl = 
-        buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
-                isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList())));
-    SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-    fwd_func_def->set_body(isSgBasicBlock(fwd_body));
-    fwd_body->set_parent(fwd_func_def);
-
-#if 0
-    pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
-
-    SgStatementPtrList fwd_stmt_list = isSgBasicBlock(fwd_body)->get_statements();
-    foreach (SgStatement* stmt, fwd_stmt_list)
-        appendStatement(stmt);
-
-    popScopeStack();
-#endif
-
-    func_name = func_decl_->get_name() + "_reverse";
-    SgFunctionDeclaration* rvs_func_decl = 
-        buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
-                isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
-    SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-    rvs_func_def->set_body(isSgBasicBlock(rvs_body));
-    rvs_body->set_parent(rvs_func_def);
-
-#if 0
-    pushScopeStack(isSgScopeStatement(rvs_func_decl->get_definition()->get_body()));
-
-    SgStatementPtrList rvs_stmt_list = isSgBasicBlock(rvs_body)->get_statements();
-    foreach (SgStatement* stmt, rvs_stmt_list)
-        appendStatement(stmt);
-
-    popScopeStack();
-#endif
-
-    output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
-    return output_func_pairs_;
-}
-
+using namespace SageBuilder;
+using namespace SageInterface;
 
 class reverserTraversal : public AstSimpleProcessing
 {
     public:
-        reverserTraversal() 
+        reverserTraversal(DFAnalysis* du) 
             : AstSimpleProcessing(),
+            defuse(du),
             events_num(0),  
             model_type(0)
     {}
         virtual void visit(SgNode* n);
 
+        DFAnalysis* defuse;
         int events_num;
         SgClassType* model_type;
         vector<SgFunctionDeclaration*> funcs_gen;
@@ -257,15 +42,15 @@ void reverserTraversal::visit(SgNode* n)
         all_funcs.push_back(func_decl);
 
         string func_name = func_decl->get_name();
-        if (!istarts_with(func_name, "event") ||
-                iends_with(func_name, "reverse") ||
-                iends_with(func_name, "forward"))
+        if (!starts_with(func_name, "event") ||
+                ends_with(func_name, "reverse") ||
+                ends_with(func_name, "forward"))
             return;
 
         //cout << func_name << endl;
         event_names.push_back(func_name);
 
-        EventReverser reverser(func_decl);
+        EventReverser reverser(func_decl, defuse);
         vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
         foreach(const FuncDeclPair& func_pair, func_pairs)
         {
@@ -296,8 +81,8 @@ void reverserTraversal::visit(SgNode* n)
     // Get the model structure type which will be used in other functions, like initialization.
     if (SgClassDeclaration* model_decl = isSgClassDeclaration(n))
     {
-        //if (model_decl->get_qualified_name() == "model")
-        model_type = model_decl->get_type();
+        if (model_decl->get_name() == "model")
+            model_type = model_decl->get_type();
     }
 }
 
@@ -428,21 +213,14 @@ int fixVariableReferences2(SgNode* root)
     return counter;
 }
 
-
-#if 1
 int main( int argc, char * argv[] )
 {
-    int i = 0;
-    const int& r = 1;
-    int j = 0;
-    cout << &i << ' ' << & j << endl;
-
-    return 0;
-
     vector<string> args(argv, argv+argc);
     bool klee = CommandlineProcessing::isOption(args, "-backstroke:", "klee", true);
     SgProject* project = frontend(args);
-    reverserTraversal reverser;
+    DFAnalysis* defuse = NULL;//new DefUseAnalysis(project);
+
+    reverserTraversal reverser(defuse);
 
     SgGlobal *globalScope = getFirstGlobalScope(project);
     string includes = "#include \"rctypes.h\"\n"
@@ -488,10 +266,5 @@ int main( int argc, char * argv[] )
 #endif
     return backend(project);
 }
-#else
-#include "CFG.C"
-#endif
-
-
 
 
