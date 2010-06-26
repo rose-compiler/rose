@@ -1,2 +1,6 @@
 #/bin/bash -vx
 if test "`find $1 \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0"; then echo "sage3basic.h source file check passed.";  else echo "There are source files that dont include sage3basic.h as the first header file."; find $1 \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h"; exit 1; fi
+
+if test "`find $1 | tr '[:upper:]' '[:lower:]'  | sort | uniq -d | wc -l ` -eq 0"; then echo "check to see if no filenames will be considerd the same on a case insensitive system passed";  else echo "There are source files that will be considered the same on a case insensitive system";     find * | tr '[:upper:]' '[:lower:]'  | sort | uniq -d  ;  exit 1; fi
+
+
