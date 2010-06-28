@@ -34,3 +34,41 @@ string backstroke_util::GenerateUniqueVariableName(SgScopeStatement* scope, std:
 
 	return name;
 }
+
+/** Returns true if the given expression refers to a variable. This could include using the
+  * dot and arrow operator to access member variables and the dereferencing / addressof operators. */
+bool backstroke_util::IsVariableReference(SgExpression* expression)
+{
+	if (isSgVarRefExp(expression))
+	{
+		return true;
+	}
+	else if (isSgAddressOfOp(expression))
+	{
+		return IsVariableReference(isSgAddressOfOp(expression)->get_operand());
+	}
+	else if (isSgDotExp(expression))
+	{
+		SgDotExp* dotExpression = isSgDotExp(expression);
+		return IsVariableReference(dotExpression->get_lhs_operand()) &&
+				IsVariableReference(dotExpression->get_rhs_operand());
+	}
+	else if (isSgArrowExp(expression))
+	{
+		SgArrowExp* arrowExpression = isSgArrowExp(expression);
+		return IsVariableReference(arrowExpression->get_lhs_operand()) &&
+				IsVariableReference(arrowExpression->get_rhs_operand());
+	}
+	else if (isSgCommaOpExp(expression))
+	{
+		//Comma op where both the lhs and th rhs are variable references.
+		//The lhs would be semantically meaningless since it doesn't have any side effects
+		SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
+		return IsVariableReference(commaOp->get_lhs_operand()) &&
+				IsVariableReference(commaOp->get_rhs_operand());
+	}
+	else
+	{
+		return false;
+	}
+}

@@ -139,7 +139,7 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
 {
 	//For right now, move everything but a constant value or an explicit variable access
-	if (isSgVarRefExp(argument) || isSgValueExp(argument))
+	if (backstroke_util::IsVariableReference(argument) || isSgValueExp(argument))
 		return false;
 
 	return true;
