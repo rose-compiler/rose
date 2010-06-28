@@ -8,7 +8,7 @@ INCLUDES = $(ROSE_INCLUDES) $(ROSE_LLVM_INCLUDES) -I$(srcdir)/../include
 
 bin_PROGRAMS = roseLLVM
 
-roseLLVM_SOURCES = main.cpp VisitorTraversal.cpp
+roseLLVM_SOURCES = main.cpp VisitorTraversal.cpp util.cpp FunctionToLLVM.cpp
 
 AM_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 #noinst_HEADERS = $(HEADERSDIR)/llvm-interface.h \

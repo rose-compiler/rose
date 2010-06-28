@@ -14,6 +14,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/System/DataTypes.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/TargetFolder.h"
 
 namespace llvm
 {
@@ -29,5 +30,10 @@ namespace llvm
     class Type;
     class FunctionType;
 }
+
+using namespace llvm;
+
+/// global module to which we compile into; consider using singleton instead
+extern Module *TheModule;
 
 #endif
