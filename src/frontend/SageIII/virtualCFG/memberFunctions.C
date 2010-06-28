@@ -3019,7 +3019,8 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 2: {
                 if (interprocedural) {
-                  SgFunctionDeclaration* decl = this->getAssociatedFunctionDeclaration();
+                  SgFunctionDeclaration* funcDecl = this->getAssociatedFunctionDeclaration();
+                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                   ROSE_ASSERT(decl);
                   SgFunctionDefinition* def = decl->get_definition();
                   if (def == NULL) {
@@ -3048,7 +3049,8 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
                 if (interprocedural) {
-                  SgFunctionDeclaration* decl = this->getAssociatedFunctionDeclaration();
+                  SgFunctionDeclaration* funcDecl = this->getAssociatedFunctionDeclaration();
+                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                   ROSE_ASSERT(decl);
                   SgFunctionDefinition* def = decl->get_definition();
                   if (def == NULL) {
