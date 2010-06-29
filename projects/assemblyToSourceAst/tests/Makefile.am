@@ -3,6 +3,7 @@
 # configuration. This is a holdover from the original makefile.
 
 inputs = test0 test1 test2
+EXTRA_DIST=$(inputs)
 
 all: $(inputs)
 
