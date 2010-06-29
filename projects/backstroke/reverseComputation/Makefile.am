@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS = eventDetection
+SUBDIRS = stateSaving
 
 # This file does not compile using ROSE (skip testing it for now)
 if !ROSE_USING_ROSE_ANALYSIS

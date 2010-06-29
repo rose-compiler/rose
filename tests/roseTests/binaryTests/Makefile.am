@@ -512,9 +512,8 @@ MOSTLYCLEANFILES = \
 	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
 	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
 	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans test_yicesSemantics.ans
-
+# Liao6/21/2010, TODO this causes make clean to fail since mostlyclean-binarysamples is not defined
 mostlyclean-local: mostlyclean-binarysamples
-
 
 ###############################################################################################################################
 # The older part of this makefile...

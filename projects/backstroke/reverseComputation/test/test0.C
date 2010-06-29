@@ -1,14 +1,47 @@
 //#include <stdlib.h>
+#include <utility>
 struct model ;
+
+struct point
+{
+    int x, y;
+  std::pair<int, int> pr;
+};
+
+bool operator ==(const point& p1, const point& p2)
+{
+    return p1.x == p2.x && p1.y == p2.y;
+}
+
+bool operator !=(const point& p1, const point& p2)
+{
+    return !(p1 == p2);
+}
 
 struct model 
 {
   int i_;
+  int j_;
   float f_;
   int a_[1000];
+  point p;
 }
 
 ;
+
+namespace ns
+{
+    int ns_i;
+}
+
+// Swap
+void event0(struct model* m)
+{
+    int t = m->i_;
+    m->i_ = m->j_;
+    m->j_ = t;
+    ns::ns_i = 10;
+}
 
 #if 0
 void event0(struct model *m)
@@ -27,6 +60,9 @@ void event0(struct model *m)
   }
 }
 #endif
+
+
+#if 0
 void event1(struct model* m)
 {
 #if 0
@@ -174,3 +210,5 @@ void event2(struct model* m)
     m->i_ -= (i = pop(), i--, pop());
 #endif
 }
+
+#endif

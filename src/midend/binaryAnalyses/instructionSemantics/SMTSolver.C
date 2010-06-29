@@ -19,12 +19,14 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     /* Generate the input file for the solver. */
     char config_name[L_tmpnam];
     while (1) {
-        tmpnam(config_name);
-        int fd = open(config_name, O_RDWR|O_EXCL|O_CREAT, 0666);
+#ifndef _MSC_VER
+		// tps (06/23/2010) : Does not work under Windows
+	int fd = open(config_name, O_RDWR|O_EXCL|O_CREAT, 0666);
         if (fd>=0) {
             close(fd);
             break;
         }
+#endif
     }
     std::ofstream config(config_name);
     Definitions defns;
@@ -46,14 +48,28 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
 
     /* Run the solver and look at the first line of output. It should be "sat" or "unsat". */
     std::string cmd = get_command(config_name);
-    FILE *output = popen(cmd.c_str(), "r");
-    ROSE_ASSERT(output!=NULL);
+#ifdef _MSC_VER
+	// tps (06/23/2010) : popen not understood in Windows
+	FILE *output=NULL;
+#else
+	FILE *output = popen(cmd.c_str(), "r");
+#endif
+	ROSE_ASSERT(output!=NULL);
     static char *line=NULL;
     static size_t line_alloc=0;
+#ifdef _MSC_VER
+	// tps (06/23/2010) : getline not understood in Windows
+    abort;
+#else
     ssize_t nread = getline(&line, &line_alloc, output);
-    ROSE_ASSERT(nread>0);
+#endif
+	ROSE_ASSERT(nread>0);
+#ifdef _MSC_VER
+	// tps (06/23/2010) : pclose not understood in Windows
+	abort;
+#else
     int status = pclose(output);
-
+#endif
     /* First line should be the word "sat" or "unsat" */
     bool retval = false;
     if (debug)
@@ -63,9 +79,13 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     } else if (!strcmp(line, "unsat\n")) {
         retval = false;
     } else {
+#ifdef _MSC_VER
+	// tps (06/23/2010) : execl not understood in Windows
+#else
         std::cout <<"    input=" <<config_name <<", status=" <<status <<", result=" <<line;
         execl("/bin/cat", "cat", "-n", config_name, NULL);
-        abort(); /*probably not reached*/
+#endif
+		abort(); /*probably not reached*/
     }
 
     unlink(config_name);

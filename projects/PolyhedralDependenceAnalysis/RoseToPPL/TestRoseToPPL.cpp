@@ -52,7 +52,7 @@ int main ( int argc, char* argv[] ) {
 				}
 			}
 			
-/*			std::cout << "Dependences in " << func_decl->get_name().getString() << ":" << std::endl;
+			std::cout << "Dependences in " << func_decl->get_name().getString() << ":" << std::endl;
 			std::vector<FadaToPPL::PolyhedricDependence *>::iterator it;
 			for (it = deps.begin(); it != deps.end(); it++) {
 				(*it)->print(std::cout);
@@ -60,7 +60,7 @@ int main ( int argc, char* argv[] ) {
 				(*it)->printMinimized(std::cout);
 				std::cout << std::endl;
 			}
-*/		}
+		}
 	}
 	
 	return 0;

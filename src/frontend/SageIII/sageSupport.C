@@ -7046,18 +7046,36 @@ SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
   // Additional libraries to be linked with
   // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
      if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering()))
-        {
+     {
+
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
+       // add libxomp.a , Liao 6/12/2010
+       string xomp_lib_path(ROSE_INSTALLATION_PATH);
+       ROSE_ASSERT (xomp_lib_path.size() != 0);
+       linkingCommand.push_back(xomp_lib_path+"/lib/libxomp.a"); // static linking for simplicity
+
        // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-          if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-             {
-               string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-               ROSE_ASSERT (gomp_lib_path.size() != 0);
-               linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-               linkingCommand.push_back("-lpthread");
-             }
+         string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
+         ROSE_ASSERT (gomp_lib_path.size() != 0);
+         linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); 
+         linkingCommand.push_back("-lpthread");
+#else
+  // GOMP has higher priority when both GOMP and OMNI are specified (wrongfully)
+  #ifdef OMNI_OPENMP_LIB_PATH
+           // a little redundant code to defer supporting 'ROSE_INSTALLATION_PATH' in cmake
+           string xomp_lib_path(ROSE_INSTALLATION_PATH);
+           ROSE_ASSERT (xomp_lib_path.size() != 0);
+           linkingCommand.push_back(xomp_lib_path+"/lib/libxomp.a"); 
+
+           string omni_lib_path(OMNI_OPENMP_LIB_PATH);
+           ROSE_ASSERT (omni_lib_path.size() != 0);
+           linkingCommand.push_back(omni_lib_path+"/libgompc.a"); 
+           linkingCommand.push_back("-lpthread");
+  #else
+     printf("Warning: OpenMP lowering is requested but no target runtime library is specified!\n");
+  #endif
 #endif
-        }
+     }
 
      if ( get_verbose() > 0 )
         {
@@ -8264,7 +8282,12 @@ static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* at
   ROSE_ASSERT(target&&att);
   // build variable list
   std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(key);
-  ROSE_ASSERT(varlist.size()!=0);
+#if 0  
+  // Liao 6/10/2010 we relax this assertion to workaround 
+  //  shared(num_threads),  a clause keyword is used as a variable 
+  //  we skip variable list of shared() for now so shared clause will have empty variable list
+#endif  
+   ROSE_ASSERT(varlist.size()!=0);
   std::vector<std::pair<std::string,SgNode* > >::iterator iter;
   for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
   {
@@ -8718,6 +8741,36 @@ SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttri
       }
     }
   } // end clause allocations 
+
+ /*
+  handle dangling #endif  attached to the loop
+  1. original 
+ #ifdef _OPENMP
+  #pragma omp parallel for  private(i,k)
+ #endif 
+   for () ...
+
+  2. after splitting
+
+ #ifdef _OPENMP
+  #pragma omp parallel 
+  #pragma omp for  private(i,k)
+ #endif 
+   for () ...
+  
+  3. We need to move #endif to omp parallel statement 's after position
+   transOmpParallel () will take care of it later on
+
+    #ifdef _OPENMP
+      #pragma omp parallel 
+      #pragma omp for  private(i) reduction(+ : j)
+      for (i = 1; i < 1000; i++)
+        if ((key_array[i - 1]) > (key_array[i]))
+          j++;
+    #endif
+  This is no perfect solution until we handle preprocessing information as structured statements in AST
+ */
+   movePreprocessingInfo(body, first_stmt, PreprocessingInfo::before, PreprocessingInfo::after, true);
   return first_stmt;
 }
 

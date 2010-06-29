@@ -370,6 +370,8 @@ Partitioner::clear()
 
     /* Read configuration file (avoid mmap due to Windows support) */
     if (!config_file_name.empty()) {
+#ifndef _MSC_VER
+		// tps (06/23/2010) : Does not work under Windows
         int fd = open(config_file_name.c_str(), O_RDONLY);
         if (fd<0)
             throw IPDParser::Exception(strerror(errno), config_file_name);
@@ -382,6 +384,7 @@ Partitioner::clear()
         IPDParser(this, config, sb.st_size, config_file_name).parse();
         delete[] config;
         close(fd);
+#endif
     }
 }
 

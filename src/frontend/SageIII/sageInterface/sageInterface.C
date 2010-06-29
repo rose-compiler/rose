@@ -5209,8 +5209,23 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
   }
+  else if (isSgInitializedName(parent))
+  {
+	  SgInitializedName* initializedNameParent = isSgInitializedName(parent);
+	  if (oldExp == initializedNameParent->get_initializer())
+	  {
+		  //We can only replace an initializer expression with another initializer expression
+		  ROSE_ASSERT(isSgInitializer(newExp));
+		  initializedNameParent->set_initializer(isSgInitializer(newExp));
+	  }
+	  else
+	  {
+		  //What other expressions can be children of an SgInitializedname?
+		  ROSE_ASSERT(false);
+	  }
+  }
  else{
-  cout<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
+  cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
   ROSE_ASSERT(false);
   }
 
@@ -10546,7 +10561,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                if ((*i)->get_scope() != targetBlock)
                   {
                     //(*i)->set_scope(targetBlock);
-                    printf ("Warning: test failing (*i)->get_scope() == targetBlock \n");
+                    printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
                   }
                //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }

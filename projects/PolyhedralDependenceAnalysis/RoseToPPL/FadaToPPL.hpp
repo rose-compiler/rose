@@ -11,6 +11,7 @@ namespace Parma_Polyhedra_Library {
 	class Variable;
 	class Polyhedron;
 	class Constraint;
+	class Constraint_System;
 }
 
 namespace FadaToPPL {
@@ -23,8 +24,12 @@ class PolyhedricDependence {
 		std::map<std::string, Parma_Polyhedra_Library::Variable> p_source_iterators;
 		std::map<std::string, Parma_Polyhedra_Library::Variable> p_destination_iterators;
 		std::map<std::string, Parma_Polyhedra_Library::Variable> p_globals;
+		
+		Parma_Polyhedra_Library::Constraint_System * p_minimized_constraints;
 
 		Parma_Polyhedra_Library::Polyhedron * p_polyhedron;
+		
+		Parma_Polyhedra_Library::Constraint_System * createConstraints();
 
 	public:
 		PolyhedricDependence(SgStatement * source, SgStatement * destination,
@@ -35,10 +40,14 @@ class PolyhedricDependence {
 		void addConstraint(Parma_Polyhedra_Library::Constraint * constraint);
 		
 		Parma_Polyhedra_Library::Variable * getSourceIterator(std::string & var);
-		
 		Parma_Polyhedra_Library::Variable * getDestinationIterator(std::string & var);
-		
 		Parma_Polyhedra_Library::Variable * getGlobal(std::string & var);
+		
+		SgStatement * getSource();
+		SgStatement * getDestination();
+		
+		int getNbrConstraints();
+		Parma_Polyhedra_Library::Constraint_System * getConstraints();
 
 		void printMinimized(std::ostream &);
 		void print(std::ostream &);
