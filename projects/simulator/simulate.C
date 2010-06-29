@@ -22,6 +22,10 @@ MachineState::MachineState() {
   ip = 0;
   for (size_t i = 0; i < 8; ++i) gprs[i] = 0;
   for (size_t i = 0; i < 16; ++i) flags[i] = 0;
+
+  // Initialize gdt using memset because some fields are not defined
+  // when compiling on linux i686.
+  memset(gdt, 0, sizeof gdt);
   gdt[0x23 >> 3].entry_number = (0x23 >> 3);
   gdt[0x23 >> 3].base_addr = 0;
   gdt[0x23 >> 3].limit = 0xFFFFF;
@@ -31,7 +35,6 @@ MachineState::MachineState() {
   gdt[0x23 >> 3].limit_in_pages = 1;
   gdt[0x23 >> 3].seg_not_present = 0;
   gdt[0x23 >> 3].useable = 1;
-  gdt[0x23 >> 3].lm = 0;
   gdt[0x2B >> 3].entry_number = (0x2B >> 3);
   gdt[0x2B >> 3].base_addr = 0;
   gdt[0x2B >> 3].limit = 0xFFFFF;
@@ -41,7 +44,7 @@ MachineState::MachineState() {
   gdt[0x2B >> 3].limit_in_pages = 1;
   gdt[0x2B >> 3].seg_not_present = 0;
   gdt[0x2B >> 3].useable = 1;
-  gdt[0x2B >> 3].lm = 0;
+
   writeSegreg(x86_segreg_cs, 0x23);
   writeSegreg(x86_segreg_ds, 0x2B);
   writeSegreg(x86_segreg_es, 0x2B);
