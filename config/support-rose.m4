@@ -954,7 +954,6 @@ ROSE_SUPPORT_MYSQL
 AM_CONDITIONAL(ROSE_USE_MYSQL_DATABASE,[test "x$MYSQL_VERSION" != "x"])
 
 # Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,[test "x$SQLITE3_VERSION" != "x"])
 
 # DQ (9/21/2009): Debugging for RH release 5
 echo "Testing the value of CC: (CC = $CC)"
