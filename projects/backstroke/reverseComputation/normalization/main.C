@@ -1,4 +1,4 @@
-#include "../normalization.h"
+#include "normalization.h"
 #include <rose.h>
 
 using namespace std;
@@ -16,7 +16,12 @@ class normalizationTraversal : public AstSimpleProcessing
 void normalizationTraversal::visit(SgNode* n)
 {
     if (SgExpression* exp = isSgExpression(n))
-        normalizeExpression(exp);
+    {
+        exp = normalizeExpression(exp);
+        splitCommaOpExp(exp);
+    }
+    else if (SgBasicBlock* body = isSgBasicBlock(n))
+        removeUselessBraces(body);
 }
 
 int main(int argc, char * argv[])
@@ -27,7 +32,7 @@ int main(int argc, char * argv[])
     normalizationTraversal norm;
     norm.traverseInputFiles(project,postorder);
 
-    //AstTests::runAllTests(project);
+    AstTests::runAllTests(project);
     return backend(project);
 }
 

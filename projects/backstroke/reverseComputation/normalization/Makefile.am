@@ -4,12 +4,12 @@ SUBDIRS =
 
 # This file does not compile using ROSE (skip testing it for now)
 bin_PROGRAMS = norm 
-norm_SOURCES = main.C
+norm_SOURCES = main.C normalization.C
 
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = 
+EXTRA_DIST = normlization.h
 
 CLEANFILES = 
 
@@ -28,5 +28,5 @@ check-local:
 	@echo "****** ROSE/projects/backstroke/reverseComputation: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
 
-mytest:clean
+mytest:
 	@$(MAKE) $(TEST_Objects)

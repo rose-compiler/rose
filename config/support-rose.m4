@@ -2360,6 +2360,7 @@ tests/CompileTests/mergeAST_tests/Makefile
 tests/CompileTests/unparseToString_tests/Makefile
 tests/CompileTests/boost_tests/Makefile
 tests/CompileTests/virtualCFG_tests/Makefile
+tests/CompileTests/staticCFG_tests/Makefile
 tests/CompileTests/uninitializedField_tests/Makefile
 tests/CompileTests/sourcePosition_tests/Makefile
 tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
