@@ -3,11 +3,19 @@
 #include <stdio.h>
 
 using namespace std;
-
+using namespace boost;
 
 /** Perform the function argument extraction on all function calls in the given subtree of the AST. */
 void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 {
+	//Check that there are no continue statements in the code and report an error if there are
+	Rose_STL_Container<SgNode*> continueStatements = NodeQuery::querySubTree(tree, V_SgContinueStmt);
+	if (continueStatements.size() > 0)
+	{
+		fprintf(stderr, "Function argument evaluation does not currently support 'continue' inside loops. Exiting");
+		exit(1);
+	}
+
 	//First, preprocess all for loops
 	Rose_STL_Container<SgNode*> forLoops = NodeQuery::querySubTree(tree, V_SgForStatement);
 
@@ -15,9 +23,6 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 	{
 		SgForStatement* forStatement = isSgForStatement(*iter);
 		ROSE_ASSERT(forStatement != NULL);
-
-		//Ensure the for statement has a basic block
-		SageInterface::ensureBasicBlockAsBodyOfFor(forStatement);
 
 		//Check if the test expression will have to be rewritten. If so, we need
 		//to move it out of the for loop. This means we also have to move the initializer out
@@ -57,14 +62,6 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 
 			SgStatement* incrementStatement = SageBuilder::buildExprStatement(incrementExpression);
 			SageInterface::appendStatement(incrementStatement, loopBody);
-
-			//Check that there are no continue statements in the code and report an error if there are
-			Rose_STL_Container<SgNode*> continueStatements = NodeQuery::querySubTree(forStatement, V_SgContinueStmt);
-			if (continueStatements.size() > 0)
-			{
-				fprintf(stderr, "Function argument evaluation does not currently support 'continue' inside loops. Exiting");
-				exit(1);
-			}
 		}
 	}
 
@@ -109,7 +106,10 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 
 		//Build a declaration for the temporary variable
 		SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
-		SgVariableDeclaration* tempVarDeclaration = CreateTempVariableForExpression(arg, scope, functionCallInfo.initializeTempVarAtDeclaration);
+		tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> tempVarInfo = CreateTempVariableForExpression(arg, scope, functionCallInfo.initializeTempVarAtDeclaration);
+		SgVariableDeclaration* tempVarDeclaration = tempVarInfo.get<0>();
+		SgAssignOp* tempVarAssignment = tempVarInfo.get<1>();
+		SgExpression* tempVarReference = tempVarInfo.get<2>();
 
 		//Insert the temporary variable declaration
 		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo.tempVarDeclarationInsertionMode);
@@ -117,18 +117,16 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		//Insert an evaluation for the temporary variable (if required)
 		if (functionCallInfo.tempVarEvaluationLocation != NULL)
 		{
-			SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
-			SgTreeCopy copyHelp;
-			SgExpression* argCopy = isSgExpression(arg->copy(copyHelp));
-			ROSE_ASSERT(argCopy != NULL);
-			SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, argCopy);
-			SgStatement* assignmentStatement = SageBuilder::buildExprStatement(assignment);
-
+			SgStatement* assignmentStatement = SageBuilder::buildExprStatement(tempVarAssignment);
 			InsertStatement(assignmentStatement, functionCallInfo.tempVarEvaluationLocation, functionCallInfo.tempVarEvaluationInsertionMode);
+		}
+		else
+		{
+			delete tempVarAssignment;
 		}
 
 		//Replace the argument with the new temporary variable
-		SageInterface::replaceExpression(arg, SageBuilder::buildVarRefExp(tempVarDeclaration));
+		SageInterface::replaceExpression(arg, tempVarReference);
 	}
 }
 
@@ -185,33 +183,68 @@ bool ExtractFunctionArguments::SubtreeNeedsNormalization(SgNode* top)
 
 
 /** Given an expression, generates a temporary variable whose initializer optionally evaluates
- * that expression. The temporary variable created is a const reference to avoid potentially calling
- * extra copy constructors.
- * @param expression Expression which will be replaced by a variable
- * @param scope scope in which the temporary variable will be generated
- * @return declaration of the temporary variable. Its initializer evaluates the original expression. */
-SgVariableDeclaration* ExtractFunctionArguments::CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
+  * that expression. Then, the var reference expression returned can be used instead of the original
+  * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
+  * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
+  * reference types correctly by using pointer types for the temporary.
+  * @param expression Expression which will be replaced by a variable
+  * @param scope scope in which the temporary variable will be generated
+  * @return declaration of the temporary variable, an assignment op to
+  *			reevaluate the expression, and a a variable reference expression to use instead of
+  *         the original expression. Delete the results that you don't need! */
+boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> ExtractFunctionArguments::CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
 {
-	SgType *expressionType = expression->get_type();
+	SgTreeCopy copyHelp;
+	SgType* expressionType = expression->get_type();
+	SgType* variableType = expressionType;
 
-	//Generate a unique variable name
-	SgName name = GenerateUniqueVariableName(scope).c_str();
-
-	SgAssignInitializer* initializer = NULL;
-
-	//Copy the expression and convert it to an intialization for the temporary variable
-	if (initializeInDeclaration)
+	//If the expression has a reference type, we need to use a pointer type for the temporary variable.
+	//Else, re-assigning the variable is not possible
+	bool isReferenceType = isSgReferenceType(expressionType);
+	if (isReferenceType)
 	{
-		SgTreeCopy copyHelp;
-		SgExpression* expressionCopy = isSgExpression(expression->copy(copyHelp));
-		ROSE_ASSERT(expressionCopy != NULL);
-		initializer = new SgAssignInitializer(expressionCopy, expressionType);
+		SgType* expressionBaseType = isSgReferenceType(expressionType)->get_base_type();
+		variableType = SageBuilder::buildPointerType(expressionBaseType);
 	}
 
-	SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, expressionType, initializer);
+	//Generate a unique variable name
+	string name = GenerateUniqueVariableName(scope);
+
+	//Initialize the temporary variable to an evaluation of the expression
+	SgAssignInitializer* initializer = NULL;
+	SgExpression* tempVarInitExpression = isSgExpression(expression->copy(copyHelp));
+	ROSE_ASSERT(tempVarInitExpression != NULL);
+	if (isReferenceType)
+	{
+		//FIXME: the next line is hiding a bug in ROSE. Remove this line and talk to Dan about the resulting assert
+		tempVarInitExpression->set_lvalue(false);
+
+		tempVarInitExpression = SageBuilder::buildAddressOfOp(tempVarInitExpression);
+	}
+
+	//Optionally initialize the variable in its declaration
+	if (initializeInDeclaration)
+	{
+		SgExpression* initExpressionCopy = isSgExpression(tempVarInitExpression->copy(copyHelp));
+		initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
+	}
+
+	SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
 	ROSE_ASSERT(tempVarDeclaration != NULL);
 
-	return tempVarDeclaration;
+	//Now create the assignment op for reevaluating the expression
+	SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
+	SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
+
+	//Build the variable reference expression that can be used in place of the original expresion
+	SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
+	if (isReferenceType)
+	{
+		//The temp variable is a pointer type, so dereference it before usint it
+		varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
+	}
+
+	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
 }
 
 
@@ -272,6 +305,8 @@ void ExtractFunctionArguments::HoistStatementOutsideOfForLoop(SgForStatement* fo
 			SgType* pointerizedArrayType = SageBuilder::buildPointerType(baseType);
 			initializedName->set_type(pointerizedArrayType);
 			delete originalType;
+
+			//We could insert an explicit cast here to get rid of a ROSE warning during unparsing, but it's not necessary
 		}
 	}
 }
@@ -303,7 +338,12 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
 		case FunctionCallInfo::APPEND_SCOPE:
 		{
 			SgScopeStatement* scopeStatement = isSgScopeStatement(location);
+			if (scopeStatement == NULL)
+			{
+				scopeStatement = isSgScopeStatement(SageInterface::ensureBasicBlockAsParent(location));
+			}
 			ROSE_ASSERT(scopeStatement != NULL);
+
 			SageInterface::appendStatement(newStatement, scopeStatement);
 			break;
 		}
@@ -332,6 +372,8 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 {
 	FunctionCallInheritedAttribute result = parentAttribute;
 	SgForStatement* parentForLoop = isSgForStatement(parentAttribute.currentLoop);
+	SgWhileStmt* parentWhileLoop = isSgWhileStmt(parentAttribute.currentLoop);
+	SgDoWhileStmt* parentDoWhileLoop = isSgDoWhileStmt(parentAttribute.currentLoop);
 
 	if (isSgForStatement(astNode))
 		result.currentLoop = isSgForStatement(astNode);
@@ -341,21 +383,30 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 		result.currentLoop = isSgDoWhileStmt(astNode);
 	else if (isSgForInitStatement(astNode))
 	{
-		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
-		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INIT;
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INIT;
 		ROSE_ASSERT(isSgForStatement(result.currentLoop));
 	}
 	else if (parentForLoop != NULL && parentForLoop->get_test() == astNode)
 	{
-		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
-		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_TEST;
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_TEST;
 	}
 	else if (parentForLoop != NULL && parentForLoop->get_increment() == astNode)
 	{
-		ROSE_ASSERT(result.forLoopStatus == FunctionCallInheritedAttribute::NOT_IN_FOR);
-		result.forLoopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT;
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT;
 	}
-
+	else if (parentWhileLoop != NULL && parentWhileLoop->get_condition() == astNode)
+	{
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_WHILE_CONDITION;
+	}
+	else if (parentDoWhileLoop != NULL && parentDoWhileLoop->get_condition() == astNode)
+	{
+		ROSE_ASSERT(result.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP);
+		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_DO_WHILE_CONDITION;
+	}
 
 	if (isSgStatement(astNode))
 		result.lastStatement = isSgStatement(astNode);
@@ -375,7 +426,7 @@ SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttrib
 
 	//Handle for loops (being inside the body of a for loop doesn't need special handling)
 	SgForStatement* forLoop = isSgForStatement(parentAttribute.currentLoop);
-	if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INIT)
+	if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INIT)
 	{
 		//The variables needed for the initialization of a for loop should be declared and
 		//evaluated outside the for loop
@@ -384,7 +435,7 @@ SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttrib
 		functionCallInfo.initializeTempVarAtDeclaration = true;
 		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 	}
-	else if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_TEST)
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_TEST)
 	{
 		//The variables for the test expression of a for loop need to be declared and initialized outside the for loop,
 		//because the test is evaluated before the for loop is entered. They also need to be reassigned at the bottom
@@ -394,31 +445,54 @@ SynthetizedAttribute FunctionEvaluationOrderTraversal::evaluateSynthesizedAttrib
 		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 		functionCallInfo.initializeTempVarAtDeclaration = true;
 
-		SgBasicBlock* loopBody = isSgBasicBlock(forLoop->get_loop_body());
-		ROSE_ASSERT(loopBody != NULL); //At this point, the for loop should have been preprocessed to have a basic block
-		functionCallInfo.tempVarEvaluationLocation = loopBody;
+		functionCallInfo.tempVarEvaluationLocation = forLoop->get_loop_body();
 		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
 	}
-	else if (parentAttribute.forLoopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT)
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT)
 	{
-		//The variables for an increment expression need to be declared outside the for loop, but initialized
-		//at the bottom of the loop body
-		ROSE_ASSERT(forLoop != NULL);
-		functionCallInfo.tempVarDeclarationLocation = forLoop;
+		//This should have been preprocessed to be at the bottom of the loop
+		ROSE_ASSERT(false);
+	}
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_WHILE_CONDITION)
+	{
+		SgWhileStmt* whileLoop = isSgWhileStmt(parentAttribute.currentLoop);
+		ROSE_ASSERT(whileLoop != NULL);
+		//The variables for the test expression of a while-loop need to be declared and initialized outside the for loop,
+		//because the test is evaluated before the while-loop is entered. They also need to be reassigned at the bottom
+		//Of the loop
+		functionCallInfo.tempVarDeclarationLocation = whileLoop;
+		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
+		functionCallInfo.initializeTempVarAtDeclaration = true;
+
+		functionCallInfo.tempVarEvaluationLocation = whileLoop->get_body();
+		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
+	}
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_DO_WHILE_CONDITION)
+	{
+		SgDoWhileStmt* doWhileLoop = isSgDoWhileStmt(parentAttribute.currentLoop);
+		ROSE_ASSERT(doWhileLoop);
+		//Temprary variables should be declared before the loop, but initialized at the botom of the loop body
+		functionCallInfo.tempVarDeclarationLocation = doWhileLoop;
+		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 		functionCallInfo.initializeTempVarAtDeclaration = false;
 
-		SgBasicBlock* loopBody = isSgBasicBlock(forLoop->get_loop_body());
-		ROSE_ASSERT(loopBody != NULL);
+		functionCallInfo.tempVarEvaluationLocation = doWhileLoop->get_body();
 		functionCallInfo.tempVarEvaluationInsertionMode = FunctionCallInfo::APPEND_SCOPE;
 	}
 
-
-	else
+	else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP)
 	{
 		//Assume we're in a basic block. Then just insert right before the current statement
+		ROSE_ASSERT(parentAttribute.loopStatus = FunctionCallInheritedAttribute::NOT_IN_LOOP);
 		functionCallInfo.tempVarDeclarationLocation = parentAttribute.lastStatement;
 		functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 		functionCallInfo.initializeTempVarAtDeclaration = true;
+	}
+
+	else
+	{
+		//Unhandled condition?!
+		ROSE_ASSERT(false);
 	}
 
 	functionCalls.push_back(functionCallInfo);

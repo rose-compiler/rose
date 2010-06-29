@@ -11,7 +11,7 @@ if test -f .git/config; then
    echo "Verified that this is a git repository."
 else
  # echo "This machine must be setup to access tux281.llnl.gov withouth passwd using ssh."
- # git clone ssh://tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-rose
+ # git clone ssh://tux281.llnl.gov/nfs/casc/overture/ROSE/git/ROSE.git git-rose
    echo "Error: this is not a git repository... (must be setup manually)."
    exit 1
 fi
@@ -30,12 +30,12 @@ if test "`git rev-parse HEAD`" != "`git rev-parse origin/master`" ; then
   mkdir ROSE-build
   cd ROSE-build
   ../configure ${CONFIGURE_FLAGS}
-# make -j8 upload_edg_binary BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+# make -j8 upload_edg_binary BINARY_EDG_TARBALL_STAGING_PATH=/nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
   make -j8 upload_edg_binary BINARY_EDG_TARBALL_STAGING_PATH=`pwd`
-  scp roseBinaryEDG* dquinlan@tux281:/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+  scp roseBinaryEDG* dquinlan@tux281:/nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
 fi
 
-echo "EDG binaries built and uploaded to /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries on LC."
+echo "EDG binaries built and uploaded to /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries on LC."
 
 echo "**************************"
 echo "Build terminated Normally."

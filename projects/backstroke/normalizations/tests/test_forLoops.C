@@ -74,5 +74,11 @@ int main(int argc, char** argv)
 		break;
 	}
 
+	//Moving the increment expression
+	for (; ; aObject.bar(aObject.foo(a)))
+	{
+		globalFunc(1, 2);
+	}
+
 	return 0;
 }

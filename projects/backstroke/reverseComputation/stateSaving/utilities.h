@@ -26,17 +26,5 @@ bool hasBreakStmt(SgBasicBlock* body);
 // If two expressions can be reorderd (in other word, reordering does not change the result).
 bool canBeReordered(SgExpression* exp1, SgExpression* exp2);
 
-// Tell if a type is a STL container type.
-bool isSTLContainer(SgType* type);
-
-// Get the defined copy constructors in a given class. Returns empty vector if the copy constructor is implicit.
-std::vector<SgMemberFunctionDeclaration*> 
-getCopyConstructors(SgClassDeclaration* class_decl);
 
 #endif
-
-
-
-
-
-
