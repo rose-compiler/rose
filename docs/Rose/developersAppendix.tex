@@ -98,7 +98,8 @@ As a result, the master branch of the shared git repository is always stable and
 %jobs that will be tested by Hudson.
 \subsection{The Internal Repository}
 
-The ROSE internal repository (the shared git repository shown in Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/usr/casc/overture/ROSE/git/ROSE.git}.
+The ROSE internal repository (the shared git repository shown in
+Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/nfs/casc/overture/ROSE/git/ROSE.git}.
 It keeps track of the latest work of each
 internal developer (who have an account with LLNL). Each
 developer will make a complete local copy of the repository which he can use to
@@ -150,17 +151,19 @@ Please configure this copy with your name and email before starting work.
 
 \item Configuration:
   \begin{itemize}
-          \item set your name \textit{git config --global user.name 'John Doe' }
-	  \item set your email \textit{git config --global user.email johndoe@example.com}
-	  \item tells git-branch and git-checkout to setup new branches so that git-pull(1)
-    will appropriately merge from that remote branch \textit{git config branch.autosetupmerge true}
+          \item Set your name: \textit{git config --global user.name 'John Doe' }
+	  \item Set your email: \textit{git config --global user.email johndoe@example.com}
+	  \item Tell git-branch and git-checkout to setup new branches so that git-pull(1)
+    will appropriately merge from that remote branch: \textit{git config branch.autosetupmerge true}
           \item This setting tells git to convert the newlines to the system’s standard
 	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
+	 \item Tell git to automatically push to the remotely tracked branch: 
+	 	\textit{git config push.default 'tracking'}
    \end{itemize}       
 \item Get content in the repository:
   \begin{itemize}
           \item Clone a private repository from the shared repository: \textit{git clone 
-          file:///usr/casc/overture/ROSE/git/ROSE.git} . A directory named ROSE will show up after this 
+          file:///nfs/casc/overture/ROSE/git/ROSE.git} . A directory named ROSE will show up after this 
            command. Type \textit{cd ROSE} to operate within the private repository from now on.
            \item Retrieve EDG source files: we use a separated git
            repository for EDG to protect its proprietary source files. The
@@ -509,20 +512,20 @@ Please save it to your own .subversion/config before committing files.
 \item List content in the repository:
   \begin{itemize}
           \item list root info: \textit{svn list
-          file:///usr/casc/overture/ROSE/svn/ROSE}
+          file:///nfs/casc/overture/ROSE/svn/ROSE}
           \item list all branches: \textit{svn list
-          file:///usr/casc/overture/ROSE/svn/ROSE/branches}
+          file:///nfs/casc/overture/ROSE/svn/ROSE/branches}
           \item list all tags: \textit{svn list
-          file:///usr/casc/overture/ROSE/svn/ROSE/tags} 
+          file:///nfs/casc/overture/ROSE/svn/ROSE/tags} 
    \end{itemize}       
 \item Check out something:
    \begin{itemize}
           \item the main trunk: \textit{svn co
-          file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE rose-svn} 
+          file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE rose-svn} 
           \item a tag: \textit{svn co
-          file:///usr/casc/overture/ROSE/svn/ROSE/tags/tag-name}
+          file:///nfs/casc/overture/ROSE/svn/ROSE/tags/tag-name}
           \item a branch: \textit{svn co
-          file:///usr/casc/overture/ROSE/svn/ROSE/branches/branch-name} 
+          file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name} 
           \item Either of these can be used on a separate machine (not CASC
           or LC) with LLNL VPN access by changing \textit{file:///} to
           \textit{svn+ssh://username@hostname/}. 
@@ -551,14 +554,14 @@ contribution is from r4 to r5,
 \item branches   
     \begin{itemize}
     \item Add a new branch based on the head of the main trunk:\\
-    \textit{svn cp file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE file:///usr/casc/overture/ROSE/svn/ROSE/branches/branch-name}
+    \textit{svn cp file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name}
     \item Delete a branch: \\
-    \textit{svn delete file:///usr/casc/overture/ROSE/svn/ROSE/branches/branch-name}
+    \textit{svn delete file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name}
     \end{itemize}
 
 \item Email notification: A perl script named post-commit (under
 svn/text/hooks or svn/ROSE/hooks) keeps our email recipient list.\\
-          \textit{/usr/casc/overture/ROSE/svn/ROSE/hooks/post-commit}
+          \textit{/nfs/casc/overture/ROSE/svn/ROSE/hooks/post-commit}
 \item To upgrade, do \textit{svn switch} to new tag URL
 \item Building distributions of ROSE MUST be done with \textit{svn export}. Otherwise, .svn directories are copied into the distribution trees. 
 

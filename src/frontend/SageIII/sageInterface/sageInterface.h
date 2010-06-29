@@ -1311,7 +1311,9 @@ SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
 //! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
 SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStmt);
-//! A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scopestatement with list of statements as children, otherwise generate a SgBasicBlock in between. Return s's parent.
+/** A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scope statement with list of statements as children,
+  * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
+  * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
 SgStatement* ensureBasicBlockAsParent(SgStatement* s);
 //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 

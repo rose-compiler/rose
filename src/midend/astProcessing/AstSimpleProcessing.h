@@ -93,7 +93,7 @@ private:
 };
 
 
-// deprecated class (provided for compatibility with existing user code - will be removed at some point in future)
+/** @deprecated Use AstSimpleProcessing instead. (provided for compatibility with existing user code - will be removed at some point in future). */
 class SgSimpleProcessing : public AstSimpleProcessing {};
 
 #endif
