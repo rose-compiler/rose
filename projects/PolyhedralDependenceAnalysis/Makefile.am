@@ -9,7 +9,7 @@ SUBDIRS += Common RoseToFada
 
 if ROSE_USE_PPL
 
-SUBDIRS += RoseToPPL Schedule
+SUBDIRS += RoseToPPL Schedule CodeGenerator
 
 endif
 
