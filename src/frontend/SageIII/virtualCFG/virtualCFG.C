@@ -23,16 +23,19 @@ namespace VirtualCFG {
   }
 
   string CFGNode::toString() const {
+      ostringstream s;
     if (isSgFunctionDefinition(node)) {
       switch (index) {
-	case 0: return "Start";
-	case 1: return "After parameters";
-	case 2: return "End";
-	default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
+          case 0: s << "Start: "; break; 
+          case 1: s << "After parameters: "; break;
+          case 2: s << "End: "; break;
+          default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
+      s << isSgFunctionDefinition(node)->get_declaration()->get_name().str(); 
     } else {
-      return toStringForDebugging();
+      s << toStringForDebugging();
     }
+    return s.str();
   }
 
   string CFGNode::toStringForDebugging() const {
@@ -110,6 +113,9 @@ namespace VirtualCFG {
           break;
         case eckArithmeticIfGreater:
           s << "greater";
+          break;
+    case eckInterprocedural:
+          s << "interprocedural";
           break;
 	default:
 	  s << "unknown";
@@ -324,6 +330,14 @@ namespace VirtualCFG {
       } else {
 	return eckFalse;
       }
+    } else if (isSgFunctionCallExp(srcNode) && 
+               srcIndex == 2 && 
+               !isSgFunctionCallExp(tgtNode)) {
+        return eckInterprocedural;
+    } else if (isSgFunctionCallExp(tgtNode) && 
+               tgtIndex == 3 && 
+               !isSgFunctionCallExp(srcNode)) {
+        return eckInterprocedural;
     } else {
       // No key
       return eckUnconditional;
@@ -583,21 +597,22 @@ namespace VirtualCFG {
     return scopesEntering;
   }
 
-  vector<CFGEdge> CFGNode::outEdges() const {
+  vector<CFGEdge> CFGNode::outEdges(bool interprocedural) const {
     ROSE_ASSERT (node);
-    return node->cfgOutEdges(index);
+    return node->cfgOutEdges(index, interprocedural);
   }
 
-  vector<CFGEdge> CFGNode::inEdges() const {
+  vector<CFGEdge> CFGNode::inEdges(bool interprocedural) const {
     ROSE_ASSERT (node);
-    return node->cfgInEdges(index);
+    return node->cfgInEdges(index, interprocedural);
   }
 
 
   vector<InterestingEdge> makeClosure(const vector<CFGEdge>& orig,
-				      vector<CFGEdge> (CFGNode::*closure)() const,
+				      vector<CFGEdge> (CFGNode::*closure)(bool interprocedural) const,
 				      CFGNode (CFGPath::*otherSide)() const,
-				      CFGPath (*merge)(const CFGPath&, const CFGPath&)) {
+				      CFGPath (*merge)(const CFGPath&, const CFGPath&),
+              bool interprocedural = false) {
     vector<CFGPath> rawEdges(orig.begin(), orig.end());
     // cerr << "makeClosure starting with " << orig.size() << endl;
     while (true) {
@@ -624,7 +639,7 @@ namespace VirtualCFG {
       for (int i = 0; i < rawEdges.size(); ++i) {
 	if (!(rawEdges[i].*otherSide)().isInteresting()) {
 	  unsigned int oldSize = rawEdges.size();
-	  vector<CFGEdge> rawEdges2 = ((rawEdges[i].*otherSide)().*closure)();
+	  vector<CFGEdge> rawEdges2 = ((rawEdges[i].*otherSide)().*closure)(interprocedural);
 	  for (unsigned int j = 0; j < rawEdges2.size(); ++j) {
 	    CFGPath merged = (*merge)(rawEdges[i], rawEdges2[j]);
             if (std::find(rawEdges.begin(), rawEdges.end(), merged) == rawEdges.end()) {
@@ -647,12 +662,12 @@ namespace VirtualCFG {
     return edges;
   }
 
-  vector<InterestingEdge> InterestingNode::outEdges() const {
-    return makeClosure(n.outEdges(), &CFGNode::outEdges, &CFGPath::target, &mergePaths);
+  vector<InterestingEdge> InterestingNode::outEdges(bool interprocedural) const {
+    return makeClosure(n.outEdges(interprocedural), &CFGNode::outEdges, &CFGPath::target, &mergePaths, interprocedural);
   }
 
-  vector<InterestingEdge> InterestingNode::inEdges() const {
-    return makeClosure(n.inEdges(), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed);
+  vector<InterestingEdge> InterestingNode::inEdges(bool interprocedural) const {
+    return makeClosure(n.inEdges(interprocedural), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed, interprocedural);
   }
 
   CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym) {
