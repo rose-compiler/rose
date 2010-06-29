@@ -1,18 +1,31 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-
-bin_PROGRAMS = normalizationTranslator 
-normalizationTranslator_SOURCES = ExtractFunctionArguments.C NormalizationTranslator.C \
-	Utilities.C CFGReverserProofOfConcept.C
-
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LINK	 = $(CXXLINK)
 
-EXTRA_DIST = ExtractFunctionArguments.h Utilities.h CPPDefinesAndNamespaces.h \
-	CFGReverserProofOfConcept.h
+# noinst_LTLIBRARIES lists all the librarlies that should be built with libtool, but not installed
+noinst_LTLIBRARIES =  libBackstrokeNormalizations.la
+
+libBackstrokeNormalizations_ladir = .
+libBackstrokeNormalizations_la_DEPENDENCIES = 
+libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C Utilities.C CFGReverserProofOfConcept.C
+libBackstrokeNormalizations_la_HEADERS = ExtractFunctionArguments.h Utilities.h CFGReverserProofOfConcept.h
+libBackstrokeNormalizations_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# bin_PROGRAMS lists all the programs which should be compiled and installed
+bin_PROGRAMS = normalizationTranslator 
+
+normalizationTranslator_SOURCES =  NormalizationTranslator.C 
+normalizationTranslator_LDADD =  libBackstrokeNormalizations.la 
+
+
+# EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
+EXTRA_DIST = CPPDefinesAndNamespaces.h
+
+include_HEADERS = 
 
 CLEANFILES = 
 
-include_HEADERS =
 
 check-local:
 	@echo "*********************************************************************************************************"

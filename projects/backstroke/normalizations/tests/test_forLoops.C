@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	}
 
 	//Moving the increment expression
-	for (; ; aObject.bar(aObject.foo(a)))
+	for (int i = 9; int j = (a - i, aObject.bar(aObject.foo(a)), 8); aObject.bar(aObject.foo(a)))
 	{
 		globalFunc(1, 2);
 	}
