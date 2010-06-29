@@ -1,4 +1,5 @@
 #include "rose.h"
+#include "rose_getline.h" /* Mac OSX v10.6 does not have GNU getline() */
 #include "SMTSolver.h"
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
@@ -58,12 +59,7 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     ROSE_ASSERT(output!=NULL);
     static char *line=NULL;
     static size_t line_alloc=0;
-#ifdef _MSC_VER
-    // tps (06/23/2010) : getline not understood in Windows
-    abort;
-#else
     ssize_t nread = getline(&line, &line_alloc, output);
-#endif
     ROSE_ASSERT(nread>0);
 #ifdef _MSC_VER
     // tps (06/23/2010) : pclose not understood in Windows
