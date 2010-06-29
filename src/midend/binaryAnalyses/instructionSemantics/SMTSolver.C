@@ -20,7 +20,8 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     char config_name[L_tmpnam];
     while (1) {
 #ifndef _MSC_VER
-		// tps (06/23/2010) : Does not work under Windows
+        // tps (06/23/2010) : Does not work under Windows
+        tmpnam(config_name);
 	int fd = open(config_name, O_RDWR|O_EXCL|O_CREAT, 0666);
         if (fd>=0) {
             close(fd);
