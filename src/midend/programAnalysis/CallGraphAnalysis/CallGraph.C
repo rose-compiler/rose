@@ -687,7 +687,8 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 // Add the declaration for functionCallExp to functionList. In the case of 
 // function pointers and virtual functions, append the set of declarations
 // to functionList. 
-void retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp, 
+void 
+CallTargetSet::retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp, 
                          ClassHierarchyWrapper* classHierarchy,
                          Rose_STL_Container<Properties *>& functionList) {
 
@@ -926,7 +927,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     {
       SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
       ROSE_ASSERT ( functionCallExp != NULL );
-      retrieveFunctionDeclarations(functionCallExp, classHierarchy, functionList);
+      CallTargetSet::retrieveFunctionDeclarations(functionCallExp, classHierarchy, functionList);
       i++;
     }
   }
