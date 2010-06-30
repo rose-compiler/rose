@@ -14,10 +14,10 @@ libBackstrokeNormalizations_la_HEADERS = ExtractFunctionArguments.h Utilities.h 
 libBackstrokeNormalizations_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # bin_PROGRAMS lists all the programs which should be compiled and installed
-bin_PROGRAMS = normalizationTranslator 
+#bin_PROGRAMS = normalizationTranslator 
 
-normalizationTranslator_SOURCES =  NormalizationTranslator.C 
-normalizationTranslator_LDADD =  libBackstrokeNormalizations.la 
+#normalizationTranslator_SOURCES =  NormalizationTranslator.C 
+#normalizationTranslator_LDADD =  libBackstrokeNormalizations.la 
 
 
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.

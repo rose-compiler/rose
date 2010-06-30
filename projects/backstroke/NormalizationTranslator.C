@@ -1,7 +1,6 @@
 #include "rose.h"
-#include "ExtractFunctionArguments.h"
-#include "FunctionNormalization.h"
-#include "CFGReverserProofOfConcept.h"
+#include "normalizations/ExtractFunctionArguments.h"
+#include "normalizations/CFGReverserProofOfConcept.h"
 
 int main(int argc, char** argv)
 {
