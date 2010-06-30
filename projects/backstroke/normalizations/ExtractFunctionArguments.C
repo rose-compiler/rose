@@ -85,6 +85,14 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 	SgFunctionCallExp* functionCall = functionCallInfo.functionCall;
 
 	SgFunctionDeclaration* functionDeclaration = functionCall->getAssociatedFunctionDeclaration();
+	if (functionDeclaration == NULL)
+	{
+		fprintf(stderr, "The following function call has potential side effects in the function reference expression:\n");
+		fprintf(stderr, "\t%s\n", functionCall->unparseToString().c_str());
+		fprintf(stderr, "You are most likely using function pointers. These are not supported by this normalization.\n");
+		exit(1);
+	}
+
 	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionDeclaration != NULL && functionArgs != NULL);
 
