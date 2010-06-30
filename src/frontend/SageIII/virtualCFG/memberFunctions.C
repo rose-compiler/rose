@@ -3024,18 +3024,18 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                   Rose_STL_Container<Properties*> functionList;
                   CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
                   Rose_STL_Container<Properties*>::iterator prop;
+                  //std::cerr << "------" << std::endl;
                   for (prop = functionList.begin(); prop != functionList.end(); prop++) {
                     SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
                     ROSE_ASSERT(funcDecl);
                     SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                     ROSE_ASSERT(decl);
                     SgFunctionDefinition* def = decl->get_definition();
-                    if (def == NULL) {
-                      std::cerr << "no definition for function in SgFunCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
-                      break;
-                    }
-                    makeEdge(CFGNode(this, idx), def->cfgForBeginning(),
-                        result);
+                    //std::cerr << "function " << decl->get_qualified_name().str() << " has " << functionList.size() << " outEdges" << std::endl;
+                    if (def == NULL) 
+                      std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
+                    else
+                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
                   }
                 }
                 else
@@ -3061,18 +3061,18 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                   Rose_STL_Container<Properties*> functionList;
                   CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
                   Rose_STL_Container<Properties*>::iterator prop;
+                  //std::cerr << "------" << std::endl;
                   for (prop = functionList.begin(); prop != functionList.end(); prop++) {
                     SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
                     ROSE_ASSERT(funcDecl);
                     SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                     ROSE_ASSERT(decl);
                     SgFunctionDefinition* def = decl->get_definition();
-                    if (def == NULL) {
-                      std::cerr << "no definition for function in SgFunCallExp::cfgInEdges: " << decl->get_name().str() << std::endl;
-                      break;
-                    }
-                    makeEdge(decl->get_definition()->cfgForEnd(), CFGNode(this, idx),
-                        result);
+                    //std::cerr << "function " << decl->get_qualified_name().str() << " has " << functionList.size() << " inEdges" << std::endl;
+                    if (def == NULL) 
+                      std::cerr << "no definition for function in SgFunctionCallExp::cfgInEdges: " << decl->get_name().str() << std::endl;
+                    else
+                      makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
                   }
                 }
                 else
