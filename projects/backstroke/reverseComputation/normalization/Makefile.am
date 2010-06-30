@@ -9,7 +9,7 @@ norm_SOURCES = main.C normalization.C
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = normlization.h
+EXTRA_DIST = normalization.h
 
 CLEANFILES = 
 
