@@ -28,7 +28,7 @@ bool isAssignmentOp(SgExpression* e)
 }
 
 // Returns a boolean value to indicate whether the return value (rvalue) of the given expression is used.
-bool isReturnValueUsed(SgExpression* exp)
+bool isReturnedValueUsed(SgExpression* exp)
 {
     SgNode* parent_node = exp->get_parent();
 
@@ -61,14 +61,14 @@ bool isReturnValueUsed(SgExpression* exp)
         if (comma_op->get_lhs_operand() == exp)
             return false;
         if (comma_op->get_rhs_operand() == exp)
-            return isReturnValueUsed(comma_op);
+            return isReturnedValueUsed(comma_op);
     }
 
     if (SgConditionalExp* cond_exp = isSgConditionalExp(parent_node))
     {
         if ((cond_exp->get_true_exp() == exp) ||
                 (cond_exp->get_false_exp() == exp))
-            return isReturnValueUsed(cond_exp);
+            return isReturnedValueUsed(cond_exp);
     }
 
     if (SgForStatement* for_stmt = isSgForStatement(parent_node))
@@ -78,8 +78,8 @@ bool isReturnValueUsed(SgExpression* exp)
     }
 
 
-    if (SgExpression* parent_exp = isSgExpression(parent_node))
-        return true;
+    //if (SgExpression* parent_exp = isSgExpression(parent_node))
+      //  return true;
 
     return true;
 }
@@ -141,6 +141,7 @@ SgExpression* normalizeExpression(SgExpression* exp)
             // (a = b) = c  ==>  a = b, a = c
             SgExpression *lexp, *rexp;
             bool lflag, rflag;
+
             tie(lexp, lflag) = getAndReplaceModifyingExpression(lhs);
             tie(rexp, rflag) = getAndReplaceModifyingExpression(rhs);
 
