@@ -30,10 +30,6 @@ void normalizationTraversal::visit(SgNode* n)
 
 int main(int argc, char * argv[])
 {
-    int i = 0;
-    int a[10];
-    a[i++] = i;
-
     vector<string> args(argv, argv+argc);
     SgProject* project = frontend(args);
 
