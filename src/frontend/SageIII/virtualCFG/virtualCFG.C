@@ -28,12 +28,12 @@ namespace VirtualCFG {
       ostringstream s;
     if (isSgFunctionDefinition(node)) {
       switch (index) {
-          case 0: s << "Start: "; break; 
+          case 0: s << "Start("; break; 
           case 1: s << "After parameters: "; break;
-          case 2: s << "End: "; break;
+          case 2: s << "End("; break;
           default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
-      s << isSgFunctionDefinition(node)->get_declaration()->get_name().str(); 
+      s << isSgFunctionDefinition(node)->get_declaration()->get_qualified_name().str() << ")"; 
     } else {
       s << toStringForDebugging();
     }
