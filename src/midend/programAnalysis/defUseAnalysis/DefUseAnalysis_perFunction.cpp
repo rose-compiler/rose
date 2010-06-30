@@ -111,12 +111,19 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
     SgExpression* l_expr = unary->get_operand();
     SgVarRefExp* varRefExp = NULL;
     if (DEBUG_MODE)
-      cout << " **********  UNARY OP. " << unary << endl;
+      cout << " **********  UNARY OP. " << unary << "  " << varRefExp << endl;
+    if (isSgAssignOp(l_expr)) {
+      // maybe the subtree on the left hand side has a varRefExp.
+      // find first leftmost varRefExp -- this would currently work for (t=i)++ but not for (t.x=i)++ 
+      Rose_STL_Container<SgNode*> vars  = NodeQuery::querySubTree(l_expr,V_SgVarRefExp);
+      if (vars.size()>0) 
+	l_expr=isSgVarRefExp(*vars.begin());
+    }
     if (isSgVarRefExp(l_expr)) {
       // if left side is a varrefexp
       varRefExp = isSgVarRefExp(l_expr);
       initName = varRefExp->get_symbol()->get_declaration();
-
+      ROSE_ASSERT(initName);
       if (DEBUG_MODE)
 	cout << " UNARY OP: " << initName->get_qualified_name().str()
 	     << "  name: " << initName << "  varRefExp: "
@@ -138,8 +145,8 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
       }
       }
     } else {
-      if (DEBUG_MODE)
-	cout << " **********  UNARY OP : CANT HANDLE YET: "
+      //      if (DEBUG_MODE)
+	cerr << " **********  UNARY OP : CANT HANDLE YET: "
 	     << l_expr->class_name() << endl;
       dont_handle = true;
     }
