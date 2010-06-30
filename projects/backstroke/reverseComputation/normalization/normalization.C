@@ -77,7 +77,6 @@ bool isReturnValueUsed(SgExpression* exp)
             return false;
     }
 
-    // Other cases: init and incr part in for, 
 
     if (SgExpression* parent_exp = isSgExpression(parent_node))
         return true;
