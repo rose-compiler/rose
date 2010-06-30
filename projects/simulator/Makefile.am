@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+include_HEADERS = memory.h simulate.h
+
 noinst_PROGRAMS = sandbox test1
 
 sandbox_SOURCES = emulator.C simulate.C linuxcalls.C elfload.C
