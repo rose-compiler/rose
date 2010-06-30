@@ -1,6 +1,7 @@
 #include "ExtractFunctionArguments.h"
 #include <sstream>
 #include <stdio.h>
+#include "Utilities.h"
 
 using namespace std;
 using namespace boost;
@@ -84,6 +85,14 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 	SgFunctionCallExp* functionCall = functionCallInfo.functionCall;
 
 	SgFunctionDeclaration* functionDeclaration = functionCall->getAssociatedFunctionDeclaration();
+	if (functionDeclaration == NULL)
+	{
+		fprintf(stderr, "The following function call has potential side effects in the function reference expression:\n");
+		fprintf(stderr, "\t%s\n", functionCall->unparseToString().c_str());
+		fprintf(stderr, "You are most likely using function pointers. These are not supported by this normalization.\n");
+		exit(1);
+	}
+
 	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionDeclaration != NULL && functionArgs != NULL);
 
@@ -138,7 +147,7 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
 {
 	//For right now, move everything but a constant value or an explicit variable access
-	if (isSgVarRefExp(argument) || isSgValueExp(argument))
+	if (backstroke_util::IsVariableReference(argument) || isSgValueExp(argument))
 		return false;
 
 	return true;
@@ -208,7 +217,7 @@ boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> ExtractFunction
 	}
 
 	//Generate a unique variable name
-	string name = GenerateUniqueVariableName(scope);
+	string name = backstroke_util::GenerateUniqueVariableName(scope);
 
 	//Initialize the temporary variable to an evaluation of the expression
 	SgAssignInitializer* initializer = NULL;
@@ -286,7 +295,7 @@ void ExtractFunctionArguments::HoistStatementOutsideOfForLoop(SgForStatement* fo
 
 		//Create a new temporary variable that has the same initializer
 		SgInitializer* initializerCopy = isSgInitializer(initializer->copy(treeCopy));
-		SgName varName = GenerateUniqueVariableName(forLoop->get_scope());
+		SgName varName = backstroke_util::GenerateUniqueVariableName(forLoop->get_scope());
 		SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(varName, tempVarType, initializerCopy);
 		SageInterface::insertStatementBefore(forLoop, tempVarDeclaration);
 
@@ -309,20 +318,6 @@ void ExtractFunctionArguments::HoistStatementOutsideOfForLoop(SgForStatement* fo
 			//We could insert an explicit cast here to get rid of a ROSE warning during unparsing, but it's not necessary
 		}
 	}
-}
-
-
-/** Generate a name that is unique in the current scope and any parent and children scopes.
- * @param baseName the word to be included in the variable names. */
-string ExtractFunctionArguments::GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
-{
-	//TODO: This implementation is incomplete; it does not check for collsions
-	static int counter = 0;
-	counter++;
-
-	ostringstream name;
-	name << "__" << baseName << counter << "__";
-	return name.str();
 }
 
 

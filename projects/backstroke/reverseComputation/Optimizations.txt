@@ -1,0 +1,32 @@
+Expression level reverse versions: (multi-version reverse expressions)
+  There may be a few different ways to reverse an expression. For example, there are three reverse versions of the following expression:
+     a += b
+  which are:
+     a -= b
+  or
+     a = pop()
+  or
+     nothing
+
+  Since a += b is a constructive operation, it can be just reversed as a -= b. However, sometimes we may get more cost to get the proper value of b, for example:
+     
+     int i, j;
+     ... (modify i and j)
+     a += i + j; 
+
+  To reverse the last expression as a -= i + j (note that i and j are both local variables), we have to retrieve the value of i and j, which needs two stores comparing to only one store when just storing a. Therefore, one better reverse version of the codes above is just storing and retrieving a.
+  Sometimes the reverse of the expression above can be ignored, for example:
+ 
+    a = foo(), a += 10
+
+  Both expressions modify the value of a, but we only have to store a once for the first expression and ignore the second.
+
+  An expression may contain several subexpressions which have several reverse versions, then the reverse expression of it depends on the reverse expressions of its subexpressions. For example:
+    
+    a += b++;  
+
+  As a result, the optimization problem is turned into a search problem.
+
+
+Statement level reverse versions:
+  For If
