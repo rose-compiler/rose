@@ -43,7 +43,7 @@ struct FunctionCallInfo
 		functionCall(function),
 		tempVarDeclarationLocation(NULL),
 		tempVarDeclarationInsertionMode(INVALID),
-		initializeTempVarAtDeclaration(NULL),  
+		initializeTempVarAtDeclaration(true),
 		tempVarEvaluationLocation(NULL),
 		tempVarEvaluationInsertionMode(INVALID)
 		{}

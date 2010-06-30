@@ -53,6 +53,9 @@ tuple<SgBasicBlock*, SgBasicBlock*> CFGReverserProofofConcept::ReverseFunctionBo
 			ROSE_ASSERT(false);
 		}
 	}
+
+	tuple<SgBasicBlock*, SgBasicBlock*> result;
+	return result;
 }
 
 
