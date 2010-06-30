@@ -80,6 +80,12 @@ namespace CallTargetSet
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
   std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
+
+  // populates functionList with declarations of all functions that may get
+  // called via an SgFunctionCallExp node.
+  void retrieveFunctionDeclarations(SgFunctionCallExp* functionCall,
+                                    ClassHierarchyWrapper* classHierarchy,
+                                    Rose_STL_Container<Properties *>& functionList);
 };
 
 class FunctionData
