@@ -3020,8 +3020,9 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 2: {
                 if (interprocedural) {
+                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
                   Rose_STL_Container<Properties*> functionList;
-                  CallTargetSet::retrieveFunctionDeclarations(this, NULL, functionList);
+                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
                   Rose_STL_Container<Properties*>::iterator prop;
                   for (prop = functionList.begin(); prop != functionList.end(); prop++) {
                     SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
@@ -3056,8 +3057,9 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
                 if (interprocedural) {
+                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
                   Rose_STL_Container<Properties*> functionList;
-                  CallTargetSet::retrieveFunctionDeclarations(this, NULL, functionList);
+                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
                   Rose_STL_Container<Properties*>::iterator prop;
                   for (prop = functionList.begin(); prop != functionList.end(); prop++) {
                     SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
