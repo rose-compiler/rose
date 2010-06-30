@@ -1,3 +1,4 @@
+#if 0
 int& foo(int& a)
 {
     return a = 0;
@@ -61,6 +62,10 @@ void test0()
     (i += j) || (j += k);
 
     // Function calls.
-    i = foo(j);
-    ++foo(j);
+    //i = foo(j);
+    //++foo(j);
 }
+
+#endif
+
+void foo() { int i; i = 2;}

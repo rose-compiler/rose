@@ -17,8 +17,12 @@ void normalizationTraversal::visit(SgNode* n)
 {
     if (SgExpression* exp = isSgExpression(n))
     {
+#if 0
         exp = normalizeExpression(exp);
         splitCommaOpExp(exp);
+#else
+        SageInterface::splitExpressionIntoBasicBlock(exp);
+#endif
     }
     else if (SgBasicBlock* body = isSgBasicBlock(n))
         removeUselessBraces(body);
