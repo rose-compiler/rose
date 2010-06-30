@@ -3,12 +3,14 @@
 # configuration. This is a holdover from the original makefile.
 
 inputs = test0 test1 test2
-EXTRA_DIST=$(inputs)
 
 all: $(inputs)
 
-$(inputs): %: %.c
-	$(CC) -nostdlib -static -m32 -O3 -s -o $@ $<
+$(inputs): %: $(srcdir)/%.c
+	$(CC) -nostdlib -static -m32 -O3 -s -o $(srcdir)/$@ $<
+
+EXTRA_DIST=test0.c test1.c test2.c lib.h
 
 clean-local:
 	rm -f $(inputs)
+
