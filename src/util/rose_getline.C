@@ -22,6 +22,11 @@ rose_getline (char **lineptr, size_t *n, FILE *stream)
             }
         }
 
+        if (nread>0 && '\n'==(*lineptr)[nread-1]) {
+            (*lineptr)[nread] = '\0';
+            return nread;
+        }
+
         int c = fgetc(stream);
         if (c<0) {
             (*lineptr)[nread] = '\0';
