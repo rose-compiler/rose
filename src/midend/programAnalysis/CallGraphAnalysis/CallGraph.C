@@ -594,6 +594,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
       {
         SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
 
+        ROSE_ASSERT(cls_mb_decl != NULL);
         f2 = cls_mb_decl->get_mangled_name().str();
         //if ( f1 == f2 )
         if ( is_functions_types_equal(isSgMemberFunctionType(memberFunctionDeclaration->get_type()), 
@@ -802,7 +803,7 @@ CallTargetSet::retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp,
               << "\t" << fctProps << "\n";
           }
 
-          functionList.push_back( fctProps );
+          //functionList.push_back( fctProps );
 
           // returns the list of all in-class declarations of functions potentially called
           // ( may be several because of polymorphism )
@@ -817,7 +818,7 @@ CallTargetSet::retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp,
           {
             ROSE_ASSERT((*it)->functionType ); 
             functionList.push_back( *it );
-            //                       std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
+            //std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
           }
         }
       }
