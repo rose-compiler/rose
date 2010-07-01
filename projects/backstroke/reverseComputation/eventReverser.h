@@ -2,7 +2,8 @@
 #define ROSE_REVERSE_COMPUTATION_REVERSE_H
 
 #include <rose.h>
-
+#include <boost/function.hpp>
+#include <string>
 
 typedef std::pair<SgExpression*, SgExpression*> ExpPair;
 typedef std::pair<SgStatement*, SgStatement*> StmtPair;
@@ -11,10 +12,6 @@ typedef std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> FuncDeclPair;
 class EventReverser
 {
     SgFunctionDeclaration* func_decl_;
-
-    // Optimization tools
-    DFAnalysis* defuse_;
-
 
     std::string function_name_;
     //std::vector<string> branch_flags_;
@@ -35,19 +32,28 @@ class EventReverser
 
     static std::set<SgFunctionDeclaration*> func_processed_;
 
-
+	/** A list of all the expression handlers that we will try first.
+	  * If these handlers can't reverse an expression, we fall back to state saving. */
+	static std::vector <boost::function<ExpPair (SgExpression*) > > expressionHandlers;
 
 public:
     EventReverser(SgFunctionDeclaration* func_decl,
             DFAnalysis* analysis = NULL);
 
-    // All functions generated. If the reverser meets a function call, it may reverse 
-    // that function then add the resulted function pair into the function pair collection. 
-    std::vector<FuncDeclPair> outputFunctions();
+    /** All functions generated. If the reverser meets a function call, it may reverse
+	  * that function then add the resulted function pair into the function pair collection.
+	  * The reverse of the original function is the very last function in this list. */
+	std::vector<FuncDeclPair> outputFunctions();
 
     // Get all variables' declarations including all kinds of states
     std::vector<SgStatement*> getVarDeclarations();
     std::vector<SgStatement*> getVarInitializers();
+
+	/** Add a method that can generate forward and reverse expressions from the given expression. */
+	static void registerExpressionHandler(boost::function<ExpPair (SgExpression*)> handler)
+	{
+		expressionHandlers.push_back(handler);
+	}
 
 private:
     static const ExpPair NULL_EXP_PAIR;
@@ -56,9 +62,6 @@ private:
     // **********************************************************************************
     // Main functions, which process expressions and statements
     // ==================================================================================
-
-    // Just reverse an expression
-    //SgExpression* reverseExpression(SgExpression* exp);
 
     // Get the forward and reverse version of an expression
     ExpPair instrumentAndReverseExpression(SgExpression* exp);

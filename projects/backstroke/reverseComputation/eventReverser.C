@@ -1,8 +1,5 @@
-// Example ROSE Translator: used within ROSE/tutorial
-
 #include "eventReverser.h"
 #include "utilities.h"
-#include <DefUseAnalysis.h>
 #include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -16,6 +13,9 @@ using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
 
+/** A list of all the expression handlers that we will try first.
+  * If these handlers can't reverse an expression, we fall back to state saving. */
+/*static*/ std::vector <boost::function<ExpPair (SgExpression*) > > EventReverser::expressionHandlers;
 
 set<SgFunctionDeclaration*> EventReverser::func_processed_;
 const ExpPair EventReverser::NULL_EXP_PAIR = ExpPair(NULL, NULL);
@@ -23,7 +23,6 @@ const StmtPair EventReverser::NULL_STMT_PAIR = StmtPair(NULL, NULL);
 
 EventReverser::EventReverser(SgFunctionDeclaration* func_decl, DFAnalysis* analysis) 
 : func_decl_(func_decl), 
-    defuse_(analysis),
     function_name_(func_decl_->get_name()), 
     flag_stack_name_(function_name_ + "_branch_flags"),
     int_stack_name_(function_name_ + "_int_values"),
@@ -96,10 +95,14 @@ vector<SgStatement*> EventReverser::getVarInitializers()
 
 ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 {
-    // We can just make copy of statements.
-    // Before processing this expression, we replace it with its copy. This can avoid
-    // to modify the expression passed in, or the same node appears in AST more than once.
-    //exp = copyExpression(exp);
+	foreach (function<ExpPair (SgExpression*)> expressionHandler, expressionHandlers)
+	{
+		ExpPair result = expressionHandler(exp);
+		if (result != NULL_EXP_PAIR)
+		{
+			return result;
+		}
+	}
 
     // if this expression is a binary one
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
