@@ -1,6 +1,8 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "CallGraph.h"
 #include <vector>
+
 using namespace std;
 using namespace VirtualCFG;
 
@@ -3003,16 +3005,36 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 2: {
                 if (interprocedural) {
-                  SgFunctionDeclaration* funcDecl = this->getAssociatedFunctionDeclaration();
-                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                  ROSE_ASSERT(decl);
-                  SgFunctionDefinition* def = decl->get_definition();
-                  if (def == NULL) {
-                    std::cerr << "no definition for function in SgFunCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
-                    break;
+                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+                  Rose_STL_Container<Properties*> functionList;
+                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
+                  Rose_STL_Container<Properties*>::iterator prop;
+                  std::cerr << "------ line:" << get_startOfConstruct()->get_line() << "  decls:" << functionList.size() << std::endl;
+                  for (prop = functionList.begin(); prop != functionList.end(); prop++) {
+                    SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
+                    ROSE_ASSERT(funcDecl);
+                    SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+                    ROSE_ASSERT(decl);
+                    SgFunctionDefinition* def = decl->get_definition();
+                    std::cerr << "  " << decl->get_qualified_name().str() << ":" << decl->get_startOfConstruct()->get_line() << std::endl;
+                    //std::cerr << "function " << decl->get_qualified_name().str() << " has " << functionList.size() << " outEdges" << std::endl;
+                    if (def == NULL) 
+                      std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
+                    else
+                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
                   }
-                  makeEdge(CFGNode(this, idx), def->cfgForBeginning(),
-                      result);
+
+                  std::cerr << "-" << std::endl;
+                  for(int i = 0; i < functionList.size(); i++) {
+                    for(int j = 0; j < functionList.size(); j++) {
+                      if (functionList[i]->functionDeclaration == functionList[j]->functionDeclaration)  
+                        std::cerr << "#";
+                      else
+                        std::cerr << " ";
+                    }
+                    std::cerr << std::endl;
+                  }
+                  std::cerr << "-" << std::endl;
                 }
                 else
                   makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
@@ -3033,16 +3055,36 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
                 if (interprocedural) {
-                  SgFunctionDeclaration* funcDecl = this->getAssociatedFunctionDeclaration();
-                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                  ROSE_ASSERT(decl);
-                  SgFunctionDefinition* def = decl->get_definition();
-                  if (def == NULL) {
-                    std::cerr << "no definition for function in SgFunCallExp::cfgInEdges: " << decl->get_name().str() << std::endl;
-                    break;
+                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+                  Rose_STL_Container<Properties*> functionList;
+                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
+                  Rose_STL_Container<Properties*>::iterator prop;
+                  std::cerr << "------ line:" << get_startOfConstruct()->get_line() << "  decls:" << functionList.size() << std::endl;
+                  for (prop = functionList.begin(); prop != functionList.end(); prop++) {
+                    SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
+                    ROSE_ASSERT(funcDecl);
+                    SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+                    ROSE_ASSERT(decl);
+                    SgFunctionDefinition* def = decl->get_definition();
+                    std::cerr << "  " << decl->get_qualified_name().str() << ":" << decl->get_startOfConstruct()->get_line() << std::endl;
+                    //std::cerr << "function " << decl->get_qualified_name().str() << " has " << functionList.size() << " inEdges" << std::endl;
+                    if (def == NULL) 
+                      std::cerr << "no definition for function in SgFunctionCallExp::cfgInEdges: " << decl->get_name().str() << std::endl;
+                    else
+                      makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
                   }
-                  makeEdge(decl->get_definition()->cfgForEnd(), CFGNode(this, idx),
-                      result);
+
+                  std::cerr << "-" << std::endl;
+                  for(int i = 0; i < functionList.size(); i++) {
+                    for(int j = 0; j < functionList.size(); j++) {
+                      if (functionList[i]->functionDeclaration == functionList[j]->functionDeclaration)  
+                        std::cerr << "#";
+                      else
+                        std::cerr << " ";
+                    }
+                    std::cerr << std::endl;
+                  }
+                  std::cerr << "-" << std::endl;
                 }
                 else
                   makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
