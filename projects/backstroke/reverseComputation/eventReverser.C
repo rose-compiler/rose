@@ -117,10 +117,12 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
     if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
         return processFunctionCallExp(func_exp);
 
-    //if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
+    if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
+		return ExpPair(copyExpression(exp), copyExpression(exp));
 
-    //return ExpPair(copyExpression(exp), NULL);
-    //return ExpPair(copyExpression(exp), buildNullExpression());
+	printf("WARNING: The following expression of type %s was not handled in the reversal: %s\n",
+			exp->class_name().c_str(), exp->unparseToString().c_str());
+
     return ExpPair(copyExpression(exp), copyExpression(exp));
 }
 
