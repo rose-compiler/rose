@@ -388,6 +388,13 @@ int main(int argc, char** argv) {
     {
       SgAsmFunctionDeclaration* binFunc = isSgAsmFunctionDeclaration( asmFunctions[j] );
 
+      // Some functions (probably just one) are generated to hold basic blocks that could not
+      // be assigned to a particular function. This happens when the Disassembler is overzealous
+      // and the Partitioner cannot statically determine where the block belongs.  The name of
+      // one such function is "***uncategorized blocks***".  [matzke 2010-06-29]
+      if ((binFunc->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS))
+        continue;
+
       //Some functions may be unnamed so we need to generate a name for those
       std::string funcName;
       if (binFunc->get_name().size()==0) {

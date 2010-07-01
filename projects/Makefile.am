@@ -39,6 +39,7 @@ SUBDIRS = \
      taintcheck \
      QtDesignerPlugins \
      RoseQt \
+     simulator \
      PolyhedralDependenceAnalysis
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support

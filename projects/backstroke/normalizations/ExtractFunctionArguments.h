@@ -135,10 +135,6 @@ private:
 	  * location to preserve its scope, and a new temporary variable is introduced. */
 	void HoistStatementOutsideOfForLoop(SgForStatement* forLoop, SgStatement* statement);
 
-	/** Generate a name that is unique in the current scope and any parent and children scopes.
-	  * @param baseName the word to be included in the variable names. */
-	static std::string GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
-
 	/** Insert a new statement in the specified location. The actual insertion can occur either before or after the location
 	  * depending on the insertion mode. */
 	void InsertStatement(SgStatement* newStatement, SgStatement* location, FunctionCallInfo::InsertionMode insertionMode);

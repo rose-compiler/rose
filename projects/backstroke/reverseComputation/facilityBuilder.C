@@ -162,7 +162,7 @@ SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
     return func_decl;
 }
 
-SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, const vector<string> event_names, bool klee)
+SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, const vector<string>& event_names, bool klee)
 {
     // build the main function which performs the test
     SgFunctionDeclaration* func_decl = 
