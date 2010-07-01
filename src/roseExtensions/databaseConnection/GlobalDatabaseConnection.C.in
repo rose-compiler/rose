@@ -176,10 +176,10 @@ int GlobalDatabaseConnection::initialize( int drop ) {
 
 	if(! connection.select_db( dbName ) ) {
 		// try again after creating the DB
-		cout << " creating db " << endl; // debug
+		cout << " creating db " << dbName << endl; // debug
 		connection.create_db( dbName );
 		if(! connection.select_db( dbName ) ) {
-			cout << " create fail " << endl; // debug
+			cout << " create fail " << connection.error() << endl; // debug
 			return 2;
 		}
 	}
@@ -194,8 +194,7 @@ int GlobalDatabaseConnection::initialize( int drop ) {
 //-----------------------------------------------------------------------------
 // close connection to datbase
 int GlobalDatabaseConnection::shutdown( void )
-{
-	if(connected) {
+{ if(connected) {
 		// disconnect from db
 		connection.disconnect();
 	}

@@ -1,8 +1,10 @@
 #include <rose.h>
 #include "sideEffect.h"
+#include "string_functions.h"
 
 #if 1
 #include <iostream>
+#include <cstring>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 //#include <hash_map.h>
@@ -11,8 +13,12 @@
 #include "TableDefinitions.h"
 
 #include <mysql++.h>
+
+
+
 using namespace mysqlpp;
 using namespace std;
+using namespace StringUtility;
 
 DEFINE_TABLE_PROJECTS();
 DEFINE_TABLE_GRAPHDATA();
@@ -61,8 +67,17 @@ typedef boost::property_map<CallGraph, boost::vertex_index_t>::const_type callVe
 typedef DatabaseGraph<varNodeRowdata, callEdgeRowdata, 
 		      boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
 
+// milki (06/16/2010) Redefine for std::string to produce
+// deterministic behavior in map_type
+struct eqstdstr
+{
+  bool operator()(string s1, string s2) const
+  {
+    return s1.compare(s2) == 0;
+  }
+};
 #if 0
-// milki (06/16/2010) Already defined in src/ROSETTA/Grammar/Support.code:3259
+// milki (06/16/2010) Name clash in src/ROSETTA/Grammar/Support.code:325
 struct eqstr
 {
   bool operator()(const char* s1, const char* s2) const
@@ -99,15 +114,29 @@ struct pairltstr
 };
 
 // boost::unordered_multimap<Key, Data, HashFcn, EqualKey, Alloc>
-typedef boost::unordered_multimap<const char*, const char *, boost::hash<const char*>, eqstr> map_type;
+//typedef boost::unordered_multimap<const char*, const char *, boost::hash<const char*>, eqstr> map_type;
+typedef boost::unordered_multimap<string, const char*, boost::hash<string>, eqstdstr> map_type;
 
 // boost::unordered_map<Key, Data, HashFcn, EqualKey, Alloc>
-typedef boost::unordered_map<const char *, int, boost::hash<const char *>, eqstr> str_int_map;
-typedef boost::unordered_map<const char *, const char *, boost::hash<const char *>, eqstr> str_str_map;
-typedef boost::unordered_map<const char *, str_int_map *, boost::hash<const char *>, eqstr> str_map_map;
+
+// milki (07/08/2010) Convert map keys to std::string
+//typedef boost::unordered_map<const char *, int, boost::hash<const char *>, eqstr> str_int_map;
+//typedef boost::unordered_map<const char *, const char *, boost::hash<const char *>, eqstr> str_str_map;
+//typedef boost::unordered_map<const char *, str_int_map *, boost::hash<const char *>, eqstr> str_map_map;
+typedef boost::unordered_map<string, int, boost::hash<string>, eqstr> str_int_map;
+typedef boost::unordered_map<string, const char *, boost::hash<string>, eqstr> str_str_map;
+typedef boost::unordered_map<string, str_int_map *, boost::hash<string>, eqstr> str_map_map;
 
 typedef boost::unordered_map<int, const char *, boost::hash<int>, eqint> int_str_map;
-typedef boost::unordered_map<const char *, int_str_map *, boost::hash<const char *>, eqstr> int_map_map;
+//typedef boost::unordered_map<const char *, int_str_map *, boost::hash<const char *>, eqstr> int_map_map;
+typedef boost::unordered_map<string, int_str_map *, boost::hash<string>, eqstr> int_map_map;
+
+void prettyprint( map_type M ) {
+  for( map_type::const_iterator it = M.cbegin() ; it != M.cend() ; it++ )
+  {
+    cout << "<" << (*it).first << "," << (*it).second << ">" << endl;
+  }
+}
 
 class SideEffect : public SideEffectAnalysis {
 
@@ -334,9 +363,19 @@ SideEffect::getNodeIdentifier(SgNode *node)
 {
   assert(node);
   assert(node->get_file_info());
-  assert(node->get_file_info()->get_filename());
+
+  Sg_File_Info* nodeinfo = node->get_file_info();
+
+  // milki (07/07/2010) Revert back to name/line/col/variant format
+
+  string fileName = node->get_file_info()->get_filenameString();
+  fileName = stripPathFromFileName(fileName);
+
   char tmp[strlen(node->get_file_info()->get_filename()) + 512];
-  sprintf(tmp, "%s-%ld", node->get_file_info()->get_filename(), (long)node);
+  //sprintf(tmp, "%s-%ld", fileName.c_str(), (long)node);
+  sprintf(tmp, "%s-%d-%d-%d", fileName.c_str(),
+      nodeinfo->get_line(), nodeinfo->get_col(),
+      node->variantT());
 
   string id = tmp;
 
@@ -466,7 +505,8 @@ getQualifiedFunctionName(SgFunctionCallExp *astNode)
 // -------------------------------------------------------------
 
 template <class Map, class Key>
-pair<typename Map::const_iterator, typename Map::const_iterator> lookup(const Map& M, Key func)
+//pair<typename Map::const_iterator, typename Map::const_iterator> lookup(const Map& M, Key func)
+pair<typename Map::const_iterator, typename Map::const_iterator> lookup(Map& M, Key func)
 {
   pair<typename Map::const_iterator, typename Map::const_iterator> p;
 
@@ -476,22 +516,26 @@ pair<typename Map::const_iterator, typename Map::const_iterator> lookup(const Ma
 }
 
 // returns 0 if already present
-int insert(map_type &M, const char *func, const char *var)
+int insert(map_type &M, const char* func, const char* var)
 {
-  char *myfunc, *myvar;
+  // milki (07/06/2010) Use a string func key
+  string myfunc;
+  char* myvar;
 
   pair<map_type::const_iterator, map_type::const_iterator> p = lookup(M, func);
   for (map_type::const_iterator i = p.first; i != p.second; ++i)
     if (!strcmp((*i).second, var))
       return 0;
 
-  myfunc = new char[(strlen(func) + 1)];
-  strcpy(myfunc, func);
+  myfunc = string(func);
 
   myvar = new char[(strlen(var) + 1)];
   strcpy(myvar, var);
 
-  M.insert(map_type::value_type(myfunc, myvar));
+  map_type::const_iterator it = M.insert(map_type::value_type(myfunc, myvar));
+#ifdef DEBUG_OUTPUT
+  cout << "Inserted <" << (*it).first << "," << (*it).second << ">" << endl;
+#endif
 
   return 1;
 }
@@ -506,7 +550,9 @@ SideEffect::SideEffect() :
 int 
 SideEffect::insertFormal(const char *func, const char *formal, int num)
 {
-  char *myfunc, *myformal;
+  // milki (07/06/2010) Use a string func key
+  string myfunc;
+  char* myformal;
   str_int_map *m;
 
   pair<str_map_map::const_iterator, str_map_map::const_iterator> p = 
@@ -516,8 +562,7 @@ SideEffect::insertFormal(const char *func, const char *formal, int num)
     // insert a map for this function
     m = new str_int_map();
 
-    myfunc = new char[(strlen(func) + 1)];
-    strcpy(myfunc, func);
+    myfunc = string(func);
 
     formals.insert(str_map_map::value_type(myfunc, m));
   } else {
@@ -553,7 +598,9 @@ SideEffect::insertFormal(const char *func, const char *formal, int num)
 int 
 SideEffect::insertFormalByPos(const char *func, const char *formal, int num)
 {
-  char *myfunc, *myformal;
+  // milki (07/06/2010) Use a string func key
+  string myfunc;
+  char* myformal;
   int_str_map *m;
 
   pair<int_map_map::const_iterator, int_map_map::const_iterator> p = 
@@ -563,8 +610,7 @@ SideEffect::insertFormalByPos(const char *func, const char *formal, int num)
     // insert a map for this function
     m = new int_str_map();
 
-    myfunc = new char[(strlen(func) + 1)];
-    strcpy(myfunc, func);
+    myfunc = string(func);
 
     formalsByPos.insert(int_map_map::value_type(myfunc, m));
   } else {
@@ -699,8 +745,9 @@ SideEffect::insertFuncToFile(const char *func, const char *file)
 
   int same;
 
+  // milki (07/06/2010) Use a string file key
   pair<str_str_map::const_iterator, str_str_map::const_iterator> p = 
-    lookup(funcToFile, file);
+    lookup(funcToFile, string(file));
 
   if (p.first != p.second) {
     
@@ -712,8 +759,8 @@ SideEffect::insertFuncToFile(const char *func, const char *file)
 
   }
 
-  char *myfunc = new char[(strlen(func) + 1)];
-  strcpy(myfunc, func);
+  // milki (07/06/2010) Use a string func key
+  string myfunc = func;
 
   char *myfile = new char[(strlen(file) + 1)];
   strcpy(myfile, file);
@@ -2992,6 +3039,18 @@ createSimpleCallGraph(CallGraph *callgraph, long projectId,
   return simpleCallgraph;
 }
 
+// milki (06/30/2010) Strip extension AND path
+// Long paths interfered with table creation
+string
+stripFileExtension(string fileName)
+{
+  string stripped = stripPathFromFileName(fileName);
+  stripped = stripFileSuffixFromFileName(stripped);
+  return stripped;
+}
+
+// milki (06/30/2010) Strips extension but leaves full path
+#if 0
 // remove the extension from a single file
 string
 stripFileExtension(string fileName)
@@ -3011,11 +3070,13 @@ stripFileExtension(string fileName)
   string stripped(fileName, 0, len);
   return stripped;
 }
+#endif
 
 // remove the extension from each file name 
 set<string>
 stripFileExtensions(list<string> fileNames)
 {
+  cout << "Called stripFileExtensions" << endl;
   set<string> strippedFileNames;
 
   for(list<string>::iterator it = fileNames.begin(); it != fileNames.end(); ++it) {
@@ -3160,6 +3221,7 @@ SideEffect::calcSideEffect(SgProject* project)
       ++it, ++i) {
 
     string fileName = stripFileExtension((*it)->getFileName());
+    cout << "Setting gdb for " << fileName.c_str() << endl;
 
     strippedFileNames[i] = fileName;
 
@@ -3836,6 +3898,8 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 {
   int i;
+
+  cout << "In doSideEffect" << endl;
   
   // we will parse the source files, populating a database with
   // information gleaned from each source file.  
@@ -3846,6 +3910,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
   // strip the extensions off of the source file names
   set<string> strippedSourceFileNames = stripFileExtensions(sourceFileNames);
+  sanitizedOutputFileName = stripFileExtension(sanitizedOutputFileName);
 
   // sort the list of file names so we can do a set difference
   //  sort(strippedSourceFileNames.begin(), strippedSourceFileNames.end());
@@ -3880,6 +3945,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 
   toplevelDb.setDatabaseParameters(NULL, NULL, NULL, (char *)sanitizedOutputFileName.c_str());
+  cout << "Creating db for " << sanitizedOutputFileName.c_str() << endl;
 
   int initOk =  toplevelDb.initialize();
   assert(initOk == 0);
@@ -3932,6 +3998,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     //    string fileName = stripFileExtension((*it)->getFileName());
 
     string fileName = stripFileExtension(nodeListFileNames[i]);
+    cout << "Setting gdb for " << fileName.c_str() << endl;
 
     strippedFileNames[i] = fileName;
 

@@ -70,8 +70,8 @@ check-db:
         GRANT ALL ON *.* TO @MySQL_username@@@MySQL_server@ IDENTIFIED BY '@MySQL_password@'; FLUSH PRIVILEGES;"
 	@echo "Run test code ..."
 	./testEdges
-#	rm -f testCode.o
-#	./testDataBase
+	rm -f testCode.o
+	./testDataBase
 #	$(MAKE) $(TEST_Objects)
 #	pkill mysqld_safe
 	@echo "Cleanup use of MySQL ..."
