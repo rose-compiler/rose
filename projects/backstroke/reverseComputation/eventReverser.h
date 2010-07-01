@@ -55,9 +55,11 @@ public:
 		expressionHandlers.push_back(handler);
 	}
 
-private:
-    static const ExpPair NULL_EXP_PAIR;
+	static const ExpPair NULL_EXP_PAIR;
     static const StmtPair NULL_STMT_PAIR;
+
+private:
+
 
     // **********************************************************************************
     // Main functions, which process expressions and statements
