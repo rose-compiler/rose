@@ -79,8 +79,10 @@ YicesSolver::satisfiable(const InsnSemanticsExpr::TreeNode *expr)
 std::string
 YicesSolver::get_command(const std::string &config_name)
 {
+#ifdef YICES
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
     return std::string(YICES) + " -tc " + config_name;
+#endif
 }
 
 /* See SMTSolver::generate_file() */
