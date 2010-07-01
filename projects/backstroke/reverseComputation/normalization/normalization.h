@@ -20,10 +20,20 @@ bool isAssignmentOp(SgExpression* e);
 // return value indicate the position (before(true)/after(false)).
 std::pair<SgExpression*, bool> getAndReplaceModifyingExpression(SgExpression* exp);
 
+// Normalize an event function.
+void normalizeEvent(SgFunctionDefinition* func_def);
+
 SgExpression* normalizeExpression(SgExpression* exp);
 
+// Split a comma expression into several statements.
 void splitCommaOpExp(SgExpression* exp);
 
+// Extend comma operation expressions, e.g. (a, b) + c ==> (a, b + c).
+SgExpression* extendCommaOpExp(SgExpression* exp);
+
+// Remove braces of a basic block in which there is no variable declared.
 void removeUselessBraces(SgBasicBlock* body);
+
+
 
 #endif
