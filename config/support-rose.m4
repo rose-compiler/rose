@@ -2299,6 +2299,7 @@ projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/reverseComputation/stateSaving/Makefile
+projects/backstroke/reverseComputation/normalization/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
@@ -2307,6 +2308,7 @@ projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
+projects/simulator/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
@@ -2359,6 +2361,7 @@ tests/CompileTests/mergeAST_tests/Makefile
 tests/CompileTests/unparseToString_tests/Makefile
 tests/CompileTests/boost_tests/Makefile
 tests/CompileTests/virtualCFG_tests/Makefile
+tests/CompileTests/staticCFG_tests/Makefile
 tests/CompileTests/uninitializedField_tests/Makefile
 tests/CompileTests/sourcePosition_tests/Makefile
 tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile

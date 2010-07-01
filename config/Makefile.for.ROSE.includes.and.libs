@@ -1,4 +1,4 @@
-# These definitions are for the benefit of independent software contained
+# These definitions are for the benefit of independent software contained			-*- makefile -*-
 # in ROSE.  (Currently, this means SAGE and ROSETTA.)
 # It defines ROSE_INCLUDES and ROSE_LIBS so they can use the ROSE codes.
 
