@@ -29,7 +29,7 @@ namespace VirtualCFG {
     if (isSgFunctionDefinition(node)) {
       switch (index) {
           case 0: s << "Start("; break; 
-          case 1: s << "After parameters: "; break;
+          case 1: s << "After parameters("; break;
           case 2: s << "End("; break;
           default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
