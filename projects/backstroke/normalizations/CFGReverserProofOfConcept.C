@@ -33,7 +33,7 @@ tuple<SgBasicBlock*, SgBasicBlock*> CFGReverserProofofConcept::ReverseFunctionBo
 		{
 			//This is ok. Currently only handle AssignOp and CommaOp
 			SgExpression* expression = isSgExprStatement(statement)->get_expression();
-			handleExpression(expression);
+			ReverseExpression(expression);
 		}
 
 		else if (isSgReturnStmt(statement))
@@ -53,10 +53,13 @@ tuple<SgBasicBlock*, SgBasicBlock*> CFGReverserProofofConcept::ReverseFunctionBo
 			ROSE_ASSERT(false);
 		}
 	}
+
+	tuple<SgBasicBlock*, SgBasicBlock*> result;
+	return result;
 }
 
 
-void CFGReverserProofofConcept::handleExpression(SgExpression* expression)
+ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
 {
 	if (isSgAssignOp(expression))
 	{
@@ -76,8 +79,8 @@ void CFGReverserProofofConcept::handleExpression(SgExpression* expression)
 	{
 		//Note that we're handling things in reverse order on purpose
 		SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
-		handleExpression(commaOp->get_rhs_operand());
-		handleExpression(commaOp->get_lhs_operand());
+		ReverseExpression(commaOp->get_rhs_operand());
+		ReverseExpression(commaOp->get_lhs_operand());
 	}
 	else if (isSgPlusPlusOp(expression) || isSgMinusMinusOp(expression))
 	{
@@ -88,6 +91,8 @@ void CFGReverserProofofConcept::handleExpression(SgExpression* expression)
 		cerr << "Expressions of type " << expression->class_name() << " not handled yet\n";
 		ROSE_ASSERT(false); //not yet
 	}
+
+	return EventReverser::NULL_EXP_PAIR;
 }
 
 

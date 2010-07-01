@@ -1,13 +1,15 @@
-#if 0
+#if 1
 int& foo(int& a)
 {
     return a = 0;
 }
 
+
+int i = 0, j = 0, k = 0;
+int a[100];
+
 void test0()
 {
-    int i = 0, j = 0, k = 0;
-
     /*****************************************/
     i = j = k;
     i = j++, i = j = k;
@@ -64,6 +66,9 @@ void test0()
     // Function calls.
     //i = foo(j);
     //++foo(j);
+
+    // In the following expression, i is undefined.
+    a[i++] = i;
 }
 
 #endif
