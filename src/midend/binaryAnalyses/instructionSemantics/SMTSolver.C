@@ -59,11 +59,11 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     ROSE_ASSERT(output!=NULL);
     static char *line=NULL;
     static size_t line_alloc=0;
-    ssize_t nread = getline(&line, &line_alloc, output);
+    ssize_t nread = rose_getline(&line, &line_alloc, output);
     ROSE_ASSERT(nread>0);
 #ifdef _MSC_VER
     // tps (06/23/2010) : pclose not understood in Windows
-    abort;
+    abort();
 #else
     int status = pclose(output);
 #endif
