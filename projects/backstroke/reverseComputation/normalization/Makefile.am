@@ -6,8 +6,8 @@ SUBDIRS =
 bin_PROGRAMS = norm 
 norm_SOURCES = main.C normalization.C
 
-INCLUDES = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L$(top_srcdir)/projects/backstroke/libBackstroke.la
 
 EXTRA_DIST = normalization.h
 

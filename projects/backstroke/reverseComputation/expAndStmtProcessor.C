@@ -718,8 +718,10 @@ ExpPair EventReverser::processFunctionCallExp(SgFunctionCallExp* func_exp)
     EventReverser func_generator(func_decl);
     vector<FuncDeclPair> func_pairs = func_generator.outputFunctions();
     if (func_processed_.count(func_decl) == 0)
+	{
         foreach(const FuncDeclPair& func_pair, func_pairs)
             output_func_pairs_.push_back(func_pair);
+	}
     SgFunctionDeclaration* fwd_func = func_pairs.back().first;
     SgFunctionDeclaration* rvs_func = func_pairs.back().second;
 

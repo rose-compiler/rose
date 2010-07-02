@@ -1,6 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = eventDetection reverseComputation restrictedLanguage normalizations
+SUBDIRS = eventDetection reverseComputation restrictedLanguage normalizations tests
+
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
 # Make a common backstroke library
 # lib_LTLIBRARIES lists all the librarlies that should be built with libtool
@@ -11,6 +13,12 @@ libBackstroke_la_DEPENDENCIES =
 libBackstroke_la_SOURCES = 
 libBackstroke_la_HEADERS =
 libBackstroke_la_LIBADD = normalizations/libBackstrokeNormalizations.la reverseComputation/libBackstrokeReverser.la
+
+
+bin_PROGRAMS = normalizationTranslator 
+
+normalizationTranslator_SOURCES =  NormalizationTranslator.C 
+normalizationTranslator_LDADD =   libBackstroke.la
 
 EXTRA_DIST = 
 

@@ -261,9 +261,9 @@ int main( int argc, char * argv[] )
     cout << "Start to fix variables references\n";
     fixVariableReferences2(globalScope);
     cout << "Fix finished\n";
-
-    //AstTests::runAllTests(project);
 #endif
+    AstTests::runAllTests(project);
+
     return backend(project);
 }
 
