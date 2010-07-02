@@ -1,8 +1,11 @@
 
 #include "rose.h"
+#include "simulate.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR /*protects this whole file*/
+
 #include "x86InstructionSemantics.h"
 #include "integerOps.h"
-#include "simulate.h"
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -424,3 +427,13 @@ int main(int argc, char** argv) {
     }
     return 0;
 }
+
+#else
+
+int main(int, char *argv[])
+{
+    std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
+    return 1;
+}
+
+#endif /*ROSE_ENABLE_SIMULATOR*/

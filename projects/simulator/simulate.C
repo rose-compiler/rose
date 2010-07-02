@@ -1,5 +1,8 @@
-#include "simulate.h"
 #include "rose.h"
+#include "simulate.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR /*protects this whole file*/
+
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -145,3 +148,5 @@ SgAsmx86Instruction* IncrementalDisassembler::operator[](uint64_t addr) {
     }
   }
 }
+
+#endif /*ROSE_ENABLE_SIMULATOR*/
