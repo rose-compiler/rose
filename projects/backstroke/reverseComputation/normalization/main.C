@@ -17,7 +17,7 @@ void normalizationTraversal::visit(SgNode* n)
 {
     if (SgExpression* exp = isSgExpression(n))
     {
-#if 0
+#if 1
         exp = normalizeExpression(exp);
         splitCommaOpExp(exp);
 #else

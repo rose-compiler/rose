@@ -28,24 +28,11 @@ struct FunctionCallInfo
 	/** How to insert the temporary variable declaration. */
 	InsertionMode tempVarDeclarationInsertionMode;
 
-	/** Should the temporary variable be initialized in the same place it's declared? E.g. for the increment
-	 * part of a for loop, the declaration should go outside the for loop, but the evaluation should be inside. */
-	bool initializeTempVarAtDeclaration;
-
-	/** Location where to generate an assignment from the argument expression to the temporary variable replacing it.
-	  * Could be NULL if the temporary variable is initialized in its declaration. */
-	SgStatement* tempVarEvaluationLocation;
-
-	/** How to insert the evaluation. */
-	InsertionMode tempVarEvaluationInsertionMode;
 
 	FunctionCallInfo(SgFunctionCallExp* function) : 
 		functionCall(function),
 		tempVarDeclarationLocation(NULL),
-		tempVarDeclarationInsertionMode(INVALID),
-		initializeTempVarAtDeclaration(NULL),  
-		tempVarEvaluationLocation(NULL),
-		tempVarEvaluationInsertionMode(INVALID)
+		tempVarDeclarationInsertionMode(INVALID)
 		{}
 };
 
@@ -116,24 +103,6 @@ private:
 	/** Given the information about a function call (obtained through a traversal), extract its arguments
 	  * into temporary variables where it is necessary. */
 	void RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo);
-
-	/** Given an expression, generates a temporary variable whose initializer optionally evaluates
-	  * that expression. Then, the var reference expression returned can be used instead of the original
-	  * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
-	  * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
-	  * reference types correctly by using pointer types for the temporary.
-	  * @param expression Expression which will be replaced by a variable
-	  * @param scope scope in which the temporary variable will be generated
-	  * @return declaration of the temporary variable, an assignment op to
-	  *			reevaluate the expression, and a a variable reference expression to use instead of
-	  *         the original expression. Delete the results that you don't need! */
-	static boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression* > CreateTempVariableForExpression(SgExpression* expression,
-		SgScopeStatement* scope, bool initializeInDeclaration);
-
-	/** Take a statement that is located somewhere inside the for loop and move it right before the
-	  * for looop. If the statement is a variable declaration, the declaration is left in its original
-	  * location to preserve its scope, and a new temporary variable is introduced. */
-	void HoistStatementOutsideOfForLoop(SgForStatement* forLoop, SgStatement* statement);
 
 	/** Insert a new statement in the specified location. The actual insertion can occur either before or after the location
 	  * depending on the insertion mode. */
