@@ -3040,17 +3040,17 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                       makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
                   }
 
-                  std::cerr << "-" << std::endl;
-                  for(int i = 0; i < functionList.size(); i++) {
-                    for(int j = 0; j < functionList.size(); j++) {
-                      if (functionList[i]->functionDeclaration == functionList[j]->functionDeclaration)  
-                        std::cerr << "#";
-                      else
-                        std::cerr << " ";
-                    }
-                    std::cerr << std::endl;
-                  }
-                  std::cerr << "-" << std::endl;
+               // std::cerr << "-" << std::endl;
+               // for(int i = 0; i < functionList.size(); i++) {
+               //   for(int j = 0; j < functionList.size(); j++) {
+               //     if (functionList[i]->functionDeclaration == functionList[j]->functionDeclaration)  
+               //       std::cerr << "#";
+               //     else
+               //       std::cerr << " ";
+               //   }
+               //   std::cerr << std::endl;
+               // }
+               // std::cerr << "-" << std::endl;
                 }
                 else
                   makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
@@ -3090,17 +3090,17 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                       makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
                   }
 
-                  std::cerr << "-" << std::endl;
-                  for(int i = 0; i < functionList.size(); i++) {
-                    for(int j = 0; j < functionList.size(); j++) {
-                      if (functionList[i]->functionDeclaration == functionList[j]->functionDeclaration)  
-                        std::cerr << "#";
-                      else
-                        std::cerr << " ";
-                    }
-                    std::cerr << std::endl;
-                  }
-                  std::cerr << "-" << std::endl;
+             //   std::cerr << "-" << std::endl;
+             //   for(int i = 0; i < functionList.size(); i++) {
+             //     for(int j = 0; j < functionList.size(); j++) {
+             //       if (functionList[i]->functionDeclaration == functionList[j]->functionDeclaration)  
+             //         std::cerr << "#";
+             //       else
+             //         std::cerr << " ";
+             //     }
+             //     std::cerr << std::endl;
+             //   }
+             //   std::cerr << "-" << std::endl;
                 }
                 else
                   makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
@@ -3520,7 +3520,23 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx, boo
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
-      case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+      case 1: {
+                if (interprocedural) {
+                  SgFunctionDeclaration* funcDecl = get_declaration();
+                  ROSE_ASSERT(funcDecl);
+                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+                  ROSE_ASSERT(decl);
+                  SgFunctionDefinition* def = decl->get_definition();
+                  if (def == NULL) 
+                    std::cerr << "no definition for constructor in SgConstructorInitializer::cfgOutEdges: " << decl->get_name().str() << std::endl;
+                  else
+                    makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+                }
+                else {
+                  makeEdge(CFGNode(this, idx), CFGNode(this, idx + 1), result);
+                }
+              }
+      case 2: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
       default: ROSE_ASSERT (!"Bad index for SgConstructorInitializer");
     }
     return result;
@@ -3531,6 +3547,22 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
       case 1: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
+      case 2: {
+                if (interprocedural) {
+                  SgFunctionDeclaration* funcDecl = get_declaration();
+                  ROSE_ASSERT(funcDecl);
+                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+                  ROSE_ASSERT(decl);
+                  SgFunctionDefinition* def = decl->get_definition();
+                  if (def == NULL) 
+                    std::cerr << "no definition for constructor in SgConstructorInitializer::cfgInEdges: " << decl->get_name().str() << std::endl;
+                  else
+                    makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
+                }
+                else {
+                  makeEdge(CFGNode(this, idx - 1), CFGNode(this, idx), result);
+                }
+              }
       default: ROSE_ASSERT (!"Bad index for SgConstructorInitializer");
     }
     return result;
