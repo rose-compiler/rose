@@ -2,12 +2,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = 
 
-# This file does not compile using ROSE (skip testing it for now)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../../normalizations/libBackstrokeNormalizations.la
+
 bin_PROGRAMS = expNormTest 
 expNormTest_SOURCES = main.C
-
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../libBackstroke.la
 
 EXTRA_DIST = 
 
