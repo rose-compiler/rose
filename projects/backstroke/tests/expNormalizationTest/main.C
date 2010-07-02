@@ -1,24 +1,20 @@
-#include "normalization.h"
-#include <rose.h>
-
-using namespace std;
+#include <normalizations/expNormalization.h>
 
 class normalizationTraversal : public AstSimpleProcessing
 {
     public:
-        normalizationTraversal() 
-            : AstSimpleProcessing()
-    {}
         virtual void visit(SgNode* n);
 };
 
 
 void normalizationTraversal::visit(SgNode* n)
 {
+#if 0
     if (SgExpression* exp = isSgExpression(n))
     {
 #if 1
         exp = normalizeExpression(exp);
+        exp = extendCommaOpExp(exp);
         splitCommaOpExp(exp);
 #else
         SageInterface::splitExpressionIntoBasicBlock(exp);
@@ -26,12 +22,14 @@ void normalizationTraversal::visit(SgNode* n)
     }
     else if (SgBasicBlock* body = isSgBasicBlock(n))
         removeUselessBraces(body);
+#endif
+    if (SgFunctionDefinition* func = isSgFunctionDefinition(n))
+        normalizeEvent(func);
 }
 
 int main(int argc, char * argv[])
 {
-    vector<string> args(argv, argv+argc);
-    SgProject* project = frontend(args);
+    SgProject* project = frontend(argc, argv);
 
     normalizationTraversal norm;
     norm.traverseInputFiles(project,postorder);
