@@ -89,6 +89,7 @@ bool isReturnedValueUsed(SgExpression* exp)
     return true;
 }
 
+#if 0
 // The first return value is the expression which should be relocated, and the second 
 // return value indicate the position (before(true)/after(false)).
 pair<SgExpression*, bool> getAndReplaceModifyingExpression(SgExpression* e)
@@ -120,18 +121,33 @@ pair<SgExpression*, bool> getAndReplaceModifyingExpression(SgExpression* e)
     }
     return make_pair(exp, true);
 }
+#endif
 
-// Returns the declaration of temporary variables.
-SgVariableDeclaration* getAndReplaceModifyingExpression2(SgExpression*& e)
+SgBasicBlock* getCurrentBody(SgExpression* e)
+{
+    SgNode* parent = e->get_parent();
+    SgBasicBlock* body = isSgBasicBlock(parent);
+    while (body == NULL)
+    {
+        parent = parent->get_parent();
+        if (parent == NULL)
+            return NULL;
+        body = isSgBasicBlock(parent);
+    }
+    return body;
+}
+
+void getAndReplaceModifyingExpression(SgExpression*& e)
 {
     // Avoid to bring variable reference expression: a = b  ==>  (a = b, a) 
     // if a is not used.
     if (!isReturnedValueUsed(e))
-        return NULL;
+        return;
 
     // The following binary expressions return lvalue.
     if (isAssignmentOp(e))
     {
+        // a = b  ==>  a = b, a
         SgExpression* new_exp = buildBinaryExpression<SgCommaOpExp>(
                     copyExpression(e), 
                     copyExpression(isSgBinaryOp(e)->get_lhs_operand()));
@@ -141,6 +157,7 @@ SgVariableDeclaration* getAndReplaceModifyingExpression2(SgExpression*& e)
     else if (isSgPlusPlusOp(e) || isSgMinusMinusOp(e))
     {
         // prefix ++ or -- returns lvalues, which we can hoist.
+        // --a  ==>  --a, a
         if (isSgUnaryOp(e)->get_mode() == SgUnaryOp::prefix)
         {
             SgExpression* new_exp = buildBinaryExpression<SgCommaOpExp>(
@@ -154,30 +171,20 @@ SgVariableDeclaration* getAndReplaceModifyingExpression2(SgExpression*& e)
         // a--  ==>  t = a, --a, t
         else
         {
-#if 1
-            SgNode* parent = e->get_parent();
-            SgBasicBlock* body = isSgBasicBlock(parent);
-            while (body == NULL)
-            {
-                parent = parent->get_parent();
-                body = isSgBasicBlock(parent);
-            }
-
+            SgBasicBlock* body = getCurrentBody(e);
             SgName name = backstroke_util::GenerateUniqueVariableName(body, "t");
             SgVariableDeclaration* temp_decl = buildVariableDeclaration(name, e->get_type(), NULL, getScope(e));
             body->prepend_statement(temp_decl);
-#endif
 
             SgInitializedName* init_name = temp_decl->get_decl_item(name);
             ROSE_ASSERT(init_name->get_scope());
             SgExpression* ass = buildBinaryExpression<SgAssignOp>(
-                    buildVarRefExp(init_name, getScope(e)), copyExpression(isSgUnaryOp(e)->get_operand()));
+                    buildVarRefExp(init_name, getScope(e)), 
+                    copyExpression(isSgUnaryOp(e)->get_operand()));
             SgExpression* comma_exp = buildBinaryExpression<SgCommaOpExp>(
                     ass, copyExpression(e));
             comma_exp = buildBinaryExpression<SgCommaOpExp>(comma_exp, buildVarRefExp(init_name, getScope(e)));
             replaceExpression(e, comma_exp);
-
-            return temp_decl;
 
 #if 0
             SgExpression* exp = copyExpression(e);
@@ -188,15 +195,49 @@ SgVariableDeclaration* getAndReplaceModifyingExpression2(SgExpression*& e)
 #endif
         }
     }
-    return NULL;
+    else if (isSgAndOp(e) || isSgOrOp(e))
+    {
+        // a && b  ==>  t = a, t && t = b, t
+        // a || b  ==>  t = a, t || t = b, t
+       
+        SgBasicBlock* body = getCurrentBody(e);
+        SgName name = backstroke_util::GenerateUniqueVariableName(body, "t");
+        SgVariableDeclaration* temp_decl = buildVariableDeclaration(name, buildBoolType(), NULL, getScope(e));
+        body->prepend_statement(temp_decl);
+
+        SgInitializedName* init_name = temp_decl->get_decl_item(name);
+        SgVarRefExp* temp_var = buildVarRefExp(init_name, getScope(e));
+
+        SgExpression* ass1 = buildBinaryExpression<SgAssignOp>(
+                copyExpression(temp_var),
+                copyExpression(isSgBinaryOp(e)->get_lhs_operand()));
+        SgExpression* ass2 = buildBinaryExpression<SgAssignOp>(
+                copyExpression(temp_var),
+                copyExpression(isSgBinaryOp(e)->get_rhs_operand()));
+
+
+        SgBinaryOp* new_exp = isSgBinaryOp(copyExpression(e));
+        new_exp->set_lhs_operand(copyExpression(temp_var));
+        new_exp->set_rhs_operand(ass2);
+
+        SgExpression* comma_exp = buildBinaryExpression<SgCommaOpExp>(ass1, new_exp);
+        comma_exp = buildBinaryExpression<SgCommaOpExp>(comma_exp, copyExpression(temp_var));
+        replaceExpression(e, comma_exp);
+
+        ass1 = extendCommaOpExp(ass1);
+        ass2 = extendCommaOpExp(ass2);
+    }
+    else if (isSgConditionalExp(e))
+    {
+    }
 }
 
 SgExpression* extendCommaOpExp(SgExpression* exp)
 {
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
     {
-        // Ignore comma, || and && operator.
-        if (isSgCommaOpExp(bin_op) || isSgAndOp(bin_op) || isSgOrOp(bin_op))
+        // Ignore comma operator.
+        if (isSgCommaOpExp(bin_op))
             return exp;
 
         SgExpression* lhs = bin_op->get_lhs_operand();
@@ -218,21 +259,26 @@ SgExpression* extendCommaOpExp(SgExpression* exp)
 
             return new_comma_op;
         }
-        // a + (b, c)  ==>  (b, a + c)
-        else if (SgCommaOpExp* comma_op = isSgCommaOpExp(rhs))
+
+        // Operator || and && cannot use the following transformation
+        if (!isSgAndOp(bin_op) && !isSgOrOp(bin_op))
         {
-            SgBinaryOp* new_exp = isSgBinaryOp(copyExpression(bin_op));
-            new_exp->set_lhs_operand(copyExpression(lhs));
-            new_exp->set_rhs_operand(copyExpression(comma_op->get_rhs_operand()));
+            // a + (b, c)  ==>  (b, a + c)
+            if (SgCommaOpExp* comma_op = isSgCommaOpExp(rhs))
+            {
+                SgBinaryOp* new_exp = isSgBinaryOp(copyExpression(bin_op));
+                new_exp->set_lhs_operand(copyExpression(lhs));
+                new_exp->set_rhs_operand(copyExpression(comma_op->get_rhs_operand()));
 
-            SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
-                    copyExpression(comma_op->get_lhs_operand()), new_exp);
-            replaceExpression(bin_op, new_comma_op);
+                SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+                        copyExpression(comma_op->get_lhs_operand()), new_exp);
+                replaceExpression(bin_op, new_comma_op);
 
-            extendCommaOpExp(new_comma_op->get_lhs_operand());
-            extendCommaOpExp(new_comma_op->get_rhs_operand());
+                extendCommaOpExp(new_comma_op->get_lhs_operand());
+                extendCommaOpExp(new_comma_op->get_rhs_operand());
 
-            return new_comma_op;
+                return new_comma_op;
+            }
         }
     }
 
@@ -286,7 +332,7 @@ void normalizeEvent(SgFunctionDefinition* func)
     {
         if (isSgExpression(exp->get_parent()))
         {
-            getAndReplaceModifyingExpression2(exp);
+            getAndReplaceModifyingExpression(exp);
             //SgVariableDeclaration* decl = getAndReplaceModifyingExpression2(exp);
             //if (decl)
               //  all_temp_decl.push_back(decl);
@@ -313,11 +359,12 @@ void normalizeEvent(SgFunctionDefinition* func)
 #endif
 }
 
+#if 0
 SgExpression* normalizeExpression(SgExpression* exp)
 {
     if (isSgExpression(exp->get_parent()))
     {
-        getAndReplaceModifyingExpression2(exp);
+        getAndReplaceModifyingExpression(exp);
         //SgVariableDeclaration* decl = getAndReplaceModifyingExpression2(exp);
 #if 0
         if (decl)
@@ -496,6 +543,7 @@ SgExpression* normalizeExpression(SgExpression* exp)
 
     return exp;
 }
+#endif
 
 void splitCommaOpExp(SgExpression* exp)
 {
