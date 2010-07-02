@@ -6,7 +6,7 @@ EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSect
 		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
 		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
 		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans test_testAssembler.ans \
-		test_symbolicSemantics.ans test_yicesSemanticsExe.ans test_yicesSemanticsLib.ans
+		test_symbolicSemantics.ans test_yicesSemanticsExe.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
