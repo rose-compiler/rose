@@ -937,6 +937,7 @@ HEADER_AGGREGATE_INITIALIZER_EXPRESSION_END
 HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual unsigned int cfgIndexForEnd() const;
       /*! \brief Get the SgClassDeclaration associated with this constructor call.
 
           Note that in rare cases where the constructor is associated with a primative type

@@ -3516,6 +3516,11 @@ SgAggregateInitializer::cfgInEdges(unsigned int idx, bool interprocedural)
      return result;
    }
 
+unsigned int SgConstructorInitializer::cfgIndexForEnd() const 
+  {
+    return 2;
+  }
+
 std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx, bool interprocedural) {
     std::vector<CFGEdge> result;
     switch (idx) {
@@ -3535,6 +3540,7 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx, boo
                 else {
                   makeEdge(CFGNode(this, idx), CFGNode(this, idx + 1), result);
                 }
+                break;
               }
       case 2: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
       default: ROSE_ASSERT (!"Bad index for SgConstructorInitializer");
@@ -3562,6 +3568,7 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
                 else {
                   makeEdge(CFGNode(this, idx - 1), CFGNode(this, idx), result);
                 }
+                break;
               }
       default: ROSE_ASSERT (!"Bad index for SgConstructorInitializer");
     }
