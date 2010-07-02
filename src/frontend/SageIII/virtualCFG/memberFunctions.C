@@ -767,6 +767,17 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
            makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
          }
      }
+     
+     // Same thing for SgConstructorInitializers. Optimize this (maybe use filter function for query)
+     VariantVector vv2(V_SgConstructorInitializer);
+     Rose_STL_Container<SgNode*> returnsite2s2 = NodeQuery::queryMemoryPool(vv2);
+     Rose_STL_Container<SgNode*>::iterator site2;
+     for (site2 = returnsite2s2.begin(); site2 != returnsite2s2.end(); ++site2) { 
+         if (isSgConstructorInitializer(*site2)->get_declaration() ==
+             this->get_declaration()) {
+           makeEdge(CFGNode(this, idx), (*site2)->cfgForEnd(), result);
+         }
+     }
      break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
@@ -784,7 +795,21 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
      Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
      Rose_STL_Container<SgNode*>::iterator caller;
      for (caller = callExprs.begin(); caller != callExprs.end(); ++caller) {
-         makeEdge((*caller)->cfgForEnd(), CFGNode(this, idx), result);
+         if (isSgFunctionCallExp(*caller)->getAssociatedFunctionDeclaration() ==
+             this->get_declaration()) {
+           makeEdge((*caller)->cfgForEnd(), CFGNode(this, idx), result);
+         }
+     }
+
+     // Same thing for SgConstructorInitializers. Optimize this (maybe use filter function for query)
+     VariantVector vv2(V_SgConstructorInitializer);
+     Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
+     Rose_STL_Container<SgNode*>::iterator caller2;
+     for (caller2 = callers2.begin(); caller2 != callers2.end(); ++caller2) { 
+         if (isSgConstructorInitializer(*caller2)->get_declaration() ==
+             this->get_declaration()) {
+           makeEdge((*caller2)->cfgForEnd(), CFGNode(this, idx), result);
+         }
      }
      break;
     }
