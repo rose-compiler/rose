@@ -3555,19 +3555,16 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx, boo
       case 0: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 1: {
                 if (interprocedural) {
-                  SgFunctionDeclaration* funcDecl = get_declaration();
-                  ROSE_ASSERT(funcDecl);
-                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                  ROSE_ASSERT(decl);
-                  SgFunctionDefinition* def = decl->get_definition();
-                  if (def == NULL) 
-                    std::cerr << "no definition for constructor in SgConstructorInitializer::cfgOutEdges: " << decl->get_name().str() << std::endl;
-                  else
-                    makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+                  SgFunctionDeclaration* decl = get_declaration();
+                  if (decl != NULL) {
+                    SgFunctionDefinition* def = decl->get_definition();
+                    if (def != NULL) {
+                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+                      break;
+                    }
+                  }
                 }
-                else {
-                  makeEdge(CFGNode(this, idx), CFGNode(this, idx + 1), result);
-                }
+                makeEdge(CFGNode(this, idx), CFGNode(this, idx + 1), result);
                 break;
               }
       case 2: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
@@ -3583,19 +3580,16 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
       case 1: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 2: {
                 if (interprocedural) {
-                  SgFunctionDeclaration* funcDecl = get_declaration();
-                  ROSE_ASSERT(funcDecl);
-                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                  ROSE_ASSERT(decl);
-                  SgFunctionDefinition* def = decl->get_definition();
-                  if (def == NULL) 
-                    std::cerr << "no definition for constructor in SgConstructorInitializer::cfgInEdges: " << decl->get_name().str() << std::endl;
-                  else
-                    makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
+                  SgFunctionDeclaration* decl = get_declaration();
+                  if (decl != NULL) {
+                    SgFunctionDefinition* def = decl->get_definition();
+                    if (def != NULL) { 
+                      makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
+                      break;
+                    }
+                  }
                 }
-                else {
-                  makeEdge(CFGNode(this, idx - 1), CFGNode(this, idx), result);
-                }
+                makeEdge(CFGNode(this, idx - 1), CFGNode(this, idx), result);
                 break;
               }
       default: ROSE_ASSERT (!"Bad index for SgConstructorInitializer");
