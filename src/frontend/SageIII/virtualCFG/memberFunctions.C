@@ -760,10 +760,11 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
      if (! interprocedural) break;
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
-     for (unsigned int i = 0; i < returnSites.size(); ++i) { 
-         if (isSgFunctionCallExp(returnSites[i])->getAssociatedFunctionDeclaration() ==
+     Rose_STL_Container<SgNode*>::iterator site;
+     for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
+         if (isSgFunctionCallExp(*site)->getAssociatedFunctionDeclaration() ==
              this->get_declaration()) {
-         makeEdge(CFGNode(this, idx), returnSites[i]->cfgForEnd(), result);
+           makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
          }
      }
      break;
@@ -781,8 +782,10 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
      if (! interprocedural) break;
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
-     for (unsigned int i = 0; i < callExprs.size(); ++i) 
-         makeEdge(callExprs[i]->cfgForEnd(), CFGNode(this, idx), result);
+     Rose_STL_Container<SgNode*>::iterator caller;
+     for (caller = callExprs.begin(); caller != callExprs.end(); ++caller) {
+         makeEdge((*caller)->cfgForEnd(), CFGNode(this, idx), result);
+     }
      break;
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
