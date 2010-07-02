@@ -1,5 +1,5 @@
-#include "normalization.h"
-#include <normalizations/Utilities.h>
+#include "expNormalization.h"
+#include "Utilities.h"
 #include <boost/foreach.hpp>
 #include <utility>
 #include <boost/tuple/tuple.hpp>
@@ -154,9 +154,6 @@ SgVariableDeclaration* getAndReplaceModifyingExpression2(SgExpression*& e)
         // a--  ==>  t = a, --a, t
         else
         {
-            SgName name = backstroke_util::GenerateUniqueVariableName(getScope(e), "t");
-            SgVariableDeclaration* temp_decl = buildVariableDeclaration(name, e->get_type(), NULL, getScope(e));
-
 #if 1
             SgNode* parent = e->get_parent();
             SgBasicBlock* body = isSgBasicBlock(parent);
@@ -165,6 +162,9 @@ SgVariableDeclaration* getAndReplaceModifyingExpression2(SgExpression*& e)
                 parent = parent->get_parent();
                 body = isSgBasicBlock(parent);
             }
+
+            SgName name = backstroke_util::GenerateUniqueVariableName(body, "t");
+            SgVariableDeclaration* temp_decl = buildVariableDeclaration(name, e->get_type(), NULL, getScope(e));
             body->prepend_statement(temp_decl);
 #endif
 
@@ -286,7 +286,8 @@ void normalizeEvent(SgFunctionDefinition* func)
     {
         if (isSgExpression(exp->get_parent()))
         {
-            SgVariableDeclaration* decl = getAndReplaceModifyingExpression2(exp);
+            getAndReplaceModifyingExpression2(exp);
+            //SgVariableDeclaration* decl = getAndReplaceModifyingExpression2(exp);
             //if (decl)
               //  all_temp_decl.push_back(decl);
         }
@@ -316,7 +317,8 @@ SgExpression* normalizeExpression(SgExpression* exp)
 {
     if (isSgExpression(exp->get_parent()))
     {
-        SgVariableDeclaration* decl = getAndReplaceModifyingExpression2(exp);
+        getAndReplaceModifyingExpression2(exp);
+        //SgVariableDeclaration* decl = getAndReplaceModifyingExpression2(exp);
 #if 0
         if (decl)
         {
