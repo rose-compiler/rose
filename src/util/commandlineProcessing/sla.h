@@ -36,7 +36,7 @@ $Id: sla.h,v 1.3 2008/01/08 02:56:44 dquinlan Exp $
 #ifndef __INCLUDED_sla_hh__
 #define __INCLUDED_sla_hh__
 /*
-$Header: /usr/casc/overture/ROSE/ROSE2_Repository/ROSE/src/util/commandlineProcessing/sla.h,v 1.3 2008/01/08 02:56:44 dquinlan Exp $
+$Header: /nfs/casc/overture/ROSE/ROSE2_Repository/ROSE/src/util/commandlineProcessing/sla.h,v 1.3 2008/01/08 02:56:44 dquinlan Exp $
 */
 
 #ifdef __cplusplus
