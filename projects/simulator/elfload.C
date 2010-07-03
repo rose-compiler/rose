@@ -1,6 +1,9 @@
 #include "rose.h"
-#include "memory.h"
 #include "simulate.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR /*protects this whole file */
+
+#include "memory.h"
 #include <sys/mman.h>
 #include <elf.h>
 #include <dlfcn.h>
@@ -181,3 +184,5 @@ void setup(LinuxMachineState& ms, int argc, char** argv) {
 
   fprintf(stderr, "------------------------- Done with setup\n");
 }
+
+#endif /*ROSE_ENABLE_SIMULATOR*/

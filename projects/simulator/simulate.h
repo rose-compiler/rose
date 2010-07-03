@@ -2,6 +2,18 @@
 #define SIMULATE_H
 
 #include "rose.h"
+
+/* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
+ * all the header file prerequisites. */
+#if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) && \
+    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H)
+#  define ROSE_ENABLE_SIMULATOR
+#else
+#  undef ROSE_ENABLE_SIMULATOR
+#endif
+
+#ifdef ROSE_ENABLE_SIMULATOR /* protects this whole header file */
+
 #include "memory.h"
 #include "x86InstructionSemantics.h"
 #include "integerOps.h"
@@ -20,13 +32,11 @@
 #include <errno.h>
 #include <asm/ldt.h>
 
-//typedef linux_ldt user_desc;
-
 template <size_t Len>
 struct Value {
-  uint64_t val_;
-  Value(uint64_t v): val_(v & (IntegerOps::shl1<uint64_t>(Len) - 1)) {}
-  uint64_t val() const {return val_;}
+    uint64_t val_;
+    Value(uint64_t v): val_(v & IntegerOps::GenMask<uint64_t,Len>::value) {}
+    uint64_t val() const {return val_;}
 };
 
 struct SegmentInfo {
@@ -128,17 +138,24 @@ extern void linuxSyscall(LinuxMachineState& ms);
 extern void setup(LinuxMachineState& ms, int argc, char** argv);
 
 class IncrementalDisassembler {
-  private:
-  std::map<uint64_t /* address */, std::pair<std::vector<uint8_t> /* raw bytes */, SgAsmx86Instruction* /* disassembled instruction */ > > insnMap;
-  const Memory& memory;
+private:
+    std::map<uint64_t /* address */,
+             std::pair<std::vector<uint8_t> /* raw bytes */,
+                       SgAsmx86Instruction* /* disassembled instruction */ >
+            > insnMap;
+    const Memory& memory;
+    SgAsmx86Instruction* disassembleNewInstruction(uint64_t addr);
+    Disassembler *disassembler;
 
-  SgAsmx86Instruction* disassembleNewInstruction(uint64_t addr);
-
-  public:
-  IncrementalDisassembler(const Memory& memory): memory(memory) {}
-
-  SgAsmx86Instruction* operator[](uint64_t addr);
+public:
+    IncrementalDisassembler(const Memory& memory): memory(memory), disassembler(NULL) {}
+    void init_disassembler(SgAsmGenericHeader *hdr) {
+        delete disassembler;
+        disassembler = Disassembler::lookup(hdr)->clone();
+        ROSE_ASSERT(disassembler!=NULL);
+    }
+    SgAsmx86Instruction* operator[](uint64_t addr);
 };
 
-
-#endif // SIMULATE_H
+#endif /* ROSE_ENABLE_SIMULATOR */
+#endif /* SIMULATE_H */

@@ -195,6 +195,8 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 # else
         SMTSolver *solver = NULL;
 # endif
+        if (debug && solver)
+            solver->set_debug(stderr);
         typedef SymbolicSemantics::Policy Policy;
         typedef SymbolicSemantics::ValueType<32> RegisterType;
         typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;

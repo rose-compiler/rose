@@ -1960,8 +1960,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_ret: {
-                if (operands.size()!=0)
-                    throw Exception("instruction must have one operand", insn);
+                if (operands.size()>1)
+                    throw Exception("instruction must have zero or one operand", insn);
                 if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
                     throw Exception("size not implemented", insn);
                 Word(32) extraBytes = (operands.size() == 1 ? read32(operands[0]) : number<32>(0));
