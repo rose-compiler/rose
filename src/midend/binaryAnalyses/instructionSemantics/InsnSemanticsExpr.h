@@ -173,7 +173,7 @@ namespace InsnSemanticsExpr {
         }
 
         /* see superclass, where this is pure virtual */
-        virtual uint64_t get_value() const { ROSE_ASSERT(!"not a constant value"); }
+        virtual uint64_t get_value() const { ROSE_ASSERT(!"not a constant value"); return 0;}
 
         /** Returns the number of children. */
         size_t size() const { return children.size(); }

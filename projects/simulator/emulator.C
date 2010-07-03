@@ -376,6 +376,7 @@ int main(int argc, char** argv) {
   targetForSignals = &policy.ms;
   setup(policy.ms, argc - 1, argv + 1);
 #if 0
+  //AS FIXME: need to get this working
   X86InstructionSemantics<EmulationPolicy> t(policy);
   while (true) {
     if (policy.ms.ip == 0x00536967) { // "\0Sig" in big-endian notation

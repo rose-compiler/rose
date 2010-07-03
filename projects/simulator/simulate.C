@@ -121,7 +121,7 @@ SgAsmx86Instruction* IncrementalDisassembler::disassembleNewInstruction(uint64_t
   std::vector<uint8_t> insnBuf = memory.readAsFarAsPossibleForExec(addr, 15);
 #if 0
   //AS FIXME
-  insnData.second = X86Disassembler::disassemble(X86Disassembler::Parameters(addr, x86_insnsize_32), &insnBuf[0], insnBuf.size(), 0, NULL);
+  insnData.second = DisassemblerX86::disassemble(DisassemblerX86::Parameters(addr, x86_insnsize_32), &insnBuf[0], insnBuf.size(), 0, NULL);
 #endif
   ROSE_ASSERT (insnData.second);
   insnData.first = insnData.second->get_raw_bytes();
