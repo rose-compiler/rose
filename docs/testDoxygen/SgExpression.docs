@@ -238,17 +238,18 @@ the correct code (which si the purpose of adding parenthesis in source code).
 
 /*!
 \fn SgExpression::get_lvalue (void) const
-\brief returns bool value if front-end considers parenthesis to be required.
+\brief returns true if the expression is used where an lvalue is required.
 
-   This function returns a boolean value which is true if parenthesis are required
-for the proper eveluation of the current expression.  The frontend is however overly
-conservative and introduces parenthesis too often.  The value as determined by the 
-frontend is saved in the SAGE III AST because it is sometimes required for more
-complex expressions and contructor calls with initializers.  At present the
-unparser applies operator precedence rules to eliminate some of the redundent
-parenthesis within expressions (this makes the output more appealing).
+	Note that if get_lvalue() == false, the expression could still be an lvalue as
+	defined in the C++ language standard. An lvalue expression could be used with an operator
+	requiring an rvalue, in which case it is treated as an rvalue and get_lvalue() would return false.
+	TODO: Add another field to SgExpression defining whether and expression is an lvalue, independently
+	of how it is used.
+	
+	This value is also used during unparsing to determine whether place parentheses around this
+	expression or not.  
 
-\return Returns bool value (true if parenthesis are needed around the expression).
+\return true if the expression is used as an lvalue in the AST
 */
 
 /*!
