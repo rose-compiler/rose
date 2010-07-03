@@ -2301,7 +2301,6 @@ projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/reverseComputation/stateSaving/Makefile
-projects/backstroke/reverseComputation/normalization/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
@@ -2319,7 +2318,6 @@ projects/PolyhedralDependenceAnalysis/Common/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
 projects/PolyhedralDependenceAnalysis/Schedule/Makefile
-projects/simulator/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
