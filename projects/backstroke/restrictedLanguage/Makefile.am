@@ -1,10 +1,21 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = lang
-lang_SOURCES = lang.C
-
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Build a library for the language restrictor
+noinst_LTLIBRARIES = libBackstrokeRestrictedLanguage.la
+libBackstrokeRestrictedLanguage_ladir = .
+libBackstrokeRestrictedLanguage_la_DEPENDENCIES =
+libBackstrokeRestrictedLanguage_la_SOURCES = LanguageRestrictions.C
+libBackstrokeRestrictedLanguage_la_HEADERS = LanguageRestrictions.h
+libBackstrokeRestrictedLanguage_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Build the test language restrictor executable
+bin_PROGRAMS = eventChecker
+eventChecker_SOURCES = EventChecker.C
+eventChecker_LDADD = libBackstrokeRestrictedLanguage.la
+
 
 TESTCODES_REQUIRED_TO_PASS = \
    testcode_01.C \
@@ -23,7 +34,7 @@ ROSE_FLAGS =
 
 
 $(TEST_Objects): lang
-	$(VALGRIND) ./lang $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ./eventChecker $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 
 EXTRA_DIST = $(TESTCODES)
