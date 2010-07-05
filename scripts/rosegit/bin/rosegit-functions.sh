@@ -252,5 +252,5 @@ rosegit_show_environment () {
 	echo "    boost: not in /usr/include (see configure output for version)"
     fi
     echo "Configuration:"
-    eval "perl -e 'print qq{    \$_\n} for @ARGV' -- $ROSEGIT_CONFIGURE"
+    eval "perl -e 'print qq{    \$_\n} for sort {(split q{=},\$a)[0] cmp (split q{=},\$b)[0]} @ARGV' -- $ROSEGIT_CONFIGURE"
 }

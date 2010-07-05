@@ -1,7 +1,15 @@
 #include "eventReverser.h"
 #include "utilities.h"
 #include <boost/tuple/tuple.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
+#define foreach BOOST_FOREACH
+
+using namespace std;
+using namespace boost;
+using namespace SageBuilder;
+using namespace SageInterface;
 
 ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 {
@@ -23,19 +31,23 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
         // Make sure the type is integer type.
         if (operand->get_type()->isIntegerType())
         {
+            // Note that transform ++a into a-- makes a lvalue expression a rvalue one, 
+            // which may bring trouble in this recursive way. For example, what is the
+            // reverse expression of ++++a?
+
             // ++ and -- can both be reversed without state saving
             if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(unary_op))
                 return ExpPair(
                         fwd_exp,
                         buildMinusMinusOp(
-                            copyExpression(operand), 
+                            rvs_operand_exp, 
                             reverseOpMode(pp_op->get_mode())));
 
             if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(unary_op))
                 return ExpPair(
                         fwd_exp,
                         buildPlusPlusOp(
-                            copyExpression(operand), 
+                            rvs_operand_exp, 
                             reverseOpMode(mm_op->get_mode())));
         }
         // If the type is float point type (float & double), we use state saving.
@@ -56,7 +68,9 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
         }
     }
 
-    SgExpression* rvs_exp = rvs_operand_exp;
+    SgUnaryOp* rvs_exp = isSgUnaryOp(copyExpression(unary_op));
+    rvs_exp->set_operand(rvs_operand_exp);
+
     return ExpPair(fwd_exp, rvs_exp);
 }
 
@@ -73,11 +87,21 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 
     // The default forward version. Unless state saving is needed, we use the following one.
     SgBinaryOp* fwd_exp = isSgBinaryOp(copyExpression(bin_op));
-    fwd_exp->set_lhs_operand(fwd_lhs_exp);
-    fwd_exp->set_rhs_operand(fwd_rhs_exp);
+    setLhsOperand(fwd_exp, fwd_lhs_exp);
+    setRhsOperand(fwd_exp, fwd_rhs_exp);
+    //fwd_exp->set_lhs_operand(fwd_lhs_exp);
+    //fwd_exp->set_rhs_operand(fwd_rhs_exp);
 
-    if (isSgAddOp(bin_op) ||
-            isSgAndOp(bin_op) ||
+    // For binary operations which don't modify the value of any variable, their 
+    // reverse expressions should reorder the evaluation of each operand, in case that
+    // reordering leads to different result. For example, ++a + (a *= 2)  ->  (a = pop()) + a--.  
+    // Therefore, we first check if the order of evaluations matters. If yes, for commutative
+    // operations, like add, sub(can be regarded as add), multiply, etc, we can just reorder their
+    // operands, and for other operations, we may have to save the value, and use comma operator to 
+    // reorder the evaluation of their operands. If no, we can just remain the original operation,
+    // but replace its operands with reverse ones.
+    if (    isSgAddOp(bin_op) ||
+            //isSgAndOp(bin_op) ||
             isSgBitAndOp(bin_op) ||
             isSgBitOrOp(bin_op) ||
             isSgBitXorOp(bin_op) ||
@@ -92,42 +116,101 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             isSgModOp(bin_op) ||
             isSgMultiplyOp(bin_op) ||
             isSgNotEqualOp(bin_op) ||
-            isSgOrOp(bin_op) ||
+            //isSgOrOp(bin_op) ||
             isSgRshiftOp(bin_op) ||
             isSgSubtractOp(bin_op))
-    {}
-    // For binary operations which don't modify the value of any variable, their 
-    // reverse expressions should reorder the evaluation of each operand, in case that
-    // reordering leads to differebt result. For example, ++a + (a *= 2)  ->  (a = pop()) + a--.  
-    // Therefore, we first check if the order of evaluations matters. If yes, for commutative
-    // operations, like add, sub(can be regarded as add), multiply, etc, we can just reorder their
-    // operands, and for other operations, we may have to save the value, and use comma operator to 
-    // reorder the evaluation of their operands. If no, we can just remain the original operation,
-    // but replace its operands with reverse ones.
-#if 0
-    if (canBeReordered(rvs_lhs_exp, rvs_rhs_exp))
     {
+#if 1
+        if (canBeReordered(rvs_lhs_exp, rvs_rhs_exp))
+        {
+            SgBinaryOp* rvs_exp = isSgBinaryOp(copyExpression(bin_op));
+            rvs_exp->set_lhs_operand(rvs_lhs_exp);
+            rvs_exp->set_rhs_operand(rvs_rhs_exp);
+            return ExpPair(fwd_exp, rvs_exp);
+        }
+        else
+        {
+            // The following operations are commutative.
+            if (    isSgAddOp(bin_op) ||
+                    //isSgAndOp(bin_op) ||
+                    isSgBitAndOp(bin_op) ||
+                    isSgBitOrOp(bin_op) ||
+                    isSgBitXorOp(bin_op) ||
+                    //isSgCommaOpExp(bin_op) ||
+                    isSgEqualityOp(bin_op) ||
+                    isSgMultiplyOp(bin_op) ||
+                    isSgNotEqualOp(bin_op))// ||
+                    //isSgOrOp(bin_op))
+            {
+                // In those cases, just reorder its two operands.
+                SgBinaryOp* rvs_exp = isSgBinaryOp(copyExpression(bin_op));
+                rvs_exp->set_lhs_operand(rvs_rhs_exp);
+                rvs_exp->set_rhs_operand(rvs_lhs_exp);
+                return ExpPair(fwd_exp, rvs_exp);
+            }
 
-    }
+            if (isSgSubtractOp(bin_op))
+                return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(
+                            buildUnaryExpression<SgMinusOp>(rvs_rhs_exp), 
+                            rvs_lhs_exp));
+            if (isSgGreaterOrEqualOp(bin_op))
+                return ExpPair(fwd_exp, buildBinaryExpression<SgLessOrEqualOp>(rvs_rhs_exp, rvs_lhs_exp));
+            if (isSgGreaterThanOp(bin_op))
+                return ExpPair(fwd_exp, buildBinaryExpression<SgLessThanOp>(rvs_rhs_exp, rvs_lhs_exp));
+            if (isSgLessOrEqualOp(bin_op))
+                return ExpPair(fwd_exp, buildBinaryExpression<SgGreaterOrEqualOp>(rvs_rhs_exp, rvs_lhs_exp));
+            if (isSgLessThanOp(bin_op))
+                return ExpPair(fwd_exp, buildBinaryExpression<SgGreaterThanOp>(rvs_rhs_exp, rvs_lhs_exp));
 
-    if (isSgAddOp(bin_op))
-        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_rhs_exp, rvs_lhs_exp));
-    if (isSgMultiplyOp(bin_op))
-        return ExpPair(fwd_exp, buildBinaryExpression<SgMultiplyOp>(rvs_rhs_exp, rvs_lhs_exp));
-    if (isSgSubtractOp(bin_op))
-        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(
-                    buildUnaryExpression<SgUnaryAddOp>(rvs_lhs_exp), 
-                    rvs_rhs_exp));
+            // The remain binary operations are those which we have to store 
+            // their values to make them reversable. For example, the instumented
+            // and reverse expression of  a / b  are  push(a / b)  and
+            // (r(b), r(a), pop())  seperately. Note that r(b) or r(a) may also 
+            // push values so we have to make the value contain FIFO temporarily.
 
-    if (SgAddOp* add_op = isSgAddOp(bin_op))
-        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_lhs_exp, rvs_rhs_exp));
-    if (SgAddOp* add_op = isSgAddOp(bin_op))
-        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_lhs_exp, rvs_rhs_exp));
-    if (SgAddOp* add_op = isSgAddOp(bin_op))
-        return ExpPair(fwd_exp, buildBinaryExpression<SgAddOp>(rvs_lhs_exp, rvs_rhs_exp));
+            // UPDATED: In the situation above, we don't have to store the value of the 
+            // expression. The return value of the reverse expression does not have to be
+            // the same as the original expression.
+
+#if 0
+
+            //FIXME The following code has some problem, which cannot remove a node thoroughly.
+
+            SgExpression *new_fwd_lhs_exp, *new_fwd_rhs_exp, *new_rvs_lhs_exp, *new_rvs_rhs_exp;
+            beginFIFO();   // Flags are FIFO now
+            tie(new_fwd_lhs_exp, new_rvs_lhs_exp) = instrumentAndReverseExpression(bin_op->get_lhs_operand());
+            tie(new_fwd_rhs_exp, new_rvs_rhs_exp) = instrumentAndReverseExpression(bin_op->get_rhs_operand());
+
+            SgExpression* rvs_exp = buildBinaryExpression<SgCommaOpExp>(rvs_rhs_exp, rvs_lhs_exp);
+            rvs_exp = buildBinaryExpression<SgCommaOpExp>(rvs_exp, popIntVal());
+
+            replaceExpression(fwd_lhs_exp, new_fwd_lhs_exp);
+            replaceExpression(fwd_rhs_exp, new_fwd_rhs_exp);
+            replaceExpression(rvs_lhs_exp, new_rvs_lhs_exp);
+            replaceExpression(rvs_rhs_exp, new_rvs_rhs_exp);
+#if 0
+            deepDelete(new_fwd_lhs_exp);
+            deepDelete(new_fwd_rhs_exp);
+            deepDelete(new_rvs_lhs_exp);
+            deepDelete(new_rvs_rhs_exp);
 #endif
 
-    // if the left-hand side of the assign-op is the state
+            //SgExpression* fwd_exp2 = pushIntVal(tmp_fwd_exp);
+
+            //beginFIFO();
+
+            SgExpression* new_fwd_exp = pushIntVal(fwd_exp);
+
+            //endFIFO();     // Flags are LIFO now
+            endFIFO();     // Flags are LIFO now
+
+            return ExpPair(new_fwd_exp, rvs_exp);
+#endif
+        }
+#endif
+    }
+
+    // If the left-hand side of the assign-op is the state
     // (note that only in this situation do we consider to reverse this expression)
 #if 0
     if (SgExpression* model_var = isStateVar(bin_op->get_lhs_operand()))
@@ -155,16 +238,33 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                 // We must make sure that the rhs operand does not contain the lhs operand.
                 // Or else, this operation is not constructive. For example, a += a or a += a + b.
                 // This can also be done by def-use analysis.
-                
+
+                // Note that sometimes we don't save a local variable. Even for a state variable, we may not 
+                // restore it everytime it is modified. This can make the constructive operations not 
+                // constructive. One solution is that we add a prerequisite to the following transformation
+                // which needs that all variables except modified one need to exist or contain the proper
+                // value.
+
                 bool constructive = true;
                 Rose_STL_Container<SgNode*> node_list = NodeQuery::querySubTree(rhs_operand, V_SgExpression);
                 foreach (SgNode* node, node_list)
                 {
-                    if (areSameVariable(isSgExpression(node), lhs_operand))
+                    SgExpression* exp = isSgExpression(node);
+                    ROSE_ASSERT(exp);
+                    if (areSameVariable(exp, lhs_operand))
                     {
                         constructive = false;
                         break;
                     }
+                    
+#if 0
+                    // Once we have the SSA, we can maintain a table in which which variables are available.
+                    if (!isAvailable(exp))
+                    {
+                        constructive = false;
+                        break;
+                    }
+#endif
                 }
 
                 if (constructive)
@@ -214,10 +314,16 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             // FIXME
             // Reverse constructive assignment, like a = a + b (if a is a variable, it's equal to
             // a += b. Leave it to preprocessor or handle it now?), a = b - a. The reverse expressions
-            // are a -= b and a = b - a. For integer plus and minus, order does not matter. Which means
+            // are a -= b and a = b - a. For integer plus and minus, order does not matter, which means
             // a = (a + b) + c is also constructive which equals to a = a + (b + c).
             // We still don't consider the following case: a = 2 * a + b, although it can be reversed as
             // a = (a - b) / 2 if there is no overflow. This issue will be handled in the future.
+
+            // Note that sometimes we don't save a local variable. Even for a state variable, we may not 
+            // restore it everytime it is modified. This can make the constructive operations not 
+            // constructive. One solution is that we add a prerequisite to the following transformation
+            // which needs that all variables except modified one need to exist or contain the proper
+            // value.
 
             if (isSgAssignOp(bin_op))
             {
@@ -232,6 +338,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                 typedef pair<SgExpression*, bool> VarWithSign;
                 vector<VarWithSign> vars;
 
+                // The following loop get all variables with their signs in the add/subtract expression.
                 queue<VarWithSign> to_process;
                 to_process.push(VarWithSign(rvs_rhs_exp, true));
                 while (!to_process.empty())
@@ -260,31 +367,48 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                 }
 
                 int count = 0;
-                int index = -1;
-                for (int i = 0; i < vars.size(); ++i)
+                size_t index;
+                bool constructive = true;
+                for (size_t i = 0; i < vars.size(); ++i)
                 {
                     if (areSameVariable(vars[i].first, lhs_operand))
                     {
                         ++count;
                         index = i;
                     }
+                    else if (containsVariable(vars[i].first, lhs_operand))
+                    {
+                        constructive = false;
+                        break;
+                    }
                 }
 
-                if (count == 1)
+                // Only if the count of lhs operand in rhs operand is 1 can this expression be 
+                // constructive. For example, a = a + a + b is not constructive (considering overflow).
+                if (constructive && count == 1)
                 {
-                    vars[index].first = lhs_operand;
+                    // The form a = b - a, the reverse expression is the same.
+                    if (!vars[index].second)
+                    {
+                        SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
+                                copyExpression(lhs_operand),
+                                rvs_rhs_exp);
+                        return ExpPair(fwd_exp, rvs_exp);
+                    }
 
+                    //vars[index].first = lhs_operand;
+
+                    // Concatenate all other variables.
                     SgExpression* rvs_exp = NULL;
-                    for (int i = 0; i < vars.size(); ++i)
+                    for (size_t i = 0; i < vars.size(); ++i)
                     {
                         if (i == index) continue;
 
                         if (rvs_exp == NULL)
                         {
-                            if (vars[i].second)
-                                rvs_exp = copyExpression(vars[i].first);
-                            else
-                                rvs_exp = buildUnaryExpression<SgMinusOp>(copyExpression(vars[i].first));
+                            rvs_exp = copyExpression(vars[i].first);
+                            if (!vars[i].second)
+                                rvs_exp = buildUnaryExpression<SgMinusOp>(rvs_exp);
                         }
                         else
                         {
@@ -293,7 +417,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                                         rvs_exp, 
                                         copyExpression(vars[i].first));
                             else
-                                rvs_exp = buildBinaryExpression<SgSubtractOp>(\
+                                rvs_exp = buildBinaryExpression<SgSubtractOp>(
                                         rvs_exp, 
                                         copyExpression(vars[i].first));
                         }
@@ -310,6 +434,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                         else
                             rvs_exp = copyExpression(lhs_operand);
                     }
+#if 0
                     else
                     {
                         // a = b - a  ->  a = b - a
@@ -323,7 +448,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                                     copyExpression(lhs_operand));
                     
                     }
-
+#endif
                     rvs_exp = buildBinaryExpression<SgAssignOp>(
                             copyExpression(lhs_operand),
                             rvs_exp);
@@ -333,9 +458,9 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             }
         }
 
-        // the following operations which alter the value of the lhs operand
+        // The following assignment operations which alter the value of the lhs operand
         // can be reversed by state saving
-        if (isSgAssignOp(bin_op) ||
+        if (    isSgAssignOp(bin_op) ||
                 isSgPlusAssignOp(bin_op) ||
                 isSgMinusAssignOp(bin_op) ||
                 isSgMultAssignOp(bin_op) ||
@@ -367,19 +492,44 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                     copyExpression(model_var),
                     copyExpression(state_var));
 #else
-            fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    pushIntVal(copyExpression(lhs_operand)),
-                    fwd_exp);
 
-            SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                    copyExpression(lhs_operand),
-                    popIntVal());
+
+            // FIXME An important analysis should be performed here based on the 
+            // value graph built. If we can track the destroyed value which is held
+            // by another live variable, we don't have to push it into stack, but 
+            // directly assign that value to this assignee. The "swap" example is a 
+            // classic one: 
+            //     void swap(int& a, int& b) { int t = a; a = b; b = t; }
+            // It's reverse function is like:
+            //     void swap(int& a, int& b) { int t = b; b = a; a = t; }
+                 
+            SgExpression* rvs_exp = NULL;
+            // The following function returns the expression which holds the proper value.
+            //if (SgExpression* exp = valueCanBeRecovered())
+            if (false)
+            {
+                fwd_exp = isSgBinaryOp(copyExpression(bin_op));
+                rvs_exp = buildBinaryExpression<SgAssignOp>(
+                        copyExpression(lhs_operand),
+                        NULL);//exp);
+            }
+            else if (toSave(lhs_operand))
+            {
+                fwd_exp = buildBinaryExpression<SgCommaOpExp>(
+                        pushIntVal(copyExpression(lhs_operand)),
+                        fwd_exp);
+                rvs_exp = buildBinaryExpression<SgAssignOp>(
+                        copyExpression(lhs_operand),
+                        popIntVal());
+            }
 #endif
             // If the rhs operand expression can be reversed, we have to deal with 
             // both sides at the same time. For example: b = ++a, where a and b are 
             // both state variables.
-            if (rvs_rhs_exp)
+            if (rvs_exp && rvs_rhs_exp)
                 rvs_exp = buildBinaryExpression<SgCommaOpExp>(rvs_rhs_exp, rvs_exp);
+            else if (rvs_rhs_exp)
+                rvs_exp = rvs_rhs_exp;
             return ExpPair(fwd_exp, rvs_exp);
         }
     }
@@ -390,7 +540,8 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
         return ExpPair(copyExpression(bin_op), copyExpression(bin_op));
 
     // logical 'and' and 'or' should be taken care of since short circuit may happen
-    if (SgAndOp* and_op = isSgAndOp(bin_op))
+    //if (SgAndOp* and_op = isSgAndOp(bin_op))
+    if (isSgAndOp(bin_op))
     {
         if (rvs_rhs_exp == NULL)
         {
@@ -421,7 +572,8 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
         return ExpPair(fwd_exp, rvs_exp);
     }
 
-    if (SgOrOp* or_op = isSgOrOp(bin_op))
+    //if (SgOrOp* or_op = isSgOrOp(bin_op))
+    if (isSgOrOp(bin_op))
     {
         if (rvs_rhs_exp == NULL)
         {
@@ -553,6 +705,10 @@ ExpPair EventReverser::processFunctionCallExp(SgFunctionCallExp* func_exp)
         fwd_exp = buildFunctionCallExp(
                 func_exp->getAssociatedFunctionSymbol(), 
                 fwd_para_list);
+
+        // FIXME Temporarily add this to make a non-parameter function call be reversed
+        if (rvs_exp == NULL)
+            rvs_exp = copyExpression(fwd_exp);
         return ExpPair(fwd_exp, rvs_exp);
     }
 
@@ -562,8 +718,10 @@ ExpPair EventReverser::processFunctionCallExp(SgFunctionCallExp* func_exp)
     EventReverser func_generator(func_decl);
     vector<FuncDeclPair> func_pairs = func_generator.outputFunctions();
     if (func_processed_.count(func_decl) == 0)
+	{
         foreach(const FuncDeclPair& func_pair, func_pairs)
             output_func_pairs_.push_back(func_pair);
+	}
     SgFunctionDeclaration* fwd_func = func_pairs.back().first;
     SgFunctionDeclaration* rvs_func = func_pairs.back().second;
 
@@ -999,7 +1157,7 @@ StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
 
     SgBasicBlock *fwd_body, *rvs_body;
     SgExpression *fwd_item_selector_exp, *rvs_item_selector_exp;
-    SgStatement *fwd_item_selector, *rvs_item_selector;
+    //SgStatement *fwd_item_selector, *rvs_item_selector;
 
     const SgStatementPtrList& stmts = body->get_statements();
     SgStatementPtrList fwd_stmts, rvs_stmts;
@@ -1058,7 +1216,7 @@ StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
         if (!case_wait_list.empty())
         {
             SgBasicBlock* rvs_body = buildBasicBlock();
-            for (int i = 0; i < case_wait_list.size(); ++i)
+            for (size_t i = 0; i < case_wait_list.size(); ++i)
             {
                 SgCaseOptionStmt* case_opt_stmt;
                 SgStatement* prev_rvs_body;
@@ -1091,7 +1249,7 @@ StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
             }
 
             // Clear unused nodes.
-            for (int i = 0; i < case_wait_list.size(); ++i)
+            for (size_t i = 0; i < case_wait_list.size(); ++i)
                 delete case_wait_list[i].second;
             delete rvs_body;
             case_wait_list.clear();

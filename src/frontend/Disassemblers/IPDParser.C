@@ -2,12 +2,44 @@
 #include "sage3basic.h"
 #include "Partitioner.h"
 
+std::ostream&
+operator<<(std::ostream &o, const Partitioner::IPDParser::Exception &e)
+{
+    return o <<e.format();
+}
+
+/* Output styles
+ *     /foo/filename.ipd:15: error message      (all info is available)
+ *     /foo/filename.ipd: error message         (missing line number)
+ *     line 15: error message                   (missing file name)
+ *     error message                            (missing file name and line number)
+ *
+ * The "error message" defaults to "IPD parse error"
+ */
+std::string
+Partitioner::IPDParser::Exception::format() const 
+{
+    std::string retval = mesg.empty() ? "IPD parse error" : mesg;
+
+    if (name.empty()) {
+        if (lnum>0)
+            retval = "line " + StringUtility::numberToString(lnum) + ": " + retval;
+    } else if (lnum>0) {
+        retval = name + ":" + StringUtility::numberToString(lnum) + ": " + retval;
+    } else {
+        retval = name + ": " + retval;
+    }
+    return retval;
+}
+
 void
 Partitioner::IPDParser::parse()
 {
     try {
         parse_File();
     } catch (Exception e) {
+        if (e.name.empty())
+            e.name = input_name;
         if (e.lnum==0) {
             e.lnum = 1;
             for (size_t i=0; i<at && i<len; i++) {
@@ -113,7 +145,12 @@ Partitioner::IPDParser::match_number()
     if (!is_number())
         throw Exception("expected number");
     char *rest;
-    rose_addr_t retval = strtoull(input+at, &rest, 0);
+#ifdef _MSC_VER
+		//tps - added Win specific function
+    rose_addr_t retval = _strtoui64(input+at, &rest, 0);
+#else
+	rose_addr_t retval = strtoull(input+at, &rest, 0);
+#endif
     at = rest-input;
     return retval;
 }

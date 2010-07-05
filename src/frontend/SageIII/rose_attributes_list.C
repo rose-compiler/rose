@@ -1632,7 +1632,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
 
        // DQ (12/16/2008): Added support fo tabs between "#" and the directive identifier.
        // Note that Fortran modes of CPP should not allow any whitespace here (at least for gfortran).
-          while (i < lineLength && (firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '\t') || firstNonBlankCharacter == '#')
+          while ((i < lineLength && (firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '\t')) || firstNonBlankCharacter == '#')
              {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
                printf ("Looping over # or white space between # and CPP directive i = %d \n",i);

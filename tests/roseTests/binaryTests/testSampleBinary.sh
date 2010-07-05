@@ -66,6 +66,17 @@ test_assembler() {
     fi
 }
 
+# A test for read/write of the AST to a file.
+test_astio() {
+    local sample="$1"
+    local cleanup="$2"
+    if [ -n "$cleanup" ]; then
+	local basename=$(basename $sample)
+	rm -f $basename-{1,2}.dump $basename.ast
+    else
+	(set -x; ./testAstIO -rose:binary $sample) || return  1
+    fi
+}
 
 ########################################################################################################################
 # End of tests.

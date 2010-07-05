@@ -64,9 +64,13 @@ READ_TRANSLATOR = $(VALGRIND) $(top_builddir)/tests/testAstFileRead
 
 TESTCODE_INCLUDES =
 
+../../testAstFileIO:
+	make -C ../.. testAstFileIO
+../../testAstFileRead:
+	make -C ../.. testAstFileRead
 # DQ (7/12/2004): Modified to run with make -j4 options
 # $(TEST_Objects): astFileIO astFileRead $(TESTCODES)
-$(TEST_Objects): astFileIO astFileRead
+$(TEST_Objects): astFileIO astFileRead ../../testAstFileIO
 #	@echo "QY:skipping test code using $(TEST_TRANSLATOR) ..."
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
@@ -87,7 +91,7 @@ test2001_03.C.binary: test2001_03.o
 
 # This tests the reading of a collection of binary files (build by running $(MAKE) $(TEST_Objects)
 # test-read: test2001_01.binary test2001_02.binary test2001_03.binary
-test-read: test2001_01.C.binary test2001_02.C.binary test2001_03.C.binary
+test-read: test2001_01.C.binary test2001_02.C.binary test2001_03.C.binary ../../testAstFileRead
 #	./astFileRead rose_test2001_01.C rose_test2001_02.C rose_test2001_03.C
 #	$(READ_TRANSLATOR) test2001_01.C test2001_02.C test2001_03.C
 	$(READ_TRANSLATOR) test2001_01.C test2001_02.C temp_output.C
@@ -101,12 +105,12 @@ test-read: test2001_01.C.binary test2001_02.C.binary test2001_03.C.binary
 TEST_TINY_LIST = input_tiny_01.C input_tiny_02.C
 # TEST_TINY_LIST_BINARIES = $(TEST_TINY_LIST:.C=.o)
 
-# test-read-tiny: 
+# test-read-tiny: ../../testAstFileIO ../../testAstFileRead
 #	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir) -c $(srcdir)/input_tiny_01.C
 #	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir) -c $(srcdir)/input_tiny_02.C
 #	$(READ_TRANSLATOR) $(TEST_TINY_LIST) temp_output_tiny.C
 
-# test-read-tiny2: 
+# test-read-tiny2: ../../testAstFileIO ../../testAstFileRead
 #	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir) -c $(srcdir)/input_tiny2_01.C
 #	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir) -c $(srcdir)/input_tiny2_02.C
 ##	$(READ_TRANSLATOR) input_tiny2_01.C input_tiny2_02.C temp_output_tiny2.C
@@ -116,7 +120,7 @@ TEST_SHORT_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_08.C test20
 # TEST_SHORT_LIST_BINARIES = $(TEST_SHORT_LIST:.C=.C.binary)
 TEST_SHORT_LIST_BINARIES = $(TEST_SHORT_LIST:.C=.o)
 
-test-read-short: $(TEST_SHORT_LIST_BINARIES)
+test-read-short: $(TEST_SHORT_LIST_BINARIES) ../../testAstFileRead
 	$(READ_TRANSLATOR) $(TEST_SHORT_LIST) temp_output_short.C
 
 # 34
@@ -252,21 +256,21 @@ TEST_MEDIUM_LIST += $(TEST_MEDIUM_LIST_EXTRA) $(ALT2_TEST_MEDIUM_LIST_EXTRA)
 
 TEST_MEDIUM_LIST_BINARIES = $(TEST_MEDIUM_LIST:.C=.o)
 
-test-read-medium: $(TEST_MEDIUM_LIST_BINARIES)
+test-read-medium: $(TEST_MEDIUM_LIST_BINARIES) ../../testAstFileRead
 	$(READ_TRANSLATOR) $(TEST_MEDIUM_LIST) temp_output_medium.C
 
 TEST_LARGE_LIST_BINARIES = $(TESTCODES:.C=.o)
 TEST_Binaries = $(TESTCODES:.C=.C.binary)
 # test-read-large: test2001_01.C.binary test2001_02.C.binary test2001_03.C.binary
-test-read-large: $(TEST_LARGE_LIST_BINARIES)
+test-read-large: $(TEST_LARGE_LIST_BINARIES) ../../testAstFileRead
 	ls -s $(TEST_Binaries)
 #	@echo "$(READ_TRANSLATOR) $(TEST_Binaries:.binary=)"
 	$(READ_TRANSLATOR) $(TEST_Binaries:.C.binary=.C) temp_output_large.C
 
-test-read-huge: 
+test-read-huge: ../../testAstFileRead
 	$(READ_TRANSLATOR) temp_output_large.C temp_output_large.C temp_output_large.C temp_output_large.C temp_output_huge.C
 
-test-read-really-huge: 
+test-read-really-huge: ../../testAstFileRead
 	$(READ_TRANSLATOR) temp_output_huge.C temp_output_huge.C temp_output_huge.C temp_output_huge.C temp_output_really_huge.C
 
 
@@ -344,7 +348,7 @@ largeFileTest: astFileIO
 largestFileTest: astFileIO
 	./astFileIO -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
 
-largestRoseFileTest: astFileIO
+largestRoseFileTest: astFileIO ../../testAstFileIO
 #	./astFileIO -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
 	$(TEST_TRANSLATOR) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRose_testFile.C
 
