@@ -45,6 +45,7 @@ NOINST_TUTORIAL_EXAMPLES = \
    binaryAnalysisExample \
    binaryAnalysis_symbolTable \
    binaryFileRead \
+   binaryFileWrite \
    sb_callgraphAnalysis \
    buildCFG \
    changeFunction \
@@ -123,6 +124,8 @@ else
 endif
 
 binaryFileRead_SOURCES = binaryFileRead.C
+
+binaryFileWrite_SOURCES = binaryFileWrite.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 

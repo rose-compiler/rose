@@ -954,7 +954,6 @@ ROSE_SUPPORT_MYSQL
 AM_CONDITIONAL(ROSE_USE_MYSQL_DATABASE,[test "x$MYSQL_VERSION" != "x"])
 
 # Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,[test "x$SQLITE3_VERSION" != "x"])
 
 # DQ (9/21/2009): Debugging for RH release 5
 echo "Testing the value of CC: (CC = $CC)"
@@ -1969,6 +1968,9 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
+# These headers are needed by projects/simulator [matzke 2009-07-02]
+AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -2299,7 +2301,6 @@ projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/reverseComputation/stateSaving/Makefile
-projects/backstroke/reverseComputation/normalization/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
@@ -2310,6 +2311,7 @@ projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
+projects/simulator/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile

@@ -61,7 +61,11 @@
         TestPolicy() {
 #           if 1==SOLVER_SELECTOR
                 YicesSolver *solver = new YicesSolver;
-                //solver->set_debug(stdout);
+                solver->set_linkage(YicesSolver::LM_EXECUTABLE);
+                set_solver(solver);
+#           elif 2==SOLVER_SELECTOR
+                YicesSolver *solver = new YicesSolver;
+                solver->set_linkage(YicesSolver::LM_LIBRARY);
                 set_solver(solver);
 #           endif
         }

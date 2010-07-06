@@ -3,7 +3,11 @@
 
 #include "InsnSemanticsExpr.h"
 
-/** Interface to Satisfiability Modulo Theory (SMT) solvers. */
+/** Interface to Satisfiability Modulo Theory (SMT) solvers.
+ *
+ *  The purpose of an SMT solver is to determine if an expression is satisfiable. Although the SMTSolver class was originally
+ *  designed to be used by SymbolicExpressionSemantics policy (see SymbolicExpressionSemantics::Policy::set_solver()), but it
+ *  can also be used independently. */
 class SMTSolver {
 public:
     struct Exception {
@@ -35,6 +39,9 @@ public:
 
     /** Obtain current debugging setting. */
     FILE *get_debug() const { return debug; }
+
+    /** Tracks the number of times an SMT solver was called. Actually, the number of calls to satisfiable() */
+    static size_t total_calls;
 
 private:
     FILE *debug;
