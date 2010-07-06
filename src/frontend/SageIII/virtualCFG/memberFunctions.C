@@ -3058,7 +3058,10 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                     SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
                     ROSE_ASSERT(funcDecl);
                     SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                    ROSE_ASSERT(decl);
+                    if (decl == NULL) {
+                      std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
+                      continue;
+                    }
                     SgFunctionDefinition* def = decl->get_definition();
                     std::cerr << "  " << decl->get_qualified_name().str() << ":" << decl->get_startOfConstruct()->get_line() << std::endl;
                     //std::cerr << "function " << decl->get_qualified_name().str() << " has " << functionList.size() << " outEdges" << std::endl;
@@ -3108,7 +3111,10 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                     SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
                     ROSE_ASSERT(funcDecl);
                     SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                    ROSE_ASSERT(decl);
+                    if (decl == NULL) {
+                      std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
+                      continue;
+                    }
                     SgFunctionDefinition* def = decl->get_definition();
                     std::cerr << "  " << decl->get_qualified_name().str() << ":" << decl->get_startOfConstruct()->get_line() << std::endl;
                     //std::cerr << "function " << decl->get_qualified_name().str() << " has " << functionList.size() << " inEdges" << std::endl;
