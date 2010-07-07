@@ -12,6 +12,7 @@
 #include <functional>
 #include <numeric>
 #include "LanguageRestrictions.h"
+#include "normalizations/CPPDefinesAndNamespaces.h"
 
 
 using namespace std;
@@ -231,19 +232,25 @@ bool RestrictionTraversal::evaluateSynthesizedAttribute(SgNode* node, Synthesize
 }
 
 
-bool backstroke::violatesRestrictionsOnEventFunctions(SgFunctionDefinition* functionDefinition)
+bool LanguageRestrictions::violatesRestrictionsOnEventFunctions(SgFunctionDefinition* functionDefinition)
 {
 	// Build the traversal object
 	RestrictionTraversal restrictionTraversal;
 
 	// Call the traversal starting at the project node of the AST
-	bool returnResult = restrictionTraversal.traverse(functionDefinition);
+	bool failure = false; //restrictionTraversal.traverse(functionDefinition);
 
-	return returnResult;
+	failure = failure || containsDeclarationsOfPointerVariables(functionDefinition);
+	failure = failure || takesArgumentsByReference(functionDefinition);
+	failure = failure || containsJumpStructures(functionDefinition);
+	failure = failure || containsExceptionHandling(functionDefinition);
+	failure = failure || usesFunctionPointersOrVirtualFunctions(functionDefinition);
+
+	return failure;
 }
 
 
-bool backstroke::violatesRestrictionsOnEventFunctions(vector<SgFunctionDefinition*> eventList)
+bool LanguageRestrictions::violatesRestrictionsOnEventFunctions(vector<SgFunctionDefinition*> eventList)
 {
 	bool returnValue = false;
 	for (size_t i = 0; i < eventList.size(); i++)
@@ -277,5 +284,128 @@ bool backstroke::violatesRestrictionsOnEventFunctions(vector<SgFunctionDefinitio
 }
 
 
+/** Returns true if the given function declares any local variables that are of a pointer or array type. */
+bool LanguageRestrictions::containsDeclarationsOfPointerVariables(SgFunctionDefinition* functionDefinition)
+{
+	Rose_STL_Container<SgNode*> localDeclarations = NodeQuery::querySubTree(functionDefinition, V_SgInitializedName);
+	foreach (SgNode* initNameNode, localDeclarations)
+	{
+		SgInitializedName* initializedName = isSgInitializedName(initNameNode);
+		SgType* varType = initializedName->get_type();
+
+		if (isSgPointerType(varType) || isSgArrayType(varType))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
 
 
+/** Returns true if any of the arguments of the given function are passed by reference. */
+bool LanguageRestrictions::takesArgumentsByReference(SgFunctionDefinition* functionDefinition)
+{
+	SgFunctionDeclaration* declaration = functionDefinition->get_declaration();
+
+	foreach (SgInitializedName* arg, declaration->get_args())
+	{
+		SgType* argType = arg->get_type();
+		if (SageInterface::isReferenceType(argType))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+/** Returns true if the function contains continue, goto, or break. The break statement is allowed inside
+  * switch statements. */
+bool LanguageRestrictions::containsJumpStructures(SgFunctionDefinition* functionDefinition)
+{
+	class JumpStructuresTraversal : public AstTopDownProcessing<bool>
+	{
+	public:
+		bool evaluateInheritedAttribute(SgNode* astNode, bool isInsideSwitchStatement)
+		{
+			if (isSgSwitchStatement(astNode))
+			{
+				return true;
+			}
+
+			//A nested loop inside a switch statement no longer counts as being inside a switch statement
+			if (isSgForStatement(astNode) || isSgDoWhileStmt(astNode) || isSgWhileStmt(astNode))
+			{
+				return false;
+			}
+
+			if (isSgGotoStatement(astNode) || isSgContinueStmt(astNode))
+			{
+				containsJumpStructures = true;
+			}
+			else if (isSgBreakStmt(astNode) && !isInsideSwitchStatement)
+			{
+				containsJumpStructures = true;
+			}
+
+			return isInsideSwitchStatement;
+		}
+
+		bool containsJumpStructures;
+	};
+
+	JumpStructuresTraversal traversal;
+	traversal.containsJumpStructures = false;
+	traversal.traverse(functionDefinition->get_body(), false);
+
+	return traversal.containsJumpStructures;
+}
+
+/** Returns true if the function has any throw or catch statements. */
+bool LanguageRestrictions::containsExceptionHandling(SgFunctionDefinition* functionDefinition)
+{
+	Rose_STL_Container<SgNode*> badNodes = NodeQuery::querySubTree(functionDefinition->get_body(), V_SgThrowOp);
+	if (badNodes.size() > 0)
+	{
+		return true;
+	}
+
+	badNodes = NodeQuery::querySubTree(functionDefinition->get_body(), V_SgCatchStatementSeq);
+	if (badNodes.size() > 0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+
+/** Returns true if the given function calls any other functions through function pointers
+  * or through virtual functions. */
+bool LanguageRestrictions::usesFunctionPointersOrVirtualFunctions(SgFunctionDefinition* functionDefinition)
+{
+	Rose_STL_Container<SgNode*> functionCalls = NodeQuery::querySubTree(functionDefinition->get_body(), V_SgFunctionCallExp);
+
+	foreach (SgNode* functionCallNode, functionCalls)
+	{
+		SgFunctionCallExp* functionCall = isSgFunctionCallExp(functionCallNode);
+
+		SgFunctionDeclaration* functionDeclaration = functionCall->getAssociatedFunctionDeclaration();
+
+		if (functionDeclaration == NULL)
+		{
+			return true;
+		}
+
+		//Check if the function is virtual
+		SgFunctionModifier& functionModifier = functionDeclaration->get_functionModifier();
+		if (functionModifier.isVirtual() || functionModifier.isPureVirtual())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}

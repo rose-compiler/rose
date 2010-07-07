@@ -58,5 +58,5 @@ int main(int argc, char * argv[])
 
 	vector<SgFunctionDefinition*> eventList = buildEventList(project);
 
-	return backstroke::violatesRestrictionsOnEventFunctions(eventList);
+	return LanguageRestrictions::violatesRestrictionsOnEventFunctions(eventList);
 }
