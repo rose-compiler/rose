@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 	}
 
 	//Constructor initialization inside the for loop
-	for (AClass localA(3, globalFunc(a, b)); aObject.bar(aObject.foo(a)); )
+	for (AClass localA(3, 3); aObject.bar(aObject.foo(a)); )
 		break;
 
 	//Aggregate initializer inside the for loop
@@ -78,6 +78,12 @@ int main(int argc, char** argv)
 	for (; ; aObject.bar(aObject.foo(a)))
 	{
 		globalFunc(1, 2);
+	}
+
+	//A variable declared in the init expression is accessed in the test expression,
+	for (int i = 12; globalFunc(aObject.bar(i), 3); )
+	{
+
 	}
 
 	return 0;

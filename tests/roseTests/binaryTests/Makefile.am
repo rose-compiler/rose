@@ -6,7 +6,7 @@ EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSect
 		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
 		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
 		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans test_testAssembler.ans \
-		test_symbolicSemantics.ans test_yicesSemantics.ans
+		test_symbolicSemantics.ans test_yicesSemanticsExe.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -26,7 +26,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
 		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler testAstIO \
-		symbolicSemantics yicesSemantics
+		symbolicSemantics yicesSemanticsExe yicesSemanticsLib
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -96,10 +96,15 @@ symbolicSemantics_SOURCES = semantics.C
 symbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=0
 symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-# Use SymbolicSemantics with YicesSolver
-yicesSemantics_SOURCES = semantics.C
-yicesSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
-yicesSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+# Use SymbolicSemantics with YicesSolver, invoking "yices" executable
+yicesSemanticsExe_SOURCES = semantics.C
+yicesSemanticsExe_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
+yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Use SymbolicSemantics with YicesSolver, linked to Yikes library
+yicesSemanticsLib_SOURCES = semantics.C
+yicesSemanticsLib_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=2
+yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
@@ -193,10 +198,13 @@ demo_virtualMachineSemantics: virtualMachineSemantics demo_findConstantsABI
 demo_symbolicSemantics: symbolicSemantics demo_virtualMachineSemantics
 	: no demo yet for symbolicSemantics
 
-demo_yicesSemantics: yicesSemantics demo_symbolicSemantics
-	: no demo yet for symbolicSemantics
+demo_yicesSemanticsExe: yicesSemanticsExe demo_symbolicSemantics
+	: no demo yet for yicesSemanticsExe
 
-demo_disassemble: disassemble demo_yicesSemantics
+demo_yicesSemanticsLib: yicesSemanticsLib demo_yicesSemanticsLib
+	: no demo yet for yicesSemanticsLib
+
+demo_disassemble: disassemble demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
@@ -397,12 +405,25 @@ test_symbolicSemantics.result: symbolicSemantics
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
-test_yicesSemantics.result: yicesSemantics
+test_yicesSemanticsExe.result: yicesSemanticsExe
 if HAVE_YICES
 	@echo "  TESTING $@"
-	@($(VALGRIND) ./yicesSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_yicesSemantics.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_yicesSemantics.ans >>$@.tmp 2>&1; \
+	@($(VALGRIND) ./yicesSemanticsExe $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_yicesSemanticsExe.ans) 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_yicesSemanticsExe.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+else
+	@echo "  TESTING $@ (the Yices SMT-solver is not supported for this configuration; test skipped)"
+endif
+
+# The yicesSemanticsLib results should be identical to the yicesSemanticsExe results
+test_yicesSemanticsLib.result: yicesSemanticsLib
+if HAVE_LIBYICES
+	@echo "  TESTING $@"
+	@($(VALGRIND) ./yicesSemanticsLib $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_yicesSemanticsLib.ans) 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u $(srcdir)/test_yicesSemanticsExe.ans ./test_yicesSemanticsLib.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 else
@@ -511,8 +532,10 @@ MOSTLYCLEANFILES = \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
 	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
 	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
-	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans test_yicesSemantics.ans
-# Liao6/21/2010, TODO this causes make clean to fail since mostlyclean-binarysamples is not defined
+	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans test_yicesSemanticsExe.ans \
+	test_yicesSemanticsLib.ans
+
+# mostlyclean-binarysamples is defined by scripts/sample_binary_rules.pl invoked from "build"
 mostlyclean-local: mostlyclean-binarysamples
 
 ###############################################################################################################################

@@ -2,6 +2,18 @@
 #define SIMULATE_H
 
 #include "rose.h"
+
+/* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
+ * all the header file prerequisites. */
+#if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) && \
+    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H)
+#  define ROSE_ENABLE_SIMULATOR
+#else
+#  undef ROSE_ENABLE_SIMULATOR
+#endif
+
+#ifdef ROSE_ENABLE_SIMULATOR /* protects this whole header file */
+
 #include "memory.h"
 #include "x86InstructionSemantics.h"
 #include "integerOps.h"
@@ -145,5 +157,5 @@ public:
     SgAsmx86Instruction* operator[](uint64_t addr);
 };
 
-
-#endif // SIMULATE_H
+#endif /* ROSE_ENABLE_SIMULATOR */
+#endif /* SIMULATE_H */

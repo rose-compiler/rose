@@ -1,3 +1,7 @@
+# Makefile for an x86 simulator called "sandbox". At this time the simulator
+# is highly Linux-specific.  On platforms other than Linux, this simulator
+# is simply a main() that prints an error message and exits.
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 include_HEADERS = memory.h simulate.h
