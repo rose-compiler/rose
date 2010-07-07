@@ -913,6 +913,10 @@ HEADER_THROW_OPERATOR_START
        // DQ (1/16/2006): Added to support special version of get_type()
           SgType* get_type() const;
 
+unsigned int cfgIndexForEnd() const;
+std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
+std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+
 HEADER_THROW_OPERATOR_END
 
 
