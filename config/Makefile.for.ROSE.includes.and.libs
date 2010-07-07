@@ -320,7 +320,6 @@ ROSE_INCLUDES = \
 # DQ (10/28/2008): I think these should be included, I don't know why they 
 # were removed (used with Microsoft Windows tests, and Yices tests).
 # DQ: Not used currently 
-#     $(ROSE_YICES_INCLUDES)
 #     $(ROSE_WINE_INCLUDES)
 
 # DQ (5/3/2007): Removed from ROSE
