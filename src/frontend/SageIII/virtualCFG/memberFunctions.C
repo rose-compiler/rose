@@ -2753,7 +2753,11 @@ SgUnaryOp::cfgOutEdges(unsigned int idx, bool interprocedural)
      std::vector<CFGEdge> result;
      switch (idx)
         {
-          case 0: makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
+          case 0: {
+                    ROSE_ASSERT(get_operand() != NULL);
+                    makeEdge(CFGNode(this, idx), get_operand()->cfgForBeginning(), result); 
+                    break;
+                  }
           case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
         }
@@ -2768,8 +2772,55 @@ SgUnaryOp::cfgInEdges(unsigned int idx, bool interprocedural)
      switch (idx)
         {
           case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-          case 1: makeEdge(this->get_operand()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 1: {
+                    ROSE_ASSERT(get_operand() != NULL);
+                    makeEdge(get_operand()->cfgForEnd(), CFGNode(this, idx), result); 
+                    break;
+                  }
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+
+     return result;
+   }
+
+unsigned int
+SgThrowOp::cfgIndexForEnd() const 
+   {
+     return (get_operand() == NULL) ? 0 : 1;
+   }
+
+std::vector<CFGEdge>
+SgThrowOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx)
+        {
+          case 0: {
+                    if (get_operand() == NULL) 
+                      makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+                    else
+                      makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); 
+                    break;
+                  }
+          case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for SgThrowOp");
+        }
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgThrowOp::cfgInEdges(unsigned int idx, bool interprocedural)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+          case 1: {
+                    ROSE_ASSERT(get_operand() != NULL);
+                    makeEdge(get_operand()->cfgForEnd(), CFGNode(this, idx), result); 
+                    break;
+                  }
+          default: ROSE_ASSERT (!"Bad index for SgThrowOp");
         }
 
      return result;
