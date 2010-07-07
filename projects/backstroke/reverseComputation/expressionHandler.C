@@ -236,3 +236,18 @@ ExpPair processConstructiveAssignment(SgExpression* exp)
 
     return NULL_EXP_PAIR;
 }
+
+
+// Process conditional expressions. Note that after normalization, the return value of 
+// a conditional expression will not be used so that we can push the flag after the 
+// evaluation of the true or false expression. That is:
+//     a ? b : c  ==>  a ? (b, push(1)) : (c, push(0))
+//                     pop() ? r(b) : r(c)
+ExpPair processConditionalExpression(SgExpression* exp)
+{
+    if (isSgConditionalExp(exp))
+    {
+    }
+
+    return NULL_EXP_PAIR;
+}
