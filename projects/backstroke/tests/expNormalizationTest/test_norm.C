@@ -7,6 +7,40 @@ int& foo(int& a)
 
 int i = 0, j = 0, k = 0;
 int a[100];
+int b[100];
+
+void test_index()
+{
+    a[i++] = b[j++];
+    int *p = &a[0];
+    i = (p++)[j++];
+
+}
+
+void test_declaration()
+{
+    int i = j++;
+    int iii(j++);
+    int ii = (j, k);
+    int k = j++ ? 1 : 2;
+
+    if (int i = j++);
+    //for(int i = 0; i < 10; ++i);
+    //for (int i = j++, k = i++; int t = i;);
+    for (; int t = i;);
+}
+
+void test_conditional()
+{
+    (i ? j : k) = 10;
+    -(i ? j : k);
+    i++ ? j : k;
+
+    (i ? (j, k) : (k, j)) = 10;
+    (i ? (j ? i : k) : k) = 10;
+    (i ? j : k) ? j : k;
+
+}
 
 void test_logical()
 {
@@ -124,4 +158,4 @@ void test13()
 
 #endif
 
-void foo() { int i; i = 2;}
+void foo() { int i = 2; int j = i++;}
