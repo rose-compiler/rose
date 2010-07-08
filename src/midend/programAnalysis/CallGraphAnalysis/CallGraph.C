@@ -593,22 +593,23 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
       for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
       {
         SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+        if (cls_mb_decl == NULL) continue;
 
         ROSE_ASSERT(cls_mb_decl != NULL);
-        f2 = cls_mb_decl->get_mangled_name().str();
-        //if ( f1 == f2 )
-        if ( is_functions_types_equal(isSgMemberFunctionType(memberFunctionDeclaration->get_type()), 
-              isSgMemberFunctionType(cls_mb_decl->get_type())) )
+        SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
+        SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
+        if (funcType1 == NULL || funcType2 == NULL) continue;
+        if ( is_functions_types_equal(funcType1, funcType2) )
         {
           SgMemberFunctionDeclaration *nonDefDecl =
             isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
           SgMemberFunctionDeclaration *defDecl =
             isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
-          ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-          if ( nonDefDecl )
-            functionDeclarationInClass = nonDefDecl;
-          else
-            functionDeclarationInClass = defDecl;
+
+          // MD 2010/07/08 defDecl might be NULL
+          // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
+          
+          functionDeclarationInClass = (nonDefDecl) ? nonDefDecl : defDecl;
           ROSE_ASSERT ( functionDeclarationInClass );
           if ( !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
           {
