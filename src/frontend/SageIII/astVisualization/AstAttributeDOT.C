@@ -179,7 +179,7 @@ std::vector<std::string> AstAttributeDOT::get_dot_options_list(){
 
 
 //#ASR: 07/07/10
-//Fixed DOTGraphEdge object creation for Cxx standard
+//Fixed non-standard invocation of base class constructor for gcc 4.5.0
 DOTGraphEdge::DOTGraphEdge ( SgNode* from, SgNode* to) : AstAttributeDOT() { 
     edgeNodes.first  = from;
     edgeNodes.second = to;
