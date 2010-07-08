@@ -422,7 +422,7 @@ getQualifiedFunctionName(SgFunctionCallExp *astNode)
       SgName qualifiedName = methodDec->get_qualified_name();
       funcName.assign(qualifiedName.str());
 #if 0
-      char *className = qualifiedName.str();
+      const char *className = qualifiedName.getString().c_str();
       funcName = new char[strlen(className) + 1];
       strcpy(funcName, className);
 #endif      
@@ -440,7 +440,7 @@ getQualifiedFunctionName(SgFunctionCallExp *astNode)
       SgName qualifiedName = methodDec->get_qualified_name();
       funcName.assign(qualifiedName.str());
 #if 0
-      char *className = qualifiedName.str();
+      const char *className = qualifiedName.getString().c_str();
       funcName = new char[strlen(className) + 1];
       strcpy(funcName, className);
 #endif      
@@ -1137,7 +1137,7 @@ class MyTraversal
 	      // this is a method definition, extract the class name
 	      // and append it
 	      SgName qualifiedName = methodDec->get_qualified_name();
-	      char *className = qualifiedName.str();
+	      const char *className = qualifiedName.getString().c_str();
 	      funcName = new char[strlen(className) + 1];
 	      strcpy(funcName, className);
 
@@ -1339,7 +1339,7 @@ class MyTraversal
 
 #if 1
             SgName qualifiedName = methodDec->get_qualified_name();
-            char *className = qualifiedName.str();
+            const char *className = qualifiedName.getString().c_str();
             funcName = new char[strlen(className) + 1];
             strcpy(funcName, className);
 #else
@@ -1356,7 +1356,7 @@ class MyTraversal
 
 #if 1
             SgName qualifiedName = methodDec->get_qualified_name();
-            char *className = qualifiedName.str();
+            const char *className = qualifiedName.getString().c_str();
             funcName = new char[strlen(className) + 1];
             strcpy(funcName, className);
 #else
@@ -1449,7 +1449,7 @@ class MyTraversal
 	    assert(expr_list.size() == typeList.size());
 	    
 	    // iterate over all of the actual arguments
-	    list<SgExpression *>::iterator e;
+        SgExpressionPtrList::iterator e;
 	    for (e = expr_list.begin(), typeIt = typeList.begin(); 
 		 e != expr_list.end(); ++e, ++typeIt) {
 	      
@@ -1469,7 +1469,7 @@ class MyTraversal
 
       // DQ (8/13/2004): Working with Brian, this was changed to use the new Query by IR nodes interface
       // list<SgNode*> varRefList = NodeQuery::querySubTree(*e, NodeQuery::VariableReferences);
-         list<SgNode*> varRefList = NodeQuery::querySubTree (*e,V_SgVarRefExp);
+          std::vector<SgNode*> varRefList = NodeQuery::querySubTree (*e,V_SgVarRefExp);
 
 	      if (varRefList.size() > 1) {
 		cerr << "We don' know how to handle complicated expressions!" << endl;
@@ -1547,11 +1547,11 @@ class MyTraversal
 		  numEdges++;
 
 		  string callerName = caller.get_functionName();
+#if 0
 		  char tmp[callerName.length() + 
 			   strlen(astNode->get_file_info()->get_filename()) +
 			   MAXSTRINGSZ];
 
-#if 0
 		  // file_info is broken for expressions so we have to use
 		  // the uniquifier hack
 		  sprintf(tmp, "%s-%s-%d-%d", 
@@ -1635,10 +1635,10 @@ class MyTraversal
 	    if (numEdges == 0) {
 
 	      string voidCallerName = caller.get_functionName();
+#if 0
 	      char tmp[voidCallerName.length() + 
 		       strlen(astNode->get_file_info()->get_filename()) +
 		       MAXSTRINGSZ];
-#if 0
 	      // file_info is broken for expressions
 	      sprintf(tmp, "%s-%s-%d-%d", s.c_str(), 
 		      astNode->get_file_info()->get_filename(), 
@@ -1929,10 +1929,10 @@ class MyTraversal
 	    
 	    string dummyCallerName = caller.get_functionName();
 	    SgNode *assign = inheritedAttribute.getAssignOp();
+#if 0
 	    char tmp[dummyCallerName.length() + 
 		     strlen(assign->get_file_info()->get_filename()) +
 		     MAXSTRINGSZ];
-#if 0
 	    // file_info is broken for expressions
 	    sprintf(tmp, "%s-%s-%d-%d", 
 		    dummyCallerName.c_str(), 
@@ -2486,7 +2486,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     }
   }
 
-}
+};
 
 // this implements eqn 5
 // NB:  we have done away with the IMOD sets, except for the pseudo function
