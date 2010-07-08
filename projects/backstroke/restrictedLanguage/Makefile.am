@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libBackstrokeRestrictedLanguage.la
 libBackstrokeRestrictedLanguage_ladir = .
 libBackstrokeRestrictedLanguage_la_DEPENDENCIES =
 libBackstrokeRestrictedLanguage_la_SOURCES = LanguageRestrictions.C
-libBackstrokeRestrictedLanguage_la_HEADERS = LanguageRestrictions.h
+include_HEADERS = LanguageRestrictions.h
 libBackstrokeRestrictedLanguage_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the test language restrictor executable
