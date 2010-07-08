@@ -2319,8 +2319,8 @@ projects/SatSolver/Makefile
 projects/simulator/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/tests/Makefile
-projects/LLVMSupport/Makefile
-projects/LLVMSupport/src/Makefile
+projects/roseToLLVM/Makefile
+projects/roseToLLVM/src/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
