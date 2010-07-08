@@ -18,6 +18,10 @@ public:
 	 */
 	static bool violatesRestrictionsOnEventFunctions(SgFunctionDefinition* functionDefinition);
 
+	/** Prints an error message associated with a certain node. Also outputs the file and location
+	  * of the node. */
+	static void printCompilerError(SgNode* badNode, const char * message);
+
 private:
 
 	/** Returns true if the given function declares any local variables that are of a pointer or array type. */
@@ -36,4 +40,21 @@ private:
 	/** Returns true if the given function calls any other functions through function pointers
 	  * or through virtual functions. */
 	static bool usesFunctionPointersOrVirtualFunctions(SgFunctionDefinition* functionDefinition);
+
+	/** Returns true if the function accesses an array or a pointer through the bracket operator []. */
+	static bool usesArrays(SgFunctionDefinition* functionDefinition);
+
+	/** Returns true if any variable of a pointer type (possibly passed as an argument) is written
+	  * in the function. Note that this refers to the pointer value itself, not to the object it's pointing to. */
+	static bool variablesOfPointerTypesAreAssigned(SgFunctionDefinition* functionDefinition);
+
+	/** Returns true if the function uses C++-style dynamic memory allocation. C-style allocation
+	  * is more difficult to detect because it is a library function and not a language feature. */
+	static bool dynamicMemoryAllocationUsed(SgFunctionDefinition* functionDefinition);
+
+	/** Returns true if the function takes a variable number of arguments. */
+	static bool hasVariableArguments(SgFunctionDefinition* functionDefinition);
+
+	/** Returns true if the function uses any type that is not a scalar or a struct strictly containing scalars.*/
+	static bool usesBannedTypes(SgFunctionDefinition* functionDefinition);
 };

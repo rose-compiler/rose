@@ -1,6 +1,6 @@
 					Restricted Language Revision 2
 
-~1) No variables of pointer or array types are declared inside the function. Arguments
+1) No variables of pointer or array types are declared inside the function. Arguments
 	can be of pointer types.
 	REASON: We would like to be able to statically determine which values are modified,
 	without getting into alias analysis. We need to allow arguments of pointer type because
@@ -16,7 +16,7 @@
 	REASON: In ROSS, the state is passed as a pointer to a struct. In SPEEDES, the
 	state consists of member variables of the class of the event function.
 
-~4) Function arguments are never passed by reference
+4) Function arguments are never passed by reference
 	REASON: We want a guarantee that function calls never modify local variables,
 	only state variables.
 
@@ -29,7 +29,7 @@
 	No bracket operator [] (i.e. arrays)
 	REASON: We don't want pointers to be used as a proxy for arrays.
 
-~7) No jump structures (goto, break outside of switch statement, continue)
+7) No jump structures (goto, break outside of switch statement, continue)
 	REASON: Simplify handling of loops.
 
 8) No dynamic memory allocation
@@ -42,10 +42,10 @@
 11) No I/O
 	REASON: I/O is irreversible an has to be handled by a commit method.
 
-~12) No calling functions through function pointers or virtual functions.
+12) No calling functions through function pointers or virtual functions.
 	REASON: We cannot call the correct reverse function in those cases.
 
-~13) No throw or catch statements
+13) No throw or catch statements
 
 14) Limited use of standard library functions
 	Pure functions such as abs, max, cos, sin are ok.

@@ -20,7 +20,7 @@ int EVENT_args_by_reference(int& x)
 }
 
 //Should pass. This is allowed
-int EVENT_break_inside_switch()
+void EVENT_break_inside_switch()
 {
 	switch (3)
 	{
@@ -32,7 +32,7 @@ int EVENT_break_inside_switch()
 }
 
 //Should fail. No break allowed inside loops
-int EVENT_jump_structures()
+void EVENT_jump_structures()
 {
 	switch (1)
 	{
@@ -45,11 +45,11 @@ int EVENT_jump_structures()
 }
 
 //Should fail
-int EVENT_exception_handling()
+void EVENT_exception_handling()
 {
 	try
 	{
-		return EVENT_foobar_UsesArrays();
+		EVENT_foobar_UsesArrays();
 	}
 	catch (...)
 	{
@@ -61,6 +61,12 @@ int EVENT_exception_handling()
 int EVENT_function_pointer(int (*hello)(int))
 {
 	return hello(3);
+}
+
+//Should fail. Accesing pointers as arrays not allowed
+void EVENT_accessing_arrays(int* state)
+{
+	state[5] = 3;
 }
 
 class A
@@ -82,11 +88,63 @@ public:
 };
 
 //Should fail. Virtual functions not allowed
-int EVENT_virtual_function_call(A* obj)
+void EVENT_virtual_function_call(A* obj)
 {
 	obj->foo();
 }
 
+
+struct State
+{
+	int x;
+};
+
+//Should pass. Writing to the value pointed to by a pointer is allowed.
+void EVENT_modify_state_through_pointer(State* state)
+{
+	state->x = 3;
+}
+
+//Should fail. Modification of pointers not allowed.
+void EVENT_modify_pointer_value(State* state)
+{
+	state++;
+}
+
+//Should fail. Dynamic memory allocation not allowed.
+void EVENT_dynamic_memory_allocation()
+{
+	EVENT_modify_state_through_pointer(new State);
+}
+
+void EVENT_varargs(int i, ...)
+{
+	
+}
+
+struct GoodStruct
+{
+	int x, y;
+};
+
+struct BadStruct
+{
+	GoodStruct s;
+};
+
+//Should pass. Structs only containg primitive types are allowed.
+void EVENT_uses_structs(GoodStruct* state)
+{
+	GoodStruct copy = *state;
+	copy.x = 3;
+}
+
+//Should fail;
+void EVENT_uses_complex_structs(GoodStruct* state)
+{
+	BadStruct s;
+	s.s = *state;
+}
 
 int main()
 {
