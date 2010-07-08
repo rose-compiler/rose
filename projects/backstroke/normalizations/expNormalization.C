@@ -401,30 +401,34 @@ SgExpression* propagateConditionalExp(SgExpression* exp)
             return new_cond_op;
         }
 
-        // a + (b ? c : d)  ==>  b ? (a + c) : (a + d)
-        if (SgConditionalExp* cond_op = isSgConditionalExp(rhs))
+        // Operator || and && cannot use the following transformation
+        if (!isSgAndOp(bin_op) && !isSgOrOp(bin_op))
         {
-            SgExpression* true_exp = cond_op->get_true_exp();
-            SgExpression* false_exp = cond_op->get_false_exp();
+            // a + (b ? c : d)  ==>  b ? (a + c) : (a + d)
+            if (SgConditionalExp* cond_op = isSgConditionalExp(rhs))
+            {
+                SgExpression* true_exp = cond_op->get_true_exp();
+                SgExpression* false_exp = cond_op->get_false_exp();
 
-            SgBinaryOp* new_true_exp = isSgBinaryOp(copyExpression(bin_op));
-            new_true_exp->set_lhs_operand(copyExpression(lhs));
-            new_true_exp->set_rhs_operand(copyExpression(true_exp));
-            replaceExpression(true_exp, new_true_exp);
+                SgBinaryOp* new_true_exp = isSgBinaryOp(copyExpression(bin_op));
+                new_true_exp->set_lhs_operand(copyExpression(lhs));
+                new_true_exp->set_rhs_operand(copyExpression(true_exp));
+                replaceExpression(true_exp, new_true_exp);
 
-            SgBinaryOp* new_false_exp = isSgBinaryOp(copyExpression(bin_op));
-            new_false_exp->set_lhs_operand(copyExpression(lhs));
-            new_false_exp->set_rhs_operand(copyExpression(false_exp));
-            replaceExpression(false_exp, new_false_exp);
+                SgBinaryOp* new_false_exp = isSgBinaryOp(copyExpression(bin_op));
+                new_false_exp->set_lhs_operand(copyExpression(lhs));
+                new_false_exp->set_rhs_operand(copyExpression(false_exp));
+                replaceExpression(false_exp, new_false_exp);
 
-            // Copy the old cond_op since replacement will destroy it.
-            SgConditionalExp* new_cond_op = isSgConditionalExp(copyExpression(cond_op));
-            replaceExpression(bin_op, new_cond_op);
+                // Copy the old cond_op since replacement will destroy it.
+                SgConditionalExp* new_cond_op = isSgConditionalExp(copyExpression(cond_op));
+                replaceExpression(bin_op, new_cond_op);
 
-            propagateCommaOpAndConditionalExp(new_cond_op->get_true_exp());
-            propagateCommaOpAndConditionalExp(new_cond_op->get_false_exp());
+                propagateCommaOpAndConditionalExp(new_cond_op->get_true_exp());
+                propagateCommaOpAndConditionalExp(new_cond_op->get_false_exp());
 
-            return new_cond_op;
+                return new_cond_op;
+            }
         }
     }
 
@@ -508,12 +512,34 @@ vector<SgExpression*> getAllExpressions(SgNode* root)
 
 void preprocess(SgFunctionDefinition* func)
 {
+    /******************************************************************************/
     // To ensure every if, while, etc. has a basic block as its body.
     vector<SgStatement*> stmt_list = querySubTree<SgStatement>(func->get_body());
     foreach (SgStatement* stmt, stmt_list)
         ensureBasicBlockAsParent(stmt);
 
-#if 0
+    /******************************************************************************/
+    // Before dealing with variable declarations, all for loops should be processed first.
+    // This is because that SgForInitStatement is special in which several declarations can
+    // coexist. We will hoist it outside of its for loop statement.
+
+    vector<SgForInitStatement*> for_init_stmts = querySubTree<SgForInitStatement>(func->get_body());
+    foreach (SgForInitStatement* for_init_stmt, for_init_stmts)
+    {
+        // A SgForInitStatement object can contain several variable declarations, or one expression statement.
+        SgStatementPtrList stmts = for_init_stmt->get_init_stmt();
+        if (!stmts.empty() && isSgVariableDeclaration(stmts[0]))
+        {
+            SgForStatement* for_stmt = isSgForStatement(for_init_stmt->get_parent());
+            SgBasicBlock* new_block = buildBasicBlock();
+            foreach (SgStatement* decl, stmts)
+                new_block->append_statement(copyStatement(decl));
+            replaceStatement(for_init_stmt, NULL);
+            new_block->append_statement(copyStatement(for_stmt));
+            replaceStatement(for_stmt, new_block);
+        }
+    }
+
     // Separate variable's definition from its declaration
     vector<SgVariableDeclaration*> var_decl_list = querySubTree<SgVariableDeclaration>(func->get_body());
     foreach (SgVariableDeclaration* var_decl, var_decl_list)
@@ -529,22 +555,54 @@ void preprocess(SgFunctionDefinition* func)
             SgStatement* new_stmt = buildExprStatement(new_exp);
             initializer->set_operand(buildIntVal(0));
 
-            SgNode* parent = var_decl->get_parent();
+            SgStatement* parent = isSgStatement(var_decl->get_parent());
             if (isSgBasicBlock(parent))
             {
                 insertStatement(var_decl, new_stmt, false);
             }
-            else if (SgForStatement* for_stmt = isSgForStatement(parent))
+            else if (!isSgForInitStatement(parent))
             {
                 SgStatement* new_decl = copyStatement(var_decl);
                 replaceStatement(var_decl, new_stmt);
-                SgBasicBlock* block = buildBasicBlock(copyStatement(for_stmt));
+                ROSE_ASSERT(new_stmt->get_parent());
+                SgBasicBlock* block = buildBasicBlock(copyStatement(parent));
                 block->prepend_statement(new_decl);
-                replaceStatement(for_stmt, block);
+                replaceStatement(parent, block);
             }
         }
     }
-#endif
+
+    /******************************************************************************/
+    // Transform logical and & or operators into conditional expression.
+    // a && b  ==>  a ? b : false
+    // a || b  ==>  a ? true : b
+
+    vector<SgAndOp*> and_exps = querySubTree<SgAndOp>(func->get_body());
+    foreach (SgAndOp* and_op, and_exps)
+    {
+        if (containsMofifyingExpressions(and_op->get_rhs_operand()))
+        {
+            SgConditionalExp* cond = buildConditionalExp(
+                    copyExpression(and_op->get_lhs_operand()),
+                    copyExpression(and_op->get_rhs_operand()),
+                    buildBoolVal(true));
+            replaceExpression(and_op, cond);
+        }
+    }
+
+    vector<SgOrOp*> or_exps = querySubTree<SgOrOp>(func->get_body());
+    foreach (SgOrOp* or_op, or_exps)
+    {
+        if (containsMofifyingExpressions(or_op->get_rhs_operand()))
+        {
+            SgConditionalExp* cond = buildConditionalExp(
+                    copyExpression(or_op->get_lhs_operand()),
+                    buildBoolVal(true),
+                    copyExpression(or_op->get_rhs_operand()));
+            replaceExpression(or_op, cond);
+        }
+    }
+
 }
 
 void normalizeEvent(SgFunctionDefinition* func)
