@@ -7,7 +7,7 @@
 #include <boost/unordered_set.hpp>
 //#include <hash_map.h>
 //#include <hash_set.h>
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 #include "TableDefinitions.h"
 
 #include <mysql++.h>

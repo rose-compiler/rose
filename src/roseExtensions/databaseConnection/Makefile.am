@@ -12,7 +12,7 @@ if ROSE_USE_MYSQL_DATABASE
 # INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
 INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
 
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) @MySQL_path@/lib/mysql/libmysqlclient.a -L@MySQL_path@/lib/mysql -lmysqlpp
+LDADD    = $(LIBS_WITH_RPATH) @MySQL_path@/lib/mysql/libmysqlclient.a -L@MySQL_path@/lib/mysql -lmysqlpp
 
 librosedatabaseSources = \
      GlobalDatabaseConnection.C \
@@ -25,7 +25,7 @@ librosedatabaseSources = \
 noinst_LTLIBRARIES = librosedatabase.la
 librosedatabase_la_SOURCES = $(librosedatabaseSources)
 
-include_HEADERS = GlobalDatabaseConnection.h TableAccessMacros.h TableAccess.h
+include_HEADERS = GlobalDatabaseConnectionMYSQL.h TableAccessMacros.h TableAccess.h
 
 
 # Test codes must be placed outside of the source directory (ROSE/src) into the ROSE/tests directory
@@ -33,6 +33,8 @@ bin_PROGRAMS = testDataBase testEdges
 testDataBase_SOURCES = testDataBase.C
 testDataBase_DEPENDENCIES = 
 testEdges_SOURCES = testEdges.C
+testEdges_DEPENDENCIES = librosedatabase.la
+testEdges_LDADD = $(LDADD) librosedatabase.la
 
 # define all test codes
 TESTCODES = testEdges.C
@@ -60,7 +62,7 @@ check-db:
 	@MySQL_path@/bin/mysql_install_db --datadir=/tmp/mysqld-datadir/
 #	start the daemon
 	@MySQL_path@/bin/mysqld_safe --datadir=/tmp/mysqld-datadir/ &
-	sleep 5
+	sleep 10
 #	set the root password
 	@MySQL_path@/bin/mysqladmin --user=root password rootpwd
 #	connect to the database as root to perform access control

@@ -15,7 +15,7 @@
 #include <algorithm>
 
 // database access, dont redefine tables 
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 #ifndef TABLES_DEFINED
 #include "TableDefinitions.h"
 USE_TABLE_GRAPHDATA();

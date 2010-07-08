@@ -7,7 +7,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  GlobalDatabaseConnection.h TableAccessMacros.h TableAccess.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  GlobalDatabaseConnectionMYSQL.h TableAccessMacros.h TableAccess.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
@@ -40,7 +40,7 @@ install(FILES  GlobalDatabaseConnection.h TableAccessMacros.h TableAccess.h DEST
 #noinst_LTLIBRARIES = librosedatabase.la
 #librosedatabase_la_SOURCES = $(librosedatabaseSources)
 #
-#include_HEADERS = GlobalDatabaseConnection.h TableAccessMacros.h TableAccess.h
+#include_HEADERS = GlobalDatabaseConnectionMYSQL.h TableAccessMacros.h TableAccess.h
 #
 #
 ## Test codes must be placed outside of the source directory (ROSE/src) into the ROSE/tests directory

@@ -7,7 +7,7 @@
  *****************************************************************************/
 
 #include "TableAccess.h"
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 
 // mysql interface
 #include <mysql++.h>

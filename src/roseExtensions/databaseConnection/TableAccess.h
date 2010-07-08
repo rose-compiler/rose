@@ -14,7 +14,7 @@
 #include <mysql++.h>
 #include <cstring>
 
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 //! automated table rowdata object creation macros
 #include "TableAccessMacros.h"
 
@@ -221,8 +221,8 @@ int TableAccess<Rowdata>::initialize( void )
 	bool found = false;
 	for(mysqlpp::StoreQueryResult::iterator i= res->begin(); i!=res->end(); i++ ) {
         mysqlpp::Row row = *i;
-		//std::cout << " checktabss " << row[0] << std::endl; // debug
-		if( std::strcmp(tableName.c_str(),row[0]) ) {
+	  //std::cout << " checktabss " << row[0] << " against " << tableName.c_str() << std::endl; // debug
+		if( std::strcmp(tableName.c_str(),row[0]) == 0 ) {
 #if DB_DROPTABLES==1
 			string dropcmd = "DROP TABLE " + tableName + ";";
 			std::cout << " dropping " << tableName << std::endl; // debug

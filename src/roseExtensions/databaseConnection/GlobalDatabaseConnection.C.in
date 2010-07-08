@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 
 using namespace std;
 using namespace mysqlpp;
@@ -97,7 +97,6 @@ void GlobalDatabaseConnection::setDatabaseParameters(char *host, char *username,
   //if (client_flag)     dbFlag = *client_flag;
 }
 
-
 //-----------------------------------------------------------------------------
 // output all tables + data
 void GlobalDatabaseConnection::DEBUG_dump( void ) {
@@ -145,28 +144,30 @@ void GlobalDatabaseConnection::DEBUG_dump( void ) {
 // assume default name
 int GlobalDatabaseConnection::initialize( int drop ) {
 
+  // milki (06/29/2010) Options must be set before connection
+  // established
+   if(! dbCompress && ! connection.set_option( new mysqlpp::CompressOption() ) ) {
+       cout << " con fail setting compression option " << connection.error() << endl;
+       return 1;
+   }
+   if(! dbTimeout && ! connection.set_option( new mysqlpp::ConnectTimeoutOption(dbTimeout) ) ) {
+       cout << " con fail setting timeout option " << connection.error() << endl;
+       return 1;
+   }
+
 	// dont supply DB name to connect, it will fail if DB doesnt exist
-    if(! dbHost.empty() && connection.connect( "", dbHost.c_str(), dbUsername.c_str(), dbPwd.c_str(), dbPort) ) {
-        cout << " con fail " << endl;
+    if(! dbHost.empty() && ! connection.connect( "", dbHost.c_str(), dbUsername.c_str(), dbPwd.c_str(), dbPort) ) {
+        cout << " con fail for host: " << connection.error() << endl;
         return 1;
     }
-    else if(! dbSock.empty() && connection.connect( "", dbSock.c_str(), dbUsername.c_str(), dbPwd.c_str(), dbPort) ) {
-            cout << " con fail " << endl;
+    else if(! dbSock.empty() && ! connection.connect( "", dbSock.c_str(), dbUsername.c_str(), dbPwd.c_str(), dbPort) ) {
+            cout << " con fail for sock" << connection.error() << endl;
             return 1;
         }
-    else {
-        cout << " con fail " << endl;
+    else if(! connection.connected() ) {
+        cout << " con fail. Missing credentials " << connection.error() << endl;
+        return 1;
     }
-
-   if(! dbCompress && connection.set_option( new mysqlpp::CompressOption() ) ) {
-       cout << " con fail " << endl;
-       return 1;
-   }
-   if(! dbTimeout && connection.set_option( new mysqlpp::ConnectTimeoutOption(dbTimeout) ) ) {
-       cout << " con fail " << endl;
-       return 1;
-   }
-
 #if DB_DROPDATABASE==1
 	connection.drop_db( dbName );
 #else
