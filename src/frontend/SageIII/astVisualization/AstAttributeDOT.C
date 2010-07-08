@@ -178,11 +178,13 @@ std::vector<std::string> AstAttributeDOT::get_dot_options_list(){
 };
 
 
-DOTGraphEdge::DOTGraphEdge ( SgNode* from, SgNode* to){
+//#ASR: 07/07/10
+//Fixed DOTGraphEdge object creation for Cxx standard
+DOTGraphEdge::DOTGraphEdge ( SgNode* from, SgNode* to) : AstAttributeDOT() { 
     edgeNodes.first  = from;
     edgeNodes.second = to;
     arrowType = UnknownListElementArrowTypes;
-    AstAttributeDOT::AstAttributeDOT();
+//    AstAttributeDOT::AstAttributeDOT();
 
 };
 
@@ -333,11 +335,12 @@ std::string DOTGraphEdge::get_dot_options_string(){
 
 
 
-
-DOTGraphNode::DOTGraphNode(SgNode* n){
+//#ASR: 07/07/2010
+//Modified constructor to call base class constructor for the standard 
+DOTGraphNode::DOTGraphNode(SgNode* n) : AstAttributeDOT() {
       node = n;
       shape     = UnknownListElementDOTShapeTypes;
-      AstAttributeDOT::AstAttributeDOT();
+//      AstAttributeDOT::AstAttributeDOT();
       set_label(n->class_name());
 };
 
