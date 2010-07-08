@@ -206,7 +206,7 @@ private:
     globalTable globalVarList;
 
 public:
-    VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(true), DEBUG_MODE_EXTRA(false){}
+    VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(true), DEBUG_MODE_EXTRA(true){}
 
     ~VariableRenaming(){}
     
@@ -277,6 +277,13 @@ private:
 
     bool mergeDefs(cfgNode curNode);
     bool resolveUses(cfgNode curNode);
+
+    /** Trace backwards in the cfg one step and return an aggregate of all previous defs.
+     *
+     * @param curNode Node to traverse backwards from.
+     * @param results TableEntry reference where results are stored.
+     */
+    void aggregatePreviousDefs(cfgNode curNode, tableEntry& results);
 
     void printToDOT(SgSourceFile* file, std::ofstream &outFile);
     void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);

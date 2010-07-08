@@ -772,80 +772,6 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
         //An SgInitializedName should count as a def, since it is the initial definition.
         return VariableRenaming::VarDefUseSynthAttr(name, NULL);
     }
-    //Catch all assign initializers of declared variables. This way, the initial
-    //declaration is one renaming, and when it is assigned it is versioned again.
-    else if(isSgAssignInitializer(node))
-    {
-        SgAssignInitializer* init = isSgAssignInitializer(node);
-        ROSE_ASSERT(init);
-
-        if(attrs.size() == 2)
-        {
-            if(attrs[0].getDefs().size() == 1)
-            {
-                //We want to set the initialized name on the LHS as being defined here.
-                std::vector<SgNode*> defs;
-                defs.assign(attrs[0].getDefs().begin(), attrs[0].getDefs().end());
-                defs.assign(attrs[0].getUses().begin(), attrs[0].getUses().end());
-
-                if(defs.size() != 1)
-                {
-                    cout << "Error: Assign Initializer with uses on LHS." << endl;
-                    ROSE_ASSERT(false);
-                }
-
-                //We want to set all the varRefs from the RHS as being used here
-                std::vector<SgNode*> uses;
-                uses.assign(attrs[1].getDefs().begin(), attrs[1].getDefs().end());
-                uses.assign(attrs[1].getUses().begin(), attrs[1].getUses().end());
-
-                //Set all the defs as being defined here.
-                foreach(nodeVec::value_type& iter, defs)
-                {
-                    //Get the unique name of the def.
-                    VarUniqueName * uName = varRename->getUniqueName(iter);
-                    ROSE_ASSERT(uName);
-
-                    //Add the varRef as a definition at the current node of the ref's uniqueName
-                    varRename->getDefTable()[init][uName->getKey()].push_back(node);
-
-                    if(varRename->getDebug())
-                    {
-                        cout << "Found def for " << uName->getNameString() << " at " << init->cfgForBeginning().toStringForDebugging() << endl;
-                    }
-                }
-
-                //Set all the uses as being used here.
-                foreach(nodeVec::value_type& iter, uses)
-                {
-                    //Get the unique name of the def.
-                    VarUniqueName * uName = varRename->getUniqueName(iter);
-                    ROSE_ASSERT(uName);
-
-                    //Add the varRef as a use at the current node of the ref's uniqueName
-                    //We will correct the reference later.
-                    varRename->getUseTable()[init][uName->getKey()].push_back(iter);
-
-                    if(varRename->getDebug())
-                    {
-                        cout << "Found use for " << uName->getNameString() << " at " << init->cfgForBeginning().toStringForDebugging() << endl;
-                    }
-                }
-
-                //Return the combined defs and uses.
-                return VariableRenaming::VarDefUseSynthAttr(defs, uses);
-            }
-            else
-            {
-                cout << "Error: AssignInitializer without exactly one def on LHS." << endl;
-                ROSE_ASSERT(false);
-            }
-        }
-        else
-        {
-            cout << "Error: AssignInitializer without exactly two children." << endl;
-        }
-    }
     //Catch all variable references
     else if(isSgVarRefExp(node))
     {
@@ -936,8 +862,8 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
                         }
                     }
 
-                    //Return the combined defs and uses.
-                    return VariableRenaming::VarDefUseSynthAttr(defs, uses);
+                    //Cut off the uses here. We will only pass up the defs.
+                    return VariableRenaming::VarDefUseSynthAttr(defs, NULL);
                 }
                 //Otherwise cover all the non-defining Ops
                 default:
@@ -966,7 +892,7 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
                         }
                     }
 
-                    //Return the combined defs and uses.
+                    //Return all the uses.
                     return VariableRenaming::VarDefUseSynthAttr(NULL, uses);
                 }
             }
@@ -983,74 +909,71 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
     {
         SgUnaryOp* op = isSgUnaryOp(node);
 
-        if(attrs.size() == 1)
+        //If we have an assigning operation, we want to list everything as being defined
+        //Otherwise, everything is being used.
+        VariantT type = op->variantT();
+        switch(type)
         {
-            //If we have an assigning operation, we want to list everything as being defined
-            //Otherwise, everything is being used.
-            VariantT type = op->variantT();
-            switch(type)
+            //Defines the variable
+            case V_SgMinusMinusOp:
+            case V_SgPlusPlusOp:
             {
-                //Defines the variable
-                case V_SgMinusMinusOp:
-                case V_SgPlusPlusOp:
+                std::vector<SgNode*> defs;
+                defs.assign(attrs[0].getDefs().begin(), attrs[0].getDefs().end());
+                defs.assign(attrs[0].getUses().begin(), attrs[0].getUses().end());
+
+                //Set all the defs as being defined here.
+                foreach(nodeVec::value_type& iter, defs)
                 {
-                    std::vector<SgNode*> defs;
-                    defs.assign(attrs[0].getDefs().begin(), attrs[0].getDefs().end());
-                    defs.assign(attrs[0].getUses().begin(), attrs[0].getUses().end());
-                    
-                    //Set all the defs as being defined here.
-                    foreach(nodeVec::value_type& iter, defs)
+                    //Get the unique name of the def.
+                    VarUniqueName * uName = varRename->getUniqueName(iter);
+                    ROSE_ASSERT(uName);
+
+                    //Add the varRef as a definition at the current node of the ref's uniqueName
+                    varRename->getDefTable()[op][uName->getKey()].push_back(node);
+
+                    if(varRename->getDebug())
                     {
-                        //Get the unique name of the def.
-                        VarUniqueName * uName = varRename->getUniqueName(iter);
-                        ROSE_ASSERT(uName);
-
-                        //Add the varRef as a definition at the current node of the ref's uniqueName
-                        varRename->getDefTable()[op][uName->getKey()].push_back(node);
-
-                        if(varRename->getDebug())
-                        {
-                            cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
-                        }
+                        cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
                     }
-
-                    //Return the defs from this node.
-                    return VariableRenaming::VarDefUseSynthAttr(defs, NULL);
                 }
-                default:
+
+                //Return the defs from this node.
+                return VariableRenaming::VarDefUseSynthAttr(defs, NULL);
+            }
+            default:
+            {
+                //For all non-defining Unary Ops, add all of them as uses
+                //We want to set all the varRefs as being used here
+                std::vector<SgNode*> uses;
+
+                //Guard agains unary ops that have no children (exception rethrow statement)
+                if(attrs.size() > 0)
                 {
-                    //For all non-defining Unary Ops, add all of them as uses
-                    //We want to set all the varRefs as being used here
-                    std::vector<SgNode*> uses;
                     uses.assign(attrs[0].getDefs().begin(), attrs[0].getDefs().end());
                     uses.assign(attrs[0].getUses().begin(), attrs[0].getUses().end());
-
-                    //Set all the uses as being used here.
-                    foreach(nodeVec::value_type& iter, uses)
-                    {
-                        //Get the unique name of the def.
-                        VarUniqueName * uName = varRename->getUniqueName(iter);
-                        ROSE_ASSERT(uName);
-
-                        //Add the varRef as a use at the current node of the ref's uniqueName
-                        //We will correct the reference later.
-                        varRename->getUseTable()[op][uName->getKey()].push_back(iter);
-
-                        if(varRename->getDebug())
-                        {
-                            cout << "Found use for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
-                        }
-                    }
-
-                    //Return the combined defs and uses.
-                    return VariableRenaming::VarDefUseSynthAttr(NULL, uses);
                 }
+
+                //Set all the uses as being used here.
+                foreach(nodeVec::value_type& iter, uses)
+                {
+                    //Get the unique name of the def.
+                    VarUniqueName * uName = varRename->getUniqueName(iter);
+                    ROSE_ASSERT(uName);
+
+                    //Add the varRef as a use at the current node of the ref's uniqueName
+                    //We will correct the reference later.
+                    varRename->getUseTable()[op][uName->getKey()].push_back(iter);
+
+                    if(varRename->getDebug())
+                    {
+                        cout << "Found use for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+                    }
+                }
+
+                //Return the combined defs and uses.
+                return VariableRenaming::VarDefUseSynthAttr(NULL, uses);
             }
-        }
-        else
-        {
-            cout << "Error: Unary Op without exactly 1 child." << endl;
-            ROSE_ASSERT(false);
         }
     }
     else if(isSgStatement(node))
@@ -1209,9 +1132,6 @@ bool VariableRenaming::mergeDefs(cfgNode curNode)
         cout << "merging defs..." << endl;
         printDefs(node);
     }
-    
-    //Get the previous edges in the CFG for this node
-    cfgEdgeVec inEdges = curNode.inEdges();
 
     //We have the definitions stored as follows:
     //defTable contans the definitions as propogated by the CFG analysis
@@ -1240,55 +1160,8 @@ bool VariableRenaming::mergeDefs(cfgNode curNode)
     //to the final version.
 
     tableEntry propDefs;
-
-
-    if(inEdges.size() == 1)
-    {
-        SgNode* prev = inEdges[0].source().getNode();
-
-        if(DEBUG_MODE)
-        {
-            cout << "Merging defs from " << prev->class_name() << prev << " to " << node->class_name() << node << endl;
-            printDefs(prev);
-        }
-
-        //Copy the previous node defs to the staging table
-        propDefs = defTable[prev];
-    }
-    else if(inEdges.size() > 1)
-    {
-        //Iterate all of the incoming edges
-        for(unsigned int i = 0; i < inEdges.size(); i++)
-        {
-            SgNode* prev = inEdges[i].source().getNode();
-
-            if(DEBUG_MODE)
-            {
-                cout << "Merging defs from " << prev->class_name() << prev << endl;
-                printDefs(prev);
-            }
-
-            //Perform the union of all the infoming definitions.
-            foreach(tableEntry::value_type& entry, defTable[prev])
-            {
-                //Insert the definitions for this node at the end of the list
-                propDefs[entry.first].insert(propDefs[entry.first].end(), entry.second.begin(), entry.second.end());
-            }
-        }
-    }
-
-    //Sort every vector in propDefs and remove duplicates
-    foreach(tableEntry::value_type& entry, propDefs)
-    {
-        std::sort(entry.second.begin(), entry.second.end());
-        std::unique(entry.second.begin(), entry.second.end());
-    }
-
-    if(DEBUG_MODE_EXTRA)
-    {
-        cout << "Merged propDefs ";
-        printDefs(propDefs);
-    }
+    //Retrieve the defs coming from previous cfgNodes
+    aggregatePreviousDefs(curNode, propDefs);
     
     //Replace every entry in staging table that has definition in original defs
     foreach(tableEntry::value_type& entry, originalDefTable[node])
@@ -1339,6 +1212,65 @@ bool VariableRenaming::mergeDefs(cfgNode curNode)
     return changed;
 }
 
+void VariableRenaming::aggregatePreviousDefs(cfgNode curNode, tableEntry& results)
+{
+    SgNode* node = curNode.getNode();
+    
+    //Get the previous edges in the CFG for this node
+    cfgEdgeVec inEdges = curNode.inEdges();
+
+    if(inEdges.size() == 1)
+    {
+        SgNode* prev = inEdges[0].source().getNode();
+
+        if(DEBUG_MODE)
+        {
+            cout << "Merging defs from " << prev->class_name() << prev << " to " << node->class_name() << node << endl;
+            printDefs(prev);
+        }
+
+        //Copy the previous node defs to the staging table
+        results = defTable[prev];
+    }
+    else if(inEdges.size() > 1)
+    {
+        //Iterate all of the incoming edges
+        for(unsigned int i = 0; i < inEdges.size(); i++)
+        {
+            SgNode* prev = inEdges[i].source().getNode();
+
+            if(DEBUG_MODE)
+            {
+                cout << "Merging defs from " << prev->class_name() << prev << endl;
+                printDefs(prev);
+            }
+
+            //Perform the union of all the infoming definitions.
+            foreach(tableEntry::value_type& entry, defTable[prev])
+            {
+                //Insert the definitions for this node at the end of the list
+                results[entry.first].insert(results[entry.first].end(), entry.second.begin(), entry.second.end());
+            }
+        }
+    }
+
+    //Sort every vector in propDefs and remove duplicates
+    foreach(tableEntry::value_type& entry, results)
+    {
+        std::sort(entry.second.begin(), entry.second.end());
+        //Create new sequence of unique elements and remove duplicate ones
+        entry.second.resize(std::unique(entry.second.begin(), entry.second.end()) - entry.second.begin());
+    }
+
+    if(DEBUG_MODE_EXTRA)
+    {
+        cout << "Merged propDefs ";
+        printDefs(results);
+    }
+
+    return;
+}
+
 bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode)
 {
     SgNode* node = curNode.getNode();
@@ -1348,6 +1280,7 @@ bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode)
     //We want to resolve the uses at the current node
     //We need to look to the defs at the current node, and match them
     //with the uses
+
 
     if(DEBUG_MODE)
         cout << "Resolving uses at " << node->class_name() << node << endl;
@@ -1372,6 +1305,27 @@ bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode)
         {
             cout << "Error: Use at node does not have propogated def at same node." << endl;
             ROSE_ASSERT(false);
+        }
+    }
+
+    tableEntry results;
+    //Get the previous defs
+    aggregatePreviousDefs(curNode, results);
+
+    //However, if there is a def at the current node, we want to use the previous
+    //def as the use for this node.
+
+    //Iterate every use at the current node
+    foreach(tableEntry::value_type& entry, useTable[node])
+    {
+        //If any of these uses are for a variable defined at this node, we will
+        //set the flag and correct it later.
+        if(originalDefTable[node].count(entry.first) != 0)
+        {
+            useTable[node][entry.first] = results[entry.first];
+
+            if(DEBUG_MODE)
+                cout << "Fixed use of local def." << endl;
         }
     }
 
