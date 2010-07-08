@@ -580,12 +580,12 @@ void preprocess(SgFunctionDefinition* func)
     vector<SgAndOp*> and_exps = querySubTree<SgAndOp>(func->get_body());
     foreach (SgAndOp* and_op, and_exps)
     {
-        if (containsMofifyingExpressions(and_op->get_rhs_operand()))
+        if (containsModifyingExpression(and_op->get_rhs_operand()))
         {
             SgConditionalExp* cond = buildConditionalExp(
                     copyExpression(and_op->get_lhs_operand()),
                     copyExpression(and_op->get_rhs_operand()),
-                    buildBoolVal(true));
+                    buildBoolValExp(true));
             replaceExpression(and_op, cond);
         }
     }
@@ -593,11 +593,11 @@ void preprocess(SgFunctionDefinition* func)
     vector<SgOrOp*> or_exps = querySubTree<SgOrOp>(func->get_body());
     foreach (SgOrOp* or_op, or_exps)
     {
-        if (containsMofifyingExpressions(or_op->get_rhs_operand()))
+        if (containsModifyingExpression(or_op->get_rhs_operand()))
         {
             SgConditionalExp* cond = buildConditionalExp(
                     copyExpression(or_op->get_lhs_operand()),
-                    buildBoolVal(true),
+                    buildBoolValExp(true),
                     copyExpression(or_op->get_rhs_operand()));
             replaceExpression(or_op, cond);
         }
