@@ -41,8 +41,6 @@ EXTRA_DIST = $(TESTCODES)
 
 CLEANFILES = 
 
-include_HEADERS =
-
 check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "*********************************************************************************************************"

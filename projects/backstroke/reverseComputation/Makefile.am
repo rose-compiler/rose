@@ -25,8 +25,6 @@ EXTRA_DIST = test
 
 CLEANFILES = 
 
-include_HEADERS =
-
 ALL_TESTCODES =
 
 TEST_Objects=test0.C test1.C test2.C test3.C 

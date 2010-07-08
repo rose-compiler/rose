@@ -17,8 +17,6 @@ libBackstrokeNormalizations_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
 EXTRA_DIST = CPPDefinesAndNamespaces.h
 
-include_HEADERS = 
-
 CLEANFILES = 
 
 
