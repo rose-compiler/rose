@@ -218,7 +218,6 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 
 # Upload web pages to the LBL server 
 copyWebPages: make-web-pages
-#	cd ROSE_WebPages; rsync -avz * quinlan1@cmg-1:/green_dev/www/casc/rose
 #       Liao 5/6/2010 migrate to the new web server
 #	Liao, 7/13/2009, must ensure the file permissions here
 	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@portal-auth.nersc.gov:/project/projectdirs/rosecompiler/www.rosecompiler.org
@@ -226,15 +225,15 @@ copyWebPages: make-web-pages
 #	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 
 # Liao 12/7/2009, we mirror the content of the internal 
-# /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+# /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
 # to a public http://www.rosecompiler.org/edg_binaries/
-EDG_BINARY_STASH_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+EDG_BINARY_STASH_PATH=/nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
 # *.tar.gz within rsync is essential to only synchronize .tar.gz files.
 # scripts/hudson/checkEDGBinaryFiles.sh untars all .tar.gz and grep for EDG files, it returns an error code 
 # if any EDG source files are found
 syncEDGBinaries:
 	test -d ${EDG_BINARY_STASH_PATH} && $(top_srcdir)/scripts/hudson/checkEDGBinaryFiles.sh && \
-	rsync -avz /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/*.tar.gz -e ssh liaoch@web-dev.nersc.gov:/www/host/rosecompiler/edg_binaries \
+	rsync -avz /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/*.tar.gz -e ssh liaoch@web-dev.nersc.gov:/www/host/rosecompiler/edg_binaries \
 	|| echo "${EDG_BINARY_STASH_PATH} does not exist, this rule can only run from within LLNL! "
 
 copyWebPagesPanas: make-web-pages

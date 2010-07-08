@@ -1,7 +1,15 @@
 #include "eventReverser.h"
 #include "utilities.h"
 #include <boost/tuple/tuple.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
+#define foreach BOOST_FOREACH
+
+using namespace std;
+using namespace boost;
+using namespace SageBuilder;
+using namespace SageInterface;
 
 ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
 {
@@ -23,19 +31,23 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
         // Make sure the type is integer type.
         if (operand->get_type()->isIntegerType())
         {
+            // Note that transform ++a into a-- makes a lvalue expression a rvalue one, 
+            // which may bring trouble in this recursive way. For example, what is the
+            // reverse expression of ++++a?
+
             // ++ and -- can both be reversed without state saving
             if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(unary_op))
                 return ExpPair(
                         fwd_exp,
                         buildMinusMinusOp(
-                            copyExpression(operand), 
+                            rvs_operand_exp, 
                             reverseOpMode(pp_op->get_mode())));
 
             if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(unary_op))
                 return ExpPair(
                         fwd_exp,
                         buildPlusPlusOp(
-                            copyExpression(operand), 
+                            rvs_operand_exp, 
                             reverseOpMode(mm_op->get_mode())));
         }
         // If the type is float point type (float & double), we use state saving.
@@ -706,8 +718,10 @@ ExpPair EventReverser::processFunctionCallExp(SgFunctionCallExp* func_exp)
     EventReverser func_generator(func_decl);
     vector<FuncDeclPair> func_pairs = func_generator.outputFunctions();
     if (func_processed_.count(func_decl) == 0)
+	{
         foreach(const FuncDeclPair& func_pair, func_pairs)
             output_func_pairs_.push_back(func_pair);
+	}
     SgFunctionDeclaration* fwd_func = func_pairs.back().first;
     SgFunctionDeclaration* rvs_func = func_pairs.back().second;
 
