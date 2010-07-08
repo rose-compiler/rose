@@ -1,0 +1,25 @@
+
+***********************************
+Instructions to compile and install
+***********************************
+
+* Mandatory environment variables to set:
+
+	BOOST_ROOT: the root folder of the boost installation
+	ROSE_ROOT: the root folder of the ROSE installation
+
+* Optional environment variables to set:
+	
+	INSTALL_ROOT: the folder where you want to install the lib and header files
+
+* To install, just run:
+
+	./install.sh
+
+* To start from scratch, run:
+
+        make maintainer-clean
+        ./install.sh
+
+
+	
