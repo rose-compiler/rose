@@ -86,6 +86,7 @@ set( STORAGECLASSES_SRC
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
@@ -436,7 +437,10 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemanticsExpr.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/VirtualMachineSemantics.C
 )
 
