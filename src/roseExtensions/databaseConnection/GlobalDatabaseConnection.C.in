@@ -176,7 +176,6 @@ int GlobalDatabaseConnection::initialize( int drop ) {
 
 	if(! connection.select_db( dbName ) ) {
 		// try again after creating the DB
-		cout << " creating db " << dbName << endl; // debug
 		connection.create_db( dbName );
 		if(! connection.select_db( dbName ) ) {
 			cout << " create fail " << connection.error() << endl; // debug

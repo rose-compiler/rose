@@ -62,14 +62,13 @@ class testSideEffectTraversal
 	    for(iter i2 = sideEffects.begin(); i2 != sideEffects.end(); ++i2)
 	      cout << *i2 << " ";
 	    cout << endl;
-	  }
+    }
 
 	  inheritedAttribute.setParentName(funcName);
 
 	} break;
       case V_SgFunctionCallExp: 
 	{
-
 #if 0
 	  string funcName = getQualifiedFunctionName((SgFunctionCallExp*)astNode);
 
@@ -84,7 +83,6 @@ class testSideEffectTraversal
 	} // fall through
       default: 
 	{
-
 	  if ( (astNode->get_file_info() != NULL) &&
 	       (inheritedAttribute.getValid()) ) {
 
@@ -103,9 +101,9 @@ class testSideEffectTraversal
 	    if (sideEffects.begin() != sideEffects.end()) {
 	      cout << "Statement Side Effects " << stmt << ": ";
 	      for(iter i2 = sideEffects.begin(); i2 != sideEffects.end(); ++i2)
-		cout << *i2 << " ";
+          cout << *i2 << " ";
 	      cout << endl;
-	    }
+      }
 
 	  }
 	} break;
@@ -120,7 +118,7 @@ class testSideEffectTraversal
   int mUniquifier;
 };
 
-
+// milki (07/07/2010) This traversal isn't used
 class testNodeSideEffectTraversal
 : public SgTopDownProcessing<testSideEffectAttribute>
 {
@@ -266,7 +264,6 @@ int main(int argc, char **argv) {
   nodeTreeTraversal.traverse( project, nodeInheritedAttribute );
 
   delete sideEffect;
-
 
   return 0;
 }

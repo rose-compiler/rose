@@ -290,7 +290,7 @@ class SideEffect : public SideEffectAnalysis {
 #define MAXSTRINGSZ 512
 
 #define DEBUG_OUTPUT
-#undef  DEBUG_OUTPUT
+#undef DEBUG_OUTPUT
 
 #define LMODFUNC   "__lmod"
 #define LMODFORMAL "formal"
@@ -511,6 +511,12 @@ pair<typename Map::const_iterator, typename Map::const_iterator> lookup(Map& M, 
   pair<typename Map::const_iterator, typename Map::const_iterator> p;
 
   p = M.equal_range(func);
+#ifdef DEBUG_OUTPUT
+  if ( p.first != p.second ) {
+  cout << "For " << func << " found <" << (*p.first).first << "," << (*p.first).second << ">" << endl;
+  }
+#endif
+
 
   return p;
 }
@@ -590,6 +596,10 @@ SideEffect::insertFormal(const char *func, const char *formal, int num)
   myformal = new char[(strlen(formal) + 1)];
   strcpy(myformal, formal);
 
+#ifdef DEBUG_OUTPUT
+  cout << "INSERTING formal " << myformal << " at " << num << " for "
+    << func << endl;
+#endif
   m->insert(str_int_map::value_type(myformal, num));
 
   return 1;
@@ -638,6 +648,11 @@ SideEffect::insertFormalByPos(const char *func, const char *formal, int num)
   myformal = new char[(strlen(formal) + 1)];
   strcpy(myformal, formal);
 
+#ifdef DEBUG_OUTPUT
+  cout << "INSERTING formalbypos " << myformal << " at " << num << " for "
+    << func << endl;
+#endif
+
   m->insert(int_str_map::value_type(num, myformal));
 
   return 1;
@@ -670,6 +685,10 @@ SideEffect::lookupFormal(const char *func, const char *formal)
     num = (*i2).second;
     ++i2;
     assert(i2 == p2.second);
+
+#ifdef DEBUG_OUTPUT
+    cout << "For formal " << func << " found pos " << num << endl;
+#endif
     return num;
 
   }
@@ -704,6 +723,10 @@ SideEffect::lookupFormalByPos(const char *func, int num)
     formal = (*i2).second;
     ++i2;
     assert(i2 == p2.second);
+
+#ifdef DEBUG_OUTPUT
+    cout << "For formalbypos " << num << " found " << formal << endl;
+#endif
     return formal;
 
   }
@@ -1155,7 +1178,6 @@ class MyTraversal
   MyInheritedAttribute evaluateInheritedAttribute(SgNode* astNode,
 						  MyInheritedAttribute inheritedAttribute) 
   {
-
     mUniquifier++;
     
     switch(astNode->variantT())
@@ -1448,8 +1470,11 @@ class MyTraversal
 					      calleeRow.get_functionName(), 
 					      calleeRow.get_projectId());
 
+#if 0
+// milki (07/01/2010) Is this debug statement valid?
 #ifdef DEBUG_OUTPUT
 	    cout << "NO funcId: " << data.get_id() << "for functionName " << data.get_functionName() << " id " << data.get_projectId() << endl;
+#endif
 #endif
 
 	    // add callee as a vertex in the call graphs
@@ -1639,9 +1664,12 @@ class MyTraversal
 				       actual.c_str(),
 				       scope, 
 				       argNum);
-		  
+
 #ifdef DEBUG_OUTPUT
-		  cout << "INSERTING edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << endl;
+      // milki (07/07/2010) data no longer a valid reference. Assuming
+      // calleeRow
+		  //cout << "INSERTING edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << endl;
+		  cout << "INSERTING edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << calleeRow.get_functionName() << endl;
 #endif
 
 		  // insert the edge row entry in the database
@@ -1848,7 +1876,7 @@ class MyTraversal
 	    mFoundLHS = false;
 
 #ifdef DEBUG_OUTPUT
-	    cout << "lval: " << getVariantName(astNode->variantT()) << " line: " << expr->get_file_info()->get_line() << " cur_line: " << expr->get_file_info()->getCurrentLine() << endl;
+	    cout << "lval: " << getVariantName(astNode->variantT()) << " line: " << expr->get_file_info()->get_line() << " cur_line: " << expr->get_file_info()->get_line() << endl;
 #endif
 	    SgBinaryOp *bin = isSgBinaryOp(astNode);
 
@@ -1895,7 +1923,6 @@ class MyTraversal
 	  inheritedAttribute.setLHS(0);
 
 	  if (destructiveAssign && !mFoundLHS) {
-  
 	    mFoundLHS = true;
 
 	    // determine the scope of this variable reference
@@ -1930,7 +1957,6 @@ class MyTraversal
 		}
 
 	      }
-
 	    } // end if(p != NULL)
 	    
 	    // if the variable reference was not passed as a formal parameter,
@@ -2023,9 +2049,12 @@ class MyTraversal
 				 actual.c_str(),
 				 scope, 
 				 0);
-	    
+
 #ifdef DEBUG_OUTPUT
-	    cout << "INSERTING dummy edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << " tmp is " << tmp << endl;
+      // milki (07/07/2010) data no longer referenced. Assuming
+      // dummyCallee
+	    //cout << "INSERTING dummy edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << " tmp is " << tmp << endl;
+	    cout << "INSERTING dummy edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << dummyCallee.get_functionName() << endl;
 #endif
 
 	    // insert the entry into the database
@@ -2397,6 +2426,8 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   build_component_lists(*multigraph, num_scc, component_number, components);
   
 #ifdef DEBUG_OUTPUT
+  cout << "There are " << components.size() << " SCCs in this multigraph "
+    << endl;
   for (cg_vertex s = 0; s < components.size(); ++s) {
     
     cout << "component: " << s << endl;
@@ -2553,7 +2584,9 @@ class solve_imodplus : public boost::base_visitor<solve_imodplus> {
   template <class Vertex, class G>
   void operator()(Vertex p, G& g) {
     string pFunc = get( boost::vertex_dbg_data, g, p).get_functionName();
-
+#ifdef DEBUG_OUTPUT
+    cout << "Operating on solve_imodplus for " << pFunc.c_str() << endl;
+#endif
     typedef typename boost::graph_traits<G>::out_edge_iterator out_edge_iter;
     pair<out_edge_iter, out_edge_iter> ep;
 
@@ -2562,6 +2595,11 @@ class solve_imodplus : public boost::base_visitor<solve_imodplus> {
       callVertex q = boost::target(*(ep.first), g);
       string qFunc = get( boost::vertex_dbg_data, g, q).get_functionName();
       int paramNum = get( boost::edge_dbg_data, g, (*ep.first) ).get_ordinal();
+
+#ifdef DEBUG_OUTPUT
+    cout << "Examining " << qFunc.c_str() << " with "
+      << paramNum << " parameters" << endl;
+#endif
 
       if (paramNum == -1)
 	continue;
@@ -2573,8 +2611,15 @@ class solve_imodplus : public boost::base_visitor<solve_imodplus> {
       if (!strcmp(qFunc.c_str(), LMODFUNC)) {
 	
 	string actual = get( boost::edge_dbg_data, g, (*ep.first) ).get_actual();
-	if (mSideEffectPtr->insertIMODPlus(pFunc.c_str(), actual.c_str()))
+#ifdef DEBUG_OUTPUT
+  cout << "Inserting to IMODPlus " << actual.c_str() << " for "
+    << pFunc.c_str() << endl;
+#endif
+	if (mSideEffectPtr->insertIMODPlus(pFunc.c_str(), actual.c_str())) {
 	  mReachedFixedPoint = false;
+  }
+    
+
 
       }
 
@@ -2599,7 +2644,7 @@ class solve_imodplus : public boost::base_visitor<solve_imodplus> {
 	  break;
 	}
 #ifdef DEBUG_OUTPUT
-	cout << "   " << (*i).second << " index: " << lookupFormal(qFunc.c_str(), (*i).second) << endl;;
+	cout << "   " << (*i).second << " index: " << mSideEffectPtr->lookupFormal(qFunc.c_str(), (*i).second) << endl;;
 #endif
       }
     }
@@ -2765,7 +2810,6 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 #endif
 	insertGMOD(pName.c_str(), (*qIt));
       }
-
     }
   } // end foreach q adjacent to p
 
@@ -2912,13 +2956,13 @@ class solve_dmod : public boost::base_visitor<solve_dmod> {
       mSideEffectPtr->lookupDMOD(site.c_str());
     int do_global = 0;
     
-    if (dmodpair.first == dmodpair.second) 
+    if (dmodpair.first == dmodpair.second)
       do_global = 1;
 
     if ( strcmp( actual.c_str(), "void") ) {
       for (map_type::const_iterator i = itpair.first; i != itpair.second; ++i) {
 #ifdef DEBUG_OUTPUT
-	cout << "checking " << (*i).second << " in " << qFunc.c_str() << " as paramNum " << paramNum << endl;
+	cout << "checking dmodpair " << (*i).second << " in " << qFunc.c_str() << " as paramNum " << paramNum << endl;
 #endif	
 
 	if ( mSideEffectPtr->lookupFormal( qFunc.c_str(), (*i).second ) == paramNum ) {
@@ -2931,6 +2975,13 @@ class solve_dmod : public boost::base_visitor<solve_dmod> {
 	  }
 	  break;
 	} 
+#ifdef DEBUG_OUTPUT
+  else
+  {
+    cout << "dmodpair does not match formal param pos " <<
+	mSideEffectPtr->lookupFormal( qFunc.c_str(), (*i).second ) << endl;
+  }
+#endif
       }
     }
 
@@ -3076,7 +3127,6 @@ stripFileExtension(string fileName)
 set<string>
 stripFileExtensions(list<string> fileNames)
 {
-  cout << "Called stripFileExtensions" << endl;
   set<string> strippedFileNames;
 
   for(list<string>::iterator it = fileNames.begin(); it != fileNames.end(); ++it) {
@@ -3290,6 +3340,9 @@ SideEffect::calcSideEffect(SgProject* project)
 
       // traverse the AST derived from the source tree to populate
       // the call graph and the above tables
+#ifdef DEBUG_OUTPUT
+      cout << "Traversing AST to populate call graph and tables" << endl;
+#endif
       MyTraversal treeTraversal(projectId, db, callgraphs[i], simpleCallgraph,
 				&definedFuncs, &mCalledFuncs, this);
       MyInheritedAttribute inheritedAttribute(project);
@@ -3899,8 +3952,6 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 {
   int i;
 
-  cout << "In doSideEffect" << endl;
-  
   // we will parse the source files, populating a database with
   // information gleaned from each source file.  
 
@@ -3919,6 +3970,9 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
   CallGraph *simpleCallgraph;
   CallGraph **callgraphs = new CallGraph *[nodeList->size()];
+#ifdef DEBUG_OUTPUT
+  cout << "Callgraph created with " << nodeList->size() << " nodes" << endl;
+#endif
   CallGraph *callgraph;
   GlobalDatabaseConnection **dbs = new GlobalDatabaseConnection *[nodeList->size()];
 
@@ -3945,7 +3999,6 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 
   toplevelDb.setDatabaseParameters(NULL, NULL, NULL, (char *)sanitizedOutputFileName.c_str());
-  cout << "Creating db for " << sanitizedOutputFileName.c_str() << endl;
 
   int initOk =  toplevelDb.initialize();
   assert(initOk == 0);
@@ -3998,7 +4051,6 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     //    string fileName = stripFileExtension((*it)->getFileName());
 
     string fileName = stripFileExtension(nodeListFileNames[i]);
-    cout << "Setting gdb for " << fileName.c_str() << endl;
 
     strippedFileNames[i] = fileName;
 
@@ -4562,6 +4614,20 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 #ifdef DEBUG_OUTPUT
   print_dmod DMODPrinter(this);
   depth_first_search(*simpleCallgraph, visitor(make_dfs_visitor(DMODPrinter)));
+
+  cout << endl << endl << "|---Pretty printing MODs---|" << endl;
+  cout << "LOCALS:" << endl;
+  prettyprint(locals);
+  cout << "IMODPLUS:" << endl;
+  prettyprint(imodplus);
+  cout << "RMOD:" << endl;
+  prettyprint(rmod);
+  cout << "GMOD:" << endl;
+  prettyprint(gmod);
+  cout << "LMOD:" << endl;
+  prettyprint(lmod);
+  cout << "DMOD:" << endl;
+  prettyprint(dmod);
 #endif  
 
   for (i = 0; i < strippedFileNames.size(); ++i) {
