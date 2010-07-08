@@ -9,12 +9,27 @@ int i = 0, j = 0, k = 0;
 int a[100];
 int b[100];
 
+
+void test_and_or()
+{
+    i || j;
+    i || j++;
+    (i, j) || k;
+    i || (j, k);
+    (i ? j : k) || i;
+    i || (j ? k : i);
+
+    (i || i++) || i++;
+    i || (i++ || i++);
+
+    i = (j || k++);
+}
+
 void test_index()
 {
     a[i++] = b[j++];
     int *p = &a[0];
     i = (p++)[j++];
-
 }
 
 void test_declaration()
@@ -25,9 +40,13 @@ void test_declaration()
     int k = j++ ? 1 : 2;
 
     if (int i = j++);
-    //for(int i = 0; i < 10; ++i);
-    //for (int i = j++, k = i++; int t = i;);
+    switch(int i = j++);
+    while (int i = j++);
+
+    for(int i = 0; i < 10; ++i);
+    for (int i = j++, k = i++; int t = i;);
     for (; int t = i;);
+    for (int t = i;;);
 }
 
 void test_conditional()
