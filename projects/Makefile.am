@@ -38,7 +38,9 @@ SUBDIRS = \
      RTED \
      taintcheck \
      QtDesignerPlugins \
-     RoseQt
+     RoseQt \
+     simulator \
+     PolyhedralDependenceAnalysis
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
 # in ROSE, so lets' move on and return to compass later for this level of support.
@@ -70,9 +72,13 @@ if ! OLD_COMPILER_VERSION
 endif
 endif
 
-#if ROSE_USE_SAT
-   SUBDIRS += SatSolver
-#endif
+# DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
+# be missing at configure time.
+# if ROSE_USE_SAT
+SUBDIRS += SatSolver
+# endif
+
+
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

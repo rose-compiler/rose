@@ -105,8 +105,9 @@ main ( int argc, char * argv[] )
           status = system ( moving.c_str() );
           ROSE_ASSERT(status == 0);
 
+#if DEBUG_FILE_IO
           printf ("BEFORE WRITING AST: Size of AST = %d \n",numberOfNodes());
-
+#endif
        // testAST(project_test);
 
 #if 0
@@ -136,20 +137,20 @@ main ( int argc, char * argv[] )
      AST_FILE_IO::compressAstInMemoryPool();
 #endif
 
-// #if DEBUG_FILE_IO
+#if DEBUG_FILE_IO
      printf ("Writing the AST to disk... \n");
-// #endif
+#endif
      AST_FILE_IO::writeASTToFile ( inputFileName + ".binary" );
 
   // delete the memroy pools and prepare them for reading back the ast the file IO
-// #if DEBUG_FILE_IO
+#if DEBUG_FILE_IO
      printf ("Clear existing memory pools... \n");
-// #endif
+#endif
      AST_FILE_IO::clearAllMemoryPools( );
 
-// #if DEBUG_FILE_IO
+#if DEBUG_FILE_IO
      printf ("Read in the AST from disk... \n");
-// #endif
+#endif
      project_test = (SgProject*) (AST_FILE_IO :: readASTFromFile ( inputFileName + ".binary" ) );
 
   // AST_FILE_IO::printListOfPoolSizes();
@@ -173,7 +174,9 @@ main ( int argc, char * argv[] )
      cout << "done " << endl;
 #endif
 
+#if DEBUG_FILE_IO
      printf ("AFTER READING AST: Size of AST = %d \n",numberOfNodes());
+#endif
 
   // testAST(project_test);
 

@@ -16,7 +16,7 @@
  *
  *  This policy can be used to emulate the execution of a single basic block of instructions.  It is similar in nature to the
  *  FindConstantsPolicy except much simpler, much faster, and much more memory-lean.  The main classes are:
- * 
+ *
  *  <ul>
  *    <li>Policy: the policy class used to instantiate X86InstructionSemantic instances.</li>
  *    <li>State: represents the state of the virtual machine, its registers and memory.</li>
@@ -182,7 +182,7 @@ struct MemoryCell {
     /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
      *  have a shorter name.  See the ValueType<>::rename() method for details. */
     void print(std::ostream&, RenameMap *rmap=NULL) const;
-    
+
     friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
         return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes && a.clobbered==b.clobbered && a.written==b.written;
     }
@@ -222,7 +222,7 @@ struct State {
 
     /** Tests registers of two states for equality. */
     bool equal_registers(const State&) const;
-    
+
     /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
      *  instruction if the policy's p_discard_popped_memory property is set. */
     void discard_popped_memory();
@@ -296,7 +296,7 @@ public:
         p.print(o, NULL);
         return o;
     }
-    
+
     /** Returns true if the specified value exists in memory and is provably at or above the stack pointer.  The stack pointer
      *  need not have a known value. */
     bool on_stack(const ValueType<32> &value) const;
@@ -359,7 +359,7 @@ public:
     ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) const {
         return ValueType<ToLen>(a);
     }
-    
+
     /** Reads a value from memory in a way that always returns the same value provided there are not intervening writes that
      *  would clobber the value either directly or by aliasing.  Also, if appropriate, the value is added to the original
      *  memory state (thus changing the value at that address from an implicit named value to an explicit named value).
@@ -387,7 +387,7 @@ public:
 
         if (!aliased && &state!=&orig_state) {
             /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that state. Therefore
-             * use the value from the initial memory state (creating it if necessary). */    
+             * use the value from the initial memory state (creating it if necessary). */
             for (Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
                 if (new_cell.must_alias(*mi)) {
                     ROSE_ASSERT(!(*mi).clobbered);
@@ -424,7 +424,7 @@ public:
         if (addr==state.gpr[x86_gpr_bp]) return MRT_FRAME_PTR;
         return MRT_OTHER_PTR;
     }
-    
+
     /** Writes a value to memory. If the address written to is an alias for other addresses then the other addresses will be
      *  clobbered. Subsequent reads from clobbered addresses will return new values. See also, mem_read(). */
     template <size_t Len> void mem_write(State &state, const ValueType<32> &addr, const ValueType<Len> &data) {
@@ -875,7 +875,7 @@ public:
         return ValueType<Len>();
     }
 };
-    
+
 }; /*namespace*/
 
 

@@ -30,7 +30,7 @@ void outputMap ( SgCopyHelp & help )
    }
 
 void
-resetVariableDefnitionSupport ( const SgInitializedName* originalInitializedName, SgInitializedName* copyInitializedName, SgDeclarationStatement* targetDeclaration )
+resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedName, SgInitializedName* copyInitializedName, SgDeclarationStatement* targetDeclaration )
    {
   // DQ (10/8/2007): This is s supporting function to the SgInitializedName::fixupCopy_scopes() member function.
 
@@ -104,7 +104,7 @@ resetVariableDefnitionSupport ( const SgInitializedName* originalInitializedName
 
           default:
              {
-               printf ("Error: default reached in resetVariableDefnitionSupport() originalDeclaration = %p = %s \n",originalDeclaration,originalDeclaration->class_name().c_str());
+               printf ("Error: default reached in resetVariableDefinitionSupport() originalDeclaration = %p = %s \n",originalDeclaration,originalDeclaration->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -157,7 +157,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                   {
                     case V_SgVariableDeclaration:
                        {
-                         resetVariableDefnitionSupport(this,initializedName_copy,NULL);
+                         resetVariableDefinitionSupport(this,initializedName_copy,NULL);
                          break;
                        }
 
@@ -165,7 +165,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                        {
                          SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(parent);
                          ROSE_ASSERT(enumDeclaration != NULL);
-                         resetVariableDefnitionSupport(this,initializedName_copy,enumDeclaration);
+                         resetVariableDefinitionSupport(this,initializedName_copy,enumDeclaration);
                          break;
                        }
 
@@ -177,7 +177,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                       // The parent of the SgFunctionParameterList might not have been set yet, so allow for this!
                          if (functionDeclaration != NULL)
                             {
-                              resetVariableDefnitionSupport(this,initializedName_copy,functionDeclaration);
+                              resetVariableDefinitionSupport(this,initializedName_copy,functionDeclaration);
                             }
                          break;
                        }

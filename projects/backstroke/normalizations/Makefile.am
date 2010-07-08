@@ -1,0 +1,34 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LINK	 = $(CXXLINK)
+
+# noinst_LTLIBRARIES lists all the librarlies that should be built with libtool, but not installed
+noinst_LTLIBRARIES =  libBackstrokeNormalizations.la
+
+libBackstrokeNormalizations_ladir = .
+libBackstrokeNormalizations_la_DEPENDENCIES = 
+libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C Utilities.C CFGReverserProofOfConcept.C expNormalization.C
+libBackstrokeNormalizations_la_HEADERS = ExtractFunctionArguments.h Utilities.h CFGReverserProofOfConcept.h expNormalization.h
+libBackstrokeNormalizations_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# bin_PROGRAMS lists all the programs which should be compiled and installed
+#bin_PROGRAMS = normalizationTranslator 
+
+#normalizationTranslator_SOURCES =  NormalizationTranslator.C 
+#normalizationTranslator_LDADD =  libBackstrokeNormalizations.la 
+
+
+# EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
+EXTRA_DIST = CPPDefinesAndNamespaces.h
+
+include_HEADERS = 
+
+CLEANFILES = 
+
+
+check-local:
+	@echo "*********************************************************************************************************"
+	@echo "****** ROSE/projects/backstroke/normalizations: make check rule complete (terminated normally) ******"
+	@echo "*********************************************************************************************************"

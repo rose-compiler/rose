@@ -1,0 +1,6 @@
+
+int var;
+
+void kernel() {
+	
+}

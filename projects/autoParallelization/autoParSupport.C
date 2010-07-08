@@ -525,9 +525,21 @@ namespace AutoParallelization
   // Variable classification for a loop node based on liveness analysis
   // Collect private, firstprivate, lastprivate, reduction and save into attribute
   // We only consider scalars for now 
+  // Algorithm: private and reduction variables cause dependences (being written)
+  //            firstprivate and lastprivate variables are never being written in the loop (no dependences)
+    /*                              live-in      live-out
+                     shared            Y           Y      no written, no dependences: no special handling, shared by default 
+                     private           N           N      written (depVars), need privatization: depVars- liveIns - liveOuts  
+                     firstprivate      Y           N      liveIns - LiveOus - writtenVariables
+                     lastprivate       N           Y      liveOuts - LiveIns 
+                     reduction         Y           Y      depVars Intersection (liveIns Intersection liveOuts)
+                     */ 
+ 
   void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute,LoopTreeDepGraph* depgraph)
   {
     ROSE_ASSERT(sg_node&&attribute&&depgraph);
+    ROSE_ASSERT (isSgForStatement(sg_node));
+
     // Variable liveness analysis: original ones and 
     // the one containing only variables with some kind of dependencies
     std::vector<SgInitializedName*> liveIns0, liveIns;
@@ -542,7 +554,8 @@ namespace AutoParallelization
     remove(liveIns0.begin(),liveIns0.end(),invarname);
     remove(liveOuts0.begin(),liveOuts0.end(),invarname);
 
-    std::vector<SgInitializedName*> allVars,depVars, invariantVars, privateVars,lastprivateVars, firstprivateVars,reductionVars, reductionResults;
+    std::vector<SgInitializedName*> allVars,depVars, invariantVars, privateVars,lastprivateVars, 
+      firstprivateVars,reductionVars, reductionResults;
     // Only consider scalars for now
     CollectVisibleVaribles(sg_node,allVars,invariantVars,true);
     CollectVariablesWithDependence(sg_node,depgraph,depVars,true);
@@ -554,18 +567,12 @@ namespace AutoParallelization
         cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
       }
     }
-
-    // We should only concern about variables with some kind of dependences
-    // Since all those variables cause some kind of dependencies 
-    // which otherwise prevent parallelization
-    /*               live-in      live-out
-                     private           N           N      depVars- liveIns - liveOuts  
-                     lastprivate       N           Y      liveOuts - liveIns
-                     firstprivate      Y           N      liveIns - liveOuts
-                     reduction         Y           Y      liveIns Intersection liveOuts
-                     */ 
     sort(liveIns0.begin(), liveIns0.end());
     sort(liveOuts0.begin(), liveOuts0.end());
+
+    // We concern about variables with some kind of dependences
+    // Since private and reduction variables cause some kind of dependencies ,
+    // which otherwise prevent parallelization
     // liveVars intersection depVars
     //Remove the live variables which have no relevant dependencies
     set_intersection(liveIns0.begin(),liveIns0.end(), depVars.begin(), depVars.end(),
@@ -578,6 +585,7 @@ namespace AutoParallelization
     // shared: scalars for now: allVars - depVars, 
 
     //private:
+    //---------------------------------------------
     //depVars- liveIns - liveOuts
     std::vector<SgInitializedName*> temp;
     set_difference(depVars.begin(),depVars.end(), liveIns.begin(), liveIns.end(),
@@ -598,8 +606,13 @@ namespace AutoParallelization
       if(enable_debug)
         cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
     }
-    //lastprivate: 
-    set_difference(liveOuts.begin(), liveOuts.end(), liveIns.begin(), liveIns.end(),
+
+    //lastprivate: liveOuts - LiveIns 
+    // Must be written and LiveOut to have the need to preserve the value:  DepVar Intersect LiveOut
+    // Must not be Livein to ensure correct semantics: private for each iteration, not getting value from previous iteration.
+    //  e.g.  for ()   {  a = 1; }  = a; 
+    //---------------------------------------------
+    set_difference(liveOuts.begin(), liveOuts.end(), liveIns0.begin(), liveIns0.end(),
         inserter(lastprivateVars, lastprivateVars.begin()));
 
     if(enable_debug)
@@ -611,6 +624,7 @@ namespace AutoParallelization
         cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
     }
     // reduction recognition
+    //---------------------------------------------
     // Some 'bad' examples have reduction variables which are not used after the loop
     // So we relax the constrains as liveIns only for reduction variables
 #if 0
@@ -621,26 +635,40 @@ namespace AutoParallelization
     reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
 #endif   
 
-    // firstprivate:  liveIns - reductionResults - liveOuts
+#if 0
+    // this code is wrong as reduction variables definitely cause dependences
+    // They don't intersect with firstprivate variables at all.
+    // firstprivate:  liveIns - reductionResults  - liveOuts
     // reduction variables with relaxed constrains (not liveOut) may be wrongfully recognized 
-    // as firstprivate, so we recognize reduction variables before recoginzing 
+    // as firstprivate, so we recognize reduction variables before recognizing 
     // firstprivate and exclude reduction variables first.
-    std::vector<SgInitializedName*> temp2;
-    set_difference(liveIns.begin(), liveIns.end(), reductionResults.begin(),reductionResults.end(),
-        inserter(temp2, temp2.begin()));
-    set_difference(temp2.begin(), temp2.end(), liveOuts.begin(),liveOuts.end(),
-        inserter(firstprivateVars, firstprivateVars.begin()));
+    //set_difference(liveIns0.begin(), liveIns0.end(), reductionResults.begin(),reductionResults.end(),
+    //inserter(temp2, temp2.begin()));
+    // set_difference(temp2.begin(), temp2.end(), liveOuts.begin(),liveOuts.end(),
+    //    inserter(firstprivateVars, firstprivateVars.begin()));
+#endif        
+    // Liao 5/28/2010: firstprivate variables should not cause any dependencies, equal to should be be written in the loop    
+    // firstprivate:  liveIns - LiveOuts - writtenVariables (or depVars)
+    //---------------------------------------------
+    //     liveIn : the need to pass in value
+    //     not liveOut: differ from Shared, we considered shared first, then firstprivate
+    //     not written: ensure the correct semantics: each iteration will use a copy from the original master, not redefined
+    //                  value from the previous iteration
     if(enable_debug)
       cout<<"Debug dump firstprivate:"<<endl;
+      
+    std::vector<SgInitializedName*> temp2;
+    set_difference(liveIns0.begin(), liveIns0.end(), liveOuts0.begin(),liveOuts0.end(),
+        inserter(temp2, temp2.begin()));
+    set_difference(temp2.begin(), temp2.end(), depVars.begin(), depVars.end(),
+        inserter(firstprivateVars, firstprivateVars.begin()));
     for (std::vector<SgInitializedName*>::iterator iter = firstprivateVars.begin(); iter!= firstprivateVars.end();iter++) 
     {
-      attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
-      if(enable_debug)
-        cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+       attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
+        if(enable_debug)
+          cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
     }
-
-
-  }
+  } // end AutoScoping()
 
   // Recognize reduction variables for a loop
   /* 
@@ -1144,10 +1172,11 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
              vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
              if (vec.size() == 0)
              {
-                 cerr<<"Error: cannot find a reaching definition for an initialized name:"<<endl;
-                 cerr<<"initName:"<<initName->get_name().getString()<<endl;
-                // ROSE_ASSERT (vec.size()>0);
-                break; 
+               cerr<<"Warning: cannot find a reaching definition for an initialized name:"<<endl;
+               cerr<<"initName:"<<initName->get_name().getString()<<"@";
+               cerr<<varRef->get_file_info()->get_line()<<":"<< varRef->get_file_info()->get_col() <<endl;
+               // ROSE_ASSERT (vec.size()>0);
+               break; 
              }
 
              // stop tracing if there are more than one reaching definitions
@@ -1166,21 +1195,32 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
                the_end_value = isSgAssignInitializer(vec[0])->get_operand_i();
              }
              else
-             {
-               cerr<<"Error: uniformIndirectIndexedArrayRefs() unhandled definition type: "<< vec[0]->class_name()<<endl;
-               ROSE_ASSERT(false);
+             {  
+               if (!isSgMinusMinusOp(vec[0])) // (! && !)
+               {
+                 cerr<<"Warning: uniformIndirectIndexedArrayRefs() ignoring a reaching definition of a type: "
+                   << vec[0]->class_name()<<"@";
+                 if (isSgLocatedNode(vec[0]))
+                 {
+                   SgLocatedNode* lnode = isSgLocatedNode(vec[0]);
+                   cerr<<lnode->get_file_info()->get_line()<<":"<< lnode->get_file_info()->get_col() ;
+                 }
+                 cerr<<endl;
+               }
+               //ROSE_ASSERT(false);
+               break;
              }
+           } // end while() to trace down to root definition expression
+           //replace rhs with its root value if rhs != end_value
+           if (rhs != the_end_value)
+           {
+             SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
+             //TODO use replaceExpression() instead
+             aRef->set_rhs_operand_i(new_rhs);
+             new_rhs->set_parent(aRef);
+             delete rhs; 
            }
-            //replace rhs with its root value if rhs != end_value
-            if (rhs != the_end_value)
-            {
-              SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
-              //TODO use replaceExpression() instead
-              aRef->set_rhs_operand_i(new_rhs);
-              new_rhs->set_parent(aRef);
-              delete rhs; 
-            }
-     
+
            break;
          } // end case V_SgVarRefExp:
        case V_SgPntrArrRefExp: // uniform form already, do nothing
@@ -1189,14 +1229,16 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
          // since we narrow down the simplest case for indirection without additional calculation
        case V_SgSubtractOp:
        case V_SgAddOp:
+       case V_SgMinusMinusOp:
        case V_SgPlusPlusOp:
+       case V_SgModOp:
        case V_SgMultiplyOp:
          break;
        default:
-       {
-         cerr<<"Warning: uniformIndirectIndexedArrayRefs(): unhandled array access expression type: "<< rhs->class_name()<<endl;
-         break;
-       }
+         {
+           cerr<<"Warning: uniformIndirectIndexedArrayRefs(): ignoring an array access expression type: "<< rhs->class_name()<<endl;
+           break;
+         }
      } // end switch
    } //end for
 

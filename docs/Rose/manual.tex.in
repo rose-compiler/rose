@@ -11,6 +11,8 @@
 \usepackage{multirow}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{amsfonts}
+\usepackage{amsmath}
 \hypersetup {
 colorlinks= true,
 urlcolor=blue,
@@ -216,6 +218,9 @@ linkcolor=black,
 
 % TV (04/27/2010): Heterogeneous computing chapter (For now: CUDA and OpenCL)
 \input{heterogeneous}
+
+% TV (06/09/2010): Dependence analysis and Polyhedric Model
+\input{polyhedric}
 
 % This is ROSE/tests/tests.tex
 \input{tests}

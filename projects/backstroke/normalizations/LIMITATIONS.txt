@@ -1,0 +1,16 @@
+The "ExtractFunctionArguments" normalization ensures that all
+function arguments are either variables or constant inputs.
+
+It has the following limitations
+1. User-supplied classes and structures must have side-effect free
+   copy constructors that create correct copies. This is because
+   storing the value result of a function call to pass it to another 
+   function necessarily involves calling the copy constructor once
+   more than it would be normally called.
+
+2. Extracting function arguments from calls to constructors is not supported.
+   For example, MyObject o(foo(), bar()) will not be normalized.
+
+3. Function calls through function pointers are not supported. For example,
+   if foo() returns a function pointer one could write foo()(bar(), bar()).
+   However, foo() could have potential side effects.

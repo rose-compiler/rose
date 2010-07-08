@@ -535,60 +535,30 @@ class SgSharedVector {
     typedef const _Tp&  const_reference;
     typedef size_t      size_type;
 
+    /**** Iterators ****/
+
     class iterator {
         public:
-     // DQ (8/29/2008): Added iterator support for an STL style interface exected by ROSE.
-            iterator operator++()
-              {
-                return (this->p)++;
-              }
-
-            bool operator!=( const iterator & x ) const
-              {
-                return (this->p != x->p);
-              }
-
-         // Should this be: value_type & operator*() const
-            value_type & operator*()
-              {
-                return *(this->p);
-              }
-
+            iterator operator++() { return (this->p)++; }
+            bool operator!=( const iterator & x ) const { return (this->p != x->p); }
+            value_type & operator*() const { return *(this->p); }
             iterator(pointer x) : p(x) {}
-
         private:          
             value_type *p;
     };
 
     class const_iterator {
         public:
-     // DQ (8/29/2008): Added iterator support for an STL style interface exected by ROSE.
-            const_iterator operator++()
-              {
-                return (this->p)++;
-              }
-
-            bool operator!=( const const_iterator & x ) const
-              {
-                return (this->p != x.p);
-              }
-
-         // Should this be: const value_type & operator*() const
-            value_type & operator*()
-              {
-                return *(this->p);
-              }
-
-          const_iterator(pointer x) : p(x) {}
-
+            const_iterator operator++() { return (this->p)++; }
+            bool operator!=( const const_iterator & x ) const { return (this->p != x.p); }
+	    const value_type & operator*() const { return *(this->p); }
+            const_iterator(pointer x) : p(x) {}
         private:          
             value_type *p;
     };
 
- // DQ (8/29/2008): Added const_iterator to support STL style interface exected by ROSE.
- // typedef const iterator const_iterator;
-    
     /**** Construct/Copy/Destroy ****/
+
     // constructs a vector having no data
     explicit SgSharedVector()
         : p_pool(0), p_capacity(0), p_size(0) {}
@@ -661,15 +631,11 @@ class SgSharedVector {
     }
         
     /**** Iterators ****/
-    // FIXME
-
- // DQ (8/29/2008): Added iterator support for an STL style interface exected by ROSE.
     iterator begin() { return iterator(p_pool); };
-    iterator end() { return iterator(p_pool+p_size+1); };
+    iterator end() { return iterator(p_pool+p_size); };
 
     const_iterator  begin() const { return const_iterator(p_pool); };
- // const_iterator  end() const { return const_iterator((pointer)(p_pool+size+1)); };
-    const_iterator  end() const { return const_iterator(p_pool+p_size+1); };
+    const_iterator  end() const { return const_iterator(p_pool+p_size); };
 
     /**** Element Reference ****/
     reference operator[](size_type n) {
@@ -1525,10 +1491,14 @@ void traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor );
 // This traversal helps support intrnal tools that call static member functions.
 void traverseRepresentativeNodes ( ROSE_VisitTraversal & traversal );
 
+// DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+// using values that overflow signed values of int.
 // DQ (1/2/2006): Support for computing the total number of IR nodes in use within an AST
 // computation is done based on the memory pools (so it is exact).
-int numberOfNodes();
-int memoryUsage();
+// int numberOfNodes();
+// int memoryUsage();
+size_t numberOfNodes();
+size_t memoryUsage();
 
 // DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
 //     (this function prototype is replicated in the ROSE/src/unparser/unparser.h)

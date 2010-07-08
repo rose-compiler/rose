@@ -7,6 +7,7 @@
 #include "findConstants.h"
 #include "VirtualMachineSemantics.h"
 #include "SymbolicSemantics.h"
+#include "YicesSolver.h"
 #include <set>
 #include <inttypes.h>
 
@@ -57,18 +58,23 @@
 #elif  4==POLICY_SELECTOR
 #   define TestValueTemplate SymbolicSemantics::ValueType
     struct TestPolicy: public SymbolicSemantics::Policy {
+        TestPolicy() {
+#           if 1==SOLVER_SELECTOR
+                YicesSolver *solver = new YicesSolver;
+                solver->set_linkage(YicesSolver::LM_EXECUTABLE);
+                set_solver(solver);
+#           elif 2==SOLVER_SELECTOR
+                YicesSolver *solver = new YicesSolver;
+                solver->set_linkage(YicesSolver::LM_LIBRARY);
+                set_solver(solver);
+#           endif
+        }
         void dump(SgAsmInstruction *insn) {
-#if 0
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<get_state()
-                      <<"    ip = " <<get_ip() <<"\n";
-#else
             std::cout <<unparseInstructionWithAddress(insn) <<"\n";
             get_state().print(std::cout);
             std::cout <<"    ip = ";
             std::cout <<get_ip();
             std::cout <<"\n";
-#endif
         }
     };
 #else
@@ -111,7 +117,10 @@ analyze_interp(SgAsmInterpretation *interp)
                 semantics.processInstruction(insn);
                 policy.dump(insn);
             } catch (const Semantics::Exception &e) {
-                std::cout <<e.mesg <<": " <<unparseInstructionWithAddress(e.insn) <<"\n";
+                std::cout <<e <<"\n";
+                break;
+            } catch (const SMTSolver::Exception &e) {
+                std::cout <<e <<" [ "<<unparseInstructionWithAddress(insn) <<"]\n";
                 break;
             }
 
@@ -120,12 +129,9 @@ analyze_interp(SgAsmInterpretation *interp)
                 break;
 
             /* Get next instruction of this block */
-#if 3==POLICY_SELECTOR
+#if 3==POLICY_SELECTOR || 4==POLICY_SELECTOR
             if (!policy.get_ip().is_known()) break;
             rose_addr_t next_addr = policy.get_ip().known_value();
-#elif 4==POLICY_SELECTOR
-            if (!policy.get_ip().is_known()) break;
-            rose_addr_t next_addr = policy.get_ip().value();
 #else
             if (policy.newIp->get().name) break;
             rose_addr_t next_addr = policy.newIp->get().offset;

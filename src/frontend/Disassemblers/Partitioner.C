@@ -11,6 +11,9 @@
 #include "AsmUnparser_compat.h"
 #include "VirtualMachineSemantics.h"
 
+#include <errno.h>
+#include <fcntl.h>
+
 /* See header file for full documentation. */
 
 
@@ -79,7 +82,7 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 
 
 
-/* Parse argument for "-rose:partitioner" command-line swich. */
+/* Parse argument for "-rose:partitioner_search" command-line swich. */
 unsigned
 Partitioner::parse_switches(const std::string &s, unsigned flags)
 {
@@ -364,6 +367,25 @@ Partitioner::clear()
 
     /* Release (do not delete) all instructions */
     insns.clear();
+
+    /* Read configuration file (avoid mmap due to Windows support) */
+    if (!config_file_name.empty()) {
+#ifndef _MSC_VER
+		// tps (06/23/2010) : Does not work under Windows
+        int fd = open(config_file_name.c_str(), O_RDONLY);
+        if (fd<0)
+            throw IPDParser::Exception(strerror(errno), config_file_name);
+        struct stat sb;
+        fstat(fd, &sb);
+        char *config = new char[sb.st_size];
+        ssize_t nread = read(fd, config, sb.st_size);
+        if (nread<0 || nread<sb.st_size)
+            throw IPDParser::Exception(strerror(errno), config_file_name);
+        IPDParser(this, config, sb.st_size, config_file_name).parse();
+        delete[] config;
+        close(fd);
+#endif
+    }
 }
 
 /* Return address of first instruction of basic block */
