@@ -8338,7 +8338,8 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
       case V_SgCatchOptionStmt: {
         if (isSgCatchOptionStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgCatchOptionStmt(p)->get_condition() == s) {
+        } else ROSE_ASSERT (false);
 	break;
       }
       case V_SgIfStmt: {

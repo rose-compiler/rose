@@ -523,6 +523,7 @@ void preprocess(SgFunctionDefinition* func)
     // This is because that SgForInitStatement is special in which several declarations can
     // coexist. We will hoist it outside of its for loop statement.
 
+#if 1
     vector<SgForInitStatement*> for_init_stmts = querySubTree<SgForInitStatement>(func->get_body());
     foreach (SgForInitStatement* for_init_stmt, for_init_stmts)
     {
@@ -533,21 +534,42 @@ void preprocess(SgFunctionDefinition* func)
             SgForStatement* for_stmt = isSgForStatement(for_init_stmt->get_parent());
             SgBasicBlock* new_block = buildBasicBlock();
             foreach (SgStatement* decl, stmts)
-                new_block->append_statement(copyStatement(decl));
-            replaceStatement(for_init_stmt, NULL);
+            {
+                SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
+                ROSE_ASSERT(var_decl);
+                new_block->append_statement(copyStatement(var_decl));
+                //delete var_decl;
+            }
+
+            // Since there is no builder function for SgForInitStatement, we build it by ourselves
+            SgForInitStatement* null_for_init = new SgForInitStatement();
+            setOneSourcePositionForTransformation(null_for_init);
+            replaceStatement(for_init_stmt, null_for_init);
+
+            // It seems that 'for_init_stmt' should be deleted explicitly.
+            //deepDelete(for_init_stmt);
+
             new_block->append_statement(copyStatement(for_stmt));
             replaceStatement(for_stmt, new_block);
+            //deepDelete(for_stmt);
         }
     }
+#endif
 
+#if 1
     // Separate variable's definition from its declaration
+    // FIXME It is not sure that whether to permit declaration in condition of if (if the varible declared 
+    // is not of scalar type?).
     vector<SgVariableDeclaration*> var_decl_list = querySubTree<SgVariableDeclaration>(func->get_body());
     foreach (SgVariableDeclaration* var_decl, var_decl_list)
     {
         SgInitializedName* init = var_decl->get_variables()[0];
         SgAssignInitializer* initializer = isSgAssignInitializer(init->get_initializer());
 
-        if (initializer)
+        if (    isScalarType(init->get_type()) && 
+                isSgPointerType(init->get_type()) &&
+                initializer && 
+                containsModifyingExpression(initializer->get_operand()))
         {
             SgExpression* new_exp = buildBinaryExpression<SgAssignOp>(
                     buildVarRefExp(init, getScope(var_decl)),
@@ -560,7 +582,10 @@ void preprocess(SgFunctionDefinition* func)
             {
                 insertStatement(var_decl, new_stmt, false);
             }
-            else if (!isSgForInitStatement(parent))
+            // At this moment, we forbid the for init statement.
+            else if (isSgForInitStatement(parent))
+                ROSE_ASSERT(false);
+            else
             {
                 SgStatement* new_decl = copyStatement(var_decl);
                 replaceStatement(var_decl, new_stmt);
@@ -571,21 +596,22 @@ void preprocess(SgFunctionDefinition* func)
             }
         }
     }
+#endif
 
     /******************************************************************************/
     // Transform logical and & or operators into conditional expression.
     // a && b  ==>  a ? b : false
     // a || b  ==>  a ? true : b
-
+#if 1
     vector<SgAndOp*> and_exps = querySubTree<SgAndOp>(func->get_body());
     foreach (SgAndOp* and_op, and_exps)
     {
-        if (containsMofifyingExpressions(and_op->get_rhs_operand()))
+        if (containsModifyingExpression(and_op->get_rhs_operand()))
         {
             SgConditionalExp* cond = buildConditionalExp(
                     copyExpression(and_op->get_lhs_operand()),
                     copyExpression(and_op->get_rhs_operand()),
-                    buildBoolVal(true));
+                    buildBoolValExp(true));
             replaceExpression(and_op, cond);
         }
     }
@@ -593,16 +619,16 @@ void preprocess(SgFunctionDefinition* func)
     vector<SgOrOp*> or_exps = querySubTree<SgOrOp>(func->get_body());
     foreach (SgOrOp* or_op, or_exps)
     {
-        if (containsMofifyingExpressions(or_op->get_rhs_operand()))
+        if (containsModifyingExpression(or_op->get_rhs_operand()))
         {
             SgConditionalExp* cond = buildConditionalExp(
                     copyExpression(or_op->get_lhs_operand()),
-                    buildBoolVal(true),
+                    buildBoolValExp(true),
                     copyExpression(or_op->get_rhs_operand()));
             replaceExpression(or_op, cond);
         }
     }
-
+#endif
 }
 
 void normalizeEvent(SgFunctionDefinition* func)
@@ -655,7 +681,7 @@ void splitCommaOpExp(SgExpression* exp)
             {
                 SgExprStatement* stmt1 = buildExprStatement(copyExpression(lhs));
                 SgExprStatement* stmt2 = buildExprStatement(copyExpression(rhs));
-                replaceStatement(stmt, buildBasicBlock(stmt1, stmt2));
+                replaceStatement(stmt, buildBasicBlock(stmt1, stmt2), true);
 
                 splitCommaOpExp(stmt1->get_expression());
                 splitCommaOpExp(stmt2->get_expression());
@@ -711,7 +737,8 @@ void removeUselessBraces(SgNode* root)
         {
             foreach (SgStatement* stmt, block->get_statements())
                 insertStatement(block, copyStatement(stmt));
-            removeStatement(block);
+            replaceStatement(block, buildNullStatement(), true);
+            //removeStatement(block);
         }
     }
 }
