@@ -1966,6 +1966,7 @@ src/midend/programAnalysis/CFG/Makefile
 src/midend/programAnalysis/dataflowAnalysis/Makefile
 src/midend/programAnalysis/pointerAnal/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
+src/midend/programAnalysis/variableRenaming/Makefile
 src/midend/programAnalysis/defUseAnalysis/Makefile
 src/midend/programAnalysis/dominanceAnalysis/Makefile
 src/midend/programAnalysis/staticInterproceduralSlicing/Makefile

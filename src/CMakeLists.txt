@@ -467,6 +467,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_Graph.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_DotGraph.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValueAnnot.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValuePropagate.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/variableRenaming/VariableRenaming.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/OAWrap.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/SAGE2OA.C
 #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/proceduralSlicing/SlicingInfo.C
