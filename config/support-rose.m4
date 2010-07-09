@@ -2242,7 +2242,6 @@ projects/binaryVisualization/Makefile
 projects/highLevelGrammars/Makefile
 projects/BabelPreprocessor/Makefile
 projects/checkPointExample/Makefile
-projects/simpleCallGraphAnalysis/Makefile
 projects/CloneDetection/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
@@ -2307,6 +2306,7 @@ projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile

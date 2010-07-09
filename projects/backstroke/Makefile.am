@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = eventDetection reverseComputation restrictedLanguage normalizations tests
+SUBDIRS = utilities eventDetection reverseComputation restrictedLanguage normalizations tests
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
@@ -12,7 +12,9 @@ libBackstroke_ladir = .
 libBackstroke_la_DEPENDENCIES = 
 libBackstroke_la_SOURCES = 
 libBackstroke_la_HEADERS =
-libBackstroke_la_LIBADD = normalizations/libBackstrokeNormalizations.la reverseComputation/libBackstrokeReverser.la \
+libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
+			normalizations/libBackstrokeNormalizations.la \
+			reverseComputation/libBackstrokeReverser.la \
 			restrictedLanguage/libBackstrokeRestrictedLanguage.la
 
 # Build the function extraction translator

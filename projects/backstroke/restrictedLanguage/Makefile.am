@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libBackstrokeRestrictedLanguage.la
 libBackstrokeRestrictedLanguage_ladir = .
 libBackstrokeRestrictedLanguage_la_DEPENDENCIES =
 libBackstrokeRestrictedLanguage_la_SOURCES = LanguageRestrictions.C
-libBackstrokeRestrictedLanguage_la_HEADERS = LanguageRestrictions.h
+include_HEADERS = LanguageRestrictions.h
 libBackstrokeRestrictedLanguage_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the test language restrictor executable
@@ -33,15 +33,13 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 ROSE_FLAGS =
 
 
-$(TEST_Objects): lang
+$(TEST_Objects): eventChecker
 	$(VALGRIND) ./eventChecker $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 
 EXTRA_DIST = $(TESTCODES)
 
 CLEANFILES = 
-
-include_HEADERS =
 
 check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)

@@ -1,5 +1,5 @@
 #include "expNormalization.h"
-#include "Utilities.h"
+#include "utilities/Utilities.h"
 #include <boost/foreach.hpp>
 #include <utility>
 #include <boost/tuple/tuple.hpp>
@@ -59,65 +59,7 @@ bool containsModifyingExpression(SgExpression* exp)
     return false;
 }
 
-// Returns a boolean value to indicate whether the return value (rvalue) of the given expression is used.
-bool isReturnedValueUsed(SgExpression* exp)
-{
-    SgNode* parent_node = exp->get_parent();
 
-    // If the expression is a full expression in an expression statement.
-    if (SgExprStatement* expr_stmt = isSgExprStatement(parent_node))
-    {
-        SgNode* grandpa_node = expr_stmt->get_parent();
-
-        // In Rose, the condition part of if, for, while and switch statement may be a SgExprStatement.
-        
-        if (SgIfStmt* if_stmt = isSgIfStmt(grandpa_node))
-            if (if_stmt->get_conditional() == expr_stmt)
-                return true;
-
-        if (SgForStatement* for_stmt = isSgForStatement(grandpa_node))
-            if (for_stmt->get_test() == expr_stmt)
-                return true;
-
-        if (SgWhileStmt* while_stmt = isSgWhileStmt(grandpa_node))
-            if (while_stmt->get_condition() == expr_stmt)
-                return true;
-
-        if (SgSwitchStatement* switch_stmt = isSgSwitchStatement(grandpa_node))
-            if (switch_stmt->get_item_selector() == expr_stmt)
-                return true;
-
-        return false;
-    }
-
-    // In (a, b),  a is not used.
-    if (SgCommaOpExp* comma_op = isSgCommaOpExp(parent_node))
-    {
-        if (comma_op->get_lhs_operand() == exp)
-            return false;
-        if (comma_op->get_rhs_operand() == exp)
-            return isReturnedValueUsed(comma_op);
-    }
-
-    if (SgConditionalExp* cond_exp = isSgConditionalExp(parent_node))
-    {
-        if ((cond_exp->get_true_exp() == exp) ||
-                (cond_exp->get_false_exp() == exp))
-            return isReturnedValueUsed(cond_exp);
-    }
-
-    if (SgForStatement* for_stmt = isSgForStatement(parent_node))
-    {
-        if (for_stmt->get_increment() == exp)
-            return false;
-    }
-
-
-    //if (SgExpression* parent_exp = isSgExpression(parent_node))
-      //  return true;
-
-    return true;
-}
 
 #if 0
 // The first return value is the expression which should be relocated, and the second 
@@ -171,7 +113,7 @@ void getAndReplaceModifyingExpression(SgExpression*& e)
 {
     // Avoid to bring variable reference expression: a = b  ==>  (a = b, a) 
     // if a is not used.
-    if (!isReturnedValueUsed(e))
+    if (!backstroke_util::isReturnValueUsed(e))
         return;
 
     // The following binary expressions return lvalue.

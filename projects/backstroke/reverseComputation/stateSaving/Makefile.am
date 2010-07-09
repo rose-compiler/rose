@@ -1,15 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS = eventDetection
-
 # This file does not compile using ROSE (skip testing it for now)
-bin_PROGRAMS = stateSaving 
-stateSaving_SOURCES = main.C stateSaver.C ../utilities.C ../facilityBuilder.C
+#bin_PROGRAMS = stateSaving
+stateSaving_SOURCES = main.C stateSaver.C  ../facilityBuilder.C
 
 INCLUDES = $(ROSE_INCLUDES) ../
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = stateSaver.h ../utilities.h ../facilityBuilder.h
+EXTRA_DIST = stateSaver.h  ../facilityBuilder.h
 
 CLEANFILES = 
 

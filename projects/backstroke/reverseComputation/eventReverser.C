@@ -1,5 +1,6 @@
 #include "eventReverser.h"
-#include "utilities.h"
+#include "utilities/Utilities.h"
+
 #include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -187,7 +188,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
 {
     string counter_name = function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++);
-    validateName(counter_name, loop_stmt);
+    backstroke_util::validateName(counter_name, loop_stmt);
 
     SgStatement* counter_decl = buildVariableDeclaration(
             counter_name, 
@@ -251,7 +252,7 @@ SgStatement* EventReverser::buildForLoop(SgStatement* loop_body)
     // build a simple for loop like: for (int i = N; i > 0; --i)
 
     string counter_name = "i";
-    validateName(counter_name, loop_body);
+    backstroke_util::validateName(counter_name, loop_body);
 
     SgStatement* init = buildVariableDeclaration(
             counter_name, buildIntType(), buildAssignInitializer(popLoopCounter()));

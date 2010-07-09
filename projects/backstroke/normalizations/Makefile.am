@@ -9,15 +9,13 @@ noinst_LTLIBRARIES =  libBackstrokeNormalizations.la
 
 libBackstrokeNormalizations_ladir = .
 libBackstrokeNormalizations_la_DEPENDENCIES = 
-libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C Utilities.C CFGReverserProofOfConcept.C expNormalization.C
-libBackstrokeNormalizations_la_HEADERS = ExtractFunctionArguments.h Utilities.h CFGReverserProofOfConcept.h expNormalization.h
+libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C CFGReverserProofOfConcept.C expNormalization.C
+include_HEADERS = ExtractFunctionArguments.h CFGReverserProofOfConcept.h expNormalization.h
 libBackstrokeNormalizations_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
 EXTRA_DIST = CPPDefinesAndNamespaces.h
-
-include_HEADERS = 
 
 CLEANFILES = 
 
