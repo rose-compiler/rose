@@ -33,7 +33,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 ROSE_FLAGS =
 
 
-$(TEST_Objects): lang
+$(TEST_Objects): eventChecker
 	$(VALGRIND) ./eventChecker $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 
