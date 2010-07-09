@@ -2321,6 +2321,7 @@ projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/tests/Makefile
 projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
+projects/roseToLLVM/src/rosetollvm/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
