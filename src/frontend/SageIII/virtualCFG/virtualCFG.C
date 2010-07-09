@@ -33,10 +33,12 @@ namespace VirtualCFG {
           case 2: s << "End("; break;
           default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
-      s << isSgFunctionDefinition(node)->get_declaration()->get_qualified_name().str() << ")"; 
-    } else {
-      s << toStringForDebugging();
+      s << isSgFunctionDefinition(node)->get_declaration()->get_qualified_name().str() << ")" << std::endl; 
     }
+    s << toStringForDebugging();
+  //if (isSgFunctionDefinition(node)) {
+  //  s << std::endl << "decl'd by: <" << isSgFunctionDefinition(node)->get_declaration()->class_name() << "> @" << 
+  //    isSgFunctionDefinition(node)->get_declaration()->get_startOfConstruct()->get_line();
     return s.str();
   }
 
