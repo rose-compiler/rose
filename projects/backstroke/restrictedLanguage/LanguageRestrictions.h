@@ -18,17 +18,10 @@ public:
 	 */
 	static bool violatesRestrictionsOnEventFunctions(SgFunctionDefinition* functionDefinition);
 
-	/** Prints an error message associated with a certain node. Also outputs the file and location
-	  * of the node. */
-	static void printCompilerError(SgNode* badNode, const char * message);
-
 private:
 
 	/** Returns true if the given function declares any local variables that are of a pointer or array type. */
 	static bool containsDeclarationsOfPointerVariables(SgFunctionDefinition* functionDefinition);
-
-	/** Returns true if any of the arguments of the given function are passed by reference. */
-	static bool takesArgumentsByReference(SgFunctionDefinition* functionDefinition);
 
 	/** Returns true if the function contains continue, goto, or break. The break statement is allowed inside
 	  * switch statements. */

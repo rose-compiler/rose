@@ -595,7 +595,7 @@ check-local:
 	@$(MAKE) $(TEST_Objects)
 	@$(MAKE) $(simple_test)
 	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/projects/backstroke/reverseComputation: make check rule complete (terminated normally) ******"
+	@echo "*** ROSE/projects/backstroke/tests/expNormalizationTest: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
 
 mytest:
