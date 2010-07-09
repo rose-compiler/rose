@@ -8310,6 +8310,7 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
         if (isSgForStatement(p)->get_loop_body() == s)
           return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
         else if (isSgForStatement(p)->get_test() == s) {
+        }else if (isSgForStatement(p)->get_for_init_stmt() == s) {
         }else ROSE_ASSERT (false);
 	break;
       }
@@ -8330,7 +8331,8 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
       case V_SgSwitchStatement: {
         if (isSgSwitchStatement(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
-        else ROSE_ASSERT (false);
+        else if (isSgSwitchStatement(p)->get_item_selector() == s) {
+        } else ROSE_ASSERT (false);
 	break;
       }
       case V_SgCatchOptionStmt: {
