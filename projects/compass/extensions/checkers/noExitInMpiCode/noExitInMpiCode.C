@@ -133,9 +133,13 @@ void CompassAnalyses::NoExitInMpiCode::Traversal::visit(SgNode* node)
       usedMPI = false;
     } //if( sgfrexpName == "MPI_Finalize" )
 
+//#ASR:07/07/10
+//fixed object creation of CheckerOutput for Cxx standard
     if( usedMPI == true && sgfrexpName == "exit" )
     {
-      output->addOutput( new CompassAnalyses::NoExitInMpiCode::CheckerOutput::CheckerOutput( node ) );
+      output->addOutput( new CompassAnalyses::NoExitInMpiCode::CheckerOutput( node ) );       
+      //output->addOutput( new CompassAnalyses::NoExitInMpiCode::CheckerOutput::CheckerOutput( node ) );
+
     } //if( usedMPI == true && sgfrexpName == "exit" )
 
   } //if( sgfrexp != NULL )
