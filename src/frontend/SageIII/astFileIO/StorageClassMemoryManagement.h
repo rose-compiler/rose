@@ -103,7 +103,7 @@ class StorageClassMemoryManagement
      to be when called!
 ****************************************************************************************/
 
-// Prototype for the EasyStorage classes, with no instatntiation! 
+// Prototype for the EasyStorage classes, with no instantiation! 
 template <class TYPE>
 class EasyStorage;
 
@@ -548,7 +548,7 @@ class EasyStorage <rose_graph_node_edge_hash_multimap> :
 
 
 
-/* EasyStorageMapEntry concerning an std::string and an AstAttribut
+/* EasyStorageMapEntry concerning an std::string and an AstAttribute
   Remarks: 
 */
 template <>
@@ -609,7 +609,7 @@ class EasyStorage<PreprocessingInfo*>  :
    };
 
 
-// EasyStorage for storing a list or vector of std::strings 
+// EasyStorage for storing a stl-like container of ProprocessingInfo
 template <template <class A> class CONTAINER >
 class EasyStorage <CONTAINER<PreprocessingInfo*> > 
    : public StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> >
@@ -630,7 +630,7 @@ class EasyStorage <CONTAINER<PreprocessingInfo*> >
    };
 
 
-// EasyStorage for storing a list or vector of std::strings 
+// EasyStorage for storing a vector of PreprocessingInfo
 template <>
 class EasyStorage <std::vector<PreprocessingInfo*> > 
    : public StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> >
@@ -651,7 +651,7 @@ class EasyStorage <std::vector<PreprocessingInfo*> >
    };
 
 
-// EasyStorage for storing a list or vector of std::strings 
+// EasyStorage for storing AttachedProprocessingInfoType
 template <>
 class EasyStorage <AttachedPreprocessingInfoType*> 
    : public StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> >
@@ -1011,6 +1011,29 @@ class EasyStorage < std::map<SgNode*, std::string> >
    };
 
 
+/** Maps SgSharedVector to/from file representation. This is almost exactly the same as the
+ *  vector of Sg object pointers specialization except the rebuildDataStoredInEasyStorageClass() constructs the SgSharedVector
+ *  in a different manner. In an original AST all SgSharedVector objects probably pointed to a common underlying storage pool
+ *  which was the contents of the entire binary file.  This sharing is currently lost in the file representation and the
+ *  reconstructed SgSharedVector objects will each get their own pool. FIXME [RPM 2010-06-15] */
+template<class BASIC_TYPE>
+class EasyStorage<SgSharedVector<BASIC_TYPE> >: public StorageClassMemoryManagement<BASIC_TYPE> {
+    typedef StorageClassMemoryManagement<BASIC_TYPE> Base;
+  public:
+    EasyStorage() {}
+    void storeDataInEasyStorageClass(const SgSharedVector<BASIC_TYPE>& data_);
+    SgSharedVector<BASIC_TYPE> rebuildDataStoredInEasyStorageClass() const;
+};
+
+/** Maps an ExtentMap to/from file representation. */
+template<>
+class EasyStorage<ExtentMap>: public StorageClassMemoryManagement<rose_addr_t> {
+    typedef StorageClassMemoryManagement<rose_addr_t> Base;
+  public:
+    EasyStorage() {}
+    void storeDataInEasyStorageClass(const ExtentMap&);
+    ExtentMap rebuildDataStoredInEasyStorageClass() const;
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #endif  // STORAGE_CLASS_MEMORY_MANAGEMENT_H

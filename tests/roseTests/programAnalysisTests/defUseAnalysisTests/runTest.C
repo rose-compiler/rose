@@ -15,7 +15,7 @@ void testOneFunction( std::string funcParamName,
 		      multimap <string, int> results,
 		      multimap <string, int> useresults) {
   if (debug)
-    cout << " \n\n------------------------------------------\nrunning ... " << argvList[1] << endl;
+    cout << " \n\n------------------------------------------\ntesting ... " << argvList[1] << endl;
   // Build the AST used by ROSE
   SgProject* project = frontend(argvList);
   // Call the Def-Use Analysis
@@ -47,8 +47,7 @@ void testOneFunction( std::string funcParamName,
     if (debug)
       cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
     if (maxNodes!=nrOfNodes) {
-      if (debug)
-	cout << " Error: Test should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
+	cerr << " Error: Test should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
       abort();
     }
     if (debug)
@@ -60,10 +59,12 @@ void testOneFunction( std::string funcParamName,
     if (map.size()>0) {
       std::vector < std::pair <SgInitializedName*, SgNode*> >::const_iterator j = map.begin();
       unsigned int hit=0;
+      SgNode* node = NULL;
+      string name="";
       for (;j!=map.end();++j) {
 	SgInitializedName* in_node = j->first;
-	SgNode* node = j->second;
-	string name= in_node->get_qualified_name().str();
+	node = j->second;
+	name= in_node->get_qualified_name().str();
 	if (debug)
 	  cout << " ... checking :  " << name << endl;
 	multimap <string, int>::const_iterator k =results.begin();
@@ -83,12 +84,12 @@ void testOneFunction( std::string funcParamName,
 
       }
       if (hit!=results.size()) {
-	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
+	cerr << " Error: No hit! ... DFA values of node " << nodeNr << " are not correct! " << endl;
 	exit(1);
       }
     } else {
       if (results.size()!=0) {
-	cout << " Error: Test node " << defuse->getIntForSgNode(func) << " should have a multimap. " << endl;
+	cerr << " Error: Test node " << defuse->getIntForSgNode(func) << " should have a multimap. " << endl;
 	exit(1);
       }
     }
@@ -123,7 +124,7 @@ void testOneFunction( std::string funcParamName,
 
       }
       if (hit!=useresults.size()) {
-	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
+	cerr << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
 	exit(1);
       }
     } // if
@@ -485,6 +486,15 @@ int main( int argc, char * argv[] )
       results.clear();      useresults.clear();
       results.insert(pair<string,int>("a",11));
       testOneFunction("::func",argvList, debug, 30, results,useresults);
+    }
+
+    if (startNrInt<=24 || testAll) {
+      // ------------------------------ TESTCASE 1 -----------------------------------------
+      argvList[1]=srcdir+"tests/test24.C";
+      results.clear();      useresults.clear();
+      results.insert(pair<string,int>("t",19));
+      //      results.insert(pair<string,int>("t",22));
+      testOneFunction("::func",argvList, debug, 26, results,useresults);
     }
 
   }

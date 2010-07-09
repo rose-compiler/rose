@@ -1,27 +1,108 @@
-// Example ROSE Translator: used within ROSE/tutorial
-
 #include "eventReverser.h"
-#include "facilityBuilder.h"
 #include "utilities.h"
-#include <DefUseAnalysis.h>
 #include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 using namespace boost;
+using namespace SageBuilder;
+using namespace SageInterface;
 
+/** A list of all the expression handlers that we will try first.
+  * If these handlers can't reverse an expression, we fall back to state saving. */
+/*static*/ std::vector <boost::function<ExpPair (SgExpression*) > > EventReverser::expressionHandlers;
 
 set<SgFunctionDeclaration*> EventReverser::func_processed_;
 const ExpPair EventReverser::NULL_EXP_PAIR = ExpPair(NULL, NULL);
 const StmtPair EventReverser::NULL_STMT_PAIR = StmtPair(NULL, NULL);
 
+EventReverser::EventReverser(SgFunctionDeclaration* func_decl, DFAnalysis* analysis) 
+: func_decl_(func_decl), 
+    function_name_(func_decl_->get_name()), 
+    flag_stack_name_(function_name_ + "_branch_flags"),
+    int_stack_name_(function_name_ + "_int_values"),
+    float_stack_name_(function_name_ + "_float_values"),
+    counter_stack_name_(function_name_ + "_loop_counters"),
+    counter_(0),
+    branch_mark_(-1)
+{
+}
+
+// Get all variables' declarations including all kinds of states
+vector<SgStatement*> EventReverser::getVarDeclarations()
+{
+    vector<SgStatement*> decls;
+    //foreach(const string& flag, branch_flags_)
+    //    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
+
+#if 0
+    foreach(const string& counter, loop_counters_)
+        decls.push_back(buildVariableDeclaration(
+                    counter, 
+                    buildIntType(), 
+                    buildAssignInitializer(buildIntVal(0))));
+
+    pair<string, SgType*> state_var;
+    foreach(state_var, state_vars_)
+    {
+        decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
+    }
+#endif
+
+    SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
+    decls.push_back(buildVariableDeclaration(flag_stack_name_, stack_type));
+    decls.push_back(buildVariableDeclaration(int_stack_name_, stack_type));
+    decls.push_back(buildVariableDeclaration(counter_stack_name_, stack_type));
+
+    // Float type stack
+    decls.push_back(buildVariableDeclaration(float_stack_name_, stack_type));
+
+    return decls;
+}
+
+vector<SgStatement*> EventReverser::getVarInitializers()
+{
+    vector<SgStatement*> inits;
+    SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
+
+    // Initialize the flag stack object.
+    inits.push_back(buildAssignStatement(
+                buildVarRefExp(flag_stack_name_),
+                buildFunctionCallExp("buildIntStack", stack_type)));
+
+    // Initialize the integer stack object.
+    inits.push_back(buildAssignStatement(
+                buildVarRefExp(int_stack_name_),
+                buildFunctionCallExp("buildIntStack", stack_type)));
+
+    // Initialize the integer stack object.
+    inits.push_back(buildAssignStatement(
+                buildVarRefExp(float_stack_name_),
+                buildFunctionCallExp("buildIntStack", stack_type)));
+
+    // Initialize the loop counter stack object.
+    inits.push_back(buildAssignStatement(
+                buildVarRefExp(counter_stack_name_),
+                buildFunctionCallExp("buildIntStack", stack_type)));
+
+    return inits;
+}
+
 ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 {
-    // We can just make copy of statements.
-    // Before processing this expression, we replace it with its copy. This can avoid
-    // to modify the expression passed in, or the same node appears in AST more than once.
-    //exp = copyExpression(exp);
+	foreach (function<ExpPair (SgExpression*)> expressionHandler, expressionHandlers)
+	{
+		ExpPair result = expressionHandler(exp);
+		if (result != NULL_EXP_PAIR)
+		{
+			return result;
+		}
+	}
 
     // if this expression is a binary one
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
@@ -39,10 +120,12 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
     if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
         return processFunctionCallExp(func_exp);
 
-    //if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
+    if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
+		return ExpPair(copyExpression(exp), copyExpression(exp));
 
-    //return ExpPair(copyExpression(exp), NULL);
-    //return ExpPair(copyExpression(exp), buildNullExpression());
+	printf("WARNING: The following expression of type %s was not handled in the reversal: %s\n",
+			exp->class_name().c_str(), exp->unparseToString().c_str());
+
     return ExpPair(copyExpression(exp), copyExpression(exp));
 }
 
@@ -182,6 +265,27 @@ SgStatement* EventReverser::buildForLoop(SgStatement* loop_body)
     return for_stmt;
 }
 
+SgExpression* EventReverser::isStateVar(SgExpression* exp)
+{
+    // a->b
+    if (SgArrowExp* arr_exp = isSgArrowExp(exp))
+    {
+        return arr_exp;
+    }
+    // a[b]
+    else if (SgPntrArrRefExp* ref_exp = isSgPntrArrRefExp(exp))
+    {
+        if (isSgArrowExp(ref_exp->get_lhs_operand()))
+            return ref_exp;
+    }
+    return NULL;
+}
+
+bool EventReverser::toSave(SgExpression* exp)
+{
+    return true;
+}
+
 vector<FuncDeclPair> EventReverser::outputFunctions()
 {
     SgBasicBlock* body = func_decl_->get_definition()->get_body();
@@ -229,262 +333,114 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
     return output_func_pairs_;
 }
 
-
-class reverserTraversal : public AstSimpleProcessing
+// Push an integer into integer stack. Can be used to save states. 
+SgExpression* EventReverser::pushIntVal(SgExpression* var)
 {
-    public:
-        reverserTraversal(DFAnalysis* du) 
-            : AstSimpleProcessing(),
-            defuse(du),
-            events_num(0),  
-            model_type(0)
-    {}
-        virtual void visit(SgNode* n);
+    // Cannot use branch mark here!!!
+    if (1)//(branch_mark_ < 0)
+        return buildFunctionCallExp(
+                "push", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(int_stack_name_), 
+                    var));
+    else
+        return buildFunctionCallExp(
+                "push", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(int_stack_name_), 
+                    var,
+                    buildIntVal(branch_mark_)));
+}
 
-        DFAnalysis* defuse;
-        int events_num;
-        SgClassType* model_type;
-        vector<SgFunctionDeclaration*> funcs_gen;
-        vector<SgFunctionDeclaration*> all_funcs;
-        vector<SgStatement*> var_decls;
-        vector<SgStatement*> var_inits;
-        vector<string> event_names;
-};
-
-
-void reverserTraversal::visit(SgNode* n)
+// Pop the stack and get the value.
+SgExpression* EventReverser::popIntVal()
 {
+    return buildFunctionCallExp("pop", buildVoidType(), 
+            buildExprListExp(buildVarRefExp(int_stack_name_)));
+}
 
-    if (SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(n))
-    {
-        all_funcs.push_back(func_decl);
+// Push a float into float stack. Can be used to save states. 
+SgExpression* EventReverser::pushFloatVal(SgExpression* var)
+{
+    return buildFunctionCallExp(
+            "push", 
+            buildIntType(), 
+            buildExprListExp(
+                buildVarRefExp(float_stack_name_), 
+                var)); 
+}
 
-        string func_name = func_decl->get_name();
-        if (!istarts_with(func_name, "event") ||
-                iends_with(func_name, "reverse") ||
-                iends_with(func_name, "forward"))
-            return;
+// Pop the stack and get the value.
+SgExpression* EventReverser::popFloatVal()
+{
+    return buildFunctionCallExp("pop", buildVoidType(), 
+            buildExprListExp(buildVarRefExp(float_stack_name_)));
+}
 
-        //cout << func_name << endl;
-        event_names.push_back(func_name);
+// For a local variable, return two statements to store its value and 
+// declare and assign the retrieved value to it.
+StmtPair EventReverser::pushAndPopLocalVar(SgVariableDeclaration* var_decl)
+{
+    const SgInitializedNamePtrList& names = var_decl->get_variables();
+    ROSE_ASSERT(names.size() == 1);
+    SgInitializedName* init_name = names[0];
 
-        EventReverser reverser(func_decl, defuse);
-        vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
-        foreach(const FuncDeclPair& func_pair, func_pairs)
-        {
-            funcs_gen.push_back(func_pair.second);
-            funcs_gen.push_back(func_pair.first);
-        }
+    SgStatement* store_var = buildExprStatement(
+            pushIntVal(buildVarRefExp(init_name)));
 
-        // Collect all variables needed to be declared
-        vector<SgStatement*> decls = reverser.getVarDeclarations();
-        vector<SgStatement*> inits = reverser.getVarInitializers();
+    SgStatement* decl_var = buildVariableDeclaration(
+            init_name->get_name(),
+            init_name->get_type(),
+            buildAssignInitializer(popIntVal()));
+    return StmtPair(store_var, decl_var);
+}
 
-        var_decls.insert(var_decls.end(), decls.begin(), decls.end());
-        var_inits.insert(var_inits.end(), inits.begin(), inits.end());
+// For and/or & conditional expressions. The value pushed is either 0 or 1. 
+SgExpression* EventReverser::putBranchFlagExp(SgExpression* exp)
+{
+    return buildFunctionCallExp(
+            "push", 
+            buildIntType(), 
+            buildExprListExp(
+                buildVarRefExp(flag_stack_name_), 
+                exp, 
+                buildIntVal(branch_mark_)));
+}
 
-        // increase the number of events
-        ++events_num;
+SgStatement* EventReverser::putBranchFlagStmt(bool flag)
+{
+    return buildExprStatement(
+            buildFunctionCallExp(
+                "push", 
+                buildIntType(), 
+                buildExprListExp(
+                    buildVarRefExp(flag_stack_name_), 
+                    buildIntVal(flag))));
+}
 
-        /* 
-           pair<SgFunctionDeclaration*, SgFunctionDeclaration*> 
-           func = reverseFunction(func_decl->get_definition());
-           if (func.first != NULL)
-           funcs.push_back(func.first);
-           if (func.second != NULL)
-           funcs.push_back(func.second);
-           */
-    }
+// Return the statement which checks the branch flag
+SgExpression* EventReverser::checkBranchFlagExp()
+{
+    return buildFunctionCallExp("pop", buildVoidType(), 
+            buildExprListExp(buildVarRefExp(flag_stack_name_)));
+}
 
-    // Get the model structure type which will be used in other functions, like initialization.
-    if (SgClassDeclaration* model_decl = isSgClassDeclaration(n))
-    {
-        if (model_decl->get_name() == "model")
-            model_type = model_decl->get_type();
-    }
+SgStatement* EventReverser::checkBranchFlagStmt()
+{
+    return buildExprStatement(checkBranchFlagExp());
 }
 
 
-// Put the functions generated in place
-void insertFunctionInPlace(SgFunctionDeclaration* func, const vector<SgFunctionDeclaration*>& all_funcs)
+SgExpression* EventReverser::popLoopCounter()
 {
-    string func_name = func->get_name();
-    replace_last(func_name, "_forward", "");
-    replace_last(func_name, "_reverse", "");
-
-    foreach (SgFunctionDeclaration* f, all_funcs)
-        if (func_name == string(f->get_name()))
-            insertStatementAfter(f, func);
+    return buildFunctionCallExp("pop", buildVoidType(), 
+            buildExprListExp(buildVarRefExp(counter_stack_name_)));
 }
 
 
-
-int fixVariableReferences2(SgNode* root)
-{
-    ROSE_ASSERT(root);
-    int counter=0;
-    Rose_STL_Container<SgNode*> nodeList;
-
-    SgVarRefExp* varRef=NULL;
-    Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
-    for (Rose_STL_Container<SgNode*>::iterator i=reflist.begin();i!=reflist.end();i++)
-    {
-        //cout << get_name(isSgVarRefExp(*i)) << endl;
-        varRef= isSgVarRefExp(*i);
-        ROSE_ASSERT(varRef->get_symbol());
-        SgInitializedName* initname= varRef->get_symbol()->get_declaration();
-        //ROSE_ASSERT(initname);
-
-        if (initname->get_type()==SgTypeUnknown::createType())
-            //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
-        {
-            SgName varName=initname->get_name();
-            SgSymbol* realSymbol = NULL;
-            //cout << varName << endl;
-
-            // CH (5/7/2010): Before searching SgVarRefExp objects, we should first deal with class/structure
-            // members. Or else, it is possible that we assign the wrong symbol to those members if there is another
-            // variable with the same name in parent scopes. Those members include normal member referenced using . or ->
-            // operators, and static members using :: operators.
-            //
-            if (SgArrowExp* arrowExp = isSgArrowExp(varRef->get_parent()))
-            {
-                if (varRef == arrowExp->get_rhs_operand())
-                {
-                    // make sure the lhs operand has been fixed
-                    counter += fixVariableReferences2(arrowExp->get_lhs_operand());
-
-                    SgPointerType* ptrType = isSgPointerType(arrowExp->get_lhs_operand()->get_type());
-                    ROSE_ASSERT(ptrType);
-                    SgClassType* clsType = isSgClassType(ptrType->get_base_type());
-                    ROSE_ASSERT(clsType);
-                    SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
-                    decl = isSgClassDeclaration(decl->get_definingDeclaration());
-                    ROSE_ASSERT(decl);
-                    realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
-                }
-                else
-                    realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
-            }
-            else if (SgDotExp* dotExp = isSgDotExp(varRef->get_parent()))
-            {
-                if (varRef == dotExp->get_rhs_operand())
-                {
-                    // make sure the lhs operand has been fixed
-                    counter += fixVariableReferences2(dotExp->get_lhs_operand());
-
-                    SgClassType* clsType = isSgClassType(dotExp->get_lhs_operand()->get_type());
-                    ROSE_ASSERT(clsType);
-                    SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
-                    decl = isSgClassDeclaration(decl->get_definingDeclaration());
-                    ROSE_ASSERT(decl);
-                    realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
-                }
-                else
-                    realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
-            }
-            else
-                realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
-
-            // should find a real symbol at this final fixing stage!
-            // This function can be called any time, not just final fixing stage
-            if (realSymbol==NULL) 
-            {
-                //cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
-                //ROSE_ASSERT(realSymbol);
-            }
-            else {
-                // release placeholder initname and symbol
-                ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
-
-                bool flag = false;
-
-                SgSymbol* symbol_to_delete = varRef->get_symbol();
-                varRef->set_symbol(isSgVariableSymbol(realSymbol));
-                counter ++;
-
-                if (nodeList.empty())
-                {
-                    VariantVector vv(V_SgVarRefExp);
-                    nodeList = NodeQuery::queryMemoryPool(vv);
-                }
-                foreach(SgNode* node, nodeList)
-                {
-                    if (SgVarRefExp* var = isSgVarRefExp(node))
-                    {
-                        if (var->get_symbol() == symbol_to_delete)
-                        {
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-                if (!flag)
-                {
-                    //cout <<initname->get_name().str() << endl;
-                    delete initname; // TODO deleteTree(), release File_Info nodes etc.
-                    delete symbol_to_delete;
-                }
-            }
-        }
-    } // end for
-    return counter;
-}
-
-int main( int argc, char * argv[] )
-{
-    vector<string> args(argv, argv+argc);
-    bool klee = CommandlineProcessing::isOption(args, "-backstroke:", "klee", true);
-    SgProject* project = frontend(args);
-    DFAnalysis* defuse = NULL;//new DefUseAnalysis(project);
-
-    reverserTraversal reverser(defuse);
-
-    SgGlobal *globalScope = getFirstGlobalScope(project);
-    string includes = "#include \"rctypes.h\"\n"
-        "#include <stdio.h>\n"
-        "#include <stdlib.h>\n"
-        "#include <time.h>\n"
-        "#include <assert.h>\n"
-        "#include <memory.h>\n";
-    if (klee)
-      includes += "#include <klee.h>\n";
-    addTextForUnparser(globalScope,includes,AstUnparseAttribute::e_before); 
-
-    pushScopeStack(isSgScopeStatement(globalScope));
-
-    reverser.traverseInputFiles(project,preorder);
-    cout << "Traverse complete\n";
-
-    ROSE_ASSERT(reverser.model_type);
-
-    //SgStatement* init_func = buildInitializationFunction();
-
-
-    for (size_t i = 0; i < reverser.var_decls.size(); ++i)
-        prependStatement(reverser.var_decls[i]);
-    for (size_t i = 0; i < reverser.funcs_gen.size(); ++i)
-        insertFunctionInPlace(reverser.funcs_gen[i], reverser.all_funcs);
-    //appendStatement(reverser.funcs[i]);
-
-    appendStatement(buildInitializationFunction(reverser.model_type));
-    appendStatement(buildCompareFunction(reverser.model_type));
-    appendStatement(buildMainFunction(reverser.var_inits, reverser.event_names, klee));
-
-
-    popScopeStack();
-
-    // Write or find a function to clear all nodes in memory pool who don't have parents.
-#if 1
-    cout << "Start to fix variables references\n";
-    fixVariableReferences2(globalScope);
-    cout << "Fix finished\n";
-
-    //AstTests::runAllTests(project);
-#endif
-    return backend(project);
-}
-
-
-
+/**********************************************************
+ * End of definitions of member funtions of EventReverser *
+ **********************************************************/
 

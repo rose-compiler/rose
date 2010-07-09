@@ -1,5 +1,8 @@
-#include "simulate.h"
 #include "rose.h"
+#include "simulate.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR /*protects this whole file*/
+
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -22,6 +25,10 @@ MachineState::MachineState() {
   ip = 0;
   for (size_t i = 0; i < 8; ++i) gprs[i] = 0;
   for (size_t i = 0; i < 16; ++i) flags[i] = 0;
+
+  // Initialize gdt using memset because some fields are not defined
+  // when compiling on linux i686.
+  memset(gdt, 0, sizeof gdt);
   gdt[0x23 >> 3].entry_number = (0x23 >> 3);
   gdt[0x23 >> 3].base_addr = 0;
   gdt[0x23 >> 3].limit = 0xFFFFF;
@@ -31,7 +38,6 @@ MachineState::MachineState() {
   gdt[0x23 >> 3].limit_in_pages = 1;
   gdt[0x23 >> 3].seg_not_present = 0;
   gdt[0x23 >> 3].useable = 1;
-  gdt[0x23 >> 3].lm = 0;
   gdt[0x2B >> 3].entry_number = (0x2B >> 3);
   gdt[0x2B >> 3].base_addr = 0;
   gdt[0x2B >> 3].limit = 0xFFFFF;
@@ -41,7 +47,7 @@ MachineState::MachineState() {
   gdt[0x2B >> 3].limit_in_pages = 1;
   gdt[0x2B >> 3].seg_not_present = 0;
   gdt[0x2B >> 3].useable = 1;
-  gdt[0x2B >> 3].lm = 0;
+
   writeSegreg(x86_segreg_cs, 0x23);
   writeSegreg(x86_segreg_ds, 0x2B);
   writeSegreg(x86_segreg_es, 0x2B);
@@ -119,10 +125,8 @@ void simulate_signal_check(LinuxMachineState& ms, uint32_t sourceAddr) {
 SgAsmx86Instruction* IncrementalDisassembler::disassembleNewInstruction(uint64_t addr) {
   std::pair<std::vector<uint8_t>, SgAsmx86Instruction*>& insnData = insnMap[addr];
   std::vector<uint8_t> insnBuf = memory.readAsFarAsPossibleForExec(addr, 15);
-#if 0
-  //AS FIXME
-  insnData.second = DisassemblerX86::disassemble(DisassemblerX86::Parameters(addr, x86_insnsize_32), &insnBuf[0], insnBuf.size(), 0, NULL);
-#endif
+
+  insnData.second = isSgAsmx86Instruction(disassembler->disassembleOne(&insnBuf[0], addr, insnBuf.size(), addr, NULL));
   ROSE_ASSERT (insnData.second);
   insnData.first = insnData.second->get_raw_bytes();
   return insnData.second;
@@ -144,3 +148,5 @@ SgAsmx86Instruction* IncrementalDisassembler::operator[](uint64_t addr) {
     }
   }
 }
+
+#endif /*ROSE_ENABLE_SIMULATOR*/

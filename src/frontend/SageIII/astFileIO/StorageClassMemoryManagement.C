@@ -338,12 +338,12 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock()
     * AstAttributeMechanism
     therefore an NULL pointer will be recreated ( this is realized by setting sizeOfData
     to -1 and check while rebuilt)
-  * the actual pointer is pointing to the next position to bestored in. Except for the case, the
+  * the actual pointer is pointing to the next position to be stored in. Except for the case, the
     memmory pool is not allocated at all, then the actual pointer is NULL. Therefore, we use
     the actual pointer for checking if the pool is valid (everytime you see (actual != NULL) )
   * every storting is mainly separated in 2 parts: 
     * the setup with the call of setPositionAndSizeAndReturnOffset
-    * the storing of the data, checking, wheather it fits in the achtual memory block or not 
+    * the storing of the data, checking, whether it fits in the actual memory block or not 
       ( done by ( 0 < offset ) )
       * the case it does not fit is separated in 2 or 3 parts
         * filling the actual memory block 
@@ -351,7 +351,7 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock()
           whole memory block
         * storing of the rest ( runs sometimes just to storing data ) 
     * more complex data (PreprocessingInfo, maps, AstAttributeMechanism) contain 
-      EasyStorage classes themself. Therefore, we must provide explicit member fumctions
+      EasyStorage classes themself. Therefore, we must provide explicit member functions
       deleting the static data of those. These functions call also the corresponing one 
       of the parent class (if the class is an inheritated class). 
 ***************************************************************************************/
@@ -3895,4 +3895,129 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: readFromFile (st
 //#endif
 //end of condition new_graph
 
+/*
+   ****************************************************************************************
+   **      Implementations for EasyStorageMapEntry <SgSharedVector<TYPE> >               **
+   ****************************************************************************************
+*/
+
+template <class TYPE>
+void EasyStorage <SgSharedVector<TYPE> > :: storeDataInEasyStorageClass(const SgSharedVector<TYPE>& data_)
+{
+    typename SgSharedVector<TYPE>::const_iterator dat = data_.begin();
+    long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
+
+    if (0 < offset) {
+        /* The new data does not fit in the actual block, but store what we can in the actual block. */
+        if (offset < Base::getSizeOfData() && Base::actual != NULL) {
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+        }
+
+        /* Put data in additional blocks if it did not fit in the previous block. */
+        while (Base::blockSize < (unsigned long)(offset)) {
+            Base::actual = Base::getNewMemoryBlock();
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+            offset -= Base::blockSize;
+        }
+
+        /* get a new memory block because we've filled up previous blocks */
+        Base::actual = Base::getNewMemoryBlock();
+    }
+
+    /* put (the rest of) the data in a (new) memory block */
+    for (/*void*/; dat != data_.end(); ++dat, ++Base::actual)
+        *Base::actual = *dat;
+}
+
+template <class TYPE>
+SgSharedVector<TYPE> EasyStorage <SgSharedVector<TYPE> > :: rebuildDataStoredInEasyStorageClass() const
+{
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+    assert(Base::actualBlock <= 1);
+    assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
+#endif
+
+    if (Base::actual!=NULL && Base::getSizeOfData()>0) {
+        TYPE *pool = new TYPE[Base::getSizeOfData()];
+        TYPE *pointer = Base::getBeginningOfDataBlock();
+        for (long i=0; i<Base::getSizeOfData(); ++i)
+            pool[i] = pointer[i];
+        return SgSharedVector<TYPE>(pool, Base::getSizeOfData());
+    }
+
+    return SgSharedVector<TYPE>();
+}
+
+/*
+   ****************************************************************************************
+   **      Implementations for EasyStorageMapEntry<ExtentMap>                            **
+   ****************************************************************************************
+*/
+
+void EasyStorage<ExtentMap>::storeDataInEasyStorageClass(const ExtentMap& emap)
+{
+    /* Since first and second elements of the value_type pair are identical (both rose_addr_t), we store them in a single pool
+     * that is twice as large as the number of pairs in the ExtentMap. */
+    std::vector<rose_addr_t> data_;
+    for (ExtentMap::const_iterator ei=emap.begin(); ei!=emap.end(); ++ei) {
+        data_.push_back(ei->first);
+        data_.push_back(ei->second);
+    }
+
+    std::vector<rose_addr_t>::const_iterator dat = data_.begin();
+    long offset = Base::setPositionAndSizeAndReturnOffset(data_.size());
+    if (0 < offset) {
+        /* The new data does not fit in the actual block, but store what we can in the actual block. */
+        if (offset < Base::getSizeOfData() && Base::actual != NULL) {
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+        }
+
+        /* Put data in additional blocks if it did not fit in the previous block. */
+        while (Base::blockSize < (unsigned long)(offset)) {
+            Base::actual = Base::getNewMemoryBlock();
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+            offset -= Base::blockSize;
+        }
+
+        /* get a new memory block because we've filled up previous blocks */
+        Base::actual = Base::getNewMemoryBlock();
+    }
+
+    /* put (the rest of) the data in a (new) memory block */
+    for (/*void*/; dat != data_.end(); ++dat, ++Base::actual)
+        *Base::actual = *dat;
+}
+
+ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
+{
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+    assert(Base::actualBlock <= 1);
+    assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
+    assert(0 == Base::getSizeOfData() % 2); /* vector holds key/value pairs of the ExtentMap */
+#endif
+
+    ExtentMap emap;
+    if (Base::actual!=NULL && Base::getSizeOfData()>0) {
+        rose_addr_t *pointer = Base::getBeginningOfDataBlock();
+        for (long i=0; i<Base::getSizeOfData(); i+=2)
+            emap.insert(pointer[i+0], pointer[i+1]);
+    }
+    return emap;
+}
 

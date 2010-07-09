@@ -14,7 +14,9 @@
 #include <signal.h>
 #include <map>
 #include <vector>
-#include <asm/ldt.h>
+#ifdef HAVE_ASM_LDT_H
+#  include <asm/ldt.h>
+#endif
 #include <boost/array.hpp>
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
@@ -41,6 +43,7 @@ struct Page {
       case USE_WRITE: return allow_write;
       case USE_EXECUTE: return allow_execute;
     }
+    ROSE_ASSERT(!"invalid permission bits");
   }
 
   void clear() {
@@ -88,7 +91,7 @@ struct Memory {
     Page p1 = findPage(vaddr);
     Page p2 = findPage(vaddr + SizeInBytes - 1);
     if (!p1.checkUse(USE_READ) || !p2.checkUse(USE_READ)) {
-      fprintf(stderr, "Bad read access to 0x%08"PRIX32" length %u\n", vaddr, SizeInBytes);
+      fprintf(stderr, "Bad read access to 0x%08"PRIX32" length %zu\n", vaddr, SizeInBytes);
       abort();
     }
     size_t partInFirstPage = PAGE_SIZE - (vaddr % PAGE_SIZE);
@@ -164,7 +167,7 @@ struct Memory {
     Page p1 = findPage(vaddr);
     Page p2 = findPage(vaddr + SizeInBytes - 1);
     if (!p1.checkUse(USE_WRITE) || !p2.checkUse(USE_WRITE)) {
-      fprintf(stderr, "Bad write access to 0x%08"PRIX32" length %u\n", vaddr, SizeInBytes);
+      fprintf(stderr, "Bad write access to 0x%08"PRIX32" length %zu\n", vaddr, SizeInBytes);
       abort();
     }
     size_t partInFirstPage = PAGE_SIZE - (vaddr % PAGE_SIZE);

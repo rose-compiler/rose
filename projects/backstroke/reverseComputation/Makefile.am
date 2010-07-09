@@ -2,20 +2,28 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = stateSaving
 
-# This file does not compile using ROSE (skip testing it for now)
-if !ROSE_USING_ROSE_ANALYSIS
-   bin_PROGRAMS = reverse 
-   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C utilities.C
-endif
-
-INCLUDES = $(ROSE_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = eventReverser.h facilityBuilder.h utilities.h test
+# Build a library of all the reverser code
+noinst_LTLIBRARIES =  libBackstrokeReverser.la
+
+libBackstrokeReverser_ladir = .
+libBackstrokeReverser_la_DEPENDENCIES = 
+libBackstrokeReverser_la_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C utilities.C
+include_HEADERS = eventReverser.h facilityBuilder.h utilities.h
+libBackstrokeReverser_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Build the reverse code generator
+bin_PROGRAMS = reverse 
+
+reverse_SOURCES =  main.C
+reverse_LDADD =  libBackstrokeReverser.la 
+
+
+EXTRA_DIST = test
 
 CLEANFILES = 
-
-include_HEADERS =
 
 ALL_TESTCODES =
 
