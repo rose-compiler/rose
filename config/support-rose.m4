@@ -2116,6 +2116,7 @@ src/midend/programAnalysis/CFG/Makefile
 src/midend/programAnalysis/dataflowAnalysis/Makefile
 src/midend/programAnalysis/pointerAnal/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
+src/midend/programAnalysis/variableRenaming/Makefile
 src/midend/programAnalysis/defUseAnalysis/Makefile
 src/midend/programAnalysis/dominanceAnalysis/Makefile
 src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
@@ -2247,7 +2248,6 @@ projects/binaryVisualization/Makefile
 projects/highLevelGrammars/Makefile
 projects/BabelPreprocessor/Makefile
 projects/checkPointExample/Makefile
-projects/simpleCallGraphAnalysis/Makefile
 projects/CloneDetection/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
