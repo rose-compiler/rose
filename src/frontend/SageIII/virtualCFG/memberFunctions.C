@@ -3115,7 +3115,8 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                     ROSE_ASSERT(funcDecl);
                     SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                     if (decl == NULL) {
-                      std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
+                      // Causes excessive output for includes. 
+                      // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
                       continue;
                     }
                     SgFunctionDefinition* def = decl->get_definition();
@@ -3153,7 +3154,8 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
                     ROSE_ASSERT(funcDecl);
                     SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                     if (decl == NULL) {
-                      std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
+                      // Causes excessive output for includes. 
+                      // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
                       continue;
                     }
                     SgFunctionDefinition* def = decl->get_definition();
