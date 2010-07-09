@@ -2242,7 +2242,6 @@ projects/binaryVisualization/Makefile
 projects/highLevelGrammars/Makefile
 projects/BabelPreprocessor/Makefile
 projects/checkPointExample/Makefile
-projects/simpleCallGraphAnalysis/Makefile
 projects/CloneDetection/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
