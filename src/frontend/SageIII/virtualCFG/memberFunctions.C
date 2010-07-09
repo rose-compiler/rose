@@ -1246,7 +1246,10 @@ std::vector<CFGEdge> SgTryStmt::cfgOutEdges(unsigned int idx, bool interprocedur
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
+    default: {
+               //ROSE_ASSERT (!"Bad index for SgTryStmt");
+               std::cerr << "SgTryStmt::cfgOutEdges failed" << std::endl;
+             }
   }
   return result;
 }
@@ -1257,7 +1260,10 @@ std::vector<CFGEdge> SgTryStmt::cfgInEdges(unsigned int idx, bool interprocedura
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
+    default: {
+               //ROSE_ASSERT (!"Bad index for SgTryStmt");
+               std::cerr << "SgTryStmt::cfgInEdges failed" << std::endl;
+             }
   }
   return result;
 }
@@ -3668,6 +3674,33 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
     ROSE_ASSERT (idx == 0);
     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
     return result;
+  }
+
+unsigned int SgCtorInitializerList::cfgIndexForEnd() const 
+  {
+    return get_ctors().size();
+  }
+
+std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx, bool interprocedural) {
+     std::vector<CFGEdge> result;
+     if (idx == this->get_ctors().size()) 
+       makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     else if (idx < this->get_ctors().size()) 
+       makeEdge(CFGNode(this, idx), this->get_ctors()[idx]->cfgForBeginning(), result);
+     else 
+       ROSE_ASSERT (!"Bad index for SgCtorInitializerList");
+     return result;
+  }
+
+std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx, bool interprocedural) {
+     std::vector<CFGEdge> result;
+     if (idx == 0) 
+       makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     else if (idx <= this->get_ctors().size()) 
+       makeEdge(this->get_ctors()[idx - 1]->cfgForEnd(), CFGNode(this, idx), result);
+     else 
+       ROSE_ASSERT (!"Bad index for SgCtorInitializerList");
+     return result;
   }
 
 unsigned int
