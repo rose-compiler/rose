@@ -1,11 +1,12 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+if ROSE_USE_LLVM
 
 SUBDIRS 		=
 
-AM_CPPFLAGS = -D__STDC_LIMIT_MACROS -D_STDC_CONSTANT_MACROS -Wno-deprecated -Wall -Wextra -g -O0
-
-INCLUDES = \
-	-I$(srcdir)/rosetollvm/include \
-	-I$(srcdir)/rosetollvm/include
+INCLUDES = $(ROSE_INCLUDES) \
+		   $(ROSE_LLVM_INCLUDES) \
+		   -I$(srcdir)/include
 
 pkginclude_HEADERS 	= \
 	include/rosetollvm/RootAstAttribute.h \
@@ -54,9 +55,13 @@ librosetollvm_la_SOURCES = \
 	Control.cpp \
 	StringSet.cpp
 
-#librosetollvm_la_CPPFLAGS	= \
+librosetollvm_la_CPPFLAGS	= -D__STDC_LIMIT_MACROS -D_STDC_CONSTANT_MACROS -Wno-deprecated -g -O0
 #	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS) $(LLVM_CPPFLAGS)
 
-librosetollvm_la_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ROSE_LLVM_LDFLAGS)
+librosetollvm_la_LDFLAGS = $(LIBS_WITH_RPATH) \
+						   $(ROSE_LIBS) \
+						   $(ROSE_LLVM_LIBS)
+endif
 
 #MAINTAINERCLEANFILES = Makefile.in
+
