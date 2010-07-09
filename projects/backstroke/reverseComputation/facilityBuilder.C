@@ -1,5 +1,5 @@
 #include "facilityBuilder.h"
-#include "utilities.h"
+#include "utilities/Utilities.h"
 #include <rose.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -25,7 +25,7 @@ SgStatement* initializeMember(SgExpression* exp)
                 buildSizeOfOp(exp));
         return buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para);
     }
-    else if (isSTLContainer(real_type))
+	else if (backstroke_util::isSTLContainer(real_type))
         return NULL;
     else if (SgClassType* class_t = isSgClassType(real_type))
     {

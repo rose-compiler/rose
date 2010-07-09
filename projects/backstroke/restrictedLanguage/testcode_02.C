@@ -13,5 +13,5 @@ int EVENT_foobar_B()
 
 int main()
    {
-     return EVENT_foobar_B();
+     
    }

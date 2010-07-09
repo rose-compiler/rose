@@ -9,8 +9,8 @@ noinst_LTLIBRARIES =  libBackstrokeNormalizations.la
 
 libBackstrokeNormalizations_ladir = .
 libBackstrokeNormalizations_la_DEPENDENCIES = 
-libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C Utilities.C CFGReverserProofOfConcept.C expNormalization.C
-include_HEADERS = ExtractFunctionArguments.h Utilities.h CFGReverserProofOfConcept.h expNormalization.h
+libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C CFGReverserProofOfConcept.C expNormalization.C
+include_HEADERS = ExtractFunctionArguments.h CFGReverserProofOfConcept.h expNormalization.h
 libBackstrokeNormalizations_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 

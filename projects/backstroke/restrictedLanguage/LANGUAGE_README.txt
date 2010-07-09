@@ -16,9 +16,11 @@
 	REASON: In ROSS, the state is passed as a pointer to a struct. In SPEEDES, the
 	state consists of member variables of the class of the event function.
 
-4) Function arguments are never passed by reference
+4) Function arguments are never passed by reference. No reference types are used
+	inside event functions.
 	REASON: We want a guarantee that function calls never modify local variables,
-	only state variables.
+	only state variables. Using references makes it difficult to determine what is being
+	modified.
 
 5) Only types allowed are scalar types and composite types containing only scalars.
 	Note: No arrays

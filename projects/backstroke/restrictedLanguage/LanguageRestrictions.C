@@ -12,7 +12,7 @@
 #include <functional>
 #include <numeric>
 #include "LanguageRestrictions.h"
-#include "normalizations/CPPDefinesAndNamespaces.h"
+#include "utilities/CPPDefinesAndNamespaces.h"
 
 
 using namespace std;
@@ -26,7 +26,7 @@ bool LanguageRestrictions::violatesRestrictionsOnEventFunctions(SgFunctionDefini
 	bool failure = false; 
 
 	failure = failure || containsDeclarationsOfPointerVariables(functionDefinition);
-	failure = failure || takesArgumentsByReference(functionDefinition);
+	//failure = failure || takesArgumentsByReference(functionDefinition);
 	failure = failure || containsJumpStructures(functionDefinition);
 	failure = failure || containsExceptionHandling(functionDefinition);
 	failure = failure || usesFunctionPointersOrVirtualFunctions(functionDefinition);

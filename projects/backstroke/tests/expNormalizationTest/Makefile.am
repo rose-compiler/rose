@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../../normalizations/libBackstrokeNormalizations.la
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
 bin_PROGRAMS = expNormTest 
 expNormTest_SOURCES = main.C

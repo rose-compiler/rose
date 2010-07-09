@@ -1,6 +1,6 @@
 #include "CFGReverserProofOfConcept.h"
-#include "CPPDefinesAndNamespaces.h"
-#include "Utilities.h"
+#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/Utilities.h"
 
 
 /** Initialize the reverser for a given AST. */
