@@ -336,7 +336,7 @@ MangledNameMapTraversal::visit ( SgNode* node)
      bool sharable = shareableIRnode(node);
 
   // DQ (7/10/2010): This is a test of the AST merge to investigate robustness.
-#if 0
+#if 1
 
      if (sharable == true)
         {
@@ -354,6 +354,7 @@ MangledNameMapTraversal::visit ( SgNode* node)
              {
             // Since we abstract out the generation of the key we can simplify this code!
                case V_SgFunctionDeclaration:
+#if 0
                case V_SgVariableDeclaration:
                case V_SgClassDeclaration:
 
@@ -417,12 +418,13 @@ MangledNameMapTraversal::visit ( SgNode* node)
 
             // DQ (3/17/2007): These should be shared, I think!
                case V_SgPragma:
-
             // DQ (5/20/2006): Initialized names are held in SgVariableDeclaration IR
             // nodes or other sharable structures so we don't have to share these.
             // But we have to permit them all to be shared because all pointers to 
             // them need to be reset they all need to be reset.
                case V_SgInitializedName:
+#endif
+#if 1
                   {
                  // DQ (7/4/2010): To improve the performance avoid regenerating the unique name for the same IR nodes when it is revisited!
 
@@ -481,7 +483,7 @@ MangledNameMapTraversal::visit ( SgNode* node)
                     numberOfNodesEvaluated++;
                     break;
                   }
-
+#endif
                default:
                   {
                  // Nothing to do here
