@@ -99,6 +99,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.la \
    $(top_builddir)/src/midend/programAnalysis/staticInterproceduralSlicing/libStaticSlicing.la \
    $(top_builddir)/src/midend/programAnalysis/valuePropagation/libvaluePropagation.la \
+   $(top_builddir)/src/midend/programAnalysis/variableRenaming/libVariableRenaming.la \
    $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.la \
    $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \
    $(top_builddir)/src/midend/programTransformation/functionCallNormalization/libfunctionCallNormalization.la \

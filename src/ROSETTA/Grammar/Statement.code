@@ -7191,13 +7191,14 @@ bool
 SgForStatement::replace_child(SgStatement *target,SgStatement *newstmt,
                               bool extractBasicBlock)
    {
-     if ( StatementReplace(this, p_loop_body, target, newstmt) == true )
-          return true;
-       else
-          if ( StatementReplace(this, p_for_init_stmt, target, newstmt) == true )
-               return true;
-            else 
-               return false;
+       if ( StatementReplace(this, p_loop_body, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_for_init_stmt, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_test, target, newstmt) == true )
+           return true;
+       else 
+           return false;
    }
 
 // DQ (11/25/2005): preserve the previous interface so that
@@ -11118,7 +11119,12 @@ bool
 SgSwitchStatement::replace_child(SgStatement *target,SgStatement *newstmt,
                               bool extractBasicBlock)
    {
-     return ( StatementReplace(this, p_body, target, newstmt) == true );
+
+     if ( StatementReplace(this, p_body, target, newstmt) )
+         return true;
+     if ( StatementReplace(this, p_item_selector, target, newstmt) )
+         return true;
+     return false;
    }
 
 #include "sageBuilder.h"
