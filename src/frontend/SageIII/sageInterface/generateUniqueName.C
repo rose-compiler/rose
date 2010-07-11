@@ -490,11 +490,17 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                             }
                        }
 
+                 // DQ (7/10/2010): Found a case where this fails, need more information about it.
                  // DQ (2/20/2007): I think that since we have reset the names of un-named enum declarations this should be possible to assert now!
-                    ROSE_ASSERT (key.empty() == false);
-#if 0
+                 // ROSE_ASSERT (key.empty() == false);
+
+                 // DQ (7/10/2010): Found a case where this fails, need more information about it.
+#if 1
                     if (key.empty() == true)
                        {
+                         printf ("ERROR: detected case of empty key constructed \n");
+                         enumDeclaration->get_file_info()->display("ERROR: detected case of empty key constructed");
+
                       // If the enum declaration is unnamed then give it a name in terms of its parent 
                       // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an 
                       // enum_declaration (additionalSuffix) in a typedef specific to _G_fpos64_t).
@@ -515,6 +521,9 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                                    ROSE_ASSERT(false);
                                  }
                             }
+
+                         printf ("ERROR: detected case of empty key constructed \n");
+                         ROSE_ASSERT (false);
                        }
 #endif
                     break;
