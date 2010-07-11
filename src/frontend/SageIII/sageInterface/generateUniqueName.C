@@ -498,8 +498,10 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
 #if 1
                     if (key.empty() == true)
                        {
-                         printf ("ERROR: detected case of empty key constructed \n");
-                         enumDeclaration->get_file_info()->display("ERROR: detected case of empty key constructed");
+                      // DQ (7/11/2010): This is not an error since we handle this case explicitly 
+                      // by addating the pointer value to make it non-sharable.
+                         printf ("WARNING: detected case of empty key constructed \n");
+                         enumDeclaration->get_file_info()->display("WARNING: detected case of empty key constructed");
 
                       // If the enum declaration is unnamed then give it a name in terms of its parent 
                       // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an 
@@ -507,7 +509,7 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                          SgNode* parentNode = enumDeclaration->get_parent();
                          switch(parentNode->variantT())
                             {
-                           // These case handle where an enum declaration is embedded in a variable or typedef declaration.
+                           // These cases handle where an enum declaration is embedded in a variable or typedef declaration.
                               case V_SgVariableDeclaration:
                               case V_SgTypedefDeclaration:
                                  {
@@ -522,6 +524,7 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                                  }
                             }
 #if 0
+                      // DQ (7/11/2010): Commented out this assertion since we handle it above for now.
                          printf ("ERROR: detected case of empty key constructed \n");
                          ROSE_ASSERT (false);
 #endif

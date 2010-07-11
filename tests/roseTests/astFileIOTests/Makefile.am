@@ -314,10 +314,11 @@ testParallelMerge-short: parallelMerge $(TEST_PARALLEL_SHORT_LIST_BINARIES)
 # TEST_PARALLEL_MEDIUM_LIST = $(ORIGINAL_TEST_MEDIUM_LIST)
 # TEST_PARALLEL_MEDIUM_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_08.C test2003_10.C test2003_12.C test2003_14.C 
 TEST_PARALLEL_MEDIUM_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_10.C test2003_12.C test2003_14.C \
-test2003_18.C test2003_20.C test2003_23.C test2003_25.C test2003_27.C \
-test2003_35.C test2003_02.C test2003_06.C test2003_09.C test2003_11.C \
-test2003_15.C test2003_17.C test2003_21.C test2003_24.C test2003_26.C test2003_28.C test2003_30.C \
-test2003_32.C test2003_36.C 
+test2003_18.C test2003_20.C test2003_23.C test2003_25.C test2003_27.C test2003_35.C test2003_02.C test2003_06.C test2003_09.C test2003_11.C \
+test2003_15.C test2003_17.C test2003_21.C test2003_24.C test2003_26.C test2003_28.C test2003_30.C test2003_32.C test2003_36.C 
+
+# This longer list fails when run in parallel, need to debug this.
+# TEST_PARALLEL_MEDIUM_LIST = $(TEST_MEDIUM_LIST)
 
 # Problem test for parallel tests:
 # test2003_08.C 
@@ -341,6 +342,14 @@ testParallelMerge-medium: parallelMerge $(TEST_PARALLEL_MEDIUM_LIST_BINARIES)
 # This is different and usually faster for small problems than the singled threaded parallel merge.
 testParellelMerge-medium-serial: $(TEST_PARALLEL_MEDIUM_LIST_BINARIES)
 	$(READ_TRANSLATOR) $(TEST_PARALLEL_MEDIUM_LIST) temp_output_parallel_medium_serial.C
+
+TEST_PARALLEL_LARGE_LIST = $(TESTCODES)
+TEST_PARALLEL_LARGE_LIST_BINARIES = $(TEST_PARALLEL_LARGE_LIST:.C=.o)
+testParallelMerge-large: parallelMerge $(TEST_PARALLEL_LARGE_LIST_BINARIES)
+	rm -rf data temp
+	mkdir data
+	mkdir temp
+	./parallelMerge $(TEST_PARALLEL_LARGE_LIST) temp_output_parallel_large.C
 
 # DQ (3/1/2010): This is the sart of a general command to process all the
 # binaries in a directory structure.

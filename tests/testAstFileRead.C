@@ -220,7 +220,7 @@ main ( int argc, char * argv[] )
 
   // DQ (6/5/2010): Trigger debugging output!
   // ROSE_DEBUG = 2;
-     SgProject::set_verbose(3);
+  // SgProject::set_verbose(3);
 
   // cout  << endl << "Here we call the AST_FILE_IO :: readASTFromFile ..." << endl;
      SgProject* tmp_previous_globalProject = NULL;
@@ -242,8 +242,8 @@ main ( int argc, char * argv[] )
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
-          printf ("SgProject* tmp_globalProject = %p \n",tmp_globalProject);
-          printf ("file #%5d = %20s AST size = %12zu memory usage = %12zu Sg_File_Info::numberOfNodes() = %12zu \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
+       // printf ("SgProject* tmp_globalProject = %p \n",tmp_globalProject);
+          printf ("file #%5d = %20s AST size = %12zu IR nodes  memory usage = %12zu bytes  Sg_File_Info::numberOfNodes() = %12zu \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
 
        // TestFreepointerInMemoryPool::test();
 
@@ -264,7 +264,7 @@ main ( int argc, char * argv[] )
        // Track the positions of the base and bound of the Sg_File_Info list in the memory pool.
           previousNumberOfNodes = currentNumberOfNodes;
 
-          printf ("At base of loop over the input files... i = %d \n",i);
+       // printf ("At base of loop over the input files... i = %d \n",i);
         }
 #if 1
      cout  << endl << "AST_FILE_IO :: readASTFromFile done ... " << endl;
@@ -281,7 +281,7 @@ main ( int argc, char * argv[] )
      AstData* ast = NULL;
      for (int i= 0; i < numFiles; ++i)
         {
-#if 1
+#if 0
           printf ("Processing file #%d \n",i);
 #endif
           ast = AST_FILE_IO::getAst(i);
@@ -392,9 +392,9 @@ main ( int argc, char * argv[] )
   // SgFunctionTypeTable* globalFunctionTypeTable = mergeFunctionTypeSymbolTables (functionTableArray);
   // ROSE_ASSERT(globalFunctionTypeTable != NULL);
 
-     printf ("Calling mergeStaticASTFileInformation() \n");
+  // It is required to merge the static information in the AST, to get a valid AST, even if no other merging is done.
+     printf ("\n\nCalling mergeStaticASTFileInformation() \n");
      mergeStaticASTFileInformation(AstFileInfoArray);
-
      printf ("Size of AST (after merge of static data) = %zu \n",numberOfNodes());
 
   // DQ (7/10/2010): This is now called from within the AST merge mechanism.
@@ -405,14 +405,14 @@ main ( int argc, char * argv[] )
 #if 1
   // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
   // of the AST and force sharing of these pieces and delete the redundany copies.
-     printf ("Calling AstMergeSupport() \n");
+     printf ("\n\nCalling AstMergeSupport() \n");
   // int mergeErrorCode = AstMergeSupport(globalProject);
   // bool skipFrontendSpecificIRnodes = true;
   // SgProject::set_verbose(3);
      bool skipFrontendSpecificIRnodes = false;
      mergeAST(globalProject,skipFrontendSpecificIRnodes);
   // ROSE_ASSERT(mergeErrorCode == 0);
-     SgProject::set_verbose(0);
+  // SgProject::set_verbose(0);
 #else
      printf ("Skipping call to mergeAST() \n");
 #endif
@@ -423,7 +423,7 @@ main ( int argc, char * argv[] )
   // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
   // performance on large codes (it is n^2 in the size of the AST if run for each file separately).
   // AstTests::runAllTests(ast->getRootOfAst());
-     printf ("Running AST consistancy tests on merged AST \n");
+     printf ("\n\nRunning AST consistancy tests on merged AST \n");
      AstTests::runAllTests(globalProject);
      printf ("DONE: Running AST consistancy tests on merged AST \n");
 #endif
@@ -455,7 +455,9 @@ main ( int argc, char * argv[] )
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
+     printf ("\n\nGenerating a dot file of the AST (could be very large) \n");
      generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
+     printf ("DONE: Generating a dot file of the AST \n");
 #endif
 
 #if 1
@@ -469,12 +471,12 @@ main ( int argc, char * argv[] )
   // printf ("globalProject->get_freepointer()  = %p \n",globalProject->get_freepointer());
   // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
   // AST_FILE_IO::display("Before writing the merged AST (before resetValidAstAfterWriting())");
-
   // string mergedFileName = "mergedFile.C";
+
      string mergedFileName = outputFileName;
      printf ("mergedFileName = %s numberOfNodes() = %zu \n",(mergedFileName + ".binary").c_str(),numberOfNodes());
 
-  // printf ("Calling AST_FILE_IO::reset() \n");
+     printf ("Calling AST_FILE_IO::reset() \n");
      AST_FILE_IO::reset();
 
   // printf ("Calling AST_FILE_IO::resetValidAstAfterWriting() \n");
@@ -482,10 +484,10 @@ main ( int argc, char * argv[] )
   // AST_FILE_IO::display("Before writing the merged AST");
 
   // Now write out the merged AST.
-  // printf ("Calling AST_FILE_IO::startUp()... \n");
+     printf ("Calling AST_FILE_IO::startUp()... \n");
      AST_FILE_IO::startUp(globalProject);
 
-  // printf ("Writing the AST to disk... \n");
+     printf ("Writing the AST to disk... \n");
      AST_FILE_IO::writeASTToFile ( mergedFileName + ".binary" );
 #endif
 
@@ -614,7 +616,7 @@ SgFunctionTypeTable* mergeFunctionTypeSymbolTables ( vector<SgFunctionTypeTable*
      ROSE_ASSERT(globalFunctionTypeTable != NULL);
 
      printf ("Using globalFunctionTypeTable = %p as a table to merge all symbols into. \n",globalFunctionTypeTable);
-#if 1
+#if 0
      printf ("BEFORE removing the global function type table: functionTableArray size = %zu \n",functionTableArray.size());
 #endif
 
@@ -623,7 +625,7 @@ SgFunctionTypeTable* mergeFunctionTypeSymbolTables ( vector<SgFunctionTypeTable*
      ROSE_ASSERT(globalTable != functionTableArray.end());
      functionTableArray.erase(globalTable);
 
-#if 1
+#if 0
      printf ("AFTER removing the global function type table: functionTableArray size = %zu \n",functionTableArray.size());
 #endif
 
