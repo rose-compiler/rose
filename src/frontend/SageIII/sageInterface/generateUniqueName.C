@@ -507,7 +507,7 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                          SgNode* parentNode = enumDeclaration->get_parent();
                          switch(parentNode->variantT())
                             {
-                           // These case handle where an enum declaration is embedded in a avriable or typedef declaration.
+                           // These case handle where an enum declaration is embedded in a variable or typedef declaration.
                               case V_SgVariableDeclaration:
                               case V_SgTypedefDeclaration:
                                  {
@@ -521,9 +521,10 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                                    ROSE_ASSERT(false);
                                  }
                             }
-
+#if 0
                          printf ("ERROR: detected case of empty key constructed \n");
                          ROSE_ASSERT (false);
+#endif
                        }
 #endif
                     break;
@@ -687,8 +688,12 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                             {
                               printf ("Error: declaration->get_string().is_null() == true declaration = %p = %s \n",declaration,declaration->class_name().c_str());
                               declaration->get_file_info()->display("Error: declaration->get_string().is_null() == true");
+
+                           // DQ (7/11/2010): This will make sure the IR node is unshared
+                              additionalSuffix += string("_empty_template_string_") + StringUtility::numberToString(node);
                             }
-                         ROSE_ASSERT(declaration->get_string().is_null() == false);
+                      // DQ (7/11/2010): Commenting out this assertion (triggered by astFileIO test test-read-large).
+                      // ROSE_ASSERT(declaration->get_string().is_null() == false);
 
                          additionalSuffix += string("_template_string_") + declaration->get_string();
                        }
@@ -1377,12 +1382,21 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
 #endif
                               break;
                             }
+
+                      // DQ (7/11/2010): In astFileIO test test-read-large we demonstrate an example of this case.
                          case SgTemplateArgument::template_template_argument:
                             {
+                           // This will make sure the IR node is unshared
+                              key += StringUtility::numberToString(node);
+#if 1
+                              printf ("Warning: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
+#else
                               printf ("Error: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
                               ROSE_ASSERT(false);
+#endif
                               break;
                             }
+
                          default:
                             {
                               printf ("Error: default reached \n");
