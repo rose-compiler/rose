@@ -397,9 +397,10 @@ main ( int argc, char * argv[] )
 
      printf ("Size of AST (after merge of static data) = %zu \n",numberOfNodes());
 
-     printf ("Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
-     normalizeTypedefSequenceLists();
-     printf ("DONE: Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
+  // DQ (7/10/2010): This is now called from within the AST merge mechanism.
+  // printf ("Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
+  // normalizeTypedefSequenceLists();
+  // printf ("DONE: Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
 
 #if 1
   // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
@@ -502,6 +503,8 @@ main ( int argc, char * argv[] )
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
+
+     printf ("Program Terminated Normally! \n");
 
      return 0;
    }

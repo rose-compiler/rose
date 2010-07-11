@@ -77,7 +77,9 @@ normalizeTypedefSequenceLists()
   // Phase 1
      NormalizeTypedefSequenceLists t1;
 
-  // printf ("\n\nBuild the global map of typedef sequences. \n");
+#if 0
+     printf ("\n\nBuild the global map of typedef sequences. \n");
+#endif
 
   // To specify the traversal of a specific IR node we pass the traversal object as a parameter.
   // t.traverseMemoryPool();
@@ -86,11 +88,15 @@ normalizeTypedefSequenceLists()
   // Phase 2
      NormalizeTypedefSequenceLists_CopyList t2(t1.typedefSeqMap);
 
-  // printf ("\n\nCopy the lists from the map of master lists to the lists in each SgTypedefSeq. \n");
+#if 0
+     printf ("\n\nCopy the lists from the map of master lists to the lists in each SgTypedefSeq. \n");
+#endif
 
      SgTypedefSeq::traverseMemoryPoolNodes(t2);
 
-  // printf ("Leaving normalizeTypedefSequenceLists() \n");
+#if 0
+     printf ("Leaving normalizeTypedefSequenceLists() \n");
+#endif
 
 #if 0
      printf ("Exiting after test! \n");
@@ -123,7 +129,7 @@ NormalizeTypedefSequenceLists::generateKey(SgTypedefSeq* typedefSeq)
           bool keepGoing = true; // (isSgPointerType(baseType) != NULL) || (isSgReferenceType(baseType) != NULL) || (isSgArrayType(baseType) != NULL) || (isSgModifierType(baseType) != NULL);
           while (keepGoing == true)
              {
-            // This loop should be a loot that always terminate
+            // This loop should be a loop that always terminate
 
             // printf (" -- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 
@@ -223,12 +229,20 @@ NormalizeTypedefSequenceLists::visit (SgNode* node)
             // Make sure that the element will be unique in the list
             // ROSE_ASSERT(find(typedefSeqMap[key].begin(),typedefSeqMap[key].end(),typedefType) == typedefSeqMap[key].end());
 
-               if ( find(typedefSeqMap[key].begin(),typedefSeqMap[key].end(),typedefType) == typedefSeqMap[key].end() )
+               SgTypePtrList & localList = typedefSeqMap[key];
+            // if ( find(typedefSeqMap[key].begin(),typedefSeqMap[key].end(),typedefType) == typedefSeqMap[key].end() )
+               if ( find(localList.begin(),localList.end(),typedefType) == localList.end() )
                   {
                  // Accumulate the element into the list.
                  // masterList.push_back(typedefType);
+#if 0
+                 // Slower initial version
                     ROSE_ASSERT(typedefSeqMap.find(key) != typedefSeqMap.end());
                     typedefSeqMap[key].push_back(typedefType);
+#else
+                 // Faster version
+                    localList.push_back(typedefType);
+#endif
                  // printf ("pointer to master list in map = %p \n",&(typedefSeqMap[key]));
                  // printf ("size of master list in map = %zu size of map = %zu \n",typedefSeqMap[key].size(),typedefSeqMap.size());
                   }

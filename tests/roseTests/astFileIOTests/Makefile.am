@@ -150,7 +150,8 @@ test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  
 
 # Problem files:
 # test2004_161.C 
-# test2004_136.C  
+# test2004_136.C
+TEST_MEDIUM_PROBLEM_FILE_LIST = test2004_136.C test2004_161.C
 
 # /home/dquinlan/ROSE/git-dq-main-rc/src/ROSETTA/Grammar/grammarAST_FileIoSource.code:363: static long unsigned int AST_FILE_IO::getGlobalIndexFromSgClassPointer(SgNode*): Assertion `globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1)' failed.
 # test2004_50.C 
@@ -168,6 +169,7 @@ test2004_09.C   test2004_113.C  test2004_128.C  test2004_141.C  test2004_155.C  
 # These files are a problem for the "medium" size test.
 # test2004_85.C 
 # test2004_127.C  
+TEST_MEDIUM_PROBLEM_FILE_LIST += test2004_85.C test2004_127.C
 
 ALT3_TEST_MEDIUM_LIST_EXTRA = \
 test2004_100.C  test2004_114.C  test2004_129.C  test2004_142.C  test2004_156.C  test2004_24.C   test2004_39.C  test2004_56.C  test2004_73.C  test2004_88.C \
@@ -189,6 +191,7 @@ test2004_102.C  test2004_116.C  test2004_144.C  test2004_158.C  test2004_26.C   
 # test2004_27.C  
 # test2004_43.C  
 # test2004_60.C  
+TEST_MEDIUM_PROBLEM_FILE_LIST += test2004_101.C test2004_115.C test2004_12.C test2004_143.C test2004_157.C test2004_130.C test2004_75.C test2004_103.C test2004_117.C test2004_145.C test2004_159.C test2004_27.C test2004_43.C test2004_60.C  
 
 ALT4_TEST_MEDIUM_LIST_EXTRA = \
 test2004_131.C  test2004_76.C test2004_91.C \
@@ -207,7 +210,12 @@ test2004_104.C  test2004_118.C  test2004_132.C  test2004_146.C  test2004_15.C  t
 # test2004_94.C
 
 # src/frontend/SageIII/sageInterface/generateUniqueName.C:494: std::string SageInterface::generateUniqueName(SgNode*, bool): Assertion `key.empty() == false' failed.
-# test2004_105.C  
+# test2004_105.C 
+
+TEST_MEDIUM_PROBLEM_FILE_LIST += test2004_93.C test2004_119.C test2004_133.C test2004_147.C test2004_160.C test2004_29.C test2004_45.C test2004_62.C test2004_78.C test2004_94.C
+
+# DQ (7/10/2010): Deal with this later!
+# test2004_105.C
 
 
 ALT_TEST_MEDIUM_LIST_EXTRA = \
@@ -259,6 +267,14 @@ TEST_MEDIUM_LIST_BINARIES = $(TEST_MEDIUM_LIST:.C=.o)
 test-read-medium: $(TEST_MEDIUM_LIST_BINARIES) ../../testAstFileRead
 	$(READ_TRANSLATOR) $(TEST_MEDIUM_LIST) temp_output_medium.C
 
+# FAILING_TEST_MEDIUM_LIST = $(TEST_MEDIUM_LIST) $(TEST_MEDIUM_PROBLEM_FILE_LIST)
+FAILING_TEST_MEDIUM_LIST = $(TEST_MEDIUM_PROBLEM_FILE_LIST)
+FAILING_TEST_MEDIUM_LIST_BINARIES = $(FAILING_TEST_MEDIUM_LIST:.C=.o)
+
+failing-test-read-medium: $(FAILING_TEST_MEDIUM_LIST_BINARIES) ../../testAstFileRead
+	$(READ_TRANSLATOR) $(FAILING_TEST_MEDIUM_LIST) temp_output_medium.C
+
+
 TEST_LARGE_LIST_BINARIES = $(TESTCODES:.C=.o)
 TEST_Binaries = $(TESTCODES:.C=.C.binary)
 # test-read-large: test2001_01.C.binary test2001_02.C.binary test2001_03.C.binary
@@ -277,7 +293,12 @@ test-read-really-huge: ../../testAstFileRead
 FailingTests = test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C
 FailingTests_Binaries = $(FailingTests:.C=.o)
 failingTest: $(FailingTests_Binaries)
-	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
+#	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
+	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C
+
+# test2003_21.C 
+# test2003_19.C 
+# test2003_17.C test2003_13.C temp_output.C
 
 TEST_PARALLEL_SHORT_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_10.C test2003_12.C test2003_14.C
 TEST_PARALLEL_SHORT_LIST_BINARIES = $(TEST_PARALLEL_SHORT_LIST:.C=.o)
