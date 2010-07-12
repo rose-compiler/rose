@@ -61,39 +61,40 @@ namespace backstroke_util
 	bool isReturnValueUsed(SgExpression* exp);
 
 	/** Prints an error message associated with a certain node. Also outputs the file and location
-	  * of the node. */
-        void printCompilerError(SgNode* badNode, const char * message);
+	 * of the node. */
+	void printCompilerError(SgNode* badNode, const char * message);
 
-        /** Returns a vector of nodes of specific type indicated by the template parameter, and the traversal 
-         * order can also be passed in. */
-        template <class T>
-        std::vector<T*> querySubTree(SgNode* root, t_traverseOrder order = postorder)
-        {
-            struct Traversal : public AstSimpleProcessing
-            {
-                std::vector<T*> all_nodes;
-                virtual void visit(SgNode* n)
-                {
-                    T* node = dynamic_cast<T*>(n);
-                    if (node) all_nodes.push_back(node);
-                }
-            }; 
+	/** Returns aT* vector of nodes of specific type indicated by the template parameter, and the traversal
+	 * order can also be passed in. */
+	template <class T>
+	inline std::vector<T*> querySubTree(SgNode* root, t_traverseOrder order = postorder)
+	{
+		struct Traversal : public AstSimpleProcessing
+		{
+			std::vector<T*> all_nodes;
 
-            Traversal traversal;
-            traversal.traverse(root, order);
-            return traversal.all_nodes;
-        }
+			virtual void visit(SgNode * n)
+			{
+				T* node = dynamic_cast<T*> (n);
+				if (node) all_nodes.push_back(node);
+			}
+		};
 
-        /** Remove braces of a basic block in which there is no variable declared. */
-        void removeUselessBraces(SgNode* root);
+		Traversal traversal;
+		traversal.traverse(root, order);
+		return traversal.all_nodes;
+	}
 
-        /** Returns if an expression modifies any value. */
-        bool isModifyingExpression(SgExpression* exp);
-        
-        /** Returns if an expression contains any subexpression which modifies any value. */
-        bool containsModifyingExpression(SgExpression* exp);
+	/** Remove braces of a basic block in which there is no variable declared. */
+	void removeUselessBraces(SgNode* root);
 
-        /** Returns if an expression is an assignment operator (including +=, etc.). */
-        bool isAssignmentOp(SgExpression* e);
+	/** Returns if an expression modifies any value. */
+	bool isModifyingExpression(SgExpression* exp);
+
+	/** Returns if an expression contains any subexpression which modifies any value. */
+	bool containsModifyingExpression(SgExpression* exp);
+
+	/** Returns if an expression is an assignment operator (including +=, etc.). */
+	bool isAssignmentOp(SgExpression* e);
 }
 
