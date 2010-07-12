@@ -1,2 +1,0 @@
-int y;
-int x;

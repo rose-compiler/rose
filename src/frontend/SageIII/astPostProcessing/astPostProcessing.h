@@ -38,6 +38,9 @@
 // DQ (4/14/2010): This is the C++ specific support for symbol aliasing (to support better name qualification).
 #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
 
+// DQ (6/24/2010): Fixup the SgTypedefSeq lists to support the AST merge mechanism.
+#include "normalizeTypedefSequenceLists.h"
+
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
 void postProcessingSupport (SgNode* node);

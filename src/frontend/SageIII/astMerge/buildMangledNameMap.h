@@ -61,6 +61,7 @@ class MangledNameMapTraversal : public ROSE_VisitTraversal
        // Allow these containers to be built (empty) outside of this class and set by the visit function.
           MangledNameMapType & mangledNameMap;
           SetOfNodesType     & setOfNodesToDelete;
+          SetOfNodesType     setOfNodesPreviouslyVisited;
 
           void visit ( SgNode* node);
           void addToMap ( std::string key, SgNode* node);
