@@ -5,9 +5,11 @@ bin_PROGRAMS = generateVirtualCFG
 
 generateVirtualCFG_SOURCES = generateVirtualCFG.C
 
-noinst_PROGRAMS = testVirtualCFG
+noinst_PROGRAMS = testVirtualCFG testInterproceduralCFG
 
 testVirtualCFG_SOURCES = testVirtualCFG.C
+
+testInterproceduralCFG_SOURCES = testInterproceduralCFG.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -459,28 +461,31 @@ F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
 F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
 F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
 
-$(CXX_FILES): testVirtualCFG
+$(CXX_FILES): testVirtualCFG testInterproceduralCFG
 	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+	./testInterproceduralCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
 
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testVirtualCFG
-$(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
+$(C_FILES): testVirtualCFG testInterproceduralCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
 	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
 	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
+	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
 
-$(C99_FILES): testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
+$(C99_FILES): testVirtualCFG testInterproceduralCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
 	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
 	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
+	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F90_FILES): ./testVirtualCFG
+$(F90_FILES): ./testVirtualCFG ./testInterproceduralCFG
 #	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F77_FILES): ./testVirtualCFG
+$(F77_FILES): ./testVirtualCFG ./testInterproceduralCFG
 #	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F03_FILES): ./testVirtualCFG
+$(F03_FILES): ./testVirtualCFG ./testInterproceduralCFG
 #	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
 
@@ -488,8 +493,10 @@ QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): testVirtualCFG $(srcdir)/$(@:.qmt=.C)
+$(QMTEST_Objects): testVirtualCFG testInterproceduralCFG $(srcdir)/$(@:.qmt=.C)
 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testVirtualCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testInterproceduralCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
