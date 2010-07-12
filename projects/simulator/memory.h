@@ -14,7 +14,9 @@
 #include <signal.h>
 #include <map>
 #include <vector>
-#include <asm/ldt.h>
+#ifdef HAVE_ASM_LDT_H
+#  include <asm/ldt.h>
+#endif
 #include <boost/array.hpp>
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS

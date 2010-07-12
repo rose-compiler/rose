@@ -1,1 +1,1 @@
-void foo(int,...);
+void foobarXXX(int,...);

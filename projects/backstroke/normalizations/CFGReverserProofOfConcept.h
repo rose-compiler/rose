@@ -2,6 +2,7 @@
 
 #include "rose.h"
 #include <boost/tuple/tuple.hpp>
+#include "reverseComputation/eventReverser.h"
 
 class CFGReverserProofofConcept
 {
@@ -15,9 +16,13 @@ public:
 	 */
 	boost::tuple<SgBasicBlock*, SgBasicBlock*> ReverseFunctionBody(SgBasicBlock* body);
 
+	/** Attempts to reverse an expression. If the reversal fails,
+	  * this function returns NULL_EXP_PAIR. */
+	ExpPair ReverseExpression(SgExpression* expression);
+
 private:
 
-	void handleExpression(SgExpression* expression);
+	
 
 	void handleVarRef(SgVarRefExp* varRef);
 

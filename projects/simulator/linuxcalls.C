@@ -1,6 +1,9 @@
 #include "rose.h"
-#include "x86InstructionSemantics.h"
 #include "simulate.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR /*protects this whole file*/
+
+#include "x86InstructionSemantics.h"
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -1279,3 +1282,5 @@ void linuxSyscall(LinuxMachineState& ms) {
 #endif
 }
 #endif
+
+#endif /*ROSE_ENABLE_SIMULATOR*/

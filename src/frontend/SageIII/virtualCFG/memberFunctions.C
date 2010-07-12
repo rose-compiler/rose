@@ -2715,7 +2715,12 @@ SgUnaryOp::cfgOutEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
-          case 0: makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
+          case 0: 
+              if (this->get_operand())
+              {
+                  makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); 
+                  break;
+              }
           case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
         }
@@ -2729,8 +2734,13 @@ SgUnaryOp::cfgInEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
+          case 1: 
+              if (this->get_operand())
+              {
+                  makeEdge(this->get_operand()->cfgForEnd(), CFGNode(this, idx), result); 
+                  break;
+              }
           case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-          case 1: makeEdge(this->get_operand()->cfgForEnd(), CFGNode(this, idx), result); break;
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
         }
 

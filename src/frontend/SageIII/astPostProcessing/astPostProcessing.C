@@ -445,6 +445,10 @@ void postProcessingSupport (SgNode* node)
   // correct visability of symbols included from alternative scopes (e.g. namespaces).
      fixupAstSymbolTablesToSupportAliasedSymbols(node);
 
+  // DQ (6/24/2010): To support merge, we want to normalize the typedef lists for each type so that 
+  // the names of the types will evaluate to be the same (and merge appropriately).
+     normalizeTypedefSequenceLists();
+
   // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
   // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).
   // TestForDisconnectedAST::test(node);

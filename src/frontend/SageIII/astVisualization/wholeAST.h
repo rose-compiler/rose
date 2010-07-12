@@ -227,8 +227,9 @@ class CustomMemoryPoolDOTGeneration
              void print_commandline_help();
              ~s_Filter_Flags ();
              void print_filter_flags();
+
            private:
-            //! Set default values for filter flags
+         //! Set default values for filter flags
              void setDefault();
          };
         

@@ -586,12 +586,12 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                ROSE_ASSERT(project != NULL);
 
                string generatedProjectName = SageInterface::generateProjectName( project );
-               printf ("generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
+            // printf ("generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
                if (generatedProjectName.length() > 40)
                   {
-                    printf ("Warning: generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
+                 // printf ("Warning: generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
                     generatedProjectName = "aggregatedFileNameTooLong";
-                    printf ("   proposed filename is too long, shortened to: %s \n",generatedProjectName.c_str());
+                    printf ("Proposed (generated) filename is too long, shortened to: %s \n",generatedProjectName.c_str());
                   }
 
                string filename = string("./") + generatedProjectName + ".dot";

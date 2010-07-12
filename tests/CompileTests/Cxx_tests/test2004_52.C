@@ -6,7 +6,7 @@
 
 int globalTest() {}
 
-class X
+class XXX
    {
      public:
 
@@ -30,7 +30,7 @@ class X
 
 float call () 
    {
-     X x;
+     XXX x;
      x.test();
      return 0.0;
    }

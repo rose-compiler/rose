@@ -15,3 +15,15 @@ AST_FILE_IO::IS_VALID_POINTER() and so when we fail the test for
    ROSE_ASSERT(p_freepointer == AST_FILE_IO::IS_VALID_POINTER());
 it might be because the delete operator has been called.
 
+
+Note a merged AST will still have the same traversal complexity as
+the original unmerged AST because IR nodes are only reused to be shared.
+This is not an issue for the serial merge, since the whole unshared AST
+is traversed.  But for the merged ASTs from the intermediate merges in 
+the parallel merge, it could be an issue.  For the parallel merge it
+might be helpful to identify the unique IR nodes in the AST first
+and then generate the merged map.
+
+Note that two static functions will only be defined in file scope
+and thus should not be shared across translation units. These
+should gnerate different mangled names.

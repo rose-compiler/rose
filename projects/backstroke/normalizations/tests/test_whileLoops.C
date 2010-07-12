@@ -15,6 +15,8 @@ int globalFunc(int a, int b)
 
 int main(int argc, char** argv)
 {
+	int x = 3;
+
 	//While loop with test condition that needs to be normalized
 	while (globalFunc(foo(3), addone(x)))
 	{
