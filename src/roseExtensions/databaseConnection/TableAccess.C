@@ -7,10 +7,10 @@
  *****************************************************************************/
 
 #include "TableAccess.h"
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 
 // mysql interface
-#include <sqlplus.hh>
+#include <mysql++.h>
 
 
 //-----------------------------------------------------------------------------

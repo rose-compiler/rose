@@ -10,9 +10,9 @@ if ROSE_USE_MYSQL_DATABASE
 #                  correct set.h (the g++ set.h instead of the C++ mySQL set.h)
 # INCLUDES = $(ROSE_INCLUDES) -I/usr/include/g++-3 -I@MySQL_path@/include -I@MySQL_path@/include/mysql
 # INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
-INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql -idirafter /home/thuerey1/local/include
+INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
 
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/dataBase/librosedatabase.a @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lz
+LDADD    = $(LIBS_WITH_RPATH) @MySQL_path@/lib/mysql/libmysqlclient.a -L@MySQL_path@/lib/mysql -lmysqlpp
 
 librosedatabaseSources = \
      GlobalDatabaseConnection.C \
@@ -25,22 +25,22 @@ librosedatabaseSources = \
 noinst_LTLIBRARIES = librosedatabase.la
 librosedatabase_la_SOURCES = $(librosedatabaseSources)
 
-include_HEADERS = GlobalDatabaseConnection.h TableAccessMacros.h TableAccess.h
+include_HEADERS = GlobalDatabaseConnectionMYSQL.h TableAccessMacros.h TableAccess.h
 
 
 # Test codes must be placed outside of the source directory (ROSE/src) into the ROSE/tests directory
-#bin_PROGRAMS = testDataBase testEdges
-#testDataBase_SOURCES = testDataBase.C
-#testDataBase_DEPENDENCIES = 
-#testEdges_SOURCES = testEdges.C
+bin_PROGRAMS = testDataBase testEdges
+testDataBase_SOURCES = testDataBase.C
+testDataBase_DEPENDENCIES = 
+testEdges_SOURCES = testEdges.C
+testEdges_DEPENDENCIES = librosedatabase.la
+testEdges_LDADD = $(LDADD) librosedatabase.la
 
 # define all test codes
-# TESTCODES = testEdges.C
+TESTCODES = testEdges.C
 
 # Build the list of object files
-# TEST_Objects = ${TESTCODES:.C=.o}
-
-# EXTRA_DIST = $(TESTCODES)
+TEST_Objects = ${TESTCODES:.C=.o}
 
 CLEANFILES = 
 
@@ -62,16 +62,16 @@ check-db:
 	@MySQL_path@/bin/mysql_install_db --datadir=/tmp/mysqld-datadir/
 #	start the daemon
 	@MySQL_path@/bin/mysqld_safe --datadir=/tmp/mysqld-datadir/ &
-	sleep 1
+	sleep 10
 #	set the root password
 	@MySQL_path@/bin/mysqladmin --user=root password rootpwd
 #	connect to the database as root to perform access control
-	@MySQL_path@/bin/mysql --user=root --password=rootpwd mysql -e "DELETE FROM user WHERE user = ''; \
-        GRANT ALL ON *.* TO @MySQL_username@ IDENTIFIED BY '@MySQL_password@'; FLUSH PRIVILEGES;"
+	@MySQL_path@/bin/mysql --user=root --password=rootpwd mysql -e "DELETE FROM mysql.user WHERE user = '@MySQL_username@@@MySQL_server@'; \
+        GRANT ALL ON *.* TO @MySQL_username@@@MySQL_server@ IDENTIFIED BY '@MySQL_password@'; FLUSH PRIVILEGES;"
 	@echo "Run test code ..."
 	./testEdges
-#	rm -f testCode.o
-#	./testDataBase
+	rm -f testCode.o
+	./testDataBase
 #	$(MAKE) $(TEST_Objects)
 #	pkill mysqld_safe
 	@echo "Cleanup use of MySQL ..."
@@ -90,7 +90,7 @@ old-check-local:
 #	set the root password
 	@MySQL_path@/bin/mysqladmin --user=root password rootpwd
 #	connect to the database as root to perform access control
-	@MySQL_path@/bin/mysql --user=root --password=rootpwd mysql -e "DELETE FROM user WHERE user = ''; GRANT ALL ON *.* TO @MySQL_username@ IDENTIFIED BY @MySQL_password@; FLUSH PRIVILEGES;"
+	@MySQL_path@/bin/mysql --user=root --password=rootpwd mysql -e "DELETE FROM user WHERE user = '@MySQL_username@'; GRANT ALL ON *.* TO @MySQL_username@ IDENTIFIED BY @MySQL_password@; FLUSH PRIVILEGES;"
 	./testEdges
 #	rm -f testCode.o
 #	./testDataBase
@@ -99,16 +99,4 @@ old-check-local:
 endif
 endif
 
-
-
-
-
-
-
-
-
-
-
-
-
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt  ${TESTCODES}
