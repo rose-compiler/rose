@@ -3,6 +3,12 @@
 #include <cstdio>
 #include <cstdlib>
 
+#ifdef _WIN64
+typedef __int64         ssize_t;
+#else
+typedef _w64 int        ssize_t;
+#endif
+
 ssize_t
 rose_getline (char **lineptr, size_t *n, FILE *stream)
 {
