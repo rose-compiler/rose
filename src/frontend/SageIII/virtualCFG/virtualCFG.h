@@ -60,7 +60,7 @@ namespace VirtualCFG {
 
     //! An index to differentiate control flow points within a single AST node
     //! (for example, before and after the test of an if statement)
-    unsigned int index const;
+    unsigned int index;
 
     public:
     CFGNode(): node(0), index(0) {}
