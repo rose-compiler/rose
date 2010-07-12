@@ -53,12 +53,30 @@ AM_CXXFLAGS = -ftemplate-depth-32
 
 check-local:
 	rm -f testCode.o
-# Could not initialize the data base and need to work with Nils to check this out
-	customtable_example
-	rosedb_example
-	databasegraph_example
-	@echo "Test not run due to database connection problem being worked on presently!"
-	$(MAKE) $(TEST_Objects)
+# initial zap to clean up from any errors in previous runs
+	@echo "Cleanup any previously left state within MySQL (errors in previous runs)"
+	@MySQL_path@/bin/mysql_zap -f mysqld
+# Create a data directory
+	-rm -rf /tmp/mysqld-datadir
+# Remove database directory (used for makefile check rule only, should not be used by users!)                                                                     mkdir /tmp/mysqld-datadir
+# Instantiate administrative databases
+	@MySQL_path@/bin/mysql_install_db --datadir=/tmp/mysqld-datadir/              # start the daemoni
+	@MySQL_path@/bin/mysqld_safe --datadir=/tmp/mysqld-datadir/ &
+	sleep 10
+# set the root password
+	@MySQL_path@/bin/mysqladmin --user=root password rootpwd
+# connect to the database as root to perform access control
+	@MySQL_path@/bin/mysql --user=root --password=rootpwd mysql -e "DELETE FROM mysql.user WHERE user = '@MySQL_username@@@MySQL_server@'; \
+	      GRANT ALL ON *.* TO @MySQL_username@@@MySQL_server@ IDENTIFIED BY '@MySQL_password@'; FLUSH PRIVILEGES;"
+	@echo "Run test code ..."
+	./customtable_example
+	./rosedb_example
+	./databasegraph_example
+# milki (07/12/2010) Commented out bad test in preperation for mysql
+# deprecation
+# $(MAKE) $(TEST_Objects)
+	@echo "Cleaning use of MySQL ..."
+	@MySQL_path@/bin/mysql_zap -f mysqld
 
 # define all test codes
 TESTCODES = simplecallgraphTestProgram.c

@@ -99,16 +99,4 @@ old-check-local:
 endif
 endif
 
-
-
-
-
-
-
-
-
-
-
-
-
 EXTRA_DIST = CMakeLists.txt  ${TESTCODES}
