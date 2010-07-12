@@ -4,19 +4,18 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # so I disable this if --with-binarysql is used!
 if ROSE_USE_BINARY_SQL
 else
-if ROSE_USE_MYSQL_DATABASE
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
+if ROSE_USE_SQLITE_DATABASE
+INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) $(SQLITE_DATABASE_INCLUDE)
 
 # noinst_HEADERS = sideEffect.h
-include_HEADERS = sideEffect.h
+include_HEADERS = sideEffect.h \
+									DatabaseGraph.h
 
 noinst_LTLIBRARIES = libsideEffect.la
 
 ## Specifications for building the pdf library.
 libsideEffect_la_SOURCES = sideEffect.C
 
-# libannotationLanguageParser_la_DEPENDENCES = language-lexer.cc language-parser.cc language.tab.h
-# libannotationLanguageParser_la_LIBADD = 
 endif
 endif
 

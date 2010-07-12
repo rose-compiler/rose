@@ -9,39 +9,16 @@
 #include <boost/unordered_set.hpp>
 //#include <hash_map.h>
 //#include <hash_set.h>
-#include "GlobalDatabaseConnectionMYSQL.h"
-#include "TableDefinitions.h"
 
-#include <mysql++.h>
-
+#include "sqlite3x.h"
+#include <CallGraph.h>
 
 
-using namespace mysqlpp;
+
+
 using namespace std;
+using namespace sqlite3x;
 using namespace StringUtility;
-
-DEFINE_TABLE_PROJECTS();
-DEFINE_TABLE_GRAPHDATA();
-DEFINE_TABLE_GRAPHNODE();
-DEFINE_TABLE_GRAPHEDGE();
-CREATE_TABLE_2( simpleFuncTable,  int,projectId, string,functionName);
-DEFINE_TABLE_2( simpleFuncTable,  int,projectId, string,functionName);
-CREATE_TABLE_3( varNode,  int,projectId, string,functionName, string,varName);
-DEFINE_TABLE_3( varNode,  int,projectId, string,functionName, string,varName);
-CREATE_TABLE_3( localVars,  int,projectId, string,functionName, string,varName);
-DEFINE_TABLE_3( localVars,  int,projectId, string,functionName, string,varName);
-CREATE_TABLE_4( formals,  int,projectId, string,functionName, string,formal, int,ordinal);
-DEFINE_TABLE_4( formals,  int,projectId, string,functionName, string,formal, int,ordinal);
-
-CREATE_TABLE_3( sideEffectTable,  int,projectId, string,functionName, int,arg);
-DEFINE_TABLE_3( sideEffectTable,  int,projectId, string,functionName, int,arg);
-CREATE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
-		                  int,scope, int,ordinal);
-DEFINE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
-		                  int,scope, int,ordinal);
-#define TABLES_DEFINED 1
-
-#include "DatabaseGraph.h"
 
 #include <boost/config.hpp>
 #include <assert.h>
@@ -57,15 +34,6 @@ DEFINE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
 #include "boost/graph/depth_first_search.hpp"
 
 #include "boost/graph/strong_components.hpp"
-
-typedef DatabaseGraph<simpleFuncTableRowdata, callEdgeRowdata, 
-		      boost::vecS, boost::vecS, boost::bidirectionalS> CallGraph;
-typedef CallGraph::dbgType Graph;
-typedef boost::graph_traits < CallGraph >::vertex_descriptor callVertex;
-typedef boost::property_map<CallGraph, boost::vertex_index_t>::const_type callVertexIndexMap;
-
-typedef DatabaseGraph<varNodeRowdata, callEdgeRowdata, 
-		      boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
 
 // milki (06/16/2010) Redefine for std::string to produce
 // deterministic behavior in map_type
@@ -136,6 +104,35 @@ void prettyprint( map_type M ) {
   {
     cout << "<" << (*it).first << "," << (*it).second << ">" << endl;
   }
+}
+
+// Database Table Initialization
+bool createDatabaseTables(sqlite3_connection& con) {
+
+  try {
+    con.executionquery("CREATE TABLE IF NOT EXISTS localVars(id INTEGER PRIMARY KEY, functionName TEXT, varName TEXT)")
+  } catch( exception &ex ) {
+    cerr << "Exception Occured: " << ex.what() << endl;
+  }
+
+  try {
+    con.executionquery("CREATE TABLE IF NOT EXISTS simpleFuncTable(id INTEGER PRIMARY KEY, functionName TEXT)");
+  } catch( exception &ex ) {
+    cerr << "Exception Occured: " << ex.what() << endl;
+  }
+
+  try {
+    con.executionquery("CREATE TABLE IF NOT EXISTS varNode(id INTEGER PRIMARY KEY, functionName TEXT, varName TEXT)");
+  } catch( exception &ex ) {
+    cerr << "Exception Occured: " << ex.what() << endl;
+  }
+
+  try {
+    con.executionquery("CREATE TABLE IF NOT EXISTS sideEffect(id INTEGER PRIMARY KEY, functionName TEXT, arg INTEGER)");
+  } catch( exception &ex ) {
+    cerr << "Exception Occured: " << ex.what() << endl;
+  }
+
 }
 
 class SideEffect : public SideEffectAnalysis {
@@ -3989,7 +3986,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
   // call graphs, tables, etc. are aggregated into one toplevel database
   // to facilitate whole program analysis-- i.e., just sweep over a 
   // single table/graph.
-  GlobalDatabaseConnection toplevelDb;
+  sqlite3_connection toplevelDb;
   
   // set the name of the toplevel database to be the name of the 
   // output file
@@ -3997,37 +3994,15 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
   // sql doesn't like hyphens and dots, change them to underscores
   //  string sanitizedOutputFileName = sanitizeFileName(project->get_outputFileName());
 
+  toplevelDb.open( (char*)sanitizeOutputFileName.c_str() );
+  con.setbusytimeout(1800 * 1000); // 30 minutes
 
-  toplevelDb.setDatabaseParameters(NULL, NULL, NULL, (char *)sanitizedOutputFileName.c_str());
-
-  int initOk =  toplevelDb.initialize();
-  assert(initOk == 0);
-
-  CREATE_TABLE(toplevelDb, projects);
-  CREATE_TABLE(toplevelDb, graphdata);
-  CREATE_TABLE(toplevelDb, graphnode);
-  CREATE_TABLE(toplevelDb, graphedge);
-
-  string toplevelProjectName = "testProject"; 
-  projectsRowdata toplevelProw( UNKNOWNID ,toplevelProjectName, UNKNOWNID );
-  projects.retrieveCreateByColumn( &toplevelProw, "name", 
-				   toplevelProjectName );
-  long toplevelProjectId = toplevelProw.get_id();
-
-  // local table holds entries of the form < func, var > where var
-  // is defined locally with function func.
-  TableAccess< localVarsRowdata > localVars(&toplevelDb);
-  localVars.initialize();
-  
-  // formals table holds entries of the form < func, formal, ordinal >
-  // where formal is the ordinal'th argument to function func.
-  TableAccess< formalsRowdata > formals(&toplevelDb);
-  formals.initialize();
-
-  TableAccess< sideEffectTableRowdata > sideEffect(&toplevelDb); 
-  sideEffect.initialize(); 
+  // localVars, formals, sideeffect
+  createDatabaseTables(con);
 
   // create the aggregate simple call graph
+
+  // TODO: CALLGRAPH REPLACEMENT
   if (!separateCompilation) {
     simpleCallgraph = new CallGraph( toplevelProjectId, GTYPE_SIMPLECALLGRAPH, &toplevelDb );
   } else {
@@ -4037,8 +4012,6 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
   // list of functions defined and called as parsed by a traversal.
   set<const char *, ltstr> definedFuncs;
   //  set<const char *, ltstr> calledFuncs;
-
-  long projectId = toplevelProjectId;
 
   vector<string> strippedFileNames(nodeList->size());
 
@@ -4055,14 +4028,16 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     strippedFileNames[i] = fileName;
 
     // create a new database for this file
-    dbs[i] = new GlobalDatabaseConnection();
+    dbs[i] = new sqlite3_connection;
 
-    GlobalDatabaseConnection *db = dbs[i];
+    sqlite3_connection *db = dbs[i];
     
     // set the name of this database to correspond to the file
-    db->setDatabaseParameters(NULL, NULL, NULL, (char *)fileName.c_str());
+    db->open( (char*)fileName.c_str() );
+    db->setbusytimeout(1800 * 1000); // 30 minutes
     
     // create a call graph for this file
+    // TODO: CALLGRAPH REPLACEMENT
     callgraphs[i] = new CallGraph(projectId, GTYPE_SIMPLECALLGRAPH, db);
 
     if (strippedSourceFileNames.find(fileName) == strippedSourceFileNames.end()) {
@@ -4085,33 +4060,10 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
       int initOk =  db->initialize(drop);
       assert(initOk == 0);
 
+      // localVars, formals, sideeffect
+      createDatabaseTables(con);
       // setup the call graph tables
-      CREATE_TABLE(*db, projects);
-      CREATE_TABLE(*db, graphdata);
-      CREATE_TABLE(*db, graphnode);
-      CREATE_TABLE(*db, graphedge);
-      
-      // create/initialize a table with entries < func > where func is
-      // a function defined or called within the file
-      TableAccess< simpleFuncTableRowdata > simpleFunc(db);
-      simpleFunc.initialize();
-      
-      // create/initialize a table to hold the data for the call graph edges
-      TableAccess< callEdgeRowdata > callEdge(db);
-      callEdge.initialize();
-      
-      // create/initialize a table with entries < func, var > where
-      // var is defined locally within function func and func is 
-      // defined within this file.
-      TableAccess< localVarsRowdata > localVars(db);
-      localVars.initialize();
-      
-      // create/initialize a table with entries < func, formal, ordinal >
-      // where formal is the ordinal'th argument to function func,
-      // a function defined within this file.
-      TableAccess< formalsRowdata > formals(db);
-      formals.initialize();
-      
+      //
 #if 0
       AstDOTGeneration dotgen;
       dotgen.generateInputFiles(project, AstDOTGeneration::PREORDER);
