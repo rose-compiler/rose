@@ -16,7 +16,7 @@ void getReachableNodes(CFGNode n, set<CFGNode>& s) {
   }
 }
 
-void testCFG(SgFunctionDefinition* stmt) {
+void testIPCFG(SgFunctionDefinition* stmt) {
   // First, get the reachable CFG nodes from the start of the function def
   set<CFGNode> nodes;
   getReachableNodes(stmt->cfgForBeginning(), nodes);
@@ -88,12 +88,20 @@ void testCFG(SgFunctionDefinition* stmt) {
 int main(int argc, char *argv[]) {
   SgProject* sageProject = frontend(argc,argv);
   AstTests::runAllTests(sageProject);
-  NodeQuerySynthesizedAttributeType functions = NodeQuery::querySubTree(sageProject, V_SgFunctionDefinition);
-  for (NodeQuerySynthesizedAttributeType::const_iterator i = functions.begin(); i != functions.end(); ++i) {
-    SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
-    ROSE_ASSERT (proc);
-    testCFG(proc);
+
+  SgFunctionDeclaration* mainDecl = SageInterface::findMain(sageProject);
+  if (mainDecl == NULL) {
+    std::cerr << "warning: unable to find declaration for 'main'. Skipping interprocedural cfg generation." << std::endl;
+    return 0;
   }
-  return 1337;
+
+  SgFunctionDefinition* mainDef = mainDecl->get_definition();
+  if (mainDef == NULL) {
+    std::cerr << "warning: unable to find definition for 'main'. Skipping interprocedural cfg generation." << std::endl;
+    return 0;
+  }
+
+  testIPCFG(mainDef);
+  return 0;
 }
 
