@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL); 
 
-  SgFunctionDeclaration* mainDefDecl = SageInterface::findmainDef(proj);
+  SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
   ROSE_ASSERT (mainDefDecl != NULL); 
 
   SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
