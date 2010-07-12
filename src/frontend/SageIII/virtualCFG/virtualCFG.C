@@ -24,6 +24,13 @@ namespace VirtualCFG {
     return s;
   }
 
+  CFGNode::CFGNode(SgNode* node, unsigned int index): node(node), index(index) {
+#ifndef _MSC_VER 
+    assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
+#endif
+    assert (node && index <= node->cfgIndexForEnd());
+  }
+
   string CFGNode::toString() const {
       ostringstream s;
     if (isSgFunctionDefinition(node)) {
