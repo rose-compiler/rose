@@ -1280,6 +1280,7 @@ std::vector<CFGEdge> SgCatchStatementSeq::cfgOutEdges(unsigned int idx, bool int
   } else if (idx < this->get_catch_statement_seq().size()) {
     makeEdge(CFGNode(this, idx), this->get_catch_statement_seq()[idx]->cfgForBeginning(), result);
   }
+  } else ROSE_ASSERT (!"Bad index for SgCatchStatementSeq");
   return result;
 }
 
