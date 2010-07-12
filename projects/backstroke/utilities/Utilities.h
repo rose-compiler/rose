@@ -64,12 +64,10 @@ namespace backstroke_util
 	  * of the node. */
         void printCompilerError(SgNode* badNode, const char * message);
 
-        /** Returns a vector of nodes of specific type indicated by the template parameter, and the traversal 
-         * order can also be passed in. */
-        template <class T>
-        std::vector<T*> querySubTree(SgNode* root, t_traverseOrder order = postorder)
+        namespace util_private
         {
-            struct Traversal : public AstSimpleProcessing
+            template <class T>
+                struct Traversal : public AstSimpleProcessing
             {
                 std::vector<T*> all_nodes;
                 virtual void visit(SgNode* n)
@@ -78,8 +76,14 @@ namespace backstroke_util
                     if (node) all_nodes.push_back(node);
                 }
             }; 
+        }
 
-            Traversal traversal;
+        /** Returns a vector of nodes of specific type indicated by the template parameter, and the traversal 
+         * order can also be passed in. */
+        template <class T>
+        std::vector<T*> querySubTree(SgNode* root, t_traverseOrder order = postorder)
+        {
+            util_private::Traversal<T> traversal;
             traversal.traverse(root, order);
             return traversal.all_nodes;
         }

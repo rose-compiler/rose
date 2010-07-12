@@ -1,5 +1,6 @@
 #include "expressionHandler.h"
 #include "utilities.h"
+#include <CPPDefinesAndNamespaces.h>
 
 ExpPair storeAndRestore(SgExpression* exp)
 {
