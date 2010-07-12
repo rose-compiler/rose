@@ -156,7 +156,9 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
     ROSE_ASSERT (decl);
     return CFGNode(decl->get_definition(), 1);
   }
-  return CFGNode(parent, parent->cfgFindNextChildIndex(n));
+  unsigned int idx = parent->cfgFindNextChildIndex(n);
+  ROSE_ASSERT( idx <= parent->cfgIndexForEnd() );
+  return CFGNode(parent, idx);
 }
 
 //! Find the CFG node of which n is a child (subtree descended into)
@@ -171,7 +173,9 @@ static CFGNode findParentNode(SgNode* n) {
     ROSE_ASSERT (decl);
     return CFGNode(decl->get_definition(), 0);
   }
-  return CFGNode(parent, parent->cfgFindChildIndex(n));
+  unsigned int idx = parent->cfgFindNextChildIndex(n);
+  ROSE_ASSERT( idx <= parent->cfgIndexForEnd() );
+  return CFGNode(parent, idx);
 }
 
 static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
@@ -1273,8 +1277,9 @@ std::vector<CFGEdge> SgCatchStatementSeq::cfgOutEdges(unsigned int idx, bool int
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_catch_statement_seq().size()) {
     makeEdge(CFGNode(this, idx), this->get_catch_statement_seq()[idx]->cfgForBeginning(), result);
+  } else {
+    ROSE_ASSERT (!"Bad index for SgCatchStatementSeq");
   }
-  } else ROSE_ASSERT (!"Bad index for SgCatchStatementSeq");
   return result;
 }
 
