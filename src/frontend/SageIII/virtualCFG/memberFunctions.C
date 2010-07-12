@@ -174,7 +174,7 @@ static CFGNode findParentNode(SgNode* n) {
     ROSE_ASSERT (decl);
     return CFGNode(decl->get_definition(), 0);
   }
-  unsigned int idx = parent->cfgFindNextChildIndex(n);
+  unsigned int idx = parent->cfgFindChildIndex(n);
   ROSE_ASSERT( idx <= parent->cfgIndexForEnd() );
   return CFGNode(parent, idx);
 }
