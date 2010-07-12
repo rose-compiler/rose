@@ -1,5 +1,5 @@
 #include "stateSaver.h"
-#include "../utilities.h"
+#include "utilities/Utilities.h"
 
 #include <rose.h>
 #include <boost/foreach.hpp>
@@ -81,7 +81,7 @@ vector<SgExpression*> StateSaver::getAllModifiedVars()//IsStateFunc pred)
             bool is_new = true;
             foreach (SgExpression* var, modified_vars)
             {
-                if (areSameVariable(var, candidate))
+                if (backstroke_util::areSameVariable(var, candidate))
                 {
                     is_new = false;
                     break;
