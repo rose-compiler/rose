@@ -207,7 +207,7 @@ bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
     }// Different number of arguments
   }
 
-  std::cout << "is_functions_types_equal: " << f1->unparseToString() << " " << f2->unparseToString() <<  ( functions_are_equal == true ? " true " : " false " ) << std::endl;
+  //std::cout << "is_functions_types_equal: " << f1->unparseToString() << " " << f2->unparseToString() <<  ( functions_are_equal == true ? " true " : " false " ) << std::endl;
 
   return functions_are_equal;
 };
@@ -356,11 +356,11 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgP
   // SgUnparse_Info ui;
   // string type1str = fctType->get_mangled( ui ).str();
   string type1str = fctType->get_mangled().str();
-  cout << "Return type of function pointer " << type1str << "\n";
+  // cout << "Return type of function pointer " << type1str << "\n";
 
-  cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<  
-    " l" << pointerDerefExp->get_file_info()->get_line() << 
-    " c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
+  // cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<  
+  //  " l" << pointerDerefExp->get_file_info()->get_line() << 
+  //  " c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
   // getting all possible functions with the same type
   // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
   // SgType *ty = Sgfunc_type_table.lookup_function_type( fctType->get_mangled( ui ) );
@@ -380,7 +380,7 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgP
   vv.push_back(V_SgTemplateInstantiationFunctionDecl);
 
   functionList =  AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType), &vv );
-  std::cout << "The size of the list: " << functionList.size() << std::endl;
+  //std::cout << "The size of the list: " << functionList.size() << std::endl;
 
   std::vector<Properties*> returnProperties;
   for( SgFunctionDeclarationPtrList::iterator funcItr = functionList.begin();
@@ -433,8 +433,8 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
   // right side of the expression should have member function type
   memberFunctionType = isSgMemberFunctionType( right->get_type()->findBaseType() );
   ROSE_ASSERT( memberFunctionType );
-  std::cout << "The member function type: " << memberFunctionType->get_mangled().getString() << std::endl;
-  std::cout << "The member function type: " << functionExp->unparseToString() << std::endl;
+  //std::cout << "The member function type: " << memberFunctionType->get_mangled().getString() << std::endl;
+  //std::cout << "The member function type: " << functionExp->unparseToString() << std::endl;
 
   SgDeclarationStatementPtrList &allMembers = classDefinition->get_members();
   for ( SgDeclarationStatementPtrList::iterator it = allMembers.begin(); it != allMembers.end(); it++ )
@@ -800,8 +800,8 @@ CallTargetSet::retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp,
             fctProps->isPolymorphic = true;
             fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration()->get_definingDeclaration() )->get_definition();
             ROSE_ASSERT(fctProps->invokedClass!=NULL);
-            cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
-              << "\t" << fctProps << "\n";
+            //cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
+            //  << "\t" << fctProps << "\n";
           }
 
           //functionList.push_back( fctProps );
