@@ -163,7 +163,7 @@ SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
 }
 
 
-SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, const vector<string>& event_names, bool klee)
+SgFunctionDeclaration* buildMainFunction(const vector<SgAssignOp*>& inits, const vector<string>& event_names, bool klee)
 {
 	// build the main function which performs the test
 	SgFunctionDeclaration* func_decl =
@@ -174,9 +174,9 @@ SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, cons
 	pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
 
 	// First, input all initializing statements.
-	foreach(SgStatement* stmt, inits)
+	foreach(SgAssignOp* stmt, inits)
 	{
-		appendStatement(stmt);
+		appendStatement(SageBuilder::buildExprStatement(stmt));
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////
