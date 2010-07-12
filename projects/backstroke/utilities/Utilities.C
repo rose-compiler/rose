@@ -5,6 +5,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
+using namespace SageInterface;
+using namespace SageBuilder;
+
 /** Generate a name that is unique in the current scope and any parent and children scopes.
  * @param baseName the word to be included in the variable names. */
 string backstroke_util::GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
@@ -433,4 +436,81 @@ void backstroke_util::printCompilerError(SgNode* badNode, const char * message)
 
 	fprintf(stderr, "\"%s\", line %d: Error: %s\n\t%s\n", badNode->get_file_info()->get_filename(),
 			badNode->get_file_info()->get_line(), message, badNode->unparseToString().c_str());
+}
+
+// Returns if an expression modifies any value.
+bool backstroke_util::isModifyingExpression(SgExpression* exp)
+{
+    if (isAssignmentOp(exp))
+        return true;
+    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
+        return true;
+    if (isSgFunctionCallExp(exp))
+    {
+        // FIXME: This part should be refined.
+        return true;
+    }
+
+    return false;
+}
+
+// Returns if an expression contains any subexpression which modifies any value.
+bool backstroke_util::containsModifyingExpression(SgExpression* exp)
+{
+    Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(exp, V_SgExpression);
+    foreach (SgNode* node, exp_list)
+    {
+        SgExpression* e = isSgExpression(node);
+        ROSE_ASSERT(e);
+        if (isModifyingExpression(e))
+            return true;
+    }
+    return false;
+}
+
+bool backstroke_util::isAssignmentOp(SgExpression* e)
+{
+    return isSgAssignOp(e) ||
+        isSgPlusAssignOp(e) ||
+        isSgMinusAssignOp(e) ||
+        isSgMultAssignOp(e) ||
+        isSgDivAssignOp(e) ||
+        isSgModAssignOp(e) ||
+        isSgIorAssignOp(e) ||
+        isSgAndAssignOp(e) ||
+        isSgXorAssignOp(e) ||
+        isSgLshiftAssignOp(e) ||
+        isSgRshiftAssignOp(e);
+}
+
+void backstroke_util::removeUselessBraces(SgNode* root)
+{
+    vector<SgBasicBlock*> block_list = querySubTree<SgBasicBlock>(root, postorder);
+
+    foreach (SgBasicBlock* block, block_list)
+    {
+        // Make sure this block is not the body of if, while, etc.
+        if (!isSgBasicBlock(block->get_parent()))
+            continue;
+
+        // If there is no declaration in a basic block and this basic block 
+        // belongs to another basic block, the braces can be removed.
+        bool has_decl = false;
+        foreach (SgStatement* stmt, block->get_statements())
+        {
+            if (isSgDeclarationStatement(stmt))
+            {
+                has_decl = true;
+                break;
+            }
+        }
+
+        if (!has_decl)
+        {
+            foreach (SgStatement* stmt, block->get_statements())
+                insertStatement(block, copyStatement(stmt));
+            replaceStatement(block, buildNullStatement(), true);
+            //removeStatement(block);
+        }
+    }
 }

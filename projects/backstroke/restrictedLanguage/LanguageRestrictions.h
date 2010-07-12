@@ -50,4 +50,7 @@ private:
 
 	/** Returns true if the function uses any type that is not a scalar or a struct strictly containing scalars.*/
 	static bool usesBannedTypes(SgFunctionDefinition* functionDefinition);
+
+        /** Returns true if the function uses any syntax which is not part of the C++ standard, but the GNU extension.*/
+        static bool usesGnuExtensions(SgFunctionDefinition* functionDefinition);
 };

@@ -541,7 +541,6 @@ test2006_144.C \
 test2006_145.C \
 test2006_146.C \
 test2006_147.C \
-test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_151.C \
@@ -572,6 +571,8 @@ inputForLoopLocator.C
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
+
+FAILURE_TESTCODES = test2006_148.C 
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 

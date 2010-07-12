@@ -12,52 +12,7 @@ using namespace std;
 using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
-
-
-bool isAssignmentOp(SgExpression* e)
-{
-    return isSgAssignOp(e) ||
-        isSgPlusAssignOp(e) ||
-        isSgMinusAssignOp(e) ||
-        isSgMultAssignOp(e) ||
-        isSgDivAssignOp(e) ||
-        isSgModAssignOp(e) ||
-        isSgIorAssignOp(e) ||
-        isSgAndAssignOp(e) ||
-        isSgXorAssignOp(e) ||
-        isSgLshiftAssignOp(e) ||
-        isSgRshiftAssignOp(e);
-}
-
-// Returns if an expression modifies any value.
-bool isModifyingExpression(SgExpression* exp)
-{
-    if (isAssignmentOp(exp))
-        return true;
-    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
-        return true;
-    if (isSgFunctionCallExp(exp))
-    {
-        // FIXME: This part should be refined.
-        return true;
-    }
-
-    return false;
-}
-
-// Returns if an expression contains any subexpression which modifies any value.
-bool containsModifyingExpression(SgExpression* exp)
-{
-    Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(exp, V_SgExpression);
-    foreach (SgNode* node, exp_list)
-    {
-        SgExpression* e = isSgExpression(node);
-        ROSE_ASSERT(e);
-        if (isModifyingExpression(e))
-            return true;
-    }
-    return false;
-}
+using namespace backstroke_util;
 
 
 
@@ -465,7 +420,6 @@ void preprocess(SgFunctionDefinition* func)
     // This is because that SgForInitStatement is special in which several declarations can
     // coexist. We will hoist it outside of its for loop statement.
 
-#if 1
     vector<SgForInitStatement*> for_init_stmts = querySubTree<SgForInitStatement>(func->get_body());
     foreach (SgForInitStatement* for_init_stmt, for_init_stmts)
     {
@@ -496,9 +450,7 @@ void preprocess(SgFunctionDefinition* func)
             //deepDelete(for_stmt);
         }
     }
-#endif
 
-#if 1
     // Separate variable's definition from its declaration
     // FIXME It is not sure that whether to permit declaration in condition of if (if the varible declared 
     // is not of scalar type?).
@@ -538,13 +490,11 @@ void preprocess(SgFunctionDefinition* func)
             }
         }
     }
-#endif
 
     /******************************************************************************/
     // Transform logical and & or operators into conditional expression.
     // a && b  ==>  a ? b : false
     // a || b  ==>  a ? true : b
-#if 1
     vector<SgAndOp*> and_exps = querySubTree<SgAndOp>(func->get_body());
     foreach (SgAndOp* and_op, and_exps)
     {
@@ -570,7 +520,6 @@ void preprocess(SgFunctionDefinition* func)
             replaceExpression(or_op, cond);
         }
     }
-#endif
 }
 
 void normalizeEvent(SgFunctionDefinition* func)
@@ -649,38 +598,6 @@ void splitCommaOpExp(SgExpression* exp)
                 }
             }
             //FIXME other cases
-        }
-    }
-}
-
-void removeUselessBraces(SgNode* root)
-{
-    vector<SgBasicBlock*> block_list = querySubTree<SgBasicBlock>(root, postorder);
-
-    foreach (SgBasicBlock* block, block_list)
-    {
-        // Make sure this block is not the body of if, while, etc.
-        if (!isSgBasicBlock(block->get_parent()))
-            continue;
-
-        // If there is no declaration in a basic block and this basic block 
-        // belongs to another basic block, the braces can be removed.
-        bool has_decl = false;
-        foreach (SgStatement* stmt, block->get_statements())
-        {
-            if (isSgDeclarationStatement(stmt))
-            {
-                has_decl = true;
-                break;
-            }
-        }
-
-        if (!has_decl)
-        {
-            foreach (SgStatement* stmt, block->get_statements())
-                insertStatement(block, copyStatement(stmt));
-            replaceStatement(block, buildNullStatement(), true);
-            //removeStatement(block);
         }
     }
 }
