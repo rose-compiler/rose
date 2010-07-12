@@ -1246,10 +1246,8 @@ std::vector<CFGEdge> SgTryStmt::cfgOutEdges(unsigned int idx, bool interprocedur
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
-    default: {
-               //ROSE_ASSERT (!"Bad index for SgTryStmt");
-               std::cerr << "SgTryStmt::cfgOutEdges failed" << std::endl;
-             }
+    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
+             
   }
   return result;
 }
@@ -1260,10 +1258,7 @@ std::vector<CFGEdge> SgTryStmt::cfgInEdges(unsigned int idx, bool interprocedura
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result); break;
-    default: {
-               //ROSE_ASSERT (!"Bad index for SgTryStmt");
-               std::cerr << "SgTryStmt::cfgInEdges failed" << std::endl;
-             }
+    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
   }
   return result;
 }
