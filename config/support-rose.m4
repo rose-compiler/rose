@@ -1037,6 +1037,11 @@ ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
+#ASR
+ROSE_SUPPORT_LLVM
+
+AM_CONDITIONAL(ROSE_USE_LLVM,test ! "$with_llvm" = no)
+
 #TPS (03/13/08) introduced optional DB support for binary work
 HASH_ROSE_BINARY_SQL
 
@@ -2312,6 +2317,9 @@ projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
 projects/simulator/Makefile
+projects/roseToLLVM/Makefile
+projects/roseToLLVM/src/Makefile
+projects/roseToLLVM/src/rosetollvm/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile

@@ -1687,11 +1687,19 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         }
 #endif
    }
+
+
 /* Initialize the filters for the default case */
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags()
 {
   setDefault();
 }
+
+// DQ (7/4/2010): This destructor does not appear to have been implemented!
+CustomMemoryPoolDOTGeneration::s_Filter_Flags::~s_Filter_Flags()
+   {
+  // Nothing to do here!
+   }
 
 void
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::setDefault()
@@ -1746,6 +1754,7 @@ void CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_filter_flags ()
 
   printf ("\t m_noFilter = %d \n", m_noFilter);
 }
+
 /* Construct an instance from */
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags(std::vector <std::string>& argvList)
 {
