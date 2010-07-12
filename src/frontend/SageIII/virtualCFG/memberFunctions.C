@@ -718,13 +718,12 @@ SgFunctionParameterList::cfgInEdges(unsigned int idx, bool interprocedural)
 
 unsigned int
 SgFunctionDefinition::cfgIndexForEnd() const {
-  SgMemberFunctionDeclaration* memberDecl = isSgMemberFunctionDeclaration(get_declaration());
-  return (memberDecl) ? 3 : 2;
+  return 2;
 }
 
 bool
 SgFunctionDefinition::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 0 || idx == 2 || idx == 3;
+  return idx == 0 || idx == 2;
 }
 
 unsigned int 
@@ -753,16 +752,11 @@ SgFunctionDefinition::cfgFindChildIndex(SgNode* n)
 
 std::vector<CFGEdge> 
 SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
-  SgMemberFunctionDeclaration* memberDecl = isSgMemberFunctionDeclaration(get_declaration());
-  int offset = 0;
-  if (! memberDecl && idx >= 1) offset = 1;
-
   std::vector<CFGEdge> result;
-  switch (idx + offset) {
+  switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
-    case 1: makeEdge(CFGNode(this, idx), memberDecl->get_CtorInitializerList()->cfgForBeginning(), result); break;
-    case 2: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 3: { 
+    case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+    case 2: { 
      if (! interprocedural) break;
      SgFunctionDeclaration* thisdecl = this->get_declaration();
      SgFunctionDeclaration* thisdefdecl = isSgFunctionDeclaration(thisdecl->get_definingDeclaration());
@@ -799,13 +793,9 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool interprocedural) {
-  SgMemberFunctionDeclaration* memberDecl = isSgMemberFunctionDeclaration(get_declaration());
-  int offset = 0;
-  if (! memberDecl && idx >= 2) offset = 1;
-
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
-  switch (idx + offset) {
+  switch (idx) {
     case 0: {
      if (! interprocedural) break;
      SgFunctionDeclaration* thisdecl = this->get_declaration();
@@ -838,8 +828,7 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
      break;
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
-    case 2: makeEdge(memberDecl->get_CtorInitializerList()->cfgForEnd(), CFGNode(this, idx), result); break;
-    case 3: {
+    case 2: {
       makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result);
       // Liao, 5/21/2010. bad implementation since vectors are created/destroyed  multiple times
       //std::vector<SgReturnStmt*> returnStmts = SageInterface::findReturnStmts(this);
