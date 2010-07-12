@@ -353,7 +353,10 @@ MangledNameMapTraversal::visit ( SgNode* node)
           switch (node->variantT())
              {
             // Since we abstract out the generation of the key we can simplify this code!
+#if 0
+            // DQ (7/11/2010): This fails for tests/CompileTests/mergeAST_tests/mergeTest_06.C, I don't know why!
                case V_SgFunctionDeclaration:
+#endif
 #if 0
                case V_SgVariableDeclaration:
                case V_SgClassDeclaration:
