@@ -471,6 +471,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_Graph.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_DotGraph.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValueAnnot.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValuePropagate.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/variableRenaming/VariableRenaming.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/OAWrap.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/SAGE2OA.C
 #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/proceduralSlicing/SlicingInfo.C
@@ -709,6 +710,7 @@ ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupUseAndUsingDeclarations.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/buildStatementNumbering.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupCxxSymbolTablesToSupportAliasingSymbols.C 
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/normalizeTypedefSequenceLists.C
    )
 
 

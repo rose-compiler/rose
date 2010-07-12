@@ -2274,9 +2274,15 @@ std::string Terminal::buildStaticDataMemberListSetStaticData()
                   {
                     s += "     if ( " + classNameString + "_" + varNameString + " != NULL ) \n" ;
                     s += "        {\n" ;
-                    s += "           " + classNameString + "::p_" + varNameString + " = " + classNameString + "_" + varNameString + ";\n" ;
+                 // DQ (6/21/2010): Only reset the pointer to the static member (e.g. p_builtin_type) if it is NULL.
+                 //                 This is important when reading multiple files from the binary AST file format.
+                 // s += "           " + classNameString + "::p_" + varNameString + " = " + classNameString + "_" + varNameString + ";\n" ;
+                 // s += " ;\n";
+                    s += "          if (" + classNameString + "::p_" + varNameString + " == NULL)\n" ;
+                    s += "             {\n" ;
+                    s += "               " + classNameString + "::p_" + varNameString + " = " + classNameString + "_" + varNameString + ";\n" ;
+                    s += "             }\n" ;
                     s += "        }\n" ;
-                     
                   }
                else 
                   {
