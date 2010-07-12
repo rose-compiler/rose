@@ -17,12 +17,6 @@ libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
 			reverseComputation/libBackstrokeReverser.la \
 			restrictedLanguage/libBackstrokeRestrictedLanguage.la
 
-# Build the function extraction translator
-bin_PROGRAMS = normalizationTranslator 
-
-normalizationTranslator_SOURCES =  NormalizationTranslator.C 
-normalizationTranslator_LDADD =   libBackstroke.la
-
 EXTRA_DIST = 
 
 CLEANFILES = 

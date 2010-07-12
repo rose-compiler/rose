@@ -22,7 +22,7 @@
 	only state variables. Using references makes it difficult to determine what is being
 	modified.
 
-5) Only types allowed are scalar types and composite types containing only scalars.
+5) Only types allowed are scalar types and classes/structs containing only scalars.
 	Note: No arrays
 	REASON: Simplicity of reverse code generation. Permissive enough to accommodate
 	ROSS's model where the state is a struct.

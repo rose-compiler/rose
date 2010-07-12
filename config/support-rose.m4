@@ -2299,13 +2299,14 @@ projects/interpreter/Makefile
 projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
-projects/backstroke/reverseComputation/stateSaving/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile

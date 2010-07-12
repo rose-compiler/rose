@@ -424,3 +424,13 @@ bool backstroke_util::isReturnValueUsed(SgExpression* exp)
     return true;
 }
 
+
+/** Prints an error message associated with a certain node. Also outputs the file and location
+  * of the node. */
+void backstroke_util::printCompilerError(SgNode* badNode, const char * message)
+{
+	ROSE_ASSERT(badNode->get_file_info() != NULL && "Can't display line number for node without file info.");
+
+	fprintf(stderr, "\"%s\", line %d: Error: %s\n\t%s\n", badNode->get_file_info()->get_filename(),
+			badNode->get_file_info()->get_line(), message, badNode->unparseToString().c_str());
+}

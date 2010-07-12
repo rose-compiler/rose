@@ -13,6 +13,7 @@
 #include <numeric>
 #include "LanguageRestrictions.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/Utilities.h"
 
 
 using namespace std;
@@ -26,7 +27,6 @@ bool LanguageRestrictions::violatesRestrictionsOnEventFunctions(SgFunctionDefini
 	bool failure = false; 
 
 	failure = failure || containsDeclarationsOfPointerVariables(functionDefinition);
-	//failure = failure || takesArgumentsByReference(functionDefinition);
 	failure = failure || containsJumpStructures(functionDefinition);
 	failure = failure || containsExceptionHandling(functionDefinition);
 	failure = failure || usesFunctionPointersOrVirtualFunctions(functionDefinition);
@@ -47,7 +47,6 @@ bool LanguageRestrictions::violatesRestrictionsOnEventFunctions(vector<SgFunctio
 	{
 		// Output the name of the function being evaluated...
 		string functionName = eventList[i]->get_declaration()->get_name();
-		printf("Evaluate function %s using language restriction tests \n", functionName.c_str());
 
 		// Check restrictions
 		bool failed = violatesRestrictionsOnEventFunctions(eventList[i]);
@@ -79,24 +78,6 @@ bool LanguageRestrictions::containsDeclarationsOfPointerVariables(SgFunctionDefi
 		SgType* varType = initializedName->get_type();
 
 		if (isSgPointerType(varType) || isSgArrayType(varType))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
-/** Returns true if any of the arguments of the given function are passed by reference. */
-bool LanguageRestrictions::takesArgumentsByReference(SgFunctionDefinition* functionDefinition)
-{
-	SgFunctionDeclaration* declaration = functionDefinition->get_declaration();
-
-	foreach (SgInitializedName* arg, declaration->get_args())
-	{
-		SgType* argType = arg->get_type();
-		if (SageInterface::isReferenceType(argType))
 		{
 			return true;
 		}
@@ -232,7 +213,7 @@ bool LanguageRestrictions::variablesOfPointerTypesAreAssigned(SgFunctionDefiniti
 		SgType* writeVarType = writeExpression->get_type();
 		if (isSgPointerType(writeVarType) || isSgArrayType(writeVarType))
 		{
-			printCompilerError(writeRefNode, "An expression of pointer type is written to.");
+			backstroke_util::printCompilerError(writeRefNode, "An expression of pointer type is written to.");
 			return true;
 		}
 	}
@@ -250,7 +231,7 @@ bool LanguageRestrictions::dynamicMemoryAllocationUsed(SgFunctionDefinition* fun
 
 	foreach (SgNode* newExpr, newExps)
 	{
-		printCompilerError(newExpr, "Dynamic memory allocation not allowed");
+		backstroke_util::printCompilerError(newExpr, "Dynamic memory allocation not allowed");
 	}
 
 	return newExps.size() > 0;
@@ -267,7 +248,7 @@ bool LanguageRestrictions::hasVariableArguments(SgFunctionDefinition* functionDe
 		SgType* argType = arg->get_type();
 		if (isSgTypeEllipse(argType))
 		{
-			printCompilerError(declaration, "Ellipses arguments not allowed.");
+			backstroke_util::printCompilerError(declaration, "Ellipses arguments not allowed.");
 			return true;
 		}
 	}
@@ -280,20 +261,20 @@ bool LanguageRestrictions::hasVariableArguments(SgFunctionDefinition* functionDe
 bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinition)
 {
 	//First, let's collect all the types used in this function
-	set<SgType*> types;
+	map<SgType*, SgNode*> types;
 
 	//Types of variables declared in the function
 	Rose_STL_Container<SgNode*> initializedNames = NodeQuery::querySubTree(functionDefinition->get_body(), V_SgInitializedName);
 	foreach (SgNode* initializedNameNode, initializedNames)
 	{
-		types.insert(isSgInitializedName(initializedNameNode)->get_type());
+		types[isSgInitializedName(initializedNameNode)->get_type()] = initializedNameNode;
 	}
 
 	//Return types of functions called
 	Rose_STL_Container<SgNode*> functionCalls = NodeQuery::querySubTree(functionDefinition->get_body(), V_SgFunctionCallExp);
 	foreach (SgNode* functionCallExp, functionCalls)
 	{
-		types.insert(isSgFunctionCallExp(functionCallExp)->get_type());
+		types[isSgFunctionCallExp(functionCallExp)->get_type()] = functionCallExp;
 	}
 
 	//Types of the arguments.
@@ -304,20 +285,24 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 		//Pointer types are allowed as arguments.
 		if (isSgPointerType(argType))
 		{
-			types.insert(isSgPointerType(argType)->get_base_type());
+			types[isSgPointerType(argType)->get_base_type()] = arg;
 		}
 		else
 		{
-			types.insert(argType);
+			types[argType] = arg;
 		}
 	}
 
 	//Return type of the function
-	types.insert(functionDefinition->get_declaration()->get_type()->get_return_type());
+	types[functionDefinition->get_declaration()->get_type()->get_return_type()] = functionDefinition->get_declaration();
 
 	//Ok, now we have a list of types used in the function. We have to check them
-	foreach (SgType* type, types)
+	pair<SgType*,SgNode*> typeUsePair;
+	foreach (typeUsePair, types)
 	{
+		SgType* type = typeUsePair.first;
+		SgNode* nodeWhereTypeIsUsed = typeUsePair.second;
+
 		if (SageInterface::isScalarType(type))
 		{
 			continue;
@@ -329,7 +314,7 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 			classDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
 			if (classDeclaration == NULL)
 			{
-				printCompilerError(type, "Could not find definition for the given type. A full definition is needed"
+				backstroke_util::printCompilerError(nodeWhereTypeIsUsed, "Could not find definition for the given type. A full definition is needed"
 						" in order to check constraints.");
 				return true;
 			}
@@ -349,7 +334,7 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 				{
 					if (!SageInterface::isScalarType(memberVariable->get_type()))
 					{
-						printCompilerError(memberVariableDeclaration, "Classes/Structs used inside the event function can"
+						backstroke_util::printCompilerError(memberVariableDeclaration, "Classes/Structs used inside the event function can"
 								" only contain scalar types");
 						return true;
 					}
@@ -358,19 +343,10 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 		}
 		else
 		{
-			printCompilerError(type, "Only primitive types and classes/structs containing primitive types are allowed");
+			backstroke_util::printCompilerError(nodeWhereTypeIsUsed, "Only primitive types and classes/structs containing primitive types are allowed");
 			return true;
 		}
 	}
 
 	return false;
-}
-
-
-/** Prints an error message associated with a certain node. Also outputs the file and location
-  * of the node. */
-void LanguageRestrictions::printCompilerError(SgNode* badNode, const char * message)
-{
-	fprintf(stderr, "\"%s\", line %d: Error: %s\n\t%s\n", badNode->get_file_info()->get_filename(),
-			badNode->get_file_info()->get_line(), message, badNode->unparseToString().c_str());
 }
