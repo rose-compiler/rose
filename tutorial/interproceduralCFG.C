@@ -9,17 +9,17 @@ int main(int argc, char *argv[])
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL); 
 
-  SgFunctionDeclaration* mainDef = SageInterface::findMain(proj);
+  SgFunctionDeclaration* mainDefDecl = SageInterface::findmainDef(proj);
+  ROSE_ASSERT (mainDefDecl != NULL); 
+
+  SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
   ROSE_ASSERT (mainDef != NULL); 
 
-  SgFunctionDefinition* main = mainDef->get_definition();
-  ROSE_ASSERT (main != NULL); 
-
-  string fileName= StringUtility::stripPathFromFileName(main->get_file_info()->get_filenameString());
+  string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
   string dotFileName = fileName + ".IP.dot";
 
   // Dump out the interprocedural CFG, including bookkeeping nodes
-  VirtualCFG::interproceduralCfgToDotForDebugging(main, dotFileName);
+  VirtualCFG::interproceduralCfgToDotForDebugging(mainDef, dotFileName);
 
   return 0;
 }
