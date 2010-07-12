@@ -38,22 +38,6 @@ EventReverser::EventReverser(SgFunctionDeclaration* func_decl, DFAnalysis* analy
 vector<SgStatement*> EventReverser::getVarDeclarations()
 {
     vector<SgStatement*> decls;
-    //foreach(const string& flag, branch_flags_)
-    //    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
-
-#if 0
-    foreach(const string& counter, loop_counters_)
-        decls.push_back(buildVariableDeclaration(
-                    counter, 
-                    buildIntType(), 
-                    buildAssignInitializer(buildIntVal(0))));
-
-    pair<string, SgType*> state_var;
-    foreach(state_var, state_vars_)
-    {
-        decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
-    }
-#endif
 
     SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
     decls.push_back(buildVariableDeclaration(flag_stack_name_, stack_type));

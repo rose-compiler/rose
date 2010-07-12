@@ -172,8 +172,8 @@ int fixVariableReferences2(SgNode* root)
             // This function can be called any time, not just final fixing stage
             if (realSymbol==NULL) 
             {
-                //cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
-                //ROSE_ASSERT(realSymbol);
+                cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
+                ROSE_ASSERT(realSymbol);
             }
             else {
                 // release placeholder initname and symbol
@@ -240,14 +240,11 @@ int main( int argc, char * argv[] )
 
     ROSE_ASSERT(reverser.model_type);
 
-    //SgStatement* init_func = buildInitializationFunction();
-
 
     for (size_t i = 0; i < reverser.var_decls.size(); ++i)
         prependStatement(reverser.var_decls[i]);
     for (size_t i = 0; i < reverser.funcs_gen.size(); ++i)
         insertFunctionInPlace(reverser.funcs_gen[i], reverser.all_funcs);
-    //appendStatement(reverser.funcs[i]);
 
     appendStatement(buildInitializationFunction(reverser.model_type));
     appendStatement(buildCompareFunction(reverser.model_type));
@@ -259,7 +256,9 @@ int main( int argc, char * argv[] )
     // Write or find a function to clear all nodes in memory pool who don't have parents.
 #if 1
     cout << "Start to fix variables references\n";
-    fixVariableReferences2(globalScope);
+    
+	//SageInterface::fixVariableReferences(globalScope);
+	fixVariableReferences2(globalScope);
     cout << "Fix finished\n";
 #endif
     AstTests::runAllTests(project);

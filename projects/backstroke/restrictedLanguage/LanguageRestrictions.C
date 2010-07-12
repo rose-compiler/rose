@@ -357,7 +357,7 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 bool LanguageRestrictions::usesGnuExtensions(SgFunctionDefinition* functionDefinition)
 {
 	// Forbid use of statement expression.
-	Rose_STL_Container<SgExpression*> all_exps = backstroke_util::querySubTree<SgExpression> (functionDefinition->get_body());
+	vector<SgExpression*> all_exps = backstroke_util::querySubTree<SgExpression> (functionDefinition->get_body());
 
 	foreach(SgExpression* exp, all_exps)
 	{
