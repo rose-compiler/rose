@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = src Analysis
+if ROSE_USE_LLVM
 
-EXTRA_DIST =						\
-	README
+SUBDIRS = src
+
+endif
