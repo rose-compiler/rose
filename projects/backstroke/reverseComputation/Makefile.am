@@ -24,7 +24,7 @@ stateSaving_SOURCES = stateSavingMain.C
 stateSaving_LDADD = libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
 new_reverse_SOURCES = newMain.C 
-new_reverse_LDADD =  libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
+new_reverse_LDADD =  libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la
 
 EXTRA_DIST = test
 

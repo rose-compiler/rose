@@ -18,7 +18,7 @@ ExpPair storeAndRestore(SgExpression* exp)
     {
         SgExpression* operand = isSgUnaryOp(exp)->get_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(copyExpression(operand)), exp);
+                pushVal(copyExpression(operand)), copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(operand), popVal());
         return ExpPair(fwd_exp, rvs_exp);
@@ -28,7 +28,7 @@ ExpPair storeAndRestore(SgExpression* exp)
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(copyExpression(lhs_operand)), fwd_exp);
+                pushVal(copyExpression(lhs_operand)), copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(lhs_operand), popVal());
         return ExpPair(fwd_exp, rvs_exp);
@@ -41,6 +41,32 @@ ExpPair storeAndRestore(SgExpression* exp)
 
 ExpPair processConstructiveExp(SgExpression* exp)
 {
+    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
+    {
+        // Note that after normalization, a plusplus or minusminus operator expression
+        // is not used by another expression, which makes its transformation much easier.
+        
+        // Make sure the expression is of integer type.
+        SgExpression* operand = isSgUnaryOp(exp)->get_operand();
+        if (operand->get_type()->isIntegerType())
+        {
+            // ++ and -- can both be reversed without state saving
+            if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
+                return ExpPair(
+                        copyExpression(exp),
+                        buildMinusMinusOp(
+                            copyExpression(operand), 
+                            backstroke_util::reverseOpMode(pp_op->get_mode())));
+
+            if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(exp))
+                return ExpPair(
+                        copyExpression(exp),
+                        buildPlusPlusOp(
+                            copyExpression(operand), 
+                            backstroke_util::reverseOpMode(mm_op->get_mode())));
+        }
+    }
+
     if (isAssignmentOp(exp))
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();

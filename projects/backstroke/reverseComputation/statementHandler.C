@@ -1,6 +1,7 @@
 #include "processorPool.h"
 #include "statementHandler.h"
 #include <boost/tuple/tuple.hpp>
+#include <boost/lexical_cast.hpp>
 #include "utilities/CPPDefinesAndNamespaces.h"
 
 using namespace SageInterface;
@@ -26,12 +27,16 @@ vector<StmtPair> processFunctionDeclaration(SgFunctionDeclaration* func_decl)
     vector<StmtPair> bodies = processStatement(body);
     vector<StmtPair> outputs;
 
+    static int ctr = 0;
+
     foreach (StmtPair stmt_pair, bodies)
     {
         SgStatement *fwd_body, *rvs_body;
         tie(fwd_body, rvs_body) = stmt_pair;
 
-        SgName fwd_func_name = func_decl->get_name() + "_forward";
+        string ctr_str = lexical_cast<string>(ctr++);
+
+        SgName fwd_func_name = func_decl->get_name() + "_forward" + ctr_str;
         SgFunctionDeclaration* fwd_func_decl = 
             buildDefiningFunctionDeclaration(fwd_func_name, func_decl->get_orig_return_type(), 
                     isSgFunctionParameterList(copyStatement(func_decl->get_parameterList())));
@@ -39,7 +44,7 @@ vector<StmtPair> processFunctionDeclaration(SgFunctionDeclaration* func_decl)
         fwd_func_def->set_body(isSgBasicBlock(fwd_body));
         fwd_body->set_parent(fwd_func_def);
 
-        SgName rvs_func_name = func_decl->get_name() + "_reverse";
+        SgName rvs_func_name = func_decl->get_name() + "_reverse" + ctr_str;
         SgFunctionDeclaration* rvs_func_decl = 
             buildDefiningFunctionDeclaration(rvs_func_name, func_decl->get_orig_return_type(), 
                     isSgFunctionParameterList(copyStatement(func_decl->get_parameterList()))); 
@@ -113,10 +118,10 @@ vector<StmtPair> processBasicBlock(SgBasicBlock* body)
 
     Index idx;
     // Initialize the index.
-    int size = all_stmts.size();
+    size_t size = all_stmts.size();
     idx.index = vector<int>(size, 0);
     idx.index_max.resize(size);
-    for (int i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; ++i)
         idx.index_max[i] = all_stmts[i].size() - 1;
 
     do
@@ -126,13 +131,27 @@ vector<StmtPair> processBasicBlock(SgBasicBlock* body)
 
         for (size_t i = 0; i < idx.index.size(); ++i)
         {
+            // In case that the size is 0.
+            if (all_stmts[i].empty())
+                continue;
+
             SgStatement *fwd_stmt, *rvs_stmt;
+
+            ROSE_ASSERT(i < all_stmts.size());
+            ROSE_ASSERT(static_cast<size_t>(idx.index[i]) < all_stmts[i].size());
+
             tie(fwd_stmt, rvs_stmt) = all_stmts[i][idx.index[i]];
 
             if (fwd_stmt)
+            {
+                ROSE_ASSERT(isSgStatement(fwd_stmt));
                 fwd_body->append_statement(fwd_stmt);
+            }
             if (rvs_stmt)
+            {
+                ROSE_ASSERT(isSgStatement(rvs_stmt));
                 rvs_body->prepend_statement(rvs_stmt);
+            }
         }
 
         // Check if the combination is valid based on SSA.
