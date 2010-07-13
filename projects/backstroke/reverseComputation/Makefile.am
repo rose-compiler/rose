@@ -10,18 +10,21 @@ noinst_LTLIBRARIES =  libBackstrokeReverser.la
 
 libBackstrokeReverser_ladir = .
 libBackstrokeReverser_la_DEPENDENCIES = 
-libBackstrokeReverser_la_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C CFGReverserProofOfConcept.C stateSaver.C
-include_HEADERS = eventReverser.h facilityBuilder.h CFGReverserProofOfConcept.h stateSaver.h
+libBackstrokeReverser_la_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C CFGReverserProofOfConcept.C stateSaver.C expressionHandler.C statementHandler.C
+include_HEADERS = eventReverser.h facilityBuilder.h CFGReverserProofOfConcept.h stateSaver.h expressionHandler.h statementHandler.h processorPool.h types.h singleton.h 
 libBackstrokeReverser_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the reverse code generator
-bin_PROGRAMS = reverse stateSaving
+bin_PROGRAMS = reverse stateSaving new_reverse
 
 reverse_SOURCES = reverseCodeGeneratorMain.C
 reverse_LDADD =  libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
 stateSaving_SOURCES = stateSavingMain.C
 stateSaving_LDADD = libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
+
+new_reverse_SOURCES = newMain.C 
+new_reverse_LDADD =  libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
 EXTRA_DIST = test
 

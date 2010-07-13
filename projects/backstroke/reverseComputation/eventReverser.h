@@ -32,33 +32,33 @@ class EventReverser
 
     static std::set<SgFunctionDeclaration*> func_processed_;
 
-	/** A list of all the expression handlers that we will try first.
-	  * If these handlers can't reverse an expression, we fall back to state saving. */
-	static std::vector <boost::function<ExpPair (SgExpression*) > > expressionHandlers;
+    /** A list of all the expression handlers that we will try first.
+     * If these handlers can't reverse an expression, we fall back to state saving. */
+    static std::vector <boost::function<ExpPair (SgExpression*) > > expressionHandlers;
 
-public:
+    public:
     EventReverser(SgFunctionDeclaration* func_decl,
             DFAnalysis* analysis = NULL);
 
     /** All functions generated. If the reverser meets a function call, it may reverse
-	  * that function then add the resulted function pair into the function pair collection.
-	  * The reverse of the original function is the very last function in this list. */
-	std::vector<FuncDeclPair> outputFunctions();
+     * that function then add the resulted function pair into the function pair collection.
+     * The reverse of the original function is the very last function in this list. */
+    std::vector<FuncDeclPair> outputFunctions();
 
     // Get all variables' declarations including all kinds of states
     std::vector<SgStatement*> getVarDeclarations();
     std::vector<SgStatement*> getVarInitializers();
 
-	/** Add a method that can generate forward and reverse expressions from the given expression. */
-	static void registerExpressionHandler(boost::function<ExpPair (SgExpression*)> handler)
-	{
-		expressionHandlers.push_back(handler);
-	}
+    /** Add a method that can generate forward and reverse expressions from the given expression. */
+    static void registerExpressionHandler(boost::function<ExpPair (SgExpression*)> handler)
+    {
+        expressionHandlers.push_back(handler);
+    }
 
-	static const ExpPair NULL_EXP_PAIR;
+    static const ExpPair NULL_EXP_PAIR;
     static const StmtPair NULL_STMT_PAIR;
 
-private:
+    private:
 
 
     // **********************************************************************************

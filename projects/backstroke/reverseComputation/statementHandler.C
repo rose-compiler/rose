@@ -1,4 +1,10 @@
 #include "processorPool.h"
+#include "statementHandler.h"
+#include <boost/tuple/tuple.hpp>
+#include "utilities/CPPDefinesAndNamespaces.h"
+
+using namespace SageInterface;
+using namespace SageBuilder;
 
 vector<StmtPair> processBasicStatement(SgStatement* stmt)
 {
@@ -11,7 +17,7 @@ vector<StmtPair> processBasicStatement(SgStatement* stmt)
     if (SgBasicBlock* block = isSgBasicBlock(stmt))
         return processBasicBlock(block);
 
-    return NULL_STMT_PAIR;
+    return vector<StmtPair>();
 }
 
 vector<StmtPair> processFunctionDeclaration(SgFunctionDeclaration* func_decl)
@@ -25,18 +31,18 @@ vector<StmtPair> processFunctionDeclaration(SgFunctionDeclaration* func_decl)
         SgStatement *fwd_body, *rvs_body;
         tie(fwd_body, rvs_body) = stmt_pair;
 
-        SgName fwd_func_name = func_decl_->get_name() + "_forward";
+        SgName fwd_func_name = func_decl->get_name() + "_forward";
         SgFunctionDeclaration* fwd_func_decl = 
-            buildDefiningFunctionDeclaration(fwd_func_name, func_decl_->get_orig_return_type(), 
-                    isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList())));
+            buildDefiningFunctionDeclaration(fwd_func_name, func_decl->get_orig_return_type(), 
+                    isSgFunctionParameterList(copyStatement(func_decl->get_parameterList())));
         SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
         fwd_func_def->set_body(isSgBasicBlock(fwd_body));
         fwd_body->set_parent(fwd_func_def);
 
-        SgName rvs_func_name = func_decl_->get_name() + "_reverse";
+        SgName rvs_func_name = func_decl->get_name() + "_reverse";
         SgFunctionDeclaration* rvs_func_decl = 
-            buildDefiningFunctionDeclaration(rvs_func_name, func_decl_->get_orig_return_type(), 
-                    isSgFunctionParameterList(copyStatement(func_decl_->get_parameterList()))); 
+            buildDefiningFunctionDeclaration(rvs_func_name, func_decl->get_orig_return_type(), 
+                    isSgFunctionParameterList(copyStatement(func_decl->get_parameterList()))); 
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
         rvs_func_def->set_body(isSgBasicBlock(rvs_body));
         rvs_body->set_parent(rvs_func_def);
@@ -69,7 +75,7 @@ vector<StmtPair> processExprStatement(SgExprStatement* exp_stmt)
 vector<StmtPair> processVariableDeclaration(SgVariableDeclaration* var_decl)
 {
     vector<StmtPair> outputs;
-    outputs.push_back(pushAndPopLocalVar(var_decl));
+    //outputs.push_back(pushAndPopLocalVar(var_decl));
 
     // FIXME  other cases
     
@@ -118,7 +124,7 @@ vector<StmtPair> processBasicBlock(SgBasicBlock* body)
         SgBasicBlock* fwd_body = buildBasicBlock();
         SgBasicBlock* rvs_body = buildBasicBlock();
 
-        for (int i = 0; i < idx.index.size(); ++i)
+        for (size_t i = 0; i < idx.index.size(); ++i)
         {
             SgStatement *fwd_stmt, *rvs_stmt;
             tie(fwd_stmt, rvs_stmt) = all_stmts[i][idx.index[i]];
@@ -130,7 +136,8 @@ vector<StmtPair> processBasicBlock(SgBasicBlock* body)
         }
 
         // Check if the combination is valid based on SSA.
-        if (checkValidity(rvs_body))
+        // FIXME
+        //if (checkValidity(rvs_body))
             outputs.push_back(StmtPair(fwd_body, rvs_body));
     } 
     while (!idx.forward());
