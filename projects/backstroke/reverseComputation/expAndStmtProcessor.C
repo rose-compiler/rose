@@ -89,8 +89,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
     SgBinaryOp* fwd_exp = isSgBinaryOp(copyExpression(bin_op));
     setLhsOperand(fwd_exp, fwd_lhs_exp);
     setRhsOperand(fwd_exp, fwd_rhs_exp);
-    //fwd_exp->set_lhs_operand(fwd_lhs_exp);
-    //fwd_exp->set_rhs_operand(fwd_rhs_exp);
 
     // For binary operations which don't modify the value of any variable, their 
     // reverse expressions should reorder the evaluation of each operand, in case that
@@ -136,11 +134,9 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                     isSgBitAndOp(bin_op) ||
                     isSgBitOrOp(bin_op) ||
                     isSgBitXorOp(bin_op) ||
-                    //isSgCommaOpExp(bin_op) ||
                     isSgEqualityOp(bin_op) ||
                     isSgMultiplyOp(bin_op) ||
-                    isSgNotEqualOp(bin_op))// ||
-                    //isSgOrOp(bin_op))
+                    isSgNotEqualOp(bin_op))
             {
                 // In those cases, just reorder its two operands.
                 SgBinaryOp* rvs_exp = isSgBinaryOp(copyExpression(bin_op));
@@ -171,41 +167,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             // UPDATED: In the situation above, we don't have to store the value of the 
             // expression. The return value of the reverse expression does not have to be
             // the same as the original expression.
-
-#if 0
-
-            //FIXME The following code has some problem, which cannot remove a node thoroughly.
-
-            SgExpression *new_fwd_lhs_exp, *new_fwd_rhs_exp, *new_rvs_lhs_exp, *new_rvs_rhs_exp;
-            beginFIFO();   // Flags are FIFO now
-            tie(new_fwd_lhs_exp, new_rvs_lhs_exp) = instrumentAndReverseExpression(bin_op->get_lhs_operand());
-            tie(new_fwd_rhs_exp, new_rvs_rhs_exp) = instrumentAndReverseExpression(bin_op->get_rhs_operand());
-
-            SgExpression* rvs_exp = buildBinaryExpression<SgCommaOpExp>(rvs_rhs_exp, rvs_lhs_exp);
-            rvs_exp = buildBinaryExpression<SgCommaOpExp>(rvs_exp, popIntVal());
-
-            replaceExpression(fwd_lhs_exp, new_fwd_lhs_exp);
-            replaceExpression(fwd_rhs_exp, new_fwd_rhs_exp);
-            replaceExpression(rvs_lhs_exp, new_rvs_lhs_exp);
-            replaceExpression(rvs_rhs_exp, new_rvs_rhs_exp);
-#if 0
-            deepDelete(new_fwd_lhs_exp);
-            deepDelete(new_fwd_rhs_exp);
-            deepDelete(new_rvs_lhs_exp);
-            deepDelete(new_rvs_rhs_exp);
-#endif
-
-            //SgExpression* fwd_exp2 = pushIntVal(tmp_fwd_exp);
-
-            //beginFIFO();
-
-            SgExpression* new_fwd_exp = pushIntVal(fwd_exp);
-
-            //endFIFO();     // Flags are LIFO now
-            endFIFO();     // Flags are LIFO now
-
-            return ExpPair(new_fwd_exp, rvs_exp);
-#endif
         }
 #endif
     }
@@ -256,15 +217,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                         constructive = false;
                         break;
                     }
-                    
-#if 0
-                    // Once we have the SSA, we can maintain a table in which which variables are available.
-                    if (!isAvailable(exp))
-                    {
-                        constructive = false;
-                        break;
-                    }
-#endif
                 }
 
                 if (constructive)
@@ -290,24 +242,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                                     rvs_lhs_exp, 
                                     rvs_rhs_exp));
 
-#if 0
-                    // we must ensure that the rhs operand of *= is not ZERO
-                    if (isSgMultAssignOp(bin_op) && !isZero(isSgValueExp(rhs_operand)))
-                        // if the rhs_operand is a value and the value is not 0
-                        return ExpPair(
-                                fwd_exp,
-                                buildBinaryExpression<SgDivAssignOp>(
-                                    copyExpression(model_var), 
-                                    copyExpression(rhs_operand)));
-
-                    if (isSgLshiftAssignOp(bin_op))
-                        return ExpPair(
-                                fwd_exp,
-                                buildBinaryExpression<SgRshiftAssignOp>(
-                                    copyExpression(model_var), 
-                                    copyExpression(rhs_operand)));
-#endif
-
                 }
             }
 
@@ -327,13 +261,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 
             if (isSgAssignOp(bin_op))
             {
-#if 0
-                // Handle the case a = -a.
-                if (SgMinusOp* minus_op = isSgMinusOp(rvs_rhs_exp))
-                    if (backstroke_util::areSameVariable(minus_op->get_operand(), lhs_operand))
-                        return ExpPair(fwd_exp, copyExpression(fwd_exp));
-#endif
-
                 // We have to record the sign of each variable.
                 typedef pair<SgExpression*, bool> VarWithSign;
                 vector<VarWithSign> vars;
@@ -396,7 +323,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                         return ExpPair(fwd_exp, rvs_exp);
                     }
 
-                    //vars[index].first = lhs_operand;
 
                     // Concatenate all other variables.
                     SgExpression* rvs_exp = NULL;
@@ -434,21 +360,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                         else
                             rvs_exp = copyExpression(lhs_operand);
                     }
-#if 0
-                    else
-                    {
-                        // a = b - a  ->  a = b - a
-                        if (rvs_exp)
-                            rvs_exp = buildBinaryExpression<SgSubtractOp>(
-                                    rvs_exp,
-                                    copyExpression(lhs_operand)); 
-                        // a = -a
-                        else
-                            rvs_exp = buildUnaryExpression<SgMinusOp>(
-                                    copyExpression(lhs_operand));
-                    
-                    }
-#endif
+
                     rvs_exp = buildBinaryExpression<SgAssignOp>(
                             copyExpression(lhs_operand),
                             rvs_exp);
@@ -473,27 +385,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                 isSgLshiftAssignOp(bin_op) ||
                 isSgRshiftAssignOp(bin_op))
         {
-            //SgBinaryOp* exp_copy = isSgBinaryOp(copyExpression(bin_op));
-            //exp_copy->set_rhs_operand(fwd_rhs_exp);
-
-#if 0
-            SgExpression* state_var = getStateVar(model_var);
-
-            // Save the state (we cannot use the default forward expression any more).
-            // Here we use comma operator expression to implement state saving.
-            fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    buildBinaryExpression<SgAssignOp>(
-                        state_var, 
-                        copyExpression(model_var)),
-                    fwd_exp);
-
-            // retrieve the state
-            SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                    copyExpression(model_var),
-                    copyExpression(state_var));
-#else
-
-
             // FIXME An important analysis should be performed here based on the 
             // value graph built. If we can track the destroyed value which is held
             // by another live variable, we don't have to push it into stack, but 
@@ -522,7 +413,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                         copyExpression(lhs_operand),
                         popIntVal());
             }
-#endif
+
             // If the rhs operand expression can be reversed, we have to deal with 
             // both sides at the same time. For example: b = ++a, where a and b are 
             // both state variables.
@@ -606,7 +497,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
 
 
     // The reverse version of an expression should still be an expression, not NULL
-#if 1
     // The following is the default reverse expression which is a combination
     // of reverse expressions of both sides.
     SgExpression* rvs_exp = NULL;
@@ -616,7 +506,6 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
         rvs_exp = rvs_lhs_exp;
     else if (rvs_rhs_exp)
         rvs_exp = rvs_rhs_exp;
-#endif
 
     return ExpPair(fwd_exp, rvs_exp);
 }
@@ -734,7 +623,6 @@ ExpPair EventReverser::processFunctionCallExp(SgFunctionCallExp* func_exp)
     foreach (SgExpression* exp, func_exp->get_args()->get_expressions())
     {
         SgExpression *fwd_exp, *rvs_exp;
-        //tie(fwd_exp, rvs_exp) = instrumentAndReverseExpression(exp);
         fwd_exp = copyExpression(exp);
         rvs_exp = copyExpression(exp);
         fwd_args->append_expression(fwd_exp);
@@ -771,69 +659,81 @@ StmtPair EventReverser::processExprStatement(SgExprStatement* exp_stmt)
         return NULL_STMT_PAIR;
 }
 
+
 StmtPair EventReverser::processBasicBlock(SgBasicBlock* body)
 {
-    // A basic block normally contains a group of statements.
-    // We process them one by one. Note that the reverse version
-    // of the basic block has its reverse statements in reverse order. 
+	// A basic block normally contains a group of statements.
+	// We process them one by one. Note that the reverse version
+	// of the basic block has its reverse statements in reverse order.
+	SgBasicBlock* fwd_body = buildBasicBlock();
+	SgBasicBlock* rvs_body = buildBasicBlock();
 
-    SgBasicBlock* fwd_body = buildBasicBlock();
-    SgBasicBlock* rvs_body = buildBasicBlock();
+	vector<SgStatement*> scopeExitStores;
+	vector<SgStatement*> localVarDeclarations;
 
-    vector<SgStatement*> fwd_stmts;
-    vector<SgStatement*> rvs_stmts;
+	foreach(SgStatement* s, body->get_statements())
+	{
+		// Put the declarations of local variables in the beginning of reverse
+		// basic block and retrieve their values. Store values of all local
+		// variables in the end of of forward basic block.
+		// Also refer to the function "processVariableDeclaration"
+		if (SgVariableDeclaration * var_decl = isSgVariableDeclaration(s))
+		{
+			SgStatement *store_var, *decl_var;
+			tie(store_var, decl_var) = pushAndPopLocalVar(var_decl);
 
-    foreach(SgStatement* s, body->get_statements())
-    {
-        // Put the declarations of local variables in the beginning of reverse 
-        // basic block and retrieve their values. Store values of all local 
-        // variables in the end of of forward basic block.
-        // Also refer to the function "processVariableDeclaration"
+			scopeExitStores.push_back(store_var);
+			localVarDeclarations.push_back(decl_var);
+		}
 
-        if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(s))
-        {
-            SgStatement *store_var, *decl_var;
-            tie(store_var, decl_var) = pushAndPopLocalVar(var_decl);
+		SgStatement *fwd_stmt, *rvs_stmt;
+		tie(fwd_stmt, rvs_stmt) = instrumentAndReverseStatement(s);
 
-            fwd_stmts.push_back(store_var);
-            rvs_stmts.push_back(decl_var);
-        }
+		//The return statement should go at the very end of the forward statement
+		//after the variables that exit scope have been stored
+		if (isSgReturnStmt(fwd_stmt))
+		{
+			scopeExitStores.push_back(fwd_stmt);
+		}
+		else if (fwd_stmt)
+		{
+			fwd_body->append_statement(fwd_stmt);
+		}
 
+		//Insert the reverse statement
+		if (isSgBreakStmt(rvs_stmt) || isSgContinueStmt(rvs_stmt))
+		{
+			// It's is unclear whether these special statements
+			// should be added in the reverse version. In switch
+			// statement, 'break' should be retained.
+			//rvs_body->append_statement(rvs_stmt);
+			ROSE_ASSERT(false);
+			delete rvs_stmt;
+			break;
+		}
+		else if (isSgReturnStmt(rvs_stmt))
+		{
+			//The reverse of a return statement is a null statement since the return statement
+			//can only come at the end of a function. Hence, this case should never occur.
+			ROSE_ASSERT(false);
+		}
+		else if (rvs_stmt)
+		{
+			rvs_body->prepend_statement(rvs_stmt);
+		}
+	}
 
-        SgStatement *fwd_stmt, *rvs_stmt;
-        tie(fwd_stmt, rvs_stmt) = instrumentAndReverseStatement(s);
-        if (fwd_stmt)
-            fwd_body->append_statement(fwd_stmt);
+	//Before exiting scope, store all local variables
+	foreach(SgStatement* stmt, scopeExitStores)
+		fwd_body->append_statement(stmt);
 
-        if (isSgReturnStmt(rvs_stmt) ||
-                isSgBreakStmt(rvs_stmt) ||
-                isSgContinueStmt(rvs_stmt))
-        {
-            // It's is unclear whether these special statements 
-            // should be added in the reverse version. In switch
-            // statement, 'break' should be retained. 
-            //rvs_body->append_statement(rvs_stmt);
-            delete rvs_stmt;
-            break;
-        }
-        else if (rvs_stmt)
-            rvs_body->prepend_statement(rvs_stmt);
-    }
+	//Restore all local variables upon returning into the scope
+	foreach(SgStatement* stmt, localVarDeclarations)
+		rvs_body->prepend_statement(stmt);
 
-    foreach (SgStatement* stmt, fwd_stmts)
-        fwd_body->append_statement(stmt);
-
-#if 0
-    for (vector<SgStatement*>::reverse_iterator it = rvs_stmts.rbegin();
-            it != rvs_stmts.rend(); ++it)
-        rvs_body->prepend_statement(*it);
-#endif
-    foreach (SgStatement* stmt, rvs_stmts)
-        rvs_body->prepend_statement(stmt);
-
-
-    return StmtPair(fwd_body, rvs_body);
+	return StmtPair(fwd_body, rvs_body);
 }
+
 
 StmtPair EventReverser::processVariableDeclaration(SgVariableDeclaration* var_decl)
 {

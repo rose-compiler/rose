@@ -77,9 +77,10 @@ vector<SgAssignOp*> EventReverser::getVarInitializers()
     return inits;
 }
 
+
 ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 {
-	foreach (function<ExpPair (SgExpression*)> expressionHandler, expressionHandlers)
+	foreach(function < ExpPair(SgExpression*) > expressionHandler, expressionHandlers)
 	{
 		ExpPair result = expressionHandler(exp);
 		if (result != NULL_EXP_PAIR)
@@ -88,29 +89,33 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 		}
 	}
 
-    // if this expression is a binary one
-    if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
-        return processBinaryOp(bin_op);
+	// if this expression is a binary one
+	if (SgBinaryOp * bin_op = isSgBinaryOp(exp))
+		return processBinaryOp(bin_op);
 
-    // if the expression is a unary one
-    if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
-        return processUnaryOp(unary_op);
+	// if the expression is a unary one
+	else if (SgUnaryOp * unary_op = isSgUnaryOp(exp))
+		return processUnaryOp(unary_op);
 
-    // process the conditional expression (?:).
-    if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
-        return processConditionalExp(cond_exp);
+	// process the conditional expression (?:).
+	else if (SgConditionalExp * cond_exp = isSgConditionalExp(exp))
+		return processConditionalExp(cond_exp);
 
-    // process the function call expression
-    if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
-        return processFunctionCallExp(func_exp);
+	// process the function call expression
+	else if (SgFunctionCallExp * func_exp = isSgFunctionCallExp(exp))
+		return processFunctionCallExp(func_exp);
 
-    if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
+	else if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
 		return ExpPair(copyExpression(exp), copyExpression(exp));
 
-	printf("WARNING: The following expression of type %s was not handled in the reversal: %s\n",
-			exp->class_name().c_str(), exp->unparseToString().c_str());
+	else
+	{
+		fprintf(stderr, "WARNING: The following expression of type %s was not handled in the reversal: %s\n",
+				exp->class_name().c_str(), exp->unparseToString().c_str());
+		ROSE_ASSERT(false);
+	}
 
-    return ExpPair(copyExpression(exp), copyExpression(exp));
+	return ExpPair(copyExpression(exp), copyExpression(exp));
 }
 
 
@@ -149,22 +154,29 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
     if (SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt))
         return processSwitchStatement(switch_stmt);
 
-#if 0
     if (SgBreakStmt* break_stmt = isSgBreakStmt(stmt))
-        return copyStatement(break_stmt);
+	{
+		backstroke_util::printCompilerError(break_stmt, "Break statement is not supported");
+		exit(1);
+	}
 
     if (SgContinueStmt* continue_stmt = isSgContinueStmt(stmt))
-        return copyStatement(continue_stmt);
+	{
+		backstroke_util::printCompilerError(continue_stmt, "Continue statement is not supported");
+		exit(1);
+	}
 
-    if (SgReturnStmt* return_stmt = isSgReturnStmt(stmt))
-        return copyStatement(return_stmt);
-#endif
+	//This should be at the very end of a function (language restriction tests should have verified)
+	//Hence, the reverse of a return statement would be nothing.
+    if (isSgReturnStmt(stmt))
+        return StmtPair(SageInterface::copyStatement(stmt), NULL);
 
     // The following output should include break, continue and other ones.
-    return StmtPair(
-            copyStatement(stmt),
-            copyStatement(stmt));
+	backstroke_util::printCompilerError(stmt, "Unhandled statement type in the reverse code generator.");
+	ROSE_ASSERT(false);
+	return NULL_STMT_PAIR;
 }
+
 
 // This function add the loop counter related statements (counter declaration, increase, and store)
 // to a forward for statement. 

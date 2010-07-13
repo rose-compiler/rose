@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 	SageInterface::addTextForUnparser(globalScope, includes, AstUnparseAttribute::e_before);
 
 	//Unparse
-	//SageInterface::fixVariableReferences(globalScope);
+	SageInterface::fixVariableReferences(globalScope);
 	AstTests::runAllTests(project);
 	backend(project);
 }
