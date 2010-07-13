@@ -1,7 +1,10 @@
 #include "rose.h"
 #include <stdio.h>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 #include "reverseComputation/eventReverser.h"
+#include "reverseComputation/CFGReverserProofOfConcept.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
 
 
@@ -23,9 +26,12 @@ int main(int argc, char** argv)
 	ROSE_ASSERT(functionDeclaration != NULL);
 
 	//Create a reverser for this function
+	CFGReverserProofofConcept cfgReverser(project);
+	EventReverser::registerExpressionHandler(bind(&CFGReverserProofofConcept::ReverseExpression, &cfgReverser, _1));
 	EventReverser reverser(functionDeclaration, NULL);
 
-	//Call the reverser andget the results
+	//Call the reverser and get the results
+	SageBuilder::pushScopeStack(globalScope);
 	map<SgFunctionDeclaration*, FuncDeclPair> originalToGenerated = reverser.outputFunctions();
 	vector<SgVariableDeclaration*> generatedVariables = reverser.getVarDeclarations();
 	vector<SgAssignOp*> generatedVariableInitializations = reverser.getVarInitializers();
@@ -58,7 +64,12 @@ int main(int argc, char** argv)
 		SageInterface::prependStatement(SageBuilder::buildExprStatement(varInitOp), mainDefinition->get_body());
 	}
 
+	//Add the header file that includes functions called by the instrumented code
+	string includes = "#include \"rctypes.h\"\n";
+	SageInterface::addTextForUnparser(globalScope, includes, AstUnparseAttribute::e_before);
+
 	//Unparse
+	//SageInterface::fixVariableReferences(globalScope);
 	AstTests::runAllTests(project);
 	backend(project);
 }
