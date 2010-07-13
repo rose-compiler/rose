@@ -6,6 +6,14 @@
 // Normalize an event function.
 void normalizeEvent(SgFunctionDefinition* func_def);
 
+inline void normalizeEvent(SgFunctionDeclaration* func_decl)
+{
+    SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+    ROSE_ASSERT(defining_decl && defining_decl->get_definition());
+    normalizeEvent(defining_decl->get_definition());
+}
+
+
 // Transform a modifying expression into several ones contained in a comma 
 // operator expression. The transformations are:
 //

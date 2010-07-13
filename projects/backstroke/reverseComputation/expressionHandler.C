@@ -1,6 +1,11 @@
+#include "processorPool.h"
 #include "expressionHandler.h"
-#include "utilities.h"
-#include <CPPDefinesAndNamespaces.h>
+#include "utilities/Utilities.h"
+#include "utilities/CPPDefinesAndNamespaces.h"
+
+using namespace SageInterface;
+using namespace SageBuilder;
+using namespace backstroke_util;
 
 ExpPair storeAndRestore(SgExpression* exp)
 {
@@ -13,7 +18,7 @@ ExpPair storeAndRestore(SgExpression* exp)
     {
         SgExpression* operand = isSgUnaryOp(exp)->get_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(copyExpression(operand)), exp);
+                pushVal(copyExpression(operand)), copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(operand), popVal());
         return ExpPair(fwd_exp, rvs_exp);
@@ -23,7 +28,7 @@ ExpPair storeAndRestore(SgExpression* exp)
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(copyExpression(lhs_operand)), fwd_exp);
+                pushVal(copyExpression(lhs_operand)), copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(lhs_operand), popVal());
         return ExpPair(fwd_exp, rvs_exp);
@@ -36,6 +41,32 @@ ExpPair storeAndRestore(SgExpression* exp)
 
 ExpPair processConstructiveExp(SgExpression* exp)
 {
+    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
+    {
+        // Note that after normalization, a plusplus or minusminus operator expression
+        // is not used by another expression, which makes its transformation much easier.
+        
+        // Make sure the expression is of integer type.
+        SgExpression* operand = isSgUnaryOp(exp)->get_operand();
+        if (operand->get_type()->isIntegerType())
+        {
+            // ++ and -- can both be reversed without state saving
+            if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
+                return ExpPair(
+                        copyExpression(exp),
+                        buildMinusMinusOp(
+                            copyExpression(operand), 
+                            backstroke_util::reverseOpMode(pp_op->get_mode())));
+
+            if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(exp))
+                return ExpPair(
+                        copyExpression(exp),
+                        buildPlusPlusOp(
+                            copyExpression(operand), 
+                            backstroke_util::reverseOpMode(mm_op->get_mode())));
+        }
+    }
+
     if (isAssignmentOp(exp))
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
@@ -62,17 +93,23 @@ ExpPair processConstructiveExp(SgExpression* exp)
 
             if (constructive)
             {
-                if (isSgPlusAssignOp(bin_op))
-                    return ExpPair(fwd_exp, buildBinaryExpression<SgMinusAssignOp>(
-                                copyExpression(lhs_operand), copyExpression(rhs_operand)));
+                if (isSgPlusAssignOp(exp))
+                    return ExpPair(copyExpression(exp), 
+                            buildBinaryExpression<SgMinusAssignOp>(
+                                copyExpression(lhs_operand), 
+                                copyExpression(rhs_operand)));
 
-                if (isSgMinusAssignOp(bin_op))
-                    return ExpPair(fwd_exp, buildBinaryExpression<SgPlusAssignOp>(
-                                copyExpression(lhs_operand), copyExpression(rhs_operand)));
+                if (isSgMinusAssignOp(exp))
+                    return ExpPair(copyExpression(exp), 
+                            buildBinaryExpression<SgPlusAssignOp>(
+                                copyExpression(lhs_operand), 
+                                copyExpression(rhs_operand)));
 
-                if (isSgXorAssignOp(bin_op))
-                    return ExpPair(fwd_exp, buildBinaryExpression<SgXorAssignOp>(
-                                copyExpression(lhs_operand), copyExpression(rhs_operand)));
+                if (isSgXorAssignOp(exp))
+                    return ExpPair(copyExpression(exp), 
+                            buildBinaryExpression<SgXorAssignOp>(
+                                copyExpression(lhs_operand), 
+                                copyExpression(rhs_operand)));
 
 #if 0
                 // we must ensure that the rhs operand of *= is not ZERO
@@ -168,7 +205,7 @@ ExpPair processConstructiveAssignment(SgExpression* exp)
             {
                 SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                         copyExpression(lhs_operand),
-                        rvs_rhs_exp);
+                        copyExpression(rhs_operand));
                 return ExpPair(fwd_exp, rvs_exp);
             }
 
