@@ -23,7 +23,8 @@ install(FILES  astPostProcessing.h       fixupDefiningAndNondefiningDeclarations
     fixupConstructorPreinitializationLists.h       propagateHiddenListData.h
     resolveFortranReferences.h       insertFortranContainsStatement.h
     markLhsValues.h       fixupUseAndUsingDeclarations.h
-    fixupCxxSymbolTablesToSupportAliasingSymbols.h DESTINATION ${INCLUDE_INSTALL_DIR})
+    fixupCxxSymbolTablesToSupportAliasingSymbols.h normalizeTypedefSequenceLists.h
+    DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
