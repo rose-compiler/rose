@@ -21,7 +21,7 @@ SgGraph::computeEdgeSet( SgGraphNode* node )
 
 
 
-     printf ("In SgGraph::computeEdgeSet(node=%p=%d) p_node_index_to_edge_multimap.size() = %zu \n",node,node->get_index(),p_node_index_to_edge_multimap.size());
+  // printf ("In SgGraph::computeEdgeSet(node=%p=%d) p_node_index_to_edge_multimap.size() = %zu \n",node,node->get_index(),p_node_index_to_edge_multimap.size());
 
      typedef std::pair<rose_graph_integer_edge_hash_multimap::const_iterator,rose_graph_integer_edge_hash_multimap::const_iterator> equal_range_type;
      equal_range_type equal_range_pair = p_node_index_to_edge_multimap.equal_range(node->get_index());
@@ -164,7 +164,7 @@ SgGraph::computeNodeIndexSet( const string & label )
      for (rose_graph_string_integer_hash_multimap::const_iterator i = equal_range_pair.first; i != equal_range_pair.second; i++)
         {
           int node_index = i->second;
-          printf ("Found node %d associated with label = %s \n",node_index,label.c_str());
+       // printf ("Found node %d associated with label = %s \n",node_index,label.c_str());
           returnSet.insert(node_index);
         }
 
@@ -528,7 +528,7 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
   // input specified size is used (I think)).  The reduces the hash collisions
   // and improves the performance of usign the hash table.
 
-     printf ("Inside of SgGraph::resize_hash_maps(numberOfNodes = %zu numberOfEdges = %zu): \n",numberOfNodes,numberOfEdges);
+  // printf ("Inside of SgGraph::resize_hash_maps(numberOfNodes = %zu numberOfEdges = %zu): \n",numberOfNodes,numberOfEdges);
 
 // #ifdef ROSE_USE_NEW_GRAPH_NODES
   // For maps and multimaps which deal with edges, make those hash 
@@ -577,7 +577,7 @@ SgGraph::memory_usage()
   // input specified size is used (I think)).  The reduces the hash collisions
   // and improves the performance of usign the hash table.
 
-     printf ("Inside of SgGraph::memory_usage(): \n");
+  // printf ("Inside of SgGraph::memory_usage(): \n");
 
   // For maps and multimaps which deal with edges, make those hash 
   // tables larger by the expected average degree of the nodes.
@@ -676,9 +676,9 @@ SgGraph::generateSpanningTree()
      std::vector < BoostEdgeDescriptor > rose_spanning_tree;
 
 #if 1
-     printf ("Computing the kruskal_minimum_spanning_tree() \n");
+  // printf ("Computing the kruskal_minimum_spanning_tree() \n");
      boost::kruskal_minimum_spanning_tree(rose_BGL_graph, std::back_inserter(rose_spanning_tree));
-     printf ("DONE: Computing the kruskal_minimum_spanning_tree() \n");
+  // printf ("DONE: Computing the kruskal_minimum_spanning_tree() \n");
 
      printf ("rose_spanning_tree.size() = %zu \n",rose_spanning_tree.size());
 #endif
@@ -716,7 +716,7 @@ SgGraph::generateSpanningTree()
      rose_graph_integerpair_edge_hash_multimap::iterator i = p_node_index_pair_to_edge_multimap.begin();
      while (i != p_node_index_pair_to_edge_multimap.end())
         {
-          printf ("Building up the boost_edges (%d,%d) \n",i->first.first,i->first.second);
+       // printf ("Building up the boost_edges (%d,%d) \n",i->first.first,i->first.second);
 
           boost_edges.push_back(i->first);
           boost_edge_weights.push_back(1);
@@ -738,9 +738,9 @@ SgGraph::generateSpanningTree()
      std::vector < BoostEdgeDescriptor > rose_spanning_tree;
 
 #if 1
-     printf ("Computing the kruskal_minimum_spanning_tree() \n");
+  // printf ("Computing the kruskal_minimum_spanning_tree() \n");
      boost::kruskal_minimum_spanning_tree(rose_BGL_graph, std::back_inserter(rose_spanning_tree));
-     printf ("DONE: Computing the kruskal_minimum_spanning_tree() \n");
+  // printf ("DONE: Computing the kruskal_minimum_spanning_tree() \n");
 
      printf ("rose_spanning_tree.size() = %zu \n",rose_spanning_tree.size());
 #endif

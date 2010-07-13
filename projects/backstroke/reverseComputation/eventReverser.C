@@ -34,26 +34,9 @@ EventReverser::EventReverser(SgFunctionDeclaration* func_decl, DFAnalysis* analy
 {
 }
 
-// Get all variables' declarations including all kinds of states
-vector<SgStatement*> EventReverser::getVarDeclarations()
+vector<SgVariableDeclaration*> EventReverser::getVarDeclarations()
 {
-    vector<SgStatement*> decls;
-    //foreach(const string& flag, branch_flags_)
-    //    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
-
-#if 0
-    foreach(const string& counter, loop_counters_)
-        decls.push_back(buildVariableDeclaration(
-                    counter, 
-                    buildIntType(), 
-                    buildAssignInitializer(buildIntVal(0))));
-
-    pair<string, SgType*> state_var;
-    foreach(state_var, state_vars_)
-    {
-        decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
-    }
-#endif
+    vector<SgVariableDeclaration*> decls;
 
     SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
     decls.push_back(buildVariableDeclaration(flag_stack_name_, stack_type));
@@ -66,28 +49,28 @@ vector<SgStatement*> EventReverser::getVarDeclarations()
     return decls;
 }
 
-vector<SgStatement*> EventReverser::getVarInitializers()
+vector<SgAssignOp*> EventReverser::getVarInitializers()
 {
-    vector<SgStatement*> inits;
+    vector<SgAssignOp*> inits;
     SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
 
     // Initialize the flag stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(flag_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
     // Initialize the integer stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(int_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
     // Initialize the integer stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(float_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
     // Initialize the loop counter stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(counter_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
@@ -287,13 +270,14 @@ bool EventReverser::toSave(SgExpression* exp)
     return true;
 }
 
-vector<FuncDeclPair> EventReverser::outputFunctions()
+map<SgFunctionDeclaration*, FuncDeclPair> EventReverser::outputFunctions()
 {
     SgBasicBlock* body = func_decl_->get_definition()->get_body();
     // Function body is a basic block, which is a kind of statement.
     SgStatement *fwd_body, *rvs_body;
     tie(fwd_body, rvs_body) = instrumentAndReverseStatement(body);
 
+	//Generate the forward function
     SgName func_name = func_decl_->get_name() + "_forward";
     SgFunctionDeclaration* fwd_func_decl = 
         buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
@@ -302,16 +286,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
     fwd_func_def->set_body(isSgBasicBlock(fwd_body));
     fwd_body->set_parent(fwd_func_def);
 
-#if 0
-    pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
-
-    SgStatementPtrList fwd_stmt_list = isSgBasicBlock(fwd_body)->get_statements();
-    foreach (SgStatement* stmt, fwd_stmt_list)
-        appendStatement(stmt);
-
-    popScopeStack();
-#endif
-
+	//Generate the reverse function
     func_name = func_decl_->get_name() + "_reverse";
     SgFunctionDeclaration* rvs_func_decl = 
         buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
@@ -320,17 +295,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
     rvs_func_def->set_body(isSgBasicBlock(rvs_body));
     rvs_body->set_parent(rvs_func_def);
 
-#if 0
-    pushScopeStack(isSgScopeStatement(rvs_func_decl->get_definition()->get_body()));
-
-    SgStatementPtrList rvs_stmt_list = isSgBasicBlock(rvs_body)->get_statements();
-    foreach (SgStatement* stmt, rvs_stmt_list)
-        appendStatement(stmt);
-
-    popScopeStack();
-#endif
-
-    output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
+    output_func_pairs_[func_decl_] = FuncDeclPair(fwd_func_decl, rvs_func_decl);
     return output_func_pairs_;
 }
 

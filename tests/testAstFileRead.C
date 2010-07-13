@@ -176,11 +176,23 @@ main ( int argc, char * argv[] )
      vector<std::string> fileNames;
      for (int i= 0; i < numFiles; ++i)
         {
+       // Detect options starting with "-"; not allowed.
+          if (argv[i+1][0] == '-')
+             {
+               printf ("Skipping %s \n",argv[i+1]);
+
+               printf ("Error can't handle common ROSE options on command line! \n");
+               ROSE_ASSERT(false);
+             }
+
           fileNames.push_back(argv[i+1]);
         }
 
      string outputFileName = argv[argc-1];
      printf ("Number of file = %zu Output filename = %s \n",fileNames.size(),outputFileName.c_str());
+
+  // Reset numFiles to only count valid input files.
+  // numFiles = fileNames.size();
 
 #if 0
      printf ("Exiting after test of output name specification. \n");
@@ -230,7 +242,8 @@ main ( int argc, char * argv[] )
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
-          printf ("file #%5d = %20s AST size = %12zu memory usage = %12zu Sg_File_Info::numberOfNodes() = %12zu \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
+       // printf ("SgProject* tmp_globalProject = %p \n",tmp_globalProject);
+          printf ("file #%5d = %20s AST size = %12zu IR nodes  memory usage = %12zu bytes  Sg_File_Info::numberOfNodes() = %12zu \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
 
        // TestFreepointerInMemoryPool::test();
 
@@ -268,6 +281,9 @@ main ( int argc, char * argv[] )
      AstData* ast = NULL;
      for (int i= 0; i < numFiles; ++i)
         {
+#if 0
+          printf ("Processing file #%d \n",i);
+#endif
           ast = AST_FILE_IO::getAst(i);
 #if 0
        // DQ (6/6/2010): Turned off to limit output in debugging...
@@ -276,6 +292,8 @@ main ( int argc, char * argv[] )
           AstTests::runAllTests(ast->getRootOfAst());
           printf ("DONE: Running AstTests::runAllTests() BEFORE calling AST_FILE_IO::setStaticDataOfAst(ast)\n");
 #endif
+
+       // This sets static data to be consistant within each AST, but not across the single merged AST (from multiple files).
           AST_FILE_IO::setStaticDataOfAst(ast);
 
        // TestFreepointerInMemoryPool::test();
@@ -301,6 +319,11 @@ main ( int argc, char * argv[] )
        // nametofileid_mapArray.push_back(Sg_File_Info::get_nametofileid_map());
 
        // testAST(ast->getRootOfAst());
+
+
+       // DQ (6/21/2010): Fixup the support for builtin types stored as static data in the SgType derived classes.
+       // FixupbuiltinTypes(AST_FILE_IO::getAst(i),AST_FILE_IO::getAst(i));
+       // printf ("In loop reading AST files: SgTypeUnsignedInt::p_builtin_type = %p \n",SgTypeUnsignedInt::createType());
 
 #if 0
        // TestFreepointerInMemoryPool::test();
@@ -348,7 +371,7 @@ main ( int argc, char * argv[] )
              }
         }
 
-     printf ("Size of AST = %zu \n",numberOfNodes());
+     printf ("Size of AST = %zu (globalProject = %p)\n",numberOfNodes(),globalProject);
 
 #if 0
      for (int i= 0; i < numFiles; ++i)
@@ -369,21 +392,27 @@ main ( int argc, char * argv[] )
   // SgFunctionTypeTable* globalFunctionTypeTable = mergeFunctionTypeSymbolTables (functionTableArray);
   // ROSE_ASSERT(globalFunctionTypeTable != NULL);
 
+  // It is required to merge the static information in the AST, to get a valid AST, even if no other merging is done.
+     printf ("\n\nCalling mergeStaticASTFileInformation() \n");
      mergeStaticASTFileInformation(AstFileInfoArray);
-
      printf ("Size of AST (after merge of static data) = %zu \n",numberOfNodes());
 
-#if 0
+  // DQ (7/10/2010): This is now called from within the AST merge mechanism.
+  // printf ("Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
+  // normalizeTypedefSequenceLists();
+  // printf ("DONE: Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
+
+#if 1
   // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
   // of the AST and force sharing of these pieces and delete the redundany copies.
-     printf ("Calling AstMergeSupport() \n");
+     printf ("\n\nCalling AstMergeSupport() \n");
   // int mergeErrorCode = AstMergeSupport(globalProject);
   // bool skipFrontendSpecificIRnodes = true;
-     SgProject::set_verbose(3);
+  // SgProject::set_verbose(3);
      bool skipFrontendSpecificIRnodes = false;
      mergeAST(globalProject,skipFrontendSpecificIRnodes);
   // ROSE_ASSERT(mergeErrorCode == 0);
-     SgProject::set_verbose(0);
+  // SgProject::set_verbose(0);
 #else
      printf ("Skipping call to mergeAST() \n");
 #endif
@@ -394,7 +423,9 @@ main ( int argc, char * argv[] )
   // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
   // performance on large codes (it is n^2 in the size of the AST if run for each file separately).
   // AstTests::runAllTests(ast->getRootOfAst());
+     printf ("\n\nRunning AST consistancy tests on merged AST \n");
      AstTests::runAllTests(globalProject);
+     printf ("DONE: Running AST consistancy tests on merged AST \n");
 #endif
 
 #if 0
@@ -424,7 +455,9 @@ main ( int argc, char * argv[] )
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
+     printf ("\n\nGenerating a dot file of the AST (could be very large) \n");
      generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
+     printf ("DONE: Generating a dot file of the AST \n");
 #endif
 
 #if 1
@@ -438,12 +471,12 @@ main ( int argc, char * argv[] )
   // printf ("globalProject->get_freepointer()  = %p \n",globalProject->get_freepointer());
   // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
   // AST_FILE_IO::display("Before writing the merged AST (before resetValidAstAfterWriting())");
-
   // string mergedFileName = "mergedFile.C";
+
      string mergedFileName = outputFileName;
      printf ("mergedFileName = %s numberOfNodes() = %zu \n",(mergedFileName + ".binary").c_str(),numberOfNodes());
 
-  // printf ("Calling AST_FILE_IO::reset() \n");
+     printf ("Calling AST_FILE_IO::reset() \n");
      AST_FILE_IO::reset();
 
   // printf ("Calling AST_FILE_IO::resetValidAstAfterWriting() \n");
@@ -451,10 +484,10 @@ main ( int argc, char * argv[] )
   // AST_FILE_IO::display("Before writing the merged AST");
 
   // Now write out the merged AST.
-  // printf ("Calling AST_FILE_IO::startUp()... \n");
+     printf ("Calling AST_FILE_IO::startUp()... \n");
      AST_FILE_IO::startUp(globalProject);
 
-  // printf ("Writing the AST to disk... \n");
+     printf ("Writing the AST to disk... \n");
      AST_FILE_IO::writeASTToFile ( mergedFileName + ".binary" );
 #endif
 
@@ -472,6 +505,8 @@ main ( int argc, char * argv[] )
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
+
+     printf ("Program Terminated Normally! \n");
 
      return 0;
    }
@@ -563,6 +598,11 @@ mergeStaticASTFileInformation(vector<AstFileSpecificInfo*> & AstFileInfoArray)
      Sg_File_Info::get_nametofileid_map() = mergedNametofileid_map;
      Sg_File_Info::get_fileidtoname_map() = mergedFileidtoname_map;
 
+
+  // DQ (6/21/2010): Fixup the support for builtin types stored as static data in the SgType derived classes.
+  // FixupbuiltinTypes(AST_FILE_IO::getAst(i),AST_FILE_IO::getAst(i));
+     printf ("In mergeStaticASTFileInformation: SgTypeUnsignedInt::p_builtin_type = %p \n",SgTypeUnsignedInt::createType());
+
   // Note that GNU g++ 4.2.x allows us to reference "index" out of scope!
   // printf ("maxFilenameIndex = %d minFilenameIndex = %d \n",maxFilenameIndex,minFilenameIndex);
    }
@@ -575,18 +615,25 @@ SgFunctionTypeTable* mergeFunctionTypeSymbolTables ( vector<SgFunctionTypeTable*
      SgFunctionTypeTable* globalFunctionTypeTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(globalFunctionTypeTable != NULL);
 
-  // printf ("Using globalFunctionTypeTable = %p as a table to merge all symbols into. \n",globalFunctionTypeTable);
-  // printf ("BEFORE removing the global function type table: functionTableArray size = %zu \n",functionTableArray.size());
+     printf ("Using globalFunctionTypeTable = %p as a table to merge all symbols into. \n",globalFunctionTypeTable);
+#if 0
+     printf ("BEFORE removing the global function type table: functionTableArray size = %zu \n",functionTableArray.size());
+#endif
 
      ROSE_ASSERT(functionTableArray.empty() == false);
      vector<SgFunctionTypeTable*>::iterator globalTable = find(functionTableArray.begin(),functionTableArray.end(),globalFunctionTypeTable);
      ROSE_ASSERT(globalTable != functionTableArray.end());
      functionTableArray.erase(globalTable);
 
-  // printf ("AFTER removing the global function type table: functionTableArray size = %zu \n",functionTableArray.size());
+#if 0
+     printf ("AFTER removing the global function type table: functionTableArray size = %zu \n",functionTableArray.size());
+#endif
 
      for (size_t index = 0; index < functionTableArray.size(); index++)
         {
+#if 0
+          printf ("Processing table = %zu \n",index);
+#endif
           ROSE_ASSERT(functionTableArray[index] != NULL);
           SgSymbolTable::BaseHashType* internalTable = functionTableArray[index]->get_function_type_table()->get_table();
           ROSE_ASSERT(internalTable != NULL);
@@ -627,6 +674,10 @@ SgFunctionTypeTable* mergeFunctionTypeSymbolTables ( vector<SgFunctionTypeTable*
                i++;
              }
         }
+
+#if 1
+     printf ("Leaving mergeFunctionTypeSymbolTables() \n");
+#endif
 
      return globalFunctionTypeTable;
    }

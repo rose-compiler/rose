@@ -11,6 +11,7 @@ typedef std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> FuncDeclPair;
 
 class EventReverser
 {
+	/** Defining declaration of the function being reversed by this reverser. */
     SgFunctionDeclaration* func_decl_;
 
     std::string function_name_;
@@ -24,7 +25,9 @@ class EventReverser
     std::string counter_stack_name_;
 
     int counter_;
-    std::vector<FuncDeclPair> output_func_pairs_;
+
+	/** Map from the original function declaration to the forward-reverse pair. */
+    std::map<SgFunctionDeclaration*, FuncDeclPair> output_func_pairs_;
 
     // This mark is for and/or and conditional expression, in which the special stack
     // interfaces are used.
@@ -43,11 +46,14 @@ class EventReverser
     /** All functions generated. If the reverser meets a function call, it may reverse
      * that function then add the resulted function pair into the function pair collection.
      * The reverse of the original function is the very last function in this list. */
-    std::vector<FuncDeclPair> outputFunctions();
+    std::map<SgFunctionDeclaration*, FuncDeclPair> outputFunctions();
 
-    // Get all variables' declarations including all kinds of states
-    std::vector<SgStatement*> getVarDeclarations();
-    std::vector<SgStatement*> getVarInitializers();
+    /** Get the variables that need to be declared for use in the reverse methods.
+     * Make sure these declarations are inserted in a scope reachable by the generated functions. */
+    std::vector<SgVariableDeclaration*> getVarDeclarations();
+
+    /** Get the initialization statements of all the variables accessed by the reverse methods. */
+    std::vector<SgAssignOp*> getVarInitializers();
 
     /** Add a method that can generate forward and reverse expressions from the given expression. */
     static void registerExpressionHandler(boost::function<ExpPair (SgExpression*)> handler)

@@ -352,13 +352,21 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 	return false;
 }
 
+
 /** Returns true if the function uses any syntax which is not part of the C++ standard, but the GNU extension.*/
 bool LanguageRestrictions::usesGnuExtensions(SgFunctionDefinition* functionDefinition)
 {
-    // Forbit use of statement expression.
-    vector<SgExpression*> all_exps = backstroke_util::querySubTree<SgExpression>(functionDefinition->get_body());
-    foreach (SgExpression* exp, all_exps)
-        if (isSgStatementExpression(exp))
-            return true;
-    return false;
+	// Forbid use of statement expression.
+	vector<SgExpression*> all_exps = backstroke_util::querySubTree<SgExpression> (functionDefinition->get_body());
+
+	foreach(SgExpression* exp, all_exps)
+	{
+		if (isSgStatementExpression(exp))
+		{
+			backstroke_util::printCompilerError(exp, "gcc-style statement expressions are not allowed.");
+			return true;
+		}
+	}
+
+	return false;
 }

@@ -85,6 +85,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
             // Can this cause recursion?
                addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
 
+            // DQ (6/23/2010): We need to include the type defined by the typedef as well.
+            // addAssociatedNodes(typedefDeclaration->get_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+
             // This should be redundant since we come from the SgTypedefType (and does cause recursion).
             // However we could test to see if the declaration is in the nodeList and only call it if not!
             // addAssociatedNodes(typedefDeclaration->get_type(),nodeList,markMemberNodesDefinedToBeDeleted);
@@ -591,6 +594,29 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                            // ROSE_ASSERT(sharedFunctionScope->symbol_exists(sharedFunctionSymbol) == false);
                               if (sharedFunctionScope->symbol_exists(sharedFunctionSymbol) == false)
                                  {
+#if 1
+                                // DQ (7/4/2010): Test use of alternative approach (ignoring some types of symbols...
+                                   bool symbolAlreadyPresentLookupName = scopeStatement->symbol_exists(sharedFunctionDeclaration->get_name(),sharedFunctionSymbol);
+                                   if (symbolAlreadyPresentLookupName == true)
+                                      {
+                                     // The symbol is not present but the name associated with the symbol is present.
+                                     // This can happend for function symbols such as "__default_function_pointer_name" 
+                                     // used to consistantly handle function pointers.
+
+                                        printf ("AST MERGE Function symbol handling in addAssociatedNodes(): Ignoring case of sharedFunctionDeclaration->get_name() = %s \n",sharedFunctionDeclaration->get_name().str());
+                                      }
+                                     else
+                                      {
+                                     // sharedFunctionScope->insert_symbol(sharedFunctionDeclaration->get_name(),sharedFunctionSymbol);
+                                        scopeStatement->insert_symbol(sharedFunctionDeclaration->get_name(),sharedFunctionSymbol);
+
+                                     // Reset the parent of the symbol (for member functions the versions form either file being merged might be used 
+                                     // (because the class definitions may be merged ahead of the member functions and thus the symbols can have a 
+                                     // parent set to the symbol table that is eliminated).
+                                        sharedFunctionSymbol->set_parent(sharedScopeSymbolTable);
+                                      }
+#else
+                                // DQ (7/4/2010): This is an error for the test-read-medium makefile rule in astFileIOTests.
                                 // sharedFunctionScope->insert_symbol(sharedFunctionDeclaration->get_name(),sharedFunctionSymbol);
                                    scopeStatement->insert_symbol(sharedFunctionDeclaration->get_name(),sharedFunctionSymbol);
 
@@ -598,6 +624,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                                 // (because the class definitions may be merged ahead of the member functions and thus the symbols can have a 
                                 // parent set to the symbol table that is eliminated).
                                    sharedFunctionSymbol->set_parent(sharedScopeSymbolTable);
+#endif
                                  }
                                 else
                                  {
@@ -825,8 +852,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                ROSE_ASSERT(typedefDeclaration != NULL);
 
             // ROSE_ASSERT(initializedName->get_storageModifier() != NULL);
+            // printf ("In addAssociatedNodes(): Adding typedefDeclaration->get_type() = %p = %s to nodeList \n",typedefDeclaration->get_type(),typedefDeclaration->get_type()->class_name().c_str());
                nodeList.insert(typedefDeclaration->get_type());
                addAssociatedNodes(typedefDeclaration->get_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+
+            // printf ("In addAssociatedNodes(): Adding typedefDeclaration->get_base_type() = %p = %s to nodeList \n",typedefDeclaration->get_base_type(),typedefDeclaration->get_base_type()->class_name().c_str());
                nodeList.insert(typedefDeclaration->get_base_type());
                addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
 

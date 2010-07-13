@@ -1,0 +1,401 @@
+#!/bin/sh
+
+#
+# WARNING
+#
+# This file is auto-generated, do not edit it or your changes
+# will be lost the next time this script is generated.
+#
+# contact vc8 if you need to make permanent changes.
+#
+# WARNING
+#
+
+#
+# For now the test folder is current folder
+#
+TEST_DIR=.
+BIN_DIR=
+
+#
+#handling options
+#
+while [[ $# -gt 0 ]]; do
+	if [[ "$1" = "-testdir"  && $# -ge 2 ]]; then
+		shift
+		TEST_DIR=("$@")
+		shift
+	elif [[ "$1" = "-bindir"  && $# -ge 2 ]]; then
+		shift
+		BIN_DIR=("$@")
+		shift
+	else
+		# stacking unknown arguments
+  		ARGS="${ARGS} $1"
+  		shift 
+    fi
+done
+
+if [ -z "${BIN_DIR}" ]; then
+	BIN_DIR=../src
+fi
+
+#
+#checking options
+#
+
+if [ ! -x ${BIN_DIR}/rose2llvm ]; then
+	echo "ERROR rose2llvm command not found in the PATH"
+	exit 1
+fi
+
+export PATH=${BIN_DIR}:${PATH}
+
+#
+# generic runTests will be inlined
+#
+
+
+
+function ext_usage () {
+	echo "Usage: test [general-options] [options]"
+	echo "where [options] includes:"
+	echo "	-testdir   : The path to testdir folder (default to .)"
+	echo "	-bindir    : The path where to find the rose2llvm binary (default to ../src)"
+}
+
+
+function usage () {
+	ext_usage
+	echo "where [general-options] includes:"
+	echo "	-testdir    : The path to the folder containing tests"
+	echo "	-exclude    : Patterns for excluding tests files"
+	echo "	-logdir     : The path where to output logs"
+	echo "	-showoutput : Show test output on console"
+	echo "	-v          : Prints additionnal information"
+	echo "	-h --help   : Prints this message"
+}
+
+
+function steps_list () {
+	RES_STEPS_LIST="s_rose2llvm s_llvm s_run_llvm s_clang s_run_clang s_verify"
+}
+
+
+function s_rose2llvm () {
+	local FILE=$1
+	local FOLDER=$2
+	
+	cd $FOLDER;
+	rose2llvm --rose2llvm:debug-output $FILE > $FILE.ll;
+	cd -;
+
+	RES=$?
+	return $RES
+}
+
+function s_llvm  () {
+	local FILE=$1
+	local FOLDER=$2
+
+	cd $FOLDER;	
+	llvmc -lm $FILE.ll; 
+	RES=$?
+	cd -;
+
+	return $RES
+}
+
+function s_run_llvm  () {
+	local FILE=$1
+	local FOLDER=$2
+
+	cd $FOLDER;	
+	touch $FILE.in; 
+	./a.out < $FILE.in > $FILE.out;
+	RES=$?
+	cd -;
+
+	return $RES
+}
+
+function s_clang () {
+	local FILE=$1
+	local FOLDER=$2
+
+	cd $FOLDER;	
+	clang -lm $FILE;
+	RES=$?
+	cd -;
+	
+	return $RES
+}
+
+function s_run_clang  () {
+	local FILE=$1
+	local FOLDER=$2
+	
+	cd $FOLDER;
+	./a.out < $FILE.in > $FILE.out.2;
+	RES=$?
+	cd -;
+	 
+	return $RES
+}
+
+	
+function s_verify () {
+	local FILE=$1
+	local FOLDER=$2
+	RES=0
+
+	cd $FOLDER;
+	diff $FILE.out $FILE.out.2;
+	RES=$?
+	cd -;
+
+	return $RES
+}
+
+
+function find_tests () {
+	local TEST_FOLDER=$1
+	RES_FIND_TESTS=`eval "find ${TEST_FOLDER} -type f '(' -name '*.c' ')' -print | sort"`
+}
+
+
+function test_name () {
+	local FILE=$1
+	local FOLDER=$2
+
+	# test name is the test filename
+
+	RES_TEST_NAME=`echo "${FILE}"` 
+}
+
+
+function print_status () {
+	local STATUS=$1
+	local OUTPUT=$2
+	
+	local TRANSLATED=1
+	local LLVMED=2
+	local RAN_LLVM=3
+	local CLANGED=4
+	local RAN_CLANG=5
+	local VERIFIED=6
+		
+	local RUN=0
+	local FAIL=0
+	local ERR=0
+	
+	if [[ $STATUS -eq $VERIFIED ]]; then
+		# No pbs
+		RUN=1
+		echo "++++++ Test succeeded." >$OUTPUT
+	fi
+	
+	if [[ $STATUS -eq $RAN_LLVM ]]; then
+		# RAN but didn't verified
+		FAIL=1
+	fi
+	
+	if [[ $STATUS -eq $TRANSLATED || $STATUS -eq $LLVMED || $STATUS -eq $CLANGED || $STATUS -eq $RAN_CLANG || $STATUS -eq 0 ]]; then
+		# didn't ran (translation or compilation error)
+		ERR=1
+	fi
+	
+	echo "Tests run: $RUN, Failures: $FAIL, Errors: $ERR"
+}
+
+
+function exclude_tests {
+	# IN: LIST_TESTS
+	# IN: EXCL_PATTERN
+	# OUT: RES_FILTER_TESTS
+	# OUT: RES_FILTER_TESTS_EXCL
+	
+	LIST_TESTS=$1
+	EXCL_PATTERNS=$2
+
+	#
+	#Exclude pattern examples
+	#For now pattern support is kind of limited, just get space separated strings
+	#	
+	#EXCL_PATTERNS='.*MKL.* .*Black.*'
+	
+	RES_FILTER_TESTS=
+	for file in `echo $RES_FIND_TESTS`; do
+	    for pattern in `echo ${EXCL_PATTERNS}`; do
+	        if [[ "$file" =~ ${pattern} ]]; then
+	            MATCH=1
+	        fi
+	    done
+	
+	    if [[ ${MATCH} -ne 1 ]]; then
+	        RES_FILTER_TESTS="${RES_FILTER_TESTS} $file"
+	    else
+	        RES_FILTER_TESTS_EXCL="${RES_FILTER_TESTS_EXCL} $file"
+	    fi
+	    MATCH=0
+	done
+	
+	if [[ -n ${VERBOSE} ]]; then
+		echo "Excluding tests: $RES_FILTER_TESTS_EXCL"
+	fi
+
+}
+	
+
+########################
+# BEGIN GENERIC RUNTESTS
+######################## 
+
+########################
+# GLOBAL OPTIONS
+######################## 
+
+VERBOSE=
+
+
+function runTests () {
+	##############
+	# Arguments
+	############## 
+	
+	# set the extension folder to use
+	local EXT_DIR=
+	local TEST_DIR=
+	local LOG_DIR=
+	local PATTERN=
+	local EXCL_PATTERN=
+	
+	while [[ $# -gt 0 ]]; do
+		if [[ "$1" = "-test"  && $# -ge 2 ]]; then
+			shift
+			PATTERN=("$@")
+			shift
+			echo "-test not yet implemented"
+			exit 1
+		elif [[ "$1" = "-logdir"  && $# -ge 2 ]]; then
+			shift
+			LOG_DIR=("$@")
+			shift
+		elif [[ "$1" = "-v" ]]; then
+			shift
+			VERBOSE=yes
+		elif [[ "$1" = "-testdir"  && $# -ge 2 ]]; then
+			shift
+			TEST_DIR=("$@")
+			shift
+		elif [[ "$1" = "-exclude"  && $# -ge 2 ]]; then
+			shift
+			EXCL_PATTERN=("$@")
+			shift
+		elif [[ "$1" = "-showoutput" ]]; then
+			shift
+			SHOW_OUTPUT="yes"
+		elif [[ "$1" = "-h"  || "$1" = "--help" ]]; then
+			usage
+			exit 0
+		else
+	      echo "unknown argument $1"
+	      break
+	    fi
+	done
+	
+	
+	#################### 
+	# Arguments Checking
+	#################### 
+
+	if [[ -z ${LOG_DIR} ]]; then
+		LOG_DIR=./tests-log
+	fi
+
+	if [ -d ${LOG_DIR} ]; then
+		echo "Erasing log dir ${LOG_DIR}"
+		rm -rf ${LOG_DIR}
+	fi
+	
+	if [[ ! -d ${LOG_DIR} ]]; then
+		echo "Creating log dir ${LOG_DIR}"
+		mkdir ${LOG_DIR}
+	fi	
+
+	
+	##############
+	# Run Tests
+	############## 
+	
+	#
+	# Invoke the script responsible for finding test cases
+	#
+	find_tests $TEST_DIR
+	TEST_LIST=${RES_FIND_TESTS}
+	echo ""
+	
+	#
+	# Apply exclude patterns
+	#
+	exclude_tests "${TEST_LIST}" "${EXCL_PATTERN}"
+	TEST_LIST="${RES_FILTER_TESTS}"
+
+	#
+	# Invoke the script responsible setting-up the steps list
+	#	
+	steps_list
+	STEPS_LIST=${RES_STEPS_LIST}
+	RET_CODE=0
+
+	echo ""
+	# apply tests steps to the list of tests
+	for test in `echo ${TEST_LIST}`; do
+	
+		# get file name
+		local file_=${test##*/}
+	
+		# get folder name
+		local folder_=${test%/*}
+		
+		#
+		# Invoke the script that generates the test name
+		#
+		test_name $file_ $folder_
+		local TEST_NAME=${RES_TEST_NAME}
+	
+		# set output
+		local OUTPUT="${LOG_DIR}/test_log_${TEST_NAME}"	
+		
+		echo "Running $TEST_NAME"
+		
+		STEPS_COMPLETED=0
+		for step in `echo ${STEPS_LIST}`; do
+			if [[ "${SHOW_OUTPUT}" = "yes" ]]; then
+				${step} $file_ $folder_ | tee ${OUTPUT}
+				RES="${PIPESTATUS[0]}"
+			else
+				${step} $file_ $folder_ >>${OUTPUT} 2>&1
+				RES=$?
+			fi
+			
+			if [[ $RES -eq 0 ]]; then
+				# Increment status
+				STEPS_COMPLETED=`expr $STEPS_COMPLETED \+ 1`
+			else
+				RET_CODE=1 
+				break
+			fi
+		done	
+		print_status ${STEPS_COMPLETED} ${OUTPUT}
+	done
+	
+	return $RET_CODE
+}
+
+#
+# calling runTests with extension specific arguments 
+#
+
+runTests -testdir $TEST_DIR ${ARGS}
+	

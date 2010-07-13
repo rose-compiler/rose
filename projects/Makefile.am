@@ -38,6 +38,7 @@ SUBDIRS = \
      taintcheck \
      QtDesignerPlugins \
      RoseQt \
+     roseToLLVM \
      simulator \
      PolyhedralDependenceAnalysis
 

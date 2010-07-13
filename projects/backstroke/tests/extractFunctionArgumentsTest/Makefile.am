@@ -4,7 +4,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the function extraction translator
-bin_PROGRAMS = normalizationTranslator
+noinst_PROGRAMS = normalizationTranslator
 
 normalizationTranslator_SOURCES =  NormalizationTranslator.C
 normalizationTranslator_LDADD = $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
