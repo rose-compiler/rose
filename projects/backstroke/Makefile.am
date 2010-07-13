@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = utilities eventDetection reverseComputation restrictedLanguage normalizations tests
+SUBDIRS = utilities eventDetection reverseComputation restrictedLanguage normalizations pluggableReverser tests
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
@@ -15,7 +15,8 @@ libBackstroke_la_HEADERS =
 libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
 			normalizations/libBackstrokeNormalizations.la \
 			reverseComputation/libBackstrokeReverser.la \
-			restrictedLanguage/libBackstrokeRestrictedLanguage.la
+			restrictedLanguage/libBackstrokeRestrictedLanguage.la \
+			pluggableReverser/libBackstrokePluggableReverser.la
 
 EXTRA_DIST = 
 

@@ -2,7 +2,7 @@
 #define REVERSE_COMPUTATION_EXP_HANDLER_H
 
 #include <rose.h>
-#include "types.h"
+#include "utilities/types.h"
 
 //! This handler just store and restore a value, once the value is modified (state saving style).
 ExpPair storeAndRestore(SgExpression* exp);

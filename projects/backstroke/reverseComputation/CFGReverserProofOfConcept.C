@@ -9,73 +9,23 @@ CFGReverserProofofConcept::CFGReverserProofofConcept(SgProject* project) : defUs
 	defUseAnalysis.run();
 }
 
-
-/**
- * @param body function body to reverse
- * @return first result is the forward body; second result is the reverse body
- */
-tuple<SgBasicBlock*, SgBasicBlock*> CFGReverserProofofConcept::ReverseFunctionBody(SgBasicBlock* body)
-{
-	//We just assume all the statements are basic statements - no loop handling, conditional handling, etc
-	reverse_foreach(SgStatement* statement, body->get_statements())
-	{
-		if (isSgForStatement(statement) || isSgWhileStmt(statement) || isSgDoWhileStmt(statement))
-		{
-			//Loops not supported yet!
-			ROSE_ASSERT(false);
-		}
-		else if (isSgIfStmt(statement))
-		{
-			//Conditionals not supported yet
-			ROSE_ASSERT(false);
-		}
-		else if (isSgExprStatement(statement))
-		{
-			//This is ok. Currently only handle AssignOp and CommaOp
-			SgExpression* expression = isSgExprStatement(statement)->get_expression();
-			ReverseExpression(expression);
-		}
-
-		else if (isSgReturnStmt(statement))
-		{
-			//We only support return statements as the very last statement of a function
-			ROSE_ASSERT(body->get_statements().back() == statement);
-			//Forward is the same, reverse is a no-op
-		}
-		else if (isSgVariableDeclaration(statement))
-		{
-			cout << "FOUND variable declaration\n";
-		}
-		else
-		{
-			//Whatever it is, it's not suported!
-			cerr << statement->class_name() << " not supported\n";
-			ROSE_ASSERT(false);
-		}
-	}
-
-	tuple<SgBasicBlock*, SgBasicBlock*> result;
-	return result;
-}
-
-
 ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
 {
 	if (isSgAssignOp(expression))
 	{
 		SgAssignOp* assignOp = isSgAssignOp(expression);
 
-		if (isSgVarRefExp(assignOp->get_lhs_operand()))
+		if (backstroke_util::IsVariableReference(assignOp->get_lhs_operand()))
 		{
-			handleVarRef(isSgVarRefExp(assignOp->get_lhs_operand()));
+			handleAssignOp(isSgVarRefExp(assignOp->get_lhs_operand()));
 		}
 	}
 
-	return EventReverser::NULL_EXP_PAIR;
+	return NULL_EXP_PAIR;
 }
 
 
-void CFGReverserProofofConcept::handleVarRef(SgVarRefExp* varRef)
+std::vector<SgExpression*> CFGReverserProofofConcept::handleAssignOp(SgVarRefExp* varRef)
 {
 	ROSE_ASSERT(varRef != NULL);
 	SgInitializedName* varDeclaration = varRef->get_symbol()->get_declaration();

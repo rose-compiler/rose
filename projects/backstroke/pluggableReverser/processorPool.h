@@ -4,7 +4,7 @@
 
 #include "statementHandler.h"
 
-#include "types.h"
+#include "utilities/types.h"
 #include "singleton.h"
 #include "normalizations/expNormalization.h"
 

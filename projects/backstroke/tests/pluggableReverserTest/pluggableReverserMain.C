@@ -1,7 +1,7 @@
 
-#include "expressionHandler.h"
-#include "statementHandler.h"
-#include "processorPool.h"
+#include "pluggableReverser/expressionHandler.h"
+#include "pluggableReverser/statementHandler.h"
+#include "pluggableReverser/processorPool.h"
 
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "utilities/Utilities.h"

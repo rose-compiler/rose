@@ -2,7 +2,7 @@
 #define REVERSE_COMPUTATION_STMT_HANDLER_H
 
 #include <rose.h>
-#include "types.h"
+#include "utilities/types.h"
 
 std::vector<StmtPair> processBasicStatement(SgStatement* stmt);
 std::vector<StmtPair> processFunctionDeclaration(SgFunctionDeclaration* func_decl);

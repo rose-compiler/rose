@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = expNormalizationTest restrictedLanguageTest extractFunctionArgumentsTest cfgReverseCodeGenerator
+SUBDIRS = expNormalizationTest restrictedLanguageTest extractFunctionArgumentsTest cfgReverseCodeGenerator \
+		 pluggableReverserTest
 
 EXTRA_DIST = 
 
