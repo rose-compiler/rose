@@ -5,7 +5,7 @@ SUBDIRS =
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
-bin_PROGRAMS = expNormTest 
+noinst_PROGRAMS = expNormTest
 expNormTest_SOURCES = main.C
 
 EXTRA_DIST = 

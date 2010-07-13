@@ -12,10 +12,10 @@ using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
 
-class reverserTraversal : public AstSimpleProcessing
+class EventReverserTraversal : public AstSimpleProcessing
 {
 public:
-	reverserTraversal(): events_num(0), model_type(NULL)
+	EventReverserTraversal(): events_num(0), model_type(NULL)
 	{
 	}
 	virtual void visit(SgNode* n);
@@ -35,7 +35,7 @@ private:
 };
 
 
-void reverserTraversal::visit(SgNode* n)
+void EventReverserTraversal::visit(SgNode* n)
 {
 	if (SgFunctionDeclaration * func_decl = isSgFunctionDeclaration(n))
 	{
@@ -193,7 +193,7 @@ int main(int argc, char * argv[])
 	bool klee = CommandlineProcessing::isOption(args, "-backstroke:", "klee", true);
 	SgProject* project = frontend(args);
 
-	reverserTraversal reverser;
+	EventReverserTraversal reverser;
 
 	SgGlobal *globalScope = getFirstGlobalScope(project);
 	string includes = "#include \"rctypes.h\"\n"

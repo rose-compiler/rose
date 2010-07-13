@@ -4,7 +4,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the test language restrictor executable
-bin_PROGRAMS = eventChecker
+noinst_PROGRAMS = eventChecker
 eventChecker_SOURCES = EventChecker.C
 eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
 			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
