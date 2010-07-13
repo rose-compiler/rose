@@ -2400,6 +2400,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 
      if (fileList.empty() == false)
         {
+       // Note that we always process one file at a time using EDG or the Fortran frontend.
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -3901,7 +3902,7 @@ SgProject::parse()
      unsigned int i = 0;
      while (nameIterator != p_sourceFileNameList.end())
         {
-#if 0
+#if 1
           printf ("Build a SgFile object for file #%d \n",i);
 #endif
           int nextErrorCode = 0;
@@ -3920,7 +3921,7 @@ SgProject::parse()
           printf ("currentFileName = %s \n",currentFileName.c_str());
 #endif
        // DQ (11/13/2008): Removed overly complex logic here!
-#if 0
+#if 1
           printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
 #endif
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);

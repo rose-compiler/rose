@@ -297,7 +297,14 @@ MangledNameMapTraversal::addToMap ( string key, SgNode* node)
        // Use the matchingNodeInMergedAST so that we can reset the entries in the symbol tables where required
           SgNode* matchingNodeInMergedAST = key_iterator->second;
           ROSE_ASSERT(matchingNodeInMergedAST != NULL);
+
+       // DQ (7/12/2010): Comment this out as a test to build a restricted form of AST merge (that we can more easily debug).
+#if 0
           addAssociatedNodes(node,setOfNodesToDelete,false,matchingNodeInMergedAST);
+#else
+   #warning "Skipping call to addAssociatedNodes()"
+       // printf ("Skipping call to addAssociatedNodes() \n");
+#endif
         }
 #else
      printf ("Skipping implementation of AST merge \n");
@@ -353,7 +360,7 @@ MangledNameMapTraversal::visit ( SgNode* node)
           switch (node->variantT())
              {
             // Since we abstract out the generation of the key we can simplify this code!
-#if 0
+#if 1
             // DQ (7/11/2010): This fails for tests/CompileTests/mergeAST_tests/mergeTest_06.C, I don't know why!
                case V_SgFunctionDeclaration:
 #endif

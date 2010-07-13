@@ -1168,7 +1168,7 @@ buildDeleteSet( SgProject* project )
      set<SgNode*> tempDeleteSet = accumulateDeleteSet(project,saveSet);
      printf ("tempDeleteSet.size() = %zu \n",tempDeleteSet.size());
 
-#if 0
+#if 1
      displaySet(tempDeleteSet,"buildDeleteSet: Computing the IR nodes to be deleted");
 #endif
 
@@ -1176,6 +1176,8 @@ buildDeleteSet( SgProject* project )
   // Step 2: Traverse the memory pools and generate the list of IR nodes that are NOT in the saveSet.
   // returnDeleteSet = accumulateDeleteSet(project,saveSet);
      returnDeleteSet = tempDeleteSet;
+#else
+     printf ("Returning an empty list of IR nodes to delete! \n");
 #endif
 
      printf ("DONE: Computing the IR nodes to be deleted \n");
