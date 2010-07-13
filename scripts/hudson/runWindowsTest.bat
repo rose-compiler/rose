@@ -6,7 +6,7 @@
 @echo JAVA_HOME : %JAVA_HOME%
 
 @echo 0 > rose_win_test.rose
-REM scp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/
+pscp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/rose_win_test.rose
 
 @echo Testing cl.exe
 cl.exe
@@ -45,5 +45,5 @@ vcbuild.exe ROSE.sln "Release|Win32"
 
 @echo 1 > rose_win_test.rose
 REM scp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/
-scp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/
+pscp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/rose_win_test.rose
 
