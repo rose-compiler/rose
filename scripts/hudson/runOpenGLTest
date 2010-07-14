@@ -4,6 +4,9 @@
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
+#starting Windows process
+curl http://tux269.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
+
 # tps : 04/26/2010 - Added support for OpenGL for 64bit
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
 
