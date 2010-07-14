@@ -94,7 +94,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	mkdir ROSE-build-cmake
 	cd ROSE-build-cmake
 	cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && \
-	make -j8
+	make -j$NUM_PROCESS
 
    if [ $? -ne 0 ]  ; then
       echo "fatal error in cmake build , aborting..."
@@ -196,7 +196,7 @@ echo "Starting configure step"
 echo "Done with configure step"
 
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
-	make -j8 upload_edg_binary && \
+	make -j$NUM_PROCESS upload_edg_binary && \
 	make -Csrc/frontend/CxxFrontend deploy_tarballs
       if [ $? -ne 0 ]  ; then
         echo "fatal error when build edg binaries , aborting..."
@@ -225,7 +225,7 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
    echo "It should be impossible to reach this branch (exiting in false branch)."
    exit 1
 
-   make -j8 2>&1 | tee make_output.txt
+   make -j$NUM_PROCESS 2>&1 | tee make_output.txt
 
 # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
    echo "Building the filtered_make_output.txt file"
@@ -239,7 +239,7 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 else
    echo "Test compile step"
 
-   make -j8
+   make -j$NUM_PROCESS
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -283,16 +283,18 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    start_time_make_check_seconds="$(date +%s)"
 
  # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
- # make -j8 check
+ # make -j$NUM_PROCESS check
    echo "Starting make check step"
  # Andreas suggests that the use of "tee" is not passing error through to Hudson.
- # make -j8 check 2>&1 | tee make_check_output.txt;
+ # make -j$NUM_PROCESS check 2>&1 | tee make_check_output.txt;
 
-   make -j8 check
+   make -j$NUM_PROCESS check
+# Liao, 7/8/2010
+   make -j$NUM_PROCESS install
  # sleep 5
 
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
- # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
+ # ( make -j$NUM_PROCESS check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make check'  , aborting..."
         exit 3
@@ -321,7 +323,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    start_time_make_distcheck_seconds="$(date +%s)"
 
  # FIXME
-   make -j8 distcheck
+   make -j$NUM_PROCESS distcheck
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -337,7 +339,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # make distcheck" rule just run (before this step).  This "make install" rule runs in a few seconds and is
  # not a bottleneck to the Hudson tests.
    echo "Starting make install step (so we can save a installed copy for secondary tests)"
-   make -j8 install
+   make -j$NUM_PROCESS install
    echo "Done with make install step (so we can save a installed copy for secondary tests)"
 
    end_time_make_distcheck_seconds="$(date +%s)"
@@ -363,7 +365,7 @@ fi
 if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
    echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
- # make -j8 docs || exit 0
+ # make -j$NUM_PROCESS docs || exit 0
  # make docs || exit 0
 
  # Running with parallelism here does not tend to be very helpful since 
@@ -372,7 +374,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
    start_time_make_docs_seconds="$(date +%s)"
 
  # FIXME
-   make -j8 docs
+   make -j$NUM_PROCESS docs
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
