@@ -432,3 +432,31 @@ echo ""
 echo "********************************************************************"
 echo "Executed runTest for ROSE Project on: $machine_name date = $end_date"
 echo "********************************************************************"
+
+
+export win_file=/nfs/casc/overture/ROSE/git/rose_win_test.rose
+
+echo "Testing result of Windows Hudson Test..."
+if [ -e $win_file ]
+then
+    echo "Found file $win_file"
+else
+    echo "File not found $win_file"
+    exit 3
+fi
+
+cat ${win_file} | \
+while read -a num 
+do
+if [ "${num[0]}" == "1" ]; then
+echo "Windows has passed the recent Hudson test"
+else
+echo "Windows has failed the recent Hudson test."
+echo "Please check the Windows Hudson test for its output to"
+echo "determine the exact error"
+exit 3
+fi
+done
+
+echo "Done testing."
+ 
