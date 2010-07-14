@@ -24,7 +24,7 @@ reverse_LDADD =  libBackstrokeReverser.la $(top_builddir)/projects/backstroke/ut
 stateSaving_SOURCES = stateSavingMain.C
 stateSaving_LDADD = libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
-EXTRA_DIST = test
+EXTRA_DIST = 
 
 CLEANFILES = 
 
