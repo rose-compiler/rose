@@ -157,11 +157,11 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
     return CFGNode(decl->get_definition(), 1);
   }
   unsigned int idx = parent->cfgFindNextChildIndex(n);
-  if ( idx <= parent->cfgIndexForEnd() ) {
+  if ( idx > parent->cfgIndexForEnd() ) {
     if (SgProject::get_verbose() >= 3) {
       std::cerr << "getNodeJustAfter has bad index:" << std::endl;
-      std::cerr << n->get_file_info()->get_filename() << ":" << n->get_file_info()->get_line() << std::endl;
-      std::cerr << n->unparseToString() << std::endl;
+      std::cerr << parent->get_file_info()->get_filename() << ":" << parent->get_file_info()->get_line() << std::endl;
+      std::cerr << parent->unparseToString() << std::endl;
     }
     ROSE_ASSERT (!"Bad index in getNodeJustAfterInContainer");
   }
