@@ -157,7 +157,14 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
     return CFGNode(decl->get_definition(), 1);
   }
   unsigned int idx = parent->cfgFindNextChildIndex(n);
-  ROSE_ASSERT( idx <= parent->cfgIndexForEnd() );
+  if ( idx <= parent->cfgIndexForEnd() ) {
+    if (SgProject::get_verbose() >= 3) {
+      std::cerr << "getNodeJustAfter has bad index:" << std::endl;
+      std::cerr << n->get_file_info()->get_filename() << ":" << n->get_file_info()->get_line() << std::endl;
+      std::cerr << n->unparseToString() << std::endl;
+    }
+    ROSE_ASSERT (!"Bad index in getNodeJustAfterInContainer");
+  }
   return CFGNode(parent, idx);
 }
 
@@ -1244,8 +1251,14 @@ std::vector<CFGEdge> SgTryStmt::cfgOutEdges(unsigned int idx, bool interprocedur
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
-             
+    default: {
+               if (SgProject::get_verbose() >= 3) {
+                 std::cerr << "SgTryStmt::cfgOutEdges failed" << std::endl;
+                 std::cerr << get_file_info()->get_filename() << ":" << get_file_info()->get_line() << std::endl;
+                 std::cerr << unparseToString() << std::endl;
+               }
+               ROSE_ASSERT (!"Bad index for SgTryStmt");
+             }
   }
   return result;
 }
@@ -1256,7 +1269,14 @@ std::vector<CFGEdge> SgTryStmt::cfgInEdges(unsigned int idx, bool interprocedura
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
+    default: {
+               if (SgProject::get_verbose() >= 3) {
+                 std::cerr << "SgTryStmt::cfgInEdges failed" << std::endl;
+                 std::cerr << get_file_info()->get_filename() << ":" << get_file_info()->get_line() << std::endl;
+                 std::cerr << unparseToString() << std::endl;
+               }
+               ROSE_ASSERT (!"Bad index for SgTryStmt");
+             }
   }
   return result;
 }
