@@ -12,6 +12,11 @@ libBackstroke_ladir = .
 libBackstroke_la_DEPENDENCIES = 
 libBackstroke_la_SOURCES = 
 libBackstroke_la_HEADERS =
+
+# Put the backstroke headers in their own subdirectory
+libBackstroke_includedir = $(includedir)/backstroke
+
+# Link all subl
 libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
 			normalizations/libBackstrokeNormalizations.la \
 			reverseComputation/libBackstrokeReverser.la \
