@@ -271,7 +271,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
        // cout << "problematic node found." << endl;
           nodeoption="color=\"orange\" ";
         }
-     string nodelabel=string("\\n")+node->sage_class_name();
+     string nodelabel=string("\\n")+node->class_name();
 
   // DQ (1/24/2009): Added support for output of isForward flag in the dot graph.
      SgDeclarationStatement* genericDeclaration = isSgDeclarationStatement(node);
@@ -689,10 +689,30 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
      AstSuccessorsSelectors::selectDefaultSuccessors(node,c);
      ss << c.size() << "\\n";
 
-  // add class name
-     if (SgClassDeclaration* n = dynamic_cast<SgClassDeclaration*>(node))
+  // add namespace name
+     if (SgNamespaceDeclarationStatement* n = isSgNamespaceDeclarationStatement(node))
         {
           ss << n->get_qualified_name().str() << "\\n";
+        }
+  // add class name
+     if (SgClassDeclaration* n = isSgClassDeclaration(node))
+        {
+          ss << n->get_qualified_name().str() << "\\n";
+        }
+  // add function name
+     if (SgFunctionDeclaration* n = isSgFunctionDeclaration(node))
+        {
+          ss << n->get_qualified_name().str() << "\\n";
+        }
+  // add variable name
+     if (SgInitializedName* n = isSgInitializedName(node))
+        {
+          ss << n->get_qualified_name().str() << "\\n";
+        }
+  // add variable name
+     if (SgVariableSymbol* n = isSgVariableSymbol(node))
+        {
+          ss << n->get_name().str() << "\\n";
         }
 
   // add memory location of node to dot output
