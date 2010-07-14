@@ -36,8 +36,22 @@ bool LanguageRestrictions::violatesRestrictionsOnEventFunctions(SgFunctionDefini
 	failure = failure || hasVariableArguments(functionDefinition);
 	failure = failure || usesBannedTypes(functionDefinition);
 	failure = failure || usesGnuExtensions(functionDefinition);
+	failure = failure || returnsBeforeFunctionEnd(functionDefinition);
 
 	return failure;
+}
+
+bool LanguageRestrictions::violatesRestrictionsOnEventFunctions(SgFunctionDeclaration* functionDeclaration)
+{
+	functionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+
+	if (functionDeclaration == NULL || functionDeclaration->get_definition() == NULL)
+	{
+		//We can't verify that a function passes if we don't have its body
+		return true;
+	}
+
+	return violatesRestrictionsOnEventFunctions(functionDeclaration->get_definition());
 }
 
 
@@ -364,6 +378,27 @@ bool LanguageRestrictions::usesGnuExtensions(SgFunctionDefinition* functionDefin
 		if (isSgStatementExpression(exp))
 		{
 			backstroke_util::printCompilerError(exp, "gcc-style statement expressions are not allowed.");
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+/** True if the function has return statements before the bottom of the body. */
+bool LanguageRestrictions::returnsBeforeFunctionEnd(SgFunctionDefinition* functionDefinition)
+{
+	vector<SgReturnStmt*> returnStatements = SageInterface::querySubTree<SgReturnStmt>(functionDefinition, V_SgReturnStmt);
+
+	SgBasicBlock* body = functionDefinition->get_body();
+	SgStatement* lastStatementInBody = body->get_statements().empty() ? NULL : body->get_statements().back();
+
+	foreach (SgReturnStmt* returnStatement, returnStatements)
+	{
+		if (returnStatement != lastStatementInBody)
+		{
+			backstroke_util::printCompilerError(returnStatement, "return statements are only allowed at the end of a function");
 			return true;
 		}
 	}

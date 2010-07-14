@@ -34,22 +34,24 @@
 7) No jump structures (goto, break outside of switch statement, continue)
 	REASON: Simplify handling of loops.
 
-8) No dynamic memory allocation
+8) A return statement can only appear as the very last statement inside the function body.
+
+9) No dynamic memory allocation
 	REASON: We would like to statically determine the state to be saved.
 
-9) No ellipse arguments (varargs)
+10) No ellipse arguments (varargs)
 
-10) No threading
+11) No threading
 
-11) No I/O
+12) No I/O
 	REASON: I/O is irreversible an has to be handled by a commit method.
 
-12) No calling functions through function pointers or virtual functions.
+13) No calling functions through function pointers or virtual functions.
 	REASON: We cannot call the correct reverse function in those cases.
 
-13) No throw or catch statements
+14) No throw or catch statements
 
-14) Limited use of standard library functions
+15) Limited use of standard library functions
 	Pure functions such as abs, max, cos, sin are ok.
 	In the first implementation, we'll have an explicit whitelist of standard library
 	functions allowed
