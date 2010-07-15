@@ -4,10 +4,10 @@
 #include <rose.h>
 #include "utilities/types.h"
 
-std::vector<StmtPair> processBasicStatement(SgStatement* stmt);
-std::vector<StmtPair> processFunctionDeclaration(SgFunctionDeclaration* func_decl);
-std::vector<StmtPair> processExprStatement(SgExprStatement* exp_stmt);
-std::vector<StmtPair> processVariableDeclaration(SgVariableDeclaration* var_decl);
-std::vector<StmtPair> processBasicBlock(SgBasicBlock* body);
+StmtPairs processBasicStatement(SgStatement* stmt);
+StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl);
+StmtPairs processExprStatement(SgExprStatement* exp_stmt);
+StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl);
+StmtPairs processBasicBlock(SgBasicBlock* body);
 
 #endif

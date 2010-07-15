@@ -52,6 +52,7 @@ inline void addStatementHandler(StmtHandler stmt_handler)
     StmtHandlersPool::instance().push_back(stmt_handler);
 }
 
+#if 0
 inline SgExpression* pushVal(SgExpression* exp)
 {
     return SageInterface::copyExpression(exp);
@@ -61,6 +62,7 @@ inline SgExpression* popVal()
 {
     return SageBuilder::buildIntVal(0);
 }
+#endif
 
 class ProcessorPool
 {
@@ -74,9 +76,6 @@ class ProcessorPool
     std::vector<FuncDeclPair>
     processEvent(SgFunctionDeclaration* func_decl)
     {
-        // First of all, normalize this event function.
-        normalizeEvent(func_decl);
-
         std::vector<FuncDeclPair> output;
 
         std::vector<StmtPair> func_decls = processFunctionDeclaration(func_decl);

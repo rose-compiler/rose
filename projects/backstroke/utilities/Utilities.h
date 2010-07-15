@@ -91,6 +91,9 @@ namespace backstroke_util
         /** Remove braces of a basic block in which there is no variable declared. */
         void removeUselessBraces(SgNode* root);
 
+        /** Remove useless parenthesis of some specific expresssions which will damage the readability. */
+        void removeUselessParen(SgNode* root);
+
         /** Returns if an expression modifies any value. */
         bool isModifyingExpression(SgExpression* exp);
         

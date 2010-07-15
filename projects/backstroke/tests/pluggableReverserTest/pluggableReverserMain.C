@@ -2,6 +2,7 @@
 #include "pluggableReverser/expressionHandler.h"
 #include "pluggableReverser/statementHandler.h"
 #include "pluggableReverser/processorPool.h"
+#include "pluggableReverser/storage.h"
 
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "utilities/Utilities.h"
@@ -131,16 +132,29 @@ int main(int argc, char * argv[])
 
     ProcessorPool processor;
 
+    SgGlobal* global = getFirstGlobalScope(project);
+
+    // Prepend includes to test files.
+    string includes = "#include \"rctypes.h\"\n"
+        "#include <stdio.h>\n"
+        "#include <stdlib.h>\n"
+        "#include <time.h>\n"
+        "#include <assert.h>\n"
+        "#include <memory.h>\n";
+    addTextForUnparser(global, includes, AstUnparseAttribute::e_before);
+
+
+    // Add all expression handlers to the expression pool.
     addExpressionHandler(storeAndRestore);
     addExpressionHandler(processConstructiveExp);
     addExpressionHandler(processConstructiveAssignment);
 
+    // Add all statement handlers to the statement pool.
     addStatementHandler(processBasicStatement);
 
-
-    SgGlobal* global = getFirstGlobalScope(project);
     pushScopeStack(isSgScopeStatement(global));
 
+    // Get every function declaration and identify if it's an event function.
     vector<SgFunctionDeclaration*> func_decls = backstroke_util::querySubTree<SgFunctionDeclaration>(global);
     foreach (SgFunctionDeclaration* decl, func_decls)
     {
@@ -150,17 +164,28 @@ int main(int argc, char * argv[])
                 ends_with(func_name, "forward"))
             continue;
 
+        // First of all, normalize this event function.
+        normalizeEvent(decl);
+
+#if 1
+        // Here reverse the event function into several versions.
         vector<FuncDeclPair> output = processor.processEvent(decl);
         foreach (FuncDeclPair func_decl_pair, output)
         {
-           appendStatement(func_decl_pair.first, global); 
-           appendStatement(func_decl_pair.second, global); 
+           appendStatement(func_decl_pair.first); 
+           appendStatement(func_decl_pair.second); 
         }
+#endif
     }
+
+    // Declare all stack variables on top of the generated file.
+    vector<SgVariableDeclaration*> stack_decls = getAllStackDeclarations();
+    foreach (SgVariableDeclaration* decl, stack_decls)
+        prependStatement(decl);
 
     popScopeStack();
 
-    fixVariableReferences2(global);
+    //fixVariableReferences2(global);
 
     return backend(project);
 }

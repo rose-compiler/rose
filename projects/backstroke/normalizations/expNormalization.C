@@ -459,17 +459,57 @@ void preprocess(SgFunctionDefinition* func)
     {
         SgInitializedName* init = var_decl->get_variables()[0];
         SgAssignInitializer* initializer = isSgAssignInitializer(init->get_initializer());
+        
+        SgStatement* parent = isSgStatement(var_decl->get_parent());
+        ROSE_ASSERT(parent);
 
-        if (    isScalarType(init->get_type()) && 
+        if (isScalarType(init->get_type()) ||
+                isSgPointerType(init->get_type()))
+        {
+            // Miss catch here?
+            if (isSgIfStmt(parent) ||
+                    isSgWhileStmt(parent) ||
+                    isSgSwitchStatement(parent) ||
+                    isSgForStatement(parent))
+            {
+                // if (int i = j);  ==>  { int i; if (i = j); }
+                // new_exp  <==  i = j
+                SgExpression* new_exp = buildBinaryExpression<SgAssignOp>(
+                        buildVarRefExp(init, getScope(var_decl)),
+                        copyExpression(initializer->get_operand()));
+
+                // new_decl  <==  int i;
+                // Here we cannot just build a new variable declaration, which will cause a problem.
+                //SgVariableDeclaration* new_decl = buildVariableDeclaration(
+                 //       init->get_name(), init->get_type());
+                SgVariableDeclaration* new_decl = isSgVariableDeclaration(copyStatement(var_decl));
+                new_decl->get_variables()[0]->set_initializer(NULL);
+
+                replaceStatement(var_decl, buildExprStatement(new_exp));
+                SgBasicBlock* block = buildBasicBlock(copyStatement(parent));
+                block->prepend_statement(new_decl);
+
+                replaceStatement(parent, block);
+            }
+        }
+
+#if 0
+        // Make sure the variable declared has scalar type.
+        if (    isScalarType(init->get_type()) &&
                 isSgPointerType(init->get_type()) &&
                 initializer && 
                 containsModifyingExpression(initializer->get_operand()))
         {
+            // int i = ++j;  ==>  int i; i = ++j;
+
+            // new_exp  <==  i = ++j
             SgExpression* new_exp = buildBinaryExpression<SgAssignOp>(
                     buildVarRefExp(init, getScope(var_decl)),
                     copyExpression(initializer->get_operand()));
+            // new_stmt  <==  i = ++j;
             SgStatement* new_stmt = buildExprStatement(new_exp);
-            initializer->set_operand(buildIntVal(0));
+            //initializer->set_operand(buildIntVal(0));
+            initializer->set_operand(NULL);
 
             SgStatement* parent = isSgStatement(var_decl->get_parent());
             if (isSgBasicBlock(parent))
@@ -481,6 +521,8 @@ void preprocess(SgFunctionDefinition* func)
                 ROSE_ASSERT(false);
             else
             {
+                // Here we deal with the variable declaration in condition part of if, while, etc.
+                // if (int i = ++j);  ==>  { int i; if (i = ++j); }
                 SgStatement* new_decl = copyStatement(var_decl);
                 replaceStatement(var_decl, new_stmt);
                 ROSE_ASSERT(new_stmt->get_parent());
@@ -489,6 +531,7 @@ void preprocess(SgFunctionDefinition* func)
                 replaceStatement(parent, block);
             }
         }
+#endif
     }
 
     /******************************************************************************/
@@ -543,6 +586,7 @@ void normalizeEvent(SgFunctionDefinition* func)
     }
 
     removeUselessBraces(func->get_body());
+    removeUselessParen(func->get_body());
 
 #if 0
     Rose_STL_Container<SgNode*> body_list = NodeQuery::querySubTree(func->get_body(), V_SgBasicBlock);
@@ -561,10 +605,12 @@ void splitCommaOpExp(SgExpression* exp)
         SgExpression* lhs = comma_op->get_lhs_operand();
         SgExpression* rhs = comma_op->get_rhs_operand();
 
-        lhs->set_need_paren(false);
-        rhs->set_need_paren(false);
+        //lhs->set_need_paren(false);
+        //rhs->set_need_paren(false);
 
-        if (SgStatement* stmt = isSgExprStatement(comma_op->get_parent()))
+        SgNode* parent = comma_op->get_parent();
+
+        if (SgStatement* stmt = isSgExprStatement(parent))
         {
             // Note that in Rose, the condition part in if statement can be an expression statement.
             // (a, b);  ==>  a; b;
@@ -577,10 +623,21 @@ void splitCommaOpExp(SgExpression* exp)
                 splitCommaOpExp(stmt1->get_expression());
                 splitCommaOpExp(stmt2->get_expression());
             }
+
+            if (SgIfStmt* if_stmt = isSgIfStmt(stmt->get_parent()))
+            {
+                SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
+                SgExpression* new_exp = copyExpression(rhs);
+                replaceExpression(comma_op, new_exp);
+                insertStatement(if_stmt, new_stmt);
+
+                splitCommaOpExp(new_stmt->get_expression());
+                splitCommaOpExp(new_exp);
+            }
         }
 
         //if (SgVariableDefinition* var_def = isSgVariableDefinition(comma_op->get_parent()))
-        if (SgAssignInitializer* ass_init = isSgAssignInitializer(comma_op->get_parent()))
+        if (SgAssignInitializer* ass_init = isSgAssignInitializer(parent))
         {
             // int a = (b, c);  ==>  b; int a = c;
             if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(ass_init->get_parent()->get_parent()))
@@ -599,6 +656,7 @@ void splitCommaOpExp(SgExpression* exp)
             }
             //FIXME other cases
         }
+
     }
 }
 
