@@ -4,8 +4,32 @@
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
+export win_file=/nfs/casc/overture/ROSE/git/rose_win_test.rose
+echo "Testing weather Windows test has started. Start only once!"
+jobstartingwin=0
+if [ -e $win_file ]
+then
+    echo "Found file $win_file"
+else
+    echo "Creating $win_file"
+    echo 5 > $win_file
+fi
+
+cat ${win_file} | \
+while read -a num 
+do
+if [ "${num[0]}" == "0" ]; then
+    echo "Windows test has already started."
+else
+    echo 0 > $win_file
+    jobstartingwin=1
+    echo "Starting Windows test."
 #starting Windows process
-curl http://tux269.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
+    curl http://tux269.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
+fi
+done
+
+
 
 # tps : 04/26/2010 - Added support for OpenGL for 64bit
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
@@ -437,8 +461,8 @@ echo "Executed runTest for ROSE Project on: $machine_name date = $end_date"
 echo "********************************************************************"
 
 
-export win_file=/nfs/casc/overture/ROSE/git/rose_win_test.rose
-
+if [ $jobstartingwin -eq 1 ] 
+then
 echo "Testing result of Windows Hudson Test..."
 if [ -e $win_file ]
 then
@@ -462,4 +486,4 @@ fi
 done
 
 echo "Done testing."
- 
+fi 
