@@ -6,7 +6,7 @@
 
 export win_file=/nfs/casc/overture/ROSE/git/rose_win_test.rose
 echo "Testing weather Windows test has started. Start only once!"
-let jobstartingwin=0
+jobstartingwin=0
 if [ -e $win_file ]
 then
     echo "Found file $win_file"
@@ -16,7 +16,7 @@ then
 	if [ "${num[0]}" == "0" ]; then
 	    echo "Windows test has already started."
 	else
-	    let jobstartingwin=1
+	    jobstartingwin=1
 	    echo "Starting Windows test."
 #starting Windows process
 	    curl http://tux269.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
