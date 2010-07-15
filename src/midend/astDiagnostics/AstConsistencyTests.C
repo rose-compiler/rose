@@ -3185,7 +3185,14 @@ TestExpressionTypes::visit ( SgNode* node )
 			case V_SgLshiftOp:      
 			case V_SgRshiftOp:       
 			case V_SgPntrArrRefExp:  
+			break;
 			case V_SgScopeOp:          
+			{
+				SgScopeOp* scopeOp = isSgScopeOp(node);
+				ROSE_ASSERT(scopeOp);
+				verifiedLValue = scopeOp->get_rhs_operand()->isLValue();
+				break;
+			}
 			case V_SgAssignOp:        
 			case V_SgPlusAssignOp:     
 			case V_SgMinusAssignOp: 
@@ -3202,7 +3209,12 @@ TestExpressionTypes::visit ( SgNode* node )
 			case V_SgPointerAssignOp:  
 			case V_SgUserDefinedBinaryOp: 
 			case V_SgBoolValExp:     
+			break;
 			case V_SgStringVal:        
+			{
+				verifiedLValue = true;
+				break;
+			}
 			case V_SgShortVal:               
 			case V_SgCharVal:         
 			case V_SgUnsignedCharVal: 
@@ -3268,6 +3280,8 @@ TestExpressionTypes::visit ( SgNode* node )
 			default:
 				break;
 		}
+		if (expression->isLValue() != verifiedLValue)
+			std::cout << "Node at " << node << " is sgtype " << node->variantT() << std::endl;
 		ROSE_ASSERT (expression->isLValue() == verifiedLValue);
 	}
 #endif

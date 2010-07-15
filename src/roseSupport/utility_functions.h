@@ -71,6 +71,25 @@ void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::strin
 //void pdfPrintAbstractSyntaxTreeEDG ( SgFile *file );
 // void generatePDFofEDG ( const SgProject & project );
 
+#include "rose.h"
+//#include "../midend/astProcessing/DOTGeneration.h"
+//#include "roseInternal.h"
+//#include "../midend/astProcessing/AstDotGeneration.h"
+//using namespace AstDOTGenerationExtended_Defaults;
+#include "../midend/astProcessing/AstDOTGeneration.h"
+
+template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
+struct generateDOTExtended ;
+//void
+//generateDOTExtended ( const SgProject & project, std::string filenamePostfix = "", ExtraNodeInfo_t eni = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo(), ExtraNodeOptions_t eno = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions(), ExtraEdgeInfo_t eei = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo(), ExtraEdgeOptions_t eeo = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions() );
+
+template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
+struct generateDOTExtended_withIncludes ;
+
+template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
+struct generateDOTExtendedforMultipleFile ;
+
+#include "utility_functionsImpl.C"
 
 namespace ROSE
    {
