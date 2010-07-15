@@ -218,6 +218,11 @@ SgStatement::cfgInEdges(unsigned int) {
     return std::vector<CFGEdge>();
   }
 
+bool SgStatement::isChildUsedAsLValue(const SgExpression* child) const
+{
+	return false;
+}
+
 //---------------------------------------
 std::vector<CFGEdge> SgGlobal::cfgOutEdges(unsigned int idx) {
   return std::vector<CFGEdge>();
@@ -2695,12 +2700,7 @@ SgUnaryOp::cfgOutEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
-          case 0: 
-              if (this->get_operand())
-              {
-                  makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); 
-                  break;
-              }
+          case 0: makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
           case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
         }
@@ -2714,13 +2714,8 @@ SgUnaryOp::cfgInEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
-          case 1: 
-              if (this->get_operand())
-              {
-                  makeEdge(this->get_operand()->cfgForEnd(), CFGNode(this, idx), result); 
-                  break;
-              }
           case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_operand()->cfgForEnd(), CFGNode(this, idx), result); break;
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
         }
 
@@ -3254,6 +3249,7 @@ SgCastExp::cfgFindChildIndex(SgNode* n)
   // DQ (11/29/2009): Avoid MSVC warning about missing return.
 	 return 0;
    }
+
 
 unsigned int
 SgNewExp::cfgIndexForEnd() const
@@ -3832,3 +3828,127 @@ std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgInEdges(unsigned int idx) {
 }
 
  
+	bool SgExpression::isLValue() const
+	{
+		return false;
+	}
+
+	bool SgExpression::isUsedAsLValue() const
+	{
+		if (isLValue())
+		{
+			SgStatement* stmt = isSgStatement(get_parent());
+			if (stmt)
+				return stmt->isChildUsedAsLValue(this);
+			SgExpression* expr = isSgExpression(get_parent());
+			if (expr)
+				return expr->isChildUsedAsLValue(this);
+			return false;
+		}
+		else
+			return false;
+	}
+
+	bool SgExpression::isChildUsedAsLValue(const SgExpression* child) const
+	{
+		return false;
+	}
+
+bool SgStringVal::isLValue() const
+{
+	return true;
+}
+
+bool SgStringVal::isChildUsedAsLValue(const SgExpression* child) const
+{
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgStringVal");
+	return false;
+}
+
+bool SgScopeOp::isLValue() const
+{
+	return get_rhs_operand()->isLValue();
+}
+
+bool SgScopeOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (child == get_lhs_operand())
+		ROSE_ASSERT(!"Only the right-hand-side is used as an l-value for SgScopeOp");
+	else if (child != get_rhs_operand())
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgScopeOp");
+	else
+	{
+		if (isLValue())
+		{
+			SgStatement* stmt = isSgStatement(get_parent());
+			if (stmt)
+				return stmt->isChildUsedAsLValue(this);
+			SgExpression* expr = isSgExpression(get_parent());
+			if (expr)
+				return expr->isChildUsedAsLValue(this);
+			return false;
+		}
+		else
+			return false;
+	}
+	return false;
+}
+
+bool SgCastExp::isLValue() const
+{
+	switch (cast_type())
+	{
+		case e_C_style_cast:
+			if (get_type()->get_ref_to() != NULL) /*! std:5.4 par. 1 */
+				return true;
+			else
+				return false;
+		case e_const_cast:
+			if (get_type()->get_ref_to() != NULL) /*! std:5.2.11 par. 1 */
+				return true;
+			else
+				return false;
+		case e_static_cast:
+			if (get_type()->get_ref_to() != NULL) /*! std:5.2.9#1 */
+				return true;
+			else
+				return false;
+		case e_dynamic_cast:
+			if (get_type()->get_ref_to() != NULL) /*! std:5.2.7#2 */
+				return true;
+			else
+				return false;
+		case e_reinterpret_cast:
+			if (get_type()->get_ref_to() != NULL) /*! std:5.2.10#1 */
+				return true;
+			else
+				return false;
+		case e_unknown:
+		case e_default:
+		default:
+			return false;
+	}
+}
+
+bool SgCastExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	// if it is an l-value and we use it as an l-value, then true
+	if (child != this->get_operand())
+	{
+		ROSE_ASSERT (!"Bad child in isChildUsedAsLValue on SgCastExp");
+		return false;
+	}
+	if (isUsedAsLValue())
+	{
+		if (child->isLValue())
+			return true;
+		else
+		{
+			ROSE_ASSERT (!"Child is not an LValue, so it cannot be used as an LValue in isChildUsedAsLValue on SgCastExp");
+			return false;
+		}
+	}
+	else
+		return false;
+}
+
