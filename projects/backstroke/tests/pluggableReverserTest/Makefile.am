@@ -16,8 +16,18 @@ EXTRA_DIST =
 
 CLEANFILES = 
 
+ALL_TESTCODES = test0.C
+
+TEST_Objects = ${ALL_TESTCODES:.C=.o}
+
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test
+
+$(TEST_Objects):pluggableReverser 
+	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/$(@:.o=.C) $(@:.o=.C)
+	./pluggableReverser $(TESTCODE_INCLUDES) -c $(@:.o=.C)    
+
 check-local:
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
 	@echo "* ROSE/projects/backstroke/tests/pluggableReverserTest: make check rule complete (terminated normally) *"
 	@echo "*********************************************************************************************************"

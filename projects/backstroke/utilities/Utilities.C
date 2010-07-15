@@ -514,3 +514,19 @@ void backstroke_util::removeUselessBraces(SgNode* root)
         }
     }
 }
+
+void backstroke_util::removeUselessParen(SgNode* root)
+{
+    vector<SgExpression*> exps = querySubTree<SgExpression>(root, postorder);
+
+    foreach (SgExpression* exp, exps)
+    {
+        // An expression in an expression statement, or comma expression does not
+        // need a parenthesis.
+        if (isSgExprStatement(exp->get_parent()) ||
+                isSgCommaOpExp(exp->get_parent()) ||
+                isSgVarRefExp(exp) ||
+                isSgValueExp(exp))
+            exp->set_need_paren(false);
+    }
+}

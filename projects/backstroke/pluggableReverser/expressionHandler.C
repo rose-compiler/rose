@@ -1,4 +1,5 @@
 #include "processorPool.h"
+#include "storage.h"
 #include "expressionHandler.h"
 #include "utilities/Utilities.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
@@ -17,20 +18,25 @@ ExpPair storeAndRestore(SgExpression* exp)
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
     {
         SgExpression* operand = isSgUnaryOp(exp)->get_operand();
-        SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(copyExpression(operand)), copyExpression(exp));
-        SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                copyExpression(operand), popVal());
-        return ExpPair(fwd_exp, rvs_exp);
+
+        // For integer type, it's better to reverse it directly, not state saving.
+        if (!(operand->get_type()->isIntegerType()))
+        {
+            SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
+                    pushVal(operand), copyExpression(exp));
+            SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
+                    copyExpression(operand), popVal(operand));
+            return ExpPair(fwd_exp, rvs_exp);
+        }
     }
 
     if (isAssignmentOp(exp))
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(copyExpression(lhs_operand)), copyExpression(exp));
+                pushVal(lhs_operand), copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                copyExpression(lhs_operand), popVal());
+                copyExpression(lhs_operand), popVal(lhs_operand));
         return ExpPair(fwd_exp, rvs_exp);
     }
 
