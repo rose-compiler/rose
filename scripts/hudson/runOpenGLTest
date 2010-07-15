@@ -16,6 +16,7 @@ then
 	if [ "${num[0]}" == "0" ]; then
 	    echo "Windows test has already started."
 	else
+	    echo 0 > $win_file
 	    jobstartingwin=1
 	    echo "Starting Windows test."
 #starting Windows process
