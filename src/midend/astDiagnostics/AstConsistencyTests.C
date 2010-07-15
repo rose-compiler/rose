@@ -2903,7 +2903,7 @@ TestAstAccessToDeclarations::test ( SgNode* node )
 
 void
 TestExpressionTypes::visit ( SgNode* node )
-   {
+{
   // DQ (2/21/2006): Test the get_type() member function which is common on many IR nodes
   // printf ("In TestExpressionTypes::visit(): node = %s \n",node->class_name().c_str());
 
@@ -3111,6 +3111,181 @@ TestExpressionTypes::visit ( SgNode* node )
              }
         }
 
+	//
+	// Test isLValue()
+	//
+#undef USE_KING84
+#define USE_KING84
+#ifdef USE_KING84
+	if (expression != NULL)
+	{
+		bool verifiedLValue = false;
+		switch (node->variantT())
+		{
+			case V_SgCastExp:
+			{
+				SgCastExp* castExp = isSgCastExp(node);
+				ROSE_ASSERT(castExp);
+				switch (castExp->cast_type())
+				{
+					case SgCastExp::e_C_style_cast:
+					case SgCastExp::e_const_cast:
+					case SgCastExp::e_static_cast:
+					case SgCastExp::e_dynamic_cast:
+					case SgCastExp::e_reinterpret_cast:
+						if (castExp->get_type()->get_ref_to() != NULL)
+							verifiedLValue = true;
+						else
+							verifiedLValue = false;
+						break;
+					case SgCastExp::e_unknown:
+					case SgCastExp::e_default:
+					default:
+						verifiedLValue = false;
+						break;
+				}
+				break;
+			}
+			case V_SgExpressionRoot: 
+			case V_SgMinusOp:            
+			case V_SgUnaryAddOp: 
+			case V_SgNotOp:           
+			case V_SgPointerDerefExp: 
+			case V_SgAddressOfOp:    
+			case V_SgMinusMinusOp:       
+			case V_SgPlusPlusOp: 
+			case V_SgBitComplementOp: 
+			case V_SgThrowOp:        
+			case V_SgRealPartOp:         
+			case V_SgImagPartOp: 
+			case V_SgConjugateOp:     
+			case V_SgUserDefinedUnaryOp: 
+			case V_SgArrowExp:       
+			case V_SgDotExp:           
+			case V_SgDotStarOp:       
+			case V_SgArrowStarOp:      
+			case V_SgEqualityOp:    
+			case V_SgLessThanOp:     
+			case V_SgGreaterThanOp:  
+			case V_SgNotEqualOp:       
+			case V_SgLessOrEqualOp:   
+			case V_SgGreaterOrEqualOp: 
+			case V_SgAddOp:         
+			case V_SgSubtractOp:     
+			case V_SgMultiplyOp:     
+			case V_SgDivideOp:         
+			case V_SgIntegerDivideOp: 
+			case V_SgModOp:            
+			case V_SgAndOp:         
+			case V_SgOrOp:           
+			case V_SgBitXorOp:       
+			case V_SgBitAndOp:         
+			case V_SgBitOrOp:         
+			case V_SgCommaOpExp:       
+			case V_SgLshiftOp:      
+			case V_SgRshiftOp:       
+			case V_SgPntrArrRefExp:  
+			break;
+			case V_SgScopeOp:          
+			{
+				SgScopeOp* scopeOp = isSgScopeOp(node);
+				ROSE_ASSERT(scopeOp);
+				verifiedLValue = scopeOp->get_rhs_operand()->isLValue();
+				break;
+			}
+			case V_SgAssignOp:        
+			case V_SgPlusAssignOp:     
+			case V_SgMinusAssignOp: 
+			case V_SgAndAssignOp:    
+			case V_SgIorAssignOp:    
+			case V_SgMultAssignOp:     
+			case V_SgDivAssignOp:     
+			case V_SgModAssignOp:      
+			case V_SgXorAssignOp:   
+			case V_SgLshiftAssignOp: 
+			case V_SgRshiftAssignOp: 
+			case V_SgExponentiationOp: 
+			case V_SgConcatenationOp: 
+			case V_SgPointerAssignOp:  
+			case V_SgUserDefinedBinaryOp: 
+			case V_SgBoolValExp:     
+			break;
+			case V_SgStringVal:        
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgShortVal:               
+			case V_SgCharVal:         
+			case V_SgUnsignedCharVal: 
+			case V_SgWcharVal:       
+			case V_SgUnsignedShortVal: 
+			case V_SgIntVal:                 
+			case V_SgEnumVal:         
+			case V_SgUnsignedIntVal:  
+			case V_SgLongIntVal:     
+			case V_SgLongLongIntVal:   
+			case V_SgUnsignedLongLongIntVal: 
+			case V_SgUnsignedLongVal: 
+			case V_SgFloatVal:        
+			case V_SgDoubleVal:      
+			case V_SgLongDoubleVal:    
+			case V_SgComplexVal:             
+			case V_SgUpcThreads:     
+			case V_SgUpcMythread: 
+			case V_SgUnaryOp:             
+			case V_SgBinaryOp:                
+			case V_SgExprListExp:         
+			case V_SgVarRefExp:           
+			case V_SgClassNameRefExp:          
+			case V_SgFunctionRefExp:      
+			case V_SgMemberFunctionRefExp:    
+			case V_SgValueExp:            
+			case V_SgFunctionCallExp:     
+			case V_SgSizeOfOp:                 
+			case V_SgUpcLocalsizeof:
+			case V_SgUpcBlocksizeof:
+			case V_SgUpcElemsizeof:
+			case V_SgTypeIdOp:            
+			case V_SgConditionalExp:          
+			case V_SgNewExp:              
+			case V_SgDeleteExp:           
+			case V_SgThisExp:                  
+			case V_SgRefExp:              
+			case V_SgInitializer:             
+			case V_SgVarArgStartOp:       
+			case V_SgVarArgOp:            
+			case V_SgVarArgEndOp:              
+			case V_SgVarArgCopyOp:        
+			case V_SgVarArgStartOneOperandOp: 
+			case V_SgNullExpression:      
+			case V_SgVariantExpression:   
+			case V_SgSubscriptExpression:      
+			case V_SgColonShapeExp:       
+			case V_SgAsteriskShapeExp:        
+			case V_SgImpliedDo:         
+			case V_SgIOItemExpression:         
+			case V_SgStatementExpression:  
+			case V_SgAsmOp:               
+			case V_SgLabelRefExp:         
+			case V_SgActualArgumentExpression: 
+			case V_SgUnknownArrayOrFunctionReference:               
+			case V_SgPseudoDestructorRefExp:                    
+			case V_SgCudaKernelCallExp:   
+			case V_SgCudaKernelExecConfig: 
+
+				break;
+			/*UseRenameExpression*/
+			/*UseOnlyExpression*/ 
+			default:
+				break;
+		}
+		if (expression->isLValue() != verifiedLValue)
+			std::cout << "Node at " << node << " is sgtype " << node->variantT() << std::endl;
+		ROSE_ASSERT (expression->isLValue() == verifiedLValue);
+	}
+#endif
+
 #if 0
      SgFunctionType* namedType = isNamedType(type);
      if (namedType != NULL)
@@ -3138,7 +3313,7 @@ TestExpressionTypes::visit ( SgNode* node )
              }
         }
 #endif
-   }
+}
 
 
 
