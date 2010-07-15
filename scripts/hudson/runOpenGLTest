@@ -4,7 +4,7 @@
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
-export win_file=/nfs/casc/overture/ROSE/git/rose_win_test.rose
+export win_file=/nfs/casc/overture/ROSE/git/rose_win_test2.rose
 echo "Testing weather Windows test has started. Start only once!"
 jobstartingwin=0
 if [ -e $win_file ]
