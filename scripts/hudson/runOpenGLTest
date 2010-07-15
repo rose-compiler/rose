@@ -4,6 +4,33 @@
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
+export win_file=/nfs/casc/overture/ROSE/git/rose_win_test2.rose
+echo "Testing weather Windows test has started. Start only once!"
+jobstartingwin=0
+if [ -e $win_file ]
+then
+    echo "Found file $win_file"
+else
+    echo "Creating $win_file"
+    echo 5 > $win_file
+fi
+
+cat ${win_file} | \
+while read -a num 
+do
+if [ "${num[0]}" == "0" ]; then
+    echo "Windows test has already started."
+else
+    echo 0 > $win_file
+    jobstartingwin=1
+    echo "Starting Windows test."
+#starting Windows process
+    curl http://tux269.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN
+fi
+done
+
+
+
 # tps : 04/26/2010 - Added support for OpenGL for 64bit
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
 
@@ -432,3 +459,31 @@ echo ""
 echo "********************************************************************"
 echo "Executed runTest for ROSE Project on: $machine_name date = $end_date"
 echo "********************************************************************"
+
+
+if [ $jobstartingwin -eq 1 ] 
+then
+echo "Testing result of Windows Hudson Test..."
+if [ -e $win_file ]
+then
+    echo "Found file $win_file"
+else
+    echo "File not found $win_file"
+    exit 3
+fi
+
+cat ${win_file} | \
+while read -a num 
+do
+if [ "${num[0]}" == "1" ]; then
+echo "Windows has passed the recent Hudson test"
+else
+echo "Windows has failed the recent Hudson test."
+echo "Please check the Windows Hudson test for its output to"
+echo "determine the exact error"
+exit 3
+fi
+done
+
+echo "Done testing."
+fi 
