@@ -308,6 +308,10 @@ HEADER_STRING_VALUE_EXPRESSION_START
       // $CLASSNAME( Sg_File_Info* file_info = NULL, char* value = NULL );
       // ~$CLASSNAME();
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_STRING_VALUE_EXPRESSION_END
 
 
@@ -665,7 +669,6 @@ HEADER_CAST_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-          virtual bool isUsedAsLValue() const; // Calls parent.isChildUsedAsLValue(this)
 		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_CAST_EXPRESSION_END
@@ -706,6 +709,9 @@ HEADER_THIS_EXPRESSION_END
 
 
 HEADER_SCOPE_OPERATOR_START
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 HEADER_SCOPE_OPERATOR_END
 
 
