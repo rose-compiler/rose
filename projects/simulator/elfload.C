@@ -3,7 +3,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR /*protects this whole file */
 
-#include "memory.h"
+#include "mymemory.h"
 #include <sys/mman.h>
 #include <elf.h>
 #include <dlfcn.h>

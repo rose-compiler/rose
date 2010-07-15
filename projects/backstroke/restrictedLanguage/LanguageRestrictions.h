@@ -18,6 +18,12 @@ public:
 	 */
 	static bool violatesRestrictionsOnEventFunctions(SgFunctionDefinition* functionDefinition);
 
+	/** Checks a single function conforms to the language restrictions.
+	 * @param functionDefintion definition that should be checked for banned language constructs
+	 * @return false if the function passed, true if the function contains banned constructs
+	 */
+	static bool violatesRestrictionsOnEventFunctions(SgFunctionDeclaration* functionDeclaration);
+
 private:
 
 	/** Returns true if the given function declares any local variables that are of a pointer or array type. */
@@ -51,6 +57,9 @@ private:
 	/** Returns true if the function uses any type that is not a scalar or a struct strictly containing scalars.*/
 	static bool usesBannedTypes(SgFunctionDefinition* functionDefinition);
 
-        /** Returns true if the function uses any syntax which is not part of the C++ standard, but the GNU extension.*/
-        static bool usesGnuExtensions(SgFunctionDefinition* functionDefinition);
+	/** Returns true if the function uses any syntax which is not part of the C++ standard, but the GNU extension.*/
+	static bool usesGnuExtensions(SgFunctionDefinition* functionDefinition);
+
+	/** True if the function has return statements before the bottom of the body. */
+	static bool returnsBeforeFunctionEnd(SgFunctionDefinition* functionDefinition);
 };

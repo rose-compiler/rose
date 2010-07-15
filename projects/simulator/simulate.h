@@ -14,7 +14,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole header file */
 
-#include "memory.h"
+#include "mymemory.h"
 #include "x86InstructionSemantics.h"
 #include "integerOps.h"
 #include <stdint.h>

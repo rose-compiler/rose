@@ -624,12 +624,15 @@ void splitCommaOpExp(SgExpression* exp)
                 splitCommaOpExp(stmt2->get_expression());
             }
 
-            if (SgIfStmt* if_stmt = isSgIfStmt(stmt->get_parent()))
+            if (isSgIfStmt(stmt->get_parent()) ||
+                    isSgWhileStmt(stmt->get_parent()) ||
+                    isSgSwitchStatement(stmt->get_parent()) ||
+                    isSgForStatement(stmt->get_parent()))
             {
                 SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
                 SgExpression* new_exp = copyExpression(rhs);
                 replaceExpression(comma_op, new_exp);
-                insertStatement(if_stmt, new_stmt);
+                insertStatement(isSgStatement(stmt->get_parent()), new_stmt);
 
                 splitCommaOpExp(new_stmt->get_expression());
                 splitCommaOpExp(new_exp);

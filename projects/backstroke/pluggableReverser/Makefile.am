@@ -10,8 +10,9 @@ noinst_LTLIBRARIES =  libBackstrokePluggableReverser.la
 
 libBackstrokePluggableReverser_ladir = .
 libBackstrokePluggableReverser_la_DEPENDENCIES =
-libBackstrokePluggableReverser_la_SOURCES = expressionHandler.C statementHandler.C storage.C
-include_HEADERS = expressionHandler.h statementHandler.h processorPool.h singleton.h storage.h
+libBackstrokePluggableReverser_la_SOURCES = expressionHandler.C statementHandler.C
+libBackstrokePluggableReverser_includedir = $(includedir)/backstroke
+libBackstrokePluggableReverser_include_HEADERS = expressionHandler.h statementHandler.h processorPool.h singleton.h
 libBackstrokePluggableReverser_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = 
