@@ -19,8 +19,6 @@
 #include <sstream>
 #include <boost/foreach.hpp>
 
-#define foreach BOOST_FOREACH
-
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
  */
 class VarUniqueName : public AstAttribute
@@ -136,7 +134,7 @@ struct IsDefUseFilter
 
 /** Class that defines an VariableRenaming of a program
  *
- * Contains all the functionality to implement SSA on a given program.
+ * Contains all the functionality to implement variable renaming on a given program.
  * For this class, we do not actually transform the AST directly, rather
  * we perform the analysis and add attributes to the AST nodes so that later
  * optimizations can access the results of this analysis while still preserving
@@ -152,20 +150,50 @@ private:
     bool DEBUG_MODE_EXTRA;
 
 public:
-    //Type definitions for the various tables.
+    /** Vector of SgNode*
+     */
     typedef std::vector<SgNode*> nodeVec;
+    /** A compound variable name as used by the variable renaming.
+     */
     typedef std::vector<SgInitializedName*> varName;
+    /** An entry in the rename table mapping a name to a nodeVec.
+     */
     typedef std::map<varName, nodeVec> tableEntry;
+    /** A table storing the name->node mappings for every node in the program.
+     */
     typedef std::map<SgNode*, tableEntry> defUseTable;
+    /** A table mapping a name to a single node.
+     */
+    typedef std::map<varName, SgNode*> firstDefTable;
+    /** A list of names.
+     */
     typedef std::vector<varName> globalTable;
+    /** A vector of SgInitializedName*
+     */
     typedef std::vector<SgInitializedName*> initNameVec;
+    /** A filtered CFGNode that is used for DefUse traversal.
+     */
     typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
+    /** A filtered CFGEdge that is used for DefUse traversal.
+     */
     typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
+    /** A vector of cfgNodes.
+     */
     typedef std::vector<cfgNode> cfgNodeVec;
+    /** A vector of cfgEdges.
+     */
     typedef std::vector<cfgEdge> cfgEdgeVec;
+    /** An entry in the rename table that maps a node to a number.
+     */
     typedef std::map<SgNode*, int> nodeNumRenameEntry;
+    /** A table that maps a name to it's node->number renamings.
+     */
     typedef std::map<varName, nodeNumRenameEntry> nodeNumRenameTable;
+    /** An entry in the rename table that maps a number to a node.
+     */
     typedef std::map<int, SgNode*> numNodeRenameEntry;
+    /** A table that maps a name to it's number->node renamings.
+     */
     typedef std::map<varName, numNodeRenameEntry> numNodeRenameTable;
 
 
@@ -176,6 +204,11 @@ private:
      * the VarDefUseTraversal. It is later used to populate the actual def/use table.
      */
     defUseTable originalDefTable;
+
+    /** This is the table of definitions that is expanded from the original table.
+     * It is used to populate the actual def/use table.
+     */
+    defUseTable expandedDefTable;
 
     /** This is the table that is populated with all the def information for all the variables
      * at all the nodes. It is populated during the runDefUse function, and is done
@@ -188,6 +221,14 @@ private:
      * with the steady-state dataflow algorithm.
      */
     defUseTable useTable;
+
+    /** Holds a list of the locations that a particular name is first
+     * defined.
+     *
+     * This helps when backwards-inserting definitions of member variables,
+     * so that we can simply insert the definition at the first definition.
+     */
+    firstDefTable firstDefList;
 
     /** This holds the mapping between variables and the nodes where they are renumbered.
      * Given a name and a node, we can get the number of the name that is defined at that node.
@@ -214,6 +255,198 @@ public:
 
     bool getDebug() { return DEBUG_MODE; }
     bool getDebugExtra() { return DEBUG_MODE_EXTRA; }
+    
+private:
+    void runDefUse(SgFunctionDefinition* func);
+    bool defUse(cfgNode node, bool *memberRefInserted, nodeVec &changedNodes);
+
+    /** Add an entry to the renumbering table for the given var and node.
+     *
+     * This will place a new entry into the renaming table that renumbers
+     * var at node. This new definition will have the next available numbering
+     * of var. If the var @ node combination already exists, the number will
+     * be returned.
+     *
+     * @param var The variable to renumber.
+     * @param node The node that defines the new number.
+     * @return The renumbering assigned to ver @ node.
+     */
+    int addRenameNumberForNode(const varName& var, SgNode* node);
+    
+    /** Locate all global varibales and add them to the table.
+     */
+    void findGlobalVars();
+
+    /** Called to merge the defs from previous nodes in the CFG to this one.
+     *
+     * This will merge the def tables from all previous CFG nodes, merge in the
+     * defs at this node, and update this node's table if needed. If it locates a def that
+     * is not in the table, it will attempt to find the location where that member
+     * was first defined and insert a definition there. It will then set the outParameter
+     * to indicate that it back-inserted a def.
+     *
+     * @param curNode The node to merge defs onto.
+     * @param memberRefInserted Reference that indicates whether the function back-inserted a definition.
+     * @return Whether the defs were different from those already on the node.
+     */
+    bool mergeDefs(cfgNode curNode, bool *memberRefInserted);
+
+    /** Called to update the uses on the current node.
+     *
+     * This will update the uses at this node to point to the defs that were propogated
+     * from previous nodes. If it locates a use of a def that did not exist, it
+     * will attempt to locate the definition site of the base variable and insert a def
+     * there. It will then set the outParameter to indicate that it back-inserted a def.
+     *
+     * @param curNode The node to resolve uses on.
+     * @param memberRefInserted Reference that indicates whether the function back-inserted a definition.
+     * @return Whether the uses were different from those already on the node.
+     */
+    bool resolveUses(cfgNode curNode, bool *memberRefInserted, nodeVec &changedNodes);
+
+    /** Trace backwards in the cfg one step and return an aggregate of all previous defs.
+     *
+     * @param curNode Node to traverse backwards from.
+     * @param results TableEntry reference where results are stored.
+     */
+    void aggregatePreviousDefs(cfgNode curNode, tableEntry& results);
+
+    /** Inserts definition points for all global variables.
+     *
+     * This will insert definitions for all global variables at 2 places.
+     * 1. At the entry points of all functionDefinitions.
+     * 2. At every function call expression.
+     */
+    void insertGlobalVarDefinitions();
+
+    /** Expand all member definitions (chained names) to define every name in the chain.
+     *
+     * When a member of a struct/class is referenced, this will insert definitions
+     * for every member referenced to access the currently referenced one.
+     *
+     * ex.   Obj o;         //Declare o of type Obj
+     *       o.a.b = 5;     //Def for o.a.b
+     *
+     * In the second line, this function will insert the following:
+     *
+     *       o.a.b = 5;     //Def for o.a.b, o.a, o
+     *
+     * @param curNode The node to expand the definitions on.
+     * @return Whether or not any new defs were inserted.
+     */
+    bool expandMemberDefinitions(cfgNode curNode);
+
+    /** Insert defs for member uses (chained names) that do not have an explicit def.
+     *
+     * When a member of a struct/class is used and that member does not have a propogated
+     * def on the current node, this will find the closest definition of a member
+     * in the ref chain and insert a definition for this use at that member's def.
+     *
+     * ex. Obj o;         //Declare o of type o
+     *     o.a = 5;       //Def for o.a
+     *     int i = o.b.x; //Def for i, use for o.b.x
+     *     int j = o.a.x; //Def for j, use for o.a.x
+     *
+     * This function will insert the following:
+     *     Obj o;         //Declare o of type o, Def for o.a, def for o.b, def for o.b.x
+     *     o.a = 5;       //Def for o.a, use for o, use for o.a, def for o.a.x
+     *     int i = o.b.x; //Def for i, use for o.b.x
+     *     int j = o.a.x; //Def for j, use for o.a.x
+     *
+     * @param curNode The node to expand the uses on.
+     * @param name The variableName to expand the uses for.
+     * @return Whether any new defs were inserted.
+     */
+    bool insertExpandedDefsForUse(cfgNode curNode, varName name, nodeVec &changedNodes);
+
+    /** Expand all member uses (chained names) to explicitly use every name in the chain.
+     *
+     * When a member of a struct/class is used, this will insert uses for every
+     * member referenced to access the currently used one.
+     *
+     * ex.   Obj o;         //Declare o of type Obj
+     *       int i;         //Declare i of type int
+     *       i = o.a.b;     //Def for i, use for o.a.b
+     *
+     * In the third line, this function will insert the following:
+     *
+     *       i = o.a.b;     //Def for i, use for o.a.b, o.a, o
+     *
+     * @param curNode
+     * @return Whether any new uses were inserted.
+     */
+    bool expandMemberUses(cfgNode curNode);
+
+    void printToDOT(SgSourceFile* file, std::ofstream &outFile);
+    void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
+
+    void printUses(tableEntry& table);
+    void printDefs(tableEntry& table);
+    
+public:
+    //External static helper functions/variables
+    /** Tag to use to retrieve unique naming key from node.
+     */
+    static std::string varKeyTag;
+
+    /** This represents the initializedName for the 'this' keyword.
+     *
+     * This will allow the this pointer to be versioned inside member functions.
+     */
+    static SgInitializedName* thisDecl;
+
+
+    /*
+     *  Printing functions.
+     */
+
+    /** Print the CFG with any UniqueNames and Def/Use information visible.
+     *
+     * @param fileName The filename to save graph as. Filenames will be prepended.
+     */
+    void toDOT(const std::string fileName);
+    
+    /** Print the CFG with any UniqueNames and Def/Use information visible.
+     *
+     * This will only print the nodes that are of interest to the filter function
+     * used by the def/use traversal.
+     *
+     * @param fileName The filename to save graph as. Filenames will be prepended.
+     */
+    void toFilteredDOT(const std::string fileName);
+
+    /** Get a string representation of a varName.
+     *
+     * @param vec varName to get string for.
+     * @return String for given varName.
+     */
+    std::string keyToString(varName vec);
+    
+    void printDefs(SgNode* node);
+
+    void printOriginalDefs(SgNode* node);
+
+    void printOriginalDefTable();    
+
+    void printUses(SgNode* node);
+
+    void printRenameTable();
+
+    void printRenameTable(const varName& var);
+
+    void printRenameTable(const nodeNumRenameTable& table);
+
+    void printRenameTable(const numNodeRenameTable& table);
+
+    void printRenameEntry(const nodeNumRenameEntry& entry);
+    
+    void printRenameEntry(const numNodeRenameEntry& entry);
+
+
+
+    /*
+     *   Def/Use Table Access Functions
+     */
 
     /** Get the table of definitions for every node.
      *
@@ -221,15 +454,30 @@ public:
      */
     defUseTable& getDefTable() { return originalDefTable; }
 
-    /**
-     * 
-     * @return
+    /** Get the defTable containing the propogated definition information.
+     *
+     * @return Def table.
      */
     defUseTable& getPropDefTable() { return defTable; }
+
+    /** Get the table of uses for every node.
+     *
+     * @return Use Table.
+     */
     defUseTable& getUseTable() { return useTable; }
+
+    /** Get the listing of global variables.
+     *
+     * @return Global Var List.
+     */
     globalTable& getGlobalVarList() { return globalVarList; }
 
-    //Manipulation functions for the rename table.
+
+
+    /*
+     *   Rename Table Access Functions
+     */
+
     /** Get the rename number for the given variable and the given node.
      *
      * This will return the number of the given variable as it is defined on the given
@@ -254,80 +502,197 @@ public:
      */
     SgNode* getNodeForRenameNumber(const varName& var, int num);
 
-    /** Add an entry to the renumbering table for the given var and node.
+    /** Get the number of the last rename of the given variable.
      *
-     * This will place a new entry into the renaming table that renumbers
-     * var at node. This new definition will have the next available numbering
-     * of var. If the var @ node combination already exists, the number will
-     * be returned.
+     * This will return the number of the last renaming of the given variable.
+     * If the given variable has no renamings, it will return -1.
      *
-     * @param var The variable to renumber.
-     * @param node The node that defines the new number.
-     * @return The renumbering assigned to ver @ node.
+     * @param var The variable to get the last renaming for.
+     * @return The highest renaming number, or -1 if var is not renamed.
      */
-    int addRenameNumberForNode(const varName& var, SgNode* node);
+    int getMaxRenameNumberForName(const varName& var);
 
-private:
-    void runDefUse(SgFunctionDefinition* func);
-    bool defUse(cfgNode node, bool *copied);
 
-    /** Locate all global varibales and add them to the table.
+
+    /*
+     *   Variable Renaming Access Functions
      */
-    void findGlobalVars();
 
-    bool mergeDefs(cfgNode curNode);
-    bool resolveUses(cfgNode curNode);
-
-    /** Trace backwards in the cfg one step and return an aggregate of all previous defs.
+    /** Retrieve a list of nodes that use the var:num specified.
      *
-     * @param curNode Node to traverse backwards from.
-     * @param results TableEntry reference where results are stored.
+     * This will retrieve a list of nodes that use the specified var:num combo.
+     * ex.  int i = s2.y1;  //Search for s:y1 will yield varRef for y1, as well as
+     *                      //the DotExpr and the AssignOp
+     * 
+     * @param var The variable name to find.
+     * @param num The revision of the variable to find.
+     * @return A vector containing the usage nodes of the variable. Empty vector otherwise.
      */
-    void aggregatePreviousDefs(cfgNode curNode, tableEntry& results);
+    nodeVec getAllUsesForDef(const varName& var, int num);
 
-    void printToDOT(SgSourceFile* file, std::ofstream &outFile);
-    void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
-    
-public:
-    //External static helper functions/variables
-    /** Tag to use to retrieve unique naming key from node.
-     */
-    static std::string varKeyTag;
-
-    /** This represents the initializedName for the 'this' keyword.
+    /** Retrieve a list of nodes of type T that use the var:num specified.
      *
-     * This will allow the this pointer to be versioned inside member functions.
-     */
-    static SgInitializedName* thisDecl;
-
-    /** Print the CFG with any UniqueNames and Def/Use information visible.
+     * This will retrieve a list of nodes of type T that use the specified var:num combo.
+     * ex.  int i = s2.y1;  //Search for s:y1,AssignOp will yield the AssignOp
      *
-     * @param fileName The filename to save graph as. Filenames will be prepended.
+     * @param var The variable name to find.
+     * @param num The revision of the variable to find.
+     * @return A vector containing the usage nodes of the variable. Empty vector otherwise.
      */
-    void toDOT(const std::string fileName);
-    
-    /** Print the CFG with any UniqueNames and Def/Use information visible.
+    template<typename T> inline std::vector<T*> getAllUsesForDef(const varName& var, int num)
+    {
+        nodeVec vec = getAllUsesForDef(var, num);
+        std::vector<T*> res;
+        T* temp;
+
+        BOOST_FOREACH(nodeVec::value_type& val, vec)
+        {
+            temp = dynamic_cast<T*>(val);
+            if(temp != NULL)
+            {
+                //Push back if it casts correctly.
+                res.push_back(temp);
+            }
+        }
+
+        return res;
+    }
+
+    /** Get name:num mappings for all reaching definitions of all variables at the node.
      *
-     * This will only print the nodes that are of interest to the filter function
-     * used by the def/use traversal.
-     *
-     * @param fileName The filename to save graph as. Filenames will be prepended.
+     * @param node The node to retrieve reaching definitions for.
+     * @return A table mapping VarName->(num, defNode). Empty table otherwise.
      */
-    void toFilteredDOT(const std::string fileName);
+    numNodeRenameTable getReachingDefsAtNode(SgNode* node);
 
-    std::string keyToString(varName vec);
-    
-    void printDefs(SgNode* node);
+    /** Get name:num mapping for all reaching definitions of the given variable at the node.
+     *
+     * @param node The node to retrieve reaching definitions for.
+     * @param var The variable to retrieve definitions of.
+     * @return A table of (num, defNode) for the given variable. Empty table otherwise.
+     */
+    numNodeRenameEntry getReachingDefsAtNodeForName(SgNode* node, const varName& var);
 
-    void printDefs(tableEntry& table);
+    /** Get name:num mappings for all uses at this node.
+     *
+     * @param node The node to get uses for.
+     * @return A table mapping VarName->(num, defNode) for every varName used at node. Empty table otherwise.
+     */
+    numNodeRenameTable getUsesAtNode(SgNode* node);
 
-    void printUses(SgNode* node);
+    /** Get name:num mapping for use of the given variable at this node.
+     *
+     * @param node The node to get uses for.
+     * @param var The varName to get the uses for.
+     * @return  A table of (num, defNode) for the given varName used at node. Empty table otherwise.
+     */
+    numNodeRenameEntry getUsesAtNodeForName(SgNode* node, const varName& var);
 
-    void printUses(tableEntry& table);
+    /** Get name:num mapping for all defs at the given node.
+     *
+     * This will return the combination of original and expanded defs on this node.
+     *
+     * ex. s.x = 5;  //This will return s.x and s  (s.x is original & s is expanded)
+     *
+     * @param node The node to get defs for.
+     * @return A table mapping VarName->(num, defNode) for every varName defined at node. Empty table otherwise.
+     */
+    numNodeRenameTable getDefsAtNode(SgNode* node);
 
-    void printRenameTable();
+    /** Get name:num mapping for def of the specified variable at the given node.
+     *
+     * This will return the combination of original and expanded defs of the given variable on this node.
+     *
+     * ex. s.x = 5;   //(s is expanded & s.x is original)
+     *     Looking for s will return this node, even though s is an expanded definition.
+     *
+     * @param node The node to get defs for.
+     * @param var The variable to get defs for.
+     * @return A table mapping VarName->(num, defNode) for every varName defined at node. Empty table otherwise.
+     */
+    numNodeRenameEntry getDefsAtNodeForName(SgNode* node, const varName& var);
 
-    VarUniqueName* getUniqueName(SgNode* node);
+    /** Get name:num mapping for all original defs at the given node.
+     *
+     * This will return the original defs on this node.
+     *
+     * ex. s.x = 5;  //This will return s.x  (s.x is original & s is expanded)
+     *
+     * @param node The node to get defs for.
+     * @return A table mapping VarName->(num, defNode) for every varName originally defined at node. Empty table otherwise.
+     */
+    numNodeRenameTable getOriginalDefsAtNode(SgNode* node);
+
+    /** Get name:num mapping for def of the specified variable at the given node.
+     *
+     * This will return the combination of original defs of the given variable on this node.
+     *
+     * ex. s.x = 5;   //(s is expanded & s.x is original)
+     *     Looking for s.x will return this node, s will return empty
+     *
+     * @param node The node to get defs for.
+     * @param var The variable to get defs for.
+     * @return A table mapping VarName->(num, defNode) for every varName defined at node. Empty table otherwise.
+     */
+    numNodeRenameEntry getOriginalDefsAtNodeForName(SgNode* node, const varName& var);
+
+    /** Get name:num mapping for all expanded defs at the given node.
+     *
+     * This will return the expanded defs on this node.
+     *
+     * ex. s.x = 5;  //This will return s  (s.x is original & s is expanded)
+     *
+     * @param node The node to get defs for.
+     * @return A table mapping VarName->(num, defNode) for every varName defined via expansion at node. Empty table otherwise.
+     */
+    numNodeRenameTable getExpandedDefsAtNode(SgNode* node);
+
+    /** Get name:num mapping for def of the specified variable at the given node.
+     *
+     * This will return the combination of expanded defs of the given variable on this node.
+     *
+     * ex. s.x = 5;   //(s is expanded & s.x is original)
+     *     Looking for s will return this node, s.x will return empty
+     *
+     * @param node The node to get defs for.
+     * @param var The variable to get defs for.
+     * @return A table mapping VarName->(num, defNode) for every varName defined at node. Empty table otherwise.
+     */
+    numNodeRenameEntry getExpandedDefsAtNodeForName(SgNode* node, const varName& var);
+
+
+
+
+
+    /*
+     *   Static Utility Functions
+     */
+
+    /** Find if the given prefix is a prefix of the given name.
+     *
+     * This will return whether the given name has the given prefix inside it.
+     *
+     * ex. a.b.c has prefix a.b, but not a.c
+     *
+     * @param name The name to search.
+     * @param prefix The prefix to search for.
+     * @return Whether or not the prefix is in this name.
+     */
+    static bool isPrefixOfName(varName name, varName prefix);
+
+    /** Get the uniqueName attribute for the given node.
+     *
+     * @param node Node to get the attribute from.
+     * @return The attribute, or NULL.
+     */
+    static VarUniqueName* getUniqueName(SgNode* node);
+
+    /** Get the variable name of the given node.
+     *
+     * @param node The node to get the name for.
+     * @return The name, or empty name.
+     */
+    static varName getVarName(SgNode* node);
 
     /** Gets whether or not the initializedName is from a library.
      *
@@ -339,60 +704,6 @@ public:
      * @return true if initName is from a library, false if otherwise.
      */
     static bool isFromLibrary(SgInitializedName* initName);
-
-    /** Create a renaming object and attribute with the given information, and attach it to target.
-     *
-     * This is used to attach rename information to a variable use. This will create
-     * a rename attribute using the information in the renameTable. For example:
-     * 1: int x;
-     * 2: x = 5;
-     * 3: int y = x;
-     * To rename the x in line 3, def = x in line 2, decl = x in line 1, target = x in line 3.
-     * Transformed:
-     * 1: int x1;
-     * 2: x2 = 5;
-     * 3: int y1 = x2;
-     *
-     * This function will not change the renameTable.
-     *
-     * @param func The function that contains the target.
-     * @param def The node where this variable was last defined (through def/use).
-     * @param decl The node where this varible was declared.
-     * @param target The SgNode to attach the attribute to.
-     */
-    void attachVarUse(SgFunctionDefinition* func, SgNode* def, SgInitializedName* decl, SgNode* target);
-
-    /** Create a renaming for a variable declaration and attach it to that declaration.
-     *
-     * This creates a renaming for the initial declaration of a variable and
-     * inserts it into the rename table and attaches it to the SgNode.
-     *
-     * This will insert this declaration into the renameTable, and will generate
-     * a ROSE_ASSERT if the declaration is not the first one in the table.
-     *
-     * @param func The function that contains the definition.
-     * @param dec The node where the variable is declared.
-     */
-    void attachVarDec(SgFunctionDefinition* func, SgInitializedName* decl);
-
-    /** Create a renaming for a variable definition and attach it to that definition.
-     *
-     * This is used to attach rename information to a variable definition. This will create
-     * a rename attribute using the information in the renameTable. For example:
-     * 1: int x;
-     * 2: x = 5;
-     * To rename the x in line 2, def = x in line 2, decl = x in line 1.
-     * Transformed:
-     * 1: int x1;
-     * 2: x2 = 5;
-     *
-     * The renameTable is updated with the new definition.
-     *
-     * @param func The function that contains the definition.
-     * @param def The node where the variable is redefined.
-     * @param decl The node where the variable is initialy declared.
-     */
-    void attachVarDef(SgFunctionDefinition* func, SgNode* def, SgInitializedName* decl);
 
 private:
 
