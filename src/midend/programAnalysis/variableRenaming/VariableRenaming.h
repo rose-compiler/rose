@@ -395,6 +395,8 @@ public:
      */
     static SgInitializedName* thisDecl;
 
+    static varName emptyName;
+
 
     /*
      *  Printing functions.
