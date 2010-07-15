@@ -10,24 +10,24 @@ jobstartingwin=0
 if [ -e $win_file ]
 then
     echo "Found file $win_file"
-    cat ${win_file} | \
-	while read -a num 
-    do
-	if [ "${num[0]}" == "0" ]; then
-	    echo "Windows test has already started."
-	else
-	    echo 0 > $win_file
-	    jobstartingwin=1
-	    echo "Starting Windows test."
-#starting Windows process
-	    curl http://tux269.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
-	fi
-    done
 else
     echo "Creating $win_file"
-    echo 0 > $win_file
+    echo 5 > $win_file
 fi
 
+cat ${win_file} | \
+while read -a num 
+do
+if [ "${num[0]}" == "0" ]; then
+    echo "Windows test has already started."
+else
+    echo 0 > $win_file
+    jobstartingwin=1
+    echo "Starting Windows test."
+#starting Windows process
+    curl http://tux269.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
+fi
+done
 
 
 
