@@ -23,6 +23,7 @@ using namespace std;
 //Initializations of the static attribute tags
 std::string VariableRenaming::varKeyTag = "rename_KeyTag";
 SgInitializedName* VariableRenaming::thisDecl = NULL;
+VariableRenaming::varName VariableRenaming::emptyName;
 
 //Printing functions
 std::string VariableRenaming::keyToString(varName vec)
