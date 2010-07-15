@@ -2,19 +2,20 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_LLVM
 
-SUBDIRS = src
-
-INCLUDES = -I$(top_srcdir)/projects/roseToLLVM/Analysis/Alias/include \
+INCLUDES = $(ROSE_INCLUDES) \
+		   $(ROSE_LLVM_INCLUDES) \
 		   -I$(top_srcdir)/projects/roseToLLVM/src/rosetollvm/include \
-		   $(ROSE_INCLUDES) \
-		   $(ROSE_LLVM_INCLUDES)
+		   -I$(top_srcdir)/projects/roseToLLVM/Analysis/Alias/include 
 
-bin_programs = rose2llvmAA
+#include_HEADERS = AliasAnalysisModule.h
 
-rose2llvmAA_SOURCES  = 
+bin_PROGRAMS = rose2llvmAA
+
+rose2llvmAA_SOURCES  = AliasAnalysis.cpp \
+					   AliasAnalysisModule.cpp
 
 rose2llvmAA_CPPFLAGS = -D__STDC_LIMIT_MACROS -Wno-deprecated
 
-rose2llvm_LDADD = $(top_builddir)/projects/roseToLLVM/src/rosetollvm/librosetollvm.la
+rose2llvmAA_LDADD = $(top_builddir)/projects/roseToLLVM/src/rosetollvm/librosetollvm.la
 
 endif

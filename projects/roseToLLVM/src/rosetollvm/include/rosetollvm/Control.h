@@ -32,6 +32,11 @@ public:
 
     void generateOutput();
 
+    void generateModules();
+
+    llvm::Module* getModuleRef(int index);
+
+
     /**
      * The following are id variables used to map Sage nodes into AstAttribute(s). Attributes are set either in CodeAttributesVisitor.cpp or in LLVMAstAttributes.cpp.
      * When a SgNode is associated with the root AstAttribute, it is an indication that that attribute will only be used as a flag.  In other words, there is no content
