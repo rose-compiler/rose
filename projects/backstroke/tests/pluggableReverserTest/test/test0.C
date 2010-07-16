@@ -1,4 +1,3 @@
-#include <rctypes.h>
 
 struct model
 {
@@ -7,6 +6,7 @@ struct model
 
 void event0(model* m)
 {
-    int i = 10;
-    m->i += ++i;
+    //int i = 10;
+    //m->i += ++i;
+    if (int i = 10) ++m->i;
 }

@@ -9,5 +9,6 @@ StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl);
 StmtPairs processExprStatement(SgExprStatement* exp_stmt);
 StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl);
 StmtPairs processBasicBlock(SgBasicBlock* body);
+StmtPairs processIfStmt(SgIfStmt* if_stmt);
 
 #endif
