@@ -479,6 +479,8 @@ void moveDeclarationsOut(SgNode* node)
                         init->get_type(),
                         init->get_initializer(),
                         block);
+                // Remember to move the preprocessing information from the old declaration to the new one.
+                movePreprocessingInfo(var_decl, new_decl);
 
                 replaceStatement(var_decl, buildExprStatement(new_exp));
                 //SgBasicBlock* block = buildBasicBlock(copyStatement(parent));
