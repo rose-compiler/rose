@@ -24,6 +24,8 @@ using namespace std;
 std::string VariableRenaming::varKeyTag = "rename_KeyTag";
 SgInitializedName* VariableRenaming::thisDecl = NULL;
 VariableRenaming::varName VariableRenaming::emptyName;
+VariableRenaming::numNodeRenameTable VariableRenaming::emptyRenameTable;
+VariableRenaming::numNodeRenameEntry VariableRenaming::emptyRenameEntry;
 
 //Printing functions
 std::string VariableRenaming::keyToString(varName vec)
@@ -420,10 +422,9 @@ void VariableRenaming::insertGlobalVarDefinitions()
 
     //Iterate the function definitions and insert definitions for all global variables
     std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
-    std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
-    for(;iter != funcs.end(); ++iter)
+    foreach(std::vector<SgFunctionDefinition*>::value_type& iter, funcs)
     {
-        SgFunctionDefinition* func = (*iter);
+        SgFunctionDefinition* func = iter;
         ROSE_ASSERT(func);
 
         //Iterate the global table insert a def for each name at the function definition
@@ -434,13 +435,12 @@ void VariableRenaming::insertGlobalVarDefinitions()
         }
     }
 
-    /*
-    //Iterate the function definitions and insert definitions for all global variables
+
+    //Iterate the function calls and insert definitions for all global variables
     std::vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp>(project, V_SgFunctionCallExp);
-    std::vector<SgFunctionCallExp*>::iterator iter2 = calls.begin();
-    for(;iter2 != calls.end(); ++iter2)
+    foreach(std::vector<SgFunctionCallExp*>::value_type& iter, calls)
     {
-        SgFunctionCallExp* call = (*iter2);
+        SgFunctionCallExp* call = iter;
         ROSE_ASSERT(call);
 
         //Iterate the global table insert a def for each name at the function call
@@ -450,7 +450,6 @@ void VariableRenaming::insertGlobalVarDefinitions()
             originalDefTable[call][entry].push_back(call);
         }
     }
-     * */
 }
 
 void VariableRenaming::toDOT(const std::string fileName)

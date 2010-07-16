@@ -121,14 +121,21 @@ struct IsDefUseFilter
      */
     bool operator() (CFGNode cfgn) const
     {
-      SgNode *n = cfgn.getNode();
-       //Remove all non-interesting nodes
-      if (!cfgn.isInteresting() && !(isSgFunctionCallExp(cfgn.getNode()) && cfgn.getIndex() >= 2))
-        return false;
-      //Remove all non-beginning nodes for initNames
-      if (isSgInitializedName(n) && cfgn.getIndex()>0)
-        return false;
-       return true;
+        SgNode *node = cfgn.getNode();
+
+        //If it is the last node in a function call, keep it
+        if(isSgFunctionCallExp(node) && cfgn == node->cfgForEnd())
+            return true;
+        
+        //Remove all non-interesting nodes
+        if (!cfgn.isInteresting())
+            return false;
+
+        //Remove all non-beginning nodes for initNames
+        if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
+            return false;
+
+        return true; 
     }
 };
 
@@ -253,8 +260,8 @@ public:
     
     void run();
 
-    bool getDebug() { return DEBUG_MODE; }
-    bool getDebugExtra() { return DEBUG_MODE_EXTRA; }
+    bool getDebug() const { return DEBUG_MODE; }
+    bool getDebugExtra() const { return DEBUG_MODE_EXTRA; }
     
 private:
     void runDefUse(SgFunctionDefinition* func);
@@ -397,6 +404,10 @@ public:
 
     static varName emptyName;
 
+    static numNodeRenameTable emptyRenameTable;
+
+    static numNodeRenameEntry emptyRenameEntry;
+
 
     /*
      *  Printing functions.
@@ -422,13 +433,13 @@ public:
      * @param vec varName to get string for.
      * @return String for given varName.
      */
-    std::string keyToString(varName vec);
+    static std::string keyToString(varName vec);
     
     void printDefs(SgNode* node);
 
     void printOriginalDefs(SgNode* node);
 
-    void printOriginalDefTable();    
+    void printOriginalDefTable();
 
     void printUses(SgNode* node);
 
@@ -454,25 +465,25 @@ public:
      *
      * @return Definition table.
      */
-    defUseTable& getDefTable() { return originalDefTable; }
+    defUseTable& getDefTable(){ return originalDefTable; }
 
     /** Get the defTable containing the propogated definition information.
      *
      * @return Def table.
      */
-    defUseTable& getPropDefTable() { return defTable; }
+    defUseTable& getPropDefTable(){ return defTable; }
 
     /** Get the table of uses for every node.
      *
      * @return Use Table.
      */
-    defUseTable& getUseTable() { return useTable; }
+    defUseTable& getUseTable(){ return useTable; }
 
     /** Get the listing of global variables.
      *
      * @return Global Var List.
      */
-    globalTable& getGlobalVarList() { return globalVarList; }
+    globalTable& getGlobalVarList(){ return globalVarList; }
 
 
 
@@ -541,7 +552,7 @@ public:
      * @param num The revision of the variable to find.
      * @return A vector containing the usage nodes of the variable. Empty vector otherwise.
      */
-    template<typename T> inline std::vector<T*> getAllUsesForDef(const varName& var, int num)
+    template<typename T> inline std::vector<T*> getAllUsesForDef(const varName& var, int num) const
     {
         nodeVec vec = getAllUsesForDef(var, num);
         std::vector<T*> res;
