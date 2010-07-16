@@ -109,12 +109,16 @@ if test "x$ROSE_EXIT_TO_TEST_HUDSON" = "xyes" ; then
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
    exit 1
 fi
 
 if test \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
    exit 1
 fi
 
@@ -122,6 +126,8 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
    exit 1
 fi
 # ************************************************************************
@@ -138,6 +144,8 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 
    if [ $? -ne 0 ]  ; then
       echo "fatal error in cmake build , aborting..."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
       exit 3
    fi
 
@@ -240,6 +248,8 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
 	make -Csrc/frontend/CxxFrontend deploy_tarballs
       if [ $? -ne 0 ]  ; then
         echo "fatal error when build edg binaries , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
       fi
 
@@ -263,6 +273,8 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "It should be impossible to reach this branch (exiting in false branch)."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
    exit 1
 
    make -j$NUM_PROCESS 2>&1 | tee make_output.txt
@@ -284,6 +296,8 @@ else
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
 fi
@@ -337,6 +351,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # ( make -j$NUM_PROCESS check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make check'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
 
@@ -368,6 +384,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make distcheck'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
 
@@ -419,6 +437,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
    echo "Done with make docs step"
@@ -487,6 +507,8 @@ exit 3
 fi
 done
 
+# reset the windows test file to any value but 0 so that the next test will start
+echo 3 > $win_file
 echo "Done testing."
 fi 
 # **************************************************************
