@@ -19,6 +19,9 @@ StmtPairs processBasicStatement(SgStatement* stmt)
     if (SgBasicBlock* block = isSgBasicBlock(stmt))
         return processBasicBlock(block);
 
+    if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
+        return processIfStmt(if_stmt);
+
     return StmtPairs();
 }
 
@@ -114,18 +117,16 @@ StmtPairs processBasicBlock(SgBasicBlock* body)
             ROSE_ASSERT(names.size() == 1);
             SgInitializedName* init_name = names[0];
 
-            // Here we use a trick to make the new variable reference have the body processed
-            // as its parent, which will let pushVal function get the correct stack.
             SgVarRefExp* var_stored = buildVarRefExp(init_name);
-            var_stored->set_parent(body);
             // Store the value of local variables at the end of the basic block.
-            SgStatement* store_var = buildExprStatement(pushVal(var_stored));
+            SgStatement* store_var = buildExprStatement(
+                    pushVal(var_stored, var_stored->get_type(), body));
 
             // Retrieve the value which is used to initialize that local variable.
             SgStatement* decl_var = buildVariableDeclaration(
                     init_name->get_name(),
                     init_name->get_type(),
-                    buildAssignInitializer(popVal(var_stored)));
+                    buildAssignInitializer(popVal(var_stored->get_type(), body)));
 
             // Stores all transformations of a local variable declaration. 
             StmtPairs results;
@@ -214,6 +215,10 @@ StmtPairs processBasicBlock(SgBasicBlock* body)
     } 
     while (!idx.forward());
 
+    // If this basic block is an empty one, just return two empty basic blocks.
+    if (outputs.empty())
+        outputs.push_back(StmtPair(buildBasicBlock(), buildBasicBlock()));
+
     return outputs;
 }
 
@@ -233,4 +238,48 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt)
     // does not need to be reversed. In other word, the expression of if condition
     // does not modify any value.
 
+    StmtPairs transformed_true_bodies = processStatement(true_body);
+    StmtPairs transformed_false_bodies = processStatement(false_body);
+
+    //if (transformed_false_bodies.empty())
+       // transformed_false_bodies.push_back(NULL_STMT_PAIR);
+
+    StmtPairs output;
+
+    foreach (StmtPair true_bodies, transformed_true_bodies)
+    {
+        foreach (StmtPair false_bodies, transformed_false_bodies)
+        {
+            SgIfStmt* fwd_if_stmt = buildIfStmt(
+                    copyStatement(if_stmt->get_conditional()),
+                    copyStatement(true_bodies.first),
+                    copyStatement(false_bodies.first));
+
+            // Note that after normalization, both true/false bodies are basic blocks.
+            ROSE_ASSERT(isSgBasicBlock(fwd_if_stmt->get_true_body()));
+            ROSE_ASSERT(isSgBasicBlock(fwd_if_stmt->get_false_body()));
+
+
+            // At the end of true/false body, push the flag into stack.
+            isSgBasicBlock(fwd_if_stmt->get_true_body())->append_statement(
+                    buildExprStatement(pushVal(
+                        buildBoolValExp(true),
+                        buildBoolType(),
+                        if_stmt)));
+            isSgBasicBlock(fwd_if_stmt->get_false_body())->append_statement(
+                    buildExprStatement(pushVal(
+                        buildBoolValExp(false),
+                        buildBoolType(),
+                        if_stmt)));
+
+
+            SgIfStmt* rvs_if_stmt = buildIfStmt(
+                    popVal(buildBoolType(), if_stmt),
+                    copyStatement(true_bodies.second),
+                    copyStatement(false_bodies.second));
+            output.push_back(StmtPair(fwd_if_stmt, rvs_if_stmt));
+        }
+    }
+
+    return output;
 }

@@ -15,6 +15,15 @@ enum Color
     yellow
 };
 
+void test_if()
+{
+    if (int i = 0);
+    if (++i > j--);
+    if ((i += j) > k);
+    if (foo(i));
+    if (++i);
+}
+
 void test_type()
 {
     //Color c = 0;

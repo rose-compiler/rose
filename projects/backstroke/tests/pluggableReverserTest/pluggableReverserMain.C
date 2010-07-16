@@ -135,7 +135,7 @@ int main(int argc, char * argv[])
     SgGlobal* global = getFirstGlobalScope(project);
 
     // Prepend includes to test files.
-    string includes = "#include \"rctypes.h\"\n"
+    string includes = "#include <rctypes.h>\n"
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "#include <time.h>\n"
@@ -165,7 +165,7 @@ int main(int argc, char * argv[])
             continue;
 
         // First of all, normalize this event function.
-        normalizeEvent(decl);
+        backstroke_norm::normalizeEvent(decl);
 
 #if 1
         // Here reverse the event function into several versions.

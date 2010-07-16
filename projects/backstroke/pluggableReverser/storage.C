@@ -7,10 +7,21 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 // The object storing all stack variable declarations.
-typedef singleton_default<std::map<SgFunctionDeclaration*, SgVariableDeclaration*> > AllStackDecl;
+typedef singleton_default<std::map<std::string, SgVariableDeclaration*> > AllStackDecl;
 
-SgExpression* getStackVar(SgNode* node)
+SgExpression* getStackVar(SgType* type, SgNode* node)
 {
+    string type_name;
+
+    if (isSgTypeInt(type))
+        type_name = "int";
+    if (isSgTypeBool(type))
+        type_name = "bool";
+    if (isSgTypeFloat(type))
+        type_name = "float";
+
+    AllStackDecl::object_type& all_var_decls = AllStackDecl::instance();
+
     SgFunctionDeclaration* func_decl = NULL;
     while (!(func_decl = isSgFunctionDeclaration(node)))
     {
@@ -18,24 +29,22 @@ SgExpression* getStackVar(SgNode* node)
         ROSE_ASSERT(node);
     }
 
-    std::map<SgFunctionDeclaration*, SgVariableDeclaration*>& all_var_decls = AllStackDecl::instance();
-
-    if (all_var_decls.count(func_decl) == 0)
+    string stack_name = func_decl->get_name() + "_" + type_name + "_stack";
+    if (all_var_decls.count(stack_name) == 0)
     {
-        SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
-        std::string stack_name = func_decl->get_name() + "_stack";
-        all_var_decls[func_decl] = buildVariableDeclaration(stack_name, stack_type);
+        SgType* stack_type = buildStructDeclaration("std::stack<" + type_name + ">")->get_type();
+        ROSE_ASSERT(stack_type);
+        all_var_decls[stack_name] = buildVariableDeclaration(stack_name, stack_type);
     }
-    return buildVarRefExp(all_var_decls[func_decl]->get_variables()[0]);
+
+    return buildVarRefExp(all_var_decls[stack_name]->get_variables()[0]);
 }
 
 std::vector<SgVariableDeclaration*> getAllStackDeclarations()
 {
     vector<SgVariableDeclaration*> output;
-    std::map<SgFunctionDeclaration*, SgVariableDeclaration*>& all_var_decls = AllStackDecl::instance();
-
-    typedef std::pair<SgFunctionDeclaration*, SgVariableDeclaration*> pair_t;
-    foreach (pair_t decl_pair, all_var_decls)
+    typedef AllStackDecl::object_type::value_type pair_t;
+    foreach (pair_t decl_pair, AllStackDecl::instance())
         output.push_back(decl_pair.second);
     return output;
 }
@@ -43,22 +52,39 @@ std::vector<SgVariableDeclaration*> getAllStackDeclarations()
 
 // Currently, when calling the following function, make sure the expression passed in
 // has a function declaration as parent.
-SgExpression* pushVal(SgExpression* exp)
+
+//SgExpression* pushVal(SgExpression* exp)
+//{
+//    return buildFunctionCallExp(
+//            "push",
+//            buildIntType(),
+//            buildExprListExp(
+//            getStackVar(exp),
+//            copyExpression(exp)));
+//}
+
+SgExpression* pushVal(SgExpression* exp, SgType* type, SgNode* node)
 {
     return buildFunctionCallExp(
-            "push", 
-            buildIntType(), 
+            "push", type,
             buildExprListExp(
-                getStackVar(exp),
+                getStackVar(type, node),
                 copyExpression(exp)));
+}
+
+SgExpression* popVal(SgType* type, SgNode* node)
+{
+    return buildFunctionCallExp("pop", type,
+            buildExprListExp(getStackVar(type, node)));
 }
 
 // FIXME  This function should be versioned to deal with int and float values.
 // Note that currently, we require that an expression which is assigned by the popped value
 // should be passed to this function, then we can do type check and stack name generation.
-SgExpression* popVal(SgExpression* exp)
-{
-    return buildFunctionCallExp("pop", buildIntType(), 
-            buildExprListExp(getStackVar(exp)));
-}
+
+//SgExpression* popVal(SgExpression* exp)
+//{
+//    return buildFunctionCallExp("pop", buildIntType(),
+//            buildExprListExp(getStackVar(exp)));
+//}
 

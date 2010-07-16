@@ -15,12 +15,15 @@ std::vector<SgVariableDeclaration*> getAllStackDeclarations();
 
 // Currently, when calling the following function, make sure the expression passed in
 // has a function declaration as parent.
-SgExpression* pushVal(SgExpression* exp);
+//SgExpression* pushVal(SgExpression* exp);
+SgExpression* pushVal(SgExpression* exp, SgType* type, SgNode* node);
 
 // FIXME  This function should be versioned to deal with int and float values.
 // Note that currently, we require that an expression which is assigned by the popped value
 // should be passed to this function, then we can do type check and stack name generation.
-SgExpression* popVal(SgExpression* exp);
+//SgExpression* popVal(SgExpression* exp);
+SgExpression* popVal(SgType* type, SgNode* node);
+
 
 
 #endif	

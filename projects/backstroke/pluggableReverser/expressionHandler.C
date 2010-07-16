@@ -23,9 +23,11 @@ ExpPair storeAndRestore(SgExpression* exp)
         if (!(operand->get_type()->isIntegerType()))
         {
             SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    pushVal(operand), copyExpression(exp));
+                    pushVal(operand, operand->get_type(), exp),
+                    copyExpression(exp));
             SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                    copyExpression(operand), popVal(operand));
+                    copyExpression(operand),
+                    popVal(operand->get_type(), exp));
             return ExpPair(fwd_exp, rvs_exp);
         }
     }
@@ -34,9 +36,11 @@ ExpPair storeAndRestore(SgExpression* exp)
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(lhs_operand), copyExpression(exp));
+                pushVal(lhs_operand, lhs_operand->get_type(), exp),
+                copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                copyExpression(lhs_operand), popVal(lhs_operand));
+                copyExpression(lhs_operand),
+                popVal(lhs_operand->get_type(), exp));
         return ExpPair(fwd_exp, rvs_exp);
     }
 
