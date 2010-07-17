@@ -42,16 +42,13 @@ string backstroke_util::GenerateUniqueVariableName(SgScopeStatement* scope, std:
 
 
 /** Returns true if the given expression refers to a variable. This could include using the
- * dot and arrow operator to access member variables and the dereferencing / addressof operators. */
+ * dot and arrow operator to access member variables. A comma op conunts as a variable references
+ * if all its members are variable references (not just the last expression in the list). */
 bool backstroke_util::IsVariableReference(SgExpression* expression)
 {
 	if (isSgVarRefExp(expression))
 	{
 		return true;
-	}
-	else if (isSgAddressOfOp(expression))
-	{
-		return IsVariableReference(isSgAddressOfOp(expression)->get_operand());
 	}
 	else if (isSgDotExp(expression))
 	{
