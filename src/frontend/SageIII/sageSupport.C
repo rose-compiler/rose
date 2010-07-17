@@ -3902,7 +3902,7 @@ SgProject::parse()
      unsigned int i = 0;
      while (nameIterator != p_sourceFileNameList.end())
         {
-#if 1
+#if 0
           printf ("Build a SgFile object for file #%d \n",i);
 #endif
           int nextErrorCode = 0;
@@ -3921,7 +3921,7 @@ SgProject::parse()
           printf ("currentFileName = %s \n",currentFileName.c_str());
 #endif
        // DQ (11/13/2008): Removed overly complex logic here!
-#if 1
+#if 0
           printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
 #endif
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);

@@ -1067,7 +1067,16 @@ accumulateDeleteSet ( SgProject* project, const set<SgNode*> & saveSet )
                          if (deleteSet.find(node) == deleteSet.end())
                             {
                            // Skip the SgDefaultType node from being added to the delete list.
-                              deleteSet.insert(node);
+                              if (isSgStorageModifier(node) != NULL)
+                                 {
+#if 0
+                                   printf ("WARNING: Skipping the removal of SgStorageModifier IR nodes from deleteSet \n");
+#endif
+                                 }
+                                else
+                                 {
+                                   deleteSet.insert(node);
+                                 }
                             }
 #endif
                        }
@@ -1168,7 +1177,7 @@ buildDeleteSet( SgProject* project )
      set<SgNode*> tempDeleteSet = accumulateDeleteSet(project,saveSet);
      printf ("tempDeleteSet.size() = %zu \n",tempDeleteSet.size());
 
-#if 1
+#if 0
      displaySet(tempDeleteSet,"buildDeleteSet: Computing the IR nodes to be deleted");
 #endif
 
