@@ -20,6 +20,7 @@ add_subdirectory(annotationLanguageParser)
 add_subdirectory(sideEffectAnalysis)
 add_subdirectory(distributedMemoryAnalysis)
 add_subdirectory(graphAnalysis)
+add_subdirectory(variableRenaming)
 
 
 
