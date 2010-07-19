@@ -3695,6 +3695,7 @@ unsigned int SgCtorInitializerList::cfgIndexForEnd() const
 
 std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx, bool interprocedural) {
      std::vector<CFGEdge> result;
+     //FIXME 
      return result;
      if (idx == this->get_ctors().size()) 
        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
@@ -3707,6 +3708,7 @@ std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx, bool i
 
 std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx, bool interprocedural) {
      std::vector<CFGEdge> result;
+     //FIXME 
      return result;
      if (idx == 0) 
        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
