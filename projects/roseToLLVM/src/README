@@ -1,0 +1,35 @@
+#
+# To Build the translator on Orion or any of the machines on the CS cluster, do this:
+#
+export LD_LIBRARY_PATH=/home/yy8/public/boost_1_38_0-install/lib:/home/yy8/public/jdk1.6.0_16/jre/lib/amd64/server:/home/yy8/public/rose-install/lib/
+export BOOSTROOT=/home/yy8/public/boost_1_38_0-install/include/boost-1_38/
+#
+# make sure that current version of gcc is version 4.2.4 or above
+# on PACE machine...: export PATH=/opt/rice/gcc-4.2.4/bin:$PATH
+#
+g++ -o translator -L/home/yy8/public/rose-install/lib -lrose -I./ -I/home/yy8/public/rose-install/include -I$BOOSTROOT translator.cpp CodeAttributesVisitor.cpp CodeGeneratorVisitor.cpp LLVMAttributes.cpp StringSet.cpp
+./pace-cc test.c
+./a.out
+
+#
+# To Optimize:
+#
+./pace-cc -O2 test.c
+
+#
+# To convert llvm input to c output:
+#
+./pace-cc -debug -emit-llvm test.c
+cat test.ll | llvm-as - | llc -march=c -o test2.c
+
+
+Available pace-cc Options
+=========================
+
+-debug             - send output to console unless -emit-llvm is also requested.
+-emit-llvm         - keep intermediate (.ll) file
+-rose-debug-pre    - print each node as it is about to be traversed in the pre pass
+-rose-debug-post   - print each node as it is about to be traversed in the post pass
+-rose-debug        - print each node as it is about to be traversed.
+
+* all other options specified are passed straight through to llvmc command

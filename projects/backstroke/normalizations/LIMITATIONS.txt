@@ -2,18 +2,15 @@ The "ExtractFunctionArguments" normalization ensures that all
 function arguments are either variables or constant inputs.
 
 It has the following limitations
-1. continue is not supported in loops. This is because certain
-   temporary variable creation, such as for incrementing, is
-   inserted at the end of loop bodies. Such code must always be executed.
-   (this could be resolved with goto's, but these constructs create
-   even more trouble for the reverse execution).
-
-2. Function calls through function pointers are not supported. For example,
-   if foo() returns a function pointer one could write foo()(bar(), bar()).
-   However, foo() could have potential side effects.
-
-3. User-supplied classes and structures must have side-effect free
+1. User-supplied classes and structures must have side-effect free
    copy constructors that create correct copies. This is because
    storing the value result of a function call to pass it to another 
    function necessarily involves calling the copy constructor once
    more than it would be normally called.
+
+2. Extracting function arguments from calls to constructors is not supported.
+   For example, MyObject o(foo(), bar()) will not be normalized.
+
+3. Function calls through function pointers are not supported. For example,
+   if foo() returns a function pointer one could write foo()(bar(), bar()).
+   However, foo() could have potential side effects.

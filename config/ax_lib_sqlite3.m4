@@ -151,4 +151,7 @@ AC_DEFUN([AX_LIB_SQLITE3],
             AC_DEFINE([HAVE_SQLITE3], [], [Have the SQLITE3 library])
         fi
     fi
+    AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE, [test "x$WANT_SQLITE3" = xyes])
+
+
 ])

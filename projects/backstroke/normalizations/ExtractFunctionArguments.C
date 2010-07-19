@@ -10,6 +10,23 @@ using namespace boost;
 /** Perform the function argument extraction on all function calls in the given subtree of the AST. */
 void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 {
+	//Check if there are any constructor calls whose arguments need to be normalized
+	//This is not supported by this normalization
+	Rose_STL_Container<SgNode*> constructorInitializers = NodeQuery::querySubTree(tree, V_SgConstructorInitializer);
+	foreach (SgNode* constructorNode, constructorInitializers)
+	{
+		SgConstructorInitializer* constructor = isSgConstructorInitializer(constructorNode);
+		if (FunctionArgsNeedNormalization(constructor->get_args()))
+		{
+			fprintf(stderr, "The function argument extraction normalization does not support extracting arguments from"
+					"\n constructors. Please rewrite the following constructor call on line %d in file %s:\n%s\n",
+					constructor->get_file_info()->get_line(),
+					constructor->get_file_info()->get_filename(),
+					constructor->unparseToString().c_str());
+			exit(1);
+		}
+	}
+
 	//Get all functions in function evaluation order
 	vector<FunctionCallInfo> functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
 
@@ -28,13 +45,19 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 {
 	SgFunctionCallExp* functionCall = functionCallInfo.functionCall;
 
+	if (SubtreeNeedsNormalization(functionCall->get_function()))
+	{
+		fprintf(stderr, "%s:%d: The following function call has potential side effects in the function reference expression:\n",
+				functionCall->get_file_info()->get_filename(), functionCall->get_file_info()->get_line());
+		fprintf(stderr, "\t%s\n", functionCall->unparseToString().c_str());
+		fprintf(stderr, "If you are using function pointers, save the function pointer first and then call the function on another line.\n");
+		exit(1);
+	}
+
 	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionArgs != NULL);
 
 	SgExpressionPtrList& argumentList = functionArgs->get_expressions();
-
-	printf("\nExtracting arguments from function call to function %s, location %d:%d\n", functionCall->get_function()->unparseToString().c_str(),
-			functionCall->get_file_info()->get_line(), functionCall->get_file_info()->get_col());
 
 	//Go over all the function arguments, pull them out
 	foreach (SgExpression* arg, argumentList)
@@ -43,8 +66,6 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		//thus don't have side effects
 		if (!FunctionArgumentNeedsNormalization(arg))
 			continue;
-
-		printf("Found %s, of return type %s.\n", arg->class_name().c_str(), arg->get_type()->unparseToCompleteString().c_str());
 
 		//Build a declaration for the temporary variable
 		SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
@@ -84,17 +105,14 @@ bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* 
 
 /** Returns true if any of the arguments of the given function call will need to
  * be extracted. */
-bool ExtractFunctionArguments::FunctionCallNeedsNormalization(SgFunctionCallExp* functionCall)
+bool ExtractFunctionArguments::FunctionArgsNeedNormalization(SgExprListExp* functionArgs)
 {
-	ROSE_ASSERT(functionCall != NULL);
-	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionArgs != NULL);
 	SgExpressionPtrList& argumentList = functionArgs->get_expressions();
 
-	for (SgExpressionPtrList::const_iterator argIter = argumentList.begin();
-			argIter != argumentList.end(); argIter++)
+	foreach(SgExpression* functionArgument, argumentList)
 	{
-		if (FunctionArgumentNeedsNormalization(*argIter))
+		if (FunctionArgumentNeedsNormalization(functionArgument))
 			return true;
 	}
 	return false;

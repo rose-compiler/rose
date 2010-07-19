@@ -954,7 +954,6 @@ ROSE_SUPPORT_MYSQL
 AM_CONDITIONAL(ROSE_USE_MYSQL_DATABASE,[test "x$MYSQL_VERSION" != "x"])
 
 # Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,[test "x$SQLITE3_VERSION" != "x"])
 
 # DQ (9/21/2009): Debugging for RH release 5
 echo "Testing the value of CC: (CC = $CC)"
@@ -1037,6 +1036,11 @@ AC_SUBST(TEST_SMT_SOLVER)
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
+
+#ASR
+ROSE_SUPPORT_LLVM
+
+AM_CONDITIONAL(ROSE_USE_LLVM,test ! "$with_llvm" = no)
 
 #TPS (03/13/08) introduced optional DB support for binary work
 HASH_ROSE_BINARY_SQL
@@ -2112,6 +2116,7 @@ src/midend/programAnalysis/CFG/Makefile
 src/midend/programAnalysis/dataflowAnalysis/Makefile
 src/midend/programAnalysis/pointerAnal/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
+src/midend/programAnalysis/variableRenaming/Makefile
 src/midend/programAnalysis/defUseAnalysis/Makefile
 src/midend/programAnalysis/dominanceAnalysis/Makefile
 src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
@@ -2243,7 +2248,6 @@ projects/binaryVisualization/Makefile
 projects/highLevelGrammars/Makefile
 projects/BabelPreprocessor/Makefile
 projects/checkPointExample/Makefile
-projects/simpleCallGraphAnalysis/Makefile
 projects/CloneDetection/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
@@ -2302,16 +2306,20 @@ projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/reverseComputation/stateSaving/Makefile
-projects/backstroke/reverseComputation/normalization/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
+projects/backstroke/tests/Makefile
+projects/backstroke/tests/expNormalizationTest/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
 projects/simulator/Makefile
+projects/roseToLLVM/Makefile
+projects/roseToLLVM/src/Makefile
+projects/roseToLLVM/src/rosetollvm/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile

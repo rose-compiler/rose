@@ -94,7 +94,7 @@ private:
 
 	/** Returns true if any of the arguments of the given function call will need to
 	  * be extracted. */
-	bool FunctionCallNeedsNormalization(SgFunctionCallExp* functionCall);
+	bool FunctionArgsNeedNormalization(SgExprListExp* functionArgs);
 
 	/** Returns true if any function calls in the given subtree will need to be
 	  * instrumented. (to extract function arguments). */

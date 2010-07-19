@@ -10,7 +10,10 @@ fi
 # Check if any tar.gz files for Mac OS exist
 # The reason is that the 32-bit and 64-bit binaries are controlled by Hudson and they can be reliably generated
 # we use the signature of the latest 64-bit binary to check Mac OS binary
-cd /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/
+cd /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/
+# fix any possible file permission problem
+chmod a+r *.tar.gz || echo "don't care"
+
 ls -ct roseBinaryEDG*-x86_64-pc-linux-gnu-GNU-4.4-*.tar.gz &>/tmp/.tttedg123
 # we have two more fields for EDG major and minor version
 EDG_SIGNATURE_SUFFIX=`head -1 /tmp/.tttedg123 | cut -f 10 -d'-'`
@@ -25,16 +28,16 @@ if [ $? -ne 0  ]; then
 fi
 
 # This script will check each tar.gz file 
-# from /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/
+# from /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/
 # to make sure there is no EDG proprietary information there
 # Please call it before publish those EDG binary files
 #
 # this is too expensive as the number of binary files increase!!!
 # So we only check the files modified within the last 7 days.
-rm -rf /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/testplace
-mkdir -p /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/testplace
-cd /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/testplace
-TAR_GZ_FILE=($(find /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/ -ctime -7 -name \*.tar.gz))
+rm -rf /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/testplace
+mkdir -p /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/testplace
+cd /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/testplace
+TAR_GZ_FILE=($(find /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/ -ctime -7 -name \*.tar.gz))
 FILE_COUNT=${#TAR_GZ_FILE[@]}
 for (( i=0; i<${FILE_COUNT}; i++ ));
 do

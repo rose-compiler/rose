@@ -62,7 +62,7 @@ void validateName(string& name, SgNode* root)
         {
             name += "_";
             validateName(name, root);
-            break;
+            return;
         }
     }
 }
