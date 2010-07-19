@@ -42,6 +42,10 @@ ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
 				}
 			}
 
+			string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
+			printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
+					expression->unparseToString().c_str(), reverseExpString.c_str());
+
 			return ExpPair(SageInterface::copyExpression(assignOp), reverseExpression);
 		}
 	}
@@ -50,15 +54,16 @@ ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
 }
 
 
-bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, std::vector<SgExpression*> reverseExpressions)
+bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, std::vector<SgExpression*>& reverseExpressions)
 {
 	ROSE_ASSERT(assignOp != NULL);
 	ROSE_ASSERT(reverseExpressions.empty());
 	
 	//Get the variable on the left side of the assign op
-	VariableRenaming::varName destroyedVarName = variableRenamingAnalysis.getVarName(assignOp->get_lhs_operand());
+	VariableRenaming::varName destroyedVarName;
+	SgExpression* destroyedVarExpression;
+	tie(destroyedVarName, destroyedVarExpression) = getReferredVariable(assignOp->get_lhs_operand());
 	ROSE_ASSERT(destroyedVarName != VariableRenaming::emptyName);
-
 
 	printf("\nGetting reaching definition for variable '%s' at line %d.\n", variableRenamingAnalysis.keyToString(destroyedVarName).c_str(),
 			assignOp->get_file_info()->get_line());
@@ -93,7 +98,7 @@ bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, std::vector
 	}*/
 
 	//Try the redefine technique
-	if (useReachingDefinition(destroyedVarName, defNode, reverseExpressions))
+	if (useReachingDefinition(destroyedVarName, destroyedVarExpression, assignOp->get_rhs_operand(), defNode, reverseExpressions))
 	{
 		return true;
 	}
@@ -110,7 +115,8 @@ bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, std::vector
  * @param reverseExpressions expressions that should be executed to restore the value of the variable
  * @return  true on success, false on failure
  */
-bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::varName destroyedVarName, SgNode* reachingDefinition, std::vector<SgExpression*> reverseExpressions)
+bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::varName destroyedVarName, SgExpression* destroyedVarExp,
+		SgNode* destroySite, SgNode* reachingDefinition, std::vector<SgExpression*>& reverseExpressions)
 {
 	ROSE_ASSERT(reverseExpressions.empty());
 
@@ -143,7 +149,7 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::varName 
 	}
 	else
 	{
-		//Todo: Handle other types of reaching definitions?
+		//Todo: Handle other types of reaching definitions, in addition to initialized name and assign op?
 		return false;
 	}
 
@@ -161,11 +167,28 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::varName 
 
 	//Go through all the variables used in the definition expression and check if their values have changed since the def
 	pair<VariableRenaming::varName, VariableRenaming::numNodeRenameEntry> nameDefinitionPair;
+	bool variableModified = false;
 	foreach (nameDefinitionPair, variablesInDefExpression)
 	{
-		//
+		VariableRenaming::numNodeRenameEntry varVersionAtDefinition = nameDefinitionPair.second;
+		VariableRenaming::numNodeRenameEntry varVersionAtDestroySite = variableRenamingAnalysis.getReachingDefsAtNodeForName(destroySite, nameDefinitionPair.first);
+
+		if (varVersionAtDefinition != varVersionAtDestroySite)
+		{
+			//Todo: use recusion here to possibly restore the modified variable
+			variableModified = true;
+		}
 	}
-	
+
+	if (variableModified)
+	{
+		return false;
+	}
+
+	//Ok, all we need to do is re-execute the original initializer
+	reverseExpressions.push_back(SageBuilder::buildAssignOp(destroyedVarExp, SageInterface::copyExpression(definitionExpression)));
+
+	return true;
 }
 
 /** Returns true if an expression calls any functions or modifies any variables. */
@@ -185,6 +208,20 @@ bool CFGReverserProofofConcept::isModifyingExpression(SgExpression* expr)
 	}
 
 	return false;
+}
+
+
+/** Returns the variable name referred by the expression. Also returns
+ *  the AST expression for referring to that variable (using the variable renaming analysis).
+  * Handles comma ops correctly. */
+pair<VariableRenaming::varName, SgExpression*> CFGReverserProofofConcept::getReferredVariable(SgExpression* exp)
+{
+	if (SgCommaOpExp* commaOp = isSgCommaOpExp(exp))
+	{
+		return getReferredVariable(commaOp->get_rhs_operand());
+	}
+
+	return pair<VariableRenaming::varName, SgExpression*>(variableRenamingAnalysis.getVarName(exp), exp);
 }
 
 
