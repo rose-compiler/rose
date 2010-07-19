@@ -778,7 +778,6 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
          }
      }
      
-     // Same thing for SgConstructorInitializers. Optimize this (maybe use filter function for query)
      VariantVector vv2(V_SgConstructorInitializer);
      Rose_STL_Container<SgNode*> returnsite2 = NodeQuery::queryMemoryPool(vv2);
      Rose_STL_Container<SgNode*>::iterator site2;
@@ -818,7 +817,6 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
          }
      }
 
-     // Same thing for SgConstructorInitializers. Optimize this (maybe use filter function for query)
      VariantVector vv2(V_SgConstructorInitializer);
      Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
      Rose_STL_Container<SgNode*>::iterator caller2;
