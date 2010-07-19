@@ -214,16 +214,18 @@ It does, however, support \lstinline{break}, \lstinline{continue},
 
 \subsection{Interprocedural control flow analysis}
 
-A limited form of interprocedural control flow analysis is supported.  That
-feature is enabled with a global variable named
-\lstinline{interproceduralControlFlowGraph}.  Setting that variable to
-\lstinline{true} changes the out edges of function calls and the in edges
-of nodes just after function calls when the function references are known.
-Although this causes interprocedural behavior, it also leads to a mismatch
-between the in and out edges between certain pairs of nodes.  Solving this
-problem would require a precomputed call graph for the program, which
-defeats the goal of not requiring any precomputed or cached information to
-traverse the control flow graph.
+Interprocedural control flow analysis is disabled by default, but can be enabled
+by setting the parameter \lstinline{interprocedural} in CFGEdge generation
+methods. Interprocedural edges are labeled with the \lstinline{eckInterprocedural}
+EdgeConditionKind.
+
+In cases where the flow of control cannot be determined statically (calls of virtual
+functions, function pointers, or functors), the interprocedural control flow
+graph contains all possible options. In keeping with the `virtual' nature of
+ROSE's control flow graphs, the set of options is computed on-the-fly;
+therefore, changes to the AST will be reflected in subsequent interaction with
+the control flow graph.  
+
 
 \section{Node filtering}
 
