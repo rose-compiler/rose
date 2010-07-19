@@ -2187,6 +2187,7 @@ sub do_pull {
 
 # Prints some info that's useful for debugging
 sub do_debug {
+  print "Debugging information from $arg0:\n";
   print "cwd=", cwd(), "\n";
   execute sub {
     git "--version";
