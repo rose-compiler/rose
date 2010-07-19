@@ -28,7 +28,7 @@ namespace VirtualCFG {
 #ifndef _MSC_VER 
     assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
 #endif
-    //assert (node && index <= node->cfgIndexForEnd());
+    assert (node && index <= node->cfgIndexForEnd());
   }
 
   string CFGNode::toString() const {
