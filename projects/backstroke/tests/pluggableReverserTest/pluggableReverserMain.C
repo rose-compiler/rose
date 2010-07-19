@@ -9,6 +9,10 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <string>
+
+//#include <VariableRenaming.h>
+
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -130,7 +134,13 @@ int main(int argc, char * argv[])
     vector<string> args(argv, argv+argc);
     SgProject* project = frontend(args);
 
-    ProcessorPool processor;
+
+    //VariableRenaming var_renaming(project);
+    //var_renaming.run();
+    //var_renaming.toDot("temp.dot");
+
+
+    ProcessorPool processor; 
 
     SgGlobal* global = getFirstGlobalScope(project);
 

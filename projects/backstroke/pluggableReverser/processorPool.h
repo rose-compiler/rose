@@ -12,31 +12,30 @@
 
 using namespace boost;
 
-typedef boost::function<ExpPair(SgExpression*)> ExpHandler;
-typedef boost::function<std::vector<StmtPair>(SgStatement*)> StmtHandler;
+typedef boost::function<ExpPairs(SgExpression*)> ExpHandler;
+typedef boost::function<StmtPairs(SgStatement*)> StmtHandler;
 typedef std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> FuncDeclPair;
 
 typedef singleton_default<std::vector<ExpHandler> > ExpHandlersPool;
 typedef singleton_default<std::vector<StmtHandler> > StmtHandlersPool;
 
-inline std::vector<ExpPair> processExpression(SgExpression* exp)
+inline ExpPairs processExpression(SgExpression* exp)
 {
-    std::vector<ExpPair> outputs;
+    ExpPairs outputs;
     foreach (ExpHandler handler, ExpHandlersPool::instance())
     {
-        ExpPair result = handler(exp);
-        if (result != NULL_EXP_PAIR)
-            outputs.push_back(handler(exp));
+        ExpPairs result = handler(exp);
+        outputs.insert(outputs.end(), result.begin(), result.end());
     }
     return outputs;
 }
 
-inline std::vector<StmtPair> processStatement(SgStatement* stmt)
+inline StmtPairs processStatement(SgStatement* stmt)
 {
-    std::vector<StmtPair> outputs;
+    StmtPairs outputs;
     foreach (StmtHandler handler, StmtHandlersPool::instance())
     {
-        std::vector<StmtPair> stmt_pairs = handler(stmt);
+        StmtPairs stmt_pairs = handler(stmt);
         outputs.insert(outputs.end(), stmt_pairs.begin(), stmt_pairs.end());
     }
     return outputs;
