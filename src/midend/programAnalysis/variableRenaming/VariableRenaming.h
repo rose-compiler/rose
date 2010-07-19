@@ -501,7 +501,7 @@ public:
      * @param node The defining node to get the renumbering at.
      * @return The number of var @ node, or -1 if node does not define var.
      */
-    int getRenameNumberForNode(const varName& var, SgNode* node);
+    int getRenameNumberForNode(const varName& var, SgNode* node) const;
 
     /** Get the node that defines the given number of the given variable.
      *
@@ -513,7 +513,7 @@ public:
      * @param num The renumbering of the defining node to get.
      * @return The defining node of var:num, or NULL if the renumbering does not exist.
      */
-    SgNode* getNodeForRenameNumber(const varName& var, int num);
+    SgNode* getNodeForRenameNumber(const varName& var, int num) const;
 
     /** Get the number of the last rename of the given variable.
      *
@@ -523,7 +523,7 @@ public:
      * @param var The variable to get the last renaming for.
      * @return The highest renaming number, or -1 if var is not renamed.
      */
-    int getMaxRenameNumberForName(const varName& var);
+    int getMaxRenameNumberForName(const varName& var) const;
 
 
 
@@ -552,7 +552,7 @@ public:
      * @param num The revision of the variable to find.
      * @return A vector containing the usage nodes of the variable. Empty vector otherwise.
      */
-    template<typename T> inline std::vector<T*> getAllUsesForDef(const varName& var, int num) const
+    template<typename T> inline std::vector<T*> getAllUsesForDef(const varName& var, int num)
     {
         nodeVec vec = getAllUsesForDef(var, num);
         std::vector<T*> res;
@@ -673,7 +673,12 @@ public:
      */
     numNodeRenameEntry getExpandedDefsAtNodeForName(SgNode* node, const varName& var);
 
-
+    /** Get all definitions for the subtree rooted at this node.
+     *
+     * @param node The root of the subtree to get definitions for.
+     * @return The table mapping VarName->(num, node) for every definition.
+     */
+    numNodeRenameTable getDefsForSubTree(SgNode* node);
 
 
 
