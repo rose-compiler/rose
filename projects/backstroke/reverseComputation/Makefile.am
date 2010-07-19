@@ -11,7 +11,7 @@ noinst_LTLIBRARIES =  libBackstrokeReverser.la
 libBackstrokeReverser_ladir = .
 libBackstrokeReverser_la_DEPENDENCIES = 
 libBackstrokeReverser_la_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C utilities.C
-libBackstrokeReverser_la_HEADERS = eventReverser.h facilityBuilder.h utilities.h
+include_HEADERS = eventReverser.h facilityBuilder.h utilities.h
 libBackstrokeReverser_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the reverse code generator
@@ -24,8 +24,6 @@ reverse_LDADD =  libBackstrokeReverser.la
 EXTRA_DIST = test
 
 CLEANFILES = 
-
-include_HEADERS =
 
 ALL_TESTCODES =
 

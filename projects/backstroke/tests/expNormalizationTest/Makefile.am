@@ -20,7 +20,7 @@ TEST_Objects=test_norm.C
 
 $(TEST_Objects):expNormTest 
 	@cp $(srcdir)/$(@:.o=.C) $(@:.o=.C)
-	./norm -c $(@:.o=.C)      		
+	./expNormTest -c $(@:.o=.C)      		
 
 check-local:
 	@echo "*********************************************************************************************************"

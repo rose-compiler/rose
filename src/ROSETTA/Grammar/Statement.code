@@ -7199,13 +7199,14 @@ bool
 SgForStatement::replace_child(SgStatement *target,SgStatement *newstmt,
                               bool extractBasicBlock)
    {
-     if ( StatementReplace(this, p_loop_body, target, newstmt) == true )
-          return true;
-       else
-          if ( StatementReplace(this, p_for_init_stmt, target, newstmt) == true )
-               return true;
-            else 
-               return false;
+       if ( StatementReplace(this, p_loop_body, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_for_init_stmt, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_test, target, newstmt) == true )
+           return true;
+       else 
+           return false;
    }
 
 // DQ (11/25/2005): preserve the previous interface so that
@@ -7785,6 +7786,8 @@ SgFunctionDeclaration::get_mangled_name() const
 
      ROSE_ASSERT(this != NULL);
 
+  // printf ("In SgFunctionDeclaration::get_mangled_name() for this = %p \n",this);
+
 #if 0
 #if SKIP_MANGLED_NAME_CACHING
   // Compute a mangled name from this function's type
@@ -7874,11 +7877,22 @@ SgFunctionDeclaration::get_mangled_name() const
      if (mangledNameString.empty() == false)
         {
        // return i->second.c_str();
+       // printf ("RETURN FROM CACHE: Inside of SgFunctionDeclaration::get_mangled_name(): mangledNameString = %s \n",mangledNameString.c_str());
           return mangledNameString;
         }
        else
         {
           SgName mangledName;
+
+       // DQ (6/23/2010): Added support to maintain seperate "main()" functions as unique (to avoid them being merged).
+          if (this->get_name() == "main")
+             {
+            // Append the pointer to the name to make this unique to avoid multiple function "main()" from being merged.
+               mangledName = "main_";
+               mangledName += StringUtility::numberToString(const_cast<SgFunctionDeclaration*>(this));
+            // printf ("RETURN FROM DETECTED MAIN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+               return mangledName;
+             }
 
        // Compute a mangled name from this function's type
           SgName type_name;
@@ -7909,12 +7923,34 @@ SgFunctionDeclaration::get_mangled_name() const
        // Compute the final mangled name.
           mangledName = joinMangledQualifiers (scope_name, xlation_unit_qual + func_name + "__" + type_name);
 
-       // p_globalMangledNameMap[function] = mangledName;
+       // DQ (6/22/2010): Better to use the function name with the paraleter list in the mangled name.  This helps disambiguate
+       // code such as:
+       //    typedef struct Domain_s { } Domain_t;
+       //    int foo ( Domain_s *domain);
+       //    int foo ( Domain_t *domain);
+       // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#if 1
+       // printf ("TEMP: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
+       // printf ("TEMP RETURN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+
+       // This results in infinite recursion in the evaluation.
+          SgFunctionParameterList* parameterList = this->get_parameterList();
+          ROSE_ASSERT(parameterList != NULL);
+          SgName mangledParameterList = parameterList->get_mangled_name();
+          mangledName += "__" + mangledParameterList;
+       // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): after adding parameter list mangledName = %s \n",mangledName.str());
+#endif
+
+       // Reset the mangled name in the map.
+       // p_globalMangledNameMap[function] = mangledName;
+          SgNode::get_globalMangledNameMap()[const_cast<SgFunctionDeclaration*>(this)] = mangledName;
+
           return mangledName;
         }
 #endif
    }
+
 
 #if 0
 // Old code
@@ -8284,12 +8320,24 @@ SgFunctionParameterList::get_mangled_name(void) const
                p++;
              }
 
+       // DQ (6/22/2010): Better to use the function name instead of the scopes mangled name.  This helps disambiguate
+       // code such as:
+       //    typedef struct Domain_s { } Domain_t;
+       //    int foo ( Domain_s *domain);
+       //    int foo ( Domain_t *domain);
        // DQ (2/22/2007): Use mangled name support in scopes instead of the qualified name (to avoid "::" substrings in mangled names).
        // This is a poor way to handle the generation of a mangled name (will be improved)
           SgName mangledName = get_scope()->get_mangled_name() + SgName("_function_parameter_list_") + variableNames;
+       // SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(get_parent());
+       // ROSE_ASSERT(functionDeclaration != NULL);
+       // SgName mangledName = functionDeclaration->get_mangled_name() + SgName("_function_parameter_list_") + variableNames;
+
+       // printf ("Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionParameterList*>(this),mangledName);
+       // printf ("RETURN: Inside of SgFunctionParameterList::get_mangled_name(void): mangledName = %s \n",mangledName.str());
+
           return mangledName;
         }
 #endif
@@ -9958,8 +10006,26 @@ SgClassDeclaration::get_mangled_name (void) const
         }
        else
         {
-          SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());;
+          SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());
+#if 0
+       // DQ (6/23/2010): Added support to make classes with the same name different when they are
+       // different classes containing different members.
+          SgName memberNames = "_class_members_";
+          if (get_definition() != NULL)
+             {
+               SgDeclarationStatementPtrList::const_iterator p = get_definition()->get_members().begin();
+               while ( p != get_definition()->get_members().end() )
+                  {
+                 // DQ (2/22/2007): Added type to generated mangled name for each variable (supports AST merge generation of name for un-named classes)
+                 // memberNames += SgName("_member_type_") + (*p)->get_type()->get_mangled() + SgName("_member_name_") + (*p)->get_mangled_name();
+                    memberNames += SgName("_member_name_") + SageInterface::get_name(*p);
 
+                    p++;
+                  }
+             }
+
+          mangledName += memberNames;
+#endif
        // p_globalMangledNameMap[classDeclaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgClassDeclaration*>(this),mangledName);
           return mangledName;
@@ -11061,7 +11127,12 @@ bool
 SgSwitchStatement::replace_child(SgStatement *target,SgStatement *newstmt,
                               bool extractBasicBlock)
    {
-     return ( StatementReplace(this, p_body, target, newstmt) == true );
+
+     if ( StatementReplace(this, p_body, target, newstmt) )
+         return true;
+     if ( StatementReplace(this, p_item_selector, target, newstmt) )
+         return true;
+     return false;
    }
 
 #include "sageBuilder.h"
