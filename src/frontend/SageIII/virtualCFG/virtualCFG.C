@@ -26,7 +26,7 @@ namespace VirtualCFG {
 #ifndef _MSC_VER 
     assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
 #endif
-    assert (node && index <= node->cfgIndexForEnd());
+    //assert (node && index <= node->cfgIndexForEnd());
   }
 
   string CFGNode::toString() const {
@@ -133,6 +133,8 @@ namespace VirtualCFG {
       s << ")";
       anyNonEmpty = true;
     }
+#if 0
+    // MD 2010-07-19 This analysis should be disabled by default
     vector<SgInitializedName*> exitingScopes = scopesBeingExited();
     vector<SgInitializedName*> enteringScopes = scopesBeingEntered();
     if (!exitingScopes.empty()) {
@@ -155,6 +157,7 @@ namespace VirtualCFG {
       s << ")";
       anyNonEmpty = true;
     }
+#endif
     return s.str();
   }
 
