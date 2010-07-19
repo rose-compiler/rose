@@ -1,6 +1,4 @@
-#include "processorPool.h"
-#include "storage.h"
-#include "expressionHandler.h"
+#include "expressionProcessor.h"
 #include "utilities/Utilities.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
 
@@ -8,7 +6,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace backstroke_util;
 
-ExpPairs storeAndRestore(SgExpression* exp)
+ExpPairs StoreAndRestoreExpressionProcessor::process(SgExpression* exp)
 {
     ExpPairs output;
 
@@ -25,11 +23,11 @@ ExpPairs storeAndRestore(SgExpression* exp)
         if (!(operand->get_type()->isIntegerType()))
         {
             SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    pushVal(operand, operand->get_type(), exp),
+                    pushVal(operand, operand->get_type()),
                     copyExpression(exp));
             SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                     copyExpression(operand),
-                    popVal(operand->get_type(), exp));
+                    popVal(operand->get_type()));
             output.push_back(ExpPair(fwd_exp, rvs_exp));
         }
     }
@@ -38,11 +36,11 @@ ExpPairs storeAndRestore(SgExpression* exp)
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(lhs_operand, lhs_operand->get_type(), exp),
+                pushVal(lhs_operand, lhs_operand->get_type()),
                 copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(lhs_operand),
-                popVal(lhs_operand->get_type(), exp));
+                popVal(lhs_operand->get_type()));
         output.push_back(ExpPair(fwd_exp, rvs_exp));
     }
 
@@ -51,7 +49,7 @@ ExpPairs storeAndRestore(SgExpression* exp)
     return output;
 }
 
-ExpPairs processConstructiveExp(SgExpression* exp)
+ExpPairs ConstructiveExpressionProcessor::process(SgExpression* exp)
 {
     ExpPairs output;
 
@@ -150,9 +148,8 @@ ExpPairs processConstructiveExp(SgExpression* exp)
 }
 
 
-// This function deals with assignment like a = b + c + a,
-// which is still constructive.
-ExpPairs processConstructiveAssignment(SgExpression* exp)
+// This function deals with assignment like a = b + c + a, which is still constructive.
+ExpPairs ConstructiveAssignmentProcessor::process(SgExpression* exp)
 {
     ExpPairs output;
 
