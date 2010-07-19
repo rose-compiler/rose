@@ -3607,7 +3607,7 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx, boo
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 1: {
-                if (false && interprocedural) {
+                if (interprocedural) {
                   SgFunctionDeclaration* decl = get_declaration();
                   if (decl != NULL) {
                     SgFunctionDefinition* def = decl->get_definition();
@@ -3632,7 +3632,7 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
       case 1: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 2: {
-                if (false && interprocedural) {
+                if (interprocedural) {
                   SgFunctionDeclaration* decl = get_declaration();
                   if (decl != NULL) {
                     SgFunctionDefinition* def = decl->get_definition();
