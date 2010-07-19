@@ -133,6 +133,8 @@ namespace VirtualCFG {
       s << ")";
       anyNonEmpty = true;
     }
+#if 0
+    // MD 2010-07-19 This analysis should be disabled by default
     vector<SgInitializedName*> exitingScopes = scopesBeingExited();
     vector<SgInitializedName*> enteringScopes = scopesBeingEntered();
     if (!exitingScopes.empty()) {
@@ -155,6 +157,7 @@ namespace VirtualCFG {
       s << ")";
       anyNonEmpty = true;
     }
+#endif
     return s.str();
   }
 
