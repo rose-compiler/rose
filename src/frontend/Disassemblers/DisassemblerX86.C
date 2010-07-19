@@ -189,9 +189,14 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 #if 0
         /* Use the most robust semantic analysis available.  Warning: this can be very slow, especially when an SMT solver is
          * involved! */
-# ifdef YICES
-        YicesSolver x;
-        SMTSolver *solver = &x;
+# if defined(YICES) || defined(HAVE_LIBYICES)
+        YicesSolver yices;
+        if (yices.available_linkage() & YicesSolver::LM_LIBRARY) {
+            yices.set_linkage(YicesSolver::LM_LIBRARY);
+        } else {
+            yices.set_linkage(YicesSolver::LM_EXECUTABLE);
+        }
+        SMTSolver *solver = &yices;
 # else
         SMTSolver *solver = NULL;
 # endif
