@@ -2426,7 +2426,7 @@ VariableRenaming::numNodeRenameEntry VariableRenaming::getExpandedDefsAtNodeForN
     return res;
 }
 
-VariableRenaming::numNodeRenameTable VariableRenaming::getDefsForSubTree(SgNode* node)
+VariableRenaming::numNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode* node)
 {
     class DefSearchTraversal : public AstSimpleProcessing
      {
