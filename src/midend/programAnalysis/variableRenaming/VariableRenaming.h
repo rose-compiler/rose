@@ -678,7 +678,7 @@ public:
      * @param node The root of the subtree to get definitions for.
      * @return The table mapping VarName->(num, node) for every definition.
      */
-    numNodeRenameTable getDefsForSubTree(SgNode* node);
+    numNodeRenameTable getDefsForSubtree(SgNode* node);
 
 
 
