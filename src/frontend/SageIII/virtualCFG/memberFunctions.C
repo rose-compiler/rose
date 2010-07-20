@@ -3093,7 +3093,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 2: {
                 if (interprocedural) {
                   Rose_STL_Container<SgFunctionDefinition*> defs;
-                  CallTargetSet::getFunctionDefinitionsForCallExp(this, defs);
+                  CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
                   Rose_STL_Container<SgFunctionDefinition*>::iterator def;
                   for (def = defs.begin(); def != defs.end(); ++def) 
                     makeEdge(CFGNode(this, idx), (*def)->cfgForBeginning(), result);
@@ -3119,7 +3119,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 3: {
                 if (interprocedural) {
                   Rose_STL_Container<SgFunctionDefinition*> defs;
-                  CallTargetSet::getFunctionDefinitionsForCallExp(this, defs);
+                  CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
                   Rose_STL_Container<SgFunctionDefinition*>::iterator def;
                   for (def = defs.begin(); def != defs.end(); ++def) 
                     makeEdge((*def)->cfgForEnd(), CFGNode(this, idx), result);
