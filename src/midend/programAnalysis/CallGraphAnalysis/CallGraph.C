@@ -686,6 +686,69 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
   return functionList; 
 }
 
+void 
+CallTargetSet::getCallExpsForFunctionDefinition(SgFunctionDefinition* def, 
+                                      Rose_STL_Container<SgFunctionCallExp*>& calls) {
+#if 0
+     SgFunctionType* targetType = def->get_declaration()->get_type();
+     
+     VariantVector vv(V_SgFunctionCallExp);
+     Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
+     Rose_STL_Container<SgNode*>::iterator site;
+     for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
+       SgFunctionCallExp* callexp = isSgFunctionCallExp(*site);
+       SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
+
+       if (decl == NULL) { // function pointer. match types
+         SgExpression* candidate = callexp->get_function();
+         SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
+         //if (targetType == candidateType)
+           //makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
+       } 
+       else {
+         SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+         if (defDecl == NULL) { // virtual function. use class heirarchy
+           std::cerr << "funCallExp not implemented for virtual functions" << std::endl;
+         }
+         else { // statically resolved function. use get_definition
+           //makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
+         }
+       }
+     }
+#endif
+}
+
+void 
+CallTargetSet::getFunctionDefinitionsForCallExp(SgFunctionCallExp* call, 
+                                      Rose_STL_Container<SgFunctionDefinition*>& defs) {
+#if 0
+  SgFunctionType* targetType = get_declaration()->get_type();
+  VariantVector vv(V_SgFunctionCallExp);
+  Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
+  Rose_STL_Container<SgNode*>::iterator caller;
+  for (caller = callExprs.begin(); caller != callExprs.end(); ++caller) {
+    SgFunctionCallExp* callexp = isSgFunctionCallExp(*caller);
+    SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
+
+    if (decl == NULL) { // function pointer. match types
+      SgExpression* candidate = callexp->get_function();
+      SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
+      if (targetType == candidateType)
+        makeEdge(CFGNode(this, idx), (*caller)->cfgForEnd(), result);
+    } 
+    else {
+      SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+      if (defDecl == NULL) { // virtual function. use class heirarchy
+        std::cerr << "funCallExp not implemented for virtual functions" << std::endl;
+      }
+      else { // statically resolved function. use get_definition
+        makeEdge((*caller)->cfgForEnd(), CFGNode(this, idx), result);
+      }
+    }
+  }
+#endif
+}
+
 // Add the declaration for functionCallExp to functionList. In the case of 
 // function pointers and virtual functions, append the set of declarations
 // to functionList. 
