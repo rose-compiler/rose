@@ -768,25 +768,13 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
-     if (! interprocedural) break;
-
+     if (! interprocedural) 
+       break;
      Rose_STL_Container<SgFunctionCallExp*> calls;
      CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgFunctionCallExp*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
        makeEdge(CFGNode(this, idx), CFGNode(*call, 3), result);
-
-#if 0     
-     VariantVector vv2(V_SgConstructorInitializer);
-     Rose_STL_Container<SgNode*> returnsite2 = NodeQuery::queryMemoryPool(vv2);
-     Rose_STL_Container<SgNode*>::iterator site2;
-     for (site2 = returnsite2.begin(); site2 != returnsite2.end(); ++site2) { 
-         SgConstructorInitializer* candidate = isSgConstructorInitializer(*site2);
-         SgFunctionType* candidateType = isSgFunctionType(candidate->get_expression_type());
-         if (targetType == candidateType)
-           makeEdge(CFGNode(this, idx), (*site2)->cfgForEnd(), result);
-     }
-#endif
      break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
@@ -800,24 +788,13 @@ SgFunctionDefinition::cfgInEdges(unsigned int idx, bool interprocedural) {
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: {
-     if (! interprocedural) break;
-
+     if (! interprocedural) 
+       break;
      Rose_STL_Container<SgFunctionCallExp*> calls;
      CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgFunctionCallExp*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
        makeEdge(CFGNode(*call, 2), CFGNode(this, idx), result);
-
-#if 0
-     VariantVector vv2(V_SgConstructorInitializer);     Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
-     Rose_STL_Container<SgNode*>::iterator caller2;
-     for (caller2 = callers2.begin(); caller2 != callers2.end(); ++caller2) { 
-         SgConstructorInitializer* candidate = isSgConstructorInitializer(*caller2);
-         SgFunctionType* candidateType = isSgFunctionType(candidate->get_expression_type());
-         if (targetType == candidateType)
-           makeEdge((*caller2)->cfgForEnd(), CFGNode(this, idx), result);
-     }
-#endif
      break;
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
