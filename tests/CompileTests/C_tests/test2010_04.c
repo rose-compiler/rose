@@ -19,16 +19,16 @@
    Thus EDG catches the problem, and GNU gcc does not.
  */
 
-static unsigned int
-hash (str, len)
-register char *str;
-register unsigned int len;
-{
-}
+static unsigned int hash (str, len)
+   register char *str;
+   register unsigned int len;
+   {
+   }
+
 inline int
 test()
-{
-        register char* str;
-        register int len;
-        hash(str, len);
-}
+   {
+     register char* str;
+     register int len;
+     hash(str, len);
+   }
