@@ -689,16 +689,22 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 void 
 CallTargetSet::getCallExpsForFunctionDefinition(SgFunctionDefinition* def, 
                                       Rose_STL_Container<SgFunctionCallExp*>& calls) {
+  VariantVector vv(V_SgFunctionCallExp);
+  Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
+  Rose_STL_Container<SgNode*>::iterator site;
+  for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
+    SgFunctionCallExp* callexp = isSgFunctionCallExp(*site);
+    SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
+    if (decl == NULL) continue;
+    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+    if (defDecl == NULL) continue;
+    SgFunctionDefinition* candidateDef = defDecl->get_definition();
+    if (candidateDef == def) calls.push_back(callexp);
+  }
+
 #if 0
      SgFunctionType* targetType = def->get_declaration()->get_type();
      
-     VariantVector vv(V_SgFunctionCallExp);
-     Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
-     Rose_STL_Container<SgNode*>::iterator site;
-     for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
-       SgFunctionCallExp* callexp = isSgFunctionCallExp(*site);
-       SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
-
        if (decl == NULL) { // function pointer. match types
          SgExpression* candidate = callexp->get_function();
          SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
@@ -721,54 +727,37 @@ CallTargetSet::getCallExpsForFunctionDefinition(SgFunctionDefinition* def,
 void 
 CallTargetSet::getFunctionDefinitionsForCallExp(SgFunctionCallExp* call, 
                                       Rose_STL_Container<SgFunctionDefinition*>& defs) {
+  
+    SgFunctionDeclaration* decl = call->getAssociatedFunctionDeclaration();
+    if (decl == NULL) return;
+    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+    if (defDecl == NULL) return;
+    SgFunctionDefinition* candidateDef = defDecl->get_definition();
+    if (candidateDef != NULL) defs.push_back(candidateDef);
+
 #if 0
-  SgFunctionType* targetType = get_declaration()->get_type();
-  VariantVector vv(V_SgFunctionCallExp);
-  Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
-  Rose_STL_Container<SgNode*>::iterator caller;
-  for (caller = callExprs.begin(); caller != callExprs.end(); ++caller) {
-    SgFunctionCallExp* callexp = isSgFunctionCallExp(*caller);
-    SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
-
-    if (decl == NULL) { // function pointer. match types
-      SgExpression* candidate = callexp->get_function();
-      SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
-      if (targetType == candidateType)
-        makeEdge(CFGNode(this, idx), (*caller)->cfgForEnd(), result);
-    } 
-    else {
-      SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-      if (defDecl == NULL) { // virtual function. use class heirarchy
-        std::cerr << "funCallExp not implemented for virtual functions" << std::endl;
+    ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+    Rose_STL_Container<Properties*> functionList;
+    CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
+    Rose_STL_Container<Properties*>::iterator prop;
+    for (prop = functionList.begin(); prop != functionList.end(); prop++) {
+      SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
+      ROSE_ASSERT(funcDecl);
+      SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+      if (decl == NULL) {
+        // Causes excessive output for includes. 
+        // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
+        continue;
       }
-      else { // statically resolved function. use get_definition
-        makeEdge((*caller)->cfgForEnd(), CFGNode(this, idx), result);
-      }
+      SgFunctionDefinition* def = decl->get_definition();
+      if (def == NULL) 
+        std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
+      else
+        makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
     }
-  }
-
-                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-                  Rose_STL_Container<Properties*> functionList;
-                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
-                  Rose_STL_Container<Properties*>::iterator prop;
-                  for (prop = functionList.begin(); prop != functionList.end(); prop++) {
-                    SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
-                    ROSE_ASSERT(funcDecl);
-                    SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                    if (decl == NULL) {
-                      // Causes excessive output for includes. 
-                      // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
-                      continue;
-                    }
-                    SgFunctionDefinition* def = decl->get_definition();
-                    if (def == NULL) 
-                      std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
-                    else
-                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
-                  }
-                }
-                else
-                  makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
+}
+else
+makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
 #endif
 }
 
