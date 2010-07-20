@@ -10571,8 +10571,6 @@ SageInterface::deleteAST ( SgNode* n )
                         }
               };
 
-
-
      	  DeleteAST deleteTree;
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
