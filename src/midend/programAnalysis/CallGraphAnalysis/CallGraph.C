@@ -746,6 +746,29 @@ CallTargetSet::getFunctionDefinitionsForCallExp(SgFunctionCallExp* call,
       }
     }
   }
+
+                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+                  Rose_STL_Container<Properties*> functionList;
+                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
+                  Rose_STL_Container<Properties*>::iterator prop;
+                  for (prop = functionList.begin(); prop != functionList.end(); prop++) {
+                    SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
+                    ROSE_ASSERT(funcDecl);
+                    SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+                    if (decl == NULL) {
+                      // Causes excessive output for includes. 
+                      // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
+                      continue;
+                    }
+                    SgFunctionDefinition* def = decl->get_definition();
+                    if (def == NULL) 
+                      std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
+                    else
+                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+                  }
+                }
+                else
+                  makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
 #endif
 }
 
