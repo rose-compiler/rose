@@ -1,6 +1,4 @@
-#include "processorPool.h"
-#include "statementHandler.h"
-#include "storage.h"
+#include "statementProcessor.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
 #include "utilities/CPPDefinesAndNamespaces.h"
@@ -8,7 +6,7 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-StmtPairs processBasicStatement(SgStatement* stmt)
+StmtPairs BasicStatementProcessor::process(SgStatement* stmt)
 {
     if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
         return processExprStatement(exp_stmt);
@@ -25,7 +23,8 @@ StmtPairs processBasicStatement(SgStatement* stmt)
     return StmtPairs();
 }
 
-StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl)
+#if 0
+StmtPairs BasicStatementProcessor::processFunctionDeclaration(SgFunctionDeclaration* func_decl)
 {
     SgBasicBlock* body = func_decl->get_definition()->get_body();
     StmtPairs bodies = processStatement(body);
@@ -61,8 +60,9 @@ StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl)
 
     return outputs;
 }
+#endif
 
-StmtPairs processExprStatement(SgExprStatement* exp_stmt)
+StmtPairs BasicStatementProcessor::processExprStatement(SgExprStatement* exp_stmt)
 {
     ExpPairs exps = processExpression(exp_stmt->get_expression());
     StmtPairs stmts;
@@ -81,11 +81,11 @@ StmtPairs processExprStatement(SgExprStatement* exp_stmt)
     return stmts;
 }
 
-StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl)
+StmtPairs BasicStatementProcessor::processVariableDeclaration(SgVariableDeclaration* var_decl)
 {
     StmtPairs outputs;
 
-    // Note the store and restore of local variables are handled in 
+    // Note the store and restore of local variables are processd in
     // basic block, not here. We just forward the declaration to forward
     // event function.
     outputs.push_back(StmtPair(copyStatement(var_decl), NULL));
@@ -96,7 +96,7 @@ StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl)
     return outputs;
 }
 
-StmtPairs processBasicBlock(SgBasicBlock* body)
+StmtPairs BasicStatementProcessor::processBasicBlock(SgBasicBlock* body)
 {
     vector<StmtPairs > all_stmts;
     StmtPairs outputs;
@@ -120,13 +120,13 @@ StmtPairs processBasicBlock(SgBasicBlock* body)
             SgVarRefExp* var_stored = buildVarRefExp(init_name);
             // Store the value of local variables at the end of the basic block.
             SgStatement* store_var = buildExprStatement(
-                    pushVal(var_stored, var_stored->get_type(), body));
+                    pushVal(var_stored, var_stored->get_type()));
 
             // Retrieve the value which is used to initialize that local variable.
             SgStatement* decl_var = buildVariableDeclaration(
                     init_name->get_name(),
                     init_name->get_type(),
-                    buildAssignInitializer(popVal(var_stored->get_type(), body)));
+                    buildAssignInitializer(popVal(var_stored->get_type())));
 
             // Stores all transformations of a local variable declaration. 
             StmtPairs results;
@@ -222,10 +222,10 @@ StmtPairs processBasicBlock(SgBasicBlock* body)
     return outputs;
 }
 
-StmtPairs processIfStmt(SgIfStmt* if_stmt)
+StmtPairs BasicStatementProcessor::processIfStmt(SgIfStmt* if_stmt)
 {
-    SgStatement *fwd_true_body, *fwd_false_body;
-    SgStatement *rvs_true_body, *rvs_false_body;
+    //SgStatement *fwd_true_body, *fwd_false_body;
+    //SgStatement *rvs_true_body, *rvs_false_body;
 
     SgStatement* true_body = if_stmt->get_true_body();
     SgStatement* false_body = if_stmt->get_false_body();
@@ -264,17 +264,15 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt)
             isSgBasicBlock(fwd_if_stmt->get_true_body())->append_statement(
                     buildExprStatement(pushVal(
                         buildBoolValExp(true),
-                        buildBoolType(),
-                        if_stmt)));
+                        buildBoolType())));
             isSgBasicBlock(fwd_if_stmt->get_false_body())->append_statement(
                     buildExprStatement(pushVal(
                         buildBoolValExp(false),
-                        buildBoolType(),
-                        if_stmt)));
+                        buildBoolType())));
 
 
             SgIfStmt* rvs_if_stmt = buildIfStmt(
-                    popVal(buildBoolType(), if_stmt),
+                    popVal(buildBoolType()),
                     copyStatement(true_bodies.second),
                     copyStatement(false_bodies.second));
             output.push_back(StmtPair(fwd_if_stmt, rvs_if_stmt));

@@ -15,6 +15,12 @@ enum Color
     yellow
 };
 
+void test_sizeof_cast()
+{
+    sizeof(i++, j++);
+    char c = static_cast<char>(i++);
+}
+
 void test_if()
 {
     if (int i = 0);
@@ -22,6 +28,7 @@ void test_if()
     if ((i += j) > k);
     if (foo(i));
     if (++i);
+    if (i ? j++ : k++);
 }
 
 void test_type()

@@ -358,7 +358,7 @@ SgExpression* propagateConditionalExp(SgExpression* exp)
             replaceExpression(true_exp, new_true_exp);
 
             SgUnaryOp* new_false_exp = isSgUnaryOp(copyExpression(unary_op));
-            new_false_exp->set_operand(copyExpression(false_exp));
+            new_false_exp->set_operand(copyExpression(false_exp)); 
             replaceExpression(false_exp, new_false_exp);
 
             // Copy the old cond_op since replacement will destroy it.

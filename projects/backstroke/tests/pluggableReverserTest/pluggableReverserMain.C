@@ -1,13 +1,15 @@
-
-#include "pluggableReverser/expressionHandler.h"
-#include "pluggableReverser/statementHandler.h"
-#include "pluggableReverser/processorPool.h"
-#include "pluggableReverser/storage.h"
+#include <pluggableReverser/eventProcessor.h>
+#include <pluggableReverser/expressionProcessor.h>
+#include <pluggableReverser/statementProcessor.h>
+#include <utilities/Utilities.h>
+#include <normalizations/expNormalization.h>
+#include <boost/algorithm/string.hpp>
+#include <string>
 
 #include "utilities/CPPDefinesAndNamespaces.h"
-#include "utilities/Utilities.h"
 
-#include <boost/algorithm/string.hpp>
+
+//#include <VariableRenaming.h>
 
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -130,7 +132,11 @@ int main(int argc, char * argv[])
     vector<string> args(argv, argv+argc);
     SgProject* project = frontend(args);
 
-    ProcessorPool processor;
+
+    //VariableRenaming var_renaming(project);
+    //var_renaming.run();
+    //var_renaming.toDot("temp.dot");
+
 
     SgGlobal* global = getFirstGlobalScope(project);
 
@@ -144,13 +150,15 @@ int main(int argc, char * argv[])
     addTextForUnparser(global, includes, AstUnparseAttribute::e_before);
 
 
+    EventProcessor event_processor;
+
     // Add all expression handlers to the expression pool.
-    addExpressionHandler(storeAndRestore);
-    addExpressionHandler(processConstructiveExp);
-    addExpressionHandler(processConstructiveAssignment);
+    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+    event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
+    event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
 
     // Add all statement handlers to the statement pool.
-    addStatementHandler(processBasicStatement);
+    event_processor.addStatementProcessor(new BasicStatementProcessor);
 
     pushScopeStack(isSgScopeStatement(global));
 
@@ -169,7 +177,7 @@ int main(int argc, char * argv[])
 
 #if 1
         // Here reverse the event function into several versions.
-        vector<FuncDeclPair> output = processor.processEvent(decl);
+        FuncDeclPairs output = event_processor.processEvent(decl);
         foreach (FuncDeclPair func_decl_pair, output)
         {
            appendStatement(func_decl_pair.first); 
@@ -179,7 +187,7 @@ int main(int argc, char * argv[])
     }
 
     // Declare all stack variables on top of the generated file.
-    vector<SgVariableDeclaration*> stack_decls = getAllStackDeclarations();
+    vector<SgVariableDeclaration*> stack_decls = event_processor.getAllStackDeclarations();
     foreach (SgVariableDeclaration* decl, stack_decls)
         prependStatement(decl);
 
