@@ -770,9 +770,9 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 2: { 
      if (! interprocedural) 
        break;
-     Rose_STL_Container<SgFunctionCallExp*> calls;
-     CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
-     Rose_STL_Container<SgFunctionCallExp*>::iterator call;
+     Rose_STL_Container<SgExpression*> calls;
+     CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
+     Rose_STL_Container<SgExpression*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
        makeEdge(CFGNode(this, idx), CFGNode(*call, 3), result);
      break;
@@ -790,9 +790,9 @@ SgFunctionDefinition::cfgInEdges(unsigned int idx, bool interprocedural) {
     case 0: {
      if (! interprocedural) 
        break;
-     Rose_STL_Container<SgFunctionCallExp*> calls;
-     CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
-     Rose_STL_Container<SgFunctionCallExp*>::iterator call;
+     Rose_STL_Container<SgExpression*> calls;
+     CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
+     Rose_STL_Container<SgExpression*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
        makeEdge(CFGNode(*call, 2), CFGNode(this, idx), result);
      break;
