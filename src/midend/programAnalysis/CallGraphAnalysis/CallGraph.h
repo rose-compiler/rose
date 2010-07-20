@@ -86,7 +86,7 @@ namespace CallTargetSet
   void retrieveFunctionDeclarations(SgFunctionCallExp* functionCall,
                                     ClassHierarchyWrapper* classHierarchy,
                                     Rose_STL_Container<Properties *>& functionList);
-  void getCallExpsForFunctionDefinition(SgFunctionDefinition* def, Rose_STL_Container<SgFunctionCallExp*>& calls);
+  void getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, Rose_STL_Container<SgExpression*>& calls);
   void getFunctionDefinitionsForCallLikeExp(SgExpression* exp, Rose_STL_Container<SgFunctionDefinition*>& defs);
 };
 

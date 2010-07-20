@@ -687,8 +687,8 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 }
 
 void 
-CallTargetSet::getCallExpsForFunctionDefinition(SgFunctionDefinition* def, 
-                                      Rose_STL_Container<SgFunctionCallExp*>& calls) {
+CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, 
+                                      Rose_STL_Container<SgExpression*>& calls) {
   VariantVector vv(V_SgFunctionCallExp);
   Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
   Rose_STL_Container<SgNode*>::iterator site;
