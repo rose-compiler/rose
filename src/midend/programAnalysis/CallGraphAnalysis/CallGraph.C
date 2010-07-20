@@ -703,6 +703,19 @@ CallTargetSet::getCallExpsForFunctionDefinition(SgFunctionDefinition* def,
   }
 
 #if 0
+  VariantVector vv2(V_SgConstructorInitializer);     
+  Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
+  Rose_STL_Container<SgNode*>::iterator caller2;
+  for (caller2 = callers2.begin(); caller2 != callers2.end(); ++caller2) { 
+    SgConstructorInitializer* ctorInit = isSgConstructorInitializer(*caller2);
+    SgMemberFunctionDeclaration* ctorDecl = ctorInit->get_declaration(); 
+    if (ctorDecl == NULL) continue;
+    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(ctorDecl->get_definingDeclaration());
+    if (defDecl == NULL) continue;
+    SgFunctionDefinition* candidateDef = defDecl->get_definition();
+    if (candidateDef == def) calls.push_back(callexp);
+  }
+
      SgFunctionType* targetType = def->get_declaration()->get_type();
      
        if (decl == NULL) { // function pointer. match types
