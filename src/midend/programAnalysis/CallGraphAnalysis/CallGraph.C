@@ -738,15 +738,28 @@ CallTargetSet::getCallExpsForFunctionDefinition(SgFunctionDefinition* def,
 }
 
 void 
-CallTargetSet::getFunctionDefinitionsForCallExp(SgFunctionCallExp* call, 
+CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp, 
                                       Rose_STL_Container<SgFunctionDefinition*>& defs) {
-  
-    SgFunctionDeclaration* decl = call->getAssociatedFunctionDeclaration();
-    if (decl == NULL) return;
-    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-    if (defDecl == NULL) return;
-    SgFunctionDefinition* candidateDef = defDecl->get_definition();
-    if (candidateDef != NULL) defs.push_back(candidateDef);
+  switch (exp->variantT()) {
+    case V_SgFunctionCallExp: {
+                                       SgFunctionCallExp* call = isSgFunctionCallExp(exp);
+                                       SgFunctionDeclaration* decl = call->getAssociatedFunctionDeclaration();
+                                       if (decl == NULL) return;
+                                       SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+                                       if (defDecl == NULL) return;
+                                       SgFunctionDefinition* candidateDef = defDecl->get_definition();
+                                       if (candidateDef != NULL) defs.push_back(candidateDef);
+                                       break;
+                                     }
+    case V_SgConstructorInitializer: {
+                                       SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
+                                       std::cerr << "can't handle ctor initializer" << std::endl;
+                                       break;
+                                     }
+    default: {
+               ROSE_ASSERT(!"Unable to get definitions for expression");
+             }
+  }
 
 #if 0
     ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
