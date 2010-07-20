@@ -763,9 +763,12 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
      if (! interprocedural) break;
+
      Rose_STL_Container<SgFunctionCallExp*> calls;
      CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
-     break;
+     Rose_STL_Container<SgFunctionCallExp*>::iterator call;
+     for (call = calls.begin(); call != calls.end(); ++call) 
+       makeEdge(CFGNode(this, idx), (*call)->cfgForBeginning(), result);
 
 #if 0     
      VariantVector vv2(V_SgConstructorInitializer);
@@ -791,9 +794,13 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
   switch (idx) {
     case 0: {
      if (! interprocedural) break;
+
      Rose_STL_Container<SgFunctionCallExp*> calls;
-     //CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
-     break;
+     CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
+     Rose_STL_Container<SgFunctionCallExp*>::iterator call;
+     for (call = calls.begin(); call != calls.end(); ++call) 
+       makeEdge((*call)->cfgForEnd(), CFGNode(this, idx), result);
+
 #if 0
      VariantVector vv2(V_SgConstructorInitializer);     Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
      Rose_STL_Container<SgNode*>::iterator caller2;
@@ -3099,28 +3106,15 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 2: {
                 if (interprocedural) {
-                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-                  Rose_STL_Container<Properties*> functionList;
-                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
-                  Rose_STL_Container<Properties*>::iterator prop;
-                  for (prop = functionList.begin(); prop != functionList.end(); prop++) {
-                    SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
-                    ROSE_ASSERT(funcDecl);
-                    SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                    if (decl == NULL) {
-                      // Causes excessive output for includes. 
-                      // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
-                      continue;
-                    }
-                    SgFunctionDefinition* def = decl->get_definition();
-                    if (def == NULL) 
-                      std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
-                    else
-                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
-                  }
+                  Rose_STL_Container<SgFunctionDefinition*> defs;
+                  CallTargetSet::getFunctionDefinitionsForCallExp(this, defs);
+                  Rose_STL_Container<SgFunctionDefinition*>::iterator def;
+                  for (def = defs.begin(); def != defs.end(); ++def) 
+                    makeEdge(CFGNode(this, idx), (*def)->cfgForBeginning(), result);
                 }
-                else
-                  makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
+                else {
+                  makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
+                }
                 break;
       }
       case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
@@ -3138,28 +3132,14 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
                 if (interprocedural) {
-                  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-                  Rose_STL_Container<Properties*> functionList;
-                  CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
-                  Rose_STL_Container<Properties*>::iterator prop;
-                  for (prop = functionList.begin(); prop != functionList.end(); prop++) {
-                    SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
-                    ROSE_ASSERT(funcDecl);
-                    SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                    if (decl == NULL) {
-                      // Causes excessive output for includes. 
-                      // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
-                      continue;
-                    }
-                    SgFunctionDefinition* def = decl->get_definition();
-                    if (def == NULL) 
-                      std::cerr << "no definition for function in SgFunctionCallExp::cfgInEdges: " << decl->get_name().str() << std::endl;
-                    else
-                      makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
-                  }
+                  Rose_STL_Container<SgFunctionDefinition*> defs;
+                  CallTargetSet::getFunctionDefinitionsForCallExp(this, defs);
+                  Rose_STL_Container<SgFunctionDefinition*>::iterator def;
+                  for (def = defs.begin(); def != defs.end(); ++def) 
+                    makeEdge((*def)->cfgForEnd(), CFGNode(this, idx), result);
                 }
                 else
-                  makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
+                  makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
                 break;
       }
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
