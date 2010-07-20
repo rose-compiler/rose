@@ -952,8 +952,13 @@ Grammar::setUpStatements ()
   //                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // MemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
   //                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/19/2010): This was a reported error, the copy function will not copy this even when specified using the deep copy.
+  // MemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
+  //                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      MemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
-                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+
   // DQ (7/25/2007): A SgClassDefinition may not exist so we need to have a pointer to a SgClassDefinition 
   // (see test2007_116.C). This pointer is only valid when the scope can not be set to the SgClassDefinition.
   // MemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
