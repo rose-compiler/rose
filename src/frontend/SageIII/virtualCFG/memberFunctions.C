@@ -768,7 +768,7 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
      CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgFunctionCallExp*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
-       makeEdge(CFGNode(this, idx), (*call)->cfgForBeginning(), result);
+       makeEdge(CFGNode(this, idx), CFGNode(*call, 3), result);
 
 #if 0     
      VariantVector vv2(V_SgConstructorInitializer);
@@ -788,7 +788,8 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
   return result;
 }
 
-std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> 
+SgFunctionDefinition::cfgInEdges(unsigned int idx, bool interprocedural) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -799,7 +800,7 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
      CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgFunctionCallExp*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
-       makeEdge((*call)->cfgForEnd(), CFGNode(this, idx), result);
+       makeEdge(CFGNode(*call, 2), CFGNode(this, idx), result);
 
 #if 0
      VariantVector vv2(V_SgConstructorInitializer);     Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
