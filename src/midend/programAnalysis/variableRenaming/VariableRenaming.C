@@ -334,7 +334,7 @@ void VariableRenaming::run()
     if(DEBUG_MODE)
         cout << "Performing UniqueNameTraversal..." << endl;
 
-    UniqueNameTraversal uniqueTrav;
+    UniqueNameTraversal uniqueTrav(this);
     std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
     std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
     for(;iter != funcs.end(); ++iter)
@@ -864,6 +864,9 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     uName->setUsesThis(lhsName->getUsesThis());
                     varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
+                    VarUniqueName* uName2 = new VarUniqueName(*uName);
+                    node->setAttribute(VariableRenaming::varKeyTag,uName2);
+
                     //Return the combination of the LHS and RHS varRefs
                     return VariableRenaming::VarRefSynthAttr(attrs[0].getRefs(), varRef);
                 }
@@ -927,6 +930,9 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                         VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
                         uName->setUsesThis(lhsName->getUsesThis());
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+
+                        VarUniqueName* uName2 = new VarUniqueName(*uName);
+                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
                     }
                     else
                     {
@@ -934,6 +940,9 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                         VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
                         uName->setUsesThis(true);
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+
+                        VarUniqueName* uName2 = new VarUniqueName(*uName);
+                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
                     }
 
                     //Return the combination of the LHS and RHS varRefs
@@ -2470,4 +2479,109 @@ VariableRenaming::numNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode*
      traversal.traverse(node, preorder);
 
      return traversal.result;
+}
+
+VariableRenaming::numNodeRenameTable VariableRenaming::getReachingDefsAtFunctionEnd(SgFunctionDefinition* node)
+{
+    ROSE_ASSERT(node);
+    numNodeRenameTable result;
+
+    cfgNode lastNode = cfgNode(node->cfgForEnd());
+    cfgEdgeVec lastEdges = lastNode.inEdges();
+    if(lastEdges.size() == 0)
+    {
+        cout << "Error: No incoming edges to end of function definition." << endl;
+        ROSE_ASSERT(false);
+    }
+    else if(lastEdges.size() == 1)
+    {
+        return getReachingDefsAtNode(lastEdges[0].source().getNode());
+    }
+    else
+    {
+        //Iterate and merge each edge
+        foreach(cfgEdgeVec::value_type& edge, lastEdges)
+        {
+            numNodeRenameTable temp = getReachingDefsAtNode(edge.source().getNode());
+
+            //Merge the tables
+            foreach(numNodeRenameTable::value_type& entry, temp)
+            {
+                //Insert the entry wholesale
+                if(result.count(entry.first) == 0)
+                {
+                    result[entry.first] = entry.second;
+                }
+                //Or merge it with an existing one
+                else
+                {
+                    foreach(numNodeRenameEntry::value_type& tableEntry, entry.second)
+                    {
+                        //Insert the entry wholesale
+                        if(result[entry.first].count(tableEntry.first) == 0)
+                        {
+                            result[entry.first][tableEntry.first] = tableEntry.second;
+                        }
+                        else
+                        {
+                            //Check for equivalence
+                            if(result[entry.first][tableEntry.first] != tableEntry.second)
+                            {
+                                cout << "Error: Same Renaming number has two different definition points." << endl;
+                                ROSE_ASSERT(false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+}
+
+VariableRenaming::numNodeRenameEntry VariableRenaming::getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const varName& var)
+{
+    ROSE_ASSERT(node);
+    numNodeRenameEntry result;
+
+    cfgNode lastNode = cfgNode(node->cfgForEnd());
+    cfgEdgeVec lastEdges = lastNode.inEdges();
+    if(lastEdges.size() == 0)
+    {
+        cout << "Error: No incoming edges to end of function definition." << endl;
+        ROSE_ASSERT(false);
+    }
+    else if(lastEdges.size() == 1)
+    {
+        return getReachingDefsAtNodeForName(lastEdges[0].source().getNode(), var);
+    }
+    else
+    {
+        //Iterate and merge each edge
+        foreach(cfgEdgeVec::value_type& edge, lastEdges)
+        {
+            numNodeRenameEntry temp = getReachingDefsAtNodeForName(edge.source().getNode(), var);
+
+            foreach(numNodeRenameEntry::value_type& tableEntry, temp)
+            {
+                //Insert the entry wholesale
+                if(result.count(tableEntry.first) == 0)
+                {
+                    result[tableEntry.first] = tableEntry.second;
+                }
+                else
+                {
+                    //Check for equivalence
+                    if(result[tableEntry.first] != tableEntry.second)
+                    {
+                        cout << "Error: Same Renaming number has two different definition points." << endl;
+                        ROSE_ASSERT(false);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
 }
