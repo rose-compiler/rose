@@ -763,18 +763,11 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
      if (! interprocedural) break;
-     SgFunctionType* targetType = get_declaration()->get_type();
-     
-     VariantVector vv(V_SgFunctionCallExp);
-     Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
-     Rose_STL_Container<SgNode*>::iterator site;
-     for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
-         SgExpression* candidate = isSgFunctionCallExp(*site)->get_function();
-         SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
-         if (targetType == candidateType)
-           makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
-     }
-     
+     Rose_STL_Container<SgFunctionCallExp*> calls;
+     CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
+     break;
+
+#if 0     
      VariantVector vv2(V_SgConstructorInitializer);
      Rose_STL_Container<SgNode*> returnsite2 = NodeQuery::queryMemoryPool(vv2);
      Rose_STL_Container<SgNode*>::iterator site2;
@@ -784,6 +777,7 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
          if (targetType == candidateType)
            makeEdge(CFGNode(this, idx), (*site2)->cfgForEnd(), result);
      }
+#endif
      break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
@@ -797,19 +791,11 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
   switch (idx) {
     case 0: {
      if (! interprocedural) break;
-     SgFunctionType* targetType = get_declaration()->get_type();
-     VariantVector vv(V_SgFunctionCallExp);
-     Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
-     Rose_STL_Container<SgNode*>::iterator caller;
-     for (caller = callExprs.begin(); caller != callExprs.end(); ++caller) {
-         SgExpression* candidate = isSgFunctionCallExp(*caller)->get_function();
-         SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
-         if (targetType == candidateType) 
-           makeEdge((*caller)->cfgForEnd(), CFGNode(this, idx), result);
-     }
-
-     VariantVector vv2(V_SgConstructorInitializer);
-     Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
+     Rose_STL_Container<SgFunctionCallExp*> calls;
+     //CallTargetSet::getCallExpsForFunctionDefinition(this, calls);
+     break;
+#if 0
+     VariantVector vv2(V_SgConstructorInitializer);     Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
      Rose_STL_Container<SgNode*>::iterator caller2;
      for (caller2 = callers2.begin(); caller2 != callers2.end(); ++caller2) { 
          SgConstructorInitializer* candidate = isSgConstructorInitializer(*caller2);
@@ -817,6 +803,7 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
          if (targetType == candidateType)
            makeEdge((*caller2)->cfgForEnd(), CFGNode(this, idx), result);
      }
+#endif
      break;
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
