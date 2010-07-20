@@ -24,6 +24,8 @@ using namespace std;
 std::string VariableRenaming::varKeyTag = "rename_KeyTag";
 SgInitializedName* VariableRenaming::thisDecl = NULL;
 VariableRenaming::varName VariableRenaming::emptyName;
+VariableRenaming::numNodeRenameTable VariableRenaming::emptyRenameTable;
+VariableRenaming::numNodeRenameEntry VariableRenaming::emptyRenameEntry;
 
 //Printing functions
 std::string VariableRenaming::keyToString(varName vec)
@@ -332,27 +334,27 @@ void VariableRenaming::run()
     if(DEBUG_MODE)
         cout << "Performing UniqueNameTraversal..." << endl;
 
-    UniqueNameTraversal *uniqueTrav = new UniqueNameTraversal();
+    UniqueNameTraversal uniqueTrav;
     std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
     std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
     for(;iter != funcs.end(); ++iter)
     {
         SgFunctionDeclaration* func = (*iter)->get_declaration();
         ROSE_ASSERT(func);
-        uniqueTrav->traverse(func);
+        uniqueTrav.traverse(func);
     }
 
     if(DEBUG_MODE)
         cout << "Finished UniqueNameTrav..." << endl;
 
-    VariableRenaming::VarDefUseTraversal *defUseTrav = new VariableRenaming::VarDefUseTraversal(this);
+    VariableRenaming::VarDefUseTraversal defUseTrav(this);
     for(iter = funcs.begin();iter != funcs.end(); ++iter)
     {
         SgFunctionDeclaration* func = (*iter)->get_declaration();
         ROSE_ASSERT(func);
         if(DEBUG_MODE)
             cout << "Running defUseTrav on function: " << func->get_name().getString() << endl;
-        defUseTrav->traverse(func);
+        defUseTrav.traverse(func);
     }
 
     if(DEBUG_MODE)
@@ -420,10 +422,9 @@ void VariableRenaming::insertGlobalVarDefinitions()
 
     //Iterate the function definitions and insert definitions for all global variables
     std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
-    std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
-    for(;iter != funcs.end(); ++iter)
+    foreach(std::vector<SgFunctionDefinition*>::value_type& iter, funcs)
     {
-        SgFunctionDefinition* func = (*iter);
+        SgFunctionDefinition* func = iter;
         ROSE_ASSERT(func);
 
         //Iterate the global table insert a def for each name at the function definition
@@ -434,13 +435,12 @@ void VariableRenaming::insertGlobalVarDefinitions()
         }
     }
 
-    /*
-    //Iterate the function definitions and insert definitions for all global variables
+
+    //Iterate the function calls and insert definitions for all global variables
     std::vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp>(project, V_SgFunctionCallExp);
-    std::vector<SgFunctionCallExp*>::iterator iter2 = calls.begin();
-    for(;iter2 != calls.end(); ++iter2)
+    foreach(std::vector<SgFunctionCallExp*>::value_type& iter, calls)
     {
-        SgFunctionCallExp* call = (*iter2);
+        SgFunctionCallExp* call = iter;
         ROSE_ASSERT(call);
 
         //Iterate the global table insert a def for each name at the function call
@@ -450,7 +450,6 @@ void VariableRenaming::insertGlobalVarDefinitions()
             originalDefTable[call][entry].push_back(call);
         }
     }
-     * */
 }
 
 void VariableRenaming::toDOT(const std::string fileName)
@@ -1432,6 +1431,11 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
     {
         foreach(tableEntry::value_type& propEntry, propDefs)
         {
+            //Don't insert a def if it is already originally defined.
+            if(originalDefTable[node].count(propEntry.first) != 0)
+            {
+                continue;
+            }
             //If the original def is a prefix of the propogated def, add a def at this node
             //Compare sizes to guard against inserting original def in expanded table
             if(isPrefixOfName(propEntry.first, entry.first) && (propEntry.first.size() > entry.first.size()))
@@ -1495,7 +1499,10 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
         printDefs(node);
     }
 
-    printRenameTable();
+    if(DEBUG_MODE)
+    {
+        printRenameTable();
+    }
 
     return changed;
 }
@@ -1604,7 +1611,7 @@ bool VariableRenaming::expandMemberDefinitions(cfgNode curNode)
             }
 
             //Only insert the new definition if it does not already exist
-            if(expandedDefTable[node].count(newName) == 0)
+            if(originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
             {
                 //Insert the new name as being defined here.
                 expandedDefTable[node][newName] = nodeVec(1, node);
@@ -1748,7 +1755,7 @@ bool VariableRenaming::expandMemberUses(cfgNode curNode)
 
     if(DEBUG_MODE_EXTRA)
     {
-        cout << "Expanded Node";
+        cout << "Expanded Node ";
         printUses(useTable[node]);
     }
 
@@ -1822,47 +1829,78 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, varName name, n
     return changed;
 }
 
-int VariableRenaming::getRenameNumberForNode(const varName& var, SgNode* node)
+int VariableRenaming::getRenameNumberForNode(const varName& var, SgNode* node) const
 {
     ROSE_ASSERT(node);
 
-    //Try and get the number for the node
-    if(nodeRenameTable[var].count(node) == 1)
-    {
-        return nodeRenameTable[var][node];
-    }
-    //Node not in table
-    else
+    nodeNumRenameTable::const_iterator iter;
+    iter = nodeRenameTable.find(var);
+
+    if(iter == nodeRenameTable.end())
     {
         return -1;
     }
+    else
+    {
+        //Try and get the number for the node
+        nodeNumRenameEntry::const_iterator iter2;
+        iter2 = (*iter).second.find(node);
+        if(iter2 != (*iter).second.end())
+        {
+            return (*iter2).second;
+        }
+        //Node not in table
+        else
+        {
+            return -1;
+        }
+    }
 }
 
-SgNode* VariableRenaming::getNodeForRenameNumber(const varName& var, int num)
+SgNode* VariableRenaming::getNodeForRenameNumber(const varName& var, int num) const
 {
     ROSE_ASSERT(num > 0);
 
-    //Try and get the node for the number
-    if(numRenameTable[var].count(num) == 1)
-    {
-        return numRenameTable[var][num];
-    }
-    //Number not in table
-    else
+    numNodeRenameTable::const_iterator iter;
+    iter = numRenameTable.find(var);
+    if(iter == numRenameTable.end())
     {
         return NULL;
     }
+    else
+    {
+        //Try and get the node for the number
+        numNodeRenameEntry::const_iterator iter2;
+        iter2 = (*iter).second.find(num);
+        if(iter2 != (*iter).second.end())
+        {
+            return (*iter2).second;
+        }
+        //Number not in table
+        else
+        {
+            return NULL;
+        }
+    }
 }
 
-int VariableRenaming::getMaxRenameNumberForName(const varName& var)
+int VariableRenaming::getMaxRenameNumberForName(const varName& var) const
 {
     int res = -1;
 
-    foreach(numNodeRenameEntry::value_type& entry, numRenameTable[var])
+    numNodeRenameTable::const_iterator iter;
+    iter = numRenameTable.find(var);
+    if(iter == numRenameTable.end())
     {
-        if(entry.first > res)
+        return res;
+    }
+
+    numNodeRenameEntry::const_iterator iter2;
+    for(iter2 = (*iter).second.begin(); iter2 != (*iter).second.end(); ++iter2)
+    {
+        if((*iter2).first > res)
         {
-            res = entry.first;
+            res = (*iter2).first;
         }
     }
 
@@ -2100,7 +2138,7 @@ VariableRenaming::numNodeRenameEntry VariableRenaming::getUsesAtNodeForName(SgNo
             }
             else
             {
-                /* This situation can happen in certain cases, so we don;t want to assert.
+                /* This situation can happen in certain cases, so we don't want to assert.
                  *
                  * ex. for(int i = 0; i < 10; i++)
                  *     {
@@ -2148,6 +2186,11 @@ VariableRenaming::numNodeRenameTable VariableRenaming::getDefsAtNode(SgNode* nod
                 else
                 {
                     cout << "Error: Same renaming present in original and expanded defs." << endl;
+                    cout << "At node " << node << endl;
+                    cout << "Original ";
+                    printRenameTable(original);
+                    cout << "Expanded ";
+                    printRenameTable(expanded);
                     ROSE_ASSERT(false);
                 }
             }
@@ -2213,8 +2256,21 @@ VariableRenaming::numNodeRenameTable VariableRenaming::getOriginalDefsAtNode(SgN
             }
             else
             {
-                cout << "Error: Found original def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
+                /* This situation can happen in certain cases, so we don't want to assert.
+                 *
+                 * ex. for(int i = 0; i < 10; i++)
+                 *     {
+                 *        return i;
+                 *     }
+                 *
+                 * The i++ will have an original def for i. However, it will not be in the rename
+                 * table for i. This is not technically wrong, since control will never
+                 * reach that i++, so it will not have an ordering wrt. the other definitions.
+                 */
+                if(DEBUG_MODE)
+                {
+                    cout << "Warning: Found original def with no entry in rename table." << endl;
+                }
             }
         }
     }
@@ -2260,8 +2316,21 @@ VariableRenaming::numNodeRenameEntry VariableRenaming::getOriginalDefsAtNodeForN
             }
             else
             {
-                cout << "Error: Found originalDef with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
+                /* This situation can happen in certain cases, so we don't want to assert.
+                 *
+                 * ex. for(int i = 0; i < 10; i++)
+                 *     {
+                 *        return i;
+                 *     }
+                 *
+                 * The i++ will have an original def for i. However, it will not be in the rename
+                 * table for i. This is not technically wrong, since control will never
+                 * reach that i++, so it will not have an ordering wrt. the other definitions.
+                 */
+                if(DEBUG_MODE)
+                {
+                    cout << "Warning: Found original def with no entry in rename table." << endl;
+                }
             }
         }
     }
@@ -2355,4 +2424,50 @@ VariableRenaming::numNodeRenameEntry VariableRenaming::getExpandedDefsAtNodeForN
     }
 
     return res;
+}
+
+VariableRenaming::numNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode* node)
+{
+    class DefSearchTraversal : public AstSimpleProcessing
+     {
+     public:
+         VariableRenaming::numNodeRenameTable result;
+         VariableRenaming* varRenamingAnalysis;
+
+         virtual void visit(SgNode* node)
+         {
+             //Look up defs at this particular node
+             VariableRenaming::numNodeRenameTable defsAtNode = varRenamingAnalysis->getDefsAtNode(node);
+
+             //Traverse the defs
+             foreach(VariableRenaming::numNodeRenameTable::value_type& entry, defsAtNode)
+             {
+                 //If this is the first time the var has been seen, add it wholesale
+                 if(result.count(entry.first) == 0)
+                 {
+                     result[entry.first] = entry.second;
+                     continue;
+                 }
+                 //Traverse each definition of the variable
+                 foreach(VariableRenaming::numNodeRenameEntry::value_type& tableEntry, entry.second)
+                 {
+                     if(result[entry.first].count(tableEntry.first) == 0)
+                     {
+                         result[entry.first][tableEntry.first] = tableEntry.second;
+                     }
+                     else
+                     {
+                         cout << "Error: Same rename number defined on multiple nodes." << endl;
+                         ROSE_ASSERT(false);
+                     }
+                 }
+             }
+         }
+     };
+
+     DefSearchTraversal traversal;
+     traversal.varRenamingAnalysis = this;
+     traversal.traverse(node, preorder);
+
+     return traversal.result;
 }
