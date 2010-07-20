@@ -64,10 +64,23 @@ namespace AstDOTGenerationExtended_Defaults
 			{
 				ss << n->get_qualified_name().str() << "\\n";
 			}
+			if (SgFunctionRefExp* n = isSgFunctionRefExp(node))
+			{
+				SgFunctionDeclaration* decl = n->getAssociatedFunctionDeclaration();
+				if (decl) // it's null if through a function pointer
+				{
+					ss << decl->get_qualified_name().str() << "\\n";
+				}
+			}
 			// add variable name
 			if (SgInitializedName* n = isSgInitializedName(node))
 			{
 				ss << n->get_qualified_name().str() << "\\n";
+			}
+			if (SgVarRefExp* n = isSgVarRefExp(node))
+			{
+				SgVariableSymbol* sym = n->get_symbol();
+				ss << sym->get_name().getString() << "\\n";
 			}
 			// add variable name
 			if (SgVariableSymbol* n = isSgVariableSymbol(node))
@@ -115,6 +128,21 @@ namespace AstDOTGenerationExtended_Defaults
 			if (SgExpression* n = isSgExpression(node))
 			{
 				ss << (n->isLValue() ? "L-Value" : "!L-Value") << "\\n";
+			}
+
+			return ss.str();
+		}
+	};
+
+	struct TypeExtraNodeInfo
+	{
+		std::string operator()(SgNode* node)
+		{
+			std::ostringstream ss;
+
+			if (SgExpression* n = isSgExpression(node))
+			{
+				ss << n->get_type()->unparseToString() << "\\n";
 			}
 
 			return ss.str();

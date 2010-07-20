@@ -229,6 +229,10 @@ HEADER_VAR_REF_EXPRESSION_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
        // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_VAR_REF_EXPRESSION_END
 
 
@@ -269,6 +273,10 @@ HEADER_FUNCTION_REF_EXPRESSION_START
 		  //! pointer.
           SgFunctionDeclaration* getAssociatedFunctionDeclaration() const;
 
+//       // get lvalue
+//          virtual bool isLValue() const;
+//		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_FUNCTION_REF_EXPRESSION_END
 
 
@@ -284,6 +292,10 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
 		  //! Note: This function can return NULL - for example when the function call occurs through a function
 		  //! pointer.
           SgMemberFunctionDeclaration* getAssociatedMemberFunctionDeclaration() const;
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
 
@@ -403,11 +415,19 @@ HEADER_LIST_DECLARATIONS
       //! This is helpful in chasing down the symbol associated with a function call.
           SgFunctionSymbol* getAssociatedFunctionSymbol() const;
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
 
 HEADER_ARROW_EXPRESSION_START
           SgType* get_type() const;
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ARROW_EXPRESSION_END
 
@@ -415,17 +435,29 @@ HEADER_ARROW_EXPRESSION_END
 HEADER_DOT_EXPRESSION_START
           SgType* get_type() const;
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_DOT_EXPRESSION_END
 
 
 HEADER_DOT_STAR_OPERATOR_START
           SgType* get_type() const;
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_DOT_STAR_OPERATOR_END
 
 
 HEADER_ARROW_STAR_OPERATOR_START
           SgType* get_type() const;
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ARROW_STAR_OPERATOR_END
 
@@ -519,6 +551,10 @@ HEADER_COMMA_OPERATOR_EXPRESSION_START
        // get the type associated with this expression (using the rhs)
           virtual SgType* get_type() const;
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_COMMA_OPERATOR_EXPRESSION_END
 
 
@@ -548,6 +584,10 @@ HEADER_TYPE_ID_OPERATOR_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_TYPE_ID_OPERATOR_END
 
@@ -585,11 +625,19 @@ HEADER_NOT_OPERATOR_END
 HEADER_POINTER_DEREF_EXPRESSION_START
           SgType* get_type() const;
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_POINTER_DEREF_EXPRESSION_END
 
 
 HEADER_ADDRESS_OF_OPERATOR_START
           SgType* get_type() const;
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ADDRESS_OF_OPERATOR_END
 
@@ -598,12 +646,20 @@ HEADER_MINUS_MINUS_OPERATOR_START
           $CLASSNAME ( Sg_File_Info* file_info, SgExpression* operand_i, Sgop_mode a_mode );
           $CLASSNAME ( SgExpression* operand_i, Sgop_mode a_mode );
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_MINUS_MINUS_OPERATOR_END
 
 
 HEADER_PLUS_PLUS_OPERATOR_START
           $CLASSNAME ( Sg_File_Info* file_info, SgExpression* operand_i, Sgop_mode a_mode );
           $CLASSNAME ( SgExpression* operand_i, Sgop_mode a_mode );
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_PLUS_PLUS_OPERATOR_END
 
@@ -630,6 +686,10 @@ HEADER_CONDITIONAL_EXPRESSION_START
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_CONDITIONAL_EXPRESSION_END
 
@@ -678,6 +738,11 @@ HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_START
        // DQ (1/16/2006): Added to support special version of get_type.
        // returns get_lhs_operand()->get_type()  (maybe we should call get_base_type() ???)
           SgType* get_type() const;
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_END
 
 
@@ -716,50 +781,110 @@ HEADER_SCOPE_OPERATOR_END
 
 
 HEADER_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_PLUS_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_PLUS_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_MINUS_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_MINUS_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_AND_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_AND_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_IOR_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_IOR_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_DIVIDE_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_DIVIDE_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_MOD_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_MOD_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_XOR_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_XOR_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_POINTER_ASSIGNMENT_OPERATOR_END
 
 
