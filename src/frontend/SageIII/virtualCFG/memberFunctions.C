@@ -763,31 +763,26 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
      if (! interprocedural) break;
-     SgFunctionDeclaration* thisdecl = this->get_declaration();
-     SgFunctionDeclaration* thisdefdecl = isSgFunctionDeclaration(thisdecl->get_definingDeclaration());
-     ROSE_ASSERT(thisdefdecl != NULL);
+     SgFunctionType* targetType = get_declaration()->get_type();
+     
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
      Rose_STL_Container<SgNode*>::iterator site;
      for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
-         SgFunctionDeclaration* calldecl = isSgFunctionCallExp(*site)->getAssociatedFunctionDeclaration();
-         if (calldecl == NULL) continue;
-         SgFunctionDeclaration* calldefdecl = isSgFunctionDeclaration(calldecl->get_definingDeclaration());
-         if (calldefdecl != NULL && calldefdecl == thisdefdecl) {
+         SgExpression* candidate = isSgFunctionCallExp(*site)->get_function();
+         SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
+         if (targetType == candidateType)
            makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
-         }
      }
      
      VariantVector vv2(V_SgConstructorInitializer);
      Rose_STL_Container<SgNode*> returnsite2 = NodeQuery::queryMemoryPool(vv2);
      Rose_STL_Container<SgNode*>::iterator site2;
      for (site2 = returnsite2.begin(); site2 != returnsite2.end(); ++site2) { 
-         SgFunctionDeclaration* calldecl = isSgConstructorInitializer(*site2)->get_declaration();
-         if (calldecl == NULL) continue;
-         SgFunctionDeclaration* calldefdecl = isSgFunctionDeclaration(calldecl->get_definingDeclaration());
-         if (calldefdecl != NULL && calldefdecl == thisdefdecl) {
+         SgConstructorInitializer* candidate = isSgConstructorInitializer(*site2);
+         SgFunctionType* candidateType = isSgFunctionType(candidate->get_expression_type());
+         if (targetType == candidateType)
            makeEdge(CFGNode(this, idx), (*site2)->cfgForEnd(), result);
-         }
      }
      break;
     }
@@ -802,31 +797,25 @@ std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx, bool int
   switch (idx) {
     case 0: {
      if (! interprocedural) break;
-     SgFunctionDeclaration* thisdecl = this->get_declaration();
-     SgFunctionDeclaration* thisdefdecl = isSgFunctionDeclaration(thisdecl->get_definingDeclaration());
-     ROSE_ASSERT(thisdefdecl != NULL);
+     SgFunctionType* targetType = get_declaration()->get_type();
      VariantVector vv(V_SgFunctionCallExp);
      Rose_STL_Container<SgNode*> callExprs = NodeQuery::queryMemoryPool(vv);
      Rose_STL_Container<SgNode*>::iterator caller;
      for (caller = callExprs.begin(); caller != callExprs.end(); ++caller) {
-         SgFunctionDeclaration* calldecl = isSgFunctionCallExp(*caller)->getAssociatedFunctionDeclaration();
-         if (calldecl == NULL) continue;
-         SgFunctionDeclaration* calldefdecl = isSgFunctionDeclaration(calldecl->get_definingDeclaration());
-         if (calldefdecl != NULL && calldefdecl == thisdefdecl) {
+         SgExpression* candidate = isSgFunctionCallExp(*caller)->get_function();
+         SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
+         if (targetType == candidateType) 
            makeEdge((*caller)->cfgForEnd(), CFGNode(this, idx), result);
-         }
      }
 
      VariantVector vv2(V_SgConstructorInitializer);
      Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
      Rose_STL_Container<SgNode*>::iterator caller2;
      for (caller2 = callers2.begin(); caller2 != callers2.end(); ++caller2) { 
-         SgFunctionDeclaration* calldecl = isSgConstructorInitializer(*caller2)->get_declaration();
-         if (calldecl == NULL) continue;
-         SgFunctionDeclaration* calldefdecl = isSgFunctionDeclaration(calldecl->get_definingDeclaration());
-         if (calldefdecl != NULL && calldefdecl == thisdefdecl) {
+         SgConstructorInitializer* candidate = isSgConstructorInitializer(*caller2);
+         SgFunctionType* candidateType = isSgFunctionType(candidate->get_expression_type());
+         if (targetType == candidateType)
            makeEdge((*caller2)->cfgForEnd(), CFGNode(this, idx), result);
-         }
      }
      break;
     }
