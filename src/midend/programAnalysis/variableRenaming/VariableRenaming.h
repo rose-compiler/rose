@@ -10,7 +10,6 @@
 
 #include <string>
 #include <iostream>
-#include "DefUseAnalysis.h"
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -18,6 +17,7 @@
 #include <fstream>
 #include <sstream>
 #include <boost/foreach.hpp>
+#include "filteredCFG.h"
 
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
  */
@@ -228,6 +228,12 @@ private:
      * with the steady-state dataflow algorithm.
      */
     defUseTable useTable;
+
+    /** This is the table that is populated with all the use information for all the variables
+     * at all the nodes. It is populated during the VarDefUse Traversal and contains the varRefs
+     * to the actual uses of the variables.
+     */
+    defUseTable useLocTable;
 
     /** Holds a list of the locations that a particular name is first
      * defined.
@@ -556,7 +562,7 @@ public:
     {
         nodeVec vec = getAllUsesForDef(var, num);
         std::vector<T*> res;
-        T* temp;
+        T* temp = NULL;
 
         BOOST_FOREACH(nodeVec::value_type& val, vec)
         {
@@ -585,6 +591,21 @@ public:
      * @return A table of (num, defNode) for the given variable. Empty table otherwise.
      */
     numNodeRenameEntry getReachingDefsAtNodeForName(SgNode* node, const varName& var);
+
+    /** Get the final versions if all variables at the end of the given function.
+     *
+     * @param node The function to get variables for.
+     * @return A table of VarName->(num, defNode) for all variables at the end of the function. Empty table otherwise.
+     */
+    numNodeRenameTable getReachingDefsAtFunctionEnd(SgFunctionDefinition* node);
+
+    /** Get the versions of a variable at the end of the given function.
+     *
+     * @param node The function definition to get definitions for.
+     * @param var The varName to get definitions for.
+     * @return A table of (num, defNode) for the given variable. Empty table otherwise.
+     */
+    numNodeRenameEntry getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const varName& var);
 
     /** Get name:num mappings for all uses at this node.
      *
@@ -902,8 +923,9 @@ private:
      */
     class UniqueNameTraversal : public AstBottomUpProcessing<VariableRenaming::VarRefSynthAttr>
     {
+        VariableRenaming* varRename;
     public:
-        UniqueNameTraversal(){}
+        UniqueNameTraversal(VariableRenaming* varRenaming):varRename(varRenaming){}
 
         /** Called to evaluate the synthesized attribute on every node.
          *
