@@ -3854,6 +3854,7 @@ std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgInEdges(unsigned int idx) {
 		return false;
 	}
 
+/*! std:5.1 par:2*/
 bool SgStringVal::isLValue() const
 {
 	return true;
@@ -3865,6 +3866,7 @@ bool SgStringVal::isChildUsedAsLValue(const SgExpression* child) const
 	return false;
 }
 
+/*! std:5.1 par:7*/
 bool SgScopeOp::isLValue() const
 {
 	return get_rhs_operand()->isLValue();
@@ -3873,9 +3875,15 @@ bool SgScopeOp::isLValue() const
 bool SgScopeOp::isChildUsedAsLValue(const SgExpression* child) const
 {
 	if (child == get_lhs_operand())
+	{
 		ROSE_ASSERT(!"Only the right-hand-side is used as an l-value for SgScopeOp");
+		return false;
+	}
 	else if (child != get_rhs_operand())
+	{
 		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgScopeOp");
+		return false;
+	}
 	else
 	{
 		if (isLValue())
@@ -3894,32 +3902,373 @@ bool SgScopeOp::isChildUsedAsLValue(const SgExpression* child) const
 	return false;
 }
 
+/*! std:5.2.1 par:1*/
+bool SgPntrArrRefExp::isLValue() const
+{
+	return true;
+}
+
+bool SgPntrArrRefExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (child == get_lhs_operand())
+	{
+		if (!child->isLValue())
+		{
+			ROSE_ASSERT(!"Left-hand-side of a pointer-index expression must be an l-value in isChildUsedAsLValue on SgPntrArrayRefExp");
+			return true;
+		}
+		return true;
+	}
+	else if (child == get_rhs_operand())
+	{
+		return false;
+	}
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgPntrArrayRefExp");
+		return false;
+	}
+	return true;
+}
+
+/*! std:5.2.1 par:1*/ bool SgPointerDerefExp::isLValue() const
+{
+	return true;
+}
+
+bool SgPointerDerefExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (child == get_operand())
+	{
+		return true;
+	}
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgPointerDerefExp");
+		return true;
+	}
+	return true;
+}
+
+/*! std:5.3.1 par:2 */
+bool SgAddressOfOp::isLValue() const
+{
+	/*! std:5.2.6 par:1 */
+	if (!this->get_operand()->isLValue()) // must also be mutable
+	{
+		ROSE_ASSERT(!"Child operand of an address-of operator must be an l-value in isLValue on SgAddressOfOp");
+		return true;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+/*! std:5.3.1 par:2 */
+bool SgAddressOfOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	/*! std:5.3.1 par:2 */
+	if (child != this->get_operand())
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAddressOfOp");
+		return false;
+	}
+	return true;
+}
+
+/*! std:5.1 par:7,8 */
+bool SgArrowExp::isLValue() const
+{
+	if (!get_rhs_operand()->isLValue())
+	{
+		ROSE_ASSERT(!"Right-hand-side must be an l-value as a data member or member function in isLValue for SgArrowExp");
+		return false;
+	}
+	// TODO: king84
+	// if rhs is a non-static member function, the result is not an l-value (static member functions are l-values)
+	// see std:5.2.5 par:4
+	// if rhs is an enum value, then the result is not an l-value
+	// see std:5.2.5 par:4
+	return true;
+}
+
+bool SgArrowExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (!isChild(const_cast<SgExpression*>(child)))
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgArrowExp");
+		return false;
+	}
+	return true;
+}
+
+/*! std:5.1 par:7,8 */
+bool SgDotExp::isLValue() const
+{
+	if (!get_rhs_operand()->isLValue())
+	{
+		ROSE_ASSERT(!"Right-hand-side must be an l-value as a data member or member function in isLValue for SgArrowExp");
+		return false;
+	}
+	// TODO: king84
+	// if rhs is a non-static member function, the result is not an l-value (static member functions are l-values)
+	// see std:5.2.5 par:4
+	// if rhs is an enum value, then the result is not an l-value
+	// see std:5.2.5 par:4
+	return true;
+}
+
+bool SgDotExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (!isChild(const_cast<SgExpression*>(child)))
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgDotExp");
+		return false;
+	}
+	return true;
+}
+
+/*! std:5.4 par:6 */
+bool SgDotStarOp::isLValue() const
+{
+	if (!get_lhs_operand()->isLValue())
+	{
+		ROSE_ASSERT(!"Left-hand-side must be an l-value in isLValue for SgDotStarOp");
+		return false;
+	}
+	// TODO: king84
+	// rhs must be a data member (and not a member function)
+	// this is approximated here with an l-value check
+	if (!get_rhs_operand()->isLValue())
+	{
+		ROSE_ASSERT(!"Right-hand-side must be a pointer to a data member in isLValue for SgDotStarOp");
+		return false;
+	}
+	return true;
+}
+
+/*! std:5.4 par:6 */
+bool SgDotStarOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (child == get_lhs_operand())
+		return true;
+	else if (child == get_rhs_operand())
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgDotStarExp");
+		return false;
+	}
+	return true;
+}
+
+/*! std:5.4 par:6 */
+bool SgArrowStarOp::isLValue() const
+{
+	if (!get_lhs_operand()->isLValue())
+	{
+		ROSE_ASSERT(!"Left-hand-side must be an l-value in isLValue for SgArrowStarOp");
+		return false;
+	}
+	// TODO: king84
+	// rhs must be a data member (and not a member function)
+	// this is approximated here with an l-value check
+	if (!get_rhs_operand()->isLValue())
+	{
+		ROSE_ASSERT(!"Right-hand-side must be a pointer to a data member in isLValue for SgArrowStarOp");
+		return false;
+	}
+	return true;
+}
+
+/*! std:5.4 par:6 */
+bool SgArrowStarOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (child == get_lhs_operand())
+		return true;
+	else if (child == get_rhs_operand())
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgArrowStarExp");
+		return false;
+	}
+	return true;
+}
+
+
+/*! std:5.2.8 par:1 */
+bool SgTypeIdOp::isLValue() const
+{
+	return true;
+}
+
+/*! std:5.2.8 par:1 */
+bool SgTypeIdOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	return false;
+}
+
+/*! std:5.2.6 par:2; std:5.3.2 par:2 */
+bool SgMinusMinusOp::isLValue() const
+{
+	/*! std:5.2.6 par:1 */
+	if (get_mode() == SgUnaryOp::postfix)
+	{
+		return false;
+	}
+	else
+	{
+		/*! std:5.3.2 par:2 */
+		if (!this->get_operand()->isLValue()) // must also be mutable
+		{
+			ROSE_ASSERT(!"Child operand of a prefix-increment must be an l-value in isLValue on SgPlusPlusOp");
+			return true;
+		}
+		else
+		{
+			return true;
+		}
+	}
+}
+
+/*! std:5.2.6 par:2; std:5.3.2 par:2 */
+bool SgMinusMinusOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	/*! std:5.2.6 par:1 */
+	if (get_mode() == SgUnaryOp::postfix)
+	{
+		if (child != this->get_operand())
+		{
+			ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgPlusPlusOp");
+			return false;
+		}
+		else
+		{
+			return isUsedAsLValue();
+		}
+	}
+	/*! std:5.3.2 par:2 */
+	else
+	{
+		return isUsedAsLValue();
+	}
+}
+
+/*! std:5.2.6 par:1; std:5.3.2 par:1 */
+bool SgPlusPlusOp::isLValue() const
+{
+	/*! std:5.2.6 par:1 */
+	if (get_mode() == SgUnaryOp::postfix)
+	{
+		return false;
+	}
+	else
+	{
+		/*! std:5.3.2 par:1 */
+		if (!this->get_operand()->isLValue()) // must also be mutable
+		{
+			ROSE_ASSERT(!"Child operand of a prefix-increment must be an l-value in isLValue on SgPlusPlusOp");
+			return true;
+		}
+		else
+		{
+			return true;
+		}
+	}
+}
+
+/*! std:5.2.6 par:1; std:5.3.2 par:1 */
+bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	/*! std:5.2.6 par:1 */
+	if (get_mode() == SgUnaryOp::postfix)
+	{
+		if (child != this->get_operand())
+		{
+			ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgPlusPlusOp");
+			return false;
+		}
+		else
+		{
+			return isUsedAsLValue();
+		}
+	}
+	/*! std:5.3.2 par:1 */
+	else
+	{
+		return isUsedAsLValue();
+	}
+}
+
+/*! std:5.2.2 par:1,10 */
+bool SgFunctionCallExp::isLValue() const
+{
+	//! Function Pointers don't have a declaration!
+//	if (getAssociatedFunctionDeclaration()->get_orig_return_type()->get_ref_to() != NULL)
+	SgType* type = get_function()->get_type();
+	SgFunctionType* ftype = isSgFunctionType(type);
+	if (!ftype)
+	{
+		ROSE_ASSERT(!"Error calling a function through a non-function type in isLValue on SgFunctionCallExp");
+		return true;
+	}
+	else
+	{
+		// depends on the return-type being a reference type
+//		if (ftype->get_return_type()->get_ref_to() == NULL)
+		if (isSgReferenceType(ftype->get_return_type()) != NULL)
+			return true;
+		else
+			return false;
+	}
+}
+
+bool SgFunctionCallExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_function() == child)
+	{
+		// King84: I'm unsure if the function itself is an l-value or an r-value.  I'm just playing it safe here.
+		return false;
+	}
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgFunctionCallExp");
+		return false;
+	}
+}
+
+/*! std:5.4 par:1; std:5.2.11 par:1; std:5.2.9 par:1; std:5.2.7 par:2; std:5.2.10 par:1 */
 bool SgCastExp::isLValue() const
 {
+	printf("%d: %s : %s\n", get_file_info()->get_line(), unparseToString().c_str(), get_type()->unparseToString().c_str());
+			     
 	switch (cast_type())
 	{
 		case e_C_style_cast:
-			if (get_type()->get_ref_to() != NULL) /*! std:5.4 par. 1 */
+//			if (get_type()->get_ref_to() != NULL) /*! std:5.4 par:1 */
+			if (isSgReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
 				return true;
 			else
 				return false;
 		case e_const_cast:
-			if (get_type()->get_ref_to() != NULL) /*! std:5.2.11 par. 1 */
+			if (isSgReferenceType(get_type()) != NULL) /*! std:5.2.11 par:1 */
 				return true;
 			else
 				return false;
 		case e_static_cast:
-			if (get_type()->get_ref_to() != NULL) /*! std:5.2.9#1 */
+			if (isSgReferenceType(get_type()) != NULL) /*! std:5.2.9 par:1 */
 				return true;
 			else
 				return false;
 		case e_dynamic_cast:
-			if (get_type()->get_ref_to() != NULL) /*! std:5.2.7#2 */
+			if (isSgReferenceType(get_type()) != NULL) /*! std:5.2.7 par:2 */
 				return true;
 			else
 				return false;
 		case e_reinterpret_cast:
-			if (get_type()->get_ref_to() != NULL) /*! std:5.2.10#1 */
+			if (isSgReferenceType(get_type()) != NULL) /*! std:5.2.10 par:1 */
 				return true;
 			else
 				return false;
@@ -3950,5 +4299,329 @@ bool SgCastExp::isChildUsedAsLValue(const SgExpression* child) const
 	}
 	else
 		return false;
+}
+
+//bool SgFunctionRefExp::isLValue() const
+//{
+//	return true;
+//}
+//
+//bool SgFunctionRefExp::isChildUsedAsLValue(const SgExpression* child) const
+//{
+//	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgFunctionRefExp");
+//	return false;
+//}
+
+/*! std:5.1 par:7,8 */
+bool SgMemberFunctionRefExp::isLValue() const
+{
+	return true;
+}
+
+bool SgMemberFunctionRefExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgMemberFunctionRefExp");
+	return false;
+}
+
+/*! std:5.1 par:7,8 */
+bool SgVarRefExp::isLValue() const
+{
+	return true;
+}
+
+bool SgVarRefExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgVarRefExp");
+	return false;
+}
+
+/*! std:5.16 par:4 */
+bool SgConditionalExp::isLValue() const
+{
+	if (get_true_exp()->isLValue() && get_false_exp()->isLValue())
+	{
+		// TODO: king84
+		// need to make sure they are of the same type, possibly without cv-qualifiers
+		if (get_true_exp()->get_type() == get_false_exp()->get_type())
+			return true;
+		else
+			return false;
+	}
+	else
+		return false;
+}
+
+/*! std:5.16 par:4 */
+bool SgConditionalExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_conditional_exp() == child)
+		return false;
+	else if (get_true_exp() == child || get_false_exp() == child)
+	{
+		if (isUsedAsLValue())
+			return true;
+		else
+			return false;
+	}
+	else// if (!isChild(const_cast<SgExpression*>(child)))
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgConditionalExp");
+		return false;
+	}
+}
+
+
+/*! std:5.17 par:1 */
+bool SgAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgPlusAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgPlusAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgPlusAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgMinusAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgMinusAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgMinusAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgAndAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgAndAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAndAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgIorAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgIorAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgIorAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgMultAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgMultAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgMultAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgDivAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgDivAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgDivAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgModAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgModAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgModAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgXorAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgXorAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgXorAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgLshiftAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgLshiftAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgLshiftAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgRshiftAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgRshiftAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgRshiftAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgPointerAssignOp::isLValue() const
+{
+	return true;
+}
+
+bool SgPointerAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_lhs_operand() == child)
+		return true;
+	else if (get_rhs_operand() == child)
+		return false;
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgPointerAssignOp");
+		return false;
+	}
+}
+
+/*! std:5.17 par:1 */
+bool SgCommaOpExp::isLValue() const
+{
+	return get_rhs_operand()->isLValue();
+}
+
+bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+
+	if (get_lhs_operand() == child)
+		return false;
+	else if (get_rhs_operand() == child)
+	{
+		if (!isUsedAsLValue())
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgCommaOpExp");
+		return false;
+	}
 }
 
