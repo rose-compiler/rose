@@ -707,6 +707,14 @@ public:
      */
     NumNodeRenameTable getDefsForSubtree(SgNode* node);
 
+    /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
+     *
+     * @param var The variable to construct access for.
+     * @param scope The scope within which to construct the access.
+     * @return An expression that access the given variable in the given scope.
+     */
+    SgExpression* buildVariableReference(const varName& var, SgScopeStatement* scope = NULL);
+
 
 
     /*
