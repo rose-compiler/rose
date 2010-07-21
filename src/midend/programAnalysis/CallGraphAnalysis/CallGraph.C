@@ -709,8 +709,13 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
       ROSE_ASSERT(targetDecl);
       SgFunctionType* targetType = isSgFunctionType(targetDecl->get_type());
 
-      if (candidateType == targetType) 
+      if (candidateType->unparseToString() == targetType->unparseToString()) {
+        std::cerr << "match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
         calls.push_back(callexp);
+      }
+      else {
+        std::cerr << "no match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
+      }
       continue;
     }
 
@@ -746,15 +751,51 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                                       Rose_STL_Container<SgFunctionDefinition*>& defs) {
   switch (exp->variantT()) {
     case V_SgFunctionCallExp: {
-                                       SgFunctionCallExp* call = isSgFunctionCallExp(exp);
-                                       SgFunctionDeclaration* decl = call->getAssociatedFunctionDeclaration();
-                                       if (decl == NULL) return;
-                                       SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-                                       if (defDecl == NULL) return;
-                                       SgFunctionDefinition* candidateDef = defDecl->get_definition();
-                                       if (candidateDef != NULL) defs.push_back(candidateDef);
-                                       break;
-                                     }
+             SgFunctionCallExp* call = isSgFunctionCallExp(exp);
+             SgFunctionDeclaration* decl = call->getAssociatedFunctionDeclaration();
+
+             // If function pointer call, match types.
+             if (decl == NULL) {
+                std::cerr << "function pointer 2. matching types" << std::endl; 
+                
+                // Get candidate type 
+                SgExpression* fxn = call->get_function();
+                ROSE_ASSERT(fxn != NULL);
+                SgFunctionType* targetType = isSgFunctionType(fxn->get_type());
+
+                VariantVector vv(V_SgFunctionDefinition);     
+                Rose_STL_Container<SgNode*> candidateDefs = NodeQuery::queryMemoryPool(vv);
+                Rose_STL_Container<SgNode*>::iterator candidateDefIter;
+                for (candidateDefIter = candidateDefs.begin(); 
+                     candidateDefIter != candidateDefs.end(); ++candidateDefIter) { 
+                  // Get target type
+                  SgFunctionDefinition* candidateDef = isSgFunctionDefinition(*candidateDefIter);
+                  SgFunctionDeclaration* candidateDecl = isSgFunctionDefinition(candidateDef)->get_declaration();
+                  ROSE_ASSERT(candidateDecl);
+                  SgFunctionType* candidateType = isSgFunctionType(candidateDecl->get_type());
+
+                  if (candidateType->unparseToString() == targetType->unparseToString()) {
+                    std::cerr << "match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
+                    defs.push_back(candidateDef);
+                  }
+                  else {
+                    std::cerr << "no match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
+                  }
+                }
+                break;
+             } 
+
+             SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+             if (defDecl == NULL) {
+                std::cerr << "virtual function 2. using class heirarchy." << std::endl;
+                break;
+             }
+
+             SgFunctionDefinition* candidateDef = defDecl->get_definition();
+             if (candidateDef != NULL) 
+               defs.push_back(candidateDef);
+             break;
+    }
     case V_SgConstructorInitializer: {
                                        SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
                                        std::cerr << "can't handle ctor initializer" << std::endl;
