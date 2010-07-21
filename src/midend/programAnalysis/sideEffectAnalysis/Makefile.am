@@ -9,7 +9,7 @@ INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) $(SQLITE_DATABASE_INCLUDE)
 
 # noinst_HEADERS = sideEffect.h
 include_HEADERS = sideEffect.h \
-									DatabaseGraph.h
+									SqliteDatabaseGraph.h
 
 noinst_LTLIBRARIES = libsideEffect.la
 
