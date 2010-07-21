@@ -689,17 +689,22 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 void 
 CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, 
                                       Rose_STL_Container<SgExpression*>& calls) {
+  // Process SgFunctionCallExps
   VariantVector vv(V_SgFunctionCallExp);
   Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
   Rose_STL_Container<SgNode*>::iterator site;
   for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
     SgFunctionCallExp* callexp = isSgFunctionCallExp(*site);
     SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
-    if (decl == NULL) { // function pointer. resolve by matching types
+    
+    // If function pointer, resolve by matching types.
+    if (decl == NULL) { 
+      // Get candidate type 
       SgExpression* fxn = callexp->get_function();
       ROSE_ASSERT(fxn != NULL);
       SgFunctionType* candidateType = isSgFunctionType(fxn->get_type());
 
+      // Get target type
       SgFunctionDeclaration* targetDecl = def->get_declaration();
       ROSE_ASSERT(targetDecl);
       SgFunctionType* targetType = isSgFunctionType(targetDecl->get_type());
@@ -709,17 +714,19 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
       continue;
     }
 
+    // If virtual function, resolve with class heirarchy
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-    if (defDecl == NULL) { // virtual function. resolve with class heirarchy
+    if (defDecl == NULL) {
       std::cerr << "found virtual function" << std::endl; 
       continue;
     }
 
-    // statically-resolvable function call
+    // If statically-resolvable function call, resolve with AST
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
     if (candidateDef == def) calls.push_back(callexp);
   }
 
+  // Process SgConstructorInitializers
   VariantVector vv2(V_SgConstructorInitializer);     
   Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
   Rose_STL_Container<SgNode*>::iterator caller2;
@@ -732,27 +739,6 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
     if (candidateDef == def) calls.push_back(ctorInit);
   }
-
-#if 0
-     SgFunctionType* targetType = def->get_declaration()->get_type();
-     
-       if (decl == NULL) { // function pointer. match types
-         SgExpression* candidate = callexp->get_function();
-         SgFunctionType* candidateType = isSgFunctionType(candidate->get_type());
-         //if (targetType == candidateType)
-           //makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
-       } 
-       else {
-         SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-         if (defDecl == NULL) { // virtual function. use class heirarchy
-           std::cerr << "funCallExp not implemented for virtual functions" << std::endl;
-         }
-         else { // statically resolved function. use get_definition
-           //makeEdge(CFGNode(this, idx), (*site)->cfgForEnd(), result);
-         }
-       }
-     }
-#endif
 }
 
 void 
