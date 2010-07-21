@@ -345,6 +345,12 @@ void Control::generateModules()
 
 Module* Control::getModuleRef(int index)
 {
-    assert(index < llvm_file_prefixes.size());
+    assert(llvm_modules.size() > 0 && index < llvm_modules.size());
     return llvm_modules[index];
+}
+
+int Control::getLLVMModuleSize()
+{
+    assert(llvm_modules.size() > 0);
+    return llvm_modules.size();
 }

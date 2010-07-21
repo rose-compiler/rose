@@ -7,6 +7,7 @@
 #include <llvm/Analysis/AliasSetTracker.h>
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/Passes.h>
+#include <AliasAnalysisGatherer.h>
 
 using namespace std;
 
@@ -19,37 +20,35 @@ int main(int argc, char *argv[])
      */
     SgProject *astRoot = frontend(args);
 
-    AliasAnalysisModule AAModule(args);
+    AliasAnalysisModule *AAModule = new AliasAnalysisModule(args);
 
     /*
      * Generate LLVM Modules for all files
      */
-    AAModule.visit(astRoot);
+    AAModule->visit(astRoot);
 
-    llvm::Module *ModRef = AAModule.getModule(0);
-/*    llvm::AliasAnalysis AA;
-    llvm::AliasSetTracker _ASTracker(AA);
+    // Create Pass Manager to manage LLVM Passes
+    llvm::PassManager *PM = new llvm::PassManager();
 
-    llvm::Module::iterator _fiterator = ModRef->begin();
-    llvm::Module::iterator _fiterator_end = ModRef->end();
+    /*
+     * Apply Alias Analysis passes on all LLVM Modules
+     */
+    for(int i = 0; i < AAModule->getLLVMModuleSize(); ++i) {
+        llvm::Module *ModRef = AAModule->getModule(i);
+        assert(ModRef != NULL);
 
-    for( ; _fiterator != _fiterator_end; ++_fiterator) {
-        llvm::Function *func = dyn_cast<llvm::Function> (_fiterator);
+        /*
+         * Add Alias Analysis Passes
+         */
+        PM->add(createBasicAliasAnalysisPass());
+        PM->add(createAAGathererPass());
+        PM->run(*ModRef);       
+    }
 
-        llvm::Function::iterator _bbiterator = func->begin();
-        llvm::Function::iterator _bbiterator_end = func->end();
+    AAModule->annotateAST(astRoot);   
 
-        for( ; _bbiterator != _bbiterator_end; ++_bbiterator) {
-            llvm::BasicBlock *BB = dyn_cast<llvm::BasicBlock> (_bbiterator);
-            _ASTracker.add(*BB);
-        }
-
-    }*/
-
-    llvm::PassManager PM;
-
-    PM.add(createBasicAliasAnalysisPass());
-    PM.run(*ModRef);
+    delete AAModule;
+    delete PM;
    
     return 0;
 }

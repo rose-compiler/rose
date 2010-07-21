@@ -12,7 +12,10 @@ INCLUDES = $(ROSE_INCLUDES) \
 bin_PROGRAMS = rose2llvmAA
 
 rose2llvmAA_SOURCES  = AliasAnalysis.cpp \
-					   AliasAnalysisModule.cpp
+					   AliasAnalysisModule.cpp \
+					   AliasAnalysisGatherer.cpp \
+					   AnnotateAST.cpp
+												   
 
 rose2llvmAA_CPPFLAGS = -D__STDC_LIMIT_MACROS -Wno-deprecated
 

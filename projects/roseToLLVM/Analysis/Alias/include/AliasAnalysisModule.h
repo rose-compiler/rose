@@ -33,8 +33,10 @@ class AliasAnalysisModule: public PaceccModule
 
         int visit(SgProject *project);
         llvm::Module* getModule(int index);
+        int getLLVMModuleSize();
+        int annotateAST(SgProject *project);
 
-        void handleModuleOptions(Rose_STL_Container<string> &args);
+        virtual void handleModuleOptions(Rose_STL_Container<string> &args);
 };
 
 #endif

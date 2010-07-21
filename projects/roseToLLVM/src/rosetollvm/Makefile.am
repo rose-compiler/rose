@@ -55,7 +55,7 @@ librosetollvm_la_SOURCES = \
 	Control.cpp \
 	StringSet.cpp
 
-librosetollvm_la_CPPFLAGS	= -D__STDC_LIMIT_MACROS -D_STDC_CONSTANT_MACROS -Wno-deprecated -g -O0
+librosetollvm_la_CPPFLAGS	= -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Wno-deprecated -g -O0 -Wall
 #	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS) $(LLVM_CPPFLAGS)
 
 librosetollvm_la_LDFLAGS = $(LIBS_WITH_RPATH) \

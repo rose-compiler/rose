@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <AliasAnalysisModule.h>
+#include <AnnotateAST.h>
 #include <rosetollvm/Control.h>
 #include <llvm/Module.h>
 
@@ -24,12 +25,27 @@ int AliasAnalysisModule::visit(SgProject *project)
     return 0;
 }
 
+int AliasAnalysisModule::annotateAST(SgProject *project)
+{
+    AnnotateAST annotate(*options, *control);
+    annotate.traverseInputFiles(project);
+
+    return 0;
+}
+
 llvm::Module* AliasAnalysisModule::getModule(int index)
 {
+    assert(control != NULL);
     return control->getModuleRef(index);
 }
 
 void AliasAnalysisModule::handleModuleOptions(Rose_STL_Container<string> &args) 
 {
     options = new Option(args);
+}
+
+int AliasAnalysisModule::getLLVMModuleSize()
+{
+    assert(control != NULL);
+    return control->getLLVMModuleSize();
 }

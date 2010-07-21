@@ -34,6 +34,8 @@ public:
 
     void generateModules();
 
+    int getLLVMModuleSize();
+
     llvm::Module* getModuleRef(int index);
 
 
