@@ -28,7 +28,11 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
             SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                     copyExpression(operand),
                     popVal(operand->get_type()));
-            output.push_back(ExpressionObject(fwd_exp, rvs_exp, var_table));
+
+            VariableVersionTable new_var_table = var_table;
+            new_var_table.reverseVersion(operand);
+
+            output.push_back(ExpressionObject(fwd_exp, rvs_exp, new_var_table));
         }
     }
 
@@ -41,7 +45,11 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(lhs_operand),
                 popVal(lhs_operand->get_type()));
-        output.push_back(ExpressionObject(fwd_exp, rvs_exp, var_table));
+
+        VariableVersionTable new_var_table = var_table;
+        new_var_table.reverseVersion(lhs_operand);
+
+        output.push_back(ExpressionObject(fwd_exp, rvs_exp, new_var_table));
     }
 
     // function call?

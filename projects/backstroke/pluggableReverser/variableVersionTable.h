@@ -14,10 +14,11 @@ class VariableVersionTable
     VariableRenaming* var_renaming_;
 
 public:
+    VariableVersionTable() : var_renaming_(NULL) {}
     VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
 
-    //! Once the value of a variable is restored or reversed, set its index to the previous one.
-    void backToPreviousIndex(const VarName& var);
+//    //! Once the value of a variable is restored or reversed, set its index to the previous one.
+//    void backToPreviousIndex(const VarName& var);
 
     //! Get the unique variable name from a AST node (could be a varref, dot or arrow operator).
     static VarName getVarName(SgNode* node);
@@ -26,8 +27,16 @@ public:
     bool checkVersion(SgNode* node) const;
 
     /** Regress the version of the given variable. Call this function once the expression or
-     * statement containing the given variable is reversed successfully. */
+      statement containing the given variable is reversed successfully. */
     void reverseVersion(SgNode* node);
+
+    /** If a local variable is not restored at the begining of the reverse basic block, set its
+      version to NULL. */
+    void setNullVersion(SgInitializedName* name);
+
+//    /** Set the version with the same name of the node to the previous version of the given node.
+//      This function if mainly for store and restore mechanism. */
+//    void setPreviousVersion(SgNode* node);
 
     static bool isEmptyVarName(const VarName& var) { return var.empty(); }
 
@@ -36,7 +45,9 @@ public:
     bool variableHasIndex(int index);
 
     void print() const;
-
+    
+    //! Print a VarName object.
+    static void print(const VarName& name);
 };
 
 

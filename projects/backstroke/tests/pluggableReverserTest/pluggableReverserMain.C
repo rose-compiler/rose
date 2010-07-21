@@ -203,7 +203,7 @@ int main(int argc, char * argv[])
 
     popScopeStack();
 
-    //fixVariableReferences2(global);
+    fixVariableReferences2(global);
 
     return backend(project);
 }
