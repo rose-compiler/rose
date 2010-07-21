@@ -32,4 +32,8 @@ check-local:
 	@echo "* ROSE/projects/backstroke/tests/pluggableReverserTest: make check rule complete (terminated normally) *"
 	@echo "*********************************************************************************************************"
 
+test: FORCE
+	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/test0.C test0.C 
+	./pluggableReverser $(TESTCODE_INCLUDES) -c test0.C   
 
+FORCE:

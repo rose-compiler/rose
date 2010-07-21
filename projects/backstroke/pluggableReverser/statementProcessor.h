@@ -15,14 +15,28 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt);
 
 class BasicStatementProcessor : public StatementProcessor
 {
-    StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl);
-    StmtPairs processExprStatement(SgExprStatement* exp_stmt);
-    StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl);
-    StmtPairs processBasicBlock(SgBasicBlock* body);
-    StmtPairs processIfStmt(SgIfStmt* if_stmt);
+    StatementObjectVec processFunctionDeclaration(
+        SgFunctionDeclaration* func_decl,
+        const VariableVersionTable& var_table);
+
+    StatementObjectVec processExprStatement(
+        SgExprStatement* exp_stmt,
+        const VariableVersionTable& var_table);
+
+    StatementObjectVec processVariableDeclaration(
+        SgVariableDeclaration* var_decl,
+        const VariableVersionTable& var_table);
+
+    StatementObjectVec processBasicBlock(
+        SgBasicBlock* body,
+        const VariableVersionTable& var_table);
+
+    StatementObjectVec processIfStmt(
+        SgIfStmt* if_stmt,
+        const VariableVersionTable& var_table);
 
 public:
-    virtual StmtPairs process(SgStatement* stmt);
+    virtual StatementObjectVec process(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 

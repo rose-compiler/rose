@@ -6,21 +6,22 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-StmtPairs BasicStatementProcessor::process(SgStatement* stmt)
+StatementObjectVec BasicStatementProcessor::process(
+        SgStatement* stmt, const VariableVersionTable& var_table)
 {
     if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
-        return processExprStatement(exp_stmt);
+        return processExprStatement(exp_stmt, var_table);
 
     if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
-        return processVariableDeclaration(var_decl);
+        return processVariableDeclaration(var_decl, var_table);
 
     if (SgBasicBlock* block = isSgBasicBlock(stmt))
-        return processBasicBlock(block);
+        return processBasicBlock(block, var_table);
 
-    if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
-        return processIfStmt(if_stmt);
+    //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
+       // return processIfStmt(if_stmt, var_table);
 
-    return StmtPairs();
+    return StatementObjectVec();
 }
 
 #if 0
@@ -62,33 +63,37 @@ StmtPairs BasicStatementProcessor::processFunctionDeclaration(SgFunctionDeclarat
 }
 #endif
 
-StmtPairs BasicStatementProcessor::processExprStatement(SgExprStatement* exp_stmt)
+StatementObjectVec BasicStatementProcessor::processExprStatement(
+        SgExprStatement* exp_stmt,
+        const VariableVersionTable& var_table)
 {
-    ExpPairs exps = processExpression(exp_stmt->get_expression());
-    StmtPairs stmts;
-    foreach (ExpPair exp_pair, exps)
+    ExpressionObjectVec exps = processExpression(exp_stmt->get_expression(), var_table);
+
+    StatementObjectVec stmts;
+    foreach (ExpressionObject exp_obj, exps)
     {
-        SgExpression *fwd_exp, *rvs_exp;
         SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
-        tie(fwd_exp, rvs_exp) = exp_pair;
-        if (fwd_exp)
-            fwd_stmt = buildExprStatement(fwd_exp);
-        if (rvs_exp)
-            rvs_stmt = buildExprStatement(rvs_exp);
-        stmts.push_back(StmtPair(fwd_stmt, rvs_stmt));
+        if (exp_obj.fwd_exp)
+            fwd_stmt = buildExprStatement(exp_obj.fwd_exp);
+        if (exp_obj.rvs_exp)
+            rvs_stmt = buildExprStatement(exp_obj.rvs_exp);
+        
+        stmts.push_back(StatementObject(fwd_stmt, rvs_stmt, var_table));
     }
     return stmts;
 }
 
-StmtPairs BasicStatementProcessor::processVariableDeclaration(SgVariableDeclaration* var_decl)
+StatementObjectVec BasicStatementProcessor::processVariableDeclaration(
+        SgVariableDeclaration* var_decl,
+        const VariableVersionTable& var_table)
 {
-    StmtPairs outputs;
+    StatementObjectVec outputs;
 
     // Note the store and restore of local variables are processd in
     // basic block, not here. We just forward the declaration to forward
     // event function.
-    outputs.push_back(StmtPair(copyStatement(var_decl), NULL));
+    outputs.push_back(StatementObject(copyStatement(var_decl), NULL, var_table));
     //outputs.push_back(pushAndPopLocalVar(var_decl));
 
     // FIXME  other cases
@@ -96,12 +101,14 @@ StmtPairs BasicStatementProcessor::processVariableDeclaration(SgVariableDeclarat
     return outputs;
 }
 
-StmtPairs BasicStatementProcessor::processBasicBlock(SgBasicBlock* body)
+StatementObjectVec BasicStatementProcessor::processBasicBlock(
+        SgBasicBlock* body,
+        const VariableVersionTable& var_table)
 {
-    vector<StmtPairs > all_stmts;
-    StmtPairs outputs;
+    StatementObjectVec outputs;
 
-    
+#if 0
+    vector<StmtPairs > all_stmts;
 
     // Store all results of transformation of local variable declarations.
     vector<StmtPairs > var_decl_output;
@@ -219,10 +226,15 @@ StmtPairs BasicStatementProcessor::processBasicBlock(SgBasicBlock* body)
     if (outputs.empty())
         outputs.push_back(StmtPair(buildBasicBlock(), buildBasicBlock()));
 
+#endif
+
     return outputs;
 }
 
-StmtPairs BasicStatementProcessor::processIfStmt(SgIfStmt* if_stmt)
+#if 0
+StmtPairs BasicStatementProcessor::processIfStmt(
+        SgIfStmt* if_stmt,
+        const VariableVersionTable& var_table)
 {
     //SgStatement *fwd_true_body, *fwd_false_body;
     //SgStatement *rvs_true_body, *rvs_false_body;
@@ -281,3 +293,5 @@ StmtPairs BasicStatementProcessor::processIfStmt(SgIfStmt* if_stmt)
 
     return output;
 }
+#endif
+

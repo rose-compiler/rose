@@ -1,11 +1,19 @@
 #include "eventProcessor.h"
 #include <boost/lexical_cast.hpp>
 #include <utilities/Utilities.h>
+
+#include <VariableRenaming.h>
+
 #include <utilities/CPPDefinesAndNamespaces.h>
 
 
 using namespace SageInterface;
 using namespace SageBuilder;
+
+ExpressionObjectVec ExpressionProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
+{
+    return event_processor_->processExpression(exp, var_table);
+}
 
 SgExpression* ExpressionProcessor::pushVal(SgExpression* exp, SgType* type)
 {
@@ -17,14 +25,14 @@ SgExpression* ExpressionProcessor::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-ExpPairs StatementProcessor::processExpression(SgExpression* exp)
+ExpressionObjectVec StatementProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    return event_processor_->processExpression(exp);
+    return event_processor_->processExpression(exp, var_table);
 }
 
-StmtPairs StatementProcessor::processStatement(SgStatement* stmt)
+StatementObjectVec StatementProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    return event_processor_->processStatement(stmt);
+    return event_processor_->processStatement(stmt, var_table);
 }
 
 SgExpression* StatementProcessor::pushVal(SgExpression* exp, SgType* type)
@@ -38,25 +46,25 @@ SgExpression* StatementProcessor::popVal(SgType* type)
 }
 
 
-ExpPairs EventProcessor::processExpression(SgExpression* exp)
+ExpressionObjectVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    ExpPairs output;
+    ExpressionObjectVec output;
 
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        ExpPairs result = exp_processor->process(exp);
+        ExpressionObjectVec result = exp_processor->process(exp, var_table);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
 
-StmtPairs EventProcessor::processStatement(SgStatement* stmt)
+StatementObjectVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    StmtPairs output;
+    StatementObjectVec output;
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        StmtPairs result = stmt_processor->process(stmt);
+        StatementObjectVec result = stmt_processor->process(stmt, var_table);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
@@ -84,11 +92,11 @@ SgExpression* EventProcessor::getStackVar(SgType* type)
     return buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
 }
 
-std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations()
+std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const
 {
     vector<SgVariableDeclaration*> output;
     typedef std::pair<std::string, SgVariableDeclaration*> pair_t;
-    foreach (pair_t decl_pair, stack_decls_)
+    foreach (const pair_t& decl_pair, stack_decls_)
         output.push_back(decl_pair.second);
     return output;
 }
@@ -110,39 +118,38 @@ SgExpression* EventProcessor::popVal(SgType* type)
 
 FuncDeclPairs EventProcessor::processEvent()
 {
-    SgBasicBlock* body = event_->get_definition()->get_body();
+    // Before processing, build a variable version table for the event function.
+    VariableVersionTable var_table(event_, var_renaming_);
+
+    SgBasicBlock* body = 
+            isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
     FuncDeclPairs outputs;
 
     static int ctr = 0;
 
-    StmtPairs bodies = processStatement(body);
+    StatementObjectVec bodies = processStatement(body, var_table);
 
-    foreach (StmtPair stmt_pair, bodies)
+    foreach (StatementObject& stmt_obj, bodies)
     {
-        SgStatement *fwd_body, *rvs_body;
-        tie(fwd_body, rvs_body) = stmt_pair;
-
         string ctr_str = lexical_cast<string > (ctr++);
 
         SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
         SgFunctionDeclaration* fwd_func_decl =
-                SageBuilder::buildDefiningFunctionDeclaration(
+                buildDefiningFunctionDeclaration(
                     fwd_func_name, event_->get_orig_return_type(),
-                    isSgFunctionParameterList(
-                        SageInterface::copyStatement(event_->get_parameterList())));
+                    isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-        fwd_func_def->set_body(isSgBasicBlock(fwd_body));
-        fwd_body->set_parent(fwd_func_def);
+        fwd_func_def->set_body(isSgBasicBlock(stmt_obj.fwd_stmt));
+        stmt_obj.fwd_stmt->set_parent(fwd_func_def);
 
         SgName rvs_func_name = event_->get_name() + "_reverse" + ctr_str;
         SgFunctionDeclaration* rvs_func_decl =
-                SageBuilder::buildDefiningFunctionDeclaration(
+                buildDefiningFunctionDeclaration(
                     rvs_func_name, event_->get_orig_return_type(),
-                    isSgFunctionParameterList(
-                        SageInterface::copyStatement(event_->get_parameterList())));
+                    isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-        rvs_func_def->set_body(isSgBasicBlock(rvs_body));
-        rvs_body->set_parent(rvs_func_def);
+        rvs_func_def->set_body(isSgBasicBlock(stmt_obj.rvs_stmt));
+        stmt_obj.rvs_stmt->set_parent(rvs_func_def);
 
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
     }
