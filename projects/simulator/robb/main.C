@@ -76,6 +76,39 @@ public:
         }
     }
 #endif
+
+    /* Reads memory from the memory map rather than the super class. */
+    template <size_t Len> VirtualMachineSemantics::ValueType<Len>
+    readMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr,
+               const VirtualMachineSemantics::ValueType<1> cond) const {
+        ROSE_ASSERT(0==Len % 8 && Len<=32);
+        ROSE_ASSERT(map!=NULL);
+        ROSE_ASSERT(addr.is_known());
+        ROSE_ASSERT(cond.is_known() && cond.known_value()!=0);
+        uint8_t buf[Len/8];
+        size_t nread = map->read(buf, addr.known_value(), Len/8);
+        ROSE_ASSERT(nread==Len/8);
+        uint64_t result = 0;
+        for (size_t i=0, j=0; i<Len; i+=8, j++)
+            result |= buf[j] << i;
+        return result;
+    }
+
+    /* Writes memory to the memory map rather than the super class. */
+    template <size_t Len> void
+    writeMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr, 
+                const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
+        ROSE_ASSERT(0==Len % 8 && Len<=32);
+        ROSE_ASSERT(map!=NULL);
+        ROSE_ASSERT(addr.is_known());
+        ROSE_ASSERT(data.is_known());
+        ROSE_ASSERT(cond.is_known() && cond.known_value()!=0);
+        uint8_t buf[Len/8];
+        for (size_t i=0, j=0; i<Len; i+=8, j++)
+            buf[j] = (data.known_value() >> i) & 0xff;
+        size_t nwritten = map->write(buf, addr.known_value(), Len/8);
+        ROSE_ASSERT(nwritten==Len/8);
+    }
 };
 
 void EmulationPolicy::load_program(int argc, char *argv[])
