@@ -726,6 +726,24 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
     if (defDecl == NULL || isVirtual) {
       std::cerr << "found virtual function" << std::endl; 
+      SgMemberFunctionDeclaration* memFunDecl = isSgMemberFunctionDeclaration(defDecl);
+      ROSE_ASSERT(memFunDecl != NULL);
+      SgClassDeclaration* classDecl = memFunDecl->get_associatedClassDeclaration();
+      ROSE_ASSERT(classDecl);
+      SgClassType* classType = classDecl->get_type();
+      ROSE_ASSERT(classType);
+      ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+
+      std::vector<Properties*> props = 
+        CallTargetSet::solveMemberFunctionCall(classType, &classHierarchy, memFunDecl, true);
+
+      Rose_STL_Container<Properties*>::iterator prop;
+      for (prop = props.begin(); prop != props.end(); ++prop) {
+        SgFunctionDeclaration* candidateDecl = (*prop)->functionDeclaration;
+        if (decl == candidateDecl)
+          calls.push_back(callexp);
+
+      }
       continue;
     }
 
