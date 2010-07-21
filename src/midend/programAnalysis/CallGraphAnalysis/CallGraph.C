@@ -718,8 +718,8 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
 
     // MD 07-21-2010 
     // Currently, get_definingDeclaration returns a declaration for virtual functions.
-    // However, this is incorrect since the declaration cannot be resolved statically.
-    // Future work on ROSE will make get_definingDeclaration return NULL for 
+    // However, this is incorrect since the defining declaration cannot be resolved 
+    // statically. Future work on ROSE will make get_definingDeclaration return NULL for 
     // virtual functions. Until this is implemented, this check is necessary. 
     SgFunctionModifier fnMod = decl->get_functionModifier();
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
