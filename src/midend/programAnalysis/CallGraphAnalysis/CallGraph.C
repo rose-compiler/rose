@@ -709,13 +709,8 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
       ROSE_ASSERT(targetDecl);
       SgFunctionType* targetType = isSgFunctionType(targetDecl->get_type());
 
-      if (candidateType->unparseToString() == targetType->unparseToString()) {
-        std::cerr << "match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
+      if (candidateType->unparseToString() == targetType->unparseToString())
         calls.push_back(callexp);
-      }
-      else {
-        std::cerr << "no match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
-      }
       continue;
     }
 
@@ -756,8 +751,6 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
 
              // If function pointer call, match types.
              if (decl == NULL) {
-                std::cerr << "function pointer 2. matching types" << std::endl; 
-                
                 // Get candidate type 
                 SgExpression* fxn = call->get_function();
                 ROSE_ASSERT(fxn != NULL);
@@ -774,13 +767,8 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                   ROSE_ASSERT(candidateDecl);
                   SgFunctionType* candidateType = isSgFunctionType(candidateDecl->get_type());
 
-                  if (candidateType->unparseToString() == targetType->unparseToString()) {
-                    std::cerr << "match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
+                  if (candidateType->unparseToString() == targetType->unparseToString()) 
                     defs.push_back(candidateDef);
-                  }
-                  else {
-                    std::cerr << "no match: " << candidateType->unparseToString() << " " << targetType->unparseToString() << std::endl;
-                  }
                 }
                 break;
              } 
