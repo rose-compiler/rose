@@ -314,6 +314,22 @@ MemoryMap::va_extents() const
     return retval;
 }
 
+rose_addr_t
+MemoryMap::highest_va() const
+{
+    if (elements.empty())
+        throw NotMapped(this, 0);
+    
+    if (!sorted) {
+	std::sort(elements.begin(), elements.end());
+        sorted = true;
+    }
+
+    MapElement &me = elements.last();
+    ROSE_ASSERT(me.second>0);
+    return me.first + me.second - 1;
+}
+
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {

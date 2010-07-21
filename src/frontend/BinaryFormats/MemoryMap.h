@@ -258,6 +258,9 @@ public:
     /** Returns just the virtual address extents for a memory map. */
     ExtentMap va_extents() const;
 
+    /** Returns the highest mapped address. */
+    rose_addr_t highest_va() const;
+
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output. */
     void dump(FILE*, const char *prefix="") const;
