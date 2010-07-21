@@ -67,6 +67,8 @@ done
 machine_name=`uname -n`
 start_time=`date`
 start_time_seconds="$(date +%s)"
+def_num_procs=16
+
 echo ""
 echo "*****************************************************************************"
 echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time"
@@ -109,12 +111,16 @@ if test "x$ROSE_EXIT_TO_TEST_HUDSON" = "xyes" ; then
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
    exit 1
 fi
 
 if test \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
    exit 1
 fi
 
@@ -122,6 +128,8 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
    exit 1
 fi
 # ************************************************************************
@@ -134,10 +142,12 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	mkdir ROSE-build-cmake
 	cd ROSE-build-cmake
 	cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && \
-	make -j$NUM_PROCESS
+	make -j${NUM_PROCESS:-$def_num_procs}
 
    if [ $? -ne 0 ]  ; then
       echo "fatal error in cmake build , aborting..."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
       exit 3
    fi
 
@@ -236,10 +246,12 @@ echo "Starting configure step"
 echo "Done with configure step"
 
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
-	make -j$NUM_PROCESS upload_edg_binary && \
+	make -j${NUM_PROCESS:-$def_num_procs} upload_edg_binary && \
 	make -Csrc/frontend/CxxFrontend deploy_tarballs
       if [ $? -ne 0 ]  ; then
         echo "fatal error when build edg binaries , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
       fi
 
@@ -258,14 +270,25 @@ echo "Starting compile step"
 start_time_make_seconds="$(date +%s)"
 
 # if test false; then
-ROSE_SPEW_ANALYSIS=no
+ROSE_SPEW_ANALYSIS=yes
 if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
-   echo "It should be impossible to reach this branch (exiting in false branch)."
-   exit 1
+ #  echo "It should be impossible to reach this branch (exiting in false branch)."
+ #  exit 1
 
-   make -j$NUM_PROCESS 2>&1 | tee make_output.txt
+   make -j${NUM_PROCESS:-$def_num_procs} 2>&1 | tee make_output.txt
+
+ # the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
+ # we check to see if make failes through this command
+   if [ ${PIPESTATUS[0]} -ne 0 ]  ; then
+        echo "fatal error during 'make'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+   fi
+
+
 
 # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
    echo "Building the filtered_make_output.txt file"
@@ -279,11 +302,13 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 else
    echo "Test compile step"
 
-   make -j$NUM_PROCESS
+   make -j${NUM_PROCESS:-$def_num_procs}
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
 fi
@@ -323,22 +348,38 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    start_time_make_check_seconds="$(date +%s)"
 
  # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
- # make -j$NUM_PROCESS check
+ # make -j${NUM_PROCESS:-$def_num_procs} check
    echo "Starting make check step"
- # Andreas suggests that the use of "tee" is not passing error through to Hudson.
- # make -j$NUM_PROCESS check 2>&1 | tee make_check_output.txt;
 
-   make -j$NUM_PROCESS check
+   if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
+
+     make -j${NUM_PROCESS:-$def_num_procs} check 2>&1 | tee make_check_output.txt;
+# the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
+# we check to see if make failes through this command
+     if [ ${PIPESTATUS[0]} -ne 0 ]  ; then
+       echo "fatal error during 'make check'  , aborting..."
+       exit 3
+     fi
+
+     grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
+
+   else
+     make -j${NUM_PROCESS:-$def_num_procs} check
+   fi
+
 # Liao, 7/8/2010
-   make -j$NUM_PROCESS install
- # sleep 5
+   make -j${NUM_PROCESS:-$def_num_procs} install
 
- # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
- # ( make -j$NUM_PROCESS check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make check'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
+
+
+ # sleep 5
+
 
    end_time_make_check_seconds="$(date +%s)"
    elapsed_make_check_time_seconds="$(expr $end_time_make_check_seconds - $start_time_make_check_seconds)"
@@ -355,7 +396,6 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    echo "***********************************************************************************************************"
 
    echo "Done with make check step"
- # grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
  # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
    echo "Starting make distcheck step"
@@ -363,11 +403,13 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    start_time_make_distcheck_seconds="$(date +%s)"
 
  # FIXME
-   make -j$NUM_PROCESS distcheck
+   make -j${NUM_PROCESS:-$def_num_procs} distcheck
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make distcheck'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
 
@@ -379,7 +421,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # make distcheck" rule just run (before this step).  This "make install" rule runs in a few seconds and is
  # not a bottleneck to the Hudson tests.
    echo "Starting make install step (so we can save a installed copy for secondary tests)"
-   make -j$NUM_PROCESS install
+   make -j${NUM_PROCESS:-$def_num_procs} install
    echo "Done with make install step (so we can save a installed copy for secondary tests)"
 
    end_time_make_distcheck_seconds="$(date +%s)"
@@ -405,7 +447,7 @@ fi
 if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
    echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
- # make -j$NUM_PROCESS docs || exit 0
+ # make -j${NUM_PROCESS:-$def_num_procs} docs || exit 0
  # make docs || exit 0
 
  # Running with parallelism here does not tend to be very helpful since 
@@ -414,11 +456,13 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
    start_time_make_docs_seconds="$(date +%s)"
 
  # FIXME
-   make -j$NUM_PROCESS docs
+   make -j${NUM_PROCESS:-$def_num_procs} docs
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
         exit 3
    fi
    echo "Done with make docs step"
@@ -487,6 +531,8 @@ exit 3
 fi
 done
 
+# reset the windows test file to any value but 0 so that the next test will start
+echo 3 > $win_file
 echo "Done testing."
 fi 
 # **************************************************************
