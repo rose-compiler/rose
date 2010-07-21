@@ -22,42 +22,37 @@ private:
 	
 	/** Reverses an assignment op. Returns true on success and false on failure.
 	 * @param reverseExpressions a list of expressions, to be executed in the specified order */
-	bool handleAssignOp(SgAssignOp* varRef, std::vector<SgExpression*>& reverseExpressions);
+	bool handleAssignOp(SgAssignOp* varRef, SgExpression*& reverseExpressions);
 
-	/** Given a variable reference and its previous definition node, produces and expression that
-	 * evaluates to the value of the variable by re-executing its definition.
+	/**
 	 *
-     * @param destroyedVarName the variable being restored
-     * @param reachingDefinition reaching definition which should be reexecuted
-     * @param reverseExpressions expressions that should be executed to restore the value of the variable
-     * @return  true on success, false on failure
+     * @param variable name of the variable to be restored
+     * @param referenceExpression an expression that can be used in the AST to refer to that variable
+     * @param useSite location where the reverse expression will go
+     * @param definitions the desired version of the variable
+     * @param reverseExpressions side-effect free expression that evaluates to the desired version of the given variable
+     * @return true on success, false on failure
      */
-	bool useReachingDefinition(VariableRenaming::varName destroyedVarName, SgExpression* destroyedVarExp,
-			SgNode* destroySite, SgNode* reachingDefinition, std::vector<SgExpression*>& reverseExpressions);
+	bool restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+		VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression);
 
-	 /** Get name:num mapping for all variables defined in the given subtree.
-	  * Note that a variable may be renamed multiple times in the subtree
-     *
-     * This will return the combination of original and expanded defs on this node.
-     *
-     * ex. s.x = 5;  //This will return s.x and s  (s.x is original & s is expanded)
-     *
-     * @param root AST tree which will be searched for defs
-     * @return A table mapping VarName->set(num, defNode) for every varName defined in the subtree
-     */
-	static std::map<VariableRenaming::varName, std::set<VariableRenaming::numNodeRenameEntry> > getDefsForSubtree(VariableRenaming& varRenamingAnalysis, SgNode* root);
+	bool useReachingDefinition(VariableRenaming::VarName destroyedVarName, SgNode* useSite,
+		VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression);
 
 	/** Returns the variable name referred by the expression. Also returns
 	  * the AST expression for referring to that variable (using the variable renaming analysis).
 	  * Handles comma ops correctly. */
-	std::pair<VariableRenaming::varName, SgExpression*> getReferredVariable(SgExpression* exp);
+	std::pair<VariableRenaming::VarName, SgExpression*> getReferredVariable(SgExpression* exp);
 
 	/** Returns true if an expression calls any functions or modifies any variables. */
 	bool isModifyingExpression(SgExpression* expr);
 
-	/** The def-use analysis used during the reversal. */
-	DefUseAnalysis defUseAnalysis;
-
 	/** This is a replacement for ROSE's def-use analysis. */
 	VariableRenaming variableRenamingAnalysis;
+
+	std::multimap<int, SgExpression*> collectUsesForVariable(VariableRenaming::VarName name, SgNode* node);
+
+	SgExpression* buildVariableReference(VariableRenaming::VarName var, SgScopeStatement* scope = NULL);
+
+	std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);
 };
