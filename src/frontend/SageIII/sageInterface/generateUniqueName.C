@@ -1015,12 +1015,15 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                     key += accessString;
                   }
 
+            // DQ (7/16/2010): To simplify debugging add the line number to the generated string.
             // DQ (7/4/2010): Tests across separate files that are actually different programs are a problem if we don't
             // also include the filename.  The same "class X" might not be able to be merged across different programs.
             // We would not have to include this if we were merging files within a single program.
                ROSE_ASSERT(declarationStatement->get_file_info() != NULL);
                string filename = declarationStatement->get_file_info()->get_filename();
-               key += filename;
+               string linenumber = StringUtility::numberToString(declarationStatement->get_file_info()->get_line());
+            // key += filename;
+               key += filename + "_" + linenumber;
              }
         }
 
