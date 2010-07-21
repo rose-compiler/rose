@@ -768,7 +768,7 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
      CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgExpression*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
-       makeEdge(CFGNode(this, idx), CFGNode(*call, 3), result);
+       makeEdge(CFGNode(this, idx), (*call)->cfgForEnd(), result);
      break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
@@ -788,7 +788,7 @@ SgFunctionDefinition::cfgInEdges(unsigned int idx, bool interprocedural) {
      CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgExpression*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
-       makeEdge(CFGNode(*call, 2), CFGNode(this, idx), result);
+       makeEdge((*call)->cfgForEnd(), CFGNode(this, idx), result);
      break;
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
