@@ -45,9 +45,6 @@ std::string VariableRenaming::keyToString(VarName vec)
 
 void VariableRenaming::printDefs(SgNode* node)
 {
-    if(!DEBUG_MODE)
-        return;
-
     std::cout << "Def Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
 
     foreach(TableEntry::value_type& entry, defTable[node])
@@ -62,9 +59,6 @@ void VariableRenaming::printDefs(SgNode* node)
 
 void VariableRenaming::printDefs(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
 {
-    if(!DEBUG_MODE)
-        return;
-
     std::cout << "Def Table:" << std::endl;
 
     foreach(TableEntry::value_type& entry,table)
@@ -79,9 +73,6 @@ void VariableRenaming::printDefs(std::map< std::vector<SgInitializedName*>, std:
 
 void VariableRenaming::printOriginalDefs(SgNode* node)
 {
-    if(!DEBUG_MODE)
-        return;
-
     std::cout << "Original Def Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
 
     foreach(TableEntry::value_type& entry, originalDefTable[node])
@@ -96,8 +87,6 @@ void VariableRenaming::printOriginalDefs(SgNode* node)
 
 void VariableRenaming::printOriginalDefTable()
 {
-    if(!DEBUG_MODE)
-        return;
     std::cout << "Original Def Table:" << endl;
 
     foreach(DefUseTable::value_type& node, originalDefTable)
@@ -117,9 +106,6 @@ void VariableRenaming::printOriginalDefTable()
 
 void VariableRenaming::printUses(SgNode* node)
 {
-    if(!DEBUG_MODE)
-        return;
-
     std::cout << "Use Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
 
     foreach(TableEntry::value_type& entry,useTable[node])
@@ -134,9 +120,6 @@ void VariableRenaming::printUses(SgNode* node)
 
 void VariableRenaming::printUses(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
 {
-    if(!DEBUG_MODE)
-        return;
-
     std::cout << "Use Table:" << std::endl;
 
     foreach(TableEntry::value_type& entry,table)
@@ -156,9 +139,6 @@ void VariableRenaming::printRenameTable()
 
 void VariableRenaming::printRenameTable(const VarName& var)
 {
-    if(DEBUG_MODE)
-        return;
-
     cout << "Names for [" << keyToString(var) << "]:" << endl;
 
     printRenameEntry(numRenameTable[var]);
@@ -166,9 +146,6 @@ void VariableRenaming::printRenameTable(const VarName& var)
 
 void VariableRenaming::printRenameTable(const NodeNumRenameTable& table)
 {
-    if(!DEBUG_MODE)
-        return;
-
     cout << "Rename Table:" << endl;
 
     //Iterate the table
@@ -183,9 +160,6 @@ void VariableRenaming::printRenameTable(const NodeNumRenameTable& table)
 
 void VariableRenaming::printRenameTable(const NumNodeRenameTable& table)
 {
-    if(!DEBUG_MODE)
-        return;
-
     cout << "Rename Table:" << endl;
 
     //Iterate the table
@@ -200,9 +174,6 @@ void VariableRenaming::printRenameTable(const NumNodeRenameTable& table)
 
 void VariableRenaming::printRenameEntry(const NodeNumRenameEntry& entry)
 {
-    if(!DEBUG_MODE)
-        return;
-
     int start = 0;
     int end = 0;
     
@@ -251,9 +222,6 @@ void VariableRenaming::printRenameEntry(const NodeNumRenameEntry& entry)
 
 void VariableRenaming::printRenameEntry(const NumNodeRenameEntry& entry)
 {
-    if(!DEBUG_MODE)
-        return;
-
     //Iterate the entry
     foreach(const NumNodeRenameEntry::value_type& iter, entry)
     {
@@ -320,11 +288,15 @@ bool VariableRenaming::isPrefixOfName(VarName name, VarName prefix)
 //Function to perform the VariableRenaming and annotate the AST
 void VariableRenaming::run()
 {
-    //if(DEBUG_MODE)
-        //cout << "Performing Variable location traversal." << endl;
-
-    //VariableRenaming::VarLocatorTraversal varTraverse(this);
-    //varTraverse.traverse(this->project,VariableRenaming::VarLocatorInheritedAttr(VariableRenaming::VarLocatorInheritedAttr::Global,this->project));
+    originalDefTable.clear();
+    expandedDefTable.clear();
+    defTable.clear();
+    useTable.clear();
+    useLocTable.clear();
+    firstDefList.clear();
+    nodeRenameTable.clear();
+    numRenameTable.clear();
+    globalVarList.clear();
 
     if(DEBUG_MODE)
         cout << "Locating global variables." << endl;
@@ -367,7 +339,10 @@ void VariableRenaming::run()
     //at every function call
     insertGlobalVarDefinitions();
 
-    printOriginalDefTable();
+    if(DEBUG_MODE)
+    {
+        printOriginalDefTable();
+    }
     
     if(DEBUG_MODE)
         cout << "Performing DefUse." << endl;
@@ -981,7 +956,10 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
 VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
-    cout << "---------<" << node->class_name() << ">-------" << node << endl;
+    if(varRename->getDebug())
+    {
+        cout << "---------<" << node->class_name() << ">-------" << node << endl;
+    }
     //We want to propogate the def/use information up from the varRefs to the higher expressions.
     if(isSgInitializedName(node))
     {
@@ -1213,7 +1191,10 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
     std::vector<SgNode*> uses;
     for(unsigned int i = 0; i < attrs.size(); i++)
     {
-        cout << "Merging attr[" << i << "]" << endl;
+        if(varRename->getDebug())
+        {
+            cout << "Merging attr[" << i << "]" << endl;
+        }
         defs.insert(defs.end(), attrs[i].getDefs().begin(), attrs[i].getDefs().end());
         uses.insert(uses.end(), attrs[i].getUses().begin(), attrs[i].getUses().end());
     }
@@ -2584,4 +2565,33 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
         return result;
     }
+}
+
+SgExpression* VariableRenaming::buildVariableReference(const VarName& var, SgScopeStatement* scope)
+{
+     ROSE_ASSERT(var.size() > 0);
+
+     SgExpression* varsSoFar = SageBuilder::buildVarRefExp(var.front(), scope);
+
+     for (size_t i = 0; i < var.size(); i++)
+     {
+         SgInitializedName* initName = var[i];
+         if (initName == var.back())
+         {
+             break;
+         }
+
+         SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i+1], scope);
+
+         if (isSgPointerType(initName->get_type()))
+         {
+             varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
+         }
+         else
+         {
+             varsSoFar = SageBuilder::buildDotExp(varsSoFar, nextVar);
+         }
+     }
+
+     return varsSoFar;
 }
