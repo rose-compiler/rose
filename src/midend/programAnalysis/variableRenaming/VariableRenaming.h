@@ -266,7 +266,7 @@ private:
     GlobalTable globalVarList;
 
 public:
-    VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(true), DEBUG_MODE_EXTRA(true){}
+    VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(project->get_verbose() > 0), DEBUG_MODE_EXTRA(project->get_verbose() > 1){}
 
     ~VariableRenaming(){}
     
@@ -706,6 +706,14 @@ public:
      * @return The table mapping VarName->(num, node) for every definition.
      */
     NumNodeRenameTable getDefsForSubtree(SgNode* node);
+
+    /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
+     *
+     * @param var The variable to construct access for.
+     * @param scope The scope within which to construct the access.
+     * @return An expression that access the given variable in the given scope.
+     */
+    SgExpression* buildVariableReference(const VarName& var, SgScopeStatement* scope = NULL);
 
 
 
