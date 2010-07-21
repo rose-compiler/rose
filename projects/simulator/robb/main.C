@@ -2,6 +2,12 @@
 #include "rose.h"
 #include "VirtualMachineSemantics.h"
 
+/* These are necessary for the system call emulation */
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -54,6 +60,12 @@ public:
     /* Returns instruction at current IP, disassembling it if necessary, and caching it. */
     SgAsmx86Instruction *current_insn();
 
+    /* Emulates a Linux system call from an INT 0x80 instruction. */
+    void emulate_syscall();
+
+    /* Reads a NUL-terminated string from memory */
+    std::string read_string(uint32_t va);
+
     /* Called by X86InstructionSemantics */
     void hlt() {
         fprintf(stderr, "hlt\n");
@@ -66,11 +78,7 @@ public:
             fprintf(stderr, "Bad interrupt\n");
             abort();
         }
-#if 0
-        linuxSyscall(ms);
-#else
-        ROSE_ASSERT(!"syscalls not handled yet");
-#endif
+        emulate_syscall();
     }
 
 #if 0
@@ -258,6 +266,71 @@ EmulationPolicy::current_insn()
     return insn;
 }
 
+std::string
+EmulationPolicy::read_string(uint32_t va)
+{
+    std::string retval;
+    while (1) {
+        uint8_t byte;
+        size_t nread = map->read(&byte, va++, 1);
+        ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+        retval += byte;
+        if (!byte)
+            return retval;
+    }
+}
+
+void
+EmulationPolicy::emulate_syscall()
+{
+    /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
+     *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
+    unsigned callno = readGPR(x86_gpr_ax).known_value();
+    switch (callno) {
+        case 3: { /*read*/
+            int fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t buf_va = readGPR(x86_gpr_cx).known_value();
+            uint32_t count = readGPR(x86_gpr_dx).known_value();
+            char buf[count];
+            ssize_t nread = read(fd, buf, count);
+            if (nread<0) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                writeGPR(x86_gpr_ax, nread);
+                map->write(buf, buf_va, nread);
+            }
+            break;
+        }
+
+        case 5: { /*open*/
+            uint32_t filename_va = readGPR(x86_gpr_bx).known_value();
+            std::string filename = read_string(filename_va);
+            uint32_t flags = readGPR(x86_gpr_cx).known_value();
+            uint32_t mode = (flags & O_CREAT) ? readGPR(x86_gpr_dx).known_value() : 0;
+            int fd = open(filename.c_str(), flags, mode);
+            writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+            break;
+        }
+
+        case 6: { /*close*/
+            int fd = readGPR(x86_gpr_bx).known_value();
+            if (1==fd || 2==fd) {
+                /* ROSE is using these */
+                writeGPR(x86_gpr_ax, -EPERM);
+            } else {
+                int status = close(fd);
+                writeGPR(x86_gpr_ax, status<0 ? -errno : status);
+            }
+            break;
+        }
+
+        default: {
+            fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
+            abort();
+        }
+    }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -282,7 +355,7 @@ main(int argc, char *argv[])
     while (true) {
         try {
             SgAsmx86Instruction *insn = policy.current_insn();
-#if 0
+#if 1
             fprintf(stderr, "\033[K\n[%07zu] %s\033[K\r\033[1A", ninsns++, unparseInstructionWithAddress(insn).c_str());
 #else
             fprintf(stderr, "[%07zu] %s\n", ninsns++, unparseInstructionWithAddress(insn).c_str());
