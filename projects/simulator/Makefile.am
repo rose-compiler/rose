@@ -6,11 +6,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 include_HEADERS = mymemory.h simulate.h
 
-noinst_PROGRAMS = sandbox test1
+noinst_PROGRAMS = sandbox test1 robb
 
 sandbox_SOURCES = emulator.C simulate.C linuxcalls.C elfload.C
 sandbox_CPPFLAGS = $(ROSE_INCLUDES) -UDEBUG
 sandbox_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+robb_SOURCES = robb/main.C
+robb_CPPFLAGS = $(ROSE_INCLUDES)
+robb_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 test1: $(srcdir)/test1.c
 	$(CC) -m32 -o $@ $<
