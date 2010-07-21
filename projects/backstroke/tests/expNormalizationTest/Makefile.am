@@ -579,7 +579,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 simple_test = test_norm.C
 
 $(simple_test):expNormTest 
-	@cp $(srcdir)/test_norm.C test_norm.C
+	@cp $(top_srcdir)/projects/backstroke/tests/expNormalizationTest/test_norm.C test_norm.C
 	./expNormTest -c test_norm.C      		
 
 

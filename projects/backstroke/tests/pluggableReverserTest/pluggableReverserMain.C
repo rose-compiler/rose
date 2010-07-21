@@ -9,7 +9,7 @@
 #include "utilities/CPPDefinesAndNamespaces.h"
 
 
-//#include <VariableRenaming.h>
+#include <VariableRenaming.h>
 
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -133,9 +133,9 @@ int main(int argc, char * argv[])
     SgProject* project = frontend(args);
 
 
-    //VariableRenaming var_renaming(project);
-    //var_renaming.run();
-    //var_renaming.toDot("temp.dot");
+    VariableRenaming var_renaming(project);
+    var_renaming.run();
+    //var_renaming.toDOT("temp.dot");
 
 
     SgGlobal* global = getFirstGlobalScope(project);
@@ -150,7 +150,7 @@ int main(int argc, char * argv[])
     addTextForUnparser(global, includes, AstUnparseAttribute::e_before);
 
 
-    EventProcessor event_processor;
+    EventProcessor event_processor(NULL, &var_renaming);
 
     // Add all expression handlers to the expression pool.
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
@@ -172,8 +172,18 @@ int main(int argc, char * argv[])
                 ends_with(func_name, "forward"))
             continue;
 
+
         // First of all, normalize this event function.
         backstroke_norm::normalizeEvent(decl);
+
+        /*******************************************************/
+        // A small test here :)
+       // VariableRenaming var_renaming(project);
+        //var_renaming.run();
+        VariableVersionTable var_table(decl, &var_renaming);
+        cout << "!!!\n";
+        var_table.print();
+
 
 #if 1
         // Here reverse the event function into several versions.
