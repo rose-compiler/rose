@@ -759,9 +759,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
   for (caller2 = callers2.begin(); caller2 != callers2.end(); ++caller2) { 
     SgConstructorInitializer* ctorInit = isSgConstructorInitializer(*caller2);
     SgMemberFunctionDeclaration* ctorDecl = ctorInit->get_declaration(); 
-    if (ctorDecl == NULL) continue;
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(ctorDecl->get_definingDeclaration());
-    if (defDecl == NULL) continue;
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
     if (candidateDef == def) calls.push_back(ctorInit);
   }
@@ -835,7 +833,9 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
     }
     case V_SgConstructorInitializer: {
              SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
-             std::cerr << "can't handle ctor initializer" << std::endl;
+             SgMemberFunctionDeclaration* decl = ctor->get_declaration();
+             SgFunctionDefinition* defn = decl->get_definition();
+             defs.push_back(defn);
              break;
     }
     default: {
