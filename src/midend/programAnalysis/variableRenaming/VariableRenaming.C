@@ -2586,7 +2586,11 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
     }
 }
 
+<<<<<<< HEAD
 SgExpression* VariableRenaming::buildVariableReference(const VarName& var, SgScopeStatement* scope)
+=======
+SgExpression* VariableRenaming::buildVariableReference(const varName& var, SgScopeStatement* scope = NULL)
+>>>>>>> 0541fe7e13c126f2f83e85d76244774c7394ce79
 {
      ROSE_ASSERT(var.size() > 0);
 
