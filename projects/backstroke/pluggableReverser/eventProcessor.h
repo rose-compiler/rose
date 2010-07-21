@@ -8,9 +8,19 @@
 
 struct ExpressionObject
 {
+    ExpressionObject() {}
     ExpressionObject(SgExpression* exp1, SgExpression* exp2, const VariableVersionTable& table)
             : fwd_exp(exp1), rvs_exp(exp2), var_table(table)
     {}
+
+    ExpressionObject clone()
+    {
+        ExpressionObject obj;
+        obj.fwd_exp = SageInterface::copyExpression(fwd_exp);
+        obj.rvs_exp = SageInterface::copyExpression(rvs_exp);
+        obj.var_table = var_table;
+        return obj;
+    }
     
     SgExpression* fwd_exp;
     SgExpression* rvs_exp;
@@ -22,9 +32,19 @@ struct ExpressionObject
 
 struct StatementObject
 {
+    StatementObject() {}
     StatementObject(SgStatement* stmt1, SgStatement* stmt2, const VariableVersionTable& table)
             : fwd_stmt(stmt1), rvs_stmt(stmt2), var_table(table)
     {}
+
+    StatementObject clone()
+    {
+        StatementObject obj;
+        obj.fwd_stmt = SageInterface::copyStatement(fwd_stmt);
+        obj.rvs_stmt = SageInterface::copyStatement(rvs_stmt);
+        obj.var_table = var_table;
+        return obj;
+    }
     
     SgStatement* fwd_stmt;
     SgStatement* rvs_stmt;
