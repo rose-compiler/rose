@@ -320,11 +320,15 @@ bool VariableRenaming::isPrefixOfName(VarName name, VarName prefix)
 //Function to perform the VariableRenaming and annotate the AST
 void VariableRenaming::run()
 {
-    //if(DEBUG_MODE)
-        //cout << "Performing Variable location traversal." << endl;
-
-    //VariableRenaming::VarLocatorTraversal varTraverse(this);
-    //varTraverse.traverse(this->project,VariableRenaming::VarLocatorInheritedAttr(VariableRenaming::VarLocatorInheritedAttr::Global,this->project));
+    originalDefTable.clear();
+    expandedDefTable.clear();
+    defTable.clear();
+    useTable.clear();
+    useLocTable.clear();
+    firstDefList.clear();
+    nodeRenameTable.clear();
+    numRenameTable.clear();
+    globalVarList.clear();
 
     if(DEBUG_MODE)
         cout << "Locating global variables." << endl;
@@ -2586,11 +2590,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
     }
 }
 
-<<<<<<< HEAD
 SgExpression* VariableRenaming::buildVariableReference(const VarName& var, SgScopeStatement* scope)
-=======
-SgExpression* VariableRenaming::buildVariableReference(const varName& var, SgScopeStatement* scope = NULL)
->>>>>>> 0541fe7e13c126f2f83e85d76244774c7394ce79
 {
      ROSE_ASSERT(var.size() > 0);
 
