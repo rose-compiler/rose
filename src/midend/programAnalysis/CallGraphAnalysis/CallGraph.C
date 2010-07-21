@@ -775,6 +775,7 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                   ROSE_ASSERT(candidateDecl);
                   SgFunctionType* candidateType = isSgFunctionType(candidateDecl->get_type());
 
+                  //Compare types.
                   if (candidateType->unparseToString() == targetType->unparseToString()) 
                     defs.push_back(candidateDef);
                 }
@@ -785,14 +786,13 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
              
              // MD 07-21-2010 
              // Currently, get_definingDeclaration returns a declaration for virtual functions.
-             // However, this is incorrect since the declaration cannot be resolved statically.
-             // Future work on ROSE will make get_definingDeclaration return NULL for 
+             // However, this is incorrect since the defining declaration cannot be resolved 
+             // statically. Future work on ROSE will make get_definingDeclaration return NULL for 
              // virtual functions. Until this is implemented, this check is necessary. 
              SgFunctionModifier fnMod = decl->get_functionModifier();
              SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
              bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
              if (defDecl == NULL || isVirtual) {
-                std::cerr << "virtual function 2. using class heirarchy." << std::endl;
                 Rose_STL_Container<Properties*> functionList;
                 ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
                 CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
@@ -803,53 +803,27 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                   SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                   ROSE_ASSERT(decl);
                   SgFunctionDefinition* def = decl->get_definition();
-                  if (def == NULL) 
-                    std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
-                  else
+                  if (def != NULL) 
                     defs.push_back(def);
                 }
                 break;
              }
 
+             // Otherwise, it's a statically-resolveable call. Resolve with the AST.
              SgFunctionDefinition* candidateDef = defDecl->get_definition();
              if (candidateDef != NULL) 
                defs.push_back(candidateDef);
              break;
     }
     case V_SgConstructorInitializer: {
-                                       SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
-                                       std::cerr << "can't handle ctor initializer" << std::endl;
-                                       break;
-                                     }
-    default: {
-               ROSE_ASSERT(!"Unable to get definitions for expression");
-             }
-  }
-
-#if 0
-    ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-    Rose_STL_Container<Properties*> functionList;
-    CallTargetSet::retrieveFunctionDeclarations(this, &classHierarchy, functionList);
-    Rose_STL_Container<Properties*>::iterator prop;
-    for (prop = functionList.begin(); prop != functionList.end(); prop++) {
-      SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
-      ROSE_ASSERT(funcDecl);
-      SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-      if (decl == NULL) {
-        // Causes excessive output for includes. 
-        // std::cerr << "warning: no definition for " << funcDecl->get_qualified_name().str() << std::endl;
-        continue;
-      }
-      SgFunctionDefinition* def = decl->get_definition();
-      if (def == NULL) 
-        std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
-      else
-        makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+             SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
+             std::cerr << "can't handle ctor initializer" << std::endl;
+             break;
     }
-}
-else
-makeEdge(CFGNode(this, idx), CFGNode(this, 3), result);
-#endif
+    default: {
+             ROSE_ASSERT(!"Unable to get definitions for expression");
+    }
+  }
 }
 
 // Add the declaration for functionCallExp to functionList. In the case of 
