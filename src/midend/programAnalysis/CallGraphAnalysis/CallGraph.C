@@ -695,9 +695,27 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
   for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
     SgFunctionCallExp* callexp = isSgFunctionCallExp(*site);
     SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
-    if (decl == NULL) continue;
+    if (decl == NULL) { // function pointer. resolve by matching types
+      SgExpression* fxn = callexp->get_function();
+      ROSE_ASSERT(fxn != NULL);
+      SgFunctionType* candidateType = isSgFunctionType(fxn->get_type());
+
+      SgFunctionDeclaration* targetDecl = def->get_declaration();
+      ROSE_ASSERT(targetDecl);
+      SgFunctionType* targetType = isSgFunctionType(targetDecl->get_type());
+
+      if (candidateType == targetType) 
+        calls.push_back(callexp);
+      continue;
+    }
+
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-    if (defDecl == NULL) continue;
+    if (defDecl == NULL) { // virtual function. resolve with class heirarchy
+      std::cerr << "found virtual function" << std::endl; 
+      continue;
+    }
+
+    // statically-resolvable function call
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
     if (candidateDef == def) calls.push_back(callexp);
   }
