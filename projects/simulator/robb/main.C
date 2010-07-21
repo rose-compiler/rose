@@ -8,7 +8,9 @@
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
 class EmulationPolicy: public VirtualMachineSemantics::Policy {
 public:
-    MemoryMap *map;                             /* describes how specimen's memory is mapped to simulator memory */
+    MemoryMap *map;                             /* Describes how specimen's memory is mapped to simulator memory */
+    Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
+    Disassembler::InstructionMap icache;        /* Cache of disassembled instructions */
 #if 0
     uint32_t gsOffset;
     void (*eipShadow)();
@@ -17,7 +19,7 @@ public:
     std::vector<user_desc> thread_areas;
 #endif
 
-    EmulationPolicy() {
+    EmulationPolicy(): map(NULL), disassembler(NULL) {
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
             writeGPR((X86GeneralPurposeRegister)i, 0);
         for (size_t i=0; i<VirtualMachineSemantics::State::n_segregs; i++)
@@ -48,6 +50,9 @@ public:
     /* Initialize the stack for the specimen.  The argc and argv are the command-line of the specimen, not ROSE or the
      * simulator. */
     void initialize_stack(int argc, char *argv[]);
+
+    /* Returns instruction at current IP, disassembling it if necessary, and caching it. */
+    SgAsmx86Instruction *current_insn();
 
     /* Called by X86InstructionSemantics */
     void hlt() {
@@ -115,8 +120,9 @@ void EmulationPolicy::load_program(int argc, char *argv[])
 {
     int new_argc = argc+1;
     char **new_argv = new char*[argc+1];
-    new_argv[0] = strdup("-rose:read_executable_file_format_only"); /*no need to disassemble yet*/
-    for (int i=0; i<=argc; i++)
+    new_argv[0] = argv[0];
+    new_argv[1] = strdup("-rose:read_executable_file_format_only"); /*no need to disassemble yet*/
+    for (int i=1; i<=argc; i++)
         new_argv[i+1] = argv[i];
 
     SgProject *project = frontend(new_argc, new_argv);
@@ -133,6 +139,9 @@ void EmulationPolicy::load_program(int argc, char *argv[])
         }
     } fhdr(project);
     ROSE_ASSERT(fhdr.best!=NULL);
+
+    /* Set program entry point now so dynamic linking can override it later if necessary. */
+    writeIP(fhdr.best->get_entry_rva() + fhdr.best->get_base_va());
 
     /* Build a memory map for the executable and dynamic libraries. We load all LOAD segments into memory. */
     struct T2: public Loader::Selector {
@@ -151,11 +160,14 @@ void EmulationPolicy::load_program(int argc, char *argv[])
             return Loader::CONTRIBUTE_NONE;
         }
     } selector;
-
     Loader *loader = Loader::find_loader(fhdr.best);
     ROSE_ASSERT(loader!=NULL);
     map = loader->create_map(NULL, fhdr.best->get_mapped_sections(), &selector);
     ROSE_ASSERT(map!=NULL);
+
+    /* Find a suitable disassembler and clone it in case we want to set properties locally. */
+    disassembler = Disassembler::lookup(fhdr.best)->clone();
+    ROSE_ASSERT(disassembler!=NULL);
 }
 
 void EmulationPolicy::initialize_stack(int argc, char *argv[])
@@ -221,10 +233,37 @@ void EmulationPolicy::initialize_stack(int argc, char *argv[])
     writeGPR(x86_gpr_sp, sp);
 }
 
+SgAsmx86Instruction *
+EmulationPolicy::current_insn()
+{
+    rose_addr_t ip = readIP().known_value();
+
+    /* Use the cached instruction if possible. */
+    Disassembler::InstructionMap::iterator found = icache.find(ip);
+    if (found!=icache.end()) {
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(found->second);
+        ROSE_ASSERT(insn!=NULL); /*shouldn't be possible due to check below*/
+        size_t insn_sz = insn->get_raw_bytes().size();
+        SgUnsignedCharList curmem(insn_sz);
+        size_t nread = map->read(&curmem[0], ip, insn_sz);
+        if (nread==insn_sz && curmem==insn->get_raw_bytes())
+            return insn;
+        icache.erase(found);
+    }
+    
+    /* Disassemble (and cache) a new instruction */
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
+    ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
+    icache.insert(std::make_pair(ip, insn));
+    return insn;
+}
+
 int
 main(int argc, char *argv[])
 {
+    typedef X86InstructionSemantics<EmulationPolicy, VirtualMachineSemantics::ValueType> Semantics;
     EmulationPolicy policy;
+    Semantics t(policy);
 
     policy.load_program(argc, argv);
 
@@ -234,6 +273,27 @@ main(int argc, char *argv[])
     specimen_argv[specimen_argc] = NULL;
     policy.initialize_stack(specimen_argc, specimen_argv);
 
+    /* Debugging */
     fprintf(stdout, "Memory map:\n");
     policy.map->dump(stdout, "  ");
+
+    /* Execute the program */
+    size_t ninsns = 0;
+    while (true) {
+        try {
+            SgAsmx86Instruction *insn = policy.current_insn();
+#if 0
+            fprintf(stderr, "\033[K\n[%07zu] %s\033[K\r\033[1A", ninsns++, unparseInstructionWithAddress(insn).c_str());
+#else
+            fprintf(stderr, "[%07zu] %s\n", ninsns++, unparseInstructionWithAddress(insn).c_str());
+#endif
+            t.processInstruction(insn);
+        } catch (const Semantics::Exception &e) {
+            std::cerr <<e <<"\n\n";
+            abort();
+        }
+    }
+    return 0;
+            
+    
 }
