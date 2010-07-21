@@ -2585,3 +2585,32 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
         return result;
     }
 }
+
+SgExpression* VariableRenaming::buildVariableReference(const VarName& var, SgScopeStatement* scope)
+{
+     ROSE_ASSERT(var.size() > 0);
+
+     SgExpression* varsSoFar = SageBuilder::buildVarRefExp(var.front(), scope);
+
+     for (size_t i = 0; i < var.size(); i++)
+     {
+         SgInitializedName* initName = var[i];
+         if (initName == var.back())
+         {
+             break;
+         }
+
+         SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i+1], scope);
+
+         if (isSgPointerType(initName->get_type()))
+         {
+             varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
+         }
+         else
+         {
+             varsSoFar = SageBuilder::buildDotExp(varsSoFar, nextVar);
+         }
+     }
+
+     return varsSoFar;
+}
