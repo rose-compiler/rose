@@ -715,8 +715,16 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     }
 
     // If virtual function, resolve with class heirarchy
+
+    // MD 07-21-2010 
+    // Currently, get_definingDeclaration returns a declaration for virtual functions.
+    // However, this is incorrect since the declaration cannot be resolved statically.
+    // Future work on ROSE will make get_definingDeclaration return NULL for 
+    // virtual functions. Until this is implemented, this check is necessary. 
+    SgFunctionModifier fnMod = decl->get_functionModifier();
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-    if (defDecl == NULL) {
+    bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
+    if (defDecl == NULL || isVirtual) {
       std::cerr << "found virtual function" << std::endl; 
       continue;
     }
@@ -773,9 +781,33 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                 break;
              } 
 
+             // If virtual function, resolve with class heirarchy 
+             
+             // MD 07-21-2010 
+             // Currently, get_definingDeclaration returns a declaration for virtual functions.
+             // However, this is incorrect since the declaration cannot be resolved statically.
+             // Future work on ROSE will make get_definingDeclaration return NULL for 
+             // virtual functions. Until this is implemented, this check is necessary. 
+             SgFunctionModifier fnMod = decl->get_functionModifier();
              SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-             if (defDecl == NULL) {
+             bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
+             if (defDecl == NULL || isVirtual) {
                 std::cerr << "virtual function 2. using class heirarchy." << std::endl;
+                Rose_STL_Container<Properties*> functionList;
+                ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+                CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
+                Rose_STL_Container<Properties*>::iterator prop;
+                for (prop = functionList.begin(); prop != functionList.end(); prop++) {
+                  SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
+                  ROSE_ASSERT(funcDecl);
+                  SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+                  ROSE_ASSERT(decl);
+                  SgFunctionDefinition* def = decl->get_definition();
+                  if (def == NULL) 
+                    std::cerr << "no definition for function in SgFunctionCallExp::cfgOutEdges: " << decl->get_name().str() << std::endl;
+                  else
+                    defs.push_back(def);
+                }
                 break;
              }
 
