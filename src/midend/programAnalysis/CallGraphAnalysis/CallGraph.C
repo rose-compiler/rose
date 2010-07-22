@@ -760,6 +760,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     SgConstructorInitializer* ctorInit = isSgConstructorInitializer(*caller2);
     SgMemberFunctionDeclaration* ctorDecl = ctorInit->get_declaration(); 
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(ctorDecl->get_definingDeclaration());
+    if (defDecl == NULL) continue;
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
     if (candidateDef == def) calls.push_back(ctorInit);
   }
