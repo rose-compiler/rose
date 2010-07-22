@@ -8,7 +8,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/n
 noinst_PROGRAMS = expNormTest
 expNormTest_SOURCES = main.C
 
-EXTRA_DIST = 
+EXTRA_DIST = test_norm.C 
 
 CLEANFILES = 
 

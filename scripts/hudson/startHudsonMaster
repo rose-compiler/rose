@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if test $TERM != screen ; then
+	echo "Warning: It is recommended to run Hudson in a screen session."
+	echo
+	echo "Press Enter to continue anyway."
+	read
+fi
+
+. ./startHudson-common
+
+HUDSON_HOME=/home/hudson-rose/hudson ; export HUDSON_HOME
+
+exec java -Dhudson.model.Hudson.flyweightSupport=true -jar hudson.war --httpPort=8080 --ajp13Port=-1
