@@ -689,6 +689,7 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 void 
 CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, 
                                       Rose_STL_Container<SgExpression*>& calls) {
+  std::cerr << "finding calls for def " << def->unparseToString() << std::endl;
   // Process SgFunctionCallExps
   VariantVector vv(V_SgFunctionCallExp);
   Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
@@ -699,6 +700,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     
     // If function pointer, resolve by matching types.
     if (decl == NULL) { 
+      std::cerr << "1 for function pointer" << callexp->unparseToString() << std::endl;
       // Get candidate type 
       SgExpression* fxn = callexp->get_function();
       ROSE_ASSERT(fxn != NULL);
@@ -709,8 +711,10 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
       ROSE_ASSERT(targetDecl);
       SgFunctionType* targetType = isSgFunctionType(targetDecl->get_type());
 
-      if (candidateType->unparseToString() == targetType->unparseToString())
+      if (candidateType->unparseToString() == targetType->unparseToString()) {
+        std::cerr << "\tadded fn on line " << targetDecl->get_file_info()->get_line() << std::endl;
         calls.push_back(callexp);
+      }
       continue;
     }
 
@@ -725,7 +729,6 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
     bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
     if (defDecl == NULL || isVirtual) {
-      std::cerr << "found virtual function" << std::endl; 
       SgMemberFunctionDeclaration* memFunDecl = isSgMemberFunctionDeclaration(defDecl);
       ROSE_ASSERT(memFunDecl != NULL);
       SgClassDeclaration* classDecl = memFunDecl->get_associatedClassDeclaration();
@@ -735,13 +738,17 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
       ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
 
       std::vector<Properties*> props = 
-        CallTargetSet::solveMemberFunctionCall(classType, &classHierarchy, memFunDecl, true);
+        CallTargetSet::solveMemberFunctionCall(classType, &classHierarchy, memFunDecl, false);
 
+      SgFunctionDeclaration* targetDecl = def->get_declaration();
       Rose_STL_Container<Properties*>::iterator prop;
+      std::cerr << "2 for function " << decl->get_qualified_name().str() << std::endl;
       for (prop = props.begin(); prop != props.end(); ++prop) {
         SgFunctionDeclaration* candidateDecl = (*prop)->functionDeclaration;
-        if (decl == candidateDecl)
+        if (candidateDecl == targetDecl) {
+          std::cerr << "\tfound virtual function: " << candidateDecl->get_qualified_name().str() << std::endl; 
           calls.push_back(callexp);
+        }
 
       }
       continue;
@@ -749,7 +756,11 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
 
     // If statically-resolvable function call, resolve with AST
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
-    if (candidateDef == def) calls.push_back(callexp);
+    std::cerr << "3 for function " << decl->get_qualified_name().str() << std::endl;
+    if (candidateDef == def) {
+      std::cerr << "\tfound function: " << defDecl->get_qualified_name().str() << std::endl; 
+      calls.push_back(callexp);
+    }
   }
 
   // Process SgConstructorInitializers
@@ -769,6 +780,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
 void 
 CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp, 
                                       Rose_STL_Container<SgFunctionDefinition*>& defs) {
+  std::cerr << "finding defs for exp " << std::endl;
   switch (exp->variantT()) {
     case V_SgFunctionCallExp: {
              SgFunctionCallExp* call = isSgFunctionCallExp(exp);
@@ -776,6 +788,7 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
 
              // If function pointer call, match types.
              if (decl == NULL) {
+               std::cerr << "00 for exp: " << call->unparseToString() << std::endl;
                 // Get candidate type 
                 SgExpression* fxn = call->get_function();
                 ROSE_ASSERT(fxn != NULL);
@@ -793,8 +806,10 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                   SgFunctionType* candidateType = isSgFunctionType(candidateDecl->get_type());
 
                   //Compare types.
-                  if (candidateType->unparseToString() == targetType->unparseToString()) 
+                  if (candidateType->unparseToString() == targetType->unparseToString()) {
+                    std::cerr << "\tfound function: " << candidateType->unparseToString() << std::endl; 
                     defs.push_back(candidateDef);
+                  }
                 }
                 break;
              } 
@@ -810,6 +825,7 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
              SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
              bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
              if (defDecl == NULL || isVirtual) {
+               std::cerr << "01 for function " << decl->get_qualified_name().str() << std::endl;
                 Rose_STL_Container<Properties*> functionList;
                 ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
                 CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
@@ -820,16 +836,21 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                   SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
                   ROSE_ASSERT(decl);
                   SgFunctionDefinition* def = decl->get_definition();
-                  if (def != NULL) 
+                  if (def != NULL) {
+                    std::cerr << "\tfound function: " << decl->get_qualified_name().str() << std::endl; 
                     defs.push_back(def);
+                  }
                 }
                 break;
              }
 
              // Otherwise, it's a statically-resolveable call. Resolve with the AST.
+             std::cerr << "02 for function " << decl->get_qualified_name().str() << std::endl;
              SgFunctionDefinition* candidateDef = defDecl->get_definition();
-             if (candidateDef != NULL) 
+             if (candidateDef != NULL) {
+               std::cerr << "\tfound function: " << defDecl->get_qualified_name().str() << std::endl; 
                defs.push_back(candidateDef);
+             }
              break;
     }
     case V_SgConstructorInitializer: {
