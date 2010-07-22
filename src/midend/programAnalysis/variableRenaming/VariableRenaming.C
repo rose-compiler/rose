@@ -1782,10 +1782,20 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
     VarName rootName;
     rootName.assign(1,name[0]);
 
+    //We want to see if the name is a class member (no def so far)
     if(firstDefList.count(rootName) == 0)
     {
-        cout << "Error: No entry in first def list for root name [" << keyToString(rootName) << "]" << endl;
-        ROSE_ASSERT(false);
+        //Check if the variable is declared in a class scope 
+        if(isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
+        {
+            //It is declared in class scope.
+            //Get our enclosing function definition to insert the first definition into.
+
+            SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+            ROSE_ASSERT(func);
+
+            firstDefList[rootName] = func;
+        }
     }
 
     //Start from the end of the name and insert definitions of every part
