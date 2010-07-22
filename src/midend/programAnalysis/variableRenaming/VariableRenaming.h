@@ -613,6 +613,21 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var);
 
+    /** Get the versions of all variables at the start of the given function.
+     *
+     * @param node The function to get variables for.
+     * @return A table of VarName->(num, defNode) for all variables at the start of the function. Empty table otherwise.
+     */
+    NumNodeRenameTable getReachingDefsAtFunctionStart(SgFunctionDefinition* node);
+
+    /** Get the versions of a variable at the start of the given function.
+     *
+     * @param node The function definition to get definitions for.
+     * @param var The varName to get definitions for.
+     * @return A table of (num, defNode) for the given variable. Empty table otherwise.
+     */
+    NumNodeRenameEntry getReachingDefsAtFunctionStartForName(SgFunctionDefinition* node, const VarName& var);
+
     /** Get name:num mappings for all uses at this node.
      *
      * @param node The node to get uses for.
