@@ -124,6 +124,10 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName 
 	}
 	else if (SgInitializedName* declaration = isSgInitializedName(reachingDefinition))
 	{
+		//FIXME: The initialized name might be for the parent of this variable.
+		//For example, the reaching defintion of s.x might be s = foo(). In this case,
+		//we have to restore s, then append the .x accessor to it...
+
 		//If the previous definition is a declaration without an initializer and the declaration is not
 		//in a function parameter list, then the previous value of the variable is undefined and we don't
 		//need to restore it
@@ -134,8 +138,8 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName 
 				//The variable has a well-defined previous value but we can't re-execute its defintion
 				return false;
 			}
-			//FIXME: What is the initializer is inside a class declaration? The class might have a constructor...
-			reverseExpression = buildVariableReference(destroyedVarName);
+
+			reverseExpression = variableRenamingAnalysis.buildVariableReference(destroyedVarName);
 			return true;
 		}
 		else if (SgAssignInitializer* assignInit = isSgAssignInitializer(declaration->get_initializer()))
@@ -277,35 +281,6 @@ multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(V
 	traversal.traverse(node);
 
 	return traversal.result;
-}
-
-SgExpression* CFGReverserProofofConcept::buildVariableReference(VariableRenaming::VarName var, SgScopeStatement* scope)
-{
-	ROSE_ASSERT(var.size() > 0);
-
-	SgExpression* varsSoFar = SageBuilder::buildVarRefExp(var.front(), scope);
-
-	for (size_t i = 0; i < var.size(); i++)
-	{
-		SgInitializedName* initName = var[i];
-		if (initName == var.back())
-		{
-			break;
-		}
-
-		SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i+1], scope);
-
-		if (isSgPointerType(initName->get_type()))
-		{
-			varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
-		}
-		else
-		{
-			varsSoFar = SageBuilder::buildDotExp(varsSoFar, nextVar);
-		}
-	}
-
-	return varsSoFar;
 }
 
 vector<SgExpression*> CFGReverserProofofConcept::findVarReferences(VariableRenaming::VarName var, SgNode* root)
