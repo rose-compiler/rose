@@ -32,6 +32,8 @@
 #include <errno.h>
 #include <asm/ldt.h>
 
+typedef modify_ldt_ldt_s user_desc;
+
 template <size_t Len>
 struct Value {
     uint64_t val_;
