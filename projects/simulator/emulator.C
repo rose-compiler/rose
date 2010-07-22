@@ -418,6 +418,9 @@ int main(int argc, char** argv) {
 #if 0
             fprintf(stderr, "\033[K\n[%07zu] %s\033[K\r\033[1A",
                     ninsns++, unparseInstructionWithAddress(policy.id[policy.ms.ip]).c_str()),
+#else
+            fprintf(stderr, "[%07zu] %s\n",
+                    ninsns++, unparseInstructionWithAddress(policy.id[policy.ms.ip]).c_str()),
 #endif
             t.processInstruction(policy.id[policy.ms.ip]);
         } catch (const Semantics::Exception &e) {
