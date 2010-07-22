@@ -76,13 +76,15 @@ AstAttribute::additionalNodeInfo()
    {
      std::vector<AttributeNodeInfo> v;
      return v;
-   }
+}
+
 
 AstAttribute*
 AstAttribute::copy()
-   {
-     return new AstAttribute(*this);
-   }
+{
+	//Implementations need to overload this to make a proper copy.
+	return NULL;
+}
 
 bool
 AstAttribute::commentOutNodeInGraph()
