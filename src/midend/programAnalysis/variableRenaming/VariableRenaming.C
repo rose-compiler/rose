@@ -2577,6 +2577,16 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
     }
 }
 
+VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunctionStart(SgFunctionDefinition* node)
+{
+    return getReachingDefsAtNode(node);
+}
+
+VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunctionStartForName(SgFunctionDefinition* node, const VarName& var)
+{
+    return getReachingDefsAtNodeForName(node, var);
+}
+
 SgExpression* VariableRenaming::buildVariableReference(const VarName& var, SgScopeStatement* scope)
 {
      ROSE_ASSERT(var.size() > 0);
