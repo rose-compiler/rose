@@ -5,6 +5,7 @@
 /* These are necessary for the system call emulation */
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/user.h>
 #include <unistd.h>
 
 
@@ -14,9 +15,11 @@
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
 class EmulationPolicy: public VirtualMachineSemantics::Policy {
 public:
-    MemoryMap *map;                             /* Describes how specimen's memory is mapped to simulator memory */
+    MemoryMap map;                              /* Describes how specimen's memory is mapped to simulator memory */
     Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
     Disassembler::InstructionMap icache;        /* Cache of disassembled instructions */
+    uint32_t brk_va;                            /* Current value for brk() syscall; initialized by load() */
+    uint32_t phdr_va;                           /* Virtual address for PT_PHDR ELF segment, or zero; initialized by load() */
 #if 0
     uint32_t gsOffset;
     void (*eipShadow)();
@@ -25,7 +28,7 @@ public:
     std::vector<user_desc> thread_areas;
 #endif
 
-    EmulationPolicy(): map(NULL), disassembler(NULL) {
+    EmulationPolicy(): disassembler(NULL), brk_va(0), phdr_va(0) {
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
             writeGPR((X86GeneralPurposeRegister)i, 0);
         for (size_t i=0; i<VirtualMachineSemantics::State::n_segregs; i++)
@@ -37,9 +40,8 @@ public:
         writeGPR(x86_gpr_sp, 0xc0000000ul);
     }
 
-    /* Load an executable plus libraries into memory, creating the MemoryMap object that describes the mapping from the
-     * specimen's address space to the simulator's address space. The arguments passed to this function are those that would
-     * be applicable to ROSE itself, not the arguments for the specimen.
+    /* Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
+     * the mapping from the specimen's address space to the simulator's address space.
      *
      * There are two ways to load dynamic libraries:
      *   1. Load the dynamic linker (ld-linux.so) and simulate it in order to load the libraries.  This is the most accurate
@@ -49,13 +51,12 @@ public:
      *      control over the finer details such as which directories are searched, etc. since we have total control over the
      *      linker.  However, Matt's work is not complete at this time [2010-07-20].
      *
-     * We will use Matt's approach for now even though Jeremiah's original work used the first approach. This gives us an
-     * opportunity to test those parts of ROSE. */
-    void load_program(int argc, char *argv[]);
+     * We use the first approach. */
+    SgAsmGenericHeader* load(const char *name);
 
     /* Initialize the stack for the specimen.  The argc and argv are the command-line of the specimen, not ROSE or the
      * simulator. */
-    void initialize_stack(int argc, char *argv[]);
+    void initialize_stack(SgAsmGenericHeader*, int argc, char *argv[]);
 
     /* Returns instruction at current IP, disassembling it if necessary, and caching it. */
     SgAsmx86Instruction *current_insn();
@@ -95,11 +96,10 @@ public:
     readMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr,
                const VirtualMachineSemantics::ValueType<1> cond) const {
         ROSE_ASSERT(0==Len % 8 && Len<=32);
-        ROSE_ASSERT(map!=NULL);
         ROSE_ASSERT(addr.is_known());
         ROSE_ASSERT(cond.is_known() && cond.known_value()!=0);
         uint8_t buf[Len/8];
-        size_t nread = map->read(buf, addr.known_value(), Len/8);
+        size_t nread = map.read(buf, addr.known_value(), Len/8);
         ROSE_ASSERT(nread==Len/8);
         uint64_t result = 0;
         for (size_t i=0, j=0; i<Len; i+=8, j++)
@@ -112,90 +112,103 @@ public:
     writeMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr, 
                 const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
         ROSE_ASSERT(0==Len % 8 && Len<=32);
-        ROSE_ASSERT(map!=NULL);
         ROSE_ASSERT(addr.is_known());
         ROSE_ASSERT(data.is_known());
         ROSE_ASSERT(cond.is_known() && cond.known_value()!=0);
         uint8_t buf[Len/8];
         for (size_t i=0, j=0; i<Len; i+=8, j++)
             buf[j] = (data.known_value() >> i) & 0xff;
-        size_t nwritten = map->write(buf, addr.known_value(), Len/8);
+        size_t nwritten = map.write(buf, addr.known_value(), Len/8);
         ROSE_ASSERT(nwritten==Len/8);
     }
 };
 
-void EmulationPolicy::load_program(int argc, char *argv[])
+SgAsmGenericHeader*
+EmulationPolicy::load(const char *name)
 {
-    int new_argc = argc+1;
-    char **new_argv = new char*[argc+1];
-    new_argv[0] = argv[0];
-    new_argv[1] = strdup("-rose:read_executable_file_format_only"); /*no need to disassemble yet*/
-    for (int i=1; i<=argc; i++)
-        new_argv[i+1] = argv[i];
+    fprintf(stderr, "loading %s...\n", name);
+    char *frontend_args[4];
+    frontend_args[0] = strdup("-");
+    frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
+    frontend_args[2] = strdup(name);
+    frontend_args[3] = NULL;
+    SgProject *project = frontend(3, frontend_args);
 
-    SgProject *project = frontend(new_argc, new_argv);
+    /* Find the best file header. For Windows programs, skip the DOS header if there's another later header. */
+    SgAsmGenericHeader *fhdr = SageInterface::querySubTree<SgAsmGenericHeader>(project, V_SgAsmGenericHeader).back();
+    writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
 
-    /* Find the best file header. If an executable has both a DOS and a PE header then the PE header is preferred. */
-    struct T1: public SgSimpleProcessing {
-        SgAsmGenericHeader *best;
-        T1(SgNode *ast): best(NULL) {
-            traverse(ast, preorder);
-        }
-        void visit(SgNode *node) {
-            if (!best || isSgAsmPEFileHeader(node))
-                best = isSgAsmGenericHeader(node);
-        }
-    } fhdr(project);
-    ROSE_ASSERT(fhdr.best!=NULL);
+    /* Find a suitable disassembler and clone it in case we want to set properties locally. We only do this for the first
+     * (non-recursive) call of load() and assume that all dynamically linked libraries would use the same disassembler. */
+    if (!disassembler) {
+        disassembler = Disassembler::lookup(fhdr)->clone();
+        ROSE_ASSERT(disassembler!=NULL);
+    }
 
-    /* Set program entry point now so dynamic linking can override it later if necessary. */
-    writeIP(fhdr.best->get_entry_rva() + fhdr.best->get_base_va());
-
-    /* Build a memory map for the executable and dynamic libraries. We load all LOAD segments into memory. */
+    /* Determine which mappable sections should be loaded into the specimen's address space.  We load LOAD and INTERP
+     * segments. INTERP segments will additionally cause EmulationPolicy::load() to run recursively.  Note that
+     * LoaderELF::order_sections() cause SgAsmGenericSections which are both ELF Sections and ELF Segments to appear twice in
+     * the list that's ultimately processed by Loader::create_map(). Therefore we need to keep track of what sections we've
+     * actually seen. */
     struct T2: public Loader::Selector {
+        EmulationPolicy *policy;
+        std::set<SgAsmGenericSection*> seen;
+        T2(EmulationPolicy *policy): policy(policy) {}
         virtual Loader::Contribution contributes(SgAsmGenericSection *_section) {
             SgAsmElfSection *section = isSgAsmElfSection(_section);
             SgAsmElfSegmentTableEntry *segment = section ? section->get_segment_entry() : NULL;
-            if (segment) {
+            if (segment && seen.find(section)==seen.end()) {
+                seen.insert(section);
                 switch (segment->get_type()) {
                     case SgAsmElfSegmentTableEntry::PT_LOAD:
-                    case SgAsmElfSegmentTableEntry::PT_INTERP:
                         return Loader::CONTRIBUTE_ADD;
+                    case SgAsmElfSegmentTableEntry::PT_INTERP:
+                        char interp_name[section->get_size()+1];
+                        section->read_content_local(0, interp_name, section->get_size());
+                        interp_name[section->get_size()] = '\0';
+                        policy->load(interp_name);
+                        return Loader::CONTRIBUTE_ADD;
+                    case SgAsmElfSegmentTableEntry::PT_PHDR:
+                        policy->phdr_va = section->get_mapped_preferred_rva();
+                        return Loader::CONTRIBUTE_NONE;
                     default:
                         return Loader::CONTRIBUTE_NONE;
                 }
             }
             return Loader::CONTRIBUTE_NONE;
         }
-    } selector;
-    Loader *loader = Loader::find_loader(fhdr.best);
-    ROSE_ASSERT(loader!=NULL);
-    map = loader->create_map(NULL, fhdr.best->get_mapped_sections(), &selector);
-    ROSE_ASSERT(map!=NULL);
+    } selector(this);
 
-    /* Find a suitable disassembler and clone it in case we want to set properties locally. */
-    disassembler = Disassembler::lookup(fhdr.best)->clone();
-    ROSE_ASSERT(disassembler!=NULL);
+    /* Load applicable sections into specimen's memory recursively, defining a MemoryMap that describes how the specimen
+     * address spaces maps to our own (the simulator's) address space. */
+    Loader *loader = Loader::find_loader(fhdr);
+    ROSE_ASSERT(loader!=NULL);
+    loader->create_map(&map, fhdr->get_mapped_sections(), &selector);
+
+    /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address.
+     * Note that we haven't mapped the stack yet, which is typically above all the segments loaded from the file. */
+    brk_va = ALIGN_UP(map.highest_va()+1, PAGE_SIZE);
+    return fhdr;
 }
 
-void EmulationPolicy::initialize_stack(int argc, char *argv[])
+void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 {
-    /* load_program() must have been called already */
-    ROSE_ASSERT(map!=NULL);
+    /* We only handle ELF for now */
+    SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(_fhdr);
+    ROSE_ASSERT(fhdr!=NULL);
 
     /* Allocate the stack */
     static const size_t stack_size = 0x01000000;
     size_t sp = readGPR(x86_gpr_sp).known_value();
     size_t stack_addr = sp - stack_size;
-    void *stack = new uint8_t[stack_size];
-    map->insert(MemoryMap::MapElement(stack_addr, stack_size, stack, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE));
+    map.insert(MemoryMap::MapElement(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE));
 
     /* Initialize the stack with specimen's argc and argv */
     std::vector<uint32_t> pointers;                     /* pointers pushed onto stack at the end of initialization */
     for (int i=0; i<argc; i++) {
         size_t len = strlen(argv[i]) + 1; /*inc. NUL termination*/
         sp -= len;
-        map->write(argv[i], sp, len);
+        map.write(argv[i], sp, len);
         pointers.push_back(sp);
     }
     pointers.push_back(0); /*the argv NULL terminator*/
@@ -205,28 +218,27 @@ void EmulationPolicy::initialize_stack(int argc, char *argv[])
         if (!environ[i]) break;
         size_t len = strlen(environ[i]) + 1;
         sp -= len;
-        map->write(environ[i], sp, len);
+        map.write(environ[i], sp, len);
         pointers.push_back(sp);
     }
     pointers.push_back(0); /*environment NULL terminator*/
 
     /* Initialize stack with auxv, where each entry is two words in the pointers vector. This information is only present for
      * dynamically linked executables. */
-#if 0 /*FIXME*/
-    if (has_interp) {
-        pointers.push_back(AT_PHDR);   pointers.push_back(phdr);
-        pointers.push_back(AT_PHENT);  pointers.push_back(phent);
-        pointers.push_back(AT_PHNUM);  pointers.push_back(phnum);
-        pointers.push_back(AT_PAGESZ); pointers.push_back(PAGE_SIZE);
-        pointers.push_back(AT_ENTRY);  pointers.push_back(entry);
-        pointers.push_back(AT_UID);    pointers.push_back(getuid());
-        pointers.push_back(AT_EUID);   pointers.push_back(geteuid());
-        pointers.push_back(AT_GID);    pointers.push_back(getgid());
-        pointers.push_back(AT_EGID);   pointers.push_back(getegid());
-        pointers.push_back(AT_SECURE); pointers.push_back(false);
+    if (fhdr->get_section_by_name(".interp")) {
+        pointers.push_back(3); /*AT_PHDR*/              pointers.push_back(phdr_va);
+        pointers.push_back(4); /*AT_PHENT*/
+          pointers.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+        pointers.push_back(5); /*AT_PHNUM*/             pointers.push_back(fhdr->get_e_phnum());
+        pointers.push_back(6); /*AT_PAGESZ*/            pointers.push_back(PAGE_SIZE);
+        pointers.push_back(9); /*AT_ENTRY*/             pointers.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
+        pointers.push_back(11); /*AT_UID*/              pointers.push_back(getuid());
+        pointers.push_back(12); /*AT_EUID*/             pointers.push_back(geteuid());
+        pointers.push_back(13); /*AT_GID*/              pointers.push_back(getgid());
+        pointers.push_back(14); /*AT_EGID*/             pointers.push_back(getegid());
+        pointers.push_back(23); /*AT_SECURE*/           pointers.push_back(false);
     }
-#endif
-    pointers.push_back(0 /*AT_NULL*/); pointers.push_back(0);
+    pointers.push_back(0); /*AT_NULL*/          pointers.push_back(0);
 
     /* Finalize stack initialization by writing all the pointers to data we've pushed:
      *    argc
@@ -236,7 +248,7 @@ void EmulationPolicy::initialize_stack(int argc, char *argv[])
      */
     sp &= ~3U; /*align to four-bytes*/
     sp -= 4 * pointers.size();
-    map->write(&(pointers[0]), sp, 4*pointers.size());
+    map.write(&(pointers[0]), sp, 4*pointers.size());
 
     writeGPR(x86_gpr_sp, sp);
 }
@@ -253,14 +265,14 @@ EmulationPolicy::current_insn()
         ROSE_ASSERT(insn!=NULL); /*shouldn't be possible due to check below*/
         size_t insn_sz = insn->get_raw_bytes().size();
         SgUnsignedCharList curmem(insn_sz);
-        size_t nread = map->read(&curmem[0], ip, insn_sz);
+        size_t nread = map.read(&curmem[0], ip, insn_sz);
         if (nread==insn_sz && curmem==insn->get_raw_bytes())
             return insn;
         icache.erase(found);
     }
     
     /* Disassemble (and cache) a new instruction */
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     icache.insert(std::make_pair(ip, insn));
     return insn;
@@ -272,7 +284,7 @@ EmulationPolicy::read_string(uint32_t va)
     std::string retval;
     while (1) {
         uint8_t byte;
-        size_t nread = map->read(&byte, va++, 1);
+        size_t nread = map.read(&byte, va++, 1);
         ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
         retval += byte;
         if (!byte)
@@ -297,7 +309,7 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, -errno);
             } else {
                 writeGPR(x86_gpr_ax, nread);
-                map->write(buf, buf_va, nread);
+                map.write(buf, buf_va, nread);
             }
             break;
         }
@@ -324,6 +336,23 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 45: { /*brk*/
+            uint32_t newbrk = ALIGN_DN(readGPR(x86_gpr_bx).known_value(), PAGE_SIZE);
+            if (newbrk >= 0xb0000000ul) {
+                writeGPR(x86_gpr_ax, -ENOMEM);
+            } else {
+                if (newbrk > brk_va) {
+                    map.insert(MemoryMap::MapElement(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE));
+                    brk_va = newbrk;
+                } else if (newbrk < brk_va) {
+                    map.erase(MemoryMap::MapElement(newbrk, brk_va-newbrk));
+                    brk_va = newbrk;
+                }
+                writeGPR(x86_gpr_ax, brk_va);
+            }
+            break;
+        }
+
         default: {
             fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
             abort();
@@ -338,24 +367,25 @@ main(int argc, char *argv[])
     EmulationPolicy policy;
     Semantics t(policy);
 
-    policy.load_program(argc, argv);
+    ROSE_ASSERT(argc==2); /*usage: only arg must be the executable name*/
+    SgAsmGenericHeader *fhdr = policy.load(argv[1]); /*header for main executable, not libraries*/
 
     /* Set up specimen's argc and argv. FIXME: for now we just set them to 0 and (NULL) */
     int specimen_argc = 0;
     char **specimen_argv = new char*[specimen_argc+1];
     specimen_argv[specimen_argc] = NULL;
-    policy.initialize_stack(specimen_argc, specimen_argv);
+    policy.initialize_stack(fhdr, specimen_argc, specimen_argv);
 
     /* Debugging */
     fprintf(stdout, "Memory map:\n");
-    policy.map->dump(stdout, "  ");
+    policy.map.dump(stdout, "  ");
 
     /* Execute the program */
     size_t ninsns = 0;
     while (true) {
         try {
             SgAsmx86Instruction *insn = policy.current_insn();
-#if 1
+#if 0
             fprintf(stderr, "\033[K\n[%07zu] %s\033[K\r\033[1A", ninsns++, unparseInstructionWithAddress(insn).c_str());
 #else
             fprintf(stderr, "[%07zu] %s\n", ninsns++, unparseInstructionWithAddress(insn).c_str());
