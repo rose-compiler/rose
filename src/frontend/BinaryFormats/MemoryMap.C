@@ -268,7 +268,7 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
         size_t m_offset = start_va - m->get_va();
         ROSE_ASSERT(m_offset < m->get_size());
         size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
-        if (m->is_anonymous()) {
+        if (m->is_anonymous() && NULL==m->get_base()) {
             memset((uint8_t*)dst_buf+ncopied, 0, n);
         } else {
             memcpy((uint8_t*)dst_buf+ncopied, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
@@ -296,6 +296,7 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
             ROSE_ASSERT(*m->anonymous==0);
             *(m->anonymous) = 1;
             m->base = new uint8_t[m->get_size()];
+            memset(m->base, 0, m->get_size());
         }
         memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, (uint8_t*)src_buf+ncopied, n);
         ncopied += n;
@@ -325,9 +326,9 @@ MemoryMap::highest_va() const
         sorted = true;
     }
 
-    MapElement &me = elements.last();
-    ROSE_ASSERT(me.second>0);
-    return me.first + me.second - 1;
+    MapElement &me = elements.back();
+    ROSE_ASSERT(me.get_size()>0);
+    return me.get_va() + me.get_size() - 1;
 }
 
 void
