@@ -69,6 +69,8 @@ StatementObjectVec BasicStatementProcessor::processExprStatement(
 {
     ExpressionObjectVec exps = processExpression(exp_stmt->get_expression(), var_table);
 
+    ROSE_ASSERT(!exps.empty());
+
     StatementObjectVec stmts;
     foreach (ExpressionObject& exp_obj, exps)
     {
@@ -94,7 +96,10 @@ StatementObjectVec BasicStatementProcessor::processVariableDeclaration(
     // Note the store and restore of local variables are processd in
     // basic block, not here. We just forward the declaration to forward
     // event function.
+
+    // FIXME copyStatement also copies preprocessing info
     outputs.push_back(StatementObject(copyStatement(var_decl), NULL, var_table));
+    //outputs.push_back(StatementObject(NULL, NULL, var_table));
     //outputs.push_back(pushAndPopLocalVar(var_decl));
 
     // FIXME  other cases
@@ -125,16 +130,16 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
                 SgInitializedName* init_name = names[0];
 
                 // Store the value of local variables at the end of the basic block.
-                SgVarRefExp* var_stored = buildVarRefExp(init_name);
+                SgVarRefExp* var_stored = buildVarRefExp(init_name->get_name()); 
                 SgStatement* store_var = buildExprStatement(
-                        pushVal(var_stored, var_stored->get_type()));
+                        pushVal(var_stored, init_name->get_type()));
 
                 // Retrieve the value which is used to initialize that local variable.
-                SgStatement* decl_restore_var = buildVariableDeclaration(
+                SgVariableDeclaration* decl_restore_var = buildVariableDeclaration(
                         init_name->get_name(),
                         init_name->get_type(),
-                        buildAssignInitializer(popVal(var_stored->get_type())));
-                
+                        buildAssignInitializer(popVal(init_name->get_type())));
+
                 // The second transformation is not to store it.
                 SgStatement* just_decl = buildVariableDeclaration(
                         init_name->get_name(),
@@ -150,6 +155,7 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
 
                 isSgBasicBlock(new_obj1.fwd_stmt)->append_statement(store_var);
                 isSgBasicBlock(new_obj1.rvs_stmt)->append_statement(decl_restore_var);
+                //fixVariableDeclaration(decl_restore_var, isSgBasicBlock(new_obj1.rvs_stmt));
 
                 // The second transformation is not to store it. We have to set its version NULL.
                 StatementObject new_obj2 = obj.clone();
@@ -172,20 +178,54 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
 #if 1
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {
-        foreach (StatementObject obj, queue[i])
+        foreach (StatementObject& obj, queue[i])
         {
             StatementObjectVec result = processStatement(stmt, obj.var_table);
-            foreach (StatementObject res, result)
+            
+            ROSE_ASSERT(!result.empty());
+
+            foreach (StatementObject& res, result)
             {
-                StatementObject new_obj = obj.clone();
+                // Currently, we cannot directly deep copy variable declarations. So we rebuild another one
+                // with the same name, type and initializer.
+                
+                StatementObject new_obj = obj;// = obj.clone();
+                new_obj.fwd_stmt = copyStatement(obj.fwd_stmt);
+                new_obj.rvs_stmt = buildBasicBlock();
+                foreach (SgStatement* s, isSgBasicBlock(obj.rvs_stmt)->get_statements())
+                {
+                    if (SgVariableDeclaration* decl = isSgVariableDeclaration(s))
+                    {
+                        SgInitializer* new_init = NULL;
+                        SgInitializer* init = decl->get_variables()[0]->get_initializer();
+                        if (init)
+                            new_init = isSgInitializer(copyExpression(init));
+                        isSgBasicBlock(new_obj.rvs_stmt)->append_statement(
+                                buildVariableDeclaration(
+                                    decl->get_variables()[0]->get_name(),
+                                    decl->get_variables()[0]->get_type(),
+                                    new_init));
+                    }
+                    else
+                        isSgBasicBlock(new_obj.rvs_stmt)->append_statement(copyStatement(s));
+                }
+
 
                 ROSE_ASSERT(isSgBasicBlock(new_obj.fwd_stmt));
                 ROSE_ASSERT(isSgBasicBlock(new_obj.rvs_stmt));
 
                 if (res.fwd_stmt)
+                {
                     isSgBasicBlock(new_obj.fwd_stmt)->prepend_statement(res.fwd_stmt);
+                    //fixVariableReferences(isSgBasicBlock(new_obj.fwd_stmt));
+                    //fixStatement(res.fwd_stmt, isSgBasicBlock(new_obj.fwd_stmt));
+                }
                 if (res.rvs_stmt)
+                {
                     isSgBasicBlock(new_obj.rvs_stmt)->append_statement(res.rvs_stmt);
+                    //fixVariableReferences(isSgBasicBlock(new_obj.rvs_stmt));
+                    //fixStatement(res.rvs_stmt, isSgBasicBlock(new_obj.rvs_stmt));
+                }
                 new_obj.var_table = res.var_table;
 
                 queue[1-i].push_back(new_obj);

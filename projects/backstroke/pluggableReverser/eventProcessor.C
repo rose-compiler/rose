@@ -10,41 +10,30 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-ExpressionObjectVec ExpressionProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
-{
-    return event_processor_->processExpression(exp, var_table);
-}
-
-SgExpression* ExpressionProcessor::pushVal(SgExpression* exp, SgType* type)
+SgExpression* ProcessorBasis::pushVal(SgExpression* exp, SgType* type)
 {
     return event_processor_->pushVal(exp, type);
 }
 
-SgExpression* ExpressionProcessor::popVal(SgType* type)
+SgExpression* ProcessorBasis::popVal(SgType* type)
 {
     return event_processor_->popVal(type);
 }
 
-ExpressionObjectVec StatementProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
+ExpressionObjectVec ProcessorBasis::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
     return event_processor_->processExpression(exp, var_table);
 }
 
-StatementObjectVec StatementProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+StatementObjectVec ProcessorBasis::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     return event_processor_->processStatement(stmt, var_table);
 }
 
-SgExpression* StatementProcessor::pushVal(SgExpression* exp, SgType* type)
+bool ProcessorBasis::isStateVariable(SgExpression* exp)
 {
-    return event_processor_->pushVal(exp, type);
+    return event_processor_->isStateVariable(exp);
 }
-
-SgExpression* StatementProcessor::popVal(SgType* type)
-{
-    return event_processor_->popVal(type);
-}
-
 
 ExpressionObjectVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
@@ -90,6 +79,27 @@ SgExpression* EventProcessor::getStackVar(SgType* type)
     }
 
     return buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
+}
+
+bool EventProcessor::isStateVariable(SgExpression* exp)
+{
+    // First, get the most lhs operand, which may be the model object.
+    while(isSgBinaryOp(exp))
+        exp = isSgBinaryOp(exp)->get_lhs_operand();
+
+    SgVarRefExp* var = isSgVarRefExp(exp);
+    ROSE_ASSERT(var);
+
+    foreach (SgInitializedName* name, event_->get_args())
+    {
+        if (name == var->get_symbol()->get_declaration() )
+        {
+            cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const

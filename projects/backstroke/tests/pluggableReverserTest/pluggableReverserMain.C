@@ -13,6 +13,7 @@
 
 using namespace SageInterface;
 using namespace SageBuilder;
+using namespace backstroke_util;
 
 int fixVariableReferences2(SgNode* root)
 {
@@ -35,7 +36,7 @@ int fixVariableReferences2(SgNode* root)
         {
             SgName varName=initname->get_name();
             SgSymbol* realSymbol = NULL;
-            //cout << varName << endl;
+            cout << varName << endl;
 
             // CH (5/7/2010): Before searching SgVarRefExp objects, we should first deal with class/structure
             // members. Or else, it is possible that we assign the wrong symbol to those members if there is another
@@ -85,7 +86,7 @@ int fixVariableReferences2(SgNode* root)
             // This function can be called any time, not just final fixing stage
             if (realSymbol==NULL) 
             {
-                //cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
+                cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
                 //ROSE_ASSERT(realSymbol);
             }
             else {
@@ -120,6 +121,8 @@ int fixVariableReferences2(SgNode* root)
                     delete initname; // TODO deleteTree(), release File_Info nodes etc.
                     delete symbol_to_delete;
                 }
+
+                cout << "@" << varRef->get_symbol()->get_declaration()->get_prev_decl_item() << endl;
             }
         }
     } // end for
@@ -153,6 +156,7 @@ int main(int argc, char * argv[])
     EventProcessor event_processor(NULL, &var_renaming);
 
     // Add all expression handlers to the expression pool.
+    event_processor.addExpressionProcessor(new NullExpressionProcessor);
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
@@ -163,8 +167,9 @@ int main(int argc, char * argv[])
     pushScopeStack(isSgScopeStatement(global));
 
     // Get every function declaration and identify if it's an event function.
-    vector<SgFunctionDeclaration*> func_decls = backstroke_util::querySubTree<SgFunctionDeclaration>(global);
-    foreach (SgFunctionDeclaration* decl, func_decls)
+    vector<SgFunctionDeclaration*> func_decls = backstroke_util::querySubTree<SgFunctionDeclaration > (global);
+
+    foreach(SgFunctionDeclaration* decl, func_decls)
     {
         string func_name = decl->get_name();
         if (!starts_with(func_name, "event") ||
@@ -176,14 +181,17 @@ int main(int argc, char * argv[])
         // First of all, normalize this event function.
         backstroke_norm::normalizeEvent(decl);
 
+        var_renaming.run();
+
         /*******************************************************/
         // A small test here :)
        // VariableRenaming var_renaming(project);
         //var_renaming.run();
+#if 0
         VariableVersionTable var_table(decl, &var_renaming);
         cout << "!!!\n";
         var_table.print();
-
+#endif
 
 #if 1
         // Here reverse the event function into several versions.
@@ -204,6 +212,7 @@ int main(int argc, char * argv[])
     popScopeStack();
 
     fixVariableReferences2(global);
+    fixVariableReferences(global);
 
     return backend(project);
 }
