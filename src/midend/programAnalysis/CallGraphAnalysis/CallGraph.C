@@ -689,32 +689,53 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 void 
 CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, 
                                       Rose_STL_Container<SgExpression*>& calls) {
-  std::cerr << "finding calls for def " << def->unparseToString() << std::endl;
+
+  VariantVector vv(V_SgFunctionCallExp);
+  Rose_STL_Container<SgNode*> callCandidates = NodeQuery::queryMemoryPool(vv);
+  Rose_STL_Container<SgNode*>::iterator callCandidate;
+
+  SgFunctionDeclaration* targetDecl = def->get_declaration();
+  if (targetDecl != NULL) targetDecl = isSgFunctionDeclaration(targetDecl->get_definingDeclaration());
+  ROSE_ASSERT(targetDecl);
+
+  for (callCandidate = callCandidates.begin(); 
+       callCandidate != callCandidates.end(); ++callCandidate) { 
+    SgFunctionCallExp* callexp = isSgFunctionCallExp(*callCandidate);
+
+    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
+    CallTargetSet::getFunctionDefinitionsForCallLikeExp(callexp, candidateDefs);
+    Rose_STL_Container<SgFunctionDefinition*>::iterator candidateDef;
+    for(candidateDef = candidateDefs.begin(); 
+        candidateDef != candidateDefs.end(); ++candidateDef) {
+      if (*candidateDef == def) 
+        calls.push_back(callexp);
+        break;
+    }
+  }
+
+#if 0 // optimized, but buggy
   // Process SgFunctionCallExps
   VariantVector vv(V_SgFunctionCallExp);
   Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
   Rose_STL_Container<SgNode*>::iterator site;
+
+  SgFunctionDeclaration* targetDecl = def->get_declaration();
+  if (targetDecl != NULL) targetDecl = isSgFunctionDeclaration(targetDecl->get_definingDeclaration());
+  ROSE_ASSERT(targetDecl);
+
   for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
     SgFunctionCallExp* callexp = isSgFunctionCallExp(*site);
-    SgFunctionDeclaration* decl = callexp->getAssociatedFunctionDeclaration();
+    SgFunctionDeclaration* candidateDecl = callexp->getAssociatedFunctionDeclaration();
     
     // If function pointer, resolve by matching types.
-    if (decl == NULL) { 
-      std::cerr << "1 for function pointer" << callexp->unparseToString() << std::endl;
+    if (candidateDecl == NULL) { 
       // Get candidate type 
       SgExpression* fxn = callexp->get_function();
       ROSE_ASSERT(fxn != NULL);
       SgFunctionType* candidateType = isSgFunctionType(fxn->get_type());
-
-      // Get target type
-      SgFunctionDeclaration* targetDecl = def->get_declaration();
-      ROSE_ASSERT(targetDecl);
       SgFunctionType* targetType = isSgFunctionType(targetDecl->get_type());
-
-      if (candidateType->unparseToString() == targetType->unparseToString()) {
-        std::cerr << "\tadded fn on line " << targetDecl->get_file_info()->get_line() << std::endl;
+      if (candidateType->unparseToString() == targetType->unparseToString()) 
         calls.push_back(callexp);
-      }
       continue;
     }
 
@@ -725,41 +746,34 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     // However, this is incorrect since the defining declaration cannot be resolved 
     // statically. Future work on ROSE will make get_definingDeclaration return NULL for 
     // virtual functions. Until this is implemented, this check is necessary. 
-    SgFunctionModifier fnMod = decl->get_functionModifier();
-    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+    SgFunctionModifier fnMod = candidateDecl->get_functionModifier();
+    SgMemberFunctionDeclaration* candidateMemDecl = isSgMemberFunctionDeclaration(candidateDecl);
     bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
-    if (defDecl == NULL || isVirtual) {
-      SgMemberFunctionDeclaration* memFunDecl = isSgMemberFunctionDeclaration(defDecl);
-      ROSE_ASSERT(memFunDecl != NULL);
-      SgClassDeclaration* classDecl = memFunDecl->get_associatedClassDeclaration();
+    if (candidateMemDecl) {
+      SgClassDeclaration* classDecl = candidateMemDecl->get_associatedClassDeclaration();
       ROSE_ASSERT(classDecl);
       SgClassType* classType = classDecl->get_type();
       ROSE_ASSERT(classType);
       ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
 
       std::vector<Properties*> props = 
-        CallTargetSet::solveMemberFunctionCall(classType, &classHierarchy, memFunDecl, false);
-
-      SgFunctionDeclaration* targetDecl = def->get_declaration();
+        CallTargetSet::solveMemberFunctionCall(classType, &classHierarchy, candidateMemDecl, false);
+      
       Rose_STL_Container<Properties*>::iterator prop;
-      std::cerr << "2 for function " << decl->get_qualified_name().str() << std::endl;
       for (prop = props.begin(); prop != props.end(); ++prop) {
-        SgFunctionDeclaration* candidateDecl = (*prop)->functionDeclaration;
-        if (candidateDecl == targetDecl) {
-          std::cerr << "\tfound virtual function: " << candidateDecl->get_qualified_name().str() << std::endl; 
+        SgFunctionDeclaration* callerDecl = (*prop)->functionDeclaration;
+        if (callerDecl != NULL) 
+          callerDecl = isSgFunctionDeclaration(callerDecl->get_definingDeclaration());
+        else if (targetDecl == callerDecl) 
           calls.push_back(callexp);
-        }
-
       }
       continue;
     }
 
-    // If statically-resolvable function call, resolve with AST
-    SgFunctionDefinition* candidateDef = defDecl->get_definition();
-    std::cerr << "3 for function " << decl->get_qualified_name().str() << std::endl;
-    if (candidateDef == def) {
-      std::cerr << "\tfound function: " << defDecl->get_qualified_name().str() << std::endl; 
+    // If statically-resolvable functon call, resolve with AST
+    if (candidateDecl == targetDecl) {
       calls.push_back(callexp);
+      continue;
     }
   }
 
@@ -775,20 +789,19 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
     if (candidateDef == def) calls.push_back(ctorInit);
   }
+#endif
 }
 
 void 
 CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp, 
                                       Rose_STL_Container<SgFunctionDefinition*>& defs) {
-  std::cerr << "finding defs for exp " << std::endl;
   switch (exp->variantT()) {
     case V_SgFunctionCallExp: {
              SgFunctionCallExp* call = isSgFunctionCallExp(exp);
-             SgFunctionDeclaration* decl = call->getAssociatedFunctionDeclaration();
+             SgFunctionDeclaration* targetDecl = call->getAssociatedFunctionDeclaration();
 
              // If function pointer call, match types.
-             if (decl == NULL) {
-               std::cerr << "00 for exp: " << call->unparseToString() << std::endl;
+             if (targetDecl == NULL) {
                 // Get candidate type 
                 SgExpression* fxn = call->get_function();
                 ROSE_ASSERT(fxn != NULL);
@@ -806,10 +819,8 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                   SgFunctionType* candidateType = isSgFunctionType(candidateDecl->get_type());
 
                   //Compare types.
-                  if (candidateType->unparseToString() == targetType->unparseToString()) {
-                    std::cerr << "\tfound function: " << candidateType->unparseToString() << std::endl; 
+                  if (candidateType->unparseToString() == targetType->unparseToString()) 
                     defs.push_back(candidateDef);
-                  }
                 }
                 break;
              } 
@@ -821,11 +832,10 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
              // However, this is incorrect since the defining declaration cannot be resolved 
              // statically. Future work on ROSE will make get_definingDeclaration return NULL for 
              // virtual functions. Until this is implemented, this check is necessary. 
-             SgFunctionModifier fnMod = decl->get_functionModifier();
-             SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+             SgFunctionModifier fnMod = targetDecl->get_functionModifier();
+             SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(targetDecl->get_definingDeclaration());
              bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
              if (defDecl == NULL || isVirtual) {
-               std::cerr << "01 for function " << decl->get_qualified_name().str() << std::endl;
                 Rose_STL_Container<Properties*> functionList;
                 ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
                 CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
@@ -834,29 +844,26 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
                   SgFunctionDeclaration* funcDecl = (*prop)->functionDeclaration;
                   ROSE_ASSERT(funcDecl);
                   SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-                  ROSE_ASSERT(decl);
+                  if (decl == NULL) // member function pointer call?
+                    break;
                   SgFunctionDefinition* def = decl->get_definition();
-                  if (def != NULL) {
-                    std::cerr << "\tfound function: " << decl->get_qualified_name().str() << std::endl; 
+                  if (def != NULL) 
                     defs.push_back(def);
-                  }
                 }
                 break;
              }
 
-             // Otherwise, it's a statically-resolveable call. Resolve with the AST.
-             std::cerr << "02 for function " << decl->get_qualified_name().str() << std::endl;
+             // Otherwise, it's a statically-resolveable call. Use the AST.
              SgFunctionDefinition* candidateDef = defDecl->get_definition();
-             if (candidateDef != NULL) {
-               std::cerr << "\tfound function: " << defDecl->get_qualified_name().str() << std::endl; 
+             if (candidateDef != NULL) 
                defs.push_back(candidateDef);
-             }
              break;
     }
     case V_SgConstructorInitializer: {
              SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
              SgMemberFunctionDeclaration* decl = ctor->get_declaration();
              SgFunctionDefinition* defn = decl->get_definition();
+             ROSE_ASSERT(defn);
              defs.push_back(defn);
              break;
     }
