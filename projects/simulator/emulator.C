@@ -41,54 +41,6 @@ struct EmulationPolicy {
         id.init_disassembler(elf);
     }
 
-#if 0 /*not actually ever used*/
-    void setupExecutableContents(SgAsmInterpretation* interp) {
-        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-        ROSE_ASSERT(1==headers.size()); /*original code did not support dynamic linking; we still don't [RPM 2010-06] */
-        SgAsmGenericHeader* header = headers[0];
-        ROSE_ASSERT (header);
-        SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(header);
-        ROSE_ASSERT (elfHeader);
-        SgAsmGenericFile* genFile = isSgAsmGenericFile(header->get_parent());
-        ROSE_ASSERT(genFile);
-
-        /* Find an appropriate disassembler */
-        id.init_disassembler(header);
-
-        /* Set up mappings for all ELF Segments of this ELF Header. An ELF Segment is represented by an SgAsmGenericSection
-         * with a non-null segment table entry. */
-        SgAsmGenericSectionPtrList mapped_sections = header->get_mapped_sections();
-        for (size_t i=0; i<mapped_sections.size(); ++i) {
-            SgAsmElfSection *segment = isSgAsmElfSection(mapped_sections[i]);
-            SgAsmElfSegmentTableEntry *ent = segment ? segment->get_segment_entry() : NULL;
-            if (ent && ent->get_type()==SgAsmElfSegmentTableEntry::PT_LOAD) {
-                bool willAllowRead = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM;
-                bool willAllowWrite = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM;
-                bool willAllowExec = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM;
-                uint32_t vaddr = (uint32_t)ent->get_vaddr();
-                uint64_t offset = ent->get_offset();
-                uint32_t filesz = (uint32_t)ent->get_filesz();
-                uint32_t memsz = (uint32_t)ent->get_memsz();
-                fprintf(stderr, "Loading at 0x%"PRIx32" with file size 0x%"PRIx32" and memory size 0x%"PRIx32"\n",
-                        vaddr, filesz, memsz);
-                SgFileContentList contentList = genFile->content(offset, filesz);
-                for (uint32_t j = 0; j < memsz + PAGE_SIZE; j += PAGE_SIZE) {
-                    ms.memory.mapZeroPageIfNeeded(j + vaddr);
-                }
-                ms.memory.writeMultiple(&contentList[0], filesz, vaddr);
-                for (uint32_t j = filesz; j < memsz; j += PAGE_SIZE) {
-                    ms.memory.mapZeroPageIfNeeded(j + vaddr);
-                }
-                for (uint32_t j = 0; j < filesz; j += PAGE_SIZE) {
-                    ms.memory.findPage(j + vaddr).allow_read = willAllowRead;
-                    ms.memory.findPage(j + vaddr).allow_write = willAllowWrite;
-                    ms.memory.findPage(j + vaddr).allow_execute = willAllowExec;
-                }
-            }
-        }
-    }
-#endif
-
     void setupArgs(const vector<string>& args) {
         /* Set up an initial stack */
         vector<uint32_t> pointers;
