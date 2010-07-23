@@ -245,14 +245,15 @@ public:
     /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
      *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
      *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
-     *  than the number of  bytes desired if the mapping does not include part of the address space requested. The @p dst_buf
-     *  bytes that do not correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always
-     *  initialized. */
+     *  than the number of  bytes desired if the mapping does not include part of the address space requested or part of the
+     *  address space does not have MM_PROT_READ permission. The @p dst_buf bytes that do not correpond to mapped virtual
+     *  addresses will be zero filled so that @p desired bytes are always initialized. */
     size_t read(void *dst_buf, rose_addr_t start_va, size_t desired) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
-     *  aborted early if a map element is marked read-only.  The return value is the number of bytes copied. */
+     *  aborted early if a map element is marked read-only or if its protection lacks the MM_PROT_READ bit.  The return value
+     *  is the number of bytes copied. */
     size_t write(const void *src_buf, rose_addr_t start_va, size_t size) const;
 
     /** Returns just the virtual address extents for a memory map. */

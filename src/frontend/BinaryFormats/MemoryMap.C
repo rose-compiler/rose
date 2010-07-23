@@ -262,7 +262,7 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
     size_t ncopied = 0;
     while (ncopied < desired) {
         const MemoryMap::MapElement *m = find(start_va);
-        if (!m)
+        if (!m || 0==(m->get_mapperms() & MM_PROT_READ))
             break;
         ROSE_ASSERT(start_va >= m->get_va());
         size_t m_offset = start_va - m->get_va();
@@ -286,7 +286,7 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
     size_t ncopied = 0;
     while (ncopied < nbytes) {
         const MemoryMap::MapElement *m = find(start_va);
-        if (!m || m->is_read_only())
+        if (!m || m->is_read_only() || 0==(m->get_mapperms() & MM_PROT_READ))
             break;
         ROSE_ASSERT(start_va >= m->get_va());
         size_t m_offset = start_va - m->get_va();
