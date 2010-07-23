@@ -286,19 +286,12 @@ struct EmulationPolicy {
     template <size_t Len>
     Value<Len> readMemory(X86SegmentRegister segreg, Value<32> address, Value<1> cond) {
         if (!cond.val()) return 0;
-#if 1
-        fprintf(stderr, "  readMemory<%zu>(0x%08"PRIx64") -> 0x%08"PRIx64"\n",
-                Len, address.val(), ms.readMemory<Len>(segreg, address.val()));
-#endif
         return ms.readMemory<Len>(segreg, address.val());
     }
 
     template <size_t Len>
     void writeMemory(X86SegmentRegister segreg, Value<32> address, Value<Len> data, Value<1> cond) {
         if (!cond.val()) return;
-#if 1
-        fprintf(stderr, "  writeMemory<%zu>(0x%08"PRIx64", 0x%08"PRIx64")\n", Len, address.val(), data.val());
-#endif
         ms.writeMemory<Len>(segreg, address.val(), data.val());
     }
 
