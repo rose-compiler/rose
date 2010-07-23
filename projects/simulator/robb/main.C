@@ -218,6 +218,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
 
     /* Initialize the stack with specimen's argc and argv */
     std::vector<uint32_t> pointers;                     /* pointers pushed onto stack at the end of initialization */
+    pointers.push_back(argc);
     for (int i=0; i<argc; i++) {
         size_t len = strlen(argv[i]) + 1; /*inc. NUL termination*/
         sp -= len;
