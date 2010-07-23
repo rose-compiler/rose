@@ -773,6 +773,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* target
       continue;
     }
   }
+#endif
 
   // Process SgConstructorInitializers
   VariantVector vv2(V_SgConstructorInitializer);     
@@ -784,9 +785,8 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* target
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(ctorDecl->get_definingDeclaration());
     if (defDecl == NULL) continue;
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
-    if (candidateDef == def) calls.push_back(ctorInit);
+    if (candidateDef == targetDef) calls.push_back(ctorInit);
   }
-#endif
 }
 
 void 
