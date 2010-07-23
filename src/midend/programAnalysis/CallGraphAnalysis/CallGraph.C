@@ -707,9 +707,10 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     Rose_STL_Container<SgFunctionDefinition*>::iterator candidateDef;
     for(candidateDef = candidateDefs.begin(); 
         candidateDef != candidateDefs.end(); ++candidateDef) {
-      if (*candidateDef == def) 
+      if (*candidateDef == def) {
         calls.push_back(callexp);
         break;
+      }
     }
   }
 
