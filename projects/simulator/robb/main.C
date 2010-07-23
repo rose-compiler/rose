@@ -442,7 +442,7 @@ EmulationPolicy::emulate_syscall()
             uint32_t prot = readGPR(x86_gpr_dx).known_value();
             uint32_t flags = readGPR(x86_gpr_si).known_value();
             uint32_t fd = readGPR(x86_gpr_di).known_value();
-            uint32_t offset = readGPR(x86_gpr_bp).known_value();
+            uint32_t offset = readGPR(x86_gpr_bp).known_value() * PAGE_SIZE;
 #if 1
             fprintf(stderr,
                     "  mmap(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
