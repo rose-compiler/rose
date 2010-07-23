@@ -225,6 +225,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         pointers.push_back(sp);
     }
     pointers.push_back(0); /*the argv NULL terminator*/
+    fprintf(stderr, "esp after argc/argv = 0x%08zx, pointers=%zu\n", sp, pointers.size());
 
     /* Initialize the stack with specimen's environment. For now we'll use the same environment as this simulator. */
     for (int i=0; true; i++) {
@@ -235,6 +236,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         pointers.push_back(sp);
     }
     pointers.push_back(0); /*environment NULL terminator*/
+    fprintf(stderr, "esp after environ = 0x%08zx, pointers=%zu\n", sp, pointers.size());
 
     /* Initialize stack with auxv, where each entry is two words in the pointers vector. This information is only present for
      * dynamically linked executables. */
@@ -252,6 +254,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         pointers.push_back(23); /*AT_SECURE*/           pointers.push_back(false);
     }
     pointers.push_back(0); /*AT_NULL*/          pointers.push_back(0);
+    fprintf(stderr, "esp after auxv = 0x%08zx, pointers=%zu\n", sp, pointers.size());
 
     /* Finalize stack initialization by writing all the pointers to data we've pushed:
      *    argc
@@ -264,6 +267,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     map.write(&(pointers[0]), sp, 4*pointers.size());
 
     writeGPR(x86_gpr_sp, sp);
+    fprintf(stderr, "esp = 0x%08zx\n", sp);
 }
 
 SgAsmx86Instruction *
@@ -349,20 +353,27 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 45: { /*brk*/
+        case 45: { /*0x2d, brk*/
             uint32_t newbrk = ALIGN_DN(readGPR(x86_gpr_bx).known_value(), PAGE_SIZE);
+#if 1
+            fprintf(stderr, "  brk(0x%08x) -- old brk is 0x%08x\n", newbrk, brk_va);
+#endif
             if (newbrk >= 0xb0000000ul) {
                 writeGPR(x86_gpr_ax, -ENOMEM);
             } else {
                 if (newbrk > brk_va) {
                     map.insert(MemoryMap::MapElement(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE));
                     brk_va = newbrk;
-                } else if (newbrk < brk_va) {
+                } else if (newbrk>0 && newbrk<brk_va) {
                     map.erase(MemoryMap::MapElement(newbrk, brk_va-newbrk));
                     brk_va = newbrk;
                 }
                 writeGPR(x86_gpr_ax, brk_va);
             }
+#if 1
+            fprintf(stderr, "  memory map after brk():\n");
+            map.dump(stderr, "    ");
+#endif
             break;
         }
 
@@ -390,8 +401,8 @@ main(int argc, char *argv[])
     policy.initialize_stack(fhdr, specimen_argc, specimen_argv);
 
     /* Debugging */
-    fprintf(stdout, "Memory map:\n");
-    policy.map.dump(stdout, "  ");
+    fprintf(stderr, "Memory map:\n");
+    policy.map.dump(stderr, "  ");
 
     /* Execute the program */
     size_t ninsns = 0;

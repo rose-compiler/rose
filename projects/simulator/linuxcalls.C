@@ -373,8 +373,8 @@ void linuxSyscall(LinuxMachineState& ms) {
 
     case 45: { // brk
       uint32_t end_data_segment = ms.gprs[x86_gpr_bx];
-#ifdef DEBUG
-      fprintf(stdout, "brk(0x%08X) -- old brk is 0x%08X\n", end_data_segment, ms.brk);
+#if 1
+      fprintf(stderr, "  brk(0x%08x) -- old brk is 0x%08x\n", end_data_segment, ms.brk);
 #endif
       if (end_data_segment == 0) {
 	ms.gprs[x86_gpr_ax] = ms.brk;
