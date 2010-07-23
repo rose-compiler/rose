@@ -687,16 +687,12 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 }
 
 void 
-CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, 
+CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* targetDef, 
                                       Rose_STL_Container<SgExpression*>& calls) {
 
   VariantVector vv(V_SgFunctionCallExp);
   Rose_STL_Container<SgNode*> callCandidates = NodeQuery::queryMemoryPool(vv);
   Rose_STL_Container<SgNode*>::iterator callCandidate;
-
-  SgFunctionDeclaration* targetDecl = def->get_declaration();
-  if (targetDecl != NULL) targetDecl = isSgFunctionDeclaration(targetDecl->get_definingDeclaration());
-  ROSE_ASSERT(targetDecl);
 
   for (callCandidate = callCandidates.begin(); 
        callCandidate != callCandidates.end(); ++callCandidate) { 
@@ -707,7 +703,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def,
     Rose_STL_Container<SgFunctionDefinition*>::iterator candidateDef;
     for(candidateDef = candidateDefs.begin(); 
         candidateDef != candidateDefs.end(); ++candidateDef) {
-      if (*candidateDef == def) {
+      if (*candidateDef == targetDef) {
         calls.push_back(callexp);
         break;
       }
