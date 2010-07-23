@@ -41,37 +41,40 @@ extern void simulate_signal(int sig);
 using namespace std;
 
 static void do_mmap(LinuxMachineState& ms, uint32_t start, uint32_t length, int prot, int flags, int fd, uint32_t offset) {
-#ifdef DEBUG
-  fprintf(stderr, "do_mmap(start=%"PRIX32", length=%"PRIX32", prot=%"PRIo32", flags=%"PRIX32", fd=%d, offset=%"PRIX32")\n", start, length, prot, flags, fd, offset);
+#if 1
+    fprintf(stderr,
+            "  mmap(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
+            ", fd=%d, offset=0x%08"PRIx32")\n", 
+            start, length, prot, flags, fd, offset);
 #endif
-  length = (length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-  size_t lengthInPages = length / PAGE_SIZE;
-  // if (start - ms.brk < 0x10000000UL && !(flags & MAP_FIXED)) start = 0;
-  bool found_addr = start ? true : false;
-  if (!start) {
-    start = 0x40000000UL;
-    for (unsigned int i = 0; i + lengthInPages - 1 < ms.memory.pages.size(); ++i) {
-      bool okMapping = true;
-      for (size_t j = 0; j < lengthInPages; ++j) {
-        if (ms.memory.pages[(start / PAGE_SIZE) + i + j].in_use) {
-          okMapping = false;
-          break;
+    length = (length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+    size_t lengthInPages = length / PAGE_SIZE;
+    // if (start - ms.brk < 0x10000000UL && !(flags & MAP_FIXED)) start = 0;
+    bool found_addr = start ? true : false;
+    if (!start) {
+        start = 0x40000000UL;
+        for (unsigned int i = 0; i + lengthInPages - 1 < ms.memory.pages.size(); ++i) {
+            bool okMapping = true;
+            for (size_t j = 0; j < lengthInPages; ++j) {
+                if (ms.memory.pages[(start / PAGE_SIZE) + i + j].in_use) {
+                    okMapping = false;
+                    break;
+                }
+            }
+            if (okMapping) {
+                found_addr = true;
+                start = start + i * PAGE_SIZE;
+                break;
+            }
         }
-      }
-      if (okMapping) {
-        found_addr = true;
-        start = start + i * PAGE_SIZE;
-        break;
-      }
-    }
-#ifdef DEBUG
-    if (found_addr) {
-      fprintf(stderr, "Assigned start address of 0x%08X\n", start);
-    } else {
-      fprintf(stderr, "Failed to find address for mapping\n");
-    }
+#if 1
+        if (found_addr) {
+            fprintf(stderr, "  start = 0x%08"PRIx32"\n", start);
+        } else {
+            fprintf(stderr, "Failed to find address for mapping\n");
+        }
 #endif
-  }
+    }
 
   if (!found_addr) {
     ms.gprs[x86_gpr_ax] = (uint32_t)(-ENOMEM);
