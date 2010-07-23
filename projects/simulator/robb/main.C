@@ -398,14 +398,9 @@ main(int argc, char *argv[])
     EmulationPolicy policy;
     Semantics t(policy);
 
-    ROSE_ASSERT(argc==2); /*usage: only arg must be the executable name*/
+    ROSE_ASSERT(argc>=2); /* usage: executable name followed by executable's arguments */
     SgAsmGenericHeader *fhdr = policy.load(argv[1]); /*header for main executable, not libraries*/
-
-    /* Set up specimen's argc and argv. FIXME: for now we just set them to 0 and (NULL) */
-    int specimen_argc = 0;
-    char **specimen_argv = new char*[specimen_argc+1];
-    specimen_argv[specimen_argc] = NULL;
-    policy.initialize_stack(fhdr, specimen_argc, specimen_argv);
+    policy.initialize_stack(fhdr, argc-1, argv+1);
 
     /* Debugging */
     fprintf(stderr, "Memory map:\n");
