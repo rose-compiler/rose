@@ -613,6 +613,21 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var);
 
+    /** Get the versions of all variables at the start of the given function.
+     *
+     * @param node The function to get variables for.
+     * @return A table of VarName->(num, defNode) for all variables at the start of the function. Empty table otherwise.
+     */
+    NumNodeRenameTable getReachingDefsAtFunctionStart(SgFunctionDefinition* node);
+
+    /** Get the versions of a variable at the start of the given function.
+     *
+     * @param node The function definition to get definitions for.
+     * @param var The varName to get definitions for.
+     * @return A table of (num, defNode) for the given variable. Empty table otherwise.
+     */
+    NumNodeRenameEntry getReachingDefsAtFunctionStartForName(SgFunctionDefinition* node, const VarName& var);
+
     /** Get name:num mappings for all uses at this node.
      *
      * @param node The node to get uses for.
@@ -707,15 +722,6 @@ public:
      */
     NumNodeRenameTable getDefsForSubtree(SgNode* node);
 
-    /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
-     *
-     * @param var The variable to construct access for.
-     * @param scope The scope within which to construct the access.
-     * @return An expression that access the given variable in the given scope.
-     */
-    SgExpression* buildVariableReference(const VarName& var, SgScopeStatement* scope = NULL);
-
-
 
     /*
      *   Static Utility Functions
@@ -757,6 +763,14 @@ public:
      * @return true if initName is from a library, false if otherwise.
      */
     static bool isFromLibrary(SgInitializedName* initName);
+
+    /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
+     *
+     * @param var The variable to construct access for.
+     * @param scope The scope within which to construct the access.
+     * @return An expression that access the given variable in the given scope.
+     */
+    static SgExpression* buildVariableReference(const VarName& var, SgScopeStatement* scope = NULL);
 
 private:
 
