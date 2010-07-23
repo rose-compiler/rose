@@ -7844,6 +7844,9 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 	//   - SgFunctionRefExp
 	//   - SgMemberFunctionRefExp
 
+	//Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
+	bool isAlwaysResolvedStatically = false;
+
 	SgExpression* functionExp = this->get_function();
 	switch (functionExp->variantT())
 	{
@@ -7900,6 +7903,10 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
 			ROSE_ASSERT(returnSymbol != NULL);
 
+			//Virtual functions called through the dot operator are resolved statically if they are not
+			//called on reference types.
+			isAlwaysResolvedStatically = !isSgReferenceType(dotExp->get_lhs_operand());
+
 			break;
 		}
 
@@ -7940,7 +7947,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 
 	//If the function is virtual, the function call might actually be to a different symbol.
 	//We should return NULL in this case to preserve correctness
-	if (returnSymbol != NULL)
+	if (returnSymbol != NULL && !isAlwaysResolvedStatically)
 	{
 		SgFunctionModifier& functionModifier = returnSymbol->get_declaration()->get_functionModifier();
 		if (functionModifier.isVirtual() || functionModifier.isPureVirtual())
