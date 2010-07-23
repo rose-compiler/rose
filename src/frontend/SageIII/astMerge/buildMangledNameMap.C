@@ -297,7 +297,14 @@ MangledNameMapTraversal::addToMap ( string key, SgNode* node)
        // Use the matchingNodeInMergedAST so that we can reset the entries in the symbol tables where required
           SgNode* matchingNodeInMergedAST = key_iterator->second;
           ROSE_ASSERT(matchingNodeInMergedAST != NULL);
+
+       // DQ (7/12/2010): Comment this out as a test to build a restricted form of AST merge (that we can more easily debug).
+#if 0
           addAssociatedNodes(node,setOfNodesToDelete,false,matchingNodeInMergedAST);
+#else
+   #warning "Skipping call to addAssociatedNodes()"
+       // printf ("Skipping call to addAssociatedNodes() \n");
+#endif
         }
 #else
      printf ("Skipping implementation of AST merge \n");
@@ -353,11 +360,12 @@ MangledNameMapTraversal::visit ( SgNode* node)
           switch (node->variantT())
              {
             // Since we abstract out the generation of the key we can simplify this code!
-#if 0
+#if 1
             // DQ (7/11/2010): This fails for tests/CompileTests/mergeAST_tests/mergeTest_06.C, I don't know why!
                case V_SgFunctionDeclaration:
 #endif
-#if 0
+#if 1
+            // DQ (7/20/2010): Testing this case...
                case V_SgVariableDeclaration:
                case V_SgClassDeclaration:
 
@@ -368,39 +376,18 @@ MangledNameMapTraversal::visit ( SgNode* node)
                case V_SgPragmaDeclaration:
                case V_SgTemplateInstantiationDirectiveStatement:
 
-            // DQ (2/3/2007): Added additional declarations that we should share
-               case V_SgMemberFunctionDeclaration:
-               case V_SgTemplateInstantiationFunctionDecl:
-               case V_SgTemplateInstantiationMemberFunctionDecl:
-
                case V_SgTypedefDeclaration:
                case V_SgEnumDeclaration:
                case V_SgTemplateDeclaration:
                case V_SgUsingDeclarationStatement:
                case V_SgUsingDirectiveStatement:
 
-               case V_SgClassDefinition:
-               case V_SgTemplateInstantiationDefn:
-               case V_SgFunctionDefinition:
-               case V_SgVariableDefinition:
-
-            // DQ (2/20/2007): Added to list so that it could be process to build the delete list
-            // statement fo the SgBasicBlock have to be considerd for the delete list. However,
-            // it is still not meaningful since we don't generate a unique name for the SgBasicBlock
-            // so it will never be shared.
-            // case V_SgBasicBlock:
-
-            // DQ (5/29/2006): Added support for types
-               case V_SgFunctionType:
-               case V_SgMemberFunctionType:
-               case V_SgModifierType:
-               case V_SgPointerType:
-
-            // DQ (5/29/2006): Added support for types
-               case V_SgClassType:
-               case V_SgEnumType:
-               case V_SgTypedefType:
-
+            // DQ (2/3/2007): Added additional declarations that we should share
+               case V_SgMemberFunctionDeclaration:
+               case V_SgTemplateInstantiationFunctionDecl:
+               case V_SgTemplateInstantiationMemberFunctionDecl:
+#endif
+#if 1
             // DQ (2/3/2007): Added support for symbols
                case V_SgClassSymbol:
                case V_SgEnumFieldSymbol:
@@ -415,6 +402,34 @@ MangledNameMapTraversal::visit ( SgNode* node)
 
                case V_SgTypedefSymbol:
                case V_SgVariableSymbol:
+
+#endif
+#if 0
+            // DQ (7/20/2010): These nodes are a problem to merge, but also not important to merge 
+            // since they are contained within associated declarations.
+
+            // DQ (2/20/2007): Added to list so that it could be process to build the delete list
+            // statement fo the SgBasicBlock have to be considerd for the delete list. However,
+            // it is still not meaningful since we don't generate a unique name for the SgBasicBlock
+            // so it will never be shared.
+            // case V_SgBasicBlock:
+
+               case V_SgClassDefinition:
+               case V_SgTemplateInstantiationDefn:
+               case V_SgFunctionDefinition:
+               case V_SgVariableDefinition:
+#endif
+#if 1
+            // DQ (5/29/2006): Added support for types
+               case V_SgFunctionType:
+               case V_SgMemberFunctionType:
+               case V_SgModifierType:
+               case V_SgPointerType:
+
+            // DQ (5/29/2006): Added support for types
+               case V_SgClassType:
+               case V_SgEnumType:
+               case V_SgTypedefType:
 
             // DQ (2/10/2007): Add this case
                case V_SgTemplateArgument:
