@@ -5,6 +5,7 @@
 /* These are necessary for the system call emulation */
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/user.h>
 #include <unistd.h>
 
@@ -64,8 +65,11 @@ public:
     /* Emulates a Linux system call from an INT 0x80 instruction. */
     void emulate_syscall();
 
-    /* Reads a NUL-terminated string from memory */
+    /* Reads a NUL-terminated string from specimen memory. */
     std::string read_string(uint32_t va);
+
+    /* Copies a stat buffer into specimen memory. */
+    void copy_stat64(struct stat64 *sb, uint32_t va);
 
     /* Called by X86InstructionSemantics */
     void hlt() {
@@ -95,7 +99,7 @@ public:
     template <size_t Len> VirtualMachineSemantics::ValueType<Len>
     readMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr,
                const VirtualMachineSemantics::ValueType<1> cond) const {
-        ROSE_ASSERT(0==Len % 8 && Len<=32);
+        ROSE_ASSERT(0==Len % 8 && Len<=64);
         ROSE_ASSERT(addr.is_known());
         ROSE_ASSERT(cond.is_known());
         if (cond.known_value()) {
@@ -119,7 +123,7 @@ public:
     template <size_t Len> void
     writeMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr, 
                 const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
-        ROSE_ASSERT(0==Len % 8 && Len<=32);
+        ROSE_ASSERT(0==Len % 8 && Len<=64);
         ROSE_ASSERT(addr.is_known());
         ROSE_ASSERT(data.is_known());
         ROSE_ASSERT(cond.is_known());
@@ -317,6 +321,24 @@ EmulationPolicy::read_string(uint32_t va)
 }
 
 void
+EmulationPolicy::copy_stat64(struct stat64 *sb, uint32_t va) {
+    writeMemory<16>(x86_segreg_ds, va+0,  sb->st_dev,     true_());
+    writeMemory<32>(x86_segreg_ds, va+12, sb->st_ino,     true_());
+    writeMemory<32>(x86_segreg_ds, va+16, sb->st_mode,    true_());
+    writeMemory<32>(x86_segreg_ds, va+20, sb->st_nlink,   true_());
+    writeMemory<32>(x86_segreg_ds, va+24, sb->st_uid,     true_());
+    writeMemory<32>(x86_segreg_ds, va+28, sb->st_gid,     true_());
+    writeMemory<16>(x86_segreg_ds, va+32, sb->st_rdev,    true_());
+    writeMemory<64>(x86_segreg_ds, va+44, sb->st_size,    true_());
+    writeMemory<32>(x86_segreg_ds, va+52, sb->st_blksize, true_());
+    writeMemory<32>(x86_segreg_ds, va+56, sb->st_blocks,  true_());
+    writeMemory<32>(x86_segreg_ds, va+64, sb->st_atime,   true_());
+    writeMemory<32>(x86_segreg_ds, va+72, sb->st_mtime,   true_());
+    writeMemory<32>(x86_segreg_ds, va+80, sb->st_ctime,   true_());
+    writeMemory<64>(x86_segreg_ds, va+88, sb->st_ino,     true_());
+}
+
+void
 EmulationPolicy::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
@@ -360,6 +382,16 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 33: { /*0x21, access*/
+            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
+            std::string name = read_string(name_va);
+            int mode = readGPR(x86_gpr_cx).known_value();
+            int result = access(name.c_str(), mode);
+            if (result<0) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
         case 45: { /*0x2d, brk*/
             uint32_t newbrk = ALIGN_DN(readGPR(x86_gpr_bx).known_value(), PAGE_SIZE);
 #if 1
@@ -378,9 +410,102 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, brk_va);
             }
 #if 1
-            fprintf(stderr, "  memory map after brk():\n");
-            map.dump(stderr, "    ");
+            if (newbrk!=0) {
+                fprintf(stderr, "  memory map after brk():\n");
+                map.dump(stderr, "    ");
+            }
 #endif
+            break;
+        }
+
+        case 122: { /*0x7a, uname*/
+            char buf[6*65];
+            memset(buf, ' ', sizeof buf);
+            strcpy(buf+0*65, "Linux");                                  /*sysname*/
+            strcpy(buf+1*65, "mymachine.example.com");                  /*nodename*/
+            strcpy(buf+2*65, "2.6.9");                                  /*release*/
+            strcpy(buf+3*65, "#1 SMP Wed Jun 18 12:35:02 EDT 2008");    /*version*/
+            strcpy(buf+4*65, "i386");                                   /*machine*/
+            strcpy(buf+5*65, "example.com");                            /*domainname*/
+            map.write(buf, readGPR(x86_gpr_bx).known_value(), sizeof buf); /*fixme: possible sigsegv for specimen*/
+            writeGPR(x86_gpr_ax, 0);
+            break;
+        }
+
+        case 192: { /*0xc0, mmap2*/
+            uint32_t start = readGPR(x86_gpr_bx).known_value();
+            uint32_t size = readGPR(x86_gpr_cx).known_value();
+            uint32_t prot = readGPR(x86_gpr_dx).known_value();
+            uint32_t flags = readGPR(x86_gpr_si).known_value();
+            uint32_t fd = readGPR(x86_gpr_di).known_value();
+            uint32_t offset = readGPR(x86_gpr_bp).known_value();
+#if 1
+            fprintf(stderr,
+                    "  mmap(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
+                    ", fd=%d, offset=0x%08"PRIx32")\n", 
+                    start, size, prot, flags, fd, offset);
+#endif
+
+            size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
+            if (!start) {
+                try {
+                    start = map.find_free(0x40000000ul, aligned_size, PAGE_SIZE);
+                } catch (const MemoryMap::NoFreeSpace &e) {
+                    fprintf(stderr, "  (cannot satisfy request for %zu bytes)\n", e.size);
+                    writeGPR(x86_gpr_ax, -ENOMEM);
+                    break;
+                }
+#if 1
+                fprintf(stderr, "  start = 0x%08"PRIx32"\n", start);
+#endif
+            }
+
+            unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
+                                  ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
+                                  ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+
+            void *buf = NULL;
+            if (flags & MAP_ANONYMOUS) {
+                buf = mmap(NULL, size, prot, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+            } else {
+                buf = mmap(NULL, size, prot, flags & ~MAP_FIXED, fd, offset);
+            }
+            if (MAP_FAILED==buf) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                map.erase(MemoryMap::MapElement(start, aligned_size));
+                map.insert(MemoryMap::MapElement(start, aligned_size, buf, 0, rose_perms));
+                writeGPR(x86_gpr_ax, start);
+            }
+            break;
+        }
+
+        case 195: { /*0xc3, stat64*/
+            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
+            std::string name = read_string(name_va);
+            uint32_t sb_va = readGPR(x86_gpr_cx).known_value();
+            struct stat64 sb;
+            int result = stat64(name.c_str(), &sb);
+            if (result<0) {
+                result = -errno;
+            } else {
+                copy_stat64(&sb, sb_va);
+            }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case 197: { /*0xc5, fstat64*/
+            int fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t sb_va = readGPR(x86_gpr_cx).known_value();
+            struct stat64 sb;
+            int result = fstat64(fd, &sb);
+            if (result<0) {
+                result = -errno;
+            } else {
+                copy_stat64(&sb, sb_va);
+            }
+            writeGPR(x86_gpr_ax, result);
             break;
         }
 
