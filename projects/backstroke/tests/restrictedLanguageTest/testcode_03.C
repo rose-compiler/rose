@@ -146,6 +146,15 @@ void EVENT_uses_complex_structs(GoodStruct* state)
 	s.s = *state;
 }
 
+//Should fail; early return statement
+int EVENT_early_return(int i)
+{
+	if (i == 0)
+		return;
+
+	return i++;
+}
+
 int main()
 {
 	return 0;

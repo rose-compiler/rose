@@ -1,5 +1,6 @@
 #include "eventReverser.h"
-#include "utilities.h"
+#include "utilities/Utilities.h"
+
 #include <stack>
 #include <boost/algorithm/string.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -33,26 +34,9 @@ EventReverser::EventReverser(SgFunctionDeclaration* func_decl, DFAnalysis* analy
 {
 }
 
-// Get all variables' declarations including all kinds of states
-vector<SgStatement*> EventReverser::getVarDeclarations()
+vector<SgVariableDeclaration*> EventReverser::getVarDeclarations()
 {
-    vector<SgStatement*> decls;
-    //foreach(const string& flag, branch_flags_)
-    //    decls.push_back(buildVariableDeclaration(flag, buildIntType()));
-
-#if 0
-    foreach(const string& counter, loop_counters_)
-        decls.push_back(buildVariableDeclaration(
-                    counter, 
-                    buildIntType(), 
-                    buildAssignInitializer(buildIntVal(0))));
-
-    pair<string, SgType*> state_var;
-    foreach(state_var, state_vars_)
-    {
-        decls.push_back(buildVariableDeclaration(state_var.first, state_var.second));
-    }
-#endif
+    vector<SgVariableDeclaration*> decls;
 
     SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
     decls.push_back(buildVariableDeclaration(flag_stack_name_, stack_type));
@@ -65,37 +49,38 @@ vector<SgStatement*> EventReverser::getVarDeclarations()
     return decls;
 }
 
-vector<SgStatement*> EventReverser::getVarInitializers()
+vector<SgAssignOp*> EventReverser::getVarInitializers()
 {
-    vector<SgStatement*> inits;
+    vector<SgAssignOp*> inits;
     SgType* stack_type = buildPointerType(buildStructDeclaration("IntStack")->get_type());
 
     // Initialize the flag stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(flag_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
     // Initialize the integer stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(int_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
     // Initialize the integer stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(float_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
     // Initialize the loop counter stack object.
-    inits.push_back(buildAssignStatement(
+    inits.push_back(buildAssignOp(
                 buildVarRefExp(counter_stack_name_),
                 buildFunctionCallExp("buildIntStack", stack_type)));
 
     return inits;
 }
 
+
 ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 {
-	foreach (function<ExpPair (SgExpression*)> expressionHandler, expressionHandlers)
+	foreach(function < ExpPair(SgExpression*) > expressionHandler, expressionHandlers)
 	{
 		ExpPair result = expressionHandler(exp);
 		if (result != NULL_EXP_PAIR)
@@ -104,29 +89,33 @@ ExpPair EventReverser::instrumentAndReverseExpression(SgExpression* exp)
 		}
 	}
 
-    // if this expression is a binary one
-    if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
-        return processBinaryOp(bin_op);
+	// if this expression is a binary one
+	if (SgBinaryOp * bin_op = isSgBinaryOp(exp))
+		return processBinaryOp(bin_op);
 
-    // if the expression is a unary one
-    if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
-        return processUnaryOp(unary_op);
+	// if the expression is a unary one
+	else if (SgUnaryOp * unary_op = isSgUnaryOp(exp))
+		return processUnaryOp(unary_op);
 
-    // process the conditional expression (?:).
-    if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
-        return processConditionalExp(cond_exp);
+	// process the conditional expression (?:).
+	else if (SgConditionalExp * cond_exp = isSgConditionalExp(exp))
+		return processConditionalExp(cond_exp);
 
-    // process the function call expression
-    if (SgFunctionCallExp* func_exp = isSgFunctionCallExp(exp))
-        return processFunctionCallExp(func_exp);
+	// process the function call expression
+	else if (SgFunctionCallExp * func_exp = isSgFunctionCallExp(exp))
+		return processFunctionCallExp(func_exp);
 
-    if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
+	else if (isSgVarRefExp(exp) || isSgValueExp(exp) || isSgSizeOfOp(exp))
 		return ExpPair(copyExpression(exp), copyExpression(exp));
 
-	printf("WARNING: The following expression of type %s was not handled in the reversal: %s\n",
-			exp->class_name().c_str(), exp->unparseToString().c_str());
+	else
+	{
+		fprintf(stderr, "WARNING: The following expression of type %s was not handled in the reversal: %s\n",
+				exp->class_name().c_str(), exp->unparseToString().c_str());
+		ROSE_ASSERT(false);
+	}
 
-    return ExpPair(copyExpression(exp), copyExpression(exp));
+	return ExpPair(copyExpression(exp), copyExpression(exp));
 }
 
 
@@ -165,29 +154,36 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
     if (SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt))
         return processSwitchStatement(switch_stmt);
 
-#if 0
     if (SgBreakStmt* break_stmt = isSgBreakStmt(stmt))
-        return copyStatement(break_stmt);
+	{
+		backstroke_util::printCompilerError(break_stmt, "Break statement is not supported");
+		exit(1);
+	}
 
     if (SgContinueStmt* continue_stmt = isSgContinueStmt(stmt))
-        return copyStatement(continue_stmt);
+	{
+		backstroke_util::printCompilerError(continue_stmt, "Continue statement is not supported");
+		exit(1);
+	}
 
-    if (SgReturnStmt* return_stmt = isSgReturnStmt(stmt))
-        return copyStatement(return_stmt);
-#endif
+	//This should be at the very end of a function (language restriction tests should have verified)
+	//Hence, the reverse of a return statement would be nothing.
+    if (isSgReturnStmt(stmt))
+        return StmtPair(SageInterface::copyStatement(stmt), NULL);
 
     // The following output should include break, continue and other ones.
-    return StmtPair(
-            copyStatement(stmt),
-            copyStatement(stmt));
+	backstroke_util::printCompilerError(stmt, "Unhandled statement type in the reverse code generator.");
+	ROSE_ASSERT(false);
+	return NULL_STMT_PAIR;
 }
+
 
 // This function add the loop counter related statements (counter declaration, increase, and store)
 // to a forward for statement. 
 SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
 {
     string counter_name = function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++);
-    validateName(counter_name, loop_stmt);
+    backstroke_util::validateName(counter_name, loop_stmt);
 
     SgStatement* counter_decl = buildVariableDeclaration(
             counter_name, 
@@ -251,7 +247,7 @@ SgStatement* EventReverser::buildForLoop(SgStatement* loop_body)
     // build a simple for loop like: for (int i = N; i > 0; --i)
 
     string counter_name = "i";
-    validateName(counter_name, loop_body);
+    backstroke_util::validateName(counter_name, loop_body);
 
     SgStatement* init = buildVariableDeclaration(
             counter_name, buildIntType(), buildAssignInitializer(popLoopCounter()));
@@ -286,13 +282,14 @@ bool EventReverser::toSave(SgExpression* exp)
     return true;
 }
 
-vector<FuncDeclPair> EventReverser::outputFunctions()
+map<SgFunctionDeclaration*, FuncDeclPair> EventReverser::outputFunctions()
 {
     SgBasicBlock* body = func_decl_->get_definition()->get_body();
     // Function body is a basic block, which is a kind of statement.
     SgStatement *fwd_body, *rvs_body;
     tie(fwd_body, rvs_body) = instrumentAndReverseStatement(body);
 
+	//Generate the forward function
     SgName func_name = func_decl_->get_name() + "_forward";
     SgFunctionDeclaration* fwd_func_decl = 
         buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
@@ -301,16 +298,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
     fwd_func_def->set_body(isSgBasicBlock(fwd_body));
     fwd_body->set_parent(fwd_func_def);
 
-#if 0
-    pushScopeStack(isSgScopeStatement(fwd_func_decl->get_definition()->get_body()));
-
-    SgStatementPtrList fwd_stmt_list = isSgBasicBlock(fwd_body)->get_statements();
-    foreach (SgStatement* stmt, fwd_stmt_list)
-        appendStatement(stmt);
-
-    popScopeStack();
-#endif
-
+	//Generate the reverse function
     func_name = func_decl_->get_name() + "_reverse";
     SgFunctionDeclaration* rvs_func_decl = 
         buildDefiningFunctionDeclaration(func_name, func_decl_->get_orig_return_type(), 
@@ -319,17 +307,7 @@ vector<FuncDeclPair> EventReverser::outputFunctions()
     rvs_func_def->set_body(isSgBasicBlock(rvs_body));
     rvs_body->set_parent(rvs_func_def);
 
-#if 0
-    pushScopeStack(isSgScopeStatement(rvs_func_decl->get_definition()->get_body()));
-
-    SgStatementPtrList rvs_stmt_list = isSgBasicBlock(rvs_body)->get_statements();
-    foreach (SgStatement* stmt, rvs_stmt_list)
-        appendStatement(stmt);
-
-    popScopeStack();
-#endif
-
-    output_func_pairs_.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
+    output_func_pairs_[func_decl_] = FuncDeclPair(fwd_func_decl, rvs_func_decl);
     return output_func_pairs_;
 }
 

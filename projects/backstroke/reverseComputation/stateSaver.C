@@ -1,5 +1,5 @@
 #include "stateSaver.h"
-#include "../utilities.h"
+#include "utilities/Utilities.h"
 
 #include <rose.h>
 #include <boost/foreach.hpp>
@@ -47,19 +47,6 @@ vector<SgExpression*> StateSaver::getAllModifiedVars()//IsStateFunc pred)
             candidate = isSgBinaryOp(node)->get_lhs_operand();
         }
 
-        if (SgFunctionCallExp* func_call = isSgFunctionCallExp(node))
-        {
-            SgExpressionPtrList exp_list = func_call->get_args()->get_expressions();
-            SgInitializedNamePtrList init_name_list = func_call->getAssociatedFunctionDeclaration()->get_args();
-            for (size_t i = 0; i < exp_list.size(); ++i)
-            {
-                SgExpression* par = exp_list[i];
-                //if (pred(par))// && isPointerType(init_name_list[i]->get_type()))
-                {
-                }
-            }
-        }
-
         // Find the real variable which is modified in case of (a, b) = 1 or a[0] = 1.
         while(1)
         {
@@ -81,7 +68,7 @@ vector<SgExpression*> StateSaver::getAllModifiedVars()//IsStateFunc pred)
             bool is_new = true;
             foreach (SgExpression* var, modified_vars)
             {
-                if (areSameVariable(var, candidate))
+                if (backstroke_util::areSameVariable(var, candidate))
                 {
                     is_new = false;
                     break;

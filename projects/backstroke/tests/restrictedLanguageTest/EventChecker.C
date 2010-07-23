@@ -1,4 +1,4 @@
-#include "LanguageRestrictions.h"
+#include "restrictedLanguage/LanguageRestrictions.h"
 
 #include "rose.h"
 #include <vector>
@@ -24,11 +24,9 @@ void visitorTraversal::visit(SgNode* node)
 		string functionName = functionDeclaration->get_name();
 		if (functionName.find("EVENT_", 0) != string::npos)
 		{
-			printf("Identified function declaration for %s as an event \n", functionName.c_str());
 			SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(functionDeclaration->get_definition());
 			if (functionDefinition != NULL)
 			{
-				printf("Adding functionDefinition for event from function declaration %s to the event list \n", functionName.c_str());
 				eventList.push_back(functionDefinition);
 			}
 		}

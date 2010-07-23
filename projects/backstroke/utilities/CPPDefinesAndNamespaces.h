@@ -1,5 +1,4 @@
 /** Do not include this file from a header file! It defines things which might pollute the global namespace! */
-#pragma once
 
 #include <boost/foreach.hpp>
 
