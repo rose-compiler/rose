@@ -332,7 +332,11 @@ EmulationPolicy::copy_stat64(struct stat64 *sb, uint32_t va) {
     writeMemory<64>(x86_segreg_ds, va+44, sb->st_size,    true_());
     writeMemory<32>(x86_segreg_ds, va+52, sb->st_blksize, true_());
     writeMemory<32>(x86_segreg_ds, va+56, sb->st_blocks,  true_());
+#ifdef FIXME
     writeMemory<32>(x86_segreg_ds, va+64, sb->st_atime,   true_());
+#else
+    writeMemory<32>(x86_segreg_ds, va+64, 1279897465ul,   true_()); /*use same time always for consistency when debugging*/
+#endif
     writeMemory<32>(x86_segreg_ds, va+72, sb->st_mtime,   true_());
     writeMemory<32>(x86_segreg_ds, va+80, sb->st_ctime,   true_());
     writeMemory<64>(x86_segreg_ds, va+88, sb->st_ino,     true_());

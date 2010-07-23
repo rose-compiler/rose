@@ -183,7 +183,11 @@ static void copyInStat(MachineState& ms, const struct stat64& st, uint32_t statP
   ms.writeMemory<64>(x86_segreg_ds, statPtr + 44, st.st_size);
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 52, st.st_blksize);
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 56, st.st_blocks);
+#ifdef FIXME
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 64, st.st_atime);
+#else
+  ms.writeMemory<32>(x86_segreg_ds, statPtr + 64, 1279897465ul); /*use same time always for consistency when debugging*/
+#endif
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 72, st.st_mtime);
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 80, st.st_ctime);
   ms.writeMemory<64>(x86_segreg_ds, statPtr + 88, st.st_ino);
