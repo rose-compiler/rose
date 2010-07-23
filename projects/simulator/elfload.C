@@ -31,7 +31,7 @@ static void load_executable_or_library(LinuxMachineState& ms, char* filename, bo
     exit(1);
   }
   Elf32_Ehdr* header = (Elf32_Ehdr*)executable;
-  if (executable_info.st_size < sizeof(Elf32_Ehdr) ||
+  if ((size_t)executable_info.st_size < sizeof(Elf32_Ehdr) ||
       header->e_ident[EI_MAG0] != ELFMAG0 ||
       header->e_ident[EI_MAG1] != ELFMAG1 ||
       header->e_ident[EI_MAG2] != ELFMAG2 ||
@@ -142,7 +142,7 @@ void setup(LinuxMachineState& ms, int argc, char** argv) {
 
   pointers.push_back(argc);
 
-  for (unsigned int i = 0; i < argc; ++i) {
+  for (int i = 0; i < argc; ++i) {
     sp -= strlen(argv[i]) + 1;
     ms.memory.writeMultiple((const uint8_t*)argv[i], strlen(argv[i]) + 1, sp);
     pointers.push_back(sp);
