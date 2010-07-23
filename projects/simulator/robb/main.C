@@ -290,7 +290,13 @@ EmulationPolicy::current_insn()
     }
     
     /* Disassemble (and cache) a new instruction */
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
+    SgAsmx86Instruction *insn = NULL;
+    try {
+        insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
+    } catch (Disassembler::Exception &e) {
+        fprintf(stderr, "disassembly failed at eip=0x%08"PRIx64": %s\n", e.ip, e.mesg.c_str());
+        throw;
+    }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     icache.insert(std::make_pair(ip, insn));
     return insn;
