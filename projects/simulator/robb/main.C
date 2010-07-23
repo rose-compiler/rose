@@ -97,14 +97,22 @@ public:
                const VirtualMachineSemantics::ValueType<1> cond) const {
         ROSE_ASSERT(0==Len % 8 && Len<=32);
         ROSE_ASSERT(addr.is_known());
-        ROSE_ASSERT(cond.is_known() && cond.known_value()!=0);
-        uint8_t buf[Len/8];
-        size_t nread = map.read(buf, addr.known_value(), Len/8);
-        ROSE_ASSERT(nread==Len/8);
-        uint64_t result = 0;
-        for (size_t i=0, j=0; i<Len; i+=8, j++)
-            result |= buf[j] << i;
-        return result;
+        ROSE_ASSERT(cond.is_known());
+        if (cond.known_value()) {
+            uint8_t buf[Len/8];
+            size_t nread = map.read(buf, addr.known_value(), Len/8);
+            ROSE_ASSERT(nread==Len/8);
+            uint64_t result = 0;
+            for (size_t i=0, j=0; i<Len; i+=8, j++)
+                result |= buf[j] << i;
+#if 1
+            fprintf(stderr, "  readMemory<%zu>(0x%08"PRIx64") -> 0x%08"PRIx64"\n",
+                    Len, addr.known_value(), VirtualMachineSemantics::ValueType<Len>(result).known_value());
+#endif
+            return result;
+        } else {
+            return 0;
+        }
     }
 
     /* Writes memory to the memory map rather than the super class. */
@@ -114,12 +122,17 @@ public:
         ROSE_ASSERT(0==Len % 8 && Len<=32);
         ROSE_ASSERT(addr.is_known());
         ROSE_ASSERT(data.is_known());
-        ROSE_ASSERT(cond.is_known() && cond.known_value()!=0);
-        uint8_t buf[Len/8];
-        for (size_t i=0, j=0; i<Len; i+=8, j++)
-            buf[j] = (data.known_value() >> i) & 0xff;
-        size_t nwritten = map.write(buf, addr.known_value(), Len/8);
-        ROSE_ASSERT(nwritten==Len/8);
+        ROSE_ASSERT(cond.is_known());
+        if (cond.known_value()) {
+#if 1
+            fprintf(stderr, "  writeMemory<%zu>(0x%08"PRIx64", 0x%08"PRIx64")\n", Len, addr.known_value(), data.known_value());
+#endif
+            uint8_t buf[Len/8];
+            for (size_t i=0, j=0; i<Len; i+=8, j++)
+                buf[j] = (data.known_value() >> i) & 0xff;
+            size_t nwritten = map.write(buf, addr.known_value(), Len/8);
+            ROSE_ASSERT(nwritten==Len/8);
+        }
     }
 };
 
