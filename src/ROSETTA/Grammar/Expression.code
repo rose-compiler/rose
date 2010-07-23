@@ -61,6 +61,8 @@ HEADER_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // get lvalue
+          virtual bool isDefinable() const;
+          virtual bool isUsedAsDefinable() const;
           virtual bool isLValue() const;
           virtual bool isUsedAsLValue() const; // Calls parent.isChildUsedAsLValue(this)
 		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
@@ -230,6 +232,7 @@ HEADER_VAR_REF_EXPRESSION_START
        // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 
        // get lvalue
+          virtual bool isDefinable() const;
           virtual bool isLValue() const;
 		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
