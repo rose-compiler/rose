@@ -34,7 +34,7 @@ public:
     class MapElement {
     public:
         MapElement()
-            : va(0), size(0), base(NULL), offset(0), read_only(false), mapperms(MM_PROT_NONE), anonymous(NULL) {}
+            : va(0), size(0), base(NULL), offset(0), read_only(false), mapperms(MM_PROT_READ), anonymous(NULL) {}
         
         MapElement(const MapElement &other) {
             init(other);
@@ -52,19 +52,19 @@ public:
 
         /** Creates a mapping relative to a memory buffer.  The MemoryMap will coalesce adjacent elements having the same base
          *  when possible, but never elements having different bases. */
-        MapElement(rose_addr_t va, size_t size, void *base, rose_addr_t offset, unsigned perms=MM_PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, void *base, rose_addr_t offset, unsigned perms=MM_PROT_READ)
             : va(va), size(size), base(base), offset(offset), read_only(false), mapperms(perms), anonymous(NULL) {}
 
         /** Create a mapping relative to a read-only memory buffer. The MemoryMap will coalesce adjacent elements having the
          *  same base when possible, but never elements having different bases. */
-        MapElement(rose_addr_t va, size_t size, const void *base, rose_addr_t offset, unsigned perms=MM_PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, const void *base, rose_addr_t offset, unsigned perms=MM_PROT_READ)
             : va(va), size(size), base(const_cast<void*>(base)), offset(offset), read_only(true), mapperms(perms), anonymous(NULL)
             {}
 
         /** Creates an anonymous mapping where all addresses of the mapping are initially contain zero bytes. Note that memory
          *  is not allocated (and the base address is not assigned) until a write attempt is made. The implementation is free
          *  to coalesce compatible adjacent anonymous regions as it sees fit, reallocating memory as necessary. */
-        MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_READ)
             : va(va), size(size), base(NULL), offset(0), read_only(false), mapperms(perms), anonymous(new size_t) {
             *anonymous = 0; /*no storage allocated yet for 'base'*/
         }
