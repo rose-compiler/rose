@@ -14,10 +14,11 @@ bin_PROGRAMS = rose2llvmAA
 rose2llvmAA_SOURCES  = AliasAnalysis.cpp \
 					   AliasAnalysisModule.cpp \
 					   AliasAnalysisGatherer.cpp \
-					   AnnotateAST.cpp
+					   AnnotateAST.cpp \
+					   AliasSetContainer.cpp
 												   
 
-rose2llvmAA_CPPFLAGS = -D__STDC_LIMIT_MACROS -Wno-deprecated
+rose2llvmAA_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Wno-deprecated
 
 rose2llvmAA_LDADD = $(top_builddir)/projects/roseToLLVM/src/rosetollvm/librosetollvm.la
 

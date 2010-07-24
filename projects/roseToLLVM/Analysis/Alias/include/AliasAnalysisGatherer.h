@@ -6,7 +6,9 @@
 #include <llvm/Analysis/Passes.h>
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/AliasSetTracker.h>
+#include <llvm/Function.h>
 #include <string>
+#include <AliasSetContainer.h>
 
 namespace llvm {
     llvm::FunctionPass* createAAGathererPass();
@@ -16,8 +18,6 @@ using namespace llvm;
 
 class AAGatherer: public FunctionPass
 {
-    AliasSetTracker *_ASTracker;
-
     public:
         static char ID;
         AAGatherer() : FunctionPass(&ID) {}
@@ -39,9 +39,20 @@ class AAGatherer: public FunctionPass
         bool doFinalization(Module &M);
 
     protected:
-       /*
-        * Write function to write PointerRec as String
-        */
+        /*
+         * Write Aliasing locations as string
+         */                          
+        std::string WriteAsString(AliasSetTracker *_asTracker, Function& F);
+
+        /*
+         * Set of aliasing locations for each memory reference
+         */
+        
+
+        /*
+         * Add blocks of interest for Alias Analysis
+         */
+        void addblocks(AliasSetTracker* _asTracker, Function& F);
 
 };
 

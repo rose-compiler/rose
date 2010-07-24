@@ -8,6 +8,7 @@
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/Passes.h>
 #include <AliasAnalysisGatherer.h>
+#include <AliasSetContainer.h>
 
 using namespace std;
 
@@ -28,7 +29,7 @@ int main(int argc, char *argv[])
     AAModule->visit(astRoot);
 
     // Create Pass Manager to manage LLVM Passes
-    llvm::PassManager *PM = new llvm::PassManager();
+    llvm::PassManager *PM = new llvm::PassManager();    
 
     /*
      * Apply Alias Analysis passes on all LLVM Modules
