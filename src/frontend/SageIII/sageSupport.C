@@ -2400,6 +2400,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 
      if (fileList.empty() == false)
         {
+       // Note that we always process one file at a time using EDG or the Fortran frontend.
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
