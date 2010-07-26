@@ -7,8 +7,8 @@ INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/../Common/ -I$(srcdir)/../PMDAtoMDA/ -I$
 
 bin_PROGRAMS = TestCodeGenerator
 
-TestPMDAtoMDA_SOURCES = TestCodeGenerator.cpp CodeGenerator.cpp ../Schedule/Schedule.cpp ../Schedule/ConvexHullInterior.cpp ../RoseToPPL/FadaToPPL.cpp ../RoseToFada/RoseToFadaAST.cpp ../Common/RoseToFadaCommon.cpp ../PMDAtoMDA/PMDAtoMDA.cpp
-TestPMDAtoMDA_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(PIP_LDFLAGS) $(FADA_LDFLAGS) $(PPL_LDFLAGS)
+TestCodeGenerator_SOURCES = TestCodeGenerator.cpp CodeGenerator.cpp ../Schedule/Schedule.cpp ../Schedule/ConvexHullInterior.cpp ../RoseToPPL/FadaToPPL.cpp ../RoseToFada/RoseToFadaAST.cpp ../Common/RoseToFadaCommon.cpp ../PMDAtoMDA/PMDAtoMDA.cpp
+TestCodeGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(PIP_LDFLAGS) $(FADA_LDFLAGS) $(PPL_LDFLAGS)
 
 EXTRA_DIST = CodeGenerator.hpp
 

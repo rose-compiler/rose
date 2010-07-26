@@ -75,19 +75,22 @@ ValidScheduleSpacePPL::ValidScheduleSpacePPL(
 	p_lambdas_counter(0)
 {
 	
-	std::vector<FadaToPPL::PolyhedricDependence *>::iterator dep_it;
-	for (dep_it = dependences->begin(); dep_it != dependences->end(); dep_it++) {
-		p_map_statement_variables_mapping.insert(std::pair<SgStatement *, ScheduleVariablesMappingPPL *>((*dep_it)->getSource(), NULL));
-		p_map_statement_variables_mapping.insert(std::pair<SgStatement *, ScheduleVariablesMappingPPL *>((*dep_it)->getDestination(), NULL));
-		p_lambdas_counter += (*dep_it)->getNbrConstraints() + 1;
+	std::vector<SgStatement *> * stmts = ctx->getStatements();
+	std::vector<SgStatement *>::iterator stmt_it;
+	for (stmt_it = stmts->begin(); stmt_it != stmts->end(); stmt_it++) {
+		p_map_statement_variables_mapping.insert(std::pair<SgStatement *, ScheduleVariablesMappingPPL *>(
+			*stmt_it,
+			new ScheduleVariablesMappingPPL(p_context, *stmt_it, this)
+		));
 	}
 	
-	std::map<SgStatement *, ScheduleVariablesMappingPPL *>::iterator stmt_it;
-	for (stmt_it = p_map_statement_variables_mapping.begin(); stmt_it != p_map_statement_variables_mapping.end(); stmt_it++) {
-		(*stmt_it).second = new ScheduleVariablesMappingPPL(p_context, (*stmt_it).first, this);
-	}
+//	std::vector<FadaToPPL::PolyhedricDependence *>::iterator dep_it;
+//	for (dep_it = dependences->begin(); dep_it != dependences->end(); dep_it++)
+//		p_lambdas_counter += (*dep_it)->getNbrConstraints() + 1;
 	
-	p_polyhedron = new Parma_Polyhedra_Library::C_Polyhedron(p_variables_counter + p_lambdas_counter);
+	delete stmts;
+	
+	p_polyhedron = new Parma_Polyhedra_Library::C_Polyhedron(p_variables_counter/* + p_lambdas_counter*/);
 	
 	FillPolyhedron(dependences);
 }
@@ -96,6 +99,7 @@ void ValidScheduleSpacePPL::FillPolyhedron(std::vector<FadaToPPL::PolyhedricDepe
 	
 	std::vector<FadaToPPL::PolyhedricDependence *>::iterator dep_it;
 	for (dep_it = dependences->begin(); dep_it != dependences->end(); dep_it++) {
+//		std::cerr << "." << std::endl;
 		AddDependenceToPolyhedron(*dep_it);
 	}
 }
@@ -144,6 +148,11 @@ void ValidScheduleSpacePPL::AddDependenceToPolyhedron(FadaToPPL::PolyhedricDepen
 	
 	ROSE_ASSERT(constraints);
 	
+	/**/
+	Parma_Polyhedra_Library::C_Polyhedron * polyhedron = 
+		new Parma_Polyhedra_Library::C_Polyhedron(p_variables_counter + dependence->getNbrConstraints() + 1);
+	/**/
+	
 	std::vector<std::string>::iterator str_it;
 	Parma_Polyhedra_Library::Constraint_System::const_iterator constraint_it;
 	
@@ -157,7 +166,7 @@ void ValidScheduleSpacePPL::AddDependenceToPolyhedron(FadaToPPL::PolyhedricDepen
 		}
 		Parma_Polyhedra_Library::Variable * schedule_var = source_var_map->getIteratorCoeficiant(*str_it);
 		ROSE_ASSERT(schedule_var);
-		p_polyhedron->add_constraint(*schedule_var == exp);
+		/*p_*/polyhedron->add_constraint(*schedule_var == exp);
 	}
 	
 	for (str_it = destination_it_list->begin(); str_it != destination_it_list->end(); str_it++) {
@@ -170,7 +179,7 @@ void ValidScheduleSpacePPL::AddDependenceToPolyhedron(FadaToPPL::PolyhedricDepen
 		}
 		Parma_Polyhedra_Library::Variable * schedule_var = destination_var_map->getIteratorCoeficiant(*str_it);
 		ROSE_ASSERT(schedule_var);
-		p_polyhedron->add_constraint(-1 * *schedule_var == exp);
+		/*p_*/polyhedron->add_constraint(-1 * *schedule_var == exp);
 	}
 	for (str_it = p_context->getGlobals()->begin(); str_it != p_context->getGlobals()->end(); str_it++) {
 		int counter = p_variables_counter + 1;
@@ -183,7 +192,7 @@ void ValidScheduleSpacePPL::AddDependenceToPolyhedron(FadaToPPL::PolyhedricDepen
 		Parma_Polyhedra_Library::Variable * schedule_source_var = source_var_map->getGlobalCoeficiant(*str_it);
 		Parma_Polyhedra_Library::Variable * schedule_destination_var = destination_var_map->getGlobalCoeficiant(*str_it);
 		ROSE_ASSERT(schedule_source_var || schedule_destination_var);
-		p_polyhedron->add_constraint(*schedule_source_var - *schedule_destination_var == exp);
+		/*p_*/polyhedron->add_constraint(*schedule_source_var - *schedule_destination_var == exp);
 	}
 	
 	int counter = p_variables_counter;
@@ -199,11 +208,20 @@ void ValidScheduleSpacePPL::AddDependenceToPolyhedron(FadaToPPL::PolyhedricDepen
 		Parma_Polyhedra_Library::Variable lambda = Parma_Polyhedra_Library::Variable(counter++);
 		rhs_exp += (*constraint_it).inhomogeneous_term() * lambda;
 	}
-	p_polyhedron->add_constraint(lhs_exp == rhs_exp);
+	/*p_*/polyhedron->add_constraint(lhs_exp == rhs_exp);
 	
-	for (; p_variables_counter < counter; p_variables_counter++) {
+	/*for (; p_variables_counter < counter; p_variables_counter++) {
 		p_polyhedron->add_constraint( Parma_Polyhedra_Library::Variable(p_variables_counter) >= 0);
+	}*/
+	for (int i = p_variables_counter; i < counter; i++) {
+		polyhedron->add_constraint( Parma_Polyhedra_Library::Variable(i) >= 0);
 	}
+	
+	/**/
+	polyhedron->remove_higher_space_dimensions(p_variables_counter);
+	p_polyhedron->intersection_assign_and_minimize(*polyhedron);
+	delete polyhedron;
+	/**/
 }
 
 std::vector<ProgramSchedule *> * ValidScheduleSpacePPL::generateAllValidSchedules() {
@@ -216,37 +234,74 @@ std::vector<ProgramSchedule *> * ValidScheduleSpacePPL::generateAllValidSchedule
 	ProgramSchedule * program_schedule;
 	StatementSchedule * statement_schedule;
 	int cnt;
+		
+	std::cout << "Dim: " << p_polyhedron->space_dimension() << std::endl;
 	
-	if (p_polyhedron->is_bounded()) {
+	if (true || p_polyhedron->is_bounded()) {
 	
-		std::vector<std::vector<int> * > * all_points = PolyhedralToolsPPL::allPointsInPolyhedron(p_polyhedron);
-		std::vector<std::vector<int> * >::iterator it;
+//		std::cerr << "\t." << std::endl;
+	
+		std::vector<int * > * all_points = PolyhedralToolsPPL::allPointsInPolyhedron(p_polyhedron);
+		std::vector<int * >::iterator it;
+	
+//		std::cerr << "\t.." << std::endl;
+		
 		for (it = all_points->begin(); it != all_points->end(); it++) {
+		
+//			std::cerr << "\t\t." << std::endl;
+
+			/*if ((*it)[p_polyhedron->space_dimension()] != 1) {
+				std::cerr << ".";
+				continue;
+			}*/
+			
 			program_schedule = new ProgramSchedule();
 			for (var_map_it = p_map_statement_variables_mapping.begin(); var_map_it != p_map_statement_variables_mapping.end(); var_map_it++) {
+			
+//				std::cerr << "\t\t\t." << std::endl;
+				
 				statement_schedule = program_schedule->addStatement((*var_map_it).first);
+				
+//				std::cerr << "\t\t\t.." << std::endl;
 				
 				var_map = &((*var_map_it).second->p_iterators_coeficiant);
 				for (var_it = var_map->begin(); var_it != var_map->end(); var_it++) {
-					statement_schedule->setIteratorCoef((**it)[var_it->second.id()]);
+					statement_schedule->setIteratorCoef((*it)[var_it->second.id()]);
 				}
 				
+//				std::cerr << "\t\t\t..." << std::endl;
+
 				var_map = &((*var_map_it).second->p_globals_coeficiant);
 				for (var_it = var_map->begin(); var_it != var_map->end(); var_it++) {
-					statement_schedule->setGlobalCoef((**it)[var_it->second.id()]);
+					statement_schedule->setGlobalCoef((*it)[var_it->second.id()]);
 				}
-				statement_schedule->setConstant((**it)[var_map_it->second->getConstantCoeficiant()->id()]);
+				
+//				std::cerr << "\t\t\t...." << std::endl;
+				
+				statement_schedule->setConstant((*it)[var_map_it->second->getConstantCoeficiant()->id()]);
+				
+//				std::cerr << "\t\t\t....." << std::endl;
 			}
+			
+//			std::cerr << "\t\t.." << std::endl;
+			
 			for (valid_schedule_it = all_valid_schedule->begin(); valid_schedule_it != all_valid_schedule->end(); valid_schedule_it++)
 				if (**valid_schedule_it == *program_schedule)
 					break;
+			
+//			std::cerr << "\t\t..." << std::endl;
+			
 			if (valid_schedule_it == all_valid_schedule->end()) {
 				all_valid_schedule->push_back(program_schedule);
 			}
 			else {
 				delete program_schedule;
 			}
+			
+//			std::cerr << "\t\t...." << std::endl;
+			
 		}
+//		std::cerr << "\t..." << std::endl;
 	}
 	else { 
 		std::cerr << "Error in PolyhedralSchedule::ValidScheduleSpacePPL::generateAllValidSchedules(...): polyhedron isn't bounded !" << std::endl;
@@ -261,12 +316,16 @@ int ValidScheduleSpacePPL::nextVariable() { return p_variables_counter++; }
 
 void ValidScheduleSpacePPL::bounding(int min_param_bound, int max_param_bound, int lambda_bound) {
 	int i;
-	for (i = 0; i < p_variables_counter - p_lambdas_counter; i++) {
+	/*for (i = 0; i < p_variables_counter - p_lambdas_counter; i++) {
 		p_polyhedron->add_constraint( Parma_Polyhedra_Library::Variable(i) >= min_param_bound);
 		p_polyhedron->add_constraint( Parma_Polyhedra_Library::Variable(i) <= max_param_bound);
 	}
 	for (; i < p_variables_counter; i++) {
 		p_polyhedron->add_constraint( Parma_Polyhedra_Library::Variable(i) <= lambda_bound);
+	}*/
+	for (i = 0; i < p_variables_counter; i++) {
+		p_polyhedron->add_constraint( Parma_Polyhedra_Library::Variable(i) >= min_param_bound);
+		p_polyhedron->add_constraint( Parma_Polyhedra_Library::Variable(i) <= max_param_bound);
 	}
 }
 

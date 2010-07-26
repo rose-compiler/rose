@@ -10,7 +10,7 @@ namespace Parma_Polyhedra_Library {
 
 namespace PolyhedralToolsPPL {
 
-	std::vector<std::vector<int> * > * allPointsInPolyhedron(Parma_Polyhedra_Library::Polyhedron * polyhedron);
+	std::vector<int * > * allPointsInPolyhedron(Parma_Polyhedra_Library::Polyhedron * polyhedron);
 	
 	void printPoints(std::ostream & out, std::vector<std::vector<int> * > * set);
 

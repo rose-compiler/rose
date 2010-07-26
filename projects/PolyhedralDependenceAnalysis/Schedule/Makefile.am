@@ -9,10 +9,10 @@ INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/../Common/ -I$(srcdir)/../PMDAtoMDA/ -I$
 
 bin_PROGRAMS = TestSchedulePPL
 
-TestSchedulePPL_SOURCES = TestSchedulePPL.cpp Schedule.cpp ConvexHullInterior.cpp ../RoseToPPL/FadaToPPL.cpp ../RoseToFada/RoseToFadaAST.cpp ../Common/RoseToFadaCommon.cpp ../PMDAtoMDA/PMDAtoMDA.cpp
+TestSchedulePPL_SOURCES = TestSchedulePPL.cpp Schedule.cpp ../RoseToPPL/FadaToPPL.cpp ../RoseToFada/RoseToFadaAST.cpp ../Common/RoseToFadaCommon.cpp ../PMDAtoMDA/PMDAtoMDA.cpp
 TestSchedulePPL_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(PIP_LDFLAGS) $(FADA_LDFLAGS) $(PPL_LDFLAGS)
 
-EXTRA_DIST = Schedule.hpp ConvexHullInterior.hpp
+EXTRA_DIST = Schedule.hpp
 
 clean-local:
-	rm -rf TestSchedulePPL *.o
+	rm -rf TestRoseToFadaAST *.o

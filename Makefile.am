@@ -48,7 +48,7 @@ else
 # Liao, 6/27/2009 skip the test if PCH is not used
 # tps (02/01/2010) : We should check this all the time... I leave it for now
 if ROSE_PCH 
-PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec
+PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec detect_carriage-return
 else  
 PROJECT_SOURCE_CODE_TESTS = 
 endif
@@ -79,6 +79,10 @@ detect_rosec:
 	sh $(srcdir)/scripts/checkForInvalidSourceFiles.sh $(top_srcdir)
 #@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h source file check passed.";  else echo "There are source files that dont include sage3basic.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h"; exit 1; fi
 
+# TV (06/28/2010): checking carriage return caracteres
+detect_carriage-return:
+	@echo Testing presence of carriage return in header/source files...
+	sh $(srcdir)/scripts/checkCarriageReturn.sh $(top_srcdir)
 
 # DQ (3/9/2009): Additional things that we can enforce within ROSE (written by Andreas).
 # Additional rules to enforce:
