@@ -18,17 +18,16 @@ public:
 	 */
 	static bool violatesRestrictionsOnEventFunctions(SgFunctionDefinition* functionDefinition);
 
-	/** Prints an error message associated with a certain node. Also outputs the file and location
-	  * of the node. */
-	static void printCompilerError(SgNode* badNode, const char * message);
+	/** Checks a single function conforms to the language restrictions.
+	 * @param functionDefintion definition that should be checked for banned language constructs
+	 * @return false if the function passed, true if the function contains banned constructs
+	 */
+	static bool violatesRestrictionsOnEventFunctions(SgFunctionDeclaration* functionDeclaration);
 
 private:
 
 	/** Returns true if the given function declares any local variables that are of a pointer or array type. */
 	static bool containsDeclarationsOfPointerVariables(SgFunctionDefinition* functionDefinition);
-
-	/** Returns true if any of the arguments of the given function are passed by reference. */
-	static bool takesArgumentsByReference(SgFunctionDefinition* functionDefinition);
 
 	/** Returns true if the function contains continue, goto, or break. The break statement is allowed inside
 	  * switch statements. */
@@ -57,4 +56,10 @@ private:
 
 	/** Returns true if the function uses any type that is not a scalar or a struct strictly containing scalars.*/
 	static bool usesBannedTypes(SgFunctionDefinition* functionDefinition);
+
+	/** Returns true if the function uses any syntax which is not part of the C++ standard, but the GNU extension.*/
+	static bool usesGnuExtensions(SgFunctionDefinition* functionDefinition);
+
+	/** True if the function has return statements before the bottom of the body. */
+	static bool returnsBeforeFunctionEnd(SgFunctionDefinition* functionDefinition);
 };

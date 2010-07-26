@@ -1,5 +1,5 @@
 #include "stateSaver.h"
-#include "../facilityBuilder.h"
+#include "facilityBuilder.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -75,33 +75,6 @@ void reverserTraversal::visit(SgNode* n)
 
         popScopeStack();
 
-#if 0
-        vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
-        foreach (const FuncDeclPair& func_pair, func_pairs)
-        {
-            funcs_gen.push_back(func_pair.second);
-            funcs_gen.push_back(func_pair.first);
-        }
-
-        // Collect all variables needed to be declared
-        vector<SgStatement*> decls = reverser.getVarDeclarations();
-        vector<SgStatement*> inits = reverser.getVarInitializers();
-
-        var_decls.insert(var_decls.end(), decls.begin(), decls.end());
-        var_inits.insert(var_inits.end(), inits.begin(), inits.end());
-
-        // increase the number of events
-        ++events_num;
-
-        /* 
-           pair<SgFunctionDeclaration*, SgFunctionDeclaration*> 
-           func = reverseFunction(func_decl->get_definition());
-           if (func.first != NULL)
-           funcs.push_back(func.first);
-           if (func.second != NULL)
-           funcs.push_back(func.second);
-           */
-#endif
     }
 
     // Get the model structure type which will be used in other functions, like initialization.
@@ -138,36 +111,7 @@ int main( int argc, char * argv[] )
 
     popScopeStack();
 
+	AstTests::runAllTests(project);
     return backend(project);
-#if 0
-    ROSE_ASSERT(reverser.model_type);
-
-    //SgStatement* init_func = buildInitializationFunction();
-
-
-    for (size_t i = 0; i < reverser.var_decls.size(); ++i)
-        prependStatement(reverser.var_decls[i]);
-    for (size_t i = 0; i < reverser.funcs_gen.size(); ++i)
-        insertFunctionInPlace(reverser.funcs_gen[i], reverser.all_funcs);
-    //appendStatement(reverser.funcs[i]);
-
-    //appendStatement(buildInitializationFunction(reverser.model_type));
-    //appendStatement(buildCompareFunction(reverser.model_type));
-    //appendStatement(buildMainFunction(reverser.var_inits, reverser.event_names, klee));
-
-
-    popScopeStack();
-
-    // Write or find a function to clear all nodes in memory pool who don't have parents.
-#if 1
-    cout << "Start to fix variables references\n";
-    fixVariableReferences2(globalScope);
-    cout << "Fix finished\n";
-
-    //AstTests::runAllTests(project);
-#endif
-    return backend(project);
-
-#endif
 }
 

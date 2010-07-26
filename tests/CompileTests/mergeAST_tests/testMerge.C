@@ -54,6 +54,8 @@ main ( int argc, char** argv )
      commandLineProcessing(argc,argv,skipFrontendSpecificIRnodes);
   // ****************************************************************************
 
+  // SgProject::set_verbose(3);
+
   // ****************************************************************************
   // **************************      Build the AST    ***************************
   // ****************************************************************************
@@ -107,6 +109,7 @@ main ( int argc, char** argv )
   // End of AST Merge
      if (SgProject::get_verbose() > 0)
           printf ("Program Terminated Normally! \n");
+
      return errorCode;
    }
 

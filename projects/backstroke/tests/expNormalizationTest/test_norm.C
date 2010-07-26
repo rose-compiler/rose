@@ -1,4 +1,3 @@
-#if 1
 int& foo(int& a)
 {
     return a = 0;
@@ -9,6 +8,45 @@ int i = 0, j = 0, k = 0;
 int a[100];
 int b[100];
 
+enum Color
+{
+    red = 1,
+    blud,
+    yellow
+};
+
+void test_sizeof_cast()
+{
+    sizeof(i++, j++);
+    char c = static_cast<char>(i++);
+}
+
+void test_if()
+{
+    if (int i = 0);
+    if (++i > j--);
+    if ((i += j) > k);
+    if (foo(i));
+    if (++i);
+    if (i ? j++ : k++);
+}
+
+void test_type()
+{
+    //Color c = 0;
+#if 1
+    {}
+#endif
+}
+
+void test_preprocessor()
+{
+    if(
+#if 1
+            int i = 0
+#endif
+      );
+}
 
 void test_and_or()
 {
@@ -19,6 +57,7 @@ void test_and_or()
     (i ? j : k) || i;
     i || (j ? k : i);
 
+    // (i ? (true || i++) : ((t = i, ++i, t) || i++)
     (i || i++) || i++;
     i || (i++ || i++);
 
@@ -42,11 +81,16 @@ void test_declaration()
     if (int i = j++);
     switch(int i = j++);
     while (int i = j++);
-
+#if 1
     for(int i = 0; i < 10; ++i);
     for (int i = j++, k = i++; int t = i;);
     for (; int t = i;);
-    for (int t = i;;);
+#endif
+    //for (int t = i;;);
+    {
+        int t = i;
+    for (;;);
+    }
 }
 
 void test_conditional()
@@ -175,6 +219,5 @@ void test13()
     a[i++] = i;
 }
 
-#endif
 
 void foo() { int i = 2; int j = i++;}

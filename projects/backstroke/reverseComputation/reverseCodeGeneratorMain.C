@@ -12,74 +12,58 @@ using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
 
-class reverserTraversal : public AstSimpleProcessing
+class EventReverserTraversal : public AstSimpleProcessing
 {
     public:
-        reverserTraversal(DFAnalysis* du) 
-            : AstSimpleProcessing(),
-            defuse(du),
-            events_num(0),  
-            model_type(0)
-    {}
+        EventReverserTraversal(): events_num(0), model_type(NULL)
+    {
+    }
         virtual void visit(SgNode* n);
 
-        DFAnalysis* defuse;
         int events_num;
         SgClassType* model_type;
-        vector<SgFunctionDeclaration*> funcs_gen;
-        vector<SgFunctionDeclaration*> all_funcs;
-        vector<SgStatement*> var_decls;
-        vector<SgStatement*> var_inits;
+
+        /** Map from a function declaration to the corresponding forward and reverse methods. */
+        map<SgFunctionDeclaration*, FuncDeclPair> generatedFunctions;
+
+        vector<SgVariableDeclaration*> generatedVariableDeclarations;
+        vector<SgAssignOp*> generatedVariableInitializations;
+
         vector<string> event_names;
+    private:
+
 };
 
 
-void reverserTraversal::visit(SgNode* n)
+void EventReverserTraversal::visit(SgNode* n)
 {
-
-    if (SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(n))
+    if (SgFunctionDeclaration * func_decl = isSgFunctionDeclaration(n))
     {
-        all_funcs.push_back(func_decl);
-
         string func_name = func_decl->get_name();
         if (!starts_with(func_name, "event") ||
                 ends_with(func_name, "reverse") ||
                 ends_with(func_name, "forward"))
             return;
 
-        //cout << func_name << endl;
         event_names.push_back(func_name);
 
-        EventReverser reverser(func_decl, defuse);
-        vector<FuncDeclPair> func_pairs = reverser.outputFunctions();
-        foreach(const FuncDeclPair& func_pair, func_pairs)
-        {
-            funcs_gen.push_back(func_pair.second);
-            funcs_gen.push_back(func_pair.first);
-        }
+        EventReverser reverser(func_decl, NULL);
+        map<SgFunctionDeclaration*, FuncDeclPair> func_pairs = reverser.outputFunctions();
+        generatedFunctions.insert(func_pairs.begin(), func_pairs.end());
 
         // Collect all variables needed to be declared
-        vector<SgStatement*> decls = reverser.getVarDeclarations();
-        vector<SgStatement*> inits = reverser.getVarInitializers();
+        vector<SgVariableDeclaration*> decls = reverser.getVarDeclarations();
+        vector<SgAssignOp*> inits = reverser.getVarInitializers();
 
-        var_decls.insert(var_decls.end(), decls.begin(), decls.end());
-        var_inits.insert(var_inits.end(), inits.begin(), inits.end());
+        generatedVariableDeclarations.insert(generatedVariableDeclarations.end(), decls.begin(), decls.end());
+        generatedVariableInitializations.insert(generatedVariableInitializations.end(), inits.begin(), inits.end());
 
         // increase the number of events
         ++events_num;
-
-        /* 
-           pair<SgFunctionDeclaration*, SgFunctionDeclaration*> 
-           func = reverseFunction(func_decl->get_definition());
-           if (func.first != NULL)
-           funcs.push_back(func.first);
-           if (func.second != NULL)
-           funcs.push_back(func.second);
-           */
     }
 
     // Get the model structure type which will be used in other functions, like initialization.
-    if (SgClassDeclaration* model_decl = isSgClassDeclaration(n))
+    if (SgClassDeclaration * model_decl = isSgClassDeclaration(n))
     {
         if (model_decl->get_name() == "model")
             model_type = model_decl->get_type();
@@ -87,40 +71,26 @@ void reverserTraversal::visit(SgNode* n)
 }
 
 
-// Put the functions generated in place
-void insertFunctionInPlace(SgFunctionDeclaration* func, const vector<SgFunctionDeclaration*>& all_funcs)
-{
-    string func_name = func->get_name();
-    replace_last(func_name, "_forward", "");
-    replace_last(func_name, "_reverse", "");
-
-    foreach (SgFunctionDeclaration* f, all_funcs)
-        if (func_name == string(f->get_name()))
-            insertStatementAfter(f, func);
-}
-
-
-
 int fixVariableReferences2(SgNode* root)
 {
     ROSE_ASSERT(root);
-    int counter=0;
+    int counter = 0;
     Rose_STL_Container<SgNode*> nodeList;
 
-    SgVarRefExp* varRef=NULL;
+    SgVarRefExp* varRef = NULL;
     Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
-    for (Rose_STL_Container<SgNode*>::iterator i=reflist.begin();i!=reflist.end();i++)
+    for (Rose_STL_Container<SgNode*>::iterator i = reflist.begin(); i != reflist.end(); i++)
     {
         //cout << get_name(isSgVarRefExp(*i)) << endl;
-        varRef= isSgVarRefExp(*i);
+        varRef = isSgVarRefExp(*i);
         ROSE_ASSERT(varRef->get_symbol());
-        SgInitializedName* initname= varRef->get_symbol()->get_declaration();
+        SgInitializedName* initname = varRef->get_symbol()->get_declaration();
         //ROSE_ASSERT(initname);
 
-        if (initname->get_type()==SgTypeUnknown::createType())
+        if (initname->get_type() == SgTypeUnknown::createType())
             //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
         {
-            SgName varName=initname->get_name();
+            SgName varName = initname->get_name();
             SgSymbol* realSymbol = NULL;
             //cout << varName << endl;
 
@@ -129,7 +99,7 @@ int fixVariableReferences2(SgNode* root)
             // variable with the same name in parent scopes. Those members include normal member referenced using . or ->
             // operators, and static members using :: operators.
             //
-            if (SgArrowExp* arrowExp = isSgArrowExp(varRef->get_parent()))
+            if (SgArrowExp * arrowExp = isSgArrowExp(varRef->get_parent()))
             {
                 if (varRef == arrowExp->get_rhs_operand())
                 {
@@ -146,9 +116,9 @@ int fixVariableReferences2(SgNode* root)
                     realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
                 }
                 else
-                    realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+                    realSymbol = lookupSymbolInParentScopes(varName, getScope(varRef));
             }
-            else if (SgDotExp* dotExp = isSgDotExp(varRef->get_parent()))
+            else if (SgDotExp * dotExp = isSgDotExp(varRef->get_parent()))
             {
                 if (varRef == dotExp->get_rhs_operand())
                 {
@@ -163,36 +133,39 @@ int fixVariableReferences2(SgNode* root)
                     realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
                 }
                 else
-                    realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+                    realSymbol = lookupSymbolInParentScopes(varName, getScope(varRef));
             }
             else
-                realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+                realSymbol = lookupSymbolInParentScopes(varName, getScope(varRef));
 
             // should find a real symbol at this final fixing stage!
             // This function can be called any time, not just final fixing stage
-            if (realSymbol==NULL) 
+            if (realSymbol == NULL)
             {
-                //cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
-                //ROSE_ASSERT(realSymbol);
+                cerr << "Error: cannot find a symbol for " << varName.getString() << endl;
+                ROSE_ASSERT(realSymbol);
             }
-            else {
+            else
+            {
                 // release placeholder initname and symbol
-                ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
+                ROSE_ASSERT(realSymbol != (varRef->get_symbol()));
 
                 bool flag = false;
 
                 SgSymbol* symbol_to_delete = varRef->get_symbol();
                 varRef->set_symbol(isSgVariableSymbol(realSymbol));
-                counter ++;
+                counter++;
 
                 if (nodeList.empty())
                 {
                     VariantVector vv(V_SgVarRefExp);
                     nodeList = NodeQuery::queryMemoryPool(vv);
                 }
+
+
                 foreach(SgNode* node, nodeList)
                 {
-                    if (SgVarRefExp* var = isSgVarRefExp(node))
+                    if (SgVarRefExp * var = isSgVarRefExp(node))
                     {
                         if (var->get_symbol() == symbol_to_delete)
                         {
@@ -213,14 +186,14 @@ int fixVariableReferences2(SgNode* root)
     return counter;
 }
 
-int main( int argc, char * argv[] )
+
+int main(int argc, char * argv[])
 {
-    vector<string> args(argv, argv+argc);
+    vector<string> args(argv, argv + argc);
     bool klee = CommandlineProcessing::isOption(args, "-backstroke:", "klee", true);
     SgProject* project = frontend(args);
-    DFAnalysis* defuse = NULL;//new DefUseAnalysis(project);
 
-    reverserTraversal reverser(defuse);
+    EventReverserTraversal reverser;
 
     SgGlobal *globalScope = getFirstGlobalScope(project);
     string includes = "#include \"rctypes.h\"\n"
@@ -230,40 +203,46 @@ int main( int argc, char * argv[] )
         "#include <assert.h>\n"
         "#include <memory.h>\n";
     if (klee)
-      includes += "#include <klee.h>\n";
-    addTextForUnparser(globalScope,includes,AstUnparseAttribute::e_before); 
+        includes += "#include <klee.h>\n";
+    addTextForUnparser(globalScope, includes, AstUnparseAttribute::e_before);
 
     pushScopeStack(isSgScopeStatement(globalScope));
 
-    reverser.traverseInputFiles(project,preorder);
+    reverser.traverseInputFiles(project, preorder);
     cout << "Traverse complete\n";
 
     ROSE_ASSERT(reverser.model_type);
 
-    //SgStatement* init_func = buildInitializationFunction();
+    //Insert all the variable declarations
+    for (size_t i = 0; i < reverser.generatedVariableDeclarations.size(); ++i)
+        prependStatement(reverser.generatedVariableDeclarations[i]);
 
-
-    for (size_t i = 0; i < reverser.var_decls.size(); ++i)
-        prependStatement(reverser.var_decls[i]);
-    for (size_t i = 0; i < reverser.funcs_gen.size(); ++i)
-        insertFunctionInPlace(reverser.funcs_gen[i], reverser.all_funcs);
-    //appendStatement(reverser.funcs[i]);
+    //Insert all the generated functions right after the original function
+    pair<SgFunctionDeclaration*, FuncDeclPair> originalAndInstrumented;
+    foreach(originalAndInstrumented, reverser.generatedFunctions)
+    {
+        SgFunctionDeclaration* originalFunction = originalAndInstrumented.first;
+        SgFunctionDeclaration* forward = originalAndInstrumented.second.first;
+        SgFunctionDeclaration* reverse = originalAndInstrumented.second.second;
+        SageInterface::insertStatementAfter(originalFunction, forward);
+        SageInterface::insertStatementAfter(originalFunction, reverse);
+    }
 
     appendStatement(buildInitializationFunction(reverser.model_type));
     appendStatement(buildCompareFunction(reverser.model_type));
-    appendStatement(buildMainFunction(reverser.var_inits, reverser.event_names, klee));
+    appendStatement(buildMainFunction(reverser.generatedVariableInitializations, reverser.event_names, klee));
 
 
     popScopeStack();
 
-    // Write or find a function to clear all nodes in memory pool who don't have parents.
 #if 1
     cout << "Start to fix variables references\n";
+    //SageInterface::fixVariableReferences(globalScope);
     fixVariableReferences2(globalScope);
     cout << "Fix finished\n";
 #endif
-    AstTests::runAllTests(project);
 
+    AstTests::runAllTests(project);
     return backend(project);
 }
 
