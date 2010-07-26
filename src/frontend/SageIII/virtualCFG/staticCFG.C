@@ -211,12 +211,12 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         graph_->addNode(from);
     }
 
-    std::cout << n.getIndex() << std::endl;
+    //std::cout << n.getIndex() << std::endl;
     std::vector<EdgeT> outEdges = n.outEdges();
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
-#if 1
+#if 0
         std::cout << tar.toString() << std::endl;
 #endif
 

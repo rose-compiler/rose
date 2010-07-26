@@ -5213,6 +5213,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
   }
+  else if (isSgValueExp(parent))
+  {
+      // For compiler generated code, this could happen.
+      // We can just ignore this function call since it will not appear in the final AST.
+      return;
+  }
   else if (isSgExpression(parent)) {
     int worked = isSgExpression(parent)->replace_expression(oldExp, newExp);  
     // ROSE_DEPRECATED_FUNCTION
@@ -8347,7 +8353,8 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
       case V_SgCatchOptionStmt: {
         if (isSgCatchOptionStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgCatchOptionStmt(p)->get_condition() == s) {
+        } else ROSE_ASSERT (false);
 	break;
       }
       case V_SgIfStmt: {
