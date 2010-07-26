@@ -1,41 +1,88 @@
 #pragma once
 
 #include "rose.h"
+#include <boost/tuple/tuple.hpp>
 
 typedef bool SynthetizedAttribute;
 
-class StatementInheritedAttribute
+/** Stores a function call expression, along with associated information about its context. */
+struct FunctionCallInfo
 {
-public:
-	/** Lowest statement in the AST which is a parent of the current AST node.
-	  * This is the location where we insert temporary variables. */
-	SgStatement* tempVarInsertertLocation;
+	/** The function call expression. */
+	SgFunctionCallExp* functionCall;
 
-	/** This is set to the for-loop initializer statement if we're inside such
-	  * a statement, else it is NULL. */
-	SgForInitStatement* forInitializer;
+	/** When a variable is created to replace one of the arguments of this function, where should it be inserted?
+	  * The declaration of the variable will occur right before this statement. */
+	SgStatement* tempVarDeclarationLocation;
 
-	/** Parent for statment in the AST. Null if we're not in a for statement*/
-	SgForStatement* forStatement;
-
-	StatementInheritedAttribute(SgStatement* s) :
-			tempVarInsertertLocation(s), forInitializer(NULL), forStatement(NULL)
+	/** How a statement should be inserted.   */
+	enum InsertionMode 
 	{
-	}
+		/** Insert right before the given statement. */
+		INSERT_BEFORE,
+		/** Insert at the bottom of the scope defined by the given statement. */
+		APPEND_SCOPE,
+		INVALID
+	};
+
+	/** How to insert the temporary variable declaration. */
+	InsertionMode tempVarDeclarationInsertionMode;
+
+
+	FunctionCallInfo(SgFunctionCallExp* function) : 
+		functionCall(function),
+		tempVarDeclarationLocation(NULL),
+		tempVarDeclarationInsertionMode(INVALID)
+		{}
 };
 
-class ExtractFunctionArguments : public AstTopDownBottomUpProcessing<StatementInheritedAttribute, SynthetizedAttribute>
+
+struct FunctionCallInheritedAttribute
+{
+	/** The innermost loop inside of which this AST node resides. It is either a for-loop,
+	 a do-looop, or a while-loop. */
+	SgScopeStatement* currentLoop;
+
+	/** The last statement encountered before the current node in the AST. */
+	SgStatement* lastStatement;
+
+	/** Is the current node inside a for loop structure (not the body). */
+	enum { INSIDE_FOR_INIT, INSIDE_FOR_TEST, INSIDE_FOR_INCREMENT, INSIDE_WHILE_CONDITION,
+			INSIDE_DO_WHILE_CONDITION, NOT_IN_LOOP }
+	loopStatus;
+
+	/** Default constructor. Initializes everything to NULL. */
+	FunctionCallInheritedAttribute() : currentLoop(NULL), lastStatement(NULL), loopStatus(NOT_IN_LOOP) {}
+};
+
+
+class FunctionEvaluationOrderTraversal : public AstTopDownBottomUpProcessing<FunctionCallInheritedAttribute, SynthetizedAttribute>
+{
+public:
+	/** Traverses the subtree of the given AST node and finds all function calls in
+	 * function-evaluation order. */
+	static std::vector<FunctionCallInfo> GetFunctionCalls(SgNode* root);
+
+	/** Visits AST nodes in pre-order */
+	FunctionCallInheritedAttribute evaluateInheritedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute);
+
+	/** Visits AST nodes in post-order. This is function-evaluation order. */
+	SynthetizedAttribute evaluateSynthesizedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute, SynthesizedAttributesList);
+
+private:
+
+	FunctionEvaluationOrderTraversal() {}
+
+	/** All the function calls seen so far. */
+	std::vector<FunctionCallInfo> functionCalls;
+};
+
+class ExtractFunctionArguments
 {
 public:
 
     /** Perform the function argument extraction on all function calls in the given subtree of the AST. */
 	void NormalizeTree(SgNode* tree);
-
-	/** Update the scope based on the parent scope. This is a pre-order traversal. */
-	StatementInheritedAttribute evaluateInheritedAttribute(SgNode* astNode, StatementInheritedAttribute parentValue);
-
-	/** Perform the actual instrumentatation to extract the function arguments. This is a post-order traversal. */
-	SynthetizedAttribute evaluateSynthesizedAttribute(SgNode* astNode, StatementInheritedAttribute parentValue, SynthesizedAttributesList);
 
 private:
 
@@ -47,25 +94,17 @@ private:
 
 	/** Returns true if any of the arguments of the given function call will need to
 	  * be extracted. */
-	bool FunctionCallNeedsNormalization(SgFunctionCallExp* functionCall);
+	bool FunctionArgsNeedNormalization(SgExprListExp* functionArgs);
 
 	/** Returns true if any function calls in the given subtree will need to be
 	  * instrumented. (to extract function arguments). */
 	bool SubtreeNeedsNormalization(SgNode* top);
 
-	/** Given an expression, generates a temporary variable whose initializer evaluates
-	  * that expression.
-	  * @param expression Expression which will be replaced by a variable
-	  * @param scope scope in which the temporary variable will be generated
-	  * @return declaration of the temporary variable. Its initializer evaluates the original expression. */
-	static SgVariableDeclaration* CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope);
+	/** Given the information about a function call (obtained through a traversal), extract its arguments
+	  * into temporary variables where it is necessary. */
+	void RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo);
 
-	/** Take a statement that is located somewhere inside the for loop and move it right before the
-	  * for looop. If the statement is a variable declaration, the declaration is left in its original
-	  * location to preserve its scope, and a new temporary variable is introduced. */
-	void HoistStatementOutsideOfForLoop(SgForStatement* forLoop, SgStatement* statement);
-
-	/** Generate a name that is unique in the current scope and any parent and children scopes.
-	  * @param baseName the word to be included in the variable names. */
-	static std::string GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
+	/** Insert a new statement in the specified location. The actual insertion can occur either before or after the location
+	  * depending on the insertion mode. */
+	void InsertStatement(SgStatement* newStatement, SgStatement* location, FunctionCallInfo::InsertionMode insertionMode);
 };

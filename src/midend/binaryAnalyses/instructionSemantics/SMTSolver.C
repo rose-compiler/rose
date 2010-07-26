@@ -1,4 +1,5 @@
 #include "rose.h"
+#include "rose_getline.h" /* Mac OSX v10.6 does not have GNU getline() */
 #include "SMTSolver.h"
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
@@ -9,18 +10,25 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
     return o <<"SMT solver: " <<e.mesg;
 }
 
+size_t SMTSolver::total_calls;
+
 bool
 SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
 {
+    total_calls++;
+
     /* Generate the input file for the solver. */
     char config_name[L_tmpnam];
     while (1) {
+#ifndef _MSC_VER
+        // tps (06/23/2010) : Does not work under Windows
         tmpnam(config_name);
-        int fd = open(config_name, O_RDWR|O_EXCL|O_CREAT, 0666);
+	int fd = open(config_name, O_RDWR|O_EXCL|O_CREAT, 0666);
         if (fd>=0) {
             close(fd);
             break;
         }
+#endif
     }
     std::ofstream config(config_name);
     Definitions defns;
@@ -35,20 +43,30 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
-            fprintf(debug, "    %5zu: %s", ++n, line.c_str());
+            if (!line.empty())
+                fprintf(debug, "    %5zu: %s\n", ++n, line.c_str());
         }
     }
 
     /* Run the solver and look at the first line of output. It should be "sat" or "unsat". */
     std::string cmd = get_command(config_name);
+#ifdef _MSC_VER
+    // tps (06/23/2010) : popen not understood in Windows
+    FILE *output=NULL;
+#else
     FILE *output = popen(cmd.c_str(), "r");
+#endif
     ROSE_ASSERT(output!=NULL);
     static char *line=NULL;
     static size_t line_alloc=0;
-    ssize_t nread = getline(&line, &line_alloc, output);
+    ssize_t nread = rose_getline(&line, &line_alloc, output);
     ROSE_ASSERT(nread>0);
+#ifdef _MSC_VER
+    // tps (06/23/2010) : pclose not understood in Windows
+    abort();
+#else
     int status = pclose(output);
-
+#endif
     /* First line should be the word "sat" or "unsat" */
     bool retval = false;
     if (debug)
@@ -58,8 +76,13 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     } else if (!strcmp(line, "unsat\n")) {
         retval = false;
     } else {
-        std::cout <<"    exit status=" <<status <<" input=" <<line;
+#ifdef _MSC_VER
+        // tps (06/23/2010) : execl not understood in Windows
+#else
+        std::cout <<"    input=" <<config_name <<", status=" <<status <<", result=" <<line;
         execl("/bin/cat", "cat", "-n", config_name, NULL);
+#endif
+        perror("execl /bin/cat");
         abort(); /*probably not reached*/
     }
 

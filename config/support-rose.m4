@@ -954,7 +954,6 @@ ROSE_SUPPORT_MYSQL
 AM_CONDITIONAL(ROSE_USE_MYSQL_DATABASE,[test "x$MYSQL_VERSION" != "x"])
 
 # Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,[test "x$SQLITE3_VERSION" != "x"])
 
 # DQ (9/21/2009): Debugging for RH release 5
 echo "Testing the value of CC: (CC = $CC)"
@@ -1038,6 +1037,11 @@ ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
+#ASR
+ROSE_SUPPORT_LLVM
+
+AM_CONDITIONAL(ROSE_USE_LLVM,test ! "$with_llvm" = no)
+
 #TPS (03/13/08) introduced optional DB support for binary work
 HASH_ROSE_BINARY_SQL
 
@@ -1056,10 +1060,6 @@ ROSE_SUPPORT_EDG_DEBUGGING
 # Call supporting macro for Omni OpenMP
 # 
 ROSE_SUPPORT_OMNI_OPENMP
-
-# Configuration commandline support for OMP project using ROSE
-#AM_CONDITIONAL(ROSE_USE_OPENMP,test ! "$with_omp_runtime_support" = no)
-AM_CONDITIONAL(ROSE_USE_OMNI_OPENMP,test ! "$with_omni_omp_runtime_support" = no)
 
 # call supporting macro for GCC 4.4.x gomp OpenMP runtime library
 # AM_CONDITIONAL is already included into the macro
@@ -1109,7 +1109,7 @@ AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 # TP SUPPORT FOR OPENGL
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
-# echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
+echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno)
 
 # Call supporting macro for python
@@ -1973,6 +1973,13 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
+# These headers and types are needed by projects/simulator [matzke 2009-07-02]
+AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
+AC_CHECK_TYPE(user_desc,
+              AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
+              [],
+	      [#include <asm/ldt.h>])
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -2113,6 +2120,7 @@ src/midend/programAnalysis/CFG/Makefile
 src/midend/programAnalysis/dataflowAnalysis/Makefile
 src/midend/programAnalysis/pointerAnal/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
+src/midend/programAnalysis/variableRenaming/Makefile
 src/midend/programAnalysis/defUseAnalysis/Makefile
 src/midend/programAnalysis/dominanceAnalysis/Makefile
 src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
@@ -2244,7 +2252,6 @@ projects/binaryVisualization/Makefile
 projects/highLevelGrammars/Makefile
 projects/BabelPreprocessor/Makefile
 projects/checkPointExample/Makefile
-projects/simpleCallGraphAnalysis/Makefile
 projects/CloneDetection/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
@@ -2305,10 +2312,23 @@ projects/backstroke/reverseComputation/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
+projects/backstroke/normalizations/Makefile
+projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/tests/Makefile
+projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
+projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
+projects/backstroke/tests/pluggableReverserTest/Makefile
+projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
+projects/simulator/Makefile
+projects/roseToLLVM/Makefile
+projects/roseToLLVM/src/Makefile
+projects/roseToLLVM/src/rosetollvm/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
@@ -2362,6 +2382,7 @@ tests/CompileTests/mergeAST_tests/Makefile
 tests/CompileTests/unparseToString_tests/Makefile
 tests/CompileTests/boost_tests/Makefile
 tests/CompileTests/virtualCFG_tests/Makefile
+tests/CompileTests/staticCFG_tests/Makefile
 tests/CompileTests/uninitializedField_tests/Makefile
 tests/CompileTests/sourcePosition_tests/Makefile
 tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile

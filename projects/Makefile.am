@@ -24,7 +24,6 @@ SUBDIRS = \
      highLevelGrammars \
      dataStructureGraphing \
      checkPointExample \
-     simpleCallGraphAnalysis \
      C_to_Promela \
      MPICodeMotion \
      javaport \
@@ -35,11 +34,17 @@ SUBDIRS = \
      binaryVisualization \
      MacroRewrapper \
      UpcTranslation \
-     RTED \
      taintcheck \
      QtDesignerPlugins \
      RoseQt \
+     roseToLLVM \
      PolyhedralDependenceAnalysis
+
+# DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
+# DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
+if !ROSE_USING_ROSE_ANALYSIS
+   SUBDIRS += RTED simulator
+endif
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
 # in ROSE, so lets' move on and return to compass later for this level of support.
@@ -84,25 +89,6 @@ SUBDIRS += SatSolver
 
 EXTRA_DIST = StaticDynamicAnalysis
 
-#AS(3/12/2008) the  NameConsistancyChecker is now part of compass
-#     NameConsistancyChecker 
-
-# DQ (9/3/2006): Removed in preference to the newer work on OpenMP.
-# Removed the older incomplete (initial attempt) at an OpenMP processor.
-#    OpenMPPreprocessor
-
-# Removed Bable from tests since it is currently broken and needs to 
-# be fixed (also fails to compile with Intel C++ 9.0 compiler.
-#    BabelPreprocessor 
-
-#     AtermTranslation      \ MS10/26/04: deactivated (didn't compile)
-
-# The dataStructureGraphing directory represents Andreas's work 
-# on the visualization of complex heap based data structures
-
-
-# DQ (8/24/2004): This has been moved to the ROSE/src/roseExtensions/databaseConnection
-# dataBase
 
 check-local:
 	@echo "***************************************************************************"

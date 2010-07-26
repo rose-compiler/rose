@@ -673,6 +673,24 @@ namespace SymbolicSemantics {
         /** Returns second or third arg depending on value of first arg. "ite" means "if-then-else". */
         template <size_t Len>
         ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
+            if (sel.is_known()) {
+                return sel.known_value() ? ifTrue : ifFalse;
+            }
+            if (solver) {
+                /* If the selection expression cannot be true, then return ifFalse */
+                TreeNode *assertion = new InternalNode(1, InsnSemanticsExpr::OP_EQ,
+                                                       sel.expr, LeafNode::create_integer(1, 1));
+                bool can_be_true = solver->satisfiable(assertion);
+                assertion->deleteDeeply(); assertion=NULL;
+                if (!can_be_true) return ifFalse;
+
+                /* If the selection expression cannot be false, then return ifTrue */
+                assertion = new InternalNode(1, InsnSemanticsExpr::OP_EQ,
+                                             sel.expr, LeafNode::create_integer(1, 0));
+                bool can_be_false = solver->satisfiable(assertion);
+                assertion->deleteDeeply(); assertion=NULL;
+                if (!can_be_false) return ifTrue;
+            }
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ITE, sel.expr, ifTrue.expr, ifFalse.expr));
         }
 

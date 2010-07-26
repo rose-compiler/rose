@@ -280,7 +280,6 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    /* 1. Generate a AstSpecificDataManagingClassStorageClass object, in order to hold
     *    the static data of an AST.
     */
-     compressAst += "#line 1 \"\"\n";
      compressAst += "     AstSpecificDataManagingClassStorageClass staticTemp; \n" ;
      compressAst += "     staticTemp.pickOutIRNodeData(actualRebuildAst); \n" ;
 

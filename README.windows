@@ -53,7 +53,7 @@ Run git-bash (click on icon on left)
 To see how to build a git clone:
 cat ../ROSE-tps/ROSE-git/.git/config
 
-git clone ssh://dquinlan@tux282.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git
+git clone ssh://dquinlan@tux282.llnl.gov/nfs/casc/overture/ROSE/git/ROSE.git
 
 
 Setting up SSH keys on Windows Server (logged in as hudson-rose):
@@ -74,9 +74,9 @@ B. Copy the keys onto tux270-0:
    7) Goto "My Computer TUX270-0", "Local Disk(C:)", "putty_keys"
    8) Click on file "id_rsa.ppk"  (this will load the private  key for use by ssh).
    9) Now try to run the git command:
-         git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE.git c:\ROSE\hudson\workspace\test-windows\label\windows-server
+         git clone ssh://hudson-rose@tux269/nfs/casc/overture/ROSE/git/ROSE.git c:\ROSE\hudson\workspace\test-windows\label\windows-server
       and
-         git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE-EDG.git c:\ROSE\hudson\workspace\test-windows\label\windows-server\src\frontend\CxxFrontend\EDG
+         git clone ssh://hudson-rose@tux269/nfs/casc/overture/ROSE/git/ROSE-EDG.git c:\ROSE\hudson\workspace\test-windows\label\windows-server\src\frontend\CxxFrontend\EDG
       And it should work.
 
   10) (moved to part A-1 above) If not then it might be because we ran "plink -agent tux269"

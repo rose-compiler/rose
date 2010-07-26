@@ -127,10 +127,11 @@ public:
         bool merge(const MapElement &other);
 		
 #ifdef _MSC_VER
-		// CH (4/15/2010): Make < operator be its member function instead of non-member function outside to avoid template
-		// parameter deduction failure in MSVC
-		bool operator<(const MapElement &a) const
-		{ return this->get_va() < a.get_va(); }
+        /* CH (4/15/2010): Make < operator be its member function instead of non-member function outside to avoid template
+         * parameter deduction failure in MSVC */
+        bool operator<(const MapElement &a) const {
+            return this->get_va() < a.get_va();
+        }
 #endif
 
     private:
@@ -256,6 +257,9 @@ public:
 
     /** Returns just the virtual address extents for a memory map. */
     ExtentMap va_extents() const;
+
+    /** Returns the highest mapped address. */
+    rose_addr_t highest_va() const;
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output. */

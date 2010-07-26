@@ -3577,11 +3577,14 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
      if (oldMangledName.size() > 40) {
        std::map<std::string, int>::const_iterator shortMNIter = shortMangledNameCache.find(oldMangledName);
        int idNumber = (int)shortMangledNameCache.size();
-       if (shortMNIter != shortMangledNameCache.end()) {
-         idNumber = shortMNIter->second;
-       } else {
-         shortMangledNameCache.insert(std::pair<std::string, int>(oldMangledName, idNumber));
-       }
+       if (shortMNIter != shortMangledNameCache.end()) 
+          {
+            idNumber = shortMNIter->second;
+          }
+         else
+          {
+            shortMangledNameCache.insert(std::pair<std::string, int>(oldMangledName, idNumber));
+          }
 
        std::ostringstream mn;
        mn << 'L' << idNumber << 'R';
@@ -3596,8 +3599,14 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
   // DQ (6/26/2007): Output information useful for understanding Jeremiah's shortended name merge caching.
   // std::cerr << "Changed MN " << oldMangledName << " to " << mangledName << std::endl;
 
-  // printf ("Updating mangled name cache for node = %p = %s with mangledName = %s \n",astNode,astNode->class_name().c_str(),mangledName.c_str());
+#if 0
+     printf ("Updating mangled name cache for node = %p = %s with mangledName = %s \n",astNode,astNode->class_name().c_str(),mangledName.c_str());
+#endif
+
      mangledNameCache.insert(pair<SgNode*,string>(astNode,mangledName));
+
+  // printf ("In SageInterface::addMangledNameToCache(): returning mangledName = %s \n",mangledName.c_str());
+
      return mangledName;
    }
 
@@ -5204,13 +5213,34 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
   }
+  else if (isSgValueExp(parent))
+  {
+      // For compiler generated code, this could happen.
+      // We can just ignore this function call since it will not appear in the final AST.
+      return;
+  }
   else if (isSgExpression(parent)) {
     int worked = isSgExpression(parent)->replace_expression(oldExp, newExp);  
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
   }
+  else if (isSgInitializedName(parent))
+  {
+	  SgInitializedName* initializedNameParent = isSgInitializedName(parent);
+	  if (oldExp == initializedNameParent->get_initializer())
+	  {
+		  //We can only replace an initializer expression with another initializer expression
+		  ROSE_ASSERT(isSgInitializer(newExp));
+		  initializedNameParent->set_initializer(isSgInitializer(newExp));
+	  }
+	  else
+	  {
+		  //What other expressions can be children of an SgInitializedname?
+		  ROSE_ASSERT(false);
+	  }
+  }
  else{
-  cout<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
+  cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
   ROSE_ASSERT(false);
   }
 
@@ -8295,6 +8325,7 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
         if (isSgForStatement(p)->get_loop_body() == s)
           return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
         else if (isSgForStatement(p)->get_test() == s) {
+        }else if (isSgForStatement(p)->get_for_init_stmt() == s) {
         }else ROSE_ASSERT (false);
 	break;
       }
@@ -8315,13 +8346,15 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
       case V_SgSwitchStatement: {
         if (isSgSwitchStatement(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
-        else ROSE_ASSERT (false);
+        else if (isSgSwitchStatement(p)->get_item_selector() == s) {
+        } else ROSE_ASSERT (false);
 	break;
       }
       case V_SgCatchOptionStmt: {
         if (isSgCatchOptionStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgCatchOptionStmt(p)->get_condition() == s) {
+        } else ROSE_ASSERT (false);
 	break;
       }
       case V_SgIfStmt: {
@@ -10546,7 +10579,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                if ((*i)->get_scope() != targetBlock)
                   {
                     //(*i)->set_scope(targetBlock);
-                    printf ("Warning: test failing (*i)->get_scope() == targetBlock \n");
+                    printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
                   }
                //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }

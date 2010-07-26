@@ -39,7 +39,6 @@ CLEANFILES =
 clean-local:
 	rm -rf Templates.DB ii_files ti_files rose_*.C *.pdf
 
-# /usr/casc/overture/MySQL/MySQL_Install/bin/mysql -u root -prose-dq mysql -e "DELETE FROM user WHERE user = ''; GRANT ALL ON db.* TO dquinlan@'%.llnl.gov' IDENTIFIED BY 'rosepwd'; FLUSH PRIVILEGES; SELECT * FROM user;"
 # "@MySQL_username@" , "@MySQL_password@", "@MySQL_database_name@"
 
 check-db:

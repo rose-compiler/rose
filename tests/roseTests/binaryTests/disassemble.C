@@ -11,6 +11,7 @@
 
 #include "AsmUnparser.h"
 #include "VirtualMachineSemantics.h"
+#include "SMTSolver.h"
 #include "bincfg.h"
 
 /*FIXME: Rose cannot parse this file.*/
@@ -705,6 +706,9 @@ main(int argc, char *argv[])
         }
         delete d;
     }
+
+    if (SMTSolver::total_calls>0)
+        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
 
     printf("running back end...\n");
     int ecode = backend(project);

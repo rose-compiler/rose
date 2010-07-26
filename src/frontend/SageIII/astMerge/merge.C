@@ -127,7 +127,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // extern void testUniqueNameGenerationTraversal();
 #endif
 
-     testUniqueNameGenerationTraversal();
+  // DQ (7/10/2010): This is currently an empty test.
+  // testUniqueNameGenerationTraversal();
 
      if (SgProject::get_verbose() > 0)
           printf ("Running testUniqueNameGenerationTraversal (more AST tests): DONE \n");
@@ -163,23 +164,26 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // This traverses the memory pool (so it sees everything) and build mangled names
   // for anything that is judged to be sharable (see implementation for what is shared).
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("\n\n");
+          printf ("**************************************************************** \n");
+          printf ("*****************  Generate Mangled Name Map ******************* \n");
+          printf ("**************************************************************** \n");
+        }
+
   // printf ("\n\n************************************************************\n");
   // MangledNameMapTraversal::SetOfNodesType intermediateDeleteSet;
      set<SgNode*>  intermediateDeleteSet;
-// CH (4/9/2010): Since the type switch to boost::unordered, Windows won't suffer this any more    
-//#ifdef _MSC_VER
-#if 0
-  // DQ (11/27/2009): MSVC does not appear to support optional specification of size of hash table.
-#pragma message ("WARNING: MSVC does not appear to support optional specification of size of hash table.")
-	 printf ("WARNING: MSVC does not appear to support optional specification of size of hash table.");
-     MangledNameMapTraversal::MangledNameMapType mangledNameMap; // (mangledNameHashTableSize);
-#else
+
+  // CH (4/9/2010): Since the type switch to boost::unordered, Windows won't suffer this any more (this used to fail to compile using MSVC).
      MangledNameMapTraversal::MangledNameMapType mangledNameMap (mangledNameHashTableSize);
-#endif
 
      if (SgProject::get_verbose() > 0)
           printf ("Calling getMangledNameMap() \n");
 
+     ROSE_ASSERT(intermediateDeleteSet.empty() == true);
      generateMangledNameMap(mangledNameMap,intermediateDeleteSet);
 
      if (SgProject::get_verbose() > 0)
@@ -197,14 +201,13 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 #endif
 
 #if DISPLAY_INTERNAL_DATA > 1
-
-          printf ("\n\n**************************************** \n");
-          printf ("Delete set computed by getMangledNameMap \n");
-          printf ("**************************************** \n");
-          displaySet(intermediateDeleteSet,"Delete set computed by getMangledNameMap");
+          printf ("\n\n***************************************************** \n");
+          printf ("Intermediate Delete set computed by getMangledNameMap \n");
+          printf ("***************************************************** \n");
+          displaySet(intermediateDeleteSet,"Intermediate Delete set computed by getMangledNameMap");
 #endif
         }
-     
+
 #if 0
      printf ("Existing after creation of mangle name IR node map \n");
      ROSE_ASSERT(false);
@@ -297,10 +300,13 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // Build the replacement Map, locations (pointers to pointers) in the AST where updates will be done (during the fixupTraversal).
   // Their is not side-effect to the AST from this traversal (the memory pool is used so that ALL IR nodes will be traversed).
+
      if (SgProject::get_verbose() > 0)
         {
-          printf ("\n\n************************************************************\n");
-          printf ("Calling replacementMapTraversal() \n");
+          printf ("\n\n");
+          printf ("**************************************************************** \n");
+          printf ("*****************  Generate Replacement Map ******************** \n");
+          printf ("**************************************************************** \n");
         }
 
   // ReplacementMapTraversal::ReplacementMapType replacementMap = replacementMapTraversal(mangledNameMap,ODR_Violations,intermediateDeleteSet);
@@ -362,10 +368,13 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // are found in the replacement map are used to lookup the replacement values that are used to reset the 
   // pointers in the AST. As the replacement is computed the pointer values that are marked in the replacement
   // list for update are added to the intermediateDeleteSet.
+
      if (SgProject::get_verbose() > 0)
         {
-          printf ("\n\n************************************************************\n");
-          printf ("Calling fixupTraversal() \n");
+          printf ("\n\n");
+          printf ("**************************************************************** \n");
+          printf ("****************  Fixup AST to Share IR nodes  ***************** \n");
+          printf ("**************************************************************** \n");
         }
 
      fixupTraversal(replacementMap,intermediateDeleteSet);
@@ -402,6 +411,21 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           generateWholeGraphOfAST(filename+"_afterMergeWholeAST",skippedNodeSet);
        // SimpleColorFilesTraversal::generateGraph(project,filename+"_afterMerge");
           generateGraphOfAST(project,filename+"_afterMerge");
+#if 0
+       // void generateWholeGraphOfAST( std::string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags);
+          CustomMemoryPoolDOTGeneration::s_Filter_Flags graphFlags;
+       // graphFlags.print_commandline_help();
+          graphFlags.print_filter_flags();
+
+       // graphFlags.m_noFilter = true;
+       // graphFlags.print_filter_flags();
+
+          generateWholeGraphOfAST(filename+"_afterMerge_ALL",&graphFlags);
+#if 0
+          printf ("Print the graph support command line! \n");
+          ROSE_ASSERT(false);
+#endif
+#endif
         }
 
      int numberOfASTnodesBeforeDelete = numberOfNodes();
@@ -413,7 +437,21 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // *****************  Compute Final Set of IR Nodes To Delete  ****************
   // ****************************************************************************
-// Using the intermediateDeleteSet and the requiredNodesSet
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("\n\n");
+          printf ("**************************************************************** \n");
+          printf ("**********  Compute Final Set of IR Nodes To Delete  *********** \n");
+          printf ("**************************************************************** \n");
+        }
+
+#if 0
+  // DQ (7/3/2010): This is the original (older) approach used to build the list of redundant IR nodes to delete.
+
+#error "DEAD CODE!"
+
+  // Using the intermediateDeleteSet and the requiredNodesSet
      set<SgNode*> requiredNodesSet = buildRequiredNodeList(project);
 #if DISPLAY_INTERNAL_DATA > 1
      displaySet (requiredNodesSet,"After fixupTraversal(): requiredNodesSet");
@@ -428,6 +466,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      printf ("Exiting after computing required IR nodes ... \n");
      exit(1);
 #endif
+
+#error "DEAD CODE!"
 
      if (SgProject::get_verbose() > 0)
           printf ("Calling computeSetDifference() \n");
@@ -444,6 +484,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           displaySet(finalDeleteSet,"finalDeleteSet");
 #endif
         }
+
+#error "DEAD CODE!"
 
   // DQ (2/15/2007): Error checking on the finalDeleteSet
   // deleteSetErrorCheck( project, requiredNodesSet );
@@ -463,6 +505,15 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 #endif
         }
 
+#error "DEAD CODE!"
+
+#else
+  // DQ (7/3/2010): Implementing new approach to deleting redundant IR nodes.
+  // set<SgNode*> requiredNodesSet = buildRequiredNodeList(project);
+     finalDeleteSet = buildDeleteSet(project);
+  // deleteSetErrorCheck( project, finalDeleteSet );
+#endif
+
 #if 0
   // DQ (2/19/2007): We can't pass the mangled name tests because we have IR nodes that are not linked to properly 
   // after the merge (those IR nodes that ate on the delete list for example). 
@@ -479,10 +530,13 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // ************  Delete AST IR Node Made Redundant Due To Sharing  ************
   // ****************************************************************************
+
      if (SgProject::get_verbose() > 0)
         {
-          printf ("\n\n************************************************************\n");
-          printf ("Calling deleteNodes() \n");
+          printf ("\n\n");
+          printf ("**************************************************************** \n");
+          printf ("******  Delete AST IR Node Made Redundant Due To Sharing  ****** \n");
+          printf ("**************************************************************** \n");
         }
 
      deleteNodes(finalDeleteSet);
@@ -574,27 +628,40 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      if (SgProject::get_verbose() > 0)
           printf ("numberOfASTnodesBeforeMerge = %d numberOfASTnodesBeforeDelete = %d \n",numberOfASTnodesBeforeMerge,numberOfASTnodesBeforeDelete);
 
-     double percentageDecrease = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
-     double numberOfFiles = project->numberOfFiles();
+  // Note that percentageCompression and percentageSpaceSavings are computed as defined at: http://en.wikipedia.org/wiki/Data_compression_ratio
+  // double percentageDecrease = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
+     double percentageCompression  = ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
+     double percentageSpaceSavings = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
+     double mergeFactor            = ( ((double) numberOfASTnodesBeforeDelete) / ((double) numberOfASTnodesAfterDelete) );
+
+     double numberOfFiles  = project->numberOfFiles();
      double mergeEfficency = 0.0;
+
+  // Handle the special case of a single file.
      if (numberOfFiles == 1)
         {
-       // For a single file we expect no decrease to ge 100% efficiency (but we do get something for better sharing of types)
-          mergeEfficency = 1.0 + percentageDecrease;
+       // For a single file we expect no decrease to get 100% efficiency (but we do get something for better because of the sharing of types)
+       // mergeEfficency = 1.0 + percentageDecrease;
+       // mergeEfficency = 1.0 + percentageCompression;
+          mergeEfficency = 1.0 + percentageSpaceSavings;
         }
        else
         {
           double fileNumberMultiplier = numberOfFiles / (numberOfFiles - 1);
-          mergeEfficency = percentageDecrease * fileNumberMultiplier;
+       // mergeEfficency = percentageDecrease * fileNumberMultiplier;
+       // mergeEfficency = percentageCompression * fileNumberMultiplier;
+          mergeEfficency = percentageSpaceSavings * fileNumberMultiplier;
         }
 
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() >= 0)
         {
           printf ("\n\n");
-          printf ("******************************************************************************************************************************************************************** \n");
-          printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent decrease, mergeEfficency = %2.4lf) \n",
-               numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageDecrease,mergeEfficency);
-          printf ("******************************************************************************************************************************************************************** \n\n\n");
+          printf ("********************************************************************************************************************************************************************************************* \n");
+       // printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent decrease, mergeEfficency = %2.4lf) \n",
+       //      numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageDecrease,mergeEfficency);
+          printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent compression, %2.4lf percent space savings, mergeEfficency = %2.4lf, mergeFactor = %2.4lf) \n",
+                  numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageCompression,percentageSpaceSavings,mergeEfficency,mergeFactor);
+          printf ("********************************************************************************************************************************************************************************************* \n\n\n");
         }
 #if 0
      reportUnsharedDeclarationsTraversal();
@@ -618,6 +685,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
 int buildAstMergeCommandFile ( SgProject* project )
    {
+  // This is part of the high level interface (API) function used for the AST merge mechanism.
+
      vector<string> argv = project->get_originalCommandLineArgumentList();
      int errorCode = 0;
 
@@ -674,6 +743,8 @@ int buildAstMergeCommandFile ( SgProject* project )
 
 int AstMergeSupport ( SgProject* project )
    {
+  // This is part of the high level interface (API) function used for the AST merge mechanism.
+
      if (SgProject::get_verbose() > 0)
           printf ("Inside of AstMergeSupport \n");
 
@@ -824,4 +895,322 @@ int AstMergeSupport ( SgProject* project )
    }
 
 
+
+
+// ****************************************************************
+// ****************************************************************
+//  Functions supporting deletion of disconnected parts of the AST
+// ****************************************************************
+// ****************************************************************
+
+void
+accumulateSaveSet ( SgNode* node, set<SgNode*> & saveSet )
+   {
+  // This function accumulates all the children of the current IR node into the saveSet 
+  // so that we can assemble the set of IR nodes that are connected in the AST.  Using this
+  // set we will traverse the memory pools of the AST and identify disconnected IR nodes
+  // from the AST and save them to a separate list of nodes to be deleted as part of the 
+  // AST merge.
+
+#if 0
+     printf ("Inside of accumulateSaveSet ( node = %p = %s, saveSet.size() = %zu ) \n",node,node->class_name().c_str(),saveSet.size());
+#endif
+
+  // Save the current IR node
+     saveSet.insert(node);
+
+  // Traverse the child nodes and add them to the list to save
+     typedef vector<pair<SgNode*,string> > DataMemberMapType;
+     DataMemberMapType dataMemberMap = node->returnDataMemberPointers();
+
+#if 0
+  // This code is not required (delete it soon).
+  // if (isSgSupport(node) != NULL)
+  // if (isSgSymbolTable(node) != NULL || isSgFunctionTypeTable(node) != NULL)
+     SgType* typePointer = isSgType(node);
+     if (typePointer != NULL)
+        {
+       // Output data about the number of data members generated.
+       // printf ("For node = %p = %s dataMemberMap.size() = %zu \n",node,node->class_name().c_str(),dataMemberMap.size());
+
+       // Save the associated SgTypedefSeq opbject.
+          accumulateSaveSet(typePointer->get_typedefs(),saveSet);
+        }
+#endif
+
+     DataMemberMapType::iterator i = dataMemberMap.begin();
+     while (i != dataMemberMap.end())
+        {
+       // Ignore the parent pointer since it will be reset differently if required
+          SgNode* childPointer = i->first;
+          string  debugString  = i->second;
+
+          if (childPointer != NULL)
+             {
+#if 0
+               printf ("At node = %p = %s on edge %s found child %p = %s \n",node,node->class_name().c_str(),debugString.c_str(),childPointer,childPointer->class_name().c_str());
+#endif
+               if (saveSet.find(childPointer) == saveSet.end())
+                  {
+                    accumulateSaveSet(childPointer,saveSet);
+                  }
+             }
+
+          i++;
+        }
+   }
+
+
+void
+accumulateSaveSetForPreprocessingInfo ( set<SgNode*> & saveSet )
+   {
+  // Traverse the Memory pools and build a set of IR nodes that are not in the saveSet.
+  // Note: This function need only traverse the Sg_File_Info IR node memory pool.
+  // We will save EVERY Sg_File_Info object that is associated with a SgPreprocessingInfo 
+  // object.
+
+  // Class declaration used only by this function (a memory pool traversal).
+     class Traversal : public ROSE_VisitTraversal
+        {
+          public:
+               set<SgNode*> & saveSet;
+
+               Traversal(set<SgNode*> & s) : saveSet(s) {}
+
+               void visit (SgNode* node)
+                  {
+                    ROSE_ASSERT(node != NULL);
+                    if (saveSet.find(node) == saveSet.end())
+                       {
+                         SgNode* parent = node->get_parent();
+#if 0
+                         printf ("Inside of accumulateSaveSetForPreprocessingInfo ( node = %p = %s ) saveSet.size() = %zu \n",node,node->class_name().c_str(),saveSet.size());
+                         if (parent != NULL)
+                              printf ("Inside of accumulateSaveSetForPreprocessingInfo() parent = %p = %s ) \n",parent,parent->class_name().c_str());
+#endif
+                      // Test for the implicit signature of a Sg_File_Info object that is used as the location in a PreprocessingInfo object.
+                         Sg_File_Info* fileInfo = isSg_File_Info(node);
+                      // if (fileInfo != NULL && isSgTypeDefault(parent) != NULL)
+                         if (fileInfo != NULL && parent == SgTypeDefault::createType())
+                            {
+#if 0
+                              printf ("saving this Sg_File_Info node to the delete list (associated with PreprocessingInfo object) fileInfo = %p \n",fileInfo);
+#endif
+
+                           // Note that parents of Sg_File_Info objects which are SgTypeDefault should 
+                           // be associated with comments or CPP directives. So test this.
+                              ROSE_ASSERT(fileInfo->isCommentOrDirective() == true);
+
+                           // Save the current IR node (and it type (parent) and the SgTypeDefault parts (SgTypedefSeq).
+                              accumulateSaveSet(node,saveSet);
+                            }
+                       }
+                  }
+        };
+#if 0
+     printf ("Inside of accumulateSaveSetForPreprocessingInfo(): This function need only traverse the Sg_File_Info IR node memory pool. \n");
+#endif
+
+  // Build the traversal and call it on the memory pools.
+     Traversal t(saveSet);
+     t.traverseMemoryPool();
+   }
+
+set<SgNode*>
+accumulateDeleteSet ( SgProject* project, const set<SgNode*> & saveSet )
+   {
+  // Traverse the Memory pools and build a set of IR nodes that are not in the saveSet.
+
+     class Traversal : public ROSE_VisitTraversal
+        {
+          public:
+               const set<SgNode*> & saveSet;
+               set<SgNode*> deleteSet;
+
+               Traversal(const set<SgNode*> & s) : saveSet(s) 
+                  {
+                  }
+
+               void visit (SgNode* node)
+                  {
+                    if (saveSet.find(node) == saveSet.end())
+                       {
+#if 0
+                         printf ("Inside of accumulateDeleteSet ( node = %p = %s ) deleteSet.size() = %zu \n",node,node->class_name().c_str(),deleteSet.size());
+#endif
+#if 0
+                         SgNode* parent = node->get_parent();
+                         if (parent != NULL)
+                              printf ("Inside of accumulateDeleteSet() parent = %p = %s ) \n",parent,parent->class_name().c_str());
+
+                      // Test for the implicit signature of a Sg_File_Info object that is used as the location in a PreprocessingInfo object.
+                         Sg_File_Info* fileInfo = isSg_File_Info(node);
+                      // if (fileInfo != NULL && isSgTypeDefault(parent) != NULL)
+                         if (fileInfo != NULL && parent == SgTypeDefault::createType())
+                            {
+                              printf ("skipping adding this Sg_File_Info node to the delete list (associated with PreprocessingInfo object) fileInfo = %p \n",fileInfo);
+                              ROSE_ASSERT(fileInfo->isCommentOrDirective() == true);
+                           // accumulateDeleteSet(project,saveSet);
+                            }
+                           else
+                            {
+                           // Test if this node is already in the set.
+                              if (deleteSet.find(node) == deleteSet.end())
+                                 {
+                                // Skip the SgDefaultType node from being added to the delete list.
+                                // if (isSgTypeDefault(node) == NULL)
+                                // if (isSgTypeDefault(parent) == NULL)
+                                   deleteSet.insert(node);
+                                 }
+                            }
+#else
+                      // Test if this node is already in the set.
+                         if (deleteSet.find(node) == deleteSet.end())
+                            {
+                           // Skip the SgDefaultType node from being added to the delete list.
+                              if (isSgStorageModifier(node) != NULL)
+                                 {
+#if 0
+                                   printf ("WARNING: Skipping the removal of SgStorageModifier IR nodes from deleteSet \n");
+#endif
+                                 }
+                                else
+                                 {
+                                   deleteSet.insert(node);
+                                 }
+                            }
+#endif
+                       }
+                  }
+        };
+
+     Traversal t(saveSet);
+     t.traverseMemoryPool();
+
+     return t.deleteSet;
+   }
+
+set<SgNode*>
+buildDeleteSet( SgProject* project )
+   {
+  // DQ (7/3/2010): Implementation of alternative appraoch to define the list 
+  // of redundant nodes to delete based on the detection of nodes disconnected 
+  // from the modified AST after the merge.
+
+     set<SgNode*> saveSet;
+     set<SgNode*> returnDeleteSet;
+
+     printf ("Computing the IR nodes to be deleted \n");
+
+     int numberOfASTnodesBeforeComputingDeleteSet = numberOfNodes();
+  // printf ("numberOfASTnodesBeforeComputingDeleteSet = %d \n",numberOfASTnodesBeforeComputingDeleteSet);
+
+  // Step 1: Compute the set of IR nodes in the current AST.
+  // saveSet.insert(SgNode::p_globalFunctionTypeTable);
+     accumulateSaveSet(project,saveSet);
+  // printf ("Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+
+#if 1
+  // DQ (7/10/2010): These are not handled in the MangledNameMapTraversal constructor (types are handled directly)
+  // printf ("Handle SgNode::p_globalFunctionTypeTable : Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
+     accumulateSaveSet(SgNode::get_globalFunctionTypeTable(),saveSet);
+#endif
+
+  // Use a simple macro to simplify the generation of the correct code.
+#define MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(TYPE) if (TYPE::numberOfNodes() > 0) { TYPE* t = TYPE::createType(); accumulateSaveSet(t,saveSet); }
+
+#if 1
+  // DQ (7/10/2010): Note that this will cause any required types to be built which can 
+  // then be used to as references to those types via the p_builtin_type static data member.
+  // This should be refactored to be a function generated by ROSETTA.
+
+  // Call the macro for every kind of type used in ROSE.
+  // Note that this should later be a function generated by ROSETTA.
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeUnknown)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeChar)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeSignedChar)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeUnsignedChar)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeShort)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeSignedShort)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeUnsignedShort)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeInt)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeSignedInt)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeUnsignedInt)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeLong)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeSignedLong)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeUnsignedLong)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeVoid)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeGlobalVoid)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeWchar)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeFloat)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeDouble)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeLongLong)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeSignedLongLong)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeUnsignedLongLong)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeLongDouble)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeString)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeBool)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgNamedType)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgPartialFunctionModifierType)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeEllipse)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgTypeDefault)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmTypeByte)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmTypeWord)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmTypeDoubleWord)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmTypeQuadWord)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmTypeDoubleQuadWord)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmType80bitFloat)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmType128bitFloat)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmTypeSingleFloat)
+     MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(SgAsmTypeDoubleFloat)
+#endif
+
+  // Note that there are Sg_File_Info objects that are associated with PreprocessingInfo objects, and since the SgPreprocessingInfo class
+  // is not generated by ROSETTA, the partent of each Sg_File_Info object is defined (somewhat arbitrarily) to be a SgDefaultType object.
+  // A special function is implemented to process these specific IR nodes since they are disconnected from the AST proper and we don't 
+  // want them to be removed as part of the AST merge (compression).
+  // printf ("Handle Sg_File_Info objects that are associated with PreprocessingInfo objects: Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+     accumulateSaveSetForPreprocessingInfo(saveSet);
+
+     printf ("Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+
+     set<SgNode*> tempDeleteSet = accumulateDeleteSet(project,saveSet);
+     printf ("tempDeleteSet.size() = %zu \n",tempDeleteSet.size());
+
+#if 0
+     displaySet(tempDeleteSet,"buildDeleteSet: Computing the IR nodes to be deleted");
+#endif
+
+#if 1
+  // Step 2: Traverse the memory pools and generate the list of IR nodes that are NOT in the saveSet.
+  // returnDeleteSet = accumulateDeleteSet(project,saveSet);
+     returnDeleteSet = tempDeleteSet;
+#else
+     printf ("Returning an empty list of IR nodes to delete! \n");
+#endif
+
+     printf ("DONE: Computing the IR nodes to be deleted \n");
+  // ROSE_ASSERT(false);
+
+     int numberOfASTnodesAfterComputingDeleteSet = numberOfNodes();
+
+#if 0
+     printf ("numberOfASTnodesBeforeComputingDeleteSet = %d numberOfASTnodesAfterComputingDeleteSet = %d \n",
+          numberOfASTnodesBeforeComputingDeleteSet,numberOfASTnodesAfterComputingDeleteSet);
+#endif
+
+  // DQ (7/11/2010): Test this since I would like to assert that it is true, but we can't do that yet!
+     if (numberOfASTnodesBeforeComputingDeleteSet != numberOfASTnodesAfterComputingDeleteSet)
+        {
+          printf ("Warning: numberOfASTnodesBeforeComputingDeleteSet = %d != numberOfASTnodesAfterComputingDeleteSet = %d \n",
+               numberOfASTnodesBeforeComputingDeleteSet,numberOfASTnodesAfterComputingDeleteSet);
+        }
+
+  // DQ (7/11/2010): This fails for a tests in tests/CompileTests/mergeAST_tests, still have to investigate why!
+  // DQ (7/10/2010): The identification of nodes to delete should not create any new IR nodes.
+  // ROSE_ASSERT(numberOfASTnodesBeforeComputingDeleteSet == numberOfASTnodesAfterComputingDeleteSet);
+
+     return returnDeleteSet;
+   }
 
