@@ -775,6 +775,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* target
   }
 #endif
 
+#if 0
   // Process SgConstructorInitializers
   VariantVector vv2(V_SgConstructorInitializer);     
   Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
@@ -787,6 +788,7 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* target
     SgFunctionDefinition* candidateDef = defDecl->get_definition();
     if (candidateDef == targetDef) calls.push_back(ctorInit);
   }
+#endif
 }
 
 void 
