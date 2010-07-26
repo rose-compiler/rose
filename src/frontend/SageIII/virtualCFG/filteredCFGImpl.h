@@ -180,14 +180,12 @@ namespace VirtualCFG
             ROSE_ASSERT(outEdges[i].source() == n);
             processNodes(outEdges[i].target());
         }
-#if 0
         std::vector < EdgeT > inEdges = n.inEdges(interprocedural);
         for (unsigned int i = 0; i < inEdges.size(); ++i)
         {
             ROSE_ASSERT(inEdges[i].target() == n);
             processNodes(inEdges[i].source());
         }
-#endif
     }
 
     template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
@@ -200,7 +198,6 @@ namespace VirtualCFG
         {
             printEdge(o, outEdges[i], false);
         }
-#if 0
 				#ifdef DEBUG
         std::vector < EdgeT > inEdges = n.inEdges(interprocedural);
         for (unsigned int i = 0; i < inEdges.size(); ++i)
@@ -208,7 +205,6 @@ namespace VirtualCFG
             printEdge(o, inEdges[i], true);
         }
 				#endif
-#endif
     }
 #if 0
     template < typename NodeT, typename EdgeT >

@@ -74,14 +74,12 @@ void printNodePlusEdges(ostream& o, NodeT n, bool interprocedural) {
   for (unsigned int i = 0; i < outEdges.size(); ++i) {
     printEdge<EdgeT, Debug>(o, outEdges[i], false);
   }
-#if 0
   if (Debug) {
     vector<EdgeT> inEdges = n.inEdges(interprocedural);
     for (unsigned int i = 0; i < inEdges.size(); ++i) {
       printEdge<EdgeT, Debug>(o, inEdges[i], true);
     }
   }
-#endif
 }
 
 #if 0 // Enable for clustering by AST hierarchy, which makes the graph look bad
