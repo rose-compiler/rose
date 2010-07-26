@@ -3,32 +3,45 @@
 
 #include <rose.h>
 
-// Normalize an event function.
+namespace backstroke_norm
+{
+
+
+/** Normalize an event function (main interface). */
 void normalizeEvent(SgFunctionDefinition* func_def);
 
-bool isAssignmentOp(SgExpression* e);
+/** A wrapper function which takes a function declaration as parameter. */
+inline void normalizeEvent(SgFunctionDeclaration* func_decl)
+{
+    SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+    ROSE_ASSERT(defining_decl && defining_decl->get_definition());
+    normalizeEvent(defining_decl->get_definition());
+}
 
-// Transform a modifying expression into several ones contained in a comma 
-// operator expression. The transformations are:
-//
-//    a = b  ==>  a = b, a
-//    --a  ==>  --a, a
-//    a--  ==>  t = a, --a, t
-//    a && b  ==>  t = a, t && t = b, t
-//    a || b  ==>  t = a, t || t = b, t
-//
+
+namespace details
+{
+
+
+/** Transform a modifying expression into several ones contained in a comma
+ operator expression. The transformations are:
+
+    a = b  ==>  a = b, a
+    --a  ==>  --a, a
+    a--  ==>  t = a, --a, t
+    a && b  ==>  t = a, t && t = b, t
+    a || b  ==>  t = a, t || t = b, t
+*/
 void getAndReplaceModifyingExpression(SgExpression*& exp);
 
-SgExpression* normalizeExpression(SgExpression* exp);
+/** Split a comma expression into several statements. */
+void splitCommaOpExpIntoStmt(SgExpression* exp);
 
-// Split a comma expression into several statements.
-void splitCommaOpExp(SgExpression* exp);
-
-// Propagate comma operation expressions, e.g. (a, b) + c ==> a, (b + c).
+/** Propagate comma operation expressions, e.g. (a, b) + c ==> a, (b + c). */
 SgExpression* propagateCommaOpExp(SgExpression* exp);
 
-// Propagate conditional operation expressions, 
-// e.g. (a ? b : c) = d ==> a ? (b = d) : (c = d).
+/** Propagate conditional operation expressions,
+   e.g. (a ? b : c) = d ==> a ? (b = d) : (c = d). */
 SgExpression* propagateConditionalExp(SgExpression* exp);
 
 inline SgExpression* propagateCommaOpAndConditionalExp(SgExpression* exp)
@@ -37,26 +50,11 @@ inline SgExpression* propagateCommaOpAndConditionalExp(SgExpression* exp)
     return propagateConditionalExp(exp);
 }
 
-// Remove braces of a basic block in which there is no variable declared.
-void removeUselessBraces(SgNode* root);
+/** Preprocess the code to be normalized. */
+void preprocess(SgFunctionDefinition* func);
 
-// The following function should be put in utilities.h
-template <class T>
-std::vector<T*> querySubTree(SgNode* root, t_traverseOrder order = postorder)
-{
-    struct Traversal : public AstSimpleProcessing
-    {
-        std::vector<T*> all_nodes;
-        virtual void visit(SgNode* n)
-        {
-            T* node = dynamic_cast<T*>(n);
-            if (node) all_nodes.push_back(node);
-        }
-    }; 
+} // namespace details
 
-    Traversal traversal;
-    traversal.traverse(root, order);
-    return traversal.all_nodes;
-}
+} // namespace backstroke_norm
 
 #endif
