@@ -44,7 +44,7 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
         //if (!(operand->get_type()->isIntegerType()))
         //{
             SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    pushVal(operand, operand->get_type()),
+                    pushVal(copyExpression(operand), operand->get_type()),
                     copyExpression(exp));
             SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                     copyExpression(operand),
@@ -61,7 +61,7 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(lhs_operand, lhs_operand->get_type()),
+                pushVal(copyExpression(lhs_operand), lhs_operand->get_type()),
                 copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(lhs_operand),

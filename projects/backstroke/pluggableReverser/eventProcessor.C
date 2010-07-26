@@ -113,11 +113,8 @@ std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() co
 
 SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* type)
 {
-    return buildFunctionCallExp(
-            "push", type,
-            buildExprListExp(
-                getStackVar(type),
-                copyExpression(exp)));
+    return buildFunctionCallExp("push", type, buildExprListExp(
+                getStackVar(type), exp));
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
@@ -141,6 +138,10 @@ FuncDeclPairs EventProcessor::processEvent()
 
     foreach (StatementObject& stmt_obj, bodies)
     {
+        cout << "!!!!!!!\n";
+        fixVariableReferences(stmt_obj.fwd_stmt);
+        fixVariableReferences(stmt_obj.rvs_stmt);
+
         string ctr_str = lexical_cast<string > (ctr++);
 
         SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
@@ -162,6 +163,8 @@ FuncDeclPairs EventProcessor::processEvent()
         stmt_obj.rvs_stmt->set_parent(rvs_func_def);
 
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
+
+        cout << "????????\n";
     }
 
     return outputs;

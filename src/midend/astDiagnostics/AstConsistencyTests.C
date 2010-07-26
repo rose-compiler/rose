@@ -173,6 +173,14 @@ AstTests::runAllTests(SgProject* sageProject)
   // ROSE_Performance::TimingPerformance("AST Consistency Tests");
      TimingPerformance timer ("AST Consistency Tests:");
 
+
+  // CH (2010/7/26):   
+  // Before running tests, first clear all variable symbols which are not referenced in the memory pool.
+  // This is because when building AST bottom-up, some temporary symbol may be generated to be referenced
+  // by those variable references generated just using names. When all variable references are fixed,
+  // those symbols are not used any more and then should be removed from memory pool.
+     SageInterface::clearUnusedVariableSymbols();
+
   // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
 
   // printf ("Exiting at top of AstTests::runAllTests() \n");
