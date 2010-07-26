@@ -3146,6 +3146,7 @@ TestExpressionTypes::visit ( SgNode* node )
 void
 TestMangledNames::visit ( SgNode* node )
    {
+     ROSE_ASSERT(node != NULL);
   // printf ("node = %p = %s \n",node,node->class_name().c_str());
 
      string mangledName;
