@@ -34,7 +34,7 @@ public:
     class MapElement {
     public:
         MapElement()
-            : va(0), size(0), base(NULL), offset(0), read_only(false), mapperms(MM_PROT_NONE), anonymous(NULL) {}
+            : va(0), size(0), base(NULL), offset(0), read_only(false), mapperms(MM_PROT_READ), anonymous(NULL) {}
         
         MapElement(const MapElement &other) {
             init(other);
@@ -52,19 +52,19 @@ public:
 
         /** Creates a mapping relative to a memory buffer.  The MemoryMap will coalesce adjacent elements having the same base
          *  when possible, but never elements having different bases. */
-        MapElement(rose_addr_t va, size_t size, void *base, rose_addr_t offset, unsigned perms=MM_PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, void *base, rose_addr_t offset, unsigned perms=MM_PROT_READ)
             : va(va), size(size), base(base), offset(offset), read_only(false), mapperms(perms), anonymous(NULL) {}
 
         /** Create a mapping relative to a read-only memory buffer. The MemoryMap will coalesce adjacent elements having the
          *  same base when possible, but never elements having different bases. */
-        MapElement(rose_addr_t va, size_t size, const void *base, rose_addr_t offset, unsigned perms=MM_PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, const void *base, rose_addr_t offset, unsigned perms=MM_PROT_READ)
             : va(va), size(size), base(const_cast<void*>(base)), offset(offset), read_only(true), mapperms(perms), anonymous(NULL)
             {}
 
         /** Creates an anonymous mapping where all addresses of the mapping are initially contain zero bytes. Note that memory
          *  is not allocated (and the base address is not assigned) until a write attempt is made. The implementation is free
          *  to coalesce compatible adjacent anonymous regions as it sees fit, reallocating memory as necessary. */
-        MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_READ)
             : va(va), size(size), base(NULL), offset(0), read_only(false), mapperms(perms), anonymous(new size_t) {
             *anonymous = 0; /*no storage allocated yet for 'base'*/
         }
@@ -245,14 +245,15 @@ public:
     /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
      *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
      *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
-     *  than the number of  bytes desired if the mapping does not include part of the address space requested. The @p dst_buf
-     *  bytes that do not correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always
-     *  initialized. */
+     *  than the number of  bytes desired if the mapping does not include part of the address space requested or part of the
+     *  address space does not have MM_PROT_READ permission. The @p dst_buf bytes that do not correpond to mapped virtual
+     *  addresses will be zero filled so that @p desired bytes are always initialized. */
     size_t read(void *dst_buf, rose_addr_t start_va, size_t desired) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
-     *  aborted early if a map element is marked read-only.  The return value is the number of bytes copied. */
+     *  aborted early if a map element is marked read-only or if its protection lacks the MM_PROT_READ bit.  The return value
+     *  is the number of bytes copied. */
     size_t write(const void *src_buf, rose_addr_t start_va, size_t size) const;
 
     /** Returns just the virtual address extents for a memory map. */
