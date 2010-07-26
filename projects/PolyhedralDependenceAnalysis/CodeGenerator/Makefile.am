@@ -3,6 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # . is necessary to ensure building the translator before building the tests
 SUBDIRS = . #tests
 
+CXXFLAGS += $(PIP_CPPFLAGS) $(FADA_CPPFLAGS) $(PPL_CPPFLAGS)
+
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/../Common/ -I$(srcdir)/../PMDAtoMDA/ -I$(srcdir)/../RoseToFada/ -I$(srcdir)/../RoseToPPL/ -I$(srcdir)/../Schedule/
 
 bin_PROGRAMS = TestCodeGenerator

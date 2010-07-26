@@ -1,6 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# . is necessary to ensure building the translator before building the tests
 SUBDIRS = PMDAtoMDA
 
 if ROSE_USE_FADALIB
