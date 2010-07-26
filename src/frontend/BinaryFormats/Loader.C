@@ -283,18 +283,10 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
             } else if (offset+file_size>total) {
                 if (p_debug)
                     fprintf(p_debug, "    Map crosses end-of-file at 0x%08"PRIx64"\n", total);
-//#ifdef _MSC_VER
-//                ltsz = _cpp_min(mem_size, total-offset);
-//#else
                 ltsz = std::min(mem_size, total-offset);
-//#endif
             } else {
                 /* Map falls entirely within the file, but mem size might be larger than file size */
-//#ifdef _MSC_VER
-//                ltsz = _cpp_min(mem_size, file_size);
-//#else
                 ltsz = std::min(mem_size, file_size);
-//#endif
             }
             rose_addr_t rtsz = mem_size - ltsz;
 
