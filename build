@@ -195,5 +195,5 @@ fi
 #     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
 #
 if [[ -n "$do_quiet" ]]; then
-    (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode)
+    (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
 fi
