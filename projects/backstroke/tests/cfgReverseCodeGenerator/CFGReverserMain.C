@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
-
-#include "reverseComputation/eventReverser.h"
-#include "reverseComputation/CFGReverserProofOfConcept.h"
+#include <VariableRenaming.h>
 #include "utilities/CPPDefinesAndNamespaces.h"
+#include "normalizations/expNormalization.h"
+#include "pluggableReverser/eventProcessor.h"
+#include "pluggableReverser/expressionProcessor.h"
+#include "pluggableReverser/statementProcessor.h"
 
 
 int main(int argc, char** argv)
@@ -25,26 +27,33 @@ int main(int argc, char** argv)
 	functionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
 	ROSE_ASSERT(functionDeclaration != NULL);
 
+	//Normalize the function
+	backstroke_norm::normalizeEvent(functionDeclaration);
+
 	//Create a reverser for this function
-	CFGReverserProofofConcept cfgReverser(project);
-	EventReverser::registerExpressionHandler(bind(&CFGReverserProofofConcept::ReverseExpression, &cfgReverser, _1));
-	EventReverser reverser(functionDeclaration, NULL);
+    VariableRenaming var_renaming(project);
+    var_renaming.run();
+	EventProcessor event_processor(NULL, &var_renaming);
+	
+	event_processor.addExpressionProcessor(new NullExpressionProcessor);
+    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+    event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
+    event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+	event_processor.addStatementProcessor(new BasicStatementProcessor);
 
 	//Call the reverser and get the results
 	SageBuilder::pushScopeStack(globalScope);
-	map<SgFunctionDeclaration*, FuncDeclPair> originalToGenerated = reverser.outputFunctions();
-	vector<SgVariableDeclaration*> generatedVariables = reverser.getVarDeclarations();
-	vector<SgAssignOp*> generatedVariableInitializations = reverser.getVarInitializers();
+	vector<FuncDeclPair> forwardReversePairs = event_processor.processEvent(functionDeclaration);
+	vector<SgVariableDeclaration*> generatedVariables = event_processor.getAllStackDeclarations();
+	//vector<SgAssignOp*> generatedVariableInitializations = reverser.getVarInitializers();
 
 	//Insert all the generated functions right after the original function
-	pair<SgFunctionDeclaration*, FuncDeclPair> originalAndInstrumented;
-	foreach(originalAndInstrumented, originalToGenerated)
+	foreach(FuncDeclPair originalAndInstrumented, forwardReversePairs)
 	{
-		SgFunctionDeclaration* originalFunction = originalAndInstrumented.first;
-		SgFunctionDeclaration* forward = originalAndInstrumented.second.first;
-		SgFunctionDeclaration* reverse = originalAndInstrumented.second.second;
-		SageInterface::insertStatementAfter(originalFunction, forward);
-		SageInterface::insertStatementAfter(originalFunction, reverse);
+		SgFunctionDeclaration* forward = originalAndInstrumented.first;
+		SgFunctionDeclaration* reverse = originalAndInstrumented.second;
+		SageInterface::insertStatementAfter(functionDeclaration, reverse);
+		SageInterface::insertStatementAfter(functionDeclaration, forward);
 	}
 
 	//Insert all the necessary variable declarations
@@ -54,7 +63,7 @@ int main(int argc, char** argv)
 	}
 
 	//Find main and insert the variable initializations in it
-	SgFunctionDeclaration* mainDeclaration = SageInterface::findMain(project);
+	/*SgFunctionDeclaration* mainDeclaration = SageInterface::findMain(project);
 	mainDeclaration = isSgFunctionDeclaration(mainDeclaration->get_definingDeclaration());
 	ROSE_ASSERT(mainDeclaration != NULL);
 	SgFunctionDefinition* mainDefinition = mainDeclaration->get_definition();
@@ -62,7 +71,7 @@ int main(int argc, char** argv)
 	reverse_foreach(SgAssignOp* varInitOp, generatedVariableInitializations)
 	{
 		SageInterface::prependStatement(SageBuilder::buildExprStatement(varInitOp), mainDefinition->get_body());
-	}
+	}*/
 
 	//Add the header file that includes functions called by the instrumented code
 	string includes = "#include \"rctypes.h\"\n";

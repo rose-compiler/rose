@@ -2,13 +2,11 @@
 #define	BACKSTROKE_VARIABLEVERSIONTABLE_H
 
 #include <rose.h>
-
-
-class VariableRenaming;
+#include <VariableRenaming.h>
 
 class VariableVersionTable
 {
-    typedef std::vector<SgInitializedName*> VarName;
+    typedef VariableRenaming::VarName VarName;
     
     std::map<VarName, std::set<int> > table_;
     VariableRenaming* var_renaming_;
