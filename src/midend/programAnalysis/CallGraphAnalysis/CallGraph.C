@@ -710,6 +710,25 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* target
     }
   }
 
+  VariantVector vv2(V_SgConstructorInitializer);
+  Rose_STL_Container<SgNode*> ctorCandidates = NodeQuery::queryMemoryPool(vv2);
+  Rose_STL_Container<SgNode*>::iterator ctorCandidate;
+
+  for (ctorCandidate = ctorCandidates.begin(); 
+       ctorCandidate != ctorCandidates.end(); ++ctorCandidate) { 
+    SgConstructorInitializer* ctor = isSgConstructorInitializer(*ctorCandidate);
+
+    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
+    CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctor, candidateDefs);
+    Rose_STL_Container<SgFunctionDefinition*>::iterator candidateDef;
+    for(candidateDef = candidateDefs.begin(); 
+        candidateDef != candidateDefs.end(); ++candidateDef) {
+      if (*candidateDef == targetDef) {
+        calls.push_back(ctor);
+        break;
+      }
+    }
+  }
 #if 0 // optimized, but buggy
   // Process SgFunctionCallExps
   VariantVector vv(V_SgFunctionCallExp);
