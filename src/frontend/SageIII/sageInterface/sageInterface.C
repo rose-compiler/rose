@@ -7521,7 +7521,6 @@ int SageInterface::fixVariableReferences(SgNode* root)
 {
   ROSE_ASSERT(root);
   int counter=0;
-  Rose_STL_Container<SgNode*> nodeList;
 
   SgVarRefExp* varRef=NULL;
   Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
@@ -7538,7 +7537,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
       SgName varName=initname->get_name();
       SgSymbol* realSymbol = NULL;
 
-#if 0
+#if 1
       // CH (5/7/2010): Before searching SgVarRefExp objects, we should first deal with class/structure
       // members. Or else, it is possible that we assign the wrong symbol to those members if there is another
       // variable with the same name in parent scopes. Those members include normal member referenced using . or ->
@@ -7606,13 +7605,12 @@ int SageInterface::fixVariableReferences(SgNode* root)
         varRef->set_symbol(isSgVariableSymbol(realSymbol));
         counter ++;
 
-        if (nodeList.empty())
-        {
-            VariantVector vv(V_SgVarRefExp);
-            nodeList = NodeQuery::queryMemoryPool(vv);
-        }
-        for (Rose_STL_Container<SgNode*>::iterator i = nodeList.begin();
-                i != nodeList.end(); ++i)
+        Rose_STL_Container<SgNode*> varList;
+        VariantVector vv(V_SgVarRefExp);
+        varList = NodeQuery::queryMemoryPool(vv);
+
+        for (Rose_STL_Container<SgNode*>::iterator i = varList.begin();
+                i != varList.end(); ++i)
         {
             if (SgVarRefExp* var = isSgVarRefExp(*i))
             {
@@ -7631,8 +7629,12 @@ int SageInterface::fixVariableReferences(SgNode* root)
 
 #else
 
+        // CH (2010/7/26): We cannot delete those initname and symbol here, since there may be other variable references 
+        // which point to them. We will delay this clear just before AstTests.
+#if 0
         delete initname; // TODO deleteTree(), release File_Info nodes etc.
         delete (varRef->get_symbol());
+#endif
 
         varRef->set_symbol(isSgVariableSymbol(realSymbol));
         counter ++;
@@ -7643,6 +7645,46 @@ int SageInterface::fixVariableReferences(SgNode* root)
   return counter;
 }
 
+void SageInterface::clearUnusedVariableSymbols()
+{
+    Rose_STL_Container<SgNode*> symbolList;
+    VariantVector sym_vv(V_SgVariableSymbol);
+    symbolList = NodeQuery::queryMemoryPool(sym_vv);
+
+    Rose_STL_Container<SgNode*> varList;
+    VariantVector var_vv(V_SgVarRefExp);
+    varList = NodeQuery::queryMemoryPool(var_vv);
+
+    for (Rose_STL_Container<SgNode*>::iterator i = symbolList.begin();
+            i != symbolList.end(); ++i)
+    {
+        SgVariableSymbol* symbolToDelete = isSgVariableSymbol(*i);
+        ROSE_ASSERT(symbolToDelete);
+        if (symbolToDelete->get_declaration()->get_type() != SgTypeUnknown::createType()) 
+            continue;
+
+        bool toDelete = true;
+
+        for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
+                j != varList.end(); ++j)
+        {
+            SgVarRefExp* var = isSgVarRefExp(*j);
+            ROSE_ASSERT(var);
+
+            if (var->get_symbol() == symbolToDelete)
+            {
+                toDelete = false;
+                break;
+            }
+        }
+
+        if (toDelete)
+        {
+            delete symbolToDelete->get_declaration(); 
+            delete symbolToDelete;
+        }
+    }
+}
 
 //! fixup symbol table for SgLableStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
 /*

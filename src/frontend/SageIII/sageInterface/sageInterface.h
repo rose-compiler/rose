@@ -195,6 +195,10 @@ struct hash_nodeptr
   // DQ (9/28/2005):
   void rebuildSymbolTable (SgScopeStatement * scope);
 
+  /*! \brief Clear those variable symbols (together with initialized names) which are not referenced by any variable references or declarations.
+   */
+  void clearUnusedVariableSymbols ();
+
   //SgNode::get_globalFunctionTypeTable() ;
 
 //@}
