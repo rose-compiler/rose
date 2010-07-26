@@ -257,22 +257,43 @@ within SAGE III (will be tested in the future).
 */
 
 /*!
+\fn SgExpression::isDefinable (void) const
+\brief For Fortran.  When called from a node of any other language, behavior is undefined (see SageInterface::is_Fortran_language).
+Returns a bool value which is true if the current expression is "almost definable".
+"Almost definable" here means as defined by the Fortran standard (2.5.5), with the caveat that allocatable variables are always called an lvalue.
+The Fortran standard dictates that an allocatable variable which has not been allocated is not definable.
+In the general case, it cannot be statically determined whether an allocatable variable has been allocated or not.
+Note: constants in Fortran are not lvalues, while in C and C++ lvalues may be const.
+\return Returns true if the current expression is almost definable.
+*/
+
+/*!
+\fn SgExpression::isUsedAsDefinable (void) const
+\brief For Fortran.  When called from a node of any other language, behavior is undefined (see SageInterface::is_Fortran_language).
+\brief Returns a bool value which is true if the current expression is used as a definable value.  That is, it is definable (assigned to).
+\return Returns true if the current expression is used as a definable value.
+*/
+
+/*!
 \fn SgExpression::isLValue (void) const
-\brief Returns a bool value which is true if the current expression is an lvalue, as defined by the C++ standard.
-\return Returns true if the current expression is an l-value.
+\brief For C and C++. When called from a node of any other language, behavior is undefined (see SageInterface::is_C*_language).
+Returns a bool value which is true if the current expression is an lvalue, as defined by the C++ standard.
+\return Returns true if the current expression is an lvalue.
 */
 
 /*!
 \fn SgExpression::isUsedAsLValue (void) const
-\brief Returns a bool value which is true if the current expression is used as an lvalue.  That is, it is an l-value and does not get converted to an r-value by its parent expression.
-\return Returns true if the current expression is used as an l-value.
+\brief For C and C++. When called from a node of any other language, behavior is undefined (see SageInterface::is_C*_language).
+\brief Returns a bool value which is true if the current expression is used as an lvalue.  That is, it is an lvalue and does not get converted to an rvalue by its parent expression.
+\return Returns true if the current expression is used as an lvalue.
 */
 
 /*!
 \fn SgExpression::isChildUsedAsLValue (SGExpression) const
-\brief Returns a bool value which is true if the specified expression is used as an lvalue.  That is, it is an l-value and does not get converted to an r-value by its parent expression.
+\brief For C and C++. When called from a node of any other language, behavior is undefined (see SageInterface::is_C*_language).
+\brief Returns a bool value which is true if the specified expression is used as an lvalue.  That is, it is an lvalue and does not get converted to an rvalue by its parent expression.
 \internal For use by children calling their parents.
-\return Returns true if the specified expression is used as an l-value.
+\return Returns true if the specified expression is used as an lvalue.
 */
 
 

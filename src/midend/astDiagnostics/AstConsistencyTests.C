@@ -3122,6 +3122,16 @@ TestExpressionTypes::visit ( SgNode* node )
 		bool verifiedLValue = false;
 		switch (node->variantT())
 		{
+			case V_SgExpressionRoot: 
+			case V_SgMinusOp:            
+			case V_SgUnaryAddOp: 
+			case V_SgNotOp:           
+			case V_SgPointerDerefExp: 
+			case V_SgAddressOfOp:    
+			case V_SgMinusMinusOp:       
+			case V_SgPlusPlusOp: 
+			case V_SgBitComplementOp: 
+			break;
 			case V_SgCastExp:
 			{
 				SgCastExp* castExp = isSgCastExp(node);
@@ -3146,24 +3156,28 @@ TestExpressionTypes::visit ( SgNode* node )
 				}
 				break;
 			}
-			case V_SgExpressionRoot: 
-			case V_SgMinusOp:            
-			case V_SgUnaryAddOp: 
-			case V_SgNotOp:           
-			case V_SgPointerDerefExp: 
-			case V_SgAddressOfOp:    
-			case V_SgMinusMinusOp:       
-			case V_SgPlusPlusOp: 
-			case V_SgBitComplementOp: 
 			case V_SgThrowOp:        
 			case V_SgRealPartOp:         
 			case V_SgImagPartOp: 
 			case V_SgConjugateOp:     
 			case V_SgUserDefinedUnaryOp: 
+			break;
 			case V_SgArrowExp:       
+			{
+				break;
+			}
 			case V_SgDotExp:           
+			{
+				break;
+			}
 			case V_SgDotStarOp:       
+			{
+				break;
+			}
 			case V_SgArrowStarOp:      
+			{
+				break;
+			}
 			case V_SgEqualityOp:    
 			case V_SgLessThanOp:     
 			case V_SgGreaterThanOp:  
@@ -3181,11 +3195,18 @@ TestExpressionTypes::visit ( SgNode* node )
 			case V_SgBitXorOp:       
 			case V_SgBitAndOp:         
 			case V_SgBitOrOp:         
+			break;
 			case V_SgCommaOpExp:       
+			{
+				break;
+			}
 			case V_SgLshiftOp:      
 			case V_SgRshiftOp:       
-			case V_SgPntrArrRefExp:  
 			break;
+			case V_SgPntrArrRefExp:  
+			{
+				break;
+			}
 			case V_SgScopeOp:          
 			{
 				SgScopeOp* scopeOp = isSgScopeOp(node);
@@ -3194,19 +3215,56 @@ TestExpressionTypes::visit ( SgNode* node )
 				break;
 			}
 			case V_SgAssignOp:        
+			{
+				break;
+			}
 			case V_SgPlusAssignOp:     
+			{
+				break;
+			}
 			case V_SgMinusAssignOp: 
+			{
+				break;
+			}
 			case V_SgAndAssignOp:    
+			{
+				break;
+			}
 			case V_SgIorAssignOp:    
+			{
+				break;
+			}
 			case V_SgMultAssignOp:     
+			{
+				break;
+			}
 			case V_SgDivAssignOp:     
+			{
+				break;
+			}
 			case V_SgModAssignOp:      
+			{
+				break;
+			}
 			case V_SgXorAssignOp:   
+			{
+				break;
+			}
 			case V_SgLshiftAssignOp: 
+			{
+				break;
+			}
 			case V_SgRshiftAssignOp: 
+			{
+				break;
+			}
 			case V_SgExponentiationOp: 
 			case V_SgConcatenationOp: 
+			break;
 			case V_SgPointerAssignOp:  
+			{
+				break;
+			}
 			case V_SgUserDefinedBinaryOp: 
 			case V_SgBoolValExp:     
 			break;
@@ -3236,18 +3294,36 @@ TestExpressionTypes::visit ( SgNode* node )
 			case V_SgUnaryOp:             
 			case V_SgBinaryOp:                
 			case V_SgExprListExp:         
+			break;
 			case V_SgVarRefExp:           
+			{
+				break;
+			}
 			case V_SgClassNameRefExp:          
+			break;
 			case V_SgFunctionRefExp:      
+			{
+				break;
+			}
 			case V_SgMemberFunctionRefExp:    
+			{
+				break;
+			}
 			case V_SgValueExp:            
 			case V_SgFunctionCallExp:     
 			case V_SgSizeOfOp:                 
 			case V_SgUpcLocalsizeof:
 			case V_SgUpcBlocksizeof:
 			case V_SgUpcElemsizeof:
+			break;
 			case V_SgTypeIdOp:            
+			{
+				break;
+			}
 			case V_SgConditionalExp:          
+			{
+				break;
+			}
 			case V_SgNewExp:              
 			case V_SgDeleteExp:           
 			case V_SgThisExp:                  
