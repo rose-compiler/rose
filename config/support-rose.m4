@@ -1109,7 +1109,7 @@ AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 # TP SUPPORT FOR OPENGL
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
-# echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
+echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno)
 
 # Call supporting macro for python
@@ -2305,13 +2305,18 @@ projects/interpreter/Makefile
 projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
-projects/backstroke/reverseComputation/stateSaving/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
+projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
+projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
+projects/backstroke/tests/pluggableReverserTest/Makefile
+projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
