@@ -743,6 +743,10 @@ Terminal::evaluateType(std::string& varTypeString)
         {
           returnType = STL_MAP;
         }
+     else if (varTypeString == "ExtentMap")
+        {
+          returnType = STL_MAP;
+        }
      else if ( 15 < length && varTypeString.substr(0,14) == "std::multimap<" && varTypeString.rfind(">" ) == length-1 )
         {
           returnType = STL_MULTIMAP;
@@ -923,22 +927,20 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::iord_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::iname_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::osfixup_type" ) ||
-              // DQ (8/8/2008): This is a typedef to a std::multimap<addr_t,addr_t>, this should likely be supported elsewhere.
-                 ( varTypeString == "ExtentMap" ) ||
-              // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
-                 ( varTypeString == "SgAsmGenericSection::ExtentVector" ) ||
               // DQ (8/8/2008): Added typedef for primative types (used in binary format)
                  ( varTypeString == "SgAsmGenericFormat::fileDetails" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
                  ( varTypeString == "SgGraphNodeDirectedGraphEdgeMultimapPtrList" ) ||
-              // DQ (9/9/2008): Added support for string table transformations.
-                 ( varTypeString == "SgAsmGenericStrtab::referenced_t" ) ||
               // TV (05/03/2010): Added support for 'SgFunctionModifier::opencl_work_group_size_t' which's  a struct of 3 longs !
                  ( varTypeString == "SgFunctionModifier::opencl_work_group_size_t") ||
                  false
               )
        {
           returnType = BASIC_DATA_TYPE;
+       }
+     else if (varTypeString == "SgAsmGenericStrtab::referenced_t")
+       {
+         return SGCLASS_POINTER_LIST;
        }
      else
        {
@@ -1046,7 +1048,7 @@ std::string Terminal::buildStorageClassHeader ()
  *    AttachedPreprocessingInfoType, and pointers to STL containers containing pointers to IR nodes (and 
  *    pointers to other IR nodes, of course).
  *  * The pointer to an STL container that stores pointers to other IR nodes is still shared in my version.
- *    Thus, we copy the pointers, repalce the pointers by its global indices in the container, store the 
+ *    Thus, we copy the pointers, replace the pointers by its global indices in the container, store the 
  *    container and copy back the original ones.
  */
 string Terminal::buildStorageClassPickOutIRNodeDataSource ()
@@ -1378,18 +1380,17 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            break;
 
                          case SGCLASS_POINTER_VECTOR:
-                           sg_string = sg_string.substr(0,sg_string.size()-2) ;
                          case SGCLASS_POINTER_LIST:
-                           sg_string = sg_string.substr(0,sg_string.size()-7) ;
+                           sg_string += "::value_type";
                            s += "     " + varTypeString + "::iterator i_" + varNameString + " = source->p_" + varNameString + ".begin() ; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
-                           s += "     "+sg_string+" **  tempList" + varNameString + " = new "+sg_string+" * [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     "+sg_string+" *  tempList" + varNameString + " = new "+sg_string+"[ source->p_" + varNameString + ".size() ]; \n" ;
                            s += "     for ( ; i_" + varNameString + " != source->p_" + varNameString + ".end(); ++i_" + varNameString + " ) \n";
                            s += "        {\n";
                            s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = *i_" + varNameString + ";\n";
                            s += "          tempListCount" + varNameString + "++; \n";
                            s += "          (*i_" + varNameString + ") = "\
-                                "("+sg_string+"* )(AST_FILE_IO::getGlobalIndexFromSgClassPointer ( *i_"+varNameString+" ) );\n";
+                                "("+sg_string+")(AST_FILE_IO::getGlobalIndexFromSgClassPointer ( *i_"+varNameString+" ) );\n";
                            s += "        }\n";
                            s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
                            s += "     tempListCount" + varNameString + " = 0; \n" ;
@@ -1855,15 +1856,13 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       break;
 
                     case SGCLASS_POINTER_VECTOR:
-                      sg_string = sg_string.substr(0,sg_string.size()-2);
                     case SGCLASS_POINTER_LIST:
-                      sg_string = sg_string.substr(0,sg_string.size()-7);
+                      sg_string += "::value_type";
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
                       s += "     " + varTypeString + "::iterator i_" + varNameString + " = p_" + varNameString + ".begin() ; \n" ;
                       s += "     for ( ; i_" + varNameString + " != p_" + varNameString + ".end(); ++i_" + varNameString + " ) \n";
                       s += "        {\n";
-                      s += "          (*i_" + varNameString + ") = (" + sg_string + 
-                            "* )(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long)(*i_" + varNameString + ") ) );\n";
+                      s += "          (*i_" + varNameString + ") = (" + sg_string + ")(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long)(*i_" + varNameString + ") ) );\n";
                       s += "        }\n";
                       break;
 
@@ -2275,9 +2274,15 @@ std::string Terminal::buildStaticDataMemberListSetStaticData()
                   {
                     s += "     if ( " + classNameString + "_" + varNameString + " != NULL ) \n" ;
                     s += "        {\n" ;
-                    s += "           " + classNameString + "::p_" + varNameString + " = " + classNameString + "_" + varNameString + ";\n" ;
+                 // DQ (6/21/2010): Only reset the pointer to the static member (e.g. p_builtin_type) if it is NULL.
+                 //                 This is important when reading multiple files from the binary AST file format.
+                 // s += "           " + classNameString + "::p_" + varNameString + " = " + classNameString + "_" + varNameString + ";\n" ;
+                 // s += " ;\n";
+                    s += "          if (" + classNameString + "::p_" + varNameString + " == NULL)\n" ;
+                    s += "             {\n" ;
+                    s += "               " + classNameString + "::p_" + varNameString + " = " + classNameString + "_" + varNameString + ";\n" ;
+                    s += "             }\n" ;
                     s += "        }\n" ;
-                     
                   }
                else 
                   {
@@ -2453,16 +2458,16 @@ string Terminal::buildSourceForStoringStaticMembers ()
                       s += "     " + varStorageNameString + ".storeDataInEasyStorageClass( source->" + classNameString + "_" + varNameString + " );\n" ;
                       break;
                     case SGCLASS_POINTER_LIST:
-                           sg_string = sg_string.substr(0,sg_string.size()-7) ;
+                           sg_string += "::value_type";
                            s += "     " + varTypeString + "::iterator i_" + classNameString + " = source->" + classNameString + "_" + varNameString +".begin() ; \n" ;
                            s += "     unsigned int tempListCount" + classNameString + " = 0; \n" ;
-                           s += "     "+sg_string+" **  tempList" + classNameString + " = new "+sg_string+" * [ source->" + classNameString + "_" + varNameString +".size() ]; \n" ;
+                           s += "     "+sg_string+" *  tempList" + classNameString + " = new "+sg_string+"[ source->" + classNameString + "_" + varNameString +".size() ]; \n" ;
                            s += "     for ( ; i_" + classNameString + " != source->" + classNameString + "_" + varNameString +".end(); ++i_" + classNameString + " ) \n";
                            s += "        {\n";
                            s += "          tempList" + classNameString + "[tempListCount" + classNameString + "] = *i_" + classNameString + ";\n";
                            s += "          tempListCount" + classNameString + "++; \n";
                            s += "          (*i_" + classNameString + ") = "\
-                                "("+sg_string+"* )(AST_FILE_IO::getGlobalIndexFromSgClassPointer ( *i_"+classNameString+" ) );\n";
+                                "("+sg_string+")(AST_FILE_IO::getGlobalIndexFromSgClassPointer ( *i_"+classNameString+" ) );\n";
                            s += "        }\n";
                            s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->" + classNameString + "_" + varNameString +");\n" ;
                            s += "     tempListCount" + classNameString + " = 0; \n" ;
@@ -2528,13 +2533,13 @@ string Terminal::buildStaticDataConstructorSource ()
                       s += "     " + classNameString + "_" + varNameString + " = " + varStorageNameString + ".rebuildDataStoredInEasyStorageClass();\n" ;
                       break;
                     case SGCLASS_POINTER_LIST:
-                      sg_string = sg_string.substr(0,sg_string.size()-7) ;
+                      sg_string += "::value_type";
                       s += "     " + classNameString + "_" + varNameString + " = " + varStorageNameString + ".rebuildDataStoredInEasyStorageClass();\n" ;
                       s += "     " + varTypeString + "::iterator i_" + classNameString + " = " + classNameString + "_" + varNameString + ".begin() ; \n" ;
                       s += "     for ( ; i_" + classNameString + " != " + classNameString + "_" + varNameString + ".end(); ++i_" + classNameString + " ) \n";
                       s += "        {\n";
                       s += "          (*i_" + classNameString + ") = "\
-                           "(" + sg_string + "* )(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long) (*i_" + classNameString + " )  ) );\n";
+                           "(" + sg_string + ")(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long) (*i_" + classNameString + " )  ) );\n";
                       s += "        }\n";
                       break;
                  // DQ (4/30/2009): Added case of STL_MULTIMAP

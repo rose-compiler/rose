@@ -13,26 +13,20 @@ AC_DEFUN([ROSE_SUPPORT_YICES],[
     AC_CACHE_CHECK([whether to use yices], [ac_cv_use_yices], [ac_cv_use_yices=no])
 
 
-    dnl Find the yices executable and/or library. These variables are AC_DEFINE'd
-    dnl   YICES_PREFIX         -- prefix specified (or found) from --with-yices switch
-    dnl   YICES                -- the full path name of the "yices" executable
-    dnl   HAVE_LIBYICES        -- defined as "1" if libyices.a exists
-    dnl
-    YICES_PREFIX=
-    YICES=
+    dnl Find the yices executable and/or library.
     HAVE_LIBYICES=
     if test $ac_cv_use_yices = yes; then
         YICES_PREFIX=
         AC_PATH_PROG(YICES, yices)
-        AC_CHECK_LIB(yices, yicesl_version)
+        AC_CHECK_LIB(yices, yicesl_version,
+                     [AC_DEFINE(HAVE_LIBYICES, [], [Defined when the Yices SMT-Solver library is present and should be used.])
+                      HAVE_LIBYICES=yes])
     elif test -n "$ac_cv_use_yices" -a "$ac_cv_use_yices" != no; then
         YICES_PREFIX="$ac_cv_use_yices"
         AC_PATH_PROG(YICES, yices, [], [$YICES_PREFIX/bin])
-        AC_MSG_CHECKING([for libyices.a])
         AC_CHECK_FILE(["$YICES_PREFIX/lib/libyices.a"],
-                      [AC_MSG_RESULT([$YICES_PREFIX/lib/libyices.a])
-                       AC_DEFINE(HAVE_LIBYICES)],
-                      [AC_MSG_RESULT(no)])
+                      [AC_DEFINE(HAVE_LIBYICES, [], [Defined when the Yices SMT-Solver library is present and should be used.])
+                       HAVE_LIBYICES=yes])
     fi
 
     dnl Sanity check... If the user told us to use yices, then we must find either an executable or the library.
@@ -41,6 +35,9 @@ AC_DEFUN([ROSE_SUPPORT_YICES],[
     fi
 
     dnl Results
+    dnl   YICES         -- defined as the name of the "yices" executable if available
+    dnl   YICES_PREFIX  -- the name of the directory where Yices software is installed if no on search paths
+    dnl   HAVE_LIBYICES -- defined if the Yices library and include files are available
     if test -n "$YICES"; then
         AC_DEFINE_UNQUOTED(YICES, ["$YICES"], [Absolute name of yices executable, or the empty string.])
     fi
