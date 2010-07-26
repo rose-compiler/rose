@@ -1,5 +1,21 @@
 /* Emulates an executable. */
 #include "rose.h"
+
+/* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
+ * all the header file prerequisites. */
+#if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) && \
+    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H)
+#  define ROSE_ENABLE_SIMULATOR
+#else
+#  undef ROSE_ENABLE_SIMULATOR
+#endif
+
+#ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
+
+
+
+
+
 #include "VirtualMachineSemantics.h"
 
 /* These are necessary for the system call emulation */
@@ -121,7 +137,7 @@ public:
 
     /* Writes memory to the memory map rather than the super class. */
     template <size_t Len> void
-    writeMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr, 
+    writeMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr,
                 const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
         ROSE_ASSERT(0==Len % 8 && Len<=64);
         ROSE_ASSERT(addr.is_known());
@@ -292,7 +308,7 @@ EmulationPolicy::current_insn()
             return insn;
         icache.erase(found);
     }
-    
+
     /* Disassemble (and cache) a new instruction */
     SgAsmx86Instruction *insn = NULL;
     try {
@@ -446,7 +462,7 @@ EmulationPolicy::emulate_syscall()
 #if 1
             fprintf(stderr,
                     "  mmap(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
-                    ", fd=%d, offset=0x%08"PRIx32")\n", 
+                    ", fd=%d, offset=0x%08"PRIx32")\n",
                     start, size, prot, flags, fd, offset);
 #endif
 
@@ -552,6 +568,13 @@ main(int argc, char *argv[])
         }
     }
     return 0;
-            
-    
 }
+
+#else
+int main(int, char *argv[])
+{
+    std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
+    return 1;
+}
+
+#endif /* ROSE_ENABLE_SIMULATOR */
