@@ -1,16 +1,18 @@
 
 struct model
 {
-    int i;
-    static int k;
+    //int i;
+    //static int k;
 };
 
+#if 0
 namespace my
 {
     int x;
 }
 
 int g;
+#endif
 
 void event0(model* m)
 {

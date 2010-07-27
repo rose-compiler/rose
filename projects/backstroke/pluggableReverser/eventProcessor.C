@@ -138,7 +138,6 @@ FuncDeclPairs EventProcessor::processEvent()
 
     foreach (StatementObject& stmt_obj, bodies)
     {
-        cout << "!!!!!!!\n";
         fixVariableReferences(stmt_obj.fwd_stmt);
         fixVariableReferences(stmt_obj.rvs_stmt);
 
@@ -150,8 +149,7 @@ FuncDeclPairs EventProcessor::processEvent()
                     fwd_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-        fwd_func_def->set_body(isSgBasicBlock(stmt_obj.fwd_stmt));
-        stmt_obj.fwd_stmt->set_parent(fwd_func_def);
+        SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt_obj.fwd_stmt));
 
         SgName rvs_func_name = event_->get_name() + "_reverse" + ctr_str;
         SgFunctionDeclaration* rvs_func_decl =
@@ -159,12 +157,9 @@ FuncDeclPairs EventProcessor::processEvent()
                     rvs_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-        rvs_func_def->set_body(isSgBasicBlock(stmt_obj.rvs_stmt));
-        stmt_obj.rvs_stmt->set_parent(rvs_func_def);
+        SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt_obj.rvs_stmt));
 
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
-
-        cout << "????????\n";
     }
 
     return outputs;

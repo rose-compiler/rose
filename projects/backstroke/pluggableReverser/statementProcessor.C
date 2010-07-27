@@ -133,7 +133,7 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
     {
         if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
         {
-            foreach (StatementObject obj, queue[i])
+            foreach (StatementObject& obj, queue[i])
             {
                 cout << "Begin:@@@";
                 const SgInitializedNamePtrList& names = var_decl->get_variables();
@@ -311,8 +311,8 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
                 }
                 new_obj.var_table = res.var_table;
 
-                fixVariableReferences(new_obj.fwd_stmt);
-                fixVariableReferences(new_obj.rvs_stmt);
+                //fixVariableReferences(new_obj.fwd_stmt);
+                //fixVariableReferences(new_obj.rvs_stmt);
 
                 queue[1-i].push_back(new_obj);
             }
@@ -335,140 +335,15 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
     // Since we build a varref before building its declaration, we may use the following function to fix them.
     foreach (StatementObject& obj, queue[i])
     {
-        cout << "Fixed: " << fixVariableReferences(obj.fwd_stmt) << endl;
+        //cout << "Fixed: " << fixVariableReferences(obj.fwd_stmt) << endl;
         //fixVariableReferences(obj.rvs_stmt);
     }
 
     foreach (SgStatement* stmt, to_delete)
-        //deepDelete(stmt);
-        delete stmt;
+        deepDelete(stmt);
+        //delete stmt;
 
     return queue[i];
-
-#if 0
-    StatementObjectVec outputs;
-
-    vector<StmtPairs > all_stmts;
-
-    // Store all results of transformation of local variable declarations.
-    vector<StmtPairs > var_decl_output;
-
-    foreach(SgStatement* s, body->get_statements())
-    {
-        all_stmts.push_back(processStatement(s));
-
-        // Here we consider to store and restore local variables.
-        if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(s))
-        {
-            const SgInitializedNamePtrList& names = var_decl->get_variables();
-            ROSE_ASSERT(names.size() == 1);
-            SgInitializedName* init_name = names[0];
-
-            SgVarRefExp* var_stored = buildVarRefExp(init_name);
-            // Store the value of local variables at the end of the basic block.
-            SgStatement* store_var = buildExprStatement(
-                    pushVal(var_stored, var_stored->get_type()));
-
-            // Retrieve the value which is used to initialize that local variable.
-            SgStatement* decl_var = buildVariableDeclaration(
-                    init_name->get_name(),
-                    init_name->get_type(),
-                    buildAssignInitializer(popVal(var_stored->get_type())));
-
-            // Stores all transformations of a local variable declaration. 
-            StmtPairs results;
-
-            // The first transformation is store and restore it.
-            results.push_back(StmtPair(store_var, decl_var));
-
-            // The second transformation is not to store it.
-            SgStatement* just_decl = buildVariableDeclaration(
-                            init_name->get_name(),
-                            init_name->get_type());
-            results.push_back(StmtPair(NULL, just_decl));
-
-            var_decl_output.push_back(results);
-        }
-    }
-    // Since all store of local variable should be put at the end of the block, those 
-    // transformations should also be appended at the end.
-    all_stmts.insert(all_stmts.end(), var_decl_output.begin(), var_decl_output.end());
-
-    // The following Index structure is used to traverse a vector of vectors.
-    struct Index
-    {
-        vector<int> index;
-        vector<int> index_max;
-
-        bool forward()
-        {
-            for (int i = index.size()-1; i >= 0; --i)
-            {
-                if (index[i] < index_max[i])
-                {
-                    ++index[i];
-                    return false;
-                }
-                else
-                    index[i] = 0;
-            }
-            return true;
-        }
-    };
-
-    Index idx;
-    // Initialize the index.
-    size_t size = all_stmts.size();
-    idx.index = vector<int>(size, 0);
-    idx.index_max.resize(size);
-    for (size_t i = 0; i < size; ++i)
-        idx.index_max[i] = all_stmts[i].size() - 1;
-
-    // List all combinations of transformed statements.
-    do
-    {
-        SgBasicBlock* fwd_body = buildBasicBlock();
-        SgBasicBlock* rvs_body = buildBasicBlock();
-
-        for (size_t i = 0; i < idx.index.size(); ++i)
-        {
-            // In case that the size is 0.
-            if (all_stmts[i].empty())
-                continue;
-
-            SgStatement *fwd_stmt, *rvs_stmt;
-
-            ROSE_ASSERT(i < all_stmts.size());
-            ROSE_ASSERT(static_cast<size_t>(idx.index[i]) < all_stmts[i].size());
-
-            tie(fwd_stmt, rvs_stmt) = all_stmts[i][idx.index[i]];
-
-            if (fwd_stmt)
-            {
-                ROSE_ASSERT(isSgStatement(fwd_stmt));
-                fwd_body->append_statement(fwd_stmt);
-            }
-            if (rvs_stmt)
-            {
-                ROSE_ASSERT(isSgStatement(rvs_stmt));
-                rvs_body->prepend_statement(rvs_stmt);
-            }
-        }
-
-        // Check if the combination is valid based on SSA.
-        // FIXME
-        //if (checkValidity(rvs_body))
-            outputs.push_back(StmtPair(fwd_body, rvs_body));
-    } 
-    while (!idx.forward());
-
-    // If this basic block is an empty one, just return two empty basic blocks.
-    if (outputs.empty())
-        outputs.push_back(StmtPair(buildBasicBlock(), buildBasicBlock()));
-
-
-    return outputs;
-#endif
 }
 
 #if 0
