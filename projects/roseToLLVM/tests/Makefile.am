@@ -46,8 +46,10 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 
 # example2.c - rose2llvm cannot compile
 # switch5.c, switch6.c - output files differ
+# test.c - need to remove test script for this to run
 
 C_TESTCODES_CURRENTLY_FAILING = \
+								test.c \
  								example2.c \
 								switch5.c \
 								switch6.c
