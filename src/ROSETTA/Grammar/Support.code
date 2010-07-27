@@ -464,6 +464,7 @@ HEADER_CV_TYPE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -614,6 +615,7 @@ HEADER_STORAGE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -672,6 +674,7 @@ HEADER_ACCESS_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -888,6 +891,7 @@ HEADER_FUNCTION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -943,6 +947,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechanism to clear all bits
           void reset();
@@ -1011,6 +1016,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1112,6 +1118,7 @@ HEADER_DECLARATION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1398,6 +1405,7 @@ HEADER_TYPE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgTypeModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1459,6 +1467,7 @@ HEADER_ELABORATED_TYPE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1513,6 +1522,7 @@ HEADER_LINKAGE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1561,6 +1571,7 @@ HEADER_BASECLASS_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1924,12 +1935,6 @@ bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
 void $CLASSNAME::setVolatile()      { p_modifier = e_volatile; }
 void $CLASSNAME::unsetVolatile()    { setDefault(); }
 
-std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -1955,6 +1960,23 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
 #endif
    }
+
+std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
+	       (lhs.isDefault()  == rhs.isDefault() ) &&
+	       (lhs.isConst()    == rhs.isConst()   ) &&
+	       (lhs.isVolatile() == rhs.isVolatile()) &&
+		   true;
+}
+
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2063,12 +2085,6 @@ void SgStorageModifier::setOpenclConstant()      { p_modifier = e_opencl_constan
 bool SgStorageModifier::isOpenclPrivate() const { return p_modifier == e_opencl_private; }
 void SgStorageModifier::setOpenclPrivate()      { p_modifier = e_opencl_private; }
 
-std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2100,6 +2116,36 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()        == rhs.isUnknown() ) &&
+	       (lhs.isDefault()        == rhs.isDefault() ) &&
+	       (lhs.isExtern()         == rhs.isExtern()  ) &&
+	       (lhs.isStatic()         == rhs.isStatic()  ) &&
+	       (lhs.isAuto()           == rhs.isAuto()  ) &&
+	       (lhs.isUnspecified()    == rhs.isUnspecified()  ) &&
+	       (lhs.isRegister()       == rhs.isRegister()  ) &&
+	       (lhs.isMutable()        == rhs.isMutable()  ) &&
+	       (lhs.isTypedef()        == rhs.isTypedef()  ) &&
+	       (lhs.isAsm()            == rhs.isAsm()  ) &&
+	       (lhs.isCudaGlobal()     == rhs.isCudaGlobal()  ) &&
+	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
+	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
+	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared()  ) &&
+	       (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()  ) &&
+	       (lhs.isOpenclLocal()    == rhs.isOpenclLocal()  ) &&
+	       (lhs.isOpenclConstant() == rhs.isOpenclConstant()  ) &&
+	       (lhs.isOpenclPrivate()  == rhs.isOpenclPrivate()  ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2148,12 +2194,6 @@ void SgAccessModifier::setPublic()      { p_modifier = e_public; }
 bool SgAccessModifier::isUndefined() const { return p_modifier == e_undefined; }
 void SgAccessModifier::setUndefined()      { p_modifier = e_undefined; }
 
-std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 SgAccessModifier::displayString() const
    {
@@ -2174,6 +2214,23 @@ SgAccessModifier::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   } 
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
+	       (lhs.isDefault()  == rhs.isDefault() ) &&
+	       (lhs.isPrivate()  == rhs.isPrivate() ) &&
+	       (lhs.isProtected()== rhs.isProtected()) &&
+	       (lhs.isPublic()   == rhs.isPublic()  ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void SgAccessModifier::reset()
@@ -2355,22 +2412,6 @@ void SgFunctionModifier::setOpenclWorkGroupSizeReq()       { setBit(e_opencl_wor
 void SgFunctionModifier::unsetOpenclWorkGroupSizeReq()     { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
 
 
-std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
-   {
-      os << m.get_modifierVector(); 
-     return os;
-   }
-
-std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv ) 
-   {
-  // DQ (1/26/2006): Modified to handle 64 bit machines
-  // for (unsigned int i=0; i < bv.size(); i++)
-  // for (vector<bool>::size_type i=0; i < bv.size(); i++)
-     for (unsigned int i=0; i < bv.size(); i++)
-          os << ((bv[i] == true) ? "T" : "F");
-     return os;
-   }
-
 string
 SgFunctionModifier::displayString() const
    {
@@ -2393,6 +2434,64 @@ SgFunctionModifier::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
+   {
+      os << m.get_modifierVector(); 
+     return os;
+   }
+
+std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv ) 
+   {
+  // DQ (1/26/2006): Modified to handle 64 bit machines
+  // for (unsigned int i=0; i < bv.size(); i++)
+  // for (vector<bool>::size_type i=0; i < bv.size(); i++)
+     for (unsigned int i=0; i < bv.size(); i++)
+          os << ((bv[i] == true) ? "T" : "F");
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown() == rhs.isUnknown() ) &&
+	       (lhs.isDefault() == rhs.isDefault() ) &&
+	       (lhs.isInline()  == rhs.isInline()  ) &&
+	       // C++ specific
+	       (lhs.isVirtual()     == rhs.isVirtual()    ) &&
+	       (lhs.isPureVirtual() == rhs.isPureVirtual()) &&
+	       // Fortran specific
+	       (lhs.isExplicit()  == rhs.isExplicit() ) &&
+	       (lhs.isPure()      == rhs.isPure()     ) &&
+	       (lhs.isElemental() == rhs.isElemental()) &&
+	       (lhs.isRecursive() == rhs.isRecursive()) &&
+	       // GNU specific
+	       (lhs.isGnuAttributeConstructor() == rhs.isGnuAttributeConstructor()) &&
+	       (lhs.isGnuAttributeDestructor()  == rhs.isGnuAttributeDestructor() ) &&
+	       (lhs.isGnuAttributePure()        == rhs.isGnuAttributePure()       ) &&
+	       (lhs.isGnuAttributeWeak()        == rhs.isGnuAttributeWeak()       ) &&
+	       (lhs.isGnuAttributeUnused()      == rhs.isGnuAttributeUnused()     ) &&
+	       (lhs.isGnuAttributeUsed()        == rhs.isGnuAttributeUsed()       ) &&
+	       (lhs.isGnuAttributeDeprecated()  == rhs.isGnuAttributeDeprecated() ) &&
+	       (lhs.isGnuAttributeMalloc()      == rhs.isGnuAttributeMalloc()     ) &&
+	       (lhs.isGnuAttributeNaked()       == rhs.isGnuAttributeNaked()      ) &&
+	       (lhs.isGnuAttributeNoInstrumentFunction() == rhs.isGnuAttributeNoInstrumentFunction()) &&
+	       (lhs.isGnuAttributeNoCheckMemoryUsage() == rhs.isGnuAttributeNoCheckMemoryUsage()) &&
+	       (lhs.isGnuAttributeNoInline()           == rhs.isGnuAttributeNoInline()          ) &&
+	       (lhs.isGnuAttributeAlwaysInline()       == rhs.isGnuAttributeAlwaysInline()      ) &&
+	       (lhs.isGnuAttributeNoThrow()            == rhs.isGnuAttributeNoThrow()           ) &&
+	       (lhs.isGnuAttributeWeakReference()      == rhs.isGnuAttributeWeakReference()     ) &&
+	       // Cuda specific
+	       (lhs.isCudaDevice() == rhs.isCudaDevice()) &&
+	       (lhs.isCudaKernel() == rhs.isCudaKernel()) &&
+	       (lhs.isCudaHost()   == rhs.isCudaHost()  ) &&
+	       // OpenCL specific
+	       (lhs.isOpenclKernel()             == rhs.isOpenclKernel()            ) &&
+	       (lhs.hasOpenclVecTypeHint()       == rhs.hasOpenclVecTypeHint()      ) &&
+	       (lhs.hasOpenclWorkGroupSizeHint() == rhs.hasOpenclWorkGroupSizeHint()) &&
+	       (lhs.hasOpenclWorkGroupSizeReq()  == rhs.hasOpenclWorkGroupSizeReq() ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void SgFunctionModifier::reset()
@@ -2448,12 +2547,6 @@ void $CLASSNAME::setUPC_Strict()      { p_modifier = e_upc_strict; }
 bool $CLASSNAME::isUPC_Relaxed() const { return p_modifier == e_upc_relaxed; }
 void $CLASSNAME::setUPC_Relaxed()      { p_modifier = e_upc_relaxed; }
 
-std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2478,6 +2571,22 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()     == rhs.isUnknown()    ) &&
+	       (lhs.isDefault()     == rhs.isDefault()    ) &&
+	       (lhs.isUPC_Strict()  == rhs.isUPC_Strict() ) &&
+	       (lhs.isUPC_Relaxed() == rhs.isUPC_Relaxed()) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2538,12 +2647,6 @@ bool $CLASSNAME::isOperator() const    { return checkBit(e_operator,p_modifierVe
 void $CLASSNAME::setOperator()         { setBit(e_operator,p_modifierVector); }
 void $CLASSNAME::unsetOperator()       { unsetBit(e_operator,p_modifierVector); }
 
-std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m) 
-   {
-      os << m.get_modifierVector(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2565,6 +2668,25 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m) 
+   {
+      os << m.get_modifierVector(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()     == rhs.isUnknown()    ) &&
+	       (lhs.isDefault()     == rhs.isDefault()    ) &&
+	       (lhs.isNotSpecial()  == rhs.isNotSpecial() ) &&
+	       (lhs.isConstructor() == rhs.isConstructor()) &&
+	       (lhs.isDestructor()  == rhs.isDestructor() ) &&
+	       (lhs.isConversion()  == rhs.isConversion() ) &&
+	       (lhs.isOperator()    == rhs.isOperator()   ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2642,12 +2764,6 @@ bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifier
 void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
 
-std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m) 
-   {
-      os << m.get_modifierVector(); 
-     return os;
-   }
-
 string
 SgDeclarationModifier::displayString() const
    {
@@ -2673,6 +2789,29 @@ SgDeclarationModifier::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m) 
+   {
+      os << m.get_modifierVector(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+		   (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
+		   (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
+		   (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
+	       (lhs.isUnknown() == rhs.isUnknown()) &&
+	       (lhs.isDefault() == rhs.isDefault()) &&
+	       (lhs.isFriend()  == rhs.isFriend() ) &&
+	       (lhs.isTypedef() == rhs.isTypedef()) &&
+	       (lhs.isExport()  == rhs.isExport() ) &&
+	       (lhs.isThrow()   == rhs.isThrow()  ) &&
+	       (lhs.isBind()    == rhs.isBind()   ) &&
+	       (lhs.isFinal()   == rhs.isFinal()  ) &&
+		   true;
+}
 
 SgTypeModifier &
 SgDeclarationModifier::get_typeModifier ()
@@ -2922,12 +3061,6 @@ bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_att
 void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 
-std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
-   {
-      os << tm.get_modifierVector(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2948,6 +3081,51 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
+   {
+      os << tm.get_modifierVector(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+		   (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
+		   (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
+		   (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
+	       (lhs.isUnknown() == rhs.isUnknown()) &&
+	       (lhs.isDefault() == rhs.isDefault()) &&
+           // C specific
+	       (lhs.isRestrict() == rhs.isRestrict()) &&
+           // Fortran specific
+	       (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
+	       (lhs.isBind()         == rhs.isBind()        ) &&
+	       (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
+	       (lhs.isData()         == rhs.isData()        ) &&
+	       (lhs.isDimension()    == rhs.isDimension()   ) &&
+	       (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
+	       (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
+	       (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
+	       (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
+	       (lhs.isOptional()     == rhs.isOptional()    ) &&
+	       (lhs.isSave()         == rhs.isSave()        ) &&
+	       (lhs.isTarget()       == rhs.isTarget()      ) &&
+	       (lhs.isValue()        == rhs.isValue()       ) &&
+           // GNU specific
+	       (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
+	       (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
+	       (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
+	       (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
+	       (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
+	       (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
+	       (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
+	       (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
+	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
+	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
+	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+		   true;
+}
 
 SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier ()
@@ -3053,12 +3231,6 @@ void $CLASSNAME::setEnum()      { p_modifier = e_enum; }
 bool $CLASSNAME::isTypename() const { return p_modifier == e_typename; }
 void $CLASSNAME::setTypename()      { p_modifier = e_typename; }
 
-std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -3080,6 +3252,25 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
+	       (lhs.isDefault()  == rhs.isDefault() ) &&
+	       (lhs.isClass()    == rhs.isClass()   ) &&
+	       (lhs.isStruct()   == rhs.isStruct()  ) &&
+	       (lhs.isUnion()    == rhs.isUnion()   ) &&
+	       (lhs.isEnum()     == rhs.isEnum()    ) &&
+	       (lhs.isTypename() == rhs.isTypename()) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -3125,12 +3316,6 @@ void $CLASSNAME::setCppLinkage()      { p_modifier = e_Cpp_linkage; }
 bool $CLASSNAME::isFortranLinkage() const { return p_modifier == e_fortran_linkage; }
 void $CLASSNAME::setFortranLinkage()      { p_modifier = e_fortran_linkage; }
 
-std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -3150,6 +3335,23 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()        == rhs.isUnknown()       ) &&
+	       (lhs.isDefault()        == rhs.isDefault()       ) &&
+	       (lhs.isC_Linkage()      == rhs.isC_Linkage()     ) &&
+	       (lhs.isCppLinkage()     == rhs.isCppLinkage()    ) &&
+	       (lhs.isFortranLinkage() == rhs.isFortranLinkage()) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -3191,12 +3393,6 @@ void $CLASSNAME::setDefault()      { p_modifier = e_default; }
 bool $CLASSNAME::isVirtual() const { return p_modifier == e_virtual; }
 void $CLASSNAME::setVirtual()      { p_modifier = e_virtual; }
 
-std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -3215,6 +3411,22 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.get_accessModifier() == rhs.get_accessModifier()) &&
+	       (lhs.isUnknown() == rhs.isUnknown()) &&
+	       (lhs.isDefault() == rhs.isDefault()) &&
+	       (lhs.isVirtual() == rhs.isVirtual()) &&
+		   true;
+}
 
 SgAccessModifier &
 $CLASSNAME::get_accessModifier ()

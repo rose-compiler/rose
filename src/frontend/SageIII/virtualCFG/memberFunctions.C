@@ -4257,7 +4257,7 @@ bool SgFunctionCallExp::isChildUsedAsLValue(const SgExpression* child) const
 {
 	if (get_function() == child)
 	{
-		// King84: I'm unsure if the function itself is an lvalue or an r-value.  I'm just playing it safe here.
+		// King84: I'm unsure if the function itself is an lvalue or an rvalue.  I'm just playing it safe here.
 		return false;
 	}
 	else
