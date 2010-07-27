@@ -8,6 +8,7 @@
 #include "pluggableReverser/eventProcessor.h"
 #include "pluggableReverser/expressionProcessor.h"
 #include "pluggableReverser/statementProcessor.h"
+#include "pluggableReverser/straightlineStatementProcessor.h"
 
 
 int main(int argc, char** argv)
@@ -35,11 +36,10 @@ int main(int argc, char** argv)
     var_renaming.run();
 	EventProcessor event_processor(NULL, &var_renaming);
 	
-	event_processor.addExpressionProcessor(new NullExpressionProcessor);
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
-	event_processor.addStatementProcessor(new BasicStatementProcessor);
+	event_processor.addStatementProcessor(new StraightlineStatementProcessor);
 
 	//Call the reverser and get the results
 	SageBuilder::pushScopeStack(globalScope);
