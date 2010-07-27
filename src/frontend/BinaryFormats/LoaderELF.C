@@ -22,6 +22,34 @@ LoaderELF::order_sections(const SgAsmGenericSectionPtrList &sections)
     return retval;
 }
 
+/* Same as superclass, but if we are mapping/unmapping an ELF Section (that is not an ELF Segment) then don't bother to align
+ * it. This is used for ELF code mapping because code is mapped by ELF Segments and then the ELF Sections fine tune it. */
+rose_addr_t
+LoaderELF::align_values(SgAsmGenericSection *_section, Contribution contrib,
+                           rose_addr_t *va_p/*out*/, rose_addr_t *mem_size_p/*out*/,
+                           rose_addr_t *offset_p/*out*/, rose_addr_t *file_size_p/*out*/,
+                           const MemoryMap *current)
+{
+    SgAsmElfSection *section = isSgAsmElfSection(_section);
+
+    rose_addr_t retval = 0;
+    rose_addr_t old_va_align = section->get_mapped_alignment();
+
+    try {
+        if (NULL==section->get_segment_entry()) {
+            if (get_debug())
+                fprintf(get_debug(), "    Temporarily relaxing memory alignment constraints.\n");
+            section->set_mapped_alignment(1);
+        }
+        retval = Loader::align_values(section, contrib, va_p, mem_size_p, offset_p, file_size_p, current);
+    } catch (...) {
+        section->set_mapped_alignment(old_va_align);
+        throw;
+    }
+    section->set_mapped_alignment(old_va_align);
+    return retval;
+}
+
 /* Load all sections containing code.  Any section marked as executable or explicitly containing code is added to the map. Any
  * ELF Section (but not ELF Segment) that is not added will be subtracted.  Therefore, since ELF Segments are processed before
  * ELF Sections, we first load the ELF Segments and then any ELF Section that doesn't contain code is subtracted out of the
