@@ -5213,6 +5213,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
   }
+  else if (isSgValueExp(parent))
+  {
+      // For compiler generated code, this could happen.
+      // We can just ignore this function call since it will not appear in the final AST.
+      return;
+  }
   else if (isSgExpression(parent)) {
     int worked = isSgExpression(parent)->replace_expression(oldExp, newExp);  
     // ROSE_DEPRECATED_FUNCTION
@@ -8347,7 +8353,8 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
       case V_SgCatchOptionStmt: {
         if (isSgCatchOptionStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgCatchOptionStmt(p)->get_condition() == s) {
+        } else ROSE_ASSERT (false);
 	break;
       }
       case V_SgIfStmt: {
@@ -10524,21 +10531,57 @@ SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*
 
 
 void
-SageInterface::deleteAST ( SgNode* node )
+SageInterface::deleteAST ( SgNode* n )
    {
-     class DeleteAST : public SgSimpleProcessing
-        {
-          public:
-               void visit (SgNode* node)
-                  {
-                    delete node;
-                  }
-        };
+//Tan, July/15/2010:       //Re-implement DeleteAST function
+             class DeleteAST : public SgSimpleProcessing
+                {
+                 public:
+                        void visit (SgNode* node)
+                        {
+                        //These nodes are manually deleted because they cannot be visited by the traversal
+                                //remove SgSymbolTable
+                                if(isSgScopeStatement(node) !=NULL){
+                                        SgSymbolTable* symbol_table = ((SgScopeStatement *)node)->get_symbol_table();
+                                        if(isSgSymbolTable(symbol_table) !=NULL){
+                                                delete symbol_table;
+                                                //printf("A SgSymbolTable was deleted\n");
+                                        }
+                                }
+                                //remove SgFunctionSymbol
+                                if(isSgFunctionDeclaration(node) !=NULL){
+                                        SgScopeStatement *scope=((SgFunctionDeclaration*)node)->get_scope();
+                                        assert(scope != NULL);
+                                        SgSymbol* symbol = scope->first_function_symbol();
+                                        delete symbol;
+                                        //printf("A SgFunctionSymbol was deleted\n");
+                                }
 
-     DeleteAST deleteTree;
+                                if(isSgInitializedName(node) !=NULL){
+                                        //remove SgVariableDefinition
+                                        SgDeclarationStatement* var_def;
+                                        var_def =  ((SgInitializedName *)node)->get_definition();
+                                        if(isSgVariableDefinition(var_def) !=NULL){
+                                                delete var_def;
+                                                //printf("A SgVariableDefinition was deleted\n");
+                                        }
+                                        //remove SgVariableSymbol
+                                        SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
+                                        if(isSgVariableSymbol(symbol) !=NULL){
+                                                delete symbol;
+                                                //printf("A SgVariableSymbol was deleted\n");
+                                        }
 
-  // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
-     deleteTree.traverse(node,postorder);
+                                }
+                        //Normal nodes will be removed in a post-order way
+                                delete node;
+                        }
+              };
+
+     	  DeleteAST deleteTree;
+
+          // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
+          deleteTree.traverse(n,postorder);
    }
 
 

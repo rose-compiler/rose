@@ -1,0 +1,22 @@
+#!/bin/bash
+# Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
+# and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output. See also scripts/rosegit/bin/rosegit-make.
+#
+# Note:
+#     The '$(CXX)...' commands must be replaced also because automake generates them for *.o targets that depend on a *.C that
+#     includes a directory component. For example, the automake rule:
+#          rdis_SOURCES=RDis/main.C
+#     generates a Makefile rule like:
+#          main.o: RDis/main.C
+#                  $(CXX) $(DEFS) ....... `test -f 'RDis/main.C' || echo '$(srcdir)/'`RDis/main.C
+#     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
+#
+
+find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
+    -e '/echo.*COMPILE/!s/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
+    -e '/echo.*LINK/!s/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
+    -e '/echo.*COMPILE/!s/^\t\$(CXX)/\t@echo "  COMPILE $@"; $(CXX)/' \
+    -e '/LIBTOOL.*quiet/!s/@LIBTOOL@/& --quiet/g' \
+    -e '/^\t\$(LIBTOOL) --tag=CXX /s/^\t/\t@echo "  COMPILE $@"; /' \
+    -e '/^\t$(librose_la_LINK) -rpath /s/^\t/\t@echo "  LINK    $@"; /'
+

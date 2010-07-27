@@ -70,7 +70,7 @@ fi
 # Run smgit if possible
 if (cd $rose && git rev-parse $branch:scripts/smgit) >/dev/null 2>&1; then
     echo "smgit_launcher: running smgit from $branch..."
-    exec perl <(cd $rose && git show $branch:scripts/smgit) "$@"
+    exec perl <(cd $rose && git show $branch:scripts/smgit) --name="$0" "$@"
     exit 1
 else
     echo "smgit_launcher: cannot find the real smgit perl script" >&2
