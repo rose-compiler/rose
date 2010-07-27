@@ -35,15 +35,6 @@ endif
 # This is control over the use of MySQL (which is complicated to use and install)
 # This support for MySQL will be removed in the future.
 if ROSE_USE_MYSQL_DATABASE
- # The use of the side effect analysis is dependent upon the data base support
- # which is compiled optionally (see configure --help, for details)
-   ROSE_SIDEEFFECTS_INCLUDE             = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
-   ROSE_SIDEEFFECTS_OBJS                = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/*.o
-   ROSE_SIDEEFFECTS_LIB_NAME            = sideEffect
-#  ROSE_SIDEEFFECTS_LIB_FILE            = lib$(ROSE_SIDEEFFECTS_LIB_NAME).so
-   ROSE_SIDEEFFECTS_LIBS_FILE_WITH_PATH = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/$(ROSE_SIDEEFFECTS_LIB_FILE)
-   ROSE_SIDEEFFECTS_LIBS                = -l$(ROSE_SIDEEFFECTS_LIB_NAME)
-
  # Location of boost should be set in configuration (not done yet)
  # Note: -idirafter puts the path last on the compiler command line, this is not what we want.
  # BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
@@ -76,10 +67,12 @@ if ROSE_USE_SQLITE_DATABASE
    ROSE_SQLITE_DATABASE_INCLUDE  = $(SQLITE3_CFLAGS)
    SQLITE_DATABASE_INCLUDE       = $(SQLITE3_CFLAGS) -I$(top_srcdir)/src/roseExtensions/sqlite3x
    SQLITE_DATABASE_LIBS          = $(SQLITE3_LDFLAGS)
-   ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/SQLiteConnection/*.o
-   ROSE_SQLITE_DATABASE_LIB_NAME = roseSQLiteDatabase
-#  ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).so
+#   ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/sqlite3x/*o
+   ROSE_SQLITE_DATABASE_LIB_NAME = RoseSQLite3xDatabase
+   ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).la
    ROSE_SQLITE_DATABASE_LIBS     = -l$(ROSE_SQLITE_DATABASE_LIB_NAME)
+
+   ROSE_SIDEEFFECT_INCLUDE						 = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
 endif
 
 # This is properly handled by automake even when specified in an include file
@@ -288,12 +281,12 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
      -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
      -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
-      $(ROSE_SIDEEFFECTS_INCLUDE) \
       $(ROSE_DATABASE_INCLUDE) \
       $(ROSE_GUI_INCLUDE) \
       $(ROSE_QT_INCLUDE) \
       $(MYSQL_DATABASE_INCLUDE) \
       $(ROSE_SQLITE_DATABASE_INCLUDE) \
+			$(ROSE_SIDEEFFECT_INCLUDE) \
       $(SQLITE_DATABASE_INCLUDE) \
      -I$(top_srcdir)/src/midend/programTransformation/partialRedundancyElimination \
      -I$(top_srcdir)/src/midend/programTransformation/finiteDifferencing \
