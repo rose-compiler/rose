@@ -13,7 +13,6 @@ libBackstrokePluggableReverser_la_DEPENDENCIES =
 libBackstrokePluggableReverser_la_SOURCES = expressionProcessor.C statementProcessor.C eventProcessor.C variableVersionTable.C
 libBackstrokePluggableReverser_includedir = $(includedir)/backstroke
 libBackstrokePluggableReverser_include_HEADERS = expressionProcessor.h statementProcessor.h eventProcessor.h variableVersionTable.h
-libBackstrokePluggableReverser_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = 
 

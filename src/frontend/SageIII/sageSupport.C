@@ -2400,6 +2400,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 
      if (fileList.empty() == false)
         {
+       // Note that we always process one file at a time using EDG or the Fortran frontend.
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -7822,127 +7823,142 @@ SgFunctionCallExp::getAssociatedFunctionDeclaration() const
     // ROSE_ASSERT(returnFunctionDeclaration != NULL);
 
      return returnFunctionDeclaration;
-   }
+}
+
 
 SgFunctionSymbol*
 SgFunctionCallExp::getAssociatedFunctionSymbol() const
-   {
-  // This is helpful in chasing down the associated declaration to this function reference.
-  // But this refactored function does the first step of getting the symbol, so that it
-  // can also be used separately in the outlining support.
-     SgFunctionSymbol* returnSymbol = NULL;
+{
+	// This is helpful in chasing down the associated declaration to this function reference.
+	// But this refactored function does the first step of getting the symbol, so that it
+	// can also be used separately in the outlining support.
+	SgFunctionSymbol* returnSymbol = NULL;
 
-  // Note that as I recall there are a number of different types of IR nodes that 
-  // the functionCallExp->get_function() can return (this is the complete list, 
-  // as tested in astConsistancyTests.C):
-  //   - SgDotExp
-  //   - SgDotStarOp
-  //   - SgArrowExp
-  //   - SgArrowStarOp
-  //   - SgPointerDerefExp
-  //   - SgFunctionRefExp
-  //   - SgMemberFunctionRefExp
+	// Note that as I recall there are a number of different types of IR nodes that
+	// the functionCallExp->get_function() can return (this is the complete list,
+	// as tested in astConsistancyTests.C):
+	//   - SgDotExp
+	//   - SgDotStarOp
+	//   - SgArrowExp
+	//   - SgArrowStarOp
+	//   - SgPointerDerefExp
+	//   - SgFunctionRefExp
+	//   - SgMemberFunctionRefExp
 
-     SgExpression* functionExp = this->get_function();
-     switch(functionExp->variantT())
-        {
-          case V_SgFunctionRefExp:
-             {
-               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
-               ROSE_ASSERT(functionRefExp != NULL);
-               returnSymbol = functionRefExp->get_symbol();
+	//Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
+	bool isAlwaysResolvedStatically = false;
 
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
-               break;
-             }
+	SgExpression* functionExp = this->get_function();
+	switch (functionExp->variantT())
+	{
+		case V_SgFunctionRefExp:
+		{
+			SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
+			ROSE_ASSERT(functionRefExp != NULL);
+			returnSymbol = functionRefExp->get_symbol();
 
-          case V_SgMemberFunctionRefExp:
-             {
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
-               returnSymbol = memberFunctionRefExp->get_symbol();
+			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+			ROSE_ASSERT(returnSymbol != NULL);
+			break;
+		}
 
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
-               break;
-             }
+		case V_SgMemberFunctionRefExp:
+		{
+			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
+			ROSE_ASSERT(memberFunctionRefExp != NULL);
+			returnSymbol = memberFunctionRefExp->get_symbol();
 
-          case V_SgArrowExp:
-             {
-            // The lhs is the this pointer (SgThisExp) and the rhs is the member function.
-               SgArrowExp* arrayExp = isSgArrowExp(functionExp);
-               ROSE_ASSERT(arrayExp != NULL);
+			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+			ROSE_ASSERT(returnSymbol != NULL);
+			break;
+		}
 
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
+		case V_SgArrowExp:
+		{
+			// The lhs is the this pointer (SgThisExp) and the rhs is the member function.
+			SgArrowExp* arrayExp = isSgArrowExp(functionExp);
+			ROSE_ASSERT(arrayExp != NULL);
 
-            // DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
-            // ROSE_ASSERT(memberFunctionRefExp != NULL);
-               if (memberFunctionRefExp != NULL)
-                  {
-                    returnSymbol = memberFunctionRefExp->get_symbol();
+			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
 
-                 // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-                    ROSE_ASSERT(returnSymbol != NULL);
-                  }
-               break;
-             }
+			// DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
+			// ROSE_ASSERT(memberFunctionRefExp != NULL);
+			if (memberFunctionRefExp != NULL)
+			{
+				returnSymbol = memberFunctionRefExp->get_symbol();
 
-          case V_SgDotExp:
-             {
-               SgDotExp * dotExp = isSgDotExp(functionExp);
-               ROSE_ASSERT(dotExp != NULL);
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
-               returnSymbol = memberFunctionRefExp->get_symbol();
+				// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+				ROSE_ASSERT(returnSymbol != NULL);
+			}
+			break;
+		}
 
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+		case V_SgDotExp:
+		{
+			SgDotExp * dotExp = isSgDotExp(functionExp);
+			ROSE_ASSERT(dotExp != NULL);
+			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+			ROSE_ASSERT(memberFunctionRefExp != NULL);
+			returnSymbol = memberFunctionRefExp->get_symbol();
 
-               break;
-             }
+			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+			ROSE_ASSERT(returnSymbol != NULL);
 
-       // Liao, 5/19/2009
-       // A pointer to function can be associated to any functions with a matching function type
-       // There is no single function declaration which is associated with it.
-       // In this case return NULL should be allowed and the caller has to handle it accordingly
-          case V_SgPointerDerefExp:
-             {
-               break;
-             }
+			//Virtual functions called through the dot operator are resolved statically if they are not
+			//called on reference types.
+			isAlwaysResolvedStatically = !isSgReferenceType(dotExp->get_lhs_operand());
 
-       // DQ (8/19/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
-       // I think that for this operator we can't expect to resolve the function declaration. (returning NULL)
-          case V_SgDotStarOp:
-             {
-               break;
-             }
+			break;
+		}
 
-          case V_SgArrowStarOp:
-             {
-            // DQ (8/18/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
-            // I also fixed the error message to make it more clear.
-               printf ("ERROR: Sorry, case SgArrowStarOp not implemented yet (might be similar to SgDotExp case) in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+		// Liao, 5/19/2009
+		// A pointer to function can be associated to any functions with a matching function type
+		// There is no single function declaration which is associated with it.
+		// In this case return NULL should be allowed and the caller has to handle it accordingly
+		case V_SgPointerDerefExp:
+		{
+			break;
+		}
 
-            // DQ (2/21/2010): This case is triggered by fixupPrettyFunction test when run on test2005_112.C
-            // ROSE_ASSERT(returnSymbol != NULL);
+		// DQ (8/19/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
+		// I think that for this operator we can't expect to resolve the function declaration. (returning NULL)
+		case V_SgDotStarOp:
+		{
+			break;
+		}
 
-               break;
-             }
+		case V_SgArrowStarOp:
+		{
+			// DQ (8/18/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
+			// I also fixed the error message to make it more clear.
+			printf("ERROR: Sorry, case SgArrowStarOp not implemented yet (might be similar to SgDotExp case) in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
 
-          default:
-             {
-               printf ("Error: There should be no other cases functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
-               ROSE_ASSERT(false);
-             }
-        }
+			// DQ (2/21/2010): This case is triggered by fixupPrettyFunction test when run on test2005_112.C
+			// ROSE_ASSERT(returnSymbol != NULL);
 
-  // DQ (8/18/2009): I think this was commented out by Liao (5/19/2009).
-  // We allow it to be NULL for a pointer to function
-  // ROSE_ASSERT(returnSymbol != NULL);
+			break;
+		}
 
-     return returnSymbol;
-   }
+		default:
+		{
+			printf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+			ROSE_ASSERT(false);
+		}
+	}
+
+	//If the function is virtual, the function call might actually be to a different symbol.
+	//We should return NULL in this case to preserve correctness
+	if (returnSymbol != NULL && !isAlwaysResolvedStatically)
+	{
+		SgFunctionModifier& functionModifier = returnSymbol->get_declaration()->get_functionModifier();
+		if (functionModifier.isVirtual() || functionModifier.isPureVirtual())
+		{
+			returnSymbol = NULL;
+		}
+	}
+
+	return returnSymbol;
+}
 #endif
 // TODO move the following OpenMP processing code into a separated source file
 // maybe in src/midend/openmpSupport ?

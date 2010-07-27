@@ -598,6 +598,9 @@ check-local:
 	@echo "*********************************************************************************************************"
 	@echo "*** ROSE/projects/backstroke/tests/expNormalizationTest: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
+ 
+clean-local:
+	rm -f *.o *.C
 
 mytest:
 	@$(MAKE) $(TEST_Objects)

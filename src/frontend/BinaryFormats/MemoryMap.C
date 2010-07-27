@@ -190,17 +190,7 @@ const MemoryMap::MapElement *
 MemoryMap::find(rose_addr_t va) const
 {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-	
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
 
@@ -223,16 +213,7 @@ rose_addr_t
 MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
 {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
 
@@ -258,16 +239,7 @@ MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) c
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
     return elements;
@@ -296,7 +268,7 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
         size_t m_offset = start_va - m->get_va();
         ROSE_ASSERT(m_offset < m->get_size());
         size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
-        if (m->is_anonymous()) {
+        if (m->is_anonymous() && NULL==m->get_base()) {
             memset((uint8_t*)dst_buf+ncopied, 0, n);
         } else {
             memcpy((uint8_t*)dst_buf+ncopied, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
@@ -324,6 +296,7 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
             ROSE_ASSERT(*m->anonymous==0);
             *(m->anonymous) = 1;
             m->base = new uint8_t[m->get_size()];
+            memset(m->base, 0, m->get_size());
         }
         memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, (uint8_t*)src_buf+ncopied, n);
         ncopied += n;
@@ -342,20 +315,27 @@ MemoryMap::va_extents() const
     return retval;
 }
 
+rose_addr_t
+MemoryMap::highest_va() const
+{
+    if (elements.empty())
+        throw NotMapped(this, 0);
+    
+    if (!sorted) {
+	std::sort(elements.begin(), elements.end());
+        sorted = true;
+    }
+
+    MapElement &me = elements.back();
+    ROSE_ASSERT(me.get_size()>0);
+    return me.get_va() + me.get_size() - 1;
+}
+
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
 

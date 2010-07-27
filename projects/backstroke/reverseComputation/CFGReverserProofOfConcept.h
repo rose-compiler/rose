@@ -52,7 +52,5 @@ private:
 
 	std::multimap<int, SgExpression*> collectUsesForVariable(VariableRenaming::VarName name, SgNode* node);
 
-	SgExpression* buildVariableReference(VariableRenaming::VarName var, SgScopeStatement* scope = NULL);
-
 	std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);
 };
