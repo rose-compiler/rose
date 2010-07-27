@@ -630,8 +630,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
   // Note that percentageCompression and percentageSpaceSavings are computed as defined at: http://en.wikipedia.org/wiki/Data_compression_ratio
   // double percentageDecrease = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
-     double percentageCompression = ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
+     double percentageCompression  = ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
      double percentageSpaceSavings = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
+     double mergeFactor            = ( ((double) numberOfASTnodesBeforeDelete) / ((double) numberOfASTnodesAfterDelete) );
 
      double numberOfFiles  = project->numberOfFiles();
      double mergeEfficency = 0.0;
@@ -658,8 +659,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           printf ("********************************************************************************************************************************************************************************************* \n");
        // printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent decrease, mergeEfficency = %2.4lf) \n",
        //      numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageDecrease,mergeEfficency);
-          printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent compression, %2.4lf percent space savings, mergeEfficency = %2.4lf) \n",
-               numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageCompression,percentageSpaceSavings,mergeEfficency);
+          printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent compression, %2.4lf percent space savings, mergeEfficency = %2.4lf, mergeFactor = %2.4lf) \n",
+                  numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageCompression,percentageSpaceSavings,mergeEfficency,mergeFactor);
           printf ("********************************************************************************************************************************************************************************************* \n\n\n");
         }
 #if 0
@@ -1067,7 +1068,16 @@ accumulateDeleteSet ( SgProject* project, const set<SgNode*> & saveSet )
                          if (deleteSet.find(node) == deleteSet.end())
                             {
                            // Skip the SgDefaultType node from being added to the delete list.
-                              deleteSet.insert(node);
+                              if (isSgStorageModifier(node) != NULL)
+                                 {
+#if 0
+                                   printf ("WARNING: Skipping the removal of SgStorageModifier IR nodes from deleteSet \n");
+#endif
+                                 }
+                                else
+                                 {
+                                   deleteSet.insert(node);
+                                 }
                             }
 #endif
                        }
@@ -1176,6 +1186,8 @@ buildDeleteSet( SgProject* project )
   // Step 2: Traverse the memory pools and generate the list of IR nodes that are NOT in the saveSet.
   // returnDeleteSet = accumulateDeleteSet(project,saveSet);
      returnDeleteSet = tempDeleteSet;
+#else
+     printf ("Returning an empty list of IR nodes to delete! \n");
 #endif
 
      printf ("DONE: Computing the IR nodes to be deleted \n");
