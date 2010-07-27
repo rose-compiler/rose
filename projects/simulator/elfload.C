@@ -13,7 +13,7 @@
 using namespace std;
 
 static void load_executable_or_library(LinuxMachineState& ms, char* filename, bool& stack_executable, bool* has_interp = 0, uint32_t* phdr = 0, uint32_t* phent = 0, uint32_t* phnum = 0, uint32_t* entry = 0) {
-  fprintf(stderr, "Loading %s\n", filename);
+  fprintf(stderr, "loading %s...\n", filename);
   int executable_fd = open(filename, O_RDONLY);
   if (executable_fd == -1) {
     perror("open of executable");
@@ -31,7 +31,7 @@ static void load_executable_or_library(LinuxMachineState& ms, char* filename, bo
     exit(1);
   }
   Elf32_Ehdr* header = (Elf32_Ehdr*)executable;
-  if (executable_info.st_size < sizeof(Elf32_Ehdr) ||
+  if ((size_t)executable_info.st_size < sizeof(Elf32_Ehdr) ||
       header->e_ident[EI_MAG0] != ELFMAG0 ||
       header->e_ident[EI_MAG1] != ELFMAG1 ||
       header->e_ident[EI_MAG2] != ELFMAG2 ||
@@ -95,7 +95,6 @@ static void load_executable_or_library(LinuxMachineState& ms, char* filename, bo
 	  fprintf(stderr, "Segment is not in file\n");
 	  exit(1);
 	}
-	fprintf(stderr, "Found interpreter '%.*s'\n", hdr.p_filesz, executable + hdr.p_offset);
 	vector<char> interp(executable + hdr.p_offset, executable + hdr.p_offset + hdr.p_filesz);
 	interp.push_back(0);
 	bool stack_executable2;
@@ -126,7 +125,6 @@ static void load_executable_or_library(LinuxMachineState& ms, char* filename, bo
       default: fprintf(stderr, "Unhandled program header type %u\n", hdr.p_type);
     }
   }
-  fprintf(stderr, "Done loading %s\n", filename);
 }
 
 void setup(LinuxMachineState& ms, int argc, char** argv) {
@@ -144,12 +142,13 @@ void setup(LinuxMachineState& ms, int argc, char** argv) {
 
   pointers.push_back(argc);
 
-  for (unsigned int i = 0; i < argc; ++i) {
+  for (int i = 0; i < argc; ++i) {
     sp -= strlen(argv[i]) + 1;
     ms.memory.writeMultiple((const uint8_t*)argv[i], strlen(argv[i]) + 1, sp);
     pointers.push_back(sp);
   }
   pointers.push_back(0);
+  fprintf(stderr, "esp after argc/argv = 0x%08x, pointers=%zu\n", sp, pointers.size());
 
   for (unsigned int i = 0; ; ++i) {
     if (!environ[i]) break;
@@ -158,6 +157,7 @@ void setup(LinuxMachineState& ms, int argc, char** argv) {
     pointers.push_back(sp);
   }
   pointers.push_back(0);
+  fprintf(stderr, "esp after environ = 0x%08x, pointers=%zu\n", sp, pointers.size());
 
   // Fill in auxv
   // Each entry is two words in the pointers vector
@@ -174,6 +174,7 @@ void setup(LinuxMachineState& ms, int argc, char** argv) {
     pointers.push_back(AT_SECURE); pointers.push_back(false);
   }
   pointers.push_back(AT_NULL); pointers.push_back(0);
+  fprintf(stderr, "esp after auxv = 0x%08x, pointers=%zu\n", sp, pointers.size());
 
   sp &= ~3U;
 
@@ -182,7 +183,7 @@ void setup(LinuxMachineState& ms, int argc, char** argv) {
 
   ms.gprs[x86_gpr_sp] = sp;
 
-  fprintf(stderr, "------------------------- Done with setup\n");
+  fprintf(stderr, "esp = 0x%08x\n", sp);
 }
 
 #endif /*ROSE_ENABLE_SIMULATOR*/

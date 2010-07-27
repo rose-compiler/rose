@@ -200,7 +200,7 @@ public:
      *  doesn't have any mapping attributes (for instance, the ELF object file loader, LoaderELFObj, maps function text
      *  sections that are marked as "not mapped" in the ELF container by choosing free regions of virtual memory using the @p
      *  current argument that contains the most up-to-date mapping). */
-    virtual rose_addr_t align_values(SgAsmGenericSection*,
+    virtual rose_addr_t align_values(SgAsmGenericSection*, Contribution,
                                      rose_addr_t *va,     rose_addr_t *mem_size,
                                      rose_addr_t *offset, rose_addr_t *file_size,
                                      const MemoryMap *current);
