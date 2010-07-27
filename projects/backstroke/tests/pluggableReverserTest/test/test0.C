@@ -16,9 +16,10 @@ void event0(model* m)
 {
     int a = 0;
     int b = 0;
-    g = 0;
+    //int q,w,e,r,t,y,u,i,o,p,l,k,j,h;
+    //g = 0;
     //model::k = 0;
-    my::x = 0;
+    //my::x = 0;
     //++a;
     //m->i += a;
     //m->i = 0;

@@ -4,7 +4,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the test language restrictor executable
-noinst_PROGRAMS = pluggableReverser mytest
+noinst_PROGRAMS = pluggableReverser
 pluggableReverser_SOURCES = pluggableReverserMain.C
 pluggableReverser_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
 			$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \

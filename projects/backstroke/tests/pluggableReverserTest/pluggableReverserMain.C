@@ -26,7 +26,7 @@ int main(int argc, char * argv[])
 #if 1
     VariableRenaming var_renaming(project);
     var_renaming.run();
-    return 0;
+    //return 0;
     //var_renaming.toDOT("temp.dot");
 
 
@@ -105,14 +105,16 @@ int main(int argc, char * argv[])
 
     popScopeStack();
 
-    //fixVariableReferences(global);
+    fixVariableReferences(global);
     //fixVariableReferences(global);
 
 
 #endif
 
 
-    //AstTests::runAllTests(project);
+    AstTests::runAllTests(project);
+
+    cout << "Test Done!\n";
 
     return backend(project);
 }

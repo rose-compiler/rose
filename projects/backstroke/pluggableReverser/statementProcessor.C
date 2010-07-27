@@ -336,7 +336,7 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
     foreach (StatementObject& obj, queue[i])
     {
         cout << "Fixed: " << fixVariableReferences(obj.fwd_stmt) << endl;
-        fixVariableReferences(obj.rvs_stmt);
+        //fixVariableReferences(obj.rvs_stmt);
     }
 
     foreach (SgStatement* stmt, to_delete)
