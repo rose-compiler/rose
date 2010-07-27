@@ -1,5 +1,5 @@
 #include "facilityBuilder.h"
-#include "utilities.h"
+#include "utilities/Utilities.h"
 #include <rose.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -25,7 +25,7 @@ SgStatement* initializeMember(SgExpression* exp)
                 buildSizeOfOp(exp));
         return buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para);
     }
-    else if (isSTLContainer(real_type))
+	else if (backstroke_util::isSTLContainer(real_type))
         return NULL;
     else if (SgClassType* class_t = isSgClassType(real_type))
     {
@@ -162,136 +162,108 @@ SgFunctionDeclaration* buildCompareFunction(SgClassType* model_type)
     return func_decl;
 }
 
-SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, const vector<string>& event_names, bool klee)
+
+SgFunctionDeclaration* buildMainFunction(const vector<SgAssignOp*>& inits, const vector<string>& event_names, bool klee)
 {
-    // build the main function which performs the test
-    SgFunctionDeclaration* func_decl = 
-        buildDefiningFunctionDeclaration(
-                "main",
-                buildIntType(),
-                buildFunctionParameterList());
-    pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
+	// build the main function which performs the test
+	SgFunctionDeclaration* func_decl =
+			buildDefiningFunctionDeclaration(
+			"main",
+			buildIntType(),
+			buildFunctionParameterList());
+	pushScopeStack(isSgScopeStatement(func_decl->get_definition()->get_body()));
 
-    // First, input all initializing statements.
-    foreach (SgStatement* stmt, inits) 
-        appendStatement(stmt);
+	// First, input all initializing statements.
+	foreach(SgAssignOp* stmt, inits)
+	{
+		appendStatement(SageBuilder::buildExprStatement(stmt));
+	}
 
-    /////////////////////////////////////////////////////////////////////////////////////////
-    // There are two tests: one is testing event and event_fwd get the same value of the model,
-    // the other is performing event_fwd and event_reverse to see if the value of the model changes
+	/////////////////////////////////////////////////////////////////////////////////////////
+	// There are two tests: one is testing event and event_fwd get the same value of the model,
+	// the other is performing event_fwd and event_reverse to see if the value of the model changes
 
-    // reset the seed of the random number generator
-    SgExprListExp* get_clock = buildExprListExp(
-            buildFunctionCallExp("time", buildIntType(), 
-                buildExprListExp(buildIntVal(0))));
-    SgStatement* reset_seed = buildFunctionCallStmt("srand", buildVoidType(), get_clock);
-    SgType* model_type = buildStructDeclaration("model")->get_type();
+	// reset the seed of the random number generator
+	SgExprListExp* get_clock = buildExprListExp(
+			buildFunctionCallExp("time", buildIntType(),
+			buildExprListExp(buildIntVal(0))));
+	SgStatement* reset_seed = buildFunctionCallStmt("srand", buildVoidType(), get_clock);
+	SgType* model_type = buildStructDeclaration("model")->get_type();
 
-    // Declare two variables 
-    SgVariableDeclaration* var1 = buildVariableDeclaration("m1", model_type);
-    SgVariableDeclaration* var2 = buildVariableDeclaration("m2", model_type);
-
-
-    // Output PASS or FAIL information
-    SgExprListExp* para_pass = buildExprListExp(buildStringVal("PASS!\\n"));
-    //SgExprListExp* para_fail = buildExprListExp(buildStringVal("FAIL!\\n"));
-    SgExprStatement* test_pass = buildFunctionCallStmt("printf", buildVoidType(), para_pass);
-    //SgExprStatement* test_fail = buildFunctionCallStmt("printf", buildVoidType(), para_fail);
-
-#if 0
-    // Call event and event_forward then check two models' values
-    SgExprStatement* call_event = buildFunctionCallStmt("event", buildVoidType(), para1);
-    SgExprStatement* call_event_fwd = buildFunctionCallStmt("event_forward", buildVoidType(), para2);
-    SgExprListExp* para_comp = buildExprListExp(
-            buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
-            buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
-    SgExpression* call_compare_exp = buildFunctionCallExp("compare", buildVoidType(), para_comp);
-    SgExprListExp* para_assert = buildExprListExp(call_compare_exp);
-    SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), para_assert);
-#endif
-
-    appendStatement(reset_seed);
-    appendStatement(var1);
-    appendStatement(var2);
-    //appendStatement(init1);
-    //appendStatement(init2);
-    //appendStatement(call_event);
-    //appendStatement(call_event_fwd);
-    // comment the following code is because random thing may happen
-    //appendStatement(test_compare);
-    //appendStatement(copyStatement(init1));
-    //appendStatement(copyStatement(init2));
-    //appendStatement(copyStatement(call_event_fwd));
-    //appendStatement(call_event_rev);
-    //appendStatement(copyStatement(test_compare));
-    //appendStatement(test_pass);
+	// Declare two variables
+	SgVariableDeclaration* varM1 = buildVariableDeclaration("m1", model_type);
+	SgVariableDeclaration* varM2 = buildVariableDeclaration("m2", model_type);
 
 
-    // Build a counter which can output which event function crashes
-    //SgStatement* counter = buildVariableDeclaration("counter", buildIntType(), 
-    //	    buildAssignInitializer(buildIntVal(0)));
+	// Output PASS or FAIL information
+	SgExprListExp* para_pass = buildExprListExp(buildStringVal("PASS!\\n"));
+	SgExprStatement* test_pass = buildFunctionCallStmt("printf", buildVoidType(), para_pass);
 
-    // We have to know which event has passed the test. So a counter is necessary
-    SgStatement* counter = buildVariableDeclaration("counter", buildIntType(), buildAssignInitializer(buildIntVal(0)));
-    appendStatement(counter);
+	appendStatement(reset_seed);
+	appendStatement(varM1);
+	appendStatement(varM2);
 
-    foreach (const string& event, event_names)
-    //for (int i = 0; i < events_num; ++i)
-    {
-        // Initialize two model objects
-        SgExprStatement *init1, *init2;
+	// We have to know which event has passed the test. So a counter is necessary
+	SgVariableDeclaration* counter = buildVariableDeclaration("counter", buildIntType(), buildAssignInitializer(buildIntVal(0)));
+	appendStatement(counter);
 
-        if (klee)
-        {
-            SgExprListExp* para1 = buildExprListExp(
-                    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
-                    buildSizeOfOp(buildVarRefExp("m1")),
-                    buildStringVal("m1"));
-            init1 = buildFunctionCallStmt("klee_make_symbolic", buildVoidType(), para1);
-            init2 = buildAssignStatement(buildVarRefExp("m2"), buildVarRefExp("m1"));
-        } else {
-            SgExprListExp* para1 = buildExprListExp(
-                    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")));
-            init1 = buildFunctionCallStmt("initialize", buildVoidType(), para1);
-            SgExprListExp* para2 = buildExprListExp(
-                    buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
-            init2 = buildFunctionCallStmt("initialize", buildVoidType(), para2);
-        }
 
-        // Call event_forward and event_reverse then check if the model's value changes
-        SgStatement* call_event_fwd = buildFunctionCallStmt(
-                event + "_forward", 
-                buildVoidType(), 
-                buildExprListExp(buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1"))));
-        SgStatement* call_event_rev = buildFunctionCallStmt(
-                event + "_reverse", 
-                buildVoidType(), 
-                buildExprListExp(buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1"))));
+	foreach(const string& event, event_names)
+	{
+		// Initialize two model objects
+		SgExprStatement *init1, *init2;
 
-        SgExprListExp* para_comp = buildExprListExp(
-                buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m1")),
-                buildUnaryExpression<SgAddressOfOp>(buildVarRefExp("m2")));
-        SgExpression* call_compare_exp = buildFunctionCallExp("compare", buildIntType(), para_comp);
-        SgExprListExp* para_assert = buildExprListExp(call_compare_exp);
-        SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), para_assert);
+		if (klee)
+		{
+			SgExprListExp* para1 = buildExprListExp(
+					buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(varM1)),
+					buildSizeOfOp(buildVarRefExp(varM1)),
+					buildStringVal("m1"));
+			init1 = buildFunctionCallStmt("klee_make_symbolic", buildVoidType(), para1);
+			init2 = buildAssignStatement(buildVarRefExp(varM2), buildVarRefExp(varM1));
+		}
+		else
+		{
+			SgExprListExp* para1 = buildExprListExp(
+					buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(varM1)));
+			init1 = buildFunctionCallStmt("initialize", buildVoidType(), para1);
+			SgExprListExp* para2 = buildExprListExp(
+					buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(varM2)));
+			init2 = buildFunctionCallStmt("initialize", buildVoidType(), para2);
+		}
 
-        SgExprListExp* para_print = buildExprListExp(
-                buildStringVal("event%d PASS!\\n"), 
-                buildPlusPlusOp(buildVarRefExp("counter"), SgUnaryOp::postfix));
-        SgExprStatement* print_pass = buildFunctionCallStmt("printf", buildVoidType(), para_print);
-        //SgStatement* incr_counter = buildExprStatement(
-        //	buildPlusPlusOp(buildVarRefExp("counter", SgUnaryOp::prefix)));
+		// Call event_forward and event_reverse then check if the model's value changes
+		SgStatement* call_event_fwd = buildFunctionCallStmt(
+				event + "_forward",
+				buildVoidType(),
+				buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(varM1))));
+		SgStatement* call_event_rev = buildFunctionCallStmt(
+				event + "_reverse",
+				buildVoidType(),
+				buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(varM1))));
 
-        appendStatement(init1);
-        appendStatement(init2);
-        appendStatement(call_event_fwd);
-        appendStatement(call_event_rev);
-        appendStatement(test_compare);
-        appendStatement(print_pass);
-    }
+		SgExprListExp* para_comp = buildExprListExp(
+				buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(varM1)),
+				buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(varM2)));
+		SgExpression* call_compare_exp = buildFunctionCallExp("compare", buildIntType(), para_comp);
+		SgExprListExp* para_assert = buildExprListExp(call_compare_exp);
+		SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), para_assert);
 
-    appendStatement(test_pass);
-    /////////////////////////////////////////////////////////////////////////////////////////
-    popScopeStack();
-    return func_decl;
+		SgExprListExp* para_print = buildExprListExp(
+				buildStringVal("event%d PASS!\\n"),
+				buildPlusPlusOp(buildVarRefExp(counter), SgUnaryOp::postfix));
+		SgExprStatement* print_pass = buildFunctionCallStmt("printf", buildVoidType(), para_print);
+
+		appendStatement(init1);
+		appendStatement(init2);
+		appendStatement(call_event_fwd);
+		appendStatement(call_event_rev);
+		appendStatement(test_compare);
+		appendStatement(print_pass);
+	}
+
+	appendStatement(test_pass);
+	/////////////////////////////////////////////////////////////////////////////////////////
+	popScopeStack();
+	return func_decl;
 }

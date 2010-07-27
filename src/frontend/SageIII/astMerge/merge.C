@@ -630,8 +630,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
   // Note that percentageCompression and percentageSpaceSavings are computed as defined at: http://en.wikipedia.org/wiki/Data_compression_ratio
   // double percentageDecrease = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
-     double percentageCompression = ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
+     double percentageCompression  = ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
      double percentageSpaceSavings = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
+     double mergeFactor            = ( ((double) numberOfASTnodesBeforeDelete) / ((double) numberOfASTnodesAfterDelete) );
 
      double numberOfFiles  = project->numberOfFiles();
      double mergeEfficency = 0.0;
@@ -658,8 +659,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           printf ("********************************************************************************************************************************************************************************************* \n");
        // printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent decrease, mergeEfficency = %2.4lf) \n",
        //      numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageDecrease,mergeEfficency);
-          printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent compression, %2.4lf percent space savings, mergeEfficency = %2.4lf) \n",
-               numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageCompression,percentageSpaceSavings,mergeEfficency);
+          printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent compression, %2.4lf percent space savings, mergeEfficency = %2.4lf, mergeFactor = %2.4lf) \n",
+                  numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageCompression,percentageSpaceSavings,mergeEfficency,mergeFactor);
           printf ("********************************************************************************************************************************************************************************************* \n\n\n");
         }
 #if 0
