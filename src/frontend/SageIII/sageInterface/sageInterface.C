@@ -7636,6 +7636,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
         delete (varRef->get_symbol());
 #endif
 
+        //std::cout << "Fixed variable reference: " << realSymbol->get_name().str() << std::endl;
         varRef->set_symbol(isSgVariableSymbol(realSymbol));
         counter ++;
 #endif
@@ -7665,6 +7666,7 @@ void SageInterface::clearUnusedVariableSymbols()
 
         bool toDelete = true;
 
+#if 1
         for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
                 j != varList.end(); ++j)
         {
@@ -7677,9 +7679,13 @@ void SageInterface::clearUnusedVariableSymbols()
                 break;
             }
         }
+#endif
 
         if (toDelete)
         {
+
+            std::cout << "Symbol " << symbolToDelete->get_name().str() << ' ' << symbolToDelete <<
+               ' ' << symbolToDelete->get_declaration() <<  " is deleted." << std::endl;
             delete symbolToDelete->get_declaration(); 
             delete symbolToDelete;
         }
