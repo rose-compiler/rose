@@ -3,6 +3,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
+#include "AsmUnparser_compat.h"
 
 #define __STDC_FORMAT_MACROS
 #include <boost/math/common_factor.hpp>
@@ -1083,6 +1084,64 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         }
     }
     if (debug) fprintf(stderr, "%s    -- END --\n", p);
+}
+
+/** Print text file containing all known information about a binary file.  If in_cwd is set, then the file is created in the
+ *  current working directory rather than the directory containing the binary file (the default is to create the file in the
+ *  current working directory).  If @p ext is non-null then these characters are added to the end of the binary file name. The
+ *  default null pointer causes the string ".dump" to be appended to the file name. */
+void
+SgAsmGenericFile::dump_all(bool in_cwd, const char *ext)
+{
+    if (!ext)
+        ext = ".dump";
+    std::string dump_name = get_name() + ext;
+    if (in_cwd) {
+        size_t slash = dump_name.find_last_of('/');
+        if (slash!=dump_name.npos)
+            dump_name.replace(0, slash+1, "");
+    }
+    dump_all(dump_name);
+}    
+
+/** Print text file containing all known information about a binary file. */
+void
+SgAsmGenericFile::dump_all(const std::string &dump_name)
+{
+    FILE *dumpFile = fopen(dump_name.c_str(), "wb");
+    ROSE_ASSERT(dumpFile != NULL);
+    try {
+        // The file type should be the first; test harness depends on it
+        fprintf(dumpFile, "%s\n", format_name());
+
+        // A table describing the sections of the file
+        dump(dumpFile);
+
+        // Detailed info about each section
+        const SgAsmGenericSectionPtrList &sections = get_sections();
+        for (size_t i = 0; i < sections.size(); i++) {
+            fprintf(dumpFile, "Section [%zd]:\n", i);
+            ROSE_ASSERT(sections[i] != NULL);
+            sections[i]->dump(dumpFile, "  ", -1);
+        }
+
+        /* Dump interpretations that point only to this file. */
+        SgBinaryComposite *binary = isSgBinaryComposite(get_parent());
+        ROSE_ASSERT(binary!=NULL);
+        const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
+        for (size_t i=0; i<interps.size(); i++) {
+            SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
+            if (interp_files.size()==1 && interp_files[0]==this) {
+                std::string assembly = unparseAsmInterpretation(interps[i]);
+                fputs(assembly.c_str(), dumpFile);
+            }
+        }
+        
+    } catch(...) {
+        fclose(dumpFile);
+        throw;
+    }
+    fclose(dumpFile);
 }
 
 /* Print basic info about the sections of a file */

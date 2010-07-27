@@ -41,54 +41,6 @@ struct EmulationPolicy {
         id.init_disassembler(elf);
     }
 
-#if 0 /*not actually ever used*/
-    void setupExecutableContents(SgAsmInterpretation* interp) {
-        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-        ROSE_ASSERT(1==headers.size()); /*original code did not support dynamic linking; we still don't [RPM 2010-06] */
-        SgAsmGenericHeader* header = headers[0];
-        ROSE_ASSERT (header);
-        SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(header);
-        ROSE_ASSERT (elfHeader);
-        SgAsmGenericFile* genFile = isSgAsmGenericFile(header->get_parent());
-        ROSE_ASSERT(genFile);
-
-        /* Find an appropriate disassembler */
-        id.init_disassembler(header);
-
-        /* Set up mappings for all ELF Segments of this ELF Header. An ELF Segment is represented by an SgAsmGenericSection
-         * with a non-null segment table entry. */
-        SgAsmGenericSectionPtrList mapped_sections = header->get_mapped_sections();
-        for (size_t i=0; i<mapped_sections.size(); ++i) {
-            SgAsmElfSection *segment = isSgAsmElfSection(mapped_sections[i]);
-            SgAsmElfSegmentTableEntry *ent = segment ? segment->get_segment_entry() : NULL;
-            if (ent && ent->get_type()==SgAsmElfSegmentTableEntry::PT_LOAD) {
-                bool willAllowRead = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM;
-                bool willAllowWrite = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM;
-                bool willAllowExec = ent->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM;
-                uint32_t vaddr = (uint32_t)ent->get_vaddr();
-                uint64_t offset = ent->get_offset();
-                uint32_t filesz = (uint32_t)ent->get_filesz();
-                uint32_t memsz = (uint32_t)ent->get_memsz();
-                fprintf(stderr, "Loading at 0x%"PRIx32" with file size 0x%"PRIx32" and memory size 0x%"PRIx32"\n",
-                        vaddr, filesz, memsz);
-                SgFileContentList contentList = genFile->content(offset, filesz);
-                for (uint32_t j = 0; j < memsz + PAGE_SIZE; j += PAGE_SIZE) {
-                    ms.memory.mapZeroPageIfNeeded(j + vaddr);
-                }
-                ms.memory.writeMultiple(&contentList[0], filesz, vaddr);
-                for (uint32_t j = filesz; j < memsz; j += PAGE_SIZE) {
-                    ms.memory.mapZeroPageIfNeeded(j + vaddr);
-                }
-                for (uint32_t j = 0; j < filesz; j += PAGE_SIZE) {
-                    ms.memory.findPage(j + vaddr).allow_read = willAllowRead;
-                    ms.memory.findPage(j + vaddr).allow_write = willAllowWrite;
-                    ms.memory.findPage(j + vaddr).allow_execute = willAllowExec;
-                }
-            }
-        }
-    }
-#endif
-
     void setupArgs(const vector<string>& args) {
         /* Set up an initial stack */
         vector<uint32_t> pointers;
@@ -334,18 +286,12 @@ struct EmulationPolicy {
     template <size_t Len>
     Value<Len> readMemory(X86SegmentRegister segreg, Value<32> address, Value<1> cond) {
         if (!cond.val()) return 0;
-#ifdef DEBUG
-        fprintf(stderr, "readMemory<%u>(%"PRIX64") -> %"PRIX64"\n", Len, address.val(), ms.readMemory<Len>(segreg, address.val()));
-#endif
         return ms.readMemory<Len>(segreg, address.val());
     }
 
     template <size_t Len>
     void writeMemory(X86SegmentRegister segreg, Value<32> address, Value<Len> data, Value<1> cond) {
         if (!cond.val()) return;
-#ifdef DEBUG
-        fprintf(stderr, "writeMemory<%u>(%"PRIX64", %"PRIX64")\n", Len, address.val(), data.val());
-#endif
         ms.writeMemory<Len>(segreg, address.val(), data.val());
     }
 
@@ -417,6 +363,9 @@ int main(int argc, char** argv) {
         try {
 #if 0
             fprintf(stderr, "\033[K\n[%07zu] %s\033[K\r\033[1A",
+                    ninsns++, unparseInstructionWithAddress(policy.id[policy.ms.ip]).c_str()),
+#else
+            fprintf(stderr, "[%07zu] %s\n",
                     ninsns++, unparseInstructionWithAddress(policy.id[policy.ms.ip]).c_str()),
 #endif
             t.processInstruction(policy.id[policy.ms.ip]);

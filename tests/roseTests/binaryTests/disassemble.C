@@ -710,9 +710,26 @@ main(int argc, char *argv[])
     if (SMTSolver::total_calls>0)
         printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
 
+    /* Generate a *.dump file in the current directory. Note that backend() also currently [2010-07-21] generates this *.dump
+     * file, but it does so after giving sections an opportunity to reallocate themselves.   We want the dump to contain the
+     * original data, prior to any normalizations that might occur, so we generate the dump here explicitly. */
+    struct T1: public SgSimpleProcessing {
+        void visit(SgNode *node) {
+            SgAsmGenericFile *file = isSgAsmGenericFile(node);
+            if (file)
+                file->dump_all(true, ".dump");
+        }
+    };
+    printf("generating ASCII dump...\n");
+    T1().traverse(project, preorder);
+
+#if 0
     printf("running back end...\n");
     int ecode = backend(project);
     return ecode>0 ? ecode : exit_status;
+#endif
+
+    return 0;
 }
 
 #endif
