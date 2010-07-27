@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = src Analysis
+SUBDIRS = src tests Analysis
 
 EXTRA_DIST =						\
 	README
