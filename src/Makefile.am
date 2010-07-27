@@ -43,8 +43,13 @@ endif
 # endif
 
 if ROSE_USE_SQLITE_DATABASE
-   libroseSqlite3xConnection = $(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
+   libroseSqlite3xConnection = \
+		$(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
    OPT_SQLITE3_LDFLAGS       = $(SQLITE3_LDFLAGS)
+
+# side effect requires sqlite3
+   libsideEffect_LIBS = \
+			$(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/libsideEffect.la
 else
    libroseSqlite3xConnection = 
    OPT_SQLITE3_LDFLAGS =
@@ -52,8 +57,6 @@ endif
 
 if ROSE_USE_MYSQL_DATABASE
     libroseMYSQLConnection = $(top_builddir)/src/roseExtensions/databaseConnection/librosedatabase.la
-    libroseMYSQLLibraries = \
-      $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/libsideEffect.la
     OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
     OPT_MYSQLPP_LDFLAGS = \
         -L@MySQL_path@/lib/mysql -lmysqlpp
@@ -124,6 +127,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(libroseSqlite3xConnection) \
+   $(libsideEffect_LIBS) \
    $(libroseQtExtension) \
    $(libroseMYSQLConnection) \
    $(libroseMYSQLLibraries)
