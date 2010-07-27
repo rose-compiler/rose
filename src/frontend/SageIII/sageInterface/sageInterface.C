@@ -7521,6 +7521,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
 {
   ROSE_ASSERT(root);
   int counter=0;
+  Rose_STL_Container<SgNode*> varList;
 
   SgVarRefExp* varRef=NULL;
   Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
@@ -7605,9 +7606,11 @@ int SageInterface::fixVariableReferences(SgNode* root)
         varRef->set_symbol(isSgVariableSymbol(realSymbol));
         counter ++;
 
-        Rose_STL_Container<SgNode*> varList;
-        VariantVector vv(V_SgVarRefExp);
-        varList = NodeQuery::queryMemoryPool(vv);
+        if (varList.empty())
+        {
+            VariantVector vv(V_SgVarRefExp);
+            varList = NodeQuery::queryMemoryPool(vv);
+        }
 
         for (Rose_STL_Container<SgNode*>::iterator i = varList.begin();
                 i != varList.end(); ++i)
