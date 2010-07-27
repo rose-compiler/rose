@@ -1,4 +1,4 @@
-#include "CFGReverserProofOfConcept.h"
+#include "akgulStyleExpressionProcessor.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "utilities/Utilities.h"
 
@@ -79,6 +79,10 @@ bool CFGReverserProofofConcept::restoreVariable(VariableRenaming::VarName variab
 {
 	//Try the redefine technique
 	if (useReachingDefinition(variable, useSite, definitions, reverseExpression))
+	{
+		return true;
+	}
+	else if (extractFromUse(variable, useSite, definitions, reverseExpression))
 	{
 		return true;
 	}
@@ -243,6 +247,44 @@ pair<VariableRenaming::VarName, SgExpression*> CFGReverserProofofConcept::getRef
 	return pair<VariableRenaming::VarName, SgExpression*>(variableRenamingAnalysis.getVarName(exp), exp);
 }
 
+
+bool CFGReverserProofofConcept::extractFromUse(VariableRenaming::VarName varName, SgNode* useSite,	VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression)
+{
+	reverseExpression = NULL;
+
+	set<SgNode*> useSites;
+
+	pair<int, SgNode*> versionDefPair;
+	foreach(versionDefPair, defintions)
+	{
+		//Get all the uses of this version
+		vector<SgNode*> usesForVersion = variableRenamingAnalysis.getAllUsesForDef(varName, versionDefPair.first);
+
+		//There might be multiple versions we require. Only add the uses that have all the desired versions
+		foreach(SgNode* potentialUseNode, usesForVersion)
+		{
+			VariableRenaming::NumNodeRenameEntry definitionsAtUse = variableRenamingAnalysis.getReachingDefsAtNodeForName(potentialUseNode, varName);
+
+			if (definitionsAtUse == defintions)
+			{
+				useSites.insert(potentialUseNode);
+			}
+		}
+	}
+
+	//We've collected all the use sites!
+	//Print them out to check if this is right
+	//Then process them to extract the variables!
+	foreach (SgNode* useSite, useSites)
+	{
+		printf("Use for '%s' on line %d: %s: %s\n", VariableRenaming::keyToString(varName).c_str(), useSite->get_file_info()->get_line(),
+				useSite->class_name().c_str(), useSite->unparseToString().c_str());
+	}
+
+	return false;
+}
+
+
 multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(VariableRenaming::VarName name, SgNode* node)
 {
 	class CollectUses : public AstBottomUpProcessing<bool>
@@ -282,6 +324,7 @@ multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(V
 
 	return traversal.result;
 }
+
 
 vector<SgExpression*> CFGReverserProofofConcept::findVarReferences(VariableRenaming::VarName var, SgNode* root)
 {

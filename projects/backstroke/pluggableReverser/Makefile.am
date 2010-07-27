@@ -10,9 +10,9 @@ noinst_LTLIBRARIES =  libBackstrokePluggableReverser.la
 
 libBackstrokePluggableReverser_ladir = .
 libBackstrokePluggableReverser_la_DEPENDENCIES =
-libBackstrokePluggableReverser_la_SOURCES = expressionProcessor.C statementProcessor.C eventProcessor.C variableVersionTable.C
+libBackstrokePluggableReverser_la_SOURCES = expressionProcessor.C statementProcessor.C eventProcessor.C variableVersionTable.C akgulStyleExpressionProcessor.C
 libBackstrokePluggableReverser_includedir = $(includedir)/backstroke
-libBackstrokePluggableReverser_include_HEADERS = expressionProcessor.h statementProcessor.h eventProcessor.h variableVersionTable.h
+libBackstrokePluggableReverser_include_HEADERS = expressionProcessor.h statementProcessor.h eventProcessor.h variableVersionTable.h akgulStyleExpressionProcessor.h
 
 EXTRA_DIST = 
 

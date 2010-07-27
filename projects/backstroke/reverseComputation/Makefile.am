@@ -10,9 +10,10 @@ noinst_LTLIBRARIES =  libBackstrokeReverser.la
 
 libBackstrokeReverser_ladir = .
 libBackstrokeReverser_la_DEPENDENCIES = 
-libBackstrokeReverser_la_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C CFGReverserProofOfConcept.C stateSaver.C 
+libBackstrokeReverser_la_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C stateSaver.C 
 libBackstrokeReverser_la_includedir = $(includedir)/backstroke
-libBackstrokeReverser_la_include_HEADERS = eventReverser.h facilityBuilder.h CFGReverserProofOfConcept.h stateSaver.h
+libBackstrokeReverser_la_include_HEADERS = eventReverser.h facilityBuilder.h stateSaver.h
+
 
 # Build the reverse code generator
 noinst_PROGRAMS = reverse stateSaving 

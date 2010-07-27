@@ -12,12 +12,19 @@ StatementObjectVec BasicStatementProcessor::process(
     if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
         return processExprStatement(exp_stmt, var_table);
 
-    if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
+	else if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
         return processVariableDeclaration(var_decl, var_table);
 
-    if (SgBasicBlock* block = isSgBasicBlock(stmt))
+	else if (SgBasicBlock* block = isSgBasicBlock(stmt))
         return processBasicBlock(block, var_table);
 
+	//The forward of a return statement is a return; the reverse is a no-op.
+	else if (isSgReturnStmt(stmt))
+	{
+		StatementObjectVec results;
+		results.push_back(StatementObject(SageInterface::copyStatement(stmt), NULL, var_table));
+		return results;
+	}
     //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
        // return processIfStmt(if_stmt, var_table);
 
