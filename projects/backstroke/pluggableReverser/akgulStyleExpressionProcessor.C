@@ -5,12 +5,13 @@
 #include <numeric>
 
 /** Initialize the reverser for a given AST. */
-CFGReverserProofofConcept::CFGReverserProofofConcept(SgProject* project) : variableRenamingAnalysis(project)
+AkgulStyleExpressionProcessor::AkgulStyleExpressionProcessor(SgProject* project) : variableRenamingAnalysis(project)
 {
 	variableRenamingAnalysis.run();
 }
 
-ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
+
+std::vector<ExpressionObject> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& variableTable)
 {
 	if (isSgAssignOp(expression))
 	{
@@ -19,25 +20,28 @@ ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
 		if (backstroke_util::IsVariableReference(assignOp->get_lhs_operand()))
 		{
 			SgExpression* reverseExpression;
-			bool success = handleAssignOp(assignOp, reverseExpression);
-			if (!success)
+			if (handleAssignOp(assignOp, reverseExpression))
 			{
-				return NULL_EXP_PAIR;
-			}
-			
-			string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
-			printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
-					expression->unparseToString().c_str(), reverseExpString.c_str());
+				string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
+				printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
+						expression->unparseToString().c_str(), reverseExpString.c_str());
 
-			return ExpPair(SageInterface::copyExpression(assignOp), reverseExpression);
+				//Indicate in the variable version table that we have restored this variable and return
+				VariableVersionTable newVarTable = variableTable;
+				newVarTable.reverseVersion(expression);
+				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
+				vector<ExpressionObject> result;
+				result.push_back(ExpressionObject(forwardExp, reverseExpression, newVarTable));
+				return result;
+			}
 		}
 	}
 
-	return NULL_EXP_PAIR;
+	return vector<ExpressionObject > ();
 }
 
 
-bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, SgExpression*& reverseExpression)
+bool AkgulStyleExpressionProcessor::handleAssignOp(SgAssignOp* assignOp, SgExpression*& reverseExpression)
 {
 	reverseExpression = NULL;
 	ROSE_ASSERT(assignOp != NULL);
@@ -74,7 +78,7 @@ bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, SgExpressio
  * @param reverseExpressions side-effect free expression that evaluates to the desired version of the given variable
  * @return true on success, false on failure
  */
-bool CFGReverserProofofConcept::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+bool AkgulStyleExpressionProcessor::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
 	VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression)
 {
 	//Try the redefine technique
@@ -99,7 +103,7 @@ bool CFGReverserProofofConcept::restoreVariable(VariableRenaming::VarName variab
  * @param reverseExpressions expressions that should be executed to restore the value of the variable
  * @return  true on success, false on failure
  */
-bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName destroyedVarName,
+bool AkgulStyleExpressionProcessor::useReachingDefinition(VariableRenaming::VarName destroyedVarName,
 			SgNode* useSite, VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression)
 {
 	reverseExpression = NULL;
@@ -215,7 +219,7 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName 
 }
 
 /** Returns true if an expression calls any functions or modifies any variables. */
-bool CFGReverserProofofConcept::isModifyingExpression(SgExpression* expr)
+bool AkgulStyleExpressionProcessor::isModifyingExpression(SgExpression* expr)
 {
 	//TODO: Make this work with functions on the whitelist that we know are side-effect free
 	//e.g. abs(), cos(), pow()
@@ -237,7 +241,7 @@ bool CFGReverserProofofConcept::isModifyingExpression(SgExpression* expr)
 /** Returns the variable name referred by the expression. Also returns
  *  the AST expression for referring to that variable (using the variable renaming analysis).
   * Handles comma ops correctly. */
-pair<VariableRenaming::VarName, SgExpression*> CFGReverserProofofConcept::getReferredVariable(SgExpression* exp)
+pair<VariableRenaming::VarName, SgExpression*> AkgulStyleExpressionProcessor::getReferredVariable(SgExpression* exp)
 {
 	if (SgCommaOpExp* commaOp = isSgCommaOpExp(exp))
 	{
@@ -248,7 +252,7 @@ pair<VariableRenaming::VarName, SgExpression*> CFGReverserProofofConcept::getRef
 }
 
 
-bool CFGReverserProofofConcept::extractFromUse(VariableRenaming::VarName varName, SgNode* useSite,	VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression)
+bool AkgulStyleExpressionProcessor::extractFromUse(VariableRenaming::VarName varName, SgNode* useSite,	VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression)
 {
 	reverseExpression = NULL;
 
@@ -285,7 +289,7 @@ bool CFGReverserProofofConcept::extractFromUse(VariableRenaming::VarName varName
 }
 
 
-multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(VariableRenaming::VarName name, SgNode* node)
+multimap<int, SgExpression*> AkgulStyleExpressionProcessor::collectUsesForVariable(VariableRenaming::VarName name, SgNode* node)
 {
 	class CollectUses : public AstBottomUpProcessing<bool>
 	{
@@ -326,7 +330,7 @@ multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(V
 }
 
 
-vector<SgExpression*> CFGReverserProofofConcept::findVarReferences(VariableRenaming::VarName var, SgNode* root)
+vector<SgExpression*> AkgulStyleExpressionProcessor::findVarReferences(VariableRenaming::VarName var, SgNode* root)
 {
 	class SearchTraversal : public AstTopDownProcessing<bool>
 	{

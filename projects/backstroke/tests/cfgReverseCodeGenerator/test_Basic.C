@@ -1,4 +1,4 @@
-/*struct Line
+struct Line
 {
 	Line()
 	{
@@ -6,7 +6,7 @@
 	}
 	
 	int t;
-};*/
+};
 
 struct State
 {
@@ -21,15 +21,18 @@ int reverseMe(int in, State* state)
 	in = state->x;
 
 	int a = 12 * in + in;
-	in = 17;
+	in = state->y;
 	int b = in / 4;
 
 	int i;
 	i = 3;
 	i = b;
 
-	//Line l;
-	//l.t = 3; //How is this undone?
+	//The following test fails
+	//Line l1;
+	//Line l = l1;
+	//l.t = 3;
+
 
 	//Swap a and b
 	int t = a;

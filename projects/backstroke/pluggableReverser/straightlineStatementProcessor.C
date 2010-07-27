@@ -126,13 +126,13 @@ vector<StatementObject> StraightlineStatementProcessor::processBasicBlock(SgBasi
 	}
 
 	//Before exiting scope, store all local variables
-	foreach(SgStatement* stmt, scopeExitStores)
+	reverse_foreach(SgStatement* stmt, scopeExitStores)
 	{
 		forwardBody->append_statement(stmt);
 	}
 
 	//Restore all local variables upon returning into the scope
-	foreach(SgStatement* stmt, localVarDeclarations)
+	reverse_foreach(SgStatement* stmt, localVarDeclarations)
 	{
 		reverseBody->prepend_statement(stmt);
 	}

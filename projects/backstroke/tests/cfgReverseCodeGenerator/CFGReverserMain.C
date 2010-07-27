@@ -9,6 +9,7 @@
 #include "pluggableReverser/expressionProcessor.h"
 #include "pluggableReverser/statementProcessor.h"
 #include "pluggableReverser/straightlineStatementProcessor.h"
+#include "pluggableReverser/akgulStyleExpressionProcessor.h"
 
 
 int main(int argc, char** argv)
@@ -35,17 +36,19 @@ int main(int argc, char** argv)
     VariableRenaming var_renaming(project);
     var_renaming.run();
 	EventProcessor event_processor(NULL, &var_renaming);
-	
-    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+
+	//Add the processors in order of priority. The lower ones will be used only if higher ones do not produce results
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
+    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+
 	event_processor.addStatementProcessor(new StraightlineStatementProcessor);
 
 	//Call the reverser and get the results
 	SageBuilder::pushScopeStack(globalScope);
 	vector<FuncDeclPair> forwardReversePairs = event_processor.processEvent(functionDeclaration);
 	vector<SgVariableDeclaration*> generatedVariables = event_processor.getAllStackDeclarations();
-	//vector<SgAssignOp*> generatedVariableInitializations = reverser.getVarInitializers();
 
 	//Insert all the generated functions right after the original function
 	foreach(FuncDeclPair originalAndInstrumented, forwardReversePairs)
@@ -61,17 +64,6 @@ int main(int argc, char** argv)
 	{
 		SageInterface::prependStatement(var, globalScope);
 	}
-
-	//Find main and insert the variable initializations in it
-	/*SgFunctionDeclaration* mainDeclaration = SageInterface::findMain(project);
-	mainDeclaration = isSgFunctionDeclaration(mainDeclaration->get_definingDeclaration());
-	ROSE_ASSERT(mainDeclaration != NULL);
-	SgFunctionDefinition* mainDefinition = mainDeclaration->get_definition();
-
-	reverse_foreach(SgAssignOp* varInitOp, generatedVariableInitializations)
-	{
-		SageInterface::prependStatement(SageBuilder::buildExprStatement(varInitOp), mainDefinition->get_body());
-	}*/
 
 	//Add the header file that includes functions called by the instrumented code
 	string includes = "#include \"rctypes.h\"\n";
