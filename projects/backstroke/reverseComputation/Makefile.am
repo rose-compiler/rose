@@ -15,11 +15,13 @@ include_HEADERS = eventReverser.h facilityBuilder.h utilities.h
 libBackstrokeReverser_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the reverse code generator
-bin_PROGRAMS = reverse 
+noinst_PROGRAMS = reverse stateSavingEXE
 
 reverse_SOURCES =  main.C
 reverse_LDADD =  libBackstrokeReverser.la 
 
+stateSavingEXE_SOURCES = stateSavingMain.C
+stateSavingEXE_LDADD = libBackstrokeReverser.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
 EXTRA_DIST = test
 
