@@ -40,12 +40,12 @@ extern void simulate_signal(int sig);
 
 using namespace std;
 
-static void do_mmap(LinuxMachineState& ms, uint32_t start, uint32_t length, int prot, int flags, int fd, uint32_t offset) {
+static void do_mmap(const char *fname, LinuxMachineState& ms, uint32_t start, uint32_t length, int prot, int flags, int fd, uint32_t offset) {
 #if 1
     fprintf(stderr,
-            "  mmap(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
+            "  %s(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
             ", fd=%d, offset=0x%08"PRIx32")\n", 
-            start, length, prot, flags, fd, offset);
+            fname, start, length, prot, flags, fd, offset);
 #endif
     length = (length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     size_t lengthInPages = length / PAGE_SIZE;
@@ -108,8 +108,8 @@ static void do_mmap(LinuxMachineState& ms, uint32_t start, uint32_t length, int 
 }
 
 static int simulate_ioctl(LinuxMachineState& ms, int fd, uint32_t cmd, uint32_t arg_ptr) {
-#ifdef DEBUG
-  fprintf(stdout, "ioctl(%d, 0x%lx, 0x%lx) --> ", fd, cmd, arg_ptr);
+#if 1
+    fprintf(stderr, "  ioctl(fd=%d, cmd=%"PRIu32", arg_va=0x%08"PRIx32")\n", fd, cmd, arg_ptr);
 #endif
   int result = -ENOSYS;
   switch (cmd) {
@@ -226,6 +226,9 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
       uint32_t count = ms.gprs[x86_gpr_dx];
+#if 1
+      fprintf(stderr, "  read(fd=%d, buf=0x%08"PRIx32", size=%"PRIu32")\n", fd, buf, count);
+#endif
       char sysbuf[count];
       ssize_t result = read(fd, sysbuf, count);
       ms.gprs[x86_gpr_ax] = result;
@@ -241,6 +244,9 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
       uint32_t count = ms.gprs[x86_gpr_dx];
+#if 1
+      fprintf(stderr, "  write(fd=%d, buf=0x%08"PRIx32", size=%"PRIu32")\n", fd, buf, count);
+#endif
       char sysbuf[count];
       ms.memory.readMultiple((uint8_t*)sysbuf, count, buf);
       ssize_t result = write(fd, sysbuf, count);
@@ -257,29 +263,23 @@ void linuxSyscall(LinuxMachineState& ms) {
       if (flags & O_CREAT) {
 	mode = ms.gprs[x86_gpr_dx];
       }
-#ifdef DEBUG
-      fprintf(stdout, "Opening file '%s' with flags 0%lo and mode 0%lo\n", &fn[0], flags, mode);
+#if 1
+      fprintf(stderr, "  open(name=0x%08"PRIx32" \"%s\", flags=0x%"PRIx32", mode=%04"PRIo32")\n", 
+              filename, fn.c_str(), flags, mode);
 #endif
-      if (string(&fn[0]) != "/etc/passwd") {
-	int fd = open(&fn[0], flags, mode);
-	if (fd == -1) {
+      int fd = open(&fn[0], flags, mode);
+      if (fd == -1) {
 	  ms.gprs[x86_gpr_ax] = (uint32_t)(-errno);
-	} else {
-	  ms.gprs[x86_gpr_ax] = fd;
-	}
-#ifdef DEBUG
-	fprintf(stdout, "File descriptor or error is %d\n", (int)(ms.gprs[x86_gpr_ax]));
-#endif
       } else {
-	ms.gprs[x86_gpr_ax] = (uint32_t)(-ENOENT);
+	  ms.gprs[x86_gpr_ax] = fd;
       }
       break;
     }
 
     case 6: { // close
       int fd = (int)(ms.gprs[x86_gpr_bx]);
-#ifdef DEBUG
-      fprintf(stdout, "Closing %d\n", fd);
+#if 1
+      fprintf(stderr, "  close(%d)\n", fd);
 #endif
       if (fd == 2) { // Don't allow closing stderr since we use it for debugging
 	ms.gprs[x86_gpr_ax] = (uint32_t)(-EPERM);
@@ -352,6 +352,9 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t pathname = ms.gprs[x86_gpr_bx];
       int mode = (int)ms.gprs[x86_gpr_cx];
       string sys_pathname = ms.memory.readString(pathname);
+#if 1
+      fprintf(stderr, "  access(name=0x%08"PRIx32" \"%s\", mode=%04o)\n", pathname, sys_pathname.c_str(), mode);
+#endif
       int result = access(&sys_pathname[0], mode);
       if (result == -1) result = -errno;
       ms.gprs[x86_gpr_ax] = (uint32_t)result;
@@ -507,21 +510,15 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t flags = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 12);
       uint32_t fd = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 16);
       uint32_t offset = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 20);
-#ifdef DEBUG
-      fprintf(stdout, "old_mmap(0x%08X, 0x%08X, 0%o, 0x%08X, %d, 0x%08X)\n", start, length, prot, flags, fd, offset);
-#endif
-      do_mmap(ms, start, length, prot, flags, fd, offset);
-#ifdef DEBUG
-      ms.dumpRegs();
-#endif
+      do_mmap("mmap", ms, start, length, prot, flags, fd, offset);
       break;
     }
 
     case 91: { // munmap
       uint32_t start = ms.gprs[x86_gpr_bx];
-#ifdef DEBUG
       uint32_t length = ms.gprs[x86_gpr_cx];
-      fprintf(stdout, "munmap(0x%08"PRIX32", 0x%08"PRIX32")\n", start, length);
+#if 1
+      fprintf(stderr, "  munmap(va=0x%08"PRIx32", size=0x%08"PRIx32")\n", start, length);
 #endif
       Page& p = ms.memory.findPage(start);
       int result = munmap(p.real_base, PAGE_SIZE);
@@ -557,8 +554,8 @@ void linuxSyscall(LinuxMachineState& ms) {
     }
 
     case 122: { // uname
-#ifdef DEBUG
-      fprintf(stderr, "newuname(0x%"PRIx64")\n", ms.gprs[x86_gpr_bx]);
+#if 1
+      fprintf(stderr, "  uname(0x%"PRIx32")\n", ms.gprs[x86_gpr_bx]);
 #endif
       ms.memory.writeMultiple( // The next 6 strings are exactly 65 characters each
           (const uint8_t*)
@@ -579,8 +576,8 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t addr = ms.gprs[x86_gpr_bx];
       uint32_t len = ms.gprs[x86_gpr_cx];
       uint32_t perms = ms.gprs[x86_gpr_dx];
-#ifdef DEBUG
-      fprintf(stderr, "mprotect(%"PRIX32", %"PRIX32", %"PRIo32")\n", addr, len, perms);
+#if 1
+      fprintf(stderr, "  mprotect(va=0x%08"PRIx32", size=0x%08"PRIx32", perm=%04"PRIo32")\n", addr, len, perms);
 #endif
       for (uint32_t i = 0; i < len; i += PAGE_SIZE) {
         Page& p = ms.memory.findPage(addr + i);
@@ -643,10 +640,16 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t iov = ms.gprs[x86_gpr_cx];
       int iovcnt = (int)ms.gprs[x86_gpr_dx];
+#if 1
+      fprintf(stderr, "  writev(fd=%d, iov=0x%08"PRIx32", nentries=%d\n", fd, iov, iovcnt);
+#endif
       uint32_t user_result = 0;
       for (int i = 0; i < iovcnt; ++i) {
 	uint32_t buf = ms.memory.read<4>(iov + 8 * i);
 	uint32_t len = ms.memory.read<4>(iov + 8 * i + 4);
+#if 1
+        fprintf(stderr, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf, len);
+#endif
 	char my_buf[len];
 	ms.memory.readMultiple((uint8_t*)my_buf, len, buf);
 	int result = write(fd, my_buf, len);
@@ -801,13 +804,7 @@ sigaction_done:
       uint32_t flags = ms.gprs[x86_gpr_si];
       uint32_t fd = ms.gprs[x86_gpr_di];
       uint32_t offset = ms.gprs[x86_gpr_bp];
-#ifdef DEBUG
-      fprintf(stdout, "mmap2(0x%08X, 0x%08X, 0%o, 0x%08X, %d, 0x%08X)\n", start, length, prot, flags, fd, offset);
-#endif
-      do_mmap(ms, start, length, prot, flags, fd, offset * PAGE_SIZE);
-#ifdef DEBUG
-      ms.dumpRegs();
-#endif
+      do_mmap("mmap2", ms, start, length, prot, flags, fd, offset * PAGE_SIZE);
       break;
     }
 
@@ -816,20 +813,15 @@ sigaction_done:
       uint32_t buf = ms.gprs[x86_gpr_cx];
       struct stat64 sys_buf;
       string sys_filename = ms.memory.readString(filename);
-#ifdef DEBUG
-      fprintf(stderr, "stat64 on %s\n", &sys_filename[0]);
+#if 1
+      fprintf(stderr, "  stat64(name=0x%08"PRIx32" \"%s\", statbuf=0x%08"PRIx32")\n",
+              filename, &sys_filename[0], buf);
 #endif
       int result = stat64(&sys_filename[0], &sys_buf);
-#ifdef DEBUG
-      fprintf(stderr, "---> %d\n", result);
-#endif
       if (result == -1) result = -errno;
       if (result >= 0) {
 	copyInStat(ms, sys_buf, buf);
       }
-#ifdef DEBUG
-      fprintf(stdout, "stat64(\"%s\") -> %d = %s\n", &sys_filename[0], result, (result < 0 ? strerror(-result) : ""));
-#endif
       ms.gprs[x86_gpr_ax] = (uint32_t)result;
       break;
     }
@@ -852,6 +844,9 @@ sigaction_done:
     case 197: { // fstat64
       int fildes = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
+#if 1
+      fprintf(stderr, "  fstat64(fd=%d, statbuf=0x%08"PRIx32")\n", fildes, buf);
+#endif
       struct stat64 sys_buf;
       int result = fstat64(fildes, &sys_buf);
       if (result == -1) result = -errno;
@@ -981,7 +976,9 @@ sigaction_done:
 
     case 252: { // exit_group
       int status = (int)ms.gprs[x86_gpr_bx];
-      fprintf(stderr, "Exiting using exit_group status %d\n", status);
+#if 1
+      fprintf(stderr, "  exit_group(%d)\n", status);
+#endif
       _exit(status);
       break;
     }
