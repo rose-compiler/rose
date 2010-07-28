@@ -87,8 +87,8 @@ struct MachineState {
     ROSE_ASSERT (address + (Len / 8) - 1 <= segregsShadow[segreg].limit);
     uint64_t retval = memory.read<Len / 8>(address + segregsShadow[segreg].base);
 #if 1
-    fprintf(stderr, "  readMemory<%zu>(0x%08"PRIx32") -> 0x%08"PRIx64"\n", 
-            Len, address+segregsShadow[segreg].base, retval);
+    fprintf(stderr, "  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n", 
+            Len, segregsShadow[segreg].base, address, address+segregsShadow[segreg].base, retval);
 #endif
     return retval;
   }
@@ -100,8 +100,8 @@ struct MachineState {
     ROSE_ASSERT (address + (Len / 8) - 1 <= segregsShadow[segreg].limit);
     memory.write<Len / 8>(address + segregsShadow[segreg].base, data);
 #if 1
-    fprintf(stderr, "  writeMemory<%zu>(0x%08"PRIx32", 0x%08"PRIx64")\n", 
-            Len, address+segregsShadow[segreg].base, data);
+    fprintf(stderr, "  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n", 
+            Len, segregsShadow[segreg].base, address, address+segregsShadow[segreg].base, data);
 #endif
   }
 };

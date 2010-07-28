@@ -645,6 +645,7 @@ main(int argc, char *argv[])
             fprintf(stderr, "[%07zu] %s\n", ninsns++, unparseInstructionWithAddress(insn).c_str());
 #endif
             t.processInstruction(insn);
+            policy.dump_registers();
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();

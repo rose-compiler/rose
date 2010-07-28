@@ -369,6 +369,7 @@ int main(int argc, char** argv) {
                     ninsns++, unparseInstructionWithAddress(policy.id[policy.ms.ip]).c_str()),
 #endif
             t.processInstruction(policy.id[policy.ms.ip]);
+            policy.ms.dumpRegs();
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
