@@ -153,7 +153,7 @@ static int simulate_ioctl(LinuxMachineState& ms, int fd, uint32_t cmd, uint32_t 
     case TIOCGWINSZ: { // 0x5413 TIOCGWINSZ
       uint32_t win_ptr = arg_ptr;
       struct winsize sys_win;
-      int result = ioctl(fd, TIOCGWINSZ, &sys_win);
+      result = ioctl(fd, TIOCGWINSZ, &sys_win);
       if (result == -1) {
 	result = (uint32_t)(-errno);
       } else {
