@@ -253,7 +253,7 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t filename = ms.gprs[x86_gpr_bx];
       string fn = ms.memory.readString(filename);
       uint32_t flags = ms.gprs[x86_gpr_cx];
-      uint32_t mode = 0;
+      int32_t mode = 0;
       if (flags & O_CREAT) {
 	mode = ms.gprs[x86_gpr_dx];
       }
