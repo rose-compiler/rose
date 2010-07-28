@@ -13,7 +13,7 @@ public:
     /* Identical to parent class but with this minor difference:  Any section that has no mapping information but is known to
      * contain code (SgAsmGenericSection::get_contains_code() is true) is mapped to an otherwise unused area of the virtual
      * memory. */
-    virtual rose_addr_t align_values(SgAsmGenericSection*, rose_addr_t *va, rose_addr_t *mem_size,
+    virtual rose_addr_t align_values(SgAsmGenericSection*, Contribution, rose_addr_t *va, rose_addr_t *mem_size,
                                      rose_addr_t *offset, rose_addr_t *file_size, const MemoryMap *current);
 };
 
