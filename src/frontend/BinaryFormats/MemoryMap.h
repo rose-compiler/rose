@@ -99,6 +99,13 @@ public:
             return mapperms;
         }
 
+        /** Modifies the mapping permissions.  The mapping permissions are orthogonal to is_read_only(). For instance, an
+         *  element can indicate that memory would be mapped read-only by the loader even when the underlying storage in ROSE
+         *  is writable. */
+        void set_mapperms(unsigned new_perms) {
+            mapperms = new_perms;
+        }
+
         /** Returns the buffer to which the offset applies.  The base for anonymous elements is probably not of interest to a
          *  caller since the implementation is free to allocate anonymous memory as it sees fit (in fact, it might not even
          *  use a large contiguous buffer). */
@@ -171,6 +178,28 @@ public:
          *  for this anonymous element if necessary and initialize it with the contents of the @p other element. The @p
          *  oldsize argument is the size of this element before we merged it with the other. */
         void merge_anonymous(const MapElement &other, size_t oldsize);
+
+        /** Changes the virtual address of a mapped region.  This is private because changing the starting address can cause
+         *  the mapping to become inconsistent. In general, it is safe to split a map element into smaller pieces and this
+         *  method can be used to adjust the starting addresses of those pieces. The set_offset() method should also be called
+         *  when adjusting the starting address. */
+        void set_va(rose_addr_t new_va) {
+            va = new_va;
+        }
+
+        /** Changes the starting offset with respect to the 'base'.  The starting offset sometimes needs to be adjusted when
+         *  splitting a map element into multiple parts. */
+        void set_offset(rose_addr_t new_offset) {
+            offset = new_offset;
+        }
+
+        /** Changes the size of a mapped region. This is private because changing the size can cause the mapping to become
+         *  inconsistent. In general, it is safe to split a map element into smaller pieces and this method can be used to
+         *  adjust the size of those pieces. */
+        void set_size(size_t sz) {
+            ROSE_ASSERT(sz>0);
+            size = sz;
+        }
 
         rose_addr_t va;                 /**< Virtual address for start of region */
         size_t size;                    /**< Number of bytes in region */
@@ -261,6 +290,9 @@ public:
 
     /** Returns the highest mapped address. */
     rose_addr_t highest_va() const;
+
+    /** Sets protection bits for the specified address range.  The entire address range must already be mapped. */
+    void mprotect(const MapElement &elmt);
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output. */
