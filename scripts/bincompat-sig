@@ -55,6 +55,7 @@ my @canonical_repos = qw(
 	file:///usr/casc/overture/ROSE/git/ROSE.git
 	http://rosecompiler.org/rose.git
 	http://www.rosecompiler.org/rose.git
+	ssh://liaoch@portal-auth.nersc.gov/project/projectdirs/rosecompiler/www.rosecompiler.org/rose.git
 );
 
 # Given a remote repository URL, returns the name of the canonical branch iff

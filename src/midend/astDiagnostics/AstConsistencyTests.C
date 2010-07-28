@@ -3120,16 +3120,42 @@ TestExpressionTypes::visit ( SgNode* node )
 	if (expression != NULL)
 	{
 		bool verifiedLValue = false;
+		bool verifiedDefinable = false;
 		switch (node->variantT())
 		{
 			case V_SgExpressionRoot: 
 			case V_SgMinusOp:            
 			case V_SgUnaryAddOp: 
 			case V_SgNotOp:           
+			break;
 			case V_SgPointerDerefExp: 
+			{
+				verifiedLValue = true;
+				break;
+			}
 			case V_SgAddressOfOp:    
+			{
+				verifiedLValue = true;
+				break;
+			}
 			case V_SgMinusMinusOp:       
+			{
+				SgMinusMinusOp* ppo = isSgMinusMinusOp(node);
+				if (ppo->get_mode() == SgUnaryOp::postfix)
+					verifiedLValue = false;
+				else
+					verifiedLValue = true;
+				break;
+			}
 			case V_SgPlusPlusOp: 
+			{
+				SgPlusPlusOp* ppo = isSgPlusPlusOp(node);
+				if (ppo->get_mode() == SgUnaryOp::postfix)
+					verifiedLValue = false;
+				else
+					verifiedLValue = true;
+				break;
+			}
 			case V_SgBitComplementOp: 
 			break;
 			case V_SgCastExp:
@@ -3143,10 +3169,7 @@ TestExpressionTypes::visit ( SgNode* node )
 					case SgCastExp::e_static_cast:
 					case SgCastExp::e_dynamic_cast:
 					case SgCastExp::e_reinterpret_cast:
-						if (castExp->get_type()->get_ref_to() != NULL)
-							verifiedLValue = true;
-						else
-							verifiedLValue = false;
+						verifiedLValue = SageInterface::isReferenceType(castExp->get_type()) != NULL;
 						break;
 					case SgCastExp::e_unknown:
 					case SgCastExp::e_default:
@@ -3164,18 +3187,22 @@ TestExpressionTypes::visit ( SgNode* node )
 			break;
 			case V_SgArrowExp:       
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgDotExp:           
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgDotStarOp:       
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgArrowStarOp:      
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgEqualityOp:    
@@ -3198,6 +3225,9 @@ TestExpressionTypes::visit ( SgNode* node )
 			break;
 			case V_SgCommaOpExp:       
 			{
+				SgCommaOpExp* comma = isSgCommaOpExp(node);
+				ROSE_ASSERT(comma);
+				verifiedLValue = comma->get_rhs_operand()->isLValue();
 				break;
 			}
 			case V_SgLshiftOp:      
@@ -3205,6 +3235,7 @@ TestExpressionTypes::visit ( SgNode* node )
 			break;
 			case V_SgPntrArrRefExp:  
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgScopeOp:          
@@ -3216,46 +3247,57 @@ TestExpressionTypes::visit ( SgNode* node )
 			}
 			case V_SgAssignOp:        
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgPlusAssignOp:     
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgMinusAssignOp: 
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgAndAssignOp:    
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgIorAssignOp:    
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgMultAssignOp:     
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgDivAssignOp:     
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgModAssignOp:      
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgXorAssignOp:   
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgLshiftAssignOp: 
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgRshiftAssignOp: 
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgExponentiationOp: 
@@ -3263,6 +3305,7 @@ TestExpressionTypes::visit ( SgNode* node )
 			break;
 			case V_SgPointerAssignOp:  
 			{
+				verifiedDefinable = true;
 				break;
 			}
 			case V_SgUserDefinedBinaryOp: 
@@ -3297,6 +3340,9 @@ TestExpressionTypes::visit ( SgNode* node )
 			break;
 			case V_SgVarRefExp:           
 			{
+				verifiedLValue = true;
+				SgVarRefExp* var = isSgVarRefExp(node);
+				verifiedDefinable = !SageInterface::isConstType(var->get_type());
 				break;
 			}
 			case V_SgClassNameRefExp:          
@@ -3307,10 +3353,22 @@ TestExpressionTypes::visit ( SgNode* node )
 			}
 			case V_SgMemberFunctionRefExp:    
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgValueExp:            
+			break;
 			case V_SgFunctionCallExp:     
+			{
+				SgFunctionCallExp* funOp = isSgFunctionCallExp(node);
+				ROSE_ASSERT(funOp);
+				SgType* type = funOp->get_function()->get_type();
+				while (SgTypedefType* type2 = isSgTypedefType(type))
+					type = type2->get_base_type();
+				SgFunctionType* ftype = isSgFunctionType(type);
+				verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type()) != NULL;
+				break;
+			}
 			case V_SgSizeOfOp:                 
 			case V_SgUpcLocalsizeof:
 			case V_SgUpcBlocksizeof:
@@ -3318,10 +3376,13 @@ TestExpressionTypes::visit ( SgNode* node )
 			break;
 			case V_SgTypeIdOp:            
 			{
+				verifiedLValue = true;
 				break;
 			}
 			case V_SgConditionalExp:          
 			{
+				SgConditionalExp* cond = isSgConditionalExp(node);
+				verifiedLValue = (cond->get_true_exp()->isLValue() && cond->get_false_exp()->isLValue()) && (cond->get_true_exp()->get_type() == cond->get_false_exp()->get_type());
 				break;
 			}
 			case V_SgNewExp:              
@@ -3359,6 +3420,9 @@ TestExpressionTypes::visit ( SgNode* node )
 		if (expression->isLValue() != verifiedLValue)
 			std::cout << "Node at " << node << " is sgtype " << node->variantT() << std::endl;
 		ROSE_ASSERT (expression->isLValue() == verifiedLValue);
+		if (expression->isDefinable() != verifiedDefinable)
+			std::cout << "Node at " << node << " is sgtype " << node->variantT() << std::endl;
+		ROSE_ASSERT (expression->isDefinable() == verifiedDefinable);
 	}
 #endif
 
@@ -3397,6 +3461,7 @@ TestExpressionTypes::visit ( SgNode* node )
 void
 TestMangledNames::visit ( SgNode* node )
    {
+     ROSE_ASSERT(node != NULL);
   // printf ("node = %p = %s \n",node,node->class_name().c_str());
 
      string mangledName;

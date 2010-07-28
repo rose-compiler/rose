@@ -18,7 +18,7 @@ public:
     const char *getCode() { return code; }
 
     void setOwner(SgNode *owner_, const char *code_) {
-        assert(owner);
+//        assert(owner);
 
         owner = owner_;
         code = code_;
