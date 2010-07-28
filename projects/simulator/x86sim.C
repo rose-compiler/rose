@@ -612,6 +612,35 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 243: { /*0xf3, set_thread_area*/
+            uint32_t u_info_va = readGPR(x86_gpr_bx).known_value();
+            user_desc ud;
+            size_t nread = map.read(&ud, u_info_va, sizeof ud);
+            ROSE_ASSERT(nread==sizeof ud);
+            fprintf(stderr, "  set_thread_area({%d, 0x%08x, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
+                    (int)ud.entry_number, ud.base_addr, ud.limit,
+                    ud.seg_32bit ? "32bit" : "16bit",
+                    ud.contents, ud.read_exec_only ? "read_exec" : "writable",
+                    ud.limit_in_pages ? "page_gran" : "byte_gran",
+                    ud.seg_not_present ? "not_present" : "present",
+                    ud.useable ? "usable" : "not_usable");
+            if (ud.entry_number==(unsigned)-1) {
+                for (ud.entry_number=0x33>>3; ud.entry_number<n_gdt; ud.entry_number++) {
+                    if (!gdt[ud.entry_number].useable) break;
+                }
+                ROSE_ASSERT(ud.entry_number<8192);
+                fprintf(stderr, "  assigned entry number = %d\n", (int)ud.entry_number);
+            }
+            gdt[ud.entry_number] = ud;
+            size_t nwritten = map.write(&ud, u_info_va, sizeof ud);
+            ROSE_ASSERT(nwritten==sizeof ud);
+            writeGPR(x86_gpr_ax, 0);
+            /* Reload all the segreg shadow values from the (modified) descriptor table */
+            for (size_t i=0; i<6; i++)
+                writeSegreg((X86SegmentRegister)i, readSegreg((X86SegmentRegister)i));
+            break;
+        }
+
         default: {
             fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
             abort();
