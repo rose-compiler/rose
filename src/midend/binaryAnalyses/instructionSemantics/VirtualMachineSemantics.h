@@ -260,7 +260,13 @@ private:
 
 public:
     Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0) {
-        orig_state = cur_state; /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
+        /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
+        orig_state = cur_state;
+    }
+
+    /** Returns the number of instructions processed. This counter is incremented at the beginning of each instruction. */
+    size_t get_ninsns() const {
+        return ninsns;
     }
 
     /** Returns the current state. */
