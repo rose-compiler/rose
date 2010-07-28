@@ -463,6 +463,22 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 4: { /*write*/
+            int fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t va = readGPR(x86_gpr_cx).known_value();
+            size_t sz = readGPR(x86_gpr_dx).known_value();
+            uint8_t buf[sz];
+            size_t nread = map.read(buf, va, sz);
+            ROSE_ASSERT(nread==sz);
+            ssize_t nwritten = write(fd, buf, sz);
+            if (-1==nwritten) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                writeGPR(x86_gpr_ax, nwritten);
+            }
+            break;
+        }
+
         case 5: { /*open*/
             uint32_t filename_va = readGPR(x86_gpr_bx).known_value();
             std::string filename = read_string(filename_va);
