@@ -681,9 +681,18 @@ EmulationPolicy::emulate_syscall()
             unsigned rose_perms = ((perms & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
-            uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
-            uint32_t aligned_sz = ALIGN_UP(size + va - aligned_va, PAGE_SIZE);
-            map.mprotect(MemoryMap::MapElement(aligned_va, aligned_sz, rose_perms));
+            if (va % PAGE_SIZE) {
+                writeGPR(x86_gpr_ax, -EINVAL);
+                break;
+            }
+            uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
+
+            try {
+                map.mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
+            } catch (const MemoryMap::NotMapped &e) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                break;
+            }
 
             if (debug) {
                 fprintf(debug, "  new map:\n");
@@ -751,7 +760,7 @@ EmulationPolicy::emulate_syscall()
             size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
             if (!start) {
                 try {
-                    start = map.find_free(0x40000000ul, aligned_size, PAGE_SIZE);
+                    start = map.find_free(mmap_start, aligned_size, PAGE_SIZE);
                 } catch (const MemoryMap::NoFreeSpace &e) {
                     if (debug)
                         fprintf(debug, "  (cannot satisfy request for %zu bytes)\n", e.size);
@@ -761,6 +770,8 @@ EmulationPolicy::emulate_syscall()
                 if (debug)
                     fprintf(debug, "  start = 0x%08"PRIx32"\n", start);
             }
+            if (!mmap_recycle)
+                mmap_start = std::max(mmap_start, start);
 
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
