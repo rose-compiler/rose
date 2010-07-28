@@ -19,11 +19,17 @@
 #include "VirtualMachineSemantics.h"
 
 /* These are necessary for the system call emulation */
+#include <asm/ldt.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/user.h>
+#include <sys/wait.h>
 #include <unistd.h>
+
+#ifndef HAVE_USER_DESC
+typedef modify_ldt_ldt_s user_desc;
+#endif
 
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
@@ -32,11 +38,33 @@
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
 class EmulationPolicy: public VirtualMachineSemantics::Policy {
 public:
+    struct SegmentInfo {
+        uint32_t base, limit;
+        bool present;
+        SegmentInfo(): base(0), limit(0), present(false) {}
+        SegmentInfo(const user_desc &ud) {
+            base = ud.base_addr;
+            limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
+            present = !ud.seg_not_present && ud.useable;
+        }
+    };
+
+    /* Thrown by exit system calls. */
+    struct Exit {
+        explicit Exit(int status): status(status) {}
+        int status;                             /* same value as returned by waitpid() */
+    };
+
+public:
     MemoryMap map;                              /* Describes how specimen's memory is mapped to simulator memory */
     Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
     Disassembler::InstructionMap icache;        /* Cache of disassembled instructions */
     uint32_t brk_va;                            /* Current value for brk() syscall; initialized by load() */
     uint32_t phdr_va;                           /* Virtual address for PT_PHDR ELF segment, or zero; initialized by load() */
+    static const size_t n_gdt=8192;             /* Number of global descriptor table entries */
+    user_desc gdt[n_gdt];                       /* Global descriptor table */
+    SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
+    
 #if 0
     uint32_t gsOffset;
     void (*eipShadow)();
@@ -48,13 +76,54 @@ public:
     EmulationPolicy(): disassembler(NULL), brk_va(0), phdr_va(0) {
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
             writeGPR((X86GeneralPurposeRegister)i, 0);
-        for (size_t i=0; i<VirtualMachineSemantics::State::n_segregs; i++)
-            writeSegreg((X86SegmentRegister)i, 0);
         for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
             writeFlag((X86Flag)i, 0);
         writeIP(0);
         writeFlag(x86_flag_1, true_());
         writeGPR(x86_gpr_sp, 0xc0000000ul);
+
+        memset(gdt, 0, sizeof gdt);
+        gdt[0x23>>3].entry_number = 0x23>>3;
+        gdt[0x23>>3].limit = 0x000fffff;
+        gdt[0x23>>3].seg_32bit = 1;
+        gdt[0x23>>3].read_exec_only = 1;
+        gdt[0x23>>3].limit_in_pages = 1;
+        gdt[0x23>>3].useable = 1;
+        gdt[0x2b>>3].entry_number = 0x2b>>3;
+        gdt[0x2b>>3].limit = 0x000fffff;
+        gdt[0x2b>>3].seg_32bit = 1;
+        gdt[0x2b>>3].limit_in_pages = 1;
+        gdt[0x2b>>3].useable = 1;
+
+        writeSegreg(x86_segreg_cs, 0x23);
+        writeSegreg(x86_segreg_ds, 0x2b);
+        writeSegreg(x86_segreg_es, 0x2b);
+        writeSegreg(x86_segreg_ss, 0x2b);
+        writeSegreg(x86_segreg_fs, 0x2b);
+        writeSegreg(x86_segreg_gs, 0x2b);
+    }
+
+    /* Print machine register state for debugging */
+    void dump_registers() const {
+        fprintf(stderr, "  Machine state:\n");
+        fprintf(stderr, "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
+                readGPR(x86_gpr_ax).known_value(), readGPR(x86_gpr_bx).known_value(),
+                readGPR(x86_gpr_cx).known_value(), readGPR(x86_gpr_dx).known_value());
+        fprintf(stderr, "    esi=0x%08"PRIx64" edi=0x%08"PRIx64" ebp=0x%08"PRIx64" esp=0x%08"PRIx64" eip=0x%08"PRIx64"\n",
+                readGPR(x86_gpr_si).known_value(), readGPR(x86_gpr_di).known_value(),
+                readGPR(x86_gpr_bp).known_value(), readGPR(x86_gpr_sp).known_value(),
+                get_ip().known_value());
+        for (int i=0; i<6; i++) {
+            X86SegmentRegister sr = (X86SegmentRegister)i;
+            fprintf(stderr, "    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
+                    segregToString(sr), readSegreg(sr).known_value(), segreg_shadow[sr].base, segreg_shadow[sr].limit,
+                    segreg_shadow[sr].present?"yes":"no");
+        }
+        fprintf(stderr, "    flags: %s %s %s %s %s %s %s\n", 
+                readFlag(x86_flag_of).known_value()?"ov":"nv", readFlag(x86_flag_df).known_value()?"dn":"up",
+                readFlag(x86_flag_sf).known_value()?"ng":"pl", readFlag(x86_flag_zf).known_value()?"zr":"nz",
+                readFlag(x86_flag_af).known_value()?"ac":"na", readFlag(x86_flag_pf).known_value()?"pe":"po", 
+                readFlag(x86_flag_cf).known_value()?"cy":"nc");
     }
 
     /* Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
@@ -87,6 +156,11 @@ public:
     /* Copies a stat buffer into specimen memory. */
     void copy_stat64(struct stat64 *sb, uint32_t va);
 
+    /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
+    VirtualMachineSemantics::ValueType<1> undefined_() {
+        return 1;
+    }
+
     /* Called by X86InstructionSemantics */
     void hlt() {
         fprintf(stderr, "hlt\n");
@@ -111,23 +185,35 @@ public:
     }
 #endif
 
+    /* Write value to a segment register and its shadow. */
+    void writeSegreg(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<16> &val) {
+        ROSE_ASSERT(3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
+        VirtualMachineSemantics::Policy::writeSegreg(sr, val);
+        segreg_shadow[sr] = gdt[val.known_value()>>3];
+        ROSE_ASSERT(segreg_shadow[sr].present);
+    }
+
     /* Reads memory from the memory map rather than the super class. */
     template <size_t Len> VirtualMachineSemantics::ValueType<Len>
-    readMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr,
+    readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
                const VirtualMachineSemantics::ValueType<1> cond) const {
         ROSE_ASSERT(0==Len % 8 && Len<=64);
-        ROSE_ASSERT(addr.is_known());
+        uint32_t base = segreg_shadow[sr].base;
+        uint32_t offset = addr.known_value();
+        ROSE_ASSERT(offset <= segreg_shadow[sr].limit);
+        ROSE_ASSERT(offset + (Len/8) - 1 <= segreg_shadow[sr].limit);
+
         ROSE_ASSERT(cond.is_known());
         if (cond.known_value()) {
             uint8_t buf[Len/8];
-            size_t nread = map.read(buf, addr.known_value(), Len/8);
+            size_t nread = map.read(buf, base+offset, Len/8);
             ROSE_ASSERT(nread==Len/8);
             uint64_t result = 0;
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 result |= buf[j] << i;
 #if 1
-            fprintf(stderr, "  readMemory<%zu>(0x%08"PRIx64") -> 0x%08"PRIx64"\n",
-                    Len, addr.known_value(), VirtualMachineSemantics::ValueType<Len>(result).known_value());
+            fprintf(stderr, "  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n",
+                    Len, base, offset, base+offset, VirtualMachineSemantics::ValueType<Len>(result).known_value());
 #endif
             return result;
         } else {
@@ -137,20 +223,24 @@ public:
 
     /* Writes memory to the memory map rather than the super class. */
     template <size_t Len> void
-    writeMemory(X86SegmentRegister segreg, const VirtualMachineSemantics::ValueType<32> &addr,
+    writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
                 const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
         ROSE_ASSERT(0==Len % 8 && Len<=64);
-        ROSE_ASSERT(addr.is_known());
+        uint32_t base = segreg_shadow[sr].base;
+        uint32_t offset = addr.known_value();
+        ROSE_ASSERT(offset <= segreg_shadow[sr].limit);
+        ROSE_ASSERT(offset + (Len/8) - 1 <= segreg_shadow[sr].limit);
         ROSE_ASSERT(data.is_known());
         ROSE_ASSERT(cond.is_known());
         if (cond.known_value()) {
 #if 1
-            fprintf(stderr, "  writeMemory<%zu>(0x%08"PRIx64", 0x%08"PRIx64")\n", Len, addr.known_value(), data.known_value());
+            fprintf(stderr, "  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n",
+                    Len, base, offset, base+offset, data.known_value());
 #endif
             uint8_t buf[Len/8];
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 buf[j] = (data.known_value() >> i) & 0xff;
-            size_t nwritten = map.write(buf, addr.known_value(), Len/8);
+            size_t nwritten = map.write(buf, base+offset, Len/8);
             ROSE_ASSERT(nwritten==Len/8);
         }
     }
@@ -380,6 +470,22 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 4: { /*write*/
+            int fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t va = readGPR(x86_gpr_cx).known_value();
+            size_t sz = readGPR(x86_gpr_dx).known_value();
+            uint8_t buf[sz];
+            size_t nread = map.read(buf, va, sz);
+            ROSE_ASSERT(nread==sz);
+            ssize_t nwritten = write(fd, buf, sz);
+            if (-1==nwritten) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                writeGPR(x86_gpr_ax, nwritten);
+            }
+            break;
+        }
+
         case 5: { /*open*/
             uint32_t filename_va = readGPR(x86_gpr_bx).known_value();
             std::string filename = read_string(filename_va);
@@ -438,6 +544,15 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 91: { /*0x5b, munmap*/
+            uint32_t va = readGPR(x86_gpr_bx).known_value();
+            uint32_t sz = readGPR(x86_gpr_cx).known_value();
+            uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
+            uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
+            map.erase(MemoryMap::MapElement(aligned_va, aligned_sz));
+            break;
+        }
+
         case 122: { /*0x7a, uname*/
             char buf[6*65];
             memset(buf, ' ', sizeof buf);
@@ -452,6 +567,60 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 125: { /*0x7d, mprotect*/
+            uint32_t va = readGPR(x86_gpr_bx).known_value();
+            uint32_t size = readGPR(x86_gpr_cx).known_value();
+            uint32_t perms = readGPR(x86_gpr_dx).known_value();
+
+            fprintf(stderr, "  original map:\n");
+            map.dump(stderr, "    ");
+            
+            unsigned rose_perms = ((perms & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
+                                  ((perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
+                                  ((perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+            uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
+            uint32_t aligned_sz = ALIGN_UP(size + va - aligned_va, PAGE_SIZE);
+            map.mprotect(MemoryMap::MapElement(aligned_va, aligned_sz, rose_perms));
+
+            fprintf(stderr, "  new map:\n");
+            map.dump(stderr, "    ");
+            break;
+        }
+
+        case 146: { /*0x92, writev*/
+            uint32_t fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t iov_va = readGPR(x86_gpr_cx).known_value();
+            int niov = readGPR(x86_gpr_dx).known_value();
+            uint32_t retval = 0;
+            for (int i=0; i<niov; i++) {
+                uint32_t buf_va_le;
+                size_t nread = map.read(&buf_va_le, iov_va+i*8+0, 4);
+                ROSE_ASSERT(4==nread);
+                uint32_t buf_va = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
+                
+                uint32_t buf_sz_le;
+                nread = map.read(&buf_sz_le, iov_va+i*8+4, 4);
+                ROSE_ASSERT(4==nread);
+                uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
+                
+                uint8_t buf[buf_sz];
+                nread = map.read(buf, buf_va, buf_sz);
+                ROSE_ASSERT(nread==buf_sz);
+                ssize_t nwritten = write(fd, buf, buf_sz);
+                if (-1==nwritten) {
+                    retval = -errno;
+                    break;
+                } else if (nwritten<buf_sz) {
+                    retval += nwritten;
+                    break;
+                } else {
+                    retval += nwritten;
+                }
+            }
+            writeGPR(x86_gpr_ax, retval);
+            break;
+        }
+            
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
@@ -529,6 +698,41 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 243: { /*0xf3, set_thread_area*/
+            uint32_t u_info_va = readGPR(x86_gpr_bx).known_value();
+            user_desc ud;
+            size_t nread = map.read(&ud, u_info_va, sizeof ud);
+            ROSE_ASSERT(nread==sizeof ud);
+            fprintf(stderr, "  set_thread_area({%d, 0x%08x, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
+                    (int)ud.entry_number, ud.base_addr, ud.limit,
+                    ud.seg_32bit ? "32bit" : "16bit",
+                    ud.contents, ud.read_exec_only ? "read_exec" : "writable",
+                    ud.limit_in_pages ? "page_gran" : "byte_gran",
+                    ud.seg_not_present ? "not_present" : "present",
+                    ud.useable ? "usable" : "not_usable");
+            if (ud.entry_number==(unsigned)-1) {
+                for (ud.entry_number=0x33>>3; ud.entry_number<n_gdt; ud.entry_number++) {
+                    if (!gdt[ud.entry_number].useable) break;
+                }
+                ROSE_ASSERT(ud.entry_number<8192);
+                fprintf(stderr, "  assigned entry number = %d\n", (int)ud.entry_number);
+            }
+            gdt[ud.entry_number] = ud;
+            size_t nwritten = map.write(&ud, u_info_va, sizeof ud);
+            ROSE_ASSERT(nwritten==sizeof ud);
+            writeGPR(x86_gpr_ax, 0);
+            /* Reload all the segreg shadow values from the (modified) descriptor table */
+            for (size_t i=0; i<6; i++)
+                writeSegreg((X86SegmentRegister)i, readSegreg((X86SegmentRegister)i));
+            break;
+        }
+
+        case 252: { /*0xfc, exit_group*/
+            int status = readGPR(x86_gpr_bx).known_value();
+            throw Exit(__W_EXITCODE(status, 0));
+            break;
+        }
+
         default: {
             fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
             abort();
@@ -562,9 +766,23 @@ main(int argc, char *argv[])
             fprintf(stderr, "[%07zu] %s\n", ninsns++, unparseInstructionWithAddress(insn).c_str());
 #endif
             t.processInstruction(insn);
+            policy.dump_registers();
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
+        } catch (const EmulationPolicy::Exit &e) {
+            /* specimen has exited */
+            if (WIFEXITED(e.status)) {
+                fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
+            } else if (WIFSIGNALED(e.status)) {
+                fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
+                        WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 
+                        WCOREDUMP(e.status)?" core dumped":"");
+            } else if (WIFSTOPPED(e.status)) {
+                fprintf(stderr, "specimen is stopped due to signal %d (%s)\n", 
+                        WSTOPSIG(e.status), strsignal(WSTOPSIG(e.status)));
+            }
+            break;
         }
     }
     return 0;
