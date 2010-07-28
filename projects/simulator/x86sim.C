@@ -149,6 +149,11 @@ public:
     /* Copies a stat buffer into specimen memory. */
     void copy_stat64(struct stat64 *sb, uint32_t va);
 
+    /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
+    VirtualMachineSemantics::ValueType<1> undefined_() {
+        return 1;
+    }
+
     /* Called by X86InstructionSemantics */
     void hlt() {
         fprintf(stderr, "hlt\n");
