@@ -2455,10 +2455,10 @@ struct X86InstructionSemantics {
                 break;
             }
         }
-    } catch(const Exception&) {
-        throw;
-    } catch(...) {
-        throw Exception("instruction translation failed", insn);
+    } catch(Exception e) {
+        if (!e.insn)
+            e.insn = insn;
+        throw e;
     }
 #endif
 
