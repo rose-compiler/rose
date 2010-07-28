@@ -81,15 +81,22 @@ bool AkgulStyleExpressionProcessor::handleAssignOp(SgAssignOp* assignOp, SgExpre
 bool AkgulStyleExpressionProcessor::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
 	VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression)
 {
-	//Try the redefine technique
-	if (useReachingDefinition(variable, useSite, definitions, reverseExpression))
+	//First, check if the variable needs restoring at all. If it has the desired version, there is nothing to do
+	if (definitions == variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, variable))
+	{
+		reverseExpression = VariableRenaming::buildVariableReference(variable);
+		return true;
+	}
+
+	if (extractFromUse(variable, useSite, definitions, reverseExpression))
 	{
 		return true;
 	}
-	else if (extractFromUse(variable, useSite, definitions, reverseExpression))
+	else if (useReachingDefinition(variable, useSite, definitions, reverseExpression))
 	{
 		return true;
 	}
+
 
 	return false;
 }
@@ -189,15 +196,28 @@ bool AkgulStyleExpressionProcessor::useReachingDefinition(VariableRenaming::VarN
 
 		if (varVersionAtDefinition != varVersionAtDestroySite)
 		{
+			printf("Recursively restoring variable '%s' to its value at line %d.\n", VariableRenaming::keyToString(nameDefinitionPair.first).c_str(),
+					definitionExpression->get_file_info()->get_line());
+
 			//See if we can recursively restore the variable so we can re-execute the definition
 			SgExpression* restoredOldValue;
-			if (restoreVariable(nameDefinitionPair.first, definitionExpression, varVersionAtDefinition, restoredOldValue))
+			if (restoreVariable(nameDefinitionPair.first, useSite, varVersionAtDefinition, restoredOldValue))
 			{
 				vector<SgExpression*> restoredVarReferences = findVarReferences(nameDefinitionPair.first, definitionExpressionCopy);
 
 				foreach (SgExpression* restoredVarReference, restoredVarReferences)
 				{
 					printf("Replacing '%s' with '%s'\n", restoredVarReference->unparseToString().c_str(), restoredOldValue->unparseToString().c_str());
+
+					//If the whole definition itself is a variable reference, eg (t = a), then we can't use SageInterface::replaceExpression
+					//because the parent of the variable reference is null. Manually replace the definition expression with the restored value
+					if (definitionExpressionCopy == restoredVarReference)
+					{
+						delete definitionExpressionCopy;
+						definitionExpressionCopy = SageInterface::copyExpression(restoredOldValue);
+						break;
+					}
+
 					SageInterface::replaceExpression(restoredVarReference, SageInterface::copyExpression(restoredOldValue));
 				}
 
@@ -205,8 +225,7 @@ bool AkgulStyleExpressionProcessor::useReachingDefinition(VariableRenaming::VarN
 			}
 			else
 			{
-				//Should I use deepdelete?
-				delete definitionExpressionCopy;
+				SageInterface::deepDelete(definitionExpressionCopy);
 				return false;
 			}
 		}
@@ -252,7 +271,7 @@ pair<VariableRenaming::VarName, SgExpression*> AkgulStyleExpressionProcessor::ge
 }
 
 
-bool AkgulStyleExpressionProcessor::extractFromUse(VariableRenaming::VarName varName, SgNode* useSite,	VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression)
+bool AkgulStyleExpressionProcessor::extractFromUse(VariableRenaming::VarName varName, SgNode* destroySite, VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression)
 {
 	reverseExpression = NULL;
 
@@ -279,10 +298,48 @@ bool AkgulStyleExpressionProcessor::extractFromUse(VariableRenaming::VarName var
 	//We've collected all the use sites!
 	//Print them out to check if this is right
 	//Then process them to extract the variables!
-	foreach (SgNode* useSite, useSites)
+	reverse_foreach (SgNode* useSite, useSites)
 	{
 		printf("Use for '%s' on line %d: %s: %s\n", VariableRenaming::keyToString(varName).c_str(), useSite->get_file_info()->get_line(),
 				useSite->class_name().c_str(), useSite->unparseToString().c_str());
+
+		//If we're restoring x and we have the assignment a = x, we
+		//can extract x from the value of a. An assign initializer is almost exactly like an assign op
+		if (isSgAssignOp(useSite) || isSgAssignInitializer(useSite))
+		{
+			VariableRenaming::VarName rhsVar, lhsVar;
+
+			if (SgAssignOp* assignOpUse = isSgAssignOp(useSite))
+			{
+				rhsVar = variableRenamingAnalysis.getVarName(assignOpUse->get_rhs_operand());
+				lhsVar = variableRenamingAnalysis.getVarName(assignOpUse->get_lhs_operand());
+			}
+			else if (SgAssignInitializer* assignInitializer = isSgAssignInitializer(useSite))
+			{
+				rhsVar = variableRenamingAnalysis.getVarName(assignInitializer->get_operand());
+				SgInitializedName* declaredVar = isSgInitializedName(assignInitializer->get_parent());
+				ROSE_ASSERT(declaredVar != NULL);
+				lhsVar = variableRenamingAnalysis.getVarName(declaredVar);
+			}
+			else
+			{
+				ROSE_ASSERT(false);
+			}
+
+			//If this is a more complex op, such as a = x + y, we'll handle it in the future
+			if (rhsVar != varName || lhsVar == VariableRenaming::emptyName)
+			{
+				continue;
+			}
+
+			//Ok, restore the lhs variable to the version used in the assignment.
+			//Then, that expression will hold the desired value of x
+			VariableRenaming::NumNodeRenameEntry lhsVersion = variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, lhsVar);
+			if (restoreVariable(lhsVar, destroySite, lhsVersion, reverseExpression))
+			{
+				return true;
+			}
+		}
 	}
 
 	return false;

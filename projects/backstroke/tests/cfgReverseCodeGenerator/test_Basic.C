@@ -38,6 +38,12 @@ int reverseMe(int in, State* state)
 	int t = a;
 	a = b;
 	b = t;
+
+	//Swap state->x and state->y
+	t = state->x;
+	state->x = state->y;
+	state->y = t;
+
 	return a;
 }
 
