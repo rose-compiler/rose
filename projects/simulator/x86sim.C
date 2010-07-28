@@ -535,6 +535,25 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 125: { /*0x7d, mprotect*/
+            uint32_t va = readGPR(x86_gpr_bx).known_value();
+            uint32_t size = readGPR(x86_gpr_cx).known_value();
+            uint32_t perms = readGPR(x86_gpr_dx).known_value();
+
+            fprintf(stderr, "  original map:\n");
+            map.dump(stderr, "    ");
+            
+            unsigned rose_perms = ((perms & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
+                                  ((perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
+                                  ((perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+            uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
+            uint32_t aligned_sz = ALIGN_UP(size + va - aligned_va, PAGE_SIZE);
+            map.mprotect(MemoryMap::MapElement(aligned_va, aligned_sz, rose_perms));
+
+            fprintf(stderr, "  new map:\n");
+            map.dump(stderr, "    ");
+        }
+
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
