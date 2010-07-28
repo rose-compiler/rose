@@ -22,9 +22,11 @@
 #include <asm/ldt.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/user.h>
 #include <sys/wait.h>
+#include <termios.h>
 #include <unistd.h>
 
 #ifndef HAVE_USER_DESC
@@ -562,6 +564,72 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 54: { /*0x36, ioctl*/
+            int fd = readGPR(x86_gpr_bx).known_value();
+            int32_t cmd = readGPR(x86_gpr_cx).known_value();
+            int32_t arg = readGPR(x86_gpr_dx).known_value();
+            if (debug)
+                fprintf(debug, "  ioctl(fd=%d, cmd=%"PRIu32", arg=0x%08"PRIx32")\n", fd, cmd, arg);
+            int result = -ENOSYS;
+            switch (cmd) {
+                case TCGETS: { /*tcgetattr*/
+                    struct termios ti;
+                    result = tcgetattr(fd, &ti);
+                    if (-1==result) {
+                        result = -errno;
+                    } else {
+                        /* The Linux kernel and glibc have different definitions for termios, with very different sizes (39
+                         * bytes vs 60) */                  
+                        size_t nwritten = map.write(&ti, arg, 39);
+                        ROSE_ASSERT(39==nwritten);
+                    }
+                    break;
+                }
+                    
+                case TIOCGPGRP: { /*tcgetpgrp*/
+                    pid_t pgrp = tcgetpgrp(fd);
+                    if (-1==pgrp) {
+                        result = -errno;
+                    } else {
+                        uint32_t pgrp_le;
+                        SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
+                        size_t nwritten = map.write(&pgrp_le, arg, 4);
+                        ROSE_ASSERT(4==nwritten);
+                    }
+                    break;
+                }
+                    
+                case TIOCSPGRP: { /*tcsetpgrp*/
+                    uint32_t pgid_le;
+                    size_t nread = map.read(&pgid_le, arg, 4);
+                    ROSE_ASSERT(4==nread);
+                    pid_t pgid = SgAsmExecutableFileFormat::le_to_host(pgid_le);
+                    result = tcsetpgrp(fd, pgid);
+                    if (-1==result)
+                        result = -errno;
+                    break;
+                }
+
+                case TIOCGWINSZ: {
+                    struct winsize ws;
+                    int result = ioctl(fd, TIOCGWINSZ, &ws);
+                    if (-1==result) {
+                        result = -errno;
+                    } else {
+                        size_t nwritten = map.write(&ws, arg, sizeof ws);
+                        ROSE_ASSERT(nwritten==sizeof ws);
+                    }
+                    break;
+                }
+                    
+                default:
+                    fprintf(stderr, "  unhandled ioctl: %u\n", cmd);
+                    abort();
+            }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+            
         case 91: { /*0x5b, munmap*/
             uint32_t va = readGPR(x86_gpr_bx).known_value();
             uint32_t sz = readGPR(x86_gpr_cx).known_value();
