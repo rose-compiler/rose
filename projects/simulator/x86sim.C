@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/user.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #ifndef HAVE_USER_DESC
@@ -46,6 +47,12 @@ public:
             limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
             present = !ud.seg_not_present && ud.useable;
         }
+    };
+
+    /* Thrown by exit system calls. */
+    struct Exit {
+        explicit Exit(int status): status(status) {}
+        int status;                             /* same value as returned by waitpid() */
     };
 
 public:
@@ -720,6 +727,12 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 252: { /*0xfc, exit_group*/
+            int status = readGPR(x86_gpr_bx).known_value();
+            throw Exit(__W_EXITCODE(status, 0));
+            break;
+        }
+
         default: {
             fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
             abort();
@@ -757,6 +770,19 @@ main(int argc, char *argv[])
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
+        } catch (const EmulationPolicy::Exit &e) {
+            /* specimen has exited */
+            if (WIFEXITED(e.status)) {
+                fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
+            } else if (WIFSIGNALED(e.status)) {
+                fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
+                        WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 
+                        WCOREDUMP(e.status)?" core dumped":"");
+            } else if (WIFSTOPPED(e.status)) {
+                fprintf(stderr, "specimen is stopped due to signal %d (%s)\n", 
+                        WSTOPSIG(e.status), strsignal(WSTOPSIG(e.status)));
+            }
+            break;
         }
     }
     return 0;
