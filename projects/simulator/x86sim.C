@@ -521,6 +521,15 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 91: { /*0x5b, munmap*/
+            uint32_t va = readGPR(x86_gpr_bx).known_value();
+            uint32_t sz = readGPR(x86_gpr_cx).known_value();
+            uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
+            uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
+            map.erase(MemoryMap::MapElement(aligned_va, aligned_sz));
+            break;
+        }
+
         case 122: { /*0x7a, uname*/
             char buf[6*65];
             memset(buf, ' ', sizeof buf);
