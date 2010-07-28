@@ -552,8 +552,43 @@ EmulationPolicy::emulate_syscall()
 
             fprintf(stderr, "  new map:\n");
             map.dump(stderr, "    ");
+            break;
         }
 
+        case 146: { /*0x92, writev*/
+            uint32_t fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t iov_va = readGPR(x86_gpr_cx).known_value();
+            int niov = readGPR(x86_gpr_dx).known_value();
+            uint32_t retval = 0;
+            for (int i=0; i<niov; i++) {
+                uint32_t buf_va_le;
+                size_t nread = map.read(&buf_va_le, iov_va+i*8+0, 4);
+                ROSE_ASSERT(4==nread);
+                uint32_t buf_va = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
+                
+                uint32_t buf_sz_le;
+                nread = map.read(&buf_sz_le, iov_va+i*8+4, 4);
+                ROSE_ASSERT(4==nread);
+                uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
+                
+                uint8_t buf[buf_sz];
+                nread = map.read(buf, buf_va, buf_sz);
+                ROSE_ASSERT(nread==buf_sz);
+                ssize_t nwritten = write(fd, buf, buf_sz);
+                if (-1==nwritten) {
+                    retval = -errno;
+                    break;
+                } else if (nwritten<buf_sz) {
+                    retval += nwritten;
+                    break;
+                } else {
+                    retval += nwritten;
+                }
+            }
+            writeGPR(x86_gpr_ax, retval);
+            break;
+        }
+            
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
