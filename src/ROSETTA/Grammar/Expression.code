@@ -890,8 +890,7 @@ HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isDefinable() const;
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_END
 
