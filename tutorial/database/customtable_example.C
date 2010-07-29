@@ -1,6 +1,6 @@
 
 // database access
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 #include "TableAccess.h"
 
 CREATE_TABLE_2( testtable,  string,name,  double,number );

@@ -1,6 +1,6 @@
-#include "GlobalDatabaseConnection.h" 
+#include "GlobalDatabaseConnectionMYSQL.h" 
 #include "TableDefinitions.h" 
- 
+
 DEFINE_TABLE_PROJECTS(); 
 DEFINE_TABLE_GRAPHDATA(); 
 DEFINE_TABLE_GRAPHNODE(); 
@@ -23,6 +23,8 @@ DEFINE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
 #include <vector> 
 #include <algorithm> 
 #include <utility> 
+
+using namespace boost;
 
 // simpleFuncTableRowdata is the node data
 // callEdgeRowdata is the edge data

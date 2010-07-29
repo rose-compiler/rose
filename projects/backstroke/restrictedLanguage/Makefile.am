@@ -10,7 +10,6 @@ libBackstrokeRestrictedLanguage_la_DEPENDENCIES =
 libBackstrokeRestrictedLanguage_la_SOURCES = LanguageRestrictions.C
 libBackstrokeRestrictedLanguage_la_includedir = $(includedir)/backstroke
 libBackstrokeRestrictedLanguage_la_include_HEADERS = LanguageRestrictions.h
-libBackstrokeRestrictedLanguage_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 CLEANFILES = 
 

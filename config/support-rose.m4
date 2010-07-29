@@ -2292,7 +2292,6 @@ projects/haskellport/Makefile
 projects/haskellport/rose.cabal.in
 projects/haskellport/Setup.hs
 projects/palette/Makefile
-projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile
 projects/assemblyToSourceAst/tests/Makefile
 projects/SemanticSignatureVectors/Makefile
