@@ -135,7 +135,6 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
         {
             foreach (StatementObject& obj, queue[i])
             {
-                cout << "Begin:@@@";
                 const SgInitializedNamePtrList& names = var_decl->get_variables();
                 ROSE_ASSERT(names.size() == 1);
                 SgInitializedName* init_name = names[0];
@@ -173,11 +172,13 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
                 ROSE_ASSERT(isSgBasicBlock(new_obj1.fwd_stmt));
                 ROSE_ASSERT(isSgBasicBlock(new_obj1.rvs_stmt));
 
-#if 1
                 // Store the value of local variables at the end of the basic block.
                 SgVarRefExp* var_stored = buildVarRefExp(init_name->get_name());
                 SgStatement* store_var = buildExprStatement(
                         pushVal(var_stored, init_name->get_type()));
+
+                isSgBasicBlock(new_obj1.fwd_stmt)->append_statement(store_var);
+                ROSE_ASSERT(store_var->get_parent() == new_obj1.fwd_stmt);
 
                 // Retrieve the value which is used to initialize that local variable.
                 SgVariableDeclaration* decl_restore_var = buildVariableDeclaration(
@@ -186,12 +187,10 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
                         buildAssignInitializer(popVal(init_name->get_type())),
                         isSgBasicBlock(new_obj1.rvs_stmt));
 
-                isSgBasicBlock(new_obj1.fwd_stmt)->append_statement(store_var);
-                ROSE_ASSERT(store_var->get_parent() == new_obj1.fwd_stmt);
-
                 isSgBasicBlock(new_obj1.rvs_stmt)->append_statement(decl_restore_var);
                 ROSE_ASSERT(decl_restore_var->get_parent() == new_obj1.rvs_stmt);
-#endif
+
+                queue[1-i].push_back(new_obj1);
                 //fixVariableDeclaration(decl_restore_var, isSgBasicBlock(new_obj1.rvs_stmt));
 
                 /*******************************************************************************/
@@ -234,10 +233,7 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
 
                 new_obj2.var_table.setNullVersion(init_name);
 
-                queue[1-i].push_back(new_obj1);
                 queue[1-i].push_back(new_obj2);
-
-                cout << "@@@End\n";
             }
 
             foreach (StatementObject& obj, queue[i])
@@ -268,7 +264,7 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
                 // Currently, we cannot directly deep copy variable declarations. So we rebuild another one
                 // with the same name, type and initializer.
 
-#if 1
+#if 0
                 StatementObject new_obj = obj;// = obj.clone();
                 new_obj.fwd_stmt = copyStatement(obj.fwd_stmt);
                 new_obj.rvs_stmt = buildBasicBlock();
@@ -299,7 +295,15 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
 
                 if (res.fwd_stmt)
                 {
-                    isSgBasicBlock(new_obj.fwd_stmt)->prepend_statement(res.fwd_stmt);
+                    prependStatement(res.fwd_stmt, isSgBasicBlock(new_obj.fwd_stmt));
+                    //isSgBasicBlock(new_obj.fwd_stmt)->prepend_statement(res.fwd_stmt);
+
+                    if (SgVariableDeclaration* decl = isSgVariableDeclaration(res.fwd_stmt))
+                    {
+                        cout << get_name(decl->get_variables()[0]->get_scope()) << endl;
+                        cout << get_name(new_obj.fwd_stmt) << endl;
+                        ROSE_ASSERT(decl->get_variables()[0]->get_scope() == new_obj.fwd_stmt);
+                    }
                     //fixVariableReferences(isSgBasicBlock(new_obj.fwd_stmt));
                     //fixStatement(res.fwd_stmt, isSgBasicBlock(new_obj.fwd_stmt));
                 }
@@ -332,16 +336,18 @@ StatementObjectVec BasicStatementProcessor::processBasicBlock(
 #endif
 
 
+#if 0
     // Since we build a varref before building its declaration, we may use the following function to fix them.
     foreach (StatementObject& obj, queue[i])
     {
         //cout << "Fixed: " << fixVariableReferences(obj.fwd_stmt) << endl;
         //fixVariableReferences(obj.rvs_stmt);
     }
+#endif
 
+    // Clean unused statements.
     foreach (SgStatement* stmt, to_delete)
         deepDelete(stmt);
-        //delete stmt;
 
     return queue[i];
 }

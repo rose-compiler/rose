@@ -103,16 +103,19 @@ int main(int argc, char * argv[])
 
     popScopeStack();
 
-    //fixVariableReferences(global);
+    fixVariableReferences(global);
+    cout << "VarRef fixed\n";
     //fixVariableReferences(global);
 
-    generateWholeGraphOfAST("Cong");
-    generateGraphOfAST(project, "Graph");
+
+    //generateWholeGraphOfAST("Cong");
+    //generateGraphOfAST(project, "Graph");
+    //cout << "Graph generated successfully!\n";
 
 #endif
 
 
-    //AstTests::runAllTests(project);
+    AstTests::runAllTests(project);
 
     cout << "Test Done!\n";
 
