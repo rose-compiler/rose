@@ -15,7 +15,8 @@ rose2llvmAA_SOURCES  = AliasAnalysis.cpp \
 					   AliasAnalysisModule.cpp \
 					   AliasAnalysisGatherer.cpp \
 					   AnnotateAST.cpp \
-					   AliasSetContainer.cpp
+					   AliasSetContainer.cpp \
+					   AliasSetHandler.cpp
 												   
 
 rose2llvmAA_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Wno-deprecated
