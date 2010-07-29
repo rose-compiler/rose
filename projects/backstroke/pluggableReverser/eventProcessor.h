@@ -15,11 +15,10 @@ struct InstrumentedExpression
 
     InstrumentedExpression clone()
     {
-        InstrumentedExpression obj;
-        obj.fwd_exp = SageInterface::copyExpression(fwd_exp);
-        obj.rvs_exp = SageInterface::copyExpression(rvs_exp);
-        obj.var_table = var_table;
-        return obj;
+        return InstrumentedExpression(
+                SageInterface::copyExpression(fwd_exp),
+                SageInterface::copyExpression(rvs_exp),
+                var_table);
     }
     
     SgExpression* fwd_exp;
@@ -39,11 +38,10 @@ struct InstrumentedStatement
 
     InstrumentedStatement clone()
     {
-        InstrumentedStatement obj;
-        obj.fwd_stmt = SageInterface::copyStatement(fwd_stmt);
-        obj.rvs_stmt = SageInterface::copyStatement(rvs_stmt);
-        obj.var_table = var_table;
-        return obj;
+        return InstrumentedStatement(
+                SageInterface::copyStatement(fwd_stmt),
+                SageInterface::copyStatement(rvs_stmt),
+                var_table);
     }
     
     SgStatement* fwd_stmt;

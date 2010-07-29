@@ -86,7 +86,7 @@ int main(int argc, char * argv[])
 
         cout << "Event is processed successfully!\n";
         
-        foreach (FuncDeclPair func_decl_pair, output)
+        foreach (FuncDeclPair& func_decl_pair, output)
         {
            appendStatement(func_decl_pair.first); 
            appendStatement(func_decl_pair.second); 

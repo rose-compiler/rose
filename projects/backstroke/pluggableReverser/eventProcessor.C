@@ -84,7 +84,7 @@ SgExpression* EventProcessor::getStackVar(SgType* type)
 bool EventProcessor::isStateVariable(SgExpression* exp)
 {
     // First, get the most lhs operand, which may be the model object.
-    while(isSgBinaryOp(exp))
+    while (isSgBinaryOp(exp))
         exp = isSgBinaryOp(exp)->get_lhs_operand();
 
     SgVarRefExp* var = isSgVarRefExp(exp);
@@ -94,7 +94,6 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
     {
         if (name == var->get_symbol()->get_declaration() )
         {
-            cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
             return true;
         }
     }
