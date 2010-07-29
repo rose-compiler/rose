@@ -297,6 +297,9 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
 Disassembler::InstructionMap
 Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
 {
+    static const time_t progress_interval = 10;
+    time_t progress_time = time(NULL);
+
     InstructionMap insns;
     SgAsmInstruction *insn = NULL;
     rose_addr_t va=0, next_va=start_va;
@@ -348,8 +351,10 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
             }
 
             /* Progress report */
-            if (0==p_ndisassembled % 10000)
-                fprintf(stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n", va, p_ndisassembled);
+            if (0==p_ndisassembled % 2500 && (p_debug || time(NULL)-progress_time > progress_interval)) {
+                fprintf(p_debug?p_debug:stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
+                        va, p_ndisassembled);
+            }
         }
 
         /* Try to figure out the successor addresses.  If we can prove that the only successor is the address following the
