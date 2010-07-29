@@ -7045,6 +7045,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
    fixStatement(stmt,scope); 
 
    scope->insertStatementInScope(stmt,true);
+   stmt->set_parent(scope); // needed?
     // update the links after insertion!
    if (isSgFunctionDeclaration(stmt))
      updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
@@ -7487,7 +7488,10 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     SgInitializedNamePtrList namelist = varDecl->get_variables();
 
     //avoid duplicated work
-    if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
+    // CH (2010/7/28): The following test may have a bug. Its scope may be not NULL but different from
+    // the scope passed in.
+    //if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
+    if (namelist.size() > 0) if (namelist[0]->get_scope() == scope) return;
     SgInitializedNamePtrList::iterator i;
     for (i=namelist.begin();i!=namelist.end();i++)
    {
@@ -7669,7 +7673,7 @@ void SageInterface::clearUnusedVariableSymbols()
 
         bool toDelete = true;
 
-#if 1
+#if 0
         for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
                 j != varList.end(); ++j)
         {
@@ -7686,9 +7690,10 @@ void SageInterface::clearUnusedVariableSymbols()
 
         if (toDelete)
         {
-
+#if 0
             std::cout << "Symbol " << symbolToDelete->get_name().str() << ' ' << symbolToDelete <<
                ' ' << symbolToDelete->get_declaration() <<  " is deleted." << std::endl;
+#endif
             delete symbolToDelete->get_declaration(); 
             delete symbolToDelete;
         }
@@ -10592,6 +10597,7 @@ SageInterface::deleteAST ( SgNode* n )
                         {
                         //These nodes are manually deleted because they cannot be visited by the traversal
                                 //remove SgSymbolTable
+#if 0
                                 if(isSgScopeStatement(node) !=NULL){
                                         SgSymbolTable* symbol_table = ((SgScopeStatement *)node)->get_symbol_table();
                                         if(isSgSymbolTable(symbol_table) !=NULL){
@@ -10599,6 +10605,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 //printf("A SgSymbolTable was deleted\n");
                                         }
                                 }
+#endif
                                 //remove SgFunctionSymbol
                                 if(isSgFunctionDeclaration(node) !=NULL){
                                         SgScopeStatement *scope=((SgFunctionDeclaration*)node)->get_scope();
@@ -10608,22 +10615,28 @@ SageInterface::deleteAST ( SgNode* n )
                                         //printf("A SgFunctionSymbol was deleted\n");
                                 }
 
+#if 1
                                 if(isSgInitializedName(node) !=NULL){
                                         //remove SgVariableDefinition
                                         SgDeclarationStatement* var_def;
                                         var_def =  ((SgInitializedName *)node)->get_definition();
+#if 1
                                         if(isSgVariableDefinition(var_def) !=NULL){
                                                 delete var_def;
                                                 //printf("A SgVariableDefinition was deleted\n");
                                         }
+#endif
+#if 1
                                         //remove SgVariableSymbol
                                         SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
                                         if(isSgVariableSymbol(symbol) !=NULL){
                                                 delete symbol;
                                                 //printf("A SgVariableSymbol was deleted\n");
                                         }
+#endif
 
                                 }
+#endif
                         //Normal nodes will be removed in a post-order way
                                 delete node;
                         }
