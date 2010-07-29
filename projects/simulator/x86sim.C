@@ -186,9 +186,9 @@ public:
     void startInstruction(SgAsmInstruction* insn) {
         if (debug) {
 #if 0
-            fprintf(stderr, "\033[K\n[%07zu] %s\033[K\r\033[1A", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
+            fprintf(debug, "\033[K\n[%07zu] %s\033[K\r\033[1A", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
 #else
-            fprintf(stderr, "[%07zu] %s\n", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
+            fprintf(debug, "[%07zu] %s\n", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
 #endif
         }
         VirtualMachineSemantics::Policy::startInstruction(insn);
@@ -570,10 +570,13 @@ EmulationPolicy::emulate_syscall()
 
         case 54: { /*0x36, ioctl*/
             int fd = readGPR(x86_gpr_bx).known_value();
-            int32_t cmd = readGPR(x86_gpr_cx).known_value();
-            int32_t arg = readGPR(x86_gpr_dx).known_value();
-            if (debug)
-                fprintf(debug, "  ioctl(fd=%d, cmd=%"PRIu32", arg=0x%08"PRIx32")\n", fd, cmd, arg);
+            uint32_t cmd = readGPR(x86_gpr_cx).known_value();
+            uint32_t arg = readGPR(x86_gpr_dx).known_value();
+            if (debug) {
+                fprintf(debug, "  ioctl(fd=%d, cmd=0x%04"PRIx32", arg=0x%08"PRIx32")\n", fd, cmd, arg);
+                fprintf(debug, "  memory map:\n");
+                map.dump(debug, "    ");
+            }
             int result = -ENOSYS;
             switch (cmd) {
                 case TCGETS: { /*tcgetattr*/
@@ -599,6 +602,7 @@ EmulationPolicy::emulate_syscall()
                         SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
                         size_t nwritten = map.write(&pgrp_le, arg, 4);
                         ROSE_ASSERT(4==nwritten);
+                        result = 0;
                     }
                     break;
                 }
@@ -616,7 +620,7 @@ EmulationPolicy::emulate_syscall()
 
                 case TIOCGWINSZ: {
                     struct winsize ws;
-                    int result = ioctl(fd, TIOCGWINSZ, &ws);
+                    result = ioctl(fd, TIOCGWINSZ, &ws);
                     if (-1==result) {
                         result = -errno;
                     } else {
@@ -890,6 +894,7 @@ main(int argc, char *argv[])
 {
     typedef X86InstructionSemantics<EmulationPolicy, VirtualMachineSemantics::ValueType> Semantics;
     EmulationPolicy policy;
+    //policy.debug = stderr;
     Semantics t(policy);
 
     ROSE_ASSERT(argc>=2); /* usage: executable name followed by executable's arguments */
@@ -903,10 +908,15 @@ main(int argc, char *argv[])
     }
 
     /* Execute the program */
-    policy.debug = stderr;
+    bool seen_entry_va = false;
     while (true) {
         try {
             SgAsmx86Instruction *insn = policy.current_insn();
+            if (!seen_entry_va && insn->get_address()==fhdr->get_base_va()+fhdr->get_entry_rva()) {
+                fprintf(stderr, "Entry memory map:\n");
+                policy.map.dump(stderr, "  ");
+                seen_entry_va = true;
+            }
             t.processInstruction(insn);
             if (policy.debug)
                 policy.dump_registers(policy.debug);
