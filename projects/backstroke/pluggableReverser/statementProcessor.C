@@ -6,7 +6,7 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-InstrumentedStatementVec BasicStatementProcessor::process(
+StatementObjectVec BasicStatementProcessor::process(
         SgStatement* stmt, const VariableVersionTable& var_table)
 {
     if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
@@ -21,14 +21,14 @@ InstrumentedStatementVec BasicStatementProcessor::process(
 	//The forward of a return statement is a return; the reverse is a no-op.
 	else if (isSgReturnStmt(stmt))
 	{
-		InstrumentedStatementVec results;
-		results.push_back(InstrumentedStatement(SageInterface::copyStatement(stmt), NULL, var_table));
+		StatementObjectVec results;
+		results.push_back(StatementObject(SageInterface::copyStatement(stmt), NULL, var_table));
 		return results;
 	}
     //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
        // return processIfStmt(if_stmt, var_table);
 
-    return InstrumentedStatementVec();
+    return StatementObjectVec();
 }
 
 #if 0
@@ -70,16 +70,16 @@ StmtPairs BasicStatementProcessor::processFunctionDeclaration(SgFunctionDeclarat
 }
 #endif
 
-InstrumentedStatementVec BasicStatementProcessor::processExprStatement(
+StatementObjectVec BasicStatementProcessor::processExprStatement(
         SgExprStatement* exp_stmt,
         const VariableVersionTable& var_table)
 {
-    InstrumentedExpressionVec exps = processExpression(exp_stmt->get_expression(), var_table);
+    ExpressionObjectVec exps = processExpression(exp_stmt->get_expression(), var_table);
 
     ROSE_ASSERT(!exps.empty());
 
-    InstrumentedStatementVec stmts;
-    foreach (InstrumentedExpression& exp_obj, exps)
+    StatementObjectVec stmts;
+    foreach (ExpressionObject& exp_obj, exps)
     {
         SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -89,23 +89,23 @@ InstrumentedStatementVec BasicStatementProcessor::processExprStatement(
             rvs_stmt = buildExprStatement(exp_obj.rvs_exp);
 
         // Use the variable version table output by expression processor.
-        stmts.push_back(InstrumentedStatement(fwd_stmt, rvs_stmt, exp_obj.var_table));
+        stmts.push_back(StatementObject(fwd_stmt, rvs_stmt, exp_obj.var_table));
     }
     return stmts;
 }
 
-InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(
+StatementObjectVec BasicStatementProcessor::processVariableDeclaration(
         SgVariableDeclaration* var_decl,
         const VariableVersionTable& var_table)
 {
-    InstrumentedStatementVec outputs;
+    StatementObjectVec outputs;
 
     // Note the store and restore of local variables are processd in
     // basic block, not here. We just forward the declaration to forward
     // event function.
 
     // FIXME copyStatement also copies preprocessing info
-    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, var_table));
+    outputs.push_back(StatementObject(copyStatement(var_decl), NULL, var_table));
 
     //outputs.push_back(StatementObject(NULL, NULL, var_table));
     //outputs.push_back(pushAndPopLocalVar(var_decl));
@@ -115,16 +115,16 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(
     return outputs;
 }
 
-InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
+StatementObjectVec BasicStatementProcessor::processBasicBlock(
         SgBasicBlock* body,
         const VariableVersionTable& var_table)
 {
     // Use two vectors to store intermediate results.
-    InstrumentedStatementVec queue[2];
+    StatementObjectVec queue[2];
     vector<SgStatement*> to_delete;
 
     int i = 0;
-    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), var_table));
+    queue[i].push_back(StatementObject(buildBasicBlock(), buildBasicBlock(), var_table));
 
 #if 1
     // Deal with variable declarations first, since they will affect the variable version table.
@@ -133,7 +133,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
     {
         if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
         {
-            foreach (InstrumentedStatement obj, queue[i])
+            foreach (StatementObject obj, queue[i])
             {
                 cout << "Begin:@@@";
                 const SgInitializedNamePtrList& names = var_decl->get_variables();
@@ -146,9 +146,9 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
                 // at the beginning of the reverse basic block. Note that this variable already
                 // has the final version unless we modify it.
 #if 1
-                InstrumentedStatement new_obj1 = obj.clone();
+                StatementObject new_obj1 = obj.clone();
 #else
-                InstrumentedStatement new_obj1 = obj; // = obj.clone();
+                StatementObject new_obj1 = obj; // = obj.clone();
                 new_obj1.fwd_stmt = copyStatement(obj.fwd_stmt);
                 new_obj1.rvs_stmt = buildBasicBlock();
 
@@ -197,9 +197,9 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
                 /*******************************************************************************/
                 // The second transformation is not to store it. We have to set its version NULL.
 #if 1
-                InstrumentedStatement new_obj2 = obj.clone();
+                StatementObject new_obj2 = obj.clone();
 #else
-                InstrumentedStatement new_obj2 = obj; // = obj.clone();
+                StatementObject new_obj2 = obj; // = obj.clone();
                 new_obj2.fwd_stmt = copyStatement(obj.fwd_stmt);
                 new_obj2.rvs_stmt = buildBasicBlock();
 
@@ -240,7 +240,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
                 cout << "@@@End\n";
             }
 
-            foreach (InstrumentedStatement& obj, queue[i])
+            foreach (StatementObject& obj, queue[i])
             {
                 to_delete.push_back(obj.fwd_stmt);
                 to_delete.push_back(obj.rvs_stmt);
@@ -257,19 +257,19 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
 #if 1
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {
-        foreach (InstrumentedStatement& obj, queue[i])
+        foreach (StatementObject& obj, queue[i])
         {
-            InstrumentedStatementVec result = processStatement(stmt, obj.var_table);
+            StatementObjectVec result = processStatement(stmt, obj.var_table);
             
             ROSE_ASSERT(!result.empty());
 
-            foreach (InstrumentedStatement& res, result)
+            foreach (StatementObject& res, result)
             {
                 // Currently, we cannot directly deep copy variable declarations. So we rebuild another one
                 // with the same name, type and initializer.
 
 #if 1
-                InstrumentedStatement new_obj = obj;// = obj.clone();
+                StatementObject new_obj = obj;// = obj.clone();
                 new_obj.fwd_stmt = copyStatement(obj.fwd_stmt);
                 new_obj.rvs_stmt = buildBasicBlock();
                 foreach (SgStatement* s, isSgBasicBlock(obj.rvs_stmt)->get_statements())
@@ -290,7 +290,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
                         isSgBasicBlock(new_obj.rvs_stmt)->append_statement(copyStatement(s));
                 }
 #else
-                InstrumentedStatement new_obj = obj.clone();
+                StatementObject new_obj = obj.clone();
 #endif
 
 
@@ -318,7 +318,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
             }
         }
         
-        foreach (InstrumentedStatement& obj, queue[i])
+        foreach (StatementObject& obj, queue[i])
         {
             to_delete.push_back(obj.fwd_stmt);
             to_delete.push_back(obj.rvs_stmt);
@@ -333,7 +333,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
 
 
     // Since we build a varref before building its declaration, we may use the following function to fix them.
-    foreach (InstrumentedStatement& obj, queue[i])
+    foreach (StatementObject& obj, queue[i])
     {
         cout << "Fixed: " << fixVariableReferences(obj.fwd_stmt) << endl;
         //fixVariableReferences(obj.rvs_stmt);
@@ -346,7 +346,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
     return queue[i];
 
 #if 0
-    InstrumentedStatementVec outputs;
+    StatementObjectVec outputs;
 
     vector<StmtPairs > all_stmts;
 

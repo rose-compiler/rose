@@ -20,8 +20,6 @@ int main(int argc, char * argv[])
     vector<string> args(argv, argv+argc);
     SgProject* project = frontend(args);
 
-        generateWholeGraphOfAST("Cong");
-    generateGraphOfAST(project, "Graph");
 
 #if 1
     VariableRenaming var_renaming(project);
@@ -106,8 +104,13 @@ int main(int argc, char * argv[])
     popScopeStack();
 
     fixVariableReferences(global);
+    cout << "VarRef fixed\n";
     //fixVariableReferences(global);
 
+
+    //generateWholeGraphOfAST("Cong");
+    //generateGraphOfAST(project, "Graph");
+    //cout << "Graph generated successfully!\n";
 
 #endif
 
