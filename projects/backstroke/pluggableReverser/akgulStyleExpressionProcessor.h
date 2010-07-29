@@ -39,6 +39,9 @@ private:
 	bool useReachingDefinition(VariableRenaming::VarName destroyedVarName, SgNode* useSite,
 		VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression);
 
+	bool extractFromUse(VariableRenaming::VarName varName, SgNode* useSite,
+		VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression);
+
 	/** Returns the variable name referred by the expression. Also returns
 	  * the AST expression for referring to that variable (using the variable renaming analysis).
 	  * Handles comma ops correctly. */

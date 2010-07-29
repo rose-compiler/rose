@@ -6,6 +6,27 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace backstroke_util;
 
+ExpressionObjectVec NullExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
+{
+    ExpressionObjectVec output;
+    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp) || isAssignmentOp(exp))
+    {
+        SgExpression* var = NULL;
+        if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
+            var = isSgUnaryOp(exp)->get_operand();
+        else if (isAssignmentOp(exp))
+            var = isSgBinaryOp(exp)->get_lhs_operand();
+        
+        ROSE_ASSERT(isSgVarRefExp(var) || isSgDotExp(var) || isSgArrowExp(var));
+        
+        if (isStateVariable(var) && var_table.isUsingFirstDefinition(var))
+            return output;
+    }
+    output.push_back(ExpressionObject(copyExpression(exp), NULL, var_table));
+    return output;
+}
+
+
 ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
     ExpressionObjectVec output;
@@ -20,10 +41,10 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
         SgExpression* operand = isSgUnaryOp(exp)->get_operand();
 
         // For integer type, it's better to reverse it directly, not state saving.
-        if (!(operand->get_type()->isIntegerType()))
-        {
+        //if (!(operand->get_type()->isIntegerType()))
+        //{
             SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    pushVal(operand, operand->get_type()),
+                    pushVal(copyExpression(operand), operand->get_type()),
                     copyExpression(exp));
             SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                     copyExpression(operand),
@@ -33,14 +54,14 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
             new_var_table.reverseVersion(operand);
 
             output.push_back(ExpressionObject(fwd_exp, rvs_exp, new_var_table));
-        }
+        //}
     }
 
     if (isAssignmentOp(exp))
     {
         SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
         SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                pushVal(lhs_operand, lhs_operand->get_type()),
+                pushVal(copyExpression(lhs_operand), lhs_operand->get_type()),
                 copyExpression(exp));
         SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                 copyExpression(lhs_operand),
@@ -79,7 +100,8 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
             // To make sure it is reversed correctly, i should has the version number 2
             // in the variable version table.
 
-            if (var_table.checkVersion(operand))
+
+            if (var_table.checkLhsVersion(operand))
             {
                 // Once reversed, the version number should backward.
                 VariableVersionTable new_table(var_table);
@@ -140,8 +162,8 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
             // To make sure it is reversed correctly, a should has the version number 1 and 
             // b should has the version number 2 in the variable version table.
 
-            if (var_table.checkVersion(lhs_operand) &&
-                    var_table.checkVersion(rhs_operand) &&
+            if (var_table.checkLhsVersion(lhs_operand) &&
+                    var_table.checkRhsVersion(rhs_operand) &&
                     constructive)
             {
                 // Once reversed, the version number should backward.

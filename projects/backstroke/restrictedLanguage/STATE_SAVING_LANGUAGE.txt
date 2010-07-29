@@ -1,0 +1,55 @@
+					Restricted Language for Automated State saving
+
+1) No variables of pointer types are declared inside the function. Array types
+	are allowed if the length is declared statically. Arguments
+	can be of pointer types.
+	REASON: We would like to be able to statically determine which values are modified,
+	without getting into alias analysis. We need to allow arguments of pointer type because
+	ROSS events take pointers to the simulation state.
+
+2) Variables of pointer types (function arguments) are never modified.
+	REASON: We want to allow pointers
+	because they are used extensively in ROSS, but we would like to treat them as simply
+	representatives to their original rvalue, rather than arbitrary references to memory.
+
+3) The state of a function consists of the rvalues referred by arguments of a pointer type,
+	and any variables outside of its scope that are modified.
+	REASON: In ROSS, the state is passed as a pointer to a struct. In SPEEDES, the
+	state consists of member variables of the class of the event function.
+
+4) Function arguments are never passed by reference. No reference types are used
+	inside event functions.
+	REASON: We want a guarantee that function calls never modify local variables,
+	only state variables. Using references makes it difficult to determine what is being
+	modified.
+
+5) Any type that is part of the state must have side-effect-free copy constructors and assignment
+	operators that correctly deeply copy the object. For example, STL containers satisfy this
+	restriction.
+	REASON: We would like to easily save the state. If complex data structures implement
+	correct copy constructors and assignment operators, we can simply treat them as value
+	types. The deep-copy requirement guarantees that the modified copies will not interfere
+	with the saved copies.
+
+6) Pointer variables can only have arrow operator and dereference operator applied.
+	No bracket operator [] (i.e. arrays)
+	REASON: We don't want pointers to be used as a proxy for arrays.
+
+7) Functions called from the event function only modify the simulation state accessible
+	from the event function.
+	REASON: Storing the state is difficult if it is not within the scope of the event function.
+
+8) No dynamic memory allocation
+	REASON: We would like to statically determine the state to be saved.
+
+9) No ellipse arguments (varargs)
+
+10) No threading
+
+11) No I/O
+	REASON: I/O is irreversible an has to be handled by a commit method.
+
+
+
+
+

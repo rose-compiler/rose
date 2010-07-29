@@ -60,34 +60,7 @@ typedef std::vector<StatementObject> StatementObjectVec;
 // Forward declaration of the class EventProcessor.
 class EventProcessor;
 
-class ExpressionProcessor
-{
-    EventProcessor* event_processor_;
-
-protected:
-
-    ExpressionObjectVec processExpression(SgExpression* exp, const VariableVersionTable& var_table);
-
-    SgExpression* pushVal(SgExpression* exp, SgType* type);
-    SgExpression* popVal(SgType* type);
-
-public:
-
-    ExpressionProcessor()
-    : event_processor_(NULL) {}
-
-    void setEventProcessor(EventProcessor* processor)
-    {
-        event_processor_ = processor;
-    }
-
-    virtual ExpressionObjectVec process(SgExpression* exp, const VariableVersionTable& var_table) = 0;
-    //virtual void getCost() = 0;
-
-};
-
-
-class StatementProcessor
+class ProcessorBasis
 {
     EventProcessor* event_processor_;
 
@@ -99,15 +72,32 @@ protected:
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
 
+    //! Return if the given variable is a state variable (currently, it should be the parameter of event function).
+    bool isStateVariable(SgExpression* exp);
+
 public:
 
-    StatementProcessor()
-    : event_processor_(NULL) {}
-
+    ProcessorBasis() : event_processor_(NULL) {}
+    
     void setEventProcessor(EventProcessor* processor)
     {
         event_processor_ = processor;
     }
+};
+
+class ExpressionProcessor : public ProcessorBasis
+{
+public:
+
+    virtual ExpressionObjectVec process(SgExpression* exp, const VariableVersionTable& var_table) = 0;
+    //virtual void getCost() = 0;
+
+};
+
+
+class StatementProcessor : public ProcessorBasis
+{
+public:
 
     virtual StatementObjectVec process(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
 
@@ -139,8 +129,7 @@ class EventProcessor
     //! The variable version table which record final version of all variables in the event.
 
     //! Make those two classes the friends to let them use some private methods.
-    friend class ExpressionProcessor;
-    friend class StatementProcessor;
+    friend class ProcessorBasis;
 
 private:
 
@@ -181,6 +170,9 @@ public:
         //stack_decls_.clear();
         return processEvent();
     }
+
+    //! Return if the given variable is a state variable (currently, it should be the parameter of event function).
+    bool isStateVariable(SgExpression* exp);
 
     //! Get all declarations of stacks which store values of different types.
     std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
