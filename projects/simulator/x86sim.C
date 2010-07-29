@@ -339,7 +339,9 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     static const size_t stack_size = 0x01000000;
     size_t sp = readGPR(x86_gpr_sp).known_value();
     size_t stack_addr = sp - stack_size;
-    map.insert(MemoryMap::MapElement(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE));
+    MemoryMap::MapElement melmt(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
+    melmt.set_name("stack");
+    map.insert(melmt);
 
     /* Initialize the stack with specimen's argc and argv */
     std::vector<uint32_t> pointers;                     /* pointers pushed onto stack at the end of initialization */
@@ -549,7 +551,9 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, -ENOMEM);
             } else {
                 if (newbrk > brk_va) {
-                    map.insert(MemoryMap::MapElement(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE));
+                    MemoryMap::MapElement melmt(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
+                    melmt.set_name("brk syscall");
+                    map.insert(melmt);
                     brk_va = newbrk;
                 } else if (newbrk>0 && newbrk<brk_va) {
                     map.erase(MemoryMap::MapElement(newbrk, brk_va-newbrk));
@@ -786,8 +790,10 @@ EmulationPolicy::emulate_syscall()
             if (MAP_FAILED==buf) {
                 writeGPR(x86_gpr_ax, -errno);
             } else {
-                map.erase(MemoryMap::MapElement(start, aligned_size));
-                map.insert(MemoryMap::MapElement(start, aligned_size, buf, 0, rose_perms));
+                MemoryMap::MapElement melmt(start, aligned_size, buf, 0, rose_perms);
+                melmt.set_name("mmap2 syscall");
+                map.erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
+                map.insert(melmt);
                 writeGPR(x86_gpr_ax, start);
             }
 

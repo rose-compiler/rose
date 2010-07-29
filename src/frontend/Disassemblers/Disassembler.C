@@ -289,7 +289,7 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
                              AddressSet *successors)
 {
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0));
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleOne temp"));
     return disassembleOne(&map, start_va, successors);
 }
 
@@ -386,7 +386,7 @@ Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, siz
                                AddressSet *successors)
 {
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0));
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleBlock temp"));
     return disassembleBlock(&map, start_va, successors);
 }
 
@@ -680,7 +680,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, rose_addr_t buf_va, si
                                 AddressSet *successors, BadMap *bad)
 {
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0));
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleBuffer temp"));
     return disassembleBuffer(&map, start_va, successors, bad);
 }
 
@@ -693,8 +693,10 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
     ROSE_ASSERT(file!=NULL);
     const void *file_buf = &(file->get_data()[0]);
 
+    MemoryMap::MapElement melmt(section_va, section->get_size(), file_buf, section->get_offset());
+    melmt.set_name(section->get_name()->get_string());
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(section_va, section->get_size(), file_buf, section->get_offset()));
+    map.insert(melmt);
     return disassembleBuffer(&map, section_va+start_offset, successors, bad);
 }
 
