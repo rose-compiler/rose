@@ -10,50 +10,50 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-SgExpression* ProcessorBasis::pushVal(SgExpression* exp, SgType* type)
+SgExpression* ProcessorBase::pushVal(SgExpression* exp, SgType* type)
 {
     return event_processor_->pushVal(exp, type);
 }
 
-SgExpression* ProcessorBasis::popVal(SgType* type)
+SgExpression* ProcessorBase::popVal(SgType* type)
 {
     return event_processor_->popVal(type);
 }
 
-ExpressionObjectVec ProcessorBasis::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
     return event_processor_->processExpression(exp, var_table);
 }
 
-StatementObjectVec ProcessorBasis::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     return event_processor_->processStatement(stmt, var_table);
 }
 
-bool ProcessorBasis::isStateVariable(SgExpression* exp)
+bool ProcessorBase::isStateVariable(SgExpression* exp)
 {
     return event_processor_->isStateVariable(exp);
 }
 
-ExpressionObjectVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    ExpressionObjectVec output;
+    InstrumentedExpressionVec output;
 
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        ExpressionObjectVec result = exp_processor->process(exp, var_table);
+        InstrumentedExpressionVec result = exp_processor->process(exp, var_table);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
 
-StatementObjectVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    StatementObjectVec output;
+    InstrumentedStatementVec output;
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        StatementObjectVec result = stmt_processor->process(stmt, var_table);
+        InstrumentedStatementVec result = stmt_processor->process(stmt, var_table);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
@@ -134,9 +134,9 @@ FuncDeclPairs EventProcessor::processEvent()
 
     static int ctr = 0;
 
-    StatementObjectVec bodies = processStatement(body, var_table);
+    InstrumentedStatementVec bodies = processStatement(body, var_table);
 
-    foreach (StatementObject& stmt_obj, bodies)
+    foreach (InstrumentedStatement& stmt_obj, bodies)
     {
         cout << "!!!!!!!\n";
         fixVariableReferences(stmt_obj.fwd_stmt);

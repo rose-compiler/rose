@@ -7,12 +7,12 @@
 class StraightlineStatementProcessor : public StatementProcessor
 {
 public:
-	virtual std::vector<StatementObject> process(SgStatement* statement, const VariableVersionTable& variableTable);
+	virtual std::vector<InstrumentedStatement> process(SgStatement* statement, const VariableVersionTable& variableTable);
 
 private:
 
 	/** Process an expression statement by using the first expression handler returning a valid result. */
-	std::vector<StatementObject> processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& variableTable);
+	std::vector<InstrumentedStatement> processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& variableTable);
 
-	std::vector<StatementObject> processBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& variableTable);
+	std::vector<InstrumentedStatement> processBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& variableTable);
 };

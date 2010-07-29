@@ -6,9 +6,9 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace backstroke_util;
 
-ExpressionObjectVec NullExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec NullExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    ExpressionObjectVec output;
+    InstrumentedExpressionVec output;
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp) || isAssignmentOp(exp))
     {
         SgExpression* var = NULL;
@@ -22,14 +22,14 @@ ExpressionObjectVec NullExpressionProcessor::process(SgExpression* exp, const Va
         if (isStateVariable(var) && var_table.isUsingFirstDefinition(var))
             return output;
     }
-    output.push_back(ExpressionObject(copyExpression(exp), NULL, var_table));
+    output.push_back(InstrumentedExpression(copyExpression(exp), NULL, var_table));
     return output;
 }
 
 
-ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    ExpressionObjectVec output;
+    InstrumentedExpressionVec output;
 
     // If an expression modifies any value, we consider to store the value 
     // before being modified and restore it in reverse event.
@@ -53,7 +53,7 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
             VariableVersionTable new_var_table = var_table;
             new_var_table.reverseVersion(operand);
 
-            output.push_back(ExpressionObject(fwd_exp, rvs_exp, new_var_table));
+            output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
         //}
     }
 
@@ -70,7 +70,7 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
         VariableVersionTable new_var_table = var_table;
         new_var_table.reverseVersion(lhs_operand);
 
-        output.push_back(ExpressionObject(fwd_exp, rvs_exp, new_var_table));
+        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
     }
 
     // function call?
@@ -78,9 +78,9 @@ ExpressionObjectVec StoreAndRestoreExpressionProcessor::process(SgExpression* ex
     return output;
 }
 
-ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec ConstructiveExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    ExpressionObjectVec output;
+    InstrumentedExpressionVec output;
 
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
     {
@@ -109,7 +109,7 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
 
                 if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
                 {
-                    ExpressionObject result(
+                    InstrumentedExpression result(
                             copyExpression(exp),
                             buildMinusMinusOp(
                                 copyExpression(operand),
@@ -120,7 +120,7 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
 
                 if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(exp))
                 {
-                    ExpressionObject result(
+                    InstrumentedExpression result(
                             copyExpression(exp),
                             buildPlusPlusOp(
                                 copyExpression(operand),
@@ -172,7 +172,7 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
 
                 if (isSgPlusAssignOp(exp))
                 {
-                    ExpressionObject result(
+                    InstrumentedExpression result(
                         copyExpression(exp),
                         buildBinaryExpression<SgMinusAssignOp>(
                             copyExpression(lhs_operand),
@@ -183,7 +183,7 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
 
                 if (isSgMinusAssignOp(exp))
                 {
-                    ExpressionObject result(
+                    InstrumentedExpression result(
                         copyExpression(exp),
                         buildBinaryExpression<SgPlusAssignOp>(
                             copyExpression(lhs_operand),
@@ -194,7 +194,7 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
 
                 if (isSgXorAssignOp(exp))
                 {
-                    ExpressionObject result(
+                    InstrumentedExpression result(
                         copyExpression(exp),
                         copyExpression(exp),
                         new_table);
@@ -227,9 +227,9 @@ ExpressionObjectVec ConstructiveExpressionProcessor::process(SgExpression* exp, 
 
 
 // This function deals with assignment like a = b + c + a, which is still constructive.
-ExpressionObjectVec ConstructiveAssignmentProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    ExpressionObjectVec output;
+    InstrumentedExpressionVec output;
 
     if (isSgAssignOp(exp))
     {
@@ -297,7 +297,7 @@ ExpressionObjectVec ConstructiveAssignmentProcessor::process(SgExpression* exp, 
                 SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                         copyExpression(lhs_operand),
                         copyExpression(rhs_operand));
-                output.push_back(ExpressionObject(fwd_exp, rvs_exp, var_table));
+                output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, var_table));
                 return output;
             }
 
@@ -360,7 +360,7 @@ ExpressionObjectVec ConstructiveAssignmentProcessor::process(SgExpression* exp, 
                     copyExpression(lhs_operand),
                     rvs_exp);
 
-            output.push_back(ExpressionObject(fwd_exp, rvs_exp, var_table));
+            output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, var_table));
         }
     }
 
@@ -373,9 +373,9 @@ ExpressionObjectVec ConstructiveAssignmentProcessor::process(SgExpression* exp, 
 // evaluation of the true or false expression. That is:
 //     a ? b : c  ==>  a ? (b, push(1)) : (c, push(0))
 //                     pop() ? r(b) : r(c)
-ExpressionObjectVec processConditionalExpression(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec processConditionalExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    ExpressionObjectVec output;
+    InstrumentedExpressionVec output;
 
     if (isSgConditionalExp(exp))
     {

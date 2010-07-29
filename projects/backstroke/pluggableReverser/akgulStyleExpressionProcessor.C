@@ -11,7 +11,7 @@ AkgulStyleExpressionProcessor::AkgulStyleExpressionProcessor(SgProject* project)
 }
 
 
-std::vector<ExpressionObject> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& variableTable)
+vector<InstrumentedExpression> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& variableTable)
 {
 	if (isSgAssignOp(expression))
 	{
@@ -30,14 +30,14 @@ std::vector<ExpressionObject> AkgulStyleExpressionProcessor::process(SgExpressio
 				VariableVersionTable newVarTable = variableTable;
 				newVarTable.reverseVersion(expression);
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
-				vector<ExpressionObject> result;
-				result.push_back(ExpressionObject(forwardExp, reverseExpression, newVarTable));
+				vector<InstrumentedExpression> result;
+				result.push_back(InstrumentedExpression(forwardExp, reverseExpression, newVarTable));
 				return result;
 			}
 		}
 	}
 
-	return vector<ExpressionObject > ();
+	return vector<InstrumentedExpression > ();
 }
 
 
@@ -357,8 +357,8 @@ multimap<int, SgExpression*> AkgulStyleExpressionProcessor::collectUsesForVariab
 
 		virtual bool evaluateSynthesizedAttribute(SgNode* astNode, SynthesizedAttributesList childAttributes)
 		{
-			bool childrenHaveDefs = accumulate(childAttributes.begin(), childAttributes.end(), false, logical_or<bool>());
-			if (childrenHaveDefs)
+			bool childrenHaveUses = accumulate(childAttributes.begin(), childAttributes.end(), false, logical_or<bool>());
+			if (childrenHaveUses)
 			{
 				//We return true if the lowest-level use is below us
 				return true;

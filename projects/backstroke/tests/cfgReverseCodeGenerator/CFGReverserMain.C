@@ -1,7 +1,4 @@
 #include "rose.h"
-#include <stdio.h>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
 #include <VariableRenaming.h>
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "normalizations/expNormalization.h"
@@ -10,7 +7,6 @@
 #include "pluggableReverser/statementProcessor.h"
 #include "pluggableReverser/straightlineStatementProcessor.h"
 #include "pluggableReverser/akgulStyleExpressionProcessor.h"
-
 
 int main(int argc, char** argv)
 {
