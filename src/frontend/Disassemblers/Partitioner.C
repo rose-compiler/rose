@@ -253,8 +253,9 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
 
-        typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
-        VirtualMachineSemantics::Policy policy;
+        typedef VirtualMachineSemantics::Policy Policy;
+        typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+        Policy policy;
         VirtualMachineSemantics::ValueType<32> orig_retaddr;
         policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
         Semantics semantics(policy);
@@ -279,6 +280,8 @@ Partitioner::pops_return_address(rose_addr_t va)
             if (!on_stack && debug)
                 fprintf(debug, "[B%08"PRIx64" discards return address]", va);
         } catch (const Semantics::Exception&) {
+            /*void*/
+        } catch (const Policy::Exception&) {
             /*void*/
         }
         

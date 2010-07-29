@@ -425,7 +425,6 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
             rose_addr_t va = *i;
             worklist.erase(i);
 
-
             if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
                 /* Skip this if we've already tried to disassemble it. */
             } else if (NULL==map->find(va)) {

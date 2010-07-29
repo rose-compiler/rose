@@ -259,6 +259,15 @@ private:
                                          *   which is the first thing called by X86InstructionSemantics::processInstruction(). */
 
 public:
+    struct Exception {
+        Exception(const std::string &mesg): mesg(mesg) {}
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+            o <<"VirtualMachineSemantics exception: " <<e.mesg;
+            return o;
+        }
+        std::string mesg;
+    };
+
     Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0) {
         /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
         orig_state = cur_state;
@@ -787,7 +796,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
+            if (0==b.offset) throw Exception("division by zero");
             if (!a.name) return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
             if (1==b.offset) return a;
             if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return negate(a);
@@ -800,7 +809,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len2>();
-        if (0==b.offset) throw std::string("division by zero");
+        if (0==b.offset) throw Exception("division by zero");
         return IntegerOps::signExtend<Len1, 64>(a.offset) % IntegerOps::signExtend<Len2, 64>(b.offset);
         /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
     }
@@ -827,7 +836,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
+            if (0==b.offset) throw Exception("division by zero");
             if (!a.name) return a.offset / b.offset;
             if (1==b.offset) return a;
             /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
@@ -839,7 +848,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
+            if (0==b.offset) throw Exception("division by zero");
             if (!a.name) return a.offset % b.offset;
             /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
         }
