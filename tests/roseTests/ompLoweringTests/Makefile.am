@@ -17,6 +17,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif.c \
 	endif3.c \
 	firstPrivateArray.c \
+	full_verify.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
         master.c \
@@ -131,6 +132,7 @@ CXX_TEST_OBJECT_REQUIRED_TO_RUN = ${CXX_TESTCODES_REQUIRED_TO_RUN:.cpp=.o}
 # TODO task-wait hangs for gcc 4.4.1 (not for Intel icc), skip the execution for now	
 #	task_wait.o
 # TODO: npb, validation suite, developer tests, epcc
+# full_verify.c complex #if #endif
 TESTCODE_CURRENTLY_FAILING = \
         collapse.c \
         copyin.c \
@@ -144,6 +146,7 @@ TESTCODE_CURRENTLY_FAILING = \
         parallelsections.c \
         recursive.c \
         section.c \
+	shared.c \
         single_copyprivate.c \
         threadProcessor.c \
         variables.c

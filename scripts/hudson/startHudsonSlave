@@ -1,0 +1,27 @@
+#!/bin/bash -vx
+
+MACHINE_NAME=`uname -n`;
+# echo "MACHINE_NAME = $MACHINE_NAME"
+if test "$MACHINE_NAME" = "tux249.llnl.gov"; then
+   echo "Detected tux249: adding proper Sun java to path"
+   PATH=/home/panas2/java/jdk1.6.0-64bit/bin:$PATH
+   echo "Retest access to java"
+ # which java
+ # java -version
+ # Add access to RedHat version 4 specific GIT.
+   /usr/apps/git/latest/setup.sh
+   PATH=/usr/apps/git/latest/bin:$PATH
+   /usr/apps/cmake/2.4.6/setup.sh
+   PATH=/usr/apps/cmake/2.4.6/bin:$PATH
+   echo "PATH after mods ofr tux249: $PATH"
+fi
+
+. ./startHudson-common
+
+# Testing what version of Java is available on this machine
+# which java
+echo "Testing the java for this slave machine."
+java -version
+echo "PATH = $PATH"
+
+exec java -jar hudson/war/WEB-INF/slave.jar

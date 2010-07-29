@@ -4609,12 +4609,13 @@ HEADER_APPLICATION_SOURCE_FILE_START
        // SgSourceFile() ROSE_DEPRECATED_FUNCTION;
 
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
       //! Support for setting Java's classpath (to support the Open Fortran Parser (OFP))
           static std::string build_classpath();
 
       //! Divide up the handling of different languages
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+#endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);

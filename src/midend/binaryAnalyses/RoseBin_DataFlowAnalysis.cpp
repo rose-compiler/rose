@@ -304,8 +304,8 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 	if ((exceptionCallNode && !exceptionCallNext)) {
 	} else if (
 		   //if (
-		   nodeN && nodeN->get_kind() == x86_call ||
-		   nextN && nextN->get_kind() == x86_ret )
+		   (nodeN && nodeN->get_kind() == x86_call) ||
+		   (nextN && nextN->get_kind() == x86_ret) )
 	  call = true;
 	//bool sameParent = analysis->sameParents(node, next);
 
@@ -325,7 +325,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 
 	// ----------------------------------
 	if (( interprocedural==false && !call) //
-	    ||  interprocedural==true && validNode) {
+	    ||  (interprocedural==true && validNode)) {
 	  if (visited.find(next)==visited.end()) {
 	    // if the successor is not yet visited
 	    // mark as visited and put into worklist

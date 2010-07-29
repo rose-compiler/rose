@@ -23,9 +23,9 @@
  *  to the partitioner() method. The first phase considers all disassembled instructions and other available information such as
  *  symbol tables and tries to determine which addresses are entry points for functions.  For instance, if the symbol table
  *  contains function symbols, then the address stored in the symbol table is assumed to be the entry point of a function.  ROSE
- *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the
- *  "-rose:partitioner_search" command-line switch.  ROSE also supports user-defined search methods that can be registered with
- * an existing partitioner (see add_function_detector()).
+ *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the set_search() method.
+ *  ROSE also supports user-defined search methods that can be registered with add_function_detector().  The three phases are
+ *  initialized and influenced by the contents of an optional configuration file specified with the set_config() method.
  *
  *  The second phase for assigning blocks to functions is via analysis of the control-flow graph.  In a nutshell, ROSE
  *  traverses the CFG starting with the entry address of each function, adding blocks to the function as it goes. When it
@@ -36,6 +36,16 @@
  *  no-op or zero padding occuring between the previously detected functions. This could also be user-extended to add blocks to
  *  functions that ROSE detected during CFG analysis (such as unreferenced basic blocks, no-ops, etc. that occur within the
  *  extent of a function.)
+ *
+ *  By default, ROSE constructs a Partitioner to use for partitioning instructions of binary files during frontend() parsing
+ *  (this happens in Disassembler::disassembleInterpretation()).  This Partitioner's settings are controlled by two
+ *  command-line switches whose documentation can be seen by running any ROSE program with the --help switch.  These
+ *  command-line switches operate by setting property values in the SgFile node and then transferring them to the Partitioner
+ *  when the Partitioner is constructed.
+ *  <ul>
+ *    <li>-rose:partitioner_search initializes the detection methods by calling set_search(), and parse_switches()</li>
+ *    <li>-rose:partitioner_config specifies an IPD file by calling set_config().</li>
+ *  </ul>
  *
  *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
  *  information via a call to the build_ast() method, which constructs a ROSE AST.  Any instructions that were not assigned to
@@ -209,7 +219,7 @@ public:
 
     /** Returns a list of the currently defined functions.
      *
-     *  \deprecated This function has been replaced by seed_functions() and analyze_cfg(). */
+     *  \deprecated This function has been replaced by pre_cfg(), analyze_cfg(), and post_cfg() */
     FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
                                    BasicBlockStarts &bb_starts/*out*/) const;
 
@@ -288,6 +298,15 @@ public:
         return debug;
     }
 
+    /** Specifies the name of a configuration file to read to initialize the partitioner. The file is read by the clear()
+     *  method, which is called by partition(). See documentation for the IPDParser class for details.  An empty string
+     *  prevents parsing of any file. */
+    void set_config(const std::string &file_name) { config_file_name = file_name; }
+
+    /** Returns the name of the configuration file used to initialize this partitioner.  An empty string means no
+     *  configuration file is used. See documentation for the IPDParser class for details. */
+    const std::string& get_config() const { return config_file_name; }
+
     /*************************************************************************************************************************
      *                                                High-level Functions
      *************************************************************************************************************************/
@@ -316,7 +335,8 @@ public:
     /** Top-level function to run the partitioner on some instructions and build an AST */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
-    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. */
+    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. Then read the
+     *  specified IPD file (see set_config()). This method is called by partition(). */
     virtual void clear();
 
     /** Adds additional instructions to be processed. New instructions are only added at addresses that don't already have an
@@ -390,6 +410,11 @@ protected:
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
 
+    /*************************************************************************************************************************
+     *                                   IPD Parser for initializing the Partitioner
+     *************************************************************************************************************************/
+public:
+
     /** This is the parser for the instruction partitioning data (IPD) files.  These files are text-based descriptions of the
      *  functions and basic blocks used by the partitioner and allow the user to seed the partitioner with additional information
      *  that is not otherwise available to the partitioner.
@@ -456,7 +481,7 @@ protected:
      *  will be created with fewer instructions but the BlockBody will be ignored.
      *
      *  A function declaration specifies the virtual memory address of the entry point of a function. The body may specify
-     *  whether the function returns. As of this writing [2010-05-13] a function declarated as non-returning will be marked as
+     *  whether the function returns. As of this writing [2010-05-13] a function declared as non-returning will be marked as
      *  returning if ROSE discovers that a basic block of the function returns.
      *
      *  If a block declaration appears inside a function declaration, then ROSE will assign the block to the function.
@@ -493,16 +518,25 @@ protected:
         Partitioner *partitioner;               /**< Partitioner to be initialized. */
         const char *input;                      /**< Input to be parsed. */
         size_t len;                             /**< Length of input, not counting NUL termination (if any). */
+        std::string input_name;                 /**< Optional name of input (usually a file name). */
         size_t at;                              /**< Current parse position w.r.t. "input". */
         Function *cur_func;                     /**< Non-null when inside a FuncBody nonterminal. */
         BasicBlock *cur_block;                  /**< Non-null when inside a BlockBody nonterminal. */
 
     public:
-        IPDParser(Partitioner *p, const char *input, size_t len)
-            : partitioner(p), input(input), len(len), at(0), cur_func(NULL), cur_block(NULL) {}
+        IPDParser(Partitioner *p, const char *input, size_t len, const std::string &input_name="")
+            : partitioner(p), input(input), len(len), input_name(input_name), at(0), cur_func(NULL), cur_block(NULL) {}
 
-        struct Exception {                      /**< Exception thrown when something cannot be parsed. */
-            Exception(const std::string &s): lnum(0), mesg(s) {}
+        class Exception {                      /**< Exception thrown when something cannot be parsed. */
+        public:
+            Exception(const std::string &mesg)
+                : lnum(0), mesg(mesg) {}
+            Exception(const std::string &mesg, const std::string &name, unsigned lnum=0)
+                : name(name), lnum(lnum), mesg(mesg) {}
+            std::string format() const;         /**< Format exception object into an error message; used by operator<<. */
+            friend std::ostream& operator<<(std::ostream&, const Exception &e);
+
+            std::string name;                   /**< Optional name of input */
             unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
             std::string mesg;                   /**< Error message. */
         };
@@ -513,7 +547,7 @@ protected:
         /*************************************************************************************************************************
          * Lexical analysis functions.
          *************************************************************************************************************************/
-
+    private:
         void skip_space();
 
         /* The is_* functions return true if the next token after white space and comments is of the specified type. */
@@ -536,7 +570,7 @@ protected:
          * construct was not present. They throw an exception if the construct was partially present but an error occurred during
          * parsing.
          *************************************************************************************************************************/
-
+    private:
         bool parse_File();
         bool parse_Declaration();
         bool parse_FuncDecl();
@@ -565,6 +599,7 @@ protected:
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory */
+    std::string config_file_name;                       /**< Optional name of IPD file to read before partitioning */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

@@ -30,17 +30,17 @@ class CFG
 {
     SgIncidenceDirectedGraph* graph_;
     std::map<CFGNode, SgGraphNode*> all_nodes_;
-    std::set<CFGNode> explored_;
     SgNode* start_;
+    bool is_filtered_;
 
 public:
     CFG() : graph_(NULL), start_(NULL) {}
 
     // The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName
-    CFG(SgNode* node)
-        : graph_(NULL), start_(node)
+    CFG(SgNode* node, bool is_filtered = false)
+        : graph_(NULL), start_(node), is_filtered_(is_filtered)
     {
-        //buildCFG();
+        buildCFG();
     }
 
     ~CFG() 
@@ -48,19 +48,31 @@ public:
 
     // Set the start node for graph building. 
     // The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName
-    void setStart(SgNode* node)
-    { start_ = node; }
+    void setStart(SgNode* node) { start_ = node; }
+
+    bool isFilteredCFG() const { return is_filtered_; }
+    void setFiltered(bool flag) { is_filtered_ = flag; }
+
+
+    // Build CFG according to the 'is_filtered_' flag.
+    void buildCFG()
+    {
+        if (is_filtered_) buildFilteredCFG();
+        else buildFullCFG();
+    }
 
     // Build CFG for debugging.
-    void buildCFG();
+    void buildFullCFG();
     // Build filtered CFG which only contains interesting nodes.
     void buildFilteredCFG();
     
 
-    // The following four functions are for getting in/out edges of a given node.
+#if 0
     std::vector<SgDirectedGraphEdge*> getOutEdges(SgNode* node, int index);
     std::vector<SgDirectedGraphEdge*> getInEdges(SgNode* node, int index);
+#endif
 
+    // The following four functions are for getting in/out edges of a given node.
     std::vector<SgDirectedGraphEdge*> getOutEdges(SgGraphNode* node);
     std::vector<SgDirectedGraphEdge*> getInEdges(SgGraphNode* node);
 
@@ -70,9 +82,6 @@ public:
 
     // Get the index of a CFG node.
     int getIndex(SgGraphNode* node);
-
-    // Turn a graph node into a CFGNode which is defined in VirtualCFG namespace.
-    CFGNode toCFGNode(SgGraphNode* node);
 
     // Output the graph to a DOT file.
     void cfgToDot(SgNode* node, const std::string& file_name)
@@ -85,11 +94,15 @@ public:
     }
 
 private:
-    void buildCFG(CFGNode n);
+    //void buildCFG(CFGNode n);
     template <class NodeT, class EdgeT>
     void buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored);
     void clearNodesAndEdges();
 
+    // Turn a graph node into a CFGNode which is defined in VirtualCFG namespace.
+    CFGNode toCFGNode(SgGraphNode* node);
+
+    // The following methods are used to build a DOT file.
     void processNodes(std::ostream & o, SgGraphNode* n, std::set<SgGraphNode*>& explored);
     void printNodePlusEdges(std::ostream & o, SgGraphNode* node);
     void printNode(std::ostream & o, SgGraphNode* node);

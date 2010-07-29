@@ -25,7 +25,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       copyAST_tests RoseExample_tests PythonExample_tests \
       colorAST_tests mergeAST_tests unparseToString_tests \
       sourcePosition_tests \
-      boost_tests virtualCFG_tests uninitializedField_tests \
+      boost_tests virtualCFG_tests staticCFG_tests uninitializedField_tests \
       A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
       ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
       sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \

@@ -88,9 +88,9 @@ if [ $? -ne 0 ]; then
 fi 
 
 GIT_REPO_URL=`grep url .git/config | cut -f 3 -d' '`
-#if [ "$GIT_REPO_URL" != "file:///usr/casc/overture/ROSE/git/ROSE.git" ]; then
+#if [ "$GIT_REPO_URL" != "file:///nfs/casc/overture/ROSE/git/ROSE.git" ]; then
 #    echo $GIT_REPO_URL
-#    echo "Error: the git URL is not file:///usr/casc/overture/ROSE/git/ROSE.git "
+#    echo "Error: the git URL is not file:///nfs/casc/overture/ROSE/git/ROSE.git "
 #    exit 1
 #fi  
 
@@ -111,5 +111,5 @@ make -C src/frontend/CxxFrontend -j${PROCESS_NUM} &&
 make binary_edg_tarball -j${PROCESS_NUM}
 #make source_with_binary_edg_dist DOT_SVNREV=-12345
 # copy it to a centralized file location
-cp roseBinaryEDG-*.tar.gz /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/.
+cp roseBinaryEDG-*.tar.gz /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/.
 

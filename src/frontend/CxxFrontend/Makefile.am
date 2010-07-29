@@ -8,8 +8,8 @@ release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-s
 BINARY_EDG_DIR_SUBSTRING_NAME=roseBinaryEDG-@ROSE_EDG_MAJOR_VERSION_NUMBER@-@ROSE_EDG_MINOR_VERSION_NUMBER@
 BINARY_EDG_DIRNAME=$(BINARY_EDG_DIR_SUBSTRING_NAME)-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
 
-BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries-staging
-BINARY_EDG_TARBALL_DISTRIBUTION_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+BINARY_EDG_TARBALL_STAGING_PATH=/nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries-staging
+BINARY_EDG_TARBALL_DISTRIBUTION_PATH=/nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
 BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)
 # Liao, 12/11/2009, we mirror the internal BINARY_EDG_TARBALL_DISTRIBUTION_PATH to rosecompiler.org
 EXTERNAL_BINARY_EDG_TARBALL_URL=http://www.rosecompiler.org/edg_binaries

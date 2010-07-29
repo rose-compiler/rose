@@ -117,6 +117,8 @@ main(int argc, char* argv[])
      * ROSE's analysis or output functions since they operate exclusively on the tree representation. */
     SgAsmBlock *block = MyPartitioner().partition(insns, vaddr, "test_function");
 
-    /* Produce human-readable output. */
-    std::cout <<unparseAsmStatement(block);
+    /* Produce human-readable output.  The output can be customized by subclassing AsmUnparser (see disassemble.C for an
+     * example). This method of output is also more efficient than calling the old unparseAsmStatement() since there's no need
+     * to buffer the string representation in memory first. */
+    AsmUnparser().unparse(std::cout, block);
 }

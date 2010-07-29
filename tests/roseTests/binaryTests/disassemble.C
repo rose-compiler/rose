@@ -11,8 +11,10 @@
 
 #include "AsmUnparser.h"
 #include "VirtualMachineSemantics.h"
+#include "SMTSolver.h"
 #include "bincfg.h"
 
+/*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
 /* Convert a SHA1 digest to a string. */
@@ -466,41 +468,6 @@ dump_CFG_CG(SgNode *ast)
     fprintf(stderr, "\n");
 }
 
-/* Testbed for the Instruction Partitioning Description (IPD) files. */
-class MyPartitioner: public Partitioner {
-public:
-    std::string ipd_filename;
-    MyPartitioner() {
-        add_function_detector(ipd_parser);
-    }
-    static void ipd_parser(Partitioner *p_, SgAsmGenericHeader* h, const Disassembler::InstructionMap&) {
-        MyPartitioner *p = dynamic_cast<MyPartitioner*>(p_);
-        if (h || p->ipd_filename.empty()) return;
-
-        /* Get the content of the IPD file */
-        int fd = open(p->ipd_filename.c_str(), O_RDONLY);
-        if (fd<0) {
-            std::cerr <<p->ipd_filename <<": file not found\n";
-            exit(1); /*or just return...*/
-        }
-        struct stat sb;
-        fstat(fd, &sb);
-        char *ipd_content = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-        close(fd);
-        
-        /* Parse the file. An exception is thrown if it cannot be parsed. */
-        IPDParser parser(p, ipd_content, sb.st_size);
-        try {
-            parser.parse();
-        } catch (const IPDParser::Exception &e) {
-            std::cerr <<p->ipd_filename <<":" <<e.lnum <<": " <<e.mesg <<"\n";
-            exit(1);
-        }
-
-        munmap(ipd_content, sb.st_size);
-    }
-};
-
 int
 main(int argc, char *argv[]) 
 {
@@ -514,7 +481,6 @@ main(int argc, char *argv[])
     bool do_show_extents = false;
     bool do_show_coverage = false;
     bool do_show_functions = false;
-    const char *ipd_filename = NULL;
     int exit_status = 0;
 
     /* Parse and remove the command-line switches intended for this executable, but leave the switches we don't
@@ -529,8 +495,6 @@ main(int argc, char *argv[])
             exit(1);
         } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
             do_ast_dot = true;
-        } else if (!strncmp(argv[i], "--blocks=", 9)) {         /* name of file containing basic block and function information */
-            ipd_filename = argv[i]+9;
         } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
             do_cfg_dot = true;
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
@@ -557,8 +521,12 @@ main(int argc, char *argv[])
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--quiet")) {               /* do not emit instructions to stdout */
             do_quiet = true;
-        } else if (i+1<argc &&
-                   (!strcmp(argv[i], "-rose:disassembler_search") || !strcmp(argv[i], "-rose:partitioner_search"))) {
+        } else if (i+2<argc && CommandlineProcessing::isOptionTakingThirdParameter(argv[i])) {
+            printf("switch and args passed along to ROSE proper: %s %s %s\n", argv[i], argv[i+1], argv[i+2]);
+            new_argv[new_argc++] = argv[i++];
+            new_argv[new_argc++] = argv[i++];
+            new_argv[new_argc++] = argv[i];
+        } else if (i+1<argc && CommandlineProcessing::isOptionTakingSecondParameter(argv[i])) {
             printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
@@ -578,6 +546,8 @@ main(int argc, char *argv[])
     assert(interps.size()>0);
     for (size_t i=0; i<interps.size(); i++) {
         SgAsmInterpretation *interp = isSgAsmInterpretation(interps[i]);
+        SgFile *file = SageInterface::getEnclosingFileNode(interp);
+        ROSE_ASSERT(file);
 
         /* Should we skip this interpretation? */
         if (do_skip_dos) {
@@ -599,25 +569,29 @@ main(int argc, char *argv[])
 
         /* Set the disassembler instruction searching heuristics from the "-rose:disassembler_search" switch as stored
          * in the SgFile node containing this interpretation. */
-        SgNode *file = interp;
-        while (file && !isSgFile(file)) file = file->get_parent();
-        ROSE_ASSERT(file);
-        d->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
+        d->set_search(file->get_disassemblerSearchHeuristics());
 
-        /* Build the instruction partitioner and set its search heuristics based on the "-rose:partitioner_search" switch as
-         * stored in the SgFile node containing this interpretation. Note: we don't actually have to build a new partitioner
-         * every time through this interpretation loop. */
-        MyPartitioner *p = new MyPartitioner();
+        /* Build the instruction partitioner and initialize it based on the -rose:partitioner_search and
+         * -rose:partitioner_confg switches as stored in the SgFile node containing this interpretation. */
+        Partitioner *p = new Partitioner();
         if (do_debug_partitioner)
             p->set_debug(stderr);
-        if (ipd_filename)
-            p->ipd_filename = ipd_filename;
-        p->set_search(isSgFile(file)->get_partitionerSearchHeuristics());
+        p->set_search(file->get_partitionerSearchHeuristics());
+        p->set_config(file->get_partitionerConfigurationFileName());
         d->set_partitioner(p);
 
-        /* Disassemble instructions, linking them into the interpretation */
+        /* Disassemble instructions, linking them into the interpretation. Passing the BadMap as the third argument of
+         * disassemble() causes the disassembler to not throw exceptions. However, the partitioner might still throw an
+         * exception if it cannot parse the configuration file. */
         Disassembler::BadMap bad;
-        d->disassemble(interp, NULL, &bad);
+        try {
+            d->disassemble(interp, NULL, &bad);
+        } catch (const Partitioner::IPDParser::Exception &e) {
+            std::cerr <<e <<"\n";
+            exit(1);
+        }
+
+        /* Show disassembly if requested. */
         if (do_show_functions)
             ShowFunctions().show(interp);
         if (!do_quiet) {
@@ -733,9 +707,29 @@ main(int argc, char *argv[])
         delete d;
     }
 
+    if (SMTSolver::total_calls>0)
+        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
+
+    /* Generate a *.dump file in the current directory. Note that backend() also currently [2010-07-21] generates this *.dump
+     * file, but it does so after giving sections an opportunity to reallocate themselves.   We want the dump to contain the
+     * original data, prior to any normalizations that might occur, so we generate the dump here explicitly. */
+    struct T1: public SgSimpleProcessing {
+        void visit(SgNode *node) {
+            SgAsmGenericFile *file = isSgAsmGenericFile(node);
+            if (file)
+                file->dump_all(true, ".dump");
+        }
+    };
+    printf("generating ASCII dump...\n");
+    T1().traverse(project, preorder);
+
+#if 0
     printf("running back end...\n");
     int ecode = backend(project);
     return ecode>0 ? ecode : exit_status;
+#endif
+
+    return 0;
 }
 
 #endif

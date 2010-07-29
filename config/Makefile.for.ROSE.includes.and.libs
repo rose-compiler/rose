@@ -1,4 +1,4 @@
-# These definitions are for the benefit of independent software contained
+# These definitions are for the benefit of independent software contained			-*- makefile -*-
 # in ROSE.  (Currently, this means SAGE and ROSETTA.)
 # It defines ROSE_INCLUDES and ROSE_LIBS so they can use the ROSE codes.
 
@@ -35,15 +35,6 @@ endif
 # This is control over the use of MySQL (which is complicated to use and install)
 # This support for MySQL will be removed in the future.
 if ROSE_USE_MYSQL_DATABASE
- # The use of the side effect analysis is dependent upon the data base support
- # which is compiled optionally (see configure --help, for details)
-   ROSE_SIDEEFFECTS_INCLUDE             = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
-   ROSE_SIDEEFFECTS_OBJS                = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/*.o
-   ROSE_SIDEEFFECTS_LIB_NAME            = sideEffect
-#  ROSE_SIDEEFFECTS_LIB_FILE            = lib$(ROSE_SIDEEFFECTS_LIB_NAME).so
-   ROSE_SIDEEFFECTS_LIBS_FILE_WITH_PATH = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/$(ROSE_SIDEEFFECTS_LIB_FILE)
-   ROSE_SIDEEFFECTS_LIBS                = -l$(ROSE_SIDEEFFECTS_LIB_NAME)
-
  # Location of boost should be set in configuration (not done yet)
  # Note: -idirafter puts the path last on the compiler command line, this is not what we want.
  # BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
@@ -76,10 +67,12 @@ if ROSE_USE_SQLITE_DATABASE
    ROSE_SQLITE_DATABASE_INCLUDE  = $(SQLITE3_CFLAGS)
    SQLITE_DATABASE_INCLUDE       = $(SQLITE3_CFLAGS) -I$(top_srcdir)/src/roseExtensions/sqlite3x
    SQLITE_DATABASE_LIBS          = $(SQLITE3_LDFLAGS)
-   ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/SQLiteConnection/*.o
-   ROSE_SQLITE_DATABASE_LIB_NAME = roseSQLiteDatabase
-#  ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).so
+#   ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/sqlite3x/*o
+   ROSE_SQLITE_DATABASE_LIB_NAME = RoseSQLite3xDatabase
+   ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).la
    ROSE_SQLITE_DATABASE_LIBS     = -l$(ROSE_SQLITE_DATABASE_LIB_NAME)
+
+   ROSE_SIDEEFFECT_INCLUDE						 = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
 endif
 
 # This is properly handled by automake even when specified in an include file
@@ -118,11 +111,10 @@ if ROSE_BUILD_ROSEHPCT
 endif
 
 # ROSE-YICES Package (destributed by SRI as a static library)
-if ROSE_USE_YICES
-  ROSE_YICES_INCLUDES = -I$(yices_path)/include
+if HAVE_LIBYICES
+  ROSE_YICES_INCLUDES = -I@YICES_PREFIX@/include
   ROSE_YICES_LIBS = -lyices
-  ROSE_YICES_LIBS_WITH_PATH = $(yices_path)/lib/libyices.a
-# ROSE_YICES_LIB_FILE = libyices.a
+  ROSE_YICES_LIBS_WITH_PATH = @YICES_PREFIX@/lib/libyices.a
 endif
 
 # ROSE-DWARF libdwarf support
@@ -152,7 +144,9 @@ else
 # DQ (3/15/2009): Use the usual static linking when not using Intel Pin (what we used to do).
 # DQ (3/13/2009): Fixup libdwarf support in ROSE to always use the dynamic (shared) library.
 # ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(dwarf_path) -L$(dwarf_path) -ldwarf -lelf
-  ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
+# DQ (6/5/2010): Fixed to use the value set in the configure step (requires the dynamic library).
+# ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
+  ROSE_DWARF_LIBS_WITH_PATH = @DWARF_LINK@
 endif
 endif
 
@@ -165,6 +159,16 @@ if ROSE_USE_PHP
   ROSE_PHP_INCLUDES = -I$(php_path)/include/phc -I$(php_path)/include/php
   ROSE_PHP_LIBS = -lphp5 -lphc -lltdl
   ROSE_PHP_LIBS_WITH_PATH = $(php_path)/lib/libphc.so $(php_path)/lib/libphp5.so $(LIBLTDL)
+endif
+
+# ASR (06/09/2010): adding llvm support variables
+if ROSE_USE_LLVM
+  ROSE_LLVM_INCLUDES = -I$(llvm_path)/include
+  ROSE_LLVM_LIBS = -L$(llvm_path)/lib -lLLVMXCoreCodeGen -lLLVMXCoreAsmPrinter -lLLVMXCoreInfo -lLLVMSystemZCodeGen -lLLVMSystemZAsmPrinter -lLLVMSystemZInfo -lLLVMSparcCodeGen -lLLVMSparcAsmPrinter -lLLVMSparcInfo -lLLVMPowerPCCodeGen -lLLVMPowerPCAsmPrinter -lLLVMPowerPCInfo -lLLVMpic16passes -lLLVMPIC16AsmPrinter -lLLVMPIC16CodeGen -lLLVMPIC16Info -lLLVMMSP430CodeGen -lLLVMMSP430AsmPrinter -lLLVMMSP430Info -lLLVMMSIL -lLLVMMSILInfo -lLLVMMipsAsmPrinter -lLLVMMipsCodeGen -lLLVMMipsInfo -lLLVMMBlazeAsmPrinter -lLLVMMBlazeCodeGen -lLLVMMBlazeInfo -lLLVMLinker -lLLVMipo -lLLVMInterpreter -lLLVMInstrumentation -lLLVMJIT -lLLVMExecutionEngine -lLLVMCppBackend -lLLVMCppBackendInfo -lLLVMCellSPUCodeGen -lLLVMCellSPUAsmPrinter -lLLVMCellSPUInfo -lLLVMCBackend -lLLVMCBackendInfo -lLLVMBlackfinCodeGen -lLLVMBlackfinAsmPrinter -lLLVMBlackfinInfo -lLLVMBitWriter -lLLVMX86Disassembler -lLLVMX86AsmParser -lLLVMX86AsmPrinter -lLLVMX86CodeGen -lLLVMX86Info -lLLVMAsmParser -lLLVMARMAsmParser -lLLVMMCParser -lLLVMARMAsmPrinter -lLLVMARMCodeGen -lLLVMARMInfo -lLLVMArchive -lLLVMBitReader -lLLVMAlphaCodeGen -lLLVMSelectionDAG -lLLVMAlphaAsmPrinter -lLLVMAsmPrinter -lLLVMCodeGen -lLLVMScalarOpts -lLLVMInstCombine -lLLVMTransformUtils -lLLVMipa -lLLVMAnalysis -lLLVMTarget -lLLVMMC -lLLVMCore -lLLVMAlphaInfo -lLLVMSupport -lLLVMSystem
+
+# adding all libraries for now
+#ROSE_LLVM_LIB_WITH_PATH = $(llvm_path)/lib/libLLVMXCoreCodeGen.a $(llvm_path)/lib/libLLVMXCoreAsmPrinter.a $(llvm_path)/lib/libLLVMXCoreInfo.a $(llvm_path)/lib/libLLVMSystemZCodeGen.a $(llvm_path)/lib/libLLVMSystemZAsmPrinter.a $(llvm_path)/lib/libLLVMSystemZInfo.a $(llvm_path)/lib/libLLVMSparcCodeGen.a $(llvm_path)/lib/libLLVMSparcAsmPrinter.a $(llvm_path)/lib/libLLVMSparcInfo.a $(llvm_path)/lib/libLLVMPowerPCCodeGen.a $(llvm_path)/lib/libLLVMPowerPCAsmPrinter.a $(llvm_path)/lib/libLLVMPowerPCInfo.a $(llvm_path)/lib/libLLVMpic16passes.a $(llvm_path)/lib/libLLVMPIC16AsmPrinter.a $(llvm_path)/lib/libLLVMPIC16CodeGen.a $(llvm_path)/lib/libLLVMPIC16Info.a $(llvm_path)/lib/libLLVMMSP430CodeGen.a $(llvm_path)/lib/libLLVMMSP430AsmPrinter.a $(llvm_path)/lib/libLLVMMSP430Info.a $(llvm_path)/lib/libLLVMMSIL.a $(llvm_path)/lib/libLLVMMSILInfo.a $(llvm_path)/lib/libLLVMMipsAsmPrinter.a $(llvm_path)/lib/libLLVMMipsCodeGen.a $(llvm_path)/lib/libLLVMMipsInfo.a $(llvm_path)/lib/libLLVMMBlazeAsmPrinter.a $(llvm_path)/lib/libLLVMMBlazeCodeGen.a $(llvm_path)/lib/libLLVMMBlazeInfo.a $(llvm_path)/lib/libLLVMLinker.a $(llvm_path)/lib/libLLVMipo.a $(llvm_path)/lib/libLLVMInterpreter.a $(llvm_path)/lib/libLLVMInstrumentation.a $(llvm_path)/lib/libLLVMJIT.a $(llvm_path)/lib/libLLVMExecutionEngine.a $(llvm_path)/lib/libLLVMCppBackend.a $(llvm_path)/lib/libLLVMCppBackendInfo.a $(llvm_path)/lib/libLLVMCellSPUCodeGen.a $(llvm_path)/lib/libLLVMCellSPUAsmPrinter.a $(llvm_path)/lib/libLLVMCellSPUInfo.a $(llvm_path)/lib/libLLVMCBackend.a $(llvm_path)/lib/libLLVMCBackendInfo.a $(llvm_path)/lib/libLLVMBlackfinCodeGen.a $(llvm_path)/lib/libLLVMBlackfinAsmPrinter.a $(llvm_path)/lib/libLLVMBlackfinInfo.a $(llvm_path)/lib/libLLVMBitWriter.a $(llvm_path)/lib/libLLVMX86Disassembler.a $(llvm_path)/lib/libLLVMX86AsmParser.a $(llvm_path)/lib/libLLVMX86AsmPrinter.a $(llvm_path)/lib/libLLVMX86CodeGen.a $(llvm_path)/lib/libLLVMX86Info.a $(llvm_path)/lib/libLLVMAsmParser.a $(llvm_path)/lib/libLLVMARMAsmParser.a $(llvm_path)/lib/libLLVMMCParser.a $(llvm_path)/lib/libLLVMARMAsmPrinter.a $(llvm_path)/lib/libLLVMARMCodeGen.a $(llvm_path)/lib/libLLVMARMInfo.a $(llvm_path)/lib/libLLVMArchive.a $(llvm_path)/lib/libLLVMBitReader.a $(llvm_path)/lib/libLLVMAlphaCodeGen.a $(llvm_path)/lib/libLLVMSelectionDAG.a $(llvm_path)/lib/libLLVMAlphaAsmPrinter.a $(llvm_path)/lib/libLLVMAsmPrinter.a $(llvm_path)/lib/libLLVMCodeGen.a $(llvm_path)/lib/libLLVMScalarOpts.a $(llvm_path)/lib/libLLVMInstCombine.a $(llvm_path)/lib/libLLVMTransformUtils.a $(llvm_path)/lib/libLLVMipa.a $(llvm_path)/lib/libLLVMAnalysis.a $(llvm_path)/lib/libLLVMTarget.a $(llvm_path)/lib/libLLVMMC.a $(llvm_path)/lib/libLLVMCore.a $(llvm_path)/lib/libLLVMAlphaInfo.a $(llvm_path)/lib/libLLVMSupport.a $(llvm_path)/lib/libLLVMSystem.a
+
 endif
 
 # SSL support permits use of MD5 checksums internally for binary library identification.
@@ -277,12 +281,14 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
      -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
      -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
+     -I$(top_srcdir)/src/midend/programAnalysis/variableRenaming \
       $(ROSE_SIDEEFFECTS_INCLUDE) \
       $(ROSE_DATABASE_INCLUDE) \
       $(ROSE_GUI_INCLUDE) \
       $(ROSE_QT_INCLUDE) \
       $(MYSQL_DATABASE_INCLUDE) \
       $(ROSE_SQLITE_DATABASE_INCLUDE) \
+			$(ROSE_SIDEEFFECT_INCLUDE) \
       $(SQLITE_DATABASE_INCLUDE) \
      -I$(top_srcdir)/src/midend/programTransformation/partialRedundancyElimination \
      -I$(top_srcdir)/src/midend/programTransformation/finiteDifferencing \
@@ -319,7 +325,6 @@ ROSE_INCLUDES = \
 # DQ (10/28/2008): I think these should be included, I don't know why they 
 # were removed (used with Microsoft Windows tests, and Yices tests).
 # DQ: Not used currently 
-#     $(ROSE_YICES_INCLUDES)
 #     $(ROSE_WINE_INCLUDES)
 
 # DQ (5/3/2007): Removed from ROSE
@@ -337,7 +342,6 @@ ROSE_INCLUDES = \
 # ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(JAVA_JVM_LIB)
 # JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
 ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
-## ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(ROSE_YICES_LIBS_WITH_PATH)
 
 # ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
 ROSE_LIBS = $(top_builddir)/src/librose.la -lm  $(JAVA_JVM_LINK) $(MYSQL_DATABASE_LIBS) \
@@ -375,7 +379,7 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 ##    $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) \
 ##    $(MYSQL_DATABASE_LIBS) $(ROSE_SQLITE_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) \
 ##    $(LIB_QT) $(JAVA_JVM_LIB) \
-##    $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) \
+##    $(RT_LIBS) \
 ##    $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
 ##    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
 ##    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS) 

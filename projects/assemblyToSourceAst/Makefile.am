@@ -11,10 +11,15 @@ INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
-bin_PROGRAMS = x86AssemblyToCDemo powerpcAssemblyToCDemo x86AssemblyToNetlist x86AssemblyToBtor simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep eliminateRedundantVariables readAndWriteSets binaryClauseSimplify lookForErrors btorUnroll btorCleanup
+bin_PROGRAMS = createDDG x86AssemblyToCDemo powerpcAssemblyToCDemo x86AssemblyToNetlist x86AssemblyToBtor simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep eliminateRedundantVariables readAndWriteSets binaryClauseSimplify lookForErrors btorUnroll btorCleanup
 lib_LTLIBRARIES = libroseBtorSupport.la libroseSatProblem.la
 
 BUILT_SOURCES = libroseBtorSupport.la libroseSatProblem.la
+
+createDDG_SOURCES = createDDG.C generatedCOpts.C generatedCOpts.h x86AssemblyToC.h
+createDDG_CPPFLAGS = $(ROSE_INCLUDES)
+createDDG_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C generatedCOpts.C generatedCOpts.h x86AssemblyToC.h
 x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)

@@ -151,7 +151,7 @@ Loader::map_writable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &
 
 /* Align section addresses and sizes */
 rose_addr_t
-Loader::align_values(SgAsmGenericSection *section,
+Loader::align_values(SgAsmGenericSection *section, Contribution contrib,
                      rose_addr_t *va_p/*out*/, rose_addr_t *mem_size_p/*out*/,
                      rose_addr_t *offset_p/*out*/, rose_addr_t *file_size_p/*out*/, 
                      const MemoryMap*)
@@ -176,7 +176,7 @@ Loader::align_values(SgAsmGenericSection *section,
         nleading = offset-n;
         file_size += nleading;
         offset = n;
-        file_size = ALIGN_UP(file_size, fa);
+        /* file_size = ALIGN_UP(file_size, fa); -- a partial ending page shall be zero filled */
     }
 
     /* Align memory address downward, adjusting memory size as necessary. Then align memory size upward so the mapped region
@@ -228,12 +228,6 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
         Contribution contrib = selector->contributes(section);
         if (CONTRIBUTE_NONE==contrib)
             continue;
-        rose_addr_t va=0, mem_size=0, offset=0, file_size=0;
-        rose_addr_t section_va = align_values(section, &va, &mem_size, &offset, &file_size, map);
-
-        if (0==mem_size)
-            continue;
-
         if (p_debug) {
             fprintf(p_debug, "  %smapping section [%d] \"%s\" with base va 0x%08"PRIx64"\n",
                     CONTRIBUTE_SUB==contrib ? "un" : "",
@@ -246,12 +240,28 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
                     section->get_header()->get_base_va() + section->get_mapped_preferred_rva(),
                     section->get_mapped_size(),
                     section->get_header()->get_base_va() + section->get_mapped_preferred_rva() + section->get_mapped_size());
-            fprintf(p_debug, "    Aligned values:     VA 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"%s\n",
-                    va, mem_size, va+mem_size,
-                    (section->get_header()->get_base_va()+section->get_mapped_preferred_rva()==va &&
-                     section->get_mapped_size()==mem_size ?
-                     " (no change)":""));
         }
+        
+        rose_addr_t va=0, mem_size=0, offset=0, file_size=0;
+        rose_addr_t section_va = align_values(section, contrib, &va, &mem_size, &offset, &file_size, map);
+        if (p_debug) {
+            fprintf(p_debug, "    Aligned values:     VA 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64,
+                    va, mem_size, va+mem_size);
+            if (section->get_header()->get_base_va()+section->get_mapped_preferred_rva()==va &&
+                section->get_mapped_size()==mem_size) {
+                fputs(" (no change)\n", p_debug);
+            } else {
+                fprintf(p_debug, " (fa=%"PRIu64", ma=%"PRIu64")\n",
+                        section->get_file_alignment(), section->get_mapped_alignment());
+            }
+            
+        }
+
+        if (0==mem_size) {
+            if (p_debug) fprintf(p_debug, "    Nothing left to do.\n");
+            continue;
+        }
+
         if (p_debug && CONTRIBUTE_ADD==contrib) {
             fprintf(p_debug, "    Section begins at va   0x%08"PRIx64"\n", section_va);
             fprintf(p_debug, "    File location:         0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
@@ -283,18 +293,10 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
             } else if (offset+file_size>total) {
                 if (p_debug)
                     fprintf(p_debug, "    Map crosses end-of-file at 0x%08"PRIx64"\n", total);
-//#ifdef _MSC_VER
-//                ltsz = _cpp_min(mem_size, total-offset);
-//#else
                 ltsz = std::min(mem_size, total-offset);
-//#endif
             } else {
                 /* Map falls entirely within the file, but mem size might be larger than file size */
-//#ifdef _MSC_VER
-//                ltsz = _cpp_min(mem_size, file_size);
-//#else
                 ltsz = std::min(mem_size, file_size);
-//#endif
             }
             rose_addr_t rtsz = mem_size - ltsz;
 

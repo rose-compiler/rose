@@ -101,12 +101,29 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
 #endif
                     break;
                   }
+#if 0
+            // DQ (6/28/2010): I think we need to make this unique so that it will not be shared for now!
+               case V_SgPointerType:
+            // case V_SgReferenceType:
+                  {
+                    SgPointerType* pointerType = isSgPointerType(node);
+                    ROSE_ASSERT(pointerType != NULL);
 
+                    key = "__pointer_"; // + StringUtility::numberToString(pointerType);
+                    additionalSuffix = additionalSuffix + StringUtility::numberToString(pointerType);
+                    break;
+                  }
+#endif
             // All other types
                default:
                   {
                  // Note difference in function name get_mangled_name() and get_mangled()
                     key = type->get_mangled();
+
+                 // DQ (7/4/2010): Use the original setting which allowed types to be shared.
+                 // DQ (6/28/2010): I think we need to make this unique so that it will not be shared for now!
+                 // additionalSuffix = "__type";
+                 // additionalSuffix = "__type"+ StringUtility::numberToString(type);
                     additionalSuffix = "__type";
 
                  // printf ("default case of SgType: key = %s \n",key.c_str());
@@ -120,6 +137,13 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                   }
              }
 
+
+       // DQ (6/25/2010): This should be less important now that we normalize the SgTypedefSeq IR nodes to have the same lists.
+#if 0
+       // DQ (7/1/2010): Note that this causes about 7 test codes to fail because if name qualification issues of 
+       // global scoping operator. Not clear why, but this code is what restores thos test codes (in Cxx_tests) to 
+       // working order.
+
        // Append a list of pointers to the types in the typedef sequence.
           SgTypePtrList & typeList = type->get_typedefs()->get_typedefs();
           SgTypePtrList::iterator i = typeList.begin();
@@ -132,23 +156,41 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                key += generateUniqueName(*i,true);
                i++;
              }
+#endif
+       // printf ("In SageInterface::generateUniqueName(): after adding typedefs for type = %s \n",key.c_str());
 
+#if 0
+       // DQ (7/4/2010): This is preventing newly built types from being used as base-types in the merge.
+       // I think that we may not require this level of detail, but we migh have to fixup the base types
+       // afterward.  Either that of rnormalize all the base-types so that we CAN use this code and still
+       // generate matching names to permit the merge to work properly.
+
+       // DQ (6/28/2010): I think we want to ignore this difference where possible.
        // DQ (3/28/2007): Add the information in get_ptr_to() and get_ref_to() member functions (if they have valid pointers)
           if (type->get_ptr_to() != NULL || type->get_ref_to() != NULL)
              {
                if (type->get_ptr_to() != NULL)
                   {
-                 // printf ("In generateUniqueName(%p = %s): Adding in the type->get_ptr_to() = %p = %s to the generation of a unique name \n",type,type->class_name().c_str(),type->get_ptr_to(),type->get_ptr_to()->class_name().c_str());
+#if 0
+                    printf ("In generateUniqueName(%p = %s): Adding in the type->get_ptr_to() = %p = %s to the generation of a unique name \n",type,type->class_name().c_str(),type->get_ptr_to(),type->get_ptr_to()->class_name().c_str());
+#endif
                     key += "_with_pointer_to_type_";
                     key += generateUniqueName(type->get_ptr_to(),true);
                   }
                if (type->get_ref_to() != NULL)
                   {
-                 // printf ("In generateUniqueName(%p = %s): Adding in the type->get_ref_to() = %p = %s to the generation of a unique name \n",type,type->class_name().c_str(),type->get_ref_to(),type->get_ref_to()->class_name().c_str());
+#if 0
+                    printf ("In generateUniqueName(%p = %s): Adding in the type->get_ref_to() = %p = %s to the generation of a unique name \n",type,type->class_name().c_str(),type->get_ref_to(),type->get_ref_to()->class_name().c_str());
+#endif
                     key += "_with_reference_to_type_";
                     key += generateUniqueName(type->get_ref_to(),true);
                   }
              }
+#endif
+
+#if 0
+          printf ("In SageInterface::generateUniqueName(): key for type = %s \n",key.c_str());
+#endif
         }
 
      SgStatement* statement = isSgStatement(node);
@@ -448,18 +490,26 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                             }
                        }
 
+                 // DQ (7/10/2010): Found a case where this fails, need more information about it.
                  // DQ (2/20/2007): I think that since we have reset the names of un-named enum declarations this should be possible to assert now!
-                    ROSE_ASSERT (key.empty() == false);
-#if 0
+                 // ROSE_ASSERT (key.empty() == false);
+
+                 // DQ (7/10/2010): Found a case where this fails, need more information about it.
+#if 1
                     if (key.empty() == true)
                        {
+                      // DQ (7/11/2010): This is not an error since we handle this case explicitly 
+                      // by addating the pointer value to make it non-sharable.
+                         printf ("WARNING: detected case of empty key constructed \n");
+                         enumDeclaration->get_file_info()->display("WARNING: detected case of empty key constructed");
+
                       // If the enum declaration is unnamed then give it a name in terms of its parent 
                       // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an 
                       // enum_declaration (additionalSuffix) in a typedef specific to _G_fpos64_t).
                          SgNode* parentNode = enumDeclaration->get_parent();
                          switch(parentNode->variantT())
                             {
-                           // These case handle where an enum declaration is embedded in a avriable or typedef declaration.
+                           // These cases handle where an enum declaration is embedded in a variable or typedef declaration.
                               case V_SgVariableDeclaration:
                               case V_SgTypedefDeclaration:
                                  {
@@ -473,6 +523,11 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                                    ROSE_ASSERT(false);
                                  }
                             }
+#if 0
+                      // DQ (7/11/2010): Commented out this assertion since we handle it above for now.
+                         printf ("ERROR: detected case of empty key constructed \n");
+                         ROSE_ASSERT (false);
+#endif
                        }
 #endif
                     break;
@@ -636,8 +691,12 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                             {
                               printf ("Error: declaration->get_string().is_null() == true declaration = %p = %s \n",declaration,declaration->class_name().c_str());
                               declaration->get_file_info()->display("Error: declaration->get_string().is_null() == true");
+
+                           // DQ (7/11/2010): This will make sure the IR node is unshared
+                              additionalSuffix += string("_empty_template_string_") + StringUtility::numberToString(node);
                             }
-                         ROSE_ASSERT(declaration->get_string().is_null() == false);
+                      // DQ (7/11/2010): Commenting out this assertion (triggered by astFileIO test test-read-large).
+                      // ROSE_ASSERT(declaration->get_string().is_null() == false);
 
                          additionalSuffix += string("_template_string_") + declaration->get_string();
                        }
@@ -786,6 +845,27 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                             }
                        }
 #endif
+
+#if 1
+                 // DQ (6/23/2010): Added support to make classes with the same name different when they are
+                 // different classes containing different members.
+                    string memberNames = "_class_members_";
+                    if (classDeclaration->get_definition() != NULL)
+                       {
+                         SgDeclarationStatementPtrList::const_iterator p = classDeclaration->get_definition()->get_members().begin();
+                         while ( p != classDeclaration->get_definition()->get_members().end() )
+                            {
+                           // DQ (2/22/2007): Added type to generated mangled name for each variable (supports AST merge generation of name for un-named classes)
+                           // memberNames += SgName("_member_type_") + (*p)->get_type()->get_mangled() + SgName("_member_name_") + (*p)->get_mangled_name();
+                              memberNames += string("_member_name_") + SageInterface::get_name(*p);
+
+                              p++;
+                            }
+                       }
+
+                    additionalSuffix += memberNames;
+#endif
+
                  // need to check for use of extern in declaration!
                  // additionalSuffix = "__class_declaration";
                     break;
@@ -934,6 +1014,16 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                   {
                     key += accessString;
                   }
+
+            // DQ (7/16/2010): To simplify debugging add the line number to the generated string.
+            // DQ (7/4/2010): Tests across separate files that are actually different programs are a problem if we don't
+            // also include the filename.  The same "class X" might not be able to be merged across different programs.
+            // We would not have to include this if we were merging files within a single program.
+               ROSE_ASSERT(declarationStatement->get_file_info() != NULL);
+               string filename = declarationStatement->get_file_info()->get_filename();
+               string linenumber = StringUtility::numberToString(declarationStatement->get_file_info()->get_line());
+            // key += filename;
+               key += filename + "_" + linenumber;
              }
         }
 
@@ -1003,8 +1093,24 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                case V_SgNamespaceSymbol:
                   {
                     SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(symbol);
+                    ROSE_ASSERT(namespaceSymbol != NULL);
                     SgDeclarationStatement* declaration = namespaceSymbol->get_declaration();
+#if 1
+                 // DQ (7/4/1020): Unclear why we can have a declaration == NULL, so allow this to generate a unique name for now!
+                 // Perhaps this is for a "using namespace std" without "std defined" (which is allows in C++).
+                 // Or it coudle the for an un-named namespace (also allowed in C++).
+                    if (declaration == NULL)
+                       {
+                         key = "__namespace_with_null_declaration_" + StringUtility::numberToString(symbol);
+                       }
+                      else
+                       {
+                         key = generateUniqueName(declaration,false);
+                       }
+#else
+                    ROSE_ASSERT(declaration != NULL);
                     key = generateUniqueName(declaration,false);
+#endif
                     additionalSuffix = "__namespace_symbol";
                     break;
                   }
@@ -1042,6 +1148,15 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                     SgLabelSymbol* labelSymbol = isSgLabelSymbol (symbol);
                     key = labelSymbol->get_name();
                     additionalSuffix = "__label_symbol";
+                    break;
+                  }
+
+            // DQ (7/4/2010): It might be that these should not be shared!
+               case V_SgAliasSymbol:
+                  {
+                    SgAliasSymbol* aliasSymbol = isSgAliasSymbol (symbol);
+                    key = aliasSymbol->get_name();
+                    additionalSuffix = "__alias_symbol";
                     break;
                   }
 
@@ -1273,12 +1388,21 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
 #endif
                               break;
                             }
+
+                      // DQ (7/11/2010): In astFileIO test test-read-large we demonstrate an example of this case.
                          case SgTemplateArgument::template_template_argument:
                             {
+                           // This will make sure the IR node is unshared
+                              key += StringUtility::numberToString(node);
+#if 1
+                              printf ("Warning: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
+#else
                               printf ("Error: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
                               ROSE_ASSERT(false);
+#endif
                               break;
                             }
+
                          default:
                             {
                               printf ("Error: default reached \n");

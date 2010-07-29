@@ -938,6 +938,46 @@ CommandlineProcessing::isPHPFileNameSuffix ( const std::string & suffix )
 
      return returnValue;
    }
+   
+// TV (05/17/2010) Support for CUDA
+bool
+CommandlineProcessing::isCudaFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "cu" )
+#else//It is a case insensitive system
+     if ( suffix == "cu" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+// TV (05/17/2010) Support for OpenCL
+bool
+CommandlineProcessing::isOpenCLFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "ocl" )
+#else//It is a case insensitive system
+     if ( suffix == "ocl" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
 
 void
 CommandlineProcessing::initSourceFileSuffixList ( )
@@ -986,6 +1026,10 @@ CommandlineProcessing::initSourceFileSuffixList ( )
      // Liao (6/6/2008)  Support for UPC   
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
+     // TV (05/17/2010) Support for CUDA
+          validSourceFileSuffixes.push_back(".cu");
+     // TV (05/17/2010) Support for OpenCL
+          validSourceFileSuffixes.push_back(".ocl");
 #else 
        // it is a case insensitive system
           validSourceFileSuffixes.push_back(".c");
@@ -1017,6 +1061,10 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".rmod"); //FMZ 5/28/2008
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
+     // TV (05/17/2010) Support for CUDA
+          validSourceFileSuffixes.push_back(".cu");
+     // TV (05/17/2010) Support for OpenCL
+          validSourceFileSuffixes.push_back(".ocl");
 #endif
           first_call = false;
         }

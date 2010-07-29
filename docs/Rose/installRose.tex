@@ -772,17 +772,20 @@ additional tests to be run.
    Haskell (ghc) is available at {\it http://www.haskell.org/ghc/}.
 To install ghc (from the binary distribution) run "configure" and 
 "make install". Specifically (for example): \\
-{\tt configure --prefix=/home/dquinlan/local/Haskell/ghc-6.12.2\_install}
+{\tt configure --prefix=/home/dquinlan/local/Haskell/ghc-6.10.4\_install}
 and
 {\tt make install}.
-Then modify the path in your .bashrc to include: \\
-   {\tt /home/dquinlan/local/Haskell/ghc-6.12.2\_install/bin}
+(This assumes that the path in your .bashrc includes ghc, e.g.: \\
+   {\tt /home/dquinlan/local/Haskell/ghc-6.10.4\_install/bin}
 
 That should be all that is required.  ROSE will detect
 the existence of "ghc" at "configure" time and setup
-what is required internally.
+what is required internally.  To turn off the use of Haskell support, 
+use the configure option {\em --with-haskell=no}.
 
-
+Note that we enforce and require version {\em 6.10.x} of ghc, this is
+because we assume some default modules that have been removed in more 
+recently releaced versions of ghc.
 
 \subsection{Testing ROSE}
      A set of test programs is available.  %More details are in section \ref{testing}.
@@ -925,7 +928,7 @@ The Intel compiler can run out of space compiling some of the larger files in RO
 Although not previously seen by anyone on the ROSE team, one user has reported
 that the Intel compiler option {\em -override-limits} was required.  As used on
 the followign configure line:
-{\em /usr/casc/aleamr/yana-local/rose/build/rose-sourcetree/configure CXX=icpc CC=icc CXXFLAGS=-override-limits --prefix=`pwd` --with-boost=<path to boost>}
+{\em /nfs/casc/aleamr/yana-local/rose/build/rose-sourcetree/configure CXX=icpc CC=icc CXXFLAGS=-override-limits --prefix=`pwd` --with-boost=<path to boost>}
 More information is on this option and when to use it is at:
 {\em http://software.intel.com/en-us/articles/internal-threshold-was-exceeded}.
 The problem that this appears to fix is that on some machines the ROSE 

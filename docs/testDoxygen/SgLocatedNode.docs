@@ -115,10 +115,12 @@ function then we should have it return a string instead of char*.
 /*!
 \fn SgLocatedNode::addToAttachedPreprocessingInfo (PreprocessingInfo *prepInfoPtr,
     PreprocessingInfo::RelativePositionType locationInList=PreprocessingInfo::after)
-\brief This function adds comment or CPP directives to the current IR node.
+\brief This function adds comment or CPP directives to the current IR node. 
 
 \param prepInfoPtr - This parameter is a pointer to the container for the comment/directive.
-\param locationInList - adds container before or after the current IR node.
+    It is used to specify if the new  new comment/directive is added to the front or back of the current list of comments/directives.
+    It does not change relative position field of the PreprocessingInfo object. 
+\param locationInList - adds container before or after the current IR node. 
 \return Returns void.
 */
 

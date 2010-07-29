@@ -6,12 +6,14 @@
 #include "Disassembler.h"
 #include "sageBuilderAsm.h"
 #include "DisassemblerX86.h"
+#include "SymbolicSemantics.h"
+#include "VirtualMachineSemantics.h"
+#include "YicesSolver.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <sstream>
 
-#include "VirtualMachineSemantics.h"
 
 /* See header file for full documentation. */
 
@@ -169,10 +171,12 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
 {
-#if 0
-    fprintf(stderr, "SgAsmx86Instruction::get_successors(B%08"PRIx64" for %zd instruction%s):\n", 
-            insns.front()->get_address(), insns.size(), 1==insns.size()?"":"s");
-#endif
+    static const bool debug = false;
+
+    if (debug) {
+        std::cerr <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
+                  <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<std::endl;
+    }
 
     Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
@@ -181,41 +185,63 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
      * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
      * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
     if (!*complete || successors.size()>1) {
-        typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
+
+#if 0
+        /* Use the most robust semantic analysis available.  Warning: this can be very slow, especially when an SMT solver is
+         * involved! */
+# if defined(YICES) || defined(HAVE_LIBYICES)
+        YicesSolver yices;
+        if (yices.available_linkage() & YicesSolver::LM_LIBRARY) {
+            yices.set_linkage(YicesSolver::LM_LIBRARY);
+        } else {
+            yices.set_linkage(YicesSolver::LM_EXECUTABLE);
+        }
+        SMTSolver *solver = &yices;
+# else
+        SMTSolver *solver = NULL;
+# endif
+        if (debug && solver)
+            solver->set_debug(stderr);
+        typedef SymbolicSemantics::Policy Policy;
+        typedef SymbolicSemantics::ValueType<32> RegisterType;
+        typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
+        Policy policy(solver);
+#else
+        typedef VirtualMachineSemantics::Policy Policy;
+        typedef VirtualMachineSemantics::ValueType<32> RegisterType;
+        typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+        Policy policy;
+#endif
         try {
-            VirtualMachineSemantics::Policy policy;
             Semantics semantics(policy);
             for (size_t i=0; i<insns.size(); i++) {
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
                 semantics.processInstruction(insn);
-#if 0
-                std::ostringstream s;
-                s << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.get_state()
-                fputs(s.str().c_str(), stderr);
-#endif
+                if (debug) {
+                    std::cerr << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
+                              <<policy.get_state();
+                }
             }
-            const VirtualMachineSemantics::ValueType<32> &newip = policy.get_ip();
-            if (newip.name==0) {
+            const RegisterType &newip = policy.get_ip();
+            if (newip.is_known()) {
                 successors.clear();
-                successors.insert(newip.offset);
+                successors.insert(newip.known_value());
                 *complete = true; /*this is the complete set of successors*/
             }
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
-#if 0
-            fprintf(stderr, "    semantic analysis failed: %s\n", e.mesg.c_str());
-#endif
+            if (debug)
+                std::cerr <<e <<"\n";
         }
     }
 
-#if 0
-    fprintf(stderr, "  successors:");
-    for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-        fprintf(stderr, " 0x%08"PRIx64, *si);
-    if (!*complete) fprintf(stderr, "...");
-    fprintf(stderr, "\n");
-#endif
+    if (debug) {
+        std::cerr <<"  successors:";
+        for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+            std::cerr <<" " <<StringUtility::addrToString(*si);
+        if (!*complete) std::cerr <<"...";
+        std::cerr <<std::endl;
+    }
 
     return successors;
 }

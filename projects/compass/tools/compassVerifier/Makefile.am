@@ -18,7 +18,7 @@ libCompassVerifierCheckers.la: $(libCompassVerifierCheckers_la_OBJECTS) $(libCom
 bin_PROGRAMS = compassVerifier
 
 compassVerifier_SOURCES = compassMain.C checkers.h
-compassVerifier_LDADD = -lCompassVerifierCheckers $(ROSE_LIBS)
+compassVerifier_LDADD = -lCompassVerifierCheckers $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
 
 # This does not contribute to the link line
 compassVerifier_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassVerifierCheckers.la
