@@ -155,7 +155,7 @@ fi
     autoheader
     autoconf
     automake -a -c -i
-) 2>&1 |./scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
+) 2>&1 |$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
 if [[ ${PIPESTATUS[0]} != 0 ]]; then
     echo "$0: unable to initialize your build environment!" 2>&1
     exit 1
@@ -195,5 +195,5 @@ fi
 #     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
 #
 if [[ -n "$do_quiet" ]]; then
-    (set -ex; ./scripts/quiet-mode)
+    (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
 fi

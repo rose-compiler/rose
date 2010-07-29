@@ -60,7 +60,21 @@ MachineState::~MachineState() {
 }
 
 void MachineState::dumpRegs() const {
-  fprintf(stdout, "EAX=%08X EBX=%08X ECX=%08X EDX=%08X ESI=%08X EDI=%08X EBP=%08X ESP=%08X EIP=%08X GS=%04X (base 0x%08X) %s %s %s %s %s %s %s\n", gprs[x86_gpr_ax], gprs[x86_gpr_bx], gprs[x86_gpr_cx], gprs[x86_gpr_dx], gprs[x86_gpr_si], gprs[x86_gpr_di], gprs[x86_gpr_bp], gprs[x86_gpr_sp], ip, segregs[x86_segreg_gs], segregsShadow[x86_segreg_gs].base, flags[x86_flag_of]?"OV":"NV", flags[x86_flag_df]?"DN":"UP", flags[x86_flag_sf]?"NG":"PL", flags[x86_flag_zf]?"ZR":"NZ", flags[x86_flag_af]?"AC":"NA", flags[x86_flag_pf]?"PE":"PO", flags[x86_flag_cf]?"CY":"NC");
+    fprintf(stderr, "  Machine state:\n");
+    fprintf(stderr, "    eax=0x%08x ebx=0x%08x ecx=0x%08x edx=0x%08x\n",
+            gprs[x86_gpr_ax], gprs[x86_gpr_bx], gprs[x86_gpr_cx], gprs[x86_gpr_dx]);
+    fprintf(stderr, "    esi=0x%08x edi=0x%08x ebp=0x%08x esp=0x%08x eip=0x%08x\n",
+            gprs[x86_gpr_si], gprs[x86_gpr_di], gprs[x86_gpr_bp], gprs[x86_gpr_sp], ip);
+    for (int i=0; i<6; i++) {
+        X86SegmentRegister sr = (X86SegmentRegister)i;
+        fprintf(stderr, "    %s=0x%04x base=0x%08x limit=0x%08x present=%s\n",
+                segregToString(sr), segregs[sr], segregsShadow[sr].base, segregsShadow[sr].limit,
+                segregsShadow[sr].present?"yes":"no");
+    }
+    fprintf(stderr, "    flags: %s %s %s %s %s %s %s\n", 
+            flags[x86_flag_of]?"ov":"nv", flags[x86_flag_df]?"dn":"up", flags[x86_flag_sf]?"ng":"pl", 
+            flags[x86_flag_zf]?"zr":"nz", flags[x86_flag_af]?"ac":"na", flags[x86_flag_pf]?"pe":"po", 
+            flags[x86_flag_cf]?"cy":"nc");
 }
 
 void simulate_signal(int sig) {

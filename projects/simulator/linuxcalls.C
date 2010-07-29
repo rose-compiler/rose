@@ -956,14 +956,19 @@ sigaction_done:
       uint32_t u_info_ptr = ms.gprs[x86_gpr_bx];
       user_desc ud;
       ms.memory.readMultiple((uint8_t*)&ud, sizeof(user_desc), u_info_ptr);
-#ifdef DEBUG
-      fprintf(stderr, "set_thread_area({0x%08X, 0x%08lX, 0x%08X, %s, %u, %s, %s, %s, %s})\n", ud.entry_number, ud.base_addr, ud.limit, ud.seg_32bit ? "32bit" : "16bit", ud.contents, ud.read_exec_only ? "read_exec" : "writable", ud.limit_in_pages ? "page_gran" : "byte_gran", ud.seg_not_present ? "not_present" : "present", ud.useable ? "usable" : "not_usable");
-#endif
-      if (ud.entry_number == -1) {
+      fprintf(stderr, "  set_thread_area({%d, 0x%08x, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
+              (int)ud.entry_number, ud.base_addr, ud.limit,
+              ud.seg_32bit ? "32bit" : "16bit",
+              ud.contents, ud.read_exec_only ? "read_exec" : "writable",
+              ud.limit_in_pages ? "page_gran" : "byte_gran",
+              ud.seg_not_present ? "not_present" : "present",
+              ud.useable ? "usable" : "not_usable");
+      if (ud.entry_number == (unsigned)-1) {
         for (ud.entry_number = (0x33 >> 3); ud.entry_number < 8192; ++ud.entry_number) {
           if (!ms.gdt[ud.entry_number].useable) break;
         }
         ROSE_ASSERT (ud.entry_number != 8192);
+        fprintf(stderr, "  assigned entry number = %d\n", (int)ud.entry_number);
       }
       ms.gdt[ud.entry_number] = ud;
       ms.memory.writeMultiple((const uint8_t*)&ud, sizeof(user_desc), u_info_ptr);

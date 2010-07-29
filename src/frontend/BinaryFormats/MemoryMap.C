@@ -304,6 +304,100 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
     return ncopied;
 }
 
+void
+MemoryMap::mprotect(const MapElement &region)
+{
+    /* Check whether the region refers to addresses not in the memory map. */
+    ExtentMap e;
+    e.insert(ExtentPair(region.get_va(), region.get_size()));
+    e.erase(va_extents());
+    if (!e.empty())
+        throw NotMapped(this, e.begin()->first);
+
+    std::vector<MapElement> created;
+    std::vector<MapElement>::iterator i=elements.begin();
+    while (i!=elements.end()) {
+        MapElement &other = *i;
+        if (other.get_va() >= region.get_va()) {
+            if (other.get_va()+other.get_offset() <= region.get_va()+region.get_offset()) {
+                /* other is fully contained in (or congruent to) region; change other's permissions */
+                other.set_mapperms(region.get_mapperms());
+                i++;
+            } else if (other.get_va() < region.get_va()+region.get_size()) {
+                /* left part of other is contained in region; split other into two parts */
+                size_t left_sz = region.get_va() + region.get_size() - other.get_va();
+                ROSE_ASSERT(left_sz>0);
+                MapElement left = other;
+                left.set_size(left_sz);
+                left.set_mapperms(region.get_mapperms());
+                created.push_back(left);
+
+                size_t right_sz = other.get_size() - left_sz;
+                MapElement right = other;
+                ROSE_ASSERT(right_sz>0);
+                right.set_va(other.get_va() + left_sz);
+                right.set_offset(right.get_offset() + left_sz);
+                right.set_size(right_sz);
+                created.push_back(right);
+
+                elements.erase(i);
+            } else {
+                /* other is right of region; skip it */
+                i++;
+            }
+        } else if (other.get_va()+other.get_size() <= region.get_va()) {
+            /* other is left of desired region; skip it */
+            i++;
+        } else if (other.get_va()+other.get_size() <= region.get_va() + region.get_size()) {
+            /* right part of other is contained in region; split other into two parts */
+            size_t left_sz = region.get_va() - other.get_va();
+            ROSE_ASSERT(left_sz>0);
+            MapElement left = other;
+            left.set_size(left_sz);
+            created.push_back(left);
+
+            size_t right_sz = other.get_size() - left_sz;
+            MapElement right = other;
+            right.set_va(other.get_va() + left_sz);
+            right.set_offset(right.get_offset() + left_sz);
+            right.set_size(right_sz);
+            right.set_mapperms(region.get_mapperms());
+            created.push_back(right);
+
+            elements.erase(i);
+        } else {
+            /* other contains entire region and extends left and right; split into three parts */
+            size_t left_sz = region.get_va() - other.get_va();
+            ROSE_ASSERT(left_sz>0);
+            MapElement left = other;
+            left.set_size(left_sz);
+            created.push_back(left);
+            
+            size_t mid_sz = region.get_size();
+            ROSE_ASSERT(mid_sz>0);
+            MapElement mid = other;
+            mid.set_va(region.get_va());
+            mid.set_offset(mid.get_offset() + left_sz);
+            mid.set_size(region.get_size());
+            mid.set_mapperms(region.get_mapperms());
+            created.push_back(mid);
+            
+            size_t right_sz = other.get_size() - (left_sz + mid_sz);
+            ROSE_ASSERT(right_sz>0);
+            MapElement right = other;
+            right.set_va(region.get_va()+region.get_size());
+            right.set_offset(mid.get_offset() + mid_sz);
+            right.set_size(right_sz);
+            created.push_back(right);
+            
+            elements.erase(i);
+        }
+    }
+
+    elements.insert(elements.end(), created.begin(), created.end());
+    sorted = false;
+}
+
 ExtentMap
 MemoryMap::va_extents() const
 {
