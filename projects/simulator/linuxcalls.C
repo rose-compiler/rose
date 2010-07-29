@@ -41,7 +41,7 @@ extern void simulate_signal(int sig);
 using namespace std;
 
 static void do_mmap(const char *fname, LinuxMachineState& ms, uint32_t start, uint32_t length, int prot, int flags, int fd, uint32_t offset) {
-#if 1
+#ifdef DO_SIMULATION_TRACING
     fprintf(stderr,
             "  %s(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
             ", fd=%d, offset=0x%08"PRIx32")\n", 
@@ -67,7 +67,7 @@ static void do_mmap(const char *fname, LinuxMachineState& ms, uint32_t start, ui
                 break;
             }
         }
-#if 1
+#ifdef DO_SIMULATION_TRACING
         if (found_addr) {
             fprintf(stderr, "  start = 0x%08"PRIx32"\n", start);
         } else {
@@ -108,7 +108,7 @@ static void do_mmap(const char *fname, LinuxMachineState& ms, uint32_t start, ui
 }
 
 static int simulate_ioctl(LinuxMachineState& ms, int fd, uint32_t cmd, uint32_t arg_ptr) {
-#if 1
+#ifdef DO_SIMULATION_TRACING
     fprintf(stderr, "  ioctl(fd=%d, cmd=%"PRIu32", arg_va=0x%08"PRIx32")\n", fd, cmd, arg_ptr);
 #endif
   int result = -ENOSYS;
@@ -226,7 +226,7 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
       uint32_t count = ms.gprs[x86_gpr_dx];
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  read(fd=%d, buf=0x%08"PRIx32", size=%"PRIu32")\n", fd, buf, count);
 #endif
       char sysbuf[count];
@@ -244,7 +244,7 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
       uint32_t count = ms.gprs[x86_gpr_dx];
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  write(fd=%d, buf=0x%08"PRIx32", size=%"PRIu32")\n", fd, buf, count);
 #endif
       char sysbuf[count];
@@ -263,7 +263,7 @@ void linuxSyscall(LinuxMachineState& ms) {
       if (flags & O_CREAT) {
 	mode = ms.gprs[x86_gpr_dx];
       }
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  open(name=0x%08"PRIx32" \"%s\", flags=0x%"PRIx32", mode=%04"PRIo32")\n", 
               filename, fn.c_str(), flags, mode);
 #endif
@@ -278,7 +278,7 @@ void linuxSyscall(LinuxMachineState& ms) {
 
     case 6: { // close
       int fd = (int)(ms.gprs[x86_gpr_bx]);
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  close(%d)\n", fd);
 #endif
       if (fd == 2) { // Don't allow closing stderr since we use it for debugging
@@ -352,7 +352,7 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t pathname = ms.gprs[x86_gpr_bx];
       int mode = (int)ms.gprs[x86_gpr_cx];
       string sys_pathname = ms.memory.readString(pathname);
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  access(name=0x%08"PRIx32" \"%s\", mode=%04o)\n", pathname, sys_pathname.c_str(), mode);
 #endif
       int result = access(&sys_pathname[0], mode);
@@ -383,7 +383,7 @@ void linuxSyscall(LinuxMachineState& ms) {
 
     case 45: { // brk
       uint32_t end_data_segment = ms.gprs[x86_gpr_bx];
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  brk(0x%08x) -- old brk is 0x%08x\n", end_data_segment, ms.brk);
 #endif
       if (end_data_segment == 0) {
@@ -516,8 +516,8 @@ void linuxSyscall(LinuxMachineState& ms) {
 
     case 91: { // munmap
       uint32_t start = ms.gprs[x86_gpr_bx];
+#ifdef DO_SIMULATION_TRACING
       uint32_t length = ms.gprs[x86_gpr_cx];
-#if 1
       fprintf(stderr, "  munmap(va=0x%08"PRIx32", size=0x%08"PRIx32")\n", start, length);
 #endif
       Page& p = ms.memory.findPage(start);
@@ -554,7 +554,7 @@ void linuxSyscall(LinuxMachineState& ms) {
     }
 
     case 122: { // uname
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  uname(0x%"PRIx32")\n", ms.gprs[x86_gpr_bx]);
 #endif
       ms.memory.writeMultiple( // The next 6 strings are exactly 65 characters each
@@ -576,7 +576,7 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t addr = ms.gprs[x86_gpr_bx];
       uint32_t len = ms.gprs[x86_gpr_cx];
       uint32_t perms = ms.gprs[x86_gpr_dx];
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  mprotect(va=0x%08"PRIx32", size=0x%08"PRIx32", perm=%04"PRIo32")\n", addr, len, perms);
 #endif
       for (uint32_t i = 0; i < len; i += PAGE_SIZE) {
@@ -640,14 +640,14 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t iov = ms.gprs[x86_gpr_cx];
       int iovcnt = (int)ms.gprs[x86_gpr_dx];
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  writev(fd=%d, iov=0x%08"PRIx32", nentries=%d\n", fd, iov, iovcnt);
 #endif
       uint32_t user_result = 0;
       for (int i = 0; i < iovcnt; ++i) {
 	uint32_t buf = ms.memory.read<4>(iov + 8 * i);
 	uint32_t len = ms.memory.read<4>(iov + 8 * i + 4);
-#if 1
+#ifdef DO_SIMULATION_TRACING
         fprintf(stderr, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf, len);
 #endif
 	char my_buf[len];
@@ -813,7 +813,7 @@ sigaction_done:
       uint32_t buf = ms.gprs[x86_gpr_cx];
       struct stat64 sys_buf;
       string sys_filename = ms.memory.readString(filename);
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  stat64(name=0x%08"PRIx32" \"%s\", statbuf=0x%08"PRIx32")\n",
               filename, &sys_filename[0], buf);
 #endif
@@ -844,7 +844,7 @@ sigaction_done:
     case 197: { // fstat64
       int fildes = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  fstat64(fd=%d, statbuf=0x%08"PRIx32")\n", fildes, buf);
 #endif
       struct stat64 sys_buf;
@@ -976,7 +976,7 @@ sigaction_done:
 
     case 252: { // exit_group
       int status = (int)ms.gprs[x86_gpr_bx];
-#if 1
+#ifdef DO_SIMULATION_TRACING
       fprintf(stderr, "  exit_group(%d)\n", status);
 #endif
       _exit(status);
