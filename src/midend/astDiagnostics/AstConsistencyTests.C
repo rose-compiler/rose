@@ -3146,6 +3146,7 @@ TestExpressionTypes::visit ( SgNode* node )
 void
 TestMangledNames::visit ( SgNode* node )
    {
+     ROSE_ASSERT(node != NULL);
   // printf ("node = %p = %s \n",node,node->class_name().c_str());
 
      string mangledName;
@@ -3563,6 +3564,13 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
      static std::map<SgNode*,std::set<SgNode*> > childMap;
 
      ROSE_ASSERT(node != NULL);
+
+     if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
+        {
+          printf ("Error: In TestChildPointersInMemoryPool::visit() for node = %s at %p \n",node->class_name().c_str(),node);
+        }
+     ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+
      SgNode *parent = node->get_parent();
 
 #if ROSE_USE_VALGRIND
@@ -3614,6 +3622,9 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
              }
             else
              {
+            // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
+               if (parent->get_freepointer() == AST_FileIO::IS_VALID_POINTER() )
+                  {
             // build the set (and do the test)
                childMap[parent] = std::set<SgNode*>();
                it = childMap.find(parent);
@@ -3629,6 +3640,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 #endif
 
 #if 0
+             // DQ (6/5/2010): Turn this on to support debugging of the AST File I/O support for reading files (tests/testAstFileRead.C).
+
                /* DEBUGGING (RPM 2008-10-10)
                 * If the call to parent->returnDataMemberPointers() fails it could be due to the fact that the parent has been
                 * deleted without deleting its children. This can happen if the parent's definition in one of the *.C files
@@ -3641,9 +3654,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 
                if (parent->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
                   {
-                    printf ("Error: In TestChildPointersInMemoryPool::visit() for %s at %p \n",parent->class_name().c_str(),parent);
+                    printf ("Error: In TestChildPointersInMemoryPool::visit() for parent = %s at %p \n",parent->class_name().c_str(),parent);
                   }
 #endif
+
                vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
 #if 0
                if (isSgTypedefSeq(node) != NULL)
@@ -3661,6 +3675,9 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          {
                            nodeFound = true;
                          }
+                  }
+
+            // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
                   }
              }
 

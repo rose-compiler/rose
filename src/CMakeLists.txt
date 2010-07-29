@@ -86,6 +86,7 @@ set( STORAGECLASSES_SRC
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
@@ -436,8 +437,10 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/RYices.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemanticsExpr.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/VirtualMachineSemantics.C
 )
 
@@ -468,6 +471,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_Graph.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_DotGraph.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValueAnnot.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValuePropagate.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/variableRenaming/VariableRenaming.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/OAWrap.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/SAGE2OA.C
 #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/proceduralSlicing/SlicingInfo.C
@@ -706,6 +710,7 @@ ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupUseAndUsingDeclarations.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/buildStatementNumbering.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupCxxSymbolTablesToSupportAliasingSymbols.C 
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/normalizeTypedefSequenceLists.C
    )
 
 

@@ -23,8 +23,9 @@ else
    echo "Setup GCC GOMP OpenMP library in ROSE! path = $gomp_omp_runtime_library_path"
    AC_DEFINE([USE_ROSE_GOMP_OPENMP_LIBRARY],1,[Controls use of ROSE support for OpenMP Translator targeting GCC 4.4 's GOMP OpenMP RTL.])
    AC_DEFINE_UNQUOTED([GCC_GOMP_OPENMP_LIB_PATH],"$gomp_omp_runtime_library_path",[Location (unquoted) of the GCC 4.4's GOMP OpenMP runtime library.])
-   AC_DEFINE_UNQUOTED([ROSE_INSTALLATION_PATH],"$prefix",[Location (unquoted) of the top directory path to which ROSE is installed.])
 fi
+
+AC_DEFINE_UNQUOTED([ROSE_INSTALLATION_PATH],"$prefix",[Location (unquoted) of the top directory path to which ROSE is installed.])
 
 AC_SUBST(gomp_omp_runtime_library_path)
 

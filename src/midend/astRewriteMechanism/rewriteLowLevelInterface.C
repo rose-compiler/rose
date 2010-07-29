@@ -12,52 +12,53 @@ using namespace std;
 //         Published Interface functions
 // ************************************************
 
+
 void
-LowLevelRewrite::remove ( SgStatement* astNode )
-   {
+LowLevelRewrite::remove(SgStatement* astNode)
+{
      removeStatement(astNode);
-   }
+}
+
 
 void
-LowLevelRewrite::insert ( SgStatement* targetStatement, SgStatementPtrList newStatementList, bool insertBeforeNode )
-   {
-     bool removeOriginalStatement = false;
-     AttachedPreprocessingInfoType commentsAndDirectives;
-     ROSE_ASSERT (newStatementList.size() > 0);
-     replaceAppendPrependTreeFragment (newStatementList,commentsAndDirectives,targetStatement,removeOriginalStatement,insertBeforeNode);
-   }
+LowLevelRewrite::insert(SgStatement* targetStatement, SgStatementPtrList newStatementList, bool insertBeforeNode)
+{
+	//6/15/2010 - These functions have been gutted and just call through to SageInterface
+	//The implmementations were not updated to work correctly with the new AST
+	//This class as a whole is deprecated.
+	SageInterface::insertStatementList(targetStatement, newStatementList, insertBeforeNode);
+}
+
 
 void
-LowLevelRewrite::replace ( SgStatement* targetStatement, SgStatementPtrList newStatementList )
-   {
-  // The semantics of replace is aways insert && remove
-     bool insertBeforeNode = true;
-     insert (targetStatement,newStatementList,insertBeforeNode);
-     remove (targetStatement);
-   }
+LowLevelRewrite::replace(SgStatement* targetStatement, SgStatementPtrList newStatementList)
+{
+	//6/15/2010 - These functions have been gutted and just call through to SageInterface
+	//The implmementations were not updated to work correctly with the new AST
+	//This class as a whole is deprecated.
+	SageInterface::insertStatementListBefore(targetStatement, newStatementList);
+	SageInterface::removeStatement(targetStatement);
+}
 
-// CI (01/08/2007): since these functions were missing, I implemented a simple wrapper for the insert-method to the insert-list-method
-void
-LowLevelRewrite::insert  ( SgStatement* targetStatement, SgStatement* newStatement,bool insertBeforeNode)
-   {
-     ROSE_ASSERT (targetStatement != NULL);
-     ROSE_ASSERT (newStatement != NULL);
-     SgStatementPtrList list;
-        
-     list.push_back(newStatement);
-     insert(targetStatement,list,insertBeforeNode);
-   }
 
 void
-LowLevelRewrite::replace ( SgStatement* targetStatement, SgStatement* newStatement )
-   {
-     ROSE_ASSERT (targetStatement != NULL);
-     ROSE_ASSERT (newStatement != NULL);
-     SgStatementPtrList list;
+LowLevelRewrite::insert(SgStatement* targetStatement, SgStatement* newStatement, bool insertBeforeNode)
+{
+	//6/15/2010 - These functions have been gutted and just call through to SageInterface
+	//The implmementations were not updated to work correctly with the new AST
+	//This class as a whole is deprecated.
+	SageInterface::insertStatement(targetStatement, newStatement, insertBeforeNode);
+}
 
-     list.push_back(newStatement);
-     replace(targetStatement,list);
-   }
+
+void
+LowLevelRewrite::replace(SgStatement* targetStatement, SgStatement* newStatement)
+{
+	//6/15/2010 - These functions have been gutted and just call through to SageInterface
+	//The implmementations were not updated to work correctly with the new AST
+	//This class as a whole is deprecated.
+	SageInterface::replaceStatement(targetStatement, newStatement);
+}
 
 // ************************************************
 
