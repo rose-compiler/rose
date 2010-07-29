@@ -6,16 +6,18 @@
 #include "VariableRenaming.h"
 #include <map>
 #include <set>
+#include <pluggableReverser/eventProcessor.h>
 
-class CFGReverserProofofConcept
+class AkgulStyleExpressionProcessor : public ExpressionProcessor
 {
 public:
-	/** Initialize the reverser for a given AST. */
-	CFGReverserProofofConcept(SgProject* project);
 
 	/** Attempts to reverse an expression. If the reversal fails,
-	  * this function returns NULL_EXP_PAIR. */
-	ExpPair ReverseExpression(SgExpression* expression);
+	  * this function returns an empty vector. */
+	virtual std::vector<InstrumentedExpression> process(SgExpression* expression, const VariableVersionTable& variableTable);
+
+	/** Initialize the reverser for a given AST. */
+	AkgulStyleExpressionProcessor(SgProject* project);
 
 private:
 
@@ -38,6 +40,9 @@ private:
 
 	bool useReachingDefinition(VariableRenaming::VarName destroyedVarName, SgNode* useSite,
 		VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression);
+
+	bool extractFromUse(VariableRenaming::VarName varName, SgNode* useSite,
+		VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression);
 
 	/** Returns the variable name referred by the expression. Also returns
 	  * the AST expression for referring to that variable (using the variable renaming analysis).

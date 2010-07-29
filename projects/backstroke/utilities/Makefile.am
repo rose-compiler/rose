@@ -14,7 +14,6 @@ libBackstrokeUtilities_la_SOURCES = Utilities.C
 libBackstrokeUtilities_la_include_HEADERS = Utilities.h types.h
 libBackstrokeUtilities_la_includedir = $(includedir)/backstroke
 noinst_HEADERS = CPPDefinesAndNamespaces.h
-libBackstrokeUtilities_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 EXTRA_DIST = 

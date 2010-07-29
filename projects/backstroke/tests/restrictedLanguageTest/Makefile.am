@@ -7,7 +7,8 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = eventChecker
 eventChecker_SOURCES = EventChecker.C
 eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
+			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 TESTCODES_REQUIRED_TO_PASS = \

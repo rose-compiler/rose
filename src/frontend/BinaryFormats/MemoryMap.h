@@ -61,7 +61,7 @@ public:
             : va(va), size(size), base(const_cast<void*>(base)), offset(offset), read_only(true), mapperms(perms), anonymous(NULL)
             {}
 
-        /** Creates an anonymous mapping where all addresses of the mapping are initially contain zero bytes. Note that memory
+        /** Creates an anonymous mapping where all addresses of the mapping initially contain zero bytes. Note that memory
          *  is not allocated (and the base address is not assigned) until a write attempt is made. The implementation is free
          *  to coalesce compatible adjacent anonymous regions as it sees fit, reallocating memory as necessary. */
         MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_READ)
@@ -133,6 +133,16 @@ public:
          *  cannot. If the two elements overlap but are inconsistent then a MemoryMap::Inconsistent exception is thrown. */
         bool merge(const MapElement &other);
 		
+        /** Give the map entry a name. This can be used for debugging, but don't rely too heavily on it because a MemoryMap
+         *  may sometimes combine two adjacent elements that have different names. Returns a reference to @p this object so
+         *  that it is convenient to use this method in the argument expression for MemoryMap::insert(). */
+        MapElement& set_name(const std::string &name);
+        
+        /** Return the name assigned to this map element.  Names are used primarily for debugging purposes. */
+        const std::string &get_name() const {
+            return name;
+        }
+
 #ifdef _MSC_VER
         /* CH (4/15/2010): Make < operator be its member function instead of non-member function outside to avoid template
          * parameter deduction failure in MSVC */
@@ -153,6 +163,7 @@ public:
             offset = other.offset;
             read_only = other.read_only;
             mapperms = other.mapperms;
+            name = other.name;
             if (anonymous && *anonymous>0)
                 (*anonymous)++;
         }
@@ -172,12 +183,16 @@ public:
             offset = 0;
             read_only = 0;
             mapperms = MM_PROT_NONE;
+            name = "";
         }
 
         /** Helper function for merge() when this and @p other element are both anonymous. This method will allocate storage
          *  for this anonymous element if necessary and initialize it with the contents of the @p other element. The @p
          *  oldsize argument is the size of this element before we merged it with the other. */
         void merge_anonymous(const MapElement &other, size_t oldsize);
+
+        /** Adjust the debugging name when merging two map elements. */
+        void merge_names(const MapElement &other);
 
         /** Changes the virtual address of a mapped region.  This is private because changing the starting address can cause
          *  the mapping to become inconsistent. In general, it is safe to split a map element into smaller pieces and this
@@ -207,6 +222,7 @@ public:
         rose_addr_t offset;             /**< Offset with respect to 'base' */
         bool read_only;                 /**< If set then write() is not allowed */
         unsigned mapperms;              /**< Mapping permissions (MM_PROT_{READ,WRITE,EXEC} from Protection enum) */
+        std::string name;               /**< Name used for debugging purposes */
 
         /** If non-null then the element describes an anonymous mapping, one that is initially all zero.  The 'base' data
          *  member in this case will initially be NULL and will be allocated when a MemoryMap::write() modifies the anonymous

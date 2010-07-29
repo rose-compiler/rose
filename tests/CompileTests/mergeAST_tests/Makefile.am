@@ -119,10 +119,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_131.C \
      mergeTest_133.C \
      mergeTest_134.C \
-     mergeTest_135.C \
-     mergeTest_136.C 
+     mergeTest_135.C 
+
 
 # This fails for GNU g++ version 4.3
+#     mergeTest_136.C  # Liao, 7/27/2010, __is_pod  __is_empty become builtin functions in GCC 4.3 and above
 #    mergeTest_07.C
 
 # DQ (7/16/2010): Test code which demonstrates that we can't delete the SgStorageModifier IR nodes (I don't know why).

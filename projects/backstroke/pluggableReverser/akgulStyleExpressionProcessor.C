@@ -1,16 +1,17 @@
-#include "CFGReverserProofOfConcept.h"
+#include "akgulStyleExpressionProcessor.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "utilities/Utilities.h"
 
 #include <numeric>
 
 /** Initialize the reverser for a given AST. */
-CFGReverserProofofConcept::CFGReverserProofofConcept(SgProject* project) : variableRenamingAnalysis(project)
+AkgulStyleExpressionProcessor::AkgulStyleExpressionProcessor(SgProject* project) : variableRenamingAnalysis(project)
 {
 	variableRenamingAnalysis.run();
 }
 
-ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
+
+vector<InstrumentedExpression> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& variableTable)
 {
 	if (isSgAssignOp(expression))
 	{
@@ -19,25 +20,28 @@ ExpPair CFGReverserProofofConcept::ReverseExpression(SgExpression* expression)
 		if (backstroke_util::IsVariableReference(assignOp->get_lhs_operand()))
 		{
 			SgExpression* reverseExpression;
-			bool success = handleAssignOp(assignOp, reverseExpression);
-			if (!success)
+			if (handleAssignOp(assignOp, reverseExpression))
 			{
-				return NULL_EXP_PAIR;
-			}
-			
-			string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
-			printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
-					expression->unparseToString().c_str(), reverseExpString.c_str());
+				string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
+				printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
+						expression->unparseToString().c_str(), reverseExpString.c_str());
 
-			return ExpPair(SageInterface::copyExpression(assignOp), reverseExpression);
+				//Indicate in the variable version table that we have restored this variable and return
+				VariableVersionTable newVarTable = variableTable;
+				newVarTable.reverseVersion(expression);
+				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
+				vector<InstrumentedExpression> result;
+				result.push_back(InstrumentedExpression(forwardExp, reverseExpression, newVarTable));
+				return result;
+			}
 		}
 	}
 
-	return NULL_EXP_PAIR;
+	return vector<InstrumentedExpression > ();
 }
 
 
-bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, SgExpression*& reverseExpression)
+bool AkgulStyleExpressionProcessor::handleAssignOp(SgAssignOp* assignOp, SgExpression*& reverseExpression)
 {
 	reverseExpression = NULL;
 	ROSE_ASSERT(assignOp != NULL);
@@ -74,14 +78,25 @@ bool CFGReverserProofofConcept::handleAssignOp(SgAssignOp* assignOp, SgExpressio
  * @param reverseExpressions side-effect free expression that evaluates to the desired version of the given variable
  * @return true on success, false on failure
  */
-bool CFGReverserProofofConcept::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+bool AkgulStyleExpressionProcessor::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
 	VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression)
 {
-	//Try the redefine technique
-	if (useReachingDefinition(variable, useSite, definitions, reverseExpression))
+	//First, check if the variable needs restoring at all. If it has the desired version, there is nothing to do
+	if (definitions == variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, variable))
+	{
+		reverseExpression = VariableRenaming::buildVariableReference(variable);
+		return true;
+	}
+
+	if (extractFromUse(variable, useSite, definitions, reverseExpression))
 	{
 		return true;
 	}
+	else if (useReachingDefinition(variable, useSite, definitions, reverseExpression))
+	{
+		return true;
+	}
+
 
 	return false;
 }
@@ -95,7 +110,7 @@ bool CFGReverserProofofConcept::restoreVariable(VariableRenaming::VarName variab
  * @param reverseExpressions expressions that should be executed to restore the value of the variable
  * @return  true on success, false on failure
  */
-bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName destroyedVarName,
+bool AkgulStyleExpressionProcessor::useReachingDefinition(VariableRenaming::VarName destroyedVarName,
 			SgNode* useSite, VariableRenaming::NumNodeRenameEntry definitions, SgExpression*& reverseExpression)
 {
 	reverseExpression = NULL;
@@ -181,15 +196,28 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName 
 
 		if (varVersionAtDefinition != varVersionAtDestroySite)
 		{
+			printf("Recursively restoring variable '%s' to its value at line %d.\n", VariableRenaming::keyToString(nameDefinitionPair.first).c_str(),
+					definitionExpression->get_file_info()->get_line());
+
 			//See if we can recursively restore the variable so we can re-execute the definition
 			SgExpression* restoredOldValue;
-			if (restoreVariable(nameDefinitionPair.first, definitionExpression, varVersionAtDefinition, restoredOldValue))
+			if (restoreVariable(nameDefinitionPair.first, useSite, varVersionAtDefinition, restoredOldValue))
 			{
 				vector<SgExpression*> restoredVarReferences = findVarReferences(nameDefinitionPair.first, definitionExpressionCopy);
 
 				foreach (SgExpression* restoredVarReference, restoredVarReferences)
 				{
 					printf("Replacing '%s' with '%s'\n", restoredVarReference->unparseToString().c_str(), restoredOldValue->unparseToString().c_str());
+
+					//If the whole definition itself is a variable reference, eg (t = a), then we can't use SageInterface::replaceExpression
+					//because the parent of the variable reference is null. Manually replace the definition expression with the restored value
+					if (definitionExpressionCopy == restoredVarReference)
+					{
+						delete definitionExpressionCopy;
+						definitionExpressionCopy = SageInterface::copyExpression(restoredOldValue);
+						break;
+					}
+
 					SageInterface::replaceExpression(restoredVarReference, SageInterface::copyExpression(restoredOldValue));
 				}
 
@@ -197,8 +225,7 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName 
 			}
 			else
 			{
-				//Should I use deepdelete?
-				delete definitionExpressionCopy;
+				SageInterface::deepDelete(definitionExpressionCopy);
 				return false;
 			}
 		}
@@ -211,7 +238,7 @@ bool CFGReverserProofofConcept::useReachingDefinition(VariableRenaming::VarName 
 }
 
 /** Returns true if an expression calls any functions or modifies any variables. */
-bool CFGReverserProofofConcept::isModifyingExpression(SgExpression* expr)
+bool AkgulStyleExpressionProcessor::isModifyingExpression(SgExpression* expr)
 {
 	//TODO: Make this work with functions on the whitelist that we know are side-effect free
 	//e.g. abs(), cos(), pow()
@@ -233,7 +260,7 @@ bool CFGReverserProofofConcept::isModifyingExpression(SgExpression* expr)
 /** Returns the variable name referred by the expression. Also returns
  *  the AST expression for referring to that variable (using the variable renaming analysis).
   * Handles comma ops correctly. */
-pair<VariableRenaming::VarName, SgExpression*> CFGReverserProofofConcept::getReferredVariable(SgExpression* exp)
+pair<VariableRenaming::VarName, SgExpression*> AkgulStyleExpressionProcessor::getReferredVariable(SgExpression* exp)
 {
 	if (SgCommaOpExp* commaOp = isSgCommaOpExp(exp))
 	{
@@ -243,7 +270,83 @@ pair<VariableRenaming::VarName, SgExpression*> CFGReverserProofofConcept::getRef
 	return pair<VariableRenaming::VarName, SgExpression*>(variableRenamingAnalysis.getVarName(exp), exp);
 }
 
-multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(VariableRenaming::VarName name, SgNode* node)
+
+bool AkgulStyleExpressionProcessor::extractFromUse(VariableRenaming::VarName varName, SgNode* destroySite, VariableRenaming::NumNodeRenameEntry defintions, SgExpression*& reverseExpression)
+{
+	reverseExpression = NULL;
+
+	set<SgNode*> useSites;
+
+	pair<int, SgNode*> versionDefPair;
+	foreach(versionDefPair, defintions)
+	{
+		//Get all the uses of this version
+		vector<SgNode*> usesForVersion = variableRenamingAnalysis.getAllUsesForDef(varName, versionDefPair.first);
+
+		//There might be multiple versions we require. Only add the uses that have all the desired versions
+		foreach(SgNode* potentialUseNode, usesForVersion)
+		{
+			VariableRenaming::NumNodeRenameEntry definitionsAtUse = variableRenamingAnalysis.getReachingDefsAtNodeForName(potentialUseNode, varName);
+
+			if (definitionsAtUse == defintions)
+			{
+				useSites.insert(potentialUseNode);
+			}
+		}
+	}
+
+	//We've collected all the use sites!
+	//Print them out to check if this is right
+	//Then process them to extract the variables!
+	reverse_foreach (SgNode* useSite, useSites)
+	{
+		printf("Use for '%s' on line %d: %s: %s\n", VariableRenaming::keyToString(varName).c_str(), useSite->get_file_info()->get_line(),
+				useSite->class_name().c_str(), useSite->unparseToString().c_str());
+
+		//If we're restoring x and we have the assignment a = x, we
+		//can extract x from the value of a. An assign initializer is almost exactly like an assign op
+		if (isSgAssignOp(useSite) || isSgAssignInitializer(useSite))
+		{
+			VariableRenaming::VarName rhsVar, lhsVar;
+
+			if (SgAssignOp* assignOpUse = isSgAssignOp(useSite))
+			{
+				rhsVar = variableRenamingAnalysis.getVarName(assignOpUse->get_rhs_operand());
+				lhsVar = variableRenamingAnalysis.getVarName(assignOpUse->get_lhs_operand());
+			}
+			else if (SgAssignInitializer* assignInitializer = isSgAssignInitializer(useSite))
+			{
+				rhsVar = variableRenamingAnalysis.getVarName(assignInitializer->get_operand());
+				SgInitializedName* declaredVar = isSgInitializedName(assignInitializer->get_parent());
+				ROSE_ASSERT(declaredVar != NULL);
+				lhsVar = variableRenamingAnalysis.getVarName(declaredVar);
+			}
+			else
+			{
+				ROSE_ASSERT(false);
+			}
+
+			//If this is a more complex op, such as a = x + y, we'll handle it in the future
+			if (rhsVar != varName || lhsVar == VariableRenaming::emptyName)
+			{
+				continue;
+			}
+
+			//Ok, restore the lhs variable to the version used in the assignment.
+			//Then, that expression will hold the desired value of x
+			VariableRenaming::NumNodeRenameEntry lhsVersion = variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, lhsVar);
+			if (restoreVariable(lhsVar, destroySite, lhsVersion, reverseExpression))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+multimap<int, SgExpression*> AkgulStyleExpressionProcessor::collectUsesForVariable(VariableRenaming::VarName name, SgNode* node)
 {
 	class CollectUses : public AstBottomUpProcessing<bool>
 	{
@@ -254,8 +357,8 @@ multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(V
 
 		virtual bool evaluateSynthesizedAttribute(SgNode* astNode, SynthesizedAttributesList childAttributes)
 		{
-			bool childrenHaveDefs = accumulate(childAttributes.begin(), childAttributes.end(), false, logical_or<bool>());
-			if (childrenHaveDefs)
+			bool childrenHaveUses = accumulate(childAttributes.begin(), childAttributes.end(), false, logical_or<bool>());
+			if (childrenHaveUses)
 			{
 				//We return true if the lowest-level use is below us
 				return true;
@@ -283,7 +386,8 @@ multimap<int, SgExpression*> CFGReverserProofofConcept::collectUsesForVariable(V
 	return traversal.result;
 }
 
-vector<SgExpression*> CFGReverserProofofConcept::findVarReferences(VariableRenaming::VarName var, SgNode* root)
+
+vector<SgExpression*> AkgulStyleExpressionProcessor::findVarReferences(VariableRenaming::VarName var, SgNode* root)
 {
 	class SearchTraversal : public AstTopDownProcessing<bool>
 	{

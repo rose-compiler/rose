@@ -266,7 +266,7 @@ private:
     GlobalTable globalVarList;
 
 public:
-    VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(project->get_verbose() > 0), DEBUG_MODE_EXTRA(project->get_verbose() > 1){}
+    VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(SgProject::get_verbose() > 0), DEBUG_MODE_EXTRA(SgProject::get_verbose() > 1){}
 
     ~VariableRenaming(){}
     
