@@ -10,61 +10,50 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-ExpressionObjectVec ExpressionProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
-{
-    return event_processor_->processExpression(exp, var_table);
-}
-
-SgExpression* ExpressionProcessor::pushVal(SgExpression* exp, SgType* type)
+SgExpression* ProcessorBase::pushVal(SgExpression* exp, SgType* type)
 {
     return event_processor_->pushVal(exp, type);
 }
 
-SgExpression* ExpressionProcessor::popVal(SgType* type)
+SgExpression* ProcessorBase::popVal(SgType* type)
 {
     return event_processor_->popVal(type);
 }
 
-ExpressionObjectVec StatementProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
+InstrumentedExpressionVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
     return event_processor_->processExpression(exp, var_table);
 }
 
-StatementObjectVec StatementProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     return event_processor_->processStatement(stmt, var_table);
 }
 
-SgExpression* StatementProcessor::pushVal(SgExpression* exp, SgType* type)
+bool ProcessorBase::isStateVariable(SgExpression* exp)
 {
-    return event_processor_->pushVal(exp, type);
+    return event_processor_->isStateVariable(exp);
 }
 
-SgExpression* StatementProcessor::popVal(SgType* type)
+InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
-    return event_processor_->popVal(type);
-}
-
-
-ExpressionObjectVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table)
-{
-    ExpressionObjectVec output;
+    InstrumentedExpressionVec output;
 
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        ExpressionObjectVec result = exp_processor->process(exp, var_table);
+        InstrumentedExpressionVec result = exp_processor->process(exp, var_table);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
 
-StatementObjectVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    StatementObjectVec output;
+    InstrumentedStatementVec output;
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        StatementObjectVec result = stmt_processor->process(stmt, var_table);
+        InstrumentedStatementVec result = stmt_processor->process(stmt, var_table);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
@@ -92,6 +81,27 @@ SgExpression* EventProcessor::getStackVar(SgType* type)
     return buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
 }
 
+bool EventProcessor::isStateVariable(SgExpression* exp)
+{
+    // First, get the most lhs operand, which may be the model object.
+    while(isSgBinaryOp(exp))
+        exp = isSgBinaryOp(exp)->get_lhs_operand();
+
+    SgVarRefExp* var = isSgVarRefExp(exp);
+    ROSE_ASSERT(var);
+
+    foreach (SgInitializedName* name, event_->get_args())
+    {
+        if (name == var->get_symbol()->get_declaration() )
+        {
+            cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const
 {
     vector<SgVariableDeclaration*> output;
@@ -103,11 +113,8 @@ std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() co
 
 SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* type)
 {
-    return buildFunctionCallExp(
-            "push", type,
-            buildExprListExp(
-                getStackVar(type),
-                copyExpression(exp)));
+    return buildFunctionCallExp("push", type, buildExprListExp(
+                getStackVar(type), exp));
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
@@ -127,10 +134,13 @@ FuncDeclPairs EventProcessor::processEvent()
 
     static int ctr = 0;
 
-    StatementObjectVec bodies = processStatement(body, var_table);
+    InstrumentedStatementVec bodies = processStatement(body, var_table);
 
-    foreach (StatementObject& stmt_obj, bodies)
+    foreach (InstrumentedStatement& stmt_obj, bodies)
     {
+        fixVariableReferences(stmt_obj.fwd_stmt);
+        fixVariableReferences(stmt_obj.rvs_stmt);
+
         string ctr_str = lexical_cast<string > (ctr++);
 
         SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
@@ -139,8 +149,7 @@ FuncDeclPairs EventProcessor::processEvent()
                     fwd_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-        fwd_func_def->set_body(isSgBasicBlock(stmt_obj.fwd_stmt));
-        stmt_obj.fwd_stmt->set_parent(fwd_func_def);
+        SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt_obj.fwd_stmt));
 
         SgName rvs_func_name = event_->get_name() + "_reverse" + ctr_str;
         SgFunctionDeclaration* rvs_func_decl =
@@ -148,8 +157,7 @@ FuncDeclPairs EventProcessor::processEvent()
                     rvs_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-        rvs_func_def->set_body(isSgBasicBlock(stmt_obj.rvs_stmt));
-        stmt_obj.rvs_stmt->set_parent(rvs_func_def);
+        SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt_obj.rvs_stmt));
 
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
     }
