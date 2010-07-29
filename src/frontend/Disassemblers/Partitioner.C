@@ -1249,12 +1249,21 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
 void
 Partitioner::analyze_cfg()
 {
+    static const time_t progress_interval = 10;
+    time_t progress_time = time(NULL);
+    bool progress_emitted = false;
+
     for (size_t pass=0; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        fprintf(stderr, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-                pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                blocks.size(), 1==blocks.size()?"":"s",
-                blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
+        if (debug || time(NULL)-progress_time > progress_interval) {
+            progress_time = time(NULL);
+            progress_emitted = true;
+            fprintf(debug?debug:stderr,
+                    "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                    pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                    blocks.size(), 1==blocks.size()?"":"s",
+                    blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
+        }
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -1288,10 +1297,13 @@ Partitioner::analyze_cfg()
             if (debug) fprintf(debug, "\n");
         }
     }
-    fprintf(stderr, "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-            functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-            blocks.size(), 1==blocks.size()?"":"s",
-            blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
+    if (debug || progress_emitted) {
+        fprintf(debug?debug:stderr,
+                "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                blocks.size(), 1==blocks.size()?"":"s",
+                blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
+    }
 }
 
 void
