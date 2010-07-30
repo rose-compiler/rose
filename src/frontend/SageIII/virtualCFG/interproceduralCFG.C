@@ -94,13 +94,6 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
         ROSE_ASSERT(edge.source() == n);
         buildCFG<NodeT, EdgeT>(edge.target(), all_nodes, explored);
     }
-
-    std::vector<EdgeT> inEdges = n.inEdges();
-    foreach (const EdgeT& edge, inEdges)
-    {
-        ROSE_ASSERT(edge.target() == n);
-        buildCFG<NodeT, EdgeT>(edge.source(), all_nodes, explored);
-    }
 }
 
 } // end of namespace StaticCFG
