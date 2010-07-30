@@ -41,13 +41,17 @@ void InterproceduralCFG::buildFilteredCFG()
 template <class NodeT, class EdgeT>
 void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored)
 {
-  CFG::buildCFG<NodeT,EdgeT>(n, all_nodes, explored);
-#if 0
     ROSE_ASSERT(n.getNode());
 
     if (explored.count(n) > 0)
         return;
     explored.insert(n);
+
+    SgFunctionCallExp* fxnCall = isSgFunctionCallExp(n.getNode());
+    if (fxnCall) {
+      SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
+      std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
+    }
 
     SgGraphNode* from = NULL;
     if (all_nodes.count(n) > 0)
@@ -97,7 +101,6 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
         ROSE_ASSERT(edge.target() == n);
         buildCFG<NodeT, EdgeT>(edge.source(), all_nodes, explored);
     }
-#endif
 }
 
 } // end of namespace StaticCFG
