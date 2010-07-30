@@ -152,9 +152,6 @@ void CFG::buildCFG(CFGNode n)
     foreach (const VirtualCFG::CFGEdge& edge, outEdges)
     {
         CFGNode tar = edge.target();
-#if 0
-        cout << tar.toString() << endl;
-#endif
 
         SgGraphNode* to = NULL;
         if (all_nodes_.count(tar) > 0)
@@ -215,9 +212,6 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
-#if 0
-        std::cout << tar.toString() << std::endl;
-#endif
 
         SgGraphNode* to = NULL;
         if (all_nodes.count(tar) > 0)
