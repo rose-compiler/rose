@@ -16,11 +16,18 @@ int main(int argc, char *argv[])
   ROSE_ASSERT (mainDef != NULL); 
 
   string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
-  string dotFileName = fileName + ".IP.dot";
+  string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".debug.dot";
+  string dotFileName2=fileName+"."+ mainDef->get_declaration()->get_name() +".interesting.dot";
 
-  // Dump out the interprocedural CFG, including bookkeeping nodes
-  VirtualCFG::interproceduralCfgToDotForDebugging(mainDef, dotFileName);
+  StaticCFG::CFG cfg(mainDef);
+
+  // Dump out the full CFG, including bookkeeping nodes
+  cfg.buildFullCFG();
+  cfg.cfgToDot(proc, dotFileName1);
+
+  // Dump out only those nodes which are "interesting" for analyses
+  cfg.buildFilteredCFG();
+  cfg.cfgToDot(proc, dotFileName2);
 
   return 0;
 }
-

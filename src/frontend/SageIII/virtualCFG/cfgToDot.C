@@ -40,7 +40,7 @@ inline void printEdge(ostream& o, const EdgeT& e, bool isInEdge) {
 }
 
 template <typename NodeT, typename EdgeT, bool Debug>
-void printNodePlusEdges(ostream& o, NodeT n, bool interprocedural);
+void printNodePlusEdges(ostream& o, NodeT n);
 
 #if 0 //redefinition, already defined in filteredCFGImpl.h, Liao, 3/6/2009
 template <typename NodeT, typename EdgeT, bool Debug>
@@ -68,14 +68,14 @@ void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(NodeT n) {
 }
 #endif
 template <typename NodeT, typename EdgeT, bool Debug>
-void printNodePlusEdges(ostream& o, NodeT n, bool interprocedural) {
+void printNodePlusEdges(ostream& o, NodeT n) {
   printNode<NodeT, Debug>(o, n);
-  vector<EdgeT> outEdges = n.outEdges(interprocedural);
+  vector<EdgeT> outEdges = n.outEdges();
   for (unsigned int i = 0; i < outEdges.size(); ++i) {
     printEdge<EdgeT, Debug>(o, outEdges[i], false);
   }
   if (Debug) {
-    vector<EdgeT> inEdges = n.inEdges(interprocedural);
+    vector<EdgeT> inEdges = n.inEdges();
     for (unsigned int i = 0; i < inEdges.size(); ++i) {
       printEdge<EdgeT, Debug>(o, inEdges[i], true);
     }
@@ -164,31 +164,6 @@ ostream& cfgToDotForDebugging(ostream& o, string graphName,
 			      InterestingNode start) {
   o << "digraph " << graphName << " {\n";
   CfgToDotImpl<InterestingNode, InterestingEdge, true> impl(o);
-  impl.processNodes(start);
-  o << "}\n";
-  return o;
-}
-
-//dump the full dot graph of a virtual control flow graph starting from SgNode (start)
-void interproceduralCfgToDotForDebugging(SgNode* start, const std::string& file_name)
-{
-  ROSE_ASSERT (start != NULL);
-  ofstream ofile (file_name.c_str(), ios::out);
-  interproceduralCfgToDotForDebugging(ofile, "defaultName", start->cfgForBeginning());
-}  
-
-ostream& interproceduralCfgToDotForDebugging(ostream& o, string graphName,
-			      InterestingNode start) {
-  o << "digraph " << graphName << " {\n";
-  CfgToDotImpl<InterestingNode, InterestingEdge, true> impl(o, true);
-  impl.processNodes(start);
-  o << "}\n";
-  return o;
-}
-
-ostream& interproceduralCfgToDotForDebugging(ostream& o, string graphName, CFGNode start) {
-  o << "digraph " << graphName << " {\n";
-  CfgToDotImpl<CFGNode, CFGEdge, true> impl(o, true);
   impl.processNodes(start);
   o << "}\n";
   return o;

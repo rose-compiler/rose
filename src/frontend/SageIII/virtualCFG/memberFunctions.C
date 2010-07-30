@@ -7,6 +7,8 @@
 using namespace std;
 using namespace VirtualCFG;
 
+bool virtualInterproceduralControlFlowGraphs = false;
+
 unsigned int
 SgNode::cfgIndexForEnd() const {
   ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
@@ -32,13 +34,13 @@ SgNode::cfgFindNextChildIndex(SgNode*) {
 }
 
 std::vector<CFGEdge>
-SgNode::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgNode::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
   return std::vector<CFGEdge>();
 }
 
 std::vector<CFGEdge>
-SgNode::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgNode::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
   return std::vector<CFGEdge>();
 }
@@ -219,14 +221,14 @@ SgStatement::cfgFindNextChildIndex(SgNode* n) {
   }
 
 std::vector<CFGEdge>
-SgStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgStatement::cfgOutEdges(unsigned int idx) {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgOutEdges()" << std::endl;
     ROSE_ASSERT (false);
     return std::vector<CFGEdge>();
   }
 
 std::vector<CFGEdge>
-SgStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgStatement::cfgInEdges(unsigned int idx) {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgInEdges()" << std::endl;
     ROSE_ASSERT (false);
     return std::vector<CFGEdge>();
@@ -238,11 +240,11 @@ bool SgStatement::isChildUsedAsLValue(const SgExpression* child) const
 }
 
 //---------------------------------------
-std::vector<CFGEdge> SgGlobal::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgGlobal::cfgOutEdges(unsigned int idx) {
   return std::vector<CFGEdge>();
 }
 
-std::vector<CFGEdge> SgGlobal::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgGlobal::cfgInEdges(unsigned int idx) {
   return std::vector<CFGEdge>();
 }
 
@@ -265,7 +267,7 @@ bool SgBasicBlock::cfgIsIndexInteresting(unsigned int idx) const {
   return false;
 }
 
-std::vector<CFGEdge> SgBasicBlock::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgBasicBlock::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (idx == this->get_statements().size()) {
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
@@ -275,7 +277,7 @@ std::vector<CFGEdge> SgBasicBlock::cfgOutEdges(unsigned int idx, bool interproce
   return result;
 }
 
-std::vector<CFGEdge> SgBasicBlock::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgBasicBlock::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (idx == 0) {
@@ -323,7 +325,7 @@ SgIfStmt::cfgFindChildIndex(SgNode* n)
    }
 
 std::vector<CFGEdge>
-SgIfStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgIfStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_conditional()->cfgForBeginning(), result); break;
@@ -341,7 +343,7 @@ SgIfStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgIfStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgIfStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -365,7 +367,7 @@ SgForInitStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgForInitStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgForInitStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (idx == this->get_init_stmt().size()) {
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
@@ -376,7 +378,7 @@ SgForInitStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgForInitStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgForInitStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (idx == 0) {
@@ -459,7 +461,7 @@ unsigned int SgForStatement::cfgFindNextChildIndex(SgNode* n)
      return returnValue;
    }
 
-std::vector<CFGEdge> SgForStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgForStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_for_init_stmt()->cfgForBeginning(), result); break;
@@ -474,7 +476,7 @@ std::vector<CFGEdge> SgForStatement::cfgOutEdges(unsigned int idx, bool interpro
   return result;
 }
 
-std::vector<CFGEdge> SgForStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgForStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -551,7 +553,7 @@ unsigned int SgForAllStatement::cfgFindNextChildIndex(SgNode* n) {
   return this->cfgFindChildIndex(n) + 1;
 }
 
-std::vector<CFGEdge> SgForAllStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgForAllStatement::cfgOutEdges(unsigned int idx) {
   vector<CFGEdge> result;
   switch (idx) {
     case 0: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_forall_header(), result); break;
@@ -575,7 +577,7 @@ std::vector<CFGEdge> SgForAllStatement::cfgOutEdges(unsigned int idx, bool inter
   return result;
 }
 
-std::vector<CFGEdge> SgForAllStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgForAllStatement::cfgInEdges(unsigned int idx) {
   vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -636,7 +638,7 @@ unsigned int SgUpcForAllStatement::cfgFindNextChildIndex(SgNode* n)
   // return doForallCfgFindNextChildIndex(this, n);
    }
 
-std::vector<CFGEdge> SgUpcForAllStatement::cfgOutEdges(unsigned int idx, bool interprocedural)
+std::vector<CFGEdge> SgUpcForAllStatement::cfgOutEdges(unsigned int idx)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
      ROSE_ASSERT(false);
@@ -645,7 +647,7 @@ std::vector<CFGEdge> SgUpcForAllStatement::cfgOutEdges(unsigned int idx, bool in
   // return doForallCfgOutEdges(this, idx);
    }
 
-std::vector<CFGEdge> SgUpcForAllStatement::cfgInEdges(unsigned int idx, bool interprocedural)
+std::vector<CFGEdge> SgUpcForAllStatement::cfgInEdges(unsigned int idx)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
      ROSE_ASSERT(false);
@@ -659,14 +661,14 @@ SgFunctionDeclaration::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgFunctionDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgFunctionDeclaration::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgFunctionDeclaration::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgFunctionDeclaration::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -681,7 +683,7 @@ SgFunctionParameterList::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgFunctionParameterList::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgFunctionParameterList::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      if (idx == this->get_args().size())
@@ -704,7 +706,7 @@ SgFunctionParameterList::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgFunctionParameterList::cfgInEdges(unsigned int idx, bool interprocedural)
+SgFunctionParameterList::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      addIncomingFortranGotos(this, idx, result);
@@ -762,13 +764,13 @@ SgFunctionDefinition::cfgFindChildIndex(SgNode* n)
    }
 
 std::vector<CFGEdge> 
-SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: { 
-     if (! interprocedural) 
+     if (! virtualInterproceduralControlFlowGraphs) 
        break;
      Rose_STL_Container<SgExpression*> calls;
      CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
@@ -783,12 +785,12 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge> 
-SgFunctionDefinition::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgFunctionDefinition::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: {
-     if (! interprocedural) 
+     if (! virtualInterproceduralControlFlowGraphs) 
        break;
      Rose_STL_Container<SgExpression*> calls;
      CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
@@ -824,14 +826,14 @@ SgMemberFunctionDeclaration::cfgIndexForEnd() const {
 // FIXME: these both assume that a function declaration is outside any
 // function, which may not actually be the case.
 
-std::vector<CFGEdge> SgMemberFunctionDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgMemberFunctionDeclaration::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgMemberFunctionDeclaration::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgMemberFunctionDeclaration::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -852,7 +854,7 @@ SgVariableDeclaration::cfgFindChildIndex(SgNode* n) {
     return idx - 1;
   }
 
-std::vector<CFGEdge> SgVariableDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgVariableDeclaration::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (idx == this->get_variables().size()) {
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
@@ -862,7 +864,7 @@ std::vector<CFGEdge> SgVariableDeclaration::cfgOutEdges(unsigned int idx, bool i
   return result;
 }
 
-std::vector<CFGEdge> SgVariableDeclaration::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgVariableDeclaration::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (idx == 0) {
@@ -878,14 +880,14 @@ SgClassDeclaration::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgClassDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgClassDeclaration::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgClassDeclaration::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgClassDeclaration::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -898,14 +900,14 @@ SgEnumDeclaration::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgEnumDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgEnumDeclaration::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgEnumDeclaration::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgEnumDeclaration::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -918,7 +920,7 @@ SgExprStatement::cfgIndexForEnd() const {
   return 1;
 }
 
-std::vector<CFGEdge> SgExprStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgExprStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
  // case 0: makeEdge(CFGNode(this, idx), this->get_expression_root()->cfgForBeginning(), result); break;
@@ -929,7 +931,7 @@ std::vector<CFGEdge> SgExprStatement::cfgOutEdges(unsigned int idx, bool interpr
   return result;
 }
 
-std::vector<CFGEdge> SgExprStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgExprStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -947,7 +949,7 @@ SgLabelStatement::cfgIndexForEnd() const
      return 0;
    }
 
-std::vector<CFGEdge> SgLabelStatement::cfgOutEdges(unsigned int idx, bool interprocedural)
+std::vector<CFGEdge> SgLabelStatement::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -959,7 +961,7 @@ std::vector<CFGEdge> SgLabelStatement::cfgOutEdges(unsigned int idx, bool interp
      return result;
    }
 
-std::vector<CFGEdge> SgLabelStatement::cfgInEdges(unsigned int idx, bool interprocedural)
+std::vector<CFGEdge> SgLabelStatement::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      addIncomingFortranGotos(this, idx, result);
@@ -1006,7 +1008,7 @@ unsigned int SgWhileStmt::cfgFindNextChildIndex(SgNode* n)
      return returnValue;
    }
 
-std::vector<CFGEdge> SgWhileStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgWhileStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
@@ -1018,7 +1020,7 @@ std::vector<CFGEdge> SgWhileStmt::cfgOutEdges(unsigned int idx, bool interproced
   return result;
 }
 
-std::vector<CFGEdge> SgWhileStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgWhileStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1054,7 +1056,7 @@ bool SgDoWhileStmt::cfgIsIndexInteresting(unsigned int idx) const {
   return idx == 2;
 }
 
-std::vector<CFGEdge> SgDoWhileStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgDoWhileStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
@@ -1067,7 +1069,7 @@ std::vector<CFGEdge> SgDoWhileStmt::cfgOutEdges(unsigned int idx, bool interproc
   return result;
 }
 
-std::vector<CFGEdge> SgDoWhileStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgDoWhileStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1107,7 +1109,7 @@ bool SgSwitchStatement::cfgIsIndexInteresting(unsigned int idx) const {
   return idx == 1;
 }
 
-std::vector<CFGEdge> SgSwitchStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgSwitchStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_item_selector()->cfgForBeginning(), result); break;
@@ -1131,7 +1133,7 @@ std::vector<CFGEdge> SgSwitchStatement::cfgOutEdges(unsigned int idx, bool inter
   return result;
 }
 
-std::vector<CFGEdge> SgSwitchStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgSwitchStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1176,7 +1178,7 @@ unsigned int SgCaseOptionStmt::cfgFindChildIndex(SgNode* n) {
   return 0;
 }
 
-std::vector<CFGEdge> SgCaseOptionStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCaseOptionStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
@@ -1186,7 +1188,7 @@ std::vector<CFGEdge> SgCaseOptionStmt::cfgOutEdges(unsigned int idx, bool interp
   return result;
 }
 
-std::vector<CFGEdge> SgCaseOptionStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCaseOptionStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1211,7 +1213,7 @@ bool SgTryStmt::cfgIsIndexInteresting(unsigned int idx) const {
   return true;
 }
 
-std::vector<CFGEdge> SgTryStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgTryStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
@@ -1228,7 +1230,7 @@ std::vector<CFGEdge> SgTryStmt::cfgOutEdges(unsigned int idx, bool interprocedur
   return result;
 }
 
-std::vector<CFGEdge> SgTryStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgTryStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1255,7 +1257,7 @@ bool SgCatchStatementSeq::cfgIsIndexInteresting(unsigned int idx) const {
   return false;
 }
 
-std::vector<CFGEdge> SgCatchStatementSeq::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCatchStatementSeq::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   // FIXME
   if (idx == this->get_catch_statement_seq().size()) {
@@ -1268,7 +1270,7 @@ std::vector<CFGEdge> SgCatchStatementSeq::cfgOutEdges(unsigned int idx, bool int
   return result;
 }
 
-std::vector<CFGEdge> SgCatchStatementSeq::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCatchStatementSeq::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   // FIXME
@@ -1285,7 +1287,7 @@ SgCatchOptionStmt::cfgIndexForEnd() const {
   return 2;
 }
 
-std::vector<CFGEdge> SgCatchOptionStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCatchOptionStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
@@ -1296,7 +1298,7 @@ std::vector<CFGEdge> SgCatchOptionStmt::cfgOutEdges(unsigned int idx, bool inter
   return result;
 }
 
-std::vector<CFGEdge> SgCatchOptionStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCatchOptionStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1317,7 +1319,7 @@ bool SgDefaultOptionStmt::cfgIsIndexInteresting(unsigned int idx) const {
   return idx == 0;
 }
 
-std::vector<CFGEdge> SgDefaultOptionStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgDefaultOptionStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
@@ -1327,7 +1329,7 @@ std::vector<CFGEdge> SgDefaultOptionStmt::cfgOutEdges(unsigned int idx, bool int
   return result;
 }
 
-std::vector<CFGEdge> SgDefaultOptionStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgDefaultOptionStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1352,7 +1354,7 @@ bool SgBreakStmt::cfgIsIndexInteresting(unsigned int idx) const {
   return idx == 0;
 }
 
-std::vector<CFGEdge> SgBreakStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgBreakStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: {
@@ -1376,7 +1378,7 @@ std::vector<CFGEdge> SgBreakStmt::cfgOutEdges(unsigned int idx, bool interproced
   return result;
 }
 
-std::vector<CFGEdge> SgBreakStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgBreakStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1396,7 +1398,7 @@ bool SgContinueStmt::cfgIsIndexInteresting(unsigned int idx) const {
   return idx == 0;
 }
 
-std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: {
@@ -1419,7 +1421,7 @@ std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx, bool interpro
   return result;
 }
 
-std::vector<CFGEdge> SgContinueStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgContinueStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1438,7 +1440,7 @@ SgReturnStmt::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgReturnStmt::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgReturnStmt::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
   // bool hasReturnValue = this->get_expression_root();
@@ -1457,7 +1459,7 @@ SgReturnStmt::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgReturnStmt::cfgInEdges(unsigned int idx, bool interprocedural)
+SgReturnStmt::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      addIncomingFortranGotos(this, idx, result);
@@ -1480,7 +1482,7 @@ bool SgGotoStatement::cfgIsIndexInteresting(unsigned int idx) const {
   return idx == 0;
 }
 
-std::vector<CFGEdge> SgGotoStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgGotoStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: {
@@ -1497,7 +1499,7 @@ std::vector<CFGEdge> SgGotoStatement::cfgOutEdges(unsigned int idx, bool interpr
   return result;
 }
 
-std::vector<CFGEdge> SgGotoStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgGotoStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -1520,14 +1522,14 @@ SgAsmStmt::cfgFindChildIndex(SgNode* n) {
   return 0;
 }
 
-std::vector<CFGEdge> SgAsmStmt::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgAsmStmt::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgAsmStmt::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgAsmStmt::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1540,14 +1542,14 @@ SgNullStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgNullStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgNullStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgNullStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgNullStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1562,7 +1564,7 @@ SgTypedefDeclaration::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgTypedefDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgTypedefDeclaration::cfgOutEdges(unsigned int idx)
    {
      ROSE_ASSERT (idx == 0);
      std::vector<CFGEdge> result;
@@ -1571,7 +1573,7 @@ SgTypedefDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgTypedefDeclaration::cfgInEdges(unsigned int idx, bool interprocedural)
+SgTypedefDeclaration::cfgInEdges(unsigned int idx)
    {
      ROSE_ASSERT (idx == 0);
      std::vector<CFGEdge> result;
@@ -1585,14 +1587,14 @@ SgPragmaDeclaration::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgPragmaDeclaration::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgPragmaDeclaration::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgPragmaDeclaration::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgPragmaDeclaration::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1605,14 +1607,14 @@ SgUsingDirectiveStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgUsingDirectiveStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgUsingDirectiveStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgUsingDirectiveStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgUsingDirectiveStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1625,14 +1627,14 @@ SgUsingDeclarationStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgUsingDeclarationStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgUsingDeclarationStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgUsingDeclarationStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgUsingDeclarationStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1646,14 +1648,14 @@ SgCommonBlock::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgCommonBlock::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgCommonBlock::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
 std::vector<CFGEdge>
-SgCommonBlock::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgCommonBlock::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -1666,14 +1668,14 @@ SgModuleStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgModuleStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgModuleStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
 std::vector<CFGEdge>
-SgModuleStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgModuleStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -1685,14 +1687,14 @@ SgContainsStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgContainsStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgContainsStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgContainsStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgContainsStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1705,14 +1707,14 @@ SgUseStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgUseStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgUseStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgUseStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgUseStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1725,7 +1727,7 @@ SgStopOrPauseStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgStopOrPauseStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgStopOrPauseStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   if (this->get_stop_or_pause() == SgStopOrPauseStatement::e_pause) {
@@ -1734,7 +1736,7 @@ std::vector<CFGEdge> SgStopOrPauseStatement::cfgOutEdges(unsigned int idx, bool 
   return result;
 }
 
-std::vector<CFGEdge> SgStopOrPauseStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgStopOrPauseStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -1772,7 +1774,7 @@ SgPrintStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgPrintStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgPrintStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 1, result)) return result;
   switch (idx) {
@@ -1787,7 +1789,7 @@ SgPrintStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgPrintStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgPrintStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 1, result)) return result;
@@ -1808,7 +1810,7 @@ SgReadStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgReadStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgReadStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 8, result)) return result;
   switch (idx) {
@@ -1830,7 +1832,7 @@ SgReadStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgReadStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgReadStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 8, result)) return result;
@@ -1858,7 +1860,7 @@ SgWriteStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgWriteStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgWriteStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 5, result)) return result;
   switch (idx) {
@@ -1877,7 +1879,7 @@ SgWriteStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgWriteStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgWriteStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 5, result)) return result;
@@ -1902,7 +1904,7 @@ SgOpenStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgOpenStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgOpenStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 13, result)) return result;
   switch (idx) {
@@ -1929,7 +1931,7 @@ SgOpenStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgOpenStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgOpenStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 13, result)) return result;
@@ -1962,7 +1964,7 @@ SgCloseStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgCloseStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgCloseStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 1, result)) return result;
   switch (idx) {
@@ -1977,7 +1979,7 @@ SgCloseStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgCloseStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgCloseStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 1, result)) return result;
@@ -1998,7 +2000,7 @@ SgInquireStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgInquireStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgInquireStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 27, result)) return result;
   switch (idx) {
@@ -2039,7 +2041,7 @@ SgInquireStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgInquireStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgInquireStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 27, result)) return result;
@@ -2086,7 +2088,7 @@ SgFlushStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgFlushStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgFlushStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
   switch (idx) {
@@ -2100,7 +2102,7 @@ SgFlushStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgFlushStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgFlushStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
@@ -2120,7 +2122,7 @@ SgRewindStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgRewindStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgRewindStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
   switch (idx) {
@@ -2134,7 +2136,7 @@ SgRewindStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgRewindStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgRewindStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
@@ -2154,7 +2156,7 @@ SgBackspaceStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgBackspaceStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgBackspaceStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
   switch (idx) {
@@ -2168,7 +2170,7 @@ SgBackspaceStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgBackspaceStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgBackspaceStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
@@ -2188,7 +2190,7 @@ SgEndfileStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgEndfileStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgEndfileStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
   switch (idx) {
@@ -2202,7 +2204,7 @@ SgEndfileStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgEndfileStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgEndfileStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
@@ -2222,7 +2224,7 @@ SgWaitStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgWaitStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgWaitStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
   switch (idx) {
@@ -2236,7 +2238,7 @@ SgWaitStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgWaitStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgWaitStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   if (handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
@@ -2287,7 +2289,7 @@ unsigned int SgFortranDo::cfgFindNextChildIndex(SgNode* n)
      return parentIndex + 1;
    }
 
-std::vector<CFGEdge> SgFortranDo::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgFortranDo::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_initialization()->cfgForBeginning(), result); break;
@@ -2303,7 +2305,7 @@ std::vector<CFGEdge> SgFortranDo::cfgOutEdges(unsigned int idx, bool interproced
   return result;
 }
 
-std::vector<CFGEdge> SgFortranDo::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgFortranDo::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -2340,7 +2342,7 @@ SgInterfaceStatement::cfgIndexForEnd() const
      return 0;
    }
 
-std::vector<CFGEdge> SgInterfaceStatement::cfgOutEdges(unsigned int idx, bool interprocedural)
+std::vector<CFGEdge> SgInterfaceStatement::cfgOutEdges(unsigned int idx)
    {
      ROSE_ASSERT (idx == 0);
      std::vector<CFGEdge> result;
@@ -2348,7 +2350,7 @@ std::vector<CFGEdge> SgInterfaceStatement::cfgOutEdges(unsigned int idx, bool in
      return result;
    }
 
-std::vector<CFGEdge> SgInterfaceStatement::cfgInEdges(unsigned int idx, bool interprocedural)
+std::vector<CFGEdge> SgInterfaceStatement::cfgInEdges(unsigned int idx)
    {
      ROSE_ASSERT (idx == 0);
      std::vector<CFGEdge> result;
@@ -2363,14 +2365,14 @@ SgImplicitStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgImplicitStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgImplicitStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
 std::vector<CFGEdge>
-SgImplicitStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgImplicitStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -2382,7 +2384,7 @@ SgWhereStatement::cfgIndexForEnd() const {
   return 3;
 }
 
-std::vector<CFGEdge> SgWhereStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgWhereStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0:
@@ -2404,7 +2406,7 @@ std::vector<CFGEdge> SgWhereStatement::cfgOutEdges(unsigned int idx, bool interp
   return result;
 }
 
-std::vector<CFGEdge> SgWhereStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgWhereStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -2432,7 +2434,7 @@ SgElseWhereStatement::cfgIndexForEnd() const {
   return 3;
 }
 
-std::vector<CFGEdge> SgElseWhereStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgElseWhereStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0:
@@ -2454,7 +2456,7 @@ std::vector<CFGEdge> SgElseWhereStatement::cfgOutEdges(unsigned int idx, bool in
   return result;
 }
 
-std::vector<CFGEdge> SgElseWhereStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgElseWhereStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -2483,14 +2485,14 @@ SgEquivalenceStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgEquivalenceStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgEquivalenceStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
 std::vector<CFGEdge>
-SgEquivalenceStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgEquivalenceStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -2503,14 +2505,14 @@ SgAttributeSpecificationStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgAttributeSpecificationStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgAttributeSpecificationStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
 std::vector<CFGEdge>
-SgAttributeSpecificationStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgAttributeSpecificationStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -2524,7 +2526,7 @@ SgArithmeticIfStatement::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgArithmeticIfStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgArithmeticIfStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_conditional()->cfgForBeginning(), result); break;
@@ -2540,7 +2542,7 @@ SgArithmeticIfStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgArithmeticIfStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgArithmeticIfStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -2576,7 +2578,7 @@ SgComputedGotoStatement::cfgFindChildIndex(SgNode* n) {
   }
 }
 
-std::vector<CFGEdge> SgComputedGotoStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgComputedGotoStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_label_index()->cfgForBeginning(), result); break;
@@ -2596,7 +2598,7 @@ std::vector<CFGEdge> SgComputedGotoStatement::cfgOutEdges(unsigned int idx, bool
   return result;
 }
 
-std::vector<CFGEdge> SgComputedGotoStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgComputedGotoStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -2617,14 +2619,14 @@ SgNamelistStatement::cfgIndexForEnd() const {
 }
 
 std::vector<CFGEdge>
-SgNamelistStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgNamelistStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
 std::vector<CFGEdge>
-SgNamelistStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgNamelistStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -2636,14 +2638,14 @@ SgImportStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgImportStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgImportStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgImportStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgImportStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -2656,7 +2658,7 @@ SgAssociateStatement::cfgIndexForEnd() const {
   return 2;
 }
 
-std::vector<CFGEdge> SgAssociateStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgAssociateStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_variable_declaration()->cfgForBeginning(), result); break;
@@ -2670,7 +2672,7 @@ std::vector<CFGEdge> SgAssociateStatement::cfgOutEdges(unsigned int idx, bool in
   return result;
 }
 
-std::vector<CFGEdge> SgAssociateStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgAssociateStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -2687,14 +2689,14 @@ SgFormatStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgFormatStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgFormatStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgFormatStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgFormatStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -2731,7 +2733,7 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
     return this->cfgFindChildIndex(n) + 1;
   }
 
-  std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int idx) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgOutEdges()" << std::endl;
     ROSE_ASSERT (false);
 
@@ -2739,7 +2741,7 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
      return std::vector<CFGEdge>();
   }
 
-  std::vector<CFGEdge> SgExpression::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgExpression::cfgInEdges(unsigned int idx) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgInEdges()" << std::endl;
     ROSE_ASSERT (false);
 
@@ -2754,7 +2756,7 @@ SgUnaryOp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgUnaryOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgUnaryOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -2773,7 +2775,7 @@ SgUnaryOp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgUnaryOp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgUnaryOp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -2798,7 +2800,7 @@ SgThrowOp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgThrowOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgThrowOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -2817,7 +2819,7 @@ SgThrowOp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgThrowOp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgThrowOp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -2840,7 +2842,7 @@ unsigned int SgBinaryOp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgBinaryOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgBinaryOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -2855,7 +2857,7 @@ SgBinaryOp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgBinaryOp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgBinaryOp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -2876,7 +2878,7 @@ SgExprListExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgExprListExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgExprListExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      if (idx == this->get_expressions().size())
@@ -2895,7 +2897,7 @@ SgExprListExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgExprListExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgExprListExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      if (idx == 0)
@@ -2920,7 +2922,7 @@ SgVarRefExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgVarRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgVarRefExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -2929,7 +2931,7 @@ SgVarRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgVarRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgVarRefExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -2944,7 +2946,7 @@ SgLabelRefExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgLabelRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgLabelRefExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -2953,7 +2955,7 @@ SgLabelRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgLabelRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgLabelRefExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -2972,7 +2974,7 @@ SgLabelRefExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgLabelRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgLabelRefExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -2981,7 +2983,7 @@ SgLabelRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgLabelRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgLabelRefExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -2997,7 +2999,7 @@ SgFunctionRefExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgFunctionRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgFunctionRefExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3006,7 +3008,7 @@ SgFunctionRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgFunctionRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgFunctionRefExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3021,7 +3023,7 @@ SgMemberFunctionRefExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgMemberFunctionRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgMemberFunctionRefExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3030,7 +3032,7 @@ SgMemberFunctionRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgMemberFunctionRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgMemberFunctionRefExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3045,7 +3047,7 @@ SgPseudoDestructorRefExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgPseudoDestructorRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgPseudoDestructorRefExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3054,7 +3056,7 @@ SgPseudoDestructorRefExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3066,14 +3068,14 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
     return 0;
   }
 
-  std::vector<CFGEdge> SgValueExp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgValueExp::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     ROSE_ASSERT (idx == 0);
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
     return result;
   }
 
-  std::vector<CFGEdge> SgValueExp::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgValueExp::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     ROSE_ASSERT (idx == 0);
     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -3084,14 +3086,14 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
     return 3;
   }
 
-  std::vector<CFGEdge> SgFunctionCallExp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgFunctionCallExp::cfgOutEdges(unsigned int idx) {
     ROSE_ASSERT(this);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 2: {
-                if (interprocedural) {
+                if (virtualInterproceduralControlFlowGraphs) {
                   Rose_STL_Container<SgFunctionDefinition*> defs;
                   CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
                   Rose_STL_Container<SgFunctionDefinition*>::iterator def;
@@ -3109,7 +3111,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
     return result;
   }
 
-  std::vector<CFGEdge> SgFunctionCallExp::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgFunctionCallExp::cfgInEdges(unsigned int idx) {
     ROSE_ASSERT(this);
     std::vector<CFGEdge> result;
     switch (idx) {
@@ -3117,7 +3119,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx, bool interprocedural)
       case 1: makeEdge(this->get_function()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
-                if (interprocedural) {
+                if (virtualInterproceduralControlFlowGraphs) {
                   Rose_STL_Container<SgFunctionDefinition*> defs;
                   CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
                   Rose_STL_Container<SgFunctionDefinition*>::iterator def;
@@ -3140,7 +3142,7 @@ SgAndOp::cfgIsIndexInteresting(unsigned int idx) const
    }
 
 std::vector<CFGEdge>
-SgAndOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgAndOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx) {
@@ -3154,7 +3156,7 @@ SgAndOp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgAndOp::cfgInEdges(unsigned int idx, bool interprocedural) 
+SgAndOp::cfgInEdges(unsigned int idx) 
    {
      std::vector<CFGEdge> result;
      switch (idx) {
@@ -3174,7 +3176,7 @@ SgOrOp::cfgIsIndexInteresting(unsigned int idx) const
    }
 
 std::vector<CFGEdge>
-SgOrOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgOrOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx) {
@@ -3187,7 +3189,7 @@ SgOrOp::cfgOutEdges(unsigned int idx, bool interprocedural)
      return result;
    }
 
-   std::vector<CFGEdge> SgOrOp::cfgInEdges(unsigned int idx, bool interprocedural) {
+   std::vector<CFGEdge> SgOrOp::cfgInEdges(unsigned int idx) {
      std::vector<CFGEdge> result;
      switch (idx) {
        case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3206,7 +3208,7 @@ SgTypeIdOp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgTypeIdOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgTypeIdOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3215,7 +3217,7 @@ SgTypeIdOp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgTypeIdOp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgTypeIdOp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3227,7 +3229,7 @@ SgTypeIdOp::cfgInEdges(unsigned int idx, bool interprocedural)
     return 2;
   }
 
-  std::vector<CFGEdge> SgVarArgStartOp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgVarArgStartOp::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_lhs_operand()->cfgForBeginning(), result); break;
@@ -3238,7 +3240,7 @@ SgTypeIdOp::cfgInEdges(unsigned int idx, bool interprocedural)
     return result;
   }
 
-  std::vector<CFGEdge> SgVarArgStartOp::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgVarArgStartOp::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3253,7 +3255,7 @@ SgTypeIdOp::cfgInEdges(unsigned int idx, bool interprocedural)
     return 1;
   }
 
-  std::vector<CFGEdge> SgVarArgOp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgVarArgOp::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_operand_expr()->cfgForBeginning(), result); break;
@@ -3263,7 +3265,7 @@ SgTypeIdOp::cfgInEdges(unsigned int idx, bool interprocedural)
     return result;
   }
 
-  std::vector<CFGEdge> SgVarArgOp::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgVarArgOp::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3277,7 +3279,7 @@ SgTypeIdOp::cfgInEdges(unsigned int idx, bool interprocedural)
     return 1;
   }
 
-  std::vector<CFGEdge> SgVarArgEndOp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgVarArgEndOp::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_operand_expr()->cfgForBeginning(), result); break;
@@ -3287,7 +3289,7 @@ SgTypeIdOp::cfgInEdges(unsigned int idx, bool interprocedural)
     return result;
   }
 
-  std::vector<CFGEdge> SgVarArgEndOp::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgVarArgEndOp::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3331,7 +3333,7 @@ SgConditionalExp::cfgFindChildIndex(SgNode* n)
      return 0;
    }
 
-  std::vector<CFGEdge> SgConditionalExp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgConditionalExp::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_conditional_exp()->cfgForBeginning(), result); break;
@@ -3343,7 +3345,7 @@ SgConditionalExp::cfgFindChildIndex(SgNode* n)
     return result;
   }
 
-  std::vector<CFGEdge> SgConditionalExp::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgConditionalExp::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3396,7 +3398,7 @@ SgNewExp::cfgFindChildIndex(SgNode* n)
      return 0;
    }
 
-  std::vector<CFGEdge> SgNewExp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgNewExp::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: {
@@ -3423,7 +3425,7 @@ SgNewExp::cfgFindChildIndex(SgNode* n)
     return result;
   }
 
-  std::vector<CFGEdge> SgNewExp::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgNewExp::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3456,7 +3458,7 @@ unsigned int SgDeleteExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgDeleteExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgDeleteExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3470,7 +3472,7 @@ SgDeleteExp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgDeleteExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgDeleteExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3490,7 +3492,7 @@ SgThisExp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgThisExp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgThisExp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3499,7 +3501,7 @@ SgThisExp::cfgOutEdges(unsigned int idx, bool interprocedural)
   }
 
 std::vector<CFGEdge>
-SgThisExp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgThisExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3513,7 +3515,7 @@ unsigned int SgInitializer::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgAggregateInitializer::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgAggregateInitializer::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx) {
@@ -3526,7 +3528,7 @@ SgAggregateInitializer::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgAggregateInitializer::cfgInEdges(unsigned int idx, bool interprocedural)
+SgAggregateInitializer::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx) {
@@ -3543,12 +3545,12 @@ unsigned int SgConstructorInitializer::cfgIndexForEnd() const
     return 2;
   }
 
-std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case 1: {
-                if (interprocedural) {
+                if (virtualInterproceduralControlFlowGraphs) {
                   SgFunctionDeclaration* decl = get_declaration();
                   if (decl != NULL) {
                     SgFunctionDefinition* def = decl->get_definition();
@@ -3567,13 +3569,13 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx, boo
     return result;
   }
 
-std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
       case 1: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 2: {
-                if (interprocedural) {
+                if (virtualInterproceduralControlFlowGraphs) {
                   SgFunctionDeclaration* decl = get_declaration();
                   if (decl != NULL) {
                     SgFunctionDefinition* def = decl->get_definition();
@@ -3591,7 +3593,7 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
     return result;
   }
 
-  std::vector<CFGEdge> SgAssignInitializer::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgAssignInitializer::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
@@ -3601,7 +3603,7 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
     return result;
   }
 
-  std::vector<CFGEdge> SgAssignInitializer::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgAssignInitializer::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3615,14 +3617,14 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx, bool
     return 0;
   }
 
-  std::vector<CFGEdge> SgNullExpression::cfgOutEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgNullExpression::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     ROSE_ASSERT (idx == 0);
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
     return result;
   }
 
-  std::vector<CFGEdge> SgNullExpression::cfgInEdges(unsigned int idx, bool interprocedural) {
+  std::vector<CFGEdge> SgNullExpression::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     ROSE_ASSERT (idx == 0);
     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -3634,7 +3636,7 @@ unsigned int SgCtorInitializerList::cfgIndexForEnd() const
     return get_ctors().size();
   }
 
-std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx) {
      std::vector<CFGEdge> result;
      //FIXME 
      return result;
@@ -3647,7 +3649,7 @@ std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx, bool i
      return result;
   }
 
-std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx) {
      std::vector<CFGEdge> result;
      //FIXME 
      return result;
@@ -3667,7 +3669,7 @@ SgStatementExpression::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgStatementExpression::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgStatementExpression::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3681,7 +3683,7 @@ SgStatementExpression::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgStatementExpression::cfgInEdges(unsigned int idx, bool interprocedural)
+SgStatementExpression::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3701,7 +3703,7 @@ SgAsmOp::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgAsmOp::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgAsmOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3710,7 +3712,7 @@ SgAsmOp::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgAsmOp::cfgInEdges(unsigned int idx, bool interprocedural)
+SgAsmOp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3724,7 +3726,7 @@ unsigned int SgSubscriptExpression::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgSubscriptExpression::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgSubscriptExpression::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3740,7 +3742,7 @@ SgSubscriptExpression::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgSubscriptExpression::cfgInEdges(unsigned int idx, bool interprocedural)
+SgSubscriptExpression::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3759,14 +3761,14 @@ unsigned int SgAsteriskShapeExp::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgAsteriskShapeExp::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgAsteriskShapeExp::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   ROSE_ASSERT (idx == 0);
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgAsteriskShapeExp::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgAsteriskShapeExp::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   ROSE_ASSERT (idx == 0);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
@@ -3779,7 +3781,7 @@ unsigned int SgImpliedDo::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgImpliedDo::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgImpliedDo::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3796,7 +3798,7 @@ SgImpliedDo::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgImpliedDo::cfgInEdges(unsigned int idx, bool interprocedural)
+SgImpliedDo::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3819,7 +3821,7 @@ SgActualArgumentExpression::cfgIndexForEnd() const
    }
 
 std::vector<CFGEdge>
-SgActualArgumentExpression::cfgOutEdges(unsigned int idx, bool interprocedural)
+SgActualArgumentExpression::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3833,7 +3835,7 @@ SgActualArgumentExpression::cfgOutEdges(unsigned int idx, bool interprocedural)
    }
 
 std::vector<CFGEdge>
-SgActualArgumentExpression::cfgInEdges(unsigned int idx, bool interprocedural)
+SgActualArgumentExpression::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx)
@@ -3846,7 +3848,7 @@ SgActualArgumentExpression::cfgInEdges(unsigned int idx, bool interprocedural)
      return result;
    }
 
-std::vector<CFGEdge> SgDesignatedInitializer::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgDesignatedInitializer::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_memberInit()->cfgForBeginning(), result); break;
@@ -3856,7 +3858,7 @@ std::vector<CFGEdge> SgDesignatedInitializer::cfgOutEdges(unsigned int idx, bool
   return result;
 }
 
-std::vector<CFGEdge> SgDesignatedInitializer::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgDesignatedInitializer::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -3911,7 +3913,7 @@ SgInitializedName::cfgFindNextChildIndex(SgNode* n) {
 }
 
 std::vector<CFGEdge>
-SgInitializedName::cfgOutEdges(unsigned int idx, bool interprocedural) {
+SgInitializedName::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0:
@@ -3934,7 +3936,7 @@ SgInitializedName::cfgOutEdges(unsigned int idx, bool interprocedural) {
 }
 
 std::vector<CFGEdge>
-SgInitializedName::cfgInEdges(unsigned int idx, bool interprocedural) {
+SgInitializedName::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0:
@@ -3957,7 +3959,7 @@ SgOmpBodyStatement::cfgIndexForEnd() const {
   return 1;
 }
 
-std::vector<CFGEdge> SgOmpBodyStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgOmpBodyStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
@@ -3967,7 +3969,7 @@ std::vector<CFGEdge> SgOmpBodyStatement::cfgOutEdges(unsigned int idx, bool inte
   return result;
 }
 
-std::vector<CFGEdge> SgOmpBodyStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgOmpBodyStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
@@ -3983,7 +3985,7 @@ SgOmpClauseBodyStatement::cfgIndexForEnd() const {
   return 2;
 }
 
-std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgOutEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
@@ -3994,7 +3996,7 @@ std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgOutEdges(unsigned int idx, boo
   return result;
 }
 
-std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgInEdges(unsigned int idx, bool interprocedural) {
+std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {

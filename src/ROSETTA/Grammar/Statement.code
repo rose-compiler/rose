@@ -187,8 +187,8 @@ HEADER_START
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // get lvalue
 		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
@@ -726,8 +726,8 @@ HEADER_GLOBAL_START
        // std::map<SgNode*,std::string> & get_mangledNameCache();
        // std::map<std::string, int> & get_shortMangledNameCache();
 
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
           virtual bool cfgIsIndexInteresting(unsigned int idx) const;
           virtual unsigned int cfgIndexForEnd() const;
 
@@ -790,8 +790,8 @@ HEADER_LIST_DECLARATIONS
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // void prepend_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
        // void append_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
@@ -955,8 +955,8 @@ HEADER_IF_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1001,8 +1001,8 @@ HEADER_LIST_DECLARATIONS
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1029,8 +1029,8 @@ HEADER_FOR_INIT_STATEMENT_START
         public:
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1050,8 +1050,8 @@ HEADER_FORALL_STATEMENT_START
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_FORALL_STATEMENT_END
 
 
@@ -1059,8 +1059,8 @@ HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1140,8 +1140,8 @@ HEADER_LIST_DECLARATIONS
      public:  // (see comment above)
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -1152,8 +1152,8 @@ HEADER_LIST_DECLARATIONS
           virtual SgName get_mangled_name(void) const;
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1175,8 +1175,8 @@ HEADER_LIST_DECLARATIONS
 
        // MD (7/09/2010): Added virtual CFG methods
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
           
 
 HEADER_CTOR_INITIALIZER_LIST_END
@@ -1213,8 +1213,8 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1274,8 +1274,8 @@ HEADER_LIST_DECLARATIONS
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1369,8 +1369,8 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1561,8 +1561,8 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
           virtual bool hasExplicitScope() const;
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/10/2007): I think this should have been marked virtual
           virtual SgSymbol* get_symbol_from_symbol_table() const;
@@ -1667,8 +1667,8 @@ HEADER_LIST_DECLARATIONS
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1686,8 +1686,8 @@ HEADER_ENUM_DECLARATION_STATEMENT_END
 HEADER_EXPRESSION_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (12/6/2006): Added to support general replace functions.
           int replace_expression(SgExpression *,SgExpression *);
@@ -1713,8 +1713,8 @@ HEADER_LABEL_STATEMENT_START
           SgName get_name() const ROSE_DEPRECATED_FUNCTION;
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/10/2007): Marked as virtual to be consistent
           virtual SgSymbol* get_symbol_from_symbol_table() const;
@@ -1749,8 +1749,8 @@ HEADER_WHILE_STATEMENT_START
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgIndexForEnd() const;
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1776,8 +1776,8 @@ HEADER_DO_WHILE_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1810,8 +1810,8 @@ HEADER_SWITCH_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -1837,8 +1837,8 @@ HEADER_CASE_OPTION_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1870,8 +1870,8 @@ HEADER_LIST_DECLARATIONS
          public:
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1902,8 +1902,8 @@ HEADER_CATCH_OPTION_STATEMENT_START
 
          public:
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1931,8 +1931,8 @@ HEADER_DEFAULT_OPTION_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -1950,8 +1950,8 @@ HEADER_DEFAULT_OPTION_STATEMENT_END
 HEADER_BREAK_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_BREAK_STATEMENT_END
 
@@ -1959,8 +1959,8 @@ HEADER_BREAK_STATEMENT_END
 HEADER_CONTINUE_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_CONTINUE_STATEMENT_END
 
@@ -1968,8 +1968,8 @@ HEADER_CONTINUE_STATEMENT_END
 HEADER_RETURN_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
 
@@ -1986,8 +1986,8 @@ HEADER_GOTO_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -2006,8 +2006,8 @@ HEADER_ASM_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (7/26/2006): Need a type for the list of registers used in the clobber list
           typedef std::vector<SgInitializedName::asm_register_name_enum> AsmRegisterNameList;
@@ -2034,8 +2034,8 @@ HEADER_SPAWN_STATEMENT_END
 HEADER_NULL_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_NULL_STATEMENT_END
 
@@ -2054,8 +2054,8 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
      protected:
           virtual bool replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock = false);
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 
      public:
@@ -2305,8 +2305,8 @@ HEADER_PRAGMA_STATEMENT_START
           virtual SgName get_mangled_name(void) const;
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_PRAGMA_STATEMENT_END
 
@@ -2395,8 +2395,8 @@ HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 HEADER_USING_DIRECTIVE_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
@@ -2406,8 +2406,8 @@ HEADER_USING_DIRECTIVE_STATEMENT_END
 HEADER_USING_DECLARATION_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 // DQ (7/21/2005): The using declaration can reference either a SgDeclarationStatement or a SgInitializedName
 // object thus we need a single more general function to return whatever it is.  Maybe not!
@@ -2519,8 +2519,8 @@ HEADER_FORTRAN_DO_START
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
           // Added for uniform support of mangled names, Liao, 3/11/2009
           virtual SgName get_mangled_name() const;
 HEADER_FORTRAN_DO_END
@@ -2542,8 +2542,8 @@ HEADER_INTERFACE_STATEMENT_START
              };
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 HEADER_INTERFACE_STATEMENT_END
@@ -2554,8 +2554,8 @@ HEADER_PARAMETER_STATEMENT_END
 HEADER_COMMON_BLOCK_STATEMENT_START
           SgName get_mangled_name() const;
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 
           const SgCommonBlockObjectPtrList & get_block_list() const;
@@ -2565,8 +2565,8 @@ HEADER_COMMON_BLOCK_STATEMENT_END
 HEADER_MODULE_STATEMENT_START
           virtual SgName get_mangled_name() const;
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           std::vector<SgInterfaceStatement*> get_interfaces() const;
 
@@ -2581,16 +2581,16 @@ HEADER_MODULE_STATEMENT_END
 
 HEADER_CONTAINS_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 HEADER_CONTAINS_STATEMENT_END
 
 HEADER_USE_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 HEADER_USE_STATEMENT_END
@@ -2605,8 +2605,8 @@ HEADER_STOP_OR_PAUSE_STATEMENT_START
              };
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_STOP_OR_PAUSE_STATEMENT_END
 
@@ -2635,68 +2635,68 @@ HEADER_IO_STATEMENT_END
 
 HEADER_PRINT_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_PRINT_STATEMENT_END
 
 HEADER_READ_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_READ_STATEMENT_END
 
 HEADER_WRITE_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_WRITE_STATEMENT_END
 
 HEADER_OPEN_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_OPEN_STATEMENT_END
 
 HEADER_CLOSE_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_CLOSE_STATEMENT_END
 
 HEADER_INQUIRE_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_INQUIRE_STATEMENT_END
 
 HEADER_FLUSH_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_FLUSH_STATEMENT_END
 
 HEADER_REWIND_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_REWIND_STATEMENT_END
 
 HEADER_BACKSPACE_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_BACKSPACE_STATEMENT_END
 
 HEADER_ENDFILE_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_ENDFILE_STATEMENT_END
 
 HEADER_WAIT_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_WAIT_STATEMENT_END
 
 
@@ -2707,8 +2707,8 @@ HEADER_BLOCK_DATA_STATEMENT_END
 HEADER_IMPLICIT_STATEMENT_START
      SgName get_mangled_name() const;
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_IMPLICIT_STATEMENT_END
 
@@ -2718,15 +2718,15 @@ HEADER_STATEMENT_FUNCTION_STATEMENT_END
 
 HEADER_WHERE_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_WHERE_STATEMENT_END
 
 HEADER_ELSE_WHERE_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_ELSE_WHERE_STATEMENT_END
 
@@ -2736,8 +2736,8 @@ HEADER_NULLIFY_STATEMENT_END
 HEADER_EQUIVALENCE_STATEMENT_START
      SgName get_mangled_name() const;
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_EQUIVALENCE_STATEMENT_END
 
@@ -2747,8 +2747,8 @@ HEADER_DERIVED_TYPE_STATEMENT_END
 
 HEADER_ATTRIBUTE_SPECIFICATION_STATEMENT_START
      virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
      public:
       //! Fortran specific classification of attribute statements (each corresponds to a declaration attribute).
@@ -2813,8 +2813,8 @@ HEADER_SEQUENCE_STATEMENT_END
 
 HEADER_ARITHMETIC_IF_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_ARITHMETIC_IF_STATEMENT_END
 
@@ -2828,8 +2828,8 @@ HEADER_COMPUTED_GOTO_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if 0
        // DQ (12/30/2007): This list is no longer requires since we ave build the IR node for a SgLabelRefExp
@@ -2848,8 +2848,8 @@ HEADER_ASSIGNED_GOTO_STATEMENT_END
 
 HEADER_NAMELIST_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 
@@ -2860,8 +2860,8 @@ HEADER_NAMELIST_STATEMENT_END
 
 HEADER_IMPORT_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 
@@ -2872,8 +2872,8 @@ HEADER_IMPORT_STATEMENT_END
 
 HEADER_ASSOCIATE_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 HEADER_ASSOCIATE_STATEMENT_END
@@ -2881,8 +2881,8 @@ HEADER_ASSOCIATE_STATEMENT_END
 
 HEADER_FORMAT_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 
@@ -2895,8 +2895,8 @@ HEADER_FORMAT_STATEMENT_END
 HEADER_FORTRAN_INCLUDE_LINE_START
        // Not sure if we need these...
        // virtual unsigned int cfgIndexForEnd() const;
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           virtual SgName get_mangled_name() const;
 HEADER_FORTRAN_INCLUDE_LINE_END
@@ -2934,8 +2934,8 @@ HEADER_LIST_DECLARATIONS
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
          // DQ (2/22/2007): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
@@ -13291,8 +13291,8 @@ SOURCE_FORMAT_STATEMENT_END
 SOURCE_FORTRAN_INCLUDE_LINE_START
        // Not sure if we need these...
        // virtual unsigned int cfgIndexForEnd() const;
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 SgName
 SgFortranIncludeLine::get_mangled_name(void) const
@@ -13460,8 +13460,8 @@ HEADER_OMP_BODY_STATEMENT_START
       public:
 
       virtual unsigned int cfgIndexForEnd() const;
-      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_OMP_BODY_STATEMENT_END
 
@@ -13482,8 +13482,8 @@ HEADER_OMP_CLAUSEBODY_STATEMENT_START
       public:
 
       virtual unsigned int cfgIndexForEnd() const;
-      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural);
-      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural);
+      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 HEADER_OMP_CLAUSEBODY_STATEMENT_END
 

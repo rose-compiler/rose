@@ -177,12 +177,12 @@ namespace VirtualBinCFG {
         result.push_back(CFGEdge(CFGNode(from, info), CFGNode(to, info), info));
     }
 
-    vector<CFGEdge> CFGNode::outEdges(bool interprocedural) const {
+    vector<CFGEdge> CFGNode::outEdges() const {
         ROSE_ASSERT (node);
         return node->cfgBinOutEdges(info);
     }
 
-    vector<CFGEdge> CFGNode::inEdges(bool interprocedural) const {
+    vector<CFGEdge> CFGNode::inEdges() const {
         ROSE_ASSERT (node);
         return node->cfgBinInEdges(info);
     }
