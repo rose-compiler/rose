@@ -4,6 +4,22 @@
 #include <rose.h>
 #include <utilities/types.h>
 #include "variableVersionTable.h"
+#include "costModel.h"
+
+struct ExpressionPackage
+{
+    SgExpression* exp;
+    VariableVersionTable var_table;
+    SimpleCostModel cost;
+};
+
+struct StatementPackage
+{
+    SgStatement* stmt;
+    VariableVersionTable var_table;
+    SimpleCostModel cost;
+};
+
 
 
 struct InstrumentedExpression
@@ -24,9 +40,10 @@ struct InstrumentedExpression
     SgExpression* fwd_exp;
     SgExpression* rvs_exp;
     
+    // Variable version table
     VariableVersionTable var_table;
-    // Cost Model;
-    // Symbol Table;
+    // Cost model
+    SimpleCostModel cost;
 };
 
 struct InstrumentedStatement
@@ -47,13 +64,29 @@ struct InstrumentedStatement
     SgStatement* fwd_stmt;
     SgStatement* rvs_stmt;
 
+    // Variable version table
     VariableVersionTable var_table;
-    // Cost Model;
-    // Symbol Table;
+    // Cost model;
+    SimpleCostModel cost;
 };
+
+//! Comparison functions for structure InstrumentedStatement and InstrumentedExpression.
+
+inline bool operator < (const InstrumentedExpression& e1, const InstrumentedExpression& e2)
+{ return e1.cost.getCost() < e2.cost.getCost(); }
+
+inline bool operator < (const InstrumentedStatement& s1, const InstrumentedStatement& s2)
+{ return s1.cost.getCost() < s2.cost.getCost(); }
+
 
 typedef std::vector<InstrumentedExpression> InstrumentedExpressionVec;
 typedef std::vector<InstrumentedStatement> InstrumentedStatementVec;
+
+
+
+
+
+
 
 // Forward declaration of the class EventProcessor.
 class EventProcessor;

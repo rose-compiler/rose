@@ -43,17 +43,17 @@ InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(SgExpressi
         // For integer type, it's better to reverse it directly, not state saving.
         //if (!(operand->get_type()->isIntegerType()))
         //{
-            SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-                    pushVal(copyExpression(operand), operand->get_type()),
-                    copyExpression(exp));
-            SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-                    copyExpression(operand),
-                    popVal(operand->get_type()));
+        SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp > (
+                pushVal(copyExpression(operand), operand->get_type()),
+                copyExpression(exp));
+        SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp > (
+                copyExpression(operand),
+                popVal(operand->get_type()));
 
-            VariableVersionTable new_var_table = var_table;
-            new_var_table.reverseVersion(operand);
+        VariableVersionTable new_var_table = var_table;
+        new_var_table.reverseVersion(operand);
 
-            output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
+        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
         //}
     }
 
@@ -101,7 +101,7 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(SgExpression*
             // in the variable version table.
 
 
-            if (var_table.checkLhsVersion(operand))
+            if (var_table.checkVersion(operand))
             {
                 // Once reversed, the version number should backward.
                 VariableVersionTable new_table(var_table);
@@ -162,8 +162,7 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(SgExpression*
             // To make sure it is reversed correctly, a should has the version number 1 and 
             // b should has the version number 2 in the variable version table.
 
-            if (var_table.checkLhsVersion(lhs_operand) &&
-                    var_table.checkRhsVersion(rhs_operand) &&
+            if (var_table.checkVersion(lhs_operand, rhs_operand) &&
                     constructive)
             {
                 // Once reversed, the version number should backward.
@@ -268,9 +267,16 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(SgExpression*
                 vars.push_back(var);
         }
 
+        // Count the number of the same variable as lhs operand which appear in the rhs operand.
         int count = 0;
         size_t index;
-        bool constructive = true;
+
+        // Also check if the expression is constructive or not.
+        //   If one subexpression contains the same variable as lhs operand, it is not constructive.
+        //       a = a + a * b;
+        //   Then check the version of every variable.
+
+        bool constructive = var_table.checkVersion(lhs_operand, rhs_operand);
         for (size_t i = 0; i < vars.size(); ++i)
         {
             if (areSameVariable(vars[i].first, lhs_operand))
@@ -291,13 +297,17 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(SgExpression*
         // constructive. For example, a = a + a + b is not constructive (considering overflow).
         if (constructive && count == 1)
         {
+            // Once reversed, the version number should backward.
+            VariableVersionTable new_var_table(var_table);
+            new_var_table.reverseVersion(lhs_operand);
+
             // The form a = b - a, the reverse expression is the same.
             if (!vars[index].second)
             {
                 SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                         copyExpression(lhs_operand),
                         copyExpression(rhs_operand));
-                output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, var_table));
+                output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
                 return output;
             }
 
@@ -360,7 +370,7 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(SgExpression*
                     copyExpression(lhs_operand),
                     rvs_exp);
 
-            output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, var_table));
+            output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
         }
     }
 

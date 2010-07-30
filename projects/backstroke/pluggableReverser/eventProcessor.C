@@ -134,6 +134,8 @@ FuncDeclPairs EventProcessor::processEvent()
     static int ctr = 0;
 
     InstrumentedStatementVec bodies = processStatement(body, var_table);
+    // Sort the generated bodies so that those with the least cost appears first.
+    sort(bodies.begin(), bodies.end());
 
     foreach (InstrumentedStatement& stmt_obj, bodies)
     {

@@ -21,9 +21,11 @@ public:
     //! Get the unique variable name from a AST node (could be a varref, dot or arrow operator).
     static VarName getVarName(SgNode* node);
 
-    //! Check if the given variable with its version number exists in the current table.
+    /*! Check if the given variables with their version numbers exist in the current table.
+     * Note that we can check one or two expressions in urary and binary operation cases. */
     bool checkLhsVersion(SgNode* node) const;
     bool checkRhsVersion(SgNode* node) const;
+    bool checkVersion(SgExpression* lhs, SgExpression* rhs = NULL) const;
 
     /** Regress the version of the given variable. Call this function once the expression or
       statement containing the given variable is reversed successfully. */

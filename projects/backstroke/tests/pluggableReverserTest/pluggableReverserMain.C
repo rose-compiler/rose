@@ -43,7 +43,7 @@ int main(int argc, char * argv[])
     EventProcessor event_processor(NULL, &var_renaming);
 
     // Add all expression handlers to the expression pool.
-    //event_processor.addExpressionProcessor(new NullExpressionProcessor);
+    event_processor.addExpressionProcessor(new NullExpressionProcessor);
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
@@ -74,13 +74,7 @@ int main(int argc, char * argv[])
         // A small test here :)
        // VariableRenaming var_renaming(project);
         //var_renaming.run();
-#if 0
-        VariableVersionTable var_table(decl, &var_renaming);
-        cout << "!!!\n";
-        var_table.print();
-#endif
 
-#if 1
         // Here reverse the event function into several versions.
         FuncDeclPairs output = event_processor.processEvent(decl);
 
@@ -91,9 +85,6 @@ int main(int argc, char * argv[])
            appendStatement(func_decl_pair.first); 
            appendStatement(func_decl_pair.second); 
         }
-
-        cout << "Done!\n";
-#endif
     }
 
     // Declare all stack variables on top of the generated file.
@@ -103,9 +94,10 @@ int main(int argc, char * argv[])
 
     popScopeStack();
 
-    fixVariableReferences(global);
-    cout << "VarRef fixed\n";
-    //fixVariableReferences(global);
+    // Fix all variable references here.
+    cout << "VarRef fixed: " <<
+            fixVariableReferences(global) << endl;
+    
 
 
     //generateWholeGraphOfAST("Cong");
