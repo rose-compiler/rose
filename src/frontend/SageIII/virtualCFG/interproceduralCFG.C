@@ -49,7 +49,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
 
     SgFunctionCallExp* fxnCall = isSgFunctionCallExp(n.getNode());
     unsigned int idx = n.getIndex();
-    if (fxnCall && idx == 2) {
+    if (fxnCall && idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
       SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
       std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
     }
