@@ -24,11 +24,11 @@ int main(int argc, char *argv[])
 
   // Dump out the full CFG, including bookkeeping nodes
   cfg.buildFullCFG();
-  cfg.cfgToDot(proc, dotFileName1);
+  cfg.cfgToDot(mainDef, dotFileName1);
 
   // Dump out only those nodes which are "interesting" for analyses
   cfg.buildFilteredCFG();
-  cfg.cfgToDot(proc, dotFileName2);
+  cfg.cfgToDot(mainDef, dotFileName2);
 
   return 0;
 }
