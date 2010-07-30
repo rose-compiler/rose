@@ -620,6 +620,21 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 47: { /*0x2f, getgid*/
+            writeGPR(x86_gpr_ax, getgid());
+            break;
+        }
+
+        case 49: { /*0x31, geteuid*/
+            writeGPR(x86_gpr_ax, geteuid());
+            break;
+        }
+
+        case 50: { /*0x32, getegid*/
+            writeGPR(x86_gpr_ax, getegid());
+            break;
+        }
+
         case 54: { /*0x36, ioctl*/
             int fd = readGPR(x86_gpr_bx).known_value();
             uint32_t cmd = readGPR(x86_gpr_cx).known_value();
@@ -919,6 +934,22 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, getuid());
             break;
         }
+
+        case 200: { /*0xc8, getgid32*/
+            writeGPR(x86_gpr_ax, getgid());
+            break;
+        }
+
+        case 201: { /*0xc9, geteuid32*/
+            writeGPR(x86_gpr_ax, geteuid());
+            break;
+        }
+
+        case 202: { /*0xca, getegid32*/
+            writeGPR(x86_gpr_ax, getegid());
+            break;
+        }
+
 
         case 224: { /*0xe0 gettid*/
             writeGPR(x86_gpr_ax, getpid());
