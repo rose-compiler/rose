@@ -704,6 +704,25 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, result);
             break;
         }
+
+        case 57: { /*0x39, setpgid*/
+            uint32_t pid = readGPR(x86_gpr_bx).known_value();
+            uint32_t pgid = readGPR(x86_gpr_cx).known_value();
+            int result = setpgid(pid, pgid);
+            if (-1==result) { result = -errno; }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case 64: { /*0x40, getppid*/
+            writeGPR(x86_gpr_ax, getppid());
+            break;
+        }
+
+        case 65: { /*0x41, getpgrp*/
+            writeGPR(x86_gpr_ax, getpgrp());
+            break;
+        }
             
         case 91: { /*0x5b, munmap*/
             uint32_t va = readGPR(x86_gpr_bx).known_value();
