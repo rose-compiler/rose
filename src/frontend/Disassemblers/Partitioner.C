@@ -331,6 +331,22 @@ Partitioner::BasicBlock::last_insn() const
     return insns.back();
 }
 
+/* Returns true (and call address) if basic block appears to end with a function call. */
+bool
+Partitioner::BasicBlock::is_function_call(rose_addr_t *target_va)
+{
+    ROSE_ASSERT(valid_cache());
+    if (cache.is_function_call) {
+        if (target_va) {
+            *target_va = cache.call_target;
+        }
+        return true;
+    }
+    if (target_va)
+        *target_va = NO_TARGET;
+    return false;
+}
+
 /* Release all blocks from a function. Do not delete the blocks. */
 void
 Partitioner::Function::clear_blocks()
@@ -523,7 +539,11 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
-            if (allow_discont_blocks) {
+            if (bb->is_function_call(NULL) && (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)) {
+                /* When we are detecting functions based on x86 CALL instructions (or similar for other architectures) then
+                 * the instruction after the CALL should never be part of this basic block. */
+                break;
+            } else if (allow_discont_blocks) {
                 if (!complete || sucs.size()!=1)
                     break;
                 va = *(sucs.begin());
