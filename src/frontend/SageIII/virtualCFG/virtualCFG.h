@@ -301,4 +301,6 @@ namespace VirtualCFG {
   CFGNode getCFGTargetOfFortranLabelRef(SgLabelRefExp* lRef);
 }
 
+#define SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX 2
+
 #endif // VIRTUAL_CFG_H
