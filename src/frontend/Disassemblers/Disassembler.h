@@ -443,7 +443,8 @@ public:
 private:
     /** Adds the address following a basic block to the list of addresses that should be disassembled.  This search method is
      *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()). */
-    void search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap *map, const BadMap *bad);
+    void search_following(AddressSet *worklist, const InstructionMap &bb, rose_addr_t bb_va, 
+                          const MemoryMap *map, const BadMap *bad);
 
     /** Adds values of immediate operands to the list of addresses that should be disassembled.  Such operands are often used
      *  in a closely following instruction as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". This search method

@@ -462,7 +462,7 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
 
                 /* Per-basicblock search methods */
                 if (p_search & SEARCH_FOLLOWING)
-                    search_following(&worklist, bb, map, bad);
+                    search_following(&worklist, bb, va, map, bad);
                 if (p_search & SEARCH_IMMEDIATE)
                     search_immediate(&worklist, bb, map, bad);
             }
@@ -487,14 +487,19 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
 
 /* Add basic block following address to work list. */
 void
-Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap *map, const BadMap *bad)
+Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, rose_addr_t bb_va, const MemoryMap *map,
+                               const BadMap *bad)
 {
-    if (bb.size()==0)
-        return;
-    InstructionMap::const_iterator bbi = bb.end();
-    --bbi;
-    SgAsmInstruction *last_insn = bbi->second;
-    rose_addr_t following_va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+    rose_addr_t following_va = 0;
+    if (bb.empty()) {
+        following_va = bb_va+1;
+    } else {
+        InstructionMap::const_iterator bbi = bb.end();
+        --bbi;
+        SgAsmInstruction *last_insn = bbi->second;
+        following_va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+    }
+
     if (map->find(following_va) && (!bad || bad->find(following_va)==bad->end())) {
         if (p_debug && worklist->find(following_va)==worklist->end()) {
             rose_addr_t va = bb.begin()->first;
