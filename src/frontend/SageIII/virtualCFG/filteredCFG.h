@@ -48,8 +48,8 @@ namespace VirtualCFG
         {
             return n.getIndex();
         }
-        std::vector < FilteredCFGEdge < FilterFunction > >outEdges(bool interprocedural = false) const;
-        std::vector < FilteredCFGEdge < FilterFunction > >inEdges(bool interprocedural = false) const;
+        std::vector < FilteredCFGEdge < FilterFunction > >outEdges() const;
+        std::vector < FilteredCFGEdge < FilterFunction > >inEdges() const;
         bool isInteresting() const
         {
             return true;
@@ -128,11 +128,6 @@ namespace VirtualCFG
     };
 
     template < typename FilterFunction > std::ostream & cfgToDot(std::ostream & o,
-                                                                 std::string graphName,
-                                                                 FilteredCFGNode <
-                                                                 FilterFunction > start);
-
-    template < typename FilterFunction > std::ostream & interproceduralCfgToDot(std::ostream & o,
                                                                  std::string graphName,
                                                                  FilteredCFGNode <
                                                                  FilterFunction > start);

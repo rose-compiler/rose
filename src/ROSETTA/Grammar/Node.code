@@ -2027,10 +2027,10 @@ HEADER_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
 
       /*! \brief Find the out edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index, bool interprocedural = false);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index = false);
 
       /*! \brief Find the in edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index, bool interprocedural = false);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index = false);
 #if 0
       /*! \brief Find the out edges of a CFG node from a static CFG -- internal version. */
           virtual std::vector<SgDirectedGraphEdge*> cfgOutEdges(unsigned int index, StaticCFG::CFG* cfg)

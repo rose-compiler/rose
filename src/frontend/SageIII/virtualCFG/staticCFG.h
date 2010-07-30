@@ -96,7 +96,7 @@ public:
 private:
     //void buildCFG(CFGNode n);
     template <class NodeT, class EdgeT>
-    void buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored, bool interprocedural = false);
+    void buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored);
     void clearNodesAndEdges();
 
     // Turn a graph node into a CFGNode which is defined in VirtualCFG namespace.
