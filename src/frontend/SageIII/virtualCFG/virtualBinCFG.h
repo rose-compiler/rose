@@ -77,8 +77,8 @@ namespace VirtualBinCFG {
             return node;
         }
   
-        std::vector<CFGEdge> outEdges(bool interprocedural = false) const;
-        std::vector<CFGEdge> inEdges(bool interprocedural = false) const;
+        std::vector<CFGEdge> outEdges() const;
+        std::vector<CFGEdge> inEdges() const;
         bool operator==(const CFGNode& o) const {
             return node == o.node;
         }
