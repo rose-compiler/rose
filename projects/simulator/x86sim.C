@@ -468,7 +468,7 @@ EmulationPolicy::emulate_syscall()
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
     unsigned callno = readGPR(x86_gpr_ax).known_value();
     switch (callno) {
-        case 3: { /*read*/
+        case 3: { /*0x3, read*/
             int fd = readGPR(x86_gpr_bx).known_value();
             uint32_t buf_va = readGPR(x86_gpr_cx).known_value();
             uint32_t size = readGPR(x86_gpr_dx).known_value();
@@ -485,7 +485,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 4: { /*write*/
+        case 4: { /*0x4, write*/
             int fd = readGPR(x86_gpr_bx).known_value();
             uint32_t buf_va = readGPR(x86_gpr_cx).known_value();
             size_t size = readGPR(x86_gpr_dx).known_value();
@@ -503,7 +503,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 5: { /*open*/
+        case 5: { /*0x5, open*/
             uint32_t filename_va = readGPR(x86_gpr_bx).known_value();
             std::string filename = read_string(filename_va);
             uint32_t flags = readGPR(x86_gpr_cx).known_value();
@@ -517,7 +517,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 6: { /*close*/
+        case 6: { /*0x6, close*/
             int fd = readGPR(x86_gpr_bx).known_value();
             if (debug)
                 fprintf(debug, "  close(%d)\n", fd);
@@ -531,7 +531,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 7: { // waitpid
+        case 7: { /*0x7, waitpid*/
             pid_t pid = readGPR(x86_gpr_bx).known_value();
             uint32_t status = readGPR(x86_gpr_cx).known_value();
             uint32_t options = readGPR(x86_gpr_dx).known_value();
@@ -552,7 +552,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 13: { /*0xd time */
+        case 13: { /*0xd, time */
             ROSE_ASSERT(sizeof(time_t)==4);
             uint32_t t = readGPR(x86_gpr_bx).known_value();
             time_t result = time(NULL);
@@ -566,12 +566,12 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 20: { /*0x14 getpid*/
+        case 20: { /*0x14, getpid*/
             writeGPR(x86_gpr_ax, getpid());
             break;
         }
 
-        case 24: { /*0x18 getuid*/
+        case 24: { /*0x18, getuid*/
             writeGPR(x86_gpr_ax, getuid());
             break;
         }
