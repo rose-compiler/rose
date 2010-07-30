@@ -54,6 +54,28 @@ MemoryMap::MapElement::merge_anonymous(const MapElement &other, size_t oldsize)
     *anonymous = 1;
 }
 
+void
+MemoryMap::MapElement::merge_names(const MapElement &other)
+{
+    if (name.empty()) {
+        set_name(other.get_name());
+    } else if (other.name.empty()) {
+        /*void*/
+    } else {
+        set_name(get_name()+"+"+other.get_name());
+    }
+}
+
+MemoryMap::MapElement &
+MemoryMap::MapElement::set_name(const std::string &s)
+{
+    static const size_t limit = 35;
+    name = s;
+    if (name.size()>limit)
+        name = name.substr(0, limit-3) + "...";
+    return *this;
+}
+
 bool
 MemoryMap::MapElement::merge(const MapElement &other)
 {
@@ -73,6 +95,7 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         size = other.size;
+        merge_names(other);
     } else if (other.va + other.size == va) {
         /* Other element is left contiguous with this element. */
         if (!consistent(other))
@@ -81,11 +104,13 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         offset = other.offset;
+        merge_names(other);
     } else if (va + size == other.va) {
         /* Other element is right contiguous with this element. */
         if (!consistent(other))
             return false; /*no exception since they don't overlap*/
         size += other.size;
+        merge_names(other);
     } else if (other.va < va) {
         /* Other element overlaps left part of this element. */
         if (!consistent(other))
@@ -94,11 +119,13 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         offset = other.offset;
+        merge_names(other);
     } else {
         /* Other element overlaps right part of this element. */
         if (!consistent(other))
             throw Inconsistent(NULL, *this, other);
         size = (other.va + other.size) - va;
+        merge_names(other);
     }
 
     /* Adjust backing store for anonymous elements. This is necessary because two anonymous elements are consistent if they
@@ -461,11 +488,16 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         }
 
 
-        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64"\n",
+        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64,
                 prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
                 0==(me.get_mapperms()&MM_PROT_READ) ?'-':'r',
                 0==(me.get_mapperms()&MM_PROT_WRITE)?'-':'w',
                 0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
                 basename.c_str(), elements[i].get_offset());
+
+        if (!me.name.empty())
+            fprintf(f, " %s", me.name.c_str());
+        
+        fputc('\n', f);
     }
 }

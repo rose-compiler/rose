@@ -7920,22 +7920,19 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 			break;
 		}
 
-		// DQ (8/19/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
-		// I think that for this operator we can't expect to resolve the function declaration. (returning NULL)
+		//DotStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
+		//the associated 'this' parameter. In this case, we can't statically determine which function is getting called
+		//and should return null.
 		case V_SgDotStarOp:
 		{
 			break;
 		}
 
+		//ArrowStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
+		//the associated 'this' parameter. In this case, we can't statically determine which function is getting called
+		//and should return null.
 		case V_SgArrowStarOp:
 		{
-			// DQ (8/18/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
-			// I also fixed the error message to make it more clear.
-			printf("ERROR: Sorry, case SgArrowStarOp not implemented yet (might be similar to SgDotExp case) in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
-
-			// DQ (2/21/2010): This case is triggered by fixupPrettyFunction test when run on test2005_112.C
-			// ROSE_ASSERT(returnSymbol != NULL);
-
 			break;
 		}
 

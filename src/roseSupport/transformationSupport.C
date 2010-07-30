@@ -2002,25 +2002,27 @@ TransformationSupport::getProject( const SgNode* astNode )
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgProject(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
-        {
-            if (astNode==NULL)
-                printf ("Warning: could not trace back to SgProject node. \n");
-            else
-                printf ("Warning: could not trace back to SgProject node from %s \n",
-          astNode->class_name().c_str());
-       // ROSE_ABORT();
-        }
-       else
-        {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
-             {
-               printf ("Error: can't locate an associated SgProject from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
-             }
-        }
+	if (isSgProject(parentNode) == NULL &&
+			dynamic_cast<const SgType*> (parentNode) == NULL &&
+			dynamic_cast<const SgSymbol*> (parentNode) == NULL)
+	{
+		if (SgProject::get_verbose() > 0)
+		{
+			if (astNode == NULL)
+				printf("Warning: could not trace back to SgProject node. \n");
+			else
+				printf("Warning: could not trace back to SgProject node from %s \n",
+					astNode->class_name().c_str());
+		}
+	}
+	else
+	{
+		if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
+		{
+			printf("Error: can't locate an associated SgProject from astNode = %p = %s parentNode = %p = %s \n", astNode, astNode->class_name().c_str(), parentNode, parentNode->class_name().c_str());
+			return NULL;
+		}
+	}
 
   // Make sure we have a SgProject node
      const SgProject* project = isSgProject(parentNode);
@@ -2214,25 +2216,29 @@ TransformationSupport::getGlobalScope( const SgNode* astNode )
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgGlobal(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
-        {  //It is possible to find no SgGlobal during transformation, changed to warning.
-         if (astNode!=NULL)
-            printf ("Warning: could not trace back to SgGlobal node from %s \n",
-          astNode->class_name().c_str());
-         else printf ("Warning: could not trace back to SgGlobal node\n ");
-       // ROSE_ASSERT(false);
-          return NULL;
-        }
-       else
-        {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
-             {
-            // printf ("Error: can't locate an associated SgGlobal from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
-             }
-        }
+	if (isSgGlobal(parentNode) == NULL &&
+			dynamic_cast<const SgType*> (parentNode) == NULL &&
+			dynamic_cast<const SgSymbol*> (parentNode) == NULL)
+	{
+		//It is possible to find no SgGlobal during transformation, changed to warning.
+		if (SgProject::get_verbose() > 0)
+		{
+			if (astNode != NULL)
+				printf("Warning: could not trace back to SgGlobal node from %s \n",
+					astNode->class_name().c_str());
+			else
+				printf("Warning: could not trace back to SgGlobal node\n ");
+		}
+		return NULL;
+	}
+	else
+	{
+		if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
+		{
+			// printf ("Error: can't locate an associated SgGlobal from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+			return NULL;
+		}
+	}
 
 
   // Make sure we have a SgGlobal node
@@ -2264,18 +2270,18 @@ TransformationSupport::getStatement( const SgNode* astNode )
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
      if ( isSgStatement(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
-        {
-          if (astNode == NULL)
-               printf ("Error: could not trace back to SgStatement node \n");
-            else 
-               printf ("Warning: could not trace back to SgStatement node from %s \n",
+          dynamic_cast<const SgSymbol*>(parentNode) == NULL)
+	{
+		if (SgProject::get_verbose() > 0)
+		{
+			if (astNode == NULL)
+				printf("Error: could not trace back to SgStatement node \n");
+			else
+				printf("Warning: could not trace back to SgStatement node from %s \n", astNode->class_name().c_str());
+		}
 
-          astNode->class_name().c_str());
-
-       // ROSE_ABORT();
-          return NULL;
-        }
+		return NULL;
+	}
        else
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
@@ -2361,7 +2367,7 @@ TransformationSupport::getFunctionDefinition( const SgNode* astNode)
           if(astNode==NULL)
           printf ("Error: could not trace back to SgFunctionDefinition node \n");
           else 
-               printf ("Warning: could not trace back to SgFunctionDefinition node from %s \n",
+               printf ("Error: could not trace back to SgFunctionDefinition node from %s \n",
           astNode->class_name().c_str());
           ROSE_ABORT();
         }
@@ -2432,11 +2438,14 @@ TransformationSupport::getModuleStatement( const SgNode* astNode)
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
      if ( isSgModuleStatement(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
-        {
-          printf ("Warning: could not trace back to SgModuleStatement node \n");
-          return NULL;
-        }
+          dynamic_cast<const SgSymbol*>(parentNode) == NULL)
+	{
+		if (SgProject::get_verbose() > 0)
+		{
+			printf("Warning: could not trace back to SgModuleStatement node \n");
+		}
+		return NULL;
+	}
        else
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
