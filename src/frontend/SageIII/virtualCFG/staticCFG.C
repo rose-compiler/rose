@@ -1,5 +1,4 @@
-#include "sage3basic.h"
-//#include "staticCFG.h"
+#include "staticCFG.h"
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
@@ -8,37 +7,6 @@
 namespace StaticCFG
 {
 
-// This class is to store index of each node as an attribuite of SgGraphNode.
-class CFGNodeAttribute : public AstAttribute
-{
-    int index_;
-    SgIncidenceDirectedGraph* graph_;
-
-public:
-    CFGNodeAttribute(int idx = 0, SgIncidenceDirectedGraph* graph = NULL) 
-        : index_(idx), graph_(graph) {}
-
-    int getIndex() const { return index_; }
-    void setIndex(int idx) { index_ = idx; }
-
-    const SgIncidenceDirectedGraph* getGraph() const { return graph_; }
-    SgIncidenceDirectedGraph* getGraph() { return graph_; }
-
-    void setGraph(SgIncidenceDirectedGraph* graph)
-    { graph_ = graph; }
-};
-
-template <class EdgeT>
-class CFGEdgeAttribute : public AstAttribute
-{
-    EdgeT edge_;
-public:
-    CFGEdgeAttribute(const EdgeT& e) : edge_(e) {}
-    void setEdge(const EdgeT& e)
-    { edge_ = e; }
-    EdgeT getEdge() const
-    { return edge_; }
-};
 
 void CFG::clearNodesAndEdges()
 {
