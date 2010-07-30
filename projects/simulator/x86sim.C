@@ -588,6 +588,13 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 41: { /*0x29, dup*/
+            uint32_t fd = readGPR(x86_gpr_bx).known_value();
+            int result = dup(fd);
+            if (-1==result) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+        }
+
         case 45: { /*0x2d, brk*/
             uint32_t newbrk = ALIGN_DN(readGPR(x86_gpr_bx).known_value(), PAGE_SIZE);
             if (debug)
