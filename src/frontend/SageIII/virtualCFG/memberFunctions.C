@@ -3092,7 +3092,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
-      case 2: {
+      case SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX: {
                 if (virtualInterproceduralControlFlowGraphs) {
                   Rose_STL_Container<SgFunctionDefinition*> defs;
                   CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
