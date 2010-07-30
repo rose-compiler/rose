@@ -172,7 +172,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   //bug 119, SgVariableDefintion's File_info is needed for deep copy to work
   // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
   // have to set SgVariableDefintion explicitly
-  SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
+  SgDeclarationStatement* variableDefinition_original = initName->get_declptr();
   setOneSourcePositionForTransformation(variableDefinition_original);
   ROSE_ASSERT((variableDefinition_original->get_startOfConstruct()) !=NULL);
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);

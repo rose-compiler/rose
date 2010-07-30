@@ -1,26 +1,23 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+SUBDIRS =
+
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-# Build the function extraction translator
-noinst_PROGRAMS = normalizationTranslator
+noinst_PROGRAMS = testVariableRenaming
+testVariableRenaming_SOURCES = testVariableRenaming.C
 
-normalizationTranslator_SOURCES =  NormalizationTranslator.C
-normalizationTranslator_LDADD = $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
-			$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
-			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
+EXTRA_DIST =
 
-EXTRA_DIST = test_basic.C test_failingTests.C test_forLoops.C test_Swap.C test_whileLoops.C
+CLEANFILES =
 
-CLEANFILES = 
+include_HEADERS =
 
 TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
-test2001_03.C \
 test2001_04.C \
 test2001_05.C \
 test2001_06.C \
@@ -48,6 +45,7 @@ test2001_27.C \
 test2001_28.C \
 test2001_29.C \
 test2002_01.C \
+test2003_01.C \
 test2003_02.C \
 test2003_03.C \
 test2003_04.C \
@@ -111,7 +109,6 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
-test2004_35.C \
 test2004_36.C \
 test2004_37.C \
 test2004_38.C \
@@ -149,15 +146,12 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
-test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
 test2004_81.C \
-test2004_83.C \
 test2004_82.C \
 test2004_84.C \
-test2004_85.C \
 test2004_86.C \
 test2004_87.C \
 test2004_88.C \
@@ -168,7 +162,6 @@ test2004_93.C \
 test2004_94.C \
 test2004_95.C \
 test2004_96.C \
-test2004_97.C \
 test2004_98.C \
 test2004_99.C \
 test2004_100.C \
@@ -191,22 +184,17 @@ test2004_116.C \
 test2004_117.C \
 test2004_118.C \
 test2004_119.C \
-test2004_120.C \
 test2004_121.C \
 test2004_122.C \
 test2004_123.C \
 test2004_124.C \
 test2004_125.C \
-test2004_127.C \
 test2004_128.C \
-test2004_129.C \
-test2004_130.C \
 test2004_131.C \
 test2004_132.C \
 test2004_133.C \
 test2004_134.C \
 test2004_135.C \
-test2004_136.C \
 test2004_137.C \
 test2004_138.C \
 test2004_139.C \
@@ -219,7 +207,6 @@ test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
-test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -229,7 +216,6 @@ test2004_155.C \
 test2004_156.C \
 test2004_157.C \
 test2004_158.C \
-test2004_159.C \
 test2004_160.C \
 test2004_161.C \
 test2004_162.C \
@@ -240,9 +226,9 @@ test2005_02.C \
 test2005_03.C \
 test2005_04.C \
 test2005_05.C \
-test2005_06.C \
 test2005_07.C \
 test2005_08.C \
+test2005_09.C \
 test2005_10.C \
 test2005_11.C \
 test2005_12.C \
@@ -266,8 +252,6 @@ test2005_30.C \
 test2005_31.C \
 test2005_32.C \
 test2005_33.C \
-test2005_34.C \
-test2005_35.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
@@ -283,7 +267,6 @@ test2005_47.C \
 test2005_48.C \
 test2005_49.C \
 test2005_50.C \
-test2005_51.C \
 test2005_52.C \
 test2005_53.C \
 test2005_55.C \
@@ -298,7 +281,6 @@ test2005_64.C \
 test2005_65.C \
 test2005_66.C \
 test2005_67.C \
-test2005_68.C \
 test2005_70.C \
 test2005_71.C \
 test2005_72.C \
@@ -312,7 +294,6 @@ test2005_78.C \
 test2005_79.C \
 test2005_80.C \
 test2005_81.C \
-test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
@@ -327,12 +308,11 @@ test2005_94.C \
 test2005_95.C \
 test2005_96.C \
 test2005_97.C \
-test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
 test2005_102.C \
-test2005_103.C \
+test2005_104.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -342,11 +322,9 @@ test2005_110.C \
 test2005_111.C \
 test2005_112.C \
 test2005_113.C \
-test2005_114.C \
 test2005_116.C \
 test2005_117.C \
 test2005_118.C \
-test2005_119.C \
 test2005_120.C \
 test2005_121.C \
 test2005_122.C \
@@ -355,7 +333,6 @@ test2005_124.C \
 test2005_125.C \
 test2005_126.C \
 test2005_127.C \
-test2005_128.C \
 test2005_129.C \
 test2005_130.C \
 test2005_131.C \
@@ -380,25 +357,21 @@ test2005_149.C \
 test2005_150.C \
 test2005_152.C \
 test2005_153.C \
-test2005_154.C \
 test2005_155.C \
 test2005_156.C \
 test2005_157.C \
 test2005_158.C \
 test2005_159.C \
 test2005_160.C \
-test2005_161.C \
 test2005_162.C \
 test2005_163.C \
 test2005_164.C \
 test2005_165.C \
 test2005_166.C \
-test2005_168.C \
 test2005_167.C \
 test2005_169.C \
 test2005_170.C \
 test2005_171.C \
-test2005_172.C \
 test2005_173.C \
 test2005_174.C \
 test2005_175.C \
@@ -412,12 +385,10 @@ test2005_182.C \
 test2005_183.C \
 test2005_184.C \
 test2005_185.C \
-test2005_187.C \
 test2005_189.C \
 test2005_190.C \
 test2005_191.C \
 test2005_192.C \
-test2005_193.C \
 test2005_194.C \
 test2005_195.C \
 test2005_196.C \
@@ -432,7 +403,6 @@ test2005_208.C \
 test2005_209.C \
 test2006_01.C \
 test2006_02.C \
-test2006_03.C \
 test2006_04.C \
 test2006_05.C \
 test2006_06.C \
@@ -459,8 +429,8 @@ test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
+test2006_44.C \
 test2006_46.C \
-test2006_47.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
@@ -474,19 +444,16 @@ test2006_61.C \
 test2006_62.C \
 test2006_63.C \
 test2006_66.C \
-test2006_67.C \
 test2006_68.C \
 test2006_69.C \
 test2006_70.C \
 test2006_71.C \
 test2006_72.C \
-test2006_73.C \
 test2006_74.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
 test2006_78.C \
-test2006_79.C \
 test2006_80.C \
 test2006_81.C \
 test2006_82.C \
@@ -500,11 +467,9 @@ test2006_89.C \
 test2006_90.C \
 test2006_91.C \
 test2006_92.C \
-test2006_93.C \
 test2006_94.C \
 test2006_95.C \
 test2006_96.C \
-test2006_97.C \
 test2006_98.C \
 test2006_99.C \
 test2006_101.C \
@@ -529,7 +494,6 @@ test2006_121.C \
 test2006_122.C \
 test2006_123.C \
 test2006_124.C \
-test2006_125.C \
 test2006_126.C \
 test2006_129.C \
 test2006_139.C \
@@ -548,6 +512,10 @@ test2006_151.C \
 test2006_152.C \
 test2006_153.C \
 test2006_154.C \
+test2006_155.C \
+test2006_156.C \
+test2006_157.C \
+test2006_158.C \
 test2006_159.C \
 test2006_160.C \
 test2006_161.C \
@@ -556,9 +524,9 @@ test2006_163.C \
 test2006_164.C \
 test2006_165.C \
 test2006_166.C \
+test2006_180.C \
 test2006_181.C \
 test2006_183.C \
-test2006_185.C \
 test2007_01.C \
 test2007_02.C \
 test2007_03.C \
@@ -572,7 +540,6 @@ test2007_10.C \
 test2007_11.C \
 test2007_12.C \
 test2007_13.C \
-test2007_14.C \
 test2007_16.C \
 test2007_17.C \
 test2007_21.C \
@@ -615,9 +582,7 @@ test2007_98.C \
 test2007_102.C \
 test2007_103.C \
 test2007_128.C \
-test2007_130.C \
 test2007_133.C \
-test2007_135.C \
 test2007_137.C \
 test2007_140.C \
 test2007_141.C \
@@ -663,13 +628,7 @@ test2009_30.C \
 test2009_31.C \
 test2009_37.C \
 test2009_39.C \
-test2009_40.C \
-test2009_41.C \
 test2009_42.C \
-test2010_03.C \
-test2010_04.C \
-test2010_05.C \
-test2010_06.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -678,21 +637,58 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C \
-inputBug317.C \
 inputBug327.C \
-test2003_01.C \
-test2005_09.C \
-test2005_104.C \
-test2006_155.C \
-test2006_156.C \
-test2006_157.C \
-test2006_158.C \
 test2007_15.C 
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS)
 
-FAILURE_TESTCODES =
+FAILURE_TESTCODES = \
+test2001_03.C \
+test2004_35.C \
+test2004_77.C \
+test2004_85.C \
+test2004_97.C \
+test2004_120.C \
+test2004_127.C \
+test2004_129.C \
+test2004_130.C \
+test2004_136.C \
+test2004_149.C \
+test2004_159.C \
+test2005_06.C \
+test2005_34.C \
+test2005_35.C \
+test2005_51.C \
+test2005_68.C \
+test2005_82.C \
+test2005_98.C \
+test2005_103.C \
+test2005_114.C \
+test2005_119.C \
+test2005_128.C \
+test2005_154.C \
+test2005_161.C \
+test2005_187.C \
+test2005_193.C \
+test2006_03.C \
+test2006_47.C \
+test2006_67.C \
+test2006_73.C \
+test2006_79.C \
+test2006_125.C \
+test2006_185.C \
+test2007_14.C \
+test2007_130.C \
+test2007_135.C \
+test2009_40.C \
+test2009_41.C \
+test2010_03.C \
+test2010_04.C \
+test2010_05.C \
+test2010_06.C \
+inputBug317.C 
+
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
@@ -701,16 +697,15 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
-$(TEST_Objects):normalizationTranslator
+$(TEST_Objects):testVariableRenaming
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./normalizationTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./testVariableRenaming $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
-	@echo "ROSE/projects/backstroke/tests/extractFunctionArgumentsTest: make check rule complete (terminated normally)"
+	@echo "******* ROSE/tests/roseTests/variableRenamingTests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
 
 clean-local:
 	rm -f *.o *.C
-
