@@ -5213,6 +5213,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
   }
+  else if (isSgValueExp(parent))
+  {
+      // For compiler generated code, this could happen.
+      // We can just ignore this function call since it will not appear in the final AST.
+      return;
+  }
   else if (isSgExpression(parent)) {
     int worked = isSgExpression(parent)->replace_expression(oldExp, newExp);  
     // ROSE_DEPRECATED_FUNCTION
@@ -7039,6 +7045,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
    fixStatement(stmt,scope); 
 
    scope->insertStatementInScope(stmt,true);
+   stmt->set_parent(scope); // needed?
     // update the links after insertion!
    if (isSgFunctionDeclaration(stmt))
      updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
@@ -7481,7 +7488,10 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     SgInitializedNamePtrList namelist = varDecl->get_variables();
 
     //avoid duplicated work
-    if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
+    // CH (2010/7/28): The following test may have a bug. Its scope may be not NULL but different from
+    // the scope passed in.
+    //if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
+    if (namelist.size() > 0) if (namelist[0]->get_scope() == scope) return;
     SgInitializedNamePtrList::iterator i;
     for (i=namelist.begin();i!=namelist.end();i++)
    {
@@ -7515,7 +7525,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
 {
   ROSE_ASSERT(root);
   int counter=0;
-  Rose_STL_Container<SgNode*> nodeList;
+  Rose_STL_Container<SgNode*> varList;
 
   SgVarRefExp* varRef=NULL;
   Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
@@ -7532,7 +7542,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
       SgName varName=initname->get_name();
       SgSymbol* realSymbol = NULL;
 
-#if 0
+#if 1
       // CH (5/7/2010): Before searching SgVarRefExp objects, we should first deal with class/structure
       // members. Or else, it is possible that we assign the wrong symbol to those members if there is another
       // variable with the same name in parent scopes. Those members include normal member referenced using . or ->
@@ -7600,13 +7610,14 @@ int SageInterface::fixVariableReferences(SgNode* root)
         varRef->set_symbol(isSgVariableSymbol(realSymbol));
         counter ++;
 
-        if (nodeList.empty())
+        if (varList.empty())
         {
             VariantVector vv(V_SgVarRefExp);
-            nodeList = NodeQuery::queryMemoryPool(vv);
+            varList = NodeQuery::queryMemoryPool(vv);
         }
-        for (Rose_STL_Container<SgNode*>::iterator i = nodeList.begin();
-                i != nodeList.end(); ++i)
+
+        for (Rose_STL_Container<SgNode*>::iterator i = varList.begin();
+                i != varList.end(); ++i)
         {
             if (SgVarRefExp* var = isSgVarRefExp(*i))
             {
@@ -7625,9 +7636,14 @@ int SageInterface::fixVariableReferences(SgNode* root)
 
 #else
 
+        // CH (2010/7/26): We cannot delete those initname and symbol here, since there may be other variable references 
+        // which point to them. We will delay this clear just before AstTests.
+#if 0
         delete initname; // TODO deleteTree(), release File_Info nodes etc.
         delete (varRef->get_symbol());
+#endif
 
+        //std::cout << "Fixed variable reference: " << realSymbol->get_name().str() << std::endl;
         varRef->set_symbol(isSgVariableSymbol(realSymbol));
         counter ++;
 #endif
@@ -7637,6 +7653,52 @@ int SageInterface::fixVariableReferences(SgNode* root)
   return counter;
 }
 
+void SageInterface::clearUnusedVariableSymbols()
+{
+    Rose_STL_Container<SgNode*> symbolList;
+    VariantVector sym_vv(V_SgVariableSymbol);
+    symbolList = NodeQuery::queryMemoryPool(sym_vv);
+
+    Rose_STL_Container<SgNode*> varList;
+    VariantVector var_vv(V_SgVarRefExp);
+    varList = NodeQuery::queryMemoryPool(var_vv);
+
+    for (Rose_STL_Container<SgNode*>::iterator i = symbolList.begin();
+            i != symbolList.end(); ++i)
+    {
+        SgVariableSymbol* symbolToDelete = isSgVariableSymbol(*i);
+        ROSE_ASSERT(symbolToDelete);
+        if (symbolToDelete->get_declaration()->get_type() != SgTypeUnknown::createType()) 
+            continue;
+
+        bool toDelete = true;
+
+#if 0
+        for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
+                j != varList.end(); ++j)
+        {
+            SgVarRefExp* var = isSgVarRefExp(*j);
+            ROSE_ASSERT(var);
+
+            if (var->get_symbol() == symbolToDelete)
+            {
+                toDelete = false;
+                break;
+            }
+        }
+#endif
+
+        if (toDelete)
+        {
+#if 0
+            std::cout << "Symbol " << symbolToDelete->get_name().str() << ' ' << symbolToDelete <<
+               ' ' << symbolToDelete->get_declaration() <<  " is deleted." << std::endl;
+#endif
+            delete symbolToDelete->get_declaration(); 
+            delete symbolToDelete;
+        }
+    }
+}
 
 //! fixup symbol table for SgLableStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
 /*
@@ -8347,7 +8409,8 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
       case V_SgCatchOptionStmt: {
         if (isSgCatchOptionStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgCatchOptionStmt(p)->get_condition() == s) {
+        } else ROSE_ASSERT (false);
 	break;
       }
       case V_SgIfStmt: {
@@ -10524,21 +10587,65 @@ SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*
 
 
 void
-SageInterface::deleteAST ( SgNode* node )
+SageInterface::deleteAST ( SgNode* n )
    {
-     class DeleteAST : public SgSimpleProcessing
-        {
-          public:
-               void visit (SgNode* node)
-                  {
-                    delete node;
-                  }
-        };
+//Tan, July/15/2010:       //Re-implement DeleteAST function
+             class DeleteAST : public SgSimpleProcessing
+                {
+                 public:
+                        void visit (SgNode* node)
+                        {
+                        //These nodes are manually deleted because they cannot be visited by the traversal
+                                //remove SgSymbolTable
+#if 0
+                                if(isSgScopeStatement(node) !=NULL){
+                                        SgSymbolTable* symbol_table = ((SgScopeStatement *)node)->get_symbol_table();
+                                        if(isSgSymbolTable(symbol_table) !=NULL){
+                                                delete symbol_table;
+                                                //printf("A SgSymbolTable was deleted\n");
+                                        }
+                                }
+#endif
+                                //remove SgFunctionSymbol
+                                if(isSgFunctionDeclaration(node) !=NULL){
+                                        SgScopeStatement *scope=((SgFunctionDeclaration*)node)->get_scope();
+                                        assert(scope != NULL);
+                                        SgSymbol* symbol = scope->first_function_symbol();
+                                        delete symbol;
+                                        //printf("A SgFunctionSymbol was deleted\n");
+                                }
 
-     DeleteAST deleteTree;
+#if 1
+                                if(isSgInitializedName(node) !=NULL){
+                                        //remove SgVariableDefinition
+                                        SgDeclarationStatement* var_def;
+                                        var_def =  ((SgInitializedName *)node)->get_definition();
+#if 1
+                                        if(isSgVariableDefinition(var_def) !=NULL){
+                                                delete var_def;
+                                                //printf("A SgVariableDefinition was deleted\n");
+                                        }
+#endif
+#if 1
+                                        //remove SgVariableSymbol
+                                        SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
+                                        if(isSgVariableSymbol(symbol) !=NULL){
+                                                delete symbol;
+                                                //printf("A SgVariableSymbol was deleted\n");
+                                        }
+#endif
 
-  // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
-     deleteTree.traverse(node,postorder);
+                                }
+#endif
+                        //Normal nodes will be removed in a post-order way
+                                delete node;
+                        }
+              };
+
+     	  DeleteAST deleteTree;
+
+          // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
+          deleteTree.traverse(n,postorder);
    }
 
 

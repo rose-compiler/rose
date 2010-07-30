@@ -271,7 +271,7 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
   // DQ (10/15/2007): If the parent of the original AST is not set then we will not process the parent in the copy, 
   // thus the AST copy mechanism can handle incompletely setup AST (as required for use in the EDG/Sage translation) 
-  // yet only return an AST of similare quality.
+  // yet only return an AST of similar quality.
      if (this->get_parent() != NULL)
         {
           FixupCopyDataMemberMacro(copyLocatedNode,SgNode,get_parent,set_parent)
@@ -301,7 +301,7 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
              }
        // ROSE_ASSERT(copyStatement->get_parent()->variantT() == this->get_parent()->variantT());
         }
-       else
+	 else if (SgProject::get_verbose() > 0)
         {
           printf ("In SgLocatedNode::fixupCopy_scopes(): parent not set for original AST at %p = %s, thus copy left similarly incomplete \n",this,this->class_name().c_str());
         }
