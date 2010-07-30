@@ -67,9 +67,6 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
-#if 1
-        std::cout << tar.toString() << std::endl;
-#endif
 
         SgGraphNode* to = NULL;
         if (all_nodes.count(tar) > 0)
