@@ -770,6 +770,27 @@ EmulationPolicy::emulate_syscall()
             break;
         }
             
+        case 175: { /*0xaf, sigprocmask */
+            uint32_t how = readGPR(x86_gpr_bx).known_value();
+            uint32_t set = readGPR(x86_gpr_cx).known_value();
+            uint32_t oldset = readGPR(x86_gpr_dx).known_value();
+            sigset_t sys_set, sys_oldset;
+            if (set != 0) {
+              size_t nread = map.read(&sys_set, set,sizeof sys_set );
+              ROSE_ASSERT(nread==sizeof sys_set);
+            }
+            int result = sigprocmask(how, set ? &sys_set : NULL, oldset ? &sys_oldset : NULL);
+            if (result == -1) {
+              result = -errno;
+            } else {
+              if (oldset != 0) {
+                  size_t nwritten = map.write(&sys_oldset, oldset, sizeof sys_oldset);
+                  ROSE_ASSERT(nwritten = sizeof sys_oldset);
+              }
+            }
+            writeGPR(x86_gpr_ax,result);
+            break;
+    }
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
@@ -863,6 +884,11 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 224: { /*0xe0 getpid*/
+            writeGPR(x86_gpr_ax, getpid());
+            break;
+        }
+
         case 243: { /*0xf3, set_thread_area*/
             uint32_t u_info_va = readGPR(x86_gpr_bx).known_value();
             user_desc ud;
@@ -906,6 +932,18 @@ EmulationPolicy::emulate_syscall()
         default: {
             fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
             abort();
+        }
+
+        case 270: { /*0x10e tgkill*/
+            uint32_t tgid = readGPR(x86_gpr_bx).known_value();
+            uint32_t pid = readGPR(x86_gpr_cx).known_value();
+            uint32_t sig = readGPR(x86_gpr_dx).known_value();
+            if (debug)
+                fprintf(debug, "  tgkill(%d,%d,%d)\n", tgid, pid, sig);
+            // TODO: Actually check thread group and kill properly
+            throw Exit(__W_EXITCODE(0, sig));
+            break;
+
         }
     }
 }
