@@ -552,6 +552,20 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 13: { /*0xd time */
+            ROSE_ASSERT(sizeof(time_t)==4);
+            uint32_t t = readGPR(x86_gpr_bx).known_value();
+            time_t result = time(NULL);
+            if (t) {
+              uint32_t t_le;
+              SgAsmExecutableFileFormat::host_to_le(t, &t_le);
+              size_t nwritten = map.write(&t_le, result, 4);
+              ROSE_ASSERT(4==nwritten);
+            }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
         case 33: { /*0x21, access*/
             uint32_t name_va = readGPR(x86_gpr_bx).known_value();
             std::string name = read_string(name_va);
@@ -884,7 +898,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 224: { /*0xe0 getpid*/
+        case 224: { /*0xe0 gettid*/
             writeGPR(x86_gpr_ax, getpid());
             break;
         }
