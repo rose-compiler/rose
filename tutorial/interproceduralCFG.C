@@ -1,5 +1,6 @@
 // Example translator to generate dot files of virtual, interprocedural control flow graphs
 #include "rose.h"
+#include "interproceduralCFG.h"
 #include <string>
 using namespace std;
 
@@ -19,7 +20,7 @@ int main(int argc, char *argv[])
   string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".debug.dot";
   string dotFileName2=fileName+"."+ mainDef->get_declaration()->get_name() +".interesting.dot";
 
-  StaticCFG::CFG cfg(mainDef);
+  StaticCFG::InterproceduralCFG cfg(mainDef);
 
   // Dump out the full CFG, including bookkeeping nodes
   cfg.buildFullCFG();
