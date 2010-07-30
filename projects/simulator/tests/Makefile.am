@@ -18,7 +18,7 @@ $(basename $(1)): $(addprefix $(SYSCALLDIR), $(1))
 endef
 
 define checkFile
-$(addprefix check-, $(1)):
+$(addprefix check-, $(1)): $(1)
 # Ignore output of actual files. Some require non 0 exit values
 	-$(addprefix ./, $(1))
 	../x86sim $(1)

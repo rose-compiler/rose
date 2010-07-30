@@ -566,6 +566,16 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 20: { /*0x14 getpid*/
+            writeGPR(x86_gpr_ax, getpid());
+            break;
+        }
+
+        case 24: { /*0x18 getuid*/
+            writeGPR(x86_gpr_ax, getuid());
+            break;
+        }
+
         case 33: { /*0x21, access*/
             uint32_t name_va = readGPR(x86_gpr_bx).known_value();
             std::string name = read_string(name_va);
@@ -895,6 +905,11 @@ EmulationPolicy::emulate_syscall()
                 copy_stat64(&sb, sb_va);
             }
             writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case 199: { /*0xc7 getuid32*/
+            writeGPR(x86_gpr_ax, getuid());
             break;
         }
 
