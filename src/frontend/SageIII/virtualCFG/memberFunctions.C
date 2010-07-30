@@ -3980,18 +3980,7 @@ bool SgPointerDerefExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.3.1 par:2 */
 bool SgAddressOfOp::isLValue() const
 {
-	/*! std:5.2.6 par:1 */
-	// TODO: king84: false?  char x[4];  x is lvalue; (x + 1) is rvalue; *(x+1) is lvalue; *(x+1) = x[1]
-//	if (!this->get_operand()->isLValue()) // must also be mutable
-//	{
-//		ROSE_ASSERT(!"Child operand of an address-of operator must be an lvalue in isLValue on SgAddressOfOp");
-//		return true;
-//	}
-//	else
-//	{
-//		return true;
-//	}
-		return true;
+	return true;
 }
 
 /*! std:5.3.1 par:2 */
@@ -4009,12 +3998,6 @@ bool SgAddressOfOp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.1 par:7,8 */
 bool SgArrowExp::isLValue() const
 {
-	// TODO: king84: is this true?
-//	if (!get_rhs_operand()->isLValue())
-//	{
-//		ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgArrowExp");
-//		return false;
-//	}
 	// TODO: king84
 	// if rhs is a non-static member function, the result is not an lvalue (static member functions are lvalues)
 	// see std:5.2.5 par:4
@@ -4036,12 +4019,6 @@ bool SgArrowExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.1 par:7,8 */
 bool SgDotExp::isLValue() const
 {
-	// TODO: king84: is this true?
-//	if (!get_rhs_operand()->isLValue())
-//	{
-//		ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgArrowExp");
-//		return false;
-//	}
 	// TODO: king84
 	// if rhs is a non-static member function, the result is not an lvalue (static member functions are lvalues)
 	// see std:5.2.5 par:4
@@ -4063,12 +4040,6 @@ bool SgDotExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.4 par:6 */
 bool SgDotStarOp::isLValue() const
 {
-	// TODO: king84: is this true?
-//	if (!get_lhs_operand()->isLValue())
-//	{
-//		ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgDotStarOp");
-//		return false;
-//	}
 	// TODO: king84
 	// rhs must be a data member (and not a member function)
 	// this is approximated here with an lvalue check
@@ -4099,12 +4070,6 @@ bool SgDotStarOp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.4 par:6 */
 bool SgArrowStarOp::isLValue() const
 {
-	// TODO: king84: is this true? consider 'this': class A {int A::*pf();} this->*pf();
-//	if (!get_lhs_operand()->isLValue())
-//	{
-//		ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgArrowStarOp");
-//		return false;
-//	}
 	// TODO: king84
 	// rhs must be a data member (and not a member function)
 	// this is approximated here with an lvalue check
@@ -4155,16 +4120,7 @@ bool SgMinusMinusOp::isLValue() const
 	}
 	else
 	{
-		/*! std:5.3.2 par:2 */
-		if (!this->get_operand()->isLValue()) // must also be mutable
-		{
-			ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgPlusPlusOp");
-			return true;
-		}
-		else
-		{
-			return true;
-		}
+		return true;
 	}
 }
 
@@ -4201,16 +4157,7 @@ bool SgPlusPlusOp::isLValue() const
 	}
 	else
 	{
-		/*! std:5.3.2 par:1 */
-		if (!this->get_operand()->isLValue()) // must also be mutable
-		{
-			ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgPlusPlusOp");
-			return true;
-		}
-		else
-		{
-			return true;
-		}
+		return true;
 	}
 }
 
