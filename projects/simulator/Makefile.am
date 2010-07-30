@@ -4,6 +4,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = tests
+
 include_HEADERS = mymemory.h simulate.h
 
 noinst_PROGRAMS = sandbox x86sim test1
