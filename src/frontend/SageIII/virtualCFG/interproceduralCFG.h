@@ -19,17 +19,15 @@ using VirtualCFG::CFGNode;
 using VirtualCFG::CFGEdge;
 
 
-class InterproceduralCFG : CFG
+class InterproceduralCFG : public CFG
 {
 
 public:
-    InterproceduralCFG() { CFG(); }
+    InterproceduralCFG() : CFG() {}
 
     // The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName
-    InterproceduralCFG(SgNode* node, bool is_filtered = false)
-    {
-        CFG(node, is_filtered);
-    }
+    InterproceduralCFG(SgNode* node, bool is_filtered = false) 
+      : CFG(node, is_filtered) {}
 
     ~InterproceduralCFG() 
     { clearNodesAndEdges(); }
