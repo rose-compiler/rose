@@ -2187,6 +2187,7 @@ sub do_pull {
 
 # Prints some info that's useful for debugging
 sub do_debug {
+  print "Debugging information from $arg0:\n";
   print "cwd=", cwd(), "\n";
   execute sub {
     git "--version";
@@ -2202,6 +2203,12 @@ sub do_debug {
 ###############################################################################################################################
 # MAIN PROGRAM
 ###############################################################################################################################
+
+# Provide a name for this script when run from stdin as 'perl -' (as done by smgit_launcher')
+if (@ARGV>0 && $ARGV[0] =~ /^--name=(.*)/) {
+  $arg0 = $1;
+  shift;
+}
 
 # Make sure we're using Git version 1.6.4 or later (we need the "git submodule foreach" command with the ability to pass
 # the submodule name to the script.

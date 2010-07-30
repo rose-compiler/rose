@@ -24,7 +24,7 @@ bin_PROGRAMS		= rose2llvm
 rose2llvm_SOURCES	=		\
 	translator.cpp
 
-rose2llvm_CPPFLAGS = -D__STDC_LIMIT_MACROS -Wno-deprecated
+rose2llvm_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Wno-deprecated
 
 #rose2llvm_CFLAGS		= 					\
 #	$(ROSE_CPPFLAGS) $(LLVM_CPPFLAGS)

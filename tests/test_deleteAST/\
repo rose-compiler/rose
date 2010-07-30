@@ -1,0 +1,85 @@
+#include "rose.h"
+
+using namespace std;
+using namespace SageInterface;
+using namespace SageBuilder;
+
+
+class testDeepDelete 
+   {
+     public:
+          void DeepDelete(SgNode* n);
+   };
+
+
+void testDeepDelete::DeepDelete(SgNode* n)
+   {
+	     class DeleteAST : public SgSimpleProcessing
+        	{
+          	 public:
+               		void visit (SgNode* node)
+                  	{
+				//if(isSgInitializedName(node) !=NULL) printf("Initalized Name \n");
+				//if(isSgVariableDefinition(node) !=NULL) printf("variable definition \n");
+				//if(isSgVariableDeclaration(node) !=NULL) printf("variable declaration \n");
+				//if(isSgFunctionDefinition(node) !=NULL) printf("Function definition \n");
+				//if(isSgVariableDeclaration(node) !=NULL) printf("Function Declaration \n");
+				/*if(isSgDeclarationStatement(node) !=NULL){
+					printf("Initalized Name \n");
+					Rose_STL_Container<SgNode*> var_def_list; 
+					var_def_list = node->get_traversalSuccessorContainer();
+					for (Rose_STL_Container<SgNode*>::iterator i = var_def_list.begin(); i != var_def_list.end(); i++) {
+						SgVariableDefinition *var_def= isSgVariableDefinition(*i); 
+						if(isSgVariableDefinition(var_def)){ delete var_def;
+						printf("iaaaaaaaaa \n");}
+					}
+				} */
+				if(isSgInititalizedName(node) !=NULL){
+					printf("DN \n");
+					SgDeclarationStatement* var_def; 
+				        var_def =  ((SgInitializedName *)node)->get_declptr();
+					delete var_def;
+					//if(isSgVariableDefinition(var_def)) delete var_def;
+				} 
+					
+                    		delete node;
+                  	}
+              };
+
+              DeleteAST deleteTree;
+
+              // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
+              deleteTree.traverse(n,postorder);
+
+   }
+
+
+int main ( int argc, char* argv[] )
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("In visitorTraversal.C: main() \n");
+
+     SgProject* project = frontend(argc,argv);
+     ROSE_ASSERT (project != NULL);
+     AstTests::runAllTests(project);
+     Rose_STL_Container<SgNode*> functionDeclarationList = NodeQuery::querySubTree (project,V_SgFunctionDeclaration);
+     for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++){
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
+          ROSE_ASSERT(functionDeclaration != NULL);
+	  if ( (*i)->get_file_info()->isCompilerGenerated() == false){
+          	  SgNode * copy = deepCopy(functionDeclaration);
+     		  testDeepDelete test;
+          	  test.DeepDelete(copy);
+	  }
+	
+     }
+/*
+     SgNode * copyproject = deepCopy(project);
+     testDeepDelete test1;
+     test1.DeepDelete(copyproject);
+*/
+     const int MAX_NUMBER_OF_IR_NODES = 2000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES);
+     AstTests::runAllTests(project);
+   }
+

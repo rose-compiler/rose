@@ -56,7 +56,7 @@ else
     jobstartingwin=1
     echo "Starting Windows test."
 #starting Windows process
-    curl http://tux269.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
+    curl http://hudson-rose.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
 fi
 done
 #
@@ -354,16 +354,14 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 
      make -j${NUM_PROCESS:-$def_num_procs} check 2>&1 | tee make_check_output.txt;
-
-     grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
-
 # the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
 # we check to see if make failes through this command
-   
      if [ ${PIPESTATUS[0]} -ne 0 ]  ; then
        echo "fatal error during 'make check'  , aborting..."
        exit 3
      fi
+
+     grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
    else
      make -j${NUM_PROCESS:-$def_num_procs} check

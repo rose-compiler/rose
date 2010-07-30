@@ -28,19 +28,22 @@ SUBDIRS = \
      MPICodeMotion \
      javaport \
      haskellport \
-     reverseComputation \
      assemblyToSourceAst \
      bugSeeding \
      binaryVisualization \
      MacroRewrapper \
      UpcTranslation \
-     RTED \
      taintcheck \
      QtDesignerPlugins \
      RoseQt \
      roseToLLVM \
-     simulator \
      PolyhedralDependenceAnalysis
+
+# DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
+# DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
+if !ROSE_USING_ROSE_ANALYSIS
+   SUBDIRS += RTED simulator
+endif
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
 # in ROSE, so lets' move on and return to compass later for this level of support.

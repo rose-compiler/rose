@@ -17,7 +17,7 @@ int main()
 // without it: 
 #pragma omp parallel private(i) reduction(+:sum)
   {
-    assert(i != 100);
+    //assert(i != 100);
     sum=sum + i;
   }
 

@@ -1,11 +1,11 @@
 Call side effects on project: 
 Function  Side Effects foo: ::x 
-Statement Side Effects testGlobal2.C-134817320: ::x 
+Statement Side Effects testGlobal2.C-6-5-261: ::x 
 Function  Side Effects main: ::x 
-Statement Side Effects testGlobal2.C-134823768: ::x 
+Statement Side Effects testGlobal2.C-11-3-374: ::x 
 Call side effects on file: 
 Function  Side Effects foo: ::x 
-Statement Side Effects testGlobal2.C-134817320: ::x 
+Statement Side Effects testGlobal2.C-6-5-261: ::x 
 Function  Side Effects main: ::x 
-Statement Side Effects testGlobal2.C-134823768: ::x 
+Statement Side Effects testGlobal2.C-11-3-374: ::x 
 Call side effects within for loop: 

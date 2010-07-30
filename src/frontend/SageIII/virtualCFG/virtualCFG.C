@@ -647,7 +647,7 @@ namespace VirtualCFG {
 	}
       }
 #else
-      for (int i = 0; i < rawEdges.size(); ++i) {
+      for (size_t i = 0; i < rawEdges.size(); ++i) {
 	if (!(rawEdges[i].*otherSide)().isInteresting()) {
 	  unsigned int oldSize = rawEdges.size();
 	  vector<CFGEdge> rawEdges2 = ((rawEdges[i].*otherSide)().*closure)();

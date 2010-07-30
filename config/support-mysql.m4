@@ -23,8 +23,13 @@ AC_ARG_WITH(MySQL_server,
 [  --with-MySQL_server=MACHINE_NAME	Specify the MySQL database server to be used],
 ,
 if test ! "$with_MySQL_server" ; then
-#  with_MySQL_server="localhost"
-   with_MySQL_server="$HOST"
+  if test -n "${HOST}" ; then
+    with_MySQL_server="$HOST"
+  elif test -n "${HOSTNAME}" ; then
+    with_MySQL_server="$HOSTNAME"
+  else
+    with_MySQL_server="localhost"
+  fi
 fi
 )
 
@@ -32,8 +37,13 @@ AC_ARG_WITH(MySQL_username,
 [  --with-MySQL_username=USER_NAME	Specify the MySQL username to be used],
 ,
 if test ! "$with_MySQL_username" ; then
-#  with_MySQL_username="root"
-   with_MySQL_username="$USERNAME"
+  if test -n "${USERNAME}" ; then
+    with_MySQL_username="$USERNAME"
+  elif test -n "${USER}" ; then
+    with_MySQL_username="$USER"
+  else
+    with_MySQL_username="root"
+  fi
 fi
 )
 
