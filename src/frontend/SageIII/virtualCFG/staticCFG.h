@@ -28,6 +28,7 @@ using VirtualCFG::CFGEdge;
 
 class CFG
 {
+protected:
     SgIncidenceDirectedGraph* graph_;
     std::map<CFGNode, SgGraphNode*> all_nodes_;
     SgNode* start_;
@@ -93,7 +94,7 @@ public:
         ofile << "}\n";
     }
 
-private:
+protected:
     //void buildCFG(CFGNode n);
     template <class NodeT, class EdgeT>
     void buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored);
