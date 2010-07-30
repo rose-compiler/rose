@@ -531,6 +531,27 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 7: { // waitpid
+            pid_t pid = readGPR(x86_gpr_bx).known_value();
+            uint32_t status = readGPR(x86_gpr_cx).known_value();
+            uint32_t options = readGPR(x86_gpr_dx).known_value();
+
+            int sys_status;
+            int result = waitpid(pid, &sys_status, options);
+            if (result == -1) {
+                result = -errno;
+            } else {
+                if (status) {
+                  uint32_t status_le;
+                  SgAsmExecutableFileFormat::host_to_le(status, &status_le);
+                  size_t nwritten = map.write(&status_le, sys_status, 4);
+                  ROSE_ASSERT(4==nwritten);
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
         case 33: { /*0x21, access*/
             uint32_t name_va = readGPR(x86_gpr_bx).known_value();
             std::string name = read_string(name_va);
