@@ -57,16 +57,16 @@ public:
 
 
     // Build CFG according to the 'is_filtered_' flag.
-    void buildCFG()
+    virtual void buildCFG()
     {
         if (is_filtered_) buildFilteredCFG();
         else buildFullCFG();
     }
 
     // Build CFG for debugging.
-    void buildFullCFG();
+    virtual void buildFullCFG();
     // Build filtered CFG which only contains interesting nodes.
-    void buildFilteredCFG();
+    virtual void buildFilteredCFG();
     
 
 #if 0
