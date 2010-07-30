@@ -20,13 +20,12 @@ namespace VirtualCFG
         const FindEnd & findEnd;
         const DontAddChildren & dontAddChildren;
         const Join & join;
-        bool interprocedural;
 
           MakeClosure(const FindSuccessors & findSuccessors, const FindEnd & findEnd,
                       const DontAddChildren & dontAddChildren,
-                      const Join & join, bool interprocedural) :
+                      const Join & join) :
             findSuccessors(findSuccessors), findEnd(findEnd),
-            dontAddChildren(dontAddChildren), join(join), interprocedural(interprocedural)
+            dontAddChildren(dontAddChildren), join(join)
         {
         }
 
@@ -41,7 +40,7 @@ namespace VirtualCFG
               visitedPaths.push_back(p);
             if (dontAddChildren(end))
                   return;
-              std::vector < CFGEdge > edges = findSuccessors(end, interprocedural);
+              std::vector < CFGEdge > edges = findSuccessors(end);
             for (unsigned int i = 0; i < edges.size(); ++i)
             {
                 go(join(p, edges[i]));
@@ -69,11 +68,10 @@ namespace VirtualCFG
                                                             findSuccessors,
                                                             const FindEnd & findEnd,
                                                             const AddChildren & addChildren,
-                                                            const Join & join,
-                                                            bool interprocedural)
+                                                            const Join & join)
     {
         MakeClosure < FindSuccessors, FindEnd, AddChildren, Join,
-            FilteredEdge > mc(findSuccessors, findEnd, addChildren, join, interprocedural);
+            FilteredEdge > mc(findSuccessors, findEnd, addChildren, join);
         for (unsigned int i = 0; i < p.size(); ++i)
             mc.go(p[i]);
         return mc.filter();
@@ -81,36 +79,35 @@ namespace VirtualCFG
 
     template < typename FilteredEdge, typename Filter >
         std::vector < FilteredEdge > makeClosure(const std::vector < CFGEdge > &orig,
-                                            std::vector < CFGEdge > (CFGNode::*closure) (bool)const,
+                                            std::vector < CFGEdge > (CFGNode::*closure) ()const,
                                             CFGNode(CFGPath::*otherSide) ()const,
                                             CFGPath(*merge) (const CFGPath &, const CFGPath &),
-                                            const Filter & filter,
-                                            bool interprocedural)
+                                            const Filter & filter)
     {
         std::vector < CFGPath > paths(orig.begin(), orig.end());
         return makeClosure < FilteredEdge > (paths, std::mem_fun_ref(closure),
-                                             std::mem_fun_ref(otherSide), filter, merge, interprocedural);
+                                             std::mem_fun_ref(otherSide), filter, merge);
     }
 
 
     // Class Impl
     template < typename FilterFunction > std::vector < FilteredCFGEdge < FilterFunction >
-        >FilteredCFGNode < FilterFunction >::outEdges(bool interprocedural)const
+        >FilteredCFGNode < FilterFunction >::outEdges()const
     {
-        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.outEdges(interprocedural),
+        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.outEdges(),
                                                                   &CFGNode::outEdges,
                                                                   &CFGPath::target, &mergePaths,
-                                                                  filter, interprocedural);
+                                                                  filter);
     }
     // Class Impl
     template < typename FilterFunction > std::vector < FilteredCFGEdge < FilterFunction >
-        >FilteredCFGNode < FilterFunction >::inEdges(bool interprocedural) const
+        >FilteredCFGNode < FilterFunction >::inEdges() const
     {
-        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.inEdges(interprocedural),
+        return makeClosure < FilteredCFGEdge < FilterFunction > >(n.inEdges(),
                                                                   &CFGNode::inEdges,
                                                                   &CFGPath::source,
-                                                                  &mergePathsReversed, filter,
-                                                                  interprocedural);
+                                                                  &mergePathsReversed, 
+                                                                  filter);
     }
     // ---------------------------------------------
     // DOT OUT IMPL
@@ -119,11 +116,10 @@ namespace VirtualCFG
         std::multimap < SgNode *, NodeT > exploredNodes;
         std::set < SgNode * >nodesPrinted;
         std::ostream & o;
-        bool interprocedural;
 
       public:
-      CfgToDotImpl(std::ostream & o, bool interprocedural = false) :
-        exploredNodes(), nodesPrinted(), o(o), interprocedural(interprocedural)
+      CfgToDotImpl(std::ostream & o) :
+        exploredNodes(), nodesPrinted(), o(o)
         {
         }
         void processNodes(NodeT n);
@@ -156,8 +152,7 @@ namespace VirtualCFG
     }
 
     template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
-                                                                        NodeT n,
-                                                                        bool interprocedural = false);
+                                                                        NodeT n);
 
     template < typename NodeT, typename EdgeT ,bool Debug>
         void CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(NodeT n)
@@ -173,14 +168,14 @@ namespace VirtualCFG
                 return;
         }
         exploredNodes.insert(make_pair(n.getNode(), n));
-        printNodePlusEdges<NodeT, EdgeT>(o, n, interprocedural);
-        std::vector < EdgeT > outEdges = n.outEdges(interprocedural);
+        printNodePlusEdges<NodeT, EdgeT>(o, n);
+        std::vector < EdgeT > outEdges = n.outEdges();
         for (unsigned int i = 0; i < outEdges.size(); ++i)
         {
             ROSE_ASSERT(outEdges[i].source() == n);
             processNodes(outEdges[i].target());
         }
-        std::vector < EdgeT > inEdges = n.inEdges(interprocedural);
+        std::vector < EdgeT > inEdges = n.inEdges();
         for (unsigned int i = 0; i < inEdges.size(); ++i)
         {
             ROSE_ASSERT(inEdges[i].target() == n);
@@ -189,17 +184,16 @@ namespace VirtualCFG
     }
 
     template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
-                                                                        NodeT n,
-                                                                        bool interprocedural)
+                                                                        NodeT n)
     {
         printNode(o, n);
-        std::vector < EdgeT > outEdges = n.outEdges(interprocedural);
+        std::vector < EdgeT > outEdges = n.outEdges();
         for (unsigned int i = 0; i < outEdges.size(); ++i)
         {
             printEdge(o, outEdges[i], false);
         }
 				#ifdef DEBUG
-        std::vector < EdgeT > inEdges = n.inEdges(interprocedural);
+        std::vector < EdgeT > inEdges = n.inEdges();
         for (unsigned int i = 0; i < inEdges.size(); ++i)
         {
             printEdge(o, inEdges[i], true);
@@ -227,19 +221,6 @@ namespace VirtualCFG
         o << "digraph " << graphName << " {\n";
         CfgToDotImpl < FilteredCFGNode < FilterFunction >,
             FilteredCFGEdge < FilterFunction > ,false>impl(o);
-        impl.processNodes(start);
-        o << "}\n";
-        return o;
-    }
-
-    template < typename FilterFunction > std::ostream & interproceduralCfgToDot(std::ostream & o,
-                                                                 std::string graphName,
-                                                                 FilteredCFGNode <
-                                                                 FilterFunction > start)
-    {
-        o << "digraph " << graphName << " {\n";
-        CfgToDotImpl < FilteredCFGNode < FilterFunction >,
-            FilteredCFGEdge < FilterFunction > ,false>impl(o, true);
         impl.processNodes(start);
         o << "}\n";
         return o;

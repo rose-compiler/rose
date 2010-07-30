@@ -609,22 +609,21 @@ namespace VirtualCFG {
     return scopesEntering;
   }
 
-  vector<CFGEdge> CFGNode::outEdges(bool interprocedural) const {
+  vector<CFGEdge> CFGNode::outEdges() const {
     ROSE_ASSERT (node);
-    return node->cfgOutEdges(index, interprocedural);
+    return node->cfgOutEdges(index);
   }
 
-  vector<CFGEdge> CFGNode::inEdges(bool interprocedural) const {
+  vector<CFGEdge> CFGNode::inEdges() const {
     ROSE_ASSERT (node);
-    return node->cfgInEdges(index, interprocedural);
+    return node->cfgInEdges(index);
   }
 
 
   vector<InterestingEdge> makeClosure(const vector<CFGEdge>& orig,
-				      vector<CFGEdge> (CFGNode::*closure)(bool interprocedural) const,
+				      vector<CFGEdge> (CFGNode::*closure)() const,
 				      CFGNode (CFGPath::*otherSide)() const,
-				      CFGPath (*merge)(const CFGPath&, const CFGPath&),
-              bool interprocedural = false) {
+				      CFGPath (*merge)(const CFGPath&, const CFGPath&)) {
     vector<CFGPath> rawEdges(orig.begin(), orig.end());
     // cerr << "makeClosure starting with " << orig.size() << endl;
     while (true) {
@@ -651,7 +650,7 @@ namespace VirtualCFG {
       for (int i = 0; i < rawEdges.size(); ++i) {
 	if (!(rawEdges[i].*otherSide)().isInteresting()) {
 	  unsigned int oldSize = rawEdges.size();
-	  vector<CFGEdge> rawEdges2 = ((rawEdges[i].*otherSide)().*closure)(interprocedural);
+	  vector<CFGEdge> rawEdges2 = ((rawEdges[i].*otherSide)().*closure)();
 	  for (unsigned int j = 0; j < rawEdges2.size(); ++j) {
 	    CFGPath merged = (*merge)(rawEdges[i], rawEdges2[j]);
             if (std::find(rawEdges.begin(), rawEdges.end(), merged) == rawEdges.end()) {
@@ -674,12 +673,12 @@ namespace VirtualCFG {
     return edges;
   }
 
-  vector<InterestingEdge> InterestingNode::outEdges(bool interprocedural) const {
-    return makeClosure(n.outEdges(interprocedural), &CFGNode::outEdges, &CFGPath::target, &mergePaths, interprocedural);
+  vector<InterestingEdge> InterestingNode::outEdges() const {
+    return makeClosure(n.outEdges(), &CFGNode::outEdges, &CFGPath::target, &mergePaths);
   }
 
-  vector<InterestingEdge> InterestingNode::inEdges(bool interprocedural) const {
-    return makeClosure(n.inEdges(interprocedural), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed, interprocedural);
+  vector<InterestingEdge> InterestingNode::inEdges() const {
+    return makeClosure(n.inEdges(), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed);
   }
 
   CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym) {
