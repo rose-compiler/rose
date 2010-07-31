@@ -74,7 +74,7 @@ normalizeTypedefSequenceLists()
      printf ("Inside of normalizeTypedefSequenceLists() \n");
 #endif
 
-#if 1
+#if 0
   // DQ (7/24/2010): Not yet ready to eliminate this post-processing!
   // DQ (7/23/2010): Now that we use a type table, we don't need this code!
 
