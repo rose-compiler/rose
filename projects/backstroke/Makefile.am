@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = eventDetection reverseComputation restrictedLanguage normalizations tests
+SUBDIRS = utilities eventDetection reverseComputation restrictedLanguage normalizations pluggableReverser tests
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
@@ -12,14 +12,16 @@ libBackstroke_ladir = .
 libBackstroke_la_DEPENDENCIES = 
 libBackstroke_la_SOURCES = 
 libBackstroke_la_HEADERS =
-libBackstroke_la_LIBADD = normalizations/libBackstrokeNormalizations.la reverseComputation/libBackstrokeReverser.la \
-			restrictedLanguage/libBackstrokeRestrictedLanguage.la
 
-# Build the function extraction translator
-bin_PROGRAMS = normalizationTranslator 
+# Put the backstroke headers in their own subdirectory
+libBackstroke_includedir = $(includedir)/backstroke
 
-normalizationTranslator_SOURCES =  NormalizationTranslator.C 
-normalizationTranslator_LDADD =   libBackstroke.la
+# Link all subl
+libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
+			normalizations/libBackstrokeNormalizations.la \
+			reverseComputation/libBackstrokeReverser.la \
+			restrictedLanguage/libBackstrokeRestrictedLanguage.la \
+			pluggableReverser/libBackstrokePluggableReverser.la
 
 EXTRA_DIST = 
 

@@ -360,50 +360,11 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
     /* Unparse the file to create a new executable */
     SgAsmExecutableFileFormat::unparseBinaryFormat(output_name, file);
 
-    /* Generate name for ASCII dump output */
+    /* Genenerate an ASCII dump of the entire file contents. This dump reflects the state of the AST after any modifications.
+     * Note that certain normalizations (such as section reallocation) might affect what is dumped. */
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
     // generated in the unparse phase of processing a binary.
-    std::string dump_name = file->get_name() + ".dump";
-    slash = dump_name.find_last_of('/');
-    if (slash!=dump_name.npos)
-        dump_name.replace(0, slash+1, "");
-
-    /* Generate the dump */
-    FILE *dumpFile = fopen(dump_name.c_str(), "wb");
-    ROSE_ASSERT(dumpFile != NULL);
-    try {
-        // The file type should be the first; test harness depends on it
-        fprintf(dumpFile, "%s\n", file->format_name());
-
-        // A table describing the sections of the file
-        file->dump(dumpFile);
-
-        // Detailed info about each section
-        const SgAsmGenericSectionPtrList &sections = file->get_sections();
-        for (size_t i = 0; i < sections.size(); i++) {
-            fprintf(dumpFile, "Section [%zd]:\n", i);
-            ROSE_ASSERT(sections[i] != NULL);
-            sections[i]->dump(dumpFile, "  ", -1);
-        }
-
-        /* Dump interpretations that point only to this file. */
-        SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
-        ROSE_ASSERT(binary!=NULL);
-        const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
-            if (interp_files.size()==1 && interp_files[0]==file) {
-                std::string assembly = unparseAsmInterpretation(interps[i]);
-                fputs(assembly.c_str(), dumpFile);
-            }
-        }
-        
-    } catch(...) {
-        fclose(dumpFile);
-        throw;
-    }
-    fclose(dumpFile);
-
+    file->dump_all(true, ".dump");
 }
 
 void

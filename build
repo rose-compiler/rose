@@ -1,14 +1,13 @@
 #! /bin/bash
 # This script needs /bin/bash rather than /bin/sh
 
-cat <<EOF
 ###############################################################################
 # Note that due to ROSE compatibility with libtool 1.5 and 2.0, some warnings #
 # may be output from configure.in and aclocal.m4. These messages come from    #
-# aclocal, autoheader, autoconf, and automake and can be safely ignored.      #
+# aclocal, autoheader, autoconf, and automake and can be safely ignored. In   #
+# fact, they should be filtered out already by the autoconf-filter.pl script. #
 #   --The Rose Project Management.                                            #
 ###############################################################################
-EOF
 
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
@@ -156,7 +155,7 @@ fi
     autoheader
     autoconf
     automake -a -c -i
-) 2>&1 |sed '/^[^+]/s/^/    /'
+) 2>&1 |$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
 if [[ ${PIPESTATUS[0]} != 0 ]]; then
     echo "$0: unable to initialize your build environment!" 2>&1
     exit 1
@@ -196,14 +195,5 @@ fi
 #     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
 #
 if [[ -n "$do_quiet" ]]; then
-    echo "$0: converting makefiles to quiet mode (use --verbose to prevent this)" 2>&1
-    find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
-        -e '/echo.*COMPILE/!s/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
-        -e '/echo.*LINK/!s/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
-        -e '/echo.*COMPILE/!s/^\t\$(CXX)/\t@echo "  COMPILE $@"; $(CXX)/' \
-        -e '/LIBTOOL.*quiet/!s/@LIBTOOL@/& --quiet/g' \
-        -e '/^\t\$(LIBTOOL) --tag=CXX /s/^\t/\t@echo "  COMPILE $@"; /' \
-        -e '/^\t$(librose_la_LINK) -rpath /s/^\t/\t@echo "  LINK    $@"; /'
+    (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
 fi
-
-echo "***** BUILD TERMINATED NORMALLY *****"
