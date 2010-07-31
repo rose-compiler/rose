@@ -2238,9 +2238,9 @@ projects/compass/tools/compass/gui2/Makefile
 projects/compass/tools/compass/buildInterpreter/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
-projects/compass/tools/compass/tests/C_tests/Makefile
-projects/compass/tools/compass/tests/Cxx_tests/Makefile
-projects/compass/tools/compass/tests/OpenMP_tests/Makefile
+projects/compass/tools/compass/tests/Compass_C_tests/Makefile
+projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
+projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile
