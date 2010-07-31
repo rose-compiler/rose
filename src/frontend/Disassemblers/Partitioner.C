@@ -179,6 +179,17 @@ Partitioner::update_analyses(BasicBlock *bb)
     bb->validate_cache();
 }
 
+/** Returns true if basic block appears to end with a function call.  If the call target can be determined and @p target_va is
+ *  non-null, then @p target_va will be initialized to contain the virtual address of the call target; otherwise it will
+ *  contain the constant NO_TARGET. */
+bool
+Partitioner::is_function_call(BasicBlock *bb, rose_addr_t *target_va)
+{
+    update_analyses(bb); /*make sure cache is current*/
+    if (target_va) *target_va = bb->cache.call_target;
+    return bb->cache.is_function_call;
+}
+
 /** Returns known successors of a basic block.
  *
  *  There are two types of successor analyses:  one is an analysis that depends only on the instructions of the basic block
@@ -329,22 +340,6 @@ Partitioner::BasicBlock::last_insn() const
 {
     ROSE_ASSERT(insns.size()>0);
     return insns.back();
-}
-
-/* Returns true (and call address) if basic block appears to end with a function call. */
-bool
-Partitioner::BasicBlock::is_function_call(rose_addr_t *target_va)
-{
-    ROSE_ASSERT(valid_cache());
-    if (cache.is_function_call) {
-        if (target_va) {
-            *target_va = cache.call_target;
-        }
-        return true;
-    }
-    if (target_va)
-        *target_va = NO_TARGET;
-    return false;
 }
 
 /* Release all blocks from a function. Do not delete the blocks. */
@@ -539,9 +534,10 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
-            if (bb->is_function_call(NULL) && (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)) {
+            if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) && is_function_call(bb, NULL)) {
                 /* When we are detecting functions based on x86 CALL instructions (or similar for other architectures) then
-                 * the instruction after the CALL should never be part of this basic block. */
+                 * the instruction after the CALL should never be part of this basic block. Otherwise allow the call to be
+                 * part of the basic block initially and we'll split the block later if we need to. */
                 break;
             } else if (allow_discont_blocks) {
                 if (!complete || sucs.size()!=1)

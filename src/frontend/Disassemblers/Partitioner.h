@@ -150,7 +150,6 @@ protected:
         /** Marks the block analysis cache as being up to date. */
         void validate_cache() { cache.age=insns.size(); }
 
-        bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
@@ -386,8 +385,8 @@ protected:
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
-    
-    
+    virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
+
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
