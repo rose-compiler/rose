@@ -1973,8 +1973,12 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
-# These headers are needed by projects/simulator [matzke 2009-07-02]
+# These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
+AC_CHECK_TYPE(user_desc,
+              AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
+              [],
+	      [#include <asm/ldt.h>])
 
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
@@ -2288,7 +2292,6 @@ projects/haskellport/Makefile
 projects/haskellport/rose.cabal.in
 projects/haskellport/Setup.hs
 projects/palette/Makefile
-projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile
 projects/assemblyToSourceAst/tests/Makefile
 projects/SemanticSignatureVectors/Makefile
@@ -2305,21 +2308,28 @@ projects/interpreter/Makefile
 projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
-projects/backstroke/reverseComputation/stateSaving/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
+projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
+projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
+projects/backstroke/tests/pluggableReverserTest/Makefile
+projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
 projects/simulator/Makefile
+projects/simulator/tests/Makefile
 projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
+projects/roseToLLVM/tests/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
