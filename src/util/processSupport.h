@@ -49,6 +49,8 @@ class rose_exception
 // throws rose_exception with the reason "abort"
 // void ROSE_ABORT();
 // #ifdef __APPLE__
+extern "C" 
+{
 
  #ifdef USE_ROSE
    // DQ (9/3/2009): This is required for EDG to correctly compile
@@ -65,12 +67,12 @@ class rose_exception
 //#if __GNUC_PREREQ(4,3)
 //       If gcc_version >= 4.3
 //#else
-       void ROSE_ABORT();
+       void ROSE_ABORT() throw();
 //#endif
 //#endif
    #endif // MSC
  #endif // USE_ROSE
-
+}
 
 // throw rose_exception with user defined abort message
 void ROSE_ABORT( const char *message );

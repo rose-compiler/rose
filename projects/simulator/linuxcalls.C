@@ -40,38 +40,41 @@ extern void simulate_signal(int sig);
 
 using namespace std;
 
-static void do_mmap(LinuxMachineState& ms, uint32_t start, uint32_t length, int prot, int flags, int fd, uint32_t offset) {
-#ifdef DEBUG
-  fprintf(stderr, "do_mmap(start=%"PRIX32", length=%"PRIX32", prot=%"PRIo32", flags=%"PRIX32", fd=%d, offset=%"PRIX32")\n", start, length, prot, flags, fd, offset);
+static void do_mmap(const char *fname, LinuxMachineState& ms, uint32_t start, uint32_t length, int prot, int flags, int fd, uint32_t offset) {
+#ifdef DO_SIMULATION_TRACING
+    fprintf(stderr,
+            "  %s(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
+            ", fd=%d, offset=0x%08"PRIx32")\n", 
+            fname, start, length, prot, flags, fd, offset);
 #endif
-  length = (length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-  size_t lengthInPages = length / PAGE_SIZE;
-  // if (start - ms.brk < 0x10000000UL && !(flags & MAP_FIXED)) start = 0;
-  bool found_addr = start ? true : false;
-  if (!start) {
-    start = 0x40000000UL;
-    for (unsigned int i = 0; i + lengthInPages - 1 < ms.memory.pages.size(); ++i) {
-      bool okMapping = true;
-      for (size_t j = 0; j < lengthInPages; ++j) {
-        if (ms.memory.pages[(start / PAGE_SIZE) + i + j].in_use) {
-          okMapping = false;
-          break;
+    length = (length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+    size_t lengthInPages = length / PAGE_SIZE;
+    // if (start - ms.brk < 0x10000000UL && !(flags & MAP_FIXED)) start = 0;
+    bool found_addr = start ? true : false;
+    if (!start) {
+        start = 0x40000000UL;
+        for (unsigned int i = 0; i + lengthInPages - 1 < ms.memory.pages.size(); ++i) {
+            bool okMapping = true;
+            for (size_t j = 0; j < lengthInPages; ++j) {
+                if (ms.memory.pages[(start / PAGE_SIZE) + i + j].in_use) {
+                    okMapping = false;
+                    break;
+                }
+            }
+            if (okMapping) {
+                found_addr = true;
+                start = start + i * PAGE_SIZE;
+                break;
+            }
         }
-      }
-      if (okMapping) {
-        found_addr = true;
-        start = start + i * PAGE_SIZE;
-        break;
-      }
-    }
-#ifdef DEBUG
-    if (found_addr) {
-      fprintf(stderr, "Assigned start address of 0x%08X\n", start);
-    } else {
-      fprintf(stderr, "Failed to find address for mapping\n");
-    }
+#ifdef DO_SIMULATION_TRACING
+        if (found_addr) {
+            fprintf(stderr, "  start = 0x%08"PRIx32"\n", start);
+        } else {
+            fprintf(stderr, "Failed to find address for mapping\n");
+        }
 #endif
-  }
+    }
 
   if (!found_addr) {
     ms.gprs[x86_gpr_ax] = (uint32_t)(-ENOMEM);
@@ -105,8 +108,8 @@ static void do_mmap(LinuxMachineState& ms, uint32_t start, uint32_t length, int 
 }
 
 static int simulate_ioctl(LinuxMachineState& ms, int fd, uint32_t cmd, uint32_t arg_ptr) {
-#ifdef DEBUG
-  fprintf(stdout, "ioctl(%d, 0x%lx, 0x%lx) --> ", fd, cmd, arg_ptr);
+#ifdef DO_SIMULATION_TRACING
+    fprintf(stderr, "  ioctl(fd=%d, cmd=%"PRIu32", arg_va=0x%08"PRIx32")\n", fd, cmd, arg_ptr);
 #endif
   int result = -ENOSYS;
   switch (cmd) {
@@ -150,7 +153,7 @@ static int simulate_ioctl(LinuxMachineState& ms, int fd, uint32_t cmd, uint32_t 
     case TIOCGWINSZ: { // 0x5413 TIOCGWINSZ
       uint32_t win_ptr = arg_ptr;
       struct winsize sys_win;
-      int result = ioctl(fd, TIOCGWINSZ, &sys_win);
+      result = ioctl(fd, TIOCGWINSZ, &sys_win);
       if (result == -1) {
 	result = (uint32_t)(-errno);
       } else {
@@ -180,7 +183,11 @@ static void copyInStat(MachineState& ms, const struct stat64& st, uint32_t statP
   ms.writeMemory<64>(x86_segreg_ds, statPtr + 44, st.st_size);
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 52, st.st_blksize);
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 56, st.st_blocks);
+#ifdef FIXME
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 64, st.st_atime);
+#else
+  ms.writeMemory<32>(x86_segreg_ds, statPtr + 64, 1279897465ul); /*use same time always for consistency when debugging*/
+#endif
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 72, st.st_mtime);
   ms.writeMemory<32>(x86_segreg_ds, statPtr + 80, st.st_ctime);
   ms.writeMemory<64>(x86_segreg_ds, statPtr + 88, st.st_ino);
@@ -219,6 +226,9 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
       uint32_t count = ms.gprs[x86_gpr_dx];
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  read(fd=%d, buf=0x%08"PRIx32", size=%"PRIu32")\n", fd, buf, count);
+#endif
       char sysbuf[count];
       ssize_t result = read(fd, sysbuf, count);
       ms.gprs[x86_gpr_ax] = result;
@@ -234,6 +244,9 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
       uint32_t count = ms.gprs[x86_gpr_dx];
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  write(fd=%d, buf=0x%08"PRIx32", size=%"PRIu32")\n", fd, buf, count);
+#endif
       char sysbuf[count];
       ms.memory.readMultiple((uint8_t*)sysbuf, count, buf);
       ssize_t result = write(fd, sysbuf, count);
@@ -250,29 +263,23 @@ void linuxSyscall(LinuxMachineState& ms) {
       if (flags & O_CREAT) {
 	mode = ms.gprs[x86_gpr_dx];
       }
-#ifdef DEBUG
-      fprintf(stdout, "Opening file '%s' with flags 0%lo and mode 0%lo\n", &fn[0], flags, mode);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  open(name=0x%08"PRIx32" \"%s\", flags=0x%"PRIx32", mode=%04"PRIo32")\n", 
+              filename, fn.c_str(), flags, mode);
 #endif
-      if (string(&fn[0]) != "/etc/passwd") {
-	int fd = open(&fn[0], flags, mode);
-	if (fd == -1) {
+      int fd = open(&fn[0], flags, mode);
+      if (fd == -1) {
 	  ms.gprs[x86_gpr_ax] = (uint32_t)(-errno);
-	} else {
-	  ms.gprs[x86_gpr_ax] = fd;
-	}
-#ifdef DEBUG
-	fprintf(stdout, "File descriptor or error is %d\n", (int)(ms.gprs[x86_gpr_ax]));
-#endif
       } else {
-	ms.gprs[x86_gpr_ax] = (uint32_t)(-ENOENT);
+	  ms.gprs[x86_gpr_ax] = fd;
       }
       break;
     }
 
     case 6: { // close
       int fd = (int)(ms.gprs[x86_gpr_bx]);
-#ifdef DEBUG
-      fprintf(stdout, "Closing %d\n", fd);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  close(%d)\n", fd);
 #endif
       if (fd == 2) { // Don't allow closing stderr since we use it for debugging
 	ms.gprs[x86_gpr_ax] = (uint32_t)(-EPERM);
@@ -345,6 +352,9 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t pathname = ms.gprs[x86_gpr_bx];
       int mode = (int)ms.gprs[x86_gpr_cx];
       string sys_pathname = ms.memory.readString(pathname);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  access(name=0x%08"PRIx32" \"%s\", mode=%04o)\n", pathname, sys_pathname.c_str(), mode);
+#endif
       int result = access(&sys_pathname[0], mode);
       if (result == -1) result = -errno;
       ms.gprs[x86_gpr_ax] = (uint32_t)result;
@@ -373,8 +383,8 @@ void linuxSyscall(LinuxMachineState& ms) {
 
     case 45: { // brk
       uint32_t end_data_segment = ms.gprs[x86_gpr_bx];
-#ifdef DEBUG
-      fprintf(stdout, "brk(0x%08X) -- old brk is 0x%08X\n", end_data_segment, ms.brk);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  brk(0x%08x) -- old brk is 0x%08x\n", end_data_segment, ms.brk);
 #endif
       if (end_data_segment == 0) {
 	ms.gprs[x86_gpr_ax] = ms.brk;
@@ -500,21 +510,15 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t flags = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 12);
       uint32_t fd = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 16);
       uint32_t offset = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 20);
-#ifdef DEBUG
-      fprintf(stdout, "old_mmap(0x%08X, 0x%08X, 0%o, 0x%08X, %d, 0x%08X)\n", start, length, prot, flags, fd, offset);
-#endif
-      do_mmap(ms, start, length, prot, flags, fd, offset);
-#ifdef DEBUG
-      ms.dumpRegs();
-#endif
+      do_mmap("mmap", ms, start, length, prot, flags, fd, offset);
       break;
     }
 
     case 91: { // munmap
       uint32_t start = ms.gprs[x86_gpr_bx];
-#ifdef DEBUG
+#ifdef DO_SIMULATION_TRACING
       uint32_t length = ms.gprs[x86_gpr_cx];
-      fprintf(stdout, "munmap(0x%08"PRIX32", 0x%08"PRIX32")\n", start, length);
+      fprintf(stderr, "  munmap(va=0x%08"PRIx32", size=0x%08"PRIx32")\n", start, length);
 #endif
       Page& p = ms.memory.findPage(start);
       int result = munmap(p.real_base, PAGE_SIZE);
@@ -550,8 +554,8 @@ void linuxSyscall(LinuxMachineState& ms) {
     }
 
     case 122: { // uname
-#ifdef DEBUG
-      fprintf(stderr, "newuname(0x%"PRIx64")\n", ms.gprs[x86_gpr_bx]);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  uname(0x%"PRIx32")\n", ms.gprs[x86_gpr_bx]);
 #endif
       ms.memory.writeMultiple( // The next 6 strings are exactly 65 characters each
           (const uint8_t*)
@@ -572,8 +576,8 @@ void linuxSyscall(LinuxMachineState& ms) {
       uint32_t addr = ms.gprs[x86_gpr_bx];
       uint32_t len = ms.gprs[x86_gpr_cx];
       uint32_t perms = ms.gprs[x86_gpr_dx];
-#ifdef DEBUG
-      fprintf(stderr, "mprotect(%"PRIX32", %"PRIX32", %"PRIo32")\n", addr, len, perms);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  mprotect(va=0x%08"PRIx32", size=0x%08"PRIx32", perm=%04"PRIo32")\n", addr, len, perms);
 #endif
       for (uint32_t i = 0; i < len; i += PAGE_SIZE) {
         Page& p = ms.memory.findPage(addr + i);
@@ -636,10 +640,16 @@ void linuxSyscall(LinuxMachineState& ms) {
       int fd = (int)ms.gprs[x86_gpr_bx];
       uint32_t iov = ms.gprs[x86_gpr_cx];
       int iovcnt = (int)ms.gprs[x86_gpr_dx];
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  writev(fd=%d, iov=0x%08"PRIx32", nentries=%d\n", fd, iov, iovcnt);
+#endif
       uint32_t user_result = 0;
       for (int i = 0; i < iovcnt; ++i) {
 	uint32_t buf = ms.memory.read<4>(iov + 8 * i);
 	uint32_t len = ms.memory.read<4>(iov + 8 * i + 4);
+#ifdef DO_SIMULATION_TRACING
+        fprintf(stderr, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf, len);
+#endif
 	char my_buf[len];
 	ms.memory.readMultiple((uint8_t*)my_buf, len, buf);
 	int result = write(fd, my_buf, len);
@@ -794,13 +804,7 @@ sigaction_done:
       uint32_t flags = ms.gprs[x86_gpr_si];
       uint32_t fd = ms.gprs[x86_gpr_di];
       uint32_t offset = ms.gprs[x86_gpr_bp];
-#ifdef DEBUG
-      fprintf(stdout, "mmap2(0x%08X, 0x%08X, 0%o, 0x%08X, %d, 0x%08X)\n", start, length, prot, flags, fd, offset);
-#endif
-      do_mmap(ms, start, length, prot, flags, fd, offset * PAGE_SIZE);
-#ifdef DEBUG
-      ms.dumpRegs();
-#endif
+      do_mmap("mmap2", ms, start, length, prot, flags, fd, offset * PAGE_SIZE);
       break;
     }
 
@@ -809,20 +813,15 @@ sigaction_done:
       uint32_t buf = ms.gprs[x86_gpr_cx];
       struct stat64 sys_buf;
       string sys_filename = ms.memory.readString(filename);
-#ifdef DEBUG
-      fprintf(stderr, "stat64 on %s\n", &sys_filename[0]);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  stat64(name=0x%08"PRIx32" \"%s\", statbuf=0x%08"PRIx32")\n",
+              filename, &sys_filename[0], buf);
 #endif
       int result = stat64(&sys_filename[0], &sys_buf);
-#ifdef DEBUG
-      fprintf(stderr, "---> %d\n", result);
-#endif
       if (result == -1) result = -errno;
       if (result >= 0) {
 	copyInStat(ms, sys_buf, buf);
       }
-#ifdef DEBUG
-      fprintf(stdout, "stat64(\"%s\") -> %d = %s\n", &sys_filename[0], result, (result < 0 ? strerror(-result) : ""));
-#endif
       ms.gprs[x86_gpr_ax] = (uint32_t)result;
       break;
     }
@@ -845,6 +844,9 @@ sigaction_done:
     case 197: { // fstat64
       int fildes = (int)ms.gprs[x86_gpr_bx];
       uint32_t buf = ms.gprs[x86_gpr_cx];
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  fstat64(fd=%d, statbuf=0x%08"PRIx32")\n", fildes, buf);
+#endif
       struct stat64 sys_buf;
       int result = fstat64(fildes, &sys_buf);
       if (result == -1) result = -errno;
@@ -949,14 +951,19 @@ sigaction_done:
       uint32_t u_info_ptr = ms.gprs[x86_gpr_bx];
       user_desc ud;
       ms.memory.readMultiple((uint8_t*)&ud, sizeof(user_desc), u_info_ptr);
-#ifdef DEBUG
-      fprintf(stderr, "set_thread_area({0x%08X, 0x%08lX, 0x%08X, %s, %u, %s, %s, %s, %s})\n", ud.entry_number, ud.base_addr, ud.limit, ud.seg_32bit ? "32bit" : "16bit", ud.contents, ud.read_exec_only ? "read_exec" : "writable", ud.limit_in_pages ? "page_gran" : "byte_gran", ud.seg_not_present ? "not_present" : "present", ud.useable ? "usable" : "not_usable");
-#endif
-      if (ud.entry_number == -1) {
+      fprintf(stderr, "  set_thread_area({%d, 0x%08x, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
+              (int)ud.entry_number, ud.base_addr, ud.limit,
+              ud.seg_32bit ? "32bit" : "16bit",
+              ud.contents, ud.read_exec_only ? "read_exec" : "writable",
+              ud.limit_in_pages ? "page_gran" : "byte_gran",
+              ud.seg_not_present ? "not_present" : "present",
+              ud.useable ? "usable" : "not_usable");
+      if (ud.entry_number == (unsigned)-1) {
         for (ud.entry_number = (0x33 >> 3); ud.entry_number < 8192; ++ud.entry_number) {
           if (!ms.gdt[ud.entry_number].useable) break;
         }
         ROSE_ASSERT (ud.entry_number != 8192);
+        fprintf(stderr, "  assigned entry number = %d\n", (int)ud.entry_number);
       }
       ms.gdt[ud.entry_number] = ud;
       ms.memory.writeMultiple((const uint8_t*)&ud, sizeof(user_desc), u_info_ptr);
@@ -969,7 +976,9 @@ sigaction_done:
 
     case 252: { // exit_group
       int status = (int)ms.gprs[x86_gpr_bx];
-      fprintf(stderr, "Exiting using exit_group status %d\n", status);
+#ifdef DO_SIMULATION_TRACING
+      fprintf(stderr, "  exit_group(%d)\n", status);
+#endif
       _exit(status);
       break;
     }
@@ -994,293 +1003,7 @@ sigaction_done:
       fprintf(stderr, "Unhandled system call %lu\n", (unsigned long)ms.gprs[x86_gpr_ax]);
       abort();
   }
-#if 0
-  if ((int)ms.gprs[x86_gpr_ax] < 0) {
-    fprintf(stdout, " syscall--> -(%s)\n", strerror(-(int)ms.gprs[x86_gpr_ax]));
-  } else {
-    fprintf(stdout, " syscall--> %d\n", ms.gprs[x86_gpr_ax]);
-  }
-#endif
 }
 
-#if 0
-void linuxSyscall(LinuxMachineState& ms) {
-#ifdef DEBUG
-  fprintf(stderr, "Starting syscall %u\n", ms.gprs[x86_gpr_ax]);
-#endif
-  switch (ms.gprs[x86_gpr_ax]) {
-    case 3: { // read
-      int fd = ms.gprs[x86_gpr_bx];
-      uint32_t buffer = ms.gprs[x86_gpr_cx];
-      size_t len = ms.gprs[x86_gpr_dx];
-      vector<uint8_t> myBuffer(len);
-      int result = read(fd, &myBuffer[0], len);
-      if (result != -1) ms.memory.writeMultiple(&myBuffer[0], result, buffer);
-      ms.gprs[x86_gpr_ax] = (result == -1 ? -errno : result);
-      break;
-    }
-    case 4: { // write
-      int fd = ms.gprs[x86_gpr_bx];
-      uint32_t buffer = ms.gprs[x86_gpr_cx];
-      size_t len = ms.gprs[x86_gpr_dx];
-#ifdef DEBUG
-      fprintf(stderr, "write(%d, 0x%"PRIX32", %zu)\n", fd, buffer, len);
-#endif
-      vector<uint8_t> myBuffer(len);
-      ms.memory.readMultiple(&myBuffer[0], len, buffer);
-      int result = write(fd, &myBuffer[0], len);
-      ms.gprs[x86_gpr_ax] = (result == -1 ? -errno : result);
-      break;
-    }
-    case 5: { // open
-      string filename = ms.memory.readString(ms.gprs[x86_gpr_bx]);
-      int flags = ms.gprs[x86_gpr_cx];
-      int mode = ms.gprs[x86_gpr_dx];
-#ifdef DEBUG
-      fprintf(stderr, "open(\"%s\", %d, %o)\n", filename.c_str(), flags, mode);
-#endif
-      int fd = open(filename.c_str(), flags, mode);
-      ms.gprs[x86_gpr_ax] = (fd == -1 ? -errno : fd);
-      break;
-    }
-    case 6: { // close
-      int fd = ms.gprs[x86_gpr_bx];
-      int result = close(fd);
-      ms.gprs[x86_gpr_ax] = (result == -1 ? -errno : result);
-      break;
-    }
-    case 20: { // getpid
-      pid_t pid = getpid();
-      ms.gprs[x86_gpr_ax] = pid;
-      break;
-    }
-    case 33: { // access
-      string filename = ms.memory.readString(ms.gprs[x86_gpr_bx]);
-      int mode = ms.gprs[x86_gpr_cx];
-#ifdef DEBUG
-      fprintf(stderr, "access(\"%s\", %o)\n", filename.c_str(), mode);
-#endif
-      int result = access(filename.c_str(), mode);
-      ms.gprs[x86_gpr_ax] = (result == -1 ? -errno : result);
-      break;
-    }
-    case 45: { // brk
-      uint32_t newbrk = ms.gprs[x86_gpr_bx];
-      if (newbrk != 0) {
-        for (size_t i = ms.brk; i < newbrk; i += PAGE_SIZE) {
-          ms.memory.mapZeroPageIfNeeded(i);
-        }
-        ms.brk = newbrk;
-      }
-      ms.gprs[x86_gpr_ax] = ms.brk;
-      break;
-    }
-    case 54: { // ioctl
-      unsigned int fd = ms.gprs[x86_gpr_bx];
-      unsigned int request = ms.gprs[x86_gpr_cx];
-#ifdef DEBUG
-      fprintf(stderr, "ioctl(%u, %X)\n", fd, request);
-#endif
-      ms.gprs[x86_gpr_ax] = -ENOTTY;
-      break;
-    }
-    case 61: { // chroot
-      string newroot = ms.memory.readString(ms.gprs[x86_gpr_bx]);
-#ifdef DEBUG
-      fprintf(stderr, "chroot(\"%s\")\n", newroot.c_str());
-#endif
-      ms.gprs[x86_gpr_ax] = -EPERM;
-      break;
-    }
-
-    case 90: { // old_mmap
-      uint32_t start = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 0);
-      uint32_t length = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 4);
-      uint32_t prot = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 8);
-      uint32_t flags = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 12);
-      uint32_t fd = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 16);
-      uint32_t offset = ms.memory.read<4>(ms.gprs[x86_gpr_bx] + 20);
-#ifdef DEBUG
-      fprintf(stdout, "struct is at 0x%08"PRIX32"\n", ms.gprs[x86_gpr_bx]);
-      fprintf(stdout, "old_mmap(0x%08"PRIX32", 0x%08"PRIX32", 0%"PRIo32", 0x%08"PRIX32", %"PRIu32", 0x%08"PRIX32")", start, length, prot, flags, fd, offset);
-#endif
-      do_mmap(ms, start, length, prot, flags, fd, offset);
-#ifdef DEBUG
-      fprintf(stdout, " --> 0x%08"PRIX32"\n", ms.gprs[x86_gpr_ax]);
-#endif
-      break;
-    }
-
-    case 91: { // munmap
-      uint32_t start = ms.gprs[x86_gpr_bx];
-      uint32_t length = ms.gprs[x86_gpr_cx];
-#ifdef DEBUG
-      fprintf(stdout, "munmap(0x%08"PRIX32", 0x%08"PRIX32")\n", start, length);
-#endif
-      Page& p = ms.memory.findPage(start);
-      int result = munmap(p.real_base, PAGE_SIZE);
-      if (result == -1) result = -errno;
-      ms.gprs[x86_gpr_ax] = (uint32_t)result;
-      break;
-    }
-
-    case 122: { // newuname
-#ifdef DEBUG
-      fprintf(stderr, "newuname(0x%"PRIx64")\n", ms.gprs[x86_gpr_bx]);
-#endif
-      ms.memory.writeMultiple( // The next 6 strings are exactly 65 characters each
-          (const uint8_t*)
-          "Linux\0                                                           " // sysname
-          "mymachine.example.com\0                                           " // nodename
-          "2.6.9\0                                                           " // release
-          "#1 SMP Wed Jun 18 12:35:02 EDT 2008\0                             " // version
-          "i386\0                                                            " // machine
-          "example.com\0                                                     " // domainname
-          ,
-          6 * 65,
-          ms.gprs[x86_gpr_bx]);
-      ms.gprs[x86_gpr_ax] = 0;
-      break;
-    }
-    case 125: { // mprotect
-      uint32_t addr = ms.gprs[x86_gpr_bx];
-      uint32_t len = ms.gprs[x86_gpr_cx];
-      uint32_t perms = ms.gprs[x86_gpr_dx];
-#ifdef DEBUG
-      fprintf(stderr, "mprotect(%"PRIX32", %"PRIX32", %"PRIo32")\n", addr, len, perms);
-#endif
-      for (uint32_t i = 0; i < len; i += PAGE_SIZE) {
-        Page& p = ms.memory.findPage(addr + i);
-        assert (p.real_base);
-        p.allow_read = (perms & PROT_READ);
-        p.allow_write = (perms & PROT_WRITE);
-        p.allow_execute = (perms & PROT_EXEC);
-        mprotect(p.real_base, PAGE_SIZE, perms);
-      }
-      ms.gprs[x86_gpr_ax] = 0;
-      break;
-    }
-    case 146: { // writev
-      int fd = ms.gprs[x86_gpr_bx];
-      uint32_t userIovec = ms.gprs[x86_gpr_cx];
-      int count = ms.gprs[x86_gpr_dx];
-      vector<vector<uint8_t> > myBuffers(count);
-      vector<struct iovec> myIovec(count);
-      for (int i = 0; i < count; ++i) {
-        myIovec[i].iov_len = ms.readMemory<32>(x86_segreg_ds, userIovec + 8 * i + 4);
-        myBuffers[i].resize(myIovec[i].iov_len);
-        ms.memory.readMultiple(&myBuffers[i][0], myIovec[i].iov_len, ms.readMemory<32>(x86_segreg_ds, userIovec + 8 * i));
-        myIovec[i].iov_base = &myBuffers[i][0];
-      }
-      ssize_t result = writev(fd, &myIovec[0], count);
-      ms.gprs[x86_gpr_ax] = (result == -1 ? -errno : result);
-      break;
-    }
-    case 183: { // getcwd
-      uint32_t buf = ms.gprs[x86_gpr_bx];
-      uint32_t len = ms.gprs[x86_gpr_cx];
-      vector<uint8_t> myBuf(len);
-      void* result = getcwd((char*)&myBuf[0], len);
-      if (result != NULL) {
-        ms.memory.writeMultiple(&myBuf[0], len, buf);
-        ms.gprs[x86_gpr_ax] = strlen((const char*)&myBuf[0]) + 1;
-      } else {
-        ms.gprs[x86_gpr_ax] = -errno;
-      }
-      break;
-    }
-    case 195: { // stat64
-      string filename = ms.memory.readString(ms.gprs[x86_gpr_bx]);
-      uint32_t statPtr = ms.gprs[x86_gpr_cx];
-#ifdef DEBUG
-      fprintf(stderr, "stat64(%s, %"PRIX32")\n", filename.c_str(), statPtr);
-#endif
-      struct stat64 st;
-      int result = stat64(filename.c_str(), &st);
-      if (result == 0) {
-        ms.writeMemory<16>(x86_segreg_ds, statPtr + 0, st.st_dev);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 12, st.st_ino);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 16, st.st_mode);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 20, st.st_nlink);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 24, st.st_uid);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 28, st.st_gid);
-        ms.writeMemory<16>(x86_segreg_ds, statPtr + 32, st.st_rdev);
-        ms.writeMemory<64>(x86_segreg_ds, statPtr + 44, st.st_size);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 52, st.st_blksize);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 56, st.st_blocks);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 64, st.st_atime);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 72, st.st_mtime);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 80, st.st_ctime);
-        ms.writeMemory<64>(x86_segreg_ds, statPtr + 88, st.st_ino);
-      }
-      ms.gprs[x86_gpr_ax] = (result == -1 ? -errno : result);
-      break;
-    }
-    case 197: { // fstat64
-      int fd = ms.gprs[x86_gpr_bx];
-      uint32_t statPtr = ms.gprs[x86_gpr_cx];
-#ifdef DEBUG
-      fprintf(stderr, "fstat64(%d, %"PRIX32")\n", fd, statPtr);
-#endif
-      struct stat64 st;
-      int result = fstat64(fd, &st);
-      if (result == 0) {
-        ms.writeMemory<16>(x86_segreg_ds, statPtr + 0, st.st_dev);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 12, st.st_ino);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 16, st.st_mode);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 20, st.st_nlink);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 24, st.st_uid);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 28, st.st_gid);
-        ms.writeMemory<16>(x86_segreg_ds, statPtr + 32, st.st_rdev);
-        ms.writeMemory<64>(x86_segreg_ds, statPtr + 44, st.st_size);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 52, st.st_blksize);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 56, st.st_blocks);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 64, st.st_atime);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 72, st.st_mtime);
-        ms.writeMemory<32>(x86_segreg_ds, statPtr + 80, st.st_ctime);
-        ms.writeMemory<64>(x86_segreg_ds, statPtr + 88, st.st_ino);
-      }
-      ms.gprs[x86_gpr_ax] = (result == -1 ? -errno : result);
-      break;
-    }
-    case 199: { // getuid32
-      ms.gprs[x86_gpr_ax] = getuid();
-      break;
-    }
-    case 200: { // getgid32
-      ms.gprs[x86_gpr_ax] = getgid();
-      break;
-    }
-    case 201: { // geteuid32
-      ms.gprs[x86_gpr_ax] = geteuid();
-      break;
-    }
-    case 202: { // getegid32
-      ms.gprs[x86_gpr_ax] = getegid();
-      break;
-    }
-    case 252: { // exit_group
-      int retval = ms.gprs[x86_gpr_bx];
-#ifdef DEBUG
-      fprintf(stderr, "exit_group(%d)\n", retval);
-#endif
-      exit(retval);
-      break;
-    }
-    default: {
-      fprintf(stderr, "Bad Linux call %u\n", (unsigned int)ms.gprs[x86_gpr_ax]);
-      abort();
-    }
-  }
-#ifdef DEBUG
-  int result = ms.gprs[x86_gpr_ax];
-  if (result >= -0x1000 && result < 0) {
-    fprintf(stderr, "syscall -> %s\n", strerror(-result));
-  } else {
-    fprintf(stderr, "syscall -> %d (0x%X)\n", result, result);
-  }
-#endif
-}
-#endif
 
 #endif /*ROSE_ENABLE_SIMULATOR*/

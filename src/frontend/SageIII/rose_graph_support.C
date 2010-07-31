@@ -37,7 +37,7 @@ SgGraph::computeEdgeSet( SgGraphNode* node )
 
           ROSE_ASSERT(edge_node_first == node->get_index() || edge_node_second == node->get_index());
 
-       // printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
+          //printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
 
           returnSet.insert(edge);
         }
@@ -91,7 +91,7 @@ SgGraph::computeNodeIndexPairSet( int node_index )
 
           ROSE_ASSERT(edge_node_first == node_index || edge_node_second == node_index);
 
-       // printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
+          //printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
 
           returnSet.insert(std::pair<int,int>(edge_node_first,edge_node_second));
         }
@@ -798,7 +798,7 @@ SgIncidenceDirectedGraph::computeEdgeSetIn( SgGraphNode* node )
 
           ROSE_ASSERT(edge_node_first == node->get_index() || edge_node_second == node->get_index());
 
-       // printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
+          //printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
 
           returnSet.insert(edge);
         }
@@ -850,7 +850,7 @@ SgIncidenceDirectedGraph::computeEdgeSetOut( SgGraphNode* node )
 
           ROSE_ASSERT(edge_node_first == node->get_index() || edge_node_second == node->get_index());
 
-       // printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
+          //printf ("Building set with edge = %d between nodes (%d,%d) \n",edge->get_index(),edge_node_first,edge_node_second);
 
           returnSet.insert(edge);
         }
