@@ -432,8 +432,7 @@ endif
 
 test_disassemble.result: disassemble
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && mv i686-test1.O0.bin.dump test_disassemble.ans; \
+	@$(VALGRIND) ./disassemble --show-functions -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassembler.ans 2>&1; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
