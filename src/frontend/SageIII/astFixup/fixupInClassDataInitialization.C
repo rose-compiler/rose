@@ -68,6 +68,13 @@ FixupInClassDataInitialization::visit (SgNode* node)
                               (*variable)->set_typeptr(modifierType);
                             }
                          ROSE_ASSERT(modifierType != NULL);
+
+                         // FMZ (12/18/2009): 
+                         //    the flag may set in the SgVariableDeclaration instead of individual variable entry
+                         if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ==false ) {
+                                  ROSE_ASSERT (modifierType->get_typeModifier().get_constVolatileModifier().isConst());
+                         }
+
                          if (modifierType->get_typeModifier().get_constVolatileModifier().isConst() == false)
                             {
                               printf ("Error: this should be a const variable (might be a fortran specific problem) \n");
