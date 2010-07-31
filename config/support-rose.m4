@@ -2325,6 +2325,7 @@ projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
 projects/simulator/Makefile
+projects/simulator/tests/Makefile
 projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
