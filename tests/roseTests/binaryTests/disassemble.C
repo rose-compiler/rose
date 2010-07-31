@@ -852,13 +852,13 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
     
     if (do_ast_dot && project) {
-        printf("Generating GraphViz dot files for the AST...\n");
+        printf("generating GraphViz dot files for the AST...\n");
         generateDOT(*project);
         //generateAstGraph(project, INT_MAX);
     }
         
     if (do_cfg_dot) {
-        printf("Generating GraphViz dot files for control flow graphs...\n");
+        printf("generating GraphViz dot files for control flow graphs...\n");
         dump_CFG_CG(block);
     }
 
