@@ -166,11 +166,20 @@ Partitioner::update_analyses(BasicBlock *bb)
     /* Successor analysis */
     bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete));
 
-    /* Call target analysis */
-    bb->cache.call_target = NO_TARGET;
-    bb->cache.is_function_call = bb->insns.front()->is_function_call(bb->insns, &(bb->cache.call_target));
-    if (!bb->cache.is_function_call)
+    /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
+     * address and the instruction at the fall-through address pops the top of the stack (this is how position independent
+     * code loads EIP into a general-purpose register). FIXME: For now we'll assume that any call to the fall-through address
+     * is not a function call. */
+    rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size();
+    rose_addr_t target_va = NO_TARGET;
+    bool looks_like_call = bb->insns.front()->is_function_call(bb->insns, &target_va);
+    if (looks_like_call && target_va!=fallthrough_va) {
+        bb->cache.is_function_call = true;
+        bb->cache.call_target = target_va;
+    } else {
+        bb->cache.is_function_call = false;
         bb->cache.call_target = NO_TARGET;
+    }
 
     /* Function return analysis */
     bb->cache.function_return = !bb->cache.sucs_complete &&
