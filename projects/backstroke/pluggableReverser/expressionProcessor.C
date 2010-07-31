@@ -53,10 +53,15 @@ InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(const Expr
                 copyExpression(operand),
                 popVal(operand->get_type()));
 
+        // Update the variable version table.
         VariableVersionTable new_var_table = exp_pkg.var_table;
         new_var_table.reverseVersion(operand);
 
-        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
+        // Update the cost.
+        SimpleCostModel cost;
+        cost.increaseStoreCount();
+
+        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table, cost));
         //}
     }
 
@@ -70,10 +75,15 @@ InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(const Expr
                 copyExpression(lhs_operand),
                 popVal(lhs_operand->get_type()));
 
+        // Update the variable version table.
         VariableVersionTable new_var_table = exp_pkg.var_table;
         new_var_table.reverseVersion(lhs_operand);
 
-        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
+        // Update the cost.
+        SimpleCostModel cost;
+        cost.increaseStoreCount();
+
+        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table, cost));
     }
 
     // function call?
@@ -113,23 +123,19 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
 
                 if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
                 {
-                    InstrumentedExpression result(
-                            copyExpression(exp),
-                            buildMinusMinusOp(
-                                copyExpression(operand),
-                                backstroke_util::reverseOpMode(pp_op->get_mode())),
-                            new_table);
+                    SgExpression* new_exp = buildMinusMinusOp(
+                            copyExpression(operand),
+                            backstroke_util::reverseOpMode(pp_op->get_mode()));
+                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
 
                 if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(exp))
                 {
-                    InstrumentedExpression result(
-                            copyExpression(exp),
-                            buildPlusPlusOp(
-                                copyExpression(operand),
-                                backstroke_util::reverseOpMode(mm_op->get_mode())),
-                            new_table);
+                    SgExpression* new_exp = buildPlusPlusOp(
+                            copyExpression(operand),
+                            backstroke_util::reverseOpMode(mm_op->get_mode()));
+                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
             }
@@ -175,32 +181,25 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
 
                 if (isSgPlusAssignOp(exp))
                 {
-                    InstrumentedExpression result(
-                        copyExpression(exp),
-                        buildBinaryExpression<SgMinusAssignOp>(
+                    SgExpression* new_exp = buildBinaryExpression<SgMinusAssignOp>(
                             copyExpression(lhs_operand),
-                            copyExpression(rhs_operand)),
-                        new_table);
+                            copyExpression(rhs_operand));
+                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
 
                 if (isSgMinusAssignOp(exp))
                 {
-                    InstrumentedExpression result(
-                        copyExpression(exp),
-                        buildBinaryExpression<SgPlusAssignOp>(
+                    SgExpression* new_exp = buildBinaryExpression<SgPlusAssignOp>(
                             copyExpression(lhs_operand),
-                            copyExpression(rhs_operand)),
-                        new_table);
+                            copyExpression(rhs_operand));
+                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
 
                 if (isSgXorAssignOp(exp))
                 {
-                    InstrumentedExpression result(
-                        copyExpression(exp),
-                        copyExpression(exp),
-                        new_table);
+                    InstrumentedExpression result(copyExpression(exp), copyExpression(exp), new_table);
                     output.push_back(result);
                 }     
 

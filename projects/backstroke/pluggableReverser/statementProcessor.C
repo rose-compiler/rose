@@ -33,7 +33,7 @@ InstrumentedStatementVec BasicStatementProcessor::processReturnStatement(const S
     ROSE_ASSERT(return_stmt);
 
     InstrumentedStatementVec stmts;
-    stmts.push_back(InstrumentedStatement(copyStatement(return_stmt), NULL, stmt_pkg.var_table, stmt_pkg.cost));
+    stmts.push_back(InstrumentedStatement(copyStatement(return_stmt), NULL, stmt_pkg.var_table));
     return stmts;
 }
 
@@ -82,7 +82,7 @@ InstrumentedStatementVec BasicStatementProcessor::processExprStatement(const Sta
     ROSE_ASSERT(exp_stmt);
     
     InstrumentedExpressionVec exps = processExpression(
-            ExpressionPackage(exp_stmt->get_expression(), stmt_pkg.var_table, stmt_pkg.cost));
+            ExpressionPackage(exp_stmt->get_expression(), stmt_pkg.var_table));
 
     ROSE_ASSERT(!exps.empty());
 
@@ -114,7 +114,7 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(con
     // event function.
 
     // FIXME copyStatement also copies preprocessing info
-    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, stmt_pkg.var_table, stmt_pkg.cost));
+    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, stmt_pkg.var_table));
 
     //outputs.push_back(InstrumentedStatement(NULL, NULL, var_table));
     //outputs.push_back(pushAndPopLocalVar(var_decl));
@@ -134,7 +134,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
     vector<SgStatement*> to_delete;
 
     int i = 0;
-    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), stmt_pkg.var_table, stmt_pkg.cost));
+    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), stmt_pkg.var_table));
 
     // Deal with variable declarations first, since they will affect the variable version table.
     // For each variable declared in this basic block, we choose storing or not storing it at the end.
@@ -175,7 +175,9 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
 
                 appendStatement(decl_restore_var, isSgBasicBlock(new_obj1.rvs_stmt));
                 ROSE_ASSERT(decl_restore_var->get_parent() == new_obj1.rvs_stmt);
-                //fixVariableDeclaration(decl_restore_var, isSgBasicBlock(new_obj1.rvs_stmt));
+
+                /****** Update the cost. ******/
+                new_obj1.cost.increaseStoreCount();
 
                 /*******************************************************************************/
                 // The second transformation is not to store it. We have to set its version NULL.
@@ -192,6 +194,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
                 appendStatement(just_decl, isSgBasicBlock(new_obj2.rvs_stmt));
                 ROSE_ASSERT(just_decl->get_parent() == new_obj2.rvs_stmt);
 
+                /****** Update the variable version table. ******/
                 new_obj2.var_table.setNullVersion(init_name);
 
                 queue[1-i].push_back(new_obj1);
@@ -215,7 +218,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
     {
         foreach (InstrumentedStatement& obj, queue[i])
         {
-            InstrumentedStatementVec result = processStatement(StatementPackage(stmt, obj.var_table, obj.cost));
+            InstrumentedStatementVec result = processStatement(StatementPackage(stmt, obj.var_table));
             
             ROSE_ASSERT(!result.empty());
 
@@ -241,10 +244,13 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
                     //fixVariableReferences(isSgBasicBlock(new_obj.rvs_stmt));
                     //fixStatement(res.rvs_stmt, isSgBasicBlock(new_obj.rvs_stmt));
                 }
-                new_obj.var_table = res.var_table;
 
-                fixVariableReferences(new_obj.fwd_stmt);
-                fixVariableReferences(new_obj.rvs_stmt);
+                /****** Update the variable version table and cost. ******/
+                new_obj.var_table = res.var_table;
+                new_obj.cost += res.cost;
+
+                //fixVariableReferences(new_obj.fwd_stmt);
+                //fixVariableReferences(new_obj.rvs_stmt);
 
                 queue[1-i].push_back(new_obj);
             }
@@ -264,11 +270,11 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
 
 
     // Since we build a varref before building its declaration, we may use the following function to fix them.
-    foreach (InstrumentedStatement& obj, queue[i])
-    {
+    //foreach (InstrumentedStatement& obj, queue[i])
+    //{
         //cout << "Fixed: " << fixVariableReferences(obj.fwd_stmt) << endl;
         //fixVariableReferences(obj.rvs_stmt);
-    }
+    //}
 
     foreach (SgStatement* stmt, to_delete)
         deepDelete(stmt);

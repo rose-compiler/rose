@@ -162,6 +162,13 @@ FuncDeclPairs EventProcessor::processEvent()
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
         SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt_obj.rvs_stmt));
 
+
+        // Add the cost information as comments to generated functions.
+        string comment = "Cost: " + lexical_cast<string>(stmt_obj.cost.getCost());
+        attachComment(fwd_func_decl, comment);
+        attachComment(rvs_func_decl, comment);
+
+
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
     }
 

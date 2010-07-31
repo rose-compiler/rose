@@ -11,14 +11,12 @@ struct ExpressionPackage
     ExpressionPackage(
             SgExpression* e,
             const VariableVersionTable& table,
-            const SimpleCostModel& cst,
             bool is_rvs_val_used = false)
-    : exp(e), var_table(table), cost(cst), is_value_used(is_rvs_val_used)
+    : exp(e), var_table(table), is_value_used(is_rvs_val_used)
     {}
 
     SgExpression* exp;
     VariableVersionTable var_table;
-    SimpleCostModel cost;
     bool is_value_used;
 };
 
@@ -26,14 +24,12 @@ struct StatementPackage
 {
     StatementPackage(
             SgStatement* s,
-            const VariableVersionTable& table,
-            const SimpleCostModel& cst)
-    : stmt(s), var_table(table), cost(cst)
+            const VariableVersionTable& table)
+    : stmt(s), var_table(table)
     {}
 
     SgStatement* stmt;
     VariableVersionTable var_table;
-    SimpleCostModel cost;
 };
 
 
@@ -45,7 +41,7 @@ struct InstrumentedExpression
         SgExpression* exp1,
         SgExpression* exp2,
         const VariableVersionTable& table,
-        const SimpleCostModel& cst)
+        const SimpleCostModel& cst = SimpleCostModel())
             : fwd_exp(exp1), rvs_exp(exp2), var_table(table), cost(cst)
     {}
 
@@ -73,7 +69,7 @@ struct InstrumentedStatement
         SgStatement* stmt1,
         SgStatement* stmt2,
         const VariableVersionTable& table,
-        const SimpleCostModel& cst)
+        const SimpleCostModel& cst = SimpleCostModel())
             : fwd_stmt(stmt1), rvs_stmt(stmt2), var_table(table), cost(cst)
     {}
 

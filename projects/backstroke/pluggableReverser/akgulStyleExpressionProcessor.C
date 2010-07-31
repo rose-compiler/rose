@@ -33,7 +33,7 @@ vector<InstrumentedExpression> AkgulStyleExpressionProcessor::process(const Expr
 				newVarTable.reverseVersion(expression);
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
 				vector<InstrumentedExpression> result;
-				result.push_back(InstrumentedExpression(forwardExp, reverseExpression, newVarTable, expPkg.cost));
+				result.push_back(InstrumentedExpression(forwardExp, reverseExpression, newVarTable));
 				return result;
 			}
 		}
