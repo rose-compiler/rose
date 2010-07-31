@@ -188,6 +188,10 @@ Grammar::setUpExpressions ()
 
   // DQ (1/31/2009): Added Fortran pointer assignment operator (to support pointer assignment statement).
      NEW_TERMINAL_MACRO (PointerAssignOp,       "PointerAssignOp",       "POINTER_ASSIGN_OP" );
+
+  // FMZ (2/6/2009): Added CoArray Reference Expression
+     NEW_TERMINAL_MACRO (CAFCoExpression,    "CAFCoExpression",    "COARRAY_REF_EXPR" );
+
 #endif
 
   // An expression with a designator, used for designated initialization in
@@ -235,7 +239,7 @@ Grammar::setUpExpressions ()
           VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
           ColonShapeExp       | AsteriskShapeExp        | /*UseOnlyExpression |*/ ImpliedDo         | IOItemExpression         |
        /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
-          UnknownArrayOrFunctionReference               | PseudoDestructorRefExp                    |
+          UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig, /* TV (04/22/2010): CUDA support */
           "Expression","ExpressionTag", false);
 
@@ -686,6 +690,9 @@ Grammar::setUpExpressions ()
      UserDefinedBinaryOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
 
      PseudoDestructorRefExp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
+
+     // FMZ (2/6/2009): Added for SgCAFCoExpression--following SgPntrArrRefExp
+     CAFCoExpression.editSubstitute ( "PRECEDENCE_VALUE", " 16" );
 
 #if 0
   // Extra required Fortran IR nodes
@@ -1444,6 +1451,22 @@ Grammar::setUpExpressions ()
      UserDefinedBinaryOp.setDataPrototype ( "SgFunctionSymbol*", "symbol"     , "= NULL",
 				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+     //FMZ (2/5/2009): Added for CAFCoExpression => change teamId from "SgName" to "SgVarRefExp*"
+     CAFCoExpression.setFunctionPrototype ( "HEADER_CO_EXPRESSION", "../Grammar/Expression.code" );
+
+     //CAFCoExpression.setDataPrototype ( "SgName", "teamId",  "= \"\"", 
+     //				          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,NO_TRAVERSAL,NO_DELETE);
+     CAFCoExpression.setDataPrototype ( "SgVarRefExp*", "teamId",  "= NULL", 
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     CAFCoExpression.setDataPrototype ( "SgExpression*", "teamRank", "= NULL",
+				          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     CAFCoExpression.setDataPrototype ( "SgExpression*", "referData", "= NULL",
+				          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,DEF_TRAVERSAL, NO_DELETE);
+     CAFCoExpression.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
+
 #endif
 
      DesignatedInitializer.setFunctionPrototype ( "HEADER_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
@@ -1662,6 +1685,9 @@ Grammar::setUpExpressions ()
 
      ActualArgumentExpression.setFunctionSource ( "SOURCE_ACTUAL_ARGUMENT_EXPRESSION", "../Grammar/Expression.code" );
      DesignatedInitializer.setFunctionSource ( "SOURCE_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
+
+     //FMZ (2/6/2009): Added for CoArray Reference
+     CAFCoExpression.setFunctionSource ( "SOURCE_CO_EXPRESSION", "../Grammar/Expression.code" );
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
