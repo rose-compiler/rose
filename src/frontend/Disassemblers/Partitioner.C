@@ -859,7 +859,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         
 /* Look for instruction patterns. */
 void
-Partitioner::mark_func_patterns(SgAsmGenericHeader*)
+Partitioner::mark_func_patterns()
 {
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         Disassembler::InstructionMap::const_iterator found = insns.end();
@@ -1094,28 +1094,37 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 
 /* Seed function starts based on criteria other than control flow graph. */
 void
-Partitioner::pre_cfg(SgAsmInterpretation *interp)
+Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    for (size_t i=0; i<headers.size(); i++) {
-        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT)
-            mark_entry_targets(headers[i]);
-        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_EH_FRAME)
-            mark_eh_frames(headers[i]);
-        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_SYMBOL)
-            mark_func_symbols(headers[i]);
-        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
-            mark_func_patterns(headers[i]);
-        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_IMPORT)
-            mark_elf_plt_entries(headers[i]);
+    if (interp) {
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (size_t i=0; i<headers.size(); i++) {
+            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT)
+                mark_entry_targets(headers[i]);
+            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_EH_FRAME)
+                mark_eh_frames(headers[i]);
+            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_SYMBOL)
+                mark_func_symbols(headers[i]);
+            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_IMPORT)
+                mark_elf_plt_entries(headers[i]);
+        }
     }
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
+        mark_func_patterns();
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_USERDEF) {
-        for (size_t i=0; i<user_detectors.size(); i++) {
-            for (size_t j=0; j<=headers.size(); j++) {
-                SgAsmGenericHeader *hdr = 0==j ? NULL : headers[j-1];
-                user_detectors[i](this, hdr, insns);
+        if (interp) {
+            const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+            for (size_t i=0; i<user_detectors.size(); i++) {
+                for (size_t j=0; j<=headers.size(); j++) {
+                    SgAsmGenericHeader *hdr = 0==j ? NULL : headers[j-1];
+                    user_detectors[i](this, hdr, insns);
+                }
+            }
+        } else {
+            for (size_t i=0; i<user_detectors.size(); i++) {
+                user_detectors[i](this, NULL, insns);
             }
         }
     }
@@ -1327,18 +1336,19 @@ Partitioner::analyze_cfg()
 }
 
 void
-Partitioner::post_cfg(SgAsmInterpretation *interp)
+Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
         create_nop_padding();
         create_zero_padding();
     }
 
-    /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
-    for (size_t i=0; i<headers.size(); i++) {
-        name_plt_entries(headers[i]);
+    if (interp) {
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
+        for (size_t i=0; i<headers.size(); i++) {
+            name_plt_entries(headers[i]);
+        }
     }
 }
 
@@ -1441,7 +1451,7 @@ Partitioner::build_ast(BasicBlock* bb)
 
 /* Top-level function to run the partitioner on some instructions and build an AST */
 SgAsmBlock *
-Partitioner::partition(SgAsmInterpretation* interp, const Disassembler::InstructionMap& insns)
+Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns)
 {
     clear();
     add_instructions(insns);
