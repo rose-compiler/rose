@@ -1536,7 +1536,11 @@ Partitioner::build_ast(BasicBlock* bb)
 SgAsmBlock *
 Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns)
 {
-    clear();
+    /* Clear only if we've already run the partitioner. This allows user to seed the partitioner with some initial functions
+     * which won't be cleared here. */
+    if (!insn2block.empty())
+        clear();
+
     add_instructions(insns);
     pre_cfg(interp);
     analyze_cfg();
