@@ -6924,20 +6924,27 @@ SgFunctionSymbol*
 SgSymbolTable::find_function (const SgName &nm, const SgType* t)
    {
   // AS (083006): cleaned up logic so that the function only have one return statement.
+
      SgFunctionSymbol *s = NULL;
      assert(p_table != NULL);
      if(p_table)
         {
+
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
        // SgSymbolHashBase::iterator i=p_table->find(nm);
        // JW and AS (08/30/06) changed to use equal range rather than find and
        //    iterating through the hash table. This is an optimization.
+
           std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
           for (hash_iterator i = range.first; i != range.second; ++i)
              {
             // s = isSgFunctionSymbol((*i).second);
                s = isSgFunctionSymbol(i->second);
-               if ( (s != NULL) && (s->get_declaration()->get_type() == t))
+
+                //  if ( (s != NULL) && (s->get_declaration()->get_type() == t))
+                // FMZ (10/29/2009) should compare name also
+                if ( (s != NULL) && (s->get_declaration()->get_type() == t) && s->get_name().str()==nm.str())
                   {
                     p_name    = nm;
                     p_no_name = false;
@@ -6969,7 +6976,7 @@ SgSymbolTable::find_function(const SgName &nm)
 
      while(p_iterator != p_table->end())
         {
-          if (isSgFunctionSymbol(p_iterator->second))
+          if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
              {
                p_name    = nm;
                p_no_name = false;
@@ -8179,6 +8186,10 @@ SgInitializedName::post_construction_initialization()
 
   // Borrow the enum definition (and default value from SgDeclarationModifier).
      p_gnu_attribute_visability              = SgDeclarationModifier::e_unknown_visibility;
+
+  // FMZ added for coarray
+     p_isCoArray = false;
+
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
@@ -8311,6 +8322,7 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
      p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
      p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
+     p_isCoArray                             = ptr.p_isCoArray;
    }
 
 SgInitializedName&
@@ -8395,6 +8407,7 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
           p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
           p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
+          p_isCoArray                             = ptr.p_isCoArray;
         }
        else
         {

@@ -1,6 +1,7 @@
 
 #include "sage3basic.h"
 #include "FortranModuleInfo.h"
+#include "boost/filesystem.hpp"
 
 using namespace std;
 using std::string;
@@ -9,6 +10,7 @@ using std::map;
 map<string, SgModuleStatement*> FortranModuleInfo::moduleNameAstMap;
 unsigned                        FortranModuleInfo::nestedSgFile;
 SgProject*                      FortranModuleInfo::currentProject;
+vector<string>                      FortranModuleInfo::inputDirs;
 
 
 bool
@@ -29,6 +31,62 @@ FortranModuleInfo::getCurrentProject()
   {
      return currentProject;
   }
+
+
+string
+FortranModuleInfo::find_file_from_inputDirs(string basename ) {
+   string dir;
+   string name;
+
+   int sizeArg = inputDirs.size();
+
+   for (int i = 0; i< sizeArg; i++) {
+       dir = inputDirs[i];
+       name = dir+"/"+ basename;
+
+       string tmp = name+MOD_FILE_SUFFIX;
+       if (boost::filesystem::exists(tmp.c_str())) {
+             return name;
+       }
+    }
+
+   return  basename;
+}
+
+
+
+void 
+FortranModuleInfo::set_inputDirs(SgProject* project) {
+
+  vector<string> args = project->get_originalCommandLineArgumentList();
+  string  rmodDir;
+
+  int sizeArgs = args.size();
+
+  for (int i = 0; i< sizeArgs; i++) {
+#if 0
+      if (args[i] == "-caf:inputdir") {
+
+          rmodDir = args[i+1];
+
+          if (boost::filesystem::exists(rmodDir.c_str())) {
+                inputDirs.push_back(rmodDir);
+          } else 
+                cout << "WARNING: the input directory is not exist : " << rmodDir<< endl;
+      }
+#else
+     if (args[i].find("-I",0)==0) {
+           rmodDir = args[i].substr(2);
+
+           if (boost::filesystem::exists(rmodDir.c_str())) {
+                inputDirs.push_back(rmodDir);
+          } else 
+                cout << "WARNING: the input directory does not exist : " << rmodDir<< endl;
+     } 
+#endif
+  }
+   
+}
 
 
 
@@ -52,7 +110,9 @@ FortranModuleInfo::getModule(string modName)
     if (modStmt)
           return modStmt;
 
-    if (createSgSourceFile(modName) == NULL ) {
+    string nameWithPath = find_file_from_inputDirs(modName);
+
+    if (createSgSourceFile(nameWithPath) == NULL ) {
         cerr << "error: No declaration found for the module: "<<modName << endl;
         return NULL;
     } else // in createSgSourceFile: insert moduleNameAstMap[modName] 
@@ -68,9 +128,14 @@ FortranModuleInfo::createSgSourceFile(string modName)
 
   // DQ (11/12/2008): Modified to force filename to lower case.
   // printf ("In FortranModuleInfo::createSgSourceFile(): generating a module file %s using module name = %s \n",StringUtility::convertToLowerCase(modName).c_str(),modName.c_str());
-     modName = StringUtility::convertToLowerCase(modName);
+ //     modName = StringUtility::convertToLowerCase(modName);
 
+ //current directory
      string rmodFileName = modName + MOD_FILE_SUFFIX;
+
+    if (boost::filesystem::exists(rmodFileName.c_str()) == false) {
+        return NULL;
+    }
 
      argv.push_back(SKIP_SYNTAX_CHECK);
      argv.push_back(rmodFileName);
@@ -90,6 +155,7 @@ FortranModuleInfo::createSgSourceFile(string modName)
   // DQ (11/12/2008): This rmod file should be explicitly marked to not be compiled.
   // printf ("Marking the new module file to not be compiled \n");
      newFile->set_skipfinalCompileStep(true);
+     newFile->set_skip_unparse(true);
 
      project->set_file(*newFile);
 

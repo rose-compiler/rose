@@ -528,11 +528,13 @@ template <class actualFunction>
 actualFunction*
 SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope)
    {
+#if 0 //FMZ (3/23/2009): We need this for the  coarray translator
      if (SageInterface::is_Fortran_language() == true)
      { // We don't expect this is being called for Fortran
        cerr<<"Building nondefining function in Fortran is not allowed!"<<endl;
        ROSE_ASSERT(false);
      }
+#endif
   // argument verification
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
