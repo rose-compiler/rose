@@ -2002,7 +2002,6 @@ TransformationSupport::getProject( const SgNode* astNode )
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-<<<<<<< HEAD
      if ( isSgProject(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
@@ -2026,7 +2025,7 @@ TransformationSupport::getProject( const SgNode* astNode )
                return NULL;
              }
         }
-=======
+#if 0
 	if (isSgProject(parentNode) == NULL &&
 			dynamic_cast<const SgType*> (parentNode) == NULL &&
 			dynamic_cast<const SgSymbol*> (parentNode) == NULL)
@@ -2048,7 +2047,7 @@ TransformationSupport::getProject( const SgNode* astNode )
 			return NULL;
 		}
 	}
->>>>>>> origin/master
+#endif
 
   // Make sure we have a SgProject node
      const SgProject* project = isSgProject(parentNode);
@@ -2252,7 +2251,6 @@ TransformationSupport::getGlobalScope( const SgNode* astNode )
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-<<<<<<< HEAD
      if ( isSgGlobal(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
@@ -2277,7 +2275,7 @@ TransformationSupport::getGlobalScope( const SgNode* astNode )
                return NULL;
              }
         }
-=======
+#if 0
 	if (isSgGlobal(parentNode) == NULL &&
 			dynamic_cast<const SgType*> (parentNode) == NULL &&
 			dynamic_cast<const SgSymbol*> (parentNode) == NULL)
@@ -2301,8 +2299,7 @@ TransformationSupport::getGlobalScope( const SgNode* astNode )
 			return NULL;
 		}
 	}
->>>>>>> origin/master
-
+#endif
 
   // Make sure we have a SgGlobal node
      const SgGlobal* globalScope = isSgGlobal(parentNode);
@@ -2342,7 +2339,6 @@ TransformationSupport::getStatement( const SgNode* astNode )
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
      if ( isSgStatement(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
-<<<<<<< HEAD
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
           if (astNode == NULL)
@@ -2358,7 +2354,7 @@ TransformationSupport::getStatement( const SgNode* astNode )
        // ROSE_ABORT();
           return NULL;
         }
-=======
+#if 0
           dynamic_cast<const SgSymbol*>(parentNode) == NULL)
 	{
 		if (SgProject::get_verbose() > 0)
@@ -2371,7 +2367,7 @@ TransformationSupport::getStatement( const SgNode* astNode )
 
 		return NULL;
 	}
->>>>>>> origin/master
+#endif
        else
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
@@ -2454,16 +2450,15 @@ TransformationSupport::getFunctionDefinition( const SgNode* astNode)
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
           if(astNode==NULL)
-<<<<<<< HEAD
                printf ("Error: could not trace back to SgFunctionDefinition node \n");
             else 
                printf ("Warning: could not trace back to SgFunctionDefinition node from %s \n",astNode->class_name().c_str());
-=======
+#if 0
           printf ("Error: could not trace back to SgFunctionDefinition node \n");
           else 
                printf ("Error: could not trace back to SgFunctionDefinition node from %s \n",
           astNode->class_name().c_str());
->>>>>>> origin/master
+#endif
           ROSE_ABORT();
         }
        else

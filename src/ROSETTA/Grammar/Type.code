@@ -3711,6 +3711,8 @@ $CLASSNAME::createType(SgTypedefDeclaration *decl)
 #if 0
                     printf ("Mangled type name for $CLASSNAME = %s (already exists in type table) \n",name.str());
 #endif
+                    ROSE_ASSERT(t != tempType);
+
                     delete tempType;
                     tempType = NULL;
 
@@ -4048,6 +4050,8 @@ $CLASSNAME::createType(SgEnumDeclaration* cd)
 #if 0
                     printf ("Mangled type name for $CLASSNAME = %s (already exists in type table) \n",name.str());
 #endif
+                    ROSE_ASSERT(t != returnType);
+
                     delete returnType;
                     returnType = NULL;
 
@@ -4153,6 +4157,8 @@ SgClassType::createType(SgClassDeclaration * cd)
 #if 0
                     printf ("Mangled type name for $CLASSNAME = %s (already exists in type table) \n",name.str());
 #endif
+                    ROSE_ASSERT(t != newType);
+
                     delete newType;
                     newType = NULL;
 #if 0
@@ -4248,6 +4254,8 @@ SgPointerType::createType(SgType* base_type)
 #if 0
                printf ("Mangled type name for SgPointerType = %s (already exists in type table) \n",name.str());
 #endif
+               ROSE_ASSERT(t != newType);
+
                delete newType;
                newType = NULL;
 
@@ -4322,6 +4330,8 @@ SgReferenceType::createType(SgType* base_type)
 #if 0
                printf ("Mangled type name for SgReferenceType = %s (already exists in type table) \n",name.str());
 #endif
+               ROSE_ASSERT(t != newType);
+
                delete newType;
                newType = NULL;
 
@@ -4391,6 +4401,8 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx )
 #if 0
           printf ("Mangled type name for SgArrayType = %s (already exists in type table) \n",name.str());
 #endif
+          ROSE_ASSERT(t != returnType);
+
           delete returnType;
           returnType = NULL;
 
@@ -4491,6 +4503,8 @@ SgModifierType::createType(SgType* base_type, unsigned int f)
 #if 0
            printf ("Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
 #endif
+          ROSE_ASSERT(t != newType);
+
           delete newType;
           newType = NULL;
 
@@ -4571,11 +4585,32 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
        // If it is already present in the type table then delete the type (so that it will remain unique).
 #if 0
            printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
+           printf ("insertModifierTypeIntoTypeTable(): t = %p result = %p \n",t,result);
 #endif
-          delete result;
-          result = NULL;
 
-          result = isSgModifierType(t);
+#if 0
+           if (t != result)
+             {
+            // Never delete the input type!
+            // delete result;
+            // result = NULL;
+
+               result = isSgModifierType(t);
+             }
+#else
+        // DQ (7/30/2010): Because SageBuilder::buildModifierType(SgType*) can be still
+        // called by mistake, we have to handle the case of where the type in the table is
+        // not a SgModifierType.
+           if (isSgModifierType(t) != NULL)
+             {
+               result = isSgModifierType(t);
+             }
+            else
+             {
+            // We want to later make this an error (the cause for this problem is the change to the build API for modifiers.
+               printf ("Error: SageBuilder::buildModifierType(SgType*) was called inapropriately internally \n");
+             }
+#endif
           ROSE_ASSERT(result != NULL);
         }
 #endif
