@@ -923,6 +923,9 @@ main(int argc, char *argv[])
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
+        } catch (const VirtualMachineSemantics::Exception &e) {
+            std::cerr <<e <<"\n\n";
+            abort();
         } catch (const EmulationPolicy::Exit &e) {
             /* specimen has exited */
             if (WIFEXITED(e.status)) {
