@@ -440,7 +440,7 @@ public:
     /*==========================================================================================================================
      * Methods for searching for disassembly addresses.
      *========================================================================================================================== */
-private:
+public:
     /** Adds the address following a basic block to the list of addresses that should be disassembled.  This search method is
      *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()). */
     void search_following(AddressSet *worklist, const InstructionMap &bb, rose_addr_t bb_va, 
