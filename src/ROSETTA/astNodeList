@@ -382,6 +382,7 @@ SgFunctionSymbol
 SgFunctionType
 SgFunctionTypeSymbol
 SgFunctionTypeTable
+SgTypeTable
 SgGlobal
 SgGotoStatement
 SgGraph

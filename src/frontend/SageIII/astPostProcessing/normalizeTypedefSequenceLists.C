@@ -74,6 +74,10 @@ normalizeTypedefSequenceLists()
      printf ("Inside of normalizeTypedefSequenceLists() \n");
 #endif
 
+#if 1
+  // DQ (7/24/2010): Not yet ready to eliminate this post-processing!
+  // DQ (7/23/2010): Now that we use a type table, we don't need this code!
+
   // Phase 1
      NormalizeTypedefSequenceLists t1;
 
@@ -81,9 +85,19 @@ normalizeTypedefSequenceLists()
      printf ("\n\nBuild the global map of typedef sequences. \n");
 #endif
 
+#if 0
+     ROSE_MemoryUsage memoryUsageA;
+     printf ("Test A: memory_usage = %f \n",memoryUsageA.getMemoryUsageMegabytes());
+#endif
+
   // To specify the traversal of a specific IR node we pass the traversal object as a parameter.
   // t.traverseMemoryPool();
      SgTypedefSeq::traverseMemoryPoolNodes(t1);
+
+#if 0
+     ROSE_MemoryUsage memoryUsageB;
+     printf ("Test B: memory_usage = %f \n",memoryUsageB.getMemoryUsageMegabytes());
+#endif
 
   // Phase 2
      NormalizeTypedefSequenceLists_CopyList t2(t1.typedefSeqMap);
@@ -92,7 +106,21 @@ normalizeTypedefSequenceLists()
      printf ("\n\nCopy the lists from the map of master lists to the lists in each SgTypedefSeq. \n");
 #endif
 
+#if 0
+     ROSE_MemoryUsage memoryUsageC;
+     printf ("Test C: memory_usage = %f \n",memoryUsageC.getMemoryUsageMegabytes());
+#endif
+
      SgTypedefSeq::traverseMemoryPoolNodes(t2);
+
+#if 0
+     ROSE_MemoryUsage memoryUsageD;
+     printf ("Test D: memory_usage = %f \n",memoryUsageD.getMemoryUsageMegabytes());
+
+     printf ("***** SgTypedefSeq::numberOfNodes() = %zu ***** \n",SgTypedefSeq::numberOfNodes());
+     printf ("***** t1.typedefSeqMap.size() = %zu ***** \n",t1.typedefSeqMap.size());
+#endif
+#endif
 
 #if 0
      printf ("Leaving normalizeTypedefSequenceLists() \n");
@@ -108,6 +136,9 @@ normalizeTypedefSequenceLists()
 NormalizeTypedefSequenceLists::key_t
 NormalizeTypedefSequenceLists::generateKey(SgTypedefSeq* typedefSeq)
    {
+  // Error checking: Build a counter to detect recursion that is likely an error (too deep).
+     int counter = 0;
+
   // Build a key to use in a set of unique types
   // vector<size_t> key;
      key_t key;
@@ -120,9 +151,6 @@ NormalizeTypedefSequenceLists::generateKey(SgTypedefSeq* typedefSeq)
        // Accumulate the list of types used.
           SgType* associatedType = isSgType(typedefSeq->get_parent());
           ROSE_ASSERT(associatedType != NULL);
-
-       // Error checking: Build a counter to detect recursion that is likely an error (too deep).
-          int counter = 0;
 
           SgType* baseType = associatedType->stripType(0);
        // bool keepGoing = (isSgPointerType(baseType) != NULL) || (isSgReferenceType(baseType) != NULL) || (isSgArrayType(baseType) != NULL) || (isSgModifierType(baseType) != NULL);
@@ -161,6 +189,8 @@ void
 NormalizeTypedefSequenceLists::visit (SgNode* node)
    {
   // printf ("Visiting SgTypedefSeq = %p = %s \n",node,node->class_name().c_str());
+
+  // static int counter = 0;
 
      SgTypedefSeq* typedefSeq = isSgTypedefSeq(node);
      ROSE_ASSERT(typedefSeq != NULL);
@@ -267,6 +297,17 @@ NormalizeTypedefSequenceLists::visit (SgNode* node)
      printf ("Exiting after test! \n");
      ROSE_ASSERT(false);
 #endif
+
+#if 0
+     if (counter++ > 2)
+        {
+          printf ("Exiting after test! \n");
+          ROSE_ASSERT(false);
+        }
+
+     if (listSize > 0)
+          counter++;
+#endif
    }
 
 
@@ -289,6 +330,12 @@ NormalizeTypedefSequenceLists_CopyList::visit (SgNode* node)
   // vector<size_t> key = NormalizeTypedefSequenceLists::generateKey(typedefSeq);
      NormalizeTypedefSequenceLists::key_t key = NormalizeTypedefSequenceLists::generateKey(typedefSeq);
 
-     typedefSeq->get_typedefs() = typedefSeqMap[key];
+     std::vector<SgType*> & listOfTypes = typedefSeqMap[key];
+  // printf ("typedefSeq->get_typedefs().size() = %zu listOfTypes.size() = %zu \n",typedefSeq->get_typedefs().size(),listOfTypes.size());
+
+  // typedefSeq->get_typedefs() = typedefSeqMap[key];
+  // typedefSeqMap[key];
+
+     typedefSeq->get_typedefs() = listOfTypes;
    }
 

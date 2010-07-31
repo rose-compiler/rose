@@ -208,6 +208,11 @@ Grammar::setUpSupport ()
   // NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 #endif
 
+  // DQ (7/22/2010): And now we implement a type table to make sure that each type is only built once and then properly referenced (shared).
+  // This will also make it possible to have exact type equivalence be tested using only pointer equality instead of anything more elaborate.
+  // This is also where the FunctionTypeTable should be moved (to tidy up ROSE a bit).
+     NEW_TERMINAL_MACRO (TypeTable,         "TypeTable",         "TYPE_TABLE" );
+
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
@@ -238,7 +243,7 @@ Grammar::setUpSupport ()
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge           |
 
-          GraphNodeList         | GraphEdgeList             | 
+          GraphNodeList         | GraphEdgeList             | TypeTable           |
 
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
@@ -295,6 +300,12 @@ Grammar::setUpSupport ()
   // SymbolTable.setDataPrototype("std::set<SgNode*>","symbolSet", "",
      SymbolTable.setDataPrototype("SgNodeSet","symbolSet", "",
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/22/2010): Added type table to support stricter uniqueness of types and proper sharing.
+     TypeTable.setFunctionPrototype( "HEADER_TYPE_TABLE", "../Grammar/Support.code" );
+     TypeTable.setAutomaticGenerationOfConstructor(false);
+     TypeTable.setDataPrototype    ( "SgSymbolTable*","type_table","= NULL",
+					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME_DATA", "../Grammar/Support.code");
 
@@ -2034,6 +2045,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Support.setFunctionSource         ( "SOURCE", "../Grammar/Support.code");
 
      SymbolTable.setFunctionSource     ( "SOURCE_SYMBOL_TABLE", "../Grammar/Support.code");
+
+  // DQ (7/22/2010): 
+     TypeTable.setFunctionSource    ( "SOURCE_TYPE_TABLE", "../Grammar/Support.code" );
+
      InitializedName.setFunctionSource ( "SOURCE_INITIALIZED_NAME", "../Grammar/Support.code");
      Name.setFunctionSource            ( "SOURCE_NAME", "../Grammar/Support.code");
      Attribute.setFunctionSource       ( "SOURCE_ATTRIBUTE", "../Grammar/Support.code");

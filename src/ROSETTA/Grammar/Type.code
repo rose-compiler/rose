@@ -165,8 +165,10 @@ HEADER_START
        // SgType* stripTypedefs() const;
        // SgType* stripModifiers() const;
 
-      //! Performs a test against bit flags representing the modifiers internally
+       // DQ (7/26/2010): Now we finally need this function!
+       // Generates a new SgModifierType with modifiers set acordig to input parameter.
        // SgModifierType* matchModifiers(unsigned int f);
+
        // void printName(SgUnparse_Info& ui, ostream& os);
 
 #if 0
@@ -284,6 +286,16 @@ HEADER_START
           SgName mangledNameSupport(SgName & fname, SgUnparse_Info& info);
 
      public:
+
+       // DQ (7/24/2010): Added static function to distiquish which types (very few) are
+       // required to use the local type table for types built during AST construction.
+       // This is required to support that we don't always know the scope of a type while
+       // it is being constructed (while it's declarations are being constructed).
+          static bool handledUsingLocalTable( SgType* t );
+
+       // DQ (7/30/2010): This function gets the scope from either the C/C++ or Fortran
+       // procesing so that the local type table in each scope can be referenced.
+          static SgScopeStatement* getCurrentScope();
 
 HEADER_END
 
@@ -466,11 +478,22 @@ HEADER_MODIFIER_TYPE_START
 #endif
        /*! */
 
+  // DQ (7/28/2010): Make this private so that we can support API that would force the type table to be used.
+  // Users should use the build functions to construct modifier types (SgModifierType IR nodes) with different
+  // flags set.
+  // private:
       //! Access function for modifier
           SgTypeModifier & get_typeModifier();
 
        // RV (2/2/2006): Added a 'const' version
           const SgTypeModifier& get_typeModifier (void) const;
+
+  // DQ (7/28/2010): Make this public as the end of the previous private region.
+     public:
+       // friend namespace SageBuilder;
+       // friend SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/);
+
+          static SgModifierType* insertModifierTypeIntoTypeTable( SgModifierType* result );
 
 #if 0
           void unsetRestrict();
@@ -726,6 +749,9 @@ HEADER_MODIFIER_TYPE_START
           unsigned int bitfield(void);
 #endif
 
+      //! Performs final initialization of data members (called by constructors)
+          void post_construction_initialization();
+
 HEADER_MODIFIER_TYPE_END
 
 
@@ -894,6 +920,7 @@ SOURCE_CONSTRUCTOR_BODY_START
 
  //! now a call to the user defined intialization function
      post_construction_initialization();
+
 SOURCE_CONSTRUCTOR_BODY_END
 
 
@@ -1270,10 +1297,15 @@ SgType::unsetAutonomousTagDeclaration()
 #endif
 
 #if 0
+// DQ (7/26/2010): Now we finally need this function!
 SgModifierType*
 SgType::matchModifiers (unsigned int f)
    {
-     if (p_modifiers) 
+#if 0
+  // DQ (7/26/2010): Not clear if we want this function to return a reference to itself.
+     ROSE_ASSERT (p_modifiers == NULL);
+
+     if (p_modifiers)
         {
           return p_modifiers->match(this, f);
         } 
@@ -1281,6 +1313,9 @@ SgType::matchModifiers (unsigned int f)
         {
           return (p_modifiers = new SgModifierNodes())->match(this, f);
         }
+#else
+     
+#endif
    }
 #endif
 
@@ -1809,6 +1844,68 @@ SgType::mangledNameSupport(SgName & fname, SgUnparse_Info & info)
 
      return rtmp;
    }
+
+bool
+SgType::handledUsingLocalTable(SgType* t)
+   {
+  // Not all types can use the global type table, since during construction of the AST the
+  // scopes may not be fully defined yet.  The local type table can be merged into the
+  // global type table as a post-processing step.
+
+     bool returnValue = false;
+
+     if (isSgEnumType(t) != NULL || isSgClassType(t) != NULL || isSgTypedefType(t) != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+
+SgScopeStatement*
+SgType::getCurrentScope()
+   {
+  // DQ (7/23/2010): This is defined in the EDG/Sage connection.
+     extern SgScopeStatement* curr_sg_scope;
+
+  // This is what is used in the Open Fortran Parser connection.
+     extern SgScopeStatement* getTopOfScopeStack();
+
+  // This is what is used to test when we can use the fortran specific function (above).
+     extern bool emptyFortranStateStack();
+
+  // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
+  // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
+     SgScopeStatement* currentScope = NULL;
+     if (curr_sg_scope != NULL)
+        {
+       // C/C++ AST being generated
+          currentScope = curr_sg_scope;
+          ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
+        }
+       else
+        {
+          if (emptyFortranStateStack() == false)
+             {
+            // Fortran AST being generated
+               currentScope = getTopOfScopeStack();
+               ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
+             }
+            else
+             {
+            // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
+                printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
+               currentScope = NULL;
+             }
+        }
+
+  // DQ (7/23/2010): Add this as another test...
+  // ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
+
+     return currentScope;
+   }
+
 SOURCE_MAIN_TYPE_END
 
 
@@ -2051,17 +2148,42 @@ $CLASSNAME::get_mangled(SgUnparse_Info&)
  *  then this routine returns an empty name.
  */
 SgName
-$CLASSNAME::get_mangled (void) const
+$CLASSNAME::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
 
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
      SgName mangled_name;
-     if (get_name ().get_length () != 0) // not anonymous
-       {
-         const SgClassDeclaration* cls_decl = isSgClassDeclaration (get_declaration ());
-         if (cls_decl)
-           mangled_name = cls_decl->get_mangled_name ();
-       }
+  // if (get_name().get_length() != 0) // not anonymous
+     if (get_name().is_null() == false) // not anonymous
+        {
+          const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
+       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
+          if (class_decl != NULL)
+             {
+            // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
+               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
+               if (template_class_decl != NULL)
+                  {
+                    mangled_name = template_class_decl->get_mangled_name();
+#if 0
+                    printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
+#endif
+#if 0
+                    printf ("Need to get the mangled names of the template arguments \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // This is for just a simple SgClassDeclaration.
+                    mangled_name = class_decl->get_mangled_name();
+                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
+                  }
+             }
+        }
+
      return mangled_name;
    }
 
@@ -2326,11 +2448,9 @@ SgModifierType::get_mangled (void) const
 
      SgName mangled_name;
 
-     const SgTypeModifier& type_mod = get_typeModifier ();
-     const SgConstVolatileModifier& cv_mod =
-       type_mod.get_constVolatileModifier ();
-     const SgUPC_AccessModifier& upc_mod =
-       type_mod.get_upcModifier ();
+     const SgTypeModifier &          type_mod = get_typeModifier();
+     const SgConstVolatileModifier & cv_mod   = type_mod.get_constVolatileModifier();
+     const SgUPC_AccessModifier &    upc_mod  = type_mod.get_upcModifier();
  
      if (cv_mod.isConst())       mangled_name << "C";
      if (cv_mod.isVolatile())    mangled_name << "V";
@@ -2342,8 +2462,9 @@ SgModifierType::get_mangled (void) const
      if (upc_mod.get_isShared())  mangled_name << "SHD";
      if (upc_mod.isUPC_Strict())  mangled_name << "STR";
      if (upc_mod.isUPC_Relaxed()) mangled_name << "RLX";
- 
-     mangled_name << get_base_type ()->get_mangled ().str ();
+
+     mangled_name << get_base_type()->get_mangled().str();
+
      return mangled_name;
    }
 
@@ -2353,21 +2474,38 @@ SgName
 SgModifierType::get_mangled(SgUnparse_Info& info)
    {
      SgName tmp;
-     if (get_typeModifier().get_constVolatileModifier().isConst())       tmp << "C";
-     if (get_typeModifier().get_constVolatileModifier().isVolatile())    tmp << "V";
+     if (get_typeModifier().get_constVolatileModifier().isConst())    tmp << "C";
+     if (get_typeModifier().get_constVolatileModifier().isVolatile()) tmp << "V";
   // DQ (4/22/2004): Removed support for CC++
   // if (isSync())        tmp << "SYN";
   // if (isGlobal())      tmp << "GLB";
-     if (get_typeModifier().isRestrict())    tmp << "RST";
-     if (get_typeModifier().get_upcModifier().isUPC_Shared())  tmp << "SHD";
-     if (get_typeModifier().get_upcModifier().isUPC_Strict())  tmp << "STR";
-     if (get_typeModifier().get_upcModifier().isUPC_Relaxed()) tmp << "RLX";
+     if (get_typeModifier().isRestrict())                             tmp << "RST";
+     if (get_typeModifier().get_upcModifier().isUPC_Shared())         tmp << "SHD";
+     if (get_typeModifier().get_upcModifier().isUPC_Strict())         tmp << "STR";
+     if (get_typeModifier().get_upcModifier().isUPC_Relaxed())        tmp << "RLX";
 
      tmp << get_base_type()->get_mangled(info).str();
 
      return tmp;
    }
 #endif
+
+// DQ (7/24/2010): Adding post_construction_initialization() function.
+void
+SgModifierType::post_construction_initialization()
+   {
+     ROSE_ASSERT(p_base_type != NULL);
+
+  // DQ (7/24/2010): There can be a number of different types of modifiers for a given base type and
+  // the SgModifierType contains a list of them.  But I don't think it is used!
+     if (isSgModifierType(p_base_type) == NULL)
+        {
+          ROSE_ASSERT(p_base_type->get_modifiers() == NULL);
+        }
+
+  // The local reference to the SgModifierType should also be NULL.
+  // ROSE_ASSERT(get_modifiers() == NULL);
+   }
 
 SOURCE_MODIFIER_TYPE_END
 
@@ -3385,13 +3523,58 @@ $CLASSNAME::createType(void)
      if (firstCallToFunction == true)
         {
        // printf ("Build the $CLASSNAME object for the p_builtin_type \n");
+#if 0
           p_builtin_type = new $CLASSNAME();
        // p_builtin_type = new $CLASSNAME(NULL,true,NULL,0);
+#else
+       // DQ (7/30/2010): In the case of merging AST's read from files this will be initialized and be a valid pointer.
+       // ROSE_ASSERT(p_builtin_type == NULL);
+          if (p_builtin_type == NULL)
+             {
+               p_builtin_type = new $CLASSNAME();
+             }
+          ROSE_ASSERT(p_builtin_type != NULL);
+
+          SgName name = p_builtin_type->get_mangled();
+#if 0
+          printf ("Mangled type name for $CLASSNAME = %s get_globalTypeTable()->get_type_table()->size() = %d \n",name.str(),get_globalTypeTable()->get_type_table()->size());
+#endif
+
+#if 0
+          bool exists = get_globalTypeTable()->get_type_table()->exists(name);
+          printf ("In $CLASSNAME::createType(): type name exists = %s \n",exists ? "true" : "false");
+#endif
+       // bool exists = get_globalTypeTable()->get_type_table()->get_symbolSet()->find(name);
+       // printf ("In $CLASSNAME::createType(): type name exists = %s \n",exists ? "true" : "false");
+
+          SgType* t = get_globalTypeTable()->lookup_type(name);
+#if 0
+          printf ("In $CLASSNAME::createType(): type from lookup_type = %p \n",t);
+#endif
+          if (t == NULL)
+             {
+               get_globalTypeTable()->insert_type(name,p_builtin_type);
+             }
+            else
+             {
+            // If t is the same as p_builtin_type then we can't delete it...(only comes up in merging AST's read from files).
+               if (t != p_builtin_type)
+                  {
+                    delete p_builtin_type;
+                    p_builtin_type = NULL;
+                  }
+
+            // Reuse this tempType variable so we can use the same code below.
+               p_builtin_type = is$CLASSNAME(t);
+               ROSE_ASSERT(p_builtin_type != NULL);
+             }
+#endif
         }
      firstCallToFunction = false;
 
      ROSE_ASSERT(p_builtin_type != NULL);
      p_builtin_type->p_freepointer = AST_FileIO::IS_VALID_POINTER();
+
      return p_builtin_type;
    }
 
@@ -3413,7 +3596,17 @@ $CLASSNAME::createType ( TYPE_INITIALIZER_LIST_SOURCE )
      if (firstCallToFunction == true)
         {
        // printf ("Build the $CLASSNAME object for the p_builtin_type \n");
+#if 0
           p_builtin_type = new $CLASSNAME();
+#else
+       // DQ (7/22/2010): Use the global type table to get the type.
+          p_builtin_type = new $CLASSNAME();
+          SgName name = p_builtin_type->get_mangled();
+#if 0
+          printf ("Mangled type name for $CLASSNAME = %s \n",name.str());
+#endif
+          get_globalTypeTable()->insert_type(name,p_builtin_type);
+#endif
         }
      firstCallToFunction = false;
 
@@ -3449,9 +3642,9 @@ SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_START
 $CLASSNAME*
 $CLASSNAME::createType(SgTypedefDeclaration *decl) 
    {
-#if 1
   // printf ("Inside of SgTypedefType::createType() \n");
      assert(decl != NULL);
+
   // if (!decl->get_type())
      if (decl->get_type() == NULL)
         {
@@ -3485,8 +3678,47 @@ $CLASSNAME::createType(SgTypedefDeclaration *decl)
 
        // Parent scope is NULL for declarations in global scope
        // ROSE_ASSERT (decl->get_parent_scope() != NULL);
-          SgTypedefType* tempType =
-               new SgTypedefType(decl, decl->get_parent_scope());
+#if 0
+          SgTypedefType* tempType = new SgTypedefType(decl, decl->get_parent_scope());
+#else
+       // DQ (7/22/2010): Use the global type table to get the type.
+
+       // We have to build the type before we can generate a mangle name for it.
+          SgTypedefType* tempType = new SgTypedefType(decl, decl->get_parent_scope());
+          SgName name = tempType->get_mangled();
+          ROSE_ASSERT(name.is_null() == false);
+
+          SgScopeStatement* currentScope = getCurrentScope();
+          
+       // ROSE_ASSERT(currentScope != NULL);
+          if (currentScope != NULL)
+             {
+            // DQ (7/30/2010): If valid pointer then we are in the process of building the C/C++/Fortran AST.
+               SgType* t = currentScope->get_type_table()->lookup_type(name);
+
+               if (t == NULL)
+                  {
+                 // If the type is not in the type table then insert it so that we can reuse it.
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (not available in type table) \n",name.str());
+#endif
+                 // get_globalTypeTable()->insert_type(name,tempType);
+                    currentScope->get_type_table()->insert_type(name,tempType);
+                  }
+                 else
+                  {
+                 // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (already exists in type table) \n",name.str());
+#endif
+                    delete tempType;
+                    tempType = NULL;
+
+                 // Reuse this tempType variable so we can use the same code below.
+                    tempType = is$CLASSNAME(t);
+                  }
+             }
+#endif
           ROSE_ASSERT (tempType != NULL);
           decl->set_type(tempType);
 
@@ -3508,12 +3740,6 @@ $CLASSNAME::createType(SgTypedefDeclaration *decl)
      ROSE_ASSERT ((decl->get_base_type()->p_typedefs)->get_typedefs().size() > 0);
 
      return decl->get_type();
-#else
-     printf ("Exiting in SgTypedefType::createType() \n");
-     ROSE_ABORT();
-
-     return NULL;
-#endif
    }
 
 SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_END
@@ -3581,7 +3807,9 @@ SgFunctionType::createType(SgPartialFunctionType* ft)
           get_globalFunctionTypeTable()->insert_function_type(nname, theType);
         }
        else
+        {
           theType->set_orig_return_type(ft->get_return_type());
+        }
 
   // Commented out to avoid deleting the input data (poor design, I think)
   // delete ft;
@@ -3733,7 +3961,17 @@ $CLASSNAME::createType(int bitLength)
   // I don't think we really need an array of these internally.
      if (p_builtin_type == NULL)
         {
+#if 0
           p_builtin_type = new $CLASSNAME(bitLength);
+#else
+       // DQ (7/22/2010): Use the global type table to get the type.
+          p_builtin_type = new $CLASSNAME(bitLength);
+          SgName name = p_builtin_type->get_mangled();
+#if 0
+          printf ("Mangled type name for $CLASSNAME = %s \n",name.str());
+#endif
+          get_globalTypeTable()->insert_type(name,p_builtin_type);
+#endif
         }
      ROSE_ASSERT(p_builtin_type != NULL);
      return p_builtin_type;
@@ -3764,17 +4002,85 @@ $CLASSNAME::createType(SgEnumDeclaration* cd)
      assert(cd != NULL);
      returnType = cd->get_type();
      if (returnType == NULL)
+        {
+#if 0
           returnType = new $CLASSNAME(cd);
+#else
+       // DQ (7/22/2010): Use the global type table to get the type.
 
-     assert(returnType != NULL);
+          returnType = new $CLASSNAME(cd);
+          ROSE_ASSERT(returnType != NULL);
+
+       // We have to build the type before we can generate a mangle name for it.
+          SgName name = returnType->get_mangled();
+          if (name.is_null() == true)
+             {
+#if 0
+               printf ("Need to handle special case of SgEnumDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
+            // ROSE_ASSERT(cd->get_file_info() != NULL);
+            // cd->get_file_info()->display("Need to handle special case of SgClassDeclaration of un-named class");
+#endif
+               name = SageInterface::generateUniqueName(returnType,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
+#if 0
+               printf ("Generated a unique name (using SageInterface::generateUniqueName())= %s \n",name.str());
+#endif
+             }
+          ROSE_ASSERT(name.is_null() == false);
+
+          SgScopeStatement* currentScope = getCurrentScope();
+
+          if (currentScope != NULL)
+             {
+            // DQ (7/30/2010): If valid pointer then we are in the process of building the C/C++/Fortran AST.
+               SgType* t = currentScope->get_type_table()->lookup_type(name);
+               if (t == NULL)
+                  {
+                 // If the type is not in the type table then insert it so that we can reuse it.
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (not available in type table) \n",name.str());
+#endif
+                 // get_globalTypeTable()->insert_type(name,returnType);
+                    currentScope->get_type_table()->insert_type(name,returnType);
+                  }
+                 else
+                  {
+                 // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (already exists in type table) \n",name.str());
+#endif
+                    delete returnType;
+                    returnType = NULL;
+
+                 // Reuse this returnType variable so we can use the same code below.
+                    ROSE_ASSERT(t != NULL);
+                    returnType = is$CLASSNAME(t);
+
+                    if (returnType == NULL)
+                       {
+                         printf ("ERROR: returnType == NULL --- t = %p = %s \n",t,t->class_name().c_str());
+                         cd->get_file_info()->display("ERROR: returnType == NULL");
+                       }
+                    ROSE_ASSERT(returnType != NULL);
+                  }
+             }
+#endif
+        }
+#if 0
+     printf ("This $CLASSNAME::createType() function does NOT set the type in the SgEnumDeclaration = %p \n",cd);
+#endif
+
+     ROSE_ASSERT(returnType != NULL);
+
      return returnType;
    }
 
 SOURCE_CREATE_TYPE_FOR_ENUM_TYPE_END
 
+
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_START
-$CLASSNAME*
-$CLASSNAME::createType(SgClassDeclaration * cd)
+
+SgClassType*
+SgClassType::createType(SgClassDeclaration * cd)
    {
      ROSE_ASSERT(cd != NULL);
 
@@ -3789,11 +4095,83 @@ $CLASSNAME::createType(SgClassDeclaration * cd)
 
      if (!cd->get_type()) 
         {
+#if 0
           $CLASSNAME* newType = new $CLASSNAME(cd);
           ROSE_ASSERT(newType != NULL);
           cd->set_type(newType);
        // cd->set_type(new $CLASSNAME(cd));
+#else
+       // DQ (7/22/2010): Use the global type table to get the type.
+          $CLASSNAME* newType = new $CLASSNAME(cd);
+          ROSE_ASSERT(newType != NULL);
+
+#if 0
+          printf ("Inside of $CLASSNAME::createType(): cd = %p = %s = %s \n",cd,cd->class_name().c_str(),cd->get_name().str());
+#endif
+       // We have to build the type before we can generate a mangle name for it.
+          SgName name = newType->get_mangled();
+          if (name.is_null() == true)
+             {
+#if 0
+               printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
+               ROSE_ASSERT(cd->get_file_info() != NULL);
+               cd->get_file_info()->display("Need to handle special case of SgClassDeclaration of un-named class");
+#endif
+            // name = SageInterface::generateUniqueName(cd,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
+               name = SageInterface::generateUniqueName(newType,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
+#if 0
+               printf ("Generated a unique name (using SageInterface::generateUniqueName())= %s \n",name.str());
+#endif
+            // name = SageInterface::get_name(newType);
+            // printf ("Generated a unique name (using SageInterface::get_name()) = %s \n",name.str());
+            // ROSE_ASSERT(false);
+             }
+          ROSE_ASSERT(name.is_null() == false);
+
+          SgScopeStatement* currentScope = getCurrentScope();
+
+          if (currentScope != NULL)
+             {
+            // DQ (7/30/2010): If valid pointer then we are in the process of building the C/C++/Fortran AST.
+               SgType* t = currentScope->get_type_table()->lookup_type(name);
+               if (t == NULL)
+                  {
+                 // If the type is not in the type table then insert it so that we can reuse it.
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (not available in type table) \n",name.str());
+#endif
+                 // get_globalTypeTable()->insert_type(name,newType);
+                    currentScope->get_type_table()->insert_type(name,newType);
+#if 0
+                    printf ("This $CLASSNAME::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
+#endif
+                    cd->set_type(newType);
+                  }
+                 else
+                  {
+                 // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (already exists in type table) \n",name.str());
+#endif
+                    delete newType;
+                    newType = NULL;
+#if 0
+                    printf ("This $CLASSNAME::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
+#endif
+                    $CLASSNAME* typeFromTypeTable = is$CLASSNAME(t);
+                    cd->set_type(typeFromTypeTable);
+                  }
+             }
+            else
+             {
+            // Set the type using the generated type that might be redundant with a previously
+            // generated type (something to sort out when we either merge local type tables or
+            // when we connect the AST fragment being built (bottom up) into the large AST).
+               cd->set_type(newType);
+             }
+#endif
         }
+
      return ($CLASSNAME*) cd->get_type();
    }
 
@@ -3806,24 +4184,81 @@ SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_START
-$CLASSNAME*
-$CLASSNAME::createType(SgType* base_type)
+SgPointerType*
+SgPointerType::createType(SgType* base_type)
    {
-     assert(base_type != NULL);
-     if (base_type->p_ptr_to)
+     ROSE_ASSERT(base_type != NULL);
+     if (base_type->p_ptr_to != NULL)
         {
           return base_type->p_ptr_to;
         }
        else
         {
-          $CLASSNAME* newType = new $CLASSNAME(base_type);
+#if 0
+          SgPointerType* newType = new SgPointerType(base_type);
           assert(newType != NULL);
+#else
+          SgPointerType* newType = new SgPointerType(base_type);
+          assert(newType != NULL);
+
+          SgName name = newType->get_mangled();
+
+#if 0
+          printf ("Building a pointer to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+
+       // Only look for pointers to type in the global type table.
+          SgType* t = get_globalTypeTable()->lookup_type(name);
+
+          if (t == NULL)
+             {
+            // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+            // This is too agressive and fails for some test codes!
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
+               get_globalTypeTable()->insert_type(name,newType);
+#else
+               SgType* root_type = base_type->stripType();
+               ROSE_ASSERT(root_type != NULL);
+               if (handledUsingLocalTable(root_type) == false)
+                  {
+#if 0
+                    printf ("Mangled type name for SgPointerType = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+                    get_globalTypeTable()->insert_type(name,newType);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Skip putting the SgPointerType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+                  }
+#endif
+             }
+            else
+             {
+            // This should be only a pointer to a SgModifierType (e.g. a pointer to a const base_type) NOT TRUE.
+            // ROSE_ASSERT(isSgModifierType(base_type) != NULL || isSgFunctionType(base_type) != NULL);
+
+            // The pointer type was found in either the local or global table (but the base_type->p_ptr_to should have been valid).
+            // printf ("WARNING: the pointer to a base type = %p = %s should exist, we need to find it! \n",base_type,base_type->class_name().c_str());
+            // ROSE_ASSERT(false);
+
+            // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+               printf ("Mangled type name for SgPointerType = %s (already exists in type table) \n",name.str());
+#endif
+               delete newType;
+               newType = NULL;
+
+               newType = isSgPointerType(t);
+             }
+#endif
 
           base_type->p_ptr_to = newType;
           assert(base_type->p_ptr_to != NULL);
 
           return base_type->p_ptr_to;
-       // return (base_type->ptr_to = new $CLASSNAME(base_type));
         }
    }
 
@@ -3831,24 +4266,73 @@ SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE_START
-$CLASSNAME*
-$CLASSNAME::createType(SgType* base_type)
+SgReferenceType*
+SgReferenceType::createType(SgType* base_type)
    {
-     assert(base_type != NULL);
+     ROSE_ASSERT(base_type != NULL);
      if (base_type->p_ref_to)
         {
           return base_type->p_ref_to;
         }
        else
         {
-          $CLASSNAME* newType = new $CLASSNAME(base_type);
+#if 0
+          SgReferenceType* newType = new SgReferenceType(base_type);
           assert(newType != NULL);
+#else
+          SgReferenceType* newType = new SgReferenceType(base_type);
+          assert(newType != NULL);
+
+          SgName name = newType->get_mangled();
+
+#if 0
+          printf ("Building a reference to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+       // Only look for pointers to type in the global type table.
+          SgType* t = get_globalTypeTable()->lookup_type(name);
+
+          if (t == NULL)
+             {
+            // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+            // This is too agressive and fails for some test codes!
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
+               get_globalTypeTable()->insert_type(name,newType);
+#else
+               SgType* root_type = base_type->stripType();
+               ROSE_ASSERT(root_type != NULL);
+               if (handledUsingLocalTable(root_type) == false)
+                  {
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+                    get_globalTypeTable()->insert_type(name,newType);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Skip putting the SgReferenceType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+                  }
+#endif
+             }
+            else
+             {
+            // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+               printf ("Mangled type name for SgReferenceType = %s (already exists in type table) \n",name.str());
+#endif
+               delete newType;
+               newType = NULL;
+
+               newType = isSgReferenceType(t);
+             }
+#endif
 
           base_type->p_ref_to = newType;
           assert(base_type->p_ref_to != NULL);
 
           return base_type->p_ref_to;
-       // return (base_type->ref_to = new $CLASSNAME(base_type));
         }
    }
 
@@ -3856,11 +4340,63 @@ SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_START
-$CLASSNAME*
+
+SgArrayType*
 SgArrayType::createType ( SgType* base_type, SgExpression* idx )
    {
-     $CLASSNAME* returnType = new $CLASSNAME(base_type, idx);
-     assert(returnType != NULL);
+#if 0
+     SgArrayType* returnType = new SgArrayType(base_type, idx);
+     ROSE_ASSERT(returnType != NULL);
+#else
+     SgArrayType* returnType = new SgArrayType(base_type, idx);
+     ROSE_ASSERT(returnType != NULL);
+
+     SgName name = returnType->get_mangled();
+
+#if 0
+     printf ("Building an array of base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+
+  // Only look for pointers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+
+     if (t == NULL)
+        {
+       // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+       // This is too agressive and fails for some test codes!
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
+          get_globalTypeTable()->insert_type(name,returnType);
+#else
+          SgType* root_type = base_type->stripType();
+          ROSE_ASSERT(root_type != NULL);
+          if (handledUsingLocalTable(root_type) == false)
+             {
+#if 0
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+               get_globalTypeTable()->insert_type(name,returnType);
+             }
+            else
+             {
+#if 0
+               printf ("Skip putting the SgArrayType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+             }
+#endif
+        }
+       else
+        {
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+          printf ("Mangled type name for SgArrayType = %s (already exists in type table) \n",name.str());
+#endif
+          delete returnType;
+          returnType = NULL;
+
+          returnType = isSgArrayType(t);
+        }
+#endif
 
   // DQ (2/20/2007): Added setting the parent (which should not have been set already)
   // note also that the index expression is not required to be specified.
@@ -3878,19 +4414,175 @@ SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_START
-$CLASSNAME*
-$CLASSNAME::createType(SgType* base_type, unsigned int f)
+
+SgModifierType*
+SgModifierType::createType(SgType* base_type, unsigned int f)
    {
-     assert(base_type != NULL);
+  // DQ (7/28/2010): Now we make it an error to call this function!
+     printf ("ERROR: This function should not be called (replaced by different API plus insertModifierTypeIntoTypeTable()) \n");
+     ROSE_ASSERT(false);
+
+#if 0
+  // DQ (7/26/2010): Note that "unsigned int f" is not used!
+     ROSE_ASSERT(base_type != NULL);
 
   // DQ (4/13/2004): See if we can get rid of this function, but first lets find out where it is called!
   // This is part of the work to reorganize now modifiers are used internally.
   // return base_type->matchModifiers(f);
+  // printf ("Error, no longer supported! \n");
+  // ROSE_ASSERT (false);
+  // return NULL;
 
-     printf ("Error, no longer supported! \n");
-     ROSE_ASSERT (false);
+#if 0
+  // DQ (7/26/2010): Alternative code which does NOT properly abstract the creation of the type using the new type table.
+     SgModifierType* newType = new SgModifierType(base_type);
+     ROSE_ASSERT(newType != NULL);
+  // base_type->matchModifiers(f);
+#else
+     SgModifierType* newType = new SgModifierType(base_type);
+     ROSE_ASSERT(newType != NULL);
+  // base_type->matchModifiers(f);
 
+     SgName name = newType->get_mangled();
+
+#if 0
+     printf ("Building a modifier type to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+
+  // Only look for modifiers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+
+     if (t == NULL)
+        {
+       // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+       // This is too agressive and fails for some test codes!
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
+          get_globalTypeTable()->insert_type(name,newType);
+#else
+          SgType* root_type = base_type->stripType();
+          ROSE_ASSERT(root_type != NULL);
+          if (handledUsingLocalTable(root_type) == false)
+             {
+#if 0
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+               get_globalTypeTable()->insert_type(name,newType);
+             }
+            else
+             {
+            // For now we can skip this case and then later use the local type table from the scope of the declaration.
+#if 0
+               printf ("Skip putting the SgModifierType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+             }
+#endif
+        }
+       else
+        {
+       // This should be only a pointer to a SgModifierType (e.g. a pointer to a const base_type) NOT TRUE.
+       // ROSE_ASSERT(isSgModifierType(base_type) != NULL || isSgFunctionType(base_type) != NULL);
+
+       // The pointer type was found in either the local or global table (but the base_type->p_ptr_to should have been valid).
+       // printf ("WARNING: the pointer to a base type = %p = %s should exist, we need to find it! \n",base_type,base_type->class_name().c_str());
+       // ROSE_ASSERT(false);
+
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+           printf ("Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
+#endif
+          delete newType;
+          newType = NULL;
+
+          newType = isSgModifierType(t);
+          ROSE_ASSERT(newType != NULL);
+        }
+#endif
+
+     ROSE_ASSERT(newType != NULL);
+     return newType;
+#else
      return NULL;
+#endif
+   }
+
+SgModifierType*
+SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
+   {
+  // DQ (7/28/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+
+  // An assuption (that I don't know how to check currently) is that this is a newly built 
+  // type not previously used and not yet returned from any fo the fullowing functions 
+  // calling this function. Thus is has not been added yet to any (global or local) type table.
+     ROSE_ASSERT(result != NULL);
+
+#if 0
+  // DQ (7/26/2010): Alternative code which does NOT properly abstract the creation of the type using the new type table.
+     return result;
+#else
+  // This is the type after some specification (setting) via type modifier flags. We could verify 
+  // this by testing that at least one type modifier flag was set, not done yet.
+     SgName name = result->get_mangled();
+
+#if 0
+     printf ("insertModifierTypeIntoTypeTable(): result is modifier type to base_type = %p = %s name = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str(),name.str());
+#endif
+
+  // Only look for modifiers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+
+     if (t == NULL)
+        {
+       // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+       // This is too agressive and fails for some test codes!
+          printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
+          get_globalTypeTable()->insert_type(name,newType);
+#else
+          SgType* root_type = result->stripType();
+          ROSE_ASSERT(root_type != NULL);
+          if (handledUsingLocalTable(root_type) == false)
+             {
+#if 0
+               printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+               get_globalTypeTable()->insert_type(name,result);
+             }
+            else
+             {
+            // For now we can skip this case and then later use the local type table from the scope of the declaration.
+#if 0
+               printf ("insertModifierTypeIntoTypeTable(): Skip putting the SgModifierType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+             }
+#endif
+        }
+       else
+        {
+       // This should be only a pointer to a SgModifierType (e.g. a pointer to a const base_type) NOT TRUE.
+       // ROSE_ASSERT(isSgModifierType(base_type) != NULL || isSgFunctionType(base_type) != NULL);
+
+       // The pointer type was found in either the local or global table (but the base_type->p_ptr_to should have been valid).
+       // printf ("WARNING: the pointer to a base type = %p = %s should exist, we need to find it! \n",base_type,base_type->class_name().c_str());
+       // ROSE_ASSERT(false);
+
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+           printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
+#endif
+          delete result;
+          result = NULL;
+
+          result = isSgModifierType(t);
+          ROSE_ASSERT(result != NULL);
+        }
+#endif
+
+     ROSE_ASSERT(result != NULL);
+
+     return result;
    }
 
 SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_END
@@ -3899,7 +4591,7 @@ SOURCE_CREATE_TYPE_FOR_QUALIFIED_NAME_TYPE_START
 $CLASSNAME*
 $CLASSNAME::createType(SgType* base_type, unsigned int f)
    {
-     assert(base_type != NULL);
+     ROSE_ASSERT(base_type != NULL);
 
   // DQ (12/21/2005): This is a copy of the function from SgModifierType 
   // (I think we need it to override the base class implementation).
@@ -3920,14 +4612,20 @@ SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_START
 $CLASSNAME*
 $CLASSNAME::createType(SgType* t)
    {
+  // Not clear why this is using a map???
      static std::map<SgType*, $CLASSNAME*> cache;
+
      $CLASSNAME*& returnType = cache[t];
-     if (returnType == NULL) {
-       returnType = new $CLASSNAME(t);
-     }
+
+     if (returnType == NULL)
+        {
+          returnType = new $CLASSNAME(t);
+        }
      ROSE_ASSERT(returnType != NULL);
+
      return returnType;
    }
+
 SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_END
 
 

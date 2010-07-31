@@ -470,6 +470,11 @@ Grammar::setUpStatements ()
      ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
+  // DQ (7/23/2010): Build a local type table because during construction of the AST we can't yet build the global type table.
+  // After construction of the AST it might be that we can build a global type table and then perhaps not use this local one at each scope.
+     ScopeStatement.setDataPrototype    ( "SgTypeTable*","type_table","= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+
   // DQ (6/5/2007): Specify no access functions so that we can build special ones that return by reference.
   // DQ (5/8/2007): Added type elaboration list. If a symbol is in this list then it requires type elaboration ("typically "class" keyword).
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","type_elaboration_list","",
