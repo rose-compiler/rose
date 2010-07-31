@@ -655,3 +655,8 @@ SgWhileStmt
 SgWriteStatement
 SgXorAssignOp
 Sg_File_Info
+SgTypeCAFTeam
+SgCAFWithTeamStatement
+SgCAFCoExpression
+SgTypeCrayPointer
+

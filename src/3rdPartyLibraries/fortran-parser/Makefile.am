@@ -48,6 +48,7 @@ test_get_new_jar_file:
 
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 # OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
+# Laksono (07/09/2010): remove IFortranParserAction.java
 OFP_SOURCE_FILES = \
    fortran/ofp/parser/c/FortranParserAction.h \
    fortran/ofp/parser/c/jni/c_actions_jni.c \
@@ -55,8 +56,7 @@ OFP_SOURCE_FILES = \
    fortran/ofp/parser/c/token.c \
    fortran/ofp/parser/c/ActionEnums.h \
    fortran/ofp/parser/c/jni/jni_token_funcs.h \
-   fortran/ofp/parser/c/jni/jni_token_funcs.c \
-   fortran/ofp/parser/c/jni/IFortranParserAction.java
+   fortran/ofp/parser/c/jni/jni_token_funcs.c 
 
 # DQ (4/5/2010): And we need a version of this macro withouth the paths.
 OFP_SOURCE_FILES_WITHOUT_PATHS = \
@@ -66,8 +66,7 @@ OFP_SOURCE_FILES_WITHOUT_PATHS = \
    token.c \
    ActionEnums.h \
    jni_token_funcs.h \
-   jni_token_funcs.c \
-   IFortranParserAction.java
+   jni_token_funcs.c 
 
 extract_rose_required_ofp_source_files: get_jar_file
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
@@ -113,5 +112,5 @@ EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
 
 clean-local:
 	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c
-	rm -f token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c IFortranParserAction.java
+	rm -f token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c 
 

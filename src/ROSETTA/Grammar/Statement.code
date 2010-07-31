@@ -4123,6 +4123,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgWhileStmt:
           case V_SgFortranDo:
           case V_SgForAllStatement:
+          case V_SgCAFWithTeamStatement: //FMZ (2/18/2009)
                returnValue = false;
                break;
 
@@ -4846,6 +4847,17 @@ SgScopeStatement::getStatementList () const
                return forAllScope->get_body()->getStatementList();
                break;
              }
+
+          // FMZ (CoArray with team)
+          case V_SgCAFWithTeamStatement:
+             {
+               const SgCAFWithTeamStatement* teamScope = isSgCAFWithTeamStatement(currentScope);
+               ROSE_ASSERT (teamScope != NULL);
+               ROSE_ASSERT (teamScope->get_body() != NULL);
+               return isSgBasicBlock(teamScope->get_body()) ? isSgBasicBlock(teamScope->get_body())->getStatementList() : emptyStatementList;
+               break;
+             }
+
 
           default:
                printf ("ERROR: default reached in switch (getStatementList() const) currentScope = %s \n",currentScope->sage_class_name());
@@ -13456,4 +13468,19 @@ void
 SgOmpBarrierStatement::post_construction_initialization()
    {}
 SOURCE_OMP_BARRIER_STATEMENT_END
+
+// FMZ (2/3/2009): Added for co-array fortran "withteam" stmt
+HEADER_WITH_TEAM_STATEMENT_START
+
+HEADER_WITH_TEAM_STATEMENT_END
+
+SOURCE_WITH_TEAM_STATEMEMT_START
+void
+SgCAFWithTeamStatement::post_construction_initialization()
+{
+}
+
+SOURCE_WITH_TEAM_STATEMEMT_END
+
+
 

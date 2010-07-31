@@ -1132,6 +1132,9 @@ SgType::SgType()
      p_typedefs = new SgTypedefSeq();
      ROSE_ASSERT(p_typedefs != NULL);
 
+  //FMZ (2/6/2009): Added a flag for CoArray
+     p_isCoArray = false;
+
   // DQ (12/1/2007): This has been moved to the SgModifierType
   // ROSE_ASSERT(p_type_kind == NULL);
 
@@ -1167,6 +1170,9 @@ SgType::SgType(const SgType & X)
   // DQ (12/1/2007): This has been moved to the SgModifierType
   // ROSE_ASSERT(p_type_kind == NULL);
 #endif
+
+     //FMZ (2/6/2009): Added a flag for CoArray
+     p_isCoArray = false;
 
      p_typedefs = new SgTypedefSeq();
      ROSE_ASSERT(p_typedefs != NULL);

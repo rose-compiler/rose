@@ -155,6 +155,11 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (EndfileStatement,          "EndfileStatement",          "ENDFILE_STATEMENT" );
      NEW_TERMINAL_MACRO (WaitStatement,             "WaitStatement",             "WAIT_STATEMENT" );
 
+  // FMZ (2/3/2009): Added co-array "withteam" stmt
+  //  NEW_TERMINAL_MACRO (WithTeamStatement,         "WithTeamStatement",         "WITHTEAM_DECL_STMT" );
+  // FMZ (2/17/2009): We re-defined "withteam" stmt
+    NEW_TERMINAL_MACRO (CAFWithTeamStatement,         "CAFWithTeamStatement",         "WITHTEAM_STMT" );
+
   // DQ (12/18/2007): Added support for Fortran Format statement
      NEW_TERMINAL_MACRO (FormatStatement,           "FormatStatement",           "FORMAT_STATEMENT" );
 
@@ -301,7 +306,7 @@ Grammar::setUpStatements ()
           Global                       | BasicBlock         | IfStmt             | ForStatement    | FunctionDefinition |
           ClassDefinition              | WhileStmt          | DoWhileStmt        | SwitchStatement | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement | AssociateStatement | FortranDo       | ForAllStatement    |
-          UpcForAllStatement           
+          UpcForAllStatement           | CAFWithTeamStatement
        /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -2175,6 +2180,24 @@ Grammar::setUpStatements ()
      FortranDo.setDataPrototype     ( "bool", "has_end_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  //FMZ (2/3/2009): Added for co-array "withteam" stmt
+     //WithTeamStatement.setDataPrototype("SgWithTeamStatement*", "withteamStmt", "= NULL",
+                      //NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //WithTeamStatement.setDataPrototype("SgInitializedName", "variable", "",
+                      //NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     CAFWithTeamStatement.setFunctionPrototype( "HEADER_WITH_TEAM_STATEMENT", "../Grammar/Statement.code" );
+     CAFWithTeamStatement.setFunctionSource ( "SOURCE_WITH_TEAM_STATEMEMT", "../Grammar/Statement.code" );
+
+     // CAFWithTeamStatement.setDataPrototype ( "SgName" , "teamId", "= \"\"",
+      CAFWithTeamStatement.setDataPrototype ( "SgVarRefExp*" , "teamId", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     CAFWithTeamStatement.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+
+     CAFWithTeamStatement.setDataPrototype ( "bool", "endHasTeamId", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Fortran 95 specific construct (different from C/C++ for loop).
      ForAllStatement.setFunctionPrototype ( "HEADER_FORALL_STATEMENT", "../Grammar/Statement.code" );
      ForAllStatement.setDataPrototype ( "SgExprListExp*", "forall_header", "= NULL",
@@ -2469,7 +2492,9 @@ Grammar::setUpStatements ()
      ElseWhereStatement .setDataPrototype    ( "SgElseWhereStatement*", "elsewhere", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     NullifyStatement.setDataPrototype    ( "SgInitializedNamePtrList", "pointer_list", "",
+  //FMZ   NullifyStatement.setDataPrototype    ( "SgInitializedNamePtrList", "pointer_list", "",
+  //                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     NullifyStatement.setDataPrototype    ( "SgExprListExp*", "pointer_list", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (7/21/2007): This is too complex to build write now, so just build an int data member for the moment.
