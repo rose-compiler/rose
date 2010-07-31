@@ -76,8 +76,10 @@ main(int argc, char* argv[])
      * of the process starting at the address specified on the command line. */
     size_t buf_sz;
     const unsigned char *buf = read_file(filename, &buf_sz);
+    MemoryMap::MapElement melmt(vaddr, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+    melmt.set_name(filename);
     MemoryMap mm;
-    mm.insert(MemoryMap::MapElement(vaddr, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC));
+    mm.insert(melmt);
 
     /* Create the SgAsmGenericFile object that will be needed later. We could have used its parse() method to read the
      * contents of our file, but this example's purpose is to clearly demonstrate how to disassemble a buffer that might not
