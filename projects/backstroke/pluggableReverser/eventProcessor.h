@@ -8,13 +8,29 @@
 
 struct ExpressionPackage
 {
+    ExpressionPackage(
+            SgExpression* e,
+            const VariableVersionTable& table,
+            const SimpleCostModel& cst,
+            bool is_rvs_val_used = false)
+    : exp(e), var_table(table), cost(cst), is_value_used(is_rvs_val_used)
+    {}
+
     SgExpression* exp;
     VariableVersionTable var_table;
     SimpleCostModel cost;
+    bool is_value_used;
 };
 
 struct StatementPackage
 {
+    StatementPackage(
+            SgStatement* s,
+            const VariableVersionTable& table,
+            const SimpleCostModel& cst)
+    : stmt(s), var_table(table), cost(cst)
+    {}
+
     SgStatement* stmt;
     VariableVersionTable var_table;
     SimpleCostModel cost;
@@ -25,8 +41,12 @@ struct StatementPackage
 struct InstrumentedExpression
 {
     InstrumentedExpression() {}
-    InstrumentedExpression(SgExpression* exp1, SgExpression* exp2, const VariableVersionTable& table)
-            : fwd_exp(exp1), rvs_exp(exp2), var_table(table)
+    InstrumentedExpression(
+        SgExpression* exp1,
+        SgExpression* exp2,
+        const VariableVersionTable& table,
+        const SimpleCostModel& cst)
+            : fwd_exp(exp1), rvs_exp(exp2), var_table(table), cost(cst)
     {}
 
     InstrumentedExpression clone()
@@ -34,7 +54,7 @@ struct InstrumentedExpression
         return InstrumentedExpression(
                 SageInterface::copyExpression(fwd_exp),
                 SageInterface::copyExpression(rvs_exp),
-                var_table);
+                var_table, cost);
     }
     
     SgExpression* fwd_exp;
@@ -49,8 +69,12 @@ struct InstrumentedExpression
 struct InstrumentedStatement
 {
     InstrumentedStatement() {}
-    InstrumentedStatement(SgStatement* stmt1, SgStatement* stmt2, const VariableVersionTable& table)
-            : fwd_stmt(stmt1), rvs_stmt(stmt2), var_table(table)
+    InstrumentedStatement(
+        SgStatement* stmt1,
+        SgStatement* stmt2,
+        const VariableVersionTable& table,
+        const SimpleCostModel& cst)
+            : fwd_stmt(stmt1), rvs_stmt(stmt2), var_table(table), cost(cst)
     {}
 
     InstrumentedStatement clone()
@@ -58,7 +82,7 @@ struct InstrumentedStatement
         return InstrumentedStatement(
                 SageInterface::copyStatement(fwd_stmt),
                 SageInterface::copyStatement(rvs_stmt),
-                var_table);
+                var_table, cost);
     }
     
     SgStatement* fwd_stmt;
@@ -97,8 +121,8 @@ class ProcessorBase
 
 protected:
 
-    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed);
-    InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
+    InstrumentedExpressionVec processExpression(const ExpressionPackage& exp_pkg);
+    InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);
 
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
@@ -120,7 +144,7 @@ class ExpressionProcessor : public ProcessorBase
 {
 public:
 
-    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed) = 0;
+    virtual InstrumentedExpressionVec process(const ExpressionPackage& exp_pkg) = 0;
     //virtual void getCost() = 0;
 
 };
@@ -130,7 +154,7 @@ class StatementProcessor : public ProcessorBase
 {
 public:
 
-    virtual InstrumentedStatementVec process(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
+    virtual InstrumentedStatementVec process(const StatementPackage& stmt_pkg) = 0;
 
     //virtual S
 
@@ -165,10 +189,10 @@ class EventProcessor
 private:
 
     //! Given an expression, return all transformations using all expression processors.
-    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed);
+    InstrumentedExpressionVec processExpression(const ExpressionPackage& exp_pkg);
 
     //! Given a statement, return all transformations using all statement processors.
-    InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
+    InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);
 
     //! The following methods are for expression and statement processors for store and restore.
     SgExpression* getStackVar(SgType* type);

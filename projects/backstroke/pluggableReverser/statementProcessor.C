@@ -6,29 +6,35 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-InstrumentedStatementVec BasicStatementProcessor::process(
-        SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec BasicStatementProcessor::process(const StatementPackage& stmt_pkg)
 {
-    if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
-        return processExprStatement(exp_stmt, var_table);
+    if (isSgExprStatement(stmt_pkg.stmt))
+        return processExprStatement(stmt_pkg);
 
-	else if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
-        return processVariableDeclaration(var_decl, var_table);
+    else if (isSgVariableDeclaration(stmt_pkg.stmt))
+        return processVariableDeclaration(stmt_pkg);
 
-	else if (SgBasicBlock* block = isSgBasicBlock(stmt))
-        return processBasicBlock(block, var_table);
+    else if (isSgBasicBlock(stmt_pkg.stmt))
+        return processBasicBlock(stmt_pkg);
 
-	//The forward of a return statement is a return; the reverse is a no-op.
-	else if (isSgReturnStmt(stmt))
-	{
-		InstrumentedStatementVec results;
-		results.push_back(InstrumentedStatement(SageInterface::copyStatement(stmt), NULL, var_table));
-		return results;
-	}
-    //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
-       // return processIfStmt(if_stmt, var_table);
+        //The forward of a return statement is a return; the reverse is a no-op.
+    else if (isSgReturnStmt(stmt_pkg.stmt))
+        return processReturnStatement(stmt_pkg);
+
+        //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
+        // return processIfStmt(if_stmt, var_table);
 
     return InstrumentedStatementVec();
+}
+
+InstrumentedStatementVec BasicStatementProcessor::processReturnStatement(const StatementPackage& stmt_pkg)
+{
+    SgReturnStmt* return_stmt = isSgReturnStmt(stmt_pkg.stmt);
+    ROSE_ASSERT(return_stmt);
+
+    InstrumentedStatementVec stmts;
+    stmts.push_back(InstrumentedStatement(copyStatement(return_stmt), NULL, stmt_pkg.var_table, stmt_pkg.cost));
+    return stmts;
 }
 
 #if 0
@@ -70,11 +76,13 @@ StmtPairs BasicStatementProcessor::processFunctionDeclaration(SgFunctionDeclarat
 }
 #endif
 
-InstrumentedStatementVec BasicStatementProcessor::processExprStatement(
-        SgExprStatement* exp_stmt,
-        const VariableVersionTable& var_table)
+InstrumentedStatementVec BasicStatementProcessor::processExprStatement(const StatementPackage& stmt_pkg)
 {
-    InstrumentedExpressionVec exps = processExpression(exp_stmt->get_expression(), var_table, false);
+    SgExprStatement* exp_stmt = isSgExprStatement(stmt_pkg.stmt);
+    ROSE_ASSERT(exp_stmt);
+    
+    InstrumentedExpressionVec exps = processExpression(
+            ExpressionPackage(exp_stmt->get_expression(), stmt_pkg.var_table, stmt_pkg.cost));
 
     ROSE_ASSERT(!exps.empty());
 
@@ -89,15 +97,16 @@ InstrumentedStatementVec BasicStatementProcessor::processExprStatement(
             rvs_stmt = buildExprStatement(exp_obj.rvs_exp);
 
         // Use the variable version table output by expression processor.
-        stmts.push_back(InstrumentedStatement(fwd_stmt, rvs_stmt, exp_obj.var_table));
+        stmts.push_back(InstrumentedStatement(fwd_stmt, rvs_stmt, exp_obj.var_table, exp_obj.cost));
     }
     return stmts;
 }
 
-InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(
-        SgVariableDeclaration* var_decl,
-        const VariableVersionTable& var_table)
+InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(const StatementPackage& stmt_pkg)
 {
+    SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt_pkg.stmt);
+    ROSE_ASSERT(var_decl);
+
     InstrumentedStatementVec outputs;
 
     // Note the store and restore of local variables are processd in
@@ -105,7 +114,7 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(
     // event function.
 
     // FIXME copyStatement also copies preprocessing info
-    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, var_table));
+    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, stmt_pkg.var_table, stmt_pkg.cost));
 
     //outputs.push_back(InstrumentedStatement(NULL, NULL, var_table));
     //outputs.push_back(pushAndPopLocalVar(var_decl));
@@ -115,16 +124,17 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(
     return outputs;
 }
 
-InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
-        SgBasicBlock* body,
-        const VariableVersionTable& var_table)
+InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const StatementPackage& stmt_pkg)
 {
+    SgBasicBlock* body = isSgBasicBlock(stmt_pkg.stmt);
+    ROSE_ASSERT(body);
+    
     // Use two vectors to store intermediate results.
     InstrumentedStatementVec queue[2];
     vector<SgStatement*> to_delete;
 
     int i = 0;
-    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), var_table));
+    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), stmt_pkg.var_table, stmt_pkg.cost));
 
     // Deal with variable declarations first, since they will affect the variable version table.
     // For each variable declared in this basic block, we choose storing or not storing it at the end.
@@ -205,7 +215,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
     {
         foreach (InstrumentedStatement& obj, queue[i])
         {
-            InstrumentedStatementVec result = processStatement(stmt, obj.var_table);
+            InstrumentedStatementVec result = processStatement(StatementPackage(stmt, obj.var_table, obj.cost));
             
             ROSE_ASSERT(!result.empty());
 

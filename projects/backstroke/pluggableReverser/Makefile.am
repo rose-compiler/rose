@@ -14,7 +14,7 @@ libBackstrokePluggableReverser_la_SOURCES = expressionProcessor.C statementProce
 						straightlineStatementProcessor.C
 libBackstrokePluggableReverser_includedir = $(includedir)/backstroke
 libBackstrokePluggableReverser_include_HEADERS = expressionProcessor.h statementProcessor.h eventProcessor.h variableVersionTable.h akgulStyleExpressionProcessor.h \
-						straightlineStatementProcessor.h
+						straightlineStatementProcessor.h costModel.h
 
 EXTRA_DIST = 
 

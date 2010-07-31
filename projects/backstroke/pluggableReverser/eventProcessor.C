@@ -20,14 +20,14 @@ SgExpression* ProcessorBase::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-InstrumentedExpressionVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec ProcessorBase::processExpression(const ExpressionPackage& exp_pkg)
 {
-    return event_processor_->processExpression(exp, var_table, reverseValueUsed);
+    return event_processor_->processExpression(exp_pkg);
 }
 
-InstrumentedStatementVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage& stmt_pkg)
 {
-    return event_processor_->processStatement(stmt, var_table);
+    return event_processor_->processStatement(stmt_pkg);
 }
 
 bool ProcessorBase::isStateVariable(SgExpression* exp)
@@ -35,25 +35,25 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec EventProcessor::processExpression(const ExpressionPackage& exp_pkg)
 {
     InstrumentedExpressionVec output;
 
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        InstrumentedExpressionVec result = exp_processor->process(exp, var_table, reverseValueUsed);
+        InstrumentedExpressionVec result = exp_processor->process(exp_pkg);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
 
-InstrumentedStatementVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage& stmt_pkg)
 {
     InstrumentedStatementVec output;
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        InstrumentedStatementVec result = stmt_processor->process(stmt, var_table);
+        InstrumentedStatementVec result = stmt_processor->process(stmt_pkg);
         output.insert(output.end(), result.begin(), result.end());
     }
     return output;
@@ -131,9 +131,11 @@ FuncDeclPairs EventProcessor::processEvent()
             isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
     FuncDeclPairs outputs;
 
-    static int ctr = 0;
+    SimpleCostModel cost_model;
+    InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table, cost_model));
 
-    InstrumentedStatementVec bodies = processStatement(body, var_table);
+    
+    static int ctr = 0;
     // Sort the generated bodies so that those with the least cost appears first.
     sort(bodies.begin(), bodies.end());
 
