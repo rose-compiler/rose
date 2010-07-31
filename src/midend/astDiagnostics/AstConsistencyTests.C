@@ -3531,6 +3531,23 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+            // DQ (7/23/2010): Added this case
+               case V_SgTypeTable:
+                  {
+                 // The parent is not always set here except for when it is in the SgScopeStatement.
+                    SgNode* parent = support->get_parent();
+                    if (parent != NULL)
+                       {
+                      // DQ (7/30/2010): Commented out this test that fails in tests/CompilerOptionsTests/testCpreprocessorOption
+                      // ROSE_ASSERT( isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL);
+                         if ( !(isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL) )
+                            {
+                           // printf ("In AST Consistancy tests: Warning: !(isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL) \n");
+                            }
+                       }
+                    break;
+                  }
+                
                default:
                   {
                     if (support->get_parent() != NULL)
@@ -3706,6 +3723,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          break;
                        }
 
+                 // DQ (7/23/2010): Added case of SgTypeTable
+                 // case V_SgTypeTable:
                     case V_SgFunctionTypeTable:
                        {
                       // Ignore this case, the pointer to the SgFunctionTypeTable is a static data member

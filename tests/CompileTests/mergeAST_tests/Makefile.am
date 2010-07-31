@@ -199,7 +199,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=80 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-VALGRIND_OPTIONS = --tool=memcheck -v --leak-check=no --error-limit=no --show-reachable=yes
+VALGRIND_OPTIONS = --tool=memcheck -v --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = /usr/bin/valgrind $(VALGRIND_OPTIONS)
 VALGRIND =
 

@@ -496,17 +496,29 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
 
                  // DQ (7/10/2010): Found a case where this fails, need more information about it.
 #if 1
+                 // DQ (7/23/2010): We need to generate some sort of name to support generation 
+                 // of mangled names for types to be put into the new type table.
+                    if (key.empty() == true)
+                       {
+                         key = "__generated_name_";
+                       }
+#else
                     if (key.empty() == true)
                        {
                       // DQ (7/11/2010): This is not an error since we handle this case explicitly 
                       // by addating the pointer value to make it non-sharable.
                          printf ("WARNING: detected case of empty key constructed \n");
-                         enumDeclaration->get_file_info()->display("WARNING: detected case of empty key constructed");
+                         if (enumDeclaration->get_file_info() != NULL)
+                            {
+                              enumDeclaration->get_file_info()->display("WARNING: detected case of empty key constructed");
+                            }
 
                       // If the enum declaration is unnamed then give it a name in terms of its parent 
                       // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an 
                       // enum_declaration (additionalSuffix) in a typedef specific to _G_fpos64_t).
                          SgNode* parentNode = enumDeclaration->get_parent();
+                         ROSE_ASSERT(parentNode != NULL);
+
                          switch(parentNode->variantT())
                             {
                            // These cases handle where an enum declaration is embedded in a variable or typedef declaration.
@@ -530,6 +542,8 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
 #endif
                        }
 #endif
+                 // DQ (7/23/2010): I think that we can assert this here!
+                    ROSE_ASSERT (key.empty() == false);
                     break;
                   }
 
@@ -722,7 +736,7 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                case V_SgClassDeclaration:
                case V_SgTemplateInstantiationDecl:
                   {
-                    SgClassDeclaration* classDeclaration                          = isSgClassDeclaration(statement);
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(statement);
                     key = classDeclaration->get_mangled_name();
 
                  // if (classDeclaration->get_definition() != NULL)
@@ -789,9 +803,19 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                          key = "";
                        }
 #endif
+
+#if 1
                  // DQ (2/20/2007): I think that since we have reset the names of un-named class declarations this should be possible to assert now!
+                    if (key.empty() == true)
+                       {
+                      // ROSE_ASSERT(classDeclaration->get_firstNondefiningDeclaration() != NULL);
+                      // key = "__generatedName_" + StringUtility::numberToString(classDeclaration->get_firstNondefiningDeclaration());
+                      // key = "__generatedName_" + StringUtility::numberToString(classDeclaration);
+                         key = "__generatedName_";
+                       }
                     ROSE_ASSERT (key.empty() == false);
-#if 0
+#else
+                 // DQ (7/23/2010): This is required again since I need it to generate names for keys in the new type table.
                     if (key.empty() == true)
                        {
                       // If the class declaration is unnamed then give it a name in terms of its parent 
@@ -1019,9 +1043,19 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
             // DQ (7/4/2010): Tests across separate files that are actually different programs are a problem if we don't
             // also include the filename.  The same "class X" might not be able to be merged across different programs.
             // We would not have to include this if we were merging files within a single program.
-               ROSE_ASSERT(declarationStatement->get_file_info() != NULL);
-               string filename = declarationStatement->get_file_info()->get_filename();
-               string linenumber = StringUtility::numberToString(declarationStatement->get_file_info()->get_line());
+               string filename;
+               string linenumber;
+               if (declarationStatement->get_file_info() != NULL)
+                  {
+                 // ROSE_ASSERT(declarationStatement->get_file_info() != NULL);
+                    filename = declarationStatement->get_file_info()->get_filename();
+                    linenumber = StringUtility::numberToString(declarationStatement->get_file_info()->get_line());
+                  }
+                 else
+                  {
+                    filename = "unknown_file_and_pointer";
+                    linenumber = StringUtility::numberToString(declarationStatement);
+                  }
             // key += filename;
                key += filename + "_" + linenumber;
              }
@@ -1286,6 +1320,17 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                       // To make this unique, append the mangled name of the scope of the variableDeclaration
                          key += "_in_scope_" + variableDeclaration->get_scope()->get_mangled_name();
                        }
+                    break;
+                  }
+
+            // DQ (7/24/2010): Added to support local and global type tables.
+               case V_SgTypeTable:
+                  {
+                    SgTypeTable* symbolTable = isSgTypeTable(node);
+                 // ROSE_ASSERT(symbolTable->get_parent() != NULL);
+                 // key = generateUniqueName(symbolTable->get_parent(),false);
+                    key = "__type_table_" + StringUtility::numberToString(node);
+                    additionalSuffix = "__type_table";
                     break;
                   }
 

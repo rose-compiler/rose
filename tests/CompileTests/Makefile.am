@@ -18,7 +18,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
-SUBDIRS = OpenMP_tests
+SUBDIRS = 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += \
       C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests UPC_tests \
@@ -32,6 +32,10 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       NewEDGInterface_C_tests
 endif
 
+# DQ (7/25/2010): Put these tests after the most basic tests that users expect ROSE to pass (C,C++,C99, etc.).
+SUBDIRS += OpenMP_tests
+
+# DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += Fortran_tests
 endif

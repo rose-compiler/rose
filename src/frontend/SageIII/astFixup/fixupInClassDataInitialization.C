@@ -55,6 +55,8 @@ FixupInClassDataInitialization::visit (SgNode* node)
                               ROSE_ASSERT(modifierType != NULL);
                               modifierType->get_typeModifier().get_constVolatileModifier().setConst();
 
+                              printf ("DEBUGGING: just called new SgModifierType() modifierType = %p \n",modifierType);
+
 #if DEBUG_SAGE_ACCESS_FUNCTIONS
                            // DQ (6/13/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and 
                            // DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION in sage3.h indicate this is required.

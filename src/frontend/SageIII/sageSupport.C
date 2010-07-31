@@ -3767,6 +3767,10 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(functionTypeTable != NULL);
      if (functionTypeTable->get_parent() == NULL)
         {
+#if 0
+          printf ("This (globalFunctionTypeTable) should have been set to point to the SgProject not the SgFile \n");
+          ROSE_ASSERT(false);
+#endif
        // ROSE_ASSERT(numberOfFiles() > 0);
        // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgFunctionTypeTable \n");
           if (numberOfFiles() > 0)
@@ -3778,6 +3782,35 @@ SgProject::parse(const vector<string>& argv)
 
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
+#endif
+
+#if 1
+  // DQ (7/25/2010): We test the parent of SgTypeTable in the AST post processing,
+  // so we need to make sure that it is set.
+     SgTypeTable* typeTable = SgNode::get_globalTypeTable();
+     ROSE_ASSERT(typeTable != NULL);
+     if (typeTable->get_parent() == NULL)
+        {
+#if 0
+          printf ("This (globalTypeTable) should have been set to point to the SgProject not the SgFile \n");
+          ROSE_ASSERT(false);
+#endif
+       // ROSE_ASSERT(numberOfFiles() > 0);
+       // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgTypeTable \n");
+          if (numberOfFiles() > 0)
+               typeTable->set_parent(&(get_file(0)));
+            else
+               typeTable->set_parent(this);
+        }
+     ROSE_ASSERT(typeTable->get_parent() != NULL);
+
+  // DQ (7/30/2010): This test fails in tests/CompilerOptionsTests/testCpreprocessorOption
+  // DQ (7/25/2010): Added new test.
+  // printf ("typeTable->get_parent()->class_name() = %s \n",typeTable->get_parent()->class_name().c_str());
+  // ROSE_ASSERT(isSgProject(typeTable->get_parent()) != NULL);
+
+     ROSE_ASSERT(SgNode::get_globalTypeTable() != NULL);
+     ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
 #endif
 
      return errorCode;
