@@ -458,7 +458,11 @@ Partitioner::append(Function* f, BasicBlock *bb)
     /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
      * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
      * function calls to this function are eventually discovered.  This includes recursive calls since we may have already
-     * discovered the recursive call but not followed the fall-through address. */
+     * discovered the recursive call but not followed the fall-through address.
+     *
+     * FIXME: It's probably no longer necessary to go back and mark calling functions as pending because we do that in the
+     *        analyze_cfg() loop.  Doing it in analyze_cfg() is probably more efficient than running these nested loops each
+     *        time we have a transition. [RPM 2010-07-30] */
     update_analyses(bb);
     if (bb->cache.function_return && !f->returns) {
         f->returns = true;
@@ -1277,8 +1281,11 @@ Partitioner::analyze_cfg()
     static const time_t progress_interval = 10;
     time_t progress_time = time(NULL);
     bool progress_emitted = false;
+    size_t pass = 0; /*only used for progress and debugging*/
 
-    for (size_t pass=0; true; pass++) {
+    while (true) {
+        pass++;
+
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
         if (debug || time(NULL)-progress_time > progress_interval) {
             progress_time = time(NULL);
@@ -1290,7 +1297,85 @@ Partitioner::analyze_cfg()
                     blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
         }
 
-        /* Get a list of functions we need to analyze */
+        /* If function A makes a call to function B and we know that function B could return but the return address is not
+         * part of any function, then mark function A as pending so that we rediscover its blocks. */   
+        for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi) {
+            BasicBlock *bb = bi->second;
+            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size());
+            BasicBlock *return_bb = find_bb_starting(return_va);
+            rose_addr_t target_va = NO_TARGET; /*call target*/
+            BasicBlock *target_bb = NULL;
+#if 0 /*DEBUG [RPM 2010-07-30]*/
+            do {
+                static rose_addr_t req_call_block_va   = 0x08048364;
+                static rose_addr_t req_target_va       = 0x0804836e;
+                static rose_addr_t req_return_va       = 0x0804836e;
+
+                if (address(bb)!=req_call_block_va) break;
+                fprintf(stderr, "in pass %zu found block 0x%08"PRIx64"\n", pass, req_call_block_va);
+                fprintf(stderr, "  belongs to function? %s\n", bb->function?"yes":"no");
+                if (!bb->function) break;
+                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", bb->function->entry_va);
+                bool is_call = is_function_call(bb, &target_va);
+                fprintf(stderr, "  is a function call? %s\n", is_call?"yes":"no");
+                if (!is_call) break;
+                fprintf(stderr, "    target va is 0x%08"PRIx64"\n", target_va);
+                if (target_va!=req_target_va) break;
+                target_bb = find_bb_starting(target_va, false);
+                fprintf(stderr, "  target block exists? %s\n", target_bb?"yes":"no");
+                if (!target_bb) break;
+                fprintf(stderr, "  target block belongs to a function? %s\n", target_bb->function?"yes":"no");
+                if (!target_bb->function) break;
+                fprintf(stderr, "    that function is 0x%08"PRIx64"\n", target_bb->function->entry_va);
+                if (target_bb->function->entry_va!=req_target_va) break;
+                fprintf(stderr, "  target function returns? %s\n", target_bb->function->returns?"yes":"no");
+                if (!target_bb->function->returns) break;
+                fprintf(stderr, "  return address is 0x%08"PRIx64"\n", return_va);
+                if (return_va!=req_return_va) break;
+                fprintf(stderr, "  return block exists? %s\n", return_bb?"yes":"no");
+                if (!return_bb) break;
+                fprintf(stderr, "  return block in a function? %s\n", return_bb->function?"yes":"no");
+                if (!return_bb->function) {
+                    fprintf(stderr, "  marking function 0x%08"PRIx64" as pending!\n", bb->function->entry_va);
+                } else if (return_bb->function->entry_va==return_va) {
+                    fprintf(stderr, "    returns to fall-through address\n");
+                    if (!bb->function->returns) {
+                        fprintf(stderr, "    marking calling function as returning\n");
+                        fprintf(stderr, "    NEED ANOTHER PASS!\n");
+                        /* Track the parent now */
+                        req_call_block_va       = 0x080482c8;
+                        req_target_va           = 0x08048364;
+                        req_return_va           = 0x080482d3;
+
+                    }
+                }
+            } while (0);
+#endif
+            if (bb->function && return_bb &&
+                is_function_call(bb, &target_va) && target_va!=NO_TARGET &&
+                NULL!=(target_bb=find_bb_starting(target_va, false)) &&
+                target_bb->function && target_bb->function->returns) {
+                if (!return_bb->function) {
+                    bb->function->pending = true;
+                    if (debug)
+                        fprintf(debug, "[B%08"PRIx64" is return target from F%08"PRIx64"]", return_va, target_va);
+                } else if (return_va==target_bb->function->entry_va && !bb->function->returns) {
+                    /* This handles the case when function A's return from B falls through into B. In this case, since B
+                     * returns then A also returns.  We mark A as returning and we'll catch A's callers on the next pass.
+                     *    function_A:
+                     *        ...
+                     *        CALL function_B
+                     *    function_B:
+                     *        RET
+                     */
+                    bb->function->returns = true;
+                    if (debug)
+                        fprintf(debug, "[B%08"PRIx64" falls through to F%08"PRIx64"]", address(bb), target_va);
+                }
+            }
+        }
+
+        /* Get a list of functions we need to analyze because they're marked as pending. */
         std::vector<Function*> pending;
         for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             ROSE_ASSERT(fi->second->entry_va==fi->first);
@@ -1300,6 +1385,7 @@ Partitioner::analyze_cfg()
                 pending.push_back(fi->second);
             }
         }
+                
         if (pending.size()==0)
             break;
 
@@ -1322,6 +1408,7 @@ Partitioner::analyze_cfg()
             if (debug) fprintf(debug, "\n");
         }
     }
+        
     if (debug || progress_emitted) {
         fprintf(debug?debug:stderr,
                 "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
