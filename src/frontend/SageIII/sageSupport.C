@@ -1311,7 +1311,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Fortran_only(true);
 
        // It is requested (by Laksono at Rice) that CoArray Fortran defaults be to skip the syntax checking
-          set_skip_syntax_check(false);
+	// Laksono 2009.01.27: I think we should put the boolean to 'true' instead of 'false'
+          set_skip_syntax_check(true);
 
           if (get_sourceFileUsesCoArrayFortranFileExtension() == false)
              {
@@ -2376,7 +2377,11 @@ SgSourceFile::initializeGlobalScope()
 
 
 SgFile* 
+#if 0 //FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
 determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
+#else 
+determineFileType ( vector<string> argv, int& nextErrorCode, SgProject* project )
+#endif
    {
      SgFile* file = NULL;
 
@@ -3921,7 +3926,10 @@ SgProject::parse()
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
      FortranModuleInfo::setCurrentProject(this);
+     FortranModuleInfo::set_inputDirs(this );
+
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
@@ -4371,7 +4379,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
           //the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
-
+          argument == "-outputdir" ||  //FMZ (12/22/1009) added for caf compiler
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
           argument == "-rose:partitioner_config" ||
