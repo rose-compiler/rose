@@ -12,13 +12,13 @@ LoaderELFObj::can_handle(SgAsmGenericHeader *header)
 }
 
 rose_addr_t
-LoaderELFObj::align_values(SgAsmGenericSection *section,
+LoaderELFObj::align_values(SgAsmGenericSection *section, Contribution contrib,
                            rose_addr_t *va_p/*out*/, rose_addr_t *mem_size_p/*out*/,
                            rose_addr_t *offset_p/*out*/, rose_addr_t *file_size_p/*out*/,
                            const MemoryMap *current)
 {
     if (section->is_mapped())
-        return LoaderELF::align_values(section, va_p, mem_size_p, offset_p, file_size_p, current);
+        return LoaderELF::align_values(section, contrib, va_p, mem_size_p, offset_p, file_size_p, current);
 
     if (section->get_contains_code()) {
         /* We don't need to worry about file alignment because the Unix loader isn't going to ever be mapping this object file

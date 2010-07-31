@@ -1109,7 +1109,7 @@ AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 # TP SUPPORT FOR OPENGL
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
-# echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
+echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno)
 
 # Call supporting macro for python
@@ -1973,8 +1973,12 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
-# These headers are needed by projects/simulator [matzke 2009-07-02]
+# These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
+AC_CHECK_TYPE(user_desc,
+              AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
+              [],
+	      [#include <asm/ldt.h>])
 
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
@@ -2234,9 +2238,9 @@ projects/compass/tools/compass/gui2/Makefile
 projects/compass/tools/compass/buildInterpreter/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
-projects/compass/tools/compass/tests/C_tests/Makefile
-projects/compass/tools/compass/tests/Cxx_tests/Makefile
-projects/compass/tools/compass/tests/OpenMP_tests/Makefile
+projects/compass/tools/compass/tests/Compass_C_tests/Makefile
+projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
+projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile
@@ -2288,7 +2292,6 @@ projects/haskellport/Makefile
 projects/haskellport/rose.cabal.in
 projects/haskellport/Setup.hs
 projects/palette/Makefile
-projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile
 projects/assemblyToSourceAst/tests/Makefile
 projects/SemanticSignatureVectors/Makefile
@@ -2305,21 +2308,28 @@ projects/interpreter/Makefile
 projects/backstroke/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
-projects/backstroke/reverseComputation/stateSaving/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
+projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
+projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
+projects/backstroke/tests/pluggableReverserTest/Makefile
+projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
 projects/simulator/Makefile
+projects/simulator/tests/Makefile
 projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
+projects/roseToLLVM/tests/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile

@@ -54,7 +54,7 @@ main ( int argc, char** argv )
      commandLineProcessing(argc,argv,skipFrontendSpecificIRnodes);
   // ****************************************************************************
 
-     SgProject::set_verbose(3);
+  // SgProject::set_verbose(3);
 
   // ****************************************************************************
   // **************************      Build the AST    ***************************

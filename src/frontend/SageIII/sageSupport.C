@@ -1311,7 +1311,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Fortran_only(true);
 
        // It is requested (by Laksono at Rice) that CoArray Fortran defaults be to skip the syntax checking
-          set_skip_syntax_check(false);
+	// Laksono 2009.01.27: I think we should put the boolean to 'true' instead of 'false'
+          set_skip_syntax_check(true);
 
           if (get_sourceFileUsesCoArrayFortranFileExtension() == false)
              {
@@ -2376,7 +2377,11 @@ SgSourceFile::initializeGlobalScope()
 
 
 SgFile* 
+#if 0 //FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
 determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
+#else 
+determineFileType ( vector<string> argv, int& nextErrorCode, SgProject* project )
+#endif
    {
      SgFile* file = NULL;
 
@@ -3767,6 +3772,10 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(functionTypeTable != NULL);
      if (functionTypeTable->get_parent() == NULL)
         {
+#if 0
+          printf ("This (globalFunctionTypeTable) should have been set to point to the SgProject not the SgFile \n");
+          ROSE_ASSERT(false);
+#endif
        // ROSE_ASSERT(numberOfFiles() > 0);
        // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgFunctionTypeTable \n");
           if (numberOfFiles() > 0)
@@ -3778,6 +3787,35 @@ SgProject::parse(const vector<string>& argv)
 
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
+#endif
+
+#if 1
+  // DQ (7/25/2010): We test the parent of SgTypeTable in the AST post processing,
+  // so we need to make sure that it is set.
+     SgTypeTable* typeTable = SgNode::get_globalTypeTable();
+     ROSE_ASSERT(typeTable != NULL);
+     if (typeTable->get_parent() == NULL)
+        {
+#if 0
+          printf ("This (globalTypeTable) should have been set to point to the SgProject not the SgFile \n");
+          ROSE_ASSERT(false);
+#endif
+       // ROSE_ASSERT(numberOfFiles() > 0);
+       // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgTypeTable \n");
+          if (numberOfFiles() > 0)
+               typeTable->set_parent(&(get_file(0)));
+            else
+               typeTable->set_parent(this);
+        }
+     ROSE_ASSERT(typeTable->get_parent() != NULL);
+
+  // DQ (7/30/2010): This test fails in tests/CompilerOptionsTests/testCpreprocessorOption
+  // DQ (7/25/2010): Added new test.
+  // printf ("typeTable->get_parent()->class_name() = %s \n",typeTable->get_parent()->class_name().c_str());
+  // ROSE_ASSERT(isSgProject(typeTable->get_parent()) != NULL);
+
+     ROSE_ASSERT(SgNode::get_globalTypeTable() != NULL);
+     ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
 #endif
 
      return errorCode;
@@ -3888,7 +3926,10 @@ SgProject::parse()
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
      FortranModuleInfo::setCurrentProject(this);
+     FortranModuleInfo::set_inputDirs(this );
+
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
@@ -3902,7 +3943,7 @@ SgProject::parse()
      unsigned int i = 0;
      while (nameIterator != p_sourceFileNameList.end())
         {
-#if 1
+#if 0
           printf ("Build a SgFile object for file #%d \n",i);
 #endif
           int nextErrorCode = 0;
@@ -3921,7 +3962,7 @@ SgProject::parse()
           printf ("currentFileName = %s \n",currentFileName.c_str());
 #endif
        // DQ (11/13/2008): Removed overly complex logic here!
-#if 1
+#if 0
           printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
 #endif
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
@@ -4338,7 +4379,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
           //the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
-
+          argument == "-outputdir" ||  //FMZ (12/22/1009) added for caf compiler
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
           argument == "-rose:partitioner_config" ||
@@ -7823,127 +7864,139 @@ SgFunctionCallExp::getAssociatedFunctionDeclaration() const
     // ROSE_ASSERT(returnFunctionDeclaration != NULL);
 
      return returnFunctionDeclaration;
-   }
+}
+
 
 SgFunctionSymbol*
 SgFunctionCallExp::getAssociatedFunctionSymbol() const
-   {
-  // This is helpful in chasing down the associated declaration to this function reference.
-  // But this refactored function does the first step of getting the symbol, so that it
-  // can also be used separately in the outlining support.
-     SgFunctionSymbol* returnSymbol = NULL;
+{
+	// This is helpful in chasing down the associated declaration to this function reference.
+	// But this refactored function does the first step of getting the symbol, so that it
+	// can also be used separately in the outlining support.
+	SgFunctionSymbol* returnSymbol = NULL;
 
-  // Note that as I recall there are a number of different types of IR nodes that 
-  // the functionCallExp->get_function() can return (this is the complete list, 
-  // as tested in astConsistancyTests.C):
-  //   - SgDotExp
-  //   - SgDotStarOp
-  //   - SgArrowExp
-  //   - SgArrowStarOp
-  //   - SgPointerDerefExp
-  //   - SgFunctionRefExp
-  //   - SgMemberFunctionRefExp
+	// Note that as I recall there are a number of different types of IR nodes that
+	// the functionCallExp->get_function() can return (this is the complete list,
+	// as tested in astConsistancyTests.C):
+	//   - SgDotExp
+	//   - SgDotStarOp
+	//   - SgArrowExp
+	//   - SgArrowStarOp
+	//   - SgPointerDerefExp
+	//   - SgFunctionRefExp
+	//   - SgMemberFunctionRefExp
 
-     SgExpression* functionExp = this->get_function();
-     switch(functionExp->variantT())
-        {
-          case V_SgFunctionRefExp:
-             {
-               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
-               ROSE_ASSERT(functionRefExp != NULL);
-               returnSymbol = functionRefExp->get_symbol();
+	//Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
+	bool isAlwaysResolvedStatically = false;
 
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
-               break;
-             }
+	SgExpression* functionExp = this->get_function();
+	switch (functionExp->variantT())
+	{
+		case V_SgFunctionRefExp:
+		{
+			SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
+			ROSE_ASSERT(functionRefExp != NULL);
+			returnSymbol = functionRefExp->get_symbol();
 
-          case V_SgMemberFunctionRefExp:
-             {
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
-               returnSymbol = memberFunctionRefExp->get_symbol();
+			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+			ROSE_ASSERT(returnSymbol != NULL);
+			break;
+		}
 
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
-               break;
-             }
+		case V_SgMemberFunctionRefExp:
+		{
+			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
+			ROSE_ASSERT(memberFunctionRefExp != NULL);
+			returnSymbol = memberFunctionRefExp->get_symbol();
 
-          case V_SgArrowExp:
-             {
-            // The lhs is the this pointer (SgThisExp) and the rhs is the member function.
-               SgArrowExp* arrayExp = isSgArrowExp(functionExp);
-               ROSE_ASSERT(arrayExp != NULL);
+			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+			ROSE_ASSERT(returnSymbol != NULL);
+			break;
+		}
 
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
+		case V_SgArrowExp:
+		{
+			// The lhs is the this pointer (SgThisExp) and the rhs is the member function.
+			SgArrowExp* arrayExp = isSgArrowExp(functionExp);
+			ROSE_ASSERT(arrayExp != NULL);
 
-            // DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
-            // ROSE_ASSERT(memberFunctionRefExp != NULL);
-               if (memberFunctionRefExp != NULL)
-                  {
-                    returnSymbol = memberFunctionRefExp->get_symbol();
+			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
 
-                 // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-                    ROSE_ASSERT(returnSymbol != NULL);
-                  }
-               break;
-             }
+			// DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
+			// ROSE_ASSERT(memberFunctionRefExp != NULL);
+			if (memberFunctionRefExp != NULL)
+			{
+				returnSymbol = memberFunctionRefExp->get_symbol();
 
-          case V_SgDotExp:
-             {
-               SgDotExp * dotExp = isSgDotExp(functionExp);
-               ROSE_ASSERT(dotExp != NULL);
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
-               returnSymbol = memberFunctionRefExp->get_symbol();
+				// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+				ROSE_ASSERT(returnSymbol != NULL);
+			}
+			break;
+		}
 
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+		case V_SgDotExp:
+		{
+			SgDotExp * dotExp = isSgDotExp(functionExp);
+			ROSE_ASSERT(dotExp != NULL);
+			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+			ROSE_ASSERT(memberFunctionRefExp != NULL);
+			returnSymbol = memberFunctionRefExp->get_symbol();
 
-               break;
-             }
+			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
+			ROSE_ASSERT(returnSymbol != NULL);
 
-       // Liao, 5/19/2009
-       // A pointer to function can be associated to any functions with a matching function type
-       // There is no single function declaration which is associated with it.
-       // In this case return NULL should be allowed and the caller has to handle it accordingly
-          case V_SgPointerDerefExp:
-             {
-               break;
-             }
+			//Virtual functions called through the dot operator are resolved statically if they are not
+			//called on reference types.
+			isAlwaysResolvedStatically = !isSgReferenceType(dotExp->get_lhs_operand());
 
-       // DQ (8/19/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
-       // I think that for this operator we can't expect to resolve the function declaration. (returning NULL)
-          case V_SgDotStarOp:
-             {
-               break;
-             }
+			break;
+		}
 
-          case V_SgArrowStarOp:
-             {
-            // DQ (8/18/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
-            // I also fixed the error message to make it more clear.
-               printf ("ERROR: Sorry, case SgArrowStarOp not implemented yet (might be similar to SgDotExp case) in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+		// Liao, 5/19/2009
+		// A pointer to function can be associated to any functions with a matching function type
+		// There is no single function declaration which is associated with it.
+		// In this case return NULL should be allowed and the caller has to handle it accordingly
+		case V_SgPointerDerefExp:
+		{
+			break;
+		}
 
-            // DQ (2/21/2010): This case is triggered by fixupPrettyFunction test when run on test2005_112.C
-            // ROSE_ASSERT(returnSymbol != NULL);
+		//DotStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
+		//the associated 'this' parameter. In this case, we can't statically determine which function is getting called
+		//and should return null.
+		case V_SgDotStarOp:
+		{
+			break;
+		}
 
-               break;
-             }
+		//ArrowStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
+		//the associated 'this' parameter. In this case, we can't statically determine which function is getting called
+		//and should return null.
+		case V_SgArrowStarOp:
+		{
+			break;
+		}
 
-          default:
-             {
-               printf ("Error: There should be no other cases functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
-               ROSE_ASSERT(false);
-             }
-        }
+		default:
+		{
+			printf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+			ROSE_ASSERT(false);
+		}
+	}
 
-  // DQ (8/18/2009): I think this was commented out by Liao (5/19/2009).
-  // We allow it to be NULL for a pointer to function
-  // ROSE_ASSERT(returnSymbol != NULL);
+	//If the function is virtual, the function call might actually be to a different symbol.
+	//We should return NULL in this case to preserve correctness
+	if (returnSymbol != NULL && !isAlwaysResolvedStatically)
+	{
+		SgFunctionModifier& functionModifier = returnSymbol->get_declaration()->get_functionModifier();
+		if (functionModifier.isVirtual() || functionModifier.isPureVirtual())
+		{
+			returnSymbol = NULL;
+		}
+	}
 
-     return returnSymbol;
-   }
+	return returnSymbol;
+}
 #endif
 // TODO move the following OpenMP processing code into a separated source file
 // maybe in src/midend/openmpSupport ?

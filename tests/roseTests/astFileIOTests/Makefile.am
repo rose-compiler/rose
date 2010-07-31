@@ -138,7 +138,7 @@ ORIGINAL_TEST_MEDIUM_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_0
 # TEST_MEDIUM_LIST = test2003_19.C test2003_21.C
 # TEST_MEDIUM_LIST = test2003_21.C
 # TEST_MEDIUM_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_08.C test2003_10.C test2003_12.C test2003_14.C test2003_35.C test2003_37.C 
-TEST_MEDIUM_LIST = $(ORIGINAL_TEST_MEDIUM_LIST)
+# TEST_MEDIUM_LIST = $(ORIGINAL_TEST_MEDIUM_LIST)
 # TEST_MEDIUM_LIST = test2003_02.C test2004_52.C
 
 # 72 files appear to merge and write out an AST, but 73 files always fail!
@@ -379,10 +379,10 @@ largeFileTest: astFileIO
 	./astFileIO -rose:verbose 0 -c $(srcdir)/test2005_36.C -o test2005_36
 
 largestFileTest: astFileIO
-	./astFileIO -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
+	./astFileIO -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
 
 largestRoseFileTest: astFileIO ../../testAstFileIO
-#	./astFileIO -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
+#	./astFileIO -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
 	$(TEST_TRANSLATOR) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRose_testFile.C
 
 locForRoseFile:
@@ -440,9 +440,9 @@ distclean-local:
 test1: test1A.C test1B.C
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	DQ(7/13/2004): This is an error since it specifies the output file twice in the vendor compile line
-#	$(TEST_TRANSLATOR) -rose:verbose -o test1A.o -c $(srcdir)/test1A.C 
-	$(TEST_TRANSLATOR) -rose:verbose -c $(srcdir)/test1A.C 
-	$(TEST_TRANSLATOR) -rose:verbose -c $(srcdir)/test1B.C
+#	$(TEST_TRANSLATOR) -rose:verbose 0 -o test1A.o -c $(srcdir)/test1A.C 
+	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/test1A.C 
+	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/test1B.C
 	g++ -o test1 rose_test1A.o rose_test1B.o
 	@echo "Running resulting executable ..."
 	./test1

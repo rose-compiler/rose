@@ -14,7 +14,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole header file */
 
-#include "memory.h"
+#include "mymemory.h"
 #include "x86InstructionSemantics.h"
 #include "integerOps.h"
 #include <stdint.h>
@@ -31,6 +31,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <asm/ldt.h>
+
+/*#define DO_SIMULATION_TRACING*/
+
+#ifndef HAVE_USER_DESC
+typedef modify_ldt_ldt_s user_desc;
+#endif
 
 template <size_t Len>
 struct Value {
@@ -78,24 +84,27 @@ struct MachineState {
 
   template <size_t Len>
   uint64_t readMemory(X86SegmentRegister segreg, uint32_t address) {
-#ifdef DEBUG
-    fprintf(stderr, "readMemory(%s, %"PRIX32")\n", segregToString(segreg), address);
-#endif
     BOOST_STATIC_ASSERT(Len % 8 == 0);
     ROSE_ASSERT (address <= segregsShadow[segreg].limit);
     ROSE_ASSERT (address + (Len / 8) - 1 <= segregsShadow[segreg].limit);
-    return memory.read<Len / 8>(address + segregsShadow[segreg].base);
+    uint64_t retval = memory.read<Len / 8>(address + segregsShadow[segreg].base);
+#ifdef DO_SIMULATION_TRACING
+    fprintf(stderr, "  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n", 
+            Len, segregsShadow[segreg].base, address, address+segregsShadow[segreg].base, retval);
+#endif
+    return retval;
   }
 
   template <size_t Len>
   void writeMemory(X86SegmentRegister segreg, uint32_t address, uint64_t data) {
-#ifdef DEBUG
-    fprintf(stderr, "writeMemory(%s, %"PRIX32")\n", segregToString(segreg), address);
-#endif
     BOOST_STATIC_ASSERT (Len % 8 == 0);
     ROSE_ASSERT (address <= segregsShadow[segreg].limit);
     ROSE_ASSERT (address + (Len / 8) - 1 <= segregsShadow[segreg].limit);
     memory.write<Len / 8>(address + segregsShadow[segreg].base, data);
+#ifdef DO_SIMULATION_TRACING
+    fprintf(stderr, "  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n", 
+            Len, segregsShadow[segreg].base, address, address+segregsShadow[segreg].base, data);
+#endif
   }
 };
 

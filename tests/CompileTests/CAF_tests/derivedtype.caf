@@ -1,0 +1,18 @@
+program derived
+implicit none
+
+type my 
+  integer :: i
+  real    :: r
+end type
+integer :: tmp
+
+type(my), allocatable :: mo(:)[*]
+
+allocate( mo(1)[*] )
+
+tmp = mo[3]%i
+mo[1]%r = 2.2
+mo[tmp@team]%i = 2
+
+end program

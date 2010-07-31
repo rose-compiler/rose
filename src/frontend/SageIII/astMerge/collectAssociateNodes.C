@@ -1887,6 +1887,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgDirectory:
           case V_SgDirectoryList:
 
+       // DQ (7/30/2010): This is the new type table support.
+          case V_SgTypeTable:
+
        // Ignore these SgSupport cases since we don't permit them to be shared
           case V_SgRenamePair:
           case V_SgInterfaceBody:

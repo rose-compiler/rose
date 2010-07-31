@@ -662,7 +662,7 @@ namespace OmpSupport
     {
       SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
       ROSE_ASSERT(s_clause);
-      SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
+      //SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
       // ROSE_ASSERT(s_kind == SgOmpClause::e_omp_schedule_static);
       SgExpression* orig_chunk_size = s_clause->get_chunk_size();  
     //  ROSE_ASSERT(orig_chunk_size->get_parent() != NULL);

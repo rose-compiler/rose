@@ -4,13 +4,19 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-include_HEADERS = memory.h simulate.h
+SUBDIRS = tests
 
-noinst_PROGRAMS = sandbox test1
+include_HEADERS = mymemory.h simulate.h
+
+noinst_PROGRAMS = sandbox x86sim test1
 
 sandbox_SOURCES = emulator.C simulate.C linuxcalls.C elfload.C
 sandbox_CPPFLAGS = $(ROSE_INCLUDES) -UDEBUG
 sandbox_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+x86sim_SOURCES = x86sim.C
+x86sim_CPPFLAGS = $(ROSE_INCLUDES)
+x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 test1: $(srcdir)/test1.c
 	$(CC) -m32 -o $@ $<

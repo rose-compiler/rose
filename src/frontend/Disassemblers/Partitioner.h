@@ -481,7 +481,7 @@ public:
      *  will be created with fewer instructions but the BlockBody will be ignored.
      *
      *  A function declaration specifies the virtual memory address of the entry point of a function. The body may specify
-     *  whether the function returns. As of this writing [2010-05-13] a function declarated as non-returning will be marked as
+     *  whether the function returns. As of this writing [2010-05-13] a function declared as non-returning will be marked as
      *  returning if ROSE discovers that a basic block of the function returns.
      *
      *  If a block declaration appears inside a function declaration, then ROSE will assign the block to the function.
