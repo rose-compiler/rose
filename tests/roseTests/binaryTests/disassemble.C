@@ -1,8 +1,13 @@
-/* Reads a binary file and disassembles according to command-line switches */
+/* Reads an executable, library, archive, core dump, or raw buffer of machine instructions and disassembles according to
+ * command-line switches.  Although ROSE does the disassembly and partitioning by default, this test disables that automation
+ * and does everything the hard way.  This allows us more control over what happens and even allows us to disassemble raw
+ * buffers of machine instructions.  This test also does a variety of analyses and Robb uses it as a general tool and staging
+ * area for testing new features before they're added to ROSE. */
 
 #include "rose.h"
 
 #define __STDC_FORMAT_MACROS
+#include <errno.h>
 #include <inttypes.h>
 #include <ostream>
 #include <fcntl.h>
@@ -34,14 +39,16 @@ digest_to_str(const unsigned char digest[20])
 bool
 block_hash(SgAsmBlock *blk, unsigned char digest[20]) 
 {
+    using namespace VirtualMachineSemantics;
+
     if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front())) {
         memset(digest, 0, 20);
         return false;
     }
     const SgAsmStatementPtrList &stmts = blk->get_statementList();
 
-    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
-    VirtualMachineSemantics::Policy policy;
+    typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+    Policy policy;
     policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
     try {
@@ -51,6 +58,9 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
             semantics.processInstruction(insn);
         }
     } catch (const Semantics::Exception&) {
+        memset(digest, 0, 20);
+        return false;
+    } catch (const Policy::Exception&) {
         memset(digest, 0, 20);
         return false;
     }
@@ -483,11 +493,10 @@ main(int argc, char *argv[])
     bool do_show_functions = false;
     bool do_raw = false;
 
-    rose_addr_t raw_entry_point = 0;
+    rose_addr_t raw_entry_va = 0;
     MemoryMap raw_map;
-    int exit_status = 0;
     unsigned disassembler_search = Disassembler::SEARCH_DEFAULT;
-    unsigned paritioner_search = SgAsmFunctionDeclaration::FUNC_DEFAULT;
+    unsigned partitioner_search = SgAsmFunctionDeclaration::FUNC_DEFAULT;
     char *partitioner_config = NULL;
 
     /*------------------------------------------------------------------------------------------------------------------------
@@ -525,7 +534,7 @@ main(int argc, char *argv[])
             ROSE_ASSERT(i+1<argc);
             do_raw = true;
             char *rest;
-            raw_entry_point = strtoull(argv[++i], &rest, 0);
+            raw_entry_va = strtoull(argv[++i], &rest, 0);
             if (rest && *rest) {
                 fprintf(stderr, "%s: raw entry address expected after --raw switch", argv[0]);
                 exit(1);
@@ -533,8 +542,8 @@ main(int argc, char *argv[])
         } else if (!strncmp(argv[i], "--raw=", 6)) {
             do_raw = true;
             char *rest;
-            raw_entry_point = strtoull(argv[i]+6, &rest, 0);
-            if (!argv[i]+6 || (rest && *rest)) {
+            raw_entry_va = strtoull(argv[i]+6, &rest, 0);
+            if (!argv[i][6] || (rest && *rest)) {
                 fprintf(stderr, "%s: usage --raw=ENTRY_ADDR\n",argv[0]);
                 exit(1);
             }
@@ -608,7 +617,7 @@ main(int argc, char *argv[])
                 exit(1);
             }
             uint8_t *buffer = new uint8_t[sb.st_size];
-            ssize_t nread = read(buffer, sb.st_size, fd);
+            ssize_t nread = read(fd, buffer, sb.st_size);
             ROSE_ASSERT(nread==sb.st_size);
             close(fd);
             MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0);
@@ -623,14 +632,19 @@ main(int argc, char *argv[])
     /*------------------------------------------------------------------------------------------------------------------------
      * Choose a disassembler
      *------------------------------------------------------------------------------------------------------------------------*/
+
     Disassembler *disassembler = NULL;
+    SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
+    SgProject *project = NULL;                  /* Project if not disassembling a raw buffer */
+
     if (do_raw) {
         /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
         disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
     } else {
         /* Choose a disassembler based on the SgAsmInterpretation that we're disassembling */
-        SgProject *project = frontend(new_argc, new_argv); /*parse container but do not disassemble yet*/
-        std::vector<SgAsmInterpretation*> interps = NodeQuery::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation);
+        project = frontend(new_argc, new_argv); /*parse container but do not disassemble yet*/
+        std::vector<SgAsmInterpretation*> interps
+            = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation);
 
         /* Optionally remove any MS-DOS interpretations */
         if (do_skip_dos) {
@@ -649,7 +663,7 @@ main(int argc, char *argv[])
         
         /* Use only the first remaining interpretation */
         ROSE_ASSERT(!interps.empty());
-        SgAsmInterpretation *interp = interps.front();
+        interp = interps.front();
         disassembler = Disassembler::lookup(interp)->clone();
     }
 
@@ -690,18 +704,27 @@ main(int argc, char *argv[])
         worklist.insert(raw_entry_va);
     } else {
         /* See Disassembler::disassembleInterp() for how to construct a memory map from an interpretation. */
-        map = interp->get_map();
-        ROSE_ASSERT(map!=NULL);
-
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        map = new MemoryMap();
         for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
-            SgRVAList entry_rvalist = headers[i]->get_entry_rvas();
+            /* Load appropriate sections into the memory map */
+            Loader *loader = Loader::find_loader(*hi);
+            if (disassembler->get_search() & Disassembler::SEARCH_NONEXE) {
+                loader->map_all_sections(map, (*hi)->get_sections()->get_sections());
+            } else {
+                loader->map_code_sections(map, (*hi)->get_sections()->get_sections());
+            }
+
+            /* Seed disassembler work list with entry addresses */
+            SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
             for (size_t i=0; i<entry_rvalist.size(); i++) {
-                rose_addr_t entry_va = headers[i]->get_base_va() + entry_rvalist[i].get_rva();
+                rose_addr_t entry_va = (*hi)->get_base_va() + entry_rvalist[i].get_rva();
                 worklist.insert(entry_va);
             }
-            if (partitioner->get_search() & Partitioner::SEARCH_FUNCSYMS)
-                partitioner->search_function_symbols(&worklist, map, headers[i]);
+
+            /* Seed disassembler work list with addresses of function symbols if desired */
+            if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
+                disassembler->search_function_symbols(&worklist, map, *hi);
         }
     }
 
@@ -716,7 +739,7 @@ main(int argc, char *argv[])
     Disassembler::AddressSet successors;
     Disassembler::BadMap bad;
     try {
-        insns = d->disassembleBuffer(map, worklist, &successors, &bad);
+        insns = disassembler->disassembleBuffer(map, worklist, &successors, &bad);
     } catch (const Partitioner::IPDParser::Exception &e) {
         std::cerr <<e <<"\n";
         exit(1);
@@ -745,18 +768,64 @@ main(int argc, char *argv[])
      * Partition instructions into basic blocks and functions
      *------------------------------------------------------------------------------------------------------------------------*/
 
-    SgAsmBlock *block = MyPartitioner().partition(insns, entry_va, "entry_function");
+    if (do_raw)
+        partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
 
+    SgAsmBlock *block = partitioner->partition(interp, insns);
+
+    /* Link instructions into AST if possible */
+    if (interp) {
+        interp->set_global_block(block);
+        block->set_parent(interp);
+    }
+    
     /*------------------------------------------------------------------------------------------------------------------------
      * Show the results
      *------------------------------------------------------------------------------------------------------------------------*/
 
     if (do_show_functions)
         ShowFunctions().show(block);
+
     if (!do_quiet) {
         MyAsmUnparser unparser;
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
+    }
+
+    /* Figure out what part of the memory mapping does not have instructions. We do this by getting the extents (in
+     * virtual address space) for the memory map used by the disassembler, then subtracting out the bytes referred to by
+     * each instruction.  We cannot just take the sum of the sizes of the sections minus the sum of the sizes of
+     * instructions because (1) sections may overlap in the memory map and (2) instructions may overlap in the virtual
+     * address space.
+     *
+     * We use the list of instructions from the SgAsmBlock produced by partitioning rather than the list of instructions
+     * actually disassembled. The lists are the same unless the partitioner's SEARCH_LEFTOVERS bit is clear, in which case we
+     * only consider instructions that are part of a function. Cleared with "-rose:partitioner_search -leftovers".
+     *
+     * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
+     * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
+     * actually use it anywhere else. */
+    if (do_show_extents || do_show_coverage) {
+        ExtentMap extents=map->va_extents();
+        size_t disassembled_map_size = extents.size();
+
+        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);
+        for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
+            extents.erase((*ii)->get_address(), (*ii)->get_raw_bytes().size());
+        size_t unused = extents.size();
+        if (do_show_extents && unused>0) {
+            printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
+            extents.dump_extents(stdout, "    ", NULL, 0);
+        }
+
+        if (do_show_coverage && disassembled_map_size>0) {
+            double disassembled_coverage = 100.0 * (disassembled_map_size - unused) / disassembled_map_size;
+            if (interp) {
+                interp->set_percentageCoverage(disassembled_coverage);
+                interp->set_coverageComputed(true);
+            }
+            printf("Disassembled coverage: %0.1f%%\n", disassembled_coverage);
+        }
     }
 
     /*------------------------------------------------------------------------------------------------------------------------
@@ -777,7 +846,22 @@ main(int argc, char *argv[])
         printf("generating ASCII dump...\n");
         T1().traverse(project, preorder);
     }
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Generate dot files
+     *------------------------------------------------------------------------------------------------------------------------*/
     
+    if (do_ast_dot && project) {
+        printf("Generating GraphViz dot files for the AST...\n");
+        generateDOT(*project);
+        //generateAstGraph(project, INT_MAX);
+    }
+        
+    if (do_cfg_dot) {
+        printf("Generating GraphViz dot files for control flow graphs...\n");
+        dump_CFG_CG(block);
+    }
+
     /*------------------------------------------------------------------------------------------------------------------------
      * Final statistics
      *------------------------------------------------------------------------------------------------------------------------*/
@@ -787,52 +871,7 @@ main(int argc, char *argv[])
 
 
 
-    /* Results */
-
 #if 0
-    /* Figure out what part of the memory mapping does not have instructions. We do this by getting the extents (in
-     * virtual address space) for the memory map used by the disassembler, then subtracting out the bytes referred to by
-     * each instruction.  We cannot just take the sum of the sizes of the sections minus the sum of the sizes of
-     * instructions because (1) sections may overlap in the memory map and (2) instructions may overlap in the virtual
-     * address space.
-     *
-     * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
-     * total number of bytes represented in the disassembly memory map. Although this is stored in the AST, we don't
-     * actually use it anywhere. */
-    if (do_show_extents || do_show_coverage) {
-        ExtentMap extents=interp->get_map()->va_extents();
-        size_t disassembled_map_size = extents.size();
-
-        std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
-        for (size_t j=0; j<insns.size(); j++) {
-            SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
-            extents.erase(insn->get_address(), insn->get_raw_bytes().size());
-        }
-        size_t unused = extents.size();
-        if (do_show_extents && unused>0) {
-            printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
-            extents.dump_extents(stdout, "    ", NULL, 0);
-        }
-
-        if (do_show_coverage && disassembled_map_size>0) {
-            double disassembled_coverage = 100.0 * (disassembled_map_size - unused) / disassembled_map_size;
-            interp->set_percentageCoverage(disassembled_coverage);
-            interp->set_coverageComputed(true);
-            printf("Disassembled coverage: %0.1f%%\n", disassembled_coverage);
-        }
-    }
-
-    /* Generate dot files */
-    if (do_ast_dot) {
-        printf("Generating GraphViz dot files for the AST...\n");
-        generateDOT(*project);
-        //generateAstGraph(project, INT_MAX);
-    }
-    if (do_cfg_dot) {
-        printf("Generating GraphViz dot files for control flow graphs...\n");
-        dump_CFG_CG(interp);
-    }
-
     /* Test assembler */
     if (do_reassemble) {
         size_t assembly_failures = 0;
