@@ -42,7 +42,12 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
             const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();
             ROSE_ASSERT(exprs.size()>=2);
             SgAsmExprListExp *elist = isSgAsmExprListExp(exprs[1]);
-            ROSE_ASSERT(elist);
+            if (!elist) {
+                SgAsmUnaryArmSpecialRegisterList *rlist = isSgAsmUnaryArmSpecialRegisterList(exprs[1]);
+                ROSE_ASSERT(rlist);
+                elist = isSgAsmExprListExp(rlist->get_operand());
+                ROSE_ASSERT(elist);
+            }
             for (size_t i=0; i<elist->get_expressions().size(); i++) {
                 SgAsmArmRegisterReferenceExpression *reg = isSgAsmArmRegisterReferenceExpression(elist->get_expressions()[i]);
                 ROSE_ASSERT(reg);
