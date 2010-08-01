@@ -28,7 +28,7 @@ testFilenameSupport: filenameSupport
 	./filenameSupport
 
 testDirectorySupport: directorySupport $(srcdir)/input_directorySupport.C
-	./directorySupport -c -rose:verbose 2 $(srcdir)/input_directorySupport.C
+	./directorySupport -c -rose:verbose 0 $(srcdir)/input_directorySupport.C
 
 # EXTRA_DIST = $(TESTCODES)
 EXTRA_DIST = input_directorySupport.C

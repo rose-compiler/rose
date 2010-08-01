@@ -37,7 +37,7 @@ SUBDIRS += OpenMP_tests
 
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-   SUBDIRS += Fortran_tests
+   SUBDIRS += Fortran_tests CAF_tests
 endif
 
 check-local:

@@ -1194,12 +1194,13 @@ AC_ARG_ENABLE(ofp-version,
 [ echo "Setting up OFP version"
 ])
 
+# DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.7.2)"
+   echo "Default version of OFP used (0.8.1)"
    ofp_major_version_number=0
-   ofp_minor_version_number=7
-   ofp_patch_version_number=2
+   ofp_minor_version_number=8
+   ofp_patch_version_number=1
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1212,12 +1213,12 @@ echo "ofp_patch_version_number = $ofp_patch_version_number"
 
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
-   if test "x$ofp_minor_version_number" = "x7"; then
+   if test "x$ofp_minor_version_number" = "x8"; then
       echo "Recognized an accepted minor version number."
-      if test "x$ofp_patch_version_number" = "x2"; then
+      if test "x$ofp_patch_version_number" = "x1"; then
          echo "Recognized an accepted patch version number."
       else
-         if test "x$ofp_patch_version_number" = "x1"; then
+         if test "x$ofp_patch_version_number" = "x2"; then
             echo "Recognized an accepted patch version number ONLY for testing."
          else
             echo "ERROR: Could not identify the OFP patch version number."
@@ -1226,8 +1227,8 @@ if test "x$ofp_major_version_number" = "x0"; then
        # exit 1
       fi
    else
-      if test "x$ofp_minor_version_number" = "x8"; then
-#     We accept any patch level with minor version number 8 releases. 
+      if test "x$ofp_minor_version_number" = "x7"; then
+       # We accept any patch level with minor version number 7 releases. 
          echo "Recognized an accepted minor version number using ofp_patch_version_number = $ofp_patch_version_number."
       else
          echo "ERROR: Could not identify the OFP minor version number."
@@ -2238,9 +2239,9 @@ projects/compass/tools/compass/gui2/Makefile
 projects/compass/tools/compass/buildInterpreter/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
-projects/compass/tools/compass/tests/C_tests/Makefile
-projects/compass/tools/compass/tests/Cxx_tests/Makefile
-projects/compass/tools/compass/tests/OpenMP_tests/Makefile
+projects/compass/tools/compass/tests/Compass_C_tests/Makefile
+projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
+projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile
@@ -2369,6 +2370,7 @@ tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
+tests/CompileTests/CAF_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
