@@ -1160,7 +1160,7 @@ void
 Partitioner::discover_first_block(Function *func) 
 {
     if (debug) {
-        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64,
+        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64" ",
                 SgAsmFunctionDeclaration::reason_str(true, func->reason).c_str(),
                 func->entry_va, func->name.c_str(), func->entry_va);
     }
@@ -1362,8 +1362,10 @@ Partitioner::analyze_cfg()
                 target_bb->function && target_bb->function->returns) {
                 if (!return_bb->function) {
                     bb->function->pending = true;
-                    if (debug)
-                        fprintf(debug, "[B%08"PRIx64" is return target from F%08"PRIx64"]", return_va, target_va);
+                    if (debug) {
+                        fprintf(debug, "  F%08"PRIx64" returns to B%08"PRIx64" in F%08"PRIx64"\n", 
+                                target_bb->function->entry_va, return_va, bb->function->entry_va);
+                    }
                 } else if (return_va==target_bb->function->entry_va && !bb->function->returns) {
                     /* This handles the case when function A's return from B falls through into B. In this case, since B
                      * returns then A also returns.  We mark A as returning and we'll catch A's callers on the next pass.
@@ -1374,8 +1376,10 @@ Partitioner::analyze_cfg()
                      *        RET
                      */
                     bb->function->returns = true;
-                    if (debug)
-                        fprintf(debug, "[B%08"PRIx64" falls through to F%08"PRIx64"]", address(bb), target_va);
+                    if (debug) {
+                        fprintf(debug, "  Function F%08"PRIx64" returns by virtue of call fall-through at B%08"PRIx64"\n", 
+                                bb->function->entry_va, address(bb));
+                    }
                 }
             }
         }
