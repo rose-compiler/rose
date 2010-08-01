@@ -85,7 +85,7 @@ extract_rose_required_ofp_source_files: get_jar_file
          cp $$f $$filename; \
       else \
          echo "Warning: $$f is not found in jar file."; \
-         if test "x$(OFP_VERSION)" = "x0.7.2"; then \
+         if test "x$(OFP_VERSION)" = "x0.8.1"; then \
             echo "Using OFP source file $$f from version $(OFP_VERSION) distributed with ROSE."; \
             if test -e $$filename; then \
                echo "Note: OFP source file $$filename is already present."; \
@@ -94,7 +94,7 @@ extract_rose_required_ofp_source_files: get_jar_file
                cp ${srcdir}/$$filename $$filename; \
             fi; \
          else \
-            echo "Error: can't use default (version 0.7.2) OFP source file $filename_without_path with OpenFortranParser-${OFP_VERSION}.jar file."; \
+            echo "Error: can't use default (version 0.8.1) OFP source file $filename_without_path with OpenFortranParser-${OFP_VERSION}.jar file."; \
             exit 1; \
          fi; \
       fi; \
@@ -104,8 +104,8 @@ extract_rose_required_ofp_source_files: get_jar_file
       rm -rf fortran; \
    fi;
 
-# We distribute the default version of the OFP jar file (version 0.7.2)
-# OpenFortranParser-0.7.2.jar but this is handled using the dist_java_DATA 
+# We distribute the default version of the OFP jar file (version 0.8.1)
+# OpenFortranParser-0.8.1.jar but this is handled using the dist_java_DATA 
 # automake variable. Also add the generated/downloaded/unpacked files from 
 # the OFP jar file.
 EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
