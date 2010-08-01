@@ -487,7 +487,7 @@ main(int argc, char *argv[])
     bool do_ast_dot = false;
     bool do_cfg_dot = false;
     bool do_quiet = false;
-    bool do_skip_dos = false;
+    bool do_dos = false;
     bool do_show_extents = false;
     bool do_show_coverage = false;
     bool do_show_functions = false;
@@ -518,8 +518,11 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
+        } else if (!strcmp(argv[i], "--dos")) {                 /* use MS-DOS header in preference to PE when both exist */
+            do_dos = true;
         } else if (!strcmp(argv[i], "--skip-dos")) {
-            do_skip_dos = true;
+            fprintf(stderr, "%s: --skip-dos behavior is the default now; use --dos if you want the MS-DOS header\n", argv[0]);
+            exit(1);
         } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
             show_bad = true;
         } else if (!strcmp(argv[i], "--show-coverage")) {       /* show disassembly coverage */
@@ -646,24 +649,11 @@ main(int argc, char *argv[])
         std::vector<SgAsmInterpretation*> interps
             = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation);
 
-        /* Optionally remove any MS-DOS interpretations */
-        if (do_skip_dos) {
-            for (std::vector<SgAsmInterpretation*>::iterator ii=interps.begin(); ii!=interps.end(); /*void*/) {
-                const SgAsmGenericHeaderPtrList &headers = (*ii)->get_headers()->get_headers();
-                bool is_dos = false;
-                for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); !is_dos && hi!=headers.end(); ++hi)
-                    is_dos = isSgAsmDOSFileHeader(*hi)!=NULL;
-                if (is_dos) {
-                    interps.erase(ii);
-                } else {
-                    ++ii;
-                }
-            }
-        }
-        
-        /* Use only the first remaining interpretation */
+        /* Use the last header if there's more than one. Windows files often have a DOS header first followed by another
+         * header such as PE.  If the "--dos" command-line switch is present then use the first header instead. */
         ROSE_ASSERT(!interps.empty());
-        interp = interps.front();
+        interp = do_dos ? interps.front() : interps.back();
+
         disassembler = Disassembler::lookup(interp)->clone();
     }
 
