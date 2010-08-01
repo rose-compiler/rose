@@ -728,12 +728,7 @@ main(int argc, char *argv[])
     Disassembler::InstructionMap insns;
     Disassembler::AddressSet successors;
     Disassembler::BadMap bad;
-    try {
-        insns = disassembler->disassembleBuffer(map, worklist, &successors, &bad);
-    } catch (const Partitioner::IPDParser::Exception &e) {
-        std::cerr <<e <<"\n";
-        exit(1);
-    }
+    insns = disassembler->disassembleBuffer(map, worklist, &successors, &bad);
     printf("disassembled %zu instruction%s + %zu failure%s",
            insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
     if (bad.size()>0) {
@@ -761,7 +756,13 @@ main(int argc, char *argv[])
     if (do_raw)
         partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
 
-    SgAsmBlock *block = partitioner->partition(interp, insns);
+    SgAsmBlock *block = NULL;
+    try {
+        block = partitioner->partition(interp, insns);
+    } catch (const Partitioner::IPDParser::Exception &e) {
+        std::cerr <<e <<"\n";
+        exit(1);
+    }
 
     /* Link instructions into AST if possible */
     if (interp) {
