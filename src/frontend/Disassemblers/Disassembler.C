@@ -295,13 +295,15 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
 
 /* Disassemble one basic block. */
 Disassembler::InstructionMap
-Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors, InstructionMap *cache)
 {
     static const time_t progress_interval = 10;
-    time_t progress_time = time(NULL);
+    static time_t progress_time = 0;
+    if (!progress_time)
+        progress_time = time(NULL);
 
     InstructionMap insns;
-    SgAsmInstruction *insn = NULL;
+    SgAsmInstruction *insn;
     rose_addr_t va=0, next_va=start_va;
 
     if (p_debug)
@@ -316,8 +318,20 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
          * instruction; otherwise INSN is null, VA is the address where disassembly failed, and NEXT_VA is meaningless. */
         while (1) {
             va = next_va;
+
+            insn = NULL;
+            if (cache) {
+                InstructionMap::iterator cached = cache->find(va);
+                if (cached!=cache->end())
+                    insn = cached->second;
+            }
             try {
-                insn = disassembleOne(map, va, NULL);
+                if (!insn) {
+                    insn = disassembleOne(map, va, NULL);
+                    p_ndisassembled++;
+                    if (cache)
+                        cache->insert(std::make_pair(va, insn));
+                }
             } catch(const Exception &e) {
                 if ((p_search & SEARCH_UNKNOWN) && e.bytes.size()>0) {
                     insn = make_unknown_instruction(e);
@@ -327,8 +341,10 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: "
                                     "disassembly failed in basic block 0x%08"PRIx64": %s\n",
                                     e.ip, start_va, e.mesg.c_str());
-                        for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-                            SageInterface::deleteAST(ii->second);
+                        if (!cache) {
+                            for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
+                                SageInterface::deleteAST(ii->second);
+                        }
                         throw;
                     }
                     /* Terminate tail recursion. Make sure we don't try to disassemble here again within this call, even if
@@ -339,7 +355,13 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
             }
             next_va = va + insn->get_raw_bytes().size();
             insns.insert(std::make_pair(va, insn));
-            p_ndisassembled++;
+
+            /* Progress report */
+            if (0==p_ndisassembled % 2500 && (p_debug || time(NULL)-progress_time > progress_interval)) {
+                progress_time = time(NULL);
+                fprintf(p_debug?p_debug:stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
+                        va, p_ndisassembled);
+            }
 
             /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
              * A more thorough analysis can be performed below in the get_block_successors() call. */          
@@ -348,12 +370,6 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                     fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: \"%s\" at 0x%08"PRIx64" naively terminates block\n",
                             start_va, unparseMnemonic(insn).c_str(), va);
                 break;
-            }
-
-            /* Progress report */
-            if (0==p_ndisassembled % 2500 && (p_debug || time(NULL)-progress_time > progress_interval)) {
-                fprintf(p_debug?p_debug:stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
-                        va, p_ndisassembled);
             }
         }
 
@@ -388,11 +404,11 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
 /* Disassemble one basic block. */
 Disassembler::InstructionMap
 Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
-                               AddressSet *successors)
+                               AddressSet *successors, InstructionMap *cache)
 {
     MemoryMap map;
     map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleBlock temp"));
-    return disassembleBlock(&map, start_va, successors);
+    return disassembleBlock(&map, start_va, successors, cache);
 }
 
 /* Disassemble reachable instructions from a buffer */
@@ -409,6 +425,7 @@ Disassembler::InstructionMap
 Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, AddressSet *successors, BadMap *bad)
 {
     InstructionMap insns;
+    InstructionMap icache;              /* to help speed up disassembleBlock() when SEARCH_DEADEND is disabled */
     try {
         rose_addr_t next_search = 0;
 
@@ -445,16 +462,8 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
                  * between instructions of block B and then become synchronized with B). */
                 InstructionMap bb;
                 try {
-                    bb = disassembleBlock(map, va, &worklist);
-                    for (InstructionMap::iterator bbi=bb.begin(); bbi!=bb.end(); ++bbi) {
-                        InstructionMap::iterator exists = insns.find(bbi->first);
-                        if (exists!=insns.end()) {
-                            SageInterface::deleteAST(exists->second); /*don't delete bbi->second because we use it below*/
-                            exists->second = bbi->second;
-                        } else {
-                            insns.insert(*bbi);
-                        }
-                    }
+                    bb = disassembleBlock(map, va, &worklist, &icache);
+                    insns.insert(bb.begin(), bb.end()); /*not inserted if already existing*/
                 } catch(const Exception &e) {
                     if (bad)
                         bad->insert(std::make_pair(va, e));
@@ -477,7 +486,7 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
             }
         }
     } catch(...) {
-        for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
+        for (InstructionMap::iterator ii=icache.begin(); ii!=icache.end(); ++ii)
             SageInterface::deleteAST(ii->second);
         throw;
     }
