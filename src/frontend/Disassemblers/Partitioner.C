@@ -1253,19 +1253,15 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         append(f, bb);
         BasicBlock *target_bb = find_bb_containing(target_va);
 
-        /* Find the target function, optionally creating it or adding reason flags to it. */
-        Function *target_func = NULL;
-        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)) {
-            target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
-        } else {
-            target_func = target_bb ? target_bb->function : NULL;
-        }
+        /* Optionally create or add reason flags to called function. */
+        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
+            add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
 
         /* If the call target is in the middle of some other existing function (i.e., not its entry address) then mark
          * that function as pending so that the target block can be removed and the target function's blocks rediscovered.
          * In other words, treat the target block as if it where a conflict like above. */
-        if (target_func && target_func!=f && target_va!=target_func->entry_va)
-            target_func->pending = true;
+        if (target_bb && target_bb->function && target_bb->function!=f && target_va!=target_bb->function->entry_va)
+            target_bb->function->pending = true;
         
         /* Discovery continues at the successors. */
         const Disassembler::AddressSet &suc = successors(bb);
