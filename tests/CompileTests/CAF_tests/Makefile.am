@@ -35,16 +35,16 @@ $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.f90)
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
-QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
+# QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
 
 # Make rule to build the QMTest database files
-CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.f90)
-	@echo "Calling QMTEST_Objects rule: "
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
+#CURRENT_DIRECTORY = `pwd`
+#$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.f90)
+#	@echo "Calling QMTEST_Objects rule: "
+#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
 
 # Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+# include $(top_srcdir)/config/QMTest_makefile.inc
 
 # put the headers here for now. TODO: Move them to a better place
 EXTRA_DIST = $(ALL_TESTCODES) 
