@@ -892,7 +892,7 @@ EmulationPolicy::emulate_syscall()
             } else {
               if (oldset != 0) {
                   size_t nwritten = map.write(&sys_oldset, oldset, sizeof sys_oldset);
-                  ROSE_ASSERT(nwritten = sizeof sys_oldset);
+                  ROSE_ASSERT(nwritten == sizeof sys_oldset);
               }
             }
             writeGPR(x86_gpr_ax,result);
