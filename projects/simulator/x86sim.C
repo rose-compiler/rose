@@ -749,6 +749,22 @@ EmulationPolicy::emulate_syscall()
           break;
         }
 
+        case 85: { /*0x55, readlink*/
+          uint32_t path = readGPR(x86_gpr_bx).known_value();
+          uint32_t buf = readGPR(x86_gpr_cx).known_value();
+          uint32_t bufsize = readGPR(x86_gpr_dx).known_value();
+          char sys_buf[bufsize];
+          std::string sys_path = read_string(path);
+          int result = readlink(sys_path.c_str(), sys_buf, bufsize);
+          if (result == -1) {
+              result = -errno;
+          } else {
+              size_t nwritten = map.write(sys_buf, buf, result);
+              ROSE_ASSERT(nwritten == result);
+          }
+          writeGPR(x86_gpr_ax, result);
+          break;
+        }
             
         case 91: { /*0x5b, munmap*/
             uint32_t va = readGPR(x86_gpr_bx).known_value();
