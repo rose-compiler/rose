@@ -87,7 +87,8 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       case V_SgFunctionDefinition: {
         if (idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
           SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
-          std::cerr << "found fun def" << std::endl;
+          SgFunctionDeclaration* fxnDecl = isSgFunctionDeclaration(funDef->get_declaration());
+          std::cerr << "found fxn def: " << fxnDecl->get_qualified_name().str() << std::endl;
           outEdges = n.outEdges(); //TODO remove
         } else 
           outEdges = n.outEdges();
