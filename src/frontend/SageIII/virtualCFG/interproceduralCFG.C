@@ -76,7 +76,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       case V_SgConstructorInitializer: {
         SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
         unsigned int idx = n.getIndex();
-        if (idx == 1) {
+        if (idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
           std::cerr << "found ctor init" << std::endl;
           break;
         }
