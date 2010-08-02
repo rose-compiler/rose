@@ -9,7 +9,7 @@ using namespace std;
 // seems like it is not supposed to be included
 #if 0
 //#ifdef HAVE_MYSQL
-   #include "GlobalDatabaseConnection.h"
+   #include "GlobalDatabaseConnectionMYSQL.h"
 #endif
 
 int main( int argc, char * argv[] ) 

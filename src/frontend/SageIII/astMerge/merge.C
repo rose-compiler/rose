@@ -71,6 +71,13 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // DQ (5/31/2007): Introduce tracking of performance of within AST merge
      TimingPerformance timer ("AST merge:");
 
+  // DQ (7/29/2010): Added support to hanlde type table.
+     if (SgTypeDefault::numberOfNodes() == 0)
+        {
+       // Build a SgTypeDefault now so that it will not be built for the first time in the function: accumulateSaveSetForPreprocessingInfo().
+          SgTypeDefault::createType();
+        }
+
   // DQ (5/27/2007): Implement this as a local variable!
   // set<SgNode*> finalDeleteSet;
 
@@ -1110,12 +1117,13 @@ buildDeleteSet( SgProject* project )
      accumulateSaveSet(project,saveSet);
   // printf ("Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
 
-#if 1
   // DQ (7/10/2010): These are not handled in the MangledNameMapTraversal constructor (types are handled directly)
   // printf ("Handle SgNode::p_globalFunctionTypeTable : Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
      accumulateSaveSet(SgNode::get_globalFunctionTypeTable(),saveSet);
-#endif
+
+     ROSE_ASSERT(SgNode::get_globalTypeTable() != NULL);
+     accumulateSaveSet(SgNode::get_globalTypeTable(),saveSet);
 
   // Use a simple macro to simplify the generation of the correct code.
 #define MACRO_ADD_STATIC_TYPE_TO_SAVE_SET(TYPE) if (TYPE::numberOfNodes() > 0) { TYPE* t = TYPE::createType(); accumulateSaveSet(t,saveSet); }

@@ -268,5 +268,9 @@ void generateAssignmentStatement( Token_t* label, bool isPointerAssignment );
 
 void convertBaseTypeOnStackToPointer();
 
+SgVariableSymbol* add_external_team_decl( std::string );
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
+
+
