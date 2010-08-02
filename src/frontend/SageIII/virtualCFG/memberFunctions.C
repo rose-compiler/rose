@@ -763,7 +763,7 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 2: { 
+    case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX: { 
      if (! virtualInterproceduralControlFlowGraphs) 
        break;
      Rose_STL_Container<SgExpression*> calls;
