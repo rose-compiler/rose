@@ -66,26 +66,32 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
     unsigned int idx = n.getIndex();
     switch (sgnode->variantT()) {
       case V_SgFunctionCallExp: {
-        SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
         if (idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
+          SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
           SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
           std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
-          break;
-        }
+          outEdges = n.outEdges(); //TODO remove
+        } else 
+          outEdges = n.outEdges();
+        break;
       } 
       case V_SgConstructorInitializer: {
-        SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
         if (idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
+          SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
           std::cerr << "found ctor init" << std::endl;
-          break;
-        }
+          outEdges = n.outEdges(); //TODO remove
+        } else 
+          outEdges = n.outEdges();
+        break;
       }
       case V_SgFunctionDefinition: {
-        SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
         if (idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
+          SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
           std::cerr << "found fun def" << std::endl;
-          break;
-        }
+          outEdges = n.outEdges(); //TODO remove
+        } else 
+          outEdges = n.outEdges();
+        break;
       }
       default: {
         outEdges = n.outEdges();
