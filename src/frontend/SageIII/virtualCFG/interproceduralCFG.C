@@ -41,18 +41,12 @@ void InterproceduralCFG::buildFilteredCFG()
 template <class NodeT, class EdgeT>
 void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored)
 {
-    ROSE_ASSERT(n.getNode());
+    SgNode* sgnode = n.getNode();
+    ROSE_ASSERT(sgnode);
 
     if (explored.count(n) > 0)
         return;
     explored.insert(n);
-
-    SgFunctionCallExp* fxnCall = isSgFunctionCallExp(n.getNode());
-    unsigned int idx = n.getIndex();
-    if (fxnCall && idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
-      SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
-      std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
-    }
 
     SgGraphNode* from = NULL;
     if (all_nodes.count(n) > 0)
@@ -62,13 +56,31 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
     else
     {
         from = new SgGraphNode;
-        from->set_SgNode(n.getNode());
+        from->set_SgNode(sgnode);
         from->addNewAttribute("info", new CFGNodeAttribute(n.getIndex(), graph_));
         all_nodes[n] = from;
         graph_->addNode(from);
     }
 
-    std::vector<EdgeT> outEdges = n.outEdges();
+    std::vector<EdgeT> outEdges;
+    switch (sgnode->variantT()) {
+      case V_SgFunctionCallExp: {
+        SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
+        unsigned int idx = n.getIndex();
+        if (fxnCall && idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
+          SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
+          std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
+          break;
+        }
+      } 
+      case V_SgConstructorInitializer: {
+        std::cerr << "found ctor init" << std::endl;
+      }
+      default: {
+        outEdges = n.outEdges();
+      }
+    }
+
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
