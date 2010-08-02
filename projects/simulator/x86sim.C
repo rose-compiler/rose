@@ -723,6 +723,20 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, getpgrp());
             break;
         }
+
+        case 78: { /*0x4e, gettimeofday*/
+          uint32_t tp = readGPR(x86_gpr_bx).known_value();
+          struct timeval sys_t;
+          int result = gettimeofday(&sys_t, NULL);
+          if (result == -1) {
+              result = -errno;
+          } else {
+              writeMemory<32>(x86_segreg_ds, tp, sys_t.tv_sec, true_() );
+              writeMemory<32>(x86_segreg_ds, tp + 4, sys_t.tv_usec, true_() );
+          }
+          writeGPR(x86_gpr_ax, result);
+          break;
+        }
             
         case 91: { /*0x5b, munmap*/
             uint32_t va = readGPR(x86_gpr_bx).known_value();
