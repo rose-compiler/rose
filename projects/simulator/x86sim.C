@@ -737,6 +737,18 @@ EmulationPolicy::emulate_syscall()
           writeGPR(x86_gpr_ax, result);
           break;
         }
+
+        case 83: { /*0x53, symlink*/
+          uint32_t oldpath = readGPR(x86_gpr_bx).known_value();
+          uint32_t newpath = readGPR(x86_gpr_cx).known_value();
+          std::string sys_oldpath = read_string(oldpath);
+          std::string sys_newpath = read_string(newpath);
+          int result = symlink(sys_oldpath.c_str(),sys_newpath.c_str());
+          if (result == -1) result = -errno;
+          writeGPR(x86_gpr_ax, result);
+          break;
+        }
+
             
         case 91: { /*0x5b, munmap*/
             uint32_t va = readGPR(x86_gpr_bx).known_value();
