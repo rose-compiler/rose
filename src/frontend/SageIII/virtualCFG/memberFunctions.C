@@ -3540,7 +3540,7 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
-      case 1: {
+      case SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX: {
                 if (virtualInterproceduralControlFlowGraphs) {
                   SgFunctionDeclaration* decl = get_declaration();
                   if (decl != NULL) {
