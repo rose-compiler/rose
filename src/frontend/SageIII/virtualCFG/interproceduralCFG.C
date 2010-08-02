@@ -67,14 +67,19 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       case V_SgFunctionCallExp: {
         SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
         unsigned int idx = n.getIndex();
-        if (fxnCall && idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
+        if (idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
           SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
           std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
           break;
         }
       } 
       case V_SgConstructorInitializer: {
-        std::cerr << "found ctor init" << std::endl;
+        SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
+        unsigned int idx = n.getIndex();
+        if (idx == 1) {
+          std::cerr << "found ctor init" << std::endl;
+          break;
+        }
       }
       default: {
         outEdges = n.outEdges();
