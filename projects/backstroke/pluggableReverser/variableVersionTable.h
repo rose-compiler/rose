@@ -11,6 +11,8 @@ class VariableVersionTable
     std::map<VarName, std::set<int> > table_;
     VariableRenaming* var_renaming_;
 
+    friend bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2);
+
 public:
     VariableVersionTable() : var_renaming_(NULL) {}
     VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
@@ -30,6 +32,13 @@ public:
     /** Regress the version of the given variable. Call this function once the expression or
       statement containing the given variable is reversed successfully. */
     void reverseVersion(SgNode* node);
+
+    /** Remove a variable from the current table. */
+    void removeVariable(SgNode* node)
+    { 
+        ROSE_ASSERT(table_.count(getVarName(node)) > 0);
+        table_.erase(getVarName(node)); 
+    }
 
     /** If a local variable is not restored at the begining of the reverse basic block, set its
       version to NULL. */
@@ -55,6 +64,11 @@ public:
     //! Print a VarName object.
     static void print(const VarName& name);
 };
+
+inline bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2)
+{
+    return t1.table_ == t2.table_;
+}
 
 
 #endif	/* BACKSTROKE_VARIABLEVERSIONTABLE_H */

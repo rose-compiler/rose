@@ -39,10 +39,41 @@ InstrumentedExpressionVec EventProcessor::processExpression(const ExpressionPack
 {
     InstrumentedExpressionVec output;
 
+    // If two results have the same variable table, we remove the one which has the higher cost.
+    
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
         InstrumentedExpressionVec result = exp_processor->process(exp_pkg);
-        output.insert(output.end(), result.begin(), result.end());
+
+        foreach (const InstrumentedExpression& exp1, result)
+        {
+            bool discard = false;
+            for (size_t i = 0; i < output.size(); ++i)
+            {
+                InstrumentedExpression& exp2 = output[i];
+                if (exp1.var_table == exp2.var_table) 
+                {
+                    if (exp1.cost > exp2.cost)
+                    {
+                        discard = true;
+                        deepDelete(exp1.fwd_exp);
+                        deepDelete(exp1.rvs_exp);
+                        break;
+                    }
+                    else if (exp1.cost < exp2.cost)
+                    {
+                        deepDelete(exp2.fwd_exp);
+                        deepDelete(exp2.rvs_exp);
+                        output.erase(output.begin() + i);
+                        --i;
+                    }
+                }
+            }
+
+            if (!discard)
+                output.push_back(exp1);
+        }
+        //output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
@@ -51,10 +82,40 @@ InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage
 {
     InstrumentedStatementVec output;
 
+    // If two results have the same variable table, we remove the one which has the higher cost.
+
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
         InstrumentedStatementVec result = stmt_processor->process(stmt_pkg);
-        output.insert(output.end(), result.begin(), result.end());
+        foreach (const InstrumentedStatement& stmt1, result)
+        {
+            bool discard = false;
+            for (size_t i = 0; i < output.size(); ++i)
+            {
+                InstrumentedStatement& stmt2 = output[i];
+                if (stmt1.var_table == stmt2.var_table) 
+                {
+                    if (stmt1.cost > stmt2.cost)
+                    {
+                        discard = true;
+                        deepDelete(stmt1.fwd_stmt);
+                        deepDelete(stmt1.rvs_stmt);
+                        break;
+                    }
+                    else if (stmt1.cost < stmt2.cost)
+                    {
+                        deepDelete(stmt2.fwd_stmt);
+                        deepDelete(stmt2.rvs_stmt);
+                        output.erase(output.begin() + i);
+                        --i;
+                    }
+                }
+            }
+
+            if (!discard)
+                output.push_back(stmt1);
+        }
+        //output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
@@ -132,7 +193,7 @@ FuncDeclPairs EventProcessor::processEvent()
     FuncDeclPairs outputs;
 
     SimpleCostModel cost_model;
-    InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table, cost_model));
+    InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table));
 
     
     static int ctr = 0;

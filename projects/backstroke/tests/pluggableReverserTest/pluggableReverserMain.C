@@ -1,6 +1,7 @@
 #include <pluggableReverser/eventProcessor.h>
 #include <pluggableReverser/expressionProcessor.h>
 #include <pluggableReverser/statementProcessor.h>
+#include <pluggableReverser/akgulStyleExpressionProcessor.h>
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
@@ -47,6 +48,7 @@ int main(int argc, char * argv[])
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+    //event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
 
     // Add all statement handlers to the statement pool.
     event_processor.addStatementProcessor(new BasicStatementProcessor);

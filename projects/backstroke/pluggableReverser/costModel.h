@@ -23,6 +23,18 @@ public:
     }
 };
 
+inline bool operator <(const SimpleCostModel& cost1, const SimpleCostModel& cost2)
+{
+    return cost1.getCost() < cost2.getCost();
+}
+
+inline bool operator >(const SimpleCostModel& cost1, const SimpleCostModel& cost2)
+{
+    return cost2 < cost1;
+}
+
+
+
 
 
 

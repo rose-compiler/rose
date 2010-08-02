@@ -132,6 +132,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
     // Use two vectors to store intermediate results.
     InstrumentedStatementVec queue[2];
     vector<SgStatement*> to_delete;
+    vector<SgInitializedName*> local_vars;
 
     int i = 0;
     queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), stmt_pkg.var_table));
@@ -142,12 +143,15 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
     {
         if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
         {
+            const SgInitializedNamePtrList& names = var_decl->get_variables();
+            ROSE_ASSERT(names.size() == 1);
+            SgInitializedName* init_name = names[0];
+
+            // Collect all local variables here, which we will use later.
+            local_vars.push_back(init_name);
+
             foreach (InstrumentedStatement obj, queue[i])
             {
-                const SgInitializedNamePtrList& names = var_decl->get_variables();
-                ROSE_ASSERT(names.size() == 1);
-                SgInitializedName* init_name = names[0];
-
 
                 /*******************************************************************************/
                 // The first transformation is restore this local variable and restore it
@@ -266,6 +270,17 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
         queue[i].clear();
         // Switch the index between 0 and 1.
         i = 1 - i;
+    }
+
+
+    // Remove all local variables from variable version table since we will not use them anymore. 
+    // This is helpful to prune branches by comparing variable version tables. 
+    foreach (InstrumentedStatement& stmt, queue[i])
+    {
+        foreach (SgInitializedName* var, local_vars)
+            stmt.var_table.removeVariable(var);
+        stmt.var_table.print();
+        cout << stmt.cost.getCost() << endl << endl;
     }
 
 
