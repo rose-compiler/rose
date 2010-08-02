@@ -1238,10 +1238,37 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
             /* This block belongs internally to some other function. Since ROSE requires that blocks be owned by exactly one
              * function (the function/block relationship is an edge in the abstract syntax tree), we have to remove this block
              * from the other function.  We'll mark both the other function and this function as being in conflict and try
-             * again later. */
-            if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
-            if (functions.find(va)==functions.end())
+             * again later.
+             *
+             * However, there is a special case we need to watch out for: the case when the block in conflict is no longer
+             * reachable from the original function due to having made changes to other blocks in the original function. For
+             * instance, consider the following sequence of events:
+             *     F000 contains B000 (the entry block) and B010
+             *          B000 has 10 instructions, and ends with a call to F100 which returns
+             *          B010 is the fall-through address of B000
+             * We then begin to discover F005 whose entry address is the fifth instruction of B000, so
+             *     B000 is split into B000 containing the first five instrucitons and B005 containing the second five
+             *     F000 is marked as pending due to the splitting of its B000 block
+             *     B005 is added to F005 as its entry block
+             *     B005 calls F100 which returns to B010, so we want to add B010 to F005
+             * So we have a conflict:
+             *     B010 belongs to F000 because we never removed it, but we need B010 also in F005.
+             * In this example, the only CFG edge to B010 inside F000 was the fall-through edge from the call to F100, which
+             * no longer exists in F000. Unfortunately we have no way of knowing (short of doing a CFG analysis in F000) that
+             * the last edge was removed. Even if we did a CFG analysis, we may be working with incomplete information (F000
+             * might not be fully discovered yet).
+             *
+             * The way we handle this special case is as follows:
+             *     If the original function (F000 in the example) is marked as pending then the blocks it currently owns might
+             *     not actually belong to the function anymore. Therefore we will not create a new FUNC_GRAPH function for the
+             *     block in conflict, but rather mark both functions as pending and abandon until the next pass.  Otherwise we
+             *     assume the block in conflict really is in conflict and we'll create a FUNC_GRAPH function. */
+            if (functions.find(va)==functions.end() && !bb->function->pending) {
                 add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
+                if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+            } else if (debug) {
+                fprintf(debug, "[possible conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+            }
             bb->function->pending = f->pending = true;
             if (debug) fprintf(debug, " abandon");
             throw AbandonFunctionDiscovery();
