@@ -785,6 +785,32 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 114: { /*0x72, wait4*/
+            uint32_t pid = readGPR(x86_gpr_bx).known_value();
+            uint32_t status_ptr = readGPR(x86_gpr_cx).known_value();
+            uint32_t options = readGPR(x86_gpr_dx).known_value();
+            uint32_t rusage_ptr = readGPR(x86_gpr_si).known_value();
+            uint32_t status;
+            size_t nread = map.read(&status, status_ptr, 4);
+            ROSE_ASSERT(nread == 4);
+            struct rusage sys_rusage;
+            uint32_t result = wait4(pid, &status, options, &sys_rusage);
+            if( result == -1) {
+                result = -errno;
+            } else {
+                if (status_ptr != 0) {
+                    size_t nwritten = map.write(&status, status_ptr, 4);
+                    ROSE_ASSERT(nwritten == 4);
+                }
+                if (rusage_ptr != 0) {
+                    size_t nwritten = map.write(&sys_rusage, rusage_ptr, sizeof(struct rusage));
+                    ROSE_ASSERT(nwritten == sizeof(struct rusage));
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
         case 122: { /*0x7a, uname*/
             uint32_t dest_va = readGPR(x86_gpr_bx).known_value();
             if (debug)
