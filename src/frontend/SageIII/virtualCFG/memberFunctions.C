@@ -45,7 +45,8 @@ SgNode::cfgInEdges(unsigned int idx) {
   return std::vector<CFGEdge>();
 }
 
-static void makeEdge(CFGNode from, CFGNode to, vector<CFGEdge>& result) {
+template <class NodeT, class EdgeT>
+static void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
   // Makes a CFG edge, adding appropriate labels
   SgNode* fromNode = from.getNode();
   unsigned int fromIndex = from.getIndex();

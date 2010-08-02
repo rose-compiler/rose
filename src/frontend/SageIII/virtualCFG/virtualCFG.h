@@ -1,7 +1,7 @@
 #ifndef VIRTUAL_CFG_H
 #define VIRTUAL_CFG_H
 
-
+#include <vector>
 
 
 //! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
@@ -304,5 +304,9 @@ namespace VirtualCFG {
 #define SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX 2
 #define SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX 1
 #define SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX 2
+
+//! Utility function to make CFG Edges
+template <class NodeT, class EdgeT>
+void makeEdge(NodeT from, NodeT to, std::vector<EdgeT>& result);
 
 #endif // VIRTUAL_CFG_H
