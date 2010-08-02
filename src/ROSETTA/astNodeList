@@ -382,6 +382,7 @@ SgFunctionSymbol
 SgFunctionType
 SgFunctionTypeSymbol
 SgFunctionTypeTable
+SgTypeTable
 SgGlobal
 SgGotoStatement
 SgGraph
@@ -655,3 +656,8 @@ SgWhileStmt
 SgWriteStatement
 SgXorAssignOp
 Sg_File_Info
+SgTypeCAFTeam
+SgCAFWithTeamStatement
+SgCAFCoExpression
+SgTypeCrayPointer
+

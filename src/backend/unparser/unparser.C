@@ -1392,6 +1392,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
      ROSE_ASSERT(file != NULL);
 
+     // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
+     if (file->get_skip_unparse()==true) return;
+
+
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
   // DQ (4/21/2006): This would prevent the file from being unparsed twice,

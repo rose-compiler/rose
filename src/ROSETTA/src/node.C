@@ -225,6 +225,10 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static SgFunctionTypeTable*","globalFunctionTypeTable","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (7/22/2010): Added support for type table supporting construction of unique types.
+     Node.setDataPrototype("static SgTypeTable*","globalTypeTable","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (3/12/2007): Added static mangled name map, used to improve performance of mangled name lookup.
   // Node.setDataPrototype("static SgMangledNameListPtr","globalMangledNameMap","",
   //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);

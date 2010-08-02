@@ -4,8 +4,11 @@
 #include "sage3basic.hhh"
 #include <stdint.h>
 
-
+#if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
+#else
+SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, SgProject* project );
+#endif
 
 #include "rewrite.h"
 
@@ -491,6 +494,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_C99_language ();
   bool is_Cxx_language ();
   bool is_Fortran_language ();
+  bool is_CAF_language ();
   bool is_PHP_language();
   bool is_binary_executable();
   bool is_mixed_C_and_Cxx_language ();
