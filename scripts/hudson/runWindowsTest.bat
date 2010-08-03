@@ -1,5 +1,6 @@
 @echo running Windows
 
+
 @echo BOOST_LIBRARIES : %BOOST_LIBRARIES%
 @echo BOOST_ROOT : %BOOST_ROOT%
 @echo Path : %Path%
