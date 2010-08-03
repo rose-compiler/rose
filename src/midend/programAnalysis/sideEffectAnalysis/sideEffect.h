@@ -1,8 +1,7 @@
 #ifndef SIDEEFFEECT_H
 #define SIDEEFFEECT_H
 
-#include "config.h"
-
+#include "sage3.h"
 #include <list>
 
 // DQ (12/30/2005): This is a Bad Bad thing to do (I can explain)
@@ -42,16 +41,16 @@ class SideEffectAnalysis {
   virtual int calcSideEffect(SgNode& node) = 0;
 #endif
   //! Return the list of invoked functions encountered during the analysis.
-  virtual list<const char* > getCalledFunctions() = 0;
+  virtual std::list<const char* > getCalledFunctions() = 0;
 
   //! Return a list of side effects for the given function.
-  virtual list<const char* > getGMOD(const char* func) = 0;
+  virtual std::list<const char* > getGMOD(const char* func) = 0;
 
   //! Return a list of side effects for the given statement.
-  virtual list<const char* > getDMOD(const char* stmt) = 0;
+  virtual std::list<const char* > getDMOD(const char* stmt) = 0;
 
   //! Return the identifier associated with this node and to be passed to getDMOD
-  virtual string getNodeIdentifier(SgNode *node) = 0;
+  virtual std::string getNodeIdentifier(SgNode *node) = 0;
 
  protected:
   
@@ -67,9 +66,9 @@ class SideEffectAnalysis {
 };
 
 //! Utility function to return the fully qualified name of a function given a function call expression AST node.
-string getQualifiedFunctionName(SgFunctionCallExp *astNode);
+std::string getQualifiedFunctionName(SgFunctionCallExp *astNode);
 
 //! Utility function to return the fully qualified name of a function given a fucntion declaration AST node.
-string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
+std::string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
 
 #endif /* SIDEEFFECT_H */

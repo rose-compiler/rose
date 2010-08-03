@@ -232,6 +232,10 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
             if (debug)
                 std::cerr <<e <<"\n";
+        } catch(const Policy::Exception& e) {
+            /* Abandon entire basic block if the semantics policy cannot handle the instruction. */
+            if (debug)
+                std::cerr <<e <<"\n";
         }
     }
 
@@ -411,8 +415,9 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
 {
     if (insns.empty()) return false;
 
-    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
-    VirtualMachineSemantics::Policy policy;
+    typedef VirtualMachineSemantics::Policy Policy;
+    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+    Policy policy;
     Semantics semantics(policy);
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     try {
@@ -423,6 +428,8 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
             if (!policy.get_ip().is_known()) return true;
         }
     } catch (const Semantics::Exception&) {
+        return true;
+    } catch (const Policy::Exception&) {
         return true;
     }
 
@@ -454,23 +461,25 @@ std::vector< std::pair< size_t, size_t > >
 SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                             bool relax_stack_semantics/*false*/)
 {
+    using namespace VirtualMachineSemantics;
+
     static const bool verbose = false;
 
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
-    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
-    VirtualMachineSemantics::Policy policy;
+    typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+    Policy policy;
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     Semantics semantics(policy);
 
     /* When comparing states, we don't want to compare the instruction pointers. Therefore, we'll change the IP value of
      * each state to be the same. */
-    const VirtualMachineSemantics::ValueType<32> common_ip;
+    const ValueType<32> common_ip;
     
     /* Save the state before and after each instruction.  states[i] is the state before insn[i] and states[i+1] is the state
      * after insn[i]. */
-    std::vector<VirtualMachineSemantics::State> state;
+    std::vector<State> state;
     state.push_back(policy.get_state());
     state.back().ip = common_ip;
     try {
@@ -485,6 +494,8 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
             if (verbose) std::cerr <<"  state:\n" <<policy.get_state();
         }
     } catch (const Semantics::Exception&) {
+        /* Perhaps we can find at least a few no-op subsequences... */
+    } catch (const Policy::Exception&) {
         /* Perhaps we can find at least a few no-op subsequences... */
     }
 

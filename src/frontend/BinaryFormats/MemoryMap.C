@@ -54,6 +54,28 @@ MemoryMap::MapElement::merge_anonymous(const MapElement &other, size_t oldsize)
     *anonymous = 1;
 }
 
+void
+MemoryMap::MapElement::merge_names(const MapElement &other)
+{
+    if (name.empty()) {
+        set_name(other.get_name());
+    } else if (other.name.empty()) {
+        /*void*/
+    } else {
+        set_name(get_name()+"+"+other.get_name());
+    }
+}
+
+MemoryMap::MapElement &
+MemoryMap::MapElement::set_name(const std::string &s)
+{
+    static const size_t limit = 35;
+    name = s;
+    if (name.size()>limit)
+        name = name.substr(0, limit-3) + "...";
+    return *this;
+}
+
 bool
 MemoryMap::MapElement::merge(const MapElement &other)
 {
@@ -73,6 +95,7 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         size = other.size;
+        merge_names(other);
     } else if (other.va + other.size == va) {
         /* Other element is left contiguous with this element. */
         if (!consistent(other))
@@ -81,11 +104,13 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         offset = other.offset;
+        merge_names(other);
     } else if (va + size == other.va) {
         /* Other element is right contiguous with this element. */
         if (!consistent(other))
             return false; /*no exception since they don't overlap*/
         size += other.size;
+        merge_names(other);
     } else if (other.va < va) {
         /* Other element overlaps left part of this element. */
         if (!consistent(other))
@@ -94,11 +119,13 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         offset = other.offset;
+        merge_names(other);
     } else {
         /* Other element overlaps right part of this element. */
         if (!consistent(other))
             throw Inconsistent(NULL, *this, other);
         size = (other.va + other.size) - va;
+        merge_names(other);
     }
 
     /* Adjust backing store for anonymous elements. This is necessary because two anonymous elements are consistent if they
@@ -304,6 +331,100 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
     return ncopied;
 }
 
+void
+MemoryMap::mprotect(const MapElement &region)
+{
+    /* Check whether the region refers to addresses not in the memory map. */
+    ExtentMap e;
+    e.insert(ExtentPair(region.get_va(), region.get_size()));
+    e.erase(va_extents());
+    if (!e.empty())
+        throw NotMapped(this, e.begin()->first);
+
+    std::vector<MapElement> created;
+    std::vector<MapElement>::iterator i=elements.begin();
+    while (i!=elements.end()) {
+        MapElement &other = *i;
+        if (other.get_va() >= region.get_va()) {
+            if (other.get_va()+other.get_offset() <= region.get_va()+region.get_offset()) {
+                /* other is fully contained in (or congruent to) region; change other's permissions */
+                other.set_mapperms(region.get_mapperms());
+                i++;
+            } else if (other.get_va() < region.get_va()+region.get_size()) {
+                /* left part of other is contained in region; split other into two parts */
+                size_t left_sz = region.get_va() + region.get_size() - other.get_va();
+                ROSE_ASSERT(left_sz>0);
+                MapElement left = other;
+                left.set_size(left_sz);
+                left.set_mapperms(region.get_mapperms());
+                created.push_back(left);
+
+                size_t right_sz = other.get_size() - left_sz;
+                MapElement right = other;
+                ROSE_ASSERT(right_sz>0);
+                right.set_va(other.get_va() + left_sz);
+                right.set_offset(right.get_offset() + left_sz);
+                right.set_size(right_sz);
+                created.push_back(right);
+
+                elements.erase(i);
+            } else {
+                /* other is right of region; skip it */
+                i++;
+            }
+        } else if (other.get_va()+other.get_size() <= region.get_va()) {
+            /* other is left of desired region; skip it */
+            i++;
+        } else if (other.get_va()+other.get_size() <= region.get_va() + region.get_size()) {
+            /* right part of other is contained in region; split other into two parts */
+            size_t left_sz = region.get_va() - other.get_va();
+            ROSE_ASSERT(left_sz>0);
+            MapElement left = other;
+            left.set_size(left_sz);
+            created.push_back(left);
+
+            size_t right_sz = other.get_size() - left_sz;
+            MapElement right = other;
+            right.set_va(other.get_va() + left_sz);
+            right.set_offset(right.get_offset() + left_sz);
+            right.set_size(right_sz);
+            right.set_mapperms(region.get_mapperms());
+            created.push_back(right);
+
+            elements.erase(i);
+        } else {
+            /* other contains entire region and extends left and right; split into three parts */
+            size_t left_sz = region.get_va() - other.get_va();
+            ROSE_ASSERT(left_sz>0);
+            MapElement left = other;
+            left.set_size(left_sz);
+            created.push_back(left);
+            
+            size_t mid_sz = region.get_size();
+            ROSE_ASSERT(mid_sz>0);
+            MapElement mid = other;
+            mid.set_va(region.get_va());
+            mid.set_offset(mid.get_offset() + left_sz);
+            mid.set_size(region.get_size());
+            mid.set_mapperms(region.get_mapperms());
+            created.push_back(mid);
+            
+            size_t right_sz = other.get_size() - (left_sz + mid_sz);
+            ROSE_ASSERT(right_sz>0);
+            MapElement right = other;
+            right.set_va(region.get_va()+region.get_size());
+            right.set_offset(mid.get_offset() + mid_sz);
+            right.set_size(right_sz);
+            created.push_back(right);
+            
+            elements.erase(i);
+        }
+    }
+
+    elements.insert(elements.end(), created.begin(), created.end());
+    sorted = false;
+}
+
 ExtentMap
 MemoryMap::va_extents() const
 {
@@ -367,11 +488,16 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         }
 
 
-        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64"\n",
+        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64,
                 prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
                 0==(me.get_mapperms()&MM_PROT_READ) ?'-':'r',
                 0==(me.get_mapperms()&MM_PROT_WRITE)?'-':'w',
                 0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
                 basename.c_str(), elements[i].get_offset());
+
+        if (!me.name.empty())
+            fprintf(f, " %s", me.name.c_str());
+        
+        fputc('\n', f);
     }
 }

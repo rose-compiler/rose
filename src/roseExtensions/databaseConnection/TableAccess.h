@@ -9,9 +9,12 @@
 #define TABLEACCESS_H
 
 #include <iostream>
+#include <cstdio>
 #include <sstream>
-#include <sqlplus.hh>
+#include <mysql++.h>
+#include <cstring>
 
+#include "GlobalDatabaseConnectionMYSQL.h"
 //! automated table rowdata object creation macros
 #include "TableAccessMacros.h"
 
@@ -22,7 +25,6 @@ class GlobalDatabaseConnection;
 
 //! standard ID value for DB insertion, or if ID is unknown (0 will never be assigned as ID)
 #define UNKNOWNID 0
-
 
 //! class to access tables in the database
 template<class Rowdata>
@@ -215,15 +217,15 @@ int TableAccess<Rowdata>::initialize( void )
 	//addTable( ta );
 
 	// get all table names
-	Result *res = gdbConnection->select("SHOW TABLES;");
+    mysqlpp::StoreQueryResult *res = gdbConnection->select("SHOW TABLES;");
 	bool found = false;
-	for(Result::iterator i= res->begin(); i!=res->end(); i++ ) {
-		Row row = *i;
-		//cout << " checktabss " << row[0] << endl; // debug
-		if( tableName == row[0].get_string() ) {
+	for(mysqlpp::StoreQueryResult::iterator i= res->begin(); i!=res->end(); i++ ) {
+        mysqlpp::Row row = *i;
+	  //std::cout << " checktabss " << row[0] << " against " << tableName.c_str() << std::endl; // debug
+		if( std::strcmp(tableName.c_str(),row[0]) == 0 ) {
 #if DB_DROPTABLES==1
 			string dropcmd = "DROP TABLE " + tableName + ";";
-			cout << " dropping " << tableName << endl; // debug
+			std::cout << " dropping " << tableName << std::endl; // debug
 			gdbConnection->execute( dropcmd.c_str() );
 			found = false;
 #else
@@ -236,7 +238,7 @@ int TableAccess<Rowdata>::initialize( void )
 
 	// creation necessary?
 	if(!found) {
-		//cout << " not found " << tableName << endl; // debug
+		//std::cout << " not found " << tableName << std::endl; // debug
 		string cmd = "CREATE TABLE " + tableName + " ( ";
 
 		// add column definitions
@@ -265,7 +267,7 @@ int TableAccess<Rowdata>::initialize( void )
 		}
 		
 		cmd += " ;";
-		//cout << "TableAccess::init executing: " << cmd << endl; // debug
+		//std::cout << "TableAccess::init executing: " << cmd << std::endl; // debug
 		gdbConnection->execute( cmd.c_str() );
 	}
 
@@ -292,19 +294,19 @@ template< class Rowdata >
 int TableAccess<Rowdata>::selectById(long id, Rowdata *data)
 {
 	if(!gdbConnection) {
-		cout << "Error TableAccess<T>::selectById : database connection not initialized" << endl; // debug
+		std::cout << "Error TableAccess<T>::selectById : database connection not initialized" << std::endl; // debug
 		assert( false );
 		return 1;
 	}
 
-	Query query =  gdbConnection->getQuery();
+	mysqlpp::Query query =  gdbConnection->getQuery();
 	query << "SELECT " << data->field_list() <<" FROM "<<  data->table() << " WHERE id='" << id << "' ;";
 #if DEBUG_SQL==1
-	cout << "TableAccess<T>::selectById : " << query.preview() << endl; // debug
+	std::cout << "TableAccess<T>::selectById : " << query.preview() << std::endl; // debug
 #endif
-	Result res = query.store();
-	if(! query.success() ) {
-		cout << "Error TableAccess<T>::selectById : " << query.error() << endl; // debug
+    mysqlpp::StoreQueryResult res = query.store();
+	if(! res ) {
+		std::cout << "Error TableAccess<T>::selectById : " << query.error() << std::endl; // debug
 		assert( false );
 		return 2;
 	}
@@ -322,25 +324,25 @@ vector<Rowdata> TableAccess<Rowdata>::select(string cond)
 	vector<Rowdata> ret;
 	Rowdata dummyData;
 	if(!gdbConnection) {
-		cout << "Error TableAccess<T>::select: database connection not initialized" << endl; // debug
+		std::cout << "Error TableAccess<T>::select: database connection not initialized" << std::endl; // debug
 		assert( false );
 		return ret;
 	}
 
-	Query query =  gdbConnection->getQuery();
+	mysqlpp::Query query =  gdbConnection->getQuery();
 	query << "SELECT " << dummyData.field_list() <<" FROM "<<  dummyData.table() << " WHERE " << cond << ";";
 #if DEBUG_SQL==1
-	cout << "TableAccess<T>::select: " << query.preview() << endl; // debug
+	std::cout << "TableAccess<T>::select: " << query.preview() << std::endl; // debug
 #endif
-	Result res = query.store();
-	if(! query.success() ) {
-		cout << "Error TableAccess<T>::select: " << query.error() << endl; // debug
+    mysqlpp::StoreQueryResult res = query.store();
+	if(! res ) {
+		std::cout << "Error TableAccess<T>::select: " << query.error() << std::endl; // debug
 		assert( false );
 		return ret;
 	}
 	// copy results into a vector
-	for(Result::iterator i= res.begin(); i!=res.end(); i++ ) {
-		Row row = *i;
+	for(mysqlpp::StoreQueryResult::iterator i= res.begin(); i!=res.end(); i++ ) {
+        mysqlpp::Row row = *i;
 		Rowdata rd( row );
 		ret.push_back(rd);
 	}
@@ -354,19 +356,19 @@ template< class Rowdata >
 int TableAccess<Rowdata>::insert(Rowdata *data)
 {
 	if(!gdbConnection) {
-		cout << "Error TableAccess<T>::insert : database connection not initialized" << endl; // debug
+		std::cout << "Error TableAccess<T>::insert : database connection not initialized" << std::endl; // debug
 		assert( false );
 		return -2;
 	}
 
-	Query query =  gdbConnection->getQuery();
+	mysqlpp::Query query =  gdbConnection->getQuery();
 	query.insert( *data );
 #if DEBUG_SQL==1
-	cout << "TableAccess<T>::insert : " << query.preview() << endl; // debug
+	std::cout << "TableAccess<T>::insert : " << query.preview() << std::endl; // debug
 #endif
-	query.execute();
-	if(! query.success() ) {
-		cout << "Error TableAccess<T>::insert : " << query.error() << endl; // debug
+    mysqlpp::SimpleResult res = query.execute();
+	if(! res ) {
+		std::cout << "Error TableAccess<T>::insert : " << query.error() << std::endl; // debug
 		assert( false );
 		return -1;
 	}
@@ -383,20 +385,20 @@ int TableAccess<Rowdata>::modify(Rowdata *data)
 {
 	long id = data->get_id();
 	if(!gdbConnection) {
-		cout << "Error TableAccess<T>::modify : database connection not initialized" << endl; // debug
+		std::cout << "Error TableAccess<T>::modify : database connection not initialized" << std::endl; // debug
 		assert( false );
 		return -2;
 	}
 
-	Query query = gdbConnection->getQuery();
+	mysqlpp::Query query = gdbConnection->getQuery();
 	query << "UPDATE " << data->table() << " SET " << data->equal_list() << 
 		" WHERE id='" << id << "' ; ";
 #if DEBUG_SQL==1
-	cout << "TableAccess<T>::modify : " << query.preview() << endl; // debug
+	std::cout << "TableAccess<T>::modify : " << query.preview() << std::endl; // debug
 #endif
-	query.execute();
-	if(! query.success() ) {
-		cout << "Error TableAccess<T>::modify : " << query.error() << endl; // debug
+    mysqlpp::SimpleResult res = query.execute();
+	if(! res ) {
+		std::cout << "Error TableAccess<T>::modify : " << query.error() << std::endl; // debug
 		assert( false );
 		return -1;
 	}
@@ -410,15 +412,15 @@ template< class Rowdata >
 int TableAccess<Rowdata>::remove(Rowdata *data)
 {
 	if(!gdbConnection) {
-		cout << "Error TableAccess<T>::remove : database connection not initialized" << endl; // debug
+		std::cout << "Error TableAccess<T>::remove : database connection not initialized" << std::endl; // debug
 		assert( false );
 		return -2;
 	}
 
 	char cmdstr[256];
-	snprintf(cmdstr, 256,"DELETE FROM %s WHERE id='%d';", data->table(), data->get_id() );
+  snprintf(cmdstr, 256,"DELETE FROM %s WHERE id='%d';", data->table(), data->get_id() );
 #if DEBUG_SQL==1
-	cout << "TableAccess<T>::remove : " << cmdstr << endl; // debug
+	std::cout << "TableAccess<T>::remove : " << cmdstr << std::endl; // debug
 #endif
 	gdbConnection->execute( cmdstr );
 	return 0;
@@ -496,8 +498,8 @@ long TableAccess<Rowdata>::retrieveCreateByColumn(Rowdata *data, string column, 
 		}
 		*data = results[0];
 		// FIXME, user insert_id ?
-		//cout << "IDinsert" <<": "<< results[0].equal_list() << endl; // debug
-		//cout << "IDinsert" <<": "<< data->equal_list() << endl; // debug
+		//std::cout << "IDinsert" <<": "<< results[0].equal_list() << std::endl; // debug
+		//std::cout << "IDinsert" <<": "<< data->equal_list() << std::endl; // debug
 	}
 	else if(results.size() > 1) {
 		// more than one project with this name?? -> fatal
@@ -506,11 +508,11 @@ long TableAccess<Rowdata>::retrieveCreateByColumn(Rowdata *data, string column, 
 	} else {
 		// project entry found
 		*data = results[0];
-		//cout << "IDfound" <<": "<< results[0].equal_list() << endl; // debug
-		//cout << "IDfound" <<": "<< data->equal_list() << endl; // debug
+		//std::cout << "IDfound" <<": "<< results[0].equal_list() << std::endl; // debug
+		//std::cout << "IDfound" <<": "<< data->equal_list() << std::endl; // debug
 	}
 	id = data->get_id();
-	//cout << " rcID " << id << endl; // debug
+	//std::cout << " rcID " << id << std::endl; // debug
 	return id;
 }
 
@@ -559,8 +561,8 @@ long TableAccess<Rowdata>::retrieveCreateByColumns(Rowdata *data, string columns
 		}
 		*data = results[0];
 		// FIXME, user insert_id ?
-		//cout << "IDinsert" <<": "<< results[0].equal_list() << endl; // debug
-		//cout << "IDinsert" <<": "<< data->equal_list() << endl; // debug
+		//std::cout << "IDinsert" <<": "<< results[0].equal_list() << std::endl; // debug
+		//std::cout << "IDinsert" <<": "<< data->equal_list() << std::endl; // debug
 	}
 	else if(results.size() > 1) {
 		// more than one project with this name?? -> fatal
@@ -569,11 +571,11 @@ long TableAccess<Rowdata>::retrieveCreateByColumns(Rowdata *data, string columns
 	} else {
 		// project entry found
 		*data = results[0];
-		//cout << "IDfound" <<": "<< results[0].equal_list() << endl; // debug
-		//cout << "IDfound" <<": "<< data->equal_list() << endl; // debug
+		//std::cout << "IDfound" <<": "<< results[0].equal_list() << std::endl; // debug
+		//std::cout << "IDfound" <<": "<< data->equal_list() << std::endl; // debug
 	}
 	id = data->get_id();
-	//cout << " rcID " << id << endl; // debug
+	//std::cout << " rcID " << id << std::endl; // debug
 	return id;
 }
 

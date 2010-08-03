@@ -289,7 +289,7 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
                              AddressSet *successors)
 {
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0));
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleOne temp"));
     return disassembleOne(&map, start_va, successors);
 }
 
@@ -297,6 +297,9 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
 Disassembler::InstructionMap
 Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
 {
+    static const time_t progress_interval = 10;
+    time_t progress_time = time(NULL);
+
     InstructionMap insns;
     SgAsmInstruction *insn = NULL;
     rose_addr_t va=0, next_va=start_va;
@@ -348,8 +351,10 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
             }
 
             /* Progress report */
-            if (0==p_ndisassembled % 10000)
-                fprintf(stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n", va, p_ndisassembled);
+            if (0==p_ndisassembled % 2500 && (p_debug || time(NULL)-progress_time > progress_interval)) {
+                fprintf(p_debug?p_debug:stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
+                        va, p_ndisassembled);
+            }
         }
 
         /* Try to figure out the successor addresses.  If we can prove that the only successor is the address following the
@@ -386,7 +391,7 @@ Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, siz
                                AddressSet *successors)
 {
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0));
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleBlock temp"));
     return disassembleBlock(&map, start_va, successors);
 }
 
@@ -424,7 +429,6 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
             AddressSet::iterator i = worklist.begin();
             rose_addr_t va = *i;
             worklist.erase(i);
-
 
             if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
                 /* Skip this if we've already tried to disassemble it. */
@@ -680,7 +684,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, rose_addr_t buf_va, si
                                 AddressSet *successors, BadMap *bad)
 {
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0));
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleBuffer temp"));
     return disassembleBuffer(&map, start_va, successors, bad);
 }
 
@@ -693,8 +697,10 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
     ROSE_ASSERT(file!=NULL);
     const void *file_buf = &(file->get_data()[0]);
 
+    MemoryMap::MapElement melmt(section_va, section->get_size(), file_buf, section->get_offset());
+    melmt.set_name(section->get_name()->get_string());
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(section_va, section->get_size(), file_buf, section->get_offset()));
+    map.insert(melmt);
     return disassembleBuffer(&map, section_va+start_offset, successors, bad);
 }
 

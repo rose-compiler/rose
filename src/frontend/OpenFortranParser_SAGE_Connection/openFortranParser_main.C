@@ -37,6 +37,7 @@
 #endif
 
 #include "jni.h"
+#include "fortran_error_handler.h"
 
 using namespace std;
 
@@ -121,7 +122,11 @@ int openFortranParser_main(int argc, char **argv)
          printf ("Call the function that will start a JVM and call the OFP \n");
        }
 
+    fortran_error_handler_begin();
+
     int status = runOFP(argc, argv);
+
+    fortran_error_handler_end();
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH
