@@ -1796,6 +1796,22 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
 
             firstDefList[rootName] = func;
         }
+        //Otherwise, see if it is in namespace scope
+        else if(isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
+        {
+            //It is declared in namespace scope.
+            //Gtet our enclosing function definition to insert the first definition into.
+
+            SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+            ROSE_ASSERT(func);
+
+            firstDefList[rootName] = func;
+        }
+        else
+        {
+            cout << "Error: Found variable with no firstDef point that is not a class or namespace member." << endl;
+            ROSE_ASSERT(false);
+        }
     }
 
     //Start from the end of the name and insert definitions of every part

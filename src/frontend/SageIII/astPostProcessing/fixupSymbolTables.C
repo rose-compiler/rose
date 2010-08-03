@@ -101,6 +101,15 @@ fixupAstSymbolTables( SgNode* node )
                SgNode::get_globalFunctionTypeTable()->set_parent(node);
         }
 
+  // DQ (7/25/2010): Set the parent of the global type table to the SgProject
+     if (SgNode::get_globalTypeTable()->get_parent() == NULL)
+        {
+          SgProject* project = isSgProject(node);
+          SgFile*    file    = isSgFile(node);
+          if (project != NULL || file != NULL)
+               SgNode::get_globalTypeTable()->set_parent(node);
+        }
+
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer2 ("Fixup local symbol tables:");
 
