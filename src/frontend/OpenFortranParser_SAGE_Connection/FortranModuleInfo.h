@@ -13,29 +13,37 @@
 #define  MOD_FILE_SUFFIX   ".rmod"
 #define  SKIP_SYNTAX_CHECK "-rose:skip_syntax_check"
 
+using std::vector;
+using std::map;
+using std::string;
 
 class FortranModuleInfo
   {
 
      private:
        static SgProject*                      currentProject;
-       static std::map<std::string, SgModuleStatement*> moduleNameAstMap;
+       static map<string, SgModuleStatement*> moduleNameAstMap;
        static unsigned                        nestedSgFile; 
+       static vector<string>                  inputDirs   ;
 
      public:
        static bool                 isRmodFile();
        static void                 setCurrentProject(SgProject*);
        static SgProject*           getCurrentProject();
 
-       static SgModuleStatement*   getModule(std::string modName);
-       static void                 addMapping(std::string modName,SgModuleStatement* modStmt);
+       static SgModuleStatement*   getModule(string modName);
+       static void                 addMapping(string modName,SgModuleStatement* modStmt);
+
+static string find_file_from_inputDirs(string name);
+
+static void set_inputDirs(SgProject* );
  
        FortranModuleInfo(){};
 
        ~FortranModuleInfo(){};
 
      private:
-       static SgSourceFile*               createSgSourceFile(std::string modName);
+       static SgSourceFile*               createSgSourceFile(string modName);
        static void                  clearMap();
        static void                  dumpMap();
 
