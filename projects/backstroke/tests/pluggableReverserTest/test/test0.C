@@ -1,20 +1,28 @@
 
 struct model
 {
-    int i;
-    int j;
+    //int i;
+    //static int k;
 };
+
+#if 0
+namespace my
+{
+    int x;
+}
+
+int g;
+#endif
 
 void event0(model* m)
 {
-#if 0
-    int i = 10;
-    m->i += ++i;
-    if (int i = 10) ++m->i, ++i;
-    //++m->i; 
-#endif
-    //int i = 1;
-    m->i = 10;
-    m->i += m->j;
-    //m->j += i;
+    int a = 0;
+    int b = 0;
+    int q,w,e,r,t,y;
+    //g = 0;
+    //model::k = 0;
+    //my::x = 0;
+    //++a;
+    //m->i += a;
+    //m->i = 0;
 }

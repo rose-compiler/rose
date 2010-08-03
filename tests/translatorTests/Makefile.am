@@ -47,7 +47,7 @@ check_PROGRAMS = testTranslator2010_01
 TESTS = $(check_PROGRAMS)
 
 testTranslator2010_02_test: testTranslator2010_02 
-	./testTranslator2010_02 -rose:verbose 2 $(srcdir)/input_testTranslator2010_2.C
+	./testTranslator2010_02 -rose:verbose 0 $(srcdir)/input_testTranslator2010_2.C
 
 EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C
 
