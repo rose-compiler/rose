@@ -174,6 +174,9 @@ namespace ELF{
 #include "ether.h"
 #endif
 
+// King85 (2010.08.03) : Now that everything is defined we can include all the implementation files for templates.
+#include "AstDOTGenerationImpl.C"
+
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 #define COMPILE_DEBUG_STATEMENTS 1
 

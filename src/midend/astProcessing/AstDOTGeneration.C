@@ -8,6 +8,7 @@
 
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
+#include "AstDOTGenerationImpl.C"
 #include "AstConsistencyTests.h"
 
 // DQ (11/6/2008): Added to support the PRIx64 macro for portable (32/64)-bit address I/O.

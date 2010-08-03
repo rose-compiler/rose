@@ -206,6 +206,4 @@ class AstDOTGenerationExtended : public AstDOTGeneration
 		virtual DOTSynthesizedAttribute evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l);
 };
 
-#include "AstDOTGenerationImpl.C"
-
 #endif
