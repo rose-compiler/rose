@@ -1,4 +1,4 @@
-#include "sage3basic.h"
+
 #include "FortranParserState.h"
 
 stack<FortranParserState*>  FortranParserState::statesStack;
@@ -43,9 +43,3 @@ FortranParserState::clearStacks()
       currFunctionAttributeStack.clear();
   }
 
-
-// DQ (7/30/2010): Added empty function to if there are entries in the stack
-bool emptyFortranStateStack()
-   {
-     return FortranParserState::empty();
-   }
