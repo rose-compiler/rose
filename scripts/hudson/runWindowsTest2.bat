@@ -42,5 +42,5 @@ cmake -DBOOST_ROOT=%BOOST_ROOT% -DCMAKE_BUILD_TYPE=Release -G"Visual Studio 9 20
 vcbuild.exe ROSE.sln "Release|Win32"
 
 @echo 1 > rose_win_test2.rose
-pscp rose_win_test2.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/rose_win_test2.rose
+pscp rose_win_test2.rose hudson-rose@hudson-rose.llnl.gov:/nfs/casc/overture/ROSE/git/rose_win_test2.rose
 
