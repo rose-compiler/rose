@@ -316,10 +316,16 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
             if (p_debug && rtsz>0)
                 fprintf(p_debug, "    Anonymous va 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64" zero filled\n",
                         va+ltsz, rtsz, va+ltsz+rtsz);
-            if (ltsz>0)
-                map->insert(MemoryMap::MapElement(va, ltsz, &(file->get_data()[0]), offset, mapperms));
-            if (rtsz>0)
-                map->insert(MemoryMap::MapElement(va+ltsz, rtsz, mapperms));
+            if (ltsz>0) {
+                MemoryMap::MapElement melmt(va, ltsz, &(file->get_data()[0]), offset, mapperms);
+                melmt.set_name(section->get_name()->get_string());
+                map->insert(melmt);
+            }
+            if (rtsz>0) {
+                MemoryMap::MapElement melmt(va+ltsz, rtsz, mapperms);
+                melmt.set_name(section->get_name()->get_string());
+                map->insert(melmt);
+            }
 
             /* Remember virtual address of first byte of section. */
             ROSE_ASSERT(section_va >= section->get_header()->get_base_va());

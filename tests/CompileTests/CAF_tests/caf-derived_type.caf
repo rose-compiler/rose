@@ -1,0 +1,18 @@
+program derived
+implicit none
+
+type my 
+  integer :: i
+  real    :: r
+end type
+integer :: tmp
+team :: ocean
+type(my), allocatable :: mo(:)[*]
+
+allocate( mo(1)[@ocean] )
+
+tmp = mo[3]%i
+mo[1]%r = 2.2
+mo[tmp@ocean]%i = 2
+
+end program

@@ -726,6 +726,9 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
           case FortranStyleComment:
              returnString = "FortranStyleComment";
              break;
+          case F90StyleComment:
+             returnString = "F90StyleComment";
+             break;
           case C_StyleComment:
              returnString = "C_StyleComment";
              break;

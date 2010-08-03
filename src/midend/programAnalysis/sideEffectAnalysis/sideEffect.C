@@ -1,38 +1,18 @@
 #include <rose.h>
 #include "sideEffect.h"
+#include "SqliteDatabaseGraph.h"
+#include "string_functions.h"
 
-#if 1
 #include <iostream>
+#include <cstring>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-//#include <hash_map.h>
-//#include <hash_set.h>
-#include "GlobalDatabaseConnection.h"
-#include "TableDefinitions.h"
 
+#include "sqlite3x.h"
 
-DEFINE_TABLE_PROJECTS();
-DEFINE_TABLE_GRAPHDATA();
-DEFINE_TABLE_GRAPHNODE();
-DEFINE_TABLE_GRAPHEDGE();
-CREATE_TABLE_2( simpleFuncTable,  int,projectId, string,functionName);
-DEFINE_TABLE_2( simpleFuncTable,  int,projectId, string,functionName);
-CREATE_TABLE_3( varNode,  int,projectId, string,functionName, string,varName);
-DEFINE_TABLE_3( varNode,  int,projectId, string,functionName, string,varName);
-CREATE_TABLE_3( localVars,  int,projectId, string,functionName, string,varName);
-DEFINE_TABLE_3( localVars,  int,projectId, string,functionName, string,varName);
-CREATE_TABLE_4( formals,  int,projectId, string,functionName, string,formal, int,ordinal);
-DEFINE_TABLE_4( formals,  int,projectId, string,functionName, string,formal, int,ordinal);
-
-CREATE_TABLE_3( sideEffectTable,  int,projectId, string,functionName, int,arg);
-DEFINE_TABLE_3( sideEffectTable,  int,projectId, string,functionName, int,arg);
-CREATE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
-		                  int,scope, int,ordinal);
-DEFINE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
-		                  int,scope, int,ordinal);
-#define TABLES_DEFINED 1
-
-#include "DatabaseGraph.h"
+using namespace std;
+using namespace sqlite3x;
+using namespace StringUtility;
 
 #include <boost/config.hpp>
 #include <assert.h>
@@ -48,16 +28,442 @@ DEFINE_TABLE_5( callEdge,         int,projectId, string,site,   string,actual,
 #include "boost/graph/depth_first_search.hpp"
 
 #include "boost/graph/strong_components.hpp"
+#define SCOPE_NA    -1
+#define SCOPE_PARAM  0
 
-typedef DatabaseGraph<simpleFuncTableRowdata, callEdgeRowdata, 
-		      boost::vecS, boost::vecS, boost::bidirectionalS> CallGraph;
+#define SCOPE_LOCAL  1
+#define SCOPE_GLOBAL 2
+
+#define MAXSTRINGSZ 512
+
+#define DEBUG_OUTPUT 1
+#undef DEBUG_OUTPUT
+
+#define LMODFUNC   "__lmod"
+#define LMODFORMAL "formal"
+
+bool debugOut = false; // output information about traversal to stderr
+
+#define SIMPLEFUNCTBL "simpleFuncTable"
+#define VARNODETBL    "varNode"
+#define LOCALVARTBL   "localVars"
+#define FORMALTBL     "formals"
+#define SIDEEFFECTTBL "sideEffect"
+#define CALLEDGETBL   "callEdge"
+
+class simpleFuncRow : public dbRow
+{
+  public:
+    simpleFuncRow() : dbRow(SIMPLEFUNCTBL) {}
+
+    simpleFuncRow(int project, string& name) : dbRow(SIMPLEFUNCTBL)
+    {
+      columnNames.push_back("id");
+      columnNames.push_back("projectId");
+      columnNames.push_back("functionName");
+
+      columnTypes.push_back("integer");
+      columnTypes.push_back("integer");
+      columnTypes.push_back("text");
+
+      pid = project;
+      fname = name;
+    }
+    simpleFuncRow(sqlite3_reader& r) : dbRow(SIMPLEFUNCTBL) { load(r); }
+
+    void load(sqlite3_reader& r)
+    {
+      rowid = r.getint(0);
+      pid = r.getint(1);
+      fname = r.getstring(2);
+    }
+
+    void insert(sqlite3_connection* db)
+    {
+      sqlite3x::sqlite3_command selectcmd(*db,
+          "SELECT * FROM " + string(SIMPLEFUNCTBL) + " WHERE projectId=? AND functionName=?;");
+      selectcmd.bind(1,pid);
+      selectcmd.bind(2,fname);
+
+      sqlite3x::sqlite3_reader r = selectcmd.executereader();
+      if( r.read() ) {
+        rowid = r.getint(0);
+        return;
+      }
+
+      sqlite3_command insertcmd(*db,
+          "INSERT INTO " + string(SIMPLEFUNCTBL) + " (projectId,functionName) VALUES (?,?);");
+      insertcmd.bind(1,pid);
+      insertcmd.bind(2,fname);
+      insertcmd.executenonquery();
+
+      rowid = db->insertid();
+    }
+
+    string get_functionName() const { return fname; }
+
+    int pid;
+    string fname;
+};
+
+class varNodeRow : public dbRow
+{
+  public:
+    varNodeRow() : dbRow(VARNODETBL) {}
+
+    varNodeRow(int project, string function, string var ) : dbRow(VARNODETBL)
+    {
+      columnNames.push_back("id");
+      columnNames.push_back("projectId");
+      columnNames.push_back("functionName");
+      columnNames.push_back("varName");
+
+      columnTypes.push_back("integer");
+      columnTypes.push_back("integer");
+      columnTypes.push_back("text");
+      columnTypes.push_back("text");
+
+      pid = project;
+      fname = function;
+      varname = var;
+    }
+    varNodeRow(sqlite3_reader& r) : dbRow(VARNODETBL) { load(r); }
+
+    void load(sqlite3_reader& r)
+    {
+      rowid = r.getint(0);
+      pid = r.getint(1);
+      fname = r.getstring(2);
+      varname = r.getstring(3);
+    }
+
+    void insert(sqlite3_connection* db)
+    {
+      sqlite3x::sqlite3_command selectcmd(*db,
+          "SELECT * FROM " + string(VARNODETBL) + " WHERE projectId=? AND functionName=? AND varName=?;");
+      selectcmd.bind(1,pid);
+      selectcmd.bind(2,fname);
+      selectcmd.bind(3,varname);
+
+      sqlite3x::sqlite3_reader r = selectcmd.executereader();
+      if( r.read() ) {
+        rowid = r.getint(0);
+        return;
+      }
+
+      sqlite3_command insertcmd(*db,
+          "INSERT INTO " + string(VARNODETBL) + " (projectId,functionName,varName) VALUES (?,?,?);");
+      insertcmd.bind(1,pid);
+      insertcmd.bind(2,fname);
+      insertcmd.bind(3,varname);
+      insertcmd.executenonquery();
+
+      rowid = db->insertid();
+    }
+
+    string get_functionName() const { return fname; }
+    string get_varName() const { return varname; }
+
+    int pid;
+    string fname;
+    string varname;
+};
+
+class localVarRow : public dbRow
+{
+  public:
+    localVarRow(int project, string function, string name) : dbRow(LOCALVARTBL)
+    {
+      columnNames.push_back("id");
+      columnNames.push_back("projectId");
+      columnNames.push_back("functionName");
+      columnNames.push_back("varName");
+
+      columnTypes.push_back("integer");
+      columnTypes.push_back("integer");
+      columnTypes.push_back("text");
+      columnTypes.push_back("text");
+
+      pid = project;
+      fname = function;
+      varname = name;
+    }
+    localVarRow(sqlite3_reader& r) : dbRow(LOCALVARTBL) { load(r); }
+
+    void load(sqlite3_reader& r)
+    {
+      rowid = r.getint(0);
+      pid = r.getint(1);
+      fname = r.getstring(2);
+      varname = r.getstring(3);
+    }
+
+    void insert(sqlite3_connection* db)
+    {
+      sqlite3x::sqlite3_command selectcmd(*db,
+          "SELECT * FROM " + string(LOCALVARTBL) + " WHERE projectId=? AND functionName=? AND varName=?;");
+      selectcmd.bind(1,pid);
+      selectcmd.bind(2,fname);
+      selectcmd.bind(3,varname);
+
+      sqlite3x::sqlite3_reader r = selectcmd.executereader();
+      if( r.read() ) {
+        rowid = r.getint(0);
+        return;
+      }
+
+      sqlite3_command insertcmd(*db,
+          "INSERT INTO " + string(LOCALVARTBL) + " (projectId,functionName,varName) VALUES (?,?,?);");
+      insertcmd.bind(1,pid);
+      insertcmd.bind(2,fname);
+      insertcmd.bind(3,varname);
+      insertcmd.executenonquery();
+
+      rowid = db->insertid();
+    }
+
+    string get_functionName() const { return fname; }
+    string get_varName() const { return varname; }
+
+    int pid;
+    string fname;
+    string varname;
+};
+
+class formalRow : public dbRow
+{
+  public:
+    formalRow(int project, string function, string formalname, int ord) : dbRow(FORMALTBL)
+    {
+      columnNames.push_back("id");
+      columnNames.push_back("projectId");
+      columnNames.push_back("functionName");
+      columnNames.push_back("formal");
+      columnNames.push_back("ordinal");
+
+      columnTypes.push_back("integer");
+      columnTypes.push_back("integer");
+      columnTypes.push_back("text");
+      columnTypes.push_back("text");
+      columnTypes.push_back("integer");
+
+      pid = project;
+      fname = function;
+      formal = formalname;
+      ordinal = ord;
+    }
+    formalRow(sqlite3_reader& r) : dbRow(FORMALTBL) { load(r); }
+
+    void load(sqlite3_reader& r)
+    {
+      rowid = r.getint(0);
+      pid = r.getint(1);
+      fname = r.getstring(2);
+      formal = r.getstring(3);
+      ordinal = r.getint(4);
+    }
+
+    void insert(sqlite3_connection* db)
+    {
+      sqlite3x::sqlite3_command selectcmd(*db,
+          "SELECT * FROM " + string(FORMALTBL) + " WHERE projectId=? AND functionName=? AND formal=? AND ordinal=?;");
+      selectcmd.bind(1,pid);
+      selectcmd.bind(2,fname);
+      selectcmd.bind(3,formal);
+      selectcmd.bind(4,ordinal);
+
+      sqlite3x::sqlite3_reader r = selectcmd.executereader();
+      if( r.read() ) {
+        rowid = r.getint(0);
+        return;
+      }
+
+      sqlite3_command insertcmd(*db,
+          "INSERT INTO " + string(FORMALTBL) + " (projectId,functionName,formal,ordinal) VALUES (?,?,?,?);");
+      insertcmd.bind(1,pid);
+      insertcmd.bind(2,fname);
+      insertcmd.bind(3,formal);
+      insertcmd.bind(4,ordinal);
+      insertcmd.executenonquery();
+
+      rowid = db->insertid();
+    }
+
+    string get_functionName() const { return fname; }
+    string get_formal() const { return formal; }
+    int get_ordinal() const { return ordinal; }
+
+    int pid;
+    string fname;
+    string formal;
+    int ordinal;
+};
+
+class sideEffectRow : public dbRow
+{
+  public:
+    sideEffectRow(int project, string function, int numargs) : dbRow(SIDEEFFECTTBL)
+    {
+      columnNames.push_back("id");
+      columnNames.push_back("projectId");
+      columnNames.push_back("functionName");
+      columnNames.push_back("arg");
+
+      columnTypes.push_back("integer");
+      columnTypes.push_back("integer");
+      columnTypes.push_back("text");
+      columnTypes.push_back("integer");
+
+      pid = project;
+      fname = function;
+      args = numargs;
+    }
+    sideEffectRow(sqlite3_reader& r) : dbRow(SIDEEFFECTTBL) { load(r); }
+
+    void load(sqlite3_reader& r)
+    {
+      rowid = r.getint(0);
+      pid = r.getint(1);
+      fname = r.getstring(2);
+      args = r.getint(3);
+    }
+
+    void insert(sqlite3_connection* db)
+    {
+      sqlite3x::sqlite3_command selectcmd(*db,
+          "SELECT * FROM " + string(SIDEEFFECTTBL) + " WHERE projectId=? AND functionName=? AND arg=?;");
+      selectcmd.bind(1,pid);
+      selectcmd.bind(2,fname);
+      selectcmd.bind(3,args);
+
+      sqlite3x::sqlite3_reader r = selectcmd.executereader();
+      if( r.read() ) {
+        rowid = r.getint(0);
+        return;
+      }
+
+      sqlite3_command insertcmd(*db,
+          "INSERT INTO " + string(SIDEEFFECTTBL) + " (projectId,functionName,arg) VALUES (?,?,?);");
+      insertcmd.bind(1,pid);
+      insertcmd.bind(2,fname);
+      insertcmd.bind(3,args);
+      insertcmd.executenonquery();
+
+      rowid = db->insertid();
+    }
+
+    int get_arg() const { return args; }
+
+    int pid;
+    string fname;
+    int args;
+};
+
+class callEdgeRow : public dbRow
+{
+  public:
+    callEdgeRow() : dbRow(CALLEDGETBL) { empty = true; }
+
+    callEdgeRow(int project, string callsite, string actualname, int callscope, int ord) : dbRow(CALLEDGETBL)
+    {
+      columnNames.push_back("id");
+      columnNames.push_back("projectId");
+      columnNames.push_back("site");
+      columnNames.push_back("actual");
+      columnNames.push_back("scope");
+      columnNames.push_back("ordinal");
+
+      columnTypes.push_back("integer");
+      columnTypes.push_back("integer");
+      columnTypes.push_back("text");
+      columnTypes.push_back("text");
+      columnTypes.push_back("integer");
+      columnTypes.push_back("integer");
+
+      pid = project;
+      site = callsite;
+      actual = actualname;
+      scope = callscope;
+      ordinal = ord;
+      empty = false;
+    }
+    callEdgeRow(sqlite3_reader& r) : dbRow(CALLEDGETBL) { load(r); }
+
+    void load(sqlite3_reader& r)
+    {
+      rowid = r.getint(0);
+      pid = r.getint(1);
+      site = r.getstring(2);
+      actual = r.getstring(3);
+      scope = r.getint(4);
+      ordinal = r.getint(5);
+      empty = empty;
+    }
+
+    void insert(sqlite3_connection* db)
+    {
+      sqlite3x::sqlite3_command selectcmd(*db,
+          "SELECT * FROM " + string(CALLEDGETBL) + " WHERE projectId=? AND site=? AND actual=? AND scope=? AND ordinal=?;");
+      selectcmd.bind(1,pid);
+      selectcmd.bind(2,site);
+      selectcmd.bind(3,actual);
+      selectcmd.bind(4,scope);
+      selectcmd.bind(5,ordinal);
+
+      sqlite3x::sqlite3_reader r = selectcmd.executereader();
+      if( r.read() ) {
+        rowid = r.getint(0);
+        return;
+      }
+
+      sqlite3_command insertcmd(*db,
+          "INSERT INTO " + string(CALLEDGETBL) + " (projectId,site,actual,scope,ordinal) VALUES (?,?,?,?,?);");
+      insertcmd.bind(1,pid);
+      insertcmd.bind(2,site);
+      insertcmd.bind(3,actual);
+      insertcmd.bind(4,scope);
+      insertcmd.bind(5,ordinal);
+      insertcmd.executenonquery();
+
+      rowid = db->insertid();
+    }
+
+    string get_site() const { return site; }
+    string get_actual() const { return actual; }
+    int get_scope() const { return scope; }
+    int get_ordinal() const { return ordinal; }
+    bool isEmpty() const { return empty; }
+
+    int pid;
+    string site;
+    string actual;
+    int scope;
+    int ordinal;
+    bool empty;
+};
+
+
+typedef DatabaseGraph<simpleFuncRow, callEdgeRow,
+                     boost::vecS, boost::vecS, boost::bidirectionalS> CallGraph;
 typedef CallGraph::dbgType Graph;
-typedef graph_traits < CallGraph >::vertex_descriptor callVertex;
-typedef property_map<CallGraph, vertex_index_t>::const_type callVertexIndexMap;
+typedef boost::graph_traits < CallGraph >::vertex_descriptor callVertex;
+typedef boost::property_map<CallGraph, boost::vertex_index_t>::const_type callVertexIndexMap;
 
-typedef DatabaseGraph<varNodeRowdata, callEdgeRowdata, 
-		      boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
+typedef DatabaseGraph<varNodeRow, callEdgeRow,
+                     boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
 
+
+// milki (06/16/2010) Redefine for std::string to produce
+// deterministic behavior in map_type
+struct eqstdstr
+{
+  bool operator()(string s1, string s2) const
+  {
+    return s1.compare(s2) == 0;
+  }
+};
+#if 0
+// milki (06/16/2010) Name clash in src/ROSETTA/Grammar/Support.code:325
 struct eqstr
 {
   bool operator()(const char* s1, const char* s2) const
@@ -65,6 +471,7 @@ struct eqstr
     return strcmp(s1, s2) == 0;
   }
 };
+#endif
 
 struct eqint
 {
@@ -93,15 +500,57 @@ struct pairltstr
 };
 
 // boost::unordered_multimap<Key, Data, HashFcn, EqualKey, Alloc>
-typedef boost::unordered_multimap<const char*, const char *, hash<const char*>, eqstr> map_type;
+//typedef boost::unordered_multimap<const char*, const char *, boost::hash<const char*>, eqstr> map_type;
+typedef boost::unordered_multimap<string, const char*, boost::hash<string>, eqstdstr> map_type;
 
 // boost::unordered_map<Key, Data, HashFcn, EqualKey, Alloc>
-typedef boost::unordered_map<const char *, int, hash<const char *>, eqstr> str_int_map;
-typedef boost::unordered_map<const char *, const char *, hash<const char *>, eqstr> str_str_map;
-typedef boost::unordered_map<const char *, str_int_map *, hash<const char *>, eqstr> str_map_map;
 
-typedef boost::unordered_map<int, const char *, hash<int>, eqint> int_str_map;
-typedef boost::unordered_map<const char *, int_str_map *, hash<const char *>, eqstr> int_map_map;
+// milki (07/08/2010) Convert map keys to std::string
+//typedef boost::unordered_map<const char *, int, boost::hash<const char *>, eqstr> str_int_map;
+//typedef boost::unordered_map<const char *, const char *, boost::hash<const char *>, eqstr> str_str_map;
+//typedef boost::unordered_map<const char *, str_int_map *, boost::hash<const char *>, eqstr> str_map_map;
+typedef boost::unordered_map<string, int, boost::hash<string>, eqstr> str_int_map;
+typedef boost::unordered_map<string, const char *, boost::hash<string>, eqstr> str_str_map;
+typedef boost::unordered_map<string, str_int_map *, boost::hash<string>, eqstr> str_map_map;
+
+typedef boost::unordered_map<int, const char *, boost::hash<int>, eqint> int_str_map;
+//typedef boost::unordered_map<const char *, int_str_map *, boost::hash<const char *>, eqstr> int_map_map;
+typedef boost::unordered_map<string, int_str_map *, boost::hash<string>, eqstr> int_map_map;
+
+void prettyprint( map_type M ) {
+  for( map_type::const_iterator it = M.cbegin() ; it != M.cend() ; it++ )
+  {
+    cout << "<" << (*it).first << "," << (*it).second << ">" << endl;
+  }
+}
+
+// Database Table Initialization
+bool createDatabaseTables(sqlite3_connection& con, bool drop) {
+
+  try {
+    if( drop) {
+      con.executenonquery("DROP TABLE IF EXISTS localVars");
+      con.executenonquery("DROP TABLE IF EXISTS simpleFuncTable");
+      con.executenonquery("DROP TABLE IF EXISTS varNode");
+      con.executenonquery("DROP TABLE IF EXISTS formals");
+      con.executenonquery("DROP TABLE IF EXISTS sideEffect");
+      con.executenonquery("DROP TABLE IF EXISTS callEdge");
+    }
+    con.executenonquery("CREATE TABLE IF NOT EXISTS localVars(id INTEGER PRIMARY KEY, projectId INTEGER, functionName TEXT, varName TEXT)");
+    con.executenonquery("CREATE TABLE IF NOT EXISTS simpleFuncTable(id INTEGER PRIMARY KEY, projectId INTEGER, functionName TEXT)");
+    con.executenonquery("CREATE TABLE IF NOT EXISTS varNode(id INTEGER PRIMARY KEY, projectId INTEGER, functionName TEXT, varName TEXT)");
+    con.executenonquery("CREATE TABLE IF NOT EXISTS formals(id INTEGER PRIMARY KEY, projectId INTEGER, functionName TEXT, formal TEXT, ordinal INTEGER)");
+    con.executenonquery("CREATE TABLE IF NOT EXISTS sideEffect(id INTEGER PRIMARY KEY, projectId INTEGER, functionName TEXT, arg INTEGER)");
+    con.executenonquery("CREATE TABLE IF NOT EXISTS callEdge(id INTEGER PRIMARY KEY, projectId INTEGER, site TEXT, actual TEXT, scope INTEGER, ordinal INTEGER);");
+
+    // DatabaseGraph tables
+    define_schema(con);
+  } catch( exception &ex ) {
+    cerr << "Exception Occured: " << ex.what() << endl;
+    return false;
+  }
+  return true;
+}
 
 class SideEffect : public SideEffectAnalysis {
 
@@ -134,12 +583,12 @@ class SideEffect : public SideEffectAnalysis {
 
   // private:
 
-  void populateLocalVarsFromDB(GlobalDatabaseConnection *db);
+  void populateLocalVarsFromDB(sqlite3_connection *db);
 
-  void populateFormalsFromDB(GlobalDatabaseConnection *db);
+  void populateFormalsFromDB(sqlite3_connection *db);
 
   CallMultiGraph * createMultiGraph(CallGraph *callgraph, long projectId, 
-				    GlobalDatabaseConnection *db);
+				    sqlite3_connection *db);
 
   int doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 		   string &sanitizedOutputFileName,
@@ -155,14 +604,14 @@ class SideEffect : public SideEffectAnalysis {
 		  callVertexIndexMap index_map);
 
   void solveRMOD(CallMultiGraph *multigraph, long projectId, 
-		 GlobalDatabaseConnection *db);
+		 sqlite3_connection *db);
 
   int nextdfn;
   deque<callVertex> vertexStack;
   
   // CH (4/9/2010): Use boost::unordered_set instead
-  //hash_set<int, hash<int>, eqint> shadowStack;
-  boost::unordered_set<int, hash<int>, eqint> shadowStack;
+  //hash_set<int, boost::hash<int>, eqint> shadowStack;
+  boost::unordered_set<int, boost::hash<int>, eqint> shadowStack;
   
   int *lowlink;
   int *dfn;
@@ -244,23 +693,6 @@ class SideEffect : public SideEffectAnalysis {
   set<const char *, ltstr> mCalledFuncs;
 
 };
-#endif
-
-#define SCOPE_NA    -1
-#define SCOPE_PARAM  0
-
-#define SCOPE_LOCAL  1
-#define SCOPE_GLOBAL 2
-
-#define MAXSTRINGSZ 512
-
-#define DEBUG_OUTPUT
-#undef  DEBUG_OUTPUT
-
-#define LMODFUNC   "__lmod"
-#define LMODFORMAL "formal"
-
-bool debugOut = false; // output information about traversal to stderr
 
 // implement the stubs for the base class
 
@@ -328,9 +760,19 @@ SideEffect::getNodeIdentifier(SgNode *node)
 {
   assert(node);
   assert(node->get_file_info());
-  assert(node->get_file_info()->get_filename());
+
+  Sg_File_Info* nodeinfo = node->get_file_info();
+
+  // milki (07/07/2010) Revert back to name/line/col/variant format
+
+  string fileName = node->get_file_info()->get_filenameString();
+  fileName = stripPathFromFileName(fileName);
+
   char tmp[strlen(node->get_file_info()->get_filename()) + 512];
-  sprintf(tmp, "%s-%ld", node->get_file_info()->get_filename(), (long)node);
+  //sprintf(tmp, "%s-%ld", fileName.c_str(), (long)node);
+  sprintf(tmp, "%s-%d-%d-%d", fileName.c_str(),
+      nodeinfo->get_line(), nodeinfo->get_col(),
+      node->variantT());
 
   string id = tmp;
 
@@ -416,7 +858,7 @@ getQualifiedFunctionName(SgFunctionCallExp *astNode)
       SgName qualifiedName = methodDec->get_qualified_name();
       funcName.assign(qualifiedName.str());
 #if 0
-      char *className = qualifiedName.str();
+      const char *className = qualifiedName.getString().c_str();
       funcName = new char[strlen(className) + 1];
       strcpy(funcName, className);
 #endif      
@@ -434,7 +876,7 @@ getQualifiedFunctionName(SgFunctionCallExp *astNode)
       SgName qualifiedName = methodDec->get_qualified_name();
       funcName.assign(qualifiedName.str());
 #if 0
-      char *className = qualifiedName.str();
+      const char *className = qualifiedName.getString().c_str();
       funcName = new char[strlen(className) + 1];
       strcpy(funcName, className);
 #endif      
@@ -460,32 +902,43 @@ getQualifiedFunctionName(SgFunctionCallExp *astNode)
 // -------------------------------------------------------------
 
 template <class Map, class Key>
-pair<typename Map::const_iterator, typename Map::const_iterator> lookup(const Map& M, Key func)
+//pair<typename Map::const_iterator, typename Map::const_iterator> lookup(const Map& M, Key func)
+pair<typename Map::const_iterator, typename Map::const_iterator> lookup(Map& M, Key func)
 {
   pair<typename Map::const_iterator, typename Map::const_iterator> p;
 
   p = M.equal_range(func);
+#ifdef DEBUG_OUTPUT
+  if ( p.first != p.second ) {
+  cout << "For " << func << " found <" << (*p.first).first << "," << (*p.first).second << ">" << endl;
+  }
+#endif
+
 
   return p;
 }
 
 // returns 0 if already present
-int insert(map_type &M, const char *func, const char *var)
+int insert(map_type &M, const char* func, const char* var)
 {
-  char *myfunc, *myvar;
+  // milki (07/06/2010) Use a string func key
+  string myfunc;
+  char* myvar;
 
   pair<map_type::const_iterator, map_type::const_iterator> p = lookup(M, func);
   for (map_type::const_iterator i = p.first; i != p.second; ++i)
     if (!strcmp((*i).second, var))
       return 0;
 
-  myfunc = new char[(strlen(func) + 1)];
-  strcpy(myfunc, func);
+  myfunc = string(func);
 
   myvar = new char[(strlen(var) + 1)];
   strcpy(myvar, var);
 
-  M.insert(map_type::value_type(myfunc, myvar));
+  map_type::const_iterator it = M.insert(map_type::value_type(myfunc, myvar));
+#ifdef DEBUG_OUTPUT
+  cout << "Inserted <" << (*it).first << "," << (*it).second << ">" << endl;
+#endif
 
   return 1;
 }
@@ -500,7 +953,9 @@ SideEffect::SideEffect() :
 int 
 SideEffect::insertFormal(const char *func, const char *formal, int num)
 {
-  char *myfunc, *myformal;
+  // milki (07/06/2010) Use a string func key
+  string myfunc;
+  char* myformal;
   str_int_map *m;
 
   pair<str_map_map::const_iterator, str_map_map::const_iterator> p = 
@@ -510,8 +965,7 @@ SideEffect::insertFormal(const char *func, const char *formal, int num)
     // insert a map for this function
     m = new str_int_map();
 
-    myfunc = new char[(strlen(func) + 1)];
-    strcpy(myfunc, func);
+    myfunc = string(func);
 
     formals.insert(str_map_map::value_type(myfunc, m));
   } else {
@@ -539,6 +993,10 @@ SideEffect::insertFormal(const char *func, const char *formal, int num)
   myformal = new char[(strlen(formal) + 1)];
   strcpy(myformal, formal);
 
+#ifdef DEBUG_OUTPUT
+  cout << "INSERTING formal " << myformal << " at " << num << " for "
+    << func << endl;
+#endif
   m->insert(str_int_map::value_type(myformal, num));
 
   return 1;
@@ -547,7 +1005,9 @@ SideEffect::insertFormal(const char *func, const char *formal, int num)
 int 
 SideEffect::insertFormalByPos(const char *func, const char *formal, int num)
 {
-  char *myfunc, *myformal;
+  // milki (07/06/2010) Use a string func key
+  string myfunc;
+  char* myformal;
   int_str_map *m;
 
   pair<int_map_map::const_iterator, int_map_map::const_iterator> p = 
@@ -557,8 +1017,7 @@ SideEffect::insertFormalByPos(const char *func, const char *formal, int num)
     // insert a map for this function
     m = new int_str_map();
 
-    myfunc = new char[(strlen(func) + 1)];
-    strcpy(myfunc, func);
+    myfunc = string(func);
 
     formalsByPos.insert(int_map_map::value_type(myfunc, m));
   } else {
@@ -585,6 +1044,11 @@ SideEffect::insertFormalByPos(const char *func, const char *formal, int num)
 
   myformal = new char[(strlen(formal) + 1)];
   strcpy(myformal, formal);
+
+#ifdef DEBUG_OUTPUT
+  cout << "INSERTING formalbypos " << myformal << " at " << num << " for "
+    << func << endl;
+#endif
 
   m->insert(int_str_map::value_type(num, myformal));
 
@@ -618,6 +1082,10 @@ SideEffect::lookupFormal(const char *func, const char *formal)
     num = (*i2).second;
     ++i2;
     assert(i2 == p2.second);
+
+#ifdef DEBUG_OUTPUT
+    cout << "For formal " << func << " found pos " << num << endl;
+#endif
     return num;
 
   }
@@ -652,6 +1120,10 @@ SideEffect::lookupFormalByPos(const char *func, int num)
     formal = (*i2).second;
     ++i2;
     assert(i2 == p2.second);
+
+#ifdef DEBUG_OUTPUT
+    cout << "For formalbypos " << num << " found " << formal << endl;
+#endif
     return formal;
 
   }
@@ -693,8 +1165,9 @@ SideEffect::insertFuncToFile(const char *func, const char *file)
 
   int same;
 
+  // milki (07/06/2010) Use a string file key
   pair<str_str_map::const_iterator, str_str_map::const_iterator> p = 
-    lookup(funcToFile, file);
+    lookup(funcToFile, string(file));
 
   if (p.first != p.second) {
     
@@ -706,8 +1179,8 @@ SideEffect::insertFuncToFile(const char *func, const char *file)
 
   }
 
-  char *myfunc = new char[(strlen(func) + 1)];
-  strcpy(myfunc, func);
+  // milki (07/06/2010) Use a string func key
+  string myfunc = func;
 
   char *myfile = new char[(strlen(file) + 1)];
   strcpy(myfile, file);
@@ -947,7 +1420,7 @@ class MyTraversal
   { };
   
   MyTraversal (int setPID,
-	       GlobalDatabaseConnection *setGdb,
+	       sqlite3_connection *setGdb,
 	       CallGraph *setGraph,
 	       CallGraph *setSimpleGraph,
 	       set<const char *, ltstr> *setDefinedFuncs,
@@ -979,15 +1452,12 @@ class MyTraversal
     // side effects.  
 
     // get a handle to the database table of function names
-    TableAccess< simpleFuncTableRowdata > simpleFunc(mGDB);
     string LMODFunctionName = LMODFUNC;
 
     // create the table row entry and insert into the table
-    simpleFuncTableRowdata LMODRow(UNKNOWNID , mProjectId, LMODFunctionName);
-    mLMODId = simpleFunc.retrieveCreateByColumn(&LMODRow, 
-						"functionName", 
-						LMODRow.get_functionName(), 
-						LMODRow.get_projectId() );
+    simpleFuncRow LMODRow(mProjectId, LMODFunctionName);
+    LMODRow.insert(mGDB);
+    mLMODId = LMODRow.get_id();
     
     // separateCompilation indicates that we have separately parsed some
     // source files and that their state will be held in the database.
@@ -1010,30 +1480,15 @@ class MyTraversal
     // local to 'functionName'
 
     // get a handle to the localVars database table
-    TableAccess< localVarsRowdata > localVars(mGDB);
-
     // create an entry for LMOD in localVars, indicating that LMOD has one
     // local variable-- its formal argument 'formal'
     int LMODDummyParamNum = 0;
     string LMODDummyFormal = LMODFORMAL;
-    localVarsRowdata localVar(UNKNOWNID, 
+    localVarRow localVar(
 			      mProjectId, 
 			      LMODRow.get_functionName().c_str(), 
 			      LMODDummyFormal.c_str());
-    
-    // add the entry for LMOD to the table
-    string localVarColumns[2];
-    string localVarValues[2];
-    
-    localVarColumns[0] = "functionName";
-    localVarValues[0]  = localVar.get_functionName();
-    localVarColumns[1] = "varName";
-    localVarValues[1]  = localVar.get_varName();
-    localVars.retrieveCreateByColumns(&localVar, 
-				      localVarColumns, 
-				      localVarValues, 
-				      2,
-				      localVar.get_projectId());
+    localVar.insert(mGDB);
     
     // maintain a data structure in memory that maps function names
     // to local variables.  this mirrors the database table localVar.
@@ -1055,32 +1510,12 @@ class MyTraversal
 
     // create LMOD entry in formals, indicating that LMOD has a
     // formal argument 'formal' which is argument number 0
-    TableAccess< formalsRowdata > formals(mGDB);
-    formalsRowdata formalParam(UNKNOWNID, 
+    formalRow formalParam(
 			       mProjectId, 
 			       LMODRow.get_functionName().c_str(), 
 			       LMODDummyFormal.c_str(),
 			       LMODDummyParamNum);
-    
-    string formalParamColumns[3];
-    string formalParamValues[3];
-
-    formalParamColumns[0] = "functionName";
-    formalParamValues[0]  = formalParam.get_functionName();
-    formalParamColumns[1] = "formal";
-    formalParamValues[1]  = formalParam.get_formal();
-    formalParamColumns[2] = "ordinal";
-    char tmp[MAXSTRINGSZ];
-    sprintf(tmp, "%d", formalParam.get_ordinal());
-    formalParamValues[2]  = strdup(tmp);
-    
-    // add LMOD entry to table
-    formals.retrieveCreateByColumns(&formalParam, 
-				    formalParamColumns, 
-				    formalParamValues, 
-				    3,
-				    formalParam.get_projectId() );
-    
+    formalParam.insert(mGDB);
     // maintain a datastructure in memory that maps function names
     // to formal parameter strings and their ordinal position in the
     // argument list.  this mirrors the database table formals.
@@ -1102,7 +1537,6 @@ class MyTraversal
   MyInheritedAttribute evaluateInheritedAttribute(SgNode* astNode,
 						  MyInheritedAttribute inheritedAttribute) 
   {
-
     mUniquifier++;
     
     switch(astNode->variantT())
@@ -1119,7 +1553,7 @@ class MyTraversal
 			     << funcDec->get_name().str() << endl; 
 #endif
 	  
-	  char *funcName = NULL;
+	  string funcName;
 
 	  if (funcDec) {
 	    
@@ -1127,41 +1561,31 @@ class MyTraversal
 	      isSgMemberFunctionDeclaration(astNode->get_parent());
 	    
 	    if (methodDec) {
-
 	      // this is a method definition, extract the class name
 	      // and append it
 	      SgName qualifiedName = methodDec->get_qualified_name();
-	      char *className = qualifiedName.str();
-	      funcName = new char[strlen(className) + 1];
-	      strcpy(funcName, className);
-
+        funcName = qualifiedName.getString();
 	    } else {
-
-	      funcName = new char[strlen(funcDec->get_name().str()) + 1];
-	      strcpy(funcName, funcDec->get_name().str());
-	    
+        funcName = funcDec->get_name();
 	    }
 
 	    // record this function definition if we haven't seen it before
-	    if (mDefinedFuncs->find(funcName) == mDefinedFuncs->end())
-	      mDefinedFuncs->insert(funcName);
+	    if (mDefinedFuncs->find(funcName.c_str()) == mDefinedFuncs->end())
+	      mDefinedFuncs->insert(funcName.c_str());
 	    
 	    // create a database entry for this function in the table 
 	    // of functions.
-	    TableAccess< simpleFuncTableRowdata > simpleFunc(mGDB);
-	    simpleFuncTableRowdata funcRow(UNKNOWNID, 
+	    simpleFuncRow funcRow(
 					   mProjectId, 
 					   funcName);
-	    long funcId = simpleFunc.retrieveCreateByColumn(&funcRow, 
-							    "functionName", 
-							    funcRow.get_functionName(), 
-							    funcRow.get_projectId());
+      funcRow.insert(mGDB);
+      int funcId = funcRow.get_id();
 
 	    // store the information about this function.  if this function makes
 	    // an invocation we will want to gain access to it as the caller. 
 	    inheritedAttribute.setFunctionDefinitionId(funcId);
 	    inheritedAttribute.setParentFunction(funcDec);
-	    inheritedAttribute.setParentName(funcName);
+	    inheritedAttribute.setParentName(funcName.c_str());
 
 	    // add this function as a vertex in the call graphs
 	    if (!mSideEffectPtr->separateCompilation) 
@@ -1211,32 +1635,16 @@ class MyTraversal
 	      // that var is local to func (since it is a formal
 	      // parameter)
 
-	      // get a handle to the table
-	      TableAccess< localVarsRowdata > localVars(mGDB);
-	      
 	      // create the table entry
-	      localVarsRowdata localVarFuncEntry(UNKNOWNID, 
+	      localVarRow localVarFuncEntry(
 						 mProjectId, 
 						 funcName,
 						 (*nameIt)->get_name().str());
-	      
-	      // insert the table entry
-	      string localVarFuncColumns[2];
-	      string localVarFuncValues[2];
-	      
-	      localVarFuncColumns[0] = "functionName";
-	      localVarFuncValues[0]  = localVarFuncEntry.get_functionName();
-	      localVarFuncColumns[1] = "varName";
-	      localVarFuncValues[1]  = localVarFuncEntry.get_varName();
-	      localVars.retrieveCreateByColumns(&localVarFuncEntry, 
-						localVarFuncColumns, 
-						localVarFuncValues, 
-						2,
-						localVarFuncEntry.get_projectId());
+	      localVarFuncEntry.insert(mGDB);
 	      
 	      // insert a corresponding entry into the memory-resident map
 	      if (!mSideEffectPtr->separateCompilation) 
-		mSideEffectPtr->insertLocal(funcName,
+		mSideEffectPtr->insertLocal(funcName.c_str(),
 					    (*nameIt)->get_name().str());
 
 	      // only create an entry in the formals table/map if this argument
@@ -1247,44 +1655,22 @@ class MyTraversal
 		// put < funcName, formalName, paramNum > entry in database to signify
 		// that formalName is the paramNum'th argument of funcName.
 
-		// get a handle to the formals database table.
-		TableAccess< formalsRowdata > formals(mGDB);
-
 		// create the table entry
-		formalsRowdata formal(UNKNOWNID, 
+		formalRow formal(
 				      mProjectId, 
 				      funcName,
 				      (*nameIt)->get_name().str(), 
 				      paramNum);
-		
-		
-		// insert the table entry
-		string formalColumns[3];
-		string formalValues[3];
-		
-		formalColumns[0] = "functionName";
-		formalValues[0]  = formal.get_functionName();
-		formalColumns[1] = "formal";
-		formalValues[1]  = formal.get_formal();
-		formalColumns[2] = "ordinal";
-		char tmp[MAXSTRINGSZ];
-		sprintf(tmp, "%d", formal.get_ordinal());
-		formalValues[2]   = strdup(tmp);
-		
-		formals.retrieveCreateByColumns(&formal, 
-						formalColumns, 
-						formalValues, 
-						3,
-						formal.get_projectId());
+    formal.insert(mGDB);
 		
 		// insert a corresponding entry into the memory-resident map
 		if (!mSideEffectPtr->separateCompilation) {
 		  
-		  mSideEffectPtr->insertFormal(funcName,
+		  mSideEffectPtr->insertFormal(funcName.c_str(),
 					       (*nameIt)->get_name().str(), 
 					       paramNum);
 		  
-		  mSideEffectPtr->insertFormalByPos(funcName,
+		  mSideEffectPtr->insertFormalByPos(funcName.c_str(),
 						    (*nameIt)->get_name().str(), 
 						    paramNum);
 		  
@@ -1313,7 +1699,7 @@ class MyTraversal
 #if 0
 	  SgName funcName;
 #else
-	  char *funcName = NULL;
+	  string funcName;
 #endif
 	  SgFunctionDeclaration *funcDec = NULL;
 	  SgFunctionRefExp *funcRef = isSgFunctionRefExp(((SgFunctionCallExp *)astNode)->get_function());
@@ -1333,13 +1719,11 @@ class MyTraversal
 
 #if 1
             SgName qualifiedName = methodDec->get_qualified_name();
-            char *className = qualifiedName.str();
-            funcName = new char[strlen(className) + 1];
-            strcpy(funcName, className);
+            string className = qualifiedName.getString();
+            funcName = className;
 #else
             funcName = methodDec->get_qualified_name();
 #endif
-	    
 	  } else if(funcDotExp) {
             SgMemberFunctionRefExp *membFunc = isSgMemberFunctionRefExp(funcDotExp->get_rhs_operand());
             funcDec = membFunc->get_symbol_i()->get_declaration();
@@ -1350,9 +1734,8 @@ class MyTraversal
 
 #if 1
             SgName qualifiedName = methodDec->get_qualified_name();
-            char *className = qualifiedName.str();
-            funcName = new char[strlen(className) + 1];
-            strcpy(funcName, className);
+            string className = qualifiedName.getString();
+            funcName = className;
 #else
             funcName = methodDec->get_qualified_name();
 #endif
@@ -1365,38 +1748,28 @@ class MyTraversal
 	    if(debugOut) cerr << " std " ; if(funcDec) cerr << funcDec->get_name().str() << endl; 
 #endif
 
-#if 1
-	    funcName = new char[strlen(funcRef->get_symbol_i()->get_name().str()) + 1];
-	    strcpy(funcName, funcRef->get_symbol_i()->get_name().str());
-#else
-	    funcName = funcRef->get_symbol_i()->get_name();
-#endif
+	    funcName = funcDec->get_name().str();
 	  }
 	  
 	  if(funcDec) {
 
 	    // record this function as a callee if we haven't already done so
-	    if (mCalledFuncs->find(funcName) == mCalledFuncs->end())
-	      mCalledFuncs->insert(funcName);
+	    if (mCalledFuncs->find(funcName.c_str()) == mCalledFuncs->end())
+	      mCalledFuncs->insert(funcName.c_str());
 
 	    // lookup function name in function table.  insert if it doesn't exist
 
-	    // get handle to function table
-	    TableAccess< simpleFuncTableRowdata > simpleFunc(mGDB);
-
 	    // create table entry
-	    simpleFuncTableRowdata calleeRow(UNKNOWNID, 
+	    simpleFuncRow calleeRow(
 					     mProjectId, 
 					     funcName);
+      calleeRow.insert(mGDB);
 
-	    // insert entry in table
-	    simpleFunc.retrieveCreateByColumn(&calleeRow, 
-					      "functionName", 
-					      calleeRow.get_functionName(), 
-					      calleeRow.get_projectId());
-
+#if 0
+// milki (07/01/2010) Is this debug statement valid?
 #ifdef DEBUG_OUTPUT
 	    cout << "NO funcId: " << data.get_id() << "for functionName " << data.get_functionName() << " id " << data.get_projectId() << endl;
+#endif
 #endif
 
 	    // add callee as a vertex in the call graphs
@@ -1404,10 +1777,6 @@ class MyTraversal
 	      mSimpleCallgraph->insertVertex(calleeRow, calleeRow.get_functionName());
 	    mCallgraph->insertVertex(calleeRow, calleeRow.get_functionName());
 	    
-	    // retrieve information about calling function by looking up funcId in
-	    // function table
-	    simpleFuncTableRowdata caller; 
-
 	    if (inheritedAttribute.getFunctionDefinitionId() == UNSET) {
 	      // the function definition id is not set.  i.e., we have
 	      // either arrived here from a global context or we are
@@ -1417,17 +1786,24 @@ class MyTraversal
 	      fakeUpCallingContext(inheritedAttribute);
 	    }
 
-	    int selRet = simpleFunc.selectById(inheritedAttribute.getFunctionDefinitionId(), 
-					       &caller);
-	    assert(selRet == 0);
+	    // retrieve information about calling function by looking up funcId in
+	    // function table
+      sqlite3_command simplefuncsearch(*mGDB,
+          "SELECT * FROM " + string(SIMPLEFUNCTBL) + " WHERE id=?;");
+      simplefuncsearch.bind(1,inheritedAttribute.getFunctionDefinitionId());
+
+      sqlite3_reader simplefuncr = simplefuncsearch.executereader();
+      simpleFuncRow caller;
+      if( simplefuncr.read() )
+        caller.load(simplefuncr);
+      else
+        assert(false);
 	    
 	    // create an edge between the caller and callee in the callgraph 
 	    // for each modifiable argument.  only add a single edge (even if the callee
 	    // is void or has no modifiable arguments) in the simplecallgraph.
 
 	    // get a handle to the edge table
-	    TableAccess< callEdgeRowdata > callEdge(mGDB);
-	    
 	    int argNum = 0;
 	    int numEdges = 0;
 
@@ -1443,7 +1819,7 @@ class MyTraversal
 	    assert(expr_list.size() == typeList.size());
 	    
 	    // iterate over all of the actual arguments
-	    list<SgExpression *>::iterator e;
+        SgExpressionPtrList::iterator e;
 	    for (e = expr_list.begin(), typeIt = typeList.begin(); 
 		 e != expr_list.end(); ++e, ++typeIt) {
 	      
@@ -1463,7 +1839,7 @@ class MyTraversal
 
       // DQ (8/13/2004): Working with Brian, this was changed to use the new Query by IR nodes interface
       // list<SgNode*> varRefList = NodeQuery::querySubTree(*e, NodeQuery::VariableReferences);
-         list<SgNode*> varRefList = NodeQuery::querySubTree (*e,V_SgVarRefExp);
+          std::vector<SgNode*> varRefList = NodeQuery::querySubTree (*e,V_SgVarRefExp);
 
 	      if (varRefList.size() > 1) {
 		cerr << "We don' know how to handle complicated expressions!" << endl;
@@ -1541,11 +1917,11 @@ class MyTraversal
 		  numEdges++;
 
 		  string callerName = caller.get_functionName();
+#if 0
 		  char tmp[callerName.length() + 
 			   strlen(astNode->get_file_info()->get_filename()) +
 			   MAXSTRINGSZ];
 
-#if 0
 		  // file_info is broken for expressions so we have to use
 		  // the uniquifier hack
 		  sprintf(tmp, "%s-%s-%d-%d", 
@@ -1580,30 +1956,20 @@ class MyTraversal
 		  string actual = actualSym->get_name().str();
 		  if (scope == SCOPE_GLOBAL)
 		    actual.insert(0, "::");
-		  callEdgeRowdata edge(UNKNOWNID, 
+		  callEdgeRow edge(
 				       mProjectId, 
 				       edgeLabel, 
 				       actual.c_str(),
 				       scope, 
 				       argNum);
-		  
-#ifdef DEBUG_OUTPUT
-		  cout << "INSERTING edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << endl;
-#endif
+      edge.insert(mGDB);
 
-		  // insert the edge row entry in the database
-		  string edgeColumns[2];
-		  string edgeValues[2];
-		  
-		  edgeColumns[0] = "site";
-		  edgeValues[0]   = edge.get_site();
-		  edgeColumns[1] = "actual";
-		  edgeValues[1]   = edge.get_actual();
-		  callEdge.retrieveCreateByColumns(&edge, 
-						   edgeColumns, 
-						   edgeValues, 
-						   2,
-						   edge.get_projectId());
+#ifdef DEBUG_OUTPUT
+      // milki (07/07/2010) data no longer a valid reference. Assuming
+      // calleeRow
+		  //cout << "INSERTING edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << endl;
+		  cout << "INSERTING edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << calleeRow.get_functionName() << endl;
+#endif
 
 		  // insert this edge in the callgraph between the caller and callee
 		  mCallgraph->insertEdge(caller, calleeRow, edge);
@@ -1629,10 +1995,10 @@ class MyTraversal
 	    if (numEdges == 0) {
 
 	      string voidCallerName = caller.get_functionName();
+#if 0
 	      char tmp[voidCallerName.length() + 
 		       strlen(astNode->get_file_info()->get_filename()) +
 		       MAXSTRINGSZ];
-#if 0
 	      // file_info is broken for expressions
 	      sprintf(tmp, "%s-%s-%d-%d", s.c_str(), 
 		      astNode->get_file_info()->get_filename(), 
@@ -1661,21 +2027,8 @@ class MyTraversal
 	      string edgeLabel = mSideEffectPtr->getNodeIdentifier(astNode);
 #endif
 	      // create the dummy edge with actual arg "void" and argument number -1
-	      callEdgeRowdata dummyEdge(UNKNOWNID, mProjectId, edgeLabel, "void", SCOPE_NA, -1);
-
-	      // insert the dummy edge in the database
-	      string dummyEdgeColumns[2];
-	      string dummyEdgeValues[2];
-	      
-	      dummyEdgeColumns[0] = "site";
-	      dummyEdgeValues[0]  = dummyEdge.get_site();
-	      dummyEdgeColumns[1] = "actual";
-	      dummyEdgeValues[1]  = dummyEdge.get_actual();
-	      callEdge.retrieveCreateByColumns(&dummyEdge, 
-					       dummyEdgeColumns, 
-					       dummyEdgeValues, 
-					       2,
-					       dummyEdge.get_projectId());
+	      callEdgeRow dummyEdge(mProjectId, edgeLabel, "void", SCOPE_NA, -1);
+        dummyEdge.insert(mGDB);
 
 	      // insert the dummy edge in the callgraphs
 	      mCallgraph->insertEdge(caller, calleeRow, dummyEdge);
@@ -1725,30 +2078,12 @@ class MyTraversal
 	      // is the function name of this expression's parent that
 	      // we have stashed off in the inherited attribute.
 
-	      // get handle to localVars table
-	      TableAccess< localVarsRowdata > localVars(mGDB);
-
 	      // create the row entry
-	      localVarsRowdata localDec(UNKNOWNID , 
+	      localVarRow localDec(
 					mProjectId, 
-					// inheritedAttribute.getParentFunction()->get_name().str(), 
 					inheritedAttribute.getParentName(), 
 					varName.c_str());
-	      
-	      string localDecColumns[2];
-	      string localDecValues[2];
-	      
-	      localDecColumns[0] = "functionName";
-	      localDecValues[0]   = localDec.get_functionName();
-	      localDecColumns[1] = "varName";
-	      localDecValues[1]   = localDec.get_varName();
-
-	      // insert the row entry
-	      localVars.retrieveCreateByColumns(&localDec, 
-						localDecColumns, 
-						localDecValues, 
-						2,
-						localDec.get_projectId());
+        localDec.insert(mGDB);
 	      
 	      // insert a corresponding entry into the memory-resident map
 	      if (!mSideEffectPtr->separateCompilation) {
@@ -1795,7 +2130,7 @@ class MyTraversal
 	    mFoundLHS = false;
 
 #ifdef DEBUG_OUTPUT
-	    cout << "lval: " << getVariantName(astNode->variantT()) << " line: " << expr->get_file_info()->get_line() << " cur_line: " << expr->get_file_info()->getCurrentLine() << endl;
+	    cout << "lval: " << getVariantName(astNode->variantT()) << " line: " << expr->get_file_info()->get_line() << " cur_line: " << expr->get_file_info()->get_line() << endl;
 #endif
 	    SgBinaryOp *bin = isSgBinaryOp(astNode);
 
@@ -1842,7 +2177,6 @@ class MyTraversal
 	  inheritedAttribute.setLHS(0);
 
 	  if (destructiveAssign && !mFoundLHS) {
-  
 	    mFoundLHS = true;
 
 	    // determine the scope of this variable reference
@@ -1877,7 +2211,6 @@ class MyTraversal
 		}
 
 	      }
-
 	    } // end if(p != NULL)
 	    
 	    // if the variable reference was not passed as a formal parameter,
@@ -1893,12 +2226,6 @@ class MyTraversal
 
 	    }
 	    
-	    // get a handle to the function table
-	    TableAccess< simpleFuncTableRowdata > simpleFunc(mGDB);
-
-	    // retrieve information about calling function
-	    simpleFuncTableRowdata caller; 
-
 	    if (inheritedAttribute.getFunctionDefinitionId() == UNSET) {
 	      // the function definition id is not set.  i.e., we have
 	      // either arrived here from a global context or we are
@@ -1908,25 +2235,39 @@ class MyTraversal
 	      fakeUpCallingContext(inheritedAttribute);
 	    }
 
-	    int selRet = simpleFunc.selectById(inheritedAttribute.getFunctionDefinitionId(), 
-					       &caller);
-	    assert(selRet == 0);
-	    
-	    // get a handle to the database edge table
-	    TableAccess< callEdgeRowdata > callEdge(mGDB);
-	    
+	    simpleFuncRow caller;
+      sqlite3_command callerSearch(*mGDB,
+          "SELECT * FROM " + string(SIMPLEFUNCTBL) + " WHERE id=?;");
+      callerSearch.bind(1,inheritedAttribute.getFunctionDefinitionId());
+
+      sqlite3_reader callerreader = callerSearch.executereader();
+
+      if( callerreader.read() )
+        caller.load(callerreader);
+      else
+        assert(false);
+
 	    // transform this assignment into an invocation on the pseudo-function
 	    // __lmod.  look up that 'callee' in the database.
-	    simpleFuncTableRowdata dummyCallee; 
-	    selRet = simpleFunc.selectById(mLMODId, &dummyCallee);
-	    assert(selRet == 0);
+	    simpleFuncRow dummyCallee; 
+
+      sqlite3_command dummyCalleesearch(*mGDB,
+          "SELECT * FROM " + string(SIMPLEFUNCTBL) + " WHERE id=?;");
+      dummyCalleesearch.bind(1,mLMODId);
+
+      sqlite3_reader dummyreader = dummyCalleesearch.executereader();
+
+      if( dummyreader.read() )
+        dummyCallee.load(dummyreader);
+      else
+        assert(false);
 	    
 	    string dummyCallerName = caller.get_functionName();
 	    SgNode *assign = inheritedAttribute.getAssignOp();
+#if 0
 	    char tmp[dummyCallerName.length() + 
 		     strlen(assign->get_file_info()->get_filename()) +
 		     MAXSTRINGSZ];
-#if 0
 	    // file_info is broken for expressions
 	    sprintf(tmp, "%s-%s-%d-%d", 
 		    dummyCallerName.c_str(), 
@@ -1964,30 +2305,20 @@ class MyTraversal
 	    string actual = LHSSym->get_name().str();
 	    if (scope == SCOPE_GLOBAL)
 	      actual.insert(0, "::");
-	    callEdgeRowdata edge(UNKNOWNID, 
+	    callEdgeRow edge(
 				 mProjectId, 
 				 edgeLabel, 
 				 actual.c_str(),
 				 scope, 
 				 0);
-	    
-#ifdef DEBUG_OUTPUT
-	    cout << "INSERTING dummy edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << " tmp is " << tmp << endl;
-#endif
+      edge.insert(mGDB);
 
-	    // insert the entry into the database
-	    string dummyCallColumns[2];
-	    string dummyCallValues[2];
-	    
-	    dummyCallColumns[0] = "site";
-	    dummyCallValues[0]  = edge.get_site();
-	    dummyCallColumns[1] = "actual";
-	    dummyCallValues[1]  = edge.get_actual();
-	    callEdge.retrieveCreateByColumns(&edge, 
-					     dummyCallColumns, 
-					     dummyCallValues, 
-					     2,
-					     edge.get_projectId() );
+#ifdef DEBUG_OUTPUT
+      // milki (07/07/2010) data no longer referenced. Assuming
+      // dummyCallee
+	    //cout << "INSERTING dummy edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << data.get_functionName() << " tmp is " << tmp << endl;
+	    cout << "INSERTING dummy edge with scope " << edge.get_scope() << " site " << edge.get_site() << " actual " << edge.get_actual() << " between " << caller.get_functionName() << " and " << dummyCallee.get_functionName() << endl;
+#endif
 
 	    mCallgraph->insertEdge(caller, dummyCallee, edge);
 	    if (!mSideEffectPtr->separateCompilation) 
@@ -2003,19 +2334,19 @@ class MyTraversal
     return returnAttribute;
   } // end method
 
-  long getLMODId() { return mLMODId; }
+  int getLMODId() { return mLMODId; }
   
  protected:
 
   // keep a connection to the database for the callgraph
-  GlobalDatabaseConnection *mGDB;
+  sqlite3_connection *mGDB;
   
   // the id of the current project
   int mProjectId;
   
   // the id of the pseudo-function __lmod.  all statements that
   // modify a var v are converted to an invocation of __lmod(v)
-  long mLMODId;
+  int mLMODId;
   
   // used to discriminate between statements on the same line
   // (according to getCurrentLine)
@@ -2036,27 +2367,15 @@ class MyTraversal
   void fakeUpCallingContext(MyInheritedAttribute& inheritedAttribute)
   {
     
-    char *tmp = "globalContext";
-    char *funcName = new char[strlen(tmp)+1];
-    strcpy(funcName, tmp);
-      
-#if 0
-    // record this function definition if we haven't seen it before
-    if (mDefinedFuncs->find(funcName) == mDefinedFuncs->end())
-      mDefinedFuncs->insert(funcName);
-#endif      
-    
+    string funcName = "globalContext";
     // create a database entry for this function in the table 
     // of functions.
-    TableAccess< simpleFuncTableRowdata > simpleFunc(mGDB);
-    simpleFuncTableRowdata funcRow(UNKNOWNID, 
+    simpleFuncRow funcRow(
 				   mProjectId, 
 				   funcName);
-    
-    long funcId = simpleFunc.retrieveCreateByColumn(&funcRow, 
-						    "functionName", 
-						    funcRow.get_functionName(), 
-						    funcRow.get_projectId());
+    funcRow.insert(mGDB);
+
+    int funcId = funcRow.get_id();
     
     // store the information about this function.  if this function makes
     // an invocation we will want to gain access to it as the caller. 
@@ -2069,7 +2388,7 @@ class MyTraversal
     inheritedAttribute.setFunctionDefinitionId(funcId);
     //      inheritedAttribute.setParentFunction(funcDec);
     inheritedAttribute.setParentFunction(NULL);
-    inheritedAttribute.setParentName(funcName);
+    inheritedAttribute.setParentName(funcName.c_str());
     
     // add this function as a vertex in the call graphs
     if (!mSideEffectPtr->separateCompilation) 
@@ -2107,21 +2426,23 @@ class MyTraversal
 // read table of < func, var > indicating that variable var is
 // local to function fuc and insert into data structure.
 void 
-SideEffect::populateLocalVarsFromDB(GlobalDatabaseConnection *db)
+SideEffect::populateLocalVarsFromDB(sqlite3_connection *db)
 {
-  string cond = "1";
+  vector<localVarRow> rows;
   
-  vector<localVarsRowdata> rows;
-  
-  TableAccess< localVarsRowdata > localVars(db);
-  // get all rows in the database (cond == 1)
-  rows = localVars.select(cond);
+  sqlite3_command localvarget(*db,
+      "SELECT * FROM " + string(LOCALVARTBL));
+
+  sqlite3_reader localreader = localvarget.executereader();
+
+  while( localreader.read() ) {
+    localVarRow row(localreader);
+    rows.push_back(row);
+  }
 
   for (unsigned int i = 0; i < rows.size(); ++i) {
-    
     insertLocal(rows[i].get_functionName().c_str(),
 		rows[i].get_varName().c_str());
-    
   }
 }
 
@@ -2129,18 +2450,21 @@ SideEffect::populateLocalVarsFromDB(GlobalDatabaseConnection *db)
 // that formal is pos'th formal parameter of function func.
 // insert into data structure.
 void 
-SideEffect::populateFormalsFromDB(GlobalDatabaseConnection *db)
+SideEffect::populateFormalsFromDB(sqlite3_connection *db)
 {
-  string cond = "1";
-  
-  vector<formalsRowdata> rows;
-  
-  TableAccess< formalsRowdata > formals(db);
-  // get all rows in the database (cond == 1)
-  rows = formals.select(cond);
+  vector<formalRow> rows;
+
+  sqlite3_command formalvarget(*db,
+      "SELECT * FROM " + string(FORMALTBL));
+
+  sqlite3_reader formalreader = formalvarget.executereader();
+
+  while( formalreader.read() ) {
+    formalRow row(formalreader);
+    rows.push_back(row);
+  }
 
   for (unsigned int i = 0; i < rows.size(); ++i) {
-    
     insertFormal(rows[i].get_functionName().c_str(),
 		 rows[i].get_formal().c_str(),
 		 rows[i].get_ordinal());
@@ -2148,13 +2472,12 @@ SideEffect::populateFormalsFromDB(GlobalDatabaseConnection *db)
     insertFormalByPos(rows[i].get_functionName().c_str(),
 		      rows[i].get_formal().c_str(),
 		      rows[i].get_ordinal());
-    
   }
 }
 
 CallMultiGraph *
 SideEffect::createMultiGraph(CallGraph *callgraph, long projectId, 
-			     GlobalDatabaseConnection *db)
+			     sqlite3_connection *db)
 {
   // a binding multigraph is described on pp 60.  we select out
   // only those vertices that are an endpoint of an edge in the
@@ -2168,79 +2491,80 @@ SideEffect::createMultiGraph(CallGraph *callgraph, long projectId,
 
   CallMultiGraph *multigraph = new CallMultiGraph( projectId, GTYPE_SIMPLECALLGRAPH, db );
 
-  typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+  typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
   pair<edge_iter, edge_iter> ep;
 
   for (ep = edges(*callgraph); ep.first != ep.second; ++ep.first) {
-    int scope = get( edge_dbg_data, *callgraph, *ep.first ).get_scope();
+    int scope = get( boost::edge_dbg_data, *callgraph, *ep.first ).get_scope();
     if ( scope == SCOPE_PARAM ) {
 #ifdef DEBUG_OUTPUT
-      cout << "****** edge: " << get( vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName() << " to " << get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName() << endl;
+      cout << "****** edge: " << get( boost::vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName() << " to " << get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName() << endl;
 #endif
 
-      string srcFunc(get( vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName());
-      string actual(get( edge_dbg_data, *callgraph, *ep.first ).get_actual());
+      string srcFunc(get( boost::vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ).get_functionName());
+      string actual(get( boost::edge_dbg_data, *callgraph, *ep.first ).get_actual());
 
-      //      varNodeRowdata src( UNKNOWNID, projectId, srcFunc, actual );
-      varNodeRowdata src( ++nextId, projectId, srcFunc, actual );
+      varNodeRow src(projectId, srcFunc, actual );
+      src.insert(db);
 
-      typedef graph_traits < CallMultiGraph >::vertex_descriptor Vertex;
+      typedef boost::graph_traits < CallMultiGraph >::vertex_descriptor Vertex;
       Vertex v;
 		 
       string name1(srcFunc + ":" + actual);
       v = multigraph->insertVertex( src, name1 );
 #ifdef DEBUG_OUTPUT
-      cout << "Inserted vertex: " << get( vertex_dbg_data, *multigraph, v).get_functionName() << endl;
+      cout << "Inserted vertex: " << get( boost::vertex_dbg_data, *multigraph, v).get_functionName() << endl;
 #endif
 
-      string tarFunc(get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName());
+      string tarFunc(get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName());
       const char *param;
       int ordinal;
 
-      ordinal = get( edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
-      //      tarFunc =get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName();
+      ordinal = get( boost::edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
+      //      tarFunc =get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ).get_functionName();
 
       param = lookupFormalByPos(tarFunc.c_str(), ordinal);
       assert(param != NULL);
 
       string param2(param);
       //      varNodeRowdata tar( UNKNOWNID, projectId, tarFunc, param2 );
-      varNodeRowdata tar( ++nextId, projectId, tarFunc, param2 );
+      varNodeRow tar( projectId, tarFunc, param2 );
+      tar.insert(db);
 
       string name2(tarFunc + ":" + param);
       v = multigraph->insertVertex( tar, name2 );
 #ifdef DEBUG_OUTPUT
-      cout << "Inserted vertex: " << get( vertex_dbg_data, *multigraph, v).get_functionName() << endl;
+      cout << "Inserted vertex: " << get( boost::vertex_dbg_data, *multigraph, v).get_functionName() << endl;
 #endif
 
-      callEdgeRowdata edge( get( edge_dbg_data, *callgraph, *ep.first ) );
+      callEdgeRow edge = get( boost::edge_dbg_data, *callgraph, *ep.first );
       edge.set_id( ++nextId );
 
-      typedef graph_traits < CallMultiGraph >::edge_descriptor Edge;
+      typedef boost::graph_traits < CallMultiGraph >::edge_descriptor Edge;
       typedef std::pair<bool, Edge> dbgEdgeReturn; 
       multigraph->insertEdge( src, tar, edge );
-      typedef property_map<CallMultiGraph, vertex_index_t>::type
+      typedef boost::property_map<CallMultiGraph, boost::vertex_index_t>::type
 	VertexIndexMap;
-      typedef property_map<CallMultiGraph, edge_index_t>::type
+      typedef boost::property_map<CallMultiGraph, boost::edge_index_t>::type
 	EdgeIndexMap;
-      EdgeIndexMap index_map = get(edge_index, *multigraph);
+      EdgeIndexMap index_map = get(boost::edge_index, *multigraph);
 
     }
   }
 
 #ifdef DEBUG_OUTPUT
   for (ep = edges(*multigraph); ep.first != ep.second; ++ep.first) {
-      cout << "****** mgraph edge: " << get( vertex_dbg_data, *multigraph, boost::source(*(ep.first), *multigraph) ).get_functionName() << " to " << get( vertex_dbg_data, *multigraph, boost::target(*(ep.first), *multigraph) ).get_functionName() << endl;
+      cout << "****** mgraph edge: " << get( boost::vertex_dbg_data, *multigraph, boost::source(*(ep.first), *multigraph) ).get_functionName() << " to " << get( boost::vertex_dbg_data, *multigraph, boost::target(*(ep.first), *multigraph) ).get_functionName() << endl;
   }
 #endif 
 
   return multigraph;
 }
 
-class solve_rmod : public base_visitor<solve_rmod> {
+class solve_rmod : public boost::base_visitor<solve_rmod> {
 
  public:
-  typedef on_finish_vertex event_filter;
+  typedef boost::on_finish_vertex event_filter;
   
   solve_rmod(SideEffect *setSideEffect) : 
     mReachedFixedPoint(false),
@@ -2249,17 +2573,17 @@ class solve_rmod : public base_visitor<solve_rmod> {
 
   template <class Vertex, class G>
   void operator()(Vertex m, G& g) {
-    string mFunc = get( vertex_dbg_data, g, m).get_functionName();
-    string mVarName = get( vertex_dbg_data, g, m).get_varName();
+    string mFunc = get( boost::vertex_dbg_data, g, m).get_functionName();
+    string mVarName = get( boost::vertex_dbg_data, g, m).get_varName();
 
-    typedef typename graph_traits<G>::out_edge_iterator out_edge_iter;
+    typedef typename boost::graph_traits<G>::out_edge_iterator out_edge_iter;
     pair<out_edge_iter, out_edge_iter> ep;
 
     // union the RMODs of any target neighbors
     for (ep = out_edges(m, g); ep.first != ep.second; ++ep.first) {
       Vertex n = boost::target(*(ep.first), g);
-      string nFunc = get( vertex_dbg_data, g, n).get_functionName();
-      string nVarName = get( vertex_dbg_data, g, n).get_varName();
+      string nFunc = get( boost::vertex_dbg_data, g, n).get_functionName();
+      string nVarName = get( boost::vertex_dbg_data, g, n).get_varName();
 
       pair<map_type::const_iterator, map_type::const_iterator> p = 
 	mSideEffectPtr->lookupRMOD(nFunc.c_str());
@@ -2311,26 +2635,26 @@ class solve_rmod : public base_visitor<solve_rmod> {
 
 void 
 SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId, 
-		      GlobalDatabaseConnection *db)
+		      sqlite3_connection *db)
 {
   // from figure 1 pp 60
 
   assert(multigraph != NULL);
 
   // (1) find strongly connected components of the multigraph
-  typedef property_map<CallMultiGraph, vertex_index_t>::const_type
+  typedef boost::property_map<CallMultiGraph, boost::vertex_index_t>::const_type
     VertexIndexMap;
-  VertexIndexMap index_map = get(vertex_index, *multigraph);
-  typedef graph_traits < CallMultiGraph >::vertex_descriptor vertex;
-  typedef graph_traits < CallMultiGraph >::edge_descriptor edge;
-  typedef graph_traits < CallMultiGraph >::vertex_iterator vertex_iterator;
-  typedef property_traits < VertexIndexMap >::value_type size_type;
-  typedef graph_traits <
+  VertexIndexMap index_map = get(boost::vertex_index, *multigraph);
+  typedef boost::graph_traits < CallMultiGraph >::vertex_descriptor vertex;
+  typedef boost::graph_traits < CallMultiGraph >::edge_descriptor edge;
+  typedef boost::graph_traits < CallMultiGraph >::vertex_iterator vertex_iterator;
+  typedef boost::property_traits < VertexIndexMap >::value_type size_type;
+  typedef boost::graph_traits <
     CallMultiGraph >::adjacency_iterator adjacency_iterator;
   
   typedef size_type cg_vertex;
   std::vector < cg_vertex > component_number_vec(num_vertices(*multigraph));
-  iterator_property_map < cg_vertex *, VertexIndexMap, cg_vertex, cg_vertex& >
+  boost::iterator_property_map < cg_vertex *, VertexIndexMap, cg_vertex, cg_vertex& >
     component_number(&component_number_vec[0], index_map);
   
   //  const char *name;
@@ -2344,12 +2668,14 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   build_component_lists(*multigraph, num_scc, component_number, components);
   
 #ifdef DEBUG_OUTPUT
+  cout << "There are " << components.size() << " SCCs in this multigraph "
+    << endl;
   for (cg_vertex s = 0; s < components.size(); ++s) {
     
     cout << "component: " << s << endl;
     for (size_type i = 0; i < components[s].size(); ++i) {
       vertex u = components[s][i];
-      cout << "func: " << get( vertex_dbg_data, *multigraph, u).get_functionName() << endl;
+      cout << "func: " << get( boost::vertex_dbg_data, *multigraph, u).get_functionName() << endl;
     }
   }
 #endif
@@ -2370,8 +2696,8 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     vertex rep = components[s][0];
     //    reps[component_number[rep]] = rep;
     
-    //    simpleFuncTableRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
-    varNodeRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
+    //    simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *multigraph, rep ) );
+    varNodeRow v = get( boost::vertex_dbg_data, *multigraph, rep );
 
 #ifdef DEBUG_OUTPUT
     cout << "Adding " << rep << " " << v.get_functionName() << endl;
@@ -2384,8 +2710,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
 
     for (size_type i = 0; i < components[s].size(); ++i) {
 
-      //      simpleFuncTableRowdata v2( get( vertex_dbg_data, *multigraph, components[s][i] ) );
-      varNodeRowdata v2( get( vertex_dbg_data, *multigraph, components[s][i] ) );
+      varNodeRow v2 = get( boost::vertex_dbg_data, *multigraph, components[s][i] );
 
       pair<map_type::const_iterator, map_type::const_iterator> p = 
 	lookupIMOD(v2.get_functionName().c_str());
@@ -2406,8 +2731,8 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     vertex rep = components[s][0];
     //    reps[component_number[rep]] = rep;
     
-    //    simpleFuncTableRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
-    varNodeRowdata v( get( vertex_dbg_data, *multigraph, rep ) );
+    //    simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *multigraph, rep ) );
+    varNodeRow v =  get( boost::vertex_dbg_data, *multigraph, rep );
 
     pair<map_type::const_iterator, map_type::const_iterator> p = 
       lookupIMOD(v.get_functionName().c_str());
@@ -2418,7 +2743,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   }
 #endif
 
-  typedef graph_traits<CallMultiGraph>::out_edge_iterator out_edge_iter;
+  typedef boost::graph_traits<CallMultiGraph>::out_edge_iterator out_edge_iter;
   pair<out_edge_iter, out_edge_iter> ep;
 
   // now collapse the edges
@@ -2433,15 +2758,14 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
       cout << "Retrieving " << derivedRep << endl;
 #endif
 
-      //      simpleFuncTableRowdata src( get( vertex_dbg_data, *derivedG, derivedRep ) );
-      varNodeRowdata src( get( vertex_dbg_data, *derivedG, derivedRep ) );
+      varNodeRow src = get( boost::vertex_dbg_data, *derivedG, derivedRep );
 
       for (ep = out_edges(origRep, *multigraph); ep.first != ep.second; ++ep.first) {
 	vertex rep2 = reps[component_number[boost::target(*(ep.first), *multigraph)]];
-	//	simpleFuncTableRowdata tar( get( vertex_dbg_data, *derivedG, rep2 ) );
-	varNodeRowdata tar( get( vertex_dbg_data, *derivedG, rep2 ) );
+	//	simpleFuncTableRowdata tar( get( boost::vertex_dbg_data, *derivedG, rep2 ) );
+	varNodeRow tar = get( boost::vertex_dbg_data, *derivedG, rep2 );
 
-	callEdgeRowdata edge( get( edge_dbg_data, *multigraph, *ep.first ) );
+	callEdgeRow edge = get( boost::edge_dbg_data, *multigraph, *ep.first );
 	derivedG->insertEdge( src, tar, edge );
 
       }
@@ -2464,7 +2788,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   for (cg_vertex s = 0; s < components.size(); ++s) {
    
     vertex rep = components[s][0];
-    string repName = get( vertex_dbg_data, *multigraph, rep ).get_functionName();
+    string repName = get( boost::vertex_dbg_data, *multigraph, rep ).get_functionName();
  
     pair<map_type::const_iterator, map_type::const_iterator> p = 
       lookupRMOD(repName.c_str());
@@ -2472,7 +2796,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     for (size_type i = 1; i < components[s].size(); ++i) {
       
       vertex v = components[s][i];
-      string nodeName = get( vertex_dbg_data, *multigraph, v ).get_functionName();
+      string nodeName = get( boost::vertex_dbg_data, *multigraph, v ).get_functionName();
 
       for (map_type::const_iterator i = p.first; i != p.second; ++i)
 	insertRMOD( nodeName.c_str(), (*i).second );
@@ -2480,7 +2804,7 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
     }
   }
 
-}
+};
 
 // this implements eqn 5
 // NB:  we have done away with the IMOD sets, except for the pseudo function
@@ -2488,9 +2812,9 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
 //      function.  where we would have unioned IMOD sets here we should instead
 //      detect if there is an edge from a caller to __lmod, in which case
 //      we need to add the corresponding actual to callers imodplus set.
-class solve_imodplus : public base_visitor<solve_imodplus> {
+class solve_imodplus : public boost::base_visitor<solve_imodplus> {
  public:
-  typedef on_finish_vertex event_filter;
+  typedef boost::on_finish_vertex event_filter;
   
   solve_imodplus(SideEffect *setSideEffect) :
     mReachedFixedPoint(false),
@@ -2499,16 +2823,23 @@ class solve_imodplus : public base_visitor<solve_imodplus> {
 
   template <class Vertex, class G>
   void operator()(Vertex p, G& g) {
-    string pFunc = get( vertex_dbg_data, g, p).get_functionName();
-
-    typedef typename graph_traits<G>::out_edge_iterator out_edge_iter;
+    string pFunc = get( boost::vertex_dbg_data, g, p).get_functionName();
+#ifdef DEBUG_OUTPUT
+    cout << "Operating on solve_imodplus for " << pFunc.c_str() << endl;
+#endif
+    typedef typename boost::graph_traits<G>::out_edge_iterator out_edge_iter;
     pair<out_edge_iter, out_edge_iter> ep;
 
     // NB:  this could be much more efficient
     for (ep = out_edges(p, g); ep.first != ep.second; ++ep.first) {
       callVertex q = boost::target(*(ep.first), g);
-      string qFunc = get( vertex_dbg_data, g, q).get_functionName();
-      int paramNum = get( edge_dbg_data, g, (*ep.first) ).get_ordinal();
+      string qFunc = get( boost::vertex_dbg_data, g, q).get_functionName();
+      int paramNum = get( boost::edge_dbg_data, g, (*ep.first) ).get_ordinal();
+
+#ifdef DEBUG_OUTPUT
+    cout << "Examining " << qFunc.c_str() << " with "
+      << paramNum << " parameters" << endl;
+#endif
 
       if (paramNum == -1)
 	continue;
@@ -2519,9 +2850,16 @@ class solve_imodplus : public base_visitor<solve_imodplus> {
       // actual to the caller's IMOD+ set.
       if (!strcmp(qFunc.c_str(), LMODFUNC)) {
 	
-	string actual = get( edge_dbg_data, g, (*ep.first) ).get_actual();
-	if (mSideEffectPtr->insertIMODPlus(pFunc.c_str(), actual.c_str()))
+	string actual = get( boost::edge_dbg_data, g, (*ep.first) ).get_actual();
+#ifdef DEBUG_OUTPUT
+  cout << "Inserting to IMODPlus " << actual.c_str() << " for "
+    << pFunc.c_str() << endl;
+#endif
+	if (mSideEffectPtr->insertIMODPlus(pFunc.c_str(), actual.c_str())) {
 	  mReachedFixedPoint = false;
+  }
+    
+
 
       }
 
@@ -2535,7 +2873,7 @@ class solve_imodplus : public base_visitor<solve_imodplus> {
       // union b_e(RMOD(q)) [ NB:  restricted to params ]
       for (map_type::const_iterator i = itpair.first; i != itpair.second; ++i) {
 	if ( mSideEffectPtr->lookupFormal(qFunc.c_str(), (*i).second) == paramNum ) {
-	  string actual = get( edge_dbg_data, g, (*ep.first) ).get_actual();
+	  string actual = get( boost::edge_dbg_data, g, (*ep.first) ).get_actual();
 
 #ifdef DEBUG_OUTPUT
 	  cout << "INSERTING IMODPLUS FROM RMOD: " << actual.c_str() << " in " << pFunc.c_str() << " from " << qFunc.c_str() << " param # " << paramNum << " formal" << (*i).second << endl;
@@ -2546,7 +2884,7 @@ class solve_imodplus : public base_visitor<solve_imodplus> {
 	  break;
 	}
 #ifdef DEBUG_OUTPUT
-	cout << "   " << (*i).second << " index: " << lookupFormal(qFunc.c_str(), (*i).second) << endl;;
+	cout << "   " << (*i).second << " index: " << mSideEffectPtr->lookupFormal(qFunc.c_str(), (*i).second) << endl;;
 #endif
       }
     }
@@ -2577,7 +2915,7 @@ static int nextdfn;
 deque<callVertex> vertexStack;
 
 // hash_set<Key, HashFcn, EqualKey, Alloc>
-hash_set<int, hash<int>, eqint> shadowStack;
+hash_set<int, boost::hash<int>, eqint> shadowStack;
 
 int *lowlink;
 int *dfn;
@@ -2587,8 +2925,8 @@ int
 SideEffect::onStack(int num)
 {
   // CH (4/9/2010): Use boost::unordered_set instead
-  //hash_set<int, hash<int>, eqint>::const_iterator it = 
-    boost::unordered_set<int, hash<int>, eqint>::const_iterator it = 
+  //hash_set<int, boost::hash<int>, eqint>::const_iterator it = 
+    boost::unordered_set<int, boost::hash<int>, eqint>::const_iterator it = 
     shadowStack.find(num);
 
   return ( it != shadowStack.end() );
@@ -2626,9 +2964,9 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 
   // foreach q adjacent to p
   // NB:  i think this means (p,q) is in the graph
-  typedef graph_traits<CallGraph>::out_edge_iterator out_edge_iter;
+  typedef boost::graph_traits<CallGraph>::out_edge_iterator out_edge_iter;
 
-  typedef graph_traits<CallGraph>::adjacency_iterator adj_it;
+  typedef boost::graph_traits<CallGraph>::adjacency_iterator adj_it;
   pair<adj_it, adj_it> adj_pair;
   for (adj_pair = adjacent_vertices(p, *g); adj_pair.first != adj_pair.second;
 	 ++adj_pair.first) {
@@ -2636,7 +2974,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
     //      tricky part:  keeping indexing consistent across graphs
     callVertex q = *(adj_pair.first);
     int qIndex = get( index_map, q );
-    string qName(get( vertex_dbg_data, *g, q ).get_functionName());
+    string qName(get( boost::vertex_dbg_data, *g, q ).get_functionName());
 #ifdef DEBUG_OUTPUT
     cout << "q: " << qName << " adjacent to p: " << pName;
 #endif
@@ -2645,7 +2983,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 #ifdef DEBUG_OUTPUT
       cout << " tree edge " << endl;
 #endif
-      string qName(get( vertex_dbg_data, *g, q ).get_functionName());
+      string qName(get( boost::vertex_dbg_data, *g, q ).get_functionName());
       searchGMOD(g, qName, q, index_map);
       lowlink[ pIndex ] = min(lowlink[ pIndex ], lowlink[ qIndex ]);
     }
@@ -2712,7 +3050,6 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 #endif
 	insertGMOD(pName.c_str(), (*qIt));
       }
-
     }
   } // end foreach q adjacent to p
 
@@ -2775,7 +3112,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 		     inserter(intersection, intersection.begin()),
 		     ltstr());
 
-      string uName(get( vertex_dbg_data, *g, u ).get_functionName());
+      string uName(get( boost::vertex_dbg_data, *g, u ).get_functionName());
 #ifdef DEBUG_OUTPUT
       cout << "    Popping " << uName << endl;
 #endif
@@ -2813,7 +3150,7 @@ SideEffect::solveGMOD(CallGraph *g)
   for(; i > 0; i--)
     dfn[i-1] = 0;
 
-  callVertexIndexMap index_map = get(vertex_index, *g);
+  callVertexIndexMap index_map = get(boost::vertex_index, *g);
 
   // search root (main)
   string mainFunc = getCallRootName();
@@ -2824,9 +3161,9 @@ SideEffect::solveGMOD(CallGraph *g)
 }
 
 
-class solve_dmod : public base_visitor<solve_dmod> {
+class solve_dmod : public boost::base_visitor<solve_dmod> {
  public:
-  typedef on_examine_edge event_filter;
+  typedef boost::on_examine_edge event_filter;
 
   solve_dmod(SideEffect *setSideEffect) :
     mReachedFixedPoint(false),
@@ -2835,19 +3172,19 @@ class solve_dmod : public base_visitor<solve_dmod> {
 
   template <class Edge, class G>
   void operator()(Edge e, G& g) {
-    string site = get( edge_dbg_data, g, e ).get_site();
+    string site = get( boost::edge_dbg_data, g, e ).get_site();
 
     // union b_e(GMOD(q))
     // NB:  this could be much more efficient
     callVertex q = boost::target( e, g );
-    string qFunc = get( vertex_dbg_data, g, q ).get_functionName();
+    string qFunc = get( boost::vertex_dbg_data, g, q ).get_functionName();
 
     pair<map_type::const_iterator, map_type::const_iterator> itpair = 
       mSideEffectPtr->lookupGMOD(qFunc.c_str());
 
-    int paramNum = get( edge_dbg_data, g, e ).get_ordinal();
-    //    int scope = get( edge_dbg_data, g, e ).get_scope();
-    string actual = get( edge_dbg_data, g, e ).get_actual();
+    int paramNum = get( boost::edge_dbg_data, g, e ).get_ordinal();
+    //    int scope = get( boost::edge_dbg_data, g, e ).get_scope();
+    string actual = get( boost::edge_dbg_data, g, e ).get_actual();
 
     int inserted = 0;    
 
@@ -2859,13 +3196,13 @@ class solve_dmod : public base_visitor<solve_dmod> {
       mSideEffectPtr->lookupDMOD(site.c_str());
     int do_global = 0;
     
-    if (dmodpair.first == dmodpair.second) 
+    if (dmodpair.first == dmodpair.second)
       do_global = 1;
 
     if ( strcmp( actual.c_str(), "void") ) {
       for (map_type::const_iterator i = itpair.first; i != itpair.second; ++i) {
 #ifdef DEBUG_OUTPUT
-	cout << "checking " << (*i).second << " in " << qFunc.c_str() << " as paramNum " << paramNum << endl;
+	cout << "checking dmodpair " << (*i).second << " in " << qFunc.c_str() << " as paramNum " << paramNum << endl;
 #endif	
 
 	if ( mSideEffectPtr->lookupFormal( qFunc.c_str(), (*i).second ) == paramNum ) {
@@ -2878,6 +3215,13 @@ class solve_dmod : public base_visitor<solve_dmod> {
 	  }
 	  break;
 	} 
+#ifdef DEBUG_OUTPUT
+  else
+  {
+    cout << "dmodpair does not match formal param pos " <<
+	mSideEffectPtr->lookupFormal( qFunc.c_str(), (*i).second ) << endl;
+  }
+#endif
       }
     }
 
@@ -2910,9 +3254,9 @@ class solve_dmod : public base_visitor<solve_dmod> {
   SideEffect *mSideEffectPtr;
 };
 
-struct print_dmod : public base_visitor<print_dmod> {
+class print_dmod : public boost::base_visitor<print_dmod> {
  public:
-  typedef on_examine_edge event_filter;
+  typedef boost::on_examine_edge event_filter;
 
   print_dmod(SideEffect *setSideEffect) :
     mSideEffectPtr(setSideEffect)
@@ -2920,14 +3264,14 @@ struct print_dmod : public base_visitor<print_dmod> {
 
   template <class Edge, class G>
   void operator()(Edge e, G& g) {
-    string site = get( edge_dbg_data, g, e ).get_site();
+    string site = get( boost::edge_dbg_data, g, e ).get_site();
 
     pair<map_type::const_iterator, map_type::const_iterator> itpair = 
       mSideEffectPtr->lookupDMOD(site.c_str());
 
     callVertex q = boost::target( e, g );
-    string qFunc = get( vertex_dbg_data, g, q ).get_functionName();
-    string actual = get( edge_dbg_data, g, e ).get_actual();
+    string qFunc = get( boost::vertex_dbg_data, g, q ).get_functionName();
+    string actual = get( boost::edge_dbg_data, g, e ).get_actual();
 
     cout << "DMOD(" << site << ") [tar: " << qFunc << " actual: " << actual << "] = ";
     for (map_type::const_iterator i = itpair.first; i != itpair.second; ++i) 
@@ -2942,7 +3286,7 @@ struct print_dmod : public base_visitor<print_dmod> {
 
 CallGraph *
 createSimpleCallGraph(CallGraph *callgraph, long projectId, 
-		      GlobalDatabaseConnection *db)
+		      sqlite3_connection *db)
 {
 
   CallGraph *simpleCallgraph = new CallGraph( projectId, 
@@ -2950,42 +3294,48 @@ createSimpleCallGraph(CallGraph *callgraph, long projectId,
 
   assert( simpleCallgraph != NULL );
 
-  typedef graph_traits<CallGraph>::vertex_iterator vertex_iter;
+  typedef boost::graph_traits<CallGraph>::vertex_iterator vertex_iter;
   pair<vertex_iter, vertex_iter> vp;
 
   for (vp = vertices(*callgraph); vp.first != vp.second; ++vp.first) {
-
-      simpleFuncTableRowdata v( get( vertex_dbg_data, *callgraph, *vp.first ) );
+      simpleFuncRow v = get( boost::vertex_dbg_data, *callgraph, *vp.first );
       simpleCallgraph->insertVertex( v, v.get_functionName() );
-
   }
 
-  typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+  typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
   pair<edge_iter, edge_iter> ep;
 
   for (ep = edges(*callgraph); ep.first != ep.second; ++ep.first) {
-    
-    int paramNum = get( edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
+    int paramNum = get( boost::edge_dbg_data, *callgraph, *ep.first ).get_ordinal();
 
     // we only want to take one edge between a caller and callee.
     // for a call edge with one or more parameters take the first
     // parameter (0th param).  for an edge that represents an invocation
     // of a void function, there is a dummy parameter with a paramNum of -1.
     if ( ( paramNum == 0 ) || ( paramNum == -1 ) ) {
-      
-      simpleFuncTableRowdata src( get( vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) ) );
-      simpleFuncTableRowdata tar( get( vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) ) );
+      simpleFuncRow src = get( boost::vertex_dbg_data, *callgraph, boost::source(*(ep.first), *callgraph) );
+      simpleFuncRow tar = get( boost::vertex_dbg_data, *callgraph, boost::target(*(ep.first), *callgraph) );
 
-      callEdgeRowdata edge( get( edge_dbg_data, *callgraph, *ep.first ) );
+      callEdgeRow edge = get( boost::edge_dbg_data, *callgraph, *ep.first );
       simpleCallgraph->insertEdge( src, tar, edge );      
-
     }
-
   }
 
   return simpleCallgraph;
 }
 
+// milki (06/30/2010) Strip extension AND path
+// Long paths interfered with table creation
+string
+stripFileExtension(string fileName)
+{
+  string stripped = stripPathFromFileName(fileName);
+  stripped = stripFileSuffixFromFileName(stripped);
+  return stripped;
+}
+
+// milki (06/30/2010) Strips extension but leaves full path
+#if 0
 // remove the extension from a single file
 string
 stripFileExtension(string fileName)
@@ -3005,6 +3355,7 @@ stripFileExtension(string fileName)
   string stripped(fileName, 0, len);
   return stripped;
 }
+#endif
 
 // remove the extension from each file name 
 set<string>
@@ -3041,7 +3392,7 @@ sanitizeFileName(string fileName)
 {
   string sanitized(fileName);
 
-  for(int i = 0; i < sanitized.size(); ++i) {
+  for(unsigned int i = 0; i < sanitized.size(); ++i) {
     if ( (sanitized[i] == '.') || (sanitized[i] == '-') )
       sanitized[i] = '_';
   }
@@ -3080,7 +3431,7 @@ SideEffect::calcSideEffect(SgProject* project)
   CallGraph *simpleCallgraph;
   CallGraph **callgraphs = new CallGraph *[fileList->size()];
   CallGraph *callgraph;
-  GlobalDatabaseConnection **dbs = new GlobalDatabaseConnection *[fileList->size()];
+  sqlite3_connection **dbs = new sqlite3_connection *[fileList->size()];
 
   // if there is only one file to be processed, we can short circuit a lot of
   // this generality
@@ -3095,7 +3446,7 @@ SideEffect::calcSideEffect(SgProject* project)
   // call graphs, tables, etc. are aggregated into one toplevel database
   // to facilitate whole program analysis-- i.e., just sweep over a 
   // single table/graph.
-  GlobalDatabaseConnection toplevelDb;
+  sqlite3_connection toplevelDb;
   
   // set the name of the toplevel database to be the name of the 
   // output file
@@ -3154,13 +3505,14 @@ SideEffect::calcSideEffect(SgProject* project)
       ++it, ++i) {
 
     string fileName = stripFileExtension((*it)->getFileName());
+    cout << "Setting gdb for " << fileName.c_str() << endl;
 
     strippedFileNames[i] = fileName;
 
     // create a new database for this file
-    dbs[i] = new GlobalDatabaseConnection();
+    dbs[i] = new sqlite3_connection();
 
-    GlobalDatabaseConnection *db = dbs[i];
+    sqlite3_connection *db = dbs[i];
     
     // set the name of this database to correspond to the file
     db->setDatabaseParameters(NULL, NULL, NULL, (char *)fileName.c_str());
@@ -3222,6 +3574,9 @@ SideEffect::calcSideEffect(SgProject* project)
 
       // traverse the AST derived from the source tree to populate
       // the call graph and the above tables
+#ifdef DEBUG_OUTPUT
+      cout << "Traversing AST to populate call graph and tables" << endl;
+#endif
       MyTraversal treeTraversal(projectId, db, callgraphs[i], simpleCallgraph,
 				&definedFuncs, &mCalledFuncs, this);
       MyInheritedAttribute inheritedAttribute(project);
@@ -3252,13 +3607,13 @@ SideEffect::calcSideEffect(SgProject* project)
     // loop over each individual callgraph to insert the vertices
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::vertex_iterator vertex_iter;
+      typedef boost::graph_traits<CallGraph>::vertex_iterator vertex_iter;
       pair<vertex_iter, vertex_iter> vp;
 
       // loop over the vertices in this callgraph.  
       for (vp = vertices(*callgraphs[i]); vp.first != vp.second; ++vp.first) {
 
-	simpleFuncTableRowdata v( get( vertex_dbg_data, *callgraphs[i], *vp.first ) );
+	simpleFuncTableRowdata v( get( boost::vertex_dbg_data, *callgraphs[i], *vp.first ) );
 
 	// keep track of which file defines a given function.
 	// this vertex was defined in this file if it is a source to any
@@ -3267,7 +3622,7 @@ SideEffect::calcSideEffect(SgProject* project)
 	// currently i do not handle static functions.
 	// signal if we ever have a case where a function is defined
 	// multiple times; we'll have to handle it.
-	typedef graph_traits<CallGraph>::adjacency_iterator adj_it;
+	typedef boost::graph_traits<CallGraph>::adjacency_iterator adj_it;
 	pair<adj_it, adj_it> adj_pair;
 	adj_pair = adjacent_vertices(*(vp.first), *callgraphs[i]); 
 	
@@ -3303,7 +3658,7 @@ SideEffect::calcSideEffect(SgProject* project)
     // loop over each individual callgraph to insert the edges
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+      typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
       pair<edge_iter, edge_iter> ep;
       
       // loop over the edges in the callgraph
@@ -3584,7 +3939,7 @@ SideEffect::calcSideEffect(SgProject* project)
     //    assert(1 == 0);
     for (i = 0; i < strippedFileNames.size(); ++i) {
       
-      GlobalDatabaseConnection *db = dbs[i];
+      sqlite3_connection *db = dbs[i];
       
       populateLocalVarsFromDB(db);
       populateFormalsFromDB(db);
@@ -3597,7 +3952,7 @@ SideEffect::calcSideEffect(SgProject* project)
 
   // create the multigraph by traversing the callgraph
   // use dummy values for projectId and &db
-  CallMultiGraph *multigraph = createMultiGraph(callgraph, toplevelProjectId, &toplevelDb);
+    CallMultiGraph *multigraph = createMultiGraph(callgraph, toplevelProjectId, &toplevelDb);
   //  multigraph->writeToDOTFile( "mcall.dot" );
   
 #ifdef DEBUG_OUTPUT
@@ -3741,20 +4096,22 @@ int
 SideEffect::calcSideEffect(SgProject& project) 
 {
   // get the list of files associated with this project
-  SgFilePtrListPtr fileList = project.get_fileList();
+  SgFilePtrList fileList = project.get_fileList();
 
   list<SgNode*> *nodeList = new list<SgNode*>;
 
-  list<string> sourceFileNames = project.get_sourceFileNameList();
+  vector<string> sourceFileNamesV = project.get_sourceFileNameList();
+  list<string> sourceFileNames(sourceFileNamesV.begin(),sourceFileNamesV.end());
+
 
   // sql doesn't like hyphens and dots, change them to underscores
   string sanitizedOutputFileName = sanitizeFileName(project.get_outputFileName());
 
-  vector<string> nodeListFileNames(fileList->size());
+  vector<string> nodeListFileNames(fileList.size());
 
   int i = 0;
-  for(SgFilePtrList::iterator it = fileList->begin();
-      it != fileList->end();
+  for(SgFilePtrList::iterator it = fileList.begin();
+      it != fileList.end();
       ++i, ++it) {
     nodeListFileNames[i] = (*it)->getFileName();
     nodeList->push_back((SgNode*)*it);
@@ -3828,7 +4185,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 {
   int i;
-  
+
   // we will parse the source files, populating a database with
   // information gleaned from each source file.  
 
@@ -3838,16 +4195,20 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
   // strip the extensions off of the source file names
   set<string> strippedSourceFileNames = stripFileExtensions(sourceFileNames);
+  sanitizedOutputFileName = stripFileExtension(sanitizedOutputFileName);
 
   // sort the list of file names so we can do a set difference
   //  sort(strippedSourceFileNames.begin(), strippedSourceFileNames.end());
 
-  long lmodId = -1;
+  int lmodId = -1;
 
   CallGraph *simpleCallgraph;
   CallGraph **callgraphs = new CallGraph *[nodeList->size()];
+#ifdef DEBUG_OUTPUT
+  cout << "Callgraph created with " << nodeList->size() << " nodes" << endl;
+#endif
   CallGraph *callgraph;
-  GlobalDatabaseConnection **dbs = new GlobalDatabaseConnection *[nodeList->size()];
+  sqlite3_connection **dbs = new sqlite3_connection *[nodeList->size()];
 
   // if there is only one file to be processed, we can short circuit a lot of
   // this generality
@@ -3862,7 +4223,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
   // call graphs, tables, etc. are aggregated into one toplevel database
   // to facilitate whole program analysis-- i.e., just sweep over a 
   // single table/graph.
-  GlobalDatabaseConnection toplevelDb;
+  sqlite3_connection toplevelDb;
   
   // set the name of the toplevel database to be the name of the 
   // output file
@@ -3870,37 +4231,22 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
   // sql doesn't like hyphens and dots, change them to underscores
   //  string sanitizedOutputFileName = sanitizeFileName(project->get_outputFileName());
 
+  string toplevelDbfile = sanitizedOutputFileName + ".db";
 
-  toplevelDb.setDatabaseParameters(NULL, NULL, NULL, (char *)sanitizedOutputFileName.c_str());
+  toplevelDb.open( toplevelDbfile.c_str() );
+  toplevelDb.setbusytimeout(1800 * 1000); // 30 minutes
 
-  int initOk =  toplevelDb.initialize();
-  assert(initOk == 0);
+  // localVars, formals, sideeffect
+  createDatabaseTables(toplevelDb, false);
 
-  CREATE_TABLE(toplevelDb, projects);
-  CREATE_TABLE(toplevelDb, graphdata);
-  CREATE_TABLE(toplevelDb, graphnode);
-  CREATE_TABLE(toplevelDb, graphedge);
+  string toplevelProjectName = "testProject";
+  projectsRow toplevelProw(toplevelProjectName);
+  toplevelProw.insert(&toplevelDb);
 
-  string toplevelProjectName = "testProject"; 
-  projectsRowdata toplevelProw( UNKNOWNID ,toplevelProjectName, UNKNOWNID );
-  projects.retrieveCreateByColumn( &toplevelProw, "name", 
-				   toplevelProjectName );
   long toplevelProjectId = toplevelProw.get_id();
 
-  // local table holds entries of the form < func, var > where var
-  // is defined locally with function func.
-  TableAccess< localVarsRowdata > localVars(&toplevelDb);
-  localVars.initialize();
-  
-  // formals table holds entries of the form < func, formal, ordinal >
-  // where formal is the ordinal'th argument to function func.
-  TableAccess< formalsRowdata > formals(&toplevelDb);
-  formals.initialize();
-
-  TableAccess< sideEffectTableRowdata > sideEffect(&toplevelDb); 
-  sideEffect.initialize(); 
-
   // create the aggregate simple call graph
+
   if (!separateCompilation) {
     simpleCallgraph = new CallGraph( toplevelProjectId, GTYPE_SIMPLECALLGRAPH, &toplevelDb );
   } else {
@@ -3928,14 +4274,17 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     strippedFileNames[i] = fileName;
 
     // create a new database for this file
-    dbs[i] = new GlobalDatabaseConnection();
+    dbs[i] = new sqlite3_connection;
 
-    GlobalDatabaseConnection *db = dbs[i];
-    
+    sqlite3_connection *db = dbs[i];
+
     // set the name of this database to correspond to the file
-    db->setDatabaseParameters(NULL, NULL, NULL, (char *)fileName.c_str());
-    
+    string dbname = fileName + ".db";
+    db->open( dbname.c_str() );
+    db->setbusytimeout(1800 * 1000); // 30 minutes
+
     // create a call graph for this file
+    // TODO: CALLGRAPH REPLACEMENT
     callgraphs[i] = new CallGraph(projectId, GTYPE_SIMPLECALLGRAPH, db);
 
     if (strippedSourceFileNames.find(fileName) == strippedSourceFileNames.end()) {
@@ -3943,10 +4292,6 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
       // created a database for it.  connect to that database and read
       // the call graph from it.
       // NB:  don't drop the database
-      int drop = 0;
-      int initOk =  db->initialize(drop);
-      assert(initOk == 0);
-
       callgraphs[i]->loadFromDatabase();
 
     } else {
@@ -3954,37 +4299,10 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
       // this is a source file.  we need to create a database for it, and
       // populate that database and a callgraph by parsing the file.
       // NB:  _do_ drop the database if it already exists
-      int drop = 1;
-      int initOk =  db->initialize(drop);
-      assert(initOk == 0);
-
+      // localVars, formals, sideeffect
+      createDatabaseTables(*db, true);
       // setup the call graph tables
-      CREATE_TABLE(*db, projects);
-      CREATE_TABLE(*db, graphdata);
-      CREATE_TABLE(*db, graphnode);
-      CREATE_TABLE(*db, graphedge);
-      
-      // create/initialize a table with entries < func > where func is
-      // a function defined or called within the file
-      TableAccess< simpleFuncTableRowdata > simpleFunc(db);
-      simpleFunc.initialize();
-      
-      // create/initialize a table to hold the data for the call graph edges
-      TableAccess< callEdgeRowdata > callEdge(db);
-      callEdge.initialize();
-      
-      // create/initialize a table with entries < func, var > where
-      // var is defined locally within function func and func is 
-      // defined within this file.
-      TableAccess< localVarsRowdata > localVars(db);
-      localVars.initialize();
-      
-      // create/initialize a table with entries < func, formal, ordinal >
-      // where formal is the ordinal'th argument to function func,
-      // a function defined within this file.
-      TableAccess< formalsRowdata > formals(db);
-      formals.initialize();
-      
+      //
 #if 0
       AstDOTGeneration dotgen;
       dotgen.generateInputFiles(project, AstDOTGeneration::PREORDER);
@@ -4022,13 +4340,13 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     // loop over each individual callgraph to insert the vertices
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::vertex_iterator vertex_iter;
+      typedef boost::graph_traits<CallGraph>::vertex_iterator vertex_iter;
       pair<vertex_iter, vertex_iter> vp;
 
       // loop over the vertices in this callgraph.  
       for (vp = vertices(*callgraphs[i]); vp.first != vp.second; ++vp.first) {
 
-	simpleFuncTableRowdata v( get( vertex_dbg_data, *callgraphs[i], *vp.first ) );
+	simpleFuncRow v = get( boost::vertex_dbg_data, *callgraphs[i], *vp.first );
 
 	// keep track of which file defines a given function.
 	// this vertex was defined in this file if it is a source to any
@@ -4037,7 +4355,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	// currently i do not handle static functions.
 	// signal if we ever have a case where a function is defined
 	// multiple times; we'll have to handle it.
-	typedef graph_traits<CallGraph>::adjacency_iterator adj_it;
+	typedef boost::graph_traits<CallGraph>::adjacency_iterator adj_it;
 	pair<adj_it, adj_it> adj_pair;
 	adj_pair = adjacent_vertices(*(vp.first), *callgraphs[i]); 
 	
@@ -4073,14 +4391,14 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     // loop over each individual callgraph to insert the edges
     for (i = 0; i < strippedFileNames.size(); ++i) {
 
-      typedef graph_traits<CallGraph>::edge_iterator edge_iter;
+      typedef boost::graph_traits<CallGraph>::edge_iterator edge_iter;
       pair<edge_iter, edge_iter> ep;
       
       // loop over the edges in the callgraph
       for (ep = edges(*callgraphs[i]); ep.first != ep.second; ++ep.first) {
 	
-	simpleFuncTableRowdata src(get(vertex_dbg_data, *callgraphs[i], 
-				       boost::source(*(ep.first), *callgraphs[i])));
+	simpleFuncRow src = get(boost::vertex_dbg_data, *callgraphs[i], 
+				       boost::source(*(ep.first), *callgraphs[i]));
 
 
 	// keep track of which file defines a given function.
@@ -4111,8 +4429,8 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 	}
 
-	simpleFuncTableRowdata tar(get(vertex_dbg_data, *callgraphs[i], 
-				       boost::target(*(ep.first), *callgraphs[i])));
+	simpleFuncRow tar = get(boost::vertex_dbg_data, *callgraphs[i], 
+				       boost::target(*(ep.first), *callgraphs[i]));
 
 	// insert target vertex
 	long tarId = insertFuncToId(tar.get_functionName().c_str(), nextAggCallGraphId);
@@ -4126,7 +4444,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 	}
 
-	callEdgeRowdata edge(get(edge_dbg_data, *callgraphs[i], *ep.first));
+	callEdgeRow edge = get(boost::edge_dbg_data, *callgraphs[i], *ep.first);
 	edge.set_id(++nextAggCallGraphId);
 
 	callgraph->insertEdge(src, tar, edge);
@@ -4181,7 +4499,9 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
   assert( lmodId >= 0 );
 
-  simpleFuncTableRowdata __lmod( lmodId, -1, s );
+  //simpleFuncRow __lmod( lmodId, -1, s );
+  // need to retrieve or create lmod with id lmodId
+  simpleFuncRow __lmod( -1, s );
 
   //  TableAccess< formalsRowdata > formals( &toplevelDb );
   //  formals.initialize();
@@ -4200,9 +4520,18 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     sprintf(tmp, "functionName = '%s'", *vIt);
     cmd = tmp; 
     
-    vector<sideEffectTableRowdata> rows;
-    
-    rows = sideEffect.select(cmd);
+    vector<sideEffectRow> rows;
+
+    sqlite3_command sideallcmd(toplevelDb,
+        "SELECT * FROM " + string(SIDEEFFECTTBL));
+
+    sqlite3_reader sidereader = sideallcmd.executereader();
+
+    while( sidereader.read() ) {
+      sideEffectRow row(sidereader);
+      rows.push_back(row);
+    }
+
     if (rows.size() <= 0) {
 
       // could not find function in side-effect table
@@ -4211,7 +4540,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
     } else {
 
-      typedef vector<sideEffectTableRowdata>::iterator rowIter;
+      typedef vector<sideEffectRow>::iterator rowIter;
 
       // function was found.  the table entries
       // consist of variables that are modified by
@@ -4230,7 +4559,8 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	long id = lookupIdByFunc( s.c_str() );
 	assert( id > 0 );
 
-	simpleFuncTableRowdata src( id, -1, s );
+	//simpleFuncRow src( id, -1, s );
+	simpleFuncRow src( -1, s );
 
 	char tmp[s.length() + 256];
 #if 0
@@ -4267,20 +4597,11 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	// that formal is local to func
 	// (since it is a formal parameter)
 	//	TableAccess< localVarsRowdata > localVars( &toplevelDb );
-	localVarsRowdata localVar( UNKNOWNID , toplevelProjectId, 
+	localVarRow localVar(toplevelProjectId, 
 				   s.c_str(), 
 				   formal.c_str());
-	
-	string columns[3];
-	string names[3];
-	
-	columns[0] = "functionName";
-	names[0]   = localVar.get_functionName();
-	columns[1] = "varName";
-	names[1]   = localVar.get_varName();
-	localVars.retrieveCreateByColumns( &localVar, columns, names, 2,
-					   localVar.get_projectId() );
-	
+  localVar.insert(&toplevelDb);
+
 	//	if (!separateCompilation) { }
 	  insertLocal(s.c_str(), 
 		      formal.c_str());
@@ -4288,23 +4609,11 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	// put < func, formal, pos > entry in database to signify
 	// that formal is the pos'th argument of func.
 	  //	TableAccess< formalsRowdata > formals( &toplevelDb );
-	formalsRowdata formalParam( UNKNOWNID , toplevelProjectId, 
+	formalRow formalParam(toplevelProjectId, 
 				    s.c_str(), 
 				    formal.c_str(),
 				    paramNum);
-	
-	columns[0] = "functionName";
-	names[0]   = formalParam.get_functionName();
-	columns[1] = "formal";
-	names[1]   = formalParam.get_formal();
-	columns[2] = "ordinal";
-	char tmpStr[MAXSTRINGSZ];
-	sprintf(tmpStr, "%d", formalParam.get_ordinal());
-	names[2]   = strdup(tmpStr);
-
-	formals.retrieveCreateByColumns( &formalParam, columns, names, 3,
-					 formalParam.get_projectId() );
-
+  formalParam.insert(&toplevelDb);
 #ifdef DEBUG_OUTPUT
 	cout << "INSERTING FORMAL " << formal.c_str() << " in " << s.c_str() << " as paramNum " << paramNum << endl;
 #endif
@@ -4325,22 +4634,20 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	// NB:  a bit of an assumption here:  that all side-effects in the able
 	//      are through parameters (i.e. scope == SCOPE_PARAM)
 	//	callEdgeRowdata edge( ++nextAggCallGraphId, -1, s, formalStr, SCOPE_PARAM, 0 );
-	callEdgeRowdata edge( UNKNOWNID, toplevelProjectId, edgeStr, formalStr, SCOPE_PARAM, 0 );
+	callEdgeRow edge(toplevelProjectId, edgeStr, formalStr, SCOPE_PARAM, 0 );
 	    
 	callgraph->insertEdge( src, __lmod, edge );
 	if (!separateCompilation) 
 	  simpleCallgraph->insertEdge( src, __lmod, edge );
 
       }
-
     }
-    
   }
   
   if (undefined) {
     for (i = 0; i < strippedFileNames.size(); ++i)
-      dbs[i]->shutdown();
-    toplevelDb.shutdown();
+      dbs[i]->close();
+    toplevelDb.close();
     exit(-1);
   }
   
@@ -4354,7 +4661,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
     //    assert(1 == 0);
     for (i = 0; i < strippedFileNames.size(); ++i) {
       
-      GlobalDatabaseConnection *db = dbs[i];
+      sqlite3_connection *db = dbs[i];
       
       populateLocalVarsFromDB(db);
       populateFormalsFromDB(db);
@@ -4487,14 +4794,28 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 #ifdef DEBUG_OUTPUT
   print_dmod DMODPrinter(this);
   depth_first_search(*simpleCallgraph, visitor(make_dfs_visitor(DMODPrinter)));
+
+  cout << endl << endl << "|---Pretty printing MODs---|" << endl;
+  cout << "LOCALS:" << endl;
+  prettyprint(locals);
+  cout << "IMODPLUS:" << endl;
+  prettyprint(imodplus);
+  cout << "RMOD:" << endl;
+  prettyprint(rmod);
+  cout << "GMOD:" << endl;
+  prettyprint(gmod);
+  cout << "LMOD:" << endl;
+  prettyprint(lmod);
+  cout << "DMOD:" << endl;
+  prettyprint(dmod);
 #endif  
 
   for (i = 0; i < strippedFileNames.size(); ++i) {
-    dbs[i]->shutdown();
+    dbs[i]->close();
     delete callgraphs[i];
   }
 
-  toplevelDb.shutdown();
+  toplevelDb.close();
   delete dbs;
   delete callgraphs;
   if (separateCompilation)

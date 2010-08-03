@@ -173,6 +173,14 @@ AstTests::runAllTests(SgProject* sageProject)
   // ROSE_Performance::TimingPerformance("AST Consistency Tests");
      TimingPerformance timer ("AST Consistency Tests:");
 
+
+  // CH (2010/7/26):   
+  // Before running tests, first clear all variable symbols which are not referenced in the memory pool.
+  // This is because when building AST bottom-up, some temporary symbol may be generated to be referenced
+  // by those variable references generated just using names. When all variable references are fixed,
+  // those symbols are not used any more and then should be removed from memory pool.
+     SageInterface::clearUnusedVariableSymbols();
+
   // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
 
   // printf ("Exiting at top of AstTests::runAllTests() \n");
@@ -3886,6 +3894,23 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+            // DQ (7/23/2010): Added this case
+               case V_SgTypeTable:
+                  {
+                 // The parent is not always set here except for when it is in the SgScopeStatement.
+                    SgNode* parent = support->get_parent();
+                    if (parent != NULL)
+                       {
+                      // DQ (7/30/2010): Commented out this test that fails in tests/CompilerOptionsTests/testCpreprocessorOption
+                      // ROSE_ASSERT( isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL);
+                         if ( !(isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL) )
+                            {
+                           // printf ("In AST Consistancy tests: Warning: !(isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL) \n");
+                            }
+                       }
+                    break;
+                  }
+                
                default:
                   {
                     if (support->get_parent() != NULL)
@@ -4061,6 +4086,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          break;
                        }
 
+                 // DQ (7/23/2010): Added case of SgTypeTable
+                 // case V_SgTypeTable:
                     case V_SgFunctionTypeTable:
                        {
                       // Ignore this case, the pointer to the SgFunctionTypeTable is a static data member

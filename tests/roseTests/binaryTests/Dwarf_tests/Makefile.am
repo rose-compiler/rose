@@ -62,7 +62,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 # File option to accumulate performance information about the compilation
 PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/DISASSEMBLER_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:binary -rose:verbose 2 $(PERFORMANCE_REPORT_OPTION)
+ROSE_FLAGS = -rose:binary -rose:verbose 0 $(PERFORMANCE_REPORT_OPTION)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
