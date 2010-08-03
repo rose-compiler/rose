@@ -5,9 +5,6 @@
 @echo Path : %Path%
 @echo JAVA_HOME : %JAVA_HOME%
 
-REM @echo 0 > rose_win_test.rose
-REM pscp rose_win_test.rose hudson-rose@hudson-rose.llnl.gov:/nfs/casc/overture/ROSE/git/rose_win_test.rose
-
 @echo Testing cl.exe
 cl.exe
 
