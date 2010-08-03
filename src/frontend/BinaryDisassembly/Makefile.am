@@ -9,15 +9,11 @@ INCLUDES = $(ROSE_INCLUDES)  #-I$(srcdir)/graph #-I$(srcdir)/analyses #-I$(srcdi
 # TPS (03/13/08) added ROSE_USE_BINARY_SQL, so that binary analysis can be compiled without MySQL
 # This will cause the dynamic library to be built (as libbinaryDatabase.so)
 noinst_LTLIBRARIES = libbinaryFrontend.la #libbinarydisassembly.la
-if ROSE_USE_BINARY_SQL
+if ROSE_USE_MYSQL
   lib_LTLIBRARIES = libbinaryDatabase.la 
-endif
-
-if ROSE_USE_BINARY_SQL
 # Isolated part of library that depends on the mysql database
 libbinaryDatabase_la_DEPENDENCIES =
 libbinaryDatabase_la_SOURCES = RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp 
-#libbinaryDatabase_la_LIBADD = $(MYSQL_DATABASE_LIBS) -lmysql
 endif 
 
 # Isolated part of library that is independent of the mysql database
@@ -57,7 +53,7 @@ powerpcInstructionEnumPrinter.C: $(srcdir)/powerpcInstructionEnum.h
 	echo 'std::string toString(PowerpcInstructionKind k) {static const int s = sizeof(powerpcInstructionStrings) / sizeof(*powerpcInstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return powerpcInstructionStrings[(int)k];}' >> powerpcInstructionEnumPrinter.C
 
 # Make sure these SAGE specific header files are placed into a distribution
-if ROSE_USE_BINARY_SQL
+if ROSE_USE_MYSQL
 BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_buildTree.h  RoseBin_DB.h  RoseBin_DB_IDAPRO.h \
    RoseBin.h  RoseBin_IDAPRO_branchGraph.h  RoseBin_IDAPRO_buildTree.h \
