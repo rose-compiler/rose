@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = 
+EXTRA_DIST = include
 
 if ROSE_USE_LLVM
 
@@ -8,38 +8,38 @@ INCLUDES = $(ROSE_INCLUDES) \
 		   $(ROSE_LLVM_INCLUDES) \
 		   -I$(srcdir)/include
 
-pkginclude_HEADERS 	= \
-	include/rosetollvm/RootAstAttribute.h \
-	include/rosetollvm/ManagerAstAttribute.h \
-	include/rosetollvm/AggregateAstAttribute.h \
-	include/rosetollvm/AttributesAstAttribute.h \
-	include/rosetollvm/CaseAstAttribute.h \
-	include/rosetollvm/CodeAttributesVisitor.h \
-	include/rosetollvm/CodeEmitter.h \
-	include/rosetollvm/CodeGeneratorVisitor.h \
-	include/rosetollvm/ConditionalAstAttribute.h \
-	include/rosetollvm/ConditionalComponentAstAttribute.h \
-	include/rosetollvm/DeclarationsAstAttribute.h \
-	include/rosetollvm/DoAstAttribute.h \
-	include/rosetollvm/ForAstAttribute.h \
-	include/rosetollvm/FunctionAstAttribute.h \
-	include/rosetollvm/IfAstAttribute.h \
-	include/rosetollvm/IfComponentAstAttribute.h \
-	include/rosetollvm/IntAstAttribute.h \
-	include/rosetollvm/LLVMAstAttributes.h \
-	include/rosetollvm/LLVMVisitor.h \
-	include/rosetollvm/LogicalAstAttribute.h \
-	include/rosetollvm/Option.h \
-	include/rosetollvm/Optimize.h \
-	include/rosetollvm/ObjectGenerator.h \
-	include/rosetollvm/Control.h \
-	include/rosetollvm/RoseToLLVMModule.hpp \
-	include/rosetollvm/SgTypeAstAttribute.h \
-	include/rosetollvm/SizeOfAstAttribute.h \
-	include/rosetollvm/StringAstAttribute.h \
-	include/rosetollvm/StringSet.h \
-	include/rosetollvm/SwitchAstAttribute.h \
-	include/rosetollvm/WhileAstAttribute.h
+#pkginclude_HEADERS 	= \
+#	include/rosetollvm/RootAstAttribute.h \
+#	include/rosetollvm/ManagerAstAttribute.h \
+#	include/rosetollvm/AggregateAstAttribute.h \
+#	include/rosetollvm/AttributesAstAttribute.h \
+#	include/rosetollvm/CaseAstAttribute.h \
+#	include/rosetollvm/CodeAttributesVisitor.h \
+#	include/rosetollvm/CodeEmitter.h \
+#	include/rosetollvm/CodeGeneratorVisitor.h \
+#	include/rosetollvm/ConditionalAstAttribute.h \
+#	include/rosetollvm/ConditionalComponentAstAttribute.h \
+#	include/rosetollvm/DeclarationsAstAttribute.h \
+#	include/rosetollvm/DoAstAttribute.h \
+#	include/rosetollvm/ForAstAttribute.h \
+#	include/rosetollvm/FunctionAstAttribute.h \
+#	include/rosetollvm/IfAstAttribute.h \
+#	include/rosetollvm/IfComponentAstAttribute.h \
+#	include/rosetollvm/IntAstAttribute.h \
+#	include/rosetollvm/LLVMAstAttributes.h \
+#	include/rosetollvm/LLVMVisitor.h \
+#	include/rosetollvm/LogicalAstAttribute.h \
+#	include/rosetollvm/Option.h \
+#	include/rosetollvm/Optimize.h \
+#	include/rosetollvm/ObjectGenerator.h \
+#	include/rosetollvm/Control.h \
+#	include/rosetollvm/RoseToLLVMModule.hpp \
+#	include/rosetollvm/SgTypeAstAttribute.h \
+#	include/rosetollvm/SizeOfAstAttribute.h \
+#	include/rosetollvm/StringAstAttribute.h \
+#	include/rosetollvm/StringSet.h \
+#	include/rosetollvm/SwitchAstAttribute.h \
+#	include/rosetollvm/WhileAstAttribute.h
 
 lib_LTLIBRARIES = librosetollvm.la
 
