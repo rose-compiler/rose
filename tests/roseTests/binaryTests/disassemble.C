@@ -571,11 +571,16 @@ main(int argc, char *argv[])
             /* Keep track of partitioner heuristics because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
             ROSE_ASSERT(i+1<argc);
-            partitioner_search = Partitioner::parse_switches(argv[i+1], partitioner_search);
+            try {
+                partitioner_search = Partitioner::parse_switches(argv[i+1], partitioner_search);
+            } catch (const Partitioner::Exception &e) {
+                std::cerr <<e <<"\n";
+                exit(1);
+            }
             printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
-        } else if (!strcmp(argv[i], "-rose:paritioner_config")) {
+        } else if (!strcmp(argv[i], "-rose:partitioner_config")) {
             /* Keep track of partitioner configuration file name because we need it even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
             ROSE_ASSERT(i+1<argc);
@@ -664,6 +669,7 @@ main(int argc, char *argv[])
     /* Set the disassembler instruction searching hueristics from the "-rose:disassembler_search" switch. We saved these
      * above, but they're also available via SgFile::get_disassemblerSearchHeuristics() if we called frontend(). */
     disassembler->set_search(disassembler_search);
+    disassembler->set_alignment(1);      /*alignment for SEARCH_WORDS (default is four)*/
     if (do_debug_disassembler)
         disassembler->set_debug(stderr);
     
