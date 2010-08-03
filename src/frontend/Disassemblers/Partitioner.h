@@ -150,7 +150,6 @@ protected:
         /** Marks the block analysis cache as being up to date. */
         void validate_cache() { cache.age=insns.size(); }
 
-        bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
@@ -332,7 +331,8 @@ public:
      *  can be specified (defaults to SgAsmFunctionDeclaration::FUNC_DEFAULT). */
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
 
-    /** Top-level function to run the partitioner on some instructions and build an AST */
+    /** Top-level function to run the partitioner on some instructions and build an AST. The SgAsmInterpretation is optional.
+     *  If it is null then those function seeding operations that depend on having file headers are not run. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
     /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. Then read the
@@ -377,21 +377,21 @@ protected:
     virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
     virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
-    virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
+    virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
-    virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */
+    virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
     virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
     virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
-    
-    
+    virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
+
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
-    virtual void mark_func_patterns(SgAsmGenericHeader*);       /**< Seeds functions according to instruction patterns */
+    virtual void mark_func_patterns();                          /**< Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
     virtual void create_nop_padding();                          /**< Creates functions to hold NOP padding */
     virtual void create_zero_padding();                         /**< Creates functions to hold zero padding */

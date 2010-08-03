@@ -34,6 +34,29 @@ typedef modify_ldt_ldt_s user_desc;
 #endif
 
 
+/* AS extra required headrs for system call simulation */
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/uio.h>
+#include <sys/wait.h>
+#include <sys/utsname.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <linux/types.h>
+#include <linux/dirent.h>
+#include <sys/stat.h>
+#include <sys/utsname.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/mman.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <asm/ldt.h>
+#include <linux/unistd.h>
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -1017,29 +1040,27 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 199: { /*0xc7 getuid32*/
-            writeGPR(x86_gpr_ax, getuid());
+	case 199: { /*0xc7, getuid32 */
+            uid_t id = getuid();
+            writeGPR(x86_gpr_ax, id);
+	    break;
+	}
+
+	case 200: { /*0xc8, getgid32 */
+            uid_t id = getgid();
+            writeGPR(x86_gpr_ax, id);
             break;
         }
 
-        case 200: { /*0xc8, getgid32*/
-            writeGPR(x86_gpr_ax, getgid());
+	case 201: { /*0xc9, geteuid32 */
+            uid_t id = geteuid();
+            writeGPR(x86_gpr_ax, id);
             break;
         }
 
-        case 201: { /*0xc9, geteuid32*/
-            writeGPR(x86_gpr_ax, geteuid());
-            break;
-        }
-
-        case 202: { /*0xca, getegid32*/
-            writeGPR(x86_gpr_ax, getegid());
-            break;
-        }
-
-
-        case 224: { /*0xe0 gettid*/
-            writeGPR(x86_gpr_ax, getpid());
+        case 202: { /*0xca, getegid32 */
+            uid_t id = getegid();
+            writeGPR(x86_gpr_ax, id);
             break;
         }
 
@@ -1134,6 +1155,9 @@ main(int argc, char *argv[])
             if (policy.debug)
                 policy.dump_registers(policy.debug);
         } catch (const Semantics::Exception &e) {
+            std::cerr <<e <<"\n\n";
+            abort();
+        } catch (const VirtualMachineSemantics::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
         } catch (const EmulationPolicy::Exit &e) {

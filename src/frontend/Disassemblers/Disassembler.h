@@ -388,13 +388,20 @@ public:
      *  If the SEARCH_DEADEND bit is set and an instruction cannot be disassembled then the address of that instruction is
      *  added to the successors and the basic block ends at the previous instruction.  If the SEARCH_DEADEND bit is clear and
      *  an instruction cannot be disassembled then the entire basic block is discarded, an exception is thrown (the exception
-     *  address is the instruction that could not be disassembled), and the successors list is not modified. */
-    InstructionMap disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
+     *  address is the instruction that could not be disassembled), and the successors list is not modified.
+     *
+     *  A cache of previously disassembled instructions can be provided. If one is provided, then the cache will be updated
+     *  with any instructions disassembled during the call to disassembleBlock().  This is convenient when the SEARCH_DEADEND
+     *  bit is clear in conjunction with the SEARCH_FOLLOWING (or similar) being set, since this combination causes the
+     *  disassembler to try every address in a dead-end block. Providing a cache in this case can speed up the disassembler by
+     *  an order of magnitude. */
+    InstructionMap disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL,
+                                    InstructionMap *cache=NULL);
 
     /** Similar in functionality to the disassembleBlock method that takes a MemoryMap argument, except the supplied buffer
      *  is mapped 1:1 to virtual memory beginning at the specified address. */
     InstructionMap disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
-                                    AddressSet *successors=NULL);
+                                    AddressSet *successors=NULL, InstructionMap *cache=NULL);
 
 
 
@@ -440,10 +447,11 @@ public:
     /*==========================================================================================================================
      * Methods for searching for disassembly addresses.
      *========================================================================================================================== */
-private:
+public:
     /** Adds the address following a basic block to the list of addresses that should be disassembled.  This search method is
      *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()). */
-    void search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap *map, const BadMap *bad);
+    void search_following(AddressSet *worklist, const InstructionMap &bb, rose_addr_t bb_va, 
+                          const MemoryMap *map, const BadMap *bad);
 
     /** Adds values of immediate operands to the list of addresses that should be disassembled.  Such operands are often used
      *  in a closely following instruction as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". This search method
