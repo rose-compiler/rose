@@ -89,8 +89,6 @@ struct generateDOTExtended_withIncludes ;
 template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
 struct generateDOTExtendedforMultipleFile ;
 
-#include "utility_functionsImpl.C"
-
 namespace ROSE
    {
   // This class serves as a catch all location for functions of general use within ROSE
