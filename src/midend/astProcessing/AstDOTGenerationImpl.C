@@ -1,3 +1,4 @@
+#ifdef TEMPLATE_IMPLEMENTATIONS
 
 #ifndef ASTDOTGENERATION_TEMPLATES_C
 #define ASTDOTGENERATION_TEMPLATES_C
@@ -427,4 +428,8 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 }
 
 #endif // ASTDOTGENERATION_TEMPLATES_C
+
+#else
+#error Must include template implementation files after all header files.  If you have, make sure you define TEMPLATE_IMPLEMENTATIONS
+#endif // TEMPLATE_IMPLEMENTATIONS
 

@@ -177,8 +177,11 @@ namespace ELF{
 #include "ether.h"
 #endif
 
-// King85 (2010.08.03) : Now that everything is defined we can include all the implementation files for templates.
+// King84 (2010.08.03) : Now that everything is defined we can include all the implementation files for templates.
+#define TEMPLATE_IMPLEMENTATIONS
 #include "AstDOTGenerationImpl.C"
+#include "utility_functionsImpl.C"
+#undef TEMPLATE_IMPLEMENTATIONS
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 #define COMPILE_DEBUG_STATEMENTS 1
