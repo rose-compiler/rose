@@ -1,5 +1,4 @@
 
-
 /***
 *string.h - declarations for string manipulation functions
 *
