@@ -25,7 +25,7 @@ else
     jobstartingwin=1
     echo "Starting Windows test with REVISION: $ROSE_TEST_REVISION"
 #starting Windows process
-    curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN?$ROSE_TEST_REVISION
+    curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN\&BUILD_NR=$ROSE_TEST_REVISION
 fi
 done
 
