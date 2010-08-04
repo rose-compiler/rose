@@ -90,7 +90,7 @@ public:
     struct Exception {
         std::string mesg;
         Exception(const std::string &mesg): mesg(mesg) {}
-        void print(std::ostream &o) const { o <<"partitioner exception: " <<mesg; }
+        void print(std::ostream &o) const { o <<mesg; }
         friend std::ostream& operator<<(std::ostream &o, const Exception &e);
     };
 

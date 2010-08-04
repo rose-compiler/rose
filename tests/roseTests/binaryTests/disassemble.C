@@ -574,7 +574,7 @@ main(int argc, char *argv[])
             try {
                 partitioner_search = Partitioner::parse_switches(argv[i+1], partitioner_search);
             } catch (const Partitioner::Exception &e) {
-                std::cerr <<e <<"\n";
+                std::cerr <<"partitioner exception: " <<e <<"\n";
                 exit(1);
             }
             printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
