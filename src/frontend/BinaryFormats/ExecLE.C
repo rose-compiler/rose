@@ -642,7 +642,7 @@ SgAsmLESectionTable::ctor(addr_t offset, addr_t size)
 //#endif
 		} else {
             ROSE_ASSERT(FAMILY_LX==fhdr->get_exec_format()->get_family());
-            section_offset = fhdr->get_e_data_pages_offset() + (pageno-1) << fhdr->get_e_page_offset_shift();
+            section_offset = fhdr->get_e_data_pages_offset() + ((pageno-1) << fhdr->get_e_page_offset_shift());
 //#ifdef _MSC_VER
 //            section_size = _cpp_min(entry->get_mapped_size(),
 //                                    (addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));

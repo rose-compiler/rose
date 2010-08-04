@@ -8,24 +8,30 @@
 #define __DFA_HXX_LOADED__
 #include <string>
 
-
-//#include "rose.h"
-
-class DFAnalysis {
+class DFAnalysis
+{
  public:
   DFAnalysis() {};
   virtual ~DFAnalysis() {};
-  // run the DFA analysis -- without debugging
+  
+  /** Run the DFA analysis without debugging. */
   virtual int run() = 0;
   virtual int run(bool debug) = 0;
   // request information from the DFA
-  // get the multimap of a specific SgNode ... get the Definition or Usage Map
+  
+  /** get the Definition multimap of a specific SgNode. */
   virtual std::vector < std::pair <SgInitializedName* , SgNode*> >  getDefMultiMapFor(SgNode* node)=0;
+
+  /** get the Usage multimap of a specific SgNode. */
   virtual std::vector < std::pair <SgInitializedName* , SgNode*> >  getUseMultiMapFor(SgNode* node)=0;
-  // get the vector of defining and usage nodes for a specific node and a initializedName
+  
+  /** get the vector of defining nodes for a specific node and a initializedName. */
   virtual std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName)=0;
+  
+  /** get the vector of usage nodes for a specific node and a initializedName. */
   virtual std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName)=0;
-  // return whether a node is a global node
+
+  /** return whether a node is a global node */
   virtual bool isNodeGlobalVariable(SgInitializedName* node)=0;
 
   // used for testing and visualization

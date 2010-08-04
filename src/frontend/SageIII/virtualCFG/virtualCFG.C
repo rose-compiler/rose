@@ -12,6 +12,8 @@ using namespace std;
 
 namespace VirtualCFG {
 
+#if !CXX_IS_ROSE_CODE_GENERATION
+
   unsigned int cfgIndexForEndWrapper(SgNode* n) {
     return n->cfgIndexForEnd();
   }
@@ -603,6 +605,10 @@ namespace VirtualCFG {
     while (true) {
       top:
       // cerr << "makeClosure loop: " << rawEdges.size() << endl;
+      
+// CH (5/27/2010): 'push_back' may invalidate iterators of a vector.
+// Using index instead to fix this subtle bug.
+#if 0 
       for (vector<CFGPath>::iterator i = rawEdges.begin(); i != rawEdges.end(); ++i) {
 	if (!((*i).*otherSide)().isInteresting()) {
 	  unsigned int oldSize = rawEdges.size();
@@ -616,6 +622,21 @@ namespace VirtualCFG {
 	  if (rawEdges.size() != oldSize) goto top; // To restart iteration
 	}
       }
+#else
+      for (size_t i = 0; i < rawEdges.size(); ++i) {
+	if (!(rawEdges[i].*otherSide)().isInteresting()) {
+	  unsigned int oldSize = rawEdges.size();
+	  vector<CFGEdge> rawEdges2 = ((rawEdges[i].*otherSide)().*closure)();
+	  for (unsigned int j = 0; j < rawEdges2.size(); ++j) {
+	    CFGPath merged = (*merge)(rawEdges[i], rawEdges2[j]);
+            if (std::find(rawEdges.begin(), rawEdges.end(), merged) == rawEdges.end()) {
+              rawEdges.push_back(merged);
+            }
+	  }
+	  if (rawEdges.size() != oldSize) goto top; // To restart iteration
+	}
+      }
+#endif
       break; // If the iteration got all of the way through
     }
     // cerr << "makeClosure loop done: " << rawEdges.size() << endl;
@@ -667,5 +688,8 @@ namespace VirtualCFG {
     ROSE_ASSERT (sym);
     return getCFGTargetOfFortranLabelSymbol(sym);
   }
+
+// if !CXX_IS_ROSE_CODE_GENERATION
+#endif
 
 }

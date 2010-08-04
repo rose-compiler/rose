@@ -1,10 +1,10 @@
 \chapter{Scopes of Declarations}
 
-     The scope of a IR nodes may be either stored explicitly in the IR node
-or obtained through computation through it's parent information in the AST.
+     The scope of an IR node may be either stored explicitly in the IR node
+or obtained through computation through its parent information in the AST.
 Figure X shows an example where the variable definition for a variable is 
 the scope of namespace X.  The declaration for variable a is in the namespace X.
-In a more common way the function foo is a member function of B which a
+In a more common way, the function foo is a member function of B with a
 declaration appearing in class B, but with a function definition in global scope.
 {\mySmallFontSize
 \begin{verbatim}
@@ -26,7 +26,7 @@ on most IR nodes) communicates the structural information of the original source
 explicitly when it can not be interpreted structurally.
 
    The example in this chapter show how to find the scope of each C++ construct
-were it make sense.  Note that SgExpression IR nodes can take there scope from
+   .  Note that SgExpression IR nodes can take their scope from
 that of the statement where they are found.  SgStatement and SgInitializedName
 IR nodes are the interesting IR nodes from the point of scope.
 
@@ -34,7 +34,7 @@ IR nodes are the interesting IR nodes from the point of scope.
 {\tt get\_scope()} which returns the scope of the associated IR nodes.  The
 example code in this chapter traverses the AST and reports the scope of any
 SgInitializedName and all SgStatement IR nodes.  It is intended to provide
-so simple intuition about what the scope can be expected to be in an application.
+a simple intuition about what the scope can be expected to be in an application.
 The example code is also useful as a simple means of exploring the scopes
 of any other input application.
 
@@ -70,8 +70,8 @@ shows the input example code form this tutorial example.
 \section{Generating the code representing any IR node}
 
     The following code traverses each IR node and for a 
-SgInitializedName of SgStatement output the scope information.
-The input code is shown in figure \ref{Tutorial:exampleInputCode_ScopeInformation},
+SgInitializedName of SgStatement outputs the scope information.
+The input code is shown in figure \ref{Tutorial:exampleInputCode_ScopeInformation};
 the output of this code is shown in figure 
 \ref{Tutorial:exampleOutput_ScopeInformation}.
     

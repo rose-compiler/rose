@@ -31,7 +31,24 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
 void
 UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
    {
+
+     // FMZ (3/22/2010) added fortran continue line support
+     bool is_fortran90 =  (unp->currentFile != NULL ) &&
+                              (unp->currentFile->get_F90_only() ||
+                                  unp->currentFile->get_CoArrayFortran_only());
+
+     int str_len       = str.size();
+     int curr_line_len = unp->cur.current_col();
+
+     if (is_fortran90 && 
+              curr_line_len!=0 && 
+               (str_len + curr_line_len)> MAX_F90_LINE_LEN) {
+          unp->u_sage->curprint("&");
+          unp->cur.insert_newline(1);
+     } 
+
      unp->u_sage->curprint(str);
+
    }
 
 // DQ (8/13/2007): This has been moved to the base class (language independent code)
@@ -581,6 +598,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                  // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
                     unparseLanguageSpecificStatement(stmt,info);
                     break;
+             }
+
+       // DQ (5/8/2010): Reset the source code position in the AST.
+          if (unp->get_resetSourcePosition() == true)
+             {
+               unp->resetSourcePosition(stmt);
              }
         }
 
@@ -1293,6 +1316,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
                  // Comments don't have to be further commented
                     case PreprocessingInfo::FortranStyleComment:
+                    case PreprocessingInfo::F90StyleComment:
                     case PreprocessingInfo::C_StyleComment:
                     case PreprocessingInfo::CplusplusStyleComment:
                          if ( !info.SkipComments() )

@@ -65,13 +65,11 @@ get_type_vector(SgType* currentType )
   SgArrayType*     arrayType   = NULL;
   SgTypedefType*   typedefType = NULL;
 
-
   while (true)
   {
     returnVector.push_back(currentType);
 
-
-    if ( modType = isSgModifierType(currentType) )
+    if ( (modType = isSgModifierType(currentType)) )
     {
       currentType = modType->get_base_type();
     }
@@ -98,8 +96,6 @@ get_type_vector(SgType* currentType )
       break;
     }
   }
-
-
                
   return returnVector;
 };
@@ -116,7 +112,7 @@ bool is_types_equal( SgType* t1, SgType* t2 )
 
   if( f1_vec.size() == f2_vec.size() )
   {
-    for( int i = 0; i < f1_vec.size(); i++ )
+    for( size_t i = 0; i < f1_vec.size(); i++ )
     {
       if( f1_vec[i]->variantT() == f2_vec[i]->variantT() )
       {
@@ -199,7 +195,7 @@ bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
     {
       functions_are_equal = true;
 
-      for(int i = 0; i < args_f1.size(); i++)
+      for(size_t i = 0; i < args_f1.size(); i++)
       {
         if( is_types_equal( args_f1[i], args_f2[i] ) == false  )
         {
@@ -990,7 +986,7 @@ findNode(SgGraph* graph, std::string nid)
 
 
 //Iterate over all edges in graph until an edge from->to is found. If not such edge
-//exsists return NULL
+//exists return NULL
   SgGraphEdge*
 findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to)
 {

@@ -111,19 +111,17 @@ class UnparseFormat
 	  //   private:
 	  //Unparser* unp;
      public:
-	  //UnparserFormat(Unparser* unp,std::ostream* _os, UnparseFormatHelp *help = NULL):unp(unp){};
-               UnparseFormat( std::ostream* _os = NULL, UnparseFormatHelp *help = NULL );
+       // UnparserFormat(Unparser* unp,std::ostream* _os, UnparseFormatHelp *help = NULL):unp(unp){};
+          UnparseFormat( std::ostream* _os = NULL, UnparseFormatHelp *help = NULL );
          ~UnparseFormat();
 
       //! the ultimate formatting functions
           void format(SgLocatedNode*, SgUnparse_Info& info, FormatOpt opt = FORMAT_BEFORE_STMT);
-	  //          void flush() { os->flush(); }
-          //void set_linewrap( int w) { linewrap = w; } // no wrapping if linewrap <= 0
-          //int get_linewrap() const { return linewrap; }
 
-     void flush() { os->flush(); }
+       // void set_linewrap( int w) { linewrap = w; } // no wrapping if linewrap <= 0
+       // int get_linewrap() const { return linewrap; }
 
-
+          void flush() { os->flush(); }
 
           void set_linewrap( int w);// { linewrap = w; } // no wrapping if linewrap <= 0
           int get_linewrap() const;// { return linewrap; }

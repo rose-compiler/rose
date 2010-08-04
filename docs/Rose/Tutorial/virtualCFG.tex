@@ -109,10 +109,76 @@ Section~\ref{interesting_node_filter}.
 \end{itemize}
 
 \section{Drawing a graph of the CFG}
+Figure~\ref{Tutorial:BuildVirtualCFG} shows a translator to dump 
+full (debug) virtual control flow graphs for all functions within input
+source files. It also dumps a simplified version (interesting) version of 
+virtual control flow graphs. A standalone tool named \textit{virtualCFG} is
+installed under \textit{ROSE\_INSTALL\_TREE/bin} for users to generate dot
+files of virtual CFGs. 
 
-FIXME, add example from tutorial/virtualCFG.C
+%---------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TutorialExampleDirectory/virtualCFG.C}
+    \end{latexonly}
 
-\includegraphics{\TutorialExampleBuildDirectory/vcfg.pdf}
+    \begin{htmlonly}
+    \verbatiminput{\TutorialExampleDirectory/virtualCFG.C}
+    \end{htmlonly}
+
+    % end of scope in font size
+  }
+  % End of scope in indentation
+}
+\label{Tutorial:BuildVirtualCFG}
+\caption{Example source code showing visualization of virtual control flow graph.}
+\end{figure}
+
+
+
+The example input code is given in
+Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. Debug and interesting virtualCFG 
+are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF} and
+Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF}, respectively.
+
+%---------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+
+
+    \begin{latexonly}
+    \lstinputlisting{\TutorialExampleDirectory/inputCode_ControlFlowGraphAnalysis.C}
+    \end{latexonly}
+
+    \begin{htmlonly}
+    \verbatiminput{\TutorialExampleDirectory/inputCode_ControlFlowGraphAnalysis.C}
+    \end{htmlonly}
+
+    % end of scope in font size
+  }
+  % End of scope in indentation
+}
+\label{Tutorial:exampleInputCode_virtualCFG}
+\caption{Example source code used as input to build virtual control graphs.}
+\end{figure}
+
+%---------------------------------------------------------------------------
+\begin{figure}
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_debug.pdf}
+\caption{The debug virtual control flow graph showing all virtual CFG nodes
+and edges}
+\label{tutorial:exampleOutputCodeDebugPDF}
+\end{figure}
+
+
+\begin{figure}
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_interesting.pdf}
+\caption{The virtual control flow graph showing only interesting virtual CFG nodes and edges}
+\label{tutorial:exampleOutputCodeInterestingPDF}
+\end{figure}
 
 \section{Index values}
 \label{cfg_index_values}
@@ -167,5 +233,72 @@ FIXME
 \label{interesting_node_filter}
 
 \subsection{Arbitrary filtering}
+
+\section{Static CFG}
+
+Since a virtual CFG does not produce any real graph, it is quite inefficient to
+traverse a virtual CFG frequently. It is necessary to build a static CFG which may
+improve the performance of some specific operations. 
+
+A \textit{SgGraph} object (actually, it's a \textit{SgIncidenceDirectedGraph} object) is created to 
+store the static CFG. Each node in the graph is a \textit{SgGraphNode} object. In a virtual 
+CFG, each node contains two members: node and index. A \textit{SgGraphNode} already holds a 
+pointer to \textit{SgNode}, and we have to add the other property ``index'' to our \textit{SgGraphNode}.
+This can be done by adding the corresponding attribute to \textit{SgGraphNode}.
+
+\subsection{Class methods}
+
+\begin{itemize}
+\item \lstinline{CFG()}: The default constructor. 
+\item \lstinline{CFG(SgNode* node, bool isFiltered = false)}: Initialize a static CFG with the start 
+node to build from and a flag indicating if the CFG is a full or filtered one.                                              
+\item \lstinline{setStart(SgNode* node)}: Set the start node for building a static CFG. Note that the argument
+has to be an object of any of the following classes: \textit{SgProject}, \textit{SgStatement}, \textit{SgExpression},
+and \textit{SgInitializedName}. If a \textit{SgProject} object is passed in, several graphs are built for every
+function definition. 
+\item \lstinline{isFilteredCFG()}: Return the \textit{isFiltered} flag.
+\item \lstinline{setFiltered(bool flag)}: Set the \textit{isFiltered} flag.                 
+\item \lstinline{buildCFG()}: Build a full or filtered CFG according to the \textit{isFiltered} flag.
+\item \lstinline{buildFullCFG()}: Build a full CFG for debugging.
+\item \lstinline{buildFilteredCFG()}: Build a filtered CFG which only contains interesting nodes.
+\item \lstinline{getOutEdges(SgGraphNode* node)}: Return a vector of outgoing CFG edges (\textit{SgDirectedGraphEdge} objects) from the given node.
+\item \lstinline{getInEdges(SgGraphNode* node)}: Return a vector of CFG edges coming into the given node.
+\item \lstinline{cfgForBeginning(SgNode* node)}: Return the CFG node for just before this AST node.                               
+\item \lstinline{cfgForEnd(SgNode* node)}: Return the CFG node for just after this AST node.                               
+\item \lstinline{getIndex(SgGraphNode* node)}: Return the index of the given CFG node.
+\item \lstinline{cfgToDot(SgNode* node, const std::string& filename)}: Generate a DOT file for the current CFG. Note that the start node
+to be drawn can be indicated which is not necessary to be the start node of the CFG.                                                      
+\end{itemize}
+
+\subsection{Drawing a graph of the CFG}
+Figure~\ref{Tutorial:BuildStaticCFG} shows a translator to dump 
+full (debug) static control flow graphs for all functions within input
+source files. It also dumps a simplified version (interesting) version of 
+static control flow graphs. 
+
+%---------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TutorialExampleDirectory/staticCFG.C}
+    \end{latexonly}
+
+    \begin{htmlonly}
+    \verbatiminput{\TutorialExampleDirectory/staticCFG.C}
+    \end{htmlonly}
+
+    % end of scope in font size
+  }
+  % End of scope in indentation
+}
+\label{Tutorial:BuildStaticCFG}
+\caption{Example source code showing visualization of static control flow graph.}
+\end{figure}
+
+The example input code is given in
+Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. Debug and interesting static CFG 
+are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF} and
+Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF}, respectively.
 
 % \section{Control flow graph on binaries}

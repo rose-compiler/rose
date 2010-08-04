@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -1021,11 +1021,18 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
         switch (mrp) {
             case mrp_disp: {
                 ROSE_ASSERT(!base_reg && !index_reg && !scale_ve && disp_ve);
-                mod = 0; /*indicates disp32 when combined with SIB*/
-                rm = 4; /*implies SIB*/
-                ss = 0;
-                index = 4; /*none*/
-                base = 5; /*none*/
+                if (insn->get_baseSize()==x86_insnsize_32) {
+                    /* No need for SIB byte; use "disp32" addressing mode */
+                    mod = 0;
+                    rm = 5;
+                    ss = index = base = 0; /*not used*/
+                } else {
+                    mod = 0; /*indicates disp32 when combined with SIB*/
+                    rm = 4; /*implies SIB*/
+                    ss = 0;
+                    index = 4; /*none*/
+                    base = 5; /*none*/
+                }
                 break;
             }
                 
@@ -1144,14 +1151,35 @@ AssemblerX86::segment_override(SgAsmx86Instruction *insn)
     for (size_t i=0; i<operands.size(); i++) {
         SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(operands[i]);
         if (mre) {
+            /* Find general purpose register in memory reference expression. */
+            struct T1: public SgSimpleProcessing {
+                bool is_found;
+                int gpr;
+                T1(): is_found(false) {}
+                void visit(SgNode *node) {
+                    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(node);
+                    if (rre && x86_regclass_gpr==rre->get_register_class() && !is_found) {
+                        is_found = true;
+                        gpr = rre->get_register_number();
+                    }
+                }
+            } reg;
+            reg.traverse(mre->get_address(), preorder);
+
             SgAsmx86RegisterReferenceExpression *seg_reg = isSgAsmx86RegisterReferenceExpression(mre->get_segment());
             ROSE_ASSERT(seg_reg!=NULL);
             ROSE_ASSERT(seg_reg->get_register_class()==x86_regclass_segment);
             switch (seg_reg->get_register_number()) {
                 case x86_segreg_es: return 0x26;
                 case x86_segreg_cs: return 0x2e;
-                case x86_segreg_ss: return 0x36;
-                case x86_segreg_ds: return 0;     //return 0x3e;
+                case x86_segreg_ss: 
+                    if (!reg.is_found || (reg.gpr!=x86_gpr_sp && reg.gpr!=x86_gpr_bp))
+                        return 0x36;
+                    return 0;
+                case x86_segreg_ds: return 0;
+                    if (reg.is_found && (reg.gpr==x86_gpr_sp || reg.gpr==x86_gpr_bp))
+                        return 0x3e;
+                    return 0;
                 case x86_segreg_fs: return 0x64;
                 case x86_segreg_gs: return 0x65;
             }
@@ -1436,14 +1464,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
         retval.push_back(rex_byte);
     
     /* Output opcode */
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffllu")
-//	printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffllu");
-	//ROSE_ASSERT(false);
-//	ROSE_ASSERT(opcode<=0xffffffffffllu);
-//#else
-    ROSE_ASSERT(opcode<=0xffffffffffllu);
-//#endif
+    ROSE_ASSERT(0==(opcode>>40));
     if (opcode > 0xffffffff)
         retval.push_back((opcode>>32) & 0xff);
     if (opcode > 0xffffff)
@@ -1498,6 +1519,19 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                 retval.push_back(iprel & 0xff);
                 break;
             case od_cw:
+                /* The following 'if' was added for 32-bit assembly to prevent JMP instructions from being encoded with a two
+                 * byte displacement when there was no operand override prefix.  The relevant lines from the Intel manual are
+                 * on page 3-105:
+                 *
+                 *   E8 cw                CALL rel16    N.S.      Valid      Call near, relative, displacement
+                 *                                                           relative to next instruction.
+                 *   E8 cd                CALL rel32    Valid     Valid      Call near, relative, displacement
+                 *                                                           relative to next instruction. 32-bit
+                 *                                                           displacement sign extended to 64-bits
+                 *                                                           in 64-bit mode.
+                 * [RPM 2010-05-03] */
+                if (x86_insnsize_16!=insn->get_operandSize())
+                    throw Exception("operand size is not 16", insn);
                 iprel -= 2;
                 if (iprel<-32768 || iprel>32767)
                     throw Exception("displacement out of range", insn);

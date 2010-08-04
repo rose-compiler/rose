@@ -672,9 +672,13 @@ SgAliasSymbol::get_declaration() const
                ROSE_ASSERT(symbol != NULL);
                SgInitializedName* initializedName = isSgInitializedName(symbol->get_declaration());
                ROSE_ASSERT(initializedName != NULL);
-               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-               ROSE_ASSERT(variableDeclaration != NULL);
-               returnValue = variableDeclaration;
+
+            // DQ (5/20/2010): Call the SgInitializedName::get_declaration() function directly instead.
+            // SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+            // ROSE_ASSERT(variableDeclaration != NULL);
+            // returnValue = variableDeclaration;
+               returnValue = initializedName->get_declaration();
+
                ROSE_ASSERT(returnValue != NULL);
                break;
              }

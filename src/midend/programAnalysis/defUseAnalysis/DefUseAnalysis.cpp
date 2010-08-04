@@ -331,6 +331,7 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
 bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
   bool isCurrentValueContained=false;
   //  std::cerr << " size map : " << ltable->size() << std::endl;
+#if 0   
   if (ltable->size()>0) {
     tabletype::const_iterator i = ltable->begin();
     for (; i != ltable->end(); ++i) {
@@ -341,6 +342,13 @@ bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
       }
     } 
   }
+#else
+   if (!ltable->empty()) {
+      if (ltable->find(node) != ltable->end()) {
+         isCurrentValueContained=true;
+      }
+    }
+#endif  
   return isCurrentValueContained;
 }
 

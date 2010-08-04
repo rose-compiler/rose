@@ -23,7 +23,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #   templateParameter.tex instrumentationExample.tex addVariableDeclaration.tex \
 #   addAssignmentStmt.tex addExpression.tex\
 #   addFunctionDeclaration.tex buildCFG.tex parallelChecker.tex defuseAnalysis.tex \
-#   binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
+#   binaryAnalysis.tex buildCallGraph.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
 #   parser-docs.tex codeCoverage.tex globalVariableHandling.tex scopeInformation.tex sideeffect-docs.tex \
 #   tauInstrumentation.tex templateSupport.tex dataBaseSupport.tex recognitionOfAbstractions.tex \
 #   debuggingSupport.tex commandlineProcessing.tex customGraphs.tex tutorialMakefile.tex wrapup.tex \

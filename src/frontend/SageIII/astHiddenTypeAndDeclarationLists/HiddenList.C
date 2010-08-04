@@ -149,7 +149,11 @@ void HiddenListComputationTraversal::UpdateScope_WithNamespace(Vector_Of_SymbolI
                         //        symbol_information.is_using_decl_in_class = false
                         //        symbol_information.si_using_decl_in_class = NULL
                         ROSE_ASSERT((*it_VecSymbolInfo) != NULL);
-                        temp_symboltable.push_back( new SymbolInformation( (*it_VecSymbolInfo)->symbol_pointer, (*it_VecSymbolInfo)->name, (*it_VecSymbolInfo)->scope_can_be_named, (*it_VecSymbolInfo)->symbol_of_class, true, depth, using_dir_stat, NULL, false, NULL ) );
+
+                     // DQ (7/23/2010): Debugging this code be first refactoring it to make it simpler.
+                     // temp_symboltable.push_back( new SymbolInformation( (*it_VecSymbolInfo)->symbol_pointer, (*it_VecSymbolInfo)->name, (*it_VecSymbolInfo)->scope_can_be_named, (*it_VecSymbolInfo)->symbol_of_class, true, depth, using_dir_stat, NULL, false, NULL ) );
+                        SymbolInformation* temp = new SymbolInformation( (*it_VecSymbolInfo)->symbol_pointer, (*it_VecSymbolInfo)->name, (*it_VecSymbolInfo)->scope_can_be_named, (*it_VecSymbolInfo)->symbol_of_class, true, depth, using_dir_stat, NULL, false, NULL );
+                        temp_symboltable.push_back( temp );
 
                 }
 

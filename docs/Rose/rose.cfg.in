@@ -481,6 +481,12 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
 			 @top_srcdir@/src/frontend/BinaryFormats \
+                         @top_srcdir@/src/midend/binaryAnalyses \
+                         @top_srcdir@/src/midend/binaryAnalyses/dataflowanalyses \
+                         @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics \
+                         @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C \
+                         @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/findConstants.C \
+                         @top_srcdir@/src/midend/binaryAnalyses/libraryIdentification \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
@@ -496,7 +502,7 @@ INPUT                  = \
 			 @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
-			 @top_srcdir@/src/backend/asmUnparser/unparseAsm.C \
+			 @top_srcdir@/src/backend/asmUnparser/AsmUnparser.C \
                          @top_srcdir@/src/backend/unparser/unparser.docs \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \

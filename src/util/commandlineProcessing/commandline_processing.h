@@ -104,6 +104,12 @@ namespace CommandlineProcessing
 
           bool isPHPFileNameSuffix ( const std::string & suffix );
 
+       // TV (05/17/2010) Support for CUDA
+          bool isCudaFileNameSuffix ( const std::string & suffix );
+       // TV (05/17/2010) Support for OpenCL
+          bool isOpenCLFileNameSuffix ( const std::string & suffix );
+
+
           void initSourceFileSuffixList();
           static Rose_STL_Container<std::string> validSourceFileSuffixes;
           

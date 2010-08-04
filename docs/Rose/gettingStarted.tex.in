@@ -107,31 +107,18 @@ ROSE distributions:
            \htmladdnormallink{ROSE Web Site
              (www.rosecompiler.org)}{http://www.rosecompiler.org}
      \item ROSE Email List \\
-           The ROSE project maintains a mailing list (casc-rose *at* llnl *dot* gov).
-           The email list is only used to request help and announce internal and external releases.
-           Anyone who would like to be on the email list can send an email to {\em dquinlan *at* llnl *dot* gov}.
-           Those with LLNL internal access may check who is on the email list at:
-           \htmladdnormallink{ROSE Email List (current subscribers, LLNL internal URL link:
-                cmg-r.llnl.gov/casc/computing/mailing\_lists/casc-rose.html)}
-                {http://cmg-r.llnl.gov/casc/computing/mailing_lists/casc-rose.html}.
-           At some point the email list will be made more generally open to automated substription.
+           The ROSE project maintains a mailing list (rose-public *at* nersc *dot* gov).
+           Anyone who would like to be on the email list can subscribe to
+           it at:
+           \htmladdnormallink{ROSE Public Email List}
+                {https://mailman.nersc.gov/mailman/listinfo/rose-public}.
 \end{enumerate}
 }
 
 % DQ (1/20/2009): Fixing the reference to the email list for ROSE.
 The ROSE project maintains an external mailing list (see information at:
-%\htmladdnormallink{https://outreach.scidac.gov/projects/rose/}{https://outreach.scidac.gov/projects/rose/}
 \htmladdnormallink{www.roseCompiler.org}{http://www.roseCompiler.org} and click on the
 {\bf Mailing Lists} link for how to join).
-
-% The ROSE project maintains a mailing list (see information at: casc-rose *at* llnl *dot* gov).
-% The email list is only used to request help and announce internal and external releases.
-% Anyone who would like to be on the email list can send an email to {\em dquinlan *at* llnl *dot* gov}.
-% Those with LLNL internal access may check who is on the email list at:
-% ROSE Email List (current subscribers, LLNL internal URL link:
-% \htmladdnormallink{cmg-r.llnl.gov/casc/computing/mailing\_lists/casc-rose.html)}
-%                 {http://cmg-r.llnl.gov/casc/computing/mailing_lists/casc-rose.html}.
-%                 At some point the email list will be made more generally open to automated substription.
 
 \input{installRose}
 

@@ -1,5 +1,13 @@
-#! /bin/sh
+#! /bin/bash
+# This script needs /bin/bash rather than /bin/sh
 
+###############################################################################
+# Note that due to ROSE compatibility with libtool 1.5 and 2.0, some warnings #
+# may be output from configure.in and aclocal.m4. These messages come from    #
+# aclocal, autoheader, autoconf, and automake and can be safely ignored. In   #
+# fact, they should be filtered out already by the autoconf-filter.pl script. #
+#   --The Rose Project Management.                                            #
+###############################################################################
 
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
@@ -7,332 +15,175 @@ ROSE_DISTRIBUTION=${ROSE_DISTRIBUTION:-.}
 
 # Parse command-line
 do_quiet=yes
-do_timing=no
-while [ "$#" -gt 0 ]; do
+do_timing=
+while [[ "$#" -gt 0 ]]; do
     arg="$1"; shift
     case "$arg" in
+        --quiet)
+            do_quiet=yes
+            ;;
         --verbose)
-            echo "Setting verbose mode in build script ..."
-            do_quiet=no
+            do_quiet=
             ;;
         --timing)
             do_timing=yes
             ;;
-        --quiet)
-            echo "$0: warning: --quiet is now the default mode and is ignored"
+        --no-timing)
+            do_timing=
             ;;
         --srcpath=*)
             ROSE_DISTRIBUTION="${arg#*=}"
             ;;
         --srcpath)
-	    ROSE_DISTRIBUTION="$1"; shift
-	    ;;
+            ROSE_DISTRIBUTION="$1"; shift
+            ;;
         *)
-	    echo "$0: unrecognized argument: $arg" >&2
-	    exit 1
-	    ;;
+            echo "$0: unrecognized argument: $arg" >&2
+            exit 1
+            ;;
     esac
 done
 
-# Debugging output is provided using the -x option as in "#! /bin/sh -x"
+# Returns ok (0) if $need is at least as large as $have, where both are version numbers
+# of the form X.Y.Z where X, Y, and Z are non-negative integers. Returns not-ok (1) otherwise.
+version_ok () {
+    local have="$1" need="$2"
+    local have_major=$(echo $have |cut -d. -f1)
+    local have_minor=$(echo $have |cut -d. -f2)
+    local have_patch=$(echo $have |cut -d. -f3)
+    local need_major=$(echo $need |cut -d. -f1)
+    local need_minor=$(echo $need |cut -d. -f2)
+    local need_patch=$(echo $need |cut -d. -f3)
+    [[ ${have_major:-0} -gt $need_major ]] && return 0
+    [[ ${have_major:-0} -lt $need_major ]] && return 1
+    [[ ${have_minor:-0} -gt $need_minor ]] && return 0
+    [[ ${have_minor:-0} -lt $need_minor ]] && return 1
+    [[ ${have_patch:-0} -ge $need_patch ]] && return 0
+    return 1
+}
 
 # DQ (12/22/2005): remove the autoconf caches
 rm -rf autom4te.cache
 
-# JJW (10/5/2008): force glibtoolize on Mac, even for external releases where
-# it wouldn't otherwise be needed (the files are there, they just don't work
-# when linking in Java)
-# JJW (11/8/2008): force libtoolize everywhere, and prefer libtoolize to
-# glibtoolize if it is present (libltdl is missing on ninjai, so I need to use
-# my own libtool installation)
-# DQ (2/10/2009): Must use "/Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy --ltdl --automake"
-# the first time.
+###############################################################################################################################
+# Test libtool version and run libtoolize.  Warn if the libtool version is too old, but run it anyway.  Show the command that
+# is run by preceding it with a "+ " on stderr as is the usual debugging style for shell scripts.
+###############################################################################################################################
 
-# This only detects the file in the current directory (not in directories given by the PATH variable).
-# if test -x libtoolize; then
-#   echo "libtoolize exists!"
-# else
-#   echo "libtoolize does not exist!"
-# fi
-
-# Original code:
-# if which libtoolize > /dev/null; then
-#    libtoolize --force --copy --ltdl --automake
-# elif which glibtoolize > /dev/null; then
-#    glibtoolize --force --copy --ltdl --automake
-# fi
-
-libtoolize_name=""
-test_libtoolize_version=""
-run_libtoolize=""
-
-# Output the name of the machine where the build is being run (helpful for debugging).
-machine_name=`uname -n`
-echo ""
-echo "******************************************"
-echo "Building ROSE Project on: $machine_name"
-echo "Build Disk Usage Report:"
-#df
-echo "******************************************"
-
-echo ""
-echo "******************************************"
-echo "Testing version of libtool (libtoolize)..."
-echo "******************************************"
-
-# Look for this name first...
-libtoolize_name=libtoolize
-
-# DQ (9/29/2009): Check if libtoolize is available in the user's path, else check for glibtoolize (less common, I think).
-if which $libtoolize_name > /dev/null; then
-   echo "Found libtoolize program, running it to generate libtool locally in ROSE."
-   test_libtoolize_version=yes
+# Look for libtoolize, glibtoolize in various places.
+libtoolize_name=
+if [[ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]]; then
+    # See README.OSX
+    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
+elif [[ -n "$(type libtoolize)" ]]; then
+    libtoolize_name=$(which libtoolize)
+elif [[ -n "$(type glibtoolize)" ]]; then
+    libtoolize_name=$(which glibtoolize)
 else
-   libtoolize_name=glibtoolize
-   if which $libtoolize_name > /dev/null; then
-      echo "Found glibtoolize program, running it to generate libtool locally in ROSE."
-      test_libtoolize_version=yes
-   else
     # If the user is running build then libtool should be available.
-      echo "Can't find libtool support (libtoolize)...(using the version that comes with ROSE)"
-      test_libtoolize_version=no
-
-      libtoolize_name=libtoolize_not_available
-
-     # Make it an error to run this build script if libtool is unavailable, however
-     # it the future it might be fine to not require libtool since we included a 
-     # version in ROSE. So this is a temporary measure.
-       echo "Error: Neither libtoolize nor glibtoolize were found in the user's path."
-       exit 1;
-   fi
+    echo "$0: neither libtoolize nor glibtoolize were found in the user's path." 2>&1
+    exit 1;
 fi
 
-# Specify what version we require (at least)
-LIBTOOL_VERSION_MAJOR_PREREQ=1
-LIBTOOL_VERSION_MINOR_PREREQ=5
-LIBTOOL_VERSION_PATCH_PREREQ=6
-
-LIBTOOL_VERSION_MAJOR=`echo|$libtoolize_name --version | head -1 | sed s/"libtoolize (GNU libtool) "//g | cut -f1 -d \) | cut -d\. -f1`
-LIBTOOL_VERSION_MINOR=`echo|$libtoolize_name --version | head -1 | sed s/"libtoolize (GNU libtool) "//g | cut -f1 -d \) | cut -d\. -f2`
-LIBTOOL_VERSION_PATCH=`echo|$libtoolize_name --version | head -1 | sed s/"libtoolize (GNU libtool) "//g | cut -f1 -d \) | cut -d\. -f3`
-
-echo "Libtool version is $LIBTOOL_VERSION_MAJOR.$LIBTOOL_VERSION_MINOR.$LIBTOOL_VERSION_PATCH (ROSE requires at least $LIBTOOL_VERSION_MAJOR_PREREQ.$LIBTOOL_VERSION_MINOR_PREREQ.$LIBTOOL_VERSION_PATCH_PREREQ)"
-
-if test $test_libtoolize_version = "yes"; then
-
- # Run libtoolize unless the version in ROSE is the latest version.
-   run_libtoolize=yes
-
- # Report the current version of libtool to be used...
- # echo "Libtool version is $LIBTOOL_VERSION_MAJOR.$LIBTOOL_VERSION_MINOR.$LIBTOOL_VERSION_PATCH (ROSE requires at least $LIBTOOL_VERSION_MAJOR_PREREQ.$LIBTOOL_VERSION_MINOR_PREREQ.$LIBTOOL_VERSION_PATCH_PREREQ)"
-
-   if test $LIBTOOL_VERSION_MAJOR -eq $LIBTOOL_VERSION_MAJOR_PREREQ; then
-    # echo "Libtool major version number is correct: LIBTOOL_VERSION_MAJOR = $LIBTOOL_VERSION_MAJOR (requires $LIBTOOL_VERSION_MAJOR_PREREQ)"
-      if test $LIBTOOL_VERSION_MINOR -eq $LIBTOOL_VERSION_MINOR_PREREQ; then
-       # echo "Libtool minor version number is correct: LIBTOOL_VERSION_MINOR = $LIBTOOL_VERSION_MINOR (requires $LIBTOOL_VERSION_MINOR_PREREQ)"
-         if test $LIBTOOL_VERSION_PATCH -eq $LIBTOOL_VERSION_PATCH_PREREQ; then
-          # echo "Libtool patch version number is correct: LIBTOOL_VERSION_PATCH = $LIBTOOL_VERSION_PATCH (requires $LIBTOOL_VERSION_PATCH_PREREQ)"
-            :
-         else
-          # Allow patch version 7 and greater to pass (I don't think there is anything between 1.9.6 and 1.10, but just in case)
-            if test $LIBTOOL_VERSION_PATCH -lt $LIBTOOL_VERSION_PATCH_PREREQ; then
-               echo "Warning: Libtool patch version number too old:    LIBTOOL_VERSION_PATCH = $LIBTOOL_VERSION_PATCH (requires $LIBTOOL_VERSION_PATCH_PREREQ)"
-               run_libtoolize=no
-             # exit 1;
-            fi
-         fi
-      else
-       # Allow minor version 10 and greater to pass (minor version values of 10 are avalable)
-         if test $LIBTOOL_VERSION_MINOR -lt $LIBTOOL_VERSION_MINOR_PREREQ; then
-            echo "Warning: Libtool minor version number too old:    LIBTOOL_VERSION_MINOR = $LIBTOOL_VERSION_MINOR (requires $LIBTOOL_VERSION_MINOR_PREREQ)"
-            run_libtoolize=no
-          # exit 1;
-         fi
-      fi
-   else
-    # Allow major version numbers greater than 1 (when they are available) to pass
-      if test $LIBTOOL_VERSION_MAJOR -lt $LIBTOOL_VERSION_MAJOR_PREREQ; then
-         echo "Warning: Libtool major version number too old:    LIBTOOL_VERSION_MAJOR = $LIBTOOL_VERSION_MAJOR (requires $LIBTOOL_VERSION_MAJOR_PREREQ)"
-         run_libtoolize=no
-       # exit 1;
-      fi
-   fi
-
- # Run the libtoolize to copy the local version into place for use by ROSE.
- # But only if it is newer then (or the same as) version 1.5.6.
-   if test $run_libtoolize = "yes"; then
-      echo "Running libtoolize: $libtoolize_name --force --copy --ltdl --automake"
-      $libtoolize_name --force --copy --ltdl --automake
-   else
-    # Note that the internal SVN repository does not have a version of libtool included in ROSE,
-    # but the external SVN repository does include a version of libtool distributed with ROSE.
-    # This is done to save users from finding the correct version of libtool if it is locally 
-    # unavailable. This is a relatively common practice within projects using libtool.
-      echo "Skipping libtoolize: \"$libtoolize_name --force --copy --ltdl --automake\" (using version distributed with in ROSE, if present)"
-   fi
-fi
-
-# echo "Exiting ./build script as a test!"
-# exit 1
-
-# DQ (9/26/2009): Testing svn (required for construction of EDG binaries)
-# echo "Testing SVN version"
-# svn --version
-# svn --help
-# svn log --help
-# svn log --limit 100
-
-echo ""
-echo "******************************************"
-echo "Testing version of automake (autotools)..."
-echo "******************************************"
-
-# DQ (9/26/2009): Having the wrong version of automake is a common problem.
-# We can't test for it in the configure.in and we want to catch the problem 
-# as early as possible.  So we test for it here. This appears to be the only 
-# place to test for the correct version of automake. Autoconf can use the 
-# AC_PREREQ macro, but there is no AM_PREREQ macro for automake.
-
-# Specify what version we require (at least)
-AUTOMAKE_VERSION_MAJOR_PREREQ=1
-AUTOMAKE_VERSION_MINOR_PREREQ=9
-AUTOMAKE_VERSION_PATCH_PREREQ=6
-
-echo "testing version of automake..."
-AUTOMAKE_VERSION_MAJOR=`echo|automake --version | head -1 | sed s/"automake (GNU automake) "//g | cut -f1 -d \) | cut -d\. -f1`
-AUTOMAKE_VERSION_MINOR=`echo|automake --version | head -1 | sed s/"automake (GNU automake) "//g | cut -f1 -d \) | cut -d\. -f2`
-AUTOMAKE_VERSION_PATCH=`echo|automake --version | head -1 | sed s/"automake (GNU automake) "//g | cut -f1 -d \) | cut -d\. -f3`
-
-# Output what version we have
-# echo "AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR"
-# echo "AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR"
-# echo "AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH"
-
-# DQ (9/26/2009): Now test for the correct version number of automake.
-echo "Automake version is $AUTOMAKE_VERSION_MAJOR.$AUTOMAKE_VERSION_MINOR.$AUTOMAKE_VERSION_PATCH (ROSE requires at least $AUTOMAKE_VERSION_MAJOR_PREREQ.$AUTOMAKE_VERSION_MINOR_PREREQ.$AUTOMAKE_VERSION_PATCH_PREREQ)"
-if test $AUTOMAKE_VERSION_MAJOR -eq $AUTOMAKE_VERSION_MAJOR_PREREQ; then
- # echo "Automake major version number is correct: AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR (requires $AUTOMAKE_VERSION_MAJOR_PREREQ)"
-   if test $AUTOMAKE_VERSION_MINOR -eq $AUTOMAKE_VERSION_MINOR_PREREQ; then
-    # echo "Automake minor version number is correct: AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR (requires $AUTOMAKE_VERSION_MINOR_PREREQ)"
-      if test $AUTOMAKE_VERSION_PATCH -eq $AUTOMAKE_VERSION_PATCH_PREREQ; then
-       # echo "Automake patch version number is correct: AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH (requires $AUTOMAKE_VERSION_PATCH_PREREQ)"
-         :
-      else
-       # Allow patch version 7 and greater to pass (I don't think there is anything between 1.9.6 and 1.10, but just in case)
-         if test $AUTOMAKE_VERSION_PATCH -lt $AUTOMAKE_VERSION_PATCH_PREREQ; then
-            echo "ERROR: Automake patch version number too old:    AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH (requires $AUTOMAKE_VERSION_PATCH_PREREQ)"
-            exit 1;
-         fi
-      fi
-   else
-    # Allow minor version 10 and greater to pass (minor version values of 10 are avalable)
-      if test $AUTOMAKE_VERSION_MINOR -lt $AUTOMAKE_VERSION_MINOR_PREREQ; then
-         echo "ERROR: Automake minor version number too old:    AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR (requires $AUTOMAKE_VERSION_MINOR_PREREQ)"
-         exit 1;
-      fi
-   fi
+# Version required and version actually present.
+LIBTOOL_VERSION_PREREQ=1.5.6
+LIBTOOL_VERSION=$($libtoolize_name --version |head -n1 |perl -pe 's/.*?([0-9\.]{5,}).*/$1/')
+if [[ -z "$LIBTOOL_VERSION" ]]; then
+    echo "$0: warning: cannot determine libtool version; skipping libtoolize" 2>&1
+elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
+    (set -x; $libtoolize_name --force --copy --ltdl --automake)
 else
- # Allow major version numbers greater than 1 (when they are available) to pass
-   if test $AUTOMAKE_VERSION_MAJOR -lt $AUTOMAKE_VERSION_MAJOR_PREREQ; then
-      echo "ERROR: Automake major version number too old:    AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR (requires $AUTOMAKE_VERSION_MAJOR_PREREQ)"
-      exit 1;
-   fi
+    echo "$0: warning: libtool $LIBTOOL_VERSION is too old (require >= $LIBTOOL_VERSION_PREREQ); skipping libtoolize" 2>&1
 fi
 
-# DQ (11/23/2008): Added message to make users less afraid of warnings...
-echo ""
-echo "*******************************************************************************************"
-echo "Note that due to ROSE compatibility with libtool 1.5 and 2.0, some warnings will be output."
-echo "These warnings come from configure.in and aclocal.m4, and can be safely ignored."
-echo "These messages from the use of aclocal, acheader, autoconf, and automake."
-echo ""
-echo "Rose Project Management."
-echo "*******************************************************************************************"
+###############################################################################################################################
+# Test version of automake.  Having the wrong version of automake is a common problem.  We can't test for it in the
+# configure.in and we want to catch the problem as early as possible.  So we test for it here. This appears to be the only 
+# place to test for the correct version of automake -- autoconf can use the AC_PREREQ macro, but there is no AM_PREREQ macro
+# for automake. [DQ 2009-09-26]
+###############################################################################################################################
 
-# DQ (9/5/2009): Added output to permit debugging on NMI machines
-echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
+AUTOMAKE_VERSION_REQ=1.9.6
+AUTOMAKE_VERSION=$(automake --version |head -n1 |perl -pe 's/.*?([0-9\.]{5,}).*/$1/')
+if [[ -z "$AUTOMAKE_VERSION" ]]; then
+    echo "$0: warning: cannot determine automake version" 2>&1
+elif version_ok "$AUTOMAKE_VERSION" "$AUTOMAKE_VERSION_PREREQ"; then
+    :
+else
+    echo "$0: warning: automake $AUTOMAKE_VERSION is too old (require >= $AUTOMAKE_VERSION_PREREQ)" 2>&1
+fi
 
-# DJH (20 July 2009): Some macros may be installed in non-standard locations
-# (e.g. libxml's on NMI build machines)
-echo "Running aclocal ... aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES"
-# echo "Running aclocal ..."
-# aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
-aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
+###############################################################################################################################
+# Run autoconf tools: aclocal, autoheader, autoconf, and automake
+###############################################################################################################################
 
-echo "Running autoheader ..."
-# autoheader --warnings=obsolete,all || : exit 1
-autoheader || : exit 1
+# Debugging (esp. for NMI machines)
+[[ -n "$ACLOCAL_INCLUDES" ]] && echo "ACLOCAL_INCLUDES=$ACLOCAL_INCLUDES"
 
-echo "Running autoconf ..."
-# autoconf --warnings=syntax,obsolete,all || : exit 1
-autoconf || : exit 1
-
-echo "Running automake ..."
-# automake -a -c --include-deps --foreign --verbose || : exit 1
-# automake -a -c -i --foreign $AUTOMAKE_FLAGS || : exit 1
-# automake -a -c -i --foreign |& grep -v "is not a standard library name" || : exit 1
-# automake -a -c -i --foreign || : exit 1
-# DQ (9/26/2009): Testing for "is not a standard library name" is not required any more!
-# automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
-
+# Automake will expect these files to always exist even if they are in a conditional.  Since we know
+# that they will not be used during the build process itself, we can create zero-length dummy files.
 # This list should be the same as in configure.in (search for CLASSPATH_COND_IF)
-if [ \! -e src/frontend/CxxFrontend/EDG/Makefile.am ] ; then
-    # Automake will expect these files to always exist even if they are
-    # in a conditional.  Since we know that they will not be used during
-    # the build process itself, we can create zero-length dummy files.
+if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
     for file in \
-src/frontend/CxxFrontend/EDG/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.3/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.3/misc/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.3/src/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.10/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.10/misc/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.10/src/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.10/src/disp/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_3.10/lib/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_4.0/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile.in \
-src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile.in \
-src/frontend/CxxFrontend/EDG/edgRose/Makefile.in
+        src/frontend/CxxFrontend/EDG/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.3/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.3/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.3/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.10/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.10/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.10/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.10/src/disp/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_3.10/lib/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.0/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile.in \
+        src/frontend/CxxFrontend/EDG/edgRose/Makefile.in
     do
         mkdir -p $(dirname $file)
         touch $file
     done
 fi
 
-automake -a -c -i 2>&1 || : exit 1
+# Run all autoconf, indenting their output for readability.  Exit if a tool fails (this is different than the
+# semantics of the original version of this script).  The '-I' switches of aclocal are because some macros may be
+# installed in non-standard locations (e.g., libxml's on NMI build machines).
+(set -ex
+    aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES
+    autoheader
+    autoconf
+    automake -a -c -i
+) 2>&1 |$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
+if [[ ${PIPESTATUS[0]} != 0 ]]; then
+    echo "$0: unable to initialize your build environment!" 2>&1
+    exit 1
+fi
 
-# DQ (9/26/2009): tracking down error when not using the correct automake version.
-# We would like to fail as early as possible.
-echo "Finishing up details ... exit status = $?"
+###############################################################################################################################
+# Finishing up details
+###############################################################################################################################
 
 # Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
-touch stamp-h.in  || : exit 1
-touch stamp-h1.in || : exit 1
+touch stamp-h.in
+touch stamp-h1.in
 
-# Add some dynamically-generated targets that run tests on various sample binaries.
-if [ -f tests/roseTests/binaryTests/Makefile.in ]; then
+# Add some dynamically-generated targets that run tests on various sample binaries. [RPM]
+if [[ -f tests/roseTests/binaryTests/Makefile.in ]]; then
     (cd $ROSE_DISTRIBUTION && ./scripts/sample_binary_rules.pl) || exit 1
 fi
 
-# Do the same steps in libltdl
-# (cd libltdl && aclocal && automake --add-missing && autoconf)
-# We can't reconfigure their code yet (autoconf too old)
-# (cd src/3rdPartyLibraries/libharu-2.1.0 && autoreconf)
-
-# When timing is selected, add a "time" command to the front of the
-# compiles.  This must be done before the --quiet handler below is
-# run to get the right output command.
-if [ "$do_timing" = "yes" ]; then
+# When timing is selected, add a "time" command to the front of the compiles.  This must be done before the --quiet
+# handler below is run to get the right output command.
+if [[ -n "$do_timing" ]]; then
+    echo "$0: converting makefiles for timing (use --no-timing to prevent this)" 2>&1
     find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
-	-e "s:^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =:& echo \"\`pwd\`/\$@\" >> `pwd`/compile_times; /usr/bin/time -o `pwd`/compile_times -a :"
+        -e "s:^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =:& echo \"\`pwd\`/\$@\" >> `pwd`/compile_times; /usr/bin/time -o `pwd`/compile_times -a :"
 fi
 
 # Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
-# and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output.
+# and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output. See also scripts/rosegit/bin/rosegit-make.
 #
 # Note:
 #     The '$(CXX)...' commands must be replaced also because automake generates them for *.o targets that depend on a *.C that
@@ -343,21 +194,6 @@ fi
 #                  $(CXX) $(DEFS) ....... `test -f 'RDis/main.C' || echo '$(srcdir)/'`RDis/main.C
 #     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
 #
-if [ "$do_quiet" = "yes" ]; then
-    echo "Converting Makefile.in files to quiet mode (use --verbose to prevent this)."
-    find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
-	-e '/echo.*COMPILE/!s/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
-	-e '/echo.*LINK/!s/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
-	-e '/echo.*COMPILE/!s/^\t\$(CXX)/\t@echo "  COMPILE $@"; $(CXX)/' \
-	-e '/LIBTOOL.*quiet/!s/@LIBTOOL@/& --quiet/g' \
-	-e '/^\t\$(LIBTOOL) --tag=CXX /s/^\t/\t@echo "  COMPILE $@"; /' \
-	-e '/^\t$(librose_la_LINK) -rpath /s/^\t/\t@echo "  LINK    $@"; /'
+if [[ -n "$do_quiet" ]]; then
+    (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
 fi
-
-echo "***** BUILD TERMINATED NORMALLY *****"
-
-# run build or better yet RUN_ME_AFTER_CHECKOUT.sh
-# echo "Call tests/performanceTests/BenchmarkBase/RUN_ME_AFTER_CHECKOUT.sh ..."
-# cd tests/PerformanceTests/BenchmarkBase; RUN_ME_AFTER_CHECKOUT.sh; 
-# cd ../../..;
-

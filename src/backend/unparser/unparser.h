@@ -36,6 +36,9 @@ class Unparser_Nameq;
 // typedef and anonymous declaration bugs.
 #define ANONYMOUS_TYPEDEF_FIX false
 
+
+#define MAX_F90_LINE_LEN 72
+
 // DQ (2/6/03):
 // The unparser should not write to (modify) the AST.  This fix skips and locations
 // in the unparser when the AST is modified.  It is an experimental fix.
@@ -164,7 +167,7 @@ class Unparser
           int ltu;
 #endif
 
-       // DQ (8/19/2007): Added simble access to the SgFile so that options specified there are easily available.
+       // DQ (8/19/2007): Added simple access to the SgFile so that options specified there are easily available.
        // Using this data member a number of mechanism in the unparser could be simplified to be more efficient 
        // (they currently search bacj through the AST to get the SgFile).
           SgFile* currentFile;
@@ -194,11 +197,16 @@ class Unparser
       //! be output after any statements attached to the next statements and before the next statement
           std::list<SgStatement*> compilerGeneratedStatementQueue;
 
+   // DQ (5/8/2010): Switched this to be private.
+      private:
        // DQ (12/5/2006): Output information that can be used to colorize properties of generated code (useful for debugging).
           int embedColorCodesInGeneratedCode;
 
        // DQ (12/5/2006): Output separate file containing source position information for highlighting (useful for debugging).
           int generateSourcePositionCodes;
+
+       // DQ (5/8/2010): Added support to force unparser to reset the source positon in the AST (this is the only side-effect in unparsing).
+          bool p_resetSourcePosition;
 
      public:
        // DQ (8/19/2007): I have removed the "int lineNumberToUnparse" function parameter (see code for details).
@@ -252,10 +260,19 @@ class Unparser
           int get_generateSourcePositionCodes();
           void set_embedColorCodesInGeneratedCode( int x );
           void set_generateSourcePositionCodes( int x );
+
+       // DQ (5/8/2010): Added support to force unparser to reset the source positon in the AST (this is the only side-effect in unparsing).
+          void set_resetSourcePosition(bool x);
+          bool get_resetSourcePosition();
+
+       // DQ (5/8/2010): Added support to force unparser to reset the source positon in the AST (this is the only side-effect in unparsing).
+      //! Reset the Sg_File_Info to reference the unparsed (generated) source code.
+          void resetSourcePosition (SgStatement* stmt);
    };
 
 
-
+// DQ (5/8/2010): Refactored code to generate the Unparser object.
+void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp );
 
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
 // DQ (3/18/2006): Modified to include UnparseFormatHelp in the interface.  These function can be 

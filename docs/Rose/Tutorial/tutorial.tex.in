@@ -6,6 +6,8 @@
 
 \usepackage{listings}
 % \lstloadlanguages{APP}
+\lstset{ numbers=left,
+}
 
 \usepackage{html}
 \usepackage{color}
@@ -269,7 +271,7 @@ to build customized analyses using ROSE.}
 \input{virtualCFG}
 \input{buildCFG}
 \input{defuseAnalysis}
-\input{buildCG}
+\input{buildCallGraph}
 \input{classHierarchyGraph}
 \input{dataBaseSupport}
 \input{customGraphs} 

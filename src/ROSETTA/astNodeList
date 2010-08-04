@@ -382,6 +382,7 @@ SgFunctionSymbol
 SgFunctionType
 SgFunctionTypeSymbol
 SgFunctionTypeTable
+SgTypeTable
 SgGlobal
 SgGotoStatement
 SgGraph
@@ -417,6 +418,8 @@ SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol
 SgIorAssignOp
+SgCudaKernelExecConfig
+SgCudaKernelCallExp
 SgLabelRefExp
 SgLabelStatement
 SgLabelSymbol
@@ -499,6 +502,7 @@ SgOmpScheduleClause
 SgOmpSharedClause
 SgOmpUntiedClause
 SgOmpVariablesClause
+SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions
 SgOrOp
@@ -652,3 +656,8 @@ SgWhileStmt
 SgWriteStatement
 SgXorAssignOp
 Sg_File_Info
+SgTypeCAFTeam
+SgCAFWithTeamStatement
+SgCAFCoExpression
+SgTypeCrayPointer
+
