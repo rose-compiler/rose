@@ -563,7 +563,12 @@ main(int argc, char *argv[])
             /* Keep track of disassembler search flags because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
             ROSE_ASSERT(i+1<argc);
-            disassembler_search = Disassembler::parse_switches(argv[i+1], disassembler_search);
+            try {
+                disassembler_search = Disassembler::parse_switches(argv[i+1], disassembler_search);
+            } catch (const Disassembler::Exception &e) {
+                std::cerr <<"disassembler exception: " <<e <<"\n";
+                exit(1);
+            }
             printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];

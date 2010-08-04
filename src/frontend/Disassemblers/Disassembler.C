@@ -94,6 +94,36 @@ void Disassembler::ctor() {
 #endif
 }
 
+void
+Disassembler::Exception::print(std::ostream &o) const
+{
+    if (insn) {
+        o <<"disassembly failed at " <<StringUtility::addrToString(ip)
+          <<" [" <<unparseInstruction(insn) <<"]"
+          <<": " <<mesg;
+    } else if (ip>0) {
+        o <<"disassembly failed at " <<StringUtility::addrToString(ip);
+        if (!bytes.empty()) {
+            for (size_t i=0; i<bytes.size(); i++) {
+                o <<(i>0?", ":"[")
+                  <<std::hex <<std::setfill('0') <<std::setw(2)
+                  <<"0x" <<bytes[i]
+                  <<std::dec <<std::setfill(' ') <<std::setw(1);
+            }
+            o <<"] at bit " <<bit;
+        }
+    } else {
+        o <<mesg;
+    }
+}
+
+std::ostream &
+operator<<(std::ostream &o, const Disassembler::Exception &e)
+{
+    e.print(o);
+    return o;
+}
+
 unsigned
 Disassembler::parse_switches(const std::string &s, unsigned flags)
 {

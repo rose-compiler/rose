@@ -125,6 +125,8 @@ public:
         Exception(const std::string &reason, SgAsmInstruction *insn)
             : mesg(reason), ip(insn->get_address()), bit(0), insn(insn)
             {}
+        void print(std::ostream&) const;
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e);
 
         std::string mesg;               /**< Reason that disassembly failed. */
         rose_addr_t ip;                 /**< Virtual address where failure occurred; zero if no associated instruction */
