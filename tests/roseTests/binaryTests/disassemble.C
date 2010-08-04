@@ -628,7 +628,7 @@ main(int argc, char *argv[])
             ssize_t nread = read(fd, buffer, sb.st_size);
             ROSE_ASSERT(nread==sb.st_size);
             close(fd);
-            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0);
+            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
             melmt.set_name(raw_filename);
             raw_map.insert(melmt);
         } else {
