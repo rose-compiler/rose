@@ -25,7 +25,7 @@
  *  contains function symbols, then the address stored in the symbol table is assumed to be the entry point of a function.  ROSE
  *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the set_search() method.
  *  ROSE also supports user-defined search methods that can be registered with add_function_detector().  The three phases are
- *  initialized and influenced by the contents of an optional configuration file specified with the set_config() method.
+ *  initialized and influenced by the contents of an optional configuration file specified with the load_config() method.
  *
  *  The second phase for assigning blocks to functions is via analysis of the control-flow graph.  In a nutshell, ROSE
  *  traverses the CFG starting with the entry address of each function, adding blocks to the function as it goes. When it
@@ -44,7 +44,7 @@
  *  when the Partitioner is constructed.
  *  <ul>
  *    <li>-rose:partitioner_search initializes the detection methods by calling set_search(), and parse_switches()</li>
- *    <li>-rose:partitioner_config specifies an IPD file by calling set_config().</li>
+ *    <li>-rose:partitioner_config specifies an IPD file by calling load_config().</li>
  *  </ul>
  *
  *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
@@ -189,6 +189,17 @@ protected:
     /** Data type for user-defined function detectors. */
     typedef void (*FunctionDetector)(Partitioner*, SgAsmGenericHeader*, const Disassembler::InstructionMap&);
 
+    /** Basic block configuration information. This is information which is set by loading an IPD configuration file. */
+    struct BlockConfig {
+        BlockConfig(): ninsns(0), alias_for(0), sucs_specified(false), sucs_complete(false) {}
+        size_t ninsns;                          /**< Number of instructions expected in the basic block. */
+        rose_addr_t alias_for;                  /**< If non-zero then this block is an alias for another block. */
+        bool sucs_specified;                    /**< True if IPD file specifies successors for this block. */
+        Disassembler::AddressSet sucs;          /**< Address to which this block might branch or fall through. */
+        bool sucs_complete;                     /**< True if successors are fully known. */
+    };
+    typedef std::map<rose_addr_t, BlockConfig*> BlockConfigMap;
+
     /*************************************************************************************************************************
      *                                                     Deprecated
      *************************************************************************************************************************/
@@ -240,8 +251,7 @@ public:
 public:
 
     Partitioner()
-        : func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true),
-          config_file_loaded(false)
+        : func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true)
         {}
     virtual ~Partitioner() { clear(); }
 
@@ -311,15 +321,6 @@ public:
         return debug;
     }
 
-    /** Specifies the name of a configuration file to read to initialize the partitioner. The file is read by the clear()
-     *  method, which is called by partition(). See documentation for the IPDParser class for details.  An empty string
-     *  prevents parsing of any file. */
-    void set_config(const std::string &file_name) { config_file_name = file_name; }
-
-    /** Returns the name of the configuration file used to initialize this partitioner.  An empty string means no
-     *  configuration file is used. See documentation for the IPDParser class for details. */
-    const std::string& get_config() const { return config_file_name; }
-
     /*************************************************************************************************************************
      *                                                High-level Functions
      *************************************************************************************************************************/
@@ -349,14 +350,13 @@ public:
      *  If it is null then those function seeding operations that depend on having file headers are not run. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
-    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. You'll probably
-     *  want to read-load the configuration file, if any, by calling load_config(). */
+    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, functions, and configuration
+     *  file settings and definitions. */
     virtual void clear();
 
-    /** Loads the configuration file if necessary. The name of the configuration file is set with set_config().  It should not
-     *  be called until instructions have been assigned to the partitioner. The partition() method itself normally makes this
-     *  call. */
-    virtual void load_config();
+    /** Loads the specified configuration file. This should be called before any of the partitioning functions (such as
+     *  partition()).  If an error occurs then Partitioner::IPDParser::Exception error is thrown. */
+    virtual void load_config(const std::string &filename);
 
     /** Adds additional instructions to be processed. New instructions are only added at addresses that don't already have an
      *  instruction. */
@@ -406,6 +406,7 @@ protected:
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
     virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
 
+    virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
@@ -540,7 +541,7 @@ public:
         std::string input_name;                 /**< Optional name of input (usually a file name). */
         size_t at;                              /**< Current parse position w.r.t. "input". */
         Function *cur_func;                     /**< Non-null when inside a FuncBody nonterminal. */
-        BasicBlock *cur_block;                  /**< Non-null when inside a BlockBody nonterminal. */
+        BlockConfig *cur_block;                 /**< Non-null when inside a BlockBody nonterminal. */
 
     public:
         IPDParser(Partitioner *p, const char *input, size_t len, const std::string &input_name="")
@@ -618,8 +619,7 @@ protected:
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory */
-    std::string config_file_name;                       /**< Optional name of IPD file to read before partitioning */
-    bool config_file_loaded;                            /**< Set when config file has been loaded; cleared by clear() */
+    BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

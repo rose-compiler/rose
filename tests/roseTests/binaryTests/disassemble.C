@@ -674,14 +674,21 @@ main(int argc, char *argv[])
         disassembler->set_debug(stderr);
     
     /* Build the instruction partitioner and initialize it based on the -rose:partitioner_search and
-     * -rose:partitioner_confg switches.  Similar to the disassembler switches, there are also available via
-     * SgFile::get_partitionerSearchHeuristics() and SgFile::get_partitionerConfigurationFileName() if we called frontend(). */
+     * -rose:partitioner_confg switches.  Similar to the disassembler switches, these are also available via
+     * SgFile::get_partitionerSearchHeuristics() and SgFile::get_partitionerConfigurationFileName() if we had called
+     * frontend(). */
     Partitioner *partitioner = new Partitioner();
     partitioner->set_search(partitioner_search);
-    if (partitioner_config)
-        partitioner->set_config(partitioner_config);
     if (do_debug_partitioner)
         partitioner->set_debug(stderr);
+    if (partitioner_config) {
+        try {
+            partitioner->load_config(partitioner_config);
+        } catch (const Partitioner::IPDParser::Exception &e) {
+            std::cerr <<e <<"\n";
+            exit(1);
+        }
+    }
 
     /* Note that because we call a low-level disassembly function (disassembleBuffer) the partitioner isn't invoked
      * automatically. However, we set it here just to be thorough. */
@@ -762,13 +769,7 @@ main(int argc, char *argv[])
     if (do_raw)
         partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
 
-    SgAsmBlock *block = NULL;
-    try {
-        block = partitioner->partition(interp, insns);
-    } catch (const Partitioner::IPDParser::Exception &e) {
-        std::cerr <<e <<"\n";
-        exit(1);
-    }
+    SgAsmBlock *block = partitioner->partition(interp, insns);
 
     /* Link instructions into AST if possible */
     if (interp) {

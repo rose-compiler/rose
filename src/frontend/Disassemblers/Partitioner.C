@@ -377,8 +377,6 @@ Partitioner::Function::last_block() const
 void
 Partitioner::clear()
 {
-    config_file_loaded = false;
-
     /* Delete all functions */
     for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
         fi->second->clear_blocks();
@@ -393,32 +391,35 @@ Partitioner::clear()
         delete bi->second;
     blocks.clear();
 
+    /* Delete all block IPD configuration data. */
+    for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci)
+        delete bci->second;
+    block_config.clear();
+
     /* Release (do not delete) all instructions */
     insns.clear();
 }
 
 void
-Partitioner::load_config() {
-    /* Read configuration file (avoid mmap due to Windows support) */
-    if (!config_file_loaded && !config_file_name.empty()) {
+Partitioner::load_config(const std::string &filename) {
+    if (filename.empty())
+        return;
 #ifdef _MSC_VER /* tps (06/23/2010) : Does not work under Windows */
-        fprintf(stderr, "Partitioner::load_config(\"%s\") not implemented on Windows\n", config_file_name.c_str());
+    throw IPDParser::Exception("IPD parsing not supported on Windows platforms");
 #else
-        int fd = open(config_file_name.c_str(), O_RDONLY);
-        if (fd<0)
-            throw IPDParser::Exception(strerror(errno), config_file_name);
-        struct stat sb;
-        fstat(fd, &sb);
-        char *config = new char[sb.st_size];
-        ssize_t nread = read(fd, config, sb.st_size);
-        if (nread<0 || nread<sb.st_size)
-            throw IPDParser::Exception(strerror(errno), config_file_name);
-        IPDParser(this, config, sb.st_size, config_file_name).parse();
-        delete[] config;
-        close(fd);
-        config_file_loaded = true;
+    int fd = open(filename.c_str(), O_RDONLY);
+    if (fd<0)
+        throw IPDParser::Exception(strerror(errno), filename);
+    struct stat sb;
+    fstat(fd, &sb);
+    char *config = new char[sb.st_size];
+    ssize_t nread = read(fd, config, sb.st_size);
+    if (nread<0 || nread<sb.st_size)
+        throw IPDParser::Exception(strerror(errno), filename);
+    IPDParser(this, config, sb.st_size, filename).parse();
+    delete[] config;
+    close(fd);
 #endif
-    }
 }
 
 /* Return address of first instruction of basic block */
@@ -631,6 +632,34 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
         if (name!="") f->name = name;
     }
     return f;
+}
+
+/* Do whatever's necessary to finish loading IPD configuration. */
+void
+Partitioner::mark_ipd_configuration()
+{
+    for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci) {
+        rose_addr_t va = bci->first;
+        BlockConfig *bconf = bci->second;
+
+        BasicBlock *bb = find_bb_starting(va);
+        if (!bb)
+            throw Exception("cannot obtain IPD-specified basic block at " + StringUtility::addrToString(va));
+        if (bb->insns.size()<bconf->ninsns)
+            throw Exception("cannot obtain " + StringUtility::numberToString(bconf->ninsns) + "-instruction basic block at " +
+                            StringUtility::addrToString(va) + " (only " + StringUtility::numberToString(bb->insns.size()) +
+                            " available)");
+        if (bb->insns.size()>bconf->ninsns)
+            truncate(bb, bb->insns[bconf->ninsns]->get_address());
+
+        /* Initial analysis followed augmented by settings from the configuration. */
+        update_analyses(bb);
+        bb->cache.alias_for = bconf->alias_for;
+        if (bconf->sucs_specified) {
+            bb->cache.sucs = bconf->sucs;
+            bb->cache.sucs_complete = bconf->sucs_complete;
+        }
+    }
 }
 
 /* Marks program entry addresses as functions. */
@@ -1115,6 +1144,8 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
+
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
@@ -1587,7 +1618,6 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
     if (!insn2block.empty())
         clear();
     add_instructions(insns);
-    load_config();
     pre_cfg(interp);
     analyze_cfg();
     post_cfg(interp);

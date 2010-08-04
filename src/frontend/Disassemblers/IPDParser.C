@@ -239,26 +239,13 @@ Partitioner::IPDParser::parse_BlockDecl()
     match_symbol("block");
     rose_addr_t va = match_number();
     size_t ninsns = match_number();
-    try {
-        /* Create new block */
-        cur_block = partitioner->find_bb_starting(va);
-        if (!cur_block)
-            throw Exception("cannot obtain basic block at " + addrToString(va));
-        if (cur_block->insns.size()<ninsns)
-            throw Exception("cannot obtain " + numberToString(ninsns) + "-instruction basic block at " + addrToString(va) +
-                            " (only " + numberToString(cur_block->insns.size()) + " available)");
-        if (cur_block->insns.size()>ninsns)
-            partitioner->truncate(cur_block, cur_block->insns[ninsns]->get_address());
 
-        /* Initial analysis, possibly modified by parse_BlockBody() */
-        partitioner->update_analyses(cur_block);
-
-        parse_BlockBody();
-        cur_block = NULL;
-    } catch (const Exception&) {
-        cur_block = NULL;
-        throw;
-    }
+    if (partitioner->block_config.find(va)!=partitioner->block_config.end())
+        throw Exception("multiple definitions for basic block at " + addrToString(va));
+    cur_block = new BlockConfig;
+    cur_block->ninsns = ninsns;
+    partitioner->block_config.insert(std::make_pair(va, cur_block));
+    parse_BlockBody();
     return true;
 }
 
@@ -293,7 +280,7 @@ Partitioner::IPDParser::parse_Alias()
     if (!is_symbol("alias")) return false;
     match_symbol("alias");
     rose_addr_t alias_va = match_number();
-    cur_block->cache.alias_for = alias_va;
+    cur_block->alias_for = alias_va;
     return true;
 }
 
@@ -302,20 +289,20 @@ Partitioner::IPDParser::parse_Successors()
 {
     if (!is_symbol("successor") && !is_symbol("successors")) return false;
     match_symbol();
-    ROSE_ASSERT(cur_block->valid_cache());
-    cur_block->cache.sucs.clear();
-    cur_block->cache.sucs_complete = true;
+    cur_block->sucs_specified = true;
+    cur_block->sucs.clear();
+    cur_block->sucs_complete = true;
 
     while (is_number()) {
         rose_addr_t succ_va = match_number();
-        cur_block->cache.sucs.insert(succ_va);
+        cur_block->sucs.insert(succ_va);
         if (!is_terminal(",")) break;
         match_terminal(",");
     }
 
     if (is_terminal("...")) {
         match_terminal("...");
-        cur_block->cache.sucs_complete = false;
+        cur_block->sucs_complete = false;
     }
 
     return true;
