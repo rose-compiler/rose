@@ -23,7 +23,7 @@ if [ "${num[0]}" == "0" ]; then
 else
     echo 0 > $win_file
     jobstartingwin=1
-    echo "Starting Windows test."
+    echo "Starting Windows test. Branch ${%BRANCH%} %BRANCH%"
 #starting Windows process
     curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN?%BRANCH%
 fi
