@@ -5,6 +5,7 @@
 @echo Path : %Path%
 @echo JAVA_HOME : %JAVA_HOME%
 
+@echo -----------------------------------------------
 @echo BUILD REVISION SHOULD BE: %ROSE_TEST_REVISION% OR %BUILD_WIN_NR% OR %BUILDNR%
 
 @echo Testing cl.exe
