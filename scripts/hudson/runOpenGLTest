@@ -25,7 +25,7 @@ else
     jobstartingwin=1
     echo "Starting Windows test."
 #starting Windows process
-    curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN
+    curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN?%BRANCH%
 fi
 done
 
