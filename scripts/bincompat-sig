@@ -49,7 +49,13 @@ sub is_dependent_file {
 # if regex or other pattern matching is required this can be done in
 # canonical_repo_branch below.
 my @canonical_repos = qw(
+	/nfs/casc/overture/ROSE/git/ROSE.git
+	file:///nfs/casc/overture/ROSE/git/ROSE.git
+	/usr/casc/overture/ROSE/git/ROSE.git
 	file:///usr/casc/overture/ROSE/git/ROSE.git
+	http://rosecompiler.org/rose.git
+	http://www.rosecompiler.org/rose.git
+	ssh://liaoch@portal-auth.nersc.gov/project/projectdirs/rosecompiler/www.rosecompiler.org/rose.git
 );
 
 # Given a remote repository URL, returns the name of the canonical branch iff
@@ -58,13 +64,12 @@ sub canonical_repo_branch {
 	my ($repo) = @_;
 	# The internal central repository and (TODO) the external central repository.
 	return "master" if grep { $repo eq $_ } @canonical_repos;
-	return "master" if $repo =~ m@^ssh://.*/usr/casc/overture/ROSE/git/ROSE\.git$@;
+	return "master" if $repo =~ m@^ssh://.*/nfs/casc/overture/ROSE/git/ROSE\.git$@;
 	return undef;
 }
 
 # Given a path to the working copy, returns true iff this is an external user.
 sub needs_canonical_repo {
-	return 0; # TODO fix this!!
 	my ($wcpath) = @_;
 	# Whether this is an external user is defined by whether the user does not have
 	# the EDG submodule checked out.
@@ -142,21 +147,26 @@ sub merge_base {
 sub find_canonical_ref {
 	my @remotes = $repo->command("remote");
 	my %remotes;
+	my @canon_ref_candidates;
 	for my $remote (@remotes) {
 		my $url = $repo->config("remote.$remote.url");
 		$remotes{$remote} = $url;
 		my $branch = canonical_repo_branch($url);
 		if (defined $branch) {
 			my $canon_ref = "refs/remotes/$remote/$branch";
-			if (! -e $repo->repo_path . "/" . $canon_ref) {
+			my $canon_ref_commit = eval { $repo->command_oneline([ "rev-parse", $canon_ref ], STDERR => 0) };
+			unless (defined $canon_ref_commit) {
 				print STDERR <<ERROR;
 The remote tracking ref $canon_ref does not exist in this repository.
 Please ensure that your remotes are up to date (use "git fetch $remote").
 ERROR
 				exit 1;
 			}
-			return $canon_ref;
+			push @canon_ref_candidates, $canon_ref;
 		}
+	}
+	if (@canon_ref_candidates) {
+		return $repo->command_oneline("rev-list", @canon_ref_candidates);
 	}
 	print STDERR <<ERROR;
 Unable to find a remote tracking a canonical repository.  Please add a
@@ -181,15 +191,26 @@ ERROR
 
 my $relevant_commit;
 
+if (@ARGV > 1 && $ARGV[0] eq "for") {
+	$relevant_commit = $ARGV[1];
+}
 # If the user cannot generate the binary content themselves, revert to the most specific commit
 # that is common to both the user's branch and the canonical repository
-# needs_canonical_repo() always returns 0 for now.
-# So we always assume a LLNL internal users are using the repository
-if (needs_canonical_repo($repo->wc_path)) {
+elsif (needs_canonical_repo($repo->wc_path)) {
 	my $canon_ref = find_canonical_ref;
-	$relevant_commit = $repo->merge_base("HEAD", $canon_ref);
+	$relevant_commit = merge_base("HEAD", $canon_ref);
 } else {
 	$relevant_commit = "HEAD";
+}
+
+if (@ARGV > 0 && $ARGV[0] eq "diff") {
+	$repo->command_noisy("diff", @ARGV[1..$#ARGV], $relevant_commit);
+	exit 0;
+}
+
+if (@ARGV > 0 && $ARGV[0] eq "show-rev") {
+	print "$relevant_commit\n";
+	exit 0;
 }
 
 my $hash = Digest::MD5->new;

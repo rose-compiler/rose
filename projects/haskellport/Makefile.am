@@ -21,7 +21,9 @@ INCLUDES = \
      $(ROSE_INCLUDES) -I$(top_srcdir)/projects/DocumentationGenerator
 
 noinst_PROGRAMS = genStubsAndWrappers
+if !ROSE_USING_ROSE_ANALYSIS
 lib_LTLIBRARIES = librosehswrap.la
+endif
 
 SRC_NONGENERATED_HSFILES = $(addprefix $(srcdir)/,$(NONGENERATED_HSFILES))
 
@@ -48,12 +50,16 @@ headersWithoutLineDirective: $(wildcard $(top_builddir)/src/frontend/SageIII/*.h
 
 run-genStubsAndWrappers-stamp: genStubsAndWrappers sage3.h.C rose.cabal.in headersWithoutLineDirective
 	mkdir -p ROSE/Sage3/Methods
-	./genStubsAndWrappers -DCAN_NOT_COMPILE_WITH_ROSE=true -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/sage3.h.C
+if !ROSE_USING_ROSE_ANALYSIS
+	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/sage3.h.C
+endif
 	touch $@
 
+if !ROSE_USING_ROSE_ANALYSIS
 librosehswrap_la_SOURCES = WrapROSE.C WrapSage3.C WrapCxxContainers.C
 nodist_librosehswrap_la_SOURCES = WrapSage3Classes.C
 librosehswrap_la_LIBADD = $(top_builddir)/src/librose.la
+endif
 
 all-local: cabal-build-stamp
 
@@ -85,6 +91,7 @@ cabal-clean:
 distclean-generic: cabal-clean
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 
+if !ROSE_USING_ROSE_ANALYSIS
 cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal Setup.hs $(SRC_NONGENERATED_HSFILES) librosehswrap.la
 	if test "x$(srcdir)" != "x." ; then \
 		for file in $(NONGENERATED_HSFILES) ; do \
@@ -95,15 +102,30 @@ cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal Setup.hs $(SRC_NONGENERA
 			fi ; \
 		done ; \
 	fi
-	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS)
+#	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --extra-lib-dirs=$dwarf_path
+#	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --extra-lib-dirs=@dwarf_path@
+#	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --extra-lib-dirs=@DWARF_LINK@
+	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3
+# if ROSE_USE_DWARF
+# 	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3 --gcc-option=@dwarf_path@/libdwarf.so --gcc-option=-lelf
+# else
+# 	$(GHCBIN)/runghc Setup.hs configure $(HS_CONFIG_OPTS) --verbose=3
+# endif
 	touch $@
+else
+cabal-configure-stamp:
+endif
 
 cabal-build-stamp: cabal-configure-stamp
+if !ROSE_USING_ROSE_ANALYSIS
 	$(GHCBIN)/runghc Setup.hs build
+endif
 	touch $@
 
 cabal-install-stamp: cabal-build-stamp
+if !ROSE_USING_ROSE_ANALYSIS
 	$(GHCBIN)/runghc Setup.hs install
+endif
 	touch $@
 
 docs: cabal-configure-stamp

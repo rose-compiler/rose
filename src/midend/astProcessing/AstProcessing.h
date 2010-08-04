@@ -282,12 +282,22 @@ private:
 // deprecated classes (provided for compatibility with existing user code - will be removed at some point in future)
 class AstSynthesizedAttribute {};
 class AstInheritedAttribute {};
+
+/** @deprecated Use AstSynthesizedAttribute instead. (provided for compatibility with existing user code - will be removed at some point in future). */
 class SgSynthesizedAttribute : public AstSynthesizedAttribute {};
+
+/** @deprecated Use AstInheritedAttribute instead. (provided for compatibility with existing user code - will be removed at some point in future). */
 class SgInheritedAttribute : public AstInheritedAttribute {};
+
+/** @deprecated Use AstTopDownBottomUpProcessing instead. (provided for compatibility with existing user code - will be removed at some point in future). */
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 class SgTopDownBottomUpProcessing : public AstTopDownBottomUpProcessing <InheritedAttributeType, SynthesizedAttributeType> {};
+
+/** @deprecated Use AstTopDownProcessing instead. (provided for compatibility with existing user code - will be removed at some point in future). */
 template <class InheritedAttributeType>
 class SgTopDownProcessing : public AstTopDownProcessing <InheritedAttributeType> {};
+
+/** @deprecated Use AstBottomUpProcessing instead. (provided for compatibility with existing user code - will be removed at some point in future). */
 template <class SynthesizedAttributeType>
 class SgBottomUpProcessing : public AstBottomUpProcessing <SynthesizedAttributeType> {};
 
@@ -801,7 +811,7 @@ atTraversalEnd()
 
 // DQ (3/20/2009): Wrap this in a test to make sure that Cygwin is not being used.
 // This causes a problem:
-//      error: there are no arguments to ÆcvLoadImageÇ that depend on a template parameter, so a declaration of <function name> must be available
+//      error: there are no arguments to ï¿½cvLoadImageï¿½ that depend on a template parameter, so a declaration of <function name> must be available
 // which requires:
 //      -fpermissive to compile without error (and then it generates a lot of warnings).
 #if !_MSC_VER

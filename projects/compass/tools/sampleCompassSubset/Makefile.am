@@ -18,7 +18,7 @@ libSampleCompassSubsetCheckers.la: $(libSampleCompassSubsetCheckers_la_OBJECTS) 
 bin_PROGRAMS = sampleCompassSubset
 
 sampleCompassSubset_SOURCES = compassMain.C checkers.h
-sampleCompassSubset_LDADD = -lSampleCompassSubsetCheckers $(ROSE_LIBS)
+sampleCompassSubset_LDADD = -lSampleCompassSubsetCheckers $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
 
 sampleCompassSubset_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libSampleCompassSubsetCheckers.la
 

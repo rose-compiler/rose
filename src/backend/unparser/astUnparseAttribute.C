@@ -1,5 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
 using namespace std;
 
 // Initialization of static data (used as name in AstAttribute mechanism)

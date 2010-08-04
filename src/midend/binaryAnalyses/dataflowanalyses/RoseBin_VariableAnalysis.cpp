@@ -7,7 +7,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
 #include "sage3basic.h"
 #include "RoseBin_VariableAnalysis.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 using namespace std;
 using namespace RoseBin_DataTypes;
 using namespace RoseBin_OS_VER;

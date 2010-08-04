@@ -1,0 +1,131 @@
+% Liao 5/27/2010. Added a new section here
+\clearpage
+\section{Liveness Analysis}
+Liveness analysis is a classic data flow analysis performed by compilers to
+calculate for each program point the variables that may be potentially read
+before their next write (re-definition).
+A variable is live at a point in a program's execution path
+if it holds a value that may be needed in the future. 
+
+Fig.~\ref{Tutorial:livenessCode} shows an example program of how the
+liveness analysis
+is called in a ROSE-based translator. 
+It generates a dot graph showing def/use information within
+a control flow graph, alone with live-in and live-out variables. 
+This program (named as \textit{livenessAnalysis})
+is installed under \textit{ROSE\_INST/bin} as a standalone tool for users
+to experiment the liveness analysis of ROSE.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/livenessAnalysis.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/livenessAnalysis.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code using liveness analysis}
+\label{Tutorial:livenessCode}
+\end{figure}
+
+Figure~\ref{Tutorial:exampleLivenessCFG} shows control flow graph with live
+variable information for the
+code(Fig.~\ref{Tutorial:livenessCode}) running on the input
+code(Fig.~\ref{Tutorial:exampleLivenessInput}). 
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_livenessAnalysis.c}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_livenessAnalysis.c}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example input code.}
+\label{Tutorial:exampleLivenessInput}
+\end{figure}
+
+
+\begin{figure}
+\includegraphics[scale=0.7]{\TutorialExampleBuildDirectory/liveness}
+\caption{Control flow graph annotated with live variables for example program.}
+\label{Tutorial:exampleLivenessCFG}
+\end{figure}
+
+%\begin{figure}[!h]
+%{\indent
+%{\mySmallFontSize
+%
+%% Do this when processing latex to generate non-html (not using latex2html)
+%\begin{latexonly}
+%   \lstinputlisting{\TutorialExampleBuildDirectory/defuseAnalysis.out}
+%\end{latexonly}
+%
+%% Do this when processing latex to build html (using latex2html)
+%\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleBuildDirectory/defuseAnalysis.out}
+%\end{htmlonly}
+%
+%% end of scope in font size
+%}
+%% End of scope in indentation
+%}
+%\caption{Output of the program}
+%\label{Tutorial:defuse.output}
+%\end{figure}
+
+
+\subsection{Access live variables}
+After calling liveness analysis, one can access live-in and live-out variables from a translator
+based on the virtual control flow graph node.
+Figure~\ref{Tutorial:livenessCode2} shows an example function which
+retrieves the live-in and live-out variables for a for loop.
+The code accesses the CFG node (showing in
+Figure~\ref{Tutorial:exampleLivenessCFG}) of a for statement and retrieve
+live-in variables of the true edge's target node as the live-in variables
+of the loop body. 
+Similarly, the live-out variables of the loop are obtained by getting
+the live-in variables of the node right after the loop (target node of the
+false edge).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/livenessAnalysis-2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/livenessAnalysis-2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example code retrieving live variables based on virtual control flow graph}
+\label{Tutorial:livenessCode2}
+\end{figure}
+
+

@@ -66,6 +66,9 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (BaseClassModifier      ,"BaseClassModifier"      , "BaseClassModifierTag" );
      NEW_TERMINAL_MACRO (DeclarationModifier    ,"DeclarationModifier"    , "DeclarationModifierTag" );
 
+  // TV (05/03/2010): OpenCL Access Mode Support
+     NEW_TERMINAL_MACRO (OpenclAccessModeModifier, "OpenclAccessModeModifier", "OPENCL_ACCESS_MODE" );
+
   // DQ (7/22/2006): I have decided to not list this as a modifier, since it is not a part of the C or C++ grammar.
   // NEW_TERMINAL_MACRO (AsmOperandModifier     ,"AsmOperandModifier"     , "AsmOperandModifierTag" );
 
@@ -77,7 +80,8 @@ Grammar::setUpSupport ()
           ModifierNodes           | ConstVolatileModifier  | StorageModifier    |
           AccessModifier          | FunctionModifier       | UPC_AccessModifier |
           SpecialFunctionModifier | ElaboratedTypeModifier | LinkageModifier    |
-          BaseClassModifier       | TypeModifier           | DeclarationModifier, "Modifier", "ModifierTag", false);
+          BaseClassModifier       | TypeModifier           | DeclarationModifier|
+          OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
 
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
 
@@ -204,6 +208,11 @@ Grammar::setUpSupport ()
   // NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 #endif
 
+  // DQ (7/22/2010): And now we implement a type table to make sure that each type is only built once and then properly referenced (shared).
+  // This will also make it possible to have exact type equivalence be tested using only pointer equality instead of anything more elaborate.
+  // This is also where the FunctionTypeTable should be moved (to tidy up ROSE a bit).
+     NEW_TERMINAL_MACRO (TypeTable,         "TypeTable",         "TYPE_TABLE" );
+
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
@@ -234,11 +243,11 @@ Grammar::setUpSupport ()
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge           |
 
-          GraphNodeList         | GraphEdgeList             | 
+          GraphNodeList         | GraphEdgeList             | TypeTable           |
 
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
-          DataStatementValue,
+          DataStatementValue    ,
           "Support", "SupportTag", false);
 //#endif
 
@@ -292,6 +301,12 @@ Grammar::setUpSupport ()
      SymbolTable.setDataPrototype("SgNodeSet","symbolSet", "",
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/22/2010): Added type table to support stricter uniqueness of types and proper sharing.
+     TypeTable.setFunctionPrototype( "HEADER_TYPE_TABLE", "../Grammar/Support.code" );
+     TypeTable.setAutomaticGenerationOfConstructor(false);
+     TypeTable.setDataPrototype    ( "SgSymbolTable*","type_table","= NULL",
+					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
   // InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME_DATA", "../Grammar/Support.code");
 
      InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME", "../Grammar/Support.code");
@@ -323,6 +338,17 @@ Grammar::setUpSupport ()
 #else
      InitializedName.setDataPrototype("SgName","name", "= \"\"",
           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+  // FMZ (4/7/2009): Added for Cray pointer declaration
+#if 0
+#if USE_FORTRAN_IR_NODES
+     InitializedName.setDataPrototype("bool","isCrayPointer", "= false",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     InitializedName.setDataPrototype("SgInitializedName*","crayPointee", "= NULL",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif 
 #endif
 
   // DQ (7/20/2004):  think this is the root of the problems in cycles when we traverse types!
@@ -389,6 +415,10 @@ Grammar::setUpSupport ()
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
      InitializedName.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // FMZ (2/18/2009)
+     InitializedName.setDataPrototype("bool","isCoArray","= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      InitializedName.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
@@ -844,6 +874,13 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "PHP_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // TV (05/17/2010) Cuda support
+     File.setDataPrototype         ( "bool", "Cuda_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TV (05/17/2010) OpenCL support
+     File.setDataPrototype         ( "bool", "OpenCL_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
      File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
@@ -1177,6 +1214,10 @@ Grammar::setUpSupport ()
   // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
   // on the constants in the SgAsmFunctionDeclaration::FunctionReason enum.
      File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunctionDeclaration::FUNC_DEFAULT",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
+     File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1684,7 +1725,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionModifier.setDataPrototype("std::string", "gnu_attribute_named_alias", "=\"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+  // TV (05/03/2010): 
+     FunctionModifier.setDataPrototype("SgType *", "opencl_vec_type", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    
+     FunctionModifier.setDataPrototype("SgFunctionModifier::opencl_work_group_size_t", "opencl_work_group_size", "",//"= {1, 1, 1}",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    
      SpecialFunctionModifier.setDataPrototype("SgBitVector","modifierVector", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1986,6 +2033,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 #endif
 
+  // TV (05/03/2010): OpenCL Access Mode Support
+  
+    OpenclAccessModeModifier.setFunctionPrototype ( "HEADER_OPENCL_ACCESS_MODE_MODIFIER", "../Grammar/Support.code" );
+    
+    OpenclAccessModeModifier.setDataPrototype("SgOpenclAccessModeModifier::access_mode_modifier_enum", "modifier","= SgOpenclAccessModeModifier::e_unknown",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -2006,6 +2060,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Support.setFunctionSource         ( "SOURCE", "../Grammar/Support.code");
 
      SymbolTable.setFunctionSource     ( "SOURCE_SYMBOL_TABLE", "../Grammar/Support.code");
+
+  // DQ (7/22/2010): 
+     TypeTable.setFunctionSource    ( "SOURCE_TYPE_TABLE", "../Grammar/Support.code" );
+
      InitializedName.setFunctionSource ( "SOURCE_INITIALIZED_NAME", "../Grammar/Support.code");
      Name.setFunctionSource            ( "SOURCE_NAME", "../Grammar/Support.code");
      Attribute.setFunctionSource       ( "SOURCE_ATTRIBUTE", "../Grammar/Support.code");
@@ -2147,6 +2205,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/Support.code");
 #endif
+
+  // TV (05/03/2010): OpenCL Access Mode Support
+
+    OpenclAccessModeModifier.setFunctionSource ( "SOURCE_OPENCL_ACCESS_MODE_MODIFIER", "../Grammar/Support.code" );
 
    }
 

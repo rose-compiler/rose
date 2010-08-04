@@ -1,0 +1,396 @@
+\chapter{Heterogeneous computing}
+
+\label{heterogeneous:heterogeneous}
+
+This chapter details how heterogeneous computing is catch by ROSE. First devices that we appended to ROSE were GPU \footnote{Graphic Processing Unit}
+with C for CUDA \footnote{Compute Unified Device Architecture, NVidia architecture model for their devices} and OpenCL \footnote{Open Compute Language,
+an open standard to program heterogeneous system, managed by the Khronos Group}.
+
+	\section{IR adaptations}
+	
+		Both CUDA and OpenCL use extensions of C ANSI 99, these extensions need to be catch by SageIII. We will describe theses adaptations below.
+
+		\subsection{C for CUDA}
+		
+			The C for CUDA extensions of C ANSI 99 is describe in the CUDA Programming Guide Version 3.0, appendix B and C.\\
+			CUDA programs are usually in .cu files.
+		
+			\subsubsection{Function and storage modifiers}
+
+				\paragraph{Function Modifier}
+
+As CUDA target multiple kind of device, it provide a way to specify whether a function executes on the host or on the device and whether it is
+callable from the host or from the device. For this, it use some function modifiers listed below, with caller and target:
+\begin{itemize}
+	\item \_\_host\_\_: from CPU to CPU;
+	\item \_\_device\_\_: from GPU to GPU;
+	\item \_\_global\_\_: from CPU to GPU, it define a \emph{kernel}.
+\end{itemize}
+We have modified \emph{SgFunctionModifier} by adding to \emph{function\_modifier\_enum}:
+\begin{itemize}
+	\item e\_cuda\_device
+	\item e\_cuda\_kernel
+	\item e\_cuda\_host
+\end{itemize}
+
+				\paragraph{Storage Modifier}	
+
+For variables, \emph{SgStorageModifier} is a good candidate but it can only address one modifier. That's a problem in the case of dynamically allocated shared memory.
+We handled it by considering following cases for \emph{storage\_modifier\_enum}:
+		
+\begin{itemize}
+	\item \_\_device\_\_ $\rightarrow$ e\_cuda\_global
+	\item (\_\_device\_\_) \_\_constant\_\_ $\rightarrow$ e\_cuda\_constant
+	\item (\_\_device\_\_) \_\_shared\_\_ $\rightarrow$ e\_cuda\_shared
+	\item extern (\_\_device\_\_) \_\_shared\_\_ $\rightarrow$ e\_cuda\_dynamic\_shared
+\end{itemize}
+
+			\subsubsection{Execution configuration associated at a kernel call}
+
+CUDA introduce too a special way to call kernels (\_\_global\_\_ functions):
+\begin{verbatim} kernel<<<Dg, Db, Ns, S>>>(parameter); \end{verbatim}
+Where:
+\begin{itemize}
+	\item Dg is the grid dimensions
+	\item Db is blocks dimensions
+	\item Ns is shared memory size (optional)
+	\item S is a stream (optional)
+\end{itemize}
+We catched it by adding two new nodes in the IR: 
+\begin{itemize}
+	\item \emph{SgCudaKernelCallExp} at the same level than \emph{SgFunctionCallExp}
+	\item \emph{SCudagKernelExecConfig}, an attribute of \emph{SgCudaKernelCallExp}, catch the execution configuration (grid, blocks, shared memory dynamic allocation and stream).
+\end{itemize}
+
+			\subsubsection{Build-in Types, Variables and Functions}
+			
+All built-in CUDA objects are defined in ROSE/config/rose\_edg\_required\_macros\_and\_functions.h.in .
+			
+				\paragraph{Types}
+			
+					\subparagraph{Vectors}
+					
+CUDA use vectors types extended from common types.
+\begin{table}[!h]
+	\caption{Vector types defined by CUDA}
+	\center
+	\begin{tabular}{|c|c|c|c|} \hline
+	char1 & char2 & char3 & char4 \\\hline
+	uchar1 & uchar2 & uchar3 & uchar4 \\\hline
+	short1 & short2 & short3 & short4 \\\hline
+	ushort1 & ushort2 & ushort3 & ushort4 \\\hline
+	int1 & int2 & int3 & int4 \\\hline
+	uint1 & uint2 & uint3 & uint4 \\\hline
+	long1 & long2 & long3 & long4 \\\hline
+	ulong1 & ulong2 & ulong3 & ulong4 \\\hline
+	longlong1 & longlong2 &  & \\\hline
+	float1 & float2 & float3 & float4 \\\hline
+	double1 & double2 &  & \\\hline
+	\end{tabular}
+	\label{heterogeneous:tabCudaVector}
+\end{table}
+
+For examples, \emph{int2} is equivalent to:
+\begin{verbatim}struct int2
+{
+	int x, y;
+};\end{verbatim}
+3rd and 4th dimensions are access by z and w fields.\\
+
+A constructor is associated with all build-in type: make\_\emph{type}
+\begin{verbatim}int2 make_int2(int x, int y);\end{verbatim}\\
+			
+					\subparagraph{Others}
+
+Based on \emph{uint3}, \emph{dim3} is used to specify dimensions. Any unspecified components of a \emph{dim3} instance is initialized to 1.\\
+
+Some others types, like cudaError\_t, are not documented as built-in types but \emph{nvcc}\footnote{NVidia compileur for CUDA} don't need that the 
+API header was explicitly included.
+
+				\paragraph{Variables}
+
+Some variables that can't be nor affected nor addressed by pointers:
+\begin{table}[!h]
+	\caption{CUDA's built-in variables}
+	\center
+	\begin{tabular}{|c|c|c|} \hline
+	Variable & Type & Purpose \\\hline\hline
+	gridDim   & dim3  & dimension of the grid \\\hline
+	blockIdx  & uint3 & block index within the grid \\\hline
+	blockDim  & dim3  & dimension of the block \\\hline
+	threadIdx & uint3 & thread index within the block \\\hline
+	warpSize  & int   & number of threads by warp \\\hline
+	\end{tabular}
+	\label{heterogeneous:tabCudaVariable}
+\end{table}
+
+				\paragraph{Functions}
+
+					\subparagraph{Synchronization functions}
+					
+\begin{itemize}
+	\item void \_\_threadfence\_block();
+	\item void \_\_threadfence();
+	\item void \_\_threadfence\_system();
+	\item void \_\_syncthreads();
+	\item int \_\_syncthreads\_count(int predicate);
+	\item int \_\_syncthreads\_and(int predicate);
+	\item int \_\_syncthreads\_or(int predicate);
+\end{itemize}
+
+					\subparagraph{Mathematical functions}
+					
+\begin{itemize}
+	\item float \_\_fdividef(float x,float y);
+	\item float \_\_sinf(float x);
+	\item float \_\_cosf(float x);
+	\item float \_\_tanf(float x);
+	\item float \_\_sincosf(float x, float * sin, float * cos);
+	\item float \_\_logf(float x);
+	\item float \_\_log2f(float x);
+	\item float \_\_log10f(float x);
+	\item float \_\_expf(float x);
+	\item float \_\_exp10f(float x);
+	\item float \_\_powf(float x,float y);
+\end{itemize}
+
+					\subparagraph{Texture functions}
+					
+\begin{verbatim}template<class Type>\end{verbatim}
+\begin{itemize}
+	\item Type tex1Dfetch(texture<Type, 1, cudaReadModeElementType> texRef, int x);
+	\item float\emph{n} tex1Dfetch(texture<Type\emph{n}, 1, cudaReadModeNormalizedFloat> texRef, int x);
+\end{itemize}
+
+\begin{verbatim}template<class Type, enum cudaTextureReadMode readMode>\end{verbatim}
+\begin{itemize}
+	\item Type tex1D(texture<Type, 1, readMode> texRef, float x);
+	\item Type tex2D(texture<Type, 1, readMode> texRef, float x, float y);
+	\item Type tex3D(texture<Type, 1, readMode> texRef, float x, float y, float z);
+\end{itemize}
+
+					\subparagraph{Time functions}
+
+\begin{itemize}
+	\item clock\_t clock();
+\end{itemize}
+
+					\subparagraph{Atomic functions}
+
+\begin{itemize}
+	\item \emph{type} atomicAdd(\emph{type} * address, \emph{type} val); with \emph{type}: int, unsigned int, unsigned long long int and float.
+	\item \emph{type} atomicSub(\emph{type} * address, \emph{type} val); with \emph{type}: int and unsigned int.
+	\item \emph{type} atomicExch(\emph{type} * address, \emph{type} val); with \emph{type}: int, unsigned int, unsigned long long int and float.
+	\item \emph{type} atomicMin(\emph{type} * address, \emph{type} val); with \emph{type}: int and unsigned int.
+	\item \emph{type} atomicMax(\emph{type} * address, \emph{type} val); with \emph{type}: int and unsigned int.
+	\item \emph{type} atomicInc(\emph{type} * address, \emph{type} val); with \emph{type}: unsigned int.
+	\item \emph{type} atomicDec(\emph{type} * address, \emph{type} val); with \emph{type}: unsigned int.
+	\item \emph{type} atomicCAS(\emph{type} * address, \emph{type} compare, \emph{type} val); with \emph{type}: int, unsigned int and unsigned long long int
+	\item \emph{type} atomicAnd(\emph{type} * address, \emph{type} val); with \emph{type}: int and unsigned int.
+	\item \emph{type} atomicOr(\emph{type} * address, \emph{type} val); with \emph{type}: int and unsigned int.
+	\item \emph{type} atomicXor(\emph{type} * address, \emph{type} val); with \emph{type}: int and unsigned int.
+\end{itemize}
+
+					\subparagraph{Warp Vote functions}
+
+\begin{itemize}
+	\item int \_\_all(int predicate);
+	\item int \_\_any(int predicate);
+	\item unsigned int \_\_ballot(int predicate);
+\end{itemize}
+
+					\subparagraph{Profiler Counter functions}
+
+\begin{itemize}
+	\item void \_\_prof\_trigger(int counter);
+\end{itemize}
+
+					\subparagraph{More Maths functions}
+
+See \underline{Appendix C - Mathematical Functions} of \underline{CUDA Programming Guide Version 3.0}.
+		
+		\subsection{OpenCL}
+		
+OpenCL language only address devices, the host (general purpose CPU) code is design in C/C++ and use OpenCL API. OpenCL programs are compiled on the
+fly and stored on C characters strings, that may be a problem but usually theses string are load from a separate .cl file. For more convenience,
+we do the assumption that all OpenCL programs are stored in separate files and never dynamically modified.
+		
+			\subsubsection{Function and storage modifiers}
+
+				\paragraph{Function Qualifiers}
+
+\begin{itemize}
+	\item \_\_kernel
+	\item \_\_attribute\_\_((vec\_type\_hint(\emph{type})))
+	\item \_\_attribute\_\_((work\_group\_size\_hint(X, Y, Z)))
+	\item \_\_attribute\_\_((reqd\_work\_group\_size(X, Y, Z)))
+\end{itemize}
+
+\_\_kernel qualifier can be catch by adding \emph{e\_ocl\_kernel} in the \emph{function\_modifier\_enum} of \emph{SgFunctionModifier}.\\
+
+The \_\_attribute\_\_(...) are linked to \_\_kernel qualifier. In OpenCL, the  \emph{work group} is a set of  \emph{work items} (instance of
+the kernel\footnote{see: OpenCL Specification v1.0, section 3.2 Execution Model}) that provide a more coarse-grained decomposition of the
+index space associate to the \emph{global work}.\\
+We had two ways to implement it: a new modifier or some modification on \emph{SgFunctionModifier}.\\
+We choosed to add in \emph{SgFunctionModifier} three flags: \emph{e\_ocl\_vec\_type\_hint}, \emph{e\_ocl\_work\_group\_hint}, 
+\emph{e\_ocl\_work\_group\_req}; and two fields: \emph{SgType * ocl\_vec\_type} and \emph{struct \{ unsigned int x, y, z; \} ocl\_work\_group\_size}.
+
+				\paragraph{Address Space Qualifier}
+				
+They are used to specify where a variable is stored in the device.
+\begin{itemize}
+	\item \_\_global accessible from all the device
+	\item \_\_local accessible for a work-group only
+	\item \_\_constant read-only variable accessible from all the device
+	\item \_\_private accessible only from one "thread"
+\end{itemize}
+
+We used \emph{SgStorageModifier} to store this information by adding to \emph{storage\_modifier\_enum}:
+\begin{itemize}
+	\item \_e\_opencl\_global
+	\item \_e\_opencl\_local
+	\item \_e\_opencl\_constant
+	\item \_e\_opencl\_private
+\end{itemize}
+
+				\paragraph{Image Access Qualifiers}
+
+\begin{itemize}
+	\item \_\_read\_only
+	\item \_\_write\_only
+	\item \_\_read\_write
+\end{itemize}
+
+{\color{red} \emph{SgAccessModifier} fill good by the name but is dedicated to class...}
+
+			\subsubsection{Build-in Types}
+
+Many Built-in types: scalars, vectors, matrix and others, like image, event or complex.
+
+				\paragraph{Scalars}
+				
+OpenCL introduce alias for unsigned types (uint, uchar, ...) and some scalars types: half, size\_t, ptrdiff\_t, intptr\_t, uintptr\_t.
+
+				\paragraph{Vectors}
+				
+OpenCL define vector from scalars: char, uchar, short, ushort, int, uint, long, ulong and float. These vector types are noted type\emph{n} where n can
+be 2, 4, 8 or 16.
+For this type, we use the same mechanism than for CUDA vector types. {\color{red} We may have a problem with vector components (section 6.1.7 
+of OpenCL Specification v1.0)}
+\begin{verbatim}
+float4 a    = (float4)(1.0f, 2.0f, 3.0f, 4.0f);
+float4 swiz = a.wzyx;     // swiz = (4.0f, 3.0f, 2.0f, 1.0f)
+float2 low  = a.lo;       // low  = (4.0f, 3.0f)
+float8 b;
+b.hi = a;
+b.lo = swiz;              // b    = (4.0f, 3.0f, 2.0f, 1.0f, 1.0f, 2.0f, 3.0f, 4.0f)
+\end{verbatim}
+
+				\paragraph{Others}
+
+Other built-in types are image2d\_t, image3d\_t, sampler\_t and event\_t.
+
+				\paragraph{Reserved}
+
+See section 6.1.4 of OpenCL Specification v1.0
+
+			\subsubsection{Build-in Functions}
+			
+				\paragraph{Work-Item Functions}
+				
+\begin{itemize}
+	\item uint get\_work\_dim ()
+	\item size\_t get\_global\_size (uint dimindx)
+	\item size\_t get\_global\_id (uint dimindx)
+	\item size\_t get\_local\_size (uint dimindx)
+	\item size\_t get\_local\_id (uint dimindx)
+	\item size\_t get\_num\_groups (uint dimindx)
+	\item size\_t get\_group\_id (uint dimindx)
+\end{itemize}
+			
+				\paragraph{Image Functions}
+				
+\begin{itemize}
+	\item float4 read\_imagef (image2d\_t image, sampler\_t sampler, int2 coord)
+	\item float4 read\_imagef (image2d\_t image, sampler\_t sampler, float2 coord)
+	\item int4 read\_imagei (image2d\_t image, sampler\_t sampler, int2 coord)
+	\item int4 read\_imagei (image2d\_t image, sampler\_t sampler, float2 coord)
+	\item unsigned int4 read\_imageui (image2d\_t image, sampler\_t sampler, int2 coord)
+	\item unsigned int4 read\_imageui (image2d\_t image, sampler\_t sampler, float2 coord)
+	\item void write\_imagef (image2d\_t image, int2 coord, float4 color)
+	\item void write\_imagei (image2d\_t image, int2 coord, int4 color)
+	\item void write\_imageui (image2d\_t image, int2 coord, unsigned int4 color)
+	\item float4 read\_imagef (image3d\_t image, sampler\_t sampler, int4 coord)
+	\item float4 read\_imagef (image3d\_t image, sampler\_t sampler, float4 coord)
+	\item int4 read\_imagei (image3d\_t image, sampler\_t sampler, int4 coord)
+	\item int4 read\_imagei (image3d\_t image, sampler\_t sampler, float4 coord)
+	\item unsigned int4 read\_imageui (image3d\_t image, sampler\_t sampler, int4 coord)
+	\item unsigned int4 read\_imageui (image3d\_t image, sampler\_t sampler, float4 coord)
+	\item int get\_image\_width (image2d\_t image)
+	\item int get\_image\_width (image3d\_t image)
+	\item int get\_image\_height (image2d\_t image)
+	\item int get\_image\_height (image3d\_t image)
+	\item int get\_image\_depht (image3d\_t image)
+	\item int get\_image\_channel\_data\_type (image2d\_t image)
+	\item int get\_image\_channel\_data\_type (image3d\_t image)
+	\item int get\_image\_channel\_order (image2d\_t image)
+	\item int get\_image\_channel\_order (image3d\_t image)
+	\item int2 get\_image\_dim (image2d\_t image)
+	\item int4 get\_image\_dim (image3d\_t image)
+\end{itemize}
+			
+				\paragraph{Synchronization Functions}
+				
+\begin{itemize}
+	\item void barrier (cl\_mem\_fence\_flags flags)
+\end{itemize}
+			
+				\paragraph{Explicit Memory Fence Functions}
+				
+\begin{itemize}
+	\item void mem\_fence (cl\_mem\_fence\_flags flags)
+	\item void read\_mem\_fence (cl\_mem\_fence\_flags flags)
+	\item void write\_mem\_fence (cl\_mem\_fence\_flags flags)
+\end{itemize}
+			
+				\paragraph{Miscellaneous Functions}
+				
+\begin{itemize}
+	\item event\_t async\_work\_group\_copy (\_\_local \emph{gentype} *dst, const \_\_global \emph{gentype} *src, size\_t num\_elements, event\_t event)
+	\item event\_t async\_work\_group\_copy (\_\_global \emph{gentype} *dst, const \_\_local \emph{gentype} *src, size\_t num\_elements, event\_t event)
+	\item void wait\_group\_events(int num\_events, event\_t * event\_list)
+	\item void prefetch (const \_\_global \emph{gentype} *p, size\_t num\_elements)
+\end{itemize}
+Where \emph{gentype} can be scalar or vector of char, uchar, short, ushort, int, uint, long, ulong or float.
+				\paragraph{Maths Functions}
+
+			\subsubsection{Preprocessor Directives and Macros}
+			
+{\color{red} Do Rose already have a mechanism to catch directive ?}
+		
+%	\section{Some ROSE's tools for heterogeneous computing}
+%
+%		\subsection{GPU}
+%		
+%			\subsubsection{CUDA computation capability check}
+%
+%For a given CUDA code, extract:
+%\begin{itemize}
+%	\item CUDA API needed
+%	\item GPU needed
+%\end{itemize}
+%
+%			\subsubsection{CUDA computation capability refactor}
+%
+%Downgrade a CUDA program to use old GPU/API.
+%
+%			\subsubsection{Performance evaluator}
+%
+%Look for commons bottleneck.
+%
+%			\subsubsection{Performance improver}
+%			
+%\begin{itemize}
+%	\item Remove commons bottleneck.
+%	\item Use polyhedron model.
+%\end{itemize}

@@ -12,7 +12,7 @@ latexFiles = \
    templateParameter.tex instrumentationExample.tex addVariableDeclaration.tex \
    addAssignmentStmt.tex addExpression.tex\
    addFunctionDeclaration.tex buildCFG.tex parallelChecker.tex defuseAnalysis.tex \
-   binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
+   binaryAnalysis.tex buildCallGraph.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
    parser-docs.tex codeCoverage.tex globalVariableHandling.tex scopeInformation.tex sideeffect-docs.tex \
    tauInstrumentation.tex templateSupport.tex dataBaseSupport.tex recognitionOfAbstractions.tex \
    debuggingSupport.tex commandlineProcessing.tex customGraphs.tex tutorialMakefile.tex wrapup.tex \
@@ -20,7 +20,7 @@ latexFiles = \
    partialRedundancyElimination.tex codeGenerationFormatControl.tex copyHelp.tex \
    roseHPCT.tex sharedMemoryTraversals.tex distributedMemoryTraversals.tex bugSeeding.tex \
    modifiers.tex howToContribute.tex virtualCFG.tex binaryConstruction.tex reductionRecognition.tex \
-   haskell.tex
+   haskell.tex livenessAnalysis.tex
 
 # This is an evolving list, but these are a few of the required files
 generatedCodeExamples = \
@@ -47,6 +47,9 @@ latex-docs: pdf
 TUTORIAL_NAME = $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
 
 pdf-local: $(TUTORIAL_NAME)
+
+tutorial:$(TUTORIAL_NAME)
+	cp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf tutorial.pdf
 
 make-web-pages: $(TUTORIAL_NAME)
 	mkdir -p ../ROSE_WebPages/ROSE_Tutorial

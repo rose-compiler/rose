@@ -11,7 +11,7 @@
 // include "array_class_interface.h"
 #include "unparser.h"
 
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 #include <string.h>
 #if _MSC_VER
 #include <direct.h>
@@ -90,6 +90,9 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      cur_index        = 0;
 
      currentFile      = NULL;
+
+  // DQ (5/8/2010): The default setting for this if "false".
+     set_resetSourcePosition(false);
 
   // DQ (8/19/2007): Removed this old unpasing mechanism.
   // line_to_unparse  = nline;
@@ -357,50 +360,11 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
     /* Unparse the file to create a new executable */
     SgAsmExecutableFileFormat::unparseBinaryFormat(output_name, file);
 
-    /* Generate name for ASCII dump output */
+    /* Genenerate an ASCII dump of the entire file contents. This dump reflects the state of the AST after any modifications.
+     * Note that certain normalizations (such as section reallocation) might affect what is dumped. */
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
     // generated in the unparse phase of processing a binary.
-    std::string dump_name = file->get_name() + ".dump";
-    slash = dump_name.find_last_of('/');
-    if (slash!=dump_name.npos)
-        dump_name.replace(0, slash+1, "");
-
-    /* Generate the dump */
-    FILE *dumpFile = fopen(dump_name.c_str(), "wb");
-    ROSE_ASSERT(dumpFile != NULL);
-    try {
-        // The file type should be the first; test harness depends on it
-        fprintf(dumpFile, "%s\n", file->format_name());
-
-        // A table describing the sections of the file
-        file->dump(dumpFile);
-
-        // Detailed info about each section
-        const SgAsmGenericSectionPtrList &sections = file->get_sections();
-        for (size_t i = 0; i < sections.size(); i++) {
-            fprintf(dumpFile, "Section [%zd]:\n", i);
-            ROSE_ASSERT(sections[i] != NULL);
-            sections[i]->dump(dumpFile, "  ", -1);
-        }
-
-        /* Dump interpretations that point only to this file. */
-        SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
-        ROSE_ASSERT(binary!=NULL);
-        const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
-            if (interp_files.size()==1 && interp_files[0]==file) {
-                std::string assembly = unparseAsmInterpretation(interps[i]);
-                fputs(assembly.c_str(), dumpFile);
-            }
-        }
-        
-    } catch(...) {
-        fclose(dumpFile);
-        throw;
-    }
-    fclose(dumpFile);
-
+    file->dump_all(true, ".dump");
 }
 
 void
@@ -745,6 +709,167 @@ void
 Unparser::set_generateSourcePositionCodes( int x )
    {
      generateSourcePositionCodes = x;
+   }
+
+void
+Unparser::set_resetSourcePosition(bool x)
+   {
+     p_resetSourcePosition = x;
+   }
+
+bool
+Unparser::get_resetSourcePosition()
+   {
+      return p_resetSourcePosition;
+   }
+
+// DQ (5/8/2010): Added support to force unparser to reset the source positon in the AST (this is the only side-effect in unparsing).
+//! Reset the Sg_File_Info to reference the unparsed (generated) source code.
+void
+Unparser::resetSourcePosition (SgStatement* stmt)
+   {
+     static int previous_line_number   = 0;
+     static int previous_column_number = 0;
+
+     Sg_File_Info* originalFileInfo = stmt->get_file_info();
+     ROSE_ASSERT(originalFileInfo != NULL);
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Reset the source code position from %s:%d:%d to ",originalFileInfo->get_filename(),originalFileInfo->get_line(),originalFileInfo->get_col());
+
+  // This is the current output file.
+  // string newFilename = "output";
+  // Detect reuse of an Unparser object with a different file
+     ROSE_ASSERT(currentFile != NULL);
+     string newFilename = get_output_filename(*currentFile);
+
+  // This is the position of the start of the stmt.
+     int line = cur.current_line();
+
+  // This is the position of the end of the stmt (likely we can refine this later).
+  // int column = cur.current_col();
+  // int column = previous_column_number;
+     int column = (line == previous_line_number) ? previous_column_number : 0;
+
+  // Save the current position
+     previous_line_number   = line;
+     previous_column_number = cur.current_col();
+
+     originalFileInfo->set_filenameString(newFilename);
+     originalFileInfo->set_line(line);
+     originalFileInfo->set_col(column);
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("%s:%d:%d \n",originalFileInfo->get_filename(),originalFileInfo->get_line(),originalFileInfo->get_col());
+   }
+
+
+void
+resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp )
+   {
+  // DQ (5/8/2010): This function uses the unparsing operation to record the locations of
+  // the unparsed language constructs and reset the source code position to that of the
+  // generated code.
+
+  // DQ (4/22/2006): This can be true when the "-E" option is used, but then we should not have called this function!
+     ROSE_ASSERT(file->get_skip_unparse() == false);
+
+  // It does not make sense to reset the source file positions for a binary (at least not yet).
+     ROSE_ASSERT (file->get_binary_only() == false);
+
+  // If we did unparse an intermediate file then we want to compile that 
+  // file instead of the original source file.
+     string outputFilename;
+     if (file->get_unparse_output_filename().empty() == true)
+        {
+          outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+
+          if (file->get_binary_only() == true)
+             {
+               outputFilename += ".s";
+             }
+        }
+       else
+        {
+          outputFilename = file->get_unparse_output_filename();
+        }
+
+  // Set the output file name, since this may be called before unparse().
+     file->set_unparse_output_filename(outputFilename);
+     ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
+
+  // Name the file with a separate extension.
+     outputFilename += ".resetSourcePosition";
+
+  // printf ("Inside of resetSourcePositionToGeneratedCode(UnparseFormatHelp*) outputFilename = %s \n",outputFilename.c_str());
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Calling the resetSourcePositionToGeneratedCode: outputFilename = %s \n",outputFilename.c_str());
+
+     fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);
+
+     if (!ROSE_OutputFile)
+        {
+       // throw std::exception("(fstream) error while opening file.");
+          printf ("Error detected in opening file %s for output \n",outputFilename.c_str());
+          ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(ROSE_OutputFile);
+
+  // all options are now defined to be false. When these options can be passed in
+  // from the prompt, these options will be set accordingly.
+     bool UseAutoKeyword                = false;
+     bool generateLineDirectives        = file->get_unparse_line_directives();
+
+  // DQ (6/19/2007): note that test2004_24.C will fail if this is false.
+  // If false, this will cause A.operator+(B) to be unparsed as "A+B". This is a confusing point!
+     bool useOverloadedOperators        = false;
+
+     bool num                           = false;
+
+  // It is an error to have this always turned off (e.g. pointer = this; will not unparse correctly)
+     bool _this                         = true;
+
+     bool caststring                    = false;
+     bool _debug                        = false;
+     bool _class                        = false;
+     bool _forced_transformation_format = false;
+
+  // control unparsing of include files into the source file (default is false)
+     bool _unparse_includes             = file->get_unparse_includes();
+
+     Unparser_Opt roseOptions( UseAutoKeyword,
+                               generateLineDirectives,
+                               useOverloadedOperators,
+                               num,
+                               _this,
+                               caststring,
+                               _debug,
+                               _class,
+                               _forced_transformation_format,
+                               _unparse_includes );
+
+     Unparser roseUnparser ( &ROSE_OutputFile, file->get_file_info()->get_filenameString(), roseOptions, unparseHelp, NULL );
+
+  // DQ (12/5/2006): Output information that can be used to colorize properties of generated code (useful for debugging).
+     roseUnparser.set_embedColorCodesInGeneratedCode ( file->get_embedColorCodesInGeneratedCode() );
+     roseUnparser.set_generateSourcePositionCodes    ( file->get_generateSourcePositionCodes() );
+
+  // This turnes on the mechanism to force resetting the AST's source position information.
+     roseUnparser.set_generateSourcePositionCodes(true);
+
+  // information that is passed down through the tree (inherited attribute)
+  // SgUnparse_Info inheritedAttributeInfo (NO_UNPARSE_INFO);
+     SgUnparse_Info inheritedAttributeInfo;
+
+     SgSourceFile* sourceFile = isSgSourceFile(file);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     roseUnparser.unparseFile(sourceFile,inheritedAttributeInfo);
+
+  // And finally we need to close the file (to flush everything out!)
+     ROSE_OutputFile.close();
    }
 
 
@@ -1266,6 +1391,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // file.set_verbose(true);
 
      ROSE_ASSERT(file != NULL);
+
+     // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
+     if (file->get_skip_unparse()==true) return;
+
 
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)

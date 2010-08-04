@@ -56,11 +56,13 @@ HEADER_INTERPRETATION_START
 
       //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
       //! to the size of the section which are disassembled (in bytes) (uses coverageComputed and percentageCoverage data members).
-          int get_disassembledInstructionCoverageMetricForDisassembledSections() const;
+          // PC (05/16/2010): Commented out as no definition exists
+          // int get_disassembledInstructionCoverageMetricForDisassembledSections() const;
 
       //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
       //! to the size of the address range of the top of the first block in memory to the end of the last block in memory.
-          double get_disassembledInstructionCoverageMetricForAddressRangeOfFunctionBlocks() const;
+          // PC (05/16/2010): Commented out as no definition exists
+          // double get_disassembledInstructionCoverageMetricForAddressRangeOfFunctionBlocks() const;
 
           void set_coverageComputed( bool x )
              {
@@ -95,6 +97,13 @@ HEADER_BINARY_INSTRUCTION_START
 		void append_sources( SgAsmInstruction* instruction );
 		virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) {return false;}
+		virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
+		virtual bool has_effect();
+		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+					bool relax_stack_semantics=false);
+		virtual std::vector<std::pair<size_t,size_t> >
+		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool *complete);
 HEADER_BINARY_INSTRUCTION_END
@@ -722,16 +731,29 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 	  static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
 
         /** Displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric byte values,
-         *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. */
-	static void hexdump(FILE *f, rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt);
+         *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. There are
+	 *  other versions that output containers of data.  The hexdump comes in three flavors: output to a C++ stream,
+	 *  output to a C FILE, and output to an std::string.  The FILE and string versions are implemented in terms of the
+	 *  stream version. */
+	static void hexdump(std::ostream&, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+	static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
+			    bool multiline=true);
+	static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
+			    bool multiline=true);
 
-        /** Container version of basic hexdump function.  If @p multiline is true (the default) then the prefix is output
-         *  before the first line and the output is terminated by a line feed in addition to the normal emitting of the prefix
-         *  between internal line feeds. */
-        static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data,
-                            bool multiline=true);
-        static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data,
-                            bool multiline=true);
+	/* Same, but returning a string instead. */
+	static std::string hexdump(rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+	static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
+			           bool multiline=true);
+	static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
+			           bool multiline=true);
+
+	/* Same, but output to a FILE* instead. */
+	static void hexdump(FILE*, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+	static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
+			    bool multiline=true);
+	static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
+			    bool multiline=true);
 
        /* Return byte order of caller */
           static SgAsmExecutableFileFormat::ByteOrder host_order();
@@ -928,7 +950,8 @@ HEADER_GENERIC_SECTION_START
 		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
 		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
 
-		bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
+		// PC (05/16/2010): Commented out as no definition exists
+		// bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
 		static std::string to_string(SgAsmGenericSection::SectionPurpose);
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
@@ -1017,7 +1040,9 @@ HEADER_GENERIC_FILE_START
 		void reallocate();					/* Make consistent before calling unparse */
 		void unparse(std::ostream&) const;			/* Unparse the file -- mirror image of parsing */
 		void extend_to_eof(std::ostream&);			/* Write zeros to logical EOF */
-		void dump(FILE*) const;                                 /* Print some debugging info */
+		void dump(FILE*) const;                                 /* Print some top-level debugging info */
+		void dump_all(bool in_cwd=true, const char *ext=NULL);	/* Recursively print all known info about the file */
+		void dump_all(const std::string& dumpname);		/* Recursively print all known info about the file */
 
 		/* Tracking references */
 		const ExtentMap& get_unreferenced_extents() const;	/* Returns parts of file that have not been referenced */
@@ -3838,6 +3863,13 @@ HEADER_BINARY_X86_INSTRUCTION_START
 		/* These virtual functions are implemented in DisassemblerX86.C */
 		virtual bool terminatesBasicBlock();
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
+		virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
+		virtual bool has_effect();
+		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+				        bool relax_stack_semantics=false);
+		virtual std::vector<std::pair<size_t,size_t> >
+		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool* complete);
 HEADER_BINARY_X86_INSTRUCTION_END
@@ -3875,9 +3907,10 @@ HEADER_BINARY_FUNCTION_CALL_START
 HEADER_BINARY_FUNCTION_CALL_END
 
 HEADER_BINARY_BLOCK_START
-          void append_statement( SgAsmStatement* statement );
-          void remove_statement( SgAsmStatement* statement );
-          void remove_children (  );
+        void append_statement( SgAsmStatement* statement );
+        void remove_statement( SgAsmStatement* statement );
+        void remove_children (  );
+        rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
 HEADER_BINARY_BLOCK_END
 
 
@@ -3960,7 +3993,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 
       //! Compute the percentage of coverage based on the length of blocks in this disassembled function (in bytes) compared 
       //! to the size of the address range of the top of the first block in memory to the end of the last block in memory.
-          double get_disassembledInstructionCoverageMetricForAddressRangeOfBlocks() const;
+          // PC (05/16/2010): Commented out as no definition exists
+          // double get_disassembledInstructionCoverageMetricForAddressRangeOfBlocks() const;
 
 HEADER_BINARY_FUNCTION_DECLARATION_END
 
@@ -4723,7 +4757,7 @@ SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info
     } // else
   } // if
 
-  if ((!isSgAsmx86Instruction(this) || isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ ) {
+  if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ ) {
     //cout << "Next insn is at " << std::hex << nextAddr << endl;
     SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
     //ROSE_ASSERT (next);

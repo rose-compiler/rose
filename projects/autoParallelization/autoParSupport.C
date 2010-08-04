@@ -15,6 +15,7 @@ namespace AutoParallelization
   bool enable_debug;
   bool enable_patch;
   bool enable_diff;
+  bool b_unique_indirect_index;
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
@@ -35,6 +36,15 @@ namespace AutoParallelization
     }
     else
       enable_patch= false;
+
+    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","unique_indirect_index",true))
+    {
+      cout<<"Assuming all arrays used as indirect indices have unique elements (no overlapping) ..."<<endl;
+      b_unique_indirect_index= true;
+    }
+    else
+      b_unique_indirect_index= false;
+
 
     if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_diff",true))
     {
@@ -64,6 +74,7 @@ namespace AutoParallelization
       cout<<"Auto parallelization-specific options"<<endl;
       cout<<"\t-rose:autopar:enable_debug          run automatic parallelization in a debugging mode"<<endl;
       cout<<"\t-rose:autopar:enable_patch          additionally generate patch files for translations"<<endl;
+      cout<<"\t-rose:autopar:unique_indirect_index assuming all arrays used as indirect indices have unique elements (no overlapping)"<<endl;
       cout<<"\t-annot filename                     specify annotation file for semantics of abstractions"<<endl;
       cout<<"\t-dumpannot                          dump annotation file content"<<endl;
       cout <<"---------------------------------------------------------------"<<endl;
@@ -79,6 +90,7 @@ namespace AutoParallelization
       ROSE_ASSERT(project != NULL);
       defuse = new DefUseAnalysis(project);
     }
+
     ROSE_ASSERT(defuse != NULL);
     // int result = ;
     defuse->run(debug);
@@ -513,9 +525,21 @@ namespace AutoParallelization
   // Variable classification for a loop node based on liveness analysis
   // Collect private, firstprivate, lastprivate, reduction and save into attribute
   // We only consider scalars for now 
+  // Algorithm: private and reduction variables cause dependences (being written)
+  //            firstprivate and lastprivate variables are never being written in the loop (no dependences)
+    /*                              live-in      live-out
+                     shared            Y           Y      no written, no dependences: no special handling, shared by default 
+                     private           N           N      written (depVars), need privatization: depVars- liveIns - liveOuts  
+                     firstprivate      Y           N      liveIns - LiveOus - writtenVariables
+                     lastprivate       N           Y      liveOuts - LiveIns 
+                     reduction         Y           Y      depVars Intersection (liveIns Intersection liveOuts)
+                     */ 
+ 
   void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute,LoopTreeDepGraph* depgraph)
   {
     ROSE_ASSERT(sg_node&&attribute&&depgraph);
+    ROSE_ASSERT (isSgForStatement(sg_node));
+
     // Variable liveness analysis: original ones and 
     // the one containing only variables with some kind of dependencies
     std::vector<SgInitializedName*> liveIns0, liveIns;
@@ -530,7 +554,8 @@ namespace AutoParallelization
     remove(liveIns0.begin(),liveIns0.end(),invarname);
     remove(liveOuts0.begin(),liveOuts0.end(),invarname);
 
-    std::vector<SgInitializedName*> allVars,depVars, invariantVars, privateVars,lastprivateVars, firstprivateVars,reductionVars, reductionResults;
+    std::vector<SgInitializedName*> allVars,depVars, invariantVars, privateVars,lastprivateVars, 
+      firstprivateVars,reductionVars, reductionResults;
     // Only consider scalars for now
     CollectVisibleVaribles(sg_node,allVars,invariantVars,true);
     CollectVariablesWithDependence(sg_node,depgraph,depVars,true);
@@ -542,18 +567,12 @@ namespace AutoParallelization
         cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
       }
     }
-
-    // We should only concern about variables with some kind of dependences
-    // Since all those variables cause some kind of dependencies 
-    // which otherwise prevent parallelization
-    /*               live-in      live-out
-                     private           N           N      depVars- liveIns - liveOuts  
-                     lastprivate       N           Y      liveOuts - liveIns
-                     firstprivate      Y           N      liveIns - liveOuts
-                     reduction         Y           Y      liveIns Intersection liveOuts
-                     */ 
     sort(liveIns0.begin(), liveIns0.end());
     sort(liveOuts0.begin(), liveOuts0.end());
+
+    // We concern about variables with some kind of dependences
+    // Since private and reduction variables cause some kind of dependencies ,
+    // which otherwise prevent parallelization
     // liveVars intersection depVars
     //Remove the live variables which have no relevant dependencies
     set_intersection(liveIns0.begin(),liveIns0.end(), depVars.begin(), depVars.end(),
@@ -566,6 +585,7 @@ namespace AutoParallelization
     // shared: scalars for now: allVars - depVars, 
 
     //private:
+    //---------------------------------------------
     //depVars- liveIns - liveOuts
     std::vector<SgInitializedName*> temp;
     set_difference(depVars.begin(),depVars.end(), liveIns.begin(), liveIns.end(),
@@ -586,8 +606,13 @@ namespace AutoParallelization
       if(enable_debug)
         cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
     }
-    //lastprivate: 
-    set_difference(liveOuts.begin(), liveOuts.end(), liveIns.begin(), liveIns.end(),
+
+    //lastprivate: liveOuts - LiveIns 
+    // Must be written and LiveOut to have the need to preserve the value:  DepVar Intersect LiveOut
+    // Must not be Livein to ensure correct semantics: private for each iteration, not getting value from previous iteration.
+    //  e.g.  for ()   {  a = 1; }  = a; 
+    //---------------------------------------------
+    set_difference(liveOuts.begin(), liveOuts.end(), liveIns0.begin(), liveIns0.end(),
         inserter(lastprivateVars, lastprivateVars.begin()));
 
     if(enable_debug)
@@ -599,6 +624,7 @@ namespace AutoParallelization
         cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
     }
     // reduction recognition
+    //---------------------------------------------
     // Some 'bad' examples have reduction variables which are not used after the loop
     // So we relax the constrains as liveIns only for reduction variables
 #if 0
@@ -609,26 +635,40 @@ namespace AutoParallelization
     reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
 #endif   
 
-    // firstprivate:  liveIns - reductionResults - liveOuts
+#if 0
+    // this code is wrong as reduction variables definitely cause dependences
+    // They don't intersect with firstprivate variables at all.
+    // firstprivate:  liveIns - reductionResults  - liveOuts
     // reduction variables with relaxed constrains (not liveOut) may be wrongfully recognized 
-    // as firstprivate, so we recognize reduction variables before recoginzing 
+    // as firstprivate, so we recognize reduction variables before recognizing 
     // firstprivate and exclude reduction variables first.
-    std::vector<SgInitializedName*> temp2;
-    set_difference(liveIns.begin(), liveIns.end(), reductionResults.begin(),reductionResults.end(),
-        inserter(temp2, temp2.begin()));
-    set_difference(temp2.begin(), temp2.end(), liveOuts.begin(),liveOuts.end(),
-        inserter(firstprivateVars, firstprivateVars.begin()));
+    //set_difference(liveIns0.begin(), liveIns0.end(), reductionResults.begin(),reductionResults.end(),
+    //inserter(temp2, temp2.begin()));
+    // set_difference(temp2.begin(), temp2.end(), liveOuts.begin(),liveOuts.end(),
+    //    inserter(firstprivateVars, firstprivateVars.begin()));
+#endif        
+    // Liao 5/28/2010: firstprivate variables should not cause any dependencies, equal to should be be written in the loop    
+    // firstprivate:  liveIns - LiveOuts - writtenVariables (or depVars)
+    //---------------------------------------------
+    //     liveIn : the need to pass in value
+    //     not liveOut: differ from Shared, we considered shared first, then firstprivate
+    //     not written: ensure the correct semantics: each iteration will use a copy from the original master, not redefined
+    //                  value from the previous iteration
     if(enable_debug)
       cout<<"Debug dump firstprivate:"<<endl;
+      
+    std::vector<SgInitializedName*> temp2;
+    set_difference(liveIns0.begin(), liveIns0.end(), liveOuts0.begin(),liveOuts0.end(),
+        inserter(temp2, temp2.begin()));
+    set_difference(temp2.begin(), temp2.end(), depVars.begin(), depVars.end(),
+        inserter(firstprivateVars, firstprivateVars.begin()));
     for (std::vector<SgInitializedName*>::iterator iter = firstprivateVars.begin(); iter!= firstprivateVars.end();iter++) 
     {
-      attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
-      if(enable_debug)
-        cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+       attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
+        if(enable_debug)
+          cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
     }
-
-
-  }
+  } // end AutoScoping()
 
   // Recognize reduction variables for a loop
   /* 
@@ -926,7 +966,8 @@ namespace AutoParallelization
   // * two array references, but SCALAR_DEP or SCALAR_BACK_DEP dependencies
   // OmpAttribute provides scoped variables
   // ArrayInterface and ArrayAnnotation support optional annotation based high level array abstractions
-  void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>& remainings, OmpSupport::OmpAttribute* att, ArrayInterface* array_interface/*=0*/, ArrayAnnotation* annot/*=0*/)
+  void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>& remainings, OmpSupport::OmpAttribute* att, 
+        std::map<SgNode*, bool> &  indirect_table, ArrayInterface* array_interface/*=0*/, ArrayAnnotation* annot/*=0*/)
   {
     //LoopTreeDepGraph * depgraph =  comp.GetDepGraph(); 
     LoopTreeDepGraph::NodeIterator nodes = depgraph->GetNodeIterator();
@@ -942,16 +983,14 @@ namespace AutoParallelization
         for (; !edges.ReachEnd(); ++edges) 
         { 
           LoopTreeDepGraph::Edge *e= *edges;
-          //cout<<"dependence edge: "<<e->toString()<<endl;
+          // cout<<"Debug: dependence edge: "<<e->toString()<<endl;
           DepInfo info =e->GetInfo();
 
-          // x. Eliminate dependence relationship if
-          // either of the source or sink variables are thread-local: 
-          // (within the scope of the loop's scope)
-          SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
+         SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
+
           if (src_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(src_node);
@@ -963,8 +1002,15 @@ namespace AutoParallelization
                 continue;
             } //end if(var_ref)
           } // end if (src_node)
+
           SgNode* snk_node = AstNodePtr2Sage(info.SnkRef());
           SgInitializedName* snk_name=NULL;
+#if 1           
+          // x. Eliminate dependence relationship if one of the pair is thread local
+          // -----------------------------------------------
+          // either of the source or sink variables are thread-local: 
+          // (within the scope of the loop's scope)
+          // There is no loop carried dependence in this case 
           if (snk_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(snk_node);
@@ -976,12 +1022,28 @@ namespace AutoParallelization
                 continue;
             } //end if(var_ref)
           } // end if (snk_node)
+#endif
+          //x. Eliminate a dependence if it is empty entry
+          // -----------------------------------------------
           // Ignore possible empty depInfo entry
           if (src_node==NULL||snk_node==NULL)
             continue;
-          //x. Eliminate a dependence if 
-          // both the source and sink variables are array references (not scalar) 
+
+          //x. Eliminate a dependence if scalar type dependence involving array references.
+          // -----------------------------------------------
+          // At least one of the source and sink variables are array references (not scalar) 
           // But the dependence type is scalar type
+          //   * array-to-array, but scalar type dependence
+          //   * scalar-to-array dependence.  
+          //    We essentially assume no aliasing between arrays and scalars here!!
+          //    I cannot think of a case in which a scalar and array element can access the same memory location otherwise.
+          // According to Qing:  
+          //   A scalar dep is simply the dependence between two scalar variables.
+          //   There is no dependence between a scalar variable and an array variable. 
+          //   The GlobalDep function simply computes dependences between two scalar 
+          //   variable references (to the same variable)
+          //   inside a loop, and the scalar variable is not considered private.
+          // We have autoscoping to take care of scalars, so we can safely skip them 
           bool isArray1=false, isArray2=false; 
           AstInterfaceImpl faImpl=AstInterfaceImpl(sg_node);
           AstInterface fa(&faImpl);
@@ -997,12 +1059,14 @@ namespace AutoParallelization
             isArray1= fa.IsArrayAccess(info.SrcRef());
             isArray2= fa.IsArrayAccess(info.SnkRef());
           }
-          if (isArray1 && isArray2)
+          //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
+          if (isArray1 || isArray2)
           {
             if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
               continue;
           }
           //x. Eliminate dependencies caused by autoscoped variables
+          // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
           if(att&& (src_name || snk_name)) // either src or snk might be an array reference 
           {
@@ -1018,7 +1082,21 @@ namespace AutoParallelization
             if (hit1!=scoped_vars.end() || (hit2!=scoped_vars.end()))
               continue;
           }
+
+          //x. Eliminate dependencies caused by a pair of indirect indexed array reference,
+          // -----------------------------------------------
+          //   if users provide the semantics that all indirect indexed array references have 
+          //   unique element accesses (via -rose:autopar:unique_indirect_index )
+          //   Since each iteration will access a unique element of the array, no loop carried data dependences
+          //  Lookup the table, rule out a dependence relationship if both source and sink are one of the unique array reference expressions.
+          //  AND both references to the same array symbol , and uses the same index variable!!
+           if (b_unique_indirect_index ) 
+           { 
+             if (indirect_table[src_node] && indirect_table[snk_node])
+               continue;
+           }
           // x. Eliminate loop-independent dependencies: 
+          // -----------------------------------------------
           // loop independent dependencies: privatization can eliminate most of them
           if (info.CarryLevel()!=0) 
             continue;
@@ -1029,12 +1107,262 @@ namespace AutoParallelization
     } // end of iterate dependence graph 
   }// end DependenceElimination()
 
+/*
+ Uniforming multiple forms of array indirect accessing into a single form: 
+        arrayX[arrayY...[loop_index]]
+
+  Common forms of array references using indirect indexing: 
+ 
+  Form 1:  naive one (the normalized/uniformed form)
+        ... array_X [array_Y [current_loop_index]] ..
+
+  Form 2:  used more often in real code from Jeff
+       indirect_loop_index  = array_Y [current_loop_index] ;
+        ...  array_X[indirect_loop_index] ...
+
+  Cases of multiple dimensions, multiple levels of indirections are also handled.  
+
+  We uniform them into a single form (Form 2) to simplify later recognition of indirect indexed array refs
+   For Form 2: if the rhs operand is a variable
+      find the reaching definition of the index based on data flow analysis
+        case 1: if it is the current loop's index variable, nothing to do further. stop
+        case 2: outside the current loop's scope: for example higher level loop's index. stop
+        case 3: the definition is within the  current loop ?  
+                 replace the rhs operand with its reaching definition's right hand value.
+                one assignment to another array with the current  (?? higher level is considered at its own level) loop index
+ 
+Algorithm: Replace the index variable with its right hand value of its reaching definition,
+           or if the definition 's scope is within the current  loop's body   
+
+*/
+ static void uniformIndirectIndexedArrayRefs (SgForStatement* for_loop)
+ {
+   ROSE_ASSERT (for_loop != NULL);
+   ROSE_ASSERT (for_loop->get_loop_body() != NULL);
+   SgInitializedName * loop_index_name = NULL;
+   bool isCanonical = SageInterface::isCanonicalForLoop (for_loop, &loop_index_name);
+   ROSE_ASSERT (isCanonical == true);
+
+   // prepare def/use analysis, it should already exist as part of initialize_analysis()
+   //SgProject * project = getProject();
+   ROSE_ASSERT (defuse != NULL);  
+   Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(for_loop->get_loop_body(), V_SgPntrArrRefExp);
+   for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+   {
+     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i));
+     ROSE_ASSERT (aRef != NULL); 
+     SgExpression* rhs = aRef-> get_rhs_operand_i();
+     switch (rhs->variantT())
+     {
+       case V_SgVarRefExp:
+         {
+           // SgVarRefExp * varRef = isSgVarRefExp(rhs);
+           // trace back to the 'root' value of rhs according to def/use analysis
+           // Initialize the end value to the current rhs of the array reference expression
+           SgExpression * the_end_value = rhs; 
+           while (isSgVarRefExp(the_end_value))
+           {
+             SgVarRefExp * varRef = isSgVarRefExp(the_end_value);
+             SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
+             ROSE_ASSERT (initName != NULL);
+             // stop tracing if it is already the current loop's index
+             if (initName  == loop_index_name) break;
+
+             // get the reaching definitions of the variable
+             vector <SgNode* > vec = defuse ->getDefFor (varRef, initName);
+             if (vec.size() == 0)
+             {
+               cerr<<"Warning: cannot find a reaching definition for an initialized name:"<<endl;
+               cerr<<"initName:"<<initName->get_name().getString()<<"@";
+               cerr<<varRef->get_file_info()->get_line()<<":"<< varRef->get_file_info()->get_col() <<endl;
+               // ROSE_ASSERT (vec.size()>0);
+               break; 
+             }
+
+             // stop tracing if there are more than one reaching definitions
+             if (vec.size()>1) break;
+
+             // stop if the defining statement is out side of the scope of the loop body
+             SgStatement* def_stmt = SageInterface::getEnclosingStatement(vec[0]);
+             if  (! SageInterface::isAncestor(for_loop->get_loop_body(), def_stmt)) 
+               break;
+
+             // now get the end value depending on the definition node's type
+             if (isSgAssignOp(vec[0]))
+               the_end_value = isSgAssignOp(vec[0])->get_rhs_operand_i();
+             else if (isSgAssignInitializer(vec[0]))
+             {
+               the_end_value = isSgAssignInitializer(vec[0])->get_operand_i();
+             }
+             else
+             {  
+               if (!isSgMinusMinusOp(vec[0])) // (! && !)
+               {
+                 cerr<<"Warning: uniformIndirectIndexedArrayRefs() ignoring a reaching definition of a type: "
+                   << vec[0]->class_name()<<"@";
+                 if (isSgLocatedNode(vec[0]))
+                 {
+                   SgLocatedNode* lnode = isSgLocatedNode(vec[0]);
+                   cerr<<lnode->get_file_info()->get_line()<<":"<< lnode->get_file_info()->get_col() ;
+                 }
+                 cerr<<endl;
+               }
+               //ROSE_ASSERT(false);
+               break;
+             }
+           } // end while() to trace down to root definition expression
+           //replace rhs with its root value if rhs != end_value
+           if (rhs != the_end_value)
+           {
+             SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
+             //TODO use replaceExpression() instead
+             aRef->set_rhs_operand_i(new_rhs);
+             new_rhs->set_parent(aRef);
+             delete rhs; 
+           }
+
+           break;
+         } // end case V_SgVarRefExp:
+       case V_SgPntrArrRefExp: // uniform form already, do nothing
+       case V_SgIntVal: // element access using number, do nothing
+         // ignore array index arithmetics 
+         // since we narrow down the simplest case for indirection without additional calculation
+       case V_SgSubtractOp:
+       case V_SgAddOp:
+       case V_SgMinusMinusOp:
+       case V_SgPlusPlusOp:
+       case V_SgModOp:
+       case V_SgMultiplyOp:
+         break;
+       default:
+         {
+           cerr<<"Warning: uniformIndirectIndexedArrayRefs(): ignoring an array access expression type: "<< rhs->class_name()<<endl;
+           break;
+         }
+     } // end switch
+   } //end for
+
+ }
+  /* Check if an array reference expression is an indirect indexed with respect to a loop
+   * This function should be called after all array references are uniformed already.
+   *
+  Algorithm:  
+    find all array variables within the loop in consideration
+    for each array variable, do the following to tell if such an array is accessed via an indirect index
+        SgPntrArrRefExp  :
+            lhs_operatnd: SgVarRefExp, SgVariableSymbol, SgInitializedName  SgArrayType
+            rhs_operand: SgVarRefExp, SgVariableSymbol, SgInitializedName, i
+        Check a lookup table to see if this kind of reference is already recognized
+              two keys: array symbol, index expression, bool
+        if not, do the actual pattern recognition
+            // in a function  
+            if is another array reference
+            Found an array reference using indirect index,
+         store it in a look up table : SySymbol (array being accessed ) , index Ref Exp, true/false 
+   */
+
+  static bool isIndirectIndexedArrayRef (SgForStatement* for_loop, SgPntrArrRefExp *aRef)
+  {
+    bool rtval = false;
+    ROSE_ASSERT (for_loop != NULL);
+    ROSE_ASSERT (aRef != NULL);
+    // grab the loop index variable
+    SgInitializedName * loop_index_name = NULL;
+    bool isCanonical = SageInterface::isCanonicalForLoop (for_loop, &loop_index_name);
+    bool hasIndirecting = false;
+    ROSE_ASSERT (isCanonical == true);
+
+    // grab the array index  from arrayX[arrayY...[loop_index]]
+    SgPntrArrRefExp* innerMostArrExp =  aRef;
+    while (isSgPntrArrRefExp(innerMostArrExp->get_rhs_operand_i()))
+    {
+       innerMostArrExp = isSgPntrArrRefExp(innerMostArrExp->get_rhs_operand_i());
+       hasIndirecting = true;
+    }
+
+    SgExpression* array_index_exp = innerMostArrExp->get_rhs_operand_i();
+
+    switch (array_index_exp->variantT() )
+    {
+      case V_SgPntrArrRefExp: 
+        {
+          cerr<<"Error: isIndirectIndexedArrayRef(). inner most loop index should not be of an array type anymore! "<<endl;
+          ROSE_ASSERT (false);
+          break;
+        }
+      case V_SgVarRefExp: 
+        {
+          SgVarRefExp * varRef = isSgVarRefExp(array_index_exp);
+          // We only concern about the indirection based on the current loop's loop index variable
+          // since we consider all loop levels one by one
+          if (hasIndirecting && (varRef->get_symbol()->get_declaration() == loop_index_name))
+            rtval = true; 
+          break;
+        }
+      case V_SgIntVal: 
+        // ignore array index arithmetics 
+        // since we narrow down the simplest case for indirection without additional calculation
+      case V_SgSubtractOp:
+      case V_SgAddOp:
+      case V_SgPlusPlusOp:
+      case V_SgMultiplyOp:
+         break;
+      default:
+        // This should not matter. We output something anyway for improvements.
+        cerr<<"Warning: isIndirectIndexedArrayRef(): unhandled array index type: "<< array_index_exp->class_name()<<endl;
+      //  ROSE_ASSERT (false);
+        break;
+    }
+
+    return rtval;
+  }
+  
+  // collect array references with indirect indexing within a loop, save the result in a lookup table
+  /*
+  Algorithm:  
+    find all array variables within the loop in consideration
+    for each array variable, do the following to tell if such an array is accessed via an indirect index
+       Check a lookup table to see if this kind of reference is already recognized
+              two keys: array symbol, index expression, bool
+        if not, do the actual pattern recognition
+           Found an array reference using indirect index,
+         store it in a look up table : SySymbol (array being accessed ) , index Ref Exp, true/false 
+   */
+  static void collectIndirectIndexedArrayReferences(SgNode* loop,  std::map<SgNode*, bool>& indirect_array_table)
+  {
+    ROSE_ASSERT (loop != NULL);
+    SgForStatement* for_loop = isSgForStatement(loop);
+    ROSE_ASSERT (for_loop != NULL);
+
+    Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(for_loop->get_loop_body(), V_SgPntrArrRefExp); 
+    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+    {
+      SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i));
+      if (isIndirectIndexedArrayRef(for_loop, aRef))
+      {
+        indirect_array_table[aRef] = true; 
+       // cout<<"Found an indirect indexed array ref:"<<aRef->unparseToString()
+       // << "@" << aRef <<endl;
+      }
+    }
+  }
+
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
     ROSE_ASSERT(loop&& array_interface && annot);
     ROSE_ASSERT(isSgForStatement(loop));
     bool isParallelizable = true;
+   
 
+    // collect array references with indirect indexing within a loop, save the result in a lookup table
+    // This work is context sensitive (depending on the outer loops), so we declare the table for each loop.
+    std::map<SgNode*, bool> indirect_array_table;
+   if (b_unique_indirect_index) // uniform and collect indirect indexed array only when needed
+   {
+    // uniform array reference expressions
+    uniformIndirectIndexedArrayRefs(isSgForStatement(loop));
+    collectIndirectIndexedArrayReferences (loop, indirect_array_table);
+   }
     // X. Compute dependence graph for the target loop
     SgNode* sg_node = loop;
     LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, array_interface, annot);
@@ -1055,7 +1383,7 @@ namespace AutoParallelization
 
     //X. Eliminate irrelevant dependence relations.
     vector<DepInfo>  remainingDependences;
-    DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute,array_interface, annot);
+    DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute, indirect_array_table,  array_interface, annot);
     if (remainingDependences.size()>0)
     {
       isParallelizable = false;

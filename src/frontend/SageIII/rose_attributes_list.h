@@ -29,22 +29,39 @@
 // DQ (12/22/2008): I would appreciate it if this were a better name...
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
 // #ifndef USE_ROSE
-#if _MSC_VER < 1600  // 1600 == VC++ 10.0
-#include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
-#ifdef _MSC_VER
-#include <boost/wave.hpp>	// CH (4/7/2010): Put this header here to avoid compiling error about mismatch between defination and declaration
-#endif
-#include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
-#include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type
-#else
+
+// DQ (5/21/2010): I have built a separate macro for tuning off the compilation of WAVE
+// since it is done only for the purpose of allowing ROSE based projects:
+//     1) projects/DocumentationGenerator
+//     2) projects/haskellport
+// to process the ROSE files cleanly.  ROSE can however process and compile ROSE
+// (including a slightly modified version of WAVE that EDG will accept) and we
+// separately test this in noightly tests.  The previous 5/18/2010 fix to permit
+// the Haskell support to skip processign WAVE turned this off and broke the nightly
+// tests of ROSE compiling ROSE.  This use of the macro ROSE_SKIP_COMPILATION_OF_WAVE
+// it menat to be turned on by ROSE based tools that need to process the ROSE code
+// and which currently fail (because of Wave) and so turn of the processing of Wave
+// for those tools.
+// #ifdef USE_ROSE
+//  #define ROSE_SKIP_COMPILATION_OF_WAVE
+// #endif
+
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
+  #if _MSC_VER < 1600  // 1600 == VC++ 10.0
+    #include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
+    #ifdef _MSC_VER
+      #include <boost/wave.hpp>	// CH (4/7/2010): Put this header here to avoid compiling error about mismatch between defination and declaration
+    #endif
+    #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
+    #include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type
+  #else
 // #warning "Setting CAN_NOT_COMPILE_WITH_ROSE to value = 1"
 // #define CAN_NOT_COMPILE_WITH_ROSE 1
 // tps (12/4/2009) : This is not found in VC++ 10.0 and Boost 1.4
-#pragma message ("Boost preprocessor and wave not included yet for VC++ 10.0")
+    #pragma message ("Boost preprocessor and wave not included yet for VC++ 10.0")
 
+  #endif
 #endif
-
-// #endif
 
 //template boost::wave::cpplexer::impl::token_data<std::string, boost::wave::util::file_position_type>::delete(std::size_t) ; 
 // DQ (10/16/2002): Required for compiling with SUN 5.2 C++ compiler
@@ -73,13 +90,14 @@ class SgFile;
 
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
 // #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 
-typedef boost::wave::cpplexer::lex_token<> token_type;
-typedef std::vector<token_type>            token_container;
-typedef std::list<token_type>              token_list_container;
-typedef std::vector<std::list<token_type> >       token_container_container;
+typedef boost::wave::cpplexer::lex_token<>  token_type;
+typedef std::vector<token_type>             token_container;
+typedef std::list<token_type>               token_list_container;
+typedef std::vector<std::list<token_type> > token_container_container;
 
-// #endif
+#endif
 
 //! For preprocessing information including source comments, #include , #if, #define, etc
 class  PreprocessingInfo
@@ -118,6 +136,9 @@ class  PreprocessingInfo
                C_StyleComment,
                CplusplusStyleComment,
                FortranStyleComment,
+
+           // FMZ(5/14/2010): Added  freeform comments (started with "!")
+               F90StyleComment,
 
             // DQ (11/20/2008): Added classification for blank line (a language independent form of comment).
                CpreprocessorBlankLine,
@@ -206,7 +227,6 @@ class  PreprocessingInfo
           std::string optionalflagsForCompilerGeneratedLinemarker;
 
 // This is part of Wave support in ROSE.
-// #if !CAN_NOT_COMPILE_WITH_ROSE 
 // #ifndef USE_ROSE
      public:
 /*
@@ -220,6 +240,7 @@ class  PreprocessingInfo
        // FIXME: To support Jochens AST binary save work the tokenSteam must
        // have a pointer type.
 
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
        // A stream of tokens representing the current prerpocessing info
        // object. This is equivalent to the internal string, but of cause
        // contains more information since it is a tokenized stream.
@@ -279,23 +300,22 @@ class  PreprocessingInfo
        // AS include directive
           rose_include_directive* includeDirective;
 
-// #endif for Wave specific data not compiled when USE_ROSE is defined.
-// #endif
+#endif
 
   // member functions
      public:
          ~PreprocessingInfo();
           PreprocessingInfo();
 
-// #if !CAN_NOT_COMPILE_WITH_ROSE 
 // #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
        // AS (112105) Added constructors to support macros
           PreprocessingInfo(token_container, DirectiveType, RelativePositionType); 
           PreprocessingInfo(rose_macro_call*, RelativePositionType); 
           PreprocessingInfo(rose_macro_definition*, RelativePositionType); 
           PreprocessingInfo(token_type, token_list_container, bool, DirectiveType,RelativePositionType); 
           PreprocessingInfo(rose_include_directive*, RelativePositionType);
-// #endif
+#endif
 
        // This constructor is called from the C++ code generated from the lex file (preproc.lex)
        // PreprocessingInfo(DirectiveType, const char *inputStringPointer, int line_no , int col_no,
@@ -367,8 +387,8 @@ class  PreprocessingInfo
           void set_filenameForCompilerGeneratedLinemarker( std::string x );
           void set_optionalflagsForCompilerGeneratedLinemarker( std::string x );
 
-// #if !CAN_NOT_COMPILE_WITH_ROSE 
 // #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
   // Wave specific member functions.
      public:
        // Access functions to get the macro call or macro definition.
@@ -382,8 +402,7 @@ class  PreprocessingInfo
           void push_front_token_stream(token_type tok);
           void push_back_token_stream(token_type tok);
 
-// #endif for Wave specific data not compiled when USE_ROSE is defined.
-// #endif
+#endif
    };
 
 // DQ (10/15/2002) Changed list element from "PreprocessingInfo" to 
@@ -522,11 +541,11 @@ class ROSEAttributesListContainer
    };
 
 
-// #if !CAN_NOT_COMPILE_WITH_ROSE 
 // #ifndef USE_ROSE
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
 
 extern token_container wave_tokenStream;
 
-// #endif
+#endif
 
 #endif

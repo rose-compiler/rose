@@ -305,7 +305,8 @@ inline SymbolicVal operator + (const SymbolicVal &v1, const SymbolicVal &v2)
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2);
 SymbolicVal operator / (const SymbolicVal &v1, const SymbolicVal &v2);
 inline SymbolicVal operator - (const SymbolicVal &v1, const SymbolicVal &v2)
-         { return v1 + (-1 * v2); }
+         { return v1 + (-1 * v2); }  // Liao 5/21/2010, performance bottleneck here for multiplication
+//         { return ApplyBnOp(SYMOP_PLUS ,v1,v2 ); }
 inline SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
                                                                                           
 typedef enum 

@@ -704,10 +704,15 @@ int GetPrecedence(int variant)
           case V_SgUnsignedLongLongIntVal: return 0;
           case V_SgUnsignedLongVal:  return 0;
           case V_SgComplexVal:       return 0;
+          case V_SgCAFCoExpression:  return 16;
+
      // Liao, 7/15/2009, UPC nodes     
           case V_SgUpcThreads:       return 0;
           case V_SgUpcMythread:       return 0;
           case V_SgNullExpression:    return 0;
+    // TV (04/26/2010): CUDA nodes
+          case V_SgCudaKernelExecConfig: return 0;
+          case V_SgCudaKernelCallExp:    return 0;
 #if 0
        // Template
           case V_:              return 0;
@@ -1803,6 +1808,45 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
              {
                curprint( "explicit ");
              }
+             
+       // TV (04/26/2010): CUDA function modifiers
+          if (functionDeclaration->get_functionModifier().isCudaKernel())
+             {
+               curprint( "__global__ ");
+             }
+          if (functionDeclaration->get_functionModifier().isCudaDevice())
+             {
+               curprint( "__device__ ");
+             }
+          if (functionDeclaration->get_functionModifier().isCudaHost())
+             {
+               curprint( "__host__ ");
+             }
+             
+       // TV (05/06/2010): OpenCL function modifiers
+          if (functionDeclaration->get_functionModifier().isOpenclKernel())
+             {
+               curprint( "__kernel ");
+             }
+          if (functionDeclaration->get_functionModifier().hasOpenclVecTypeHint())
+             {
+               SgType * opencl_vec_type = functionDeclaration->get_functionModifier().get_opencl_vec_type();
+               //curprint( "__attribute__((vec_type_hint(" << get_type_name(opencl_vec_type) << "))) ");
+               //curprint( "__attribute__((vec_type_hint(" << unp->u_type->unparseType(opencl_vec_type) << "))) ");
+               curprint( "__attribute__((vec_type_hint(type))) ");
+             }
+          if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeHint())
+             {
+               SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
+               //curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+               curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
+             }
+          if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeReq())
+             {
+               SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
+               //curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+               curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
+             }
         }
 
   // DQ (4/25/2004): Removed CC++ specific modifiers
@@ -1857,6 +1901,50 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      if (decl_stmt->get_declarationModifier().get_storageModifier().isMutable())
         {
           curprint( "mutable ");
+        }
+        
+  // TV (05/06/2010): CUDA storage modifiers
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isCudaGlobal())
+        {
+          curprint( "__device__ ");
+        }
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isCudaConstant())
+        {
+          curprint( "__device__ __constant__ ");
+        }
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isCudaShared())
+        {
+          curprint( "__device__ __shared__ ");
+        }
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isCudaDynamicShared())
+        {
+          curprint( "extern __device__ __shared__ ");
+        }
+        
+  // TV (05/06/2010): OpenCL storage modifiers
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclGlobal())
+        {
+          curprint( "__global ");
+        }
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclLocal())
+        {
+          curprint( "__local ");
+        }
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclConstant())
+        {
+          curprint( "__constant ");
+        }
+
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclPrivate())
+        {
+          curprint( "__private ");
         }
    }
 

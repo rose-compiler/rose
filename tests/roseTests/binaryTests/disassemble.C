@@ -4,8 +4,102 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <ostream>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
+#include "AsmUnparser.h"
+#include "VirtualMachineSemantics.h"
+#include "SMTSolver.h"
 #include "bincfg.h"
+
+/*FIXME: Rose cannot parse this file.*/
+#ifndef CXX_IS_ROSE_ANALYSIS
+
+/* Convert a SHA1 digest to a string. */
+std::string
+digest_to_str(const unsigned char digest[20])
+{
+    std::string digest_str;
+    for (size_t i=20; i>0; --i) {
+        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+    }
+    return digest_str;
+}
+
+/** Computes the SHA1 digest for the semantics of a single basic block. Returns true if the hash was computed, false
+ *  otherwise.  When the hash is not computed, @p digest is set to all zeros. */
+bool
+block_hash(SgAsmBlock *blk, unsigned char digest[20]) 
+{
+    if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front())) {
+        memset(digest, 0, 20);
+        return false;
+    }
+    const SgAsmStatementPtrList &stmts = blk->get_statementList();
+
+    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
+    VirtualMachineSemantics::Policy policy;
+    policy.set_discard_popped_memory(true);
+    Semantics semantics(policy);
+    try {
+        for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
+            ROSE_ASSERT(insn!=NULL);
+            semantics.processInstruction(insn);
+        }
+    } catch (const Semantics::Exception&) {
+        memset(digest, 0, 20);
+        return false;
+    }
+
+    /* If the last instruction is a x86 CALL or FARCALL then change the return address that's at the top of the stack so that
+     * two identical blocks located at different memory addresses generate equal hashes (at least as far as the function call
+     * is concerned. */
+    bool ignore_final_ip = true;
+    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
+    if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
+        VirtualMachineSemantics::RenameMap rmap;
+        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), policy.number<32>(0), policy.true_());
+        ignore_final_ip = false;
+    }
+
+    /* Set original IP to a constant value so that hash is never dependent on the true original IP.  If the final IP doesn't
+     * matter, then make it the same as the original so that the difference between the original and final does not include the
+     * IP (SHA1 is calculated in terms of the difference). */
+    policy.get_orig_state().ip = policy.number<32>(0);
+    if (ignore_final_ip)
+        policy.get_state().ip = policy.get_orig_state().ip;
+    return policy.SHA1(digest);
+}
+
+/* Compute a hash value for a function. Return false if the hash cannot be computed. */
+bool
+function_hash(SgAsmFunctionDeclaration *func, unsigned char digest[20])
+{
+    memset(digest, 0, 20);
+    std::set<std::string> seen;
+    const SgAsmStatementPtrList &stmts = func->get_statementList();
+    for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+        SgAsmBlock *bb = isSgAsmBlock(*si);
+        ROSE_ASSERT(bb!=NULL);
+        unsigned char bb_digest[20];
+        if (block_hash(bb, bb_digest)) {
+            std::string key = digest_to_str(bb_digest);
+            if (seen.find(key)==seen.end()) {
+                seen.insert(key);
+                for (size_t i=0; i<20; i++)
+                    digest[i] ^= bb_digest[i];
+            }
+        } else {
+            memset(digest, 0, 20);
+            return false;
+        }
+    }
+    return true;
+}
 
 /* Traversal prints information about each SgAsmFunctionDeclaration node. */
 class ShowFunctions : public SgSimpleProcessing {
@@ -22,10 +116,10 @@ public:
         printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
         printf("      H = insn sequence head    I = imported/dyn-linked   L = leftover blocks\n");
         printf("\n");
-        printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name\n");
-        printf("    --- ---------- ---------- ------------ ---------- -------- --------------------------------\n");
+        printf("    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Kind     Hash             Name\n");
+        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
         traverse(node, preorder);
-        printf("    --- ---------- ---------- ------------ ---------- -------- --------------------------------\n");
+        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
     }
     void visit(SgNode *node) {
         SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
@@ -64,10 +158,40 @@ public:
               default:                                     fputs("    other", stdout); break;
             }
 
+            /* First 16 bytes of the function hash */
+            unsigned char sha1[20];
+            if (function_hash(defn, sha1)) {
+                printf(" %-16s", digest_to_str(sha1).substr(0, 16).c_str());
+            } else {
+                printf(" %-16s", "");
+            }
+            
             /* Function name if known */
             if (defn->get_name()!="")
                 printf(" %s", defn->get_name().c_str());
             fputc('\n', stdout);
+        }
+    }
+};
+
+/* Unparser that outputs some extra information */
+class MyAsmUnparser: public AsmUnparser {
+public:
+    MyAsmUnparser() {
+        blk_detect_noop_seq = true;
+    }
+    virtual void pre(std::ostream &o, SgAsmBlock *blk) {
+        unsigned char sha1[20];
+        if (block_hash(blk, sha1)) {
+            o <<StringUtility::addrToString(blk->get_address()) 
+              <<": " <<digest_to_str(sha1) <<"\n";
+        }
+    }
+    virtual void pre(std::ostream &o, SgAsmFunctionDeclaration *func) {
+        unsigned char sha1[20];
+        if (function_hash(func, sha1)) {
+            o <<StringUtility::addrToString(func->get_entry_va())
+              <<": ============================ " <<digest_to_str(sha1) <<"\n";
         }
     }
 };
@@ -85,7 +209,11 @@ function_label_attr(SgAsmFunctionDeclaration *func)
             retval += std::string(" <") + func->get_name() + ">";
         retval += std::string("\\n(") + func->reason_str(false) + ")";
         sprintf(buf, "\\n%zu instructions", SageInterface::querySubTree<SgAsmInstruction>(func, V_SgAsmInstruction).size());
-        retval += std::string(buf) + "\"";
+
+        unsigned char sha1[20];
+        if (function_hash(func, sha1))
+            retval += std::string(buf) + "\\n" + digest_to_str(sha1).substr(0, 16) + "...";
+        retval += "\"";
     }
     return retval;
 }
@@ -99,65 +227,105 @@ function_url_attr(SgAsmFunctionDeclaration *func)
     return std::string("URL=\"") + buf + ".html\"";
 }
 
+
+        
+
 /* Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
  * control flow edges within the function. */
 static std::string
-dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bool verbose) 
+dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bool verbose) 
 {
-    char node_name[64];
-    sprintf(node_name, "%08"PRIx64, func->get_entry_va());
+    using namespace StringUtility;
+
+    struct Unparser: public AsmUnparser {
+        std::set<std::string> semantics_seen;
+        SgAsmFunctionDeclaration *cur_func;
+        Unparser(): cur_func(NULL) {
+            insn_show_bytes = false;
+            insn_linefeed = false;
+            blk_detect_noop_seq = true;
+            blk_remove_noop_seq = false;
+            blk_show_noop_warning = false;
+            blk_show_successors = false;
+            func_show_title = false;
+            interp_show_title = false;
+        }
+        virtual void pre(std::ostream &o, SgAsmInstruction*) {
+            o <<"<tr>"
+              <<"<td align=\"left\"" <<(insn_is_noop_seq?" bgcolor=\"gray50\"":"") <<">";
+        }
+        virtual void post(std::ostream &o, SgAsmInstruction*) {
+            o <<"</td></tr>";
+        }
+        virtual void pre(std::ostream &o, SgAsmBlock *b) {
+            std::string semantics_color = "green";
+            unsigned char sha1[20];
+            block_hash(b, sha1);
+            std::string sha1_str = digest_to_str(sha1);
+            if (semantics_seen.find(sha1_str)!=semantics_seen.end()) {
+                semantics_color = "orange";
+            } else {
+                semantics_seen.insert(sha1_str);
+            }
+            o <<"B" <<StringUtility::addrToString(b->get_address()) <<" [ label=<<table border=\"0\"";
+            if (b->get_address()==cur_func->get_entry_va()) o <<" bgcolor=\"lightskyblue1\"";
+            o <<"><tr><td align=\"left\" bgcolor=\"" <<semantics_color <<"\">" <<sha1_str <<"</td></tr>";
+        }
+        virtual void post(std::ostream &o, SgAsmBlock*b) {
+            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(b->get_parent());
+            o <<"</table>>";
+            if (!b->get_complete_successors()) {
+                SgAsmInstruction *last_insn = isSgAsmInstruction(b->get_statementList().back());
+                if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
+                    o <<", color=blue"; /*function return statement, not used as an unconditional branch*/
+                } else {
+                    o <<", color=red"; /*red implies that we don't have complete information for successors*/
+                }
+            } else if (func && b->get_address()==func->get_entry_va()) {
+                o <<", color=blue"; /*function entry node*/
+            }
+            o <<" ];\n";
+        }
+        virtual void pre(std::ostream&, SgAsmFunctionDeclaration *func) {
+            semantics_seen.clear();
+            cur_func = func;
+        }
+    } unparser;
+
     std::string label_attr = function_label_attr(func);
 
     if (verbose) {
-        fprintf(out, "  subgraph clusterF%s {\n", node_name);
-        fprintf(out, "    style=filled; color=gray95;\n");
-        fprintf(out, "    %s;\n", label_attr.c_str());
+        sout <<"  subgraph clusterF" <<addrToString(func->get_entry_va()) <<" {\n"
+             <<"    style=filled; color=gray90;\n"
+             <<"    " <<label_attr.c_str() <<";\n";
 
         /* Write the node definitions (basic blocks of this function) */
+        unparser.unparse(sout, func);
+
+        /* Write the edge definitions for internal flow control. Fall-through edges are black, non-fall-throughs are orange. */
         std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
         for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-            fprintf(out, "    B%08"PRIx64" [ label=<<table border=\"0\">", (*bbi)->get_address());
-            const SgAsmStatementPtrList &stmts = (*bbi)->get_statementList();
-            for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-                SgAsmInstruction *insn = isSgAsmInstruction(*si);
-                if (insn!=NULL) {
-                    char addr_str[64];
-                    sprintf(addr_str, "0x%08"PRIx64": ", insn->get_address());
-                    std::string s = std::string(addr_str) + unparseInstruction(insn).c_str();
-                    for (size_t j=0; j<s.size(); j++) if ('\t'==s[j]) s[j]=' ';
-                    fprintf(out, "<tr><td align=\"left\">%s</td></tr>", s.c_str());
-                }
-            }
-            fprintf(out, "</table>>");
-            if (!(*bbi)->get_complete_successors()) {
-                SgAsmInstruction *last_insn = isSgAsmInstruction((*bbi)->get_statementList().back());
-                if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
-                    fprintf(out, ", color=blue"); /*function return statement, not used as an unconditional branch*/
-                } else {
-                    fprintf(out, ", color=red"); /*red implies that we don't have complete information for successors*/
-                }
-            } else if ((*bbi)->get_address()==func->get_entry_va()) {
-                fprintf(out, ", color=darkgreen");
-            }
-            fprintf(out, " ];\n");
-        }
-
-        /* Write the edge definitions for internal flow control */
-        for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
             const SgAddressList &sucs = (*bbi)->get_cached_successors();
+            rose_addr_t fall_through_va = (*bbi)->get_fallthrough_va();
             for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
                 SgAsmBlock *target_block = cfg.block(*si);
                 SgAsmFunctionDeclaration *target_func = target_block ?
                                                         isSgAsmFunctionDeclaration(target_block->get_parent()) : NULL;
-                if (target_func==func)
-                    fprintf(out, "    B%08"PRIx64" -> B%08"PRIx64";\n", (*bbi)->get_address(), *si);
+                if (target_func==func) {
+                    sout <<"    B" <<addrToString((*bbi)->get_address())
+                         <<" -> B" <<addrToString(*si);
+                    if (*si!=fall_through_va)
+                        sout <<" [ color=orange ]"; /* black for fall-through; orange for other */
+                    sout <<";\n";
+                }
             }
         }
-        fprintf(out, "  };\n"); /*subgraph*/
+        sout <<"  };\n"; /*subgraph*/
     } else {
-        fprintf(out, "B%s [ %s, %s ];\n", node_name, label_attr.c_str(), function_url_attr(func).c_str());
+        sout <<"B" <<addrToString(func->get_entry_va())
+             <<" [ " <<label_attr <<", " <<function_url_attr(func) <<" ];\n";
     }
-    return std::string("B") + node_name;
+    return std::string("B") + addrToString(func->get_entry_va());
 }
 
 /* Create a graphvis *.dot file of the control-flow graph for the specified function, along with the call graph edges into and
@@ -165,15 +333,18 @@ dump_function_node(FILE *out, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bo
 static void
 dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, BinaryCG &cg)
 {
+    using namespace StringUtility;
+
     char func_node_name[64];
     sprintf(func_node_name, "F%08"PRIx64, func->get_entry_va());
     fprintf(stderr, " %s", func_node_name);
     FILE *out = fopen((fileprefix+"-"+func_node_name+".dot").c_str(), "w");
     ROSE_ASSERT(out!=NULL);
-    fprintf(out, "digraph %s {\n", func_node_name);
-    fprintf(out, "  node [ shape = box ];\n");
+    std::stringstream sout;
+    sout <<"digraph " <<func_node_name <<" {\n"
+         <<"  node [ shape = box ];\n";
 
-    std::string my_node = dump_function_node(out, func, cfg, true);
+    std::string my_node = dump_function_node(sout, func, cfg, true);
     Disassembler::AddressSet node_defined;      /* nodes (virtual addresses) that we've defined in this graph so far */
     node_defined.insert(func->get_entry_va());
 
@@ -190,14 +361,15 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
                 SgAsmBlock *dst_bb = cfg.block(dst_addr);
                 SgAsmFunctionDeclaration *dst_func = dst_bb ? isSgAsmFunctionDeclaration(dst_bb->get_parent()) : NULL;
                 if (dst_func) {
-                    dump_function_node(out, dst_func, cfg, false);
+                    dump_function_node(sout, dst_func, cfg, false);
                 } else {
                     /* Node is not present in the CFG, so print a "B" (block) node rather than an "F" (function) node. */
-                    fprintf(out, "B%08"PRIx64" [ style=filled, color=lightpink ];\n", dst_addr);
+                    sout <<"B" <<addrToString(dst_addr) <<" [ style=filled, color=lightpink ];\n";
                 }
                 node_defined.insert(dst_addr);
             }
-            fprintf(out, "B%08"PRIx64" -> B%08"PRIx64";\n", src_bb->get_address(), dst_addr);
+            sout <<"B" <<addrToString(src_bb->get_address()) <<" -> B" <<addrToString(dst_addr)
+                 <<" [ color=blue ];\n";
         }
     }
 
@@ -208,15 +380,17 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
             SgAsmFunctionDeclaration *src_func = ei->first;
             rose_addr_t src_addr = src_func->get_entry_va();
             if (node_defined.find(src_addr)==node_defined.end()) {
-                dump_function_node(out, src_func, cfg, false);
+                dump_function_node(sout, src_func, cfg, false);
                 node_defined.insert(src_addr);
             }
-            fprintf(out, "B%08"PRIx64" -> B%08"PRIx64" [ label=\"%zu call%s\" ];\n",
-                    src_addr, func->get_entry_va(), ei->second, 1==ei->second?"":"s");
+            sout <<"B" <<addrToString(src_addr)
+                 <<" -> B" <<addrToString(func->get_entry_va())
+                 <<" [ color=blue, label=\"" <<ei->second <<" call" <<(1==ei->second?"":"s") <<"\" ];\n";
         }
     }
 
-    fprintf(out, "}\n"); /*digraph*/
+    sout <<"}\n";
+    fputs(sout.str().c_str(), out);
     fclose(out);
 }
 
@@ -224,6 +398,8 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
 static void
 dump_CFG_CG(SgNode *ast)
 {
+    using namespace StringUtility;
+
     std::vector<SgAsmFunctionDeclaration*> funcs = SageInterface::querySubTree<SgAsmFunctionDeclaration>
                                                    (ast, V_SgAsmFunctionDeclaration);
 
@@ -249,13 +425,14 @@ dump_CFG_CG(SgNode *ast)
     fprintf(stderr, "  generating: cg");
     FILE *out = fopen((filename+"-cg.dot").c_str(), "w");
     ROSE_ASSERT(out);
-    fprintf(out, "digraph callgraph {\n");
-    fprintf(out, "node [ shape = box ];\n");
+    std::stringstream sout;
+    sout <<"digraph callgraph {\n"
+         <<"node [ shape = box ];\n";
     for (BinaryCG::CallerMap::const_iterator i1=cg.caller_edges.begin(); i1!=cg.caller_edges.end(); ++i1) {
         SgAsmFunctionDeclaration *caller = i1->first;
         if (cg_defined_nodes.find(caller->get_entry_va())==cg_defined_nodes.end()) {
             cg_defined_nodes.insert(caller->get_entry_va());
-            dump_function_node(out, caller, cfg, false);
+            dump_function_node(sout, caller, cfg, false);
         }
         typedef std::map<rose_addr_t/*callee_addr*/, size_t/*count*/> CalleeCounts;
         CalleeCounts callee_counts;
@@ -269,16 +446,17 @@ dump_CFG_CG(SgNode *ast)
                 SgAsmBlock *callee_bb = cfg.block(callee_addr);
                 SgAsmFunctionDeclaration *callee_func = callee_bb ? isSgAsmFunctionDeclaration(callee_bb->get_parent()) : NULL;
                 if (callee_func) {
-                    dump_function_node(out, callee_func, cfg, false);
+                    dump_function_node(sout, callee_func, cfg, false);
                 } else {
-                    fprintf(out, "  B%08"PRIx64" [ style=filled, color=lightpink ];\n", callee_addr);
+                    sout <<"  B" <<addrToString(callee_addr) <<" [ style=filled, color=lightpink ];\n";
                 }
             }
-            fprintf(out, "  B%08"PRIx64" -> B%08"PRIx64" [ label=\"%zu\" ];\n",
-                    caller->get_entry_va(), callee_addr, cci->second);
+            sout <<"  B" <<addrToString(caller->get_entry_va()) <<" -> B" <<addrToString(callee_addr)
+                 <<" [ label=\"" <<cci->second <<"\" ];\n";
         }
     }
-    fprintf(out, "}\n");
+    sout <<"}\n";
+    fputs(sout.str().c_str(), out);
     fclose(out);
     
     /* Generate a dot file for each function */
@@ -301,6 +479,7 @@ main(int argc, char *argv[])
     bool do_quiet = false;
     bool do_skip_dos = false;
     bool do_show_extents = false;
+    bool do_show_coverage = false;
     bool do_show_functions = false;
     int exit_status = 0;
 
@@ -325,6 +504,8 @@ main(int argc, char *argv[])
             do_skip_dos = true;
         } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
             show_bad = true;
+        } else if (!strcmp(argv[i], "--show-coverage")) {       /* show disassembly coverage */
+            do_show_coverage = true;
         } else if (!strcmp(argv[i], "--show-functions")) {      /* show function summary */
             do_show_functions = true;
         } else if (!strcmp(argv[i], "--show-extents")) {        /* show parts of file that were not disassembled */
@@ -340,6 +521,15 @@ main(int argc, char *argv[])
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--quiet")) {               /* do not emit instructions to stdout */
             do_quiet = true;
+        } else if (i+2<argc && CommandlineProcessing::isOptionTakingThirdParameter(argv[i])) {
+            printf("switch and args passed along to ROSE proper: %s %s %s\n", argv[i], argv[i+1], argv[i+2]);
+            new_argv[new_argc++] = argv[i++];
+            new_argv[new_argc++] = argv[i++];
+            new_argv[new_argc++] = argv[i];
+        } else if (i+1<argc && CommandlineProcessing::isOptionTakingSecondParameter(argv[i])) {
+            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
+            new_argv[new_argc++] = argv[i++];
+            new_argv[new_argc++] = argv[i];
         } else if (argv[i][0]=='-') {
             printf("switch passed along to ROSE proper: %s\n", argv[i]);
             new_argv[new_argc++] = argv[i];
@@ -356,6 +546,8 @@ main(int argc, char *argv[])
     assert(interps.size()>0);
     for (size_t i=0; i<interps.size(); i++) {
         SgAsmInterpretation *interp = isSgAsmInterpretation(interps[i]);
+        SgFile *file = SageInterface::getEnclosingFileNode(interp);
+        ROSE_ASSERT(file);
 
         /* Should we skip this interpretation? */
         if (do_skip_dos) {
@@ -377,26 +569,34 @@ main(int argc, char *argv[])
 
         /* Set the disassembler instruction searching heuristics from the "-rose:disassembler_search" switch as stored
          * in the SgFile node containing this interpretation. */
-        SgNode *file = interp;
-        while (file && !isSgFile(file)) file = file->get_parent();
-        ROSE_ASSERT(file);
-        d->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
+        d->set_search(file->get_disassemblerSearchHeuristics());
 
-        /* Build the instruction partitioner and set its search heuristics based on the "-rose:partitioner_search" switch as
-         * stored in the SgFile node containing this interpretation. */
+        /* Build the instruction partitioner and initialize it based on the -rose:partitioner_search and
+         * -rose:partitioner_confg switches as stored in the SgFile node containing this interpretation. */
         Partitioner *p = new Partitioner();
         if (do_debug_partitioner)
             p->set_debug(stderr);
-        p->set_search(isSgFile(file)->get_partitionerSearchHeuristics());
+        p->set_search(file->get_partitionerSearchHeuristics());
+        p->set_config(file->get_partitionerConfigurationFileName());
         d->set_partitioner(p);
 
-        /* Disassemble instructions, linking them into the interpretation */
+        /* Disassemble instructions, linking them into the interpretation. Passing the BadMap as the third argument of
+         * disassemble() causes the disassembler to not throw exceptions. However, the partitioner might still throw an
+         * exception if it cannot parse the configuration file. */
         Disassembler::BadMap bad;
-        d->disassemble(interp, NULL, &bad);
+        try {
+            d->disassemble(interp, NULL, &bad);
+        } catch (const Partitioner::IPDParser::Exception &e) {
+            std::cerr <<e <<"\n";
+            exit(1);
+        }
+
+        /* Show disassembly if requested. */
         if (do_show_functions)
             ShowFunctions().show(interp);
         if (!do_quiet) {
-            fputs(unparseAsmInterpretation(interp).c_str(), stdout);
+            MyAsmUnparser unparser;
+            unparser.unparse(std::cout, interp);
             fputs("\n\n", stdout);
         }
 
@@ -418,12 +618,18 @@ main(int argc, char *argv[])
         printf("used this memory map:\n");
         interp->get_map()->dump(stdout, "    ");
 
-        /* Figure out what part of the memory mapping does not have instructions. */
-        if (do_show_extents) {
+        /* Figure out what part of the memory mapping does not have instructions. We do this by getting the extents (in
+         * virtual address space) for the memory map used by the disassembler, then subtracting out the bytes referred to by
+         * each instruction.  We cannot just take the sum of the sizes of the sections minus the sum of the sizes of
+         * instructions because (1) sections may overlap in the memory map and (2) instructions may overlap in the virtual
+         * address space.
+         *
+         * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
+         * total number of bytes represented in the disassembly memory map. Although this is stored in the AST, we don't
+         * actually use it anywhere. */
+        if (do_show_extents || do_show_coverage) {
             ExtentMap extents=interp->get_map()->va_extents();
-
-         // DQ (4/29/2010): Adding support for computing coverage of disassembled functions over the lenghts of sections where we attempt to disassemble functions.
-            double extendSizeBefore = (double) extents.size();
+            size_t disassembled_map_size = extents.size();
 
             std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
             for (size_t j=0; j<insns.size(); j++) {
@@ -431,15 +637,17 @@ main(int argc, char *argv[])
                 extents.erase(insn->get_address(), insn->get_raw_bytes().size());
             }
             size_t unused = extents.size();
-            if (unused>0) {
+            if (do_show_extents && unused>0) {
                 printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
                 extents.dump_extents(stdout, "    ", NULL, 0);
             }
 
-         // DQ (4/29/2010): Adding support for computing coverage of disassembled functions over the lenghts of sections where we attempt to disassemble functions.
-            double extendSizeAfter = (double) unused;
-            interp->set_percentageCoverage(extendSizeBefore/extendSizeAfter);
-            interp->set_coverageComputed(true);
+            if (do_show_coverage && disassembled_map_size>0) {
+                double disassembled_coverage = 100.0 * (disassembled_map_size - unused) / disassembled_map_size;
+                interp->set_percentageCoverage(disassembled_coverage);
+                interp->set_coverageComputed(true);
+                printf("Disassembled coverage: %0.1f%%\n", disassembled_coverage);
+            }
         }
 
         /* Generate dot files */
@@ -499,7 +707,29 @@ main(int argc, char *argv[])
         delete d;
     }
 
+    if (SMTSolver::total_calls>0)
+        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
+
+    /* Generate a *.dump file in the current directory. Note that backend() also currently [2010-07-21] generates this *.dump
+     * file, but it does so after giving sections an opportunity to reallocate themselves.   We want the dump to contain the
+     * original data, prior to any normalizations that might occur, so we generate the dump here explicitly. */
+    struct T1: public SgSimpleProcessing {
+        void visit(SgNode *node) {
+            SgAsmGenericFile *file = isSgAsmGenericFile(node);
+            if (file)
+                file->dump_all(true, ".dump");
+        }
+    };
+    printf("generating ASCII dump...\n");
+    T1().traverse(project, preorder);
+
+#if 0
     printf("running back end...\n");
     int ecode = backend(project);
     return ecode>0 ? ecode : exit_status;
+#endif
+
+    return 0;
 }
+
+#endif

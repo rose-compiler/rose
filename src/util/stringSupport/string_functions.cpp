@@ -2,11 +2,14 @@
 // the automake manual request that we use <> instead of ""
 #include <rose_config.h>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
 
 // DQ (1/21/2010): Use this to turn off the use of #line in ROSETTA generated code.
-// #define SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+#define SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
 
 
 #if !ROSE_MICROSOFT_OS
@@ -473,6 +476,14 @@ StringUtility::numberToString ( double x )
      char numberString[128];
      sprintf (numberString,"%2.2f",x);
   // printf ("numberString = %s \n",numberString);
+     return string(numberString);
+   }
+
+string
+StringUtility::addrToString( uint64_t x )
+   {
+     char numberString[128];
+     sprintf(numberString, "0x%08"PRIx64, x);
      return string(numberString);
    }
 

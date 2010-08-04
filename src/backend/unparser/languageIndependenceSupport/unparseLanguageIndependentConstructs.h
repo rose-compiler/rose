@@ -86,6 +86,7 @@ class UnparseLanguageIndependentConstructs
 
 #if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
 
+// DQ (5/6/2010): Actually we watn to keep this code since we will return to using this implementation soon!
 #error "DEAD CODE!: I think this is OLD code that can be removed."
 
       //! functions that unparses directives and/or comments

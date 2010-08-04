@@ -3,12 +3,16 @@
 #define __STDC_FORMAT_MACROS
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include <inttypes.h>
+
 #include "Partitioner.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
-#include "unparseAsm.h"
-#include <inttypes.h>
+#include "AsmUnparser_compat.h"
 #include "VirtualMachineSemantics.h"
+
+#include <errno.h>
+#include <fcntl.h>
 
 /* See header file for full documentation. */
 
@@ -35,13 +39,15 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
     }
 }
 
+/** Returns reason string for this function. */
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad) const
 {
     return reason_str(do_pad, get_reason());
 }
 
-/* Class method */
+/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
+ *  SgAsmFunctionDeclaration::FunctionReason bits. */
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 {
@@ -76,7 +82,7 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 
 
 
-/* Parse argument for "-rose:partitioner" command-line swich */
+/* Parse argument for "-rose:partitioner_search" command-line swich. */
 unsigned
 Partitioner::parse_switches(const std::string &s, unsigned flags)
 {
@@ -148,116 +154,173 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-/* Return known successors of basic block and cache them. */
-const Disassembler::AddressSet&
-Partitioner::successors(BasicBlock *bb, bool *complete)
+/** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
+ *  results only depend on the specified block and which are valid into the future as long as the instructions in the block do
+ *  not change. */
+void
+Partitioner::update_analyses(BasicBlock *bb)
 {
-    if (bb->insns.size()!=bb->sucs_ninsns || bb->insns.front()->get_address()!=bb->sucs_first_va) {
-        /* Compute successors from scratch. */
-        bb->sucs.clear();
-        bb->sucs = bb->insns.front()->get_successors(bb->insns, &(bb->sucs_complete));
+    ROSE_ASSERT(bb!=NULL && !bb->insns.empty());
+    if (bb->valid_cache()) return;
 
-        /* If the last instruction of a block is an x86 CALL or FARCALL instruction then this is probably a function call.
-         * However, if we can determine the address of the called block and that block appears to pop the return address off
-         * the stack, then treat this CALL/FARCALL instruction as an unconditional branch. */
-        rose_addr_t call_target = NO_TARGET;
-        if (bb->is_function_call(&call_target) && call_target!=NO_TARGET && pops_return_address(call_target)) {
-            bb->sucs.clear();
-            bb->sucs.insert(call_target);
-            bb->sucs_complete = true;
-        }
+    /* Successor analysis */
+    bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete));
 
-        bb->sucs_ninsns = bb->insns.size();
-        bb->sucs_first_va = bb->insns.front()->get_address();
-    }
-    if (complete)
-        *complete = bb->sucs_complete;
-    return bb->sucs;
+    /* Call target analysis */
+    bb->cache.call_target = NO_TARGET;
+    bb->cache.is_function_call = bb->insns.front()->is_function_call(bb->insns, &(bb->cache.call_target));
+    if (!bb->cache.is_function_call)
+        bb->cache.call_target = NO_TARGET;
+
+    /* Function return analysis */
+    bb->cache.function_return = !bb->cache.sucs_complete &&
+                                bb->insns.front()->is_function_return(bb->insns);
+
+    bb->validate_cache();
 }
 
-/* Returns true if the basic block at the specified virtual address appears to discard the return address from the top of the
- * stack.
+/** Returns known successors of a basic block.
+ *
+ *  There are two types of successor analyses:  one is an analysis that depends only on the instructions of the basic block
+ *  for which successors are being calculated.  It is safe to cache these based on properties of the block itself (e.g., the
+ *  number of instructions in the block).
+ *
+ *  The other category is analyses that depend on other blocks, such as determining whether the target of an x86 CALL
+ *  instruction returns to the instruction after the CALL site.  The results of these analyses cannot be cached at the block
+ *  that needs them and must be recomputed for each call.  However, they can be cached at either the block or function that's
+ *  analyzed, so recomputing them here in this block is probably not too expensive.
+ *
+ *  All successor addresses are translated according to the alias_for links in existing blocks via calls to canonic_block(). */
+Disassembler::AddressSet
+Partitioner::successors(BasicBlock *bb, bool *complete)
+{
+    update_analyses(bb); /*make sure cache is current*/
+
+    /* Follow alias_for links. */
+    Disassembler::AddressSet retval;
+    for (Disassembler::AddressSet::const_iterator si=bb->cache.sucs.begin(); si!=bb->cache.sucs.end(); ++si)
+        retval.insert(canonic_block(*si));
+    if (complete) *complete = bb->cache.sucs_complete;
+
+    /* Run non-local analyses if necessary. These are never cached here in this block. */
+
+    /* If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
+     * successor. */
+    if (bb->cache.is_function_call) {
+        rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size());
+        rose_addr_t call_target_va = call_target(bb);
+        if (call_target_va!=NO_TARGET) {
+            BasicBlock *target_bb = find_bb_containing(call_target_va, false);
+            if (target_bb && target_bb->function && target_bb->function->returns)
+                retval.insert(fall_through_va);
+        } else {
+            retval.insert(fall_through_va); /*true 99% of the time*/
+        }
+    }
+
+    return retval;
+}
+
+/** Returns call target if block could be a function call. If the specified block looks like it could be a function call
+ *  (using only local analysis) then return the call target address.  If the block does not look like a function call or the
+ *  target address cannot be statically computed, then return Partitioner::NO_TARGET. */
+rose_addr_t
+Partitioner::call_target(BasicBlock *bb)
+{
+    update_analyses(bb); /*make sure cache is current*/
+    if (bb->cache.call_target==NO_TARGET) return NO_TARGET;
+    return canonic_block(bb->cache.call_target);
+}
+
+/* Returns true if the basic block at the specified virtual address appears to pop the return address from the top of the
+ * stack without returning.
  *
  * FIXME: This is far from perfect: it analyzes only the first basic block; it may have incomplete information about where the
  *        basic block ends due to not yet having discovered all incoming CFG edges; it doesn't consider cases where the return
- *        value is popped but saved and restored later; etc. */
+ *        value is popped but saved and restored later; etc.  It also only handles x86 instructions at this time.
+ *        [RPM 2010-04-30] */
 bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
-    bool retval = false;
-    typedef X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> Semantics;
-    static const uint64_t wordsize=4; /*FIXME: instruction semantics are only for 32-bit code for now, so this is ok*/
-    bool preexisting = insn2block[va]!=NULL;
-    BasicBlock* target_block = find_bb_containing(va);
-    SgAsmx86Instruction* last_insn = target_block ? isSgAsmx86Instruction(target_block->last_insn()) : NULL;
+    bool on_stack = true; /*assume return value stays on stack; prove otherwise*/
 
-    /* Analyze the block */
-    if (last_insn && last_insn->get_kind()!=x86_ret) {
+    /* Create the basic block if possible, but if we created it here then we should clear it below. */
+    BasicBlock *bb = find_bb_containing(va, false);
+    bool preexisting = bb!=NULL;
+    if (!bb) bb = find_bb_containing(va);
+    if (!bb) return false;
+    try {
+
+        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
+
+        typedef VirtualMachineSemantics::Policy Policy;
+        typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+        Policy policy;
+        VirtualMachineSemantics::ValueType<32> orig_retaddr;
+        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
+        Semantics semantics(policy);
+
+#if 0
+        fputs("Partitioner::pops_return_address:\n", stderr);
+#endif
         try {
-            VirtualMachineSemantics::Policy policy;
-            Semantics semantics(policy);
-            VirtualMachineSemantics::ValueType<32> origsp = policy.readGPR(x86_gpr_sp);
-            for (size_t i=0; i<target_block->insns.size(); i++) {
-                SgAsmx86Instruction* insn = isSgAsmx86Instruction(target_block->insns[i]);
+            for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+                if (!insn) return false;
+                if (insn==last_insn && insn->get_kind()==x86_ret) break;
                 semantics.processInstruction(insn);
 #if 0
                 std::ostringstream s;
                 s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.state
-                  <<"    ip = " <<policy.readIP() <<"\n";
+                  <<policy.get_state()
                 fputs(s.str().c_str(), stderr);
 #endif
             }
-            if (policy.readGPR(x86_gpr_sp)==policy.add(origsp, policy.number<32>(wordsize))) {
-                retval = true;
-            } else if (last_insn->get_kind()==x86_call && policy.readGPR(x86_gpr_sp)==origsp) {
-                retval = true;
-            }
-        } catch(const Semantics::Exception&) {
-            /* Abandon entire block. Assume block does not pop return address. */
+            on_stack = policy.on_stack(orig_retaddr);
+            if (!on_stack && debug)
+                fprintf(debug, "[B%08"PRIx64" discards return address]", va);
+        } catch (const Semantics::Exception&) {
+            /*void*/
+        } catch (const Policy::Exception&) {
+            /*void*/
         }
+        
+    } catch(...) {
+        if (!preexisting)
+            discard(bb);
+        throw;
     }
-    
+
     /* We don't want to have a basic block created just because we did some analysis. */
     if (!preexisting)
-        discard(target_block);
+        discard(bb);
 
-    if (retval && debug)
-        fprintf(debug, "[B%08"PRIx64" discards return address]", va);
-
-    return retval;
+    /* Is the original return value still on the stack? */
+    return !on_stack;
 }
 
 Partitioner::BasicBlock*
 Partitioner::discard(BasicBlock *bb)
 {
     if (bb!=NULL) {
+        /* Erase the block from the list of known blocks. */
+        BasicBlocks::iterator bbi=blocks.find(address(bb));
+        ROSE_ASSERT(bbi!=blocks.end());
+        ROSE_ASSERT(bbi->second==bb);
+        blocks.erase(bbi);
+
+        /* Erase the instruction-to-block link in the insn2block map. */
         for (size_t i=0; i<bb->insns.size(); ++i) {
             SgAsmInstruction *insn = bb->insns[i];
             std::map<rose_addr_t, BasicBlock*>::iterator bbi = insn2block.find(insn->get_address());
             ROSE_ASSERT(bbi!=insn2block.end());
             ROSE_ASSERT(bbi->second==bb);
-            bbi->second = NULL; /*faster than erasing*/
+            bbi->second = NULL; /*much faster than erasing, as determined by real testing*/
         }
+
+        delete bb;
     }
-    delete bb;
     return NULL;
-}
-
-size_t Partitioner::BasicBlock::nblocks;
-
-/* Returns true if block ends with what appears to be a function call. Don't modify @p target if this isn't a function call. */
-bool
-Partitioner::BasicBlock::is_function_call(rose_addr_t *target)
-{
-    if (insns.size()==0)
-        return false;
-    rose_addr_t va;
-    if (insns.front()->is_function_call(insns, &va)) {
-        *target = va;
-        return true;
-    }
-    return false;
 }
 
 /* Returns instruction with highest address */
@@ -268,7 +331,7 @@ Partitioner::BasicBlock::last_insn() const
     return insns.back();
 }
 
-/* Release all blocks from a function. */
+/* Release all blocks from a function. Do not delete the blocks. */
 void
 Partitioner::Function::clear_blocks()
 {
@@ -277,7 +340,7 @@ Partitioner::Function::clear_blocks()
     blocks.clear();
 }
 
-/* Return block with highest address */
+/* Return this function's block having the highest address. */
 Partitioner::BasicBlock *
 Partitioner::Function::last_block() const
 {
@@ -298,18 +361,34 @@ Partitioner::clear()
     }
     functions.clear();
 
-    /* Delete all basic blocks */
-    std::set<BasicBlock*> blocks;
-    for (std::map<rose_addr_t, BasicBlock*>::const_iterator ibi=insn2block.begin(); ibi!=insn2block.end(); ++ibi) {
-        if (ibi->second)
-            blocks.insert(ibi->second);
-    }
-    for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
-        delete *bi;
+    /* Delete all basic blocks. We don't need to call Partitioner::discard() to fix up ptrs because all functions that might
+     * have pointed to this block have already been deleted, and the insn2block map has also been cleared. */
     insn2block.clear();
+    for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
+        delete bi->second;
+    blocks.clear();
 
     /* Release (do not delete) all instructions */
     insns.clear();
+
+    /* Read configuration file (avoid mmap due to Windows support) */
+    if (!config_file_name.empty()) {
+#ifndef _MSC_VER
+		// tps (06/23/2010) : Does not work under Windows
+        int fd = open(config_file_name.c_str(), O_RDONLY);
+        if (fd<0)
+            throw IPDParser::Exception(strerror(errno), config_file_name);
+        struct stat sb;
+        fstat(fd, &sb);
+        char *config = new char[sb.st_size];
+        ssize_t nread = read(fd, config, sb.st_size);
+        if (nread<0 || nread<sb.st_size)
+            throw IPDParser::Exception(strerror(errno), config_file_name);
+        IPDParser(this, config, sb.st_size, config_file_name).parse();
+        delete[] config;
+        close(fd);
+#endif
+    }
 }
 
 /* Return address of first instruction of basic block */
@@ -360,9 +439,33 @@ Partitioner::append(Function* f, BasicBlock *bb)
 {
     ROSE_ASSERT(f);
     ROSE_ASSERT(bb);
+    if (bb->function==f) return;
     ROSE_ASSERT(bb->function==NULL);
     bb->function = f;
     f->blocks[address(bb)] = bb;
+
+    /* If the block is a function return then mark the function as returning.  On a transition from a non-returning function
+     * to a returning function, we must mark all calling functions as pending so that the fall-through address of their
+     * function calls to this function are eventually discovered.  This includes recursive calls since we may have already
+     * discovered the recursive call but not followed the fall-through address. */
+    update_analyses(bb);
+    if (bb->cache.function_return && !f->returns) {
+        f->returns = true;
+        if (debug) fprintf(debug, "[returns-to");
+        for (BasicBlocks::iterator bbi=blocks.begin(); bbi!=blocks.end(); ++bbi) {
+            if (bbi->second->function!=NULL) {
+                const Disassembler::AddressSet &sucs = successors(bbi->second, NULL);
+                for (Disassembler::AddressSet::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                    if (*si==f->entry_va) {
+                        if (debug) fprintf(debug, " F%08"PRIx64, bbi->second->function->entry_va);
+                        bbi->second->function->pending = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (debug) fprintf(debug, "]");
+    }
 }
 
 /* Remove a basic block from a function */
@@ -376,13 +479,32 @@ Partitioner::remove(Function* f, BasicBlock* bb)
     f->blocks.erase(address(bb));
 }
 
-/* Find (or create) a basic block containing the specified instruction address. The address is assumed to be an instruction
- * boundary, not an arbitrary address. Returns null if there is no instruction at the specified address. */
+/** Finds a basic block containing the specified instruction address. If no basic block exists and @p create is set, then a
+ *  new block is created which starts at the specified address.  The return value, in the case when a block already exists,
+ *  may be a block where the specified virtual address is either the beginning of the block or somewhere inside the block. In
+ *  any case, the virtual address will always represent a function.
+ *
+ *  If no instruction can be found at the specified address then no block is created and a null pointer is returned.
+ *
+ *  Blocks are created by adding the initial instruction to the block, then repeatedly attempting to add more instructions as
+ *  follows: if the block successors can all be statically determined, and there is exactly one successor, and that successor
+ *  is not already part of a block, then the successor is appended to the block.
+ *
+ *  Block creation is recursive in nature since the computation of a (partial) block's successors might require creation of
+ *  other blocks. Consider the case of an x86 CALL instruction:  after a CALL is appended to a block, the successors are
+ *  calculated by looking at the target of the CALL. If the target is known and it can be proved that the target block
+ *  (recursively constructed) discards the return address, then the fall-through address of the CALL is not a direct
+ *  successor.
+ *
+ *  See also, set_allow_discontiguous_blocks().
+ */
 Partitioner::BasicBlock *
-Partitioner::find_bb_containing(rose_addr_t va)
+Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 {
     if (insn2block[va]!=NULL)
         return insn2block[va];
+    if (!create)
+        return NULL;
 
     BasicBlock *bb = NULL;
     while (1) {
@@ -392,27 +514,69 @@ Partitioner::find_bb_containing(rose_addr_t va)
         if (insn2block[va]!=NULL)
             break; /*we've reached another block*/
         SgAsmInstruction *insn = ii->second;
-        va += insn->get_raw_bytes().size();
-        if (!bb)
+        if (!bb) {
             bb = new BasicBlock;
+            blocks.insert(std::make_pair(va, bb));
+        }
         append(bb, insn);
-        if (insn->terminatesBasicBlock()) {
+        va += insn->get_raw_bytes().size();
+        if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
-#if 0 /*basic blocks contiguous in memory*/
-            if (!complete || sucs.size()!=1 || *(sucs.begin())!=va)
-                break;
-#else /*basic blocks not contigiguous in memory*/
-            if (!complete || sucs.size()!=1)
-                break;
-            va = *(sucs.begin());
-#endif
+            if (allow_discont_blocks) {
+                if (!complete || sucs.size()!=1)
+                    break;
+                va = *(sucs.begin());
+            } else {
+                if (!complete || sucs.size()!=1 || *(sucs.begin())!=va)
+                    break;
+            }
         }
     }
     ROSE_ASSERT(!bb || bb->insns.size()>0);
     return bb;
 }
 
+/** Makes sure the block at the specified address exists.  This is similar to find_bb_containing() except it makes sure that
+ *  @p va starts a new basic block if it was previously in the middle of a block.  If an existing block had to be truncated to
+ *  start this new block then the original block's function is marked as pending rediscovery. */
+Partitioner::BasicBlock *
+Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
+{
+    BasicBlock *bb = find_bb_containing(va, create);
+    if (!bb)
+        return NULL;
+    if (va==address(bb))
+        return bb;
+    if (!create)
+        return NULL;
+    if (debug)
+        fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
+    if (bb->function!=NULL)
+        bb->function->pending = true;
+    truncate(bb, va);
+    bb = find_bb_containing(va);
+    ROSE_ASSERT(bb!=NULL);
+    ROSE_ASSERT(va==address(bb));
+    return bb;
+}
+
+/** Folows alias_for links in basic blocks. The input value is the virtual address of a basic block (which need not exist). We
+ *  recursively look up the specified block and follow its alias_for link until either the block does not exist or it has no
+ *  alias_for. */
+rose_addr_t
+Partitioner::canonic_block(rose_addr_t va)
+{
+    for (size_t i=0; i<100; i++) {
+        BasicBlock *bb = find_bb_starting(va, false);
+        if (!bb || !bb->cache.alias_for) return va;
+        if (debug) fprintf(debug, "[B%08"PRIx64"->B%08"PRIx64"]", va, bb->cache.alias_for);
+        va = bb->cache.alias_for;
+    }
+    ROSE_ASSERT(!"possible alias loop");
+}
+
+/* Adds or updates a function definition. */
 Partitioner::Function *
 Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string name)
 {
@@ -531,11 +695,19 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
             }
         }
         
-        add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+        Function *plt_func = add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+
+        /* FIXME: Assume that most PLT functions return. We make this assumption for now because the PLT table contains an
+         *        indirect jump through the .plt.got data area and we don't yet do static analysis of the data.  Because of
+         *        that, all the PLT functons will contain only a basic block with the single indirect jump, and no return
+         *        (e.g., x86 RET or RETF) instruction, and therefore the function would not normally be marked as returning.
+         *        [RPM 2010-05-11] */
+        if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
+            "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
+            "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name)
+            plt_func->returns = true;
     }
 }
-
-
 
 /* Use symbol tables to determine function entry points. */
 void
@@ -950,9 +1122,9 @@ void
 Partitioner::discover_first_block(Function *func) 
 {
     if (debug) {
-        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": ",
+        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64,
                 SgAsmFunctionDeclaration::reason_str(true, func->reason).c_str(),
-                func->entry_va, func->name.c_str());
+                func->entry_va, func->name.c_str(), func->entry_va);
     }
     BasicBlock *bb = find_bb_containing(func->entry_va);
 
@@ -982,10 +1154,8 @@ Partitioner::discover_first_block(Function *func)
 }
 
 /** Discover the basic blocks that belong to the current function. This function recursively adds basic blocks to function @p f
- *  by following the successors of each block.  Two types of successors are recognized: "call successors" are successors
- *  that invoke a function (on x86 this is usually a CALL instruction, see is_function_call()), and "flow control" successors
- *  that usually (but not always) branches within a single function.  If a successor is an instruction belonging to some other
- *  function then its either a function call (if it branches to the entry point of that function) or it's a collision.
+ *  by following the successors of each block.  If a successor is an instruction belonging to some other
+ *  function then it's either a function call (if it branches to the entry point of that function) or it's a collision.
  *  Collisions are resolved by discarding and rediscovering the blocks of the other function. */
 void
 Partitioner::discover_blocks(Function *f, rose_addr_t va)
@@ -993,7 +1163,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     if (debug) fprintf(debug, " B%08"PRIx64, va);
     Disassembler::InstructionMap::const_iterator ii = insns.find(va);
     if (ii==insns.end()) return; /* No instruction at this address. */
-    rose_addr_t call_target = NO_TARGET;
+    rose_addr_t target_va = NO_TARGET; /*target of function call instructions (e.g., x86 CALL and FARCALL)*/
 
     /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. This
      * can happen when a new function was discovered during the current pass. It can't happen for functions discovered in a
@@ -1004,84 +1174,74 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         return;
     }
 
-    BasicBlock *bb = find_bb_containing(va);
+    /* Find basic block at address, creating it if necessary. */
+    BasicBlock *bb = find_bb_starting(va);
     ROSE_ASSERT(bb!=NULL);
 
-    /* Truncate an existing basic block if necessary since basic blocks can have only one entry address. The block we
-     * truncated now probably has different successors. If it was part of a function, then we need to be sure to recalculate
-     * which basic blocks are part of that function (i.e., set that function's "pending" status).  If the function is the one
-     * we're currently working on, then our to-do list of outstanding blocks for this function (contained in various levels of
-     * the stack) are possibly outdated -- we abandon this function and try the whole thing again later. */
-    if (va!=address(bb)) {
-        if (debug) fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
-        truncate(bb, va);
-        if (bb->function!=NULL) bb->function->pending = true;
-        if (bb->function==f) {
+    /* If the current function has been somehow marked as pending then we might as well give up discovering its blocks because
+     * some of its blocks' successors may have changed.  This can happen, for instance, if the create_bb() called above had to
+     * split one of this function's blocks. */
+    if (f->pending) {
+        if (debug) fprintf(debug, " abandon");
+        throw AbandonFunctionDiscovery();
+    }
+
+    /* Don't reprocess blocks for this function. However, we need to reprocess the first block because it was added by
+     * discover_first_block(), which is not recursive.  Care should be taken so none of the recursive calls below are invoked
+     * for the first block, or we'll have infinite recurision! */
+    if (bb->function==f && address(bb)!=f->entry_va)
+        return;
+
+    if (bb->function && bb->function!=f) {
+        if (va==bb->function->entry_va) {
+            /* This is a call to some other existing function. Do not add it to the current function. */
+            if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
+        } else {
+            /* This block belongs internally to some other function. Since ROSE requires that blocks be owned by exactly one
+             * function (the function/block relationship is an edge in the abstract syntax tree), we have to remove this block
+             * from the other function.  We'll mark both the other function and this function as being in conflict and try
+             * again later. */
+            if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+            if (functions.find(va)==functions.end())
+                add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
+            bb->function->pending = f->pending = true;
             if (debug) fprintf(debug, " abandon");
             throw AbandonFunctionDiscovery();
         }
-        bb = find_bb_containing(va);
-        ROSE_ASSERT(bb!=NULL);
-        ROSE_ASSERT(va==address(bb));
-    }
-    
-    if (bb->function==f) {
-        /* Already processed unless this is the first block, in which case we should not add it to the function but should
-         * follow the successors. The first block was added with discover_first_block() but its successors were not originally
-         * followed. */
-        if (address(bb)==f->entry_va) {
-            const Disassembler::AddressSet& suc = successors(bb);
-            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-                if (*si!=f->entry_va)
-                    discover_blocks(f, *si);
-            }
-        }
-    } else if (bb->function && va==bb->function->entry_va) {
-        /* This is a call to an existing function. Do not add it to the current function. */
-        if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
-    } else if (bb->function) {
-        /* This block belongs to some other function. Since ROSE requires that blocks be owned by exactly one function (the
-         * function/block relationship is an edge in the abstract syntax tree), we have to remove this block from the other
-         * function.  We'll mark both the other function and this function as being in conflict and try again later. */
-        if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
-        if (functions.find(va)==functions.end())
-            add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
-        bb->function->pending = f->pending = true;
-        if (debug) fprintf(debug, " abandon");
-        throw AbandonFunctionDiscovery();
-    } else if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
-               bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
-        if (pops_return_address(call_target)) {
-            /* Although this looks like a function call from the perspective of the caller, the called block pops the
-             * return value off the stack and therefore we should treat the CALL instruction as an unconditional branch.
-             * We add this current block to the function and discovery continues at the branch target. */
-            if (debug) fprintf(debug, "[!call]");
-            append(f, bb);
-            discover_blocks(f, call_target);
+    } else if ((target_va=call_target(bb))!=NO_TARGET) {
+        /* Call to a known target */
+        if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
+
+        append(f, bb);
+        BasicBlock *target_bb = find_bb_containing(target_va);
+
+        /* Find the target function, optionally creating it or adding reason flags to it. */
+        Function *target_func = NULL;
+        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)) {
+            target_func = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
         } else {
-            /* This block appears to end with a function call. Add this block to the function and create a function at the
-             * call target.  If the target block is in the middle of the other function (i.e., not that function's entry
-             * block) then mark that function as pending so that the target block can be removed and that function's blocks
-             * rediscovered.  Discovery for this current function will continue with the non-called successors (usually just
-             * the fall-through address). */
-            if (debug) fprintf(debug, "[call F%08"PRIx64"]", call_target);
-            add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
-            BasicBlock *target_bb = find_bb_containing(call_target);
-            if (target_bb && target_bb->function && address(target_bb)!=target_bb->function->entry_va)
-                target_bb->function->pending = true;
-            append(f, bb);
-            const Disassembler::AddressSet& suc = successors(bb);
-            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-                if (*si!=call_target)
-                    discover_blocks(f, *si);
-            }
+            target_func = target_bb ? target_bb->function : NULL;
         }
+
+        /* If the call target is in the middle of some other existing function (i.e., not its entry address) then mark
+         * that function as pending so that the target block can be removed and the target function's blocks rediscovered.
+         * In other words, treat the target block as if it where a conflict like above. */
+        if (target_func && target_func!=f && target_va!=target_func->entry_va)
+            target_func->pending = true;
+        
+        /* Discovery continues at the successors. */
+        const Disassembler::AddressSet &suc = successors(bb);
+        for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
+            if (*si!=f->entry_va)
+                discover_blocks(f, *si);
+        }
+
     } else {
-        /* This block does not end with a function call. Add this block to the function and discover the successors. */
         append(f, bb);
         const Disassembler::AddressSet& suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
-            discover_blocks(f, *si);
+            if (*si!=f->entry_va)
+                discover_blocks(f, *si);
         }
     }
 }
@@ -1089,12 +1249,21 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
 void
 Partitioner::analyze_cfg()
 {
+    static const time_t progress_interval = 10;
+    time_t progress_time = time(NULL);
+    bool progress_emitted = false;
+
     for (size_t pass=0; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        fprintf(stderr, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-                pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
-                BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
+        if (debug || time(NULL)-progress_time > progress_interval) {
+            progress_time = time(NULL);
+            progress_emitted = true;
+            fprintf(debug?debug:stderr,
+                    "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                    pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                    blocks.size(), 1==blocks.size()?"":"s",
+                    blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
+        }
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -1128,10 +1297,13 @@ Partitioner::analyze_cfg()
             if (debug) fprintf(debug, "\n");
         }
     }
-    fprintf(stderr, "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-            functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-            BasicBlock::nblocks, 1==BasicBlock::nblocks?"":"s",
-            BasicBlock::nblocks?(int)(1.0*insn2block.size()/BasicBlock::nblocks+0.5):0);
+    if (debug || progress_emitted) {
+        fprintf(debug?debug:stderr,
+                "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                blocks.size(), 1==blocks.size()?"":"s",
+                blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
+    }
 }
 
 void

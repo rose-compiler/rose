@@ -47,7 +47,6 @@ test2001_27.C \
 test2001_28.C \
 test2001_29.C \
 test2002_01.C \
-test2003_01.C \
 test2003_02.C \
 test2003_03.C \
 test2003_04.C \
@@ -243,7 +242,6 @@ test2005_05.C \
 test2005_06.C \
 test2005_07.C \
 test2005_08.C \
-test2005_09.C \
 test2005_10.C \
 test2005_11.C \
 test2005_12.C \
@@ -334,7 +332,6 @@ test2005_100.C \
 test2005_101.C \
 test2005_102.C \
 test2005_103.C \
-test2005_104.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -550,10 +547,6 @@ test2006_151.C \
 test2006_152.C \
 test2006_153.C \
 test2006_154.C \
-test2006_155.C \
-test2006_156.C \
-test2006_157.C \
-test2006_158.C \
 test2006_159.C \
 test2006_160.C \
 test2006_161.C \
@@ -579,7 +572,6 @@ test2007_11.C \
 test2007_12.C \
 test2007_13.C \
 test2007_14.C \
-test2007_15.C \
 test2007_16.C \
 test2007_17.C \
 test2007_21.C \
@@ -677,6 +669,7 @@ test2010_03.C \
 test2010_04.C \
 test2010_05.C \
 test2010_06.C \
+test2010_18.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -686,7 +679,25 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 inputBug317.C \
-inputBug327.C
+inputBug327.C \
+test2003_01.C \
+test2005_09.C \
+test2005_104.C \
+test2006_155.C \
+test2006_156.C \
+test2006_157.C \
+test2006_158.C \
+test2007_15.C 
+
+# DQ (6/25/2010): Removed as part of testing!
+# test2003_01.C 
+# test2005_09.C 
+# test2005_104.C 
+# test2006_155.C 
+# test2006_156.C
+# test2006_157.C 
+# test2006_158.C 
+# test2007_15.C 
 
 OLD_LIST = test2009_20.C \
 test2009_30.C \

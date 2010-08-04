@@ -74,7 +74,7 @@ install(TARGETS rosehswrap ${INSTALL_TARGETS_DEFAULT_ARGS})
 #
 #run-genStubsAndWrappers-stamp: genStubsAndWrappers sage3.h.C rose.cabal.in headersWithoutLineDirective
 #	mkdir -p ROSE/Sage3/Methods
-#	./genStubsAndWrappers -DCAN_NOT_COMPILE_WITH_ROSE=true -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/sage3.h.C
+#	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/sage3.h.C
 #	touch $@
 #
 #librosehswrap_la_SOURCES = WrapROSE.C WrapSage3.C WrapCxxContainers.C

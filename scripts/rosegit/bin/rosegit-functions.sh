@@ -33,20 +33,21 @@ rosegit_elapsed_human () {
 
 # Configure certain environment variables:
 #   Adjust LD_LIBRARY_PATH so we can run executables without installing them and without going through the libtool shell script.
-#   This allows us to run debuggers on the uninstalled executables.
+#   This allows us to run debuggers on the uninstalled executables.  DYLD_LIBRARY_PATH is for Darwin.
 rosegit_environment () {
     [ -d "$ROSEGIT_SRC" ] || rosegit_die "no source directory"
     [ -d "$ROSEGIT_BLD" ] || rosegit_die "no build directory"
 
     if [ -d "$BOOST_ROOT" ]; then
 	type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/ /boost_)
-	[ -d "$BOOST_ROOT"] && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
+	[ -d "$BOOST_ROOT" ] && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
     fi
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/.libs"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/libltdl/.libs"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/3rdPartyLibraries/qrose/QRoseLib/.libs"
     export LD_LIBRARY_PATH
+    export DYLD_LIBRARY_PATH="$LD_LIBRARY_PATH"
 }
 
 # Filters output of GNU make(1) so that only parts where an error occurred are output. Reads stdin and writes to stdout using
@@ -179,6 +180,9 @@ rosegit_load_config_file () {
     else
 	echo -n "[no]"
     fi
+
+    # This variable is typically long and spans multiple lines. Change its value to a single line.
+    ROSEGIT_CONFIGURE=$(echo "$ROSEGIT_CONFIGURE" |tr '\n' ' ')
 }
 
 # Runs ROSEGIT_MAKE. Used by test scripts.
@@ -221,9 +225,11 @@ rosegit_preamble () {
 rosegit_show_environment () {
     echo "Date:              $(date)"
     echo "User:              $(whoami) [$(rosegit_namespace)] pid=$$"
-    echo "Machine:           $(hostname --long) [$(hostname --ip-address)]"
-    echo "Operating system:  $(uname -s) $(uname -r) $(uname -v)"
-    echo "Architecture:      $(uname -m) $(uname -i) $(uname -p)"
+    local hostname=$(hostname --long 2>/dev/null || hostname)
+    local hostip=$(hostname --ip-address 2>/dev/null || dig $hostname |grep "^$hostname" |head -n1 |cut -f5)
+    echo "Machine:           $hostname [$hostip]"
+    echo "Operating system:  $(uname -s) $(uname -r)"
+    echo "Architecture:      $(uname -m)"
     echo "Source tree:       $ROSEGIT_SRC"
     echo "Build tree:        $ROSEGIT_BLD"
     [ "$ROSEGIT_SRC" != "$ROSE_SRC" ] && echo "ROSE source tree:  $ROSE_SRC"
@@ -233,11 +239,11 @@ rosegit_show_environment () {
     echo "    $(gcc --version |head -n1)"
     echo "    $(g++ --version |head -n1)"
     echo "    $(bison --version |head -n1)"
-    echo "    doxygen $(doxygen --version)"
-    echo "    $(dot -V 2>&1)"
-    echo "    $(libtool --version |head -n1)"
-    echo "    $(tex --version |head -n1)"
-    echo "    $(latex --version |head -n1)"
+    echo "    doxygen $(doxygen --version 2>/dev/null || echo NOT INSTALLED)"
+    echo "    $(dot -V 2>&1 |grep version || echo dot NOT INSTALLED)"
+    echo "    libtool $((libtool --version || libtool -V) 2>/dev/null |head -n1)"
+    echo "    $((tex --version || echo tex NOT INSTALLED) 2>/dev/null |head -n1)"
+    echo "    $((latex --version || echo latex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $(swig -version |grep -i version)"
     if [ -f /usr/include/boost/version.hpp ]; then
 	echo "    boost (in /usr/include)" \
@@ -246,5 +252,5 @@ rosegit_show_environment () {
 	echo "    boost: not in /usr/include (see configure output for version)"
     fi
     echo "Configuration:"
-    eval "perl -e 'print qq{    \$_\n} for @ARGV' -- $ROSEGIT_CONFIGURE"
+    eval "perl -e 'print qq{    \$_\n} for sort {(split q{=},\$a)[0] cmp (split q{=},\$b)[0]} @ARGV' -- $ROSEGIT_CONFIGURE"
 }

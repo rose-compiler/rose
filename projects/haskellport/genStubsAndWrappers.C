@@ -1552,7 +1552,18 @@ int main( int argc, char * argv[] )
    {
      initCHsTypeMap();
 
-     SgProject* project = frontend(argc,argv);
+  // DQ (5/21/2010): Added macro to turn off the compilation of Wave when tools
+  // have to compile ROSE source codes (only effects required header files). This
+  // support avoids using the "USE_ROSE" macro which is reserved for ROSE internal 
+  // use. This fixes a bug that caused the Haskell support to break the nightly 
+  // tests of ROSE compiling ROSE using a slightly modified version of Wave that
+  // fixed problems were an issue only for EDG. A newer version of EDG should fix 
+  // this.
+  // SgProject* project = frontend(argc,argv);
+     vector<string> argvList(argv, argv + argc);
+     argvList.insert(argvList.begin() + 1, "-DROSE_SKIP_COMPILATION_OF_WAVE");
+     SgProject* project = frontend(argvList);
+
      Doxygen::annotate(project);
 
      ofstream stubs("ROSE/Sage3/Classes.hs");

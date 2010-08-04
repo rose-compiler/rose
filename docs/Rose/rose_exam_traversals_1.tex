@@ -1,0 +1,63 @@
+\chapter{Traversals (part 1)}
+
+  This chapter is about getting to use the AST traversals.
+First with the simple traversals (equivalent to the visitor
+pattern) and then with more useful traversals.
+
+% *******************************************************
+%                  Source Code Analysis
+% *******************************************************
+\section{Source Code Analysis}
+   This subsection is resticted to analysis of the input code
+and generating information about what is in the input source code.
+
+\subsection{Function Detection}
+   Write the ROSE based analysis tool to detect functions in the input source code
+and report the location in the file and the number of lines of code in each function.
+Use a traversal to do this exercise. See the tutorial for example code if required.
+
+% *******************************************************
+%               Source Code Transformation
+% *******************************************************
+\section{Source Code Transformations}
+   This subsection deals with transformations on the 
+input code and the generation of new code.
+
+\subsection{Fixup Uninitialized Variables}
+   Write the code required to use ROSE to define a translator
+that takes in any input C/C++/Fortran code and detect uninitialized
+variables and defines an appropriate initializer (where possible;
+structure initialization could be considered only more difficult).
+{\em (Extra points for structure initialization).}
+Hint: Use a post-order traversal.
+
+
+
+
+% *******************************************************
+%                  Binary Code Analysis
+% *******************************************************
+\section{Binary Code Analysis}
+   This subsection deals with analysis of the binary and the
+output of information about the binary.
+
+\subsection{Global Variable References}
+   Generate a translator that identifies all references to the data segment.
+Report there location and the offset into the data segment.
+
+
+
+% *******************************************************
+%               Binary Code Transformation
+% *******************************************************
+\section{Binary Code Transformations}
+   This subsection tests your ability to rewrite parts of the binary
+AST and regenerate the binary.  Note that depending on the transformation
+the resulting binary may or may not be executable.
+
+\subsection{Add a new Section}
+   Write a tool to add a new section to the binary (at the end of the
+binary) and write your name into the section.
+
+
+

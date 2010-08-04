@@ -7,7 +7,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
 #include "sage3basic.h"
 #include "RoseBin_DefUseAnalysis.h"
-#include "unparseAsm.h"
+#include "AsmUnparser_compat.h"
 
 using namespace std;
 
@@ -362,11 +362,13 @@ RoseBin_DefUseAnalysis::handleCopy(bool def,SgGraphNode* sgNode,
     if (RoseBin_support::DEBUG_MODE())
       cout << " DefCopy :: nrOfElements in oldTable : " << oldTable.size() << endl;
     // ---- */
-    if (g_algo->isValidCFGEdge(sgNode,sgNodeBefore))
-      if (def)
+    if (g_algo->isValidCFGEdge(sgNode,sgNodeBefore)) {
+      if (def) {
 	mapDefUnion(sgNodeBefore, NULL, sgNode);
-      else
-	mapUseUnion(sgNodeBefore, NULL, sgNode);
+      } else {
+        mapUseUnion(sgNodeBefore, NULL, sgNode);
+      }
+    }
     /* -- debug
     multitype dTable = getDefMultiMapFor(sgNode);
     if (RoseBin_support::DEBUG_MODE())
@@ -376,11 +378,13 @@ RoseBin_DefUseAnalysis::handleCopy(bool def,SgGraphNode* sgNode,
     // otherwise, it we have more than one in-edge, we union the maps
     //if (RoseBin_support::DEBUG_MODE())
     //  cout << " DefCopy :: inEdges > 1 : union of sgNodeBefore and sgNode. "  << endl;
-    if (g_algo->isValidCFGEdge(sgNode, sgNodeBefore))
-      if (def)
+    if (g_algo->isValidCFGEdge(sgNode, sgNodeBefore)) {
+      if (def) {
 	mapDefUnion(sgNodeBefore, NULL, sgNode);
-      else
-	mapUseUnion(sgNodeBefore, NULL, sgNode);
+      } else {
+        mapUseUnion(sgNodeBefore, NULL, sgNode);
+      }
+    }
 
     vector <SgGraphNode*> inNodes;
     getOtherInNode(inNodes, sgNode, sgNodeBefore);
@@ -388,11 +392,13 @@ RoseBin_DefUseAnalysis::handleCopy(bool def,SgGraphNode* sgNode,
     for (;it!=inNodes.end();++it) {
       SgGraphNode* otherInNode = *it;
       if (otherInNode!=NULL) {
-	if (g_algo->isValidCFGEdge(sgNode, otherInNode))
-	  if (def)
+	if (g_algo->isValidCFGEdge(sgNode, otherInNode)) {
+	  if (def) {
 	    mapDefUnion(sgNode, otherInNode, sgNode);
-	  else
+	  } else {
 	    mapUseUnion(sgNode, otherInNode, sgNode);
+          }
+        }
       } else {
 	cout << " !!!!!!! ERROR !!!!!!!!!   Other In Node is NULL ! " << endl;
       }

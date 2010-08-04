@@ -207,7 +207,7 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 // AS(012006) Added to support macros
 PreprocessingInfo::rose_macro_call*
 PreprocessingInfo::get_macro_call()
@@ -524,7 +524,7 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
 
    }
 
-#endif
+// #endif
 
 PreprocessingInfo::PreprocessingInfo()
    {
@@ -725,6 +725,9 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
              break;
           case FortranStyleComment:
              returnString = "FortranStyleComment";
+             break;
+          case F90StyleComment:
+             returnString = "F90StyleComment";
              break;
           case C_StyleComment:
              returnString = "C_StyleComment";
@@ -1632,7 +1635,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
 
        // DQ (12/16/2008): Added support fo tabs between "#" and the directive identifier.
        // Note that Fortran modes of CPP should not allow any whitespace here (at least for gfortran).
-          while (i < lineLength && (firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '\t') || firstNonBlankCharacter == '#')
+          while ((i < lineLength && (firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '\t')) || firstNonBlankCharacter == '#')
              {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
                printf ("Looping over # or white space between # and CPP directive i = %d \n",i);

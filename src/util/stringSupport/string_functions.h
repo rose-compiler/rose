@@ -132,6 +132,8 @@ namespace StringUtility
            std::string numberToString ( void* x );
        //! Convert a number to a string
            std::string numberToString ( double x );
+       //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.
+           std::string addrToString( uint64_t x );
 
        //! Formatting support for generated code strings
 	   std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );

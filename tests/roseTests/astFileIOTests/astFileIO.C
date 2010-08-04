@@ -92,7 +92,7 @@ main ( int argc, char * argv[] )
   // return 0;
 
 #if 1
-     std :: cout  << std::endl<< "Here we delete the memroy pools and prepare them for reading back the ast the file IO " << std::endl;
+     std :: cout  << std::endl<< "Here we delete the memory pools and prepare them for reading back the ast the file IO " << std::endl;
 
      AST_FILE_IO :: clearAllMemoryPools( );
 
@@ -110,7 +110,7 @@ main ( int argc, char * argv[] )
 #endif
 
 #if 0
-     std :: cout << "Staring AstTests ...... "   << flush;
+     std :: cout << "Starting AstTests ...... "   << flush;
      AstTests::runAllTests(project_test);
      std :: cout << "done "   << std::endl;
 #endif

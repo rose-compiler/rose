@@ -18,6 +18,9 @@ bool
 CheckIsModifiedFlagSupport(SgNode *node)
 {
     bool retval=false;
+
+#if 0
+ // DQ (7/21/2010): This appears to be consuming 8-9 Gig of memory for the case of ROSE compiling a large source file. 
     if (node->get_isModified()) {
         node->set_isModified(false);
         retval = true;
@@ -29,6 +32,7 @@ CheckIsModifiedFlagSupport(SgNode *node)
         if (cur && node==cur->get_parent() && CheckIsModifiedFlagSupport(cur))
             retval = true;
     }
+#endif
 
     return retval;
 } 

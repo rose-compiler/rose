@@ -34,14 +34,15 @@ Assembler::assembleBlock(SgAsmBlock *bb)
 }
 
 SgUnsignedCharList
-Assembler::assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_t rva)
+Assembler::assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_t va)
 {
     SgUnsignedCharList retval;
     for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         SgAsmInstruction *insn = *ii;
-        insn->set_address(rva);
+        insn->set_address(va);
         SgUnsignedCharList ucl = assembleOne(insn);
         retval.insert(retval.end(), ucl.begin(), ucl.end());
+        va += ucl.size();
     }
     return retval;
 }

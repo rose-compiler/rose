@@ -50,7 +50,7 @@ if  [ "$MACHINE" = "x86_64" ]; then
     if [ "$GCC_VERSION" == "3.4" ]; then
       source /home/liao6/set.gcc3.4
 # gcc 3.4 needs a compatible boost library compiled with gcc 3.4
-      export BOOST_ROOT=/usr/casc/overture/ROSE/svn/apps/rh5-64/boost/1.35/gcc3.4
+      export BOOST_ROOT=/nfs/casc/overture/ROSE/svn/apps/rh5-64/boost/1.35/gcc3.4
     fi  
     if [ "$GCC_VERSION" == "4.0" ]; then
       source /usr/apps/gcc/4.0.4/setup.sh
@@ -90,9 +90,9 @@ test -d trunk && cd trunk || (echo "expecting trunk, but not found..." && echo `
 #fi 
 
 #GIT_REPO_URL=`grep url .git/config | cut -f 3 -d' '`
-#if [ "$GIT_REPO_URL" != "file:///usr/casc/overture/ROSE/git/ROSE.git" ]; then
+#if [ "$GIT_REPO_URL" != "file:///nfs/casc/overture/ROSE/git/ROSE.git" ]; then
 #    echo $GIT_REPO_URL
-#    echo "Error: the git URL is not file:///usr/casc/overture/ROSE/git/ROSE.git "
+#    echo "Error: the git URL is not file:///nfs/casc/overture/ROSE/git/ROSE.git "
 #    exit 1
 #fi  
 test -f configure

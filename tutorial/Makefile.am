@@ -13,8 +13,16 @@ noinst_HEADERS = \
    coverage_funcsC.h \
    inputCode_collectComments.h
 
+# Liao 5/7/2010  We want to have a few installable programs as tools for users
+bin_PROGRAMS = \
+   buildCallGraph \
+   defuseAnalysis \
+   livenessAnalysis \
+   virtualCFG 
+
 #varSubstCopy , disabled this one Liao, and sorted the list
-TUTORIAL_EXAMPLES = \
+# tutorial examples which will not be installed to ROSE_INS/bin
+NOINST_TUTORIAL_EXAMPLES = \
    abstractHandle1 \
    abstractHandle2 \
    accumulatorAttributeTraversal \
@@ -37,10 +45,9 @@ TUTORIAL_EXAMPLES = \
    binaryAnalysisExample \
    binaryAnalysis_symbolTable \
    binaryFileRead \
+   binaryFileWrite \
    sb_callgraphAnalysis \
    buildCFG \
-   buildCG \
-   callGraphAnalysis \
    changeFunction \
    charmSupport \
    classHierarchyGraph \
@@ -61,7 +68,6 @@ TUTORIAL_EXAMPLES = \
    dataFlowGraph \
    debuggingIRnodeToString \
    debuggingSourceCodePositionInformation \
-   defuseAnalysis \
    dwarfAnalysis \
    dwarfInstructionAddressToSourceLineAnalysis \
    findVariableDeclarations \
@@ -101,7 +107,6 @@ TUTORIAL_EXAMPLES = \
    traverseIRnodeTypes \
    typeInfoFromFunctionParameters \
    typeTransformation \
-   virtualCFG \
    virtualFunctionIdentification \
    visitorMemoryPoolTraversal \
    visitorTraversal \
@@ -112,13 +117,15 @@ TUTORIAL_EXAMPLES = \
 
 # DQ (3/21/2009): Separate those that compile under Cygwin from those that don't.
 if ROSE_BUILD_OS_IS_CYGWIN
-  noinst_PROGRAMS = $(TUTORIAL_EXAMPLES)
+  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES)
 else
-  noinst_PROGRAMS = $(TUTORIAL_EXAMPLES) sharedMemoryTraversals
+  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES) sharedMemoryTraversals
   sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 endif
 
 binaryFileRead_SOURCES = binaryFileRead.C
+
+binaryFileWrite_SOURCES = binaryFileWrite.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 
@@ -213,7 +220,9 @@ binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 
 bin_example_SOURCES = bin_example.C
 
-buildCG_SOURCES = buildCG.C
+buildCallGraph_SOURCES = buildCallGraph.C
+
+livenessAnalysis_SOURCES = livenessAnalysis.C
 
 charmSupport_SOURCES = CharmSupport.C
 
@@ -228,8 +237,6 @@ codeCoverage_SOURCES = codeCoverage.C coverageCodeFromShmuel.c
 interveneAtVariables_SOURCES = interveneAtVariables.C
 
 changeFunction_SOURCES = changeFunction.C
-
-callGraphAnalysis_SOURCES = callGraphAnalysis.C
 
 classHierarchyGraph_SOURCES = classHierarchyGraph.C
 
@@ -427,7 +434,6 @@ testCharmSupport: charmSupport
 
 testBuildCFG: buildCFG
 #	./buildCFG $(srcdir)/inputCode_1.C
-#	./buildCFG $(srcdir)/inputCode_CallGraphAnalysis.C
 	./buildCFG $(srcdir)/inputCode_ControlFlowGraphAnalysis.C
 	@echo "Building postscript file from foo.dot ..."
 #	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
@@ -447,24 +453,9 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e controlFlowGraph_testfile1.pdf; then exit 1; fi
 endif
 
-testVirtualCFG: virtualCFG
-	./virtualCFG $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
-	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e vcfg.pdf; then exit 1; fi
-endif
+testVirtualCFG: vcfg_debug.pdf
 
-# Both this and the testCallGraphAnalysis rule generate a file called callGraph.ps
-testBuildCG: buildCG
-	./buildCG $(srcdir)/inputCode_BuildCG.C
-	@echo "Building postscript file from DATABASE.dot ..."
-#	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e callGraph.pdf; then exit 1; fi
-endif
+testBuildCG: callGraph.pdf
 
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
@@ -487,17 +478,6 @@ testChangeFunction: changeFunction
 
 testInterveneAtVariables: interveneAtVariables
 	./interveneAtVariables -rose:verbose 0 -c $(srcdir)/inputCode_interveneAtVariables.C
-
-testCallGraphAnalysis: callGraphAnalysis
-	./callGraphAnalysis -c $(srcdir)/inputCode_CallGraphAnalysis.C
-	@echo "Building postscript file from inputCode_CallGraphAnalysis.C.callgraph.dot ..."
-#	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.ps
-#	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e callGraph.pdf; then exit 1; fi
-endif
 
 testTemplateExample1: identityTranslator
 	./identityTranslator -c $(srcdir)/inputCode_templateExample1.C
@@ -783,13 +763,14 @@ generatedCodeExamples = \
    rose_inputCode_LoopOptimization_lufac.C \
    rose_inputCode_LoopOptimization_tridvpk.C \
    controlFlowGraph.pdf \
-   vcfg.pdf \
+   vcfg_debug.pdf \
    debuggingIRnodeToString.out \
    debuggingSourceCodePositionInformation.out \
    commandlineProcessing.out \
    charmSupport.out \
    codeCoverage.out \
    callGraph.pdf \
+   liveness.pdf \
    classHierarchyGraph.pdf \
    rose_inputCode_templateExample1.C \
    rose_inputCode_templateExample2.C \
@@ -1091,20 +1072,21 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e controlFlowGraph.pdf; then exit 1; fi
 endif
 
-vcfg.pdf: virtualCFG
+vcfg_debug.pdf: virtualCFG
 	@echo "Building an example virtual Control Flow Graph (virtualCFG) ..."
-	./virtualCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
-	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
+	./virtualCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C 
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.debug.dot vcfg_debug.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.interesting.dot vcfg_interesting.pdf
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e vcfg.pdf; then exit 1; fi
+	if ! test -e vcfg_debug.pdf; then exit 1; fi
 endif
 
 defuseAnalysis_pic1.pdf: defuseAnalysis
 	@echo "Building an example DefUse ..."
-	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C
+	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C &>defuseAnalysis.out
 	@echo "DefUseAnalysis: Building postscript file from foo.dot ..."
-	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf &>defuseAnalysis_pic1.out
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e defuseAnalysis_pic1.pdf; then exit 1; fi
@@ -1177,19 +1159,23 @@ codeCoverage.out: codeCoverage $(srcdir)/inputCode_ExampleCodeCoverage.C
 	./ExampleCodeCoverage_GeneratedBinary > codeCoverage.out
 	split -80 $(srcdir)/codeCoverage.C codeCoverage.
 
-# DQ (4/10/2006): Not clear on which CG program we want!
-callGraph.pdf: callGraphAnalysis buildCG
+callGraph.pdf: buildCallGraph
 	@echo "Generate call graph from processing of input code (callGraph) ..."
-#	./callGraphAnalysis -c $(srcdir)/inputCode_CallGraphAnalysis.C
-	./buildCG $(ROSE_FLAGS) -c $(srcdir)/inputCode_CallGraphAnalysis.C
-#	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.ps
-#	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
-#	$(top_srcdir)/scripts/dotgen DATABASE.dot callGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
+	./buildCallGraph $(ROSE_FLAGS) -c $(srcdir)/inputCode_BuildCG.C
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_BuildCG.C_callGraph.dot callGraph.pdf
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e callGraph.pdf; then exit 1; fi
 endif
+
+liveness.pdf: livenessAnalysis
+	@echo "Generate liveness information from processing of input code ..."
+	./livenessAnalysis $(ROSE_FLAGS) -c $(srcdir)/inputCode_livenessAnalysis.c
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_livenessAnalysis.c_liveness.dot liveness.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+	if ! test -e liveness.pdf; then exit 1; fi
+endif
+
 
 classHierarchyGraph.pdf: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
@@ -1307,9 +1293,7 @@ rose_inputCode_codeGenerationFormatControl.C: codeGenerationFormatControl
 
 dataFlowGraph.pdf: dataFlowGraph
 	@echo "Generate the data flow graph from processing of input code (dataFlowGraph) ..."
-	./callGraphAnalysis $(ROSE_FLAGS) -c $(srcdir)/inputCode_dataFlowGraphAnalysis.C
-#	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot dataFlowGraph.ps
-#	$(top_srcdir)/scripts/dotgen inputCode_dataFlowGraphAnalysis.C.dot dataFlowGraph.ps
+	./dataFlowGraph $(ROSE_FLAGS) -c $(srcdir)/inputCode_dataFlowGraphAnalysis.C
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dataFlowGraphAnalysis.C.dot dataFlowGraph.pdf
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
@@ -1404,7 +1388,6 @@ EXTRA_DIST = CMakeLists.txt \
    exampleMakefile.in \
    slicingExample.C \
    inputCode_ExampleCharmSupport.C \
-   inputCode_CallGraphAnalysis.C \
    inputCode_templateExample1.C \
    inputCode_templateExample2.C \
    inputCode_dataBaseExample1.C \
@@ -1419,6 +1402,7 @@ EXTRA_DIST = CMakeLists.txt \
    inputCode_scopeInformation.C \
    inputCode_BuildCG.C \
    inputCode_inlineTransformations.C \
+   inputCode_livenessAnalysis.c \
    inputCode_NestedQuery.C \
    inputCode_ControlFlowGraphAnalysis.C \
    inputCode_addComments.C \
@@ -1442,14 +1426,15 @@ EXTRA_DIST = CMakeLists.txt \
    buffer2.bin \
    inputCode_seedBugsExample_arrayIndexing.C \
    inputCode_dwarfAnalysis.C \
-   inputCode_reductionRecognition.C
+   inputCode_reductionRecognition.C \
+   livenessAnalysis-2.C
 
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
 
 CLEANFILES = rose_bin_example.s callgraph.gml
 
-docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
+docs: $(noinst_PROGRAMS) $(bin_PROGRAMS) $(generatedCodeExamples)
 	@echo ""
 #	DQ (5/20/2007): Added to support Rich's work with outlining and the HPC Toolkit
 	cd outliner; $(MAKE) docs
@@ -1465,7 +1450,7 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
-	rm -f rose_*.C rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST 
+	rm -f rose_*.C rose_*.c rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST 
 	rm -f ExampleCodeCoverage_GeneratedBinary 
 	rm -f inputCode_AST_PDF_Generator.C 
 	rm -f rose_inputCode_dwarfAnalysis.s inputCode_dwarfAnalysis rose_inputCode_dwarfAnalysis
@@ -1473,7 +1458,7 @@ cleanDocs:
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg  *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
-	rm -rf $(generatedCodeExamples)
+	rm -rf $(generatedCodeExamples) *.out
 #	rm -f exampleTranslator exampleTranslatorMultiLib
 #	rm -f inputCode_ExampleCodeCoverage
 

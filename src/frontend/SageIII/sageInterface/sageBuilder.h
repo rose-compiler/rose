@@ -115,14 +115,15 @@ SgReferenceType* buildReferenceType(SgType *base_type = NULL);
 //! Build a modifier type with no modifiers set
 SgModifierType* buildModifierType(SgType *base_type = NULL);
 
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
 //! Build a const type.
-SgType* buildConstType(SgType* base_type = NULL);
+SgModifierType* buildConstType(SgType* base_type = NULL);
 
 //! Build a volatile type.
-SgType* buildVolatileType(SgType* base_type = NULL);
+SgModifierType* buildVolatileType(SgType* base_type = NULL);
 
 //! Build a restrict type.
-SgType* buildRestrictType(SgType* base_type);
+SgModifierType* buildRestrictType(SgType* base_type);
 
 //! Build ArrayType
 SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
@@ -148,23 +149,25 @@ buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeL
   */
 SgType* buildOpaqueType(std::string const type_name, SgScopeStatement * scope);
 
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
 //! Build a UPC strict type
-SgType* buildUpcStrictType(SgType *base_type = NULL);
+SgModifierType* buildUpcStrictType(SgType *base_type = NULL);
 
 //! Build a UPC relaxed type
-SgType* buildUpcRelaxedType(SgType *base_type = NULL);
+SgModifierType* buildUpcRelaxedType(SgType *base_type = NULL);
 
 //! Build a UPC shared type
-SgType* buildUpcSharedType(SgType *base_type = NULL);
+// SgModifierType* buildUpcSharedType(SgType *base_type = NULL);
+SgModifierType* buildUpcSharedType(SgType *base_type = NULL, long layout = -1);
 
 //! Build a UPC shared[] type
-SgType* buildUpcBlockIndefiniteType(SgType *base_type = NULL);
+SgModifierType* buildUpcBlockIndefiniteType(SgType *base_type = NULL);
 
 //! Build a UPC shared[*] type
-SgType* buildUpcBlockStarType(SgType *base_type = NULL);
+SgModifierType* buildUpcBlockStarType(SgType *base_type = NULL);
 
 //! Build a UPC shared[n] type
-SgType* buildUpcBlockNumberType(SgType *base_type, long block_factor);
+SgModifierType* buildUpcBlockNumberType(SgType *base_type, long block_factor);
 
 //! Build a complex type
 SgTypeComplex* buildComplexType(SgType *base_type = NULL);
@@ -414,6 +417,7 @@ SgConditionalExp * buildConditionalExp_nfi(SgExpression* test, SgExpression* a, 
 
 //! Build a SgExprListExp, used for function call parameter list etc.
 SgExprListExp * buildExprListExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
+SgExprListExp * buildExprListExp(const std::vector<SgExpression*>& exprs);
 SgExprListExp * buildExprListExp_nfi();
 SgExprListExp * buildExprListExp_nfi(const std::vector<SgExpression*>& exprs);
 

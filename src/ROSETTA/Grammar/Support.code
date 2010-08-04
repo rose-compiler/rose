@@ -506,6 +506,19 @@ HEADER_STORAGE_MODIFIER_START
                e_intrinsic     = 13, /*!< Intrinsic function or subroutine */
                e_pointer_based = 14, /*!< Pointee of a POINTER definition */
 #endif
+
+            // TV (04/08/2010): Support for CUDA storage modifiers
+               e_cuda_global         = 15, /*!< CUDA, in device's global memory */
+               e_cuda_constant       = 16, /*!< CUDA, in device's constant memory */
+               e_cuda_shared         = 17, /*!< CUDA, in device's shared memory */
+               e_cuda_dynamic_shared = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
+
+            // TV (05/06/2010): Support for OpenCL storage modifiers
+               e_opencl_global   = 19, /*!< OpenCL, accessible from all the device */
+               e_opencl_local    = 20, /*!< OpenCL, accessible for a work-group only */
+               e_opencl_constant = 21, /*!< OpenCL, read-only variable accessible from all the device */
+               e_opencl_private  = 22, /*!< OpenCL, accessible only from one work-item */
+               
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -569,6 +582,34 @@ HEADER_STORAGE_MODIFIER_START
           void setPointerBased();
 #endif
 #endif
+
+       // TV (04/08/2010): Support for CUDA storage modifiers
+
+          bool isCudaGlobal() const;
+          void setCudaGlobal();
+
+          bool isCudaConstant() const;
+          void setCudaConstant();
+
+          bool isCudaShared() const;
+          void setCudaShared();
+
+          bool isCudaDynamicShared() const;
+          void setCudaDynamicShared();
+
+       // TV (05/06/2010): Support for OpenCL storage modifiers
+
+          bool isOpenclGlobal() const;
+          void setOpenclGlobal();
+
+          bool isOpenclLocal() const;
+          void setOpenclLocal();
+
+          bool isOpenclConstant() const;
+          void setOpenclConstant();
+
+          bool isOpenclPrivate() const;
+          void setOpenclPrivate();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -676,8 +717,27 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__always_inline__          = 22,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__nothrow__                = 23,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
+               
+            // TV (04/08/2010): Support for CUDA functions modifiers
+             
+               e_cuda_device				 = 25, /*!< CUDA device function */
+               e_cuda_kernel				 = 26, /*!< CUDA kernel */
+               e_cuda_host				 = 27, /*!< CUDA host function */
+               
+            // TV (05/03/2010): Support for OpenCL functions modifiers
+             
+               e_opencl_kernel				 = 28, /*!< OpenCL kernel */
+               e_opencl_vec_type_hint			 = 29, /*!< OpenCL */
+               e_opencl_work_group_size_hint		 = 30, /*!< OpenCL */
+               e_opencl_work_group_size_req		 = 31, /*!< OpenCL */
 
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
+             };
+             
+          // TV (05/03/2010)
+
+             struct opencl_work_group_size_t {
+             	unsigned long int x, y, z;
              };
 
        // Copy constructor
@@ -792,6 +852,38 @@ HEADER_FUNCTION_MODIFIER_START
           bool isGnuAttributeWeakReference() const;
           void setGnuAttributeWeakReference();
           void unsetGnuAttributeWeakReference();
+
+       // TV (04/08/2010): Support for CUDA functions modifiers
+       
+          bool isCudaDevice() const;
+          void setCudaDevice();
+          void unsetCudaDevice();
+
+          bool isCudaKernel() const;
+          void setCudaKernel();
+          void unsetCudaKernel();
+
+          bool isCudaHost() const;
+          void setCudaHost();
+          void unsetCudaHost();
+          
+       // TV (05/03/2010): Support for OpenCL functions modifiers
+       
+          bool isOpenclKernel() const;
+          void setOpenclKernel();
+          void unsetOpenclKernel();
+          
+          bool hasOpenclVecTypeHint() const;
+          void setOpenclVecTypeHint();
+          void unsetOpenclVecTypeHint();
+          
+          bool hasOpenclWorkGroupSizeHint() const;
+          void setOpenclWorkGroupSizeHint();
+          void unsetOpenclWorkGroupSizeHint();
+          
+          bool hasOpenclWorkGroupSizeReq() const;
+          void setOpenclWorkGroupSizeReq();
+          void unsetOpenclWorkGroupSizeReq();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -1591,6 +1683,20 @@ HEADER_FORMAT_ITEM_LIST_START
 HEADER_FORMAT_ITEM_LIST_END
 
 
+HEADER_TYPE_TABLE_START
+          $CLASSNAME ();
+          void insert_type(const SgName&, SgType *);
+
+          SgType* lookup_type (const SgName&);
+
+       // DQ (7/22/2010): Added to support AST merge.
+          void remove_type(const SgName&);
+
+          void print_typetable(std::ostream& os = std::cout);
+
+HEADER_TYPE_TABLE_END
+
+
 
 SOURCE_ATTRIBUTE_SUPPORT_START
 
@@ -1943,6 +2049,34 @@ bool $CLASSNAME::isPointerBased() const { return p_modifier == e_pointer_based; 
 void $CLASSNAME::setPointerBased()      { p_modifier = e_pointer_based; }
 #endif
 
+// TV (08/04/2010): Support for CUDA storage modifiers
+
+bool SgStorageModifier::isCudaGlobal() const { return p_modifier == e_cuda_global; }
+void SgStorageModifier::setCudaGlobal()      { p_modifier = e_cuda_global; }
+
+bool SgStorageModifier::isCudaConstant() const { return p_modifier == e_cuda_constant; }
+void SgStorageModifier::setCudaConstant()      { p_modifier = e_cuda_constant; }
+
+bool SgStorageModifier::isCudaShared() const { return p_modifier == e_cuda_shared; }
+void SgStorageModifier::setCudaShared()      { p_modifier = e_cuda_shared; }
+
+bool SgStorageModifier::isCudaDynamicShared() const { return p_modifier == e_cuda_dynamic_shared; }
+void SgStorageModifier::setCudaDynamicShared()      { p_modifier = e_cuda_dynamic_shared; }
+
+// TV (05/06/2010): Support for OpenCL storage modifiers
+
+bool SgStorageModifier::isOpenclGlobal() const { return p_modifier == e_opencl_global; }
+void SgStorageModifier::setOpenclGlobal()      { p_modifier = e_opencl_global; }
+
+bool SgStorageModifier::isOpenclLocal() const { return p_modifier == e_opencl_local; }
+void SgStorageModifier::setOpenclLocal()      { p_modifier = e_opencl_local; }
+
+bool SgStorageModifier::isOpenclConstant() const { return p_modifier == e_opencl_constant; }
+void SgStorageModifier::setOpenclConstant()      { p_modifier = e_opencl_constant; }
+
+bool SgStorageModifier::isOpenclPrivate() const { return p_modifier == e_opencl_private; }
+void SgStorageModifier::setOpenclPrivate()      { p_modifier = e_opencl_private; }
+
 std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m) 
    {
       os << m.get_modifier(); 
@@ -2202,7 +2336,37 @@ bool SgFunctionModifier::isGnuAttributeWeakReference() const { return checkBit(e
 void SgFunctionModifier::setGnuAttributeWeakReference()      { setBit(e_gnu_attribute__weakref__,p_modifierVector); }
 void SgFunctionModifier::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__,p_modifierVector); }
 
+// TV (04/08/2010): Support for CUDA functions modifiers
 
+bool SgFunctionModifier::isCudaDevice() const { return checkBit(e_cuda_device,p_modifierVector); }
+void SgFunctionModifier::setCudaDevice()      { setBit(e_cuda_device,p_modifierVector); }
+void SgFunctionModifier::unsetCudaDevice()    { unsetBit(e_cuda_device,p_modifierVector); }
+
+bool SgFunctionModifier::isCudaKernel() const { return checkBit(e_cuda_kernel,p_modifierVector); }
+void SgFunctionModifier::setCudaKernel()      { setBit(e_cuda_kernel,p_modifierVector); }
+void SgFunctionModifier::unsetCudaKernel()    { unsetBit(e_cuda_kernel,p_modifierVector); }
+
+bool SgFunctionModifier::isCudaHost() const { return checkBit(e_cuda_host,p_modifierVector); }
+void SgFunctionModifier::setCudaHost()      { setBit(e_cuda_host,p_modifierVector); }
+void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVector); }
+
+// TV (05/03/2010): Support for OpenCL functions modifiers
+       
+bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }
+void SgFunctionModifier::setOpenclKernel()      { setBit(e_opencl_kernel, p_modifierVector); }
+void SgFunctionModifier::unsetOpenclKernel()    { unsetBit(e_opencl_kernel, p_modifierVector); }
+          
+bool SgFunctionModifier::hasOpenclVecTypeHint() const { return checkBit(e_opencl_vec_type_hint, p_modifierVector); }
+void SgFunctionModifier::setOpenclVecTypeHint()       { setBit(e_opencl_vec_type_hint,p_modifierVector); }
+void SgFunctionModifier::unsetOpenclVecTypeHint()     { unsetBit(e_opencl_vec_type_hint, p_modifierVector); }
+
+bool SgFunctionModifier::hasOpenclWorkGroupSizeHint() const { return checkBit(e_opencl_work_group_size_hint, p_modifierVector); }
+void SgFunctionModifier::setOpenclWorkGroupSizeHint()       { setBit(e_opencl_work_group_size_hint,p_modifierVector); }
+void SgFunctionModifier::unsetOpenclWorkGroupSizeHint()     { unsetBit(e_opencl_work_group_size_hint, p_modifierVector); }
+
+bool SgFunctionModifier::hasOpenclWorkGroupSizeReq() const { return checkBit(e_opencl_work_group_size_req, p_modifierVector); }
+void SgFunctionModifier::setOpenclWorkGroupSizeReq()       { setBit(e_opencl_work_group_size_req,p_modifierVector);}
+void SgFunctionModifier::unsetOpenclWorkGroupSizeReq()     { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
 
 
 std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
@@ -2259,7 +2423,7 @@ void SgFunctionModifier::reset()
   // Set this bit to indicate the default value (we want a value of all zero bits to be an error)
      setDefault();
    }
-
+   
 SOURCE_FUNCTION_MODIFIER_END
 
 
@@ -2771,7 +2935,6 @@ void SgTypeModifier::unsetGnuAttributeNonnull()     { unsetBit(e_gnu_attribute__
 bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
-
 
 std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
    {
@@ -4316,6 +4479,13 @@ HEADER_APPLICATION_FILE_START
       //! Generate the C++ file representing the AST
           void unparse ( UnparseFormatHelp *unparseHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
 
+       // DQ (5/8/2010): Added support to reset the Sg_File_Info (source code position information) 
+       // to be relative to the generated code instead of the original input code.  This is useful when 
+       // we want to output references to the position of language constructs in the generated code
+       // instead of the original input code.  Also useful for building references to locations in 
+       // automatically generated code.
+          void resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp = NULL );
+
       //! Member function to compile the resulting output file from unparsing
       //  BP : 11/13/2001, modified to include compiler name
           int compileOutput ( int fileNameIndex, const std::string& compilerName );
@@ -4453,14 +4623,13 @@ HEADER_APPLICATION_SOURCE_FILE_START
        // SgSourceFile() ROSE_DEPRECATED_FUNCTION;
 
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
       //! Support for setting Java's classpath (to support the Open Fortran Parser (OFP))
           static std::string build_classpath();
 
       //! Divide up the handling of different languages
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-#endif
+#endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
@@ -4620,6 +4789,9 @@ HEADER_APPLICATION_PROJECT_START
       //! function to generate output for all files in the project (arguments control code generation)
        // void unparse();
           void unparse ( UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelegate = NULL );
+
+       // DQ (5/8/2010): Added support for resetting the source position information.
+          void resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp = NULL );
 
       // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to compile the output from unparsing the project
@@ -5295,6 +5467,50 @@ HEADER_TEMPLATE_PARAMETER_LIST_END
 HEADER_TEMPLATE_ARGUMENT_LIST_START
 HEADER_TEMPLATE_ARGUMENT_LIST_END
 
+HEADER_OPENCL_ACCESS_MODE_MODIFIER_START
+
+  // TV (05/03/2010): OpenCL Access Mode Support
+
+	enum access_mode_modifier_enum
+             {
+               e_unknown       = 0,  /*!< error value */
+               e_default       = 1,  /*!< default value */
+               e_read_only     = 2,  /*!< read only access mode modifier */
+               e_write_only    = 3,  /*!< write only access mode modifier */
+               e_read_write    = 4,  /*!< read-write access mode modifier */
+               
+               e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
+             };
+
+       // Copy constructor
+          $CLASSNAME ( const $CLASSNAME & X );
+
+       // Assignment Operator
+          $CLASSNAME & operator= ( const $CLASSNAME & X );
+
+          void post_construction_initialization();
+
+          bool isUnknown() const;
+          void setUnknown();
+
+          bool isDefault() const;
+          void setDefault();
+
+          bool isReadOnly() const;
+          void setReadOnly();
+
+          bool isWriteOnly() const;
+          void setWriteOnly();
+
+          bool isReadWrite() const;
+          void setReadWrite();
+
+          std::string displayString() const;
+          void display ( std::string label ) const;
+          friend std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m );
+          
+HEADER_OPENCL_ACCESS_MODE_MODIFIER_END
+
 
 
 // *************************************************
@@ -5569,10 +5785,16 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
   // DQ (3/10/2007): This is a simpler assertion equivalent to the one above but without generating any error output 
-     assert(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
+     ROSE_ASSERT(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
 
   // DQ (3/10/2007): Test for if the symbol exists
-     assert (p_symbolSet.find(sp) == p_symbolSet.end());
+     if (p_symbolSet.find(sp) != p_symbolSet.end())
+        {
+           SgType* t = sp->get_type();
+           ROSE_ASSERT(t != NULL);
+           printf ("ERROR: p_symbolSet.find(sp) != p_symbolSet.end(): base type = %p = %s \n",t,t->class_name().c_str());
+        }
+     ROSE_ASSERT(p_symbolSet.find(sp) == p_symbolSet.end());
 
 #if 0
   // #if SYMBOL_TABLE_ERROR_CHECKING
@@ -5741,6 +5963,9 @@ SgSymbolTable::remove_function_type( const SgName & name )
           deleteList.push_back(it);
           it++;
         }
+#if 1
+     printf ("In SgSymbolTable::remove_function_type( const SgName & name ): name = %s deleteList.size() = %zu \n",name.str(),deleteList.size());
+#endif
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
 // CH (4/8/2010): Use boost::unordered instead     
@@ -6699,20 +6924,27 @@ SgFunctionSymbol*
 SgSymbolTable::find_function (const SgName &nm, const SgType* t)
    {
   // AS (083006): cleaned up logic so that the function only have one return statement.
+
      SgFunctionSymbol *s = NULL;
      assert(p_table != NULL);
      if(p_table)
         {
+
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
        // SgSymbolHashBase::iterator i=p_table->find(nm);
        // JW and AS (08/30/06) changed to use equal range rather than find and
        //    iterating through the hash table. This is an optimization.
+
           std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
           for (hash_iterator i = range.first; i != range.second; ++i)
              {
             // s = isSgFunctionSymbol((*i).second);
                s = isSgFunctionSymbol(i->second);
-               if ( (s != NULL) && (s->get_declaration()->get_type() == t))
+
+                //  if ( (s != NULL) && (s->get_declaration()->get_type() == t))
+                // FMZ (10/29/2009) should compare name also
+                if ( (s != NULL) && (s->get_declaration()->get_type() == t) && s->get_name().str()==nm.str())
                   {
                     p_name    = nm;
                     p_no_name = false;
@@ -6744,7 +6976,7 @@ SgSymbolTable::find_function(const SgName &nm)
 
      while(p_iterator != p_table->end())
         {
-          if (isSgFunctionSymbol(p_iterator->second))
+          if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
              {
                p_name    = nm;
                p_no_name = false;
@@ -7954,6 +8186,10 @@ SgInitializedName::post_construction_initialization()
 
   // Borrow the enum definition (and default value from SgDeclarationModifier).
      p_gnu_attribute_visability              = SgDeclarationModifier::e_unknown_visibility;
+
+  // FMZ added for coarray
+     p_isCoArray = false;
+
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
@@ -8086,6 +8322,7 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
      p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
      p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
+     p_isCoArray                             = ptr.p_isCoArray;
    }
 
 SgInitializedName&
@@ -8170,6 +8407,7 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
           p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
           p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
+          p_isCoArray                             = ptr.p_isCoArray;
         }
        else
         {
@@ -8459,9 +8697,10 @@ SgInitializedName::get_declaration() const
        // DQ (6/21/2005): I think this should always be true!
        // assert(d != NULL);
 
-          if (d != NULL) {
+          if (d != NULL)
+             {
                return d;
-        }
+             }
         }
 
      return NULL;
@@ -11005,6 +11244,19 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
 
 // Moved to sageSupport.C: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
 
+
+// DQ (5/8/2010): Added support to reset the Sg_File_Info (source code position information) 
+// to be relative to the generated code instead of the original input code.  This is useful when 
+// we want to output references to the position of language constructs in the generated code
+// instead of the original input code.  Also useful for building references to locations in 
+// automatically generated code.
+void
+SgFile::resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp )
+   {
+     extern void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp );
+     resetSourcePositionToGeneratedCode( this, unparseFormatHelp );
+   }
+
 void
 SgFile::display ( const std::string & label ) const
    {
@@ -11695,6 +11947,17 @@ SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unpa
    }
 
 // Moved to sageSupport.C: int SgProject::compileOutput( const std::string& compilerName )
+
+void
+SgProject::resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp )
+   {
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          file.resetSourcePositionToGeneratedCode( unparseFormatHelp );
+        }
+   }
+
 
 #if 0
 // DQ (9/2/2008): Removed this redundant function
@@ -14135,3 +14398,197 @@ SgFormatItemList::set_format_item_list ( const SgFormatItemPtrList & formatItemL
 
 SOURCE_FORMAT_ITEM_LIST_END
 
+SOURCE_OPENCL_ACCESS_MODE_MODIFIER_START
+
+// Copy constructor
+$CLASSNAME::$CLASSNAME ( const $CLASSNAME & X )
+   {
+     p_modifier = X.p_modifier;
+   }
+
+$CLASSNAME &
+$CLASSNAME::operator= ( const $CLASSNAME & X )
+   {
+     p_modifier = X.p_modifier;
+     return *this;
+   }
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+     p_modifier = e_default;
+   }
+
+bool $CLASSNAME::isUnknown() const { return p_modifier == e_unknown; }
+void $CLASSNAME::setUnknown()      { p_modifier = e_unknown; }
+
+bool $CLASSNAME::isDefault() const { return p_modifier == e_default; }
+void $CLASSNAME::setDefault()      { p_modifier = e_default; }
+
+bool $CLASSNAME::isReadOnly() const { return p_modifier == e_read_only; }
+void $CLASSNAME::setReadOnly()      { p_modifier = e_read_only; }
+
+bool $CLASSNAME::isWriteOnly() const { return p_modifier == e_write_only; }
+void $CLASSNAME::setWriteOnly()      { p_modifier = e_write_only; }
+
+bool $CLASSNAME::isReadWrite() const { return p_modifier == e_read_write; }
+void $CLASSNAME::setReadWrite()      { p_modifier = e_read_write; }
+
+std::ostream & operator<< ( std::ostream & os, $CLASSNAME & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+string
+$CLASSNAME::displayString() const
+   {
+     std::string s = "$CLASSNAME(";
+     s += std::string("isUnknown() = ")   + std::string(isUnknown()   ? "true " : "false ");
+     s += std::string("isDefault() = ")   + std::string(isDefault()   ? "true " : "false ");
+     s += std::string("isReadOnly() = ")  + std::string(isReadOnly()  ? "true " : "false ");
+     s += std::string("isWriteOnly() = ") + std::string(isWriteOnly() ? "true " : "false ");
+     s += std::string("isReadWrite() = ") + std::string(isReadWrite() ? "true " : "false ");
+     s += ")";
+     return s;
+   }
+
+void
+$CLASSNAME::display ( std::string label ) const
+   {
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
+   }
+
+
+SOURCE_OPENCL_ACCESS_MODE_MODIFIER_END
+
+
+SOURCE_TYPE_TABLE_START
+
+/* \brief Hash table of types (table is stored on global scope).
+
+   Hash table of types (table is stored on global scope and includes types
+   from all scopes). Types are placed into and retrieved from this data 
+   base (simple hash table) of SgTypes.
+ */
+SgTypeTable::SgTypeTable ()
+   {
+  // DQ (2/19/2007): Use a much larger size symbol table for the function types (the input value is the hash table size, which should be a prime number)!
+  // p_function_type_table = new SgSymbolTable();
+     p_type_table = new SgSymbolTable(1001);
+     ROSE_ASSERT(p_type_table != NULL);
+
+  // DQ (2/16/2006): Set this parent directly (now tested)
+     p_type_table->set_parent(this);
+   }
+
+#if 0
+// DQ (2/19/2007): This appears to not be called but is here because 
+// the ROSETTA code requires it (I think).
+void
+SgTypeTable::post_construction_initialization()
+   {
+   }
+#endif
+
+void
+SgTypeTable::print_typetable(std::ostream& os)
+   {
+  // printf ("ERROR: Sage $CLASSNAME::print_functypetable function called! \n");
+  // abort();
+
+     os << endl << "...TypeTbl..." << endl;
+  // p_type_table.print(os);
+
+     ROSE_ASSERT(p_type_table != NULL);
+  // p_type_table->print(os);
+     p_type_table->print("Called from $CLASSNAME::print_typetable");
+   }
+
+void
+SgTypeTable::insert_type(const SgName& n, SgType *t)
+   {
+     ROSE_ASSERT (p_type_table != NULL);
+     ROSE_ASSERT (t != NULL);
+
+  // DQ (7/22/2010): We might want to reuse the SgFunctionTypeSymbol or change the name of it to SgTypeSymbol
+     SgFunctionTypeSymbol* newSymbol = new SgFunctionTypeSymbol(n,t);
+     ROSE_ASSERT (newSymbol != NULL);
+#if 0
+  // DQ (7/29/2010): This can sometimes fail in unparsing types.  This is important becasse we now support type tables in ROSE.
+     printf ("Inside of SgTypeTable::insert_function_type(SgName,SgType*): n = %s type = %s = %s newSymbol = %p \n",
+             n.str(),t->sage_class_name(),t->unparseToString().c_str(),newSymbol);
+#endif
+#if 0
+  // DQ (7/29/2010): This is more robust for the new type table support.
+     printf ("Inside of SgTypeTable::insert_function_type(SgName,SgType*): n = %s type = %s newSymbol = %p \n",
+             n.str(),t->sage_class_name(),newSymbol);
+#endif
+  // printf ("Is the qualified name being used! \n");
+  // ROSE_ASSERT(false);
+
+  // DQ (7/26/2010): Set the parent of the type to it symbol.
+  // This is a new idea and will allow the parent pointer to be valid for all types and also 
+  // point to something meaningful.  This is another benefit of using the type table idea.
+     t->set_parent(newSymbol);
+
+     p_type_table->insert(n, newSymbol);
+   }
+
+// DQ (1/31/2007): Added support for removing function type symbols (used in AST merge)
+void
+SgTypeTable::remove_type(const SgName& n)
+   {
+     ROSE_ASSERT (p_type_table != NULL);
+     p_type_table->remove_function_type(n);
+   }
+
+#if 0
+// see if this is ever used!
+void
+SgTypeTable::insert_type(const SgFunctionDeclaration *fdecl)
+   {
+     assert(fdecl != NULL);
+     printf ("Inside of SgTypeTable::insert_function_type(SgFunctionDeclaration = %s) \n",fdecl->get_name().str());
+     SgFunctionType* type = isSgFunctionType(fdecl->get_type());
+     ROSE_ASSERT(type != NULL);
+
+     SgName n = type->get_mangled_type();
+  // printf ("Using function name = %s  should be using qualified function type name \n",n.str());
+
+     printf ("Looking up %s in function table \n",n.str());
+     if (lookup_function_type(n) != NULL)
+        {
+          printf ("Found function %s (skip reinsertion) \n",n.str());
+       // return; // DQ: no need for multiple return!
+        }
+       else
+        {
+       // printf ("Function NOT Found: so insert in table %s \n",n.str());
+          insert_function_type(n,type);
+        }
+   }
+#endif
+
+SgType*
+SgTypeTable::lookup_type(const SgName& n)
+   {
+  // printf ("In SgTypeTable::lookup_function_type: Looking for %s \n",n.str());
+     ROSE_ASSERT (p_type_table != NULL);
+  // SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(p_function_type_table->findfunctype(n));
+     SgSymbol *symbol = p_type_table->find_function_type(n);
+     SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(symbol);
+     SgType* returnType = NULL;
+
+     if (fsymb != NULL)
+        {
+          returnType = fsymb->get_type();
+          ROSE_ASSERT(returnType != NULL);
+       // printf ("In SgTypeTable::lookup_function_type(): found function type %s \n",returnType->class_name().c_str());
+        }
+
+     return returnType;
+   }
+
+SOURCE_TYPE_TABLE_END

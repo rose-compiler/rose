@@ -1,0 +1,150 @@
+\chapter{Getting Started}
+
+  This chapter is about getting started.  It is assumed that
+you already are familiar with C++ and some of the simplest parts
+of the Standard Template Language (STL). You will also need web 
+access to the doxygen generated documentation for ROSE (availalbe
+at {\em http://www.roseCompiler.org}.
+
+% *******************************************************
+%                  Source Code Analysis
+% *******************************************************
+\section{Source Code Analysis}
+   This subsection is resticted to analysis of the input code
+and generating information about what is in the input source code.
+
+\subsection{Function Detection}
+   Write the ROSE based analysis tool to detect functions in the input source code
+and report the location in the file and the number of lines of code in each function.
+
+Start using:
+\begin{verbatim}
+#include "rose.h"
+int main( int argc, char * argv[] )
+   {
+  // Generate the ROSE AST.
+     SgProject* project = frontend(argc,argv);
+
+     std::vector<SgNode*> functions = NodeQuery::querySubTree(sageProject,V_SgFunctionDeclaration);
+     for (std::vector<SgNode*>::iterator i = functions.begin(); i != functions.end(); i++)
+        {
+          printf ("function name = %s \n",*i->get_name().c_str());
+        }
+
+     return 0;
+   }
+
+\end{verbatim}
+
+% *******************************************************
+%               Source Code Transformation
+% *******************************************************
+\section{Source Code Transformations}
+   This subsection deals with transformations on the 
+input code and the generation of new code.
+
+\subsection{Identity Translator}
+   Write the code required to use ROSE to define a translator
+that takes in any input C/C++/Fortran code and outputs the 
+same code.
+
+Start using:
+\begin{verbatim}
+#include "rose.h"
+int main( int argc, char * argv[] )
+   {
+  // Generate the ROSE AST.
+     SgProject* project = frontend(argc,argv);
+
+  // AST consistency tests (optional for users, but this enforces more of our tests)
+     AstTests::runAllTests(project);
+
+  // regenerate the source code and call the vendor 
+  // compiler, only backend error code is reported.
+     return backend(project);
+   }
+\end{verbatim}
+
+\subsection{Trivial Translator}
+   Write the translator that will change all instances of the literal
+{\tt 1} to {\tt 2} in any input source code.  This should be done only
+in the input source file and not header files.
+
+
+
+
+% *******************************************************
+%                  Binary Code Analysis
+% *******************************************************
+\section{Binary Code Analysis}
+   This subsection deals with analysis of the binary and the
+output of information about the binary.
+
+\subsection{Function Detection}
+   Generate a translator that identifies all of the function in the binary.
+{\em (Hint, this requires detecting only the SgAsmFunction IR nodes in the binary AST.)}
+Report the function name, the number of instructions, and the starting and ending location
+in the executable file and in memory if it were loaded for execution.
+
+Start using the example from the source code analysis and substitute:
+\begin{verbatim}
+     std::vector<SgNode*> functions = NodeQuery::querySubTree(sageProject,V_SgAsmFunctionDeclaration);
+\end{verbatim}
+
+
+
+% *******************************************************
+%               Binary Code Transformation
+% *******************************************************
+\section{Binary Code Transformations}
+   This subsection tests your ability to rewrite parts of the binary
+AST and regenerate the binary.  Note that depending on the transformation
+the resulting binary may or may not be executable.
+
+\subsection{NOP Translation}
+   Rewrite sequences of single byte x86 NOP instructions to use the newer 
+Intel x86 multi-byte NOP instructions.  Verify that the resulting binary 
+is executable. Use only the space provided by the sequence of single byte NOP 
+instructions else your generated executable will may not run properly.
+{\em Hint: replace each instruction with the appropriate NOP instruction 
+using the build interface function to NOP construction.}
+
+
+
+
+\commentout{
+Start using:
+\begin{verbatim}
+#include "rose.h"
+int main( int argc, char * argv[] )
+   {
+  // Generate the ROSE AST.
+     SgProject* project = frontend(argc,argv);
+
+  // AST consistency tests (optional for users, but this enforces more of our tests)
+     AstTests::runAllTests(project);
+
+#if 0
+  // This function will reset the source position information to match the generated code.
+     project->resetSourcePositionToGeneratedCode();
+#endif
+
+#if 0
+  // Output an optional graph of the AST (just the tree, when active)
+     printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
+     generateDOT ( *project );
+#endif
+
+#if 0
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+#endif
+
+  // regenerate the source code and call the vendor 
+  // compiler, only backend error code is reported.
+     return backend(project);
+   }
+
+\end{verbatim}
+}

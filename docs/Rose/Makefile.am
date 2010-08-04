@@ -4,9 +4,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # When debugging latex documentation skip using the --interaction=batchmode option
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
+# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 # Liao 12/18/2009, use normal mode to ease finding bugs from hudson logs
-# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -93,7 +93,8 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex \
              rose-processing-phases.pdf testing.tex \
              writingYourFirstTranslator.tex overviewOfRose.tex \
              developersAppendix.tex astMerge.tex installRose.tex \
-             binaryAnalysis.tex demo.tex OpenMPsupport.tex UPCsupport.tex
+             binaryAnalysis.tex demo.tex OpenMPsupport.tex UPCsupport.tex \
+             rose_exam_1.tex rose_exam_traversals_1.tex
 
 # DQ (3/4/2009): Removed requirements.tex since it is not longer used.
 # requirements.tex
@@ -182,7 +183,7 @@ if !OS_MACOSX
 #	doxygen roseQtWidgets.doxygen
 endif
 
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) $(HASKELLPORT_APIDOCS) RoseQtDoc
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) $(HASKELLPORT_APIDOCS) RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -205,6 +206,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
+	cp -f ROSE_Exam.pdf ROSE_WebPages/ROSE_Exam.pdf
 	cp -f ROSE_DeveloperInstructions.pdf ROSE_WebPages/ROSE_DeveloperInstructions.pdf
 	cp -f ROSE_DemoGuide.pdf ROSE_WebPages/ROSE_DemoGuide.pdf
 	mkdir -p ROSE_WebPages/ROSE_UserManual
@@ -216,23 +218,22 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 
 # Upload web pages to the LBL server 
 copyWebPages: make-web-pages
-#	cd ROSE_WebPages; rsync -avz * quinlan1@cmg-1:/green_dev/www/casc/rose
-#	Liao 5/6/2010 migrate to the new web server
-	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@portal-auth.nersc.gov:/project/projectdirs/rosecompiler/www.rosecompiler.org
+#       Liao 5/6/2010 migrate to the new web server
 #	Liao, 7/13/2009, must ensure the file permissions here
+	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@portal-auth.nersc.gov:/project/projectdirs/rosecompiler/www.rosecompiler.org
 #	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
 #	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 
 # Liao 12/7/2009, we mirror the content of the internal 
-# /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+# /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
 # to a public http://www.rosecompiler.org/edg_binaries/
-EDG_BINARY_STASH_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+EDG_BINARY_STASH_PATH=/nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
 # *.tar.gz within rsync is essential to only synchronize .tar.gz files.
 # scripts/hudson/checkEDGBinaryFiles.sh untars all .tar.gz and grep for EDG files, it returns an error code 
 # if any EDG source files are found
 syncEDGBinaries:
 	test -d ${EDG_BINARY_STASH_PATH} && $(top_srcdir)/scripts/hudson/checkEDGBinaryFiles.sh && \
-	rsync -avz /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/*.tar.gz -e ssh liaoch@web-dev.nersc.gov:/www/host/rosecompiler/edg_binaries \
+	rsync -avz /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries/*.tar.gz -e ssh liaoch@web-dev.nersc.gov:/www/host/rosecompiler/edg_binaries \
 	|| echo "${EDG_BINARY_STASH_PATH} does not exist, this rule can only run from within LLNL! "
 
 copyWebPagesPanas: make-web-pages
@@ -259,6 +260,7 @@ manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 pdf-local:
 	$(MAKE) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf || exit 1
 	$(MAKE) ROSE_InstallationInstructions.pdf || exit 1
+	$(MAKE) ROSE_Exam.pdf || exit 1
 	$(MAKE) ROSE_DeveloperInstructions.pdf || exit 1
 	$(MAKE) ROSE_DemoGuide.pdf || exit 1
 
@@ -276,6 +278,11 @@ ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_Instal
 	($(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex) || exit 1;
+
+ROSE_Exam.pdf: $(latexFiles) $(latexDependences) ROSE_Exam.tex rose_exam_1.tex rose_exam_traversals_1.tex
+	($(PDFLATEX) ROSE_Exam.tex && \
+	$(PDFLATEX) ROSE_Exam.tex && \
+	$(PDFLATEX) ROSE_Exam.tex) || exit 1;
 
 ROSE_DeveloperInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_DeveloperInstructions.tex
 	($(PDFLATEX) ROSE_DeveloperInstructions.tex && \
@@ -377,7 +384,8 @@ EXTRA_DIST = CMakeLists.txt \
    developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex \
    preface.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
    AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
-   roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf introduction_start.tex
+   roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf introduction_start.tex \
+   rose_exam_1.tex rose_exam_traversals_1.tex
 
 # DQ (3/4/2009): Removed requirements.tex since it is not longer used.
 # requirements.tex
@@ -392,7 +400,8 @@ clean-local: clean-web-pages
 
 CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     AstProcessing AstRewrite *.gz a.out roseDirectoryMap.ps roseDirectoryMap.pdf \
-	     manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
+	     manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf \
+        ROSE_InstallationInstructions.pdf ROSE_Exam.pdf \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \

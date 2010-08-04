@@ -151,7 +151,8 @@ namespace ELF{
 #include "AssemblerX86.h"
 
 // Files in src/backend/asmUnparser
-#include "unparseAsm.h"
+#include "AsmUnparser.h"
+#include "AsmUnparser_compat.h"  /*backward compatibility functions once in unparseAsm.h*/
 
 
 
@@ -163,9 +164,12 @@ namespace ELF{
 // added .h file for error check transformations
 //#include "RuntimeInstrumentation.h"
 
+// Laksono (12/06/2010): we include PHPFrontend.h if and only if a PHP support is required
+#ifdef USE_ROSE_PHP_SUPPORT
 #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "PHPFrontend.h"
+#endif
 #endif
 
 // Support for Xen/Ether hypervisor
@@ -174,7 +178,7 @@ namespace ELF{
 #endif
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
-#define COMPILE_DEBUG_STATEMENTS 0
+#define COMPILE_DEBUG_STATEMENTS 1
 
 // Endian access wrappers in src/frontend/SageIII/sageInterface
 //#include "endianWrappers.h"

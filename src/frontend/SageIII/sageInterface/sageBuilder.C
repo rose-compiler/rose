@@ -528,11 +528,13 @@ template <class actualFunction>
 actualFunction*
 SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope)
    {
+#if 0 //FMZ (3/23/2009): We need this for the  coarray translator
      if (SageInterface::is_Fortran_language() == true)
      { // We don't expect this is being called for Fortran
        cerr<<"Building nondefining function in Fortran is not allowed!"<<endl;
        ROSE_ASSERT(false);
      }
+#endif
   // argument verification
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
@@ -1932,6 +1934,18 @@ SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression
   return expList;
 }
 
+// CH (5/11/2010): Seems that this function is useful.
+SgExprListExp * SageBuilder::buildExprListExp(const std::vector<SgExpression*>& exprs)
+{
+  SgExprListExp* expList = new SgExprListExp();
+  ROSE_ASSERT(expList);
+  setOneSourcePositionForTransformation(expList);
+  for (size_t i = 0; i < exprs.size(); ++i) {
+    appendExpression(expList, exprs[i]);
+  }
+  return expList;
+}
+
 SgExprListExp * SageBuilder::buildExprListExp_nfi()
 {
   SgExprListExp* expList = new SgExprListExp();
@@ -2500,6 +2514,15 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   if (increment) 
     increment->set_parent(result);
 
+  // CH (5/13/2010): If the initialize_stmt is an object of SgForInitStatement, we can directly put it 
+  // into for statement. Or else, there will be two semicolons after unparsing.
+  if (SgForInitStatement* for_init_stmt = isSgForInitStatement(initialize_stmt))
+  {
+    result->set_for_init_stmt(for_init_stmt);
+    for_init_stmt->set_parent(result);
+    return result;
+  }
+
   SgForInitStatement* init_stmt = new SgForInitStatement();
   ROSE_ASSERT(init_stmt);
   setOneSourcePositionForTransformation(init_stmt);
@@ -2898,25 +2921,52 @@ SgStatement* SageBuilder::buildStatementFromString(std::string str)
 #endif
 
 SgPointerType* SageBuilder::buildPointerType(SgType * base_type /*= NULL*/)
-{
-  SgPointerType* result= new SgPointerType(base_type);
-  ROSE_ASSERT(result);
-  return result;
-}
+   {
+  // DQ (7/26/2010): This needs to call the SgPointerType::createType() function so that we can properly abstract the creation of types into the type table.
+  // printf ("ERROR: This function needs to call the SgPointerType::createType() function so that we can properly abstract the creation of types into the type table. \n");
+  // ROSE_ASSERT(false);
+
+  // DQ (7/29/2010): This function needs to call the SgPointerType::createType() function to support the new type table.
+  // SgPointerType* result = new SgPointerType(base_type);
+     SgPointerType* result = SgPointerType::createType(base_type);
+     ROSE_ASSERT(result != NULL);
+
+     return result;
+   }
 
 SgReferenceType* SageBuilder::buildReferenceType(SgType * base_type /*= NULL*/)
-{
-  SgReferenceType* result= new SgReferenceType(base_type);
-  ROSE_ASSERT(result);
-  return result;
-}
+   {
+  // DQ (7/26/2010): This needs to call the SgReferenceType::createType() function so that we can properly abstract the creation of types into the type table.
+  // printf ("ERROR: This function needs to call the SgReferenceType::createType() function so that we can properly abstract the creation of types into the type table. \n");
+  // ROSE_ASSERT(false);
+
+  // DQ (7/29/2010): This function needs to call the SgPointerType::createType() function to support the new type table.
+  // SgReferenceType* result= new SgReferenceType(base_type);
+     SgReferenceType* result = SgReferenceType::createType(base_type);
+     ROSE_ASSERT(result != NULL);
+
+     return result;
+   }
 
 SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
-{
-  SgModifierType* result= new SgModifierType(base_type);
-  ROSE_ASSERT(result);
-  return result;
-}
+   {
+  // DQ (7/30/2010): Note that this is called by the outline test: tests/roseTests/astOutliningTests/moreTest3.cpp
+  // DQ (7/28/2010): Now we want to make calling this function an error, the functions buildConst() will return SgModifierType objects instead.
+     printf ("Error: this function SageBuilder::buildModifierType() should not be called! (call the buildConst() function (or whatever other function is required) directly \n");
+  // ROSE_ASSERT(false);
+
+  // DQ (7/26/2010): This needs to call the SgModifierType::createType() function so that we can properly abstract the creation of types into the type table.
+     SgModifierType* result = new SgModifierType(base_type);
+  // SgModifierType* result = SgModifierType::createType(base_type);
+     ROSE_ASSERT(result != NULL);
+
+  // DQ (7/28/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
 
 SgTypeBool * SageBuilder::buildBoolType() { 
   SgTypeBool * result =SgTypeBool::createType(); 
@@ -3105,95 +3155,178 @@ SgTypeFloat * SageBuilder::buildFloatType()
   return result;
 }
 
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a constant type.
-SgType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
- {
-   SgModifierType *result = new SgModifierType(base_type);
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_constVolatileModifier().setConst();
-   return result;
+SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
+   {
+#if 0
+  // DQ (7/28/2010): Old approach before type table support.
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+     result->get_typeModifier().get_constVolatileModifier().setConst();
+     return result;
+#else
+  // DQ (7/28/2010): New (similar) approach using type table support.
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+     result->get_typeModifier().get_constVolatileModifier().setConst();
+
+  // DQ (7/28/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+#endif
  }
 
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a volatile type.
-SgType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
- {
-   SgModifierType *result = new SgModifierType(base_type);
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_constVolatileModifier().setVolatile();
-   return result;
+SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
+   {
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
 
- }
-  //! Build a restrict type.
-SgType* SageBuilder::buildRestrictType(SgType* base_type)
- {
-   ROSE_ASSERT(base_type!=NULL);
-   if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
-   {  
-     printf("Base type of restrict type must be a pointer or reference type.\n");
-     ROSE_ASSERT(false);
+     result->get_typeModifier().get_constVolatileModifier().setVolatile();
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
    }
-   SgModifierType *result = new SgModifierType(base_type);
-   ROSE_ASSERT(result!=NULL);
 
-   result->get_typeModifier().setRestrict();
-   return result;
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
+  //! Build a restrict type.
+SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
+   {
+     ROSE_ASSERT(base_type!=NULL);
+     if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
+        {
+          printf("Base type of restrict type must be a pointer or reference type.\n");
+          ROSE_ASSERT(false);
+        }
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
 
- }
+     result->get_typeModifier().setRestrict();
 
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
+
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a UPC strict type.
-SgType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
- {
-   SgModifierType *result = new SgModifierType(base_type);
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_strict);
-   return result;
- }
+SgModifierType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
+   {
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
 
+     result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_strict);
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
+
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a UPC relaxed type.
-SgType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
- {
-   SgModifierType *result = new SgModifierType(base_type);
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_relaxed);
-   return result;
- }
+SgModifierType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
+   {
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
 
+     result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_relaxed);
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
+
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a UPC shared type.
-SgType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/)
- {
-   SgModifierType *result = new SgModifierType(base_type);
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_upcModifier().set_isShared(true);
-   result->get_typeModifier().get_upcModifier().set_layout(-1); // No layout ("shared" without a block size)
-   return result;
- }
+SgModifierType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/, long layout /*= -1*/)
+   {
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
 
+     result->get_typeModifier().get_upcModifier().set_isShared(true);
+
+  // DQ (7/29/2010): Modified to use new input parameter.
+  // result->get_typeModifier().get_upcModifier().set_layout(-1); // No layout ("shared" without a block size)
+     result->get_typeModifier().get_upcModifier().set_layout(layout); // No layout ("shared" without a block size)
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
+
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a UPC shared[] type.
-SgType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NULL*/)
- {
-   SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_upcModifier().set_layout(0); // [] layout
-   return result;
- }
+SgModifierType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NULL*/)
+   {
+     SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
+     ROSE_ASSERT(result!=NULL);
 
+     result->get_typeModifier().get_upcModifier().set_layout(0); // [] layout
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
+
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a UPC shared[*] type.
-SgType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
- {
-   SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_upcModifier().set_layout(-2); // [*] layout
-   return result;
- }
+SgModifierType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
+   {
+     SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
+     ROSE_ASSERT(result!=NULL);
 
+     result->get_typeModifier().get_upcModifier().set_layout(-2); // [*] layout
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
+
+// DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a UPC shared[n] type.
-SgType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long block_factor)
- {
-   SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
-   ROSE_ASSERT(result!=NULL);
-   result->get_typeModifier().get_upcModifier().set_layout(block_factor); // [block_factor] layout
-   return result;
- }
+SgModifierType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long block_factor)
+   {
+     SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
+     ROSE_ASSERT(result!=NULL);
+
+     result->get_typeModifier().get_upcModifier().set_layout(block_factor); // [block_factor] layout
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     return result;
+   }
+
+
 
   //! Build a complex type.
 SgTypeComplex* SageBuilder::buildComplexType(SgType* base_type /*=NULL*/)

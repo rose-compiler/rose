@@ -57,6 +57,7 @@ libtool-2.2.4.tar.bz2:
 
 Need to run: "/Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy --ltdl --automake"
 the first time installed on OSX (ninjai specific detail).
+(This is done by "build" when Dan's libtoolize is present).
 
 
 Crontab used for OSX tests:

@@ -76,8 +76,10 @@ main(int argc, char* argv[])
      * of the process starting at the address specified on the command line. */
     size_t buf_sz;
     const unsigned char *buf = read_file(filename, &buf_sz);
+    MemoryMap::MapElement melmt(vaddr, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+    melmt.set_name(filename);
     MemoryMap mm;
-    mm.insert(MemoryMap::MapElement(vaddr, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC));
+    mm.insert(melmt);
 
     /* Create the SgAsmGenericFile object that will be needed later. We could have used its parse() method to read the
      * contents of our file, but this example's purpose is to clearly demonstrate how to disassemble a buffer that might not
@@ -108,15 +110,17 @@ main(int argc, char* argv[])
     if (!successors.empty()) {
         for (Disassembler::AddressSet::iterator si=successors.begin(); si!=successors.end(); ++si)
             printf(" 0x%08"PRIx64, *si);
-        fputc('\n', stdout);
+        fputs("\n\n", stdout);
     } else {
-        fputs(" buffer is self contained.\n", stdout);
+        fputs(" buffer is self contained.\n\n", stdout);
     }
 
     /* A partitioner can reorganize the instructions into an AST if you desire.  This is necessary if you plan to use any
      * ROSE's analysis or output functions since they operate exclusively on the tree representation. */
     SgAsmBlock *block = MyPartitioner().partition(insns, vaddr, "test_function");
 
-    /* Produce human-readable output. */
-    std::cout <<unparseAsmStatement(block);
+    /* Produce human-readable output.  The output can be customized by subclassing AsmUnparser (see disassemble.C for an
+     * example). This method of output is also more efficient than calling the old unparseAsmStatement() since there's no need
+     * to buffer the string representation in memory first. */
+    AsmUnparser().unparse(std::cout, block);
 }
