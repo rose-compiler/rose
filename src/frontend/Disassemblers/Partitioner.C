@@ -17,8 +17,11 @@
 /* See header file for full documentation. */
 
 
-
-
+std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
+{
+    e.print(o);
+    return o;
+}
 
 /********************************************************************************************************************************
  * These SgAsmFunctionDeclaration methods have no other home, so they're here for now. Do not move them into
@@ -101,13 +104,13 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             at++;
         }
         if (at>=s.size())
-            throw std::string("heuristic name must follow qualifier");
+            throw Exception("heuristic name must follow qualifier");
         
              
         size_t comma = s.find(",", at);
         std::string word = std::string(s, at, comma-at);
         if (word.size()==0)
-            throw std::string("heuristic name must follow comma");
+            throw Exception("heuristic name must follow comma");
         
         unsigned bits = 0;
         if (word=="entry" || word=="entry_point") {
@@ -134,7 +137,7 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         } else if (isdigit(word[0])) {
             bits = strtol(word.c_str(), NULL, 0);
         } else {
-            throw std::string("unknown partitioner heuristic: \"" + word + "\"");
+            throw Exception("unknown partitioner heuristic: \"" + word + "\"");
         }
 
         switch (howset) {
@@ -374,6 +377,8 @@ Partitioner::Function::last_block() const
 void
 Partitioner::clear()
 {
+    config_file_loaded = false;
+
     /* Delete all functions */
     for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
         fi->second->clear_blocks();
@@ -390,11 +395,15 @@ Partitioner::clear()
 
     /* Release (do not delete) all instructions */
     insns.clear();
+}
 
+void
+Partitioner::load_config() {
     /* Read configuration file (avoid mmap due to Windows support) */
-    if (!config_file_name.empty()) {
-#ifndef _MSC_VER
-		// tps (06/23/2010) : Does not work under Windows
+    if (!config_file_loaded && !config_file_name.empty()) {
+#ifdef _MSC_VER /* tps (06/23/2010) : Does not work under Windows */
+        fprintf(stderr, "Partitioner::load_config(\"%s\") not implemented on Windows\n", config_file_name.c_str());
+#else
         int fd = open(config_file_name.c_str(), O_RDONLY);
         if (fd<0)
             throw IPDParser::Exception(strerror(errno), config_file_name);
@@ -407,6 +416,7 @@ Partitioner::clear()
         IPDParser(this, config, sb.st_size, config_file_name).parse();
         delete[] config;
         close(fd);
+        config_file_loaded = true;
 #endif
     }
 }
@@ -1576,8 +1586,8 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
      * which won't be cleared here. */
     if (!insn2block.empty())
         clear();
-
     add_instructions(insns);
+    load_config();
     pre_cfg(interp);
     analyze_cfg();
     post_cfg(interp);

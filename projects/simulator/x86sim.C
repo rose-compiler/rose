@@ -991,7 +991,7 @@ main(int argc, char *argv[])
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
-        } catch (const VirtualMachineSemantics::Exception &e) {
+        } catch (const VirtualMachineSemantics::Policy::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
         } catch (const EmulationPolicy::Exit &e) {

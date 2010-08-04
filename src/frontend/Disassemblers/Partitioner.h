@@ -83,10 +83,21 @@
  *  to disassemble and partition a buffer of instructions obtained outside of ROSE's binary file parsing mechanisms.
  */
 class Partitioner {
-protected:
+    /*************************************************************************************************************************
+     *                                        Public Exceptions
+     *************************************************************************************************************************/
+public:
+    struct Exception {
+        std::string mesg;
+        Exception(const std::string &mesg): mesg(mesg) {}
+        void print(std::ostream &o) const { o <<"partitioner exception: " <<mesg; }
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e);
+    };
+
     /*************************************************************************************************************************
      *                                        Data Structures Useful to Subclasses
      *************************************************************************************************************************/
+protected:
 
     struct Function;
 
@@ -228,7 +239,10 @@ public:
      *************************************************************************************************************************/
 public:
 
-    Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true) {}
+    Partitioner()
+        : func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true),
+          config_file_loaded(false)
+        {}
     virtual ~Partitioner() { clear(); }
 
     /*************************************************************************************************************************
@@ -335,9 +349,14 @@ public:
      *  If it is null then those function seeding operations that depend on having file headers are not run. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
-    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. Then read the
-     *  specified IPD file (see set_config()). This method is called by partition(). */
+    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. You'll probably
+     *  want to read-load the configuration file, if any, by calling load_config(). */
     virtual void clear();
+
+    /** Loads the configuration file if necessary. The name of the configuration file is set with set_config().  It should not
+     *  be called until instructions have been assigned to the partitioner. The partition() method itself normally makes this
+     *  call. */
+    virtual void load_config();
 
     /** Adds additional instructions to be processed. New instructions are only added at addresses that don't already have an
      *  instruction. */
@@ -600,6 +619,7 @@ protected:
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory */
     std::string config_file_name;                       /**< Optional name of IPD file to read before partitioning */
+    bool config_file_loaded;                            /**< Set when config file has been loaded; cleared by clear() */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
