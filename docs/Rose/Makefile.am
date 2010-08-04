@@ -217,8 +217,10 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 # Upload web pages to the LBL server 
 copyWebPages: make-web-pages
 #	cd ROSE_WebPages; rsync -avz * quinlan1@cmg-1:/green_dev/www/casc/rose
+#	Liao 5/6/2010 migrate to the new web server
+	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@portal-auth.nersc.gov:/project/projectdirs/rosecompiler/www.rosecompiler.org
 #	Liao, 7/13/2009, must ensure the file permissions here
-	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
+#	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
 #	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 
 # Liao 12/7/2009, we mirror the content of the internal 
