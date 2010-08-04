@@ -1872,8 +1872,11 @@ SgType::handledUsingLocalTable(SgType* t)
 SgScopeStatement*
 SgType::getCurrentScope()
    {
+     // Liao 8/3/2010, pass fortran only test
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
   // DQ (7/23/2010): This is defined in the EDG/Sage connection.
      extern SgScopeStatement* curr_sg_scope;
+#endif     
 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
   // This is what is used in the Open Fortran Parser connection.
@@ -1886,6 +1889,7 @@ SgType::getCurrentScope()
   // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
   // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
      SgScopeStatement* currentScope = NULL;
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT     
      if (curr_sg_scope != NULL)
         {
        // C/C++ AST being generated
@@ -1893,6 +1897,8 @@ SgType::getCurrentScope()
           ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
         }
        else
+#endif
+
         {
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
        // DQ (7/31/2010): If Fortran is not enabled then these functions will not be available.
@@ -1909,9 +1915,9 @@ SgType::getCurrentScope()
                currentScope = NULL;
              }
 #else
-       // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
-          printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
-          currentScope = NULL;
+          // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
+            printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
+            currentScope = NULL;
 #endif
         }
 
