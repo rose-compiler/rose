@@ -11,8 +11,10 @@ echo THIS does not work because it has a parameter BUILD_JOB_BUILD
 echo ERROR WILL BE: authentification needed 
 curl 'http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN\&BUILD_JOB_BUILD_NUMBER=$BUILD_NUMBER'
 
+curl 'http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN&BUILD_JOB_BUILD_NUMBER=$BUILD_NUMBER'
+
 echo THIS works because it has no parameter
-curl  'http://hudson-rose.llnl.gov:8080/job/v7-opengl-wintest-scratch/build?token=WIN\&BUILD_JOB_BUILD_NUMBER=$BUILD_NUMBER'
+curl  'http://hudson-rose.llnl.gov:8080/job/v7-opengl-wintest-scratch/build?token=WIN'
 
 
 echo "Done curl."
