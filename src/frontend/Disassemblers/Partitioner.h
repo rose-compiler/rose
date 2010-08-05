@@ -197,6 +197,7 @@ protected:
         bool sucs_specified;                    /**< True if IPD file specifies successors for this block. */
         Disassembler::AddressSet sucs;          /**< Address to which this block might branch or fall through. */
         bool sucs_complete;                     /**< True if successors are fully known. */
+        SgUnsignedCharList sucs_program;        /**< i386 code to simulate to find successors. */
     };
     typedef std::map<rose_addr_t, BlockConfig*> BlockConfigMap;
 
@@ -470,13 +471,14 @@ public:
      *     BlockStmtList := BlockStmt [';' BlockStmtList]
      *     BlockStmt := ( Empty | Alias | Successors ) ';'
      *     Alias := 'alias' Address
-     *     Successors := ('successor' | 'successors') [SuccessorAddrList]
+     *     Successors := ('successor' | 'successors') [SuccessorAddrList|AssemblyCode]
      *     SuccessorAddrList := AddressList | AddressList '...' | '...'
      *
      *     AddressList := Address ( ',' AddressList )*
      *     Address: Integer
      *     Integer: DECIMAL_INTEGER | OCTAL_INTEGER | HEXADECIMAL_INTEGER
      *     Name: STRING
+     *     AssemblyCode: asm '{' ASSEMBLY '}'
      *  \endcode
      *
      *  Language terminals:
@@ -583,6 +585,7 @@ public:
         std::string match_symbol();
         std::string match_string();
         rose_addr_t match_number();
+        std::string match_asm();        /* assembly code inside nested curly braces */
 
 
         /*************************************************************************************************************************

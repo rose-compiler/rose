@@ -1,6 +1,7 @@
 /* Parser for the Instruction Partitioning Description (IPD) files. See documentation in Partitioner.h */
 #include "sage3basic.h"
 #include "Partitioner.h"
+#include "AssemblerX86.h"       /* Needed to assemble the "successors" program in parse_Successors() */
 
 std::ostream&
 operator<<(std::ostream &o, const Partitioner::IPDParser::Exception &e)
@@ -146,12 +147,35 @@ Partitioner::IPDParser::match_number()
         throw Exception("expected number");
     char *rest;
 #ifdef _MSC_VER
-		//tps - added Win specific function
+    //tps - added Win specific function
     rose_addr_t retval = _strtoui64(input+at, &rest, 0);
 #else
-	rose_addr_t retval = strtoull(input+at, &rest, 0);
+    rose_addr_t retval = strtoull(input+at, &rest, 0);
 #endif
     at = rest-input;
+    return retval;
+}
+
+std::string
+Partitioner::IPDParser::match_asm()
+{
+    std::string retval;
+    skip_space();
+    match_terminal("{");
+    size_t depth = 1;
+    while (at<len && depth>0) {
+        if ('{'==input[at]) {
+            retval += input[at++];
+            ++depth;
+        } else if ('}'==input[at]) {
+            if (--depth>0) retval += input[at];
+            at++;
+        } else {
+            retval += input[at++];
+        }
+    }
+    if (depth > 0)
+        throw Exception("EOF reached before end of assembly code (missing right curly brace?)");
     return retval;
 }
 
@@ -289,20 +313,30 @@ Partitioner::IPDParser::parse_Successors()
 {
     if (!is_symbol("successor") && !is_symbol("successors")) return false;
     match_symbol();
-    cur_block->sucs_specified = true;
-    cur_block->sucs.clear();
-    cur_block->sucs_complete = true;
-
-    while (is_number()) {
-        rose_addr_t succ_va = match_number();
-        cur_block->sucs.insert(succ_va);
-        if (!is_terminal(",")) break;
-        match_terminal(",");
-    }
-
-    if (is_terminal("...")) {
-        match_terminal("...");
-        cur_block->sucs_complete = false;
+    if (is_symbol("asm")) {
+        /* Successors specified by ROSE-simulated assembly program */
+        match_symbol("asm");
+        std::string src = match_asm();
+        try {
+            cur_block->sucs_program = AssemblerX86().assembleProgram(src);
+        } catch (const Assembler::Exception &e) {
+            throw Exception(std::string("successor program assembly failed: ") + e.mesg);
+        }
+    } else {
+        /* Successors specified as a list of addresses */
+        cur_block->sucs_specified = true;
+        cur_block->sucs.clear();
+        cur_block->sucs_complete = true;
+        while (is_number()) {
+            rose_addr_t succ_va = match_number();
+            cur_block->sucs.insert(succ_va);
+            if (!is_terminal(",")) break;
+            match_terminal(",");
+        }
+        if (is_terminal("...")) {
+            match_terminal("...");
+            cur_block->sucs_complete = false;
+        }
     }
 
     return true;

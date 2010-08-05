@@ -659,6 +659,8 @@ Partitioner::mark_ipd_configuration()
             bb->cache.sucs = bconf->sucs;
             bb->cache.sucs_complete = bconf->sucs_complete;
         }
+        if (!bconf->sucs_program.empty())
+            throw Exception("successor program not supported yet"); /*FIXME*/
     }
 }
 
