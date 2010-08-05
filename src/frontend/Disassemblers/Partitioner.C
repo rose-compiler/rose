@@ -732,7 +732,8 @@ Partitioner::mark_ipd_configuration()
             /* address of basic block's last instruction */
             stack_ptr -= 4;
             policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
-                                   policy.number<32>(bb->insns.back()->get_address()), policy.true_());
+                                   policy.number<32>(bb->insns.back()->get_address()+bb->insns.back()->get_raw_bytes().size()),
+                                   policy.true_());
 
             /* address of basic block's first instruction */
             stack_ptr -= 4;
