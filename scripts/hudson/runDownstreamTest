@@ -8,12 +8,12 @@ echo "http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN
 curl 'http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN\&BUILD_JOB_BUILD_NUMBER=$BUILD_NUMBER'
 
 echo "Curl without apostrophes"
-curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN\&BUILD_JOB_BUILD_NUMBER=$BUILD_NUMBER
+#curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN\&BUILD_JOB_BUILD_NUMBER=$BUILD_NUMBER
 
 echo Trying another project
 curl  'http://hudson-rose.llnl.gov:8080/job/v7-opengl-wintest-scratch/build?token=WIN'
 
 echo Trying another project without apostrophes
-curl  http://hudson-rose.llnl.gov:8080/job/v7-opengl-wintest-scratch/build?token=WIN
+#curl  http://hudson-rose.llnl.gov:8080/job/v7-opengl-wintest-scratch/build?token=WIN
 
 echo "Done curl."
