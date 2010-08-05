@@ -2,7 +2,7 @@
 #include <iostream>
 
 // database access
-#include "GlobalDatabaseConnection.h"
+#include "GlobalDatabaseConnectionMYSQL.h"
 #include "TableDefinitions.h"
 DEFINE_TABLE_PROJECTS();
 DEFINE_TABLE_FILES();

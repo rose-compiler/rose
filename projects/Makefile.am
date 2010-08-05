@@ -28,7 +28,6 @@ SUBDIRS = \
      MPICodeMotion \
      javaport \
      haskellport \
-     reverseComputation \
      assemblyToSourceAst \
      bugSeeding \
      binaryVisualization \

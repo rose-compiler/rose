@@ -10,11 +10,6 @@ int main( int argc, char * argv[] )
      AstTests::runAllTests(project);
 
 #if 0
-  // This function will reset the source position information to match the generated code.
-     project->resetSourcePositionToGeneratedCode();
-#endif
-
-#if 0
   // Output an optional graph of the AST (just the tree, when active)
      printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
      generateDOT ( *project );

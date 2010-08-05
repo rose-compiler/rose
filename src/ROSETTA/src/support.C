@@ -208,6 +208,11 @@ Grammar::setUpSupport ()
   // NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 #endif
 
+  // DQ (7/22/2010): And now we implement a type table to make sure that each type is only built once and then properly referenced (shared).
+  // This will also make it possible to have exact type equivalence be tested using only pointer equality instead of anything more elaborate.
+  // This is also where the FunctionTypeTable should be moved (to tidy up ROSE a bit).
+     NEW_TERMINAL_MACRO (TypeTable,         "TypeTable",         "TYPE_TABLE" );
+
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
@@ -238,7 +243,7 @@ Grammar::setUpSupport ()
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge           |
 
-          GraphNodeList         | GraphEdgeList             | 
+          GraphNodeList         | GraphEdgeList             | TypeTable           |
 
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
@@ -296,6 +301,12 @@ Grammar::setUpSupport ()
      SymbolTable.setDataPrototype("SgNodeSet","symbolSet", "",
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/22/2010): Added type table to support stricter uniqueness of types and proper sharing.
+     TypeTable.setFunctionPrototype( "HEADER_TYPE_TABLE", "../Grammar/Support.code" );
+     TypeTable.setAutomaticGenerationOfConstructor(false);
+     TypeTable.setDataPrototype    ( "SgSymbolTable*","type_table","= NULL",
+					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
   // InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME_DATA", "../Grammar/Support.code");
 
      InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME", "../Grammar/Support.code");
@@ -327,6 +338,17 @@ Grammar::setUpSupport ()
 #else
      InitializedName.setDataPrototype("SgName","name", "= \"\"",
           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+  // FMZ (4/7/2009): Added for Cray pointer declaration
+#if 0
+#if USE_FORTRAN_IR_NODES
+     InitializedName.setDataPrototype("bool","isCrayPointer", "= false",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     InitializedName.setDataPrototype("SgInitializedName*","crayPointee", "= NULL",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif 
 #endif
 
   // DQ (7/20/2004):  think this is the root of the problems in cycles when we traverse types!
@@ -393,6 +415,10 @@ Grammar::setUpSupport ()
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
      InitializedName.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // FMZ (2/18/2009)
+     InitializedName.setDataPrototype("bool","isCoArray","= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      InitializedName.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
@@ -2034,6 +2060,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Support.setFunctionSource         ( "SOURCE", "../Grammar/Support.code");
 
      SymbolTable.setFunctionSource     ( "SOURCE_SYMBOL_TABLE", "../Grammar/Support.code");
+
+  // DQ (7/22/2010): 
+     TypeTable.setFunctionSource    ( "SOURCE_TYPE_TABLE", "../Grammar/Support.code" );
+
      InitializedName.setFunctionSource ( "SOURCE_INITIALIZED_NAME", "../Grammar/Support.code");
      Name.setFunctionSource            ( "SOURCE_NAME", "../Grammar/Support.code");
      Attribute.setFunctionSource       ( "SOURCE_ATTRIBUTE", "../Grammar/Support.code");

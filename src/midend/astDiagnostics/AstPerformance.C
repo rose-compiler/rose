@@ -240,6 +240,9 @@ AstPerformance::~AstPerformance()
    {
   // printf ("Inside of AstPerformance destructor ... project = %p outputReportInDestructor = %s \n",project,outputReportInDestructor ? "true" : "false");
 
+  // DQ (7/21/2010): Call this here before we get too far into the derived class constructor.
+  // localData->set_memory_usage((double) (localData->memoryUsage.getMemoryUsageMegabytes()));
+
   // Remove this performance monitor from the stack
      performanceStack.pop_front();
 
@@ -295,8 +298,9 @@ ProcessingPhase::ProcessingPhase ( const std::string & s, double p, ProcessingPh
 
      internalMemoryUsageData = startMemoryUsage;
 #else
+  // DQ (7/21/2010): Set in the destructor instead of the constructor.
   // internalMemoryUsageData = ROSE_MemoryUsage::getMemoryUsageKilobytes();
-     internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
+  // internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
 #endif
 
 
@@ -304,11 +308,27 @@ ProcessingPhase::ProcessingPhase ( const std::string & s, double p, ProcessingPh
           parent->childList.push_back(this);
    }
 
-double
-ProcessingPhase::getCurrentDelta(const RoseTimeType& timer) {
-  return double(clock() - timer) / CLOCKS_PER_SEC;
-}
+ProcessingPhase::~ProcessingPhase()
+   {
+  // DQ (7/21/2010): This is too late of a stage to set this value!
+  // internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
+   }
 
+double
+ProcessingPhase::getCurrentDelta(const RoseTimeType& timer)
+   {
+#if 1
+     return double(clock() - timer) / CLOCKS_PER_SEC;
+#else
+     double returnValue = double(clock() - timer) / CLOCKS_PER_SEC;
+  // internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
+     internalMemoryUsageData = get_memory_usage() - internalMemoryUsageData;
+     return returnValue;
+#endif
+   }
+
+#if 0
+// DQ (7/21/2010): I don't think this is called anymore!
 void
 ProcessingPhase::stopTiming(const RoseTimeType& timer) {
      double performance = getCurrentDelta(timer);
@@ -341,6 +361,7 @@ ProcessingPhase::stopTiming(const RoseTimeType& timer) {
   // printf ("resolution = %f \n",resolution);
      set_resolution(resolution);
    }
+#endif
 
 int
 AstPerformance::getLock()
@@ -757,6 +778,14 @@ TimingPerformance::~TimingPerformance()
   // printf ("resolution = %f \n",resolution);
      localData->set_resolution(resolution);
 #endif
+
+  // DQ (7/21/2010): Set this here to record the useage of memory in the interval being evaluated.
+  // internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
+  // localData->internalMemoryUsageData = get_memory_usage() - localData->internalMemoryUsageData;
+  // localData->set_memory_usage( (double)(get_memory_usage()));
+  // localData->internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
+     ROSE_MemoryUsage memoryUsage;
+     localData->set_memory_usage( memoryUsage.getMemoryUsageMegabytes() );
    }
 
 double

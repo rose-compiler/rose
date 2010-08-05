@@ -3631,6 +3631,10 @@ SgScopeStatement::SgScopeStatement ( Sg_File_Info* file_info )
 
   // DQ (2/16/2006): Set this parent directly (now tested)
      p_symbol_table->set_parent(this);
+
+  // DQ (7/23/2010): Build the local type table.
+     p_type_table = new SgTypeTable();
+     p_type_table->set_parent(this);
    }
 
 void
@@ -4126,6 +4130,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgWhileStmt:
           case V_SgFortranDo:
           case V_SgForAllStatement:
+          case V_SgCAFWithTeamStatement: //FMZ (2/18/2009)
                returnValue = false;
                break;
 
@@ -4849,6 +4854,17 @@ SgScopeStatement::getStatementList () const
                return forAllScope->get_body()->getStatementList();
                break;
              }
+
+          // FMZ (CoArray with team)
+          case V_SgCAFWithTeamStatement:
+             {
+               const SgCAFWithTeamStatement* teamScope = isSgCAFWithTeamStatement(currentScope);
+               ROSE_ASSERT (teamScope != NULL);
+               ROSE_ASSERT (teamScope->get_body() != NULL);
+               return isSgBasicBlock(teamScope->get_body()) ? isSgBasicBlock(teamScope->get_body())->getStatementList() : emptyStatementList;
+               break;
+             }
+
 
           default:
                printf ("ERROR: default reached in switch (getStatementList() const) currentScope = %s \n",currentScope->sage_class_name());
@@ -9961,7 +9977,7 @@ SgClassDeclaration::get_qualified_name() const
 
 // RV (1/31/2006): Added mangler for class declarations.
 SgName
-SgClassDeclaration::get_mangled_name (void) const
+SgClassDeclaration::get_mangled_name(void) const
    {
 #if 0
   // return joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());
@@ -9996,12 +10012,21 @@ SgClassDeclaration::get_mangled_name (void) const
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgClassDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
-       // return i->second.c_str();
+       // printf ("In SgClassDeclaration::get_mangled_name(): (FOUND in cache) mangledNameString = %s \n",mangledNameString.c_str());
           return mangledNameString;
         }
        else
         {
           SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());
+       // printf ("In SgClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s \n",mangledName.str());
+
+          if (mangledName.is_null() == true)
+             {
+            // printf ("In SgClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s get_name() = %s \n",mangledName.str(),get_name().str());
+               mangledName = "unknown_scope_and_name";
+             }
+          ROSE_ASSERT(mangledName.is_null() == false);
+
 #if 0
        // DQ (6/23/2010): Added support to make classes with the same name different when they are
        // different classes containing different members.
@@ -10125,44 +10150,23 @@ SgTemplateInstantiationDecl::post_construction_initialization()
   // DQ (9/27/2004): This function should not modify the existing SgType which 
   // in some cases is shared with other IR nodes within Sage III.  This is a bug
   // which effects the handling of defining vs. non-defining declarations.
-#if 0
-     if (get_type()) 
-          get_type()->set_declaration(this);
-       else	
-          set_type(SgClassType::createType(this)); 
-#else
-  // Only build a type if one does not exist
-     if (get_type() == NULL)
-        {
-#if 0
-#if PRINT_DEVELOPER_WARNINGS
-          printf ("In $CLASSNAME::post_construction_initialization(): generating the SgClassType internally (from the declaration) \n");
-#endif
-#endif
-          set_type(SgClassType::createType(this));
-        }
-#endif
+
+  // printf ("p_templateArguments.size() = %zu \n",p_templateArguments.size());
 
   // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
   // JJW (8/6/2008): p_templateArguments is not a pointer anymore
-#if 0
-     if (p_templateArguments != NULL)
+     SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
+     while (i != p_templateArguments.end())
         {
-#endif
-          SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
-          while (i != p_templateArguments.end())
-             {
-               (*i)->set_parent(this);
-               i++;
-             }
-#if 0
+          (*i)->set_parent(this);
+          i++;
         }
-       else
+
+  // DQ (7/29/2010): Build the type after setting the template aruments.
+     if (get_type() == NULL)
         {
-       // DQ (2/22/2007): This is OK sometimes, though a better implementation could likely be done to make this an error (more strict).
-       // printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationDecl = %p \n",this);
+          set_type(SgClassType::createType(this));
         }
-#endif
    }
 
 SgName
@@ -10250,14 +10254,42 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
      if (mangledNameString.empty() == false)
         {
        // return i->second.c_str();
+#if 0
+          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (FOUND in cache) mangledNameString = %s get_name() = %s \n",mangledNameString.c_str(),get_name().str());
+#endif
           return mangledNameString;
         }
        else
         {
-          SgName mangledName = mangleTemplate (get_templateName(),get_templateArguments(),get_scope());
+       // DQ (7/24/2010): Added to support type tables (at an early stage in AST construction, the get_templateName() might not be known yet.
+       // ROSE_ASSERT(get_templateName().is_null() == false);
+          SgName template_name = get_templateName();
+          if (template_name.is_null() == true)
+             {
+            // Use the name of the template (as defined by EDG) so that we can generate a unique string (later this is reset).
+               template_name = get_name();
+             }
+          ROSE_ASSERT(template_name.is_null() == false);
+#if 0
+          printf ("template_name = %s \n",template_name.str());
+#endif
+       // SgName mangledName = mangleTemplate (get_templateName(),get_templateArguments(),get_scope());
+          SgName mangledName = mangleTemplate(template_name,get_templateArguments(),get_scope());
+#if 0
+          printf ("After mangleTemplate(): get_templateArguments().size() = %zu mangledName = %s \n",get_templateArguments().size(),mangledName.str());
+          ROSE_ASSERT(get_templateArguments().size() > 0);
+#endif
+#if 0
+          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (NOT found in cache) mangledNameString = %s get_name() = %s get_templateName() = %s \n",mangledNameString.c_str(),get_name().str(),get_templateName().str());
+#endif
+       // DQ (7/24/2010): Added to support type tables.
+          ROSE_ASSERT(mangledName.is_null() == false);
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationDecl*>(this),mangledName);
+#if 0
+          printf ("After SageInterface::addMangledNameToCache(): mangledName = %s \n",mangledName.str());
+#endif
           return mangledName;
         }
 #endif
@@ -13459,4 +13491,19 @@ void
 SgOmpBarrierStatement::post_construction_initialization()
    {}
 SOURCE_OMP_BARRIER_STATEMENT_END
+
+// FMZ (2/3/2009): Added for co-array fortran "withteam" stmt
+HEADER_WITH_TEAM_STATEMENT_START
+
+HEADER_WITH_TEAM_STATEMENT_END
+
+SOURCE_WITH_TEAM_STATEMEMT_START
+void
+SgCAFWithTeamStatement::post_construction_initialization()
+{
+}
+
+SOURCE_WITH_TEAM_STATEMEMT_END
+
+
 
