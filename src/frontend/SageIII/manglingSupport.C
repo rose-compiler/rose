@@ -448,63 +448,85 @@ string
 mangleTemplateToString (const string& templ_name,
                         const SgTemplateArgumentPtrList& templ_args,
                         const SgScopeStatement* scope)
-  {
-    // Mangle all the template arguments
-    string args_mangled;
-    args_mangled = mangleTemplateArgsToString (templ_args.begin (),
-                                               templ_args.end ());
+   {
+  // Mangle all the template arguments
+     string args_mangled;
+  // if (templ_args.begin() != templ_args.end())
+     if (templ_args.empty() == true)
+        {
+          args_mangled = "unknown_arg";
+        }
+       else
+        {
+          args_mangled = mangleTemplateArgsToString (templ_args.begin(),templ_args.end());
+        }
 
-    // Compute the name qualification, if any.
-    string scope_name;
-    if (scope)
-      scope_name = mangleQualifiersToString (scope);
+  // Compute the name qualification, if any.
+     string scope_name;
+     if (scope == NULL)
+        {
+          scope_name = "unknown_scope";
+        }
+       else
+        {
+          scope_name = mangleQualifiersToString (scope);
+        }
 
-    // Compute the final mangled name.
-    string mangled_name = joinMangledQualifiersToString (scope_name, templ_name);
-    mangled_name += "__tas__" + args_mangled + "__tae__";
-    return mangled_name;
-  }
+  // Compute the final mangled name.
+     string mangled_name = joinMangledQualifiersToString (scope_name, templ_name);
+  // printf ("joinMangledQualifiersToString (scope_name, templ_name) : mangled_name = %s \n",mangled_name.c_str());
+
+     if (mangled_name.empty() == true)
+        {
+          mangled_name = "unknown_template_name";
+        }
+
+     mangled_name += "__tas__" + args_mangled + "__tae__";
+
+  // printf ("args_mangled = %s mangled_name = %s \n",args_mangled.c_str(),mangled_name.c_str());
+
+     return mangled_name;
+   }
 
 SgName
 mangleTemplate (const SgName& templ_name,
                 const SgTemplateArgumentPtrList& templ_args,
                 const SgScopeStatement* scope)
-{
-  string mangled_name = mangleTemplateToString (templ_name.getString (),
-                                                templ_args,
-                                                scope);
-  return SgName (mangled_name.c_str ());
-}
+   {
+     string mangled_name = mangleTemplateToString(templ_name.getString(),templ_args,scope);
+  // printf ("In mangleTemplate(): mangled_name = %s \n",mangled_name.c_str());
+     return SgName (mangled_name.c_str());
+   }
 
 string
 mangleTemplateFunctionToString (const string& templ_name,
                                 const SgTemplateArgumentPtrList& templ_args,
                                 const SgFunctionType* func_type,
                                 const SgScopeStatement* scope)
-  {
-    // Compute a mangled name for this function's type
-    string type_name;
-    string ret_type_name;
-    if (func_type)
-      {
-        type_name = func_type->get_mangled ().getString ();
-        const SgType* ret_type = func_type->get_return_type ();
-        if (ret_type)
-          ret_type_name = ret_type->get_mangled ().getString ();
-      }
-    else
-      type_name = "UNKNOWN_FUNCTION_TYPE";
+   {
+  // Compute a mangled name for this function's type
+     string type_name;
+     string ret_type_name;
+     if (func_type)
+        {
+          type_name = func_type->get_mangled ().getString ();
+          const SgType* ret_type = func_type->get_return_type ();
+          if (ret_type)
+               ret_type_name = ret_type->get_mangled ().getString ();
+        }
+       else
+        {
+          type_name = "UNKNOWN_FUNCTION_TYPE";
+        }
 
-    // This function's name, transformed.
-    string func_name = mangleFunctionNameToString (templ_name,
-                                                   ret_type_name);
-    
-    // Compute the final mangled name.
-    string mangled_name
-      = mangleTemplateToString (func_name, templ_args, scope)
-      + "__" + type_name;
-    return mangled_name;
-  }
+  // This function's name, transformed.
+     string func_name = mangleFunctionNameToString (templ_name,ret_type_name);
+
+  // Compute the final mangled name.
+     string mangled_name = mangleTemplateToString (func_name, templ_args, scope) + "__" + type_name;
+
+     return mangled_name;
+   }
 
 SgName
 mangleTemplateFunction (const string& templ_name,
