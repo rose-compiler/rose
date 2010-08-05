@@ -42,6 +42,12 @@ endif
 #   libroseBinaryLibraries =
 # endif
 
+if ROSE_USE_MYSQL
+  OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
+else
+  OPT_MYSQL_LDFLAGS =
+endif
+
 if ROSE_USE_SQLITE_DATABASE
    libroseSqlite3xConnection = \
 		$(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
@@ -54,19 +60,6 @@ else
    libroseSqlite3xConnection = 
    OPT_SQLITE3_LDFLAGS =
 endif
-
-if ROSE_USE_MYSQL_DATABASE
-    libroseMYSQLConnection = $(top_builddir)/src/roseExtensions/databaseConnection/librosedatabase.la
-    OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
-    OPT_MYSQLPP_LDFLAGS = \
-        -L@MySQL_path@/lib/mysql -lmysqlpp
-else
-    libroseMYSQLConnection =
-    libroseMYSQLLibraries =
-    OPT_MYSQL_LDFLAGS = 
-    OPT_MYSQLPP_LDFLAGS =
-endif
-
 
 if ROSE_WITH_ROSEQT
    libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la \
@@ -129,9 +122,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/libroseutil.la \
    $(libroseSqlite3xConnection) \
    $(libsideEffect_LIBS) \
-   $(libroseQtExtension) \
-   $(libroseMYSQLConnection) \
-   $(libroseMYSQLLibraries)
+   $(libroseQtExtension)
 
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
 # used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
@@ -180,8 +171,7 @@ librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIB
 		    $(BOOST_WAVE_LIB) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
 		    $(OPT_SQLITE3_LDFLAGS) \
-		    $(OPT_MYSQL_LDFLAGS) \
-		    $(OPT_MYSQLPP_LDFLAGS)
+        $(OPT_MYSQL_LDFLAGS)
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_USE_DWARF
