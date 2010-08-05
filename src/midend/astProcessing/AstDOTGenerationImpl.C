@@ -3,13 +3,23 @@
 #ifndef ASTDOTGENERATION_TEMPLATES_C
 #define ASTDOTGENERATION_TEMPLATES_C
 
-#include "sage3basic.h"
-//#include "AstConsistencyTests.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#include "AsmUnparser_compat.h"
-#include "wholeAST_API.h"
-#include "sageInterface.h"
+// if we included rose.h, then we need these files
+#ifdef ROSE_H
+// otherwise, we just include rose.h
+#	define __STDC_FORMAT_MACROS
+#	include <inttypes.h>
+#else
+#	include "sage3basic.h"
+//	#include "AstConsistencyTests.h"
+//#	ifndef __STDC_FORMAT_MACROS
+#		define __STDC_FORMAT_MACROS
+//#		define PRIx64 "I64x"
+//#	endif
+#	include <inttypes.h>
+#	include "AsmUnparser_compat.h"
+#	include "wholeAST_API.h"
+#	include "sageInterface.h"
+#endif
 
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>
 DOTSynthesizedAttribute
