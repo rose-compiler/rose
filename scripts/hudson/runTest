@@ -527,7 +527,7 @@ else
 echo "Windows has failed the recent Hudson test."
 echo "Please check the Windows Hudson test for its output to"
 echo "determine the exact error"
-exit 3
+#exit 3
 fi
 done
 
