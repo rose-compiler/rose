@@ -569,7 +569,6 @@ main(int argc, char *argv[])
                 std::cerr <<"disassembler exception: " <<e <<"\n";
                 exit(1);
             }
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (!strcmp(argv[i], "-rose:partitioner_search")) {
@@ -582,7 +581,6 @@ main(int argc, char *argv[])
                 std::cerr <<"partitioner exception: " <<e <<"\n";
                 exit(1);
             }
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (!strcmp(argv[i], "-rose:partitioner_config")) {
@@ -590,20 +588,16 @@ main(int argc, char *argv[])
              * also pass them along to the frontend() call. */
             ROSE_ASSERT(i+1<argc);
             partitioner_config = argv[i+1];
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (i+2<argc && CommandlineProcessing::isOptionTakingThirdParameter(argv[i])) {
-            printf("switch and args passed along to ROSE proper: %s %s %s\n", argv[i], argv[i+1], argv[i+2]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (i+1<argc && CommandlineProcessing::isOptionTakingSecondParameter(argv[i])) {
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (argv[i][0]=='-') {
-            printf("switch passed along to ROSE proper: %s\n", argv[i]);
             new_argv[new_argc++] = argv[i];
         } else if (do_raw) {
             /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
@@ -637,7 +631,6 @@ main(int argc, char *argv[])
             melmt.set_name(raw_filename);
             raw_map.insert(melmt);
         } else {
-            printf("filename passed along to ROSE proper: %s\n", argv[i]);
             new_argv[new_argc++] = argv[i];
         }
     }
