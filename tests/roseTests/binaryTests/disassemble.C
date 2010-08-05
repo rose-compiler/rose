@@ -735,6 +735,7 @@ main(int argc, char *argv[])
                 disassembler->search_function_symbols(&worklist, map, *hi);
         }
     }
+    partitioner->set_map(map);
 
     printf("using this memory map for disassembly:\n");
     map->dump(stdout, "    ");

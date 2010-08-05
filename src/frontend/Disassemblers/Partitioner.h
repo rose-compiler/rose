@@ -252,7 +252,7 @@ public:
 public:
 
     Partitioner()
-        : func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true)
+        : func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true), map(NULL)
         {}
     virtual ~Partitioner() { clear(); }
 
@@ -320,6 +320,16 @@ public:
     /** Returns the file currently used for debugging; null implies no debugging. */
     FILE *get_debug() const {
         return debug;
+    }
+
+    /** Set the memory map that was used for disassembly. */
+    void set_map(MemoryMap *mmap) {
+        map = mmap;
+    }
+    
+    /** Return the memory map that was used for disassembly. */
+    MemoryMap *get_map() const {
+        return map;
     }
 
     /*************************************************************************************************************************
@@ -615,14 +625,15 @@ public:
 protected:
 
     Disassembler::InstructionMap insns;                 /**< Set of all instructions to partition. */
-    std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block */
-    Functions functions;                                /**< All known functions, pending and complete */
-    BasicBlocks blocks;                                 /**< All known basic blocks */
-    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits */
-    std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
-    FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
-    bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory */
-    BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks */
+    std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block. */
+    Functions functions;                                /**< All known functions, pending and complete. */
+    BasicBlocks blocks;                                 /**< All known basic blocks. */
+    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
+    std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
+    FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */
+    bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory. */
+    BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
+    MemoryMap *map;                                     /**< Memory map used for disassembly. */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

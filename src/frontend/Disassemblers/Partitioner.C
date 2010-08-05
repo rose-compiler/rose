@@ -279,6 +279,7 @@ Partitioner::pops_return_address(rose_addr_t va)
         typedef VirtualMachineSemantics::Policy Policy;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
+        policy.set_map(get_map());
         VirtualMachineSemantics::ValueType<32> orig_retaddr;
         policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
         Semantics semantics(policy);
