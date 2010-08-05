@@ -108,6 +108,9 @@ public:
      *  adjustments will be made. An exception is thrown if any of the instructions cannot be disassembled. */
     SgUnsignedCharList assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_t starting_rva);
 
+    /** Assembles a program from an assembly listing.  This method may call an external assembler to do its work. */
+    virtual SgUnsignedCharList assembleProgram(const std::string &source) = 0;
+
 
     
     /*==========================================================================================================================
