@@ -8,7 +8,8 @@ noinst_PROGRAMS = normalizationTranslator
 
 normalizationTranslator_SOURCES =  NormalizationTranslator.C
 normalizationTranslator_LDADD = $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
+			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = test_basic.C test_failingTests.C test_forLoops.C test_Swap.C test_whileLoops.C
 
