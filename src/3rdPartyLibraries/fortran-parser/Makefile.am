@@ -67,7 +67,10 @@ OFP_SOURCE_FILES_WITHOUT_PATHS = \
    ActionEnums.h \
    jni_token_funcs.h \
    jni_token_funcs.c 
-
+# Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
+if ROSE_USE_OPEN_FORTRAN_PARSER
+include_HEADERS = ActionEnums.h token.h FortranParserAction.h
+endif
 extract_rose_required_ofp_source_files: get_jar_file
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
