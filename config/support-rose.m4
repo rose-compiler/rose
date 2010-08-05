@@ -757,7 +757,7 @@ AX_BOOST_WAVE
 
 AX_LIB_SQLITE3
 AX_LIB_MYSQL
-AM_CONDITIONAL(ROSE_USE_MYSQL,test ! "$found_mysql" = yes)
+AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 
 # DQ (9/15/2009): I have moved this to before the backend compiler selection so that
 # we can make the backend selection a bit more compiler dependent. Actually we likely
