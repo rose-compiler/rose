@@ -1750,7 +1750,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
 }
 
 SgUnsignedCharList
-AssemblerX86::assembleProgram(const std::string &source)
+AssemblerX86::assembleProgram(const std::string &_source)
 {
     SgUnsignedCharList retval;
     char src_file_name[L_tmpnam];
@@ -1758,6 +1758,9 @@ AssemblerX86::assembleProgram(const std::string &source)
     char dst_file_name[L_tmpnam+4];
     dst_file_name[0] = '\0';
     int fd = -1;
+
+    /* Boiler plate */
+    std::string source = std::string("BITS 32\n") + _source;
 
     try {
         /* Write source code to a temporary file */
