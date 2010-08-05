@@ -774,7 +774,13 @@ main(int argc, char *argv[])
     if (do_raw)
         partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
 
-    SgAsmBlock *block = partitioner->partition(interp, insns);
+    SgAsmBlock *block = NULL;
+    try {
+        block = partitioner->partition(interp, insns);
+    } catch (const Partitioner::Exception &e) {
+        std::cerr <<"partitioner exception: " <<e <<"\n";
+        exit(1);
+    }
 
     /* Link instructions into AST if possible */
     if (interp) {

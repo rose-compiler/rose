@@ -2,6 +2,22 @@
 #include "sage3basic.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
+#include "AsmUnparser_compat.h"
+
+std::ostream&
+operator<<(std::ostream &o, const Assembler::Exception &e)
+{
+    e.print(o);
+    return o;
+}
+
+void
+Assembler::Exception::print(std::ostream &o) const
+{
+    o <<mesg;
+    if (insn)
+        o <<" while assembling [" <<unparseInstruction(insn) <<"]";
+}
 
 /* class method */
 Assembler *
