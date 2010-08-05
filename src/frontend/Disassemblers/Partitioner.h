@@ -497,12 +497,14 @@ public:
      *     OCTAL_INTEGER: as in C, for example, 0775
      *     DECIMAL_INTEGER: as in C, for example, 1234
      *     STRING: double quoted. Use backslash to escape embedded double quotes
+     *     ASSEMBLY: x86 assembly instructions (must contain balanced curly braces, if any)
      *  \endcode
      *
      *  Comments begin with a hash ('#') and continue to the end of the line.  The hash character is not treated specially inside
-     *  quoted strings.
+     *  quoted strings.  Comments within an ASSEMBLY terminal must conform to the syntax accepted by the Netwide Assembler (nasm),
+     *  namely semicolon in place of a hash.
      *
-     *  Semantics
+     *  <h2>Semantics</h2>
      *
      *  A block declaration specifies the virtual memory address of the block's first instruction. The integer after the
      *  address specifies the number of instructions in the block.  If the specified length is less than the number of
@@ -532,7 +534,70 @@ public:
      *     }
      *  \endcode
      *
-     *  Example usage: The easiest way to parse an IPD file is to read it into memory and then call the parse() method.  The
+     *  <h2>Basic Block Successors</h2>
+     *
+     *  A block declaration can specify control-flow successors in two ways: as a list of addresses, or as an x86 assembly
+     *  language program that's interpretted by ROSE.  The benefits of using a program to determine the successors is that the
+     *  program can directly extract information, such as jump tables, from the specimen executable.
+     *
+     *  The assembly source code is fed to the Netwide Assembler, nasm (http://www.nasm.us/), which assembles it into i386
+     *  machine code. When ROSE needs to figure out the successors for a basic block it will interpret the basic block, then
+     *  load the successor program and interpret it, then extract the successor list from the program's return value. ROSE
+     *  interprets the program rather than running it directly so that the program can operate on unknown, symbolic data
+     *  values rather than actual 32-bit numbers.
+     *
+     *  The successor program is interpretted in a context that makes it appear to have been called (via CALL instruction)
+     *  from the end of the basic block being analyzed.  These arguments are passed to the program:
+     *
+     *  <ul>
+     *    <li>The address of an "svec" object to be filled in by the program. The first four-byte word at this address
+     *        is the number of successor addresses that immediately follow and must be a known value upon return of the
+     *        program.  The following values are the successors--either known values or unknown values.</li>
+     *    <li>The size of the "svec" object in bytes. The object is allocated by ROSE and is a fixed size (8192 bytes at
+     *        the time of this writing--able to hold 2047 successors).</li>
+     *    <li>The starting virtual address of the first instruction of the basic block.</li>
+     *    <li>The address immediately after the last instruction of the basic block. Depending on the Partitioner settings,
+     *        basic block may or may not be contiguous in memory.</li>
+     *    <li>The value of the stack pointer at the end of the basic block. ROSE creates a new stack before starting the
+     *        successor program because the basic block's stack might not be at a known memory address.</li>
+     *  </ul>
+     *
+     *  The successor program may either fall off the end or execute a RET statement.
+     *
+     *  For instance, if the 5-instruction block at virtual address 0x00c01115 ends with an indirect jump through a
+     *  256-element jump table beginning at 0x00c037fa, then a program to compute the successors might look like this:
+     *
+     *  \code
+     *    block 0x00c01115 5 {
+     *      successors asm {
+     *          push ebp
+     *          mov ebp, esp
+     *          ; ecx is the base address of the successors return vector,
+     *          ; the first element of which is the vector size.
+     *          mov ecx, [ebp+8]
+     *          add ecx, 4
+     *          ; loop over the entries in the jump table, copying each
+     *          ; address from the jump table to the svec return value
+     *          xor eax, eax
+     *        loop:
+     *          cmp eax, 256
+     *          je done
+     *          mov ebx, [0x00c037fa+eax*4]
+     *          mov [ecx+eax*4], ebx
+     *          inc eax
+     *          jmp loop
+     *        done:
+     *          ; set the number of entries in the svec
+     *          mov ecx, [ebp+8]
+     *          mov DWORD [ecx], 256
+     *          mov esp, ebp
+     *          pop ebp
+     *          ret
+     *  \endcode
+     *
+     *  <h2>Example Programmatic Usage</h2>
+     *
+     *  The easiest way to parse an IPD file is to read it into memory and then call the parse() method.  The
      *  following code demonstrates the use of mmap to read the file into memory, parse it, and release it from memory.  For
      *  simplicity, we do not check for errors in this example.
      *  \code

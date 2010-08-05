@@ -661,9 +661,9 @@ Partitioner::mark_ipd_configuration()
             bb->cache.sucs_complete = bconf->sucs_complete;
         }
         if (!bconf->sucs_program.empty()) {
-            /* "Execute" the program that will detect successors. We do this by simulating the basic block in order to
-             * initialize registers, loading the successor program, pushing some arguments onto the program's stack, executing
-             * the program, extracting values from the stack, and unloading the program. */
+            /* "Execute" the program that will detect successors. We do this by interpreting the basic block to initialize
+             * registers, loading the successor program, pushing some arguments onto the program's stack, interpreting the
+             * program, extracting return values from memory, and unloading the program. */
             bool debug = true;
             char block_name_str[64];
             sprintf(block_name_str, "B%08"PRIx64, va);
@@ -729,7 +729,7 @@ Partitioner::mark_ipd_configuration()
             policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
                                    policy.readGPR(x86_gpr_sp), policy.true_());
 
-            /* address of basic block's last instruction */
+            /* address past the basic block's last instruction */
             stack_ptr -= 4;
             policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
                                    policy.number<32>(bb->insns.back()->get_address()+bb->insns.back()->get_raw_bytes().size()),
@@ -742,23 +742,23 @@ Partitioner::mark_ipd_configuration()
 
             /* size of svec in bytes */
             stack_ptr -= 4;
-            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr), 
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
                                    policy.number<32>(svec_size), policy.true_());
 
             /* address of svec */
             stack_ptr -= 4;
-            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr), 
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
                                    policy.number<32>(svec_va), policy.true_());
 
             /* return address for successors program */
             stack_ptr -= 4;
-            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr), 
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
                                    policy.number<32>(return_va), policy.true_());
 
             /* Adjust policy stack pointer */
             policy.writeGPR(x86_gpr_sp, policy.number<32>(stack_ptr));
 
-            /* "Execute" the program */
+            /* Interpret the program */
             if (debug) fprintf(stderr, "  running the program...\n");
             Disassembler *disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
             ROSE_ASSERT(disassembler!=NULL);
