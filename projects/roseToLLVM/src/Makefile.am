@@ -33,6 +33,5 @@ rose2llvm_LDADD		= rosetollvm/librosetollvm.la
 
 endif
 
-EXTRA_DIST = 
 
 #############################################################################
