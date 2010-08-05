@@ -71,7 +71,7 @@ void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::strin
 //void pdfPrintAbstractSyntaxTreeEDG ( SgFile *file );
 // void generatePDFofEDG ( const SgProject & project );
 
-#include "rose.h"
+//#include "rose.h"
 //#include "../midend/astProcessing/DOTGeneration.h"
 //#include "roseInternal.h"
 //#include "../midend/astProcessing/AstDotGeneration.h"
