@@ -1009,11 +1009,17 @@ EmulationPolicy::emulate_syscall()
         }
 
         default: {
-            uint32_t arg1 = readGPR(x86_gpr_bx).known_value();
-            uint32_t arg2 = readGPR(x86_gpr_cx).known_value();
-            uint32_t arg3 = readGPR(x86_gpr_dx).known_value();
-            fprintf(stderr, "syscall_%u(0x%08"PRIx32", 0x%08"PRIx32", 0x%08"PRIx32") is not implemented yet\n\n",
-                    callno, arg1, arg2, arg3);
+            uint32_t args[6];
+            args[0] = readGPR(x86_gpr_bx).known_value();
+            args[1] = readGPR(x86_gpr_cx).known_value();
+            args[2] = readGPR(x86_gpr_dx).known_value();
+            args[3] = readGPR(x86_gpr_si).known_value();
+            args[4] = readGPR(x86_gpr_di).known_value();
+            args[5] = readGPR(x86_gpr_bp).known_value();
+            fprintf(stderr, "syscall_%u(", callno);
+            for (int i=0; i<6; i++)
+                fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", args[i]);
+            fprintf(stderr, ") is not implemented yet\n\n");
             abort();
         }
     }
