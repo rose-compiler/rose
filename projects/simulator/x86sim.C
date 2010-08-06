@@ -880,6 +880,25 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 191: { /*0xbf, getrlimit*/
+            int resource = readGPR(x86_gpr_bx).known_value();
+            uint32_t rl_va = readGPR(x86_gpr_cx).known_value();
+            if (debug && trace_syscall)
+                fprintf(debug, "  getrlimit(resource=%d, buf=0x%08"PRIx32")\n", resource, rl_va);
+            struct rlimit rl;
+            int status = getrlimit(resource, &rl);
+            if (status<=0) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                if (rl_va) {
+                    size_t nwritten = map.write(&rl, rl_va, sizeof rl);
+                    ROSE_ASSERT(nwritten==sizeof rl);
+                }
+                writeGPR(x86_gpr_ax, 0);
+            }
+            break;
+        }
+
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
