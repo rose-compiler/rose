@@ -641,7 +641,7 @@ main(int argc, char *argv[])
             ROSE_ASSERT(nread==sb.st_size);
             close(fd);
             MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
-            melmt.set_name(raw_filename);
+            melmt.set_name(strrchr(raw_filename, '/')?strrchr(raw_filename, '/')+1:raw_filename);
             raw_map.insert(melmt);
         } else {
             new_argv[new_argc++] = argv[i];
