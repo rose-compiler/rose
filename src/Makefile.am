@@ -146,8 +146,10 @@ include_HEADERS = \
      rose_msvc.h \
      msvc_stdint.h \
 	 roseSupport/utility_functionsImpl.C \
+	 midend/astProcessing/AstDOTGeneration.h \
 	 midend/astProcessing/AstDOTGenerationImpl.C \
 	 frontend/SageIII/sage3basic.h \
+	 frontend/SageIII/sage3basic.hhh \
 	 midend/astDiagnostics/AstConsistencyTests.h \
 	 backend/asmUnparser/AsmUnparser_compat.h
 
