@@ -440,7 +440,7 @@ EmulationPolicy::current_insn()
     try {
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
     } catch (Disassembler::Exception &e) {
-        fprintf(stderr, "disassembly failed at eip=0x%08"PRIx64": %s\n", e.ip, e.mesg.c_str());
+        std::cerr <<e <<"\n";
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
@@ -989,6 +989,9 @@ main(int argc, char *argv[])
             if (policy.debug)
                 policy.dump_registers(policy.debug);
         } catch (const Semantics::Exception &e) {
+            std::cerr <<e <<"\n\n";
+            abort();
+        } catch (const VirtualMachineSemantics::Policy::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
         } catch (const EmulationPolicy::Exit &e) {
