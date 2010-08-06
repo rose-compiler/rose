@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)  #-I$(srcdir)/graph #-I$(srcdir)/analyses #-I$(srcdir)/mysql_include
+INCLUDES = $(ROSE_INCLUDES) @MYSQL_INCLUDE@
 
 # binarylibdir = $(libdir)
 
