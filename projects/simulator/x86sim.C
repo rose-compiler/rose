@@ -950,6 +950,20 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 258: { /*0x102, set_tid_address*/
+            uint32_t tid_va = readGPR(x86_gpr_bx).known_value();
+            uint32_t tid_le;
+            size_t nread = map.read(&tid_le, tid_va, 4);
+            ROSE_ASSERT(4==nread);
+            pid_t tid = SgAsmExecutableFileFormat::le_to_host(tid_le);
+            if (tid!=getpid()) {
+                writeGPR(x86_gpr_ax, -EINVAL);
+            } else {
+                writeGPR(x86_gpr_ax, 0);
+            }
+            break;
+        }
+            
         default: {
             fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
             abort();
