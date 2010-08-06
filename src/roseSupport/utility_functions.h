@@ -76,7 +76,8 @@ void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::strin
 //#include "roseInternal.h"
 //#include "../midend/astProcessing/AstDotGeneration.h"
 //using namespace AstDOTGenerationExtended_Defaults;
-#include "../midend/astProcessing/AstDOTGeneration.h"
+//#include "../midend/astProcessing/AstDOTGeneration.h"
+#include "AstDOTGeneration.h"
 
 template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
 struct generateDOTExtended ;
