@@ -76,6 +76,13 @@ public:
         }
     };
 
+    /* Must be the same size and layout as struct sigaction on 32-bit linux */
+    struct SignalAction {
+        uint32_t        handler;
+        sigset_t        mask;                   /* same size on 32- and 64-bit linux */
+        uint32_t        flags;
+    };
+
     /* Thrown by exit system calls. */
     struct Exit {
         explicit Exit(int status): status(status) {}
@@ -93,6 +100,15 @@ public:
     SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
     uint32_t mmap_start;                        /* Minimum address to use when looking for mmap free space */
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
+    SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
+
+#if 0
+    uint32_t gsOffset;
+    void (*eipShadow)();
+    uint32_t signalStack;
+    std::vector<user_desc> thread_areas;
+#endif
+    
 
     /* Debugging, tracing, etc. */
     FILE *debug;                                /* Stream to which debugging output is sent (or NULL to suppress it) */
@@ -103,13 +119,6 @@ public:
     bool trace_mmap;                            /* Show changes in the memory map */
     bool trace_syscall;                         /* Show each system call */
 
-#if 0
-    uint32_t gsOffset;
-    void (*eipShadow)();
-    uint32_t signalHandlers[_NSIG + 1];
-    uint32_t signalStack;
-    std::vector<user_desc> thread_areas;
-#endif
 
     EmulationPolicy()
         : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), 
@@ -143,6 +152,8 @@ public:
         writeSegreg(x86_segreg_ss, 0x2b);
         writeSegreg(x86_segreg_fs, 0x2b);
         writeSegreg(x86_segreg_gs, 0x2b);
+
+        memset(signal_action, 0, sizeof signal_action);
     }
 
     /* Print machine register state for debugging */
@@ -800,6 +811,34 @@ EmulationPolicy::emulate_syscall()
                 }
             }
             writeGPR(x86_gpr_ax, retval);
+            break;
+        }
+
+        case 174: { /*0xae, rt_sigaction*/
+            int signum = readGPR(x86_gpr_bx).known_value();
+            uint32_t action_va = readGPR(x86_gpr_cx).known_value();
+            uint32_t oldact_va = readGPR(x86_gpr_dx).known_value();
+            if (debug && trace_syscall) {
+                fprintf(debug, "  rt_sigaction(signum=%d, act=0x%08"PRIx32", oldact=0x%08"PRIx32")\n", 
+                        signum, action_va, oldact_va);
+            }
+
+            if (signum<1 || signum>_NSIG) {
+                writeGPR(x86_gpr_ax, -EINVAL);
+                break;
+            }
+
+            if (oldact_va) {
+                size_t nwritten = map.write(signal_action+signum, oldact_va, sizeof(*signal_action));
+                ROSE_ASSERT(nwritten==sizeof(*signal_action));
+            }
+            
+            if (action_va) {
+                size_t nread = map.read(signal_action+signum, action_va, sizeof(*signal_action));
+                ROSE_ASSERT(nread==sizeof(*signal_action));
+            }
+
+            writeGPR(x86_gpr_ax, 0);
             break;
         }
             
