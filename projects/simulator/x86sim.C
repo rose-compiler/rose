@@ -22,6 +22,8 @@
 #include <asm/ldt.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/futex.h>
+#include <syscall.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/user.h>
@@ -979,7 +981,33 @@ EmulationPolicy::emulate_syscall()
             }
             break;
         }
+
+        case 311: { /*0x137, set_robust_list*/
+            uint32_t head_va = readGPR(x86_gpr_bx).known_value();
+            uint32_t len = readGPR(x86_gpr_cx).known_value();
+            if (debug && trace_syscall)
+                fprintf(debug, "  set_robust_list(head=0x%08"PRIx32", len=%"PRIu32")\n", head_va, len);
             
+            /* Read from specimen memory to make sure pages are allocated. */
+            struct robust_list_head rlh;
+            size_t nread = map.read(&rlh, head_va, sizeof rlh);
+            ROSE_ASSERT(nread==sizeof rlh);
+            
+            /* Get head_va, but in ROSE's address space */
+            const MemoryMap::MapElement *me = map.find(head_va);
+            ROSE_ASSERT(me!=NULL);
+            struct robust_list_head *rlh_ptr = (struct robust_list_head*)((char*)me->get_base() + me->get_va_offset(head_va));
+            
+            /* Allow Linux to update the specimen's memory directly */
+            int status = syscall(SYS_set_robust_list, rlh_ptr, len);
+            if (status<0) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                writeGPR(x86_gpr_ax, 0);
+            }
+            break;
+        }
+
         default: {
             uint32_t arg1 = readGPR(x86_gpr_bx).known_value();
             uint32_t arg2 = readGPR(x86_gpr_cx).known_value();
