@@ -5,10 +5,12 @@
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
+#include "rose_getline.h"
 
 #define __STDC_FORMAT_MACROS
+#include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
-
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
@@ -1745,4 +1747,102 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
     if (best.size()==0)
         throw Exception("no matching assembly definition", insn);
     return best;
+}
+
+SgUnsignedCharList
+AssemblerX86::assembleProgram(const std::string &_source)
+{
+    SgUnsignedCharList retval;
+    char src_file_name[L_tmpnam];
+    src_file_name[0] = '\0';
+    char dst_file_name[L_tmpnam+4];
+    dst_file_name[0] = '\0';
+    int fd = -1;
+
+    /* Boiler plate */
+    std::string source = std::string("BITS 32\n") + _source;
+
+    try {
+        /* Write source code to a temporary file */
+        for (int i=0; i<10 && !src_file_name[0]; i++) {
+            if (!tmpnam_r(src_file_name))
+                throw Exception("tmpnam failed");
+            fd = open(src_file_name, O_CREAT|O_EXCL|O_RDWR, 0666);
+            if (fd<0) {
+                src_file_name[0] = '\0';
+            } else {
+                size_t offset = 0;
+                size_t to_write = source.size();
+                while (to_write>0) {
+                    ssize_t nwritten = TEMP_FAILURE_RETRY(write(fd, source.c_str()+offset, to_write));
+                    if (nwritten<0) {
+                        close(fd);
+                        unlink(src_file_name);
+                        throw Exception(std::string("failed to write assembly source to temporary file: ")+ strerror(errno));
+                    }
+                    to_write -= nwritten;
+                    offset += nwritten;
+                }
+                close(fd);
+                fd = -1;
+            }
+        }
+        if (!src_file_name[0])
+            throw Exception("could not create temporary file for assembly source code");
+        strcpy(dst_file_name, src_file_name);
+        strcat(dst_file_name, ".bin");
+        unlink(dst_file_name);
+
+        /* Run the assembler, capturing its stdout (and combined stderr) */
+        char nasm_cmd[256 + L_tmpnam + L_tmpnam];
+        sprintf(nasm_cmd, "nasm -s -f bin -o %s %s", dst_file_name, src_file_name);
+        FILE *nasm_output = popen(nasm_cmd, "r");
+        if (!nasm_output)
+            throw Exception(std::string("could not execute command: ") + nasm_cmd);
+        std::string output;
+        char *line = NULL;
+        size_t line_nalloc = 0;
+        while (0<rose_getline(&line, &line_nalloc, nasm_output))
+            output += line;
+        if (line) free(line);
+        if (!output.empty() && '\n'==output[output.size()-1])
+            output = output.substr(0, output.size()-1);
+        int status = pclose(nasm_output);
+        if (status!=0)
+            throw Exception("nasm exited with status " + StringUtility::numberToString(status) + ": " + output);
+
+        /* Read the raw assembly */
+        fd = open(dst_file_name, O_RDONLY);
+        if (fd<0)
+            throw Exception(std::string("nasm didn't produce output in ") + dst_file_name);
+        struct stat sb;
+        if (fstat(fd, &sb)<0)
+            throw Exception(std::string("fstat failed on ") + dst_file_name);
+        retval.resize(sb.st_size, '\0');
+        ssize_t pos = 0;
+        while (pos<sb.st_size) {
+            ssize_t nread = TEMP_FAILURE_RETRY(read(fd, &retval[pos], sb.st_size-pos));
+            if (nread<0)
+                throw Exception(std::string("failed to read nasm output: ") + strerror(errno));
+            if (0==nread)
+                throw Exception("possible short read of nasm output");
+            pos += nread;
+        }
+
+    } catch (...) {
+        /* Make sure temp files are deleted */
+        if (src_file_name[0])
+            unlink(src_file_name);
+        if (dst_file_name[0])
+            unlink(dst_file_name);
+        if (fd>=0)
+            close(fd);
+        throw;
+    }
+
+    /* Cleanup */
+    close(fd);
+    unlink(src_file_name);
+    unlink(dst_file_name);
+    return retval;
 }

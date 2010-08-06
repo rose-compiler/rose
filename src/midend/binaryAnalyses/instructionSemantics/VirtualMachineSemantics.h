@@ -257,10 +257,32 @@ private:
                                          * default is false, that is, no special treatment for the stack. */
     size_t ninsns;                      /**< Total number of instructions processed. This is incremented by startInstruction(),
                                          *   which is the first thing called by X86InstructionSemantics::processInstruction(). */
+    MemoryMap *map;                     /**< Initial known memory values for known addresses. */
 
 public:
-    Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0) {
-        orig_state = cur_state; /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
+    struct Exception {
+        Exception(const std::string &mesg): mesg(mesg) {}
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+            o <<"VirtualMachineSemantics exception: " <<e.mesg;
+            return o;
+        }
+        std::string mesg;
+    };
+
+    Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL) {
+        /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
+        orig_state = cur_state;
+    }
+
+    /** Set the memory map that holds known values for known memory addresses.  This map is not modified by the policy and
+     *  data is read from but not written to the map. */
+    void set_map(MemoryMap *map) {
+        this->map = map;
+    }
+
+    /** Returns the number of instructions processed. This counter is incremented at the beginning of each instruction. */
+    size_t get_ninsns() const {
+        return ninsns;
     }
 
     /** Returns the current state. */
@@ -395,6 +417,20 @@ public:
                     state.mem.push_back(*mi);
                     std::sort(state.mem.begin(), state.mem.end());
                     return (*mi).data;
+                }
+            }
+
+            /* Not found in intial state. But if we have a known address and a valid memory map then initialize the original
+             * state with data from the memory map. */      
+            if (map && addr.is_known()) {
+                uint8_t buf[sizeof(uint64_t)];
+                ROSE_ASSERT(Len/8 < sizeof buf);
+                size_t nread = map->read(buf, addr.known_value(), Len/8);
+                if (nread==Len/8) {
+                    uint64_t n = 0;
+                    for (size_t i=0; i<Len/8; i++)
+                        n |= buf[i] << (8*i);
+                    new_cell.data = number<32>(n);
                 }
             }
 
@@ -781,7 +817,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
+            if (0==b.offset) throw Exception("division by zero");
             if (!a.name) return IntegerOps::signExtend<Len1, 64>(a.offset) / IntegerOps::signExtend<Len2, 64>(b.offset);
             if (1==b.offset) return a;
             if (b.offset==IntegerOps::GenMask<uint64_t,Len2>::value) return negate(a);
@@ -794,7 +830,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (a.name || b.name) return ValueType<Len2>();
-        if (0==b.offset) throw std::string("division by zero");
+        if (0==b.offset) throw Exception("division by zero");
         return IntegerOps::signExtend<Len1, 64>(a.offset) % IntegerOps::signExtend<Len2, 64>(b.offset);
         /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
     }
@@ -821,7 +857,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
+            if (0==b.offset) throw Exception("division by zero");
             if (!a.name) return a.offset / b.offset;
             if (1==b.offset) return a;
             /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
@@ -833,7 +869,7 @@ public:
     template <size_t Len1, size_t Len2>
     ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
         if (!b.name) {
-            if (0==b.offset) throw std::string("division by zero");
+            if (0==b.offset) throw Exception("division by zero");
             if (!a.name) return a.offset % b.offset;
             /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
         }
