@@ -926,6 +926,24 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 240: { /*0xf0, futex*/
+            uint32_t addr1 = readGPR(x86_gpr_bx).known_value();
+            uint32_t op = readGPR(x86_gpr_cx).known_value();
+            uint32_t val1 = readGPR(x86_gpr_dx).known_value();
+            uint32_t ptimeout = readGPR(x86_gpr_si).known_value();
+            uint32_t addr2 = readGPR(x86_gpr_di).known_value();
+            uint32_t val3 = readGPR(x86_gpr_bp).known_value();
+
+            if (debug && trace_syscall) {
+                fprintf(debug,
+                        "  futex(addr1=0x%08"PRIx32", op=%d, val1=%d, ptimeout=0x%08"PRIx32", addr2=0x%08"PRIx32", val3=%d)\n",
+                        addr1, op, val1, ptimeout, addr2, val3);
+            }
+            fprintf(stderr, "    futex syscall is returning ENOSYS for now.\n");
+            writeGPR(x86_gpr_ax, -ENOSYS);
+            break;
+        }
+            
         case 243: { /*0xf3, set_thread_area*/
             uint32_t u_info_va = readGPR(x86_gpr_bx).known_value();
             user_desc ud;
