@@ -101,6 +101,7 @@ public:
     uint32_t mmap_start;                        /* Minimum address to use when looking for mmap free space */
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
     SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
+    uint64_t signal_mask;                       /* Set by sigsetmask() */
 
 #if 0
     uint32_t gsOffset;
@@ -121,7 +122,7 @@ public:
 
 
     EmulationPolicy()
-        : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), 
+        : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
           debug(NULL), tty(true),
           trace_insn(true), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false) {
 
@@ -818,9 +819,10 @@ EmulationPolicy::emulate_syscall()
             int signum = readGPR(x86_gpr_bx).known_value();
             uint32_t action_va = readGPR(x86_gpr_cx).known_value();
             uint32_t oldact_va = readGPR(x86_gpr_dx).known_value();
+            size_t sigsetsize = readGPR(x86_gpr_si).known_value();
             if (debug && trace_syscall) {
-                fprintf(debug, "  rt_sigaction(signum=%d, act=0x%08"PRIx32", oldact=0x%08"PRIx32")\n", 
-                        signum, action_va, oldact_va);
+                fprintf(debug, "  rt_sigaction(signum=%d, act=0x%08"PRIx32", oldact=0x%08"PRIx32", sigsetsize=%zu)\n", 
+                        signum, action_va, oldact_va, sigsetsize);
             }
 
             if (signum<1 || signum>_NSIG) {
@@ -828,20 +830,56 @@ EmulationPolicy::emulate_syscall()
                 break;
             }
 
-            if (oldact_va) {
-                size_t nwritten = map.write(signal_action+signum, oldact_va, sizeof(*signal_action));
-                ROSE_ASSERT(nwritten==sizeof(*signal_action));
-            }
-            
+            SignalAction saved = signal_action[signum];
             if (action_va) {
-                size_t nread = map.read(signal_action+signum, action_va, sizeof(*signal_action));
+                size_t nread = map.read(signal_action+signum, action_va, sizeof saved);
                 ROSE_ASSERT(nread==sizeof(*signal_action));
+            }
+            if (oldact_va) {
+                size_t nwritten = map.write(&saved, oldact_va, sizeof saved);
+                ROSE_ASSERT(nwritten==sizeof(*signal_action));
             }
 
             writeGPR(x86_gpr_ax, 0);
             break;
         }
-            
+
+        case 175: { /*0xaf, rt_sigprocmask*/
+            int how = readGPR(x86_gpr_bx).known_value();
+            uint32_t set_va = readGPR(x86_gpr_cx).known_value();
+            uint32_t get_va = readGPR(x86_gpr_dx).known_value();
+            size_t sigsetsize = readGPR(x86_gpr_si).known_value();
+            if (debug && trace_syscall) {
+                fprintf(debug, "  rt_sigprocmask(how=%d, set=0x%08"PRIx32", oldset=0x%08"PRIx32", sigsetsize=%zu)\n",
+                        how, set_va, get_va, sigsetsize);
+            }
+
+            uint64_t saved=signal_mask, sigset=0;
+            size_t nread = map.read(&sigset, set_va, sizeof sigset);
+            ROSE_ASSERT(nread==sizeof sigset);
+
+            if (0==how) {
+                /* SIG_BLOCK */
+                signal_mask |= sigset;
+            } else if (1==how) {
+                /* SIG_UNBLOCK */
+                signal_mask &= ~sigset;
+            } else if (2==how) {
+                /* SIG_SETMASK */
+                signal_mask = sigset;
+            } else {
+                writeGPR(x86_gpr_ax, -EINVAL);
+                break;
+            }
+
+            if (get_va) {
+                size_t nwritten = map.write(&saved, get_va, sizeof saved);
+                ROSE_ASSERT(nwritten==sizeof saved);
+            }
+            writeGPR(x86_gpr_ax, 0);
+            break;
+        }
+
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
