@@ -5,10 +5,27 @@
 
 using namespace std;
 
+string 
+get_rmod_dir(SgFile* sfile)
+{
+  vector<string> args = sfile->get_originalCommandLineArgumentList();
+  string  rmodDir;
+
+  if (CommandlineProcessing::isOptionWithParameter(args,"-outputdir","",rmodDir,true)==true) 
+       return rmodDir+"/";
+  else return "";
+}
+
+
 void
 generateModFile(SgFile *sfile)
    {
      ROSE_ASSERT(sfile != NULL);
+
+//FMZ (10/28/2009): don't generate the .rmod for the readin .rmod file
+if (sfile->get_skipfinalCompileStep() == true)
+       return;
+
 
   // file name, with full path.
      string  originalModuleFilenameWithPath = sfile->get_file_info()->get_filenameString();
@@ -34,8 +51,12 @@ generateModFile(SgFile *sfile)
           SgModuleStatement* module_stmt = isSgModuleStatement(*i);
 
           ROSE_ASSERT(module_stmt != NULL);
-
-          string outputFilename = module_stmt->get_name() + MOD_FILE_SUFFIX;
+string outputDir = get_rmod_dir(sfile);
+string outputFilename;
+if (outputDir !="")
+          outputFilename =outputDir + module_stmt->get_name() + MOD_FILE_SUFFIX;
+else
+          outputFilename = module_stmt->get_name() + MOD_FILE_SUFFIX;
 
           string lowerCaseOutputFilename = StringUtility::convertToLowerCase(outputFilename);
 

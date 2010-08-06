@@ -3201,6 +3201,25 @@ SageInterface::is_UPC_language()
      return returnValue;
    }
 
+//FMZ
+bool
+SageInterface::is_CAF_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_CoArrayFortran_only()==true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+
 // true if any of upc_threads is set to >0 via command line: -rose:upc_threads n 
 bool
 SageInterface::is_UPC_dynamic_threads()
@@ -7863,9 +7882,9 @@ PreprocessingInfo* SageInterface::attachComment(
                   }
                  else  // TODO :What about Fortran?
                   {
-                    if (is_Fortran_language())
+                    if (is_Fortran_language() || is_CAF_language()) //FMZ:3/23/2009
                        {
-                         mytype = PreprocessingInfo::CplusplusStyleComment;
+                         mytype = PreprocessingInfo::F90StyleComment;
                       // comment = "// "+ content;
                        }
                       else  // TODO :What about Fortran?
@@ -7884,6 +7903,7 @@ PreprocessingInfo* SageInterface::attachComment(
           case PreprocessingInfo::C_StyleComment:        comment = "/* " + content + " */"; break;
           case PreprocessingInfo::CplusplusStyleComment: comment = "// " + content;         break;
           case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
+          case PreprocessingInfo::F90StyleComment:   comment = "!" + content;    break;
           case PreprocessingInfo::CpreprocessorLineDeclaration:
                comment = "#myline " + content;
                mytype = PreprocessingInfo::CplusplusStyleComment;
