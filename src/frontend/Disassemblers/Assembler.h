@@ -55,6 +55,12 @@ public:
         Exception(const std::string &reason, SgAsmInstruction *insn)
             : mesg(reason), insn(insn)
             {}
+        /** An exception not bound to a particular instruction. */
+        Exception(const std::string &reason)
+            : mesg(reason), insn(NULL)
+            {}
+        void print(std::ostream&) const;
+        friend std::ostream& operator<<(std::ostream&, const Exception&);
 
         std::string mesg;               /**< Reason that disassembly failed. */
         SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
@@ -101,6 +107,9 @@ public:
      *  instructions are stored in a vector instead. The will be treated like a single basic block: no control flow
      *  adjustments will be made. An exception is thrown if any of the instructions cannot be disassembled. */
     SgUnsignedCharList assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_t starting_rva);
+
+    /** Assembles a program from an assembly listing.  This method may call an external assembler to do its work. */
+    virtual SgUnsignedCharList assembleProgram(const std::string &source) = 0;
 
 
     
