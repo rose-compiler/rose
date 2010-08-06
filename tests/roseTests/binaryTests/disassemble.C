@@ -601,18 +601,31 @@ main(int argc, char *argv[])
             new_argv[new_argc++] = argv[i];
         } else if (do_raw) {
             /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
-             * and the virtual address where those instructions are mapped.  Add the file contents to the raw memory map. */
+             * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
+             * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
+             * is 'rx'. */
             char *raw_filename = argv[i++];
             if (i>=argc) {
                 fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
                 exit(1);
             }
-            char *rest;
-            rose_addr_t start_va = strtoull(argv[i], &rest, 0);
-            if (rest && *rest) {
+            char *suffix;
+            errno = 0;
+            rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
+            if (suffix==argv[i] || errno) {
                 fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
                 exit(1);
             }
+            unsigned perm = 0;
+            while (suffix && *suffix) {
+                switch (*suffix++) {
+                    case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
+                    case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
+                    case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
+                    default: fprintf(stderr, "%s: invalid map permissions: %s\n", argv[0], suffix-1); exit(1);
+                }
+            }
+            if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
             int fd = open(raw_filename, O_RDONLY);
             if (fd<0) {
                 fprintf(stderr, "%s: cannot open %s: %s\n", argv[0], raw_filename, strerror(errno));
@@ -627,7 +640,7 @@ main(int argc, char *argv[])
             ssize_t nread = read(fd, buffer, sb.st_size);
             ROSE_ASSERT(nread==sb.st_size);
             close(fd);
-            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
             melmt.set_name(raw_filename);
             raw_map.insert(melmt);
         } else {
