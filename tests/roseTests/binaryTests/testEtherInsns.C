@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
                     printf("0x%08"PRIx64": %s\n", va, unparseInstruction(insn).c_str());
                     SageInterface::deleteAST(insn);
                 } catch(const Disassembler::Exception &e) {
-                    printf("0x%08"PRIx64": cannot disassemble: %s\n", va, e.mesg.c_str());
+                    std::cerr <<e <<"\n";
                 }
             } else {
                 printf("received event %d\n", event);

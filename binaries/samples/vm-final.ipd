@@ -1,0 +1,111 @@
+# IPD file for vm-final.raw
+#
+# The 5-instruction block at 0x00c01115 exits through a 256-element jump table.  ROSE cannot (yet) determine
+# the control-flow successors of this block because of the indirect JMP instruction and the fact that the
+# index into the jump table is calculated across a number of basic blocks.
+#
+# Therefore, if we want the ROSE disassembler/partitioner to use the correct information, we need to provide
+# it explicitly. There are two ways:
+#
+#   1. List the successors individually. This requires that the user manually extracts the jump table entries
+#      from the specimen and place them in this file.  This is not very flexible.
+#
+#   2. Provide a small assembly function which ROSE "executes" when it needs to determine the block's successors.
+#      The function is interpretted in the context of the basic block and therefore has available to it the
+#      results of ROSE's own semantic analysis of the block.  For instance, memory and registers can contain
+#      actual known values or unknown values.  This is more flexible than #1.  Future work should make this even
+#      more flexible.
+#
+# See doxygen documentation for Partitioner::IPDParser for details.
+
+function 0x00c010fa "dispatcher" {
+        block 0x00c01115 5 {
+
+                ##################################
+                # METHOD 1
+                ##################################
+                # successors
+                #       0x00c01947, 0x00c01aae, 0x00c01890, 0x00c0116f, 0x00c015e0, 0x00c01594, 0x00c01601, 0x00c019b8,
+                #       0x00c015f1, 0x00c01a71, 0x00c016ed, 0x00c01148, 0x00c01594, 0x00c0108b, 0x00c016dc, 0x00c019bf,
+                #       0x00c015a3, 0x00c01619, 0x00c01871, 0x00c018ec, 0x00c0183c, 0x00c0144a, 0x00c01011, 0x00c0174b,
+                #       0x00c0198c, 0x00c01138, 0x00c01832, 0x00c010de, 0x00c0195c, 0x00c016f4, 0x00c01845, 0x00c01a08,
+                #       0x00c010d6, 0x00c016d3, 0x00c01661, 0x00c01624, 0x00c017ce, 0x00c0193e, 0x00c014a8, 0x00c0187e,
+                #       0x00c01019, 0x00c014ca, 0x00c0163c, 0x00c0148c, 0x00c01610, 0x00c0166b, 0x00c010ba, 0x00c01701,
+                #       0x00c01aa5, 0x00c0171a, 0x00c01a4f, 0x00c01918, 0x00c01082, 0x00c01858, 0x00c01565, 0x00c0112f,
+                #       0x00c014f9, 0x00c016c9, 0x00c01755, 0x00c01978, 0x00c014d9, 0x00c01126, 0x00c0159b, 0x00c010cc,
+                #       0x00c01011, 0x00c01724, 0x00c01635, 0x00c0192b, 0x00c01683, 0x00c0159b, 0x00c01093, 0x00c01a8b,
+                #       0x00c019ea, 0x00c0154f, 0x00c0159b, 0x00c01816, 0x00c019a8, 0x00c01635, 0x00c019d3, 0x00c0183c,
+                #       0x00c0184e, 0x00c01558, 0x00c01906, 0x00c01075, 0x00c018e4, 0x00c01610, 0x00c016b4, 0x00c01a69,
+                #       0x00c01465, 0x00c019f4, 0x00c01969, 0x00c01772, 0x00c019a8, 0x00c01923, 0x00c014f9, 0x00c010ba,
+                #       0x00c014d9, 0x00c01a29, 0x00c017ce, 0x00c015a3, 0x00c014d9, 0x00c01023, 0x00c019fe, 0x00c017fa,
+                #       0x00c01923, 0x00c017c7, 0x00c010e8, 0x00c0156e, 0x00c0154f, 0x00c015da, 0x00c01585, 0x00c01947,
+                #       0x00c015e9, 0x00c015f1, 0x00c01655, 0x00c01a40, 0x00c017a1, 0x00c01abb, 0x00c01082, 0x00c017ce,
+                #       0x00c01762, 0x00c019b0, 0x00c018b6, 0x00c01936, 0x00c01981, 0x00c01594, 0x00c016a2, 0x00c0192b,
+                #       0x00c018ce, 0x00c016ab, 0x00c010c3, 0x00c0199e, 0x00c0147c, 0x00c0103a, 0x00c01738, 0x00c01546,
+                #       0x00c018f6, 0x00c0104d, 0x00c015e9, 0x00c01740, 0x00c01157, 0x00c019fe, 0x00c0176b, 0x00c019bf,
+                #       0x00c01a61, 0x00c0144a, 0x00c01a4f, 0x00c014ae, 0x00c0150c, 0x00c015e0, 0x00c01a61, 0x00c01995,
+                #       0x00c01531, 0x00c0146e, 0x00c01499, 0x00c01577, 0x00c0189e, 0x00c0178a, 0x00c01a40, 0x00c01701,
+                #       0x00c017a1, 0x00c01645, 0x00c0152a, 0x00c0167b, 0x00c0147c, 0x00c01707, 0x00c01a7a, 0x00c0176b,
+                #       0x00c0118a, 0x00c01609, 0x00c015da, 0x00c01845, 0x00c01969, 0x00c01691, 0x00c0157e, 0x00c018c7,
+                #       0x00c0187e, 0x00c019e1, 0x00c0182a, 0x00c01475, 0x00c014b7, 0x00c019b0, 0x00c01459, 0x00c0151f,
+                #       0x00c01a8b, 0x00c018d6, 0x00c0105c, 0x00c015b8, 0x00c01619, 0x00c014e4, 0x00c0199e, 0x00c0100a,
+                #       0x00c018be, 0x00c019bf, 0x00c014a0, 0x00c0164c, 0x00c018a5, 0x00c01484, 0x00c017d7, 0x00c017aa,
+                #       0x00c01019, 0x00c01712, 0x00c0187e, 0x00c01a11, 0x00c0189e, 0x00c018c7, 0x00c01781, 0x00c01531,
+                #       0x00c01821, 0x00c01a1c, 0x00c01160, 0x00c019bf, 0x00c01799, 0x00c014f0, 0x00c01888, 0x00c017c0,
+                #       0x00c018ff, 0x00c0116f, 0x00c018be, 0x00c01160, 0x00c0194f, 0x00c01515, 0x00c019c6, 0x00c01a9e,
+                #       0x00c015af, 0x00c019b0, 0x00c017b2, 0x00c01055, 0x00c0109c, 0x00c01157, 0x00c01698, 0x00c01aae,
+                #       0x00c01a82, 0x00c01a4f, 0x00c0162d, 0x00c01531, 0x00c01635, 0x00c01868, 0x00c01978, 0x00c01068,
+                #       0x00c01503, 0x00c01858, 0x00c016ed, 0x00c01a48, 0x00c017d7, 0x00c01a37, 0x00c01a94, 0x00c016e4,
+                #       0x00c016c1, 0x00c01918, 0x00c016ab, 0x00c01aa5, 0x00c01043, 0x00c01539, 0x00c0180c, 0x00c0172e;
+
+
+                ##################################
+                # METHOD 2
+                ##################################
+                # Successors for this block are loaded from the 256-element jump table at address 0x00c037fa, which is
+                # part of the text being disassembled.
+                #
+                # Arguments on the stack are (after we set up our stack frame)
+                #    [bp+0]     old bp
+                #    [bp+4]     return address
+                #    [bp+8]     address of successors vector, svec, to be filled in
+                #    [bp+12]    size of svec in bytes
+                #    [bp+16]    address of first instruction of block
+                #    [bp+20]    address after last instruction of block
+                #    [bp+24]    stack pointer after block executed
+                #
+                successors asm {
+                                push ebp
+                                mov ebp, esp
+
+                                ; ecx is the base address of the successors return vector,
+                                ; the first element of which is the vector size.
+                                mov ecx, [ebp+8]
+                                add ecx, 4
+
+                                ; loop over the entries in the jump table, copying each
+                                ; address from the jump table to the svec return value
+                                xor eax, eax
+                        loop:   cmp eax, 256
+                                je done
+                                mov ebx, [0x00c037fa+eax*4]
+                                mov [ecx+eax*4], ebx
+                                inc eax
+                                jmp loop
+                        done:
+
+                                ; TESTING: set one of the successors to an unknown value
+                                mov eax, [0xffffff00]
+                                mov [ecx], eax;
+                        
+                                ; set the number of entries in the svec
+                                mov ecx, [ebp+8]
+                                mov DWORD [ecx], 256
+
+                                mov esp, ebp
+                                pop ebp
+                                ret
+                };
+
+        }
+}
