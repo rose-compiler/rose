@@ -1,5 +1,0 @@
-#!/bin/sh
-
-rm *.ll
-rm *.out
-rm *.out.2

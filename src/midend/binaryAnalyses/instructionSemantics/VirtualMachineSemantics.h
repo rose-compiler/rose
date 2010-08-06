@@ -257,6 +257,7 @@ private:
                                          * default is false, that is, no special treatment for the stack. */
     size_t ninsns;                      /**< Total number of instructions processed. This is incremented by startInstruction(),
                                          *   which is the first thing called by X86InstructionSemantics::processInstruction(). */
+    MemoryMap *map;                     /**< Initial known memory values for known addresses. */
 
 public:
     struct Exception {
@@ -268,9 +269,15 @@ public:
         std::string mesg;
     };
 
-    Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0) {
+    Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL) {
         /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
         orig_state = cur_state;
+    }
+
+    /** Set the memory map that holds known values for known memory addresses.  This map is not modified by the policy and
+     *  data is read from but not written to the map. */
+    void set_map(MemoryMap *map) {
+        this->map = map;
     }
 
     /** Returns the number of instructions processed. This counter is incremented at the beginning of each instruction. */
@@ -410,6 +417,20 @@ public:
                     state.mem.push_back(*mi);
                     std::sort(state.mem.begin(), state.mem.end());
                     return (*mi).data;
+                }
+            }
+
+            /* Not found in intial state. But if we have a known address and a valid memory map then initialize the original
+             * state with data from the memory map. */      
+            if (map && addr.is_known()) {
+                uint8_t buf[sizeof(uint64_t)];
+                ROSE_ASSERT(Len/8 < sizeof buf);
+                size_t nread = map->read(buf, addr.known_value(), Len/8);
+                if (nread==Len/8) {
+                    uint64_t n = 0;
+                    for (size_t i=0; i<Len/8; i++)
+                        n |= buf[i] << (8*i);
+                    new_cell.data = number<32>(n);
                 }
             }
 
