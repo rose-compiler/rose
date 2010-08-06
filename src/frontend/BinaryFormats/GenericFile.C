@@ -832,7 +832,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
     }
 
     for (size_t pass=0; pass<2; pass++) {
-        if (debug) fprintf(stderr, "%s    -- PASS %zu --\n", p, pass);
+        if (debug) {
+            fprintf(stderr, "%s    -- %s --\n",
+                    p, pass?"FIRST PASS":"SECOND PASS (after making a larger hole)");
+        }
 
         /* S offset and size in file or memory address space */
         if (filespace) {
@@ -1074,9 +1077,11 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             break;
         }
         if (debug) {
+            const char *space_name = filespace ? "file" : "mem";
             addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
-            fprintf(stderr, "%s   %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
-                    p, 0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
+            fprintf(stderr, "%s   %4s-%c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                    p, space_name, ExtentMap::category(ap, sp), 
+                    0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
             ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     0==newap.first%(x?x:1)?' ':'!', newap.first, newap.second, newap.first+newap.second);

@@ -3,6 +3,8 @@
 #ifndef ROSE_ASSEMBLER_X86_H
 #define ROSE_ASSEMBLER_X86_H
 
+#include "Assembler.h"
+
 //#include "sage3.h"
 
 /** This class contains methods for assembling x86 instructions (SgAsmx86Instruction).
@@ -49,6 +51,8 @@ public:
         return honor_operand_types;
     }
 
+    /** Assemble an x86 program from assembly source code using the nasm assembler. */
+    virtual SgUnsignedCharList assembleProgram(const std::string &source);
 
     /*========================================================================================================================
      * Members for defining instructions.
