@@ -12,7 +12,7 @@
 class AliasSetHandler
 {
     private:
-        AliasSetHandler();
+        AliasSetHandler() {}
         AliasSetHandler(AliasSetHandler const &);
         AliasSetHandler& operator = (AliasSetHandler const &);
 
@@ -26,17 +26,22 @@ class AliasSetHandler
         static AliasSetHandler* getInstance()            
         {
             if(!_handler)
-                _handler = new AliasSetHandler();
+                _handler = new AliasSetHandler;
             return _handler;
         }
-           
-        ~AliasSetHandler() 
-        {
-            delete _handler;
-        }
 
-        void addnew(std::string modulename);
+        // for debugging
+        void print();
+
+        void addNewModule(std::string modulename);
+
+        ~AliasSetHandler();
+
+        AliasSetContainerList* getAliasSetContainerList(std::string _modulename);
+
+        /*
+         * break result string for LLVM Pass to sets
+         */
+        void processAliasInformation();
 };
-
-
 #endif

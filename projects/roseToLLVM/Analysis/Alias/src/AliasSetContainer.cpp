@@ -1,6 +1,12 @@
 #include <AliasSetContainer.h>
 #include <map>
 #include <string>
+#include <iostream>
+
+
+/*
+ * Defintion for AliasSetContainer
+ */
 
 AliasSetContainer::AliasSetContainer(std::string _fn_name)
 {
@@ -17,7 +23,32 @@ AliasSetContainerList::AliasSetContainerList(std::string _module)
     _modulename = _module;
 }
 
-void AliasSetContainerList::addNew(std::string _functionname ) 
+void AliasSetContainer::print()
+{
+    std::cout << _aliaslocations << std::endl;
+}
+
+void AliasSetContainer::parseAliasSet()
+{
+    assert( !_aliaslocations.empty() );
+    
+    std::vector<std::string> _allSetsinThisFunc ;
+
+    boost::split (_allSetsinThisFunc, _aliaslocations, boost::is_any_of("\n"));
+
+    std::vector<std::string>::iterator I;
+
+    for( I = _allSetsinThisFunc.begin(); I != _allSetsinThisFunc.end(); ++I) {
+        std::cout << I->data() << std::endl;
+                          
+    }
+}
+
+/*
+ * Definition for AliasSetContainerList
+ */
+
+void AliasSetContainerList::addNewFunction(std::string _functionname ) 
 {
     AliasSetContainer *_ascontainer = new AliasSetContainer(_functionname);
     _list[_functionname] = _ascontainer;
@@ -26,8 +57,7 @@ void AliasSetContainerList::addNew(std::string _functionname )
         
 AliasSetContainer* AliasSetContainerList::getContainer(std::string _functionname )
 {
-    AliasSetContainer *ptr = _list.find(_functionname)->second;
-    return ptr;                  
+    return _list.find(_functionname)->second;
 }
 
 AliasSetContainerList:: ~AliasSetContainerList()
@@ -40,4 +70,22 @@ AliasSetContainerList:: ~AliasSetContainerList()
        
     _list.erase(_list.begin(), _list.end());
 }     
+
+void AliasSetContainerList::parseAliasSet()
+{
+    std::map<std::string, AliasSetContainer*>::iterator I;
+    for(I = _list.begin(); I != _list.end(); ++I) {
+        std::cout << I->first << std::endl;
+        I->second->parseAliasSet();
+        std::cout << std::endl;
+    }
+}
+
+void AliasSetContainerList::print()
+{
+    std::map<std::string, AliasSetContainer*>::iterator I;
+    for(I = _list.begin(); I != _list.end(); ++I) {
+        I->second->print();
+    }
+}
 

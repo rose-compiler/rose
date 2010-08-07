@@ -38,15 +38,26 @@ int main(int argc, char *argv[])
         llvm::Module *ModRef = AAModule->getModule(i);
         assert(ModRef != NULL);
 
+        AliasSetHandler::getInstance()->addNewModule(ModRef->getModuleIdentifier());
+
         /*
          * Add Alias Analysis Passes
          */
         PM->add(createBasicAliasAnalysisPass());
         PM->add(createAAGathererPass());
-        PM->run(*ModRef);       
+
+        /*
+         * Run the Passes
+         */
+        PM->run(*ModRef);
+
     }
 
-    AAModule->annotateAST(astRoot);   
+    AliasSetHandler::getInstance()->processAliasInformation();
+
+//    AAModule->annotateAST(astRoot);   
+
+//    AliasSetHandler::getInstance()->print();
 
     delete AAModule;
     delete PM;

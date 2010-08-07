@@ -9,6 +9,7 @@
 #include <llvm/Function.h>
 #include <string>
 #include <AliasSetContainer.h>
+#include <AliasSetHandler.h>
 
 namespace llvm {
     llvm::FunctionPass* createAAGathererPass();

@@ -4,6 +4,7 @@ if ROSE_USE_LLVM
 
 INCLUDES = $(ROSE_INCLUDES) \
 		   $(ROSE_LLVM_INCLUDES) \
+		   $(ROSE_BOOST_INCLUDES) \
 		   -I$(top_srcdir)/projects/roseToLLVM/src/rosetollvm/include \
 		   -I$(top_srcdir)/projects/roseToLLVM/Analysis/Alias/include 
 
@@ -11,15 +12,16 @@ INCLUDES = $(ROSE_INCLUDES) \
 
 bin_PROGRAMS = rose2llvmAA
 
-rose2llvmAA_SOURCES  = AliasAnalysis.cpp \
+rose2llvmAA_SOURCES  = AliasSetHandler.cpp \
 					   AliasAnalysisModule.cpp \
 					   AliasAnalysisGatherer.cpp \
 					   AnnotateAST.cpp \
 					   AliasSetContainer.cpp \
-					   AliasSetHandler.cpp
+					   AliasAnalysis.cpp 
+
 												   
 
-rose2llvmAA_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Wno-deprecated
+rose2llvmAA_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Wno-deprecated -g
 
 rose2llvmAA_LDADD = $(top_builddir)/projects/roseToLLVM/src/rosetollvm/librosetollvm.la
 

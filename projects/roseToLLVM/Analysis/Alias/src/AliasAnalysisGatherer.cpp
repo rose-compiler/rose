@@ -32,11 +32,23 @@ std::string AAGatherer::WriteAsString(AliasSetTracker* _asTracker, Function &F)
     std::string result;
     raw_string_ostream _aaResults(result);
 
+
     // iterate over alias sets
     AliasSetTracker::iterator _asIter;
     for(_asIter = _asTracker->begin(); _asIter != _asTracker->end(); ++_asIter) {
         AliasSet *_aliasset = static_cast<AliasSet*> (_asIter);
         AliasSet::iterator I, E;
+
+        /*
+         * Write the Type of Alias Set
+         */
+
+        if (_aliasset->isMayAlias() )
+            _aaResults << "May ";
+        else if(_aliasset->isMustAlias() )
+            _aaResults << "Must ";
+        else
+            _aaResults << "No "; 
 
         for( I = _aliasset->begin(), E = _aliasset->end(); I != E ; ++I) {
 
@@ -44,7 +56,9 @@ std::string AAGatherer::WriteAsString(AliasSetTracker* _asTracker, Function &F)
             WriteAsOperand(_aaResults, I.getPointer(), false, F.getParent());
             _aaResults << " ";
         } 
+
         _aaResults << "\n";      
+        
     }
     return _aaResults.str();   
 }
@@ -56,14 +70,19 @@ bool AAGatherer::runOnFunction(Function &F)
     AliasSetTracker *_ASTracker = new AliasSetTracker(AA);
 
     // Gather Alias Sets
-    
     addblocks(_ASTracker, F);
+
+    AliasSetContainerList *list = AliasSetHandler::getInstance()->getAliasSetContainerList(F.getParent()->getModuleIdentifier());
+
+    list->addNewFunction(F.getNameStr());
 
     std::string _AAResults = WriteAsString(_ASTracker, F);
 
-    std::cout << _AAResults << std::endl;
-    
-     _ASTracker->dump();
+    AliasSetContainer *container = list->getContainer(F.getNameStr());
+
+    container->addaliasinglocations(_AAResults);
+
+//     _ASTracker->dump();
 
     delete _ASTracker;
 }
