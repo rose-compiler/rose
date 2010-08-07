@@ -66,7 +66,7 @@ class ProcessorBase
 
 protected:
 
-    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table);
+    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed);
     InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
     SgExpression* pushVal(SgExpression* exp, SgType* type);
@@ -89,7 +89,7 @@ class ExpressionProcessor : public ProcessorBase
 {
 public:
 
-    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table) = 0;
+    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed) = 0;
     //virtual void getCost() = 0;
 
 };
@@ -134,7 +134,7 @@ class EventProcessor
 private:
 
     //! Given an expression, return all transformations using all expression processors.
-    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table);
+    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed);
 
     //! Given a statement, return all transformations using all statement processors.
     InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
