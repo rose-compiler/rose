@@ -2313,6 +2313,9 @@ projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
+projects/roseToLLVM/Analysis/Makefile
+projects/roseToLLVM/Analysis/Alias/Makefile
+projects/roseToLLVM/Analysis/Alias/src/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
