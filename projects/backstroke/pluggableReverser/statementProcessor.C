@@ -74,7 +74,7 @@ InstrumentedStatementVec BasicStatementProcessor::processExprStatement(
         SgExprStatement* exp_stmt,
         const VariableVersionTable& var_table)
 {
-    InstrumentedExpressionVec exps = processExpression(exp_stmt->get_expression(), var_table, false);
+    InstrumentedExpressionVec exps = processExpression(exp_stmt->get_expression(), var_table);
 
     ROSE_ASSERT(!exps.empty());
 

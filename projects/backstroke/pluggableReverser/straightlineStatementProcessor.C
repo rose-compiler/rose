@@ -30,7 +30,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::process(SgStatemen
 /** Process an expression statement by using the first expression handler returning a valid result. */
 vector<InstrumentedStatement> StraightlineStatementProcessor::processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& variableTable)
 {
-	vector<InstrumentedExpression> expressions = processExpression(statement->get_expression(), variableTable, false);
+	vector<InstrumentedExpression> expressions = processExpression(statement->get_expression(), variableTable);
 
 	//If none of the expression handlers could handle the code, we can't reverse it!
 	ROSE_ASSERT(!expressions.empty());

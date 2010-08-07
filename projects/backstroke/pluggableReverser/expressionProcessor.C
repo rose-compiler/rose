@@ -6,7 +6,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace backstroke_util;
 
-InstrumentedExpressionVec NullExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec NullExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
     InstrumentedExpressionVec output;
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp) || isAssignmentOp(exp))
@@ -27,7 +27,7 @@ InstrumentedExpressionVec NullExpressionProcessor::process(SgExpression* exp, co
 }
 
 
-InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
     InstrumentedExpressionVec output;
 
@@ -78,7 +78,7 @@ InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(SgExpressi
     return output;
 }
 
-InstrumentedExpressionVec ConstructiveExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec ConstructiveExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
     InstrumentedExpressionVec output;
 
@@ -227,7 +227,7 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(SgExpression*
 
 
 // This function deals with assignment like a = b + c + a, which is still constructive.
-InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(SgExpression* exp, const VariableVersionTable& var_table)
 {
     InstrumentedExpressionVec output;
 
@@ -373,7 +373,7 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(SgExpression*
 // evaluation of the true or false expression. That is:
 //     a ? b : c  ==>  a ? (b, push(1)) : (c, push(0))
 //                     pop() ? r(b) : r(c)
-InstrumentedExpressionVec processConditionalExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec processConditionalExpression(SgExpression* exp, const VariableVersionTable& var_table)
 {
     InstrumentedExpressionVec output;
 

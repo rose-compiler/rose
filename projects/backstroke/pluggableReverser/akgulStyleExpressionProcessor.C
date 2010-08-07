@@ -11,7 +11,7 @@ AkgulStyleExpressionProcessor::AkgulStyleExpressionProcessor(SgProject* project)
 }
 
 
-vector<InstrumentedExpression> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& variableTable, bool reverseValueUsed)
+vector<InstrumentedExpression> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& variableTable)
 {
 	if (isSgAssignOp(expression))
 	{
