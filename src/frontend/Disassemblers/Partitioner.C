@@ -17,8 +17,11 @@
 /* See header file for full documentation. */
 
 
-
-
+std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
+{
+    e.print(o);
+    return o;
+}
 
 /********************************************************************************************************************************
  * These SgAsmFunctionDeclaration methods have no other home, so they're here for now. Do not move them into
@@ -101,13 +104,13 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             at++;
         }
         if (at>=s.size())
-            throw std::string("heuristic name must follow qualifier");
+            throw Exception("heuristic name must follow qualifier");
         
              
         size_t comma = s.find(",", at);
         std::string word = std::string(s, at, comma-at);
         if (word.size()==0)
-            throw std::string("heuristic name must follow comma");
+            throw Exception("heuristic name must follow comma");
         
         unsigned bits = 0;
         if (word=="entry" || word=="entry_point") {
@@ -134,7 +137,7 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         } else if (isdigit(word[0])) {
             bits = strtol(word.c_str(), NULL, 0);
         } else {
-            throw std::string("unknown partitioner heuristic: \"" + word + "\"");
+            throw Exception("unknown partitioner heuristic: \"" + word + "\"");
         }
 
         switch (howset) {
@@ -276,6 +279,7 @@ Partitioner::pops_return_address(rose_addr_t va)
         typedef VirtualMachineSemantics::Policy Policy;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
+        policy.set_map(get_map());
         VirtualMachineSemantics::ValueType<32> orig_retaddr;
         policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
         Semantics semantics(policy);
@@ -388,27 +392,35 @@ Partitioner::clear()
         delete bi->second;
     blocks.clear();
 
+    /* Delete all block IPD configuration data. */
+    for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci)
+        delete bci->second;
+    block_config.clear();
+
     /* Release (do not delete) all instructions */
     insns.clear();
+}
 
-    /* Read configuration file (avoid mmap due to Windows support) */
-    if (!config_file_name.empty()) {
-#ifndef _MSC_VER
-		// tps (06/23/2010) : Does not work under Windows
-        int fd = open(config_file_name.c_str(), O_RDONLY);
-        if (fd<0)
-            throw IPDParser::Exception(strerror(errno), config_file_name);
-        struct stat sb;
-        fstat(fd, &sb);
-        char *config = new char[sb.st_size];
-        ssize_t nread = read(fd, config, sb.st_size);
-        if (nread<0 || nread<sb.st_size)
-            throw IPDParser::Exception(strerror(errno), config_file_name);
-        IPDParser(this, config, sb.st_size, config_file_name).parse();
-        delete[] config;
-        close(fd);
+void
+Partitioner::load_config(const std::string &filename) {
+    if (filename.empty())
+        return;
+#ifdef _MSC_VER /* tps (06/23/2010) : Does not work under Windows */
+    throw IPDParser::Exception("IPD parsing not supported on Windows platforms");
+#else
+    int fd = open(filename.c_str(), O_RDONLY);
+    if (fd<0)
+        throw IPDParser::Exception(strerror(errno), filename);
+    struct stat sb;
+    fstat(fd, &sb);
+    char *config = new char[sb.st_size];
+    ssize_t nread = read(fd, config, sb.st_size);
+    if (nread<0 || nread<sb.st_size)
+        throw IPDParser::Exception(strerror(errno), filename);
+    IPDParser(this, config, sb.st_size, filename).parse();
+    delete[] config;
+    close(fd);
 #endif
-    }
 }
 
 /* Return address of first instruction of basic block */
@@ -621,6 +633,173 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
         if (name!="") f->name = name;
     }
     return f;
+}
+
+/* Do whatever's necessary to finish loading IPD configuration. */
+void
+Partitioner::mark_ipd_configuration()
+{
+    for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci) {
+        rose_addr_t va = bci->first;
+        BlockConfig *bconf = bci->second;
+
+        BasicBlock *bb = find_bb_starting(va);
+        if (!bb)
+            throw Exception("cannot obtain IPD-specified basic block at " + StringUtility::addrToString(va));
+        if (bb->insns.size()<bconf->ninsns)
+            throw Exception("cannot obtain " + StringUtility::numberToString(bconf->ninsns) + "-instruction basic block at " +
+                            StringUtility::addrToString(va) + " (only " + StringUtility::numberToString(bb->insns.size()) +
+                            " available)");
+        if (bb->insns.size()>bconf->ninsns)
+            truncate(bb, bb->insns[bconf->ninsns]->get_address());
+
+        /* Initial analysis followed augmented by settings from the configuration. */
+        update_analyses(bb);
+        bb->cache.alias_for = bconf->alias_for;
+        if (bconf->sucs_specified) {
+            bb->cache.sucs = bconf->sucs;
+            bb->cache.sucs_complete = bconf->sucs_complete;
+        }
+        if (!bconf->sucs_program.empty()) {
+            /* "Execute" the program that will detect successors. We do this by interpreting the basic block to initialize
+             * registers, loading the successor program, pushing some arguments onto the program's stack, interpreting the
+             * program, extracting return values from memory, and unloading the program. */
+            bool debug = true;
+            char block_name_str[64];
+            sprintf(block_name_str, "B%08"PRIx64, va);
+            std::string block_name = block_name_str;
+            if (debug) fprintf(stderr, "running successors program for %s\n", block_name_str);
+
+            MemoryMap *map = get_map();
+            ROSE_ASSERT(map!=NULL);
+            using namespace VirtualMachineSemantics;
+            typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+            Policy policy;
+            policy.set_map(map);
+            Semantics semantics(policy);
+            
+            if (debug) fprintf(stderr, "  running semantics for the basic block...\n");
+            for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+                ROSE_ASSERT(insn!=NULL);
+                semantics.processInstruction(insn);
+            }
+
+            /* Load the program. Keep at least one unmapped byte between the program text, stack, and svec areas in order to
+             * help with debugging. */       
+            if (debug) fprintf(stderr, "  loading the program...\n");
+
+            /* Load the instructions to execute */
+            rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
+            MemoryMap::MapElement text_me(text_va, bconf->sucs_program.size(), &(bconf->sucs_program[0]), 0, 
+                                          MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+            text_me.set_name(block_name + " successors program text");
+            map->insert(text_me);
+
+            /* Create a stack */
+            static const size_t stack_size = 8192;
+            rose_addr_t stack_va = map->find_free(text_va+bconf->sucs_program.size()+1, stack_size, 4096);
+            MemoryMap::MapElement stack_me(stack_va, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
+            stack_me.set_name(block_name + " successors stack");
+            map->insert(stack_me);
+            rose_addr_t stack_ptr = stack_va + stack_size;
+
+            /* Create an area for the returned vector of successors */
+            static const size_t svec_size = 8192;
+            rose_addr_t svec_va = map->find_free(stack_va+stack_size+1, svec_size, 4096);
+            MemoryMap::MapElement svec_me(svec_va, svec_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
+            svec_me.set_name(block_name + " successors vector");
+            map->insert(svec_me);
+
+            /* What is the "return" address. Eventually the successors program will execute a "RET" instruction that will
+             * return to this address.  We can choose something arbitrary as long as it doesn't conflict with anything else.
+             * We'll use the first byte past the end of the successor program, which gives the added benefit that the
+             * successor program doesn't actually have to even return -- it can just fall off the end. */
+            rose_addr_t return_va = text_va + bconf->sucs_program.size();
+            if (debug) {
+                fprintf(stderr, "    memory map after program is loaded:\n");
+                map->dump(stderr, "      ");
+            }
+
+            /* Push arguments onto the stack in reverse order. */
+            if (debug) fprintf(stderr, "  setting up the call frame...\n");
+
+            /* old stack pointer */
+            stack_ptr -= 4;
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
+                                   policy.readGPR(x86_gpr_sp), policy.true_());
+
+            /* address past the basic block's last instruction */
+            stack_ptr -= 4;
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
+                                   policy.number<32>(bb->insns.back()->get_address()+bb->insns.back()->get_raw_bytes().size()),
+                                   policy.true_());
+
+            /* address of basic block's first instruction */
+            stack_ptr -= 4;
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
+                                   policy.number<32>(bb->insns.front()->get_address()), policy.true_());
+
+            /* size of svec in bytes */
+            stack_ptr -= 4;
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
+                                   policy.number<32>(svec_size), policy.true_());
+
+            /* address of svec */
+            stack_ptr -= 4;
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
+                                   policy.number<32>(svec_va), policy.true_());
+
+            /* return address for successors program */
+            stack_ptr -= 4;
+            policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
+                                   policy.number<32>(return_va), policy.true_());
+
+            /* Adjust policy stack pointer */
+            policy.writeGPR(x86_gpr_sp, policy.number<32>(stack_ptr));
+
+            /* Interpret the program */
+            if (debug) fprintf(stderr, "  running the program...\n");
+            Disassembler *disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
+            ROSE_ASSERT(disassembler!=NULL);
+            policy.writeIP(policy.number<32>(text_va));
+            while (1) {
+                rose_addr_t ip = policy.readIP().known_value();
+                if (ip==return_va) break;
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
+                if (debug) fprintf(stderr, "    0x%08"PRIx64": %s\n", ip, insn?unparseInstruction(insn).c_str():"<null>");
+                ROSE_ASSERT(insn!=NULL);
+                semantics.processInstruction(insn);
+                ROSE_ASSERT(policy.readIP().is_known());
+                SageInterface::deleteAST(insn);
+            }
+
+            /* Extract the list of successors. The number of successors is the first element of the list. */
+            if (debug) fprintf(stderr, "  extracting program return values...\n");
+            ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va), policy.true_());
+            ROSE_ASSERT(nsucs.is_known());
+            if (debug) fprintf(stderr, "    number of successors: %"PRId64"\n", nsucs.known_value());
+            ROSE_ASSERT(nsucs.known_value()*4 <= svec_size-4); /*first entry is size*/
+            for (size_t i=0; i<nsucs.known_value(); i++) {
+                ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va+4+i*4), policy.true_());
+                if (suc_va.is_known()) {
+                    if (debug) fprintf(stderr, "    #%zu: 0x%08"PRIx64"\n", i, suc_va.known_value());
+                    bb->cache.sucs.insert(suc_va.known_value());
+                } else {
+                    if (debug) fprintf(stderr, "    #%zu: unknown\n", i);
+                    bb->cache.sucs_complete = false;
+                }
+            }
+
+            /* Unmap the program */
+            if (debug) fprintf(stderr, "  unmapping the program...\n");
+            map->erase(text_me);
+            map->erase(stack_me);
+            map->erase(svec_me);
+
+            if (debug) fprintf(stderr, "  done.\n");
+        }
+    }
 }
 
 /* Marks program entry addresses as functions. */
@@ -1105,6 +1284,8 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
+
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
@@ -1572,17 +1753,11 @@ Partitioner::build_ast(BasicBlock* bb)
 SgAsmBlock *
 Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns)
 {
-    /* Clear only if we've already run the partitioner. This allows user to seed the partitioner with some initial functions
-     * which won't be cleared here. */
-    if (!insn2block.empty())
-        clear();
-
     add_instructions(insns);
     pre_cfg(interp);
     analyze_cfg();
     post_cfg(interp);
     SgAsmBlock *ast = build_ast();
-    clear();
     return ast;
 }
 

@@ -1,6 +1,3 @@
-switch and arg passed along to ROSE proper: -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown
-switch and arg passed along to ROSE proper: -rose:partitioner_search -leftovers
-filename passed along to ROSE proper: /home/matzke/GS-CAD/ROSE/sources/main/binaries/samples/i686-test1.O0.bin
 using this memory map for disassembly:
     va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000 ELF Load (segment 2)
     va 0x08048114 + 0x00000013 = 0x08048127 r-- at base aaa  + 0x00000114 .interp

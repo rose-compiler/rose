@@ -21,8 +21,9 @@ sub find_sample_binaries {
     opendir DIR, $dir or die "$0: $dir: $!\n";
     while (my $basename = readdir DIR) {
       my $fullname = "$dir/$basename";
-      next if $basename =~ /^\./;    # skip all dot files, including "." and ".."
-      next if $basename =~ /\.txt$/;
+      next if $basename =~ /^\./;                      # skip all dot files, including "." and ".."
+      next if $basename =~ /\.(txt|ipd|README|raw)$/;  # not a packaged binary
+      next if $basename =~ /~$/;                       # Emacs/Xemacs backup file
       next if $basename =~ /^Makefile/;
       if (-d $fullname) {
 	unshift @dirs, $fullname;

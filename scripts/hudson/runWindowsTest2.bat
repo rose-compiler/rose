@@ -5,6 +5,8 @@
 @echo Path : %Path%
 @echo JAVA_HOME : %JAVA_HOME%
 
+@echo -----------------------------------------------
+@echo BUILD REVISION SHOULD BE: %ROSE_TEST_REVISION% OR %BUILD_WIN_NR% OR %BUILDNR%
 
 @echo Testing cl.exe
 cl.exe
@@ -42,5 +44,5 @@ cmake -DBOOST_ROOT=%BOOST_ROOT% -DCMAKE_BUILD_TYPE=Release -G"Visual Studio 9 20
 vcbuild.exe ROSE.sln "Release|Win32"
 
 @echo 1 > rose_win_test2.rose
-pscp rose_win_test2.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/rose_win_test2.rose
+pscp rose_win_test2.rose hudson-rose@hudson-rose.llnl.gov:/nfs/casc/overture/ROSE/git/rose_win_test2.rose
 

@@ -563,52 +563,69 @@ main(int argc, char *argv[])
             /* Keep track of disassembler search flags because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
             ROSE_ASSERT(i+1<argc);
-            disassembler_search = Disassembler::parse_switches(argv[i+1], disassembler_search);
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
+            try {
+                disassembler_search = Disassembler::parse_switches(argv[i+1], disassembler_search);
+            } catch (const Disassembler::Exception &e) {
+                std::cerr <<"disassembler exception: " <<e <<"\n";
+                exit(1);
+            }
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (!strcmp(argv[i], "-rose:partitioner_search")) {
             /* Keep track of partitioner heuristics because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
             ROSE_ASSERT(i+1<argc);
-            partitioner_search = Partitioner::parse_switches(argv[i+1], partitioner_search);
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
+            try {
+                partitioner_search = Partitioner::parse_switches(argv[i+1], partitioner_search);
+            } catch (const Partitioner::Exception &e) {
+                std::cerr <<"partitioner exception: " <<e <<"\n";
+                exit(1);
+            }
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
-        } else if (!strcmp(argv[i], "-rose:paritioner_config")) {
+        } else if (!strcmp(argv[i], "-rose:partitioner_config")) {
             /* Keep track of partitioner configuration file name because we need it even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
             ROSE_ASSERT(i+1<argc);
             partitioner_config = argv[i+1];
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (i+2<argc && CommandlineProcessing::isOptionTakingThirdParameter(argv[i])) {
-            printf("switch and args passed along to ROSE proper: %s %s %s\n", argv[i], argv[i+1], argv[i+2]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (i+1<argc && CommandlineProcessing::isOptionTakingSecondParameter(argv[i])) {
-            printf("switch and arg passed along to ROSE proper: %s %s\n", argv[i], argv[i+1]);
             new_argv[new_argc++] = argv[i++];
             new_argv[new_argc++] = argv[i];
         } else if (argv[i][0]=='-') {
-            printf("switch passed along to ROSE proper: %s\n", argv[i]);
             new_argv[new_argc++] = argv[i];
         } else if (do_raw) {
             /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
-             * and the virtual address where those instructions are mapped.  Add the file contents to the raw memory map. */
+             * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
+             * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
+             * is 'rx'. */
             char *raw_filename = argv[i++];
             if (i>=argc) {
                 fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
                 exit(1);
             }
-            char *rest;
-            rose_addr_t start_va = strtoull(argv[i], &rest, 0);
-            if (rest && *rest) {
+            char *suffix;
+            errno = 0;
+            rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
+            if (suffix==argv[i] || errno) {
                 fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
                 exit(1);
             }
+            unsigned perm = 0;
+            while (suffix && *suffix) {
+                switch (*suffix++) {
+                    case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
+                    case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
+                    case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
+                    default: fprintf(stderr, "%s: invalid map permissions: %s\n", argv[0], suffix-1); exit(1);
+                }
+            }
+            if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
             int fd = open(raw_filename, O_RDONLY);
             if (fd<0) {
                 fprintf(stderr, "%s: cannot open %s: %s\n", argv[0], raw_filename, strerror(errno));
@@ -623,11 +640,10 @@ main(int argc, char *argv[])
             ssize_t nread = read(fd, buffer, sb.st_size);
             ROSE_ASSERT(nread==sb.st_size);
             close(fd);
-            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0);
+            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
             melmt.set_name(raw_filename);
             raw_map.insert(melmt);
         } else {
-            printf("filename passed along to ROSE proper: %s\n", argv[i]);
             new_argv[new_argc++] = argv[i];
         }
     }
@@ -664,18 +680,26 @@ main(int argc, char *argv[])
     /* Set the disassembler instruction searching hueristics from the "-rose:disassembler_search" switch. We saved these
      * above, but they're also available via SgFile::get_disassemblerSearchHeuristics() if we called frontend(). */
     disassembler->set_search(disassembler_search);
+    disassembler->set_alignment(1);      /*alignment for SEARCH_WORDS (default is four)*/
     if (do_debug_disassembler)
         disassembler->set_debug(stderr);
     
     /* Build the instruction partitioner and initialize it based on the -rose:partitioner_search and
-     * -rose:partitioner_confg switches.  Similar to the disassembler switches, there are also available via
-     * SgFile::get_partitionerSearchHeuristics() and SgFile::get_partitionerConfigurationFileName() if we called frontend(). */
+     * -rose:partitioner_confg switches.  Similar to the disassembler switches, these are also available via
+     * SgFile::get_partitionerSearchHeuristics() and SgFile::get_partitionerConfigurationFileName() if we had called
+     * frontend(). */
     Partitioner *partitioner = new Partitioner();
     partitioner->set_search(partitioner_search);
-    if (partitioner_config)
-        partitioner->set_config(partitioner_config);
     if (do_debug_partitioner)
         partitioner->set_debug(stderr);
+    if (partitioner_config) {
+        try {
+            partitioner->load_config(partitioner_config);
+        } catch (const Partitioner::IPDParser::Exception &e) {
+            std::cerr <<e <<"\n";
+            exit(1);
+        }
+    }
 
     /* Note that because we call a low-level disassembly function (disassembleBuffer) the partitioner isn't invoked
      * automatically. However, we set it here just to be thorough. */
@@ -717,6 +741,7 @@ main(int argc, char *argv[])
                 disassembler->search_function_symbols(&worklist, map, *hi);
         }
     }
+    partitioner->set_map(map);
 
     printf("using this memory map for disassembly:\n");
     map->dump(stdout, "    ");
@@ -759,8 +784,8 @@ main(int argc, char *argv[])
     SgAsmBlock *block = NULL;
     try {
         block = partitioner->partition(interp, insns);
-    } catch (const Partitioner::IPDParser::Exception &e) {
-        std::cerr <<e <<"\n";
+    } catch (const Partitioner::Exception &e) {
+        std::cerr <<"partitioner exception: " <<e <<"\n";
         exit(1);
     }
 
