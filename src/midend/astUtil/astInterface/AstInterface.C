@@ -2332,7 +2332,7 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
 	*incr = AstNodePtrImpl(f->get_increment());
 
       if (cond != 0)
-	*cond = AstNodePtrImpl(f->get_test());
+	*cond = AstNodePtrImpl(f->get_test_expr());
       if (body != 0)
 	*body = AstNodePtrImpl(f->get_loop_body());
     }
