@@ -31,8 +31,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += astFileIOTests astInliningTests astInterfaceTests astMergeTests astOutliningTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests \
               loopProcessingTests ompLoweringTests programAnalysisTests programTransformationTests \
-              roseHPCToolkitTests utilTests fileLocation_tests graph_tests mergeTraversal_tests \
-	      variableRenamingTests
+              roseHPCToolkitTests utilTests fileLocation_tests graph_tests mergeTraversal_tests
 endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
