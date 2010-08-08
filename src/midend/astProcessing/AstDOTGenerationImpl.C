@@ -9,7 +9,9 @@
 #	define __STDC_FORMAT_MACROS
 #	include <inttypes.h>
 #else
-#	include "sage3basic.h"
+#	ifndef SAGE3_CLASSES_BASIC__H
+#		include "sage3basic.h"
+#	endif
 //	#include "AstConsistencyTests.h"
 //#	ifndef __STDC_FORMAT_MACROS
 #		define __STDC_FORMAT_MACROS
