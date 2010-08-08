@@ -5,7 +5,7 @@ OSX note (12/31/2009):
    ROSE currently requires OSX 10.5, it is not clear if earlier versions
 will work.  We are in the process of getting access to a new OSX 10.6 
 system so that we can regularly test ROSE and generate the required 
-10.6 binaires for EDG.  At present Rice is reporting that 10.6 fails
+10.6 binaries for EDG.  At present Rice is reporting that 10.6 fails
 to implement the STL non-standard hash_map correctly and as a 
 result ROSE failes on OSX 10.6.  We are persuing getting this fixed,
 but we don't have a way to test this yet.
