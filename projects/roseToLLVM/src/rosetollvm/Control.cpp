@@ -300,3 +300,57 @@ void Control::generateOutput() {
         }
     }
 }
+
+void Control::generateModules()
+{
+     string command;
+
+    /**
+     * 
+     */
+    for (int i = 0; i < llvm_file_prefixes.size(); i++ ) {
+        string file_prefix = llvm_file_prefixes[i];
+
+        /**
+         * Assemble
+         */
+        // Every time we convert the file to a new form, we immediately
+        // delete the last form in order to minimize memory usage.
+        assert(llvm_streams[i]);
+        char *llvm_cstr;
+        {
+            std::string llvm_string = llvm_streams[i]->str();
+            delete llvm_streams[i];
+            llvm_streams[i] = NULL;
+            llvm_cstr = new char[llvm_string.size() + 1];
+            llvm_string.copy(llvm_cstr, llvm_string.size());
+            llvm_cstr[llvm_string.size()] = '\0';
+        }
+        Module *module = ParseAssemblyString(llvm_cstr, NULL, error, context);
+        if (! module) {
+            cerr << "Internal error: failure parsing generated LLVM"
+                 << " assembly: ";
+            llvm::raw_stderr_ostream stderr_stream;
+            string module_name = string("roseToLLVM:") + file_prefix + ".c";
+            error.Print(module_name.c_str(), stderr_stream);
+            abort();
+        }
+        module -> setModuleIdentifier(file_prefix + ".c");
+        delete [] llvm_cstr;
+        verifyModule(*module);
+
+	llvm_modules.push_back(module);
+    }     
+}
+
+Module* Control::getModuleRef(int index)
+{
+    assert(llvm_modules.size() > 0 && index < llvm_modules.size());
+    return llvm_modules[index];
+}
+
+int Control::getLLVMModuleSize()
+{
+    assert(llvm_modules.size() > 0);
+    return llvm_modules.size();
+}
