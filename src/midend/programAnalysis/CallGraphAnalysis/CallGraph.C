@@ -4,7 +4,7 @@
 #include "CallGraph.h"
 
 #ifdef HAVE_SQLITE3
-
+#include "sqlite3x.h"
 using namespace sqlite3x;
 #endif
 
