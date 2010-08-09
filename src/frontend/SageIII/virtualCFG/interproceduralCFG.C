@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "interproceduralCFG.h"
+#include "CallGraph.h"
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
@@ -70,7 +71,12 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
           SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
           SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
           std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
-          outEdges = n.outEdges(); //TODO remove
+
+          Rose_STL_Container<SgFunctionDefinition*> defs;
+          CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
+          Rose_STL_Container<SgFunctionDefinition*>::iterator def;
+          for (def = defs.begin(); def != defs.end(); ++def) 
+            VirtualCFG::makeEdge(n, (*def)->cfgForBeginning(), outEdges);
         } else 
           outEdges = n.outEdges();
         break;
