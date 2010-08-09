@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # The testing of the side effect analysis depends upon the side effect analysis,
 # which depends upon the database support within ROSE, which depends upon the use
-# of MySQL, which is an external (and optional) piece of the ROSE puzzle.
+# of sqlite, which is an external (and optional) piece of the ROSE puzzle.
 
 if ROSE_USE_SQLITE_DATABASE
 
@@ -21,11 +21,6 @@ EXTRA_DIST = testClasses1.C  testClasses2.C  testClasses3.C  testGlobal1.C  test
 
 TESTCODES =
 
-# DQ (8/26/2004):
-# This test currently fails because the data base is not setup before
-# the test is run.  We should likely use the same technique for setting
-# up the database as in the test code used in the database test directory.
-# This can be fixed later after discussion with Brian White.
 check-local:	testSideEffect
 	@echo "Run test code ..."
 	./testSideEffect $(srcdir)/testGlobal1.C | grep -i 'side effect' > tmp
