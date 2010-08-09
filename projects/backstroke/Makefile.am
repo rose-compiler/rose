@@ -6,22 +6,20 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
 # Make a common backstroke library
 # lib_LTLIBRARIES lists all the librarlies that should be built with libtool
-lib_LTLIBRARIES =  libBackstroke.la
+lib_LIBRARIES =  libBackstroke.a
 
-libBackstroke_ladir = .
-libBackstroke_la_DEPENDENCIES = 
-libBackstroke_la_SOURCES = 
-libBackstroke_la_HEADERS =
+libBackstroke_a_DEPENDENCIES = 
+libBackstroke_a_SOURCES = 
 
 # Put the backstroke headers in their own subdirectory
 libBackstroke_includedir = $(includedir)/backstroke
 
-# Link all subl
-libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
-			normalizations/libBackstrokeNormalizations.la \
-			reverseComputation/libBackstrokeReverser.la \
-			restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			pluggableReverser/libBackstrokePluggableReverser.la
+# Link all sublibs
+libBackstroke_a_LIBADD = utilities/libBackstrokeUtilities.a \
+			normalizations/libBackstrokeNormalizations.a \
+			reverseComputation/libBackstrokeReverser.a \
+			restrictedLanguage/libBackstrokeRestrictedLanguage.a \
+			pluggableReverser/libBackstrokePluggableReverser.a
 
 EXTRA_DIST = 
 
