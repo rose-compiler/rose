@@ -13,10 +13,9 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 
-
-
-
+#include "x86print.h"
 #include "VirtualMachineSemantics.h"
+#include <stdarg.h>
 
 /* These are necessary for the system call emulation */
 #include <asm/ldt.h>
@@ -201,10 +200,25 @@ public:
     /* Returns instruction at current IP, disassembling it if necessary, and caching it. */
     SgAsmx86Instruction *current_insn();
 
+    /* Returns an argument of a system call */
+    uint32_t arg(int idx);
+
     /* Emulates a Linux system call from an INT 0x80 instruction. */
     void emulate_syscall();
 
-    /* Reads a NUL-terminated string from specimen memory. */
+    /* Print the name and arguments of a system call in a manner like strace */
+    void syscall_enter(const char *name, const char *fmt, ...);
+
+    /* Print the return value of a system call in a manner like strace */
+    void syscall_leave(const char *format, ...);
+
+    /* Initializes an ArgInfo object to pass to syscall printing functions. */
+    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list ap);
+
+    /* Returns the memory address in ROSE where the specified specimen address is located. */
+    void *my_addr(uint32_t va);
+
+    /* Reads a NUL-terminated string from specimen memory. The NUL is not included in the string. */
     std::string read_string(uint32_t va);
 
     /* Copies a stat buffer into specimen memory. */
@@ -269,7 +283,12 @@ public:
         if (cond.known_value()) {
             uint8_t buf[Len/8];
             size_t nread = map.read(buf, base+offset, Len/8);
-            ROSE_ASSERT(nread==Len/8);
+            if (nread!=Len/8) {
+                fprintf(stderr, "read %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
+                fprintf(stderr, "memory map at failure:\n");
+                map.dump(stderr, "  ");
+                abort();
+            }
             uint64_t result = 0;
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 result |= buf[j] << i;
@@ -303,7 +322,12 @@ public:
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 buf[j] = (data.known_value() >> i) & 0xff;
             size_t nwritten = map.write(buf, base+offset, Len/8);
-            ROSE_ASSERT(nwritten==Len/8);
+            if (nwritten!=Len/8) {
+                fprintf(stderr, "write %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
+                fprintf(stderr, "memory map at failure:\n");
+                map.dump(stderr, "  ");
+                abort();
+            }
         }
     }
 };
@@ -473,6 +497,22 @@ EmulationPolicy::current_insn()
     return insn;
 }
 
+void *
+EmulationPolicy::my_addr(uint32_t va)
+{
+    /* Read from specimen in order to make sure that the memory is allocated and mapped into ROSE. */
+    uint32_t word;
+    size_t nread = map.read(&word, va, sizeof word);
+    ROSE_ASSERT(nread==sizeof word);
+
+    /* Obtain mapping information */
+    const MemoryMap::MapElement *me = map.find(va);
+    ROSE_ASSERT(me!=NULL); /*because the map.read() was successful above*/
+    uint8_t *base = (uint8_t*)me->get_base();
+    size_t offset = me->get_va_offset(va);
+    return base+offset;
+}
+
 std::string
 EmulationPolicy::read_string(uint32_t va)
 {
@@ -481,9 +521,9 @@ EmulationPolicy::read_string(uint32_t va)
         uint8_t byte;
         size_t nread = map.read(&byte, va++, 1);
         ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
-        retval += byte;
         if (!byte)
             return retval;
+        retval += byte;
     }
 }
 
@@ -517,11 +557,9 @@ EmulationPolicy::emulate_syscall()
     unsigned callno = readGPR(x86_gpr_ax).known_value();
     switch (callno) {
         case 3: { /*read*/
-            int fd = readGPR(x86_gpr_bx).known_value();
-            uint32_t buf_va = readGPR(x86_gpr_cx).known_value();
-            uint32_t size = readGPR(x86_gpr_dx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  read(fd=%d, buf=0x%08"PRIx32", size=%"PRIu32")\n", fd, buf_va, size);
+            syscall_enter("read", "dpd");
+            int fd=arg(0);
+            uint32_t buf_va=arg(1), size=arg(2);
             char buf[size];
             ssize_t nread = read(fd, buf, size);
             if (nread<0) {
@@ -530,15 +568,15 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, nread);
                 map.write(buf, buf_va, nread);
             }
+            syscall_leave("d");
             break;
         }
 
         case 4: { /*write*/
-            int fd = readGPR(x86_gpr_bx).known_value();
-            uint32_t buf_va = readGPR(x86_gpr_cx).known_value();
-            size_t size = readGPR(x86_gpr_dx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  write(fd=%d, buf=0x%08"PRIx32", size=%zu)\n", fd, buf_va, size);
+            syscall_enter("write", "dpd");
+            int fd=arg(0);
+            uint32_t buf_va=arg(1);
+            size_t size=arg(2);
             uint8_t buf[size];
             size_t nread = map.read(buf, buf_va, size);
             ROSE_ASSERT(nread==size);
@@ -548,27 +586,28 @@ EmulationPolicy::emulate_syscall()
             } else {
                 writeGPR(x86_gpr_ax, nwritten);
             }
+            syscall_leave("d");
             break;
         }
 
         case 5: { /*open*/
-            uint32_t filename_va = readGPR(x86_gpr_bx).known_value();
+            static const Translate oflags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
+                                                TF(O_CREAT), TF(O_EXCL), TF(O_NONBLOCK), TF(O_NOCTTY), TF(O_TRUNC),
+                                                TF(O_APPEND), TF(O_NDELAY), TF(O_ASYNC), TF(O_FSYNC), TF(O_SYNC), TF(O_NOATIME),
+                                                T_END };
+            syscall_enter("open", "sf", oflags);
+            uint32_t filename_va=arg(0);
             std::string filename = read_string(filename_va);
-            uint32_t flags = readGPR(x86_gpr_cx).known_value();
-            uint32_t mode = (flags & O_CREAT) ? readGPR(x86_gpr_dx).known_value() : 0;
-            if (debug && trace_syscall) {
-                fprintf(debug, "  open(name=0x%08"PRIx32" \"%s\", flags=0x%"PRIx32", mode=%04"PRIo32")\n", 
-                        filename_va, filename.c_str(), flags, mode);
-            }
+            uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
             int fd = open(filename.c_str(), flags, mode);
             writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+            syscall_leave("d");
             break;
         }
 
         case 6: { /*close*/
-            int fd = readGPR(x86_gpr_bx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  close(%d)\n", fd);
+            syscall_enter("close", "d");
+            int fd=arg(0);
             if (1==fd || 2==fd) {
                 /* ROSE is using these */
                 writeGPR(x86_gpr_ax, -EPERM);
@@ -576,17 +615,15 @@ EmulationPolicy::emulate_syscall()
                 int status = close(fd);
                 writeGPR(x86_gpr_ax, status<0 ? -errno : status);
             }
+            syscall_leave("d");
             break;
         }
 
         case 7: { // waitpid
-            pid_t pid = readGPR(x86_gpr_bx).known_value();
-            uint32_t status = readGPR(x86_gpr_cx).known_value();
-            uint32_t options = readGPR(x86_gpr_dx).known_value();
-            if (debug && trace_syscall) {
-                fprintf(debug, "  waitpid(pid=%d, status_va=0x%08"PRIx32", flags=0x%"PRIx32")\n", 
-                        pid, status, options);
-            }
+            static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
+            syscall_enter("waitpid", "dpf", wflags);
+            pid_t pid=arg(0);
+            uint32_t status=arg(1), options=arg(2);
             int sys_status;
             int result = waitpid(pid, &sys_status, options);
             if (result == -1) {
@@ -600,27 +637,30 @@ EmulationPolicy::emulate_syscall()
                 }
             }
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
         case 33: { /*0x21, access*/
-            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
+            static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
+            syscall_enter("access", "sf", flags);
+            uint32_t name_va=arg(0);
             std::string name = read_string(name_va);
-            int mode = readGPR(x86_gpr_cx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  access(name=0x%08"PRIx32" \"%s\", mode=%04o)\n", name_va, name.c_str(), mode);
+            int mode=arg(1);
             int result = access(name.c_str(), mode);
             if (result<0) result = -errno;
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
         case 45: { /*0x2d, brk*/
-            uint32_t newbrk = ALIGN_DN(readGPR(x86_gpr_bx).known_value(), PAGE_SIZE);
-            if (debug && trace_syscall)
-                fprintf(debug, "  brk(0x%08x) -- old brk is 0x%08x\n", newbrk, brk_va);
+            syscall_enter("brk", "x");
+            uint32_t newbrk = ALIGN_DN(arg(0), PAGE_SIZE);
+            int retval = 0;
+
             if (newbrk >= 0xb0000000ul) {
-                writeGPR(x86_gpr_ax, -ENOMEM);
+                retval = -ENOMEM;
             } else {
                 if (newbrk > brk_va) {
                     MemoryMap::MapElement melmt(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
@@ -631,22 +671,22 @@ EmulationPolicy::emulate_syscall()
                     map.erase(MemoryMap::MapElement(newbrk, brk_va-newbrk));
                     brk_va = newbrk;
                 }
-                writeGPR(x86_gpr_ax, brk_va);
+                retval= brk_va;
             }
             if (debug && newbrk!=0 && trace_mmap) {
                 fprintf(debug, "  memory map after brk syscall:\n");
                 map.dump(debug, "    ");
             }
+
+            writeGPR(x86_gpr_ax, retval);
+            syscall_leave("p");
             break;
         }
 
         case 54: { /*0x36, ioctl*/
-            int fd = readGPR(x86_gpr_bx).known_value();
-            uint32_t cmd = readGPR(x86_gpr_cx).known_value();
-            uint32_t arg = readGPR(x86_gpr_dx).known_value();
-            if (debug && trace_syscall) {
-                fprintf(debug, "  ioctl(fd=%d, cmd=0x%04"PRIx32", arg=0x%08"PRIx32")\n", fd, cmd, arg);
-            }
+            syscall_enter("ioctl", "ddd");
+            int fd=arg(0);
+            uint32_t cmd=arg(1), arg2=arg(2);
             int result = -ENOSYS;
             switch (cmd) {
                 case TCGETS: { /*tcgetattr*/
@@ -657,7 +697,7 @@ EmulationPolicy::emulate_syscall()
                     } else {
                         /* The Linux kernel and glibc have different definitions for termios, with very different sizes (39
                          * bytes vs 60) */                  
-                        size_t nwritten = map.write(&ti, arg, 39);
+                        size_t nwritten = map.write(&ti, arg2, 39);
                         ROSE_ASSERT(39==nwritten);
                     }
                     break;
@@ -670,7 +710,7 @@ EmulationPolicy::emulate_syscall()
                     } else {
                         uint32_t pgrp_le;
                         SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
-                        size_t nwritten = map.write(&pgrp_le, arg, 4);
+                        size_t nwritten = map.write(&pgrp_le, arg2, 4);
                         ROSE_ASSERT(4==nwritten);
                         result = 0;
                     }
@@ -679,7 +719,7 @@ EmulationPolicy::emulate_syscall()
                     
                 case TIOCSPGRP: { /*tcsetpgrp*/
                     uint32_t pgid_le;
-                    size_t nread = map.read(&pgid_le, arg, 4);
+                    size_t nread = map.read(&pgid_le, arg2, 4);
                     ROSE_ASSERT(4==nread);
                     pid_t pgid = SgAsmExecutableFileFormat::le_to_host(pgid_le);
                     result = tcsetpgrp(fd, pgid);
@@ -694,7 +734,7 @@ EmulationPolicy::emulate_syscall()
                     if (-1==result) {
                         result = -errno;
                     } else {
-                        size_t nwritten = map.write(&ws, arg, sizeof ws);
+                        size_t nwritten = map.write(&ws, arg2, sizeof ws);
                         ROSE_ASSERT(nwritten==sizeof ws);
                     }
                     break;
@@ -705,15 +745,14 @@ EmulationPolicy::emulate_syscall()
                     abort();
             }
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
             
         case 91: { /*0x5b, munmap*/
-            uint32_t va = readGPR(x86_gpr_bx).known_value();
-            uint32_t sz = readGPR(x86_gpr_cx).known_value();
-            if (debug && trace_syscall) {
-                fprintf(debug, "  munmap(va=0x%08"PRIx32", size=0x%08"PRIx32")\n", va, sz);
-            }
+            syscall_enter("munmap", "pd");
+            uint32_t va=arg(0);
+            uint32_t sz=arg(1);
             uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
             uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
             map.erase(MemoryMap::MapElement(aligned_va, aligned_sz));
@@ -722,13 +761,13 @@ EmulationPolicy::emulate_syscall()
                 map.dump(debug, "    ");
             }
             writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
             break;
         }
 
         case 122: { /*0x7a, uname*/
-            uint32_t dest_va = readGPR(x86_gpr_bx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  uname(0x%08"PRIx32")\n", dest_va);
+            syscall_enter("uname", "p");
+            uint32_t dest_va=arg(0);
             char buf[6*65];
             memset(buf, ' ', sizeof buf);
             strcpy(buf+0*65, "Linux");                                  /*sysname*/
@@ -740,18 +779,14 @@ EmulationPolicy::emulate_syscall()
             size_t nwritten = map.write(buf, dest_va, sizeof buf);
             ROSE_ASSERT(nwritten==sizeof buf);
             writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
             break;
         }
 
         case 125: { /*0x7d, mprotect*/
-            uint32_t va = readGPR(x86_gpr_bx).known_value();
-            uint32_t size = readGPR(x86_gpr_cx).known_value();
-            uint32_t perms = readGPR(x86_gpr_dx).known_value();
-
-            if (debug && trace_syscall) {
-                fprintf(debug, "  mprotect(va=0x%08"PRIx32", size=0x%08"PRIx32", perm=%04"PRIo32")\n", va, size, perms);
-            }
-            
+            static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
+            syscall_enter("mprotect", "pdf", pflags);
+            uint32_t va=arg(0), size=arg(1), perms=arg(2);
             unsigned rose_perms = ((perms & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
@@ -768,21 +803,20 @@ EmulationPolicy::emulate_syscall()
                 break;
             }
 
+            writeGPR(x86_gpr_ax, 0);
+
+            syscall_leave("d");
             if (debug && trace_mmap) {
                 fprintf(debug, "  memory map after mprotect syscall:\n");
                 map.dump(debug, "    ");
             }
-
-            writeGPR(x86_gpr_ax, 0);
             break;
         }
 
         case 146: { /*0x92, writev*/
-            uint32_t fd = readGPR(x86_gpr_bx).known_value();
-            uint32_t iov_va = readGPR(x86_gpr_cx).known_value();
-            int niov = readGPR(x86_gpr_dx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  writev(fd=%d, iov=0x%08"PRIx32", nentries=%d\n", fd, iov_va, niov);
+            syscall_enter("writev", "dpd");
+            uint32_t fd=arg(0), iov_va=arg(1);
+            int niov=arg(2);
             uint32_t retval = 0;
             for (int i=0; i<niov; i++) {
                 uint32_t buf_va_le;
@@ -812,18 +846,16 @@ EmulationPolicy::emulate_syscall()
                 }
             }
             writeGPR(x86_gpr_ax, retval);
+            syscall_leave("d");
             break;
         }
 
         case 174: { /*0xae, rt_sigaction*/
-            int signum = readGPR(x86_gpr_bx).known_value();
-            uint32_t action_va = readGPR(x86_gpr_cx).known_value();
-            uint32_t oldact_va = readGPR(x86_gpr_dx).known_value();
-            size_t sigsetsize = readGPR(x86_gpr_si).known_value();
-            if (debug && trace_syscall) {
-                fprintf(debug, "  rt_sigaction(signum=%d, act=0x%08"PRIx32", oldact=0x%08"PRIx32", sigsetsize=%zu)\n", 
-                        signum, action_va, oldact_va, sigsetsize);
-            }
+            syscall_enter("rt_sigaction", "dppd");
+            int signum=arg(0);
+            uint32_t action_va=arg(1), oldact_va=arg(2);
+            //size_t sigsetsize=arg(3);
+
 
             if (signum<1 || signum>_NSIG) {
                 writeGPR(x86_gpr_ax, -EINVAL);
@@ -841,18 +873,17 @@ EmulationPolicy::emulate_syscall()
             }
 
             writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
             break;
         }
 
         case 175: { /*0xaf, rt_sigprocmask*/
-            int how = readGPR(x86_gpr_bx).known_value();
-            uint32_t set_va = readGPR(x86_gpr_cx).known_value();
-            uint32_t get_va = readGPR(x86_gpr_dx).known_value();
-            size_t sigsetsize = readGPR(x86_gpr_si).known_value();
-            if (debug && trace_syscall) {
-                fprintf(debug, "  rt_sigprocmask(how=%d, set=0x%08"PRIx32", oldset=0x%08"PRIx32", sigsetsize=%zu)\n",
-                        how, set_va, get_va, sigsetsize);
-            }
+            static const Translate flags[] = { TF(SIG_BLOCK), TF(SIG_UNBLOCK), TF(SIG_SETMASK), T_END };
+            syscall_enter("rt_sigprocmask", "fpp", flags);
+
+            int how=arg(0);
+            uint32_t set_va=arg(1), get_va=arg(2);
+            //size_t sigsetsize=arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
             size_t nread = map.read(&sigset, set_va, sizeof sigset);
@@ -877,14 +908,14 @@ EmulationPolicy::emulate_syscall()
                 ROSE_ASSERT(nwritten==sizeof saved);
             }
             writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
             break;
         }
 
         case 191: { /*0xbf, getrlimit*/
-            int resource = readGPR(x86_gpr_bx).known_value();
-            uint32_t rl_va = readGPR(x86_gpr_cx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  getrlimit(resource=%d, buf=0x%08"PRIx32")\n", resource, rl_va);
+            syscall_enter("getrlimit", "dp");
+            int resource=arg(0);
+            uint32_t rl_va=arg(1);
             struct rlimit rl;
             int status = getrlimit(resource, &rl);
             if (status<=0) {
@@ -896,44 +927,35 @@ EmulationPolicy::emulate_syscall()
                 }
                 writeGPR(x86_gpr_ax, 0);
             }
+            syscall_leave("d");
             break;
         }
 
         case 192: { /*0xc0, mmap2*/
-            uint32_t start = readGPR(x86_gpr_bx).known_value();
-            uint32_t size = readGPR(x86_gpr_cx).known_value();
-            uint32_t prot = readGPR(x86_gpr_dx).known_value();
-            uint32_t flags = readGPR(x86_gpr_si).known_value();
-            uint32_t fd = readGPR(x86_gpr_di).known_value();
-            uint32_t offset = readGPR(x86_gpr_bp).known_value() * PAGE_SIZE;
-            if (debug && trace_syscall) {
-                fprintf(debug,
-                        "  mmap2(start=0x%08"PRIx32", size=0x%08"PRIx32", prot=%04"PRIo32", flags=0x%"PRIx32
-                        ", fd=%d, offset=0x%08"PRIx32")\n",
-                        start, size, prot, flags, fd, offset);
-            }
-
+            static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
+            static const Translate mflags[] = { TF(MAP_SHARED), TF(MAP_PRIVATE), TF(MAP_32BIT), TF(MAP_ANONYMOUS), 
+                                                TF(MAP_DENYWRITE), TF(MAP_EXECUTABLE), TF(MAP_FILE), TF(MAP_FIXED), 
+                                                TF(MAP_GROWSDOWN), TF(MAP_LOCKED), TF(MAP_NONBLOCK), TF(MAP_NORESERVE),
+                                                TF(MAP_POPULATE), T_END };
+            syscall_enter("mmap2", "pdffdd", pflags, mflags);
+            uint32_t start=arg(0), size=arg(1), prot=arg(2), flags=arg(3), fd=arg(4), offset=arg(5)*PAGE_SIZE;
             size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
-            if (!start) {
-                try {
-                    start = map.find_free(mmap_start, aligned_size, PAGE_SIZE);
-                } catch (const MemoryMap::NoFreeSpace &e) {
-                    if (debug && trace_syscall)
-                        fprintf(debug, "  (cannot satisfy request for %zu bytes)\n", e.size);
-                    writeGPR(x86_gpr_ax, -ENOMEM);
-                    break;
-                }
-                if (debug && trace_syscall)
-                    fprintf(debug, "  start = 0x%08"PRIx32"\n", start);
-            }
-            if (!mmap_recycle)
-                mmap_start = std::max(mmap_start, start);
-
+            void *buf = NULL;
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
 
-            void *buf = NULL;
+            if (!start) {
+                try {
+                    start = map.find_free(mmap_start, aligned_size, PAGE_SIZE);
+                } catch (const MemoryMap::NoFreeSpace &e) {
+                    writeGPR(x86_gpr_ax, -ENOMEM);
+                    goto mmap2_done;
+                }
+            }
+            if (!mmap_recycle)
+                mmap_start = std::max(mmap_start, start);
+
             if (flags & MAP_ANONYMOUS) {
                 buf = mmap(NULL, size, prot, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
             } else {
@@ -949,6 +971,8 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, start);
             }
 
+        mmap2_done:
+            syscall_leave("p");
             if (debug && trace_mmap) {
                 fprintf(debug, "  memory map after mmap2 syscall:\n");
                 map.dump(debug, "    ");
@@ -958,11 +982,9 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 195: { /*0xc3, stat64*/
-            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
+            syscall_enter("stat64", "sp");
+            uint32_t name_va=arg(0), sb_va=arg(1);
             std::string name = read_string(name_va);
-            uint32_t sb_va = readGPR(x86_gpr_cx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  stat64(name=0x%08"PRIx32" \"%s\", statbuf=0x%08"PRIx32")\n", name_va, name.c_str(), sb_va);
             struct stat64 sb;
             int result = stat64(name.c_str(), &sb);
             if (result<0) {
@@ -971,14 +993,14 @@ EmulationPolicy::emulate_syscall()
                 copy_stat64(&sb, sb_va);
             }
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
         case 197: { /*0xc5, fstat64*/
-            int fd = readGPR(x86_gpr_bx).known_value();
-            uint32_t sb_va = readGPR(x86_gpr_cx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  fstat64(fd=%d, statbuf=0x%08"PRIx32")\n", fd, sb_va);
+            syscall_enter("fstat64", "dp");
+            int fd=arg(0);
+            uint32_t sb_va=arg(1);
             struct stat64 sb;
             int result = fstat64(fd, &sb);
             if (result<0) {
@@ -987,64 +1009,71 @@ EmulationPolicy::emulate_syscall()
                 copy_stat64(&sb, sb_va);
             }
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
 	case 199: { /*0xc7, getuid32 */
+            syscall_enter("getuid32", "");
             uid_t id = getuid();
-            if (debug && trace_syscall)
-                fprintf(debug, "  getuid() = %d\n", id);
             writeGPR(x86_gpr_ax, id);
+            syscall_leave("d");
 	    break;
 	}
 
 	case 200: { /*0xc8, getgid32 */
+            syscall_enter("getgid32", "");
             uid_t id = getgid();
-            if (debug && trace_syscall)
-                fprintf(debug, "  getgid32() = %d\n", id);
             writeGPR(x86_gpr_ax, id);
+            syscall_leave("d");
             break;
         }
 
 	case 201: { /*0xc9, geteuid32 */
+            syscall_enter("geteuid32", "");
             uid_t id = geteuid();
-            if (debug && trace_syscall)
-                fprintf(debug, "  geteuid32() = %d\n", id);
             writeGPR(x86_gpr_ax, id);
+            syscall_leave("d");
             break;
         }
 
         case 202: { /*0xca, getegid32 */
+            syscall_enter("getegid32", "");
             uid_t id = getegid();
-            if (debug && trace_syscall)
-                fprintf(debug, "  getegid32() = %d\n", id);
             writeGPR(x86_gpr_ax, id);
+            syscall_leave("d");
             break;
         }
 
         case 240: { /*0xf0, futex*/
-            uint32_t addr1 = readGPR(x86_gpr_bx).known_value();
-            uint32_t op = readGPR(x86_gpr_cx).known_value();
-            uint32_t val1 = readGPR(x86_gpr_dx).known_value();
-            uint32_t ptimeout = readGPR(x86_gpr_si).known_value();
-            uint32_t addr2 = readGPR(x86_gpr_di).known_value();
-            uint32_t val3 = readGPR(x86_gpr_bp).known_value();
-
-            if (debug && trace_syscall) {
-                fprintf(debug,
-                        "  futex(addr1=0x%08"PRIx32", op=%d, val1=%d, ptimeout=0x%08"PRIx32", addr2=0x%08"PRIx32", val3=%d)\n",
-                        addr1, op, val1, ptimeout, addr2, val3);
-            }
-            fprintf(stderr, "    futex syscall is returning ENOSYS for now.\n");
+            static const Translate opflags[] = { TF(FUTEX_PRIVATE_FLAG),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_FD),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
+                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
+                                                 T_END };
+            syscall_enter("futex", "pfdppd", opflags);
+            //uint32_t addr1=arg(0), op=arg(1), val1=arg(2), ptimeout=arg(3), addr2=arg(4), val3=arg(5);
             writeGPR(x86_gpr_ax, -ENOSYS);
+            syscall_leave("d");
+            fprintf(stderr, "futex syscall is returning ENOSYS for now.\n"); /*FIXME*/
             break;
         }
             
         case 243: { /*0xf3, set_thread_area*/
-            uint32_t u_info_va = readGPR(x86_gpr_bx).known_value();
+            syscall_enter("set_thread_area", "p");
+            uint32_t u_info_va=arg(0);
             user_desc ud;
             size_t nread = map.read(&ud, u_info_va, sizeof ud);
             ROSE_ASSERT(nread==sizeof ud);
+#if 1 /*FIXME: should be using syscall_enter*/
             if (debug && trace_syscall) {
                 fprintf(debug, "  set_thread_area({%d, 0x%08x, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
                         (int)ud.entry_number, ud.base_addr, ud.limit,
@@ -1054,6 +1083,7 @@ EmulationPolicy::emulate_syscall()
                         ud.seg_not_present ? "not_present" : "present",
                         ud.useable ? "usable" : "not_usable");
             }
+#endif
             if (ud.entry_number==(unsigned)-1) {
                 for (ud.entry_number=0x33>>3; ud.entry_number<n_gdt; ud.entry_number++) {
                     if (!gdt[ud.entry_number].useable) break;
@@ -1069,73 +1099,134 @@ EmulationPolicy::emulate_syscall()
             /* Reload all the segreg shadow values from the (modified) descriptor table */
             for (size_t i=0; i<6; i++)
                 writeSegreg((X86SegmentRegister)i, readSegreg((X86SegmentRegister)i));
+            syscall_leave("d");
             break;
         }
 
         case 252: { /*0xfc, exit_group*/
-            int status = readGPR(x86_gpr_bx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  exit_group(%d)\n", status);
+            syscall_enter("exit_group", "d");
+            if (debug && trace_syscall) fputs("(throwing...)\n", debug);
+            int status=arg(0);
             throw Exit(__W_EXITCODE(status, 0));
-            break;
         }
 
         case 258: { /*0x102, set_tid_address*/
-            uint32_t tid_va = readGPR(x86_gpr_bx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  set_tid_address(0x%08"PRIx32")\n", tid_va);
-            uint32_t tid_le;
-            size_t nread = map.read(&tid_le, tid_va, 4);
-            ROSE_ASSERT(4==nread);
-            pid_t tid = SgAsmExecutableFileFormat::le_to_host(tid_le);
-            if (tid!=getpid()) {
-                writeGPR(x86_gpr_ax, -EINVAL);
+            syscall_enter("set_tid_address", "p");
+            uint32_t tid_va=arg(0);
+            
+            /* We want the 32-bit value to be updated by Linux, but if we're running on a 64-bit system then Linux will also
+             * update the following 32-bits (probably initializing them to zero).  Therefore we'll create 64 bits memory for
+             * Linux to update and map the low-order 32-bits into the specimen. */
+            int *tidptr = NULL;
+            if (sizeof(int)>4) {
+                tidptr = new int;
+                *tidptr = 0;
+                size_t nread = map.read(tidptr, tid_va, 4);
+                ROSE_ASSERT(4==nread);
+                const MemoryMap::MapElement *orig = map.find(tid_va);
+                MemoryMap::MapElement submap(tid_va, 4, tidptr, 0, orig->get_mapperms());
+                submap.set_name("set_tid_address");
+                map.insert(submap);
             } else {
-                writeGPR(x86_gpr_ax, 0);
+                tidptr = (int*)my_addr(tid_va);
+            }
+
+            syscall(SYS_set_tid_address, tidptr);
+            writeGPR(x86_gpr_ax, getpid());
+
+            syscall_leave("d");
+            if (debug && trace_mmap) {
+                fprintf(debug, "  memory map after set_tid_address syscall:\n");
+                map.dump(debug, "    ");
             }
             break;
         }
 
         case 311: { /*0x137, set_robust_list*/
-            uint32_t head_va = readGPR(x86_gpr_bx).known_value();
-            uint32_t len = readGPR(x86_gpr_cx).known_value();
-            if (debug && trace_syscall)
-                fprintf(debug, "  set_robust_list(head=0x%08"PRIx32", len=%"PRIu32")\n", head_va, len);
+            syscall_enter("set_robust_list", "pd");
+            uint32_t head_va=arg(0), len=arg(1);
+            void *head = my_addr(head_va);
             
-            /* Read from specimen memory to make sure pages are allocated. */
-            struct robust_list_head rlh;
-            size_t nread = map.read(&rlh, head_va, sizeof rlh);
-            ROSE_ASSERT(nread==sizeof rlh);
-            
-            /* Get head_va, but in ROSE's address space */
-            const MemoryMap::MapElement *me = map.find(head_va);
-            ROSE_ASSERT(me!=NULL);
-            struct robust_list_head *rlh_ptr = (struct robust_list_head*)((char*)me->get_base() + me->get_va_offset(head_va));
-            
-            /* Allow Linux to update the specimen's memory directly */
-            int status = syscall(SYS_set_robust_list, rlh_ptr, len);
+            /* Allow Linux to update the specimen's memory directly. */
+            int status = syscall(SYS_set_robust_list, head, len);
             if (status<0) {
                 writeGPR(x86_gpr_ax, -errno);
             } else {
                 writeGPR(x86_gpr_ax, 0);
             }
+            syscall_leave("d");
             break;
         }
 
         default: {
-            uint32_t args[6];
-            args[0] = readGPR(x86_gpr_bx).known_value();
-            args[1] = readGPR(x86_gpr_cx).known_value();
-            args[2] = readGPR(x86_gpr_dx).known_value();
-            args[3] = readGPR(x86_gpr_si).known_value();
-            args[4] = readGPR(x86_gpr_di).known_value();
-            args[5] = readGPR(x86_gpr_bp).known_value();
             fprintf(stderr, "syscall_%u(", callno);
             for (int i=0; i<6; i++)
-                fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", args[i]);
+                fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
             abort();
         }
+    }
+}
+
+void
+EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list ap)
+{
+    ROSE_ASSERT(info!=NULL);
+    info->val = val;
+    switch (format) {
+        case 'f':       /*flags*/
+        case 'e':       /*enum*/
+            info->xlate = va_arg(ap, const Translate*);
+            break;
+        case 's':       /*NUL-terminated string*/
+            info->str = read_string(val);
+            break;
+    }
+}
+
+void
+EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+
+    if (debug && trace_syscall) {
+        ArgInfo args[6];
+        for (size_t i=0; format[i]; i++)
+            syscall_arginfo(format[i], arg(i), args+i, ap);
+        print_enter(debug, name, format, args);
+    }
+    
+    va_end(ap);
+}
+
+void
+EmulationPolicy::syscall_leave(const char *format, ...) 
+{
+    va_list ap;
+    va_start(ap, format);
+
+    ROSE_ASSERT(1==strlen(format));
+    if (debug && trace_syscall) {
+        ArgInfo info;
+        uint32_t value = readGPR(x86_gpr_ax).known_value();
+        syscall_arginfo(format[0], value, &info, ap);
+        print_leave(debug, format[0], &info);
+    }
+}
+
+
+uint32_t
+EmulationPolicy::arg(int idx)
+{
+    switch (idx) {
+        case 0: return readGPR(x86_gpr_bx).known_value();
+        case 1: return readGPR(x86_gpr_cx).known_value();
+        case 2: return readGPR(x86_gpr_dx).known_value();
+        case 3: return readGPR(x86_gpr_si).known_value();
+        case 4: return readGPR(x86_gpr_di).known_value();
+        case 5: return readGPR(x86_gpr_bp).known_value();
+        default: assert(!"invalid argument number"); abort();
     }
 }
 
@@ -1145,6 +1236,12 @@ main(int argc, char *argv[])
     typedef X86InstructionSemantics<EmulationPolicy, VirtualMachineSemantics::ValueType> Semantics;
     EmulationPolicy policy;
     Semantics t(policy);
+
+#if 1 /*DEBUGGING [RPM 2010-08-06]*/
+    policy.trace_insn = false;
+    policy.trace_syscall = true;
+    policy.trace_mmap = true;
+#endif
 
     /* Parse command-line */
     int argno = 1;
