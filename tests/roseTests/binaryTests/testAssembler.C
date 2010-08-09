@@ -66,7 +66,7 @@ assemble_all(SgAsmInterpretation *interp)
         /* We're using the same memory map as what was used when we loaded the binary and disassembled it. Therefore, the
          * machine code that we're writing back needs to fall within those same areas of the virtual address space: we cannot
          * write past the end of mapped memory, nor can we write to the space (if any) between mapped memory chunks. */
-        size_t nwritten = interp->get_map()->write(&(machine_code[0]), new_va, machine_code.size());
+        size_t nwritten = interp->get_map()->write(&(machine_code[0]), new_va, machine_code.size(), MemoryMap::MM_PROT_NONE);
         ROSE_ASSERT(nwritten==machine_code.size());
     }
 
