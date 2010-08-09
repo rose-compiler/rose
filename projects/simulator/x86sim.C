@@ -1068,6 +1068,12 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 224: { /*0xe0, gettid*/
+            // We have no concept of threads
+            writeGPR(x86_gpr_ax, getpid());
+            break;
+       }
+
         case 243: { /*0xf3, set_thread_area*/
             uint32_t u_info_va = readGPR(x86_gpr_bx).known_value();
             user_desc ud;
