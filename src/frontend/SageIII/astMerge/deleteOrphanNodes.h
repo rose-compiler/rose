@@ -1,3 +1,5 @@
+#ifndef DELETE_ORPHAN_NODES_H
+#define DELETE_ORPHAN_NODES_H
 
 class BuildOrphanListMemoryPoolTraversal 
    : public ROSE_VisitTraversal
@@ -17,4 +19,6 @@ class BuildOrphanListMemoryPoolTraversal
    };
 
 void deleteOrphanIRnodesInMemoryPool();
+
+#endif // DELETE_ORPHAN_NODES_H
 

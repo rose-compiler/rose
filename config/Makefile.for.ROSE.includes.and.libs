@@ -32,29 +32,6 @@ if USE_ROSE_IN_BUILD_TREE_VAR
 export ROSE_IN_BUILD_TREE=$(top_builddir)
 endif
 
-# This is control over the use of MySQL (which is complicated to use and install)
-# This support for MySQL will be removed in the future.
-if ROSE_USE_MYSQL_DATABASE
- # Location of boost should be set in configuration (not done yet)
- # Note: -idirafter puts the path last on the compiler command line, this is not what we want.
- # BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
- # BOOST_INCLUDE                     = -idirafter $(BOOST_CPPFLAGS)
- # BOOST_INCLUDE                     = -isystem $(ROSE_BOOST_INCLUDE_PATH)
-
- # DQ (12/22/2008): Since I am setting BOOST_INCLUDE above, I don't what this to interfer
- # ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection $(BOOST_INCLUDE)
-   ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection
-   ROSE_DATABASE_OBJS                = $(top_builddir)/src/roseExtensions/databaseConnection/*.o
-   ROSE_DATABASE_LIB_NAME            = rosedatabase
-#  ROSE_DATABASE_LIB_FILE            = lib$(ROSE_DATABASE_LIB_NAME).so
-   ROSE_DATABASE_LIBS_FILE_WITH_PATH = $(top_builddir)/src/roseExtensions/databaseConnection/lib$(ROSE_DATABASE_LIB_FILE).a
-   ROSE_DATABASE_LIBS                = -l$(ROSE_DATABASE_LIB_NAME)
-
- # MySQL support is setup optionally at compile time (see configure --help, for details)
-   MYSQL_DATABASE_LIBS    = $(MYSQL_LDFLAGS)
-   MYSQL_DATABASE_INCLUDE = $(MYSQL_CFLAGS)
-endif
-
 # DQ (12/22/2008): Specification of Boost path for use with "-isystem" option (may be GNU
 # specific).  We use this option only if the configuration of ROSE has detected a
 # previously installed version of Boost (which we do not want to use). 
@@ -286,7 +263,6 @@ ROSE_INCLUDES = \
       $(ROSE_DATABASE_INCLUDE) \
       $(ROSE_GUI_INCLUDE) \
       $(ROSE_QT_INCLUDE) \
-      $(MYSQL_DATABASE_INCLUDE) \
       $(ROSE_SQLITE_DATABASE_INCLUDE) \
 			$(ROSE_SIDEEFFECT_INCLUDE) \
       $(SQLITE_DATABASE_INCLUDE) \
@@ -343,8 +319,8 @@ ROSE_INCLUDES = \
 # JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
 ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 
-# ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
-ROSE_LIBS = $(top_builddir)/src/librose.la -lm  $(JAVA_JVM_LINK) $(MYSQL_DATABASE_LIBS) \
+# ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
+ROSE_LIBS = $(top_builddir)/src/librose.la -lm  $(JAVA_JVM_LINK) \
   $(SQLITE_DATABASE_LIBS) $(QT_LIBS)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
@@ -377,7 +353,7 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 ## ROSE_SEPARATE_LIBS = \
 ##    $(top_builddir)/src/librose.la \
 ##    $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) \
-##    $(MYSQL_DATABASE_LIBS) $(ROSE_SQLITE_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) \
+##    $(ROSE_SQLITE_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) \
 ##    $(LIB_QT) $(JAVA_JVM_LIB) \
 ##    $(RT_LIBS) \
 ##    $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \

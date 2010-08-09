@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 LINK	 = $(CXXLINK)
 
 # noinst_LTLIBRARIES lists all the librarlies that should be built with libtool, but not installed
