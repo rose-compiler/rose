@@ -1,7 +1,7 @@
 Call side effects on project: 
 Function  Side Effects main: ::x 
-Statement Side Effects testGlobal1.C-134818144: ::x 
+Statement Side Effects testGlobal1.C-4-5-261: ::x 
 Call side effects on file: 
 Function  Side Effects main: ::x 
-Statement Side Effects testGlobal1.C-134818144: ::x 
+Statement Side Effects testGlobal1.C-4-5-261: ::x 
 Call side effects within for loop: 

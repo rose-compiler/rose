@@ -37,14 +37,14 @@ test_file_format_elf: libraryIdentificationTest
 # Test *.o files
 test_object_files: libraryIdentificationTest
 	mkdir -p tmp_objects; cd tmp_objects; ar -vox $(PWD)/../../../src/midend/abstractHandle/.libs/libabstractHandle.a
-	$(VALGRIND) ./libraryIdentificationTest -rose:binary -rose:verbose 2 tmp_objects/roseAdapter.o
+	$(VALGRIND) ./libraryIdentificationTest -rose:binary -rose:verbose 0 tmp_objects/roseAdapter.o
 
 # Test a *.a file with ROSE...
 test_library_archive: libraryIdentificationTest
-	$(VALGRIND) ./libraryIdentificationTest -rose:verbose 2 -rose:read_executable_file_format_only $(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a
+	$(VALGRIND) ./libraryIdentificationTest -rose:verbose 0 -rose:read_executable_file_format_only $(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a
 
 test_library_archive_with_instructions: libraryIdentificationTest
-	$(VALGRIND) ./libraryIdentificationTest -rose:verbose 2 $(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a
+	$(VALGRIND) ./libraryIdentificationTest -rose:verbose 0 $(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a
 
 # ****************************************************
 #                     Demo Rules
@@ -81,7 +81,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 # File option to accumulate performance information about the compilation
 PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/DISASSEMBLER_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:binary -rose:verbose 2 $(PERFORMANCE_REPORT_OPTION)
+ROSE_FLAGS = -rose:binary -rose:verbose 0 $(PERFORMANCE_REPORT_OPTION)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)

@@ -6,16 +6,16 @@
 #include "variableVersionTable.h"
 
 
-struct ExpressionObject
+struct InstrumentedExpression
 {
-    ExpressionObject() {}
-    ExpressionObject(SgExpression* exp1, SgExpression* exp2, const VariableVersionTable& table)
+    InstrumentedExpression() {}
+    InstrumentedExpression(SgExpression* exp1, SgExpression* exp2, const VariableVersionTable& table)
             : fwd_exp(exp1), rvs_exp(exp2), var_table(table)
     {}
 
-    ExpressionObject clone()
+    InstrumentedExpression clone()
     {
-        ExpressionObject obj;
+        InstrumentedExpression obj;
         obj.fwd_exp = SageInterface::copyExpression(fwd_exp);
         obj.rvs_exp = SageInterface::copyExpression(rvs_exp);
         obj.var_table = var_table;
@@ -30,16 +30,16 @@ struct ExpressionObject
     // Symbol Table;
 };
 
-struct StatementObject
+struct InstrumentedStatement
 {
-    StatementObject() {}
-    StatementObject(SgStatement* stmt1, SgStatement* stmt2, const VariableVersionTable& table)
+    InstrumentedStatement() {}
+    InstrumentedStatement(SgStatement* stmt1, SgStatement* stmt2, const VariableVersionTable& table)
             : fwd_stmt(stmt1), rvs_stmt(stmt2), var_table(table)
     {}
 
-    StatementObject clone()
+    InstrumentedStatement clone()
     {
-        StatementObject obj;
+        InstrumentedStatement obj;
         obj.fwd_stmt = SageInterface::copyStatement(fwd_stmt);
         obj.rvs_stmt = SageInterface::copyStatement(rvs_stmt);
         obj.var_table = var_table;
@@ -54,62 +54,52 @@ struct StatementObject
     // Symbol Table;
 };
 
-typedef std::vector<ExpressionObject> ExpressionObjectVec;
-typedef std::vector<StatementObject> StatementObjectVec;
+typedef std::vector<InstrumentedExpression> InstrumentedExpressionVec;
+typedef std::vector<InstrumentedStatement> InstrumentedStatementVec;
 
 // Forward declaration of the class EventProcessor.
 class EventProcessor;
 
-class ExpressionProcessor
+class ProcessorBase
 {
     EventProcessor* event_processor_;
 
 protected:
 
-    ExpressionObjectVec processExpression(SgExpression* exp, const VariableVersionTable& var_table);
+    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed);
+    InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
 
+    //! Return if the given variable is a state variable (currently, it should be the parameter of event function).
+    bool isStateVariable(SgExpression* exp);
+
 public:
 
-    ExpressionProcessor()
-    : event_processor_(NULL) {}
-
+    ProcessorBase() : event_processor_(NULL) {}
+    
     void setEventProcessor(EventProcessor* processor)
     {
         event_processor_ = processor;
     }
+};
 
-    virtual ExpressionObjectVec process(SgExpression* exp, const VariableVersionTable& var_table) = 0;
+class ExpressionProcessor : public ProcessorBase
+{
+public:
+
+    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed) = 0;
     //virtual void getCost() = 0;
 
 };
 
 
-class StatementProcessor
+class StatementProcessor : public ProcessorBase
 {
-    EventProcessor* event_processor_;
-
-protected:
-
-    ExpressionObjectVec processExpression(SgExpression* exp, const VariableVersionTable& var_table);
-    StatementObjectVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    SgExpression* pushVal(SgExpression* exp, SgType* type);
-    SgExpression* popVal(SgType* type);
-
 public:
 
-    StatementProcessor()
-    : event_processor_(NULL) {}
-
-    void setEventProcessor(EventProcessor* processor)
-    {
-        event_processor_ = processor;
-    }
-
-    virtual StatementObjectVec process(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
+    virtual InstrumentedStatementVec process(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
 
     //virtual S
 
@@ -139,16 +129,15 @@ class EventProcessor
     //! The variable version table which record final version of all variables in the event.
 
     //! Make those two classes the friends to let them use some private methods.
-    friend class ExpressionProcessor;
-    friend class StatementProcessor;
+    friend class ProcessorBase;
 
 private:
 
     //! Given an expression, return all transformations using all expression processors.
-    ExpressionObjectVec processExpression(SgExpression* exp, const VariableVersionTable& var_table);
+    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed);
 
     //! Given a statement, return all transformations using all statement processors.
-    StatementObjectVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
+    InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
     //! The following methods are for expression and statement processors for store and restore.
     SgExpression* getStackVar(SgType* type);
@@ -181,6 +170,9 @@ public:
         //stack_decls_.clear();
         return processEvent();
     }
+
+    //! Return if the given variable is a state variable (currently, it should be the parameter of event function).
+    bool isStateVariable(SgExpression* exp);
 
     //! Get all declarations of stacks which store values of different types.
     std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;

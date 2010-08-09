@@ -119,6 +119,11 @@ analyze_interp(SgAsmInterpretation *interp)
             } catch (const Semantics::Exception &e) {
                 std::cout <<e <<"\n";
                 break;
+#if 3==POLICY_SELECTOR
+            } catch (const TestPolicy::Exception &e) {
+                std::cout <<e <<"\n";
+                break;
+#endif
             } catch (const SMTSolver::Exception &e) {
                 std::cout <<e <<" [ "<<unparseInstructionWithAddress(insn) <<"]\n";
                 break;

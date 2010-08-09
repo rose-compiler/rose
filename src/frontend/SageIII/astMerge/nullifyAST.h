@@ -1,3 +1,6 @@
+#ifndef NULLIFY_AST_H
+#define NULLIFY_AST_H
+
 class NullTreeMemoryPoolTraversal 
    : public ROSE_VisitTraversal
    {
@@ -9,3 +12,6 @@ class NullTreeMemoryPoolTraversal
    };
 
 void NullTree();
+
+#endif // NULLIFY_AST_H
+

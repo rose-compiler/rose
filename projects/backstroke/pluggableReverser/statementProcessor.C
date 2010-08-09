@@ -6,22 +6,29 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-StatementObjectVec BasicStatementProcessor::process(
+InstrumentedStatementVec BasicStatementProcessor::process(
         SgStatement* stmt, const VariableVersionTable& var_table)
 {
     if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
         return processExprStatement(exp_stmt, var_table);
 
-    if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
+	else if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
         return processVariableDeclaration(var_decl, var_table);
 
-    if (SgBasicBlock* block = isSgBasicBlock(stmt))
+	else if (SgBasicBlock* block = isSgBasicBlock(stmt))
         return processBasicBlock(block, var_table);
 
+	//The forward of a return statement is a return; the reverse is a no-op.
+	else if (isSgReturnStmt(stmt))
+	{
+		InstrumentedStatementVec results;
+		results.push_back(InstrumentedStatement(SageInterface::copyStatement(stmt), NULL, var_table));
+		return results;
+	}
     //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
        // return processIfStmt(if_stmt, var_table);
 
-    return StatementObjectVec();
+    return InstrumentedStatementVec();
 }
 
 #if 0
@@ -63,14 +70,16 @@ StmtPairs BasicStatementProcessor::processFunctionDeclaration(SgFunctionDeclarat
 }
 #endif
 
-StatementObjectVec BasicStatementProcessor::processExprStatement(
+InstrumentedStatementVec BasicStatementProcessor::processExprStatement(
         SgExprStatement* exp_stmt,
         const VariableVersionTable& var_table)
 {
-    ExpressionObjectVec exps = processExpression(exp_stmt->get_expression(), var_table);
+    InstrumentedExpressionVec exps = processExpression(exp_stmt->get_expression(), var_table, false);
 
-    StatementObjectVec stmts;
-    foreach (ExpressionObject& exp_obj, exps)
+    ROSE_ASSERT(!exps.empty());
+
+    InstrumentedStatementVec stmts;
+    foreach (InstrumentedExpression& exp_obj, exps)
     {
         SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -80,21 +89,25 @@ StatementObjectVec BasicStatementProcessor::processExprStatement(
             rvs_stmt = buildExprStatement(exp_obj.rvs_exp);
 
         // Use the variable version table output by expression processor.
-        stmts.push_back(StatementObject(fwd_stmt, rvs_stmt, exp_obj.var_table));
+        stmts.push_back(InstrumentedStatement(fwd_stmt, rvs_stmt, exp_obj.var_table));
     }
     return stmts;
 }
 
-StatementObjectVec BasicStatementProcessor::processVariableDeclaration(
+InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(
         SgVariableDeclaration* var_decl,
         const VariableVersionTable& var_table)
 {
-    StatementObjectVec outputs;
+    InstrumentedStatementVec outputs;
 
     // Note the store and restore of local variables are processd in
     // basic block, not here. We just forward the declaration to forward
     // event function.
-    outputs.push_back(StatementObject(copyStatement(var_decl), NULL, var_table));
+
+    // FIXME copyStatement also copies preprocessing info
+    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, var_table));
+
+    //outputs.push_back(InstrumentedStatement(NULL, NULL, var_table));
     //outputs.push_back(pushAndPopLocalVar(var_decl));
 
     // FIXME  other cases
@@ -102,106 +115,238 @@ StatementObjectVec BasicStatementProcessor::processVariableDeclaration(
     return outputs;
 }
 
-StatementObjectVec BasicStatementProcessor::processBasicBlock(
+InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(
         SgBasicBlock* body,
         const VariableVersionTable& var_table)
 {
     // Use two vectors to store intermediate results.
-    StatementObjectVec queue[2];
+    InstrumentedStatementVec queue[2];
+    vector<SgStatement*> to_delete;
 
     int i = 0;
-    queue[i].push_back(StatementObject(buildBasicBlock(), buildBasicBlock(), var_table));
+    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), var_table));
 
+#if 1
     // Deal with variable declarations first, since they will affect the variable version table.
     // For each variable declared in this basic block, we choose storing or not storing it at the end.
     foreach (SgStatement* stmt, body->get_statements())
     {
         if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
         {
-            foreach (StatementObject obj, queue[i])
+            foreach (InstrumentedStatement obj, queue[i])
             {
+                cout << "Begin:@@@";
                 const SgInitializedNamePtrList& names = var_decl->get_variables();
                 ROSE_ASSERT(names.size() == 1);
                 SgInitializedName* init_name = names[0];
 
-                // Store the value of local variables at the end of the basic block.
-                SgVarRefExp* var_stored = buildVarRefExp(init_name);
-                SgStatement* store_var = buildExprStatement(
-                        pushVal(var_stored, var_stored->get_type()));
 
-                // Retrieve the value which is used to initialize that local variable.
-                SgStatement* decl_restore_var = buildVariableDeclaration(
-                        init_name->get_name(),
-                        init_name->get_type(),
-                        buildAssignInitializer(popVal(var_stored->get_type())));
-                
-                // The second transformation is not to store it.
-                SgStatement* just_decl = buildVariableDeclaration(
-                        init_name->get_name(),
-                        init_name->get_type());
-
+                /*******************************************************************************/
                 // The first transformation is restore this local variable and restore it
                 // at the beginning of the reverse basic block. Note that this variable already
                 // has the final version unless we modify it.
-                StatementObject new_obj1 = obj.clone();
+#if 1
+                InstrumentedStatement new_obj1 = obj.clone();
+#else
+                InstrumentedStatement new_obj1 = obj; // = obj.clone();
+                new_obj1.fwd_stmt = copyStatement(obj.fwd_stmt);
+                new_obj1.rvs_stmt = buildBasicBlock();
+
+                foreach(SgStatement* s, isSgBasicBlock(obj.rvs_stmt)->get_statements())
+                {
+                    if (SgVariableDeclaration * decl = isSgVariableDeclaration(s))
+                    {
+                        SgInitializer* new_init = NULL;
+                        SgInitializer* init = decl->get_variables()[0]->get_initializer();
+                        if (init)
+                            new_init = isSgInitializer(copyExpression(init));
+                        isSgBasicBlock(new_obj1.rvs_stmt)->append_statement(
+                                buildVariableDeclaration(
+                                decl->get_variables()[0]->get_name(),
+                                decl->get_variables()[0]->get_type(),
+                                new_init));
+                    } else
+                        isSgBasicBlock(new_obj1.rvs_stmt)->append_statement(copyStatement(s));
+                }
+#endif
 
                 ROSE_ASSERT(isSgBasicBlock(new_obj1.fwd_stmt));
                 ROSE_ASSERT(isSgBasicBlock(new_obj1.rvs_stmt));
 
-                isSgBasicBlock(new_obj1.fwd_stmt)->append_statement(store_var);
-                isSgBasicBlock(new_obj1.rvs_stmt)->append_statement(decl_restore_var);
+#if 1
+                // Store the value of local variables at the end of the basic block.
+                SgVarRefExp* var_stored = buildVarRefExp(init_name->get_name());
+                SgStatement* store_var = buildExprStatement(
+                        pushVal(var_stored, init_name->get_type()));
 
+                // Retrieve the value which is used to initialize that local variable.
+                SgVariableDeclaration* decl_restore_var = buildVariableDeclaration(
+                        init_name->get_name(),
+                        init_name->get_type(),
+                        buildAssignInitializer(popVal(init_name->get_type())),
+                        isSgBasicBlock(new_obj1.rvs_stmt));
+
+                isSgBasicBlock(new_obj1.fwd_stmt)->append_statement(store_var);
+                ROSE_ASSERT(store_var->get_parent() == new_obj1.fwd_stmt);
+
+                isSgBasicBlock(new_obj1.rvs_stmt)->append_statement(decl_restore_var);
+                ROSE_ASSERT(decl_restore_var->get_parent() == new_obj1.rvs_stmt);
+#endif
+                //fixVariableDeclaration(decl_restore_var, isSgBasicBlock(new_obj1.rvs_stmt));
+
+                /*******************************************************************************/
                 // The second transformation is not to store it. We have to set its version NULL.
-                StatementObject new_obj2 = obj.clone();
+#if 1
+                InstrumentedStatement new_obj2 = obj.clone();
+#else
+                InstrumentedStatement new_obj2 = obj; // = obj.clone();
+                new_obj2.fwd_stmt = copyStatement(obj.fwd_stmt);
+                new_obj2.rvs_stmt = buildBasicBlock();
+
+                foreach(SgStatement* s, isSgBasicBlock(obj.rvs_stmt)->get_statements())
+                {
+                    if (SgVariableDeclaration * decl = isSgVariableDeclaration(s))
+                    {
+                        SgInitializer* new_init = NULL;
+                        SgInitializer* init = decl->get_variables()[0]->get_initializer();
+                        if (init)
+                            new_init = isSgInitializer(copyExpression(init));
+                        isSgBasicBlock(new_obj2.rvs_stmt)->append_statement(
+                                buildVariableDeclaration(
+                                decl->get_variables()[0]->get_name(),
+                                decl->get_variables()[0]->get_type(),
+                                new_init));
+                    } else
+                        isSgBasicBlock(new_obj2.rvs_stmt)->append_statement(copyStatement(s));
+                }
+#endif
 
                 ROSE_ASSERT(isSgBasicBlock(new_obj2.rvs_stmt));
 
+                // The second transformation is not to store it.
+                SgStatement* just_decl = buildVariableDeclaration(
+                        init_name->get_name(),
+                        init_name->get_type(),
+                        NULL, isSgBasicBlock(new_obj2.rvs_stmt));
+
                 isSgBasicBlock(new_obj2.rvs_stmt)->append_statement(just_decl);
+                ROSE_ASSERT(just_decl->get_parent() == new_obj2.rvs_stmt);
+
                 new_obj2.var_table.setNullVersion(init_name);
 
                 queue[1-i].push_back(new_obj1);
                 queue[1-i].push_back(new_obj2);
+
+                cout << "@@@End\n";
             }
 
+            foreach (InstrumentedStatement& obj, queue[i])
+            {
+                to_delete.push_back(obj.fwd_stmt);
+                to_delete.push_back(obj.rvs_stmt);
+                //delete obj.fwd_stmt;
+                //delete obj.rvs_stmt;
+            }
             queue[i].clear();
             // Switch the index between 0 and 1.
             i = 1 - i;
         }
     }
+#endif
 
 #if 1
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {
-        foreach (StatementObject obj, queue[i])
+        foreach (InstrumentedStatement& obj, queue[i])
         {
-            StatementObjectVec result = processStatement(stmt, obj.var_table);
-            foreach (StatementObject res, result)
+            InstrumentedStatementVec result = processStatement(stmt, obj.var_table);
+            
+            ROSE_ASSERT(!result.empty());
+
+            foreach (InstrumentedStatement& res, result)
             {
-                StatementObject new_obj = obj.clone();
+                // Currently, we cannot directly deep copy variable declarations. So we rebuild another one
+                // with the same name, type and initializer.
+
+#if 1
+                InstrumentedStatement new_obj = obj;// = obj.clone();
+                new_obj.fwd_stmt = copyStatement(obj.fwd_stmt);
+                new_obj.rvs_stmt = buildBasicBlock();
+                foreach (SgStatement* s, isSgBasicBlock(obj.rvs_stmt)->get_statements())
+                {
+                    if (SgVariableDeclaration* decl = isSgVariableDeclaration(s))
+                    {
+                        SgInitializer* new_init = NULL;
+                        SgInitializer* init = decl->get_variables()[0]->get_initializer();
+                        if (init)
+                            new_init = isSgInitializer(copyExpression(init));
+                        isSgBasicBlock(new_obj.rvs_stmt)->append_statement(
+                                buildVariableDeclaration(
+                                    decl->get_variables()[0]->get_name(),
+                                    decl->get_variables()[0]->get_type(),
+                                    new_init));
+                    }
+                    else
+                        isSgBasicBlock(new_obj.rvs_stmt)->append_statement(copyStatement(s));
+                }
+#else
+                InstrumentedStatement new_obj = obj.clone();
+#endif
+
 
                 ROSE_ASSERT(isSgBasicBlock(new_obj.fwd_stmt));
                 ROSE_ASSERT(isSgBasicBlock(new_obj.rvs_stmt));
 
                 if (res.fwd_stmt)
+                {
                     isSgBasicBlock(new_obj.fwd_stmt)->prepend_statement(res.fwd_stmt);
+                    //fixVariableReferences(isSgBasicBlock(new_obj.fwd_stmt));
+                    //fixStatement(res.fwd_stmt, isSgBasicBlock(new_obj.fwd_stmt));
+                }
                 if (res.rvs_stmt)
+                {
                     isSgBasicBlock(new_obj.rvs_stmt)->append_statement(res.rvs_stmt);
+                    //fixVariableReferences(isSgBasicBlock(new_obj.rvs_stmt));
+                    //fixStatement(res.rvs_stmt, isSgBasicBlock(new_obj.rvs_stmt));
+                }
                 new_obj.var_table = res.var_table;
+
+                fixVariableReferences(new_obj.fwd_stmt);
+                fixVariableReferences(new_obj.rvs_stmt);
 
                 queue[1-i].push_back(new_obj);
             }
         }
         
+        foreach (InstrumentedStatement& obj, queue[i])
+        {
+            to_delete.push_back(obj.fwd_stmt);
+            to_delete.push_back(obj.rvs_stmt);
+            //delete obj.fwd_stmt;
+            //delete obj.rvs_stmt;
+        }
         queue[i].clear();
         // Switch the index between 0 and 1.
         i = 1 - i;
     }
 #endif
 
+
+    // Since we build a varref before building its declaration, we may use the following function to fix them.
+    foreach (InstrumentedStatement& obj, queue[i])
+    {
+        cout << "Fixed: " << fixVariableReferences(obj.fwd_stmt) << endl;
+        //fixVariableReferences(obj.rvs_stmt);
+    }
+
+    foreach (SgStatement* stmt, to_delete)
+        //deepDelete(stmt);
+        delete stmt;
+
     return queue[i];
 
 #if 0
-    StatementObjectVec outputs;
+    InstrumentedStatementVec outputs;
 
     vector<StmtPairs > all_stmts;
 
