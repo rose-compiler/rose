@@ -574,6 +574,26 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, result);
             break;
         }
+                
+        case 10: { /*0xa, unlink*/
+            char sflags[255];
+            int length;
+
+            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
+            uint32_t flags = readGPR(x86_gpr_cx).known_value();
+            uint32_t mode = readGPR(x86_gpr_dx).known_value();
+
+            std::string filename = read_string(name_va);
+
+            if (debug)
+              fprintf(debug, "  unlink(%s)\n", filename.c_str());
+
+            int result = unlink(filename.c_str());
+            if (result == -1) 
+                result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
 
         case 13: { /*0xd, time */
             uint32_t t = readGPR(x86_gpr_bx).known_value();
