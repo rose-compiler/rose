@@ -7,6 +7,10 @@
 #include <fstream>
 #include<map>
 
+#ifdef HAVE_SQLITE3
+#include "sqlite3x.h"
+#endif
+
 using namespace std;
 
 
