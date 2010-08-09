@@ -576,7 +576,6 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 13: { /*0xd, time */
-            ROSE_ASSERT(sizeof(time_t)==4);
             uint32_t t = readGPR(x86_gpr_bx).known_value();
             time_t result = time(NULL);
             if (t) {
