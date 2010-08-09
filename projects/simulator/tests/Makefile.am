@@ -32,4 +32,4 @@ $(foreach file, $(SYSCALL_FILES), $(eval $(call checkFile, $(basename $(notdir $
 check-local: $(foreach file,$(SYSCALL_FILES), $(addprefix check-,$(basename $(notdir $(file)))))
 
 clean-local:
-	-rm syscall*
+	-rm syscall* tfile*
