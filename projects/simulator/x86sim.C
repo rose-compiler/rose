@@ -971,6 +971,22 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax,result);
             break;
     }
+
+        case 191: { /*0xbf, ugetrlimit*/
+            uint32_t resource = readGPR(x86_gpr_bx).known_value();
+            uint32_t rlp = readGPR(x86_gpr_cx).known_value();
+            struct rlimit sys_rlp;
+            int result = getrlimit(resource, &sys_rlp);
+            if( result == 0 && rlp != 0) {
+                size_t nwritten = map.write(&sys_rlp, rlp, sizeof(struct rlimit));
+                ROSE_ASSERT(nwritten == sizeof(struct rlimit));
+            }
+            if (result == -1)
+                result = -errno;
+            writeGPR(x86_gpr_ax,result);
+            break;
+        }
+
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
