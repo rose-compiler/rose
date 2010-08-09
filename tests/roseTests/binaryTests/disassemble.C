@@ -4,6 +4,88 @@
  * buffers of machine instructions.  This test also does a variety of analyses and Robb uses it as a general tool and staging
  * area for testing new features before they're added to ROSE. */
 
+static const char *usage = "\
+Synopsis:\n\
+  %s [SWITCHES] CONTAINER_FILE\n\
+  %s [SWITCHES] --raw=ENTRY RAW_FILE ADDRESS ...\n\
+\n\
+Description:\n\
+  Disassembles machine instructions from a container such as ELF or PE, or from\n\
+  a raw buffer such as a memory dump.\n\
+\n\
+  --ast-dot\n\
+    Generate GraphViz dot files for the entire AST. This switch is applicable\n\
+    only when the input file is a container such as ELF or PE.\n\
+\n\
+  --cfg-dot\n\
+    Generate a GraphViz dot file containing the control flow graph of each\n\
+    function.  These files will be named \"x-FXXXXXXXX.dot\" where \"XXXXXXXX\"\n\
+    is a function entry address.  This switch also generates a function call\n\
+    graph with the name \"x-cg.dot\". These files can be converted to HTML with\n\
+    the generate_html script found in tests/roseTests/binaryTests.\n\
+\n\
+  --debug-disassembler\n\
+    Causes the disassembler to spew diagnostics to standard error. This is\n\
+    intended for ROSE developers.\n\
+\n\
+  --debug-partitioner\n\
+    Causes the instruction partitioner to spew diagnostics to standard error.\n\
+    This is intended for ROSE developers.\n\
+\n\
+  --debug\n\
+    Convenience switch that turns on the --debug-disassembler and\n\
+    --debug-partitioner switches\n\
+\n\
+  --dos\n\
+    Normally, when the disassembler is invoked on a Windows PE or related\n\
+    container file it will ignore the DOS interpretation. This switch causes\n\
+    the disassembler to use the DOS interpretation instead of the PE\n\
+    interpretation.\n\
+\n\
+  --dot\n\
+    Convenience switch that is equivalent to --ast-dot and --cfg-dot.\n\
+\n\
+  --quiet\n\
+    Suppresses the instruction listing that is normally emitted to the standard\n\
+    output stream.\n\
+\n\
+  --raw=ENTRY\n\
+    Indicates that the specified file(s) contains raw machine instructions\n\
+    rather than a binary container such as ELF or PE.  The non-switch,\n\
+    positional arguments are pairs, each consisting of a file name and a\n\
+    virtual address at which the file contents is mapped. The starting address\n\
+    can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
+    (execute) to specify mapping permissions other than the default read+exec.\n\
+\n\
+  --reassemble\n\
+    Assemble each disassembled instruction and compare the generated\n\
+    machine code with the bytes originally disassembled.  This switch is\n\
+    intended mostly to check the consistency of the disassembler with the\n\
+    assembler.\n\
+\n\
+  --show-bad\n\
+    Show details about why instructions at certain addresses could not be\n\
+    disassembled.\n\
+\n\
+  --show-coverage\n\
+    Show what percent of the disassembly memory map was actually disassembled.\n\
+\n\
+  --show-extents\n\
+    Show detailed information about what parts of the file were not\n\
+    disassembled.\n\
+\n\
+  --show-functions\n\
+    Display a list of functions in tabular format.\n\
+\n\
+In addition to the above switches, this disassembler tool passes all other\n\
+switches to the underlying ROSE library's frontend() function if that function\n\
+is actually called.  Of particular note are the following. Documentation for\n\
+these switches can be obtained by specifying the \"--rose-help\" switch.\n\
+  -rose:disassembler_search FLAGS\n\
+  -rose:partitioner_search FLAGS\n\
+  -rose:partitioner_config IPD_FILE\n\
+";
+
 #include "rose.h"
 
 #define __STDC_FORMAT_MACROS
@@ -492,6 +574,7 @@ main(int argc, char *argv[])
     bool do_show_coverage = false;
     bool do_show_functions = false;
     bool do_raw = false;
+    bool do_rose_help = false;
 
     rose_addr_t raw_entry_va = 0;
     MemoryMap raw_map;
@@ -520,6 +603,14 @@ main(int argc, char *argv[])
             do_cfg_dot = true;
         } else if (!strcmp(argv[i], "--dos")) {                 /* use MS-DOS header in preference to PE when both exist */
             do_dos = true;
+        } else if (!strcmp(argv[i], "-?") ||
+                   !strcmp(argv[i], "-help") ||
+                   !strcmp(argv[i], "--help")) {
+            printf(usage, argv[0], argv[0]);
+            exit(0);
+        } else if (!strcmp(argv[i], "--rose-help")) {
+            new_argv[new_argc++] = strdup("--help");
+            do_rose_help = true;
         } else if (!strcmp(argv[i], "--skip-dos")) {
             fprintf(stderr, "%s: --skip-dos behavior is the default now; use --dos if you want the MS-DOS header\n", argv[0]);
             exit(1);
@@ -656,7 +747,7 @@ main(int argc, char *argv[])
     SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
     SgProject *project = NULL;                  /* Project if not disassembling a raw buffer */
 
-    if (do_raw) {
+    if (do_raw && !do_rose_help) {
         /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
         disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
     } else {
