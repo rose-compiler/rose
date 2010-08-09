@@ -59,7 +59,6 @@
 #include <errno.h>
 #include <sys/utsname.h>
 #include "assert.h"
-#include <stdio.h>
 
 void cleanup(void);
 void setup(void);
@@ -95,7 +94,6 @@ int main(int ac, char **av)
 		 */
 
     int result = uname((struct utsname *)-1);
-    fprintf(stderr,"Result: %d",result);
     assert( result == -1 );
     assert( errno == EFAULT );
 #if 0

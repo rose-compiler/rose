@@ -59,6 +59,9 @@
 #include <errno.h>
 #include <sys/utsname.h>
 #include <string.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 #include "assert.h"
 
 void cleanup(void);
