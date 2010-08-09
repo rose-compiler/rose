@@ -299,14 +299,15 @@ namespace VirtualCFG {
   CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym);
   //! \internal Get the CFG node for a Fortran label from a reference to it
   CFGNode getCFGTargetOfFortranLabelRef(SgLabelRefExp* lRef);
-}
+  
+  //! Utility function to make CFG Edges
+  template <class Node1T, class Node2T, class EdgeT>
+  void makeEdge(Node1T from, Node2T to, std::vector<EdgeT>& result);
+
+} // end namespace VirtualCFG
 
 #define SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX 2
 #define SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX 1
 #define SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX 2
-
-//! Utility function to make CFG Edges
-template <class NodeT, class EdgeT>
-void makeEdge(NodeT from, NodeT to, std::vector<EdgeT>& result);
 
 #endif // VIRTUAL_CFG_H
