@@ -131,6 +131,12 @@ class ProcessingPhase
           ProcessingPhase ();
           ProcessingPhase ( const std::string & s, double p, ProcessingPhase *parent );
 
+       // DQ (7/21/2010): We need a destructor so that we can set the internalMemoryUsageData 
+       // in the destructor instead of the constructor.  This way the memory usage is for the 
+       // operation that is being evaluated instead of the memory usage just before the 
+       // operation being evaluated.
+          virtual ~ProcessingPhase();
+
           void outputReport ( int n );
           void outputReportToFile ( std::ofstream & datafile );
           void outputReportHeaderToFile ( std::ofstream & datafile );

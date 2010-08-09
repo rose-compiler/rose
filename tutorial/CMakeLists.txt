@@ -1,7 +1,6 @@
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
-add_subdirectory(database)
 add_subdirectory(roseHPCT)
 add_subdirectory(outliner)
 add_subdirectory(intelPin)
