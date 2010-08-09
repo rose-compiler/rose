@@ -406,7 +406,6 @@ test2006_06.C \
 test2006_07.C \
 test2006_08.C \
 test2006_10.C \
-test2006_12.C \
 test2006_13.C \
 test2006_14.C \
 test2006_16.C \
@@ -687,6 +686,7 @@ test2010_06.C \
 inputBug317.C \
 test2005_131.C \
 test2005_130.C \
+test2006_12.C \
 test2005_129.C
 
 
