@@ -847,6 +847,11 @@ EmulationPolicy::emulate_syscall()
             strcpy(buf+4*65, "i386");                                   /*machine*/
             strcpy(buf+5*65, "example.com");                            /*domainname*/
             size_t nwritten = map.write(buf, dest_va, sizeof buf);
+            if( nwritten <= 0 ) {
+              writeGPR(x86_gpr_ax, -EFAULT);
+              break;
+            }
+
             ROSE_ASSERT(nwritten==sizeof buf);
             writeGPR(x86_gpr_ax, 0);
             break;
