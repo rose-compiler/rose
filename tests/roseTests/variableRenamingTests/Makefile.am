@@ -639,6 +639,8 @@ test2007_15.C
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS)
 
+# These are currently failing testcodes that should be fixed
+# (as opposed to testcodes that are expected to fail)
 FAILURE_TESTCODES = \
 test2001_03.C \
 test2004_35.C \
