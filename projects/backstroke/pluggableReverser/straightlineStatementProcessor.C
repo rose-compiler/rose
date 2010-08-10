@@ -6,22 +6,20 @@
 #include "statementProcessor.h"
 
 
-vector<InstrumentedStatement> StraightlineStatementProcessor::process(const StatementPackage& stmtPkg)
+vector<InstrumentedStatement> StraightlineStatementProcessor::process(SgStatement* statement, const VariableVersionTable& var_table)
 {
-    SgStatement* statement = stmtPkg.stmt;
-
 	if (SgBasicBlock * basicBlock = isSgBasicBlock(statement))
 	{
-		return processBasicBlock(stmtPkg);
+		return processBasicBlock(basicBlock, var_table);
 	}
 	else if (SgExprStatement * expressionStatement = isSgExprStatement(statement))
 	{
-		return processExpressionStatement(stmtPkg);
+		return processExpressionStatement(expressionStatement, var_table);
 	}
 	else if (isSgReturnStmt(statement))
 	{
 		InstrumentedStatementVec results;
-		results.push_back(InstrumentedStatement(SageInterface::copyStatement(statement), NULL, stmtPkg.var_table));
+		results.push_back(InstrumentedStatement(SageInterface::copyStatement(statement), NULL, var_table));
 		return results;
 	}
 
@@ -30,12 +28,11 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::process(const Stat
 
 
 /** Process an expression statement by using the first expression handler returning a valid result. */
-vector<InstrumentedStatement> StraightlineStatementProcessor::processExpressionStatement(const StatementPackage& stmtPkg)
+vector<InstrumentedStatement> StraightlineStatementProcessor::processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
 {
-    SgExprStatement* statement = isSgExprStatement(stmtPkg.stmt);
     ROSE_ASSERT(statement);
     
-	vector<InstrumentedExpression> expressions = processExpression(statement->get_expression(), stmtPkg.var_table, false);
+	vector<InstrumentedExpression> expressions = processExpression(statement->get_expression(), var_table, false);
 
 	//If none of the expression handlers could handle the code, we can't reverse it!
 	ROSE_ASSERT(!expressions.empty());
@@ -53,9 +50,8 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processExpressionS
 }
 
 
-vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(const StatementPackage& stmtPkg)
+vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
 {
-    SgBasicBlock* basicBlock = isSgBasicBlock(stmtPkg.stmt);
     ROSE_ASSERT(basicBlock);
     
 	SgBasicBlock* forwardBody = SageBuilder::buildBasicBlock();
@@ -96,7 +92,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 		}
 
 		//In this simple processor, we just take the first valid statement available
-		vector<InstrumentedStatement> instrumentedStatements = processStatement(StatementPackage(s, stmtPkg.var_table));
+		vector<InstrumentedStatement> instrumentedStatements = processStatement(s, var_table);
 
 		if (instrumentedStatements.empty())
 		{
@@ -145,7 +141,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 		reverseBody->prepend_statement(stmt);
 	}
 
-	InstrumentedStatement result(forwardBody, reverseBody, stmtPkg.var_table);
+	InstrumentedStatement result(forwardBody, reverseBody, var_table);
 
 	vector<InstrumentedStatement> out;
 	out.push_back(result);

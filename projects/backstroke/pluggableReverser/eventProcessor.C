@@ -25,9 +25,9 @@ InstrumentedExpressionVec ProcessorBase::processExpression(SgExpression* exp, co
     return event_processor_->processExpression(exp, var_table, isReverseValueUsed);
 }
 
-InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage& stmt_pkg)
+InstrumentedStatementVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    return event_processor_->processStatement(stmt_pkg);
+    return event_processor_->processStatement(stmt, var_table);
 }
 
 bool ProcessorBase::isStateVariable(SgExpression* exp)
@@ -78,7 +78,7 @@ InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, c
     return output;
 }
 
-InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage& stmt_pkg)
+InstrumentedStatementVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     InstrumentedStatementVec output;
 
@@ -86,7 +86,7 @@ InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        InstrumentedStatementVec result = stmt_processor->process(stmt_pkg);
+        InstrumentedStatementVec result = stmt_processor->process(stmt, var_table);
         foreach (const InstrumentedStatement& stmt1, result)
         {
             bool discard = false;
@@ -193,7 +193,7 @@ FuncDeclPairs EventProcessor::processEvent()
     FuncDeclPairs outputs;
 
     SimpleCostModel cost_model;
-    InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table));
+    InstrumentedStatementVec bodies = processStatement(body, var_table);
 
     
     static int ctr = 0;

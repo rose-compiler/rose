@@ -6,20 +6,6 @@
 #include "variableVersionTable.h"
 #include "costModel.h"
 
-struct StatementPackage
-{
-    StatementPackage(
-            SgStatement* s,
-            const VariableVersionTable& table)
-    : stmt(s), var_table(table)
-    {}
-
-    SgStatement* stmt;
-    VariableVersionTable var_table;
-};
-
-
-
 struct InstrumentedExpression
 {
     InstrumentedExpression() {}
@@ -104,7 +90,7 @@ class ProcessorBase
 protected:
 
     InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed);
-    InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
@@ -136,7 +122,7 @@ class StatementProcessor : public ProcessorBase
 {
 public:
 
-    virtual InstrumentedStatementVec process(const StatementPackage& stmt_pkg) = 0;
+    virtual InstrumentedStatementVec process(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
 
     //virtual S
 
@@ -174,7 +160,7 @@ private:
     InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed);
 
     //! Given a statement, return all transformations using all statement processors.
-    InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
     //! The following methods are for expression and statement processors for store and restore.
     SgExpression* getStackVar(SgType* type);

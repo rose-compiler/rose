@@ -15,20 +15,20 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt);
 
 class BasicStatementProcessor : public StatementProcessor
 {
-    InstrumentedStatementVec processReturnStatement(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processFunctionDeclaration(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processFunctionDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processExprStatement(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processVariableDeclaration(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processBasicBlock(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processIfStmt(const StatementPackage& stmt_pkg);
+    InstrumentedStatementVec processIfStmt(SgStatement* stmt, const VariableVersionTable& var_table);
 
 public:
-    virtual InstrumentedStatementVec process(const StatementPackage& stmt_pkg);
+    virtual InstrumentedStatementVec process(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 

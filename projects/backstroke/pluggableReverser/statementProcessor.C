@@ -6,20 +6,20 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-InstrumentedStatementVec BasicStatementProcessor::process(const StatementPackage& stmt_pkg)
+InstrumentedStatementVec BasicStatementProcessor::process(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    if (isSgExprStatement(stmt_pkg.stmt))
-        return processExprStatement(stmt_pkg);
+    if (isSgExprStatement(stmt))
+        return processExprStatement(stmt, var_table);
 
-    else if (isSgVariableDeclaration(stmt_pkg.stmt))
-        return processVariableDeclaration(stmt_pkg);
+    else if (isSgVariableDeclaration(stmt))
+        return processVariableDeclaration(stmt, var_table);
 
-    else if (isSgBasicBlock(stmt_pkg.stmt))
-        return processBasicBlock(stmt_pkg);
+    else if (isSgBasicBlock(stmt))
+        return processBasicBlock(stmt, var_table);
 
         //The forward of a return statement is a return; the reverse is a no-op.
-    else if (isSgReturnStmt(stmt_pkg.stmt))
-        return processReturnStatement(stmt_pkg);
+    else if (isSgReturnStmt(stmt))
+        return processReturnStatement(stmt, var_table);
 
         //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
         // return processIfStmt(if_stmt, var_table);
@@ -27,13 +27,13 @@ InstrumentedStatementVec BasicStatementProcessor::process(const StatementPackage
     return InstrumentedStatementVec();
 }
 
-InstrumentedStatementVec BasicStatementProcessor::processReturnStatement(const StatementPackage& stmt_pkg)
+InstrumentedStatementVec BasicStatementProcessor::processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    SgReturnStmt* return_stmt = isSgReturnStmt(stmt_pkg.stmt);
+    SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
     ROSE_ASSERT(return_stmt);
 
     InstrumentedStatementVec stmts;
-    stmts.push_back(InstrumentedStatement(copyStatement(return_stmt), NULL, stmt_pkg.var_table));
+    stmts.push_back(InstrumentedStatement(copyStatement(return_stmt), NULL, var_table));
     return stmts;
 }
 
@@ -76,13 +76,13 @@ StmtPairs BasicStatementProcessor::processFunctionDeclaration(SgFunctionDeclarat
 }
 #endif
 
-InstrumentedStatementVec BasicStatementProcessor::processExprStatement(const StatementPackage& stmt_pkg)
+InstrumentedStatementVec BasicStatementProcessor::processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    SgExprStatement* exp_stmt = isSgExprStatement(stmt_pkg.stmt);
+    SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
     
     InstrumentedExpressionVec exps = processExpression(
-            exp_stmt->get_expression(), stmt_pkg.var_table, false);
+            exp_stmt->get_expression(), var_table, false);
 
     ROSE_ASSERT(!exps.empty());
 
@@ -102,9 +102,9 @@ InstrumentedStatementVec BasicStatementProcessor::processExprStatement(const Sta
     return stmts;
 }
 
-InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(const StatementPackage& stmt_pkg)
+InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt_pkg.stmt);
+    SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt);
     ROSE_ASSERT(var_decl);
 
     InstrumentedStatementVec outputs;
@@ -114,7 +114,7 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(con
     // event function.
 
     // FIXME copyStatement also copies preprocessing info
-    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, stmt_pkg.var_table));
+    outputs.push_back(InstrumentedStatement(copyStatement(var_decl), NULL, var_table));
 
     //outputs.push_back(InstrumentedStatement(NULL, NULL, var_table));
     //outputs.push_back(pushAndPopLocalVar(var_decl));
@@ -124,9 +124,9 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(con
     return outputs;
 }
 
-InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const StatementPackage& stmt_pkg)
+InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    SgBasicBlock* body = isSgBasicBlock(stmt_pkg.stmt);
+    SgBasicBlock* body = isSgBasicBlock(stmt);
     ROSE_ASSERT(body);
     
     // Use two vectors to store intermediate results.
@@ -135,7 +135,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
     vector<SgInitializedName*> local_vars;
 
     int i = 0;
-    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), stmt_pkg.var_table));
+    queue[i].push_back(InstrumentedStatement(buildBasicBlock(), buildBasicBlock(), var_table));
 
     // Deal with variable declarations first, since they will affect the variable version table.
     // For each variable declared in this basic block, we choose storing or not storing it at the end.
@@ -222,7 +222,7 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
     {
         foreach (InstrumentedStatement& obj, queue[i])
         {
-            InstrumentedStatementVec result = processStatement(StatementPackage(stmt, obj.var_table));
+            InstrumentedStatementVec result = processStatement(stmt, obj.var_table);
             
             ROSE_ASSERT(!result.empty());
 
