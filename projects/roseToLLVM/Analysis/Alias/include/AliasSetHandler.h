@@ -42,6 +42,6 @@ class AliasSetHandler
         /*
          * break result string for LLVM Pass to sets
          */
-        void processAliasInformation();
+        void processAliasInformation(std::string _modulename);
 };
 #endif

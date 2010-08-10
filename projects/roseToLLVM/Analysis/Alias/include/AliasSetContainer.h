@@ -9,13 +9,14 @@
 #include <utility>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <rose.h>
 
 enum AliasType {May = 2, Must = 1, No = 0};
 
 namespace AliasDataSet 
 {
     typedef std::set<std::string> AliasRef;
-    typedef std::pair<AliasRef, AliasType> AliasSet;
+    typedef std::pair<AliasType, AliasRef> AliasSet;
     typedef std::vector<AliasSet> AliasSetList;
 }
 
@@ -28,7 +29,11 @@ class AliasSetContainer
 {
     std::string _functionname;       // to associate sets with a function
 
-    std::string _aliaslocations;     // written by llvm pass
+    /*
+     * LLVM Pass String Write Format {AliasType, AliasReferences..}
+     */
+
+    std::string _aliaslocations;    
 
     AliasDataSet::AliasSetList _aliasSetList;
 
@@ -50,8 +55,12 @@ class AliasSetContainer
     void parseAliasSet();
 
 
-    // for debugging purposes
+    // for debugging
     void print();
+
+    private:
+    
+    void printAliasType(AliasType _type);
      
 };
 

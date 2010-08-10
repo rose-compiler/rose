@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     llvm::PassManager *PM = new llvm::PassManager();    
 
     /*
-     * Apply Alias Analysis passes on all LLVM Modules
+     * Apply Alias Analysis passes on all LLVM Modules (currently one)
      */
     for(int i = 0; i < AAModule->getLLVMModuleSize(); ++i) {
         llvm::Module *ModRef = AAModule->getModule(i);
@@ -51,13 +51,17 @@ int main(int argc, char *argv[])
          */
         PM->run(*ModRef);
 
+        /*
+         * process alias set information for each module
+         */
+        AliasSetHandler::getInstance()->processAliasInformation(ModRef->getModuleIdentifier());
+
     }
 
-    AliasSetHandler::getInstance()->processAliasInformation();
 
-//    AAModule->annotateAST(astRoot);   
+    AAModule->annotateAST(astRoot);   
 
-//    AliasSetHandler::getInstance()->print();
+    AliasSetHandler::getInstance()->print();
 
     delete AAModule;
     delete PM;

@@ -23,24 +23,100 @@ AliasSetContainerList::AliasSetContainerList(std::string _module)
     _modulename = _module;
 }
 
+void AliasSetContainer::printAliasType(AliasType _type)
+{
+    std::cout << "Alias Type : ";
+
+    if(_type == May) {
+        std::cout << "May" << std::endl;
+    }
+    else if(_type == Must) {
+        std::cout << "Must" << std::endl;
+    }
+    else
+        std::cout << "No" << std::endl;
+}
+
 void AliasSetContainer::print()
 {
-    std::cout << _aliaslocations << std::endl;
+    std::cout << "Number of Alias Sets : " << _aliasSetList.size() << std::endl;
+
+    AliasDataSet::AliasSetList::iterator I, E;
+    AliasDataSet::AliasRef::iterator sI, sE;
+
+    for(I = _aliasSetList.begin(), E = _aliasSetList.end(); I != E; ++I) {
+        printAliasType(I->first);
+
+        std::cout << "{";
+
+        AliasDataSet::AliasRef &aRef = I->second;
+
+        for(sI = aRef.begin(), sE = aRef.end(); sI != sE; ++sI) {
+            std::cout << *sI <<",";
+        }
+
+        std::cout << "}" << std::endl;
+
+     }
 }
 
 void AliasSetContainer::parseAliasSet()
 {
     assert( !_aliaslocations.empty() );
-    
+   
     std::vector<std::string> _allSetsinThisFunc ;
 
-    boost::split (_allSetsinThisFunc, _aliaslocations, boost::is_any_of("\n"));
+    boost::split (_allSetsinThisFunc, _aliaslocations, boost::is_any_of("{}"));
 
     std::vector<std::string>::iterator I;
+    std::string _aliastype, _aliasref;
+    std::vector<std::string> _allRefsinThisSet;
+
+
+    enum AliasType _aliasType;
+
 
     for( I = _allSetsinThisFunc.begin(); I != _allSetsinThisFunc.end(); ++I) {
-        std::cout << I->data() << std::endl;
-                          
+        _aliasref = I->data();
+
+        /*
+         * Empty lines between } and {
+         */
+
+        boost::trim(_aliasref);
+        if(_aliasref.empty()) continue;
+
+        /*
+         * Non-empty lines for each alias set 
+         */
+
+        boost::split(_allRefsinThisSet, _aliasref, boost::is_any_of(","));
+
+        /*
+         * Needs to be alteast 2
+         * one for type and 2 or more for aliasing references
+         */
+
+        if(_allRefsinThisSet.size() > 2) {
+            
+            _aliastype = _allRefsinThisSet.back(); 
+            _allRefsinThisSet.pop_back();
+
+            if(! _aliastype.compare("May")) {
+                _aliasType = May;
+            }
+            else if(! _aliastype.compare("Must")) {
+                _aliasType = Must;
+            }
+            else {
+                _aliasType = No;
+            }
+
+            AliasDataSet::AliasRef _aRefs;
+           _aRefs.insert(_allRefsinThisSet.begin(), _allRefsinThisSet.end());
+            AliasDataSet::AliasSet _aSet = make_pair(_aliasType, _aRefs);
+            _aliasSetList.push_back(_aSet);
+        }
     }
 }
 

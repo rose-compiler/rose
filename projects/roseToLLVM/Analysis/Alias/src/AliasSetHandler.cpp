@@ -26,16 +26,14 @@ void AliasSetHandler::print()
     }
 }
 
-void AliasSetHandler::processAliasInformation()
+void AliasSetHandler::processAliasInformation(std::string _modulename)
 {
-    std::map<std::string, AliasSetContainerList*>::iterator I;
-    for(I = _mlist.begin(); I != _mlist.end(); ++I) {
-        I->second->parseAliasSet();
-    }
+    AliasSetContainerList *list = _mlist.find(_modulename)->second;
+    list->parseAliasSet();
 }
 
 AliasSetContainerList* AliasSetHandler::getAliasSetContainerList(std::string modulename)
 {
     return _mlist.find(modulename)->second;
 }
-   
+
