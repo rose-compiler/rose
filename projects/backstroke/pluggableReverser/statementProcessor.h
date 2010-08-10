@@ -4,20 +4,9 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
-#if 0
-StmtPairs processBasicStatement(SgStatement* stmt);
-StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl);
-StmtPairs processExprStatement(SgExprStatement* exp_stmt);
-StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl);
-StmtPairs processBasicBlock(SgBasicBlock* body);
-StmtPairs processIfStmt(SgIfStmt* if_stmt);
-#endif
-
 class BasicStatementProcessor : public StatementProcessor
 {
     StatementReversalVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    StatementReversalVec processFunctionDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
 
     StatementReversalVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
@@ -25,12 +14,17 @@ class BasicStatementProcessor : public StatementProcessor
 
     StatementReversalVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    StatementReversalVec processIfStmt(SgStatement* stmt, const VariableVersionTable& var_table);
 
 public:
     virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 
+/** Handles return statements. The reverse of a return statement is a no-op. */
+class ReturnStatementProcessor : public StatementProcessor
+{
+	public:
+		virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+};
 
 #endif

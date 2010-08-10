@@ -17,64 +17,9 @@ StatementReversalVec BasicStatementProcessor::process(SgStatement* stmt, const V
     else if (isSgBasicBlock(stmt))
         return processBasicBlock(stmt, var_table);
 
-        //The forward of a return statement is a return; the reverse is a no-op.
-    else if (isSgReturnStmt(stmt))
-        return processReturnStatement(stmt, var_table);
-
-        //if (SgIfStmt* if_stmt = isSgIfStmt(stmt))
-        // return processIfStmt(if_stmt, var_table);
-
     return StatementReversalVec();
 }
 
-StatementReversalVec BasicStatementProcessor::processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table)
-{
-    SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
-    ROSE_ASSERT(return_stmt);
-
-    StatementReversalVec stmts;
-    stmts.push_back(StatementReversal(copyStatement(return_stmt), NULL, var_table));
-    return stmts;
-}
-
-#if 0
-StmtPairs BasicStatementProcessor::processFunctionDeclaration(SgFunctionDeclaration* func_decl)
-{
-    SgBasicBlock* body = func_decl->get_definition()->get_body();
-    StmtPairs bodies = processStatement(body);
-    StmtPairs outputs;
-
-    static int ctr = 0;
-
-    foreach (StmtPair stmt_pair, bodies)
-    {
-        SgStatement *fwd_body, *rvs_body;
-        tie(fwd_body, rvs_body) = stmt_pair;
-
-        string ctr_str = lexical_cast<string>(ctr++);
-
-        SgName fwd_func_name = func_decl->get_name() + "_forward" + ctr_str;
-        SgFunctionDeclaration* fwd_func_decl = 
-            buildDefiningFunctionDeclaration(fwd_func_name, func_decl->get_orig_return_type(), 
-                    isSgFunctionParameterList(copyStatement(func_decl->get_parameterList())));
-        SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-        fwd_func_def->set_body(isSgBasicBlock(fwd_body));
-        fwd_body->set_parent(fwd_func_def);
-
-        SgName rvs_func_name = func_decl->get_name() + "_reverse" + ctr_str;
-        SgFunctionDeclaration* rvs_func_decl = 
-            buildDefiningFunctionDeclaration(rvs_func_name, func_decl->get_orig_return_type(), 
-                    isSgFunctionParameterList(copyStatement(func_decl->get_parameterList()))); 
-        SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-        rvs_func_def->set_body(isSgBasicBlock(rvs_body));
-        rvs_body->set_parent(rvs_func_def);
-
-        outputs.push_back(StmtPair(fwd_func_decl, rvs_func_decl));
-    }
-
-    return outputs;
-}
-#endif
 
 StatementReversalVec BasicStatementProcessor::processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
@@ -443,67 +388,17 @@ StatementReversalVec BasicStatementProcessor::processBasicBlock(SgStatement* stm
 #endif
 }
 
-#if 0
-StmtPairs BasicStatementProcessor::processIfStmt(
-        SgIfStmt* if_stmt,
-        const VariableVersionTable& var_table)
+
+StatementReversalVec ReturnStatementProcessor::process(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    //SgStatement *fwd_true_body, *fwd_false_body;
-    //SgStatement *rvs_true_body, *rvs_false_body;
+	//The forward of a return statement is a return; the reverse is a no-op.
+	if (SgReturnStmt * return_stmt = isSgReturnStmt(stmt))
+	{
+		StatementReversalVec stmts;
+		stmts.push_back(StatementReversal(SageInterface::copyStatement(return_stmt), NULL, var_table));
+		return stmts;
+	}
 
-    SgStatement* true_body = if_stmt->get_true_body();
-    SgStatement* false_body = if_stmt->get_false_body();
-
-    // Here we have do decide whether to store the flag. We don't have to store
-    // the flag if the value of that flag will not change after the if statement.
-    // Otherwise, we will push the flag at the end of if statement.
-
-    // After normalization, we require that the condition part of if statement
-    // does not need to be reversed. In other word, the expression of if condition
-    // does not modify any value.
-
-    StmtPairs transformed_true_bodies = processStatement(true_body);
-    StmtPairs transformed_false_bodies = processStatement(false_body);
-
-    //if (transformed_false_bodies.empty())
-       // transformed_false_bodies.push_back(NULL_STMT_PAIR);
-
-    StmtPairs output;
-
-    foreach (StmtPair true_bodies, transformed_true_bodies)
-    {
-        foreach (StmtPair false_bodies, transformed_false_bodies)
-        {
-            SgIfStmt* fwd_if_stmt = buildIfStmt(
-                    copyStatement(if_stmt->get_conditional()),
-                    copyStatement(true_bodies.first),
-                    copyStatement(false_bodies.first));
-
-            // Note that after normalization, both true/false bodies are basic blocks.
-            ROSE_ASSERT(isSgBasicBlock(fwd_if_stmt->get_true_body()));
-            ROSE_ASSERT(isSgBasicBlock(fwd_if_stmt->get_false_body()));
-
-
-            // At the end of true/false body, push the flag into stack.
-            isSgBasicBlock(fwd_if_stmt->get_true_body())->append_statement(
-                    buildExprStatement(pushVal(
-                        buildBoolValExp(true),
-                        buildBoolType())));
-            isSgBasicBlock(fwd_if_stmt->get_false_body())->append_statement(
-                    buildExprStatement(pushVal(
-                        buildBoolValExp(false),
-                        buildBoolType())));
-
-
-            SgIfStmt* rvs_if_stmt = buildIfStmt(
-                    popVal(buildBoolType()),
-                    copyStatement(true_bodies.second),
-                    copyStatement(false_bodies.second));
-            output.push_back(StmtPair(fwd_if_stmt, rvs_if_stmt));
-        }
-    }
-
-    return output;
+	return StatementReversalVec();
 }
-#endif
 

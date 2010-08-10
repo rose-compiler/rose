@@ -51,6 +51,7 @@ int main(int argc, char * argv[])
     //event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
 
     // Add all statement handlers to the statement pool.
+	event_processor.addStatementProcessor(new ReturnStatementProcessor);
     event_processor.addStatementProcessor(new BasicStatementProcessor);
 
     pushScopeStack(isSgScopeStatement(global));

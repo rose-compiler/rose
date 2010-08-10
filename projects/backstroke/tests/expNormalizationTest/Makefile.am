@@ -596,7 +596,6 @@ test2007_47.C \
 test2007_48.C \
 test2007_49.C \
 test2007_50.C \
-test2007_51.C \
 test2007_52.C \
 test2007_53.C \
 test2007_55.C \
@@ -687,7 +686,8 @@ inputBug327.C
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
 
-FAILURE_TESTCODES = test2006_148.C 
+# These fail because we don't support SgStatementExpression
+TESTCODES_EXPECTED_TO_FAIL = test2006_148.C test2007_51.C
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
@@ -705,7 +705,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects):expNormTest 
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)      		
+	./expNormTest --edg:no_warnings $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)

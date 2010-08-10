@@ -16,12 +16,6 @@ vector<StatementReversal> StraightlineStatementProcessor::process(SgStatement* s
 	{
 		return processExpressionStatement(expressionStatement, var_table);
 	}
-	else if (isSgReturnStmt(statement))
-	{
-		StatementReversalVec results;
-		results.push_back(StatementReversal(SageInterface::copyStatement(statement), NULL, var_table));
-		return results;
-	}
 
 	return vector<StatementReversal > ();
 }

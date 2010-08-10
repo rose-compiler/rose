@@ -710,7 +710,7 @@ test2005_114.C
 
 $(ROSE_TESTCODES_REQUIRED_TO_PASS):eventChecker
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./eventChecker $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./eventChecker --edg:no_warnings $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
