@@ -641,6 +641,35 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 13: { /*0xd, time */
+            syscall_enter("time", "p");
+            uint32_t t = arg(0);
+            time_t result = time(NULL);
+            if (t) {
+              uint32_t t_le;
+              SgAsmExecutableFileFormat::host_to_le(t, &t_le);
+              size_t nwritten = map.write(&t_le, result, 4);
+              ROSE_ASSERT(4==nwritten);
+            }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d"); /*FIXME: we should have a "t" format to print time [RPM 2010-08-09]*/
+            break;
+        }
+
+        case 20: { /*0x14, getpid*/
+            syscall_enter("getpid", "");
+            writeGPR(x86_gpr_ax, getpid());
+            syscall_leave("d");
+            break;
+        }
+
+        case 24: { /*0x18, getuid*/
+            syscall_enter("getuid", "");
+            writeGPR(x86_gpr_ax, getuid());
+            syscall_leave("d");
+            break;
+        }
+
         case 33: { /*0x21, access*/
             static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
             syscall_enter("access", "sf", flags);
@@ -649,6 +678,16 @@ EmulationPolicy::emulate_syscall()
             int mode=arg(1);
             int result = access(name.c_str(), mode);
             if (result<0) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 41: { /*0x29, dup*/
+            syscall_enter("dup", "d");
+            uint32_t fd = arg(0);
+            int result = dup(fd);
+            if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
@@ -680,6 +719,27 @@ EmulationPolicy::emulate_syscall()
 
             writeGPR(x86_gpr_ax, retval);
             syscall_leave("p");
+            break;
+        }
+
+        case 47: { /*0x2f, getgid*/
+            syscall_enter("getgid", "");
+            writeGPR(x86_gpr_ax, getgid());
+            syscall_leave("d");
+            break;
+        }
+
+        case 49: { /*0x31, geteuid*/
+            syscall_enter("geteuid", "");
+            writeGPR(x86_gpr_ax, geteuid());
+            syscall_leave("d");
+            break;
+        }
+
+        case 50: { /*0x32, getegid*/
+            syscall_enter("getegid", "");
+            writeGPR(x86_gpr_ax, getegid());
+            syscall_leave("d");
             break;
         }
 
@@ -748,6 +808,75 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+        case 57: { /*0x39, setpgid*/
+            syscall_enter("setpgid", "dd");
+            uint32_t pid=arg(0), pgid=arg(1);
+            int result = setpgid(pid, pgid);
+            if (-1==result) { result = -errno; }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 64: { /*0x40, getppid*/
+            syscall_enter("getppid", "");
+            writeGPR(x86_gpr_ax, getppid());
+            syscall_leave("d");
+            break;
+        }
+
+        case 65: { /*0x41, getpgrp*/
+            syscall_enter("getpgrp", "");
+            writeGPR(x86_gpr_ax, getpgrp());
+            syscall_leave("d");
+            break;
+        }
+
+        case 78: { /*0x4e, gettimeofday*/       
+            syscall_enter("gettimeofday", "p");
+            uint32_t tp = arg(0);
+            struct timeval sys_t;
+            int result = gettimeofday(&sys_t, NULL);
+            if (result == -1) {
+                result = -errno;
+            } else {
+                writeMemory<32>(x86_segreg_ds, tp, sys_t.tv_sec, true_() );
+                writeMemory<32>(x86_segreg_ds, tp + 4, sys_t.tv_usec, true_() );
+            }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 83: { /*0x53, symlink*/
+            syscall_enter("symlink", "ss");
+            uint32_t oldpath=arg(0), newpath=arg(1);
+            std::string sys_oldpath = read_string(oldpath);
+            std::string sys_newpath = read_string(newpath);
+            int result = symlink(sys_oldpath.c_str(),sys_newpath.c_str());
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 85: { /*0x55, readlink*/
+            syscall_enter("readlink", "spd");
+            uint32_t path=arg(0), buf=arg(1), bufsize=arg(2);
+            char sys_buf[bufsize];
+            std::string sys_path = read_string(path);
+            int result = readlink(sys_path.c_str(), sys_buf, bufsize);
+            if (result == -1) {
+                result = -errno;
+            } else {
+                size_t nwritten = map.write(sys_buf, buf, result);
+                ROSE_ASSERT(nwritten == (size_t)result);
+            }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
             
         case 91: { /*0x5b, munmap*/
             syscall_enter("munmap", "pd");
@@ -765,6 +894,32 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 114: { /*0x72, wait4*/
+            static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
+            syscall_enter("wait4", "dpfp", wflags);
+            uint32_t pid=arg(0), status_ptr=arg(1), options=arg(2), rusage_ptr=arg(3);
+            uint32_t status;
+            size_t nread = map.read(&status, status_ptr, 4);
+            ROSE_ASSERT(nread == 4);
+            struct rusage sys_rusage;
+            int result = wait4(pid, &status, options, &sys_rusage);
+            if( result == -1) {
+                result = -errno;
+            } else {
+                if (status_ptr != 0) {
+                    size_t nwritten = map.write(&status, status_ptr, 4);
+                    ROSE_ASSERT(nwritten == 4);
+                }
+                if (rusage_ptr != 0) {
+                    size_t nwritten = map.write(&sys_rusage, rusage_ptr, sizeof(struct rusage));
+                    ROSE_ASSERT(nwritten == sizeof(struct rusage));
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
         case 122: { /*0x7a, uname*/
             syscall_enter("uname", "p");
             uint32_t dest_va=arg(0);
@@ -777,6 +932,11 @@ EmulationPolicy::emulate_syscall()
             strcpy(buf+4*65, "i386");                                   /*machine*/
             strcpy(buf+5*65, "example.com");                            /*domainname*/
             size_t nwritten = map.write(buf, dest_va, sizeof buf);
+            if( nwritten <= 0 ) {
+              writeGPR(x86_gpr_ax, -EFAULT);
+              break;
+            }
+
             ROSE_ASSERT(nwritten==sizeof buf);
             writeGPR(x86_gpr_ax, 0);
             syscall_leave("d");
@@ -1045,6 +1205,14 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 224: { /*0xe0, gettid*/
+            // We have no concept of threads
+            syscall_enter("gettid", "");
+            writeGPR(x86_gpr_ax, getpid());
+            syscall_leave("d");
+            break;
+       }
+
         case 240: { /*0xf0, futex*/
             static const Translate opflags[] = { TF(FUTEX_PRIVATE_FLAG),
                                                  TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
@@ -1140,6 +1308,16 @@ EmulationPolicy::emulate_syscall()
                 map.dump(debug, "    ");
             }
             break;
+        }
+
+        case 270: { /*0x10e tgkill*/
+            syscall_enter("tgkill", "ddd");
+            uint32_t tgid=arg(0), pid=arg(1), sig=arg(2);
+            // TODO: Actually check thread group and kill properly
+            if (debug && trace_syscall) fputs("(throwing...)\n", debug);
+            throw Exit(__W_EXITCODE(0, sig));
+            break;
+
         }
 
         case 311: { /*0x137, set_robust_list*/
