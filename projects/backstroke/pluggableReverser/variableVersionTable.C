@@ -83,6 +83,68 @@ vector<SgExpression*> getAllVariables(SgNode* node)
     return vars;
 }
 
+bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) const
+{
+    // In this function, for expression a.b or a->b ,we only care about the version of a.b or a->b,
+    // but not the version of a or b.
+
+    // First, get all variables in lhs expression.
+    // Note that a expression contains several variables can be passed in.
+    vector<SgExpression*> lhs_vars = getAllVariables(lhs);
+
+    // Currently, the lhs operand of an assignment should contain only one variable.
+    // For array case, like a[i] = 0, we cannot handle it now.
+    ROSE_ASSERT(lhs_vars.size() == 1);
+
+    SgExpression* lhs_var = lhs_vars[0];
+
+    //foreach (SgExpression* var, lhs_vars)
+    {
+        VarName name = getVarName(lhs_var);
+        VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(lhs_var->get_parent(), name);
+
+        ROSE_ASSERT(!defs.empty());
+
+        foreach (VariableRenaming::NumNodeRenameEntry::value_type num_to_node, defs)
+        {
+            int num = num_to_node.first;
+            if (table_.find(name)->second.count(num) == 0)
+                return false;
+        }
+        //int num = var_renaming_->getRenameNumberForNode(name, var);
+    }
+
+    // For unary operation ++ and --, rhs is NULL and we can just return true at this point.
+    if (rhs == NULL)
+        return true;
+
+    vector<SgExpression*> rhs_vars = getAllVariables(rhs);
+
+    foreach (SgExpression* var, rhs_vars)
+    {
+        // Here we check if the variable is the same as the lhs variable. If true, we don't have
+        // to check its version. For example,
+        //        a(2) = a(1) + b(1)
+        // where the versions of a in lhs and rhs operand are different.
+        if (backstroke_util::areSameVariable(lhs_var, var))
+            continue;
+
+        VarName name = getVarName(var);
+        VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
+
+        ROSE_ASSERT(!defs.empty());
+
+        foreach (VariableRenaming::NumNodeRenameEntry::value_type num_to_node, defs)
+        {
+            int num = num_to_node.first;
+            if (table_.find(name)->second.count(num) == 0)
+                return false;
+        }
+        //int num = var_renaming_->getRenameNumberForNode(name, var);
+    }
+    return true;
+}
+
 bool VariableVersionTable::checkRhsVersion(SgNode* node) const
 {
     // In this function, for expression a.b or a->b ,we only care about the version of a.b or a->b,
