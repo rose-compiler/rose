@@ -682,8 +682,7 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 inputBug317.C \
-inputBug327.C \
-
+inputBug327.C 
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 

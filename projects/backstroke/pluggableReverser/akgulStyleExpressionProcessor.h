@@ -14,7 +14,7 @@ public:
 
 	/** Attempts to reverse an expression. If the reversal fails,
 	  * this function returns an empty vector. */
-	virtual std::vector<InstrumentedExpression> process(const ExpressionPackage& expPkg);
+	virtual std::vector<InstrumentedExpression> process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
 
 	/** Initialize the reverser for a given AST. */
 	AkgulStyleExpressionProcessor(SgProject* project);

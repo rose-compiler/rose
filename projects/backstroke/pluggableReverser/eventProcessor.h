@@ -6,20 +6,6 @@
 #include "variableVersionTable.h"
 #include "costModel.h"
 
-struct ExpressionPackage
-{
-    ExpressionPackage(
-            SgExpression* e,
-            const VariableVersionTable& table,
-            bool is_rvs_val_used = false)
-    : exp(e), var_table(table), is_value_used(is_rvs_val_used)
-    {}
-
-    SgExpression* exp;
-    VariableVersionTable var_table;
-    bool is_value_used;
-};
-
 struct StatementPackage
 {
     StatementPackage(
@@ -117,7 +103,7 @@ class ProcessorBase
 
 protected:
 
-    InstrumentedExpressionVec processExpression(const ExpressionPackage& exp_pkg);
+    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed);
     InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);
 
     SgExpression* pushVal(SgExpression* exp, SgType* type);
@@ -140,7 +126,7 @@ class ExpressionProcessor : public ProcessorBase
 {
 public:
 
-    virtual InstrumentedExpressionVec process(const ExpressionPackage& exp_pkg) = 0;
+    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed) = 0;
     //virtual void getCost() = 0;
 
 };
@@ -185,7 +171,7 @@ class EventProcessor
 private:
 
     //! Given an expression, return all transformations using all expression processors.
-    InstrumentedExpressionVec processExpression(const ExpressionPackage& exp_pkg);
+    InstrumentedExpressionVec processExpression(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed);
 
     //! Given a statement, return all transformations using all statement processors.
     InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);

@@ -20,9 +20,9 @@ SgExpression* ProcessorBase::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-InstrumentedExpressionVec ProcessorBase::processExpression(const ExpressionPackage& exp_pkg)
+InstrumentedExpressionVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    return event_processor_->processExpression(exp_pkg);
+    return event_processor_->processExpression(exp, var_table, isReverseValueUsed);
 }
 
 InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage& stmt_pkg)
@@ -35,7 +35,7 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-InstrumentedExpressionVec EventProcessor::processExpression(const ExpressionPackage& exp_pkg)
+InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
     InstrumentedExpressionVec output;
 
@@ -43,7 +43,7 @@ InstrumentedExpressionVec EventProcessor::processExpression(const ExpressionPack
     
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        InstrumentedExpressionVec result = exp_processor->process(exp_pkg);
+        InstrumentedExpressionVec result = exp_processor->process(exp, var_table, isReverseValueUsed);
 
         foreach (const InstrumentedExpression& exp1, result)
         {

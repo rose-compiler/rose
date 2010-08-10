@@ -35,7 +35,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processExpressionS
     SgExprStatement* statement = isSgExprStatement(stmtPkg.stmt);
     ROSE_ASSERT(statement);
     
-	vector<InstrumentedExpression> expressions = processExpression(ExpressionPackage(statement->get_expression(), stmtPkg.var_table, false));
+	vector<InstrumentedExpression> expressions = processExpression(statement->get_expression(), stmtPkg.var_table, false);
 
 	//If none of the expression handlers could handle the code, we can't reverse it!
 	ROSE_ASSERT(!expressions.empty());

@@ -82,7 +82,7 @@ InstrumentedStatementVec BasicStatementProcessor::processExprStatement(const Sta
     ROSE_ASSERT(exp_stmt);
     
     InstrumentedExpressionVec exps = processExpression(
-            ExpressionPackage(exp_stmt->get_expression(), stmt_pkg.var_table));
+            exp_stmt->get_expression(), stmt_pkg.var_table, false);
 
     ROSE_ASSERT(!exps.empty());
 
