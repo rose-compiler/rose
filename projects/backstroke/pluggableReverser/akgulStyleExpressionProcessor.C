@@ -11,7 +11,7 @@ AkgulStyleExpressionProcessor::AkgulStyleExpressionProcessor(SgProject* project)
 }
 
 
-vector<InstrumentedExpression> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& var_table, bool isReverseValueUsed)
+vector<ExpressionReversal> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
 	if (isSgAssignOp(expression))
 	{
@@ -30,14 +30,14 @@ vector<InstrumentedExpression> AkgulStyleExpressionProcessor::process(SgExpressi
 				VariableVersionTable newVarTable = var_table;
 				newVarTable.reverseVersion(expression);
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
-				vector<InstrumentedExpression> result;
-				result.push_back(InstrumentedExpression(forwardExp, reverseExpression, newVarTable));
+				vector<ExpressionReversal> result;
+				result.push_back(ExpressionReversal(forwardExp, reverseExpression, newVarTable));
 				return result;
 			}
 		}
 	}
 
-	return vector<InstrumentedExpression > ();
+	return vector<ExpressionReversal > ();
 }
 
 

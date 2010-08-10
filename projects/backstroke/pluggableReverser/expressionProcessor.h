@@ -8,28 +8,28 @@
 class NullExpressionProcessor : public ExpressionProcessor
 {
 public:
-    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
 };
 
 //! This handler just store and restore a value, once the value is modified (state saving style).
 class StoreAndRestoreExpressionProcessor : public ExpressionProcessor
 {
 public:
-    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
 };
 
 //! This handler handles constructive assignment, like ++, +=, -=, etc.
 class ConstructiveExpressionProcessor : public ExpressionProcessor
 {
 public:
-    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
 };
 
 //! This handler handles more constructive assignment (for example, a = b - a).
 class ConstructiveAssignmentProcessor : public ExpressionProcessor
 {
 public:
-    virtual InstrumentedExpressionVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
 };
 
 #endif    

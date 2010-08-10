@@ -6,7 +6,7 @@
 #include "statementProcessor.h"
 
 
-vector<InstrumentedStatement> StraightlineStatementProcessor::process(SgStatement* statement, const VariableVersionTable& var_table)
+vector<StatementReversal> StraightlineStatementProcessor::process(SgStatement* statement, const VariableVersionTable& var_table)
 {
 	if (SgBasicBlock * basicBlock = isSgBasicBlock(statement))
 	{
@@ -18,39 +18,39 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::process(SgStatemen
 	}
 	else if (isSgReturnStmt(statement))
 	{
-		InstrumentedStatementVec results;
-		results.push_back(InstrumentedStatement(SageInterface::copyStatement(statement), NULL, var_table));
+		StatementReversalVec results;
+		results.push_back(StatementReversal(SageInterface::copyStatement(statement), NULL, var_table));
 		return results;
 	}
 
-	return vector<InstrumentedStatement > ();
+	return vector<StatementReversal > ();
 }
 
 
 /** Process an expression statement by using the first expression handler returning a valid result. */
-vector<InstrumentedStatement> StraightlineStatementProcessor::processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
+vector<StatementReversal> StraightlineStatementProcessor::processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(statement);
     
-	vector<InstrumentedExpression> expressions = processExpression(statement->get_expression(), var_table, false);
+	vector<ExpressionReversal> expressions = processExpression(statement->get_expression(), var_table, false);
 
 	//If none of the expression handlers could handle the code, we can't reverse it!
 	ROSE_ASSERT(!expressions.empty());
 
 	//This simple processor just takes the first valid reverse expression returned
-	InstrumentedExpression& instrumentedExpression = expressions.front();
+	ExpressionReversal& instrumentedExpression = expressions.front();
 
 	SgStatement* forwardStatement = SageBuilder::buildExprStatement(instrumentedExpression.fwd_exp);
 	SgStatement* reverseStatement = SageBuilder::buildExprStatement(instrumentedExpression.rvs_exp);
 
-	vector<InstrumentedStatement> results;
-	results.push_back(InstrumentedStatement(forwardStatement, reverseStatement, instrumentedExpression.var_table, instrumentedExpression.cost));
+	vector<StatementReversal> results;
+	results.push_back(StatementReversal(forwardStatement, reverseStatement, instrumentedExpression.var_table, instrumentedExpression.cost));
 
 	return results;
 }
 
 
-vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
+vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(basicBlock);
     
@@ -92,7 +92,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 		}
 
 		//In this simple processor, we just take the first valid statement available
-		vector<InstrumentedStatement> instrumentedStatements = processStatement(s, var_table);
+		vector<StatementReversal> instrumentedStatements = processStatement(s, var_table);
 
 		if (instrumentedStatements.empty())
 		{
@@ -101,7 +101,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 			exit(1);
 		}
 
-		InstrumentedStatement instrumentedStatement = instrumentedStatements.front();
+		StatementReversal instrumentedStatement = instrumentedStatements.front();
 		SgStatement* forwardStatement = instrumentedStatement.fwd_stmt;
 		SgStatement* reverseStatement = instrumentedStatement.rvs_stmt;
 
@@ -141,9 +141,9 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 		reverseBody->prepend_statement(stmt);
 	}
 
-	InstrumentedStatement result(forwardBody, reverseBody, var_table);
+	StatementReversal result(forwardBody, reverseBody, var_table);
 
-	vector<InstrumentedStatement> out;
+	vector<StatementReversal> out;
 	out.push_back(result);
 	return out;
 }

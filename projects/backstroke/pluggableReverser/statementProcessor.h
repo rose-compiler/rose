@@ -15,20 +15,20 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt);
 
 class BasicStatementProcessor : public StatementProcessor
 {
-    InstrumentedStatementVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
+    StatementReversalVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processFunctionDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
+    StatementReversalVec processFunctionDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
+    StatementReversalVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
+    StatementReversalVec processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
+    StatementReversalVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processIfStmt(SgStatement* stmt, const VariableVersionTable& var_table);
+    StatementReversalVec processIfStmt(SgStatement* stmt, const VariableVersionTable& var_table);
 
 public:
-    virtual InstrumentedStatementVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+    virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 

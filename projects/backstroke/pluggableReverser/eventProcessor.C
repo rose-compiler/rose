@@ -20,12 +20,12 @@ SgExpression* ProcessorBase::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-InstrumentedExpressionVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
+ExpressionReversalVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
     return event_processor_->processExpression(exp, var_table, isReverseValueUsed);
 }
 
-InstrumentedStatementVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+StatementReversalVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     return event_processor_->processStatement(stmt, var_table);
 }
@@ -35,22 +35,22 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
+ExpressionReversalVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    InstrumentedExpressionVec output;
+    ExpressionReversalVec output;
 
     // If two results have the same variable table, we remove the one which has the higher cost.
     
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        InstrumentedExpressionVec result = exp_processor->process(exp, var_table, isReverseValueUsed);
+        ExpressionReversalVec result = exp_processor->process(exp, var_table, isReverseValueUsed);
 
-        foreach (const InstrumentedExpression& exp1, result)
+        foreach (const ExpressionReversal& exp1, result)
         {
             bool discard = false;
             for (size_t i = 0; i < output.size(); ++i)
             {
-                InstrumentedExpression& exp2 = output[i];
+                ExpressionReversal& exp2 = output[i];
                 if (exp1.var_table == exp2.var_table) 
                 {
                     if (exp1.cost > exp2.cost)
@@ -78,21 +78,21 @@ InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, c
     return output;
 }
 
-InstrumentedStatementVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    InstrumentedStatementVec output;
+    StatementReversalVec output;
 
     // If two results have the same variable table, we remove the one which has the higher cost.
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        InstrumentedStatementVec result = stmt_processor->process(stmt, var_table);
-        foreach (const InstrumentedStatement& stmt1, result)
+        StatementReversalVec result = stmt_processor->process(stmt, var_table);
+        foreach (const StatementReversal& stmt1, result)
         {
             bool discard = false;
             for (size_t i = 0; i < output.size(); ++i)
             {
-                InstrumentedStatement& stmt2 = output[i];
+                StatementReversal& stmt2 = output[i];
                 if (stmt1.var_table == stmt2.var_table) 
                 {
                     if (stmt1.cost > stmt2.cost)
@@ -193,14 +193,14 @@ FuncDeclPairs EventProcessor::processEvent()
     FuncDeclPairs outputs;
 
     SimpleCostModel cost_model;
-    InstrumentedStatementVec bodies = processStatement(body, var_table);
+    StatementReversalVec bodies = processStatement(body, var_table);
 
     
     static int ctr = 0;
     // Sort the generated bodies so that those with the least cost appears first.
     sort(bodies.begin(), bodies.end());
 
-    foreach (InstrumentedStatement& stmt_obj, bodies)
+    foreach (StatementReversal& stmt_obj, bodies)
     {
         fixVariableReferences(stmt_obj.fwd_stmt);
         fixVariableReferences(stmt_obj.rvs_stmt);
