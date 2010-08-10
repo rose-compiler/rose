@@ -1,3 +1,8 @@
+#ifdef TEMPLATE_IMPLEMENTATIONS
+
+#ifndef UTILITY_FUNCTION_TEMPLATES_C
+#define UTILITY_FUNCTION_TEMPLATES_C
+
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
 #include "wholeAST_API.h"
@@ -73,4 +78,10 @@ struct generateDOTExtendedforMultipleFile
 		generateDOTExtended_withIncludes<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, ExtraEdgeOptions_t>(project,filenamePostfix, eni, eno, eei, eeo);
 	}
 };
+
+#endif // UTILITY_FUNCTION_TEMPLATES_C
+
+#else
+#error Must include template implementation files after all header files.  If you have, make sure you define TEMPLATE_IMPLEMENTATIONS
+#endif // TEMPLATE_IMPLEMENTATIONS
 

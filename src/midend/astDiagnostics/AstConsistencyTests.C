@@ -479,6 +479,12 @@ AstTests::runAllTests(SgProject* sageProject)
 
           TestLValueExpressions lvalueTest;
           lvalueTest.traverse(sageProject,preorder);
+
+			// King84 (7/29/2010): Uncomment this to enable checking of the corrected LValues
+#if 0
+			TestLValues lvaluesTest;
+			lvaluesTest.traverse(sageProject,preorder);
+#endif
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test expressions for properly set l-values finished." << endl;
@@ -3119,23 +3125,65 @@ TestExpressionTypes::visit ( SgNode* node )
              }
         }
 
+#if 0
+     SgFunctionType* namedType = isNamedType(type);
+     if (namedType != NULL)
+        {
+          SgDeclarationStatement* declaration = namedType->get_declaration();
+          ROSE_ASSERT(declaration != NULL);
+          SgDeclarationStatement* nondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
+          SgDeclarationStatement* definingDeclaration    = declaration->get_definingDeclaration();
+          if (definingDeclaration != NULL)
+             {
+               switch(definingDeclaration->variantT())
+                  {
+                    case V_SgFunctionDeclaration:
+                       {
+                         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(definingDeclaration);
+                         ROSE_ASSERT(functionDeclaration->get_definition() != NULL);
+                         break;
+                       }
+
+                     default:
+                       {
+                         printf ("definingDeclaration not tested = %s \n",definingDeclaration->class_name().c_str());
+                       }
+                  }
+             }
+        }
+#endif
+}
+
+void
+TestLValues::visit ( SgNode* node )
+{
+	SgExpression* expression = isSgExpression(node);
+	if (expression != NULL)
+	{
+		return;
+	}
+
 	//
 	// Test isLValue()
 	//
-#undef USE_KING84
-#define USE_KING84
-#ifdef USE_KING84
 	if (expression != NULL)
 	{
 		bool verifiedLValue = false;
 		bool verifiedDefinable = false;
 		switch (node->variantT())
 		{
-			case V_SgExpressionRoot: 
-			case V_SgMinusOp:            
-			case V_SgUnaryAddOp: 
-			case V_SgNotOp:           
-			break;
+			case V_SgScopeOp:          
+			{
+				SgScopeOp* scopeOp = isSgScopeOp(node);
+				ROSE_ASSERT(scopeOp);
+				verifiedLValue = scopeOp->get_rhs_operand()->isLValue();
+				break;
+			}
+			case V_SgPntrArrRefExp:  
+			{
+				verifiedLValue = true;
+				break;
+			}
 			case V_SgPointerDerefExp: 
 			{
 				verifiedLValue = true;
@@ -3143,16 +3191,69 @@ TestExpressionTypes::visit ( SgNode* node )
 			}
 			case V_SgAddressOfOp:    
 			{
+				/*! std:5.2.6 par:1 */
+				// TODO: king84: false?  char x[4];  x is lvalue; (x + 1) is rvalue; *(x+1) is lvalue; *(x+1) = x[1]
+				if (!isSgAddressOfOp(expression)->get_operand()->isLValue()) // must also be mutable
+				{
+					ROSE_ASSERT(!"Child operand of an address-of operator must be an lvalue in isLValue on SgAddressOfOp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgArrowExp:       
+			{
+				// TODO: king84: is this true?
+				if (!isSgArrowExp(expression)->get_rhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgArrowExp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgDotExp:           
+			{
+				// TODO: king84: is this true?
+				if (!isSgDotExp(expression)->get_rhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgDotExp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgDotStarOp:       
+			{
+				// TODO: king84: is this true?
+				if (!isSgDotStarOp(expression)->get_lhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgDotStarOp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgArrowStarOp:      
+			{
+				// TODO: king84: is this true? consider 'this': class A {int A::*pf();} this->*pf();
+				if (!isSgArrowStarOp(expression)->get_lhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgArrowStarOp");
+				}
 				verifiedLValue = true;
 				break;
 			}
 			case V_SgMinusMinusOp:       
 			{
-				SgMinusMinusOp* ppo = isSgMinusMinusOp(node);
-				if (ppo->get_mode() == SgUnaryOp::postfix)
+				SgMinusMinusOp* mmo = isSgMinusMinusOp(node);
+				if (mmo->get_mode() == SgUnaryOp::postfix)
 					verifiedLValue = false;
 				else
+				{
+					/*! std:5.3.2 par:2 */
+					if (!mmo->get_operand()->isLValue()) // must also be mutable
+					{
+						ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgMinusMinusOp");
+					}
 					verifiedLValue = true;
+				}
 				break;
 			}
 			case V_SgPlusPlusOp: 
@@ -3161,11 +3262,16 @@ TestExpressionTypes::visit ( SgNode* node )
 				if (ppo->get_mode() == SgUnaryOp::postfix)
 					verifiedLValue = false;
 				else
+				{
+					/*! std:5.3.2 par:1 */
+					if (!ppo->get_operand()->isLValue()) // must also be mutable
+					{
+						ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgPlusPlusOp");
+					}
 					verifiedLValue = true;
+				}
 				break;
 			}
-			case V_SgBitComplementOp: 
-			break;
 			case V_SgCastExp:
 			{
 				SgCastExp* castExp = isSgCastExp(node);
@@ -3187,70 +3293,11 @@ TestExpressionTypes::visit ( SgNode* node )
 				}
 				break;
 			}
-			case V_SgThrowOp:        
-			case V_SgRealPartOp:         
-			case V_SgImagPartOp: 
-			case V_SgConjugateOp:     
-			case V_SgUserDefinedUnaryOp: 
-			break;
-			case V_SgArrowExp:       
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgDotExp:           
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgDotStarOp:       
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgArrowStarOp:      
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgEqualityOp:    
-			case V_SgLessThanOp:     
-			case V_SgGreaterThanOp:  
-			case V_SgNotEqualOp:       
-			case V_SgLessOrEqualOp:   
-			case V_SgGreaterOrEqualOp: 
-			case V_SgAddOp:         
-			case V_SgSubtractOp:     
-			case V_SgMultiplyOp:     
-			case V_SgDivideOp:         
-			case V_SgIntegerDivideOp: 
-			case V_SgModOp:            
-			case V_SgAndOp:         
-			case V_SgOrOp:           
-			case V_SgBitXorOp:       
-			case V_SgBitAndOp:         
-			case V_SgBitOrOp:         
-			break;
 			case V_SgCommaOpExp:       
 			{
 				SgCommaOpExp* comma = isSgCommaOpExp(node);
 				ROSE_ASSERT(comma);
 				verifiedLValue = comma->get_rhs_operand()->isLValue();
-				break;
-			}
-			case V_SgLshiftOp:      
-			case V_SgRshiftOp:       
-			break;
-			case V_SgPntrArrRefExp:  
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgScopeOp:          
-			{
-				SgScopeOp* scopeOp = isSgScopeOp(node);
-				ROSE_ASSERT(scopeOp);
-				verifiedLValue = scopeOp->get_rhs_operand()->isLValue();
 				break;
 			}
 			case V_SgAssignOp:        
@@ -3308,20 +3355,52 @@ TestExpressionTypes::visit ( SgNode* node )
 				verifiedLValue = true;
 				break;
 			}
-			case V_SgExponentiationOp: 
-			case V_SgConcatenationOp: 
-			break;
 			case V_SgPointerAssignOp:  
 			{
 				verifiedDefinable = true;
 				break;
 			}
-			case V_SgUserDefinedBinaryOp: 
-			case V_SgBoolValExp:     
-			break;
 			case V_SgStringVal:        
 			{
 				verifiedLValue = true;
+				break;
+			}
+			case V_SgVarRefExp:           
+			{
+				verifiedLValue = true;
+				SgVarRefExp* var = isSgVarRefExp(node);
+				verifiedDefinable = !SageInterface::isConstType(var->get_type());
+				break;
+			}
+			case V_SgFunctionRefExp:      
+			{
+				break;
+			}
+			case V_SgMemberFunctionRefExp:    
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgFunctionCallExp:     
+			{
+				SgFunctionCallExp* funOp = isSgFunctionCallExp(node);
+				ROSE_ASSERT(funOp);
+				SgType* type = funOp->get_function()->get_type();
+				while (SgTypedefType* type2 = isSgTypedefType(type))
+					type = type2->get_base_type();
+				SgFunctionType* ftype = isSgFunctionType(type);
+				verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type()) != NULL;
+				break;
+			}
+			case V_SgTypeIdOp:            
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgConditionalExp:          
+			{
+				SgConditionalExp* cond = isSgConditionalExp(node);
+				verifiedLValue = (cond->get_true_exp()->isLValue() && cond->get_false_exp()->isLValue()) && (cond->get_true_exp()->get_type() == cond->get_false_exp()->get_type());
 				break;
 			}
 			case V_SgShortVal:               
@@ -3345,54 +3424,45 @@ TestExpressionTypes::visit ( SgNode* node )
 			case V_SgUnaryOp:             
 			case V_SgBinaryOp:                
 			case V_SgExprListExp:         
-			break;
-			case V_SgVarRefExp:           
-			{
-				verifiedLValue = true;
-				SgVarRefExp* var = isSgVarRefExp(node);
-				verifiedDefinable = !SageInterface::isConstType(var->get_type());
-				break;
-			}
+			case V_SgUserDefinedBinaryOp: 
+			case V_SgBoolValExp:     
+			case V_SgExponentiationOp: 
+			case V_SgConcatenationOp: 
+			case V_SgLshiftOp:      
+			case V_SgRshiftOp:       
+			case V_SgEqualityOp:    
+			case V_SgLessThanOp:     
+			case V_SgGreaterThanOp:  
+			case V_SgNotEqualOp:       
+			case V_SgLessOrEqualOp:   
+			case V_SgGreaterOrEqualOp: 
+			case V_SgAddOp:         
+			case V_SgSubtractOp:     
+			case V_SgMultiplyOp:     
+			case V_SgDivideOp:         
+			case V_SgIntegerDivideOp: 
+			case V_SgModOp:            
+			case V_SgAndOp:         
+			case V_SgOrOp:           
+			case V_SgBitXorOp:       
+			case V_SgBitAndOp:         
+			case V_SgBitOrOp:         
+			case V_SgThrowOp:        
+			case V_SgRealPartOp:         
+			case V_SgImagPartOp: 
+			case V_SgConjugateOp:     
+			case V_SgUserDefinedUnaryOp: 
+			case V_SgExpressionRoot: 
+			case V_SgMinusOp:            
+			case V_SgUnaryAddOp: 
+			case V_SgNotOp:           
+			case V_SgBitComplementOp: 
 			case V_SgClassNameRefExp:          
-			break;
-			case V_SgFunctionRefExp:      
-			{
-				break;
-			}
-			case V_SgMemberFunctionRefExp:    
-			{
-				verifiedLValue = true;
-				break;
-			}
 			case V_SgValueExp:            
-			break;
-			case V_SgFunctionCallExp:     
-			{
-				SgFunctionCallExp* funOp = isSgFunctionCallExp(node);
-				ROSE_ASSERT(funOp);
-				SgType* type = funOp->get_function()->get_type();
-				while (SgTypedefType* type2 = isSgTypedefType(type))
-					type = type2->get_base_type();
-				SgFunctionType* ftype = isSgFunctionType(type);
-				verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type()) != NULL;
-				break;
-			}
 			case V_SgSizeOfOp:                 
 			case V_SgUpcLocalsizeof:
 			case V_SgUpcBlocksizeof:
 			case V_SgUpcElemsizeof:
-			break;
-			case V_SgTypeIdOp:            
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgConditionalExp:          
-			{
-				SgConditionalExp* cond = isSgConditionalExp(node);
-				verifiedLValue = (cond->get_true_exp()->isLValue() && cond->get_false_exp()->isLValue()) && (cond->get_true_exp()->get_type() == cond->get_false_exp()->get_type());
-				break;
-			}
 			case V_SgNewExp:              
 			case V_SgDeleteExp:           
 			case V_SgThisExp:                  
@@ -3418,7 +3488,6 @@ TestExpressionTypes::visit ( SgNode* node )
 			case V_SgPseudoDestructorRefExp:                    
 			case V_SgCudaKernelCallExp:   
 			case V_SgCudaKernelExecConfig: 
-
 				break;
 			/*UseRenameExpression*/
 			/*UseOnlyExpression*/ 
@@ -3426,41 +3495,12 @@ TestExpressionTypes::visit ( SgNode* node )
 				break;
 		}
 		if (expression->isLValue() != verifiedLValue)
-			std::cout << "Node at " << node << " is sgtype " << node->variantT() << std::endl;
+			std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
 		ROSE_ASSERT (expression->isLValue() == verifiedLValue);
 		if (expression->isDefinable() != verifiedDefinable)
-			std::cout << "Node at " << node << " is sgtype " << node->variantT() << std::endl;
+			std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
 		ROSE_ASSERT (expression->isDefinable() == verifiedDefinable);
 	}
-#endif
-
-#if 0
-     SgFunctionType* namedType = isNamedType(type);
-     if (namedType != NULL)
-        {
-          SgDeclarationStatement* declaration = namedType->get_declaration();
-          ROSE_ASSERT(declaration != NULL);
-          SgDeclarationStatement* nondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
-          SgDeclarationStatement* definingDeclaration    = declaration->get_definingDeclaration();
-          if (definingDeclaration != NULL)
-             {
-               switch(definingDeclaration->variantT())
-                  {
-                    case V_SgFunctionDeclaration:
-                       {
-                         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(definingDeclaration);
-                         ROSE_ASSERT(functionDeclaration->get_definition() != NULL);
-                         break;
-                       }
-
-                     default:
-                       {
-                         printf ("definingDeclaration not tested = %s \n",definingDeclaration->class_name().c_str());
-                       }
-                  }
-             }
-        }
-#endif
 }
 
 
