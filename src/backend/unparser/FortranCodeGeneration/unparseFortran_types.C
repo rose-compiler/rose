@@ -51,7 +51,9 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
              }
 
        // case V_SgTypeVoid:             curprint(type->sage_class_name()); break;
-          case V_SgTypeVoid:             curprint("void"); break;
+       //   case V_SgTypeVoid:             curprint("void"); break;
+          //FMZ 6/17/2009 
+          case V_SgTypeVoid:              break;
 
        // DQ (8/16/2007): I don't think that SgGlobalVoid is used!
        // case V_SgTypeGlobalVoid:       curprint(type->sage_class_name()); break;
@@ -128,6 +130,11 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
        // DQ (12/1/2007): We need to unparse the kind and type parameters
           case V_SgModifierType:         unparseModifierType(type, info); break;
+
+       // FMZ (2/2/2009): Add image_team for co-array team declaration
+          case V_SgTypeCAFTeam:          curprint("TEAM"); break;
+       // FMZ (4/14/2009): Added cray pointer
+          case V_SgTypeCrayPointer:      curprint("POINTER "); break;
 
 #if 0
        // DQ (8/15/2007): I don't think these apply to Fortran.

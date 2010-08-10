@@ -1,10 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_LLVM
-
 TESTCODE_INCLUDES = 
 
-ROSE2LLVM_FLAGS =
+ROSE2LLVM_FLAGS = --rose2llvm:emit-llvm
 
 CLANG=clang
 CLANG_FLAGS=-lm
@@ -42,17 +40,24 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 							   switch1.c \
 							   switch2.c \
 							   switch3.c \
-							   switch4.c 
+							   switch4.c \
+							   test.c
+
 
 # example2.c - rose2llvm cannot compile
 # switch5.c, switch6.c - output files differ
 # test.c - need to remove test script for this to run
 
 C_TESTCODES_CURRENTLY_FAILING = \
-								test.c \
  								example2.c \
 								switch5.c \
 								switch6.c
+
+ALL_TESTCODES = \
+$(C_TESTCODES_REQUIRED_TO_PASS) \
+$(C_TESTCODES_CURRENTLY_FAILING)	
+
+if ROSE_USE_LLVM
 
 # GENERATE Executables using rose2llvm
 C_TEST_EXECUTABLES = $(C_TESTCODES_REQUIRED_TO_PASS:.c=)
@@ -73,22 +78,24 @@ DIFF_CHECK = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.c.diff)
 	$(MAKE) -C ../src rose2llvm
 
 $(C_TEST_EXECUTABLES): ../src/rose2llvm 
-	../src/rose2llvm $(TESTCODE_INCLUDES) $(ROSE2LLVM_FLAGS) -o $@ $(srcdir)/$(@:=.c)
+	@cp $(srcdir)/$(@:=.c) $(@:=.c)
+	@cp $(srcdir)/$(@:=.c.in) $(@:=.c.in)
+	../src/rose2llvm $(TESTCODE_INCLUDES) $(ROSE2LLVM_FLAGS) -o $@ $(@:=.c)
 
 $(C_TEST_OUT): $(C_TEST_EXECUTABLES)
-	./$(@:.c.out=) < $(srcdir)/$(@:.c.out=.c.in) > $@	
+	./$(@:.c.out=) < $(@:.c.out=.c.in) > $@	
 
-$(C_TEST_CLANG_EXECUTABLES):
-	$(CLANG) $(TESTCODE_INCLUDES) $(CLANG_FLAGS) -o $@ $(srcdir)/$(@:.clang=.c)
+$(C_TEST_CLANG_EXECUTABLES): $(C_TEST_EXECUTABLES)
+	$(CLANG) $(TESTCODE_INCLUDES) $(CLANG_FLAGS) -o $@ $(@:.clang=.c)
 
 $(C_TEST_CLANG_OUT): $(C_TEST_CLANG_EXECUTABLES)
-	./$(@:.c.clang.out=.clang) < $(srcdir)/$(@:.c.clang.out=.c.in) > $@
+	./$(@:.c.clang.out=.clang) < $(@:.c.clang.out=.c.in) > $@
 
 $(DIFF_CHECK): $(C_TEST_OUT) $(C_TEST_CLANG_OUT)
 	@if $(DIFF)	$(@:.c.diff=.c.out) $(@:.c.diff=.c.clang.out); then :; else echo "Files differ; test falied"; exit 1; fi
 
 check-local:
-	@echo "Test for rose2llvm translator."
+	@echo "Test for rose2llvm translator."	
 	@$(MAKE) $(C_TEST_EXECUTABLES)
 	@$(MAKE) $(C_TEST_OUT)
 	@$(MAKE) $(C_TEST_CLANG_EXECUTABLES)
@@ -97,6 +104,9 @@ check-local:
 	@echo "======== make check rule for rose2llvm terminated normally ========"
 
 clean-local:	
-	rm -f $(C_TEST_EXECUTABLES) *.ll *.out *.clang
+	rm -f $(C_TEST_EXECUTABLES) *.ll *.out *.clang *.c *.c.in
 
 endif
+
+EXTRA_DIST = $(ALL_TESTCODES) $(ALL_TESTCODES:.c=.c.in)
+

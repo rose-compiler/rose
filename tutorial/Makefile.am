@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = database roseHPCT outliner intelPin binaryAnalysis
+SUBDIRS = roseHPCT outliner intelPin binaryAnalysis
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -41,6 +41,7 @@ NOINST_TUTORIAL_EXAMPLES = \
    astFileIO_GenerateBinaryFile \
    astFileIO_ReadMultipleASTs \
    ASTGraphGenerator \
+   ASTGraphGeneratorCustomized \
    bin_example \
    binaryAnalysisExample \
    binaryAnalysis_symbolTable \
@@ -128,6 +129,8 @@ binaryFileRead_SOURCES = binaryFileRead.C
 binaryFileWrite_SOURCES = binaryFileWrite.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
+
+ASTGraphGeneratorCustomized_SOURCES = ASTGraphGeneratorCustomized.C
 
 AST_PDF_Generator_SOURCES = AST_PDF_Generator.C
 
@@ -334,6 +337,16 @@ VALGRIND =
 testASTGraphGenerator: ASTGraphGenerator
 	@echo "Generating dot file ..."
 	./ASTGraphGenerator $(srcdir)/inputCode_2.C
+	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_2.C.dot inputCode_2.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
+	if ! test -e inputCode_2.pdf; then exit 1; fi
+endif
+
+testASTGraphGeneratorCustomized: ASTGraphGeneratorCustomized
+	@echo "Generating dot file ..."
+	./ASTGraphGeneratorCustomized $(srcdir)/inputCode_2.C
 	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_2.C.dot inputCode_2.pdf
 if ROSE_USE_GRAPHVIZ_DOT
@@ -733,6 +746,7 @@ generatedCodeExamples = \
    rose_inputCode_partialRedundancyElimination.C \
    rose_inputCode_tauInstrumenter.C \
    inputCode_ASTGraphGenerator.pdf \
+   inputCode_ASTGraphGeneratorCustomized.pdf \
    inputCode_AST_PDF_Generator.pdf \
    inputCode_ASTWholeGraphGenerator_small.pdf \
    inputCode_ASTWholeGraphGenerator_large.pdf \
@@ -820,6 +834,21 @@ if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 #	rm inputCode_ASTGraphGenerator.pdf
 	if ! test -e inputCode_ASTGraphGenerator.pdf; then exit 1; fi
+endif
+
+inputCode_ASTGraphGeneratorCustomized.pdf: ASTGraphGeneratorCustomized
+	@echo "Generating required documentation for tutorial (inputCode_ASTGraphGeneratorCustomized.pdf) ..."
+# Build smaller versions of these files (so that they fit onto two separate pages (within the tutorial))
+	split -80 $(srcdir)/addFunctionDeclaration.C addFunctionDeclaration.
+	split -80 $(srcdir)/inheritedAndSynthesizedAttributeTraversal.C inheritedAndSynthesizedAttributeTraversal.
+	split -64 $(srcdir)/loopRecognition.C loopRecognition.
+	./ASTGraphGeneratorCustomized $(ROSE_FLAGS) $(srcdir)/inputCode_ASTGraphGeneratorCustomized.C
+	@echo "Generate postscript file (default name: test.pdf) from dot file ..."
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ASTGraphGeneratorCustomized.C.dot inputCode_ASTGraphGeneratorCustomized.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
+#	rm inputCode_ASTGraphGeneratorCustomized.pdf
+	if ! test -e inputCode_ASTGraphGeneratorCustomized.pdf; then exit 1; fi
 endif
 
 inputCode_AST_PDF_Generator.pdf: AST_PDF_Generator
@@ -1381,6 +1410,7 @@ EXTRA_DIST = CMakeLists.txt \
    inputCode_LoopOptimization_tridvpk.C \
    inputCode_TemplateParameterExtration.C \
    inputCode_ASTGraphGenerator.C \
+   inputCode_ASTGraphGeneratorCustomized.C \
    inputCode_IdentityTranslator.C \
    inputCode_LoopRecognition.C \
    inputCode_TypeInfoFromFunctionParameters.C \

@@ -1,15 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the test language restrictor executable
-noinst_PROGRAMS = eventChecker
+bin_PROGRAMS = eventChecker
 eventChecker_SOURCES = EventChecker.C
-eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
+			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
 
 TESTCODES_REQUIRED_TO_PASS = \
    testcode_01.C \

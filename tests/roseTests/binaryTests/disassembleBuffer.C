@@ -53,8 +53,9 @@ class MyPartitioner: public Partitioner {
 public:
     SgAsmBlock* partition(const Disassembler::InstructionMap& insns, rose_addr_t entry_va, const std::string& name) {
         clear();
+        set_search(SgAsmFunctionDeclaration::FUNC_DEFAULT & ~SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
         add_instructions(insns);
-        add_function(entry_va, SgAsmFunctionDeclaration::FUNC_USERDEF, name);
+        add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, name);
         analyze_cfg();
         return build_ast();
     }
@@ -65,18 +66,19 @@ int
 main(int argc, char* argv[])
 {
     if (argc<3) {
-        fprintf(stderr, "usage: %s FILENAME VADDR\n", argv[0]);
+        fprintf(stderr, "usage: %s FILENAME START_ADDR [ENTRY_ADDR]\n", argv[0]);
         exit(1);
     }
     const char* filename = argv[1];
-    uint64_t vaddr = strtoll(argv[2], NULL, 0);
+    uint64_t start_va = strtoll(argv[2], NULL, 0);
+    uint64_t entry_va = argc>3 ? strtol(argv[3], NULL, 0) : start_va;
 
     /* Read the supplied file into our memory, and then tell ROSE how that memory would have been mapped into
      * the process' memory by the loader. In this case, we just map the entire buffer to a contiguous region
      * of the process starting at the address specified on the command line. */
     size_t buf_sz;
     const unsigned char *buf = read_file(filename, &buf_sz);
-    MemoryMap::MapElement melmt(vaddr, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+    MemoryMap::MapElement melmt(start_va, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
     melmt.set_name(filename);
     MemoryMap mm;
     mm.insert(melmt);
@@ -99,7 +101,8 @@ main(int argc, char* argv[])
     /* Disassemble the mapped buffer. The last two arguments are optional, but we show how to use them here. */
     Disassembler::BadMap errors;
     Disassembler::AddressSet successors;
-    Disassembler::InstructionMap insns = d->disassembleBuffer(&mm, vaddr, &successors, &errors);
+    Disassembler::InstructionMap insns = d->disassembleBuffer(&mm, entry_va, &successors, &errors);
+    printf("Disassembled %zu instruction%s\n", insns.size(), 1==insns.size()?"":"s");
 
     /* Report about any disassembly errors. */
     for (Disassembler::BadMap::iterator ei=errors.begin(); ei!=errors.end(); ++ei)
@@ -117,7 +120,7 @@ main(int argc, char* argv[])
 
     /* A partitioner can reorganize the instructions into an AST if you desire.  This is necessary if you plan to use any
      * ROSE's analysis or output functions since they operate exclusively on the tree representation. */
-    SgAsmBlock *block = MyPartitioner().partition(insns, vaddr, "test_function");
+    SgAsmBlock *block = MyPartitioner().partition(insns, entry_va, "entry_function");
 
     /* Produce human-readable output.  The output can be customized by subclassing AsmUnparser (see disassemble.C for an
      * example). This method of output is also more efficient than calling the old unparseAsmStatement() since there's no need
