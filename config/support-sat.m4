@@ -5,7 +5,6 @@ AC_DEFUN([ROSE_SUPPORT_SAT],
 # Inclusion of test for Internal SAT Solver 
 
 # There are currently no prerequisites
-# AC_MSG_CHECKING(for yices)
 AC_ARG_WITH(sat,
 [  --with-sat	Specify if we should compile internal sata solver],
 ,

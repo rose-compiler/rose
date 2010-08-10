@@ -4,8 +4,11 @@
 #include "sage3basic.hhh"
 #include <stdint.h>
 
-
+#if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
+#else
+SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, SgProject* project );
+#endif
 
 #include "rewrite.h"
 
@@ -90,7 +93,7 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
  void addMessageStatement( SgStatement* stmt, std::string message );
 
 // DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
-//! Function to delete AST subtree, user must take care of any dangling pointers that result.
+//! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
  void deleteAST(SgNode* node);
 
 // DQ (2/25/2009): Added new function to support outliner.
@@ -194,6 +197,10 @@ struct hash_nodeptr
    */
   // DQ (9/28/2005):
   void rebuildSymbolTable (SgScopeStatement * scope);
+
+  /*! \brief Clear those variable symbols (together with initialized names) which are not referenced by any variable references or declarations.
+   */
+  void clearUnusedVariableSymbols ();
 
   //SgNode::get_globalFunctionTypeTable() ;
 
@@ -487,6 +494,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_C99_language ();
   bool is_Cxx_language ();
   bool is_Fortran_language ();
+  bool is_CAF_language ();
   bool is_PHP_language();
   bool is_binary_executable();
   bool is_mixed_C_and_Cxx_language ();
@@ -546,8 +554,13 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX. 
 PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
-//! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing information from the specified sourcerelative position to a specified target position, otherwise move all preprocessing information with position information intact 
-void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType src_position=PreprocessingInfo::undef,  PreprocessingInfo::RelativePositionType dst_position=PreprocessingInfo::undef);
+//! Identical to movePreprocessingInfo(), except for the stale name and confusing order of parameters. It will be deprecated soon.
+void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType src_position=PreprocessingInfo::undef,  PreprocessingInfo::RelativePositionType dst_position=PreprocessingInfo::undef, bool usePrepend= false);
+
+//! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing information from the specified source-relative position to a specified target position, otherwise move all preprocessing information with position information intact. The preprocessing information is appended to the existing preprocessing information list of the target node by default. Prepending is used if usePreprend is set to true. Optionally, the relative position can be adjust after the moving using dst_position.
+void movePreprocessingInfo (SgStatement* stmt_src, SgStatement* stmt_dst,  PreprocessingInfo::RelativePositionType src_position=PreprocessingInfo::undef, 
+                             PreprocessingInfo::RelativePositionType dst_position=PreprocessingInfo::undef, bool usePrepend= false);
+
 
 //!Cut preprocessing information from a source node and save it into a buffer. Used in combination of pastePreprocessingInfo(). The cut-paste operation is similar to moveUpPreprocessingInfo() but it is more flexible in that the destination node can be unknown during the cut operation.
 void cutPreprocessingInfo (SgLocatedNode* src_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& save_buf);
@@ -1117,7 +1130,7 @@ void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgState
 //! Remove a statement
 void removeStatement(SgStatement* stmt);
 
-//! Deep delete a sub AST tree. It uses postorder traversal to delete each child node.
+//! Deep delete a sub AST tree. It uses postorder traversal to delete each child node. Users must take care of any dangling pointers, symbols or types that result. This is identical to deleteAST()
 void deepDelete(SgNode* root);
 
 //! Replace a statement with another. Move preprocessing information from oldStmt to newStmt if requested.
@@ -1306,7 +1319,9 @@ SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
 //! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
 SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStmt);
-//! A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scopestatement with list of statements as children, otherwise generate a SgBasicBlock in between. Return s's parent.
+/** A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scope statement with list of statements as children,
+  * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
+  * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
 SgStatement* ensureBasicBlockAsParent(SgStatement* s);
 //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 

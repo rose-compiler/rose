@@ -9,6 +9,9 @@
 using namespace std;
 
 
+#ifdef HAVE_SQLITE3
+#include "sqlite3x.h"
+#endif
 
   void 
 ClassHierarchyWrapper::setAST( SgNode *proj )

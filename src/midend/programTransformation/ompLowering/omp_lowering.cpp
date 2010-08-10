@@ -198,79 +198,8 @@ namespace OmpSupport
 
   //! Replace variable references within root based on a map from old symbols to new symbols
   /* This function is mostly used by transOmpVariables() to handle private, firstprivate, reduction, etc.
-   * Within this context, the replacement of a variable used by address need special attention:
-   * The quick answer is skip the replacement to maintain the semantic correctness.
-   * The reason follows:
-   * Considering nested omp tasks: 
-
-         #pragma omp task untied
-            {
-              int j =100;
-              // i is firstprivate, item is shared
-              {
-                for (i = 0; i < LARGE_NUMBER; i++)
-                {
-      #pragma omp task if(1) 
-                  process (item[i],&j);
-                }
-              }
-            }
-   * the variable j will be firstprivate by default 
-   * however, it is used by its address within a nested task (&j)
-   * replacing it with its local copy will not get the right, original address.
-   *
-   * Even worse: the replacement will cause some later translation (outlining) to 
-   * access the address of a parent task's local variable. 
-   * It seems (not 100% certain!!!) that GOMP implements tasks as independent entities.
-   * As a result a parent task's local stack will not be always accessible to its nested tasks.
-   * A segmentation fault will occur when the lexically nested task tries to obtain the address of
-   * its parent task's local variable. 
-   * An example mistaken translation is shown below
-       int main()
-      {
-        GOMP_parallel_start(OUT__3__1527__,0,0);
-        OUT__3__1527__();
-        GOMP_parallel_end();
-        return 0;
-      }
-      
-      void OUT__3__1527__()
-      {
-        if (GOMP_single_start()) {
-          int i;
-          printf(("Using %d threads.\n"),omp_get_num_threads());
-          void *__out_argv2__1527__[1];
-          __out_argv2__1527__[0] = ((void *)(&i));
-          GOMP_task(OUT__2__1527__,&__out_argv2__1527__,0,4,4,1,1);
-          //GOMP_task(OUT__2__1527__,&__out_argv2__1527__,0,4,4,1,0); //untied or not, no difference
-        }
-      }
-      
-      void OUT__2__1527__(void **__out_argv)
-      {
-        int *i = (int *)(__out_argv[0]);
-      //  int _p_i;
-      //  _p_i =  *i;
-      //  for (_p_i = 0; _p_i < 1000; _p_i++) {
-        for (*i = 0; *i < 1000; (*i)++) {
-          void *__out_argv1__1527__[1];
-        // cannot access auto variable from the stack of another task instance!!
-          //__out_argv1__1527__[0] = ((void *)(&_p_i));
-          __out_argv1__1527__[0] = ((void *)(&(*i)));// this is the right translation
-          GOMP_task(OUT__1__1527__,&__out_argv1__1527__,0,4,4,1,0);
-        }
-      }
-      void OUT__1__1527__(void **__out_argv)
-      {
-        int *i = (int *)(__out_argv[0]);
-        int _p_i;
-        _p_i =  *i;
-        assert(_p_i>=0);
-        assert(_p_i<10000);
-      
-        process((item[_p_i]));
-      }
-   *
+   *  
+   
    *   
    */
   int replaceVariableReferences(SgNode* root, VariableSymbolMap_t varRemap)
@@ -282,11 +211,13 @@ namespace OmpSupport
     {
       SgVarRefExp* ref_orig = isSgVarRefExp (*i);
       ROSE_ASSERT (ref_orig);
-      if (SageInterface::isUseByAddressVariableRef(ref_orig))
+#if 0 // Liao 6/9/2010  , 
+     if (SageInterface::isUseByAddressVariableRef(ref_orig))
       {
       //  cout<<"Skipping a variable replacement because the variable is used by its address:"<< ref_orig->unparseToString()<<endl;
         continue; //skip the replacement for variable used by addresses
       }
+#endif      
       VariableSymbolMap_t::const_iterator iter = varRemap.find(ref_orig->get_symbol()); 
       if (iter != varRemap.end())
       {
@@ -703,10 +634,14 @@ namespace OmpSupport
 
     // Declare local loop control variables: _p_loop_index _p_loop_lower _p_loop_upper , no change to the original stride
     SgType* loop_var_type  = NULL ;
+#if 0    
     if (sizeof(void*) ==8 ) // xomp interface expects long* for some runtime calls. 
      loop_var_type = buildLongType();
    else 
      loop_var_type = buildIntType();
+#endif
+     // xomp interface expects long for some runtime calls now, 6/9/2010
+     loop_var_type = buildLongType();
     SgVariableDeclaration* index_decl =  buildVariableDeclaration("_p_index", loop_var_type , NULL,bb1); 
     SgVariableDeclaration* lower_decl =  buildVariableDeclaration("_p_lower", loop_var_type , NULL,bb1); 
     SgVariableDeclaration* upper_decl =  buildVariableDeclaration("_p_upper", loop_var_type , NULL,bb1); 
@@ -727,7 +662,7 @@ namespace OmpSupport
     {
       SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
       ROSE_ASSERT(s_clause);
-      SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
+      //SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
       // ROSE_ASSERT(s_kind == SgOmpClause::e_omp_schedule_static);
       SgExpression* orig_chunk_size = s_clause->get_chunk_size();  
     //  ROSE_ASSERT(orig_chunk_size->get_parent() != NULL);
@@ -1014,6 +949,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     AttachedPreprocessingInfoType save_buf1, save_buf2, save_buf_inside;
     cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
     cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
+   
+    // some #endif may be attached to the body, we should not move it with the body into
+    // the outlined funcion!!
+     // cutPreprocessingInfo(body, PreprocessingInfo::before, save_buf_body) ;
+
     // 1/15/2009, Liao, also handle the last #endif, which is attached inside of the target
     cutPreprocessingInfo(target, PreprocessingInfo::inside, save_buf_inside) ;
      // generated an outlined function as the task
@@ -1068,6 +1008,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
    pastePreprocessingInfo(s2, PreprocessingInfo::after, save_buf2); 
    // paste the preprocessing info with inside position to the outlined function's body
    pastePreprocessingInfo(outlined_func->get_definition()->get_body(), PreprocessingInfo::inside, save_buf_inside); 
+
+    // some #endif may be attached to the body, we should not move it with the body into
+    // the outlined funcion!!
+   // move dangling #endif etc from the body to the end of s2
+   movePreprocessingInfo(body,s2,PreprocessingInfo::before, PreprocessingInfo::after); 
 
    // SageInterface::deepDelete(target);
     // Postprocessing  to ensure the AST is legal 
@@ -1392,6 +1337,21 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
       // choice between set TLS to declaration or init_name (not working) ?
      // init_name-> get_storageModifier ().set_thread_local_storage (true); 
     }
+
+    // 6/8/2010, handling #if attached to #pragma omp threadprivate
+    SgStatement* n_stmt = getNextStatement(target);
+    if (n_stmt == NULL) 
+    {
+      cerr<<"Warning: found an omp threadprivate directive without a following statement."<<endl;
+      cerr<<"Warning: the attached preprocessing information to the directive may get lost during translation!"<<endl;
+    }
+    else
+    {
+      // preserve preprocessing information attached to the pragma,
+      // by moving it to the beginning of the preprocessing info list of the next statement .
+      movePreprocessingInfo(target, n_stmt, PreprocessingInfo::before, PreprocessingInfo::before, true);
+    }
+
     removeStatement(target);
   }
 
@@ -2176,7 +2136,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     return result;
   } // end isSharedInEnclosingConstructs()
 
-  //! Patch up firstprivate variables for omp task. The reason is that the specification 3.0 defines rules for implicitly determined data-sharing attributes and this function will make the implicit firstprivate variable of omp task explicit.
+//! Patch up firstprivate variables for omp task. The reason is that the specification 3.0 defines rules for implicitly determined data-sharing attributes and this function will make the implicit firstprivate variable of omp task explicit.
 /*
 variables used in task block: 
 
@@ -2192,6 +2152,100 @@ It should also satisfy the restriction defined in specification 3.0 page 93  TOD
 * must have an accessible, unambiguous copy constructor for the class type
 * must not have a const-qualified type unless it is of class type with a mutable member
 * must not have an incomplete C/C++ type or a reference type
+*
+I decided to exclude variables which are used by addresses when recognizing firstprivate variables 
+      The reason is that in real code, it is often to have private variables first then use their
+      address later.   Skipping the replacement will result in wrong semantics.
+       e.g. from Allan Porterfield
+          void    create_seq( double seed, double a )
+      {
+             double x, s;
+             int    i, k;
+     
+      #pragma omp parallel private(x,s,i,k)
+         { 
+              // ..... 
+             // here s is private 
+             s = find_my_seed( myid, num_procs,
+                               (long)4*NUM_KEYS, seed, a );
+     
+             for (i=k1; i<k2; i++)
+             {
+                 x = randlc(&s, &a); // here s is used by its address
+     
+             }
+         }
+      }   
+If not, wrong code will be generated later on. The reason follows:
+   * Considering nested omp tasks: 
+         #pragma omp task untied
+            {
+              int j =100;
+              // i is firstprivate, item is shared
+              {
+                for (i = 0; i < LARGE_NUMBER; i++)
+                {
+      #pragma omp task if(1) 
+                  process (item[i],&j);
+                }
+              }
+            }
+   * the variable j will be firstprivate by default 
+   * however, it is used by its address within a nested task (&j)
+   * replacing it with its local copy will not get the right, original address.
+   *
+   * Even worse: the replacement will cause some later translation (outlining) to 
+   * access the address of a parent task's local variable. 
+   * It seems (not 100% certain!!!) that GOMP implements tasks as independent entities.
+   * As a result a parent task's local stack will not be always accessible to its nested tasks.
+   * A segmentation fault will occur when the lexically nested task tries to obtain the address of
+   * its parent task's local variable. 
+   * An example mistaken translation is shown below
+       int main()
+      {
+        GOMP_parallel_start(OUT__3__1527__,0,0);
+        OUT__3__1527__();
+        GOMP_parallel_end();
+        return 0;
+      }
+      
+      void OUT__3__1527__()
+      {
+        if (GOMP_single_start()) {
+          int i;
+          printf(("Using %d threads.\n"),omp_get_num_threads());
+          void *__out_argv2__1527__[1];
+          __out_argv2__1527__[0] = ((void *)(&i));
+          GOMP_task(OUT__2__1527__,&__out_argv2__1527__,0,4,4,1,1);
+          //GOMP_task(OUT__2__1527__,&__out_argv2__1527__,0,4,4,1,0); //untied or not, no difference
+        }
+      }
+      
+      void OUT__2__1527__(void **__out_argv)
+      {
+        int *i = (int *)(__out_argv[0]);
+      //  int _p_i;
+      //  _p_i =  *i;
+      //  for (_p_i = 0; _p_i < 1000; _p_i++) {
+        for (*i = 0; *i < 1000; (*i)++) {
+          void *__out_argv1__1527__[1];
+        // cannot access auto variable from the stack of another task instance!!
+          //__out_argv1__1527__[0] = ((void *)(&_p_i));
+          __out_argv1__1527__[0] = ((void *)(&(*i)));// this is the right translation
+          GOMP_task(OUT__1__1527__,&__out_argv1__1527__,0,4,4,1,0);
+        }
+      }
+      void OUT__1__1527__(void **__out_argv)
+      {
+        int *i = (int *)(__out_argv[0]);
+        int _p_i;
+        _p_i =  *i;
+        assert(_p_i>=0);
+        assert(_p_i<10000);
+      
+        process((item[_p_i]));
+      }
+   *
 */
   int patchUpFirstprivateVariables(SgFile*  file)
   {
@@ -2223,6 +2277,8 @@ It should also satisfy the restriction defined in specification 3.0 page 93  TOD
         if (isAncestor(directive_scope, var_scope))
           continue;
 
+        if (SageInterface::isUseByAddressVariableRef(var_ref))
+           continue;
         // Skip variables already with explicit data-sharing attributes
         VariantVector vv (V_SgOmpDefaultClause);
         vv.push_back(V_SgOmpPrivateClause);

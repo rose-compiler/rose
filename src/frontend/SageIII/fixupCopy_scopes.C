@@ -30,7 +30,7 @@ void outputMap ( SgCopyHelp & help )
    }
 
 void
-resetVariableDefnitionSupport ( const SgInitializedName* originalInitializedName, SgInitializedName* copyInitializedName, SgDeclarationStatement* targetDeclaration )
+resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedName, SgInitializedName* copyInitializedName, SgDeclarationStatement* targetDeclaration )
    {
   // DQ (10/8/2007): This is s supporting function to the SgInitializedName::fixupCopy_scopes() member function.
 
@@ -104,7 +104,7 @@ resetVariableDefnitionSupport ( const SgInitializedName* originalInitializedName
 
           default:
              {
-               printf ("Error: default reached in resetVariableDefnitionSupport() originalDeclaration = %p = %s \n",originalDeclaration,originalDeclaration->class_name().c_str());
+               printf ("Error: default reached in resetVariableDefinitionSupport() originalDeclaration = %p = %s \n",originalDeclaration,originalDeclaration->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -157,7 +157,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                   {
                     case V_SgVariableDeclaration:
                        {
-                         resetVariableDefnitionSupport(this,initializedName_copy,NULL);
+                         resetVariableDefinitionSupport(this,initializedName_copy,NULL);
                          break;
                        }
 
@@ -165,7 +165,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                        {
                          SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(parent);
                          ROSE_ASSERT(enumDeclaration != NULL);
-                         resetVariableDefnitionSupport(this,initializedName_copy,enumDeclaration);
+                         resetVariableDefinitionSupport(this,initializedName_copy,enumDeclaration);
                          break;
                        }
 
@@ -177,7 +177,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                       // The parent of the SgFunctionParameterList might not have been set yet, so allow for this!
                          if (functionDeclaration != NULL)
                             {
-                              resetVariableDefnitionSupport(this,initializedName_copy,functionDeclaration);
+                              resetVariableDefinitionSupport(this,initializedName_copy,functionDeclaration);
                             }
                          break;
                        }
@@ -271,7 +271,7 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
   // DQ (10/15/2007): If the parent of the original AST is not set then we will not process the parent in the copy, 
   // thus the AST copy mechanism can handle incompletely setup AST (as required for use in the EDG/Sage translation) 
-  // yet only return an AST of similare quality.
+  // yet only return an AST of similar quality.
      if (this->get_parent() != NULL)
         {
           FixupCopyDataMemberMacro(copyLocatedNode,SgNode,get_parent,set_parent)
@@ -301,7 +301,7 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
              }
        // ROSE_ASSERT(copyStatement->get_parent()->variantT() == this->get_parent()->variantT());
         }
-       else
+	 else if (SgProject::get_verbose() > 0)
         {
           printf ("In SgLocatedNode::fixupCopy_scopes(): parent not set for original AST at %p = %s, thus copy left similarly incomplete \n",this,this->class_name().c_str());
         }
