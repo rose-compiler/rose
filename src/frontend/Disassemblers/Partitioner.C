@@ -679,7 +679,7 @@ Partitioner::mark_ipd_configuration()
             /* "Execute" the program that will detect successors. We do this by interpreting the basic block to initialize
              * registers, loading the successor program, pushing some arguments onto the program's stack, interpreting the
              * program, extracting return values from memory, and unloading the program. */
-            bool debug = true;
+            bool debug = false;
             char block_name_str[64];
             sprintf(block_name_str, "B%08"PRIx64, va);
             std::string block_name = block_name_str;
