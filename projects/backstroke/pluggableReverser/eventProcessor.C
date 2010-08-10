@@ -20,14 +20,14 @@ SgExpression* ProcessorBase::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-InstrumentedExpressionVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec ProcessorBase::processExpression(const ExpressionPackage& exp_pkg)
 {
-    return event_processor_->processExpression(exp, var_table, reverseValueUsed);
+    return event_processor_->processExpression(exp_pkg);
 }
 
-InstrumentedStatementVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage& stmt_pkg)
 {
-    return event_processor_->processStatement(stmt, var_table);
+    return event_processor_->processStatement(stmt_pkg);
 }
 
 bool ProcessorBase::isStateVariable(SgExpression* exp)
@@ -35,26 +35,87 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-InstrumentedExpressionVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+InstrumentedExpressionVec EventProcessor::processExpression(const ExpressionPackage& exp_pkg)
 {
     InstrumentedExpressionVec output;
 
+    // If two results have the same variable table, we remove the one which has the higher cost.
+    
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        InstrumentedExpressionVec result = exp_processor->process(exp, var_table, reverseValueUsed);
-        output.insert(output.end(), result.begin(), result.end());
+        InstrumentedExpressionVec result = exp_processor->process(exp_pkg);
+
+        foreach (const InstrumentedExpression& exp1, result)
+        {
+            bool discard = false;
+            for (size_t i = 0; i < output.size(); ++i)
+            {
+                InstrumentedExpression& exp2 = output[i];
+                if (exp1.var_table == exp2.var_table) 
+                {
+                    if (exp1.cost > exp2.cost)
+                    {
+                        discard = true;
+                        deepDelete(exp1.fwd_exp);
+                        deepDelete(exp1.rvs_exp);
+                        break;
+                    }
+                    else if (exp1.cost < exp2.cost)
+                    {
+                        deepDelete(exp2.fwd_exp);
+                        deepDelete(exp2.rvs_exp);
+                        output.erase(output.begin() + i);
+                        --i;
+                    }
+                }
+            }
+
+            if (!discard)
+                output.push_back(exp1);
+        }
+        //output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
 
-InstrumentedStatementVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage& stmt_pkg)
 {
     InstrumentedStatementVec output;
 
+    // If two results have the same variable table, we remove the one which has the higher cost.
+
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        InstrumentedStatementVec result = stmt_processor->process(stmt, var_table);
-        output.insert(output.end(), result.begin(), result.end());
+        InstrumentedStatementVec result = stmt_processor->process(stmt_pkg);
+        foreach (const InstrumentedStatement& stmt1, result)
+        {
+            bool discard = false;
+            for (size_t i = 0; i < output.size(); ++i)
+            {
+                InstrumentedStatement& stmt2 = output[i];
+                if (stmt1.var_table == stmt2.var_table) 
+                {
+                    if (stmt1.cost > stmt2.cost)
+                    {
+                        discard = true;
+                        deepDelete(stmt1.fwd_stmt);
+                        deepDelete(stmt1.rvs_stmt);
+                        break;
+                    }
+                    else if (stmt1.cost < stmt2.cost)
+                    {
+                        deepDelete(stmt2.fwd_stmt);
+                        deepDelete(stmt2.rvs_stmt);
+                        output.erase(output.begin() + i);
+                        --i;
+                    }
+                }
+            }
+
+            if (!discard)
+                output.push_back(stmt1);
+        }
+        //output.insert(output.end(), result.begin(), result.end());
     }
     return output;
 }
@@ -84,7 +145,7 @@ SgExpression* EventProcessor::getStackVar(SgType* type)
 bool EventProcessor::isStateVariable(SgExpression* exp)
 {
     // First, get the most lhs operand, which may be the model object.
-    while(isSgBinaryOp(exp))
+    while (isSgBinaryOp(exp))
         exp = isSgBinaryOp(exp)->get_lhs_operand();
 
     SgVarRefExp* var = isSgVarRefExp(exp);
@@ -94,7 +155,6 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
     {
         if (name == var->get_symbol()->get_declaration() )
         {
-            cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
             return true;
         }
     }
@@ -132,9 +192,13 @@ FuncDeclPairs EventProcessor::processEvent()
             isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
     FuncDeclPairs outputs;
 
-    static int ctr = 0;
+    SimpleCostModel cost_model;
+    InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table));
 
-    InstrumentedStatementVec bodies = processStatement(body, var_table);
+    
+    static int ctr = 0;
+    // Sort the generated bodies so that those with the least cost appears first.
+    sort(bodies.begin(), bodies.end());
 
     foreach (InstrumentedStatement& stmt_obj, bodies)
     {
@@ -158,6 +222,13 @@ FuncDeclPairs EventProcessor::processEvent()
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
         SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt_obj.rvs_stmt));
+
+
+        // Add the cost information as comments to generated functions.
+        string comment = "Cost: " + lexical_cast<string>(stmt_obj.cost.getCost());
+        attachComment(fwd_func_decl, comment);
+        attachComment(rvs_func_decl, comment);
+
 
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
     }
