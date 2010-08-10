@@ -827,6 +827,16 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 102: { // socketcall
+            uint32_t call = readGPR(x86_gpr_bx).known_value();
+            uint32_t args = readGPR(x86_gpr_cx).known_value();
+            if (debug) {
+              fprintf(stderr, "socketcall(%d, 0x%08X)\n", call, args);
+            }
+            writeGPR(x86_gpr_ax, -ENOSYS);
+            break;
+        }
+
         case 114: { /*0x72, wait4*/
             uint32_t pid = readGPR(x86_gpr_bx).known_value();
             uint32_t status_ptr = readGPR(x86_gpr_cx).known_value();
@@ -1101,6 +1111,35 @@ EmulationPolicy::emulate_syscall()
         case 202: { /*0xca, getegid32 */
             uid_t id = getegid();
             writeGPR(x86_gpr_ax, id);
+            break;
+        }
+
+        case 221: { // fcntl
+            uint32_t fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t cmd = readGPR(x86_gpr_cx).known_value();
+            uint32_t other_arg = readGPR(x86_gpr_dx).known_value();
+            int result = -EINVAL;
+            if (debug)
+                fprintf(debug, "fcntl(%d, %d, %lu) --> ", fd, cmd, other_arg);
+            switch (cmd) {
+                case F_DUPFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                case F_SETFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                default: {
+                    if (debug)
+                        fprintf(debug, "Unhandled fcntl %d on fd %d\n", cmd, fd);
+                    result = -EINVAL;
+                    break;
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
             break;
         }
 
