@@ -981,30 +981,27 @@ main(int argc, char *argv[])
     }
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Final statistics
+     * Test the assembler
      *------------------------------------------------------------------------------------------------------------------------*/
-    
-    if (SMTSolver::total_calls>0)
-        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
 
-
-
-#if 0
-    /* Test assembler */
     if (do_reassemble) {
         size_t assembly_failures = 0;
 
         /* Choose an encoding that must match the encoding used originally by the disassembler. If such an encoding cannot
          * be found by the assembler then assembleOne() will throw an exception. */
-        Assembler *asmb = Assembler::create(interp);
+        Assembler *asmb = NULL;
+        if (interp) {
+            asmb = Assembler::create(interp);
+        } else {
+            asmb = Assembler::create(new SgAsmPEFileHeader(new SgAsmGenericFile()));
+        }
+        ROSE_ASSERT(asmb!=NULL);
         asmb->set_encoding_type(Assembler::ET_MATCHES);
 
-        std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
-        printf("reassembling to check consistency...\n");
-        for (size_t j=0; j<insns.size(); j++) {
+        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             /* Attempt to encode the instruction silently since most attempts succeed and we only want to produce
              * diagnostics for failures.  If there's a failure, turn on diagnostics and do the same thing again. */
-            SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
+            SgAsmInstruction *insn = ii->second;
             SgUnsignedCharList bytes;
             try {
                 bytes = asmb->assembleOne(insn);
@@ -1024,7 +1021,6 @@ main(int argc, char *argv[])
             }
         }
         if (assembly_failures>0) {
-            exit_status = 1;
             printf("reassembly failed for %zu instruction%s.%s\n",
                    assembly_failures, 1==assembly_failures?"":"s", 
                    show_bad ? "" : " (use --show-bad to see details)");
@@ -1032,8 +1028,17 @@ main(int argc, char *argv[])
             printf("reassembly succeeded for all instructions.\n");
         }
         delete asmb;
+        if (assembly_failures>0)
+            exit(1);
     }
-#endif
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Final statistics
+     *------------------------------------------------------------------------------------------------------------------------*/
+    
+    if (SMTSolver::total_calls>0)
+        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
+    return 0;
 }
 
 
