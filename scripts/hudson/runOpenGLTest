@@ -219,7 +219,7 @@ else
 fi
 
 # tps (02/04/2010) : Checking the EDG submodule version
-git submodule status
+#git submodule status
 
 if test -e ROSE-install ; then chmod -R u+w ROSE-install ; fi
 rm -rf ROSE-install
