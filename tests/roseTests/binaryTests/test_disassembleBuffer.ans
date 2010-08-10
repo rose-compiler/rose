@@ -1,6 +1,7 @@
+Disassembled 16 instructions
 Successors: buffer is self contained.
 
-0x08048310: ============================ Function (user defined) <test_function>
+0x08048310: ============================ Function (entry point) <entry_function>
 0x08048310: 55                |U     |   push   ebp
 0x08048311: 89 e5             |..    |   mov    ebp, esp
 0x08048313: 83 ec 08          |...   |   sub    esp, 0x08

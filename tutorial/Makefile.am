@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = database roseHPCT outliner intelPin binaryAnalysis
+SUBDIRS = roseHPCT outliner intelPin binaryAnalysis
 
 INCLUDES = $(ROSE_INCLUDES)
 

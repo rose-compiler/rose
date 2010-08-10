@@ -432,8 +432,7 @@ endif
 
 test_disassemble.result: disassemble
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && mv i686-test1.O0.bin.dump test_disassemble.ans; \
+	@$(VALGRIND) ./disassemble --show-functions -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassemble.ans 2>&1; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
@@ -601,9 +600,8 @@ else
 # check-local: runTest test1 $(TEST_RESULT_TARGETS) test_so_file
 # Caution: runTest generates the same output files as some $(TEST_RESULT_TARGETS) [RPM 2009-07-21]
 
-# DQ (7/30/2010): Temporarily commented out to see if these are the only failing tests.
 check-local: runTest test1 
-# check-local: runTest test1 test_static.result test_dynamic.result
+check-local: runTest test1 test_static.result test_dynamic.result
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/binaryTests: passed ***"
 	@echo "*********************************************************************"

@@ -440,7 +440,7 @@ EmulationPolicy::current_insn()
     try {
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
     } catch (Disassembler::Exception &e) {
-        fprintf(stderr, "disassembly failed at eip=0x%08"PRIx64": %s\n", e.ip, e.mesg.c_str());
+        std::cerr <<e <<"\n";
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
@@ -491,7 +491,7 @@ EmulationPolicy::emulate_syscall()
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
     unsigned callno = readGPR(x86_gpr_ax).known_value();
     switch (callno) {
-        case 3: { /*read*/
+        case 3: { /*0x3, read*/
             int fd = readGPR(x86_gpr_bx).known_value();
             uint32_t buf_va = readGPR(x86_gpr_cx).known_value();
             uint32_t size = readGPR(x86_gpr_dx).known_value();
@@ -508,7 +508,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 4: { /*write*/
+        case 4: { /*0x4, write*/
             int fd = readGPR(x86_gpr_bx).known_value();
             uint32_t buf_va = readGPR(x86_gpr_cx).known_value();
             size_t size = readGPR(x86_gpr_dx).known_value();
@@ -526,7 +526,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 5: { /*open*/
+        case 5: { /*0x5, open*/
             uint32_t filename_va = readGPR(x86_gpr_bx).known_value();
             std::string filename = read_string(filename_va);
             uint32_t flags = readGPR(x86_gpr_cx).known_value();
@@ -540,7 +540,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 6: { /*close*/
+        case 6: { /*0x6, close*/
             int fd = readGPR(x86_gpr_bx).known_value();
             if (debug)
                 fprintf(debug, "  close(%d)\n", fd);
@@ -554,7 +554,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 7: { // waitpid
+        case 7: { /*0x7, waitpid*/
             pid_t pid = readGPR(x86_gpr_bx).known_value();
             uint32_t status = readGPR(x86_gpr_cx).known_value();
             uint32_t options = readGPR(x86_gpr_dx).known_value();
@@ -575,6 +575,29 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 13: { /*0xd, time */
+            uint32_t t = readGPR(x86_gpr_bx).known_value();
+            time_t result = time(NULL);
+            if (t) {
+              uint32_t t_le;
+              SgAsmExecutableFileFormat::host_to_le(t, &t_le);
+              size_t nwritten = map.write(&t_le, result, 4);
+              ROSE_ASSERT(4==nwritten);
+            }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case 20: { /*0x14, getpid*/
+            writeGPR(x86_gpr_ax, getpid());
+            break;
+        }
+
+        case 24: { /*0x18, getuid*/
+            writeGPR(x86_gpr_ax, getuid());
+            break;
+        }
+
         case 33: { /*0x21, access*/
             uint32_t name_va = readGPR(x86_gpr_bx).known_value();
             std::string name = read_string(name_va);
@@ -585,6 +608,13 @@ EmulationPolicy::emulate_syscall()
             if (result<0) result = -errno;
             writeGPR(x86_gpr_ax, result);
             break;
+        }
+
+        case 41: { /*0x29, dup*/
+            uint32_t fd = readGPR(x86_gpr_bx).known_value();
+            int result = dup(fd);
+            if (-1==result) result = -errno;
+            writeGPR(x86_gpr_ax, result);
         }
 
         case 45: { /*0x2d, brk*/
@@ -609,6 +639,21 @@ EmulationPolicy::emulate_syscall()
                 fprintf(debug, "  memory map after brk():\n");
                 map.dump(debug, "    ");
             }
+            break;
+        }
+
+        case 47: { /*0x2f, getgid*/
+            writeGPR(x86_gpr_ax, getgid());
+            break;
+        }
+
+        case 49: { /*0x31, geteuid*/
+            writeGPR(x86_gpr_ax, geteuid());
+            break;
+        }
+
+        case 50: { /*0x32, getegid*/
+            writeGPR(x86_gpr_ax, getegid());
             break;
         }
 
@@ -681,6 +726,67 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, result);
             break;
         }
+
+        case 57: { /*0x39, setpgid*/
+            uint32_t pid = readGPR(x86_gpr_bx).known_value();
+            uint32_t pgid = readGPR(x86_gpr_cx).known_value();
+            int result = setpgid(pid, pgid);
+            if (-1==result) { result = -errno; }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case 64: { /*0x40, getppid*/
+            writeGPR(x86_gpr_ax, getppid());
+            break;
+        }
+
+        case 65: { /*0x41, getpgrp*/
+            writeGPR(x86_gpr_ax, getpgrp());
+            break;
+        }
+
+        case 78: { /*0x4e, gettimeofday*/
+          uint32_t tp = readGPR(x86_gpr_bx).known_value();
+          struct timeval sys_t;
+          int result = gettimeofday(&sys_t, NULL);
+          if (result == -1) {
+              result = -errno;
+          } else {
+              writeMemory<32>(x86_segreg_ds, tp, sys_t.tv_sec, true_() );
+              writeMemory<32>(x86_segreg_ds, tp + 4, sys_t.tv_usec, true_() );
+          }
+          writeGPR(x86_gpr_ax, result);
+          break;
+        }
+
+        case 83: { /*0x53, symlink*/
+          uint32_t oldpath = readGPR(x86_gpr_bx).known_value();
+          uint32_t newpath = readGPR(x86_gpr_cx).known_value();
+          std::string sys_oldpath = read_string(oldpath);
+          std::string sys_newpath = read_string(newpath);
+          int result = symlink(sys_oldpath.c_str(),sys_newpath.c_str());
+          if (result == -1) result = -errno;
+          writeGPR(x86_gpr_ax, result);
+          break;
+        }
+
+        case 85: { /*0x55, readlink*/
+          uint32_t path = readGPR(x86_gpr_bx).known_value();
+          uint32_t buf = readGPR(x86_gpr_cx).known_value();
+          uint32_t bufsize = readGPR(x86_gpr_dx).known_value();
+          char sys_buf[bufsize];
+          std::string sys_path = read_string(path);
+          int result = readlink(sys_path.c_str(), sys_buf, bufsize);
+          if (result == -1) {
+              result = -errno;
+          } else {
+              size_t nwritten = map.write(sys_buf, buf, result);
+              ROSE_ASSERT(nwritten == result);
+          }
+          writeGPR(x86_gpr_ax, result);
+          break;
+        }
             
         case 91: { /*0x5b, munmap*/
             uint32_t va = readGPR(x86_gpr_bx).known_value();
@@ -701,6 +807,32 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 114: { /*0x72, wait4*/
+            uint32_t pid = readGPR(x86_gpr_bx).known_value();
+            uint32_t status_ptr = readGPR(x86_gpr_cx).known_value();
+            uint32_t options = readGPR(x86_gpr_dx).known_value();
+            uint32_t rusage_ptr = readGPR(x86_gpr_si).known_value();
+            uint32_t status;
+            size_t nread = map.read(&status, status_ptr, 4);
+            ROSE_ASSERT(nread == 4);
+            struct rusage sys_rusage;
+            uint32_t result = wait4(pid, &status, options, &sys_rusage);
+            if( result == -1) {
+                result = -errno;
+            } else {
+                if (status_ptr != 0) {
+                    size_t nwritten = map.write(&status, status_ptr, 4);
+                    ROSE_ASSERT(nwritten == 4);
+                }
+                if (rusage_ptr != 0) {
+                    size_t nwritten = map.write(&sys_rusage, rusage_ptr, sizeof(struct rusage));
+                    ROSE_ASSERT(nwritten == sizeof(struct rusage));
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
         case 122: { /*0x7a, uname*/
             uint32_t dest_va = readGPR(x86_gpr_bx).known_value();
             if (debug)
@@ -714,6 +846,11 @@ EmulationPolicy::emulate_syscall()
             strcpy(buf+4*65, "i386");                                   /*machine*/
             strcpy(buf+5*65, "example.com");                            /*domainname*/
             size_t nwritten = map.write(buf, dest_va, sizeof buf);
+            if( nwritten <= 0 ) {
+              writeGPR(x86_gpr_ax, -EFAULT);
+              break;
+            }
+
             ROSE_ASSERT(nwritten==sizeof buf);
             writeGPR(x86_gpr_ax, 0);
             break;
@@ -793,6 +930,27 @@ EmulationPolicy::emulate_syscall()
             break;
         }
             
+        case 175: { /*0xaf, sigprocmask */
+            uint32_t how = readGPR(x86_gpr_bx).known_value();
+            uint32_t set = readGPR(x86_gpr_cx).known_value();
+            uint32_t oldset = readGPR(x86_gpr_dx).known_value();
+            sigset_t sys_set, sys_oldset;
+            if (set != 0) {
+              size_t nread = map.read(&sys_set, set,sizeof sys_set );
+              ROSE_ASSERT(nread==sizeof sys_set);
+            }
+            int result = sigprocmask(how, set ? &sys_set : NULL, oldset ? &sys_oldset : NULL);
+            if (result == -1) {
+              result = -errno;
+            } else {
+              if (oldset != 0) {
+                  size_t nwritten = map.write(&sys_oldset, oldset, sizeof sys_oldset);
+                  ROSE_ASSERT(nwritten == sizeof sys_oldset);
+              }
+            }
+            writeGPR(x86_gpr_ax,result);
+            break;
+    }
         case 192: { /*0xc0, mmap2*/
             uint32_t start = readGPR(x86_gpr_bx).known_value();
             uint32_t size = readGPR(x86_gpr_cx).known_value();
@@ -910,6 +1068,12 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 224: { /*0xe0, gettid*/
+            // We have no concept of threads
+            writeGPR(x86_gpr_ax, getpid());
+            break;
+       }
+
         case 243: { /*0xf3, set_thread_area*/
             uint32_t u_info_va = readGPR(x86_gpr_bx).known_value();
             user_desc ud;
@@ -954,6 +1118,18 @@ EmulationPolicy::emulate_syscall()
             fprintf(stderr, "syscall %u is not implemented yet.\n\n", callno);
             abort();
         }
+
+        case 270: { /*0x10e tgkill*/
+            uint32_t tgid = readGPR(x86_gpr_bx).known_value();
+            uint32_t pid = readGPR(x86_gpr_cx).known_value();
+            uint32_t sig = readGPR(x86_gpr_dx).known_value();
+            if (debug)
+                fprintf(debug, "  tgkill(%d,%d,%d)\n", tgid, pid, sig);
+            // TODO: Actually check thread group and kill properly
+            throw Exit(__W_EXITCODE(0, sig));
+            break;
+
+        }
     }
 }
 
@@ -989,6 +1165,9 @@ main(int argc, char *argv[])
             if (policy.debug)
                 policy.dump_registers(policy.debug);
         } catch (const Semantics::Exception &e) {
+            std::cerr <<e <<"\n\n";
+            abort();
+        } catch (const VirtualMachineSemantics::Policy::Exception &e) {
             std::cerr <<e <<"\n\n";
             abort();
         } catch (const EmulationPolicy::Exit &e) {

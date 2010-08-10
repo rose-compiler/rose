@@ -1,14 +1,27 @@
+#ifdef TEMPLATE_IMPLEMENTATIONS
 
 #ifndef ASTDOTGENERATION_TEMPLATES_C
 #define ASTDOTGENERATION_TEMPLATES_C
 
-#include "sage3basic.h"
-//#include "AstConsistencyTests.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#include "AsmUnparser_compat.h"
-#include "wholeAST_API.h"
-#include "sageInterface.h"
+// if we included rose.h, then we need these files
+#ifdef ROSE_H
+// otherwise, we just include rose.h
+#	define __STDC_FORMAT_MACROS
+#	include <inttypes.h>
+#else
+#	ifndef SAGE3_CLASSES_BASIC__H
+#		include "sage3basic.h"
+#	endif
+//	#include "AstConsistencyTests.h"
+//#	ifndef __STDC_FORMAT_MACROS
+#		define __STDC_FORMAT_MACROS
+//#		define PRIx64 "I64x"
+//#	endif
+#	include <inttypes.h>
+#	include "AsmUnparser_compat.h"
+#	include "wholeAST_API.h"
+#	include "sageInterface.h"
+#endif
 
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>
 DOTSynthesizedAttribute
@@ -427,4 +440,8 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 }
 
 #endif // ASTDOTGENERATION_TEMPLATES_C
+
+#else
+#error Must include template implementation files after all header files.  If you have, make sure you define TEMPLATE_IMPLEMENTATIONS
+#endif // TEMPLATE_IMPLEMENTATIONS
 

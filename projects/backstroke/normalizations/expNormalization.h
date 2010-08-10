@@ -2,6 +2,7 @@
 #define REVERSE_COMPUTATION_NORMALIZATION
 
 #include <rose.h>
+#include "ExtractFunctionArguments.h"
 
 namespace backstroke_norm
 {
@@ -15,6 +16,7 @@ inline void normalizeEvent(SgFunctionDeclaration* func_decl)
 {
     SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
     ROSE_ASSERT(defining_decl && defining_decl->get_definition());
+	ExtractFunctionArguments::NormalizeTree(defining_decl->get_definition());
     normalizeEvent(defining_decl->get_definition());
 }
 
