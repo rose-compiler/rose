@@ -147,13 +147,17 @@ void CompassAnalyses::CppCallsSetjmpLongjmp::Traversal::visit(SgNode* node)
 
     std::string sgfrexpName = sgfrexp->get_symbol()->get_name().getString();
 
+//#ASR: 07/07/10
+//fixed the object creation of CheckerOutput for Cxx standard    
     if( sgfrexpName == "_setjmp" )
     {
-      output->addOutput( new CompassAnalyses::CppCallsSetjmpLongjmp::CheckerOutput::CheckerOutput( node, "setjmp()" ) );
+      output->addOutput( new CompassAnalyses::CppCallsSetjmpLongjmp::CheckerOutput( node, "setjmp()" ) );
+//      output->addOutput( new CompassAnalyses::CppCallsSetjmpLongjmp::CheckerOutput::CheckerOutput( node, "setjmp()" ) );
     } //if( sgfrexpName == "_setjmp" )
     else if( sgfrexpName == "longjmp" )
     {
-      output->addOutput( new CompassAnalyses::CppCallsSetjmpLongjmp::CheckerOutput::CheckerOutput( node, "longjmp()" ) );
+      output->addOutput( new CompassAnalyses::CppCallsSetjmpLongjmp::CheckerOutput( node, "longjmp()" ) );
+//      output->addOutput( new CompassAnalyses::CppCallsSetjmpLongjmp::CheckerOutput::CheckerOutput( node, "longjmp()" ) );     
     } //else if( sgfrexpName == "longjmp" )
   } //if( sgfrexp != NULL )
 

@@ -1,0 +1,84 @@
+#!/bin/bash -vx
+# -----------------------------------------
+# the minimum environment settings for hudson
+# git path, java path, hudson root,etc
+# variant paths like boost, GCC should be set in Hudson job's web configuration! 
+ 
+# settings for hudson tmp directories
+#--------------------------------------------
+if test -e /export/tmp.hudson-rose ; then
+	HUDSON_TMPDIR=/export/tmp.hudson-rose
+#elif test -e /export/home/hudson-rose/tmp.hudson-rose ; then
+#	HUDSON_TMPDIR=/export/home/hudson-rose/tmp.hudson-rose
+else
+	echo "Error: unable to find Hudson temporary directory: /export/tmp.hudson-rose"
+	exit 1
+fi
+export HUDSON_TMPDIR
+
+# git, cmake, etc
+#--------------------------------------------
+# git 1.6.5 has problem with git submodule, We use 1.6.4 instead Liao
+#PATH=$HUDSON_TMPDIR/opt/git-1.6.5.2-inst/bin:$HUDSON_TMPDIR/opt/cmake-2.6.4-inst/bin:$PATH 
+
+if test -e /usr/apps/git/1.6.4/setup.sh ; then 
+  source /usr/apps/git/1.6.4/setup.sh
+elif test -e $HUDSON_TMPDIR/opt/git-1.6.5.2-inst/bin ; then
+  # Mac OS machines don't have access to /usr/app/...
+  export PATH=$HUDSON_TMPDIR/opt/git-1.6.5.2-inst/bin:$PATH
+else
+  echo "Error, cannot git installation !!"
+  exit 1
+fi
+
+if test -e $HUDSON_TMPDIR/opt/cmake-2.6.4-inst/bin ; then
+  PATH=$HUDSON_TMPDIR/opt/cmake-2.6.4-inst/bin:$PATH 
+  export PATH
+else
+  echo "Unable to find $HUDSON_TMPDIR/opt/cmake-2.6.4-inst/bin"
+  exit 1
+fi 
+
+OPERATING_SYSTEM=`uname -s`
+MACHINE=`uname -m`
+
+# settings for Mac : libtool, wget
+#--------------------------------------------
+if test "$OPERATING_SYSTEM" = "Darwin" ; then
+  export PATH=/export/tmp.hudson-rose/opt/libtool-2.2.4-inst/bin:$PATH
+  export PATH=$PATH:/export/tmp.hudson-rose/opt/wget-1.11.4-inst/bin
+  #export PATH=/export/tmp.hudson-rose/opt/libtool-2.2.4-inst/bin:$PATH:/export/tmp.hudson-rose/opt/git-1.6.5.2-inst/bin
+  #export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/export/tmp.hudson-rose/opt/boost_1_40_0-inst/lib 
+fi
+
+# Additional settings for Linux machine: java, ghc, graphviz, etc
+#--------------------------------------------
+if test "$OPERATING_SYSTEM" = "Linux" ; then
+  if test "$MACHINE" = "i686" ; then
+    LD_LIBRARY_PATH=/usr/apps/java/jdk1.6.0_11/jre/lib/i386/server
+    export LD_LIBRARY_PATH
+    PATH=/usr/apps/java/jdk1.6.0_11/bin/:$PATH
+    export PATH
+  elif test "$MACHINE" = "x86_64" ; then
+    LD_LIBRARY_PATH=/usr/apps/java/jdk1.6.0_11/jre/lib/amd64/server
+    export LD_LIBRARY_PATH
+    # add Haskell support for 64-bit only, Liao 5/19/2010
+    PATH=$PATH:/home/hudson-rose/opt/ghc-6.10.4-inst-64bit/bin
+    PATH=/usr/apps/java/jdk1.6.0_11/bin/:$PATH
+    export PATH
+  else
+     echo "Error: unhandled Linux machine type: $MACHINE !"
+     exit 1
+  fi
+  
+  if test -e /usr/apps/graphviz/latest/setup.sh ; then 
+    . /usr/apps/graphviz/latest/setup.sh
+  else
+    echo "Error, cannot find /usr/apps/graphviz/latest/setup.sh"
+    exit 1
+  fi
+
+fi
+
+echo "At base of startHudson-common: PATH = $PATH"
+

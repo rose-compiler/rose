@@ -18,7 +18,7 @@ libCompassVerifierCheckers.la: $(libCompassVerifierCheckers_la_OBJECTS) $(libCom
 bin_PROGRAMS = compassVerifier
 
 compassVerifier_SOURCES = compassMain.C checkers.h
-compassVerifier_LDADD = -lCompassVerifierCheckers $(ROSE_LIBS)
+compassVerifier_LDADD = -lCompassVerifierCheckers $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
 
 # This does not contribute to the link line
 compassVerifier_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassVerifierCheckers.la
@@ -71,7 +71,7 @@ verify.inc:
 # 	done ;\
 # 	export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
 # 	echo "env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C" ;\
-# 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 2 -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
+# 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
 # 	'
 
 
@@ -94,7 +94,7 @@ oneBigVerify: compassVerifier compass_parameters
 		done ;\
 		rm -f $$tmpfile ;\
 		export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
-		env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 2 $${CAT_CHECKER_INCLUDES} -I$(top_builddir) $(INCLUDES) $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) catChecker.C ;\
+		env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 $${CAT_CHECKER_INCLUDES} -I$(top_builddir) $(INCLUDES) $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) catChecker.C ;\
 	'
  
 verify.makefile: verify.inc

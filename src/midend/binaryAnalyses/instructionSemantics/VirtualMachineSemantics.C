@@ -76,7 +76,7 @@ MemoryCell::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
  *************************************************************************************************************************/
 
 void
-State::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const 
+State::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 {
     std::string prefix = "    ";
 
@@ -143,7 +143,7 @@ State::print_diff_registers(std::ostream &o, const State &other, RenameMap *rmap
 }
 
 bool
-State::equal_registers(const State &other) const 
+State::equal_registers(const State &other) const
 {
 #ifndef CXX_IS_ROSE_ANALYSIS
     for (size_t i=0; i<n_gprs; ++i)
@@ -158,7 +158,7 @@ State::equal_registers(const State &other) const
 }
 
 void
-State::discard_popped_memory() 
+State::discard_popped_memory()
 {
     Memory new_mem;
     const ValueType<32> &sp = gpr[x86_gpr_sp];
@@ -231,7 +231,7 @@ Policy::print_diff(std::ostream &o, const State &s1, const State &s2, RenameMap 
         if (!(*mi).is_clobbered() && (*mi).is_written())
             addresses.insert((*mi).address);
     }
- 
+
     State tmp_s1 = s1;
     State tmp_s2 = s2;
     size_t nmemdiff = 0;
@@ -279,7 +279,7 @@ Policy::SHA1(unsigned char digest[20]) const
         gcry_check_version(NULL);
         initialized = true;
     }
-    
+
     std::stringstream s;
     RenameMap rmap;
     print_diff(s, &rmap);

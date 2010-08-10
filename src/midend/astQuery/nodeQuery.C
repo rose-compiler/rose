@@ -10,6 +10,8 @@
 // string class used if compiler does not contain a C++ string class
 // include <roseString.h>
 
+#include <boost/bind.hpp>
+
 #include "nodeQuery.h"
 #define DEBUG_NODEQUERY 0
 // #include "arrayTransformationSupport.h"
@@ -1013,15 +1015,23 @@ NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
 ( SgNode * subTree,
   VariantVector targetVariantVector,
   AstQueryNamespace::QueryDepth defineQueryType){
-  return AstQueryNamespace::querySubTree(subTree, 
-      std::bind2nd(std::ptr_fun(querySolverGrammarElementFromVariantVector),targetVariantVector), defineQueryType);
+  NodeQuerySynthesizedAttributeType returnList;
+  AstQueryNamespace::querySubTree(subTree, 
+      boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList), defineQueryType);
+
+  return returnList;
 };
 
 NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList
 ( NodeQuerySynthesizedAttributeType nodeList,
   VariantVector targetVariantVector){
-  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), 
-      std::bind2nd(std::ptr_fun(querySolverGrammarElementFromVariantVector),targetVariantVector));
+
+  NodeQuerySynthesizedAttributeType returnList;
+
+  AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), 
+      boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList));
+
+  return returnList;
 };
 
 // DQ (3/26/2004): Added query based on variant

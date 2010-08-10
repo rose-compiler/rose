@@ -10,6 +10,7 @@
 
 using namespace std;
 
+#if 0
 namespace AST_FileIO
    {
      class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
@@ -27,6 +28,7 @@ namespace AST_FileIO
           node->checkDataMemberPointersIfInMemoryPool();
         }
     }
+#endif
 
 /* JH(01/17/2006) Initializing the static data members
 */
@@ -57,8 +59,8 @@ AST_FILE_IO::registeredAttributes;
 void 
 AST_FILE_IO :: startUp( SgProject* root )
    {
-   /* Our array containing the total memory pool sizes starts at startingIndex. This is the first multiply of 100
-      that is greater than the indices used internally. We sorte the the memory pool size at
+   /* Our array containing the total memory pool sizes starts at startingIndex. This is the first multiple of 100
+      that is greater than the indices used internally. We sort the the memory pool size at
       position [ V_$CLASSNAME + 1 ]. Concurrently, we allocate the appropriate STORAGE_class_list arrays.
       If the corresponding memory pool is empty, we set the pointer to NULL!
   */
@@ -75,9 +77,11 @@ AST_FILE_IO :: startUp( SgProject* root )
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
-
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+#if 0
+  // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << "  done ! " << std::endl;
@@ -267,9 +271,12 @@ $REPLACE_COMPRESSASTINMEMEORYPOOL
           listOfMemoryPoolSizes[i] += getPoolSizeOfNewAst(i);
         }
      listOfMemoryPoolSizes[totalNumberOfIRNodes] += getTotalNumberOfNodesOfNewAst();
-     // std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+  // std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
+#if 0
+  // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
+#endif
      // std::cout << "  done ! " << std::endl;
 #endif
 
@@ -308,6 +315,7 @@ AST_FILE_IO :: areFreepointersContainingGlobalIndices ( )
 unsigned long
 AST_FILE_IO::getGlobalIndexFromSgClassPointer ( SgNode* pointer )
   {
+  // This converts the pointer value held in the p_freepointer into a global index.
      unsigned long globalIndex = 0;
      if ( pointer != NULL )
         {
@@ -324,6 +332,19 @@ AST_FILE_IO::getGlobalIndexFromSgClassPointer ( SgNode* pointer )
           assert ( pointer->p_freepointer != AST_FileIO::IS_VALID_POINTER() );
 #endif
 
+#if FILE_IO_EXTRA_CHECK
+          if (pointer->p_freepointer == NULL)
+             {
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p \n",pointer);
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer->p_freepointer = %p \n",pointer->p_freepointer);
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): AST_FileIO::IS_VALID_POINTER() = %p \n",AST_FileIO::IS_VALID_POINTER());
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
+             }
+#endif
+       // DQ (6/6/2010): This is equivalent to the test for (globalIndex > 0).
+          assert ( pointer->p_freepointer != NULL );
+
           globalIndex = (unsigned long) (pointer->p_freepointer);
 
 #if FILE_IO_EXTRA_CHECK
@@ -336,11 +357,34 @@ AST_FILE_IO::getGlobalIndexFromSgClassPointer ( SgNode* pointer )
                printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): AST_FileIO::IS_VALID_POINTER() = %p \n",AST_FileIO::IS_VALID_POINTER());
                printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
              }
+
           assert (  0 < globalIndex );
-          assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
-          assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
+       // DQ (7/10/2010): I think this is not a reasonable test. And large AST's demonstrate this problem.
+#if 0
+       // assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
+          if (AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) > globalIndex )
+             {
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer( SgNode* pointer = %p = %s) \n",pointer,pointer->class_name().c_str());
+               printf ("     pointer->p_freepointer = %p = %zu \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
+               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) = %zu \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()));
+             }
+       // assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
+#endif
+
+       // DQ (7/10/2010): I think this is not a reasonable test. And large AST's demonstrate this problem.
+#if 0
+       // assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
+          if (globalIndex >= AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) )
+             {
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer( SgNode* pointer = %p = %s) \n",pointer,pointer->class_name().c_str());
+               printf ("     pointer->p_freepointer = %p = %zu \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
+               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) = %zu \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1));
+             }
+       // assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
+#endif
 #endif
         }
+
      return globalIndex;
    }
 
@@ -654,8 +698,11 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- before AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
 
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_A;
+#if 0
+  // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_A;
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_A;
      memoryCheckingTraversal_A.traverseMemoryPool();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << " DONE: Checking the ast via pool entries -- before AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
@@ -679,8 +726,11 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
 
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_B;
+#if 0
+  // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_B;
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_B;
      memoryCheckingTraversal_B.traverseMemoryPool();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << " DONE: Checking the ast via pool entries -- after AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
@@ -706,8 +756,10 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after marker read .... " << std::endl;
 
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_C;
+#if 0
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_C;
      memoryCheckingTraversal_C.traverseMemoryPool();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << " DONE: Checking the ast via pool entries -- after marker read .... " << std::endl;
@@ -721,10 +773,13 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Initializing the actualRebuildAST with staticTemp ... " << std::endl;
 
+  // This calls the constructor AstSpecificDataManagingClass(const AstSpecificDataManagingClassStorageClass& source ).
+  // The code used to generate this function is in: ROSETTA/src/buildStorageClasses.C
+  // Note that AstData is typedefed to AstSpecificDataManagingClass 
      actualRebuildAst = new AstData(staticTemp);
   // extendMemoryPoolsForRebuildingAST();
 
-  // The call to the constructor calls "extendMemoryPoolsForRebuildingAST()" which used valid pointers
+  // The call to the constructor calls "extendMemoryPoolsForRebuildingAST()" which uses valid pointers
   // to reference the extended memory blocks where the new AST extends beyond the current memory block.
   // This means that freepointer values at the end of a sequence of memroy blocks will have values
   // that are not equal to "AST_FileIO::IS_VALID_POINTER()", thus causing warnings to be spewed
@@ -739,24 +794,28 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
   // But I don't yet see exactly why!!!
 
   // One thing to test is if the new operators are working properly (or used) when the "AST_FileIO::IS_VALID_POINTER()"
-  // values are in place in the AST.  Seems like it would be an error. to mix an AST read fron disk with
+  // values are in place in the AST.  Seems like it would be an error. to mix an AST read from disk with
   // and AST that has been extended via "extendMemoryPoolsForRebuildingAST()".
 
-  // I think the problem is in the converstion of freepointer values back to correct values after having
+  // I think the problem is in the conversion of freepointer values back to correct values after having
   // been set as "AST_FileIO::IS_VALID_POINTER()" (particularly when the "AST_FileIO::IS_VALID_POINTER()"
   // value has been over written.
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after actualRebuildAst = new AstData() .... " << std::endl;
 
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_D;
+#if 0
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_D;
      memoryCheckingTraversal_D.traverseMemoryPool();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << " DONE: Checking the ast via pool entries -- after actualRebuildAst = new AstData() .... " << std::endl;
 
-  // 3. 
-     if (AST_FILE_IO::vectorOfASTs.size()==1)
+  // 3.
+  // DQ (6/7/2010): Not clear why this is only called for where there is a single AST.
+  // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
+     if (AST_FILE_IO::vectorOfASTs.size() == 1)
         { 
           if ( SgProject::get_verbose() > 0 )
                std::cout << "setting the static data of an AST, but only for the first AST in a pool ... " << std::flush;
@@ -766,14 +825,25 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
           if ( SgProject::get_verbose() > 0 )
                std::cout << "done" << std::endl;
         }
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Calling AstDataStorageClass::deleteStaticDataOfEasyStorageClasses() .... " << std::endl;
+
+#if 0
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_D2;
+     memoryCheckingTraversal_D2.traverseMemoryPool();
+#endif
+
      AstDataStorageClass::deleteStaticDataOfEasyStorageClasses();
      }
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after AstDataStorageClass::deleteStaticDataOfEasyStorageClasses() .... " << std::endl;
 
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_E;
+#if 0
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_E;
      memoryCheckingTraversal_E.traverseMemoryPool();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << " DONE: Checking the ast via pool entries -- after AstDataStorageClass::deleteStaticDataOfEasyStorageClasses() .... " << std::endl;
@@ -820,8 +890,10 @@ $REPLACE_READASTFROMFILE
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries .... " << std::endl;
 
-     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+#if 0
+     MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
+#endif
 #endif
 
      return returnPointer;

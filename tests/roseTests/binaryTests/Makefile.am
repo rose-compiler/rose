@@ -6,7 +6,7 @@ EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSect
 		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
 		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
 		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans test_testAssembler.ans \
-		test_symbolicSemantics.ans
+		test_symbolicSemantics.ans test_yicesSemanticsExe.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -25,8 +25,8 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
-		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler \
-		symbolicSemantics
+		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler testAstIO \
+		symbolicSemantics yicesSemanticsExe yicesSemanticsLib
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -77,24 +77,34 @@ shiftResizeSection_SOURCES = shiftResizeSection.C
 shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions
-findConstants_SOURCES = findConstants.C
+findConstants_SOURCES = semantics.C
 findConstants_CPPFLAGS = -DPOLICY_SELECTOR=1
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions using an ABI
-findConstantsABI_SOURCES = findConstants.C
+findConstantsABI_SOURCES = semantics.C
 findConstantsABI_CPPFLAGS = -DPOLICY_SELECTOR=2
 findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Uses VirtualMachineSemantics semantic analysis policy
-virtualMachineSemantics_SOURCES = findConstants.C
+virtualMachineSemantics_SOURCES = semantics.C
 virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
 virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Use SymbolicSemantics semantic analysis policy
-symbolicSemantics_SOURCES = findConstants.C
-symbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4
+symbolicSemantics_SOURCES = semantics.C
+symbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=0
 symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Use SymbolicSemantics with YicesSolver, invoking "yices" executable
+yicesSemanticsExe_SOURCES = semantics.C
+yicesSemanticsExe_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
+yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Use SymbolicSemantics with YicesSolver, linked to Yikes library
+yicesSemanticsLib_SOURCES = semantics.C
+yicesSemanticsLib_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=2
+yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
@@ -121,6 +131,10 @@ rot13_SOURCES=rot13.C
 # Program to test the assembler (see also "disassemble --assemble")
 testAssembler_SOURCES=testAssembler.C
 testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Program to test that we can write and then read an AST for a binary executable
+testAstIO_SOURCES=testAstIO.C
+testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 ###############################################################################################################################
 # DEMOS
@@ -184,7 +198,13 @@ demo_virtualMachineSemantics: virtualMachineSemantics demo_findConstantsABI
 demo_symbolicSemantics: symbolicSemantics demo_virtualMachineSemantics
 	: no demo yet for symbolicSemantics
 
-demo_disassemble: disassemble demo_symbolicSemantics
+demo_yicesSemanticsExe: yicesSemanticsExe demo_symbolicSemantics
+	: no demo yet for yicesSemanticsExe
+
+demo_yicesSemanticsLib: yicesSemanticsLib demo_yicesSemanticsLib
+	: no demo yet for yicesSemanticsLib
+
+demo_disassemble: disassemble demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
@@ -210,6 +230,9 @@ demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
 
 demo_rot13: rot13
 	: no demo yet for rot13
+
+demo_testAstIO: testAstIO
+	: no demo yet for $<
 
 
 ###############################################################################################################################
@@ -241,6 +264,15 @@ test_static.result: $(STATIC_TEST_TARGETS)
 test_dynamic.result: test_static.result
 	@$(MAKE) test_sample_binaries.result
 	@touch $@
+
+# Static tests...
+
+test_testAstIO.result: testAstIO
+	@echo "  TESTING $@"
+	@if $(VALGRIND) ./testAstIO $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
+	  then mv $@.tmp $@; \
+	  else sed 's/^/$@> /' <$@.tmp; exit 1; \
+         fi
 
 test_execFormatsTest.result: execFormatsTest
 	@echo "  TESTING $@ (not currently tested)"
@@ -373,10 +405,34 @@ test_symbolicSemantics.result: symbolicSemantics
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
+test_yicesSemanticsExe.result: yicesSemanticsExe
+if HAVE_YICES
+	@echo "  TESTING $@"
+	@($(VALGRIND) ./yicesSemanticsExe $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_yicesSemanticsExe.ans) 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_yicesSemanticsExe.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+else
+	@echo "  TESTING $@ (the Yices SMT-solver is not supported for this configuration; test skipped)"
+endif
+
+# The yicesSemanticsLib results should be identical to the yicesSemanticsExe results
+test_yicesSemanticsLib.result: yicesSemanticsLib
+if HAVE_LIBYICES
+	@echo "  TESTING $@"
+	@($(VALGRIND) ./yicesSemanticsLib $(BINARY_SAMPLES)/i686-test1.O3.bin |\
+	    $(FIND_CONSTANTS_FILTER) >test_yicesSemanticsLib.ans) 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u $(srcdir)/test_yicesSemanticsExe.ans ./test_yicesSemanticsLib.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+else
+	@echo "  TESTING $@ (the Yices SMT-solver is not supported for this configuration; test skipped)"
+endif
+
 test_disassemble.result: disassemble
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && mv i686-test1.O0.bin.dump test_disassemble.ans; \
+	@$(VALGRIND) ./disassemble --show-functions -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassemble.ans 2>&1; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
@@ -475,10 +531,11 @@ MOSTLYCLEANFILES = \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
 	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
 	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
-	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans
+	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans test_yicesSemanticsExe.ans \
+	test_yicesSemanticsLib.ans
 
+# mostlyclean-binarysamples is defined by scripts/sample_binary_rules.pl invoked from "build"
 mostlyclean-local: mostlyclean-binarysamples
-
 
 ###############################################################################################################################
 # The older part of this makefile...
@@ -542,6 +599,8 @@ else
 # works if BinQ is built which is not the default configuration).
 # check-local: runTest test1 $(TEST_RESULT_TARGETS) test_so_file
 # Caution: runTest generates the same output files as some $(TEST_RESULT_TARGETS) [RPM 2009-07-21]
+
+check-local: runTest test1 
 check-local: runTest test1 test_static.result test_dynamic.result
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/binaryTests: passed ***"

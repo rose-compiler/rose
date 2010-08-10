@@ -23,6 +23,17 @@ Liao 12/10/2009 */
 static const char* ompparserinput = NULL;
 static std::string gExpressionString;
 
+/* Liao 6/11/2010,
+OpenMP does not preclude the use of clause names as regular variable names.
+For example, num_threads could be a clause name or a variable in the variable list.
+
+We introduce a flag to indicate the context: within a variable list like (a,y,y) or outside of it
+  We check '(' or ')' to set it to true or false as parsing proceed */
+extern bool b_within_variable_list ; /* = false; */
+
+/*conditionally return either a clause token or ID_EXPRESSION, depending on the context.
+  We should use it for any OpenMP keyword which could potentially used by users as a variable within a variable list.*/
+static int cond_return (int input);
 /* pass user specified string to buf, indicate the size using 'result', 
    and shift the current position pointer of user input afterwards 
    to prepare next round of token recognition!!
@@ -46,41 +57,54 @@ id              [a-zA-Z_][a-zA-Z0-9_]*
 
 %%
 {digit}{digit}* { omp_lval.itype = atoi(strdup(yytext)); return (ICONSTANT); }
-omp             { return ( OMP); }
-parallel        { return ( PARALLEL); }
-task		{ return ( TASK ); }
-taskwait	{ return ( TASKWAIT ); }
-untied          { return ( UNTIED );}
-if		{ return ( IF); }
-num_threads     { return ( NUM_THREADS); }
-ordered         { return ( ORDERED  ); }
-schedule        { return ( SCHEDULE ); }
-static          { return ( STATIC ); }
-dynamic         { return ( DYNAMIC ); }
-guided          { return ( GUIDED ); }
-runtime         { return ( RUNTIME ); }
-auto            { return ( AUTO ); }
-sections        { return ( SECTIONS ); }
-section         { return ( SECTION ); }
-single          { return ( SINGLE ); }
-nowait          { return ( NOWAIT); }
-for             { return ( FOR ); }
-collapse	{ return ( COLLAPSE ); }
-master          { return ( MASTER ); }
-critical        { return ( CRITICAL ); }
-barrier         { return ( BARRIER ); }
-atomic          { return ( ATOMIC ); }
-flush           { return ( FLUSH ); }
-threadprivate   { return ( THREADPRIVATE ); }
-private         { return ( PRIVATE ); }
-copyprivate     { return ( COPYPRIVATE ); }
-firstprivate    { return ( FIRSTPRIVATE ); }
-lastprivate     { return ( LASTPRIVATE ); }
-shared          { return ( SHARED ); }
-default         { return ( DEFAULT ); }
-none            { return ( NONE ); }
-reduction       { return ( REDUCTION ); }
-copyin          { return ( COPYIN ); }
+omp             { return cond_return ( OMP); }
+parallel        { return cond_return ( PARALLEL); }
+task		{ return cond_return ( TASK ); }
+taskwait	{ return cond_return ( TASKWAIT ); }
+untied          { return cond_return ( UNTIED );}
+if		{ return ( IF); } /*if is a keyword in C/C++, no change to be a variable*/
+num_threads     { /*Can be either a clause name or a variable name */ 
+                  return cond_return (NUM_THREADS);
+                  /*
+                  if (b_within_variable_list)
+                  {
+                    omp_lval.stype = strdup(yytext);
+                     return ID_EXPRESSION;
+                  }
+                  else 
+                    return ( NUM_THREADS); 
+                    */
+                } 
+ordered         { return cond_return ( ORDERED  ); }
+schedule        { return cond_return ( SCHEDULE ); }
+
+static          { return ( STATIC ); }  /*keyword in C/C++ */
+dynamic         { return cond_return ( DYNAMIC ); } 
+guided          { return cond_return ( GUIDED ); }
+runtime         { return cond_return ( RUNTIME ); }
+auto            { return ( AUTO ); } /*keyword in C/C++ ?*/
+
+sections        { return cond_return  ( SECTIONS ); }
+section         { return cond_return ( SECTION ); }
+single          { return cond_return ( SINGLE ); }
+nowait          { return cond_return ( NOWAIT); }
+for             { return ( FOR ); } /*keyword in C/C++ */
+collapse	{ return cond_return ( COLLAPSE ); }
+master          { return cond_return ( MASTER ); }
+critical        { return cond_return ( CRITICAL ); }
+barrier         { return cond_return ( BARRIER ); }
+atomic          { return cond_return ( ATOMIC ); }
+flush           { return cond_return ( FLUSH ); }
+threadprivate   { return cond_return ( THREADPRIVATE ); }
+private         { return cond_return ( PRIVATE ); }
+copyprivate     { return cond_return ( COPYPRIVATE ); }
+firstprivate    { return cond_return ( FIRSTPRIVATE ); }
+lastprivate     { return cond_return ( LASTPRIVATE ); }
+default         { return cond_return ( DEFAULT ); }
+shared          { return cond_return ( SHARED ); } 
+none            { return cond_return ( NONE ); } 
+reduction       { return cond_return ( REDUCTION ); }
+copyin          { return cond_return ( COPYIN ); }
 
 "="             { return('='); }
 "("		{ return ('('); }
@@ -162,6 +186,16 @@ extern void omp_lexer_init(const char* str) {
   omp_restart(omp_in);
 }
 
+static int cond_return (int input)
+{
+  if (b_within_variable_list)
+  {
+    omp_lval.stype = strdup(yytext);
+    return ID_EXPRESSION;
+  }
+  else
+    return ( input); 
+}
 /**
  * @file
  * Lexer for OpenMP-pragmas.

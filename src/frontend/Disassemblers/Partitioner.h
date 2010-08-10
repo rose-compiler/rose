@@ -23,9 +23,9 @@
  *  to the partitioner() method. The first phase considers all disassembled instructions and other available information such as
  *  symbol tables and tries to determine which addresses are entry points for functions.  For instance, if the symbol table
  *  contains function symbols, then the address stored in the symbol table is assumed to be the entry point of a function.  ROSE
- *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the
- *  "-rose:partitioner_search" command-line switch.  ROSE also supports user-defined search methods that can be registered with
- * an existing partitioner (see add_function_detector()).
+ *  has a variety of these "pre-cfg" detection methods which can be enabled/disabled at runtime with the set_search() method.
+ *  ROSE also supports user-defined search methods that can be registered with add_function_detector().  The three phases are
+ *  initialized and influenced by the contents of an optional configuration file specified with the load_config() method.
  *
  *  The second phase for assigning blocks to functions is via analysis of the control-flow graph.  In a nutshell, ROSE
  *  traverses the CFG starting with the entry address of each function, adding blocks to the function as it goes. When it
@@ -36,6 +36,16 @@
  *  no-op or zero padding occuring between the previously detected functions. This could also be user-extended to add blocks to
  *  functions that ROSE detected during CFG analysis (such as unreferenced basic blocks, no-ops, etc. that occur within the
  *  extent of a function.)
+ *
+ *  By default, ROSE constructs a Partitioner to use for partitioning instructions of binary files during frontend() parsing
+ *  (this happens in Disassembler::disassembleInterpretation()).  This Partitioner's settings are controlled by two
+ *  command-line switches whose documentation can be seen by running any ROSE program with the --help switch.  These
+ *  command-line switches operate by setting property values in the SgFile node and then transferring them to the Partitioner
+ *  when the Partitioner is constructed.
+ *  <ul>
+ *    <li>-rose:partitioner_search initializes the detection methods by calling set_search(), and parse_switches()</li>
+ *    <li>-rose:partitioner_config specifies an IPD file by calling load_config().</li>
+ *  </ul>
  *
  *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
  *  information via a call to the build_ast() method, which constructs a ROSE AST.  Any instructions that were not assigned to
@@ -73,10 +83,21 @@
  *  to disassemble and partition a buffer of instructions obtained outside of ROSE's binary file parsing mechanisms.
  */
 class Partitioner {
-protected:
+    /*************************************************************************************************************************
+     *                                        Public Exceptions
+     *************************************************************************************************************************/
+public:
+    struct Exception {
+        std::string mesg;
+        Exception(const std::string &mesg): mesg(mesg) {}
+        void print(std::ostream &o) const { o <<mesg; }
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e);
+    };
+
     /*************************************************************************************************************************
      *                                        Data Structures Useful to Subclasses
      *************************************************************************************************************************/
+protected:
 
     struct Function;
 
@@ -140,7 +161,6 @@ protected:
         /** Marks the block analysis cache as being up to date. */
         void validate_cache() { cache.age=insns.size(); }
 
-        bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
@@ -168,6 +188,18 @@ protected:
 
     /** Data type for user-defined function detectors. */
     typedef void (*FunctionDetector)(Partitioner*, SgAsmGenericHeader*, const Disassembler::InstructionMap&);
+
+    /** Basic block configuration information. This is information which is set by loading an IPD configuration file. */
+    struct BlockConfig {
+        BlockConfig(): ninsns(0), alias_for(0), sucs_specified(false), sucs_complete(false) {}
+        size_t ninsns;                          /**< Number of instructions expected in the basic block. */
+        rose_addr_t alias_for;                  /**< If non-zero then this block is an alias for another block. */
+        bool sucs_specified;                    /**< True if IPD file specifies successors for this block. */
+        Disassembler::AddressSet sucs;          /**< Address to which this block might branch or fall through. */
+        bool sucs_complete;                     /**< True if successors are fully known. */
+        SgUnsignedCharList sucs_program;        /**< i386 code to simulate to find successors. */
+    };
+    typedef std::map<rose_addr_t, BlockConfig*> BlockConfigMap;
 
     /*************************************************************************************************************************
      *                                                     Deprecated
@@ -209,7 +241,7 @@ public:
 
     /** Returns a list of the currently defined functions.
      *
-     *  \deprecated This function has been replaced by seed_functions() and analyze_cfg(). */
+     *  \deprecated This function has been replaced by pre_cfg(), analyze_cfg(), and post_cfg() */
     FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
                                    BasicBlockStarts &bb_starts/*out*/) const;
 
@@ -219,7 +251,9 @@ public:
      *************************************************************************************************************************/
 public:
 
-    Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true) {}
+    Partitioner()
+        : func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true), map(NULL)
+        {}
     virtual ~Partitioner() { clear(); }
 
     /*************************************************************************************************************************
@@ -288,6 +322,16 @@ public:
         return debug;
     }
 
+    /** Set the memory map that was used for disassembly. */
+    void set_map(MemoryMap *mmap) {
+        map = mmap;
+    }
+    
+    /** Return the memory map that was used for disassembly. */
+    MemoryMap *get_map() const {
+        return map;
+    }
+
     /*************************************************************************************************************************
      *                                                High-level Functions
      *************************************************************************************************************************/
@@ -313,11 +357,17 @@ public:
      *  can be specified (defaults to SgAsmFunctionDeclaration::FUNC_DEFAULT). */
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
 
-    /** Top-level function to run the partitioner on some instructions and build an AST */
+    /** Top-level function to run the partitioner on some instructions and build an AST. The SgAsmInterpretation is optional.
+     *  If it is null then those function seeding operations that depend on having file headers are not run. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
-    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. */
+    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, functions, and configuration
+     *  file settings and definitions. */
     virtual void clear();
+
+    /** Loads the specified configuration file. This should be called before any of the partitioning functions (such as
+     *  partition()).  If an error occurs then Partitioner::IPDParser::Exception error is thrown. */
+    virtual void load_config(const std::string &filename);
 
     /** Adds additional instructions to be processed. New instructions are only added at addresses that don't already have an
      *  instruction. */
@@ -357,21 +407,22 @@ protected:
     virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
     virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
-    virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
+    virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
-    virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */
+    virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
     virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
     virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
-    
-    
+    virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
+
+    virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
-    virtual void mark_func_patterns(SgAsmGenericHeader*);       /**< Seeds functions according to instruction patterns */
+    virtual void mark_func_patterns();                          /**< Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
     virtual void create_nop_padding();                          /**< Creates functions to hold NOP padding */
     virtual void create_zero_padding();                         /**< Creates functions to hold zero padding */
@@ -389,6 +440,11 @@ protected:
 
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
+
+    /*************************************************************************************************************************
+     *                                   IPD Parser for initializing the Partitioner
+     *************************************************************************************************************************/
+public:
 
     /** This is the parser for the instruction partitioning data (IPD) files.  These files are text-based descriptions of the
      *  functions and basic blocks used by the partitioner and allow the user to seed the partitioner with additional information
@@ -425,13 +481,14 @@ protected:
      *     BlockStmtList := BlockStmt [';' BlockStmtList]
      *     BlockStmt := ( Empty | Alias | Successors ) ';'
      *     Alias := 'alias' Address
-     *     Successors := ('successor' | 'successors') [SuccessorAddrList]
+     *     Successors := ('successor' | 'successors') [SuccessorAddrList|AssemblyCode]
      *     SuccessorAddrList := AddressList | AddressList '...' | '...'
      *
      *     AddressList := Address ( ',' AddressList )*
      *     Address: Integer
      *     Integer: DECIMAL_INTEGER | OCTAL_INTEGER | HEXADECIMAL_INTEGER
      *     Name: STRING
+     *     AssemblyCode: asm '{' ASSEMBLY '}'
      *  \endcode
      *
      *  Language terminals:
@@ -440,12 +497,14 @@ protected:
      *     OCTAL_INTEGER: as in C, for example, 0775
      *     DECIMAL_INTEGER: as in C, for example, 1234
      *     STRING: double quoted. Use backslash to escape embedded double quotes
+     *     ASSEMBLY: x86 assembly instructions (must contain balanced curly braces, if any)
      *  \endcode
      *
      *  Comments begin with a hash ('#') and continue to the end of the line.  The hash character is not treated specially inside
-     *  quoted strings.
+     *  quoted strings.  Comments within an ASSEMBLY terminal must conform to the syntax accepted by the Netwide Assembler (nasm),
+     *  namely semicolon in place of a hash.
      *
-     *  Semantics
+     *  <h2>Semantics</h2>
      *
      *  A block declaration specifies the virtual memory address of the block's first instruction. The integer after the
      *  address specifies the number of instructions in the block.  If the specified length is less than the number of
@@ -456,7 +515,7 @@ protected:
      *  will be created with fewer instructions but the BlockBody will be ignored.
      *
      *  A function declaration specifies the virtual memory address of the entry point of a function. The body may specify
-     *  whether the function returns. As of this writing [2010-05-13] a function declarated as non-returning will be marked as
+     *  whether the function returns. As of this writing [2010-05-13] a function declared as non-returning will be marked as
      *  returning if ROSE discovers that a basic block of the function returns.
      *
      *  If a block declaration appears inside a function declaration, then ROSE will assign the block to the function.
@@ -475,7 +534,70 @@ protected:
      *     }
      *  \endcode
      *
-     *  Example usage: The easiest way to parse an IPD file is to read it into memory and then call the parse() method.  The
+     *  <h2>Basic Block Successors</h2>
+     *
+     *  A block declaration can specify control-flow successors in two ways: as a list of addresses, or as an x86 assembly
+     *  language program that's interpretted by ROSE.  The benefits of using a program to determine the successors is that the
+     *  program can directly extract information, such as jump tables, from the specimen executable.
+     *
+     *  The assembly source code is fed to the Netwide Assembler, nasm (http://www.nasm.us/), which assembles it into i386
+     *  machine code. When ROSE needs to figure out the successors for a basic block it will interpret the basic block, then
+     *  load the successor program and interpret it, then extract the successor list from the program's return value. ROSE
+     *  interprets the program rather than running it directly so that the program can operate on unknown, symbolic data
+     *  values rather than actual 32-bit numbers.
+     *
+     *  The successor program is interpretted in a context that makes it appear to have been called (via CALL instruction)
+     *  from the end of the basic block being analyzed.  These arguments are passed to the program:
+     *
+     *  <ul>
+     *    <li>The address of an "svec" object to be filled in by the program. The first four-byte word at this address
+     *        is the number of successor addresses that immediately follow and must be a known value upon return of the
+     *        program.  The following values are the successors--either known values or unknown values.</li>
+     *    <li>The size of the "svec" object in bytes. The object is allocated by ROSE and is a fixed size (8192 bytes at
+     *        the time of this writing--able to hold 2047 successors).</li>
+     *    <li>The starting virtual address of the first instruction of the basic block.</li>
+     *    <li>The address immediately after the last instruction of the basic block. Depending on the Partitioner settings,
+     *        basic block may or may not be contiguous in memory.</li>
+     *    <li>The value of the stack pointer at the end of the basic block. ROSE creates a new stack before starting the
+     *        successor program because the basic block's stack might not be at a known memory address.</li>
+     *  </ul>
+     *
+     *  The successor program may either fall off the end or execute a RET statement.
+     *
+     *  For instance, if the 5-instruction block at virtual address 0x00c01115 ends with an indirect jump through a
+     *  256-element jump table beginning at 0x00c037fa, then a program to compute the successors might look like this:
+     *
+     *  \code
+     *    block 0x00c01115 5 {
+     *      successors asm {
+     *          push ebp
+     *          mov ebp, esp
+     *          ; ecx is the base address of the successors return vector,
+     *          ; the first element of which is the vector size.
+     *          mov ecx, [ebp+8]
+     *          add ecx, 4
+     *          ; loop over the entries in the jump table, copying each
+     *          ; address from the jump table to the svec return value
+     *          xor eax, eax
+     *        loop:
+     *          cmp eax, 256
+     *          je done
+     *          mov ebx, [0x00c037fa+eax*4]
+     *          mov [ecx+eax*4], ebx
+     *          inc eax
+     *          jmp loop
+     *        done:
+     *          ; set the number of entries in the svec
+     *          mov ecx, [ebp+8]
+     *          mov DWORD [ecx], 256
+     *          mov esp, ebp
+     *          pop ebp
+     *          ret
+     *  \endcode
+     *
+     *  <h2>Example Programmatic Usage</h2>
+     *
+     *  The easiest way to parse an IPD file is to read it into memory and then call the parse() method.  The
      *  following code demonstrates the use of mmap to read the file into memory, parse it, and release it from memory.  For
      *  simplicity, we do not check for errors in this example.
      *  \code
@@ -493,16 +615,25 @@ protected:
         Partitioner *partitioner;               /**< Partitioner to be initialized. */
         const char *input;                      /**< Input to be parsed. */
         size_t len;                             /**< Length of input, not counting NUL termination (if any). */
+        std::string input_name;                 /**< Optional name of input (usually a file name). */
         size_t at;                              /**< Current parse position w.r.t. "input". */
         Function *cur_func;                     /**< Non-null when inside a FuncBody nonterminal. */
-        BasicBlock *cur_block;                  /**< Non-null when inside a BlockBody nonterminal. */
+        BlockConfig *cur_block;                 /**< Non-null when inside a BlockBody nonterminal. */
 
     public:
-        IPDParser(Partitioner *p, const char *input, size_t len)
-            : partitioner(p), input(input), len(len), at(0), cur_func(NULL), cur_block(NULL) {}
+        IPDParser(Partitioner *p, const char *input, size_t len, const std::string &input_name="")
+            : partitioner(p), input(input), len(len), input_name(input_name), at(0), cur_func(NULL), cur_block(NULL) {}
 
-        struct Exception {                      /**< Exception thrown when something cannot be parsed. */
-            Exception(const std::string &s): lnum(0), mesg(s) {}
+        class Exception {                      /**< Exception thrown when something cannot be parsed. */
+        public:
+            Exception(const std::string &mesg)
+                : lnum(0), mesg(mesg) {}
+            Exception(const std::string &mesg, const std::string &name, unsigned lnum=0)
+                : name(name), lnum(lnum), mesg(mesg) {}
+            std::string format() const;         /**< Format exception object into an error message; used by operator<<. */
+            friend std::ostream& operator<<(std::ostream&, const Exception &e);
+
+            std::string name;                   /**< Optional name of input */
             unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
             std::string mesg;                   /**< Error message. */
         };
@@ -513,7 +644,7 @@ protected:
         /*************************************************************************************************************************
          * Lexical analysis functions.
          *************************************************************************************************************************/
-
+    private:
         void skip_space();
 
         /* The is_* functions return true if the next token after white space and comments is of the specified type. */
@@ -529,6 +660,7 @@ protected:
         std::string match_symbol();
         std::string match_string();
         rose_addr_t match_number();
+        std::string match_asm();        /* assembly code inside nested curly braces */
 
 
         /*************************************************************************************************************************
@@ -536,7 +668,7 @@ protected:
          * construct was not present. They throw an exception if the construct was partially present but an error occurred during
          * parsing.
          *************************************************************************************************************************/
-
+    private:
         bool parse_File();
         bool parse_Declaration();
         bool parse_FuncDecl();
@@ -558,13 +690,15 @@ protected:
 protected:
 
     Disassembler::InstructionMap insns;                 /**< Set of all instructions to partition. */
-    std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block */
-    Functions functions;                                /**< All known functions, pending and complete */
-    BasicBlocks blocks;                                 /**< All known basic blocks */
-    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits */
-    std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
-    FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
-    bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory */
+    std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block. */
+    Functions functions;                                /**< All known functions, pending and complete. */
+    BasicBlocks blocks;                                 /**< All known basic blocks. */
+    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
+    std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
+    FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */
+    bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory. */
+    BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
+    MemoryMap *map;                                     /**< Memory map used for disassembly. */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

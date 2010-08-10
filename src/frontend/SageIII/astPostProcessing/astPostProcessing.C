@@ -440,10 +440,29 @@ void postProcessingSupport (SgNode* node)
   // This also will fixup C++ using declarations.
      fixupFortranUseDeclarations(node);
 
+#if 0
+     ROSE_MemoryUsage memoryUsage1;
+     printf ("Test 1: memory_usage = %f \n",memoryUsage1.getMemoryUsageMegabytes());
+#endif
+
   // DQ (4/14/2010): Added support for symbol aliases for C++
   // This is the support for C++ "using declarations" which uses symbol aliases in the symbol table to provide 
   // correct visability of symbols included from alternative scopes (e.g. namespaces).
      fixupAstSymbolTablesToSupportAliasedSymbols(node);
+
+#if 0
+     ROSE_MemoryUsage memoryUsage2;
+     printf ("Test 2: memory_usage = %f \n",memoryUsage2.getMemoryUsageMegabytes());
+#endif
+
+  // DQ (6/24/2010): To support merge, we want to normalize the typedef lists for each type so that 
+  // the names of the types will evaluate to be the same (and merge appropriately).
+     normalizeTypedefSequenceLists();
+
+#if 0
+     ROSE_MemoryUsage memoryUsage3;
+     printf ("Test 3: memory_usage = %f \n",memoryUsage3.getMemoryUsageMegabytes());
+#endif
 
   // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
   // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).
@@ -453,6 +472,11 @@ void postProcessingSupport (SgNode* node)
   // QY: check the isModified flag
   // CheckIsModifiedFlagSupport(node); 
      checkIsModifiedFlag(node);
+
+#if 0
+     ROSE_MemoryUsage memoryUsage4;
+     printf ("Test 4: memory_usage = %f \n",memoryUsage4.getMemoryUsageMegabytes());
+#endif
 
   // ROSE_ASSERT(saved_declaration->get_definingDeclaration() != saved_declaration->get_firstNondefiningDeclaration());
 
