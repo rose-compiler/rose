@@ -652,7 +652,7 @@ EmulationPolicy::emulate_syscall()
               ROSE_ASSERT(4==nwritten);
             }
             writeGPR(x86_gpr_ax, result);
-            syscall_leave("d"); /*FIXME: we should have a "t" format to print time [RPM 2010-08-09]*/
+            syscall_leave("t");
             break;
         }
 
@@ -1418,7 +1418,7 @@ main(int argc, char *argv[])
 #if 1 /*DEBUGGING [RPM 2010-08-06]*/
     policy.trace_insn = false;
     policy.trace_syscall = true;
-    policy.trace_mmap = true;
+    policy.trace_mmap = false;
 #endif
 
     /* Parse command-line */

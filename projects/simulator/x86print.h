@@ -41,6 +41,7 @@ int print_signed(FILE*, uint32_t value);
 int print_pointer(FILE*, uint32_t value);
 int print_hex(FILE*, uint32_t value);
 int print_string(FILE*, const std::string &value);
+int print_time(FILE*, uint32_t value);
 int print_single(FILE*, char fmt, const ArgInfo *info);
 int print_enter(FILE*, const char *name, const char *format, const ArgInfo *info);
 int print_leave(FILE*, char fmt, const ArgInfo *info);

@@ -105,6 +105,17 @@ print_string(FILE *f, const std::string &value)
 }
 
 int
+print_time(FILE *f, uint32_t value)
+{
+    time_t ts = value;
+    struct tm tm;
+    localtime_r(&ts, &tm);
+    char buf[256];
+    strftime(buf, sizeof buf, "%c", &tm);
+    return fprintf(f, "%s", buf);
+}
+
+int
 print_single(FILE *f, char fmt, const ArgInfo *info)
 {
     int retval=0;
@@ -123,6 +134,9 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
             break;
         case 's':
             retval += print_string(f, info->str);
+            break;
+        case 't':
+            retval += print_time(f, info->val);
             break;
         case 'x':
             retval += print_hex(f, info->val);
