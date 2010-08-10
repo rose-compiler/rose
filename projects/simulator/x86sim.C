@@ -1224,8 +1224,12 @@ EmulationPolicy::emulate_syscall()
                                                  TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
                                                  TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
                                                  TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
+#ifdef FUTEX_WAIT_BITSET
                                                  TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
+#endif
+#ifdef FUTEX_WAKE_BITSET
                                                  TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
+#endif
                                                  T_END };
             syscall_enter("futex", "pfdppd", opflags);
             //uint32_t addr1=arg(0), op=arg(1), val1=arg(2), ptimeout=arg(3), addr2=arg(4), val3=arg(5);
