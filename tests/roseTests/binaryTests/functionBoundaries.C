@@ -60,30 +60,21 @@ class ShowFunctions : public SgSimpleProcessing {
     }
 };
 
-/* Example disassembler to replace the ROSE-defined x86 disassembler.  The example disassembler is identical in every respect
- * except it defines its own partitioner that disables the detection of functions by instruction patterns and adds a
- * user-defined pattern instead. */
-class MyDisassembler: public DisassemblerX86 {
+/* Example partitioner that demonstrates how to write a user-defined function detector that uses at least one protected data
+ * member (the instruction cache, in this case). */
+class MyPartitioner: public Partitioner {
 public:
-    MyDisassembler(size_t wordsize)
-        : DisassemblerX86(wordsize) {
-
-// DQ (4/18/2010): This code does not compile with ROSE (commented out to both mark 
-// it as such and allow tests of compiling the rest of ROSE using ROSE to proceed).
-#ifndef CXX_IS_ROSE_ANALYSIS
-        Partitioner *p = new Partitioner;
-        unsigned h = p->get_search();
-        h &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
-        p->set_search(h);
-        p->add_function_detector(user_pattern);
-        set_partitioner(p);
-#endif
+    MyPartitioner() {
+        set_search(get_search() & ~SgAsmFunctionDeclaration::FUNC_PATTERN);
+        add_function_detector(user_pattern);
     }
 private:
     /* Looks for "push bp" (any word size) and makes them the start of functions. */
-    static void user_pattern(Partitioner* p, SgAsmGenericHeader* hdr, const Disassembler::InstructionMap& insns) {
+    static void user_pattern(Partitioner* p_, SgAsmGenericHeader* hdr) {
         if (hdr) return; /*this function doesn't depend on anything in a file header*/
-        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
+        MyPartitioner *p = dynamic_cast<MyPartitioner*>(p_);
+        ROSE_ASSERT(p!=NULL);
+        for (Disassembler::InstructionMap::const_iterator ii=p->insns.begin(); ii!=p->insns.end(); ii++) {
             rose_addr_t addr = ii->first;
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
             if (!insn || insn->get_kind()!=x86_push) continue;
@@ -94,6 +85,16 @@ private:
             printf("Marking 0x%08"PRIx64" as the start of a function.\n", addr);
             p->add_function(addr, SgAsmFunctionDeclaration::FUNC_USERDEF);
         }
+    }
+};
+
+/* Example disassembler to replace the ROSE-defined x86 disassembler.  The example disassembler is identical in every respect
+ * except it defines its own partitioner. */
+class MyDisassembler: public DisassemblerX86 {
+public:
+    MyDisassembler(size_t wordsize)
+        : DisassemblerX86(wordsize) {
+        set_partitioner(new MyPartitioner());
     }
 };
 
