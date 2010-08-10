@@ -36,6 +36,9 @@ class Unparser_Nameq;
 // typedef and anonymous declaration bugs.
 #define ANONYMOUS_TYPEDEF_FIX false
 
+
+#define MAX_F90_LINE_LEN 72
+
 // DQ (2/6/03):
 // The unparser should not write to (modify) the AST.  This fix skips and locations
 // in the unparser when the AST is modified.  It is an experimental fix.

@@ -137,6 +137,9 @@ class  PreprocessingInfo
                CplusplusStyleComment,
                FortranStyleComment,
 
+           // FMZ(5/14/2010): Added  freeform comments (started with "!")
+               F90StyleComment,
+
             // DQ (11/20/2008): Added classification for blank line (a language independent form of comment).
                CpreprocessorBlankLine,
 

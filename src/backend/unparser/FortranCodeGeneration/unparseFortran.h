@@ -405,8 +405,15 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           void unparseAllocateStatement(SgStatement* stmt, SgUnparse_Info& info); 
           void unparseDeallocateStatement(SgStatement* stmt, SgUnparse_Info& info);
 
+       // FMZ (2/17/200(): Added support for co-array fortran "withteam" stmt
+          void unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info& info); 
+
       //! begin the unparser (unparser.C)
           void run_unparser();
+
+      //FMZ (2/10/2009): Added support for unparsing SgCoExpresson
+          void unparseCoArrayExpression      (SgExpression* expr, SgUnparse_Info& info);
+void curprint(const std::string&) const;
 
 };
 

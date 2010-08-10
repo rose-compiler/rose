@@ -1,7 +1,7 @@
 #ifndef __FORTRANPARSERSTATE_H_
 #define __FORTRANPARSERSTATE_H_
 
-
+//#include "rose.h"
 #include "fortran_support.h"
 
 #define astScopeStack              (*(FortranParserState::getCurrentScopeStack()))
@@ -53,111 +53,58 @@ class FortranParserState
        AstNameListType         currFunctionAttributeStack;
        vector<string>          currAstIncludeStack;
 
-       void clearStacks();
+       void clearStacks();       
 
      public:
 
-     // DQ (7/30/2010): Added empty function to if there are entries in the stack
-        static bool empty()
-         { return statesStack.empty(); }
-
-     // DQ (7/30/2010): Added assertions to all the functions below.
        // following functions will called by macro in ofp-rose connection files
        static  list<SgScopeStatement*>  *getCurrentScopeStack()
-        {
-          ROSE_ASSERT(statesStack.empty() == false);
-          return &(statesStack.top()->currScopeStack);
-        }
+          { return &(statesStack.top()->currScopeStack); }
 
        static  list<SgExpression*>      *getCurrentExpressionStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currExpressionStack);
-          }
+          { return &(statesStack.top()->currExpressionStack); }
 
        static  list<SgNode*>            *getCurrentNodeStack()
-          { 
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currNodeStack);
-          }
+          { return &(statesStack.top()->currNodeStack); }
 
        static  AstNameListType          *getCurrentNameStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currNameStack);
-          }
+          { return &(statesStack.top()->currNameStack); }
 
        static  list<SgType*>            *getCurrentTypeStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currTypeStack);
-          }
+          { return &(statesStack.top()->currTypeStack); }
 
        static  list<SgType*>            *getCurrentBaseTypeStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currBaseTypeStack);
-          }
+          { return &(statesStack.top()->currBaseTypeStack); }
 
        static  list<int>                *getCurrentIntentSpecStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currIntentSpecStack);
-          }
+          { return &(statesStack.top()->currIntentSpecStack); }
 
        static  list<int>                *getCurrentAttributeSpecStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currAttributeSpecStack);
-          }
+          { return &(statesStack.top()->currAttributeSpecStack); }
 
        static  list<SgExpression*>      *getCurrentInitializerStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currInitializerStack);
-          }
+          { return &(statesStack.top()->currInitializerStack); }
 
        static  list<SgExpression*>      *getCurrentTypeKindStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currTypeKindStack);
-          }
+          { return &(statesStack.top()->currTypeKindStack); }
 
        static  list<SgExpression*>      *getCurrentTypeParameterStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currTypeParameterStack);
-          }
+          { return &(statesStack.top()->currTypeParameterStack); }
 
        static  list<SgLabelSymbol*>     *getCurrentLabelSymbolStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currLabelSymbolStack);
-          }
+          { return &(statesStack.top()->currLabelSymbolStack); }
 
        static  list<SgIfStmt*>          *getCurrentIfStatementStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currIfStatementStack);
-          }
+          { return &(statesStack.top()->currIfStatementStack); }
 
        static  AstNameListType          *getCurrentActualArgumentNameStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currActualArgumentNameStack);
-          }
+          { return &(statesStack.top()->currActualArgumentNameStack); }
 
        static  AstNameListType          *getCurrentFunctionAttributeStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currFunctionAttributeStack);
-          }
+          { return &(statesStack.top()->currFunctionAttributeStack); }
 
        static  vector<string>          *getCurrentIncludeStack()
-          {
-            ROSE_ASSERT(statesStack.empty() == false);
-            return &(statesStack.top()->currAstIncludeStack);
-          }
+          { return &(statesStack.top()->currAstIncludeStack); }
 
        //Constructor:
        //   push "this" object of FortranParserState into the "statesStack"
