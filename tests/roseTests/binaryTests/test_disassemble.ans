@@ -12,8 +12,7 @@ using this memory map for disassembly:
     va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at anonymous + 0x00000000 ELF Load (segment 2)
     va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000 .data+.got.plt+.got+.dynamic+.jc...
     va 0x080496d4 + 0x0000092c = 0x0804a000 rw- at anonymous + 0x00000000 .bss+ELF Load (segment 3)
-disassembled 5158 instructions + 8 failures (use --show-bad to see errors)
-disassembler encountered 3 unresolved successors
+disassembled 1915 instructions and 1 failure (use --show-bad to see errors)
 Functions detected in this interpretation:
     Key for reason(s) address is a suspected function:
       E = entry address         C = call target           X = exception frame
@@ -23,7 +22,7 @@ Functions detected in this interpretation:
 
     Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Kind     Hash             Name
     --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------
-      1 0x080482c8 0x080482df     8/23     .C..SP.....  unknown 79cca92bea5cda43 _init
+      1 0x080482c8 0x080482df     8/23     .C..S......  unknown 79cca92bea5cda43 _init
       2 0x080482f0 0x080482f6     1/6      .C.I.......  unknown 0907d8af90186095 signal@plt
       3 0x08048300 0x08048306     1/6      .C.I.......  unknown 0907d8af90186095 puts@plt
       4 0x08048310 0x08048316     1/6      .C.I.......  unknown 0907d8af90186095 __libc_start_main@plt
@@ -31,40 +30,23 @@ Functions detected in this interpretation:
       6 0x08048330 0x08048336     1/6      .C.I.......  unknown 0907d8af90186095 __gmon_start__@plt
       7 0x08048340 0x08048362    14/34     E...S......  unknown 92023b92250caf66 _start
       8 0x08048362 0x08048364     2/2      ........N..  unknown 0907d8af90186095
-      9 0x08048364 0x08048388    15/36     .C..SP.....  unknown 0917b36843e6f8bd call_gmon_start
+      9 0x08048364 0x08048388    15/36     .C..S......  unknown 0917b36843e6f8bd call_gmon_start
      10 0x08048388 0x08048390     8/8      ........N..  unknown 0907d8af90186095
-     11 0x08048390 0x080483ce    20/62     .C..SP.....  unknown 0ac0dbac57d5cc69 __do_global_dtors_aux
-     12 0x080483d0 0x08048404    12/28     .C..SP...D.  unknown 506e8e65baccdfa1 frame_dummy
-     13 0x08048404 0x08048418     7/20     .C..SP.....  unknown 8147876b96787446 bar
-     14 0x08048418 0x0804842f     6/23     .C..SP.....  unknown c9caefa914566a04 foo
-     15 0x0804842f 0x08048440     5/17     ....SP.....  unknown 035ab7d9f4e2db64 handler
-     16 0x0804845b 0x08048486    12/43     ....SP.....  unknown 7bad4908b09c295f main
+     11 0x08048390 0x080483ce    20/62     .C..S......  unknown 0ac0dbac57d5cc69 __do_global_dtors_aux
+     12 0x080483d0 0x08048404    12/28     .C..S....D.  unknown 506e8e65baccdfa1 frame_dummy
+     13 0x08048404 0x08048418     7/20     .C..S......  unknown 8147876b96787446 bar
+     14 0x08048418 0x0804842f     6/23     .C..S......  unknown c9caefa914566a04 foo
+     15 0x0804842f 0x08048440     5/17     ....S......  unknown 035ab7d9f4e2db64 handler
+     16 0x0804845b 0x08048486    12/43     ....S......  unknown 7bad4908b09c295f main
      17 0x08048486 0x08048490    10/10     ........N..  unknown 0907d8af90186095
-     18 0x08048490 0x080484c8    22/56     ....SP.....  unknown 86310226610e5191 __libc_csu_init
-     19 0x08048500 0x08048558    24/60     ....SP...D.  unknown 7db322cd073000ba __libc_csu_fini
+     18 0x08048490 0x080484c8    22/56     ....S......  unknown 86310226610e5191 __libc_csu_init
+     19 0x08048500 0x08048558    24/60     ....S....D.  unknown 7db322cd073000ba __libc_csu_fini
      20 0x08048558 0x08048560     8/8      ........N..  unknown 0907d8af90186095
-     21 0x08048560 0x08048590    19/48     .C..SP.....  unknown 8e463b9c4de1346f __do_global_ctors_aux
-     22 0x08048590 0x080485aa    12/26     .C..SP.....  unknown f292102830d08b90 _fini
-     23 0x080492c8 0x080492df     8/23     .C...P.....  unknown 44f6ebfc2eeb1e3f
-     24 0x080492f0 0x080492f6     1/6      .C.........  unknown 0907d8af90186095
-     25 0x08049300 0x08049306     1/6      .C.........  unknown 0907d8af90186095
-     26 0x08049330 0x08049336     1/6      .C.........  unknown 0907d8af90186095
-     27 0x08049364 0x08049388    15/36     .C...P.....  unknown bea56953af8e269b
-     28 0x08049388 0x08049390     8/8      ........N..  unknown 0907d8af90186095
-     29 0x08049390 0x080493ce    20/62     .C...P.....  unknown 0ac0dbac57d5cc69
-     30 0x080493d0 0x08049404    12/28     .C...P...D.  unknown 506e8e65baccdfa1
-     31 0x08049404 0x08049416     5/18     .C...P.....  unknown 2ea852286a69595b
-     32 0x08049418 0x08049423     4/11     .C...P.....  unknown 200ffe4a0e29dda4
-     33 0x0804942f 0x08049440     5/17     .....P.....  unknown 22d44e7ce3535f75
-     34 0x0804945b 0x0804947f     9/36     .....P.....  unknown 2bad39fb58f17aaf
-     35 0x08049490 0x080494c8    22/56     .....P.....  unknown c83c4a47e534afd1
-     36 0x08049500 0x08049558    24/60     .....P...D.  unknown c746948962e74a42
-     37 0x08049558 0x08049560     8/8      ........N..  unknown 0907d8af90186095
-     38 0x08049560 0x08049590    19/48     .C...P.....  unknown 8e463b9c4de1346f
-     39 0x08049590 0x080495aa    12/26     .C...P.....  unknown 8b5e4865b00b162d
+     21 0x08048560 0x08048590    19/48     .C..S......  unknown 8e463b9c4de1346f __do_global_ctors_aux
+     22 0x08048590 0x080485aa    12/26     .C..S......  unknown f292102830d08b90 _fini
     --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------
 0x080482c8: ============================ 79cca92bea5cda432e261a160e032820558579c1
-0x080482c8: ============================ Function (call target, symbol, pattern) <_init>
+0x080482c8: ============================ Function (call target, symbol) <_init>
 0x080482c8: 865e5a240b7cc168d715dabb119bb8ed8b32308a
 0x080482c8: 55                |U     |   push   ebp
 0x080482c9: 89 e5             |..    |   mov    ebp, esp
@@ -137,7 +119,7 @@ Functions detected in this interpretation:
 0x08048363: 90                |.     |   nop    
             (successors: 0x08048364)
 0x08048364: ============================ 0917b36843e6f8bda6e7be37ee70529ccd706b2e
-0x08048364: ============================ Function (call target, symbol, pattern) <call_gmon_start>
+0x08048364: ============================ Function (call target, symbol) <call_gmon_start>
 0x08048364: d428affbe0e5425332d639e701261371668b9e21
 0x08048364: 55                |U     |   push   ebp
 0x08048365: 89 e5             |..    |   mov    ebp, esp
@@ -174,7 +156,7 @@ Functions detected in this interpretation:
 0x0804838f: 90                |.     |   nop    
             (successors: 0x08048390)
 0x08048390: ============================ 0ac0dbac57d5cc69eaf3dc2fb5923781a429831c
-0x08048390: ============================ Function (call target, symbol, pattern) <__do_global_dtors_aux>
+0x08048390: ============================ Function (call target, symbol) <__do_global_dtors_aux>
 0x08048390: 23e98a44a53806f1c681f39e6c6dd1b8745c2ccb
 0x08048390: 55                |U     |   push   ebp
 0x08048391: 89 e5             |..    |   mov    ebp, esp
@@ -218,7 +200,7 @@ Functions detected in this interpretation:
 0x080483cd: c3                |.     |   ret    
             (successors:...)
 0x080483d0: ============================ 506e8e65baccdfa172bd79aa88a026600ead7fd1
-0x080483d0: ============================ Function (call target, symbol, pattern, discontiguous) <frame_dummy>
+0x080483d0: ============================ Function (call target, symbol, discontiguous) <frame_dummy>
 0x080483d0: cb1af7706c467ffe8a0f7b2f98602a8b15eac35c
 0x080483d0: 55                |U     |   push   ebp
 0x080483d1: 89 e5             |..    |   mov    ebp, esp
@@ -240,7 +222,7 @@ Functions detected in this interpretation:
 0x08048403: c3                |.     |   ret    
             (successors:...)
 0x08048404: ============================ 8147876b96787446b5c74223cc391a57452cc931
-0x08048404: ============================ Function (call target, symbol, pattern) <bar>
+0x08048404: ============================ Function (call target, symbol) <bar>
 0x08048404: 539d1fc4d3d0fe6bdb6c352c42c407af5fe38885
 0x08048404: 55                |U     |   push   ebp
 0x08048405: 89 e5             |..    |   mov    ebp, esp
@@ -255,7 +237,7 @@ Functions detected in this interpretation:
 0x08048417: c3                |.     |   ret    
             (successors:...)
 0x08048418: ============================ c9caefa914566a046916436be72d325581f832bf
-0x08048418: ============================ Function (call target, symbol, pattern) <foo>
+0x08048418: ============================ Function (call target, symbol) <foo>
 0x08048418: eeeb9a5d260a6021c8aa18cbcc7b0e1712e2c98a
 0x08048418: 55                |U     |   push   ebp
 0x08048419: 89 e5             |..    |   mov    ebp, esp
@@ -269,7 +251,7 @@ Functions detected in this interpretation:
 0x0804842a: e8 f1 fe ff ff    |..... |   call   0x08048320
             (successors: 0x08048320)
 0x0804842f: ============================ 035ab7d9f4e2db648b42f1c09120d515c43be99a
-0x0804842f: ============================ Function (symbol, pattern) <handler>
+0x0804842f: ============================ Function (symbol) <handler>
 0x0804842f: 035ab7d9f4e2db648b42f1c09120d515c43be99a
 0x0804842f: 55                |U     |   push   ebp
 0x08048430: 89 e5             |..    |   mov    ebp, esp
@@ -278,7 +260,7 @@ Functions detected in this interpretation:
 0x0804843b: e8 d8 ff ff ff    |..... |   call   0x08048418
             (successors: 0x08048418)
 0x0804845b: ============================ 7bad4908b09c295ff64a61a10dcf285f08a0ce29
-0x0804845b: ============================ Function (symbol, pattern) <main>
+0x0804845b: ============================ Function (symbol) <main>
 0x0804845b: cf3db72a5e0fb02bf1005a468f47cbcab90d8f2a
 0x0804845b: 55                |U     |   push   ebp
 0x0804845c: 89 e5             |..    |   mov    ebp, esp
@@ -313,7 +295,7 @@ Functions detected in this interpretation:
 0x0804848f: 90                |.     |   nop    
             (successors: 0x08048490)
 0x08048490: ============================ 86310226610e51915502106e8b8a7a76a56f6f9f
-0x08048490: ============================ Function (symbol, pattern) <__libc_csu_init>
+0x08048490: ============================ Function (symbol) <__libc_csu_init>
 0x08048490: 006bd26ea43732b483d4d2ad96d6bf3dd5b6112d
 0x08048490: 55                |U     |   push   ebp
 0x08048491: 89 e5             |..    |   mov    ebp, esp
@@ -342,7 +324,7 @@ Functions detected in this interpretation:
 0x080484c7: c3                |.     |   ret    
             (successors:...)
 0x08048500: ============================ 7db322cd073000baaf9ea85a11bfd197bb2ede9d
-0x08048500: ============================ Function (symbol, pattern, discontiguous) <__libc_csu_fini>
+0x08048500: ============================ Function (symbol, discontiguous) <__libc_csu_fini>
 0x08048500: a504cd17dc10d8ddb8e5fec86f0939f115f80278
 0x08048500: 55                |U     |   push   ebp
 0x08048501: 89 e5             |..    |   mov    ebp, esp
@@ -385,7 +367,7 @@ Functions detected in this interpretation:
 0x0804855f: 90                |.     |   nop    
             (successors: 0x08048560)
 0x08048560: ============================ 8e463b9c4de1346f784fd1b2b10eab0a75f5f551
-0x08048560: ============================ Function (call target, symbol, pattern) <__do_global_ctors_aux>
+0x08048560: ============================ Function (call target, symbol) <__do_global_ctors_aux>
 0x08048560: e4edc1f4dc950ebb192d06c0d43e2bc44e6f4e46
 0x08048560: 55                |U     |   push   ebp
 0x08048561: 89 e5             |..    |   mov    ebp, esp
@@ -421,7 +403,7 @@ Functions detected in this interpretation:
 0x0804858f: c3                |.     |   ret    
             (successors:...)
 0x08048590: ============================ f292102830d08b9070d2986959d9fe969124fb7a
-0x08048590: ============================ Function (call target, symbol, pattern) <_fini>
+0x08048590: ============================ Function (call target, symbol) <_fini>
 0x08048590: b524375aa9aae3ed67309f5f27fb91d8898ee441
 0x08048590: 55                |U     |   push   ebp
 0x08048591: 89 e5             |..    |   mov    ebp, esp
@@ -438,314 +420,6 @@ Functions detected in this interpretation:
 0x080485a7: 5b                |[     |   pop    ebx
 0x080485a8: c9                |.     |   leave  
 0x080485a9: c3                |.     |   ret    
-            (successors:...)
-0x080492c8: ============================ 44f6ebfc2eeb1e3f7796e113fb7fb05941b65228
-0x080492c8: ============================ Function (call target, pattern) unknown name
-0x080492c8: 860a26c46d693ffd12bb279a8dfaed860bd9a574
-0x080492c8: 55                |U     |   push   ebp
-0x080492c9: 89 e5             |..    |   mov    ebp, esp
-0x080492cb: 83 ec 08          |...   |   sub    esp, 0x08
-0x080492ce: e8 91 00 00 00    |..... |   call   0x08049364
-            (successors: 0x080492d3 0x08049364)
-
-0x080492d3: 5cb116ed733cedf448a6edd3e1a3ab93583bf003
-0x080492d3: e8 f8 00 00 00    |..... |   call   0x080493d0
-            (successors: 0x080492d8 0x080493d0)
-
-0x080492d8: 4c97437a7516461b43205c5519dbebb4089b46eb
-0x080492d8: e8 83 02 00 00    |..... |   call   0x08049560
-            (successors: 0x080492dd 0x08049560)
-
-0x080492dd: d2da98af45a88a2d6eab770f8efd1df81acf41b4
-0x080492dd: c9                |.     |   leave  
-0x080492de: c3                |.     |   ret    
-            (successors:...)
-0x080492f0: ============================ 0907d8af90186095efbf55320d4b6b5eeea339da
-0x080492f0: ============================ Function (call target) unknown name
-0x080492f0: 0907d8af90186095efbf55320d4b6b5eeea339da
-0x080492f0: ff 25 b4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b4]
-            (successors:...)
-0x08049300: ============================ 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049300: ============================ Function (call target) unknown name
-0x08049300: 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049300: ff 25 b8 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b8]
-            (successors:...)
-0x08049330: ============================ 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049330: ============================ Function (call target) unknown name
-0x08049330: 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049330: ff 25 c4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c4]
-            (successors:...)
-0x08049364: ============================ bea56953af8e269bc185ebbf23dd28ce9aee1b05
-0x08049364: ============================ Function (call target, pattern) unknown name
-0x08049364: def7c2a4c0754ba692d7cec409750dd8e3ff781e
-0x08049364: 55                |U     |   push   ebp
-0x08049365: 89 e5             |..    |   mov    ebp, esp
-0x08049367: 53                |S     |   push   ebx
-0x08049368: 51                |Q     |   push   ecx
-0x08049369: e8 00 00 00 00    |..... |   call   0x0804936e
-0x0804936e: 5b                |[     |   pop    ebx
-0x0804936f: 81 c3 3a 13 00 00 |..:...|   add    ebx, 0x0000133a
-0x08049375: 8b 93 fc ff ff ff |......|   mov    edx, DWORD PTR ds:[ebx + 0xfffffffc(-0x00000004)]
-0x0804937b: 85 d2             |..    |   test   edx, edx
-0x0804937d: 74 05             |t.    |   je     0x08049384
-            (successors: 0x0804937f 0x08049384)
-
-0x0804937f: 27e48c85f681054044b0224d548a4a5861bb7c20
-0x0804937f: e8 ac ff ff ff    |..... |   call   0x08049330
-            (successors: 0x08049330)
-
-0x08049384: 47b62772997a687d17e207367e226f4e18aa1f3b
-0x08049384: 58                |X     |   pop    eax
-0x08049385: 5b                |[     |   pop    ebx
-0x08049386: c9                |.     |   leave  
-0x08049387: c3                |.     |   ret    
-            (successors:...)
-0x08049388: ============================ 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049388: ============================ Function (padding) unknown name
-0x08049388: 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049388: 90                |.     |   nop    
-0x08049389: 90                |.     |   nop    
-0x0804938a: 90                |.     |   nop    
-0x0804938b: 90                |.     |   nop    
-0x0804938c: 90                |.     |   nop    
-0x0804938d: 90                |.     |   nop    
-0x0804938e: 90                |.     |   nop    
-0x0804938f: 90                |.     |   nop    
-            (successors: 0x08049390)
-0x08049390: ============================ 0ac0dbac57d5cc69eaf3dc2fb5923781a429831c
-0x08049390: ============================ Function (call target, pattern) unknown name
-0x08049390: 23e98a44a53806f1c681f39e6c6dd1b8745c2ccb
-0x08049390: 55                |U     |   push   ebp
-0x08049391: 89 e5             |..    |   mov    ebp, esp
-0x08049393: 83 ec 08          |...   |   sub    esp, 0x08
-0x08049396: 80 3d d4 96 04 08 |.=....|
-0x0804939c: 00                |.     |   cmp    BYTE PTR ds:[0x080496d4], 0x00
-0x0804939d: 75 2d             |u-    |   jne    0x080493cc
-            (successors: 0x0804939f 0x080493cc)
-
-0x0804939f: a283737d8df59b887ce137d44da92ca20faf2968
-0x0804939f: a1 d0 96 04 08    |..... |   mov    eax, DWORD PTR ds:[0x080496d0]
-0x080493a4: 8b 10             |..    |   mov    edx, DWORD PTR ds:[eax]
-0x080493a6: 85 d2             |..    |   test   edx, edx
-0x080493a8: 74 1b             |t.    |   je     0x080493c5
-            (successors: 0x080493aa 0x080493c5)
-
-0x080493aa: 0907d8af90186095efbf55320d4b6b5eeea339da
-0x080493aa: 8d b6 00 00 00 00 |......|   lea    esi, [esi + 0x00000000]
-            (successors: 0x080493b0)
-
-0x080493b0: 15305605c4f4621b64cc58325201bf0cd74fce4b
-0x080493b0: 83 c0 04          |...   |   add    eax, 0x04
-0x080493b3: a3 d0 96 04 08    |..... |   mov    DWORD PTR ds:[0x080496d0], eax
-0x080493b8: ff d2             |..    |   call   edx
-            (successors: 0x080493ba...)
-
-0x080493ba: a283737d8df59b887ce137d44da92ca20faf2968
-0x080493ba: a1 d0 96 04 08    |..... |   mov    eax, DWORD PTR ds:[0x080496d0]
-0x080493bf: 8b 10             |..    |   mov    edx, DWORD PTR ds:[eax]
-0x080493c1: 85 d2             |..    |   test   edx, edx
-0x080493c3: 75 eb             |u.    |   jne    0x080493b0
-            (successors: 0x080493b0 0x080493c5)
-
-0x080493c5: 454734906e5cd9b3b54b626a45e10331fcf9309a
-0x080493c5: c6 05 d4 96 04 08 |......|
-0x080493cb: 01                |.     |   mov    BYTE PTR ds:[0x080496d4], 0x01
-            (successors: 0x080493cc)
-
-0x080493cc: d2da98af45a88a2d6eab770f8efd1df81acf41b4
-0x080493cc: c9                |.     |   leave  
-0x080493cd: c3                |.     |   ret    
-            (successors:...)
-0x080493d0: ============================ 506e8e65baccdfa172bd79aa88a026600ead7fd1
-0x080493d0: ============================ Function (call target, pattern, discontiguous) unknown name
-0x080493d0: cb1af7706c467ffe8a0f7b2f98602a8b15eac35c
-0x080493d0: 55                |U     |   push   ebp
-0x080493d1: 89 e5             |..    |   mov    ebp, esp
-0x080493d3: 83 ec 08          |...   |   sub    esp, 0x08
-0x080493d6: a1 d8 95 04 08    |..... |   mov    eax, DWORD PTR ds:[0x080495d8]
-0x080493db: 85 c0             |..    |   test   eax, eax
-0x080493dd: 74 21             |t!    |   je     0x08049400
-            (successors: 0x080493df 0x08049400)
-
-0x080493df: 49aee1ba93222a729619758a9e3d11130188fd39
-0x080493df: b8 00 00 00 00    |..... |   mov    eax, 0x00000000
-0x080493e4: 85 c0             |..    |   test   eax, eax
-0x080493e6: 74 18             |t.    |   je     0x08049400
-            (successors: 0x08049400)
-
-0x08049400: d2da98af45a88a2d6eab770f8efd1df81acf41b4
-0x08049400: 89 ec             |..    |   mov    esp, ebp
-0x08049402: 5d                |]     |   pop    ebp
-0x08049403: c3                |.     |   ret    
-            (successors:...)
-0x08049404: ============================ 2ea852286a69595bf0501189443866ca75a56f5d
-0x08049404: ============================ Function (call target, pattern) unknown name
-0x08049404: 2ea852286a69595bf0501189443866ca75a56f5d
-0x08049404: 55                |U     |   push   ebp
-0x08049405: 89 e5             |..    |   mov    ebp, esp
-0x08049407: 83 ec 08          |...   |   sub    esp, 0x08
-0x0804940a: c7 04 24 b4 85 04 |..$...|
-0x08049410: 08                |.     |   mov    DWORD PTR ss:[esp], 0x080485b4
-0x08049411: e8 ea fe ff ff    |..... |   call   0x08049300
-            (successors: 0x08049300)
-0x08049418: ============================ 200ffe4a0e29dda4747429b1f48354935d6bf701
-0x08049418: ============================ Function (call target, pattern) unknown name
-0x08049418: 200ffe4a0e29dda4747429b1f48354935d6bf701
-0x08049418: 55                |U     |   push   ebp
-0x08049419: 89 e5             |..    |   mov    ebp, esp
-0x0804941b: 83 ec 08          |...   |   sub    esp, 0x08
-0x0804941e: e8 e1 ff ff ff    |..... |   call   0x08049404
-            (successors: 0x08049404)
-0x0804942f: ============================ 22d44e7ce3535f7560b7e141cb72f6de701ba6eb
-0x0804942f: ============================ Function (pattern) unknown name
-0x0804942f: 22d44e7ce3535f7560b7e141cb72f6de701ba6eb
-0x0804942f: 55                |U     |   push   ebp
-0x08049430: 89 e5             |..    |   mov    ebp, esp
-0x08049432: 83 ec 08          |...   |   sub    esp, 0x08
-0x08049435: ff 05 d8 96 04 08 |......|   inc    DWORD PTR ds:[0x080496d8]
-0x0804943b: e8 d8 ff ff ff    |..... |   call   0x08049418
-            (successors: 0x08049418)
-0x0804945b: ============================ 2bad39fb58f17aaf632c855399b61f68d3fba57e
-0x0804945b: ============================ Function (pattern) unknown name
-0x0804945b: 2bad39fb58f17aaf632c855399b61f68d3fba57e
-0x0804945b: 55                |U     |   push   ebp
-0x0804945c: 89 e5             |..    |   mov    ebp, esp
-0x0804945e: 83 ec 08          |...   |   sub    esp, 0x08
-0x08049461: 83 e4 f0          |...   |   and    esp, 0xf0(-0x10)
-0x08049464: b8 00 00 00 00    |..... |   mov    eax, 0x00000000
-0x08049469: 29 c4             |).    |   sub    esp, eax
-0x0804946b: c7 44 24 04 2f 84 |.D$./.|
-0x08049471: 04 08             |..    |   mov    DWORD PTR ss:[esp + 0x04], 0x0804842f
-0x08049473: c7 04 24 0a 00 00 |..$...|
-0x08049479: 00                |.     |   mov    DWORD PTR ss:[esp], 0x0000000a
-0x0804947a: e8 71 fe ff ff    |.q... |   call   0x080492f0
-            (successors: 0x080492f0)
-0x08049490: ============================ c83c4a47e534afd1b972ae8274e10cddf02bf348
-0x08049490: ============================ Function (pattern) unknown name
-0x08049490: 4e669a0f200dccf46fa46c4169bdc99680f28dfa
-0x08049490: 55                |U     |   push   ebp
-0x08049491: 89 e5             |..    |   mov    ebp, esp
-0x08049493: 57                |W     |   push   edi
-0x08049494: 56                |V     |   push   esi
-0x08049495: 53                |S     |   push   ebx
-0x08049496: 83 ec 0c          |...   |   sub    esp, 0x0c
-0x08049499: e8 00 00 00 00    |..... |   call   0x0804949e
-0x0804949e: 5b                |[     |   pop    ebx
-0x0804949f: 81 c3 0a 12 00 00 |......|   add    ebx, 0x0000120a
-0x080494a5: e8 1e fe ff ff    |..... |   call   0x080492c8
-            (successors: 0x080492c8 0x080494aa)
-
-0x080494aa: 865ad048c5396325d6d6c2c31d5cc54b70d97eb2
-0x080494aa: 8d 83 20 ff ff ff |.. ...|   lea    eax, [ebx + 0xffffff20(-0x000000e0)]
-0x080494b0: 8d 93 20 ff ff ff |.. ...|   lea    edx, [ebx + 0xffffff20(-0x000000e0)]
-0x080494b6: 29 d0             |).    |   sub    eax, edx
-0x080494b8: c1 f8 02          |...   |   sar    eax, 0x02
-0x080494bb: 89 45 f0          |.E.   |   mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax
-0x080494be: 75 10             |u.    |   jne    0x080494d0
-0x080494c0: 83 c4 0c          |...   |   add    esp, 0x0c
-0x080494c3: 5b                |[     |   pop    ebx
-0x080494c4: 5e                |^     |   pop    esi
-0x080494c5: 5f                |_     |   pop    edi
-0x080494c6: 5d                |]     |   pop    ebp
-0x080494c7: c3                |.     |   ret    
-            (successors:...)
-0x08049500: ============================ c746948962e74a42b4d7bee1e5e2614c6b9c4642
-0x08049500: ============================ Function (pattern, discontiguous) unknown name
-0x08049500: 1ff17b53b9c79225a3ace8739b54892ac54a9aa7
-0x08049500: 55                |U     |   push   ebp
-0x08049501: 89 e5             |..    |   mov    ebp, esp
-0x08049503: 57                |W     |   push   edi
-0x08049504: 56                |V     |   push   esi
-0x08049505: 53                |S     |   push   ebx
-0x08049506: 83 ec 0c          |...   |   sub    esp, 0x0c
-0x08049509: e8 00 00 00 00    |..... |   call   0x0804950e
-0x0804950e: 5b                |[     |   pop    ebx
-0x0804950f: 81 c3 9a 11 00 00 |......|   add    ebx, 0x0000119a
-0x08049515: 8d 83 20 ff ff ff |.. ...|   lea    eax, [ebx + 0xffffff20(-0x000000e0)]
-0x0804951b: 8d 93 20 ff ff ff |.. ...|   lea    edx, [ebx + 0xffffff20(-0x000000e0)]
-0x08049521: 29 d0             |).    |   sub    eax, edx
-0x08049523: c1 f8 02          |...   |   sar    eax, 0x02
-0x08049526: 89 45 f0          |.E.   |   mov    DWORD PTR ss:[ebp + 0xf0(-0x10)], eax
-0x08049529: 48                |H     |   dec    eax
-0x0804952a: 83 f8 ff          |...   |   cmp    eax, 0xff(-0x01)
-0x0804952d: 74 1c             |t.    |   je     0x0804954b
-0x0804954b: e8 40 00 00 00    |.@... |   call   0x08049590
-            (successors: 0x08049550 0x08049590)
-
-0x08049550: d8b7efdadb20d867177b56927eb6e866aed6dce5
-0x08049550: 83 c4 0c          |...   |   add    esp, 0x0c
-0x08049553: 5b                |[     |   pop    ebx
-0x08049554: 5e                |^     |   pop    esi
-0x08049555: 5f                |_     |   pop    edi
-0x08049556: 5d                |]     |   pop    ebp
-0x08049557: c3                |.     |   ret    
-            (successors:...)
-0x08049558: ============================ 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049558: ============================ Function (padding) unknown name
-0x08049558: 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049558: 90                |.     |   nop    
-0x08049559: 90                |.     |   nop    
-0x0804955a: 90                |.     |   nop    
-0x0804955b: 90                |.     |   nop    
-0x0804955c: 90                |.     |   nop    
-0x0804955d: 90                |.     |   nop    
-0x0804955e: 90                |.     |   nop    
-0x0804955f: 90                |.     |   nop    
-            (successors: 0x08049560)
-0x08049560: ============================ 8e463b9c4de1346f784fd1b2b10eab0a75f5f551
-0x08049560: ============================ Function (call target, pattern) unknown name
-0x08049560: e4edc1f4dc950ebb192d06c0d43e2bc44e6f4e46
-0x08049560: 55                |U     |   push   ebp
-0x08049561: 89 e5             |..    |   mov    ebp, esp
-0x08049563: 53                |S     |   push   ebx
-0x08049564: 83 ec 04          |...   |   sub    esp, 0x04
-0x08049567: bb c8 95 04 08    |..... |   mov    ebx, 0x080495c8
-0x0804956c: a1 c8 95 04 08    |..... |   mov    eax, DWORD PTR ds:[0x080495c8]
-0x08049571: 83 f8 ff          |...   |   cmp    eax, 0xff(-0x01)
-0x08049574: 74 16             |t.    |   je     0x0804958c
-            (successors: 0x08049576 0x0804958c)
-
-0x08049576: 0907d8af90186095efbf55320d4b6b5eeea339da
-0x08049576: 8d 76 00          |.v.   |   lea    esi, [esi + 0x00]
-0x08049579: 8d bc 27 00 00 00 |..'...|
-0x0804957f: 00                |.     |   lea    edi, [edi + 0x00000000]
-            (successors: 0x08049580)
-
-0x08049580: 1c7f9262e1d0d3873846e57b7f7fbb66b79effd0
-0x08049580: 83 eb 04          |...   |   sub    ebx, 0x04
-0x08049583: ff d0             |..    |   call   eax
-            (successors: 0x08049585...)
-
-0x08049585: 0bd84ab5cfa2ac33a896620627dbb5af7f6d443a
-0x08049585: 8b 03             |..    |   mov    eax, DWORD PTR ds:[ebx]
-0x08049587: 83 f8 ff          |...   |   cmp    eax, 0xff(-0x01)
-0x0804958a: 75 f4             |u.    |   jne    0x08049580
-            (successors: 0x08049580 0x0804958c)
-
-0x0804958c: 740bfa102f1e25f51e0d053d30dfe5591dca3927
-0x0804958c: 58                |X     |   pop    eax
-0x0804958d: 5b                |[     |   pop    ebx
-0x0804958e: 5d                |]     |   pop    ebp
-0x0804958f: c3                |.     |   ret    
-            (successors:...)
-0x08049590: ============================ 8b5e4865b00b162dade544eb787730e84e8cf621
-0x08049590: ============================ Function (call target, pattern) unknown name
-0x08049590: cce86f1729717e50ba0743dd06555fa65626e91a
-0x08049590: 55                |U     |   push   ebp
-0x08049591: 89 e5             |..    |   mov    ebp, esp
-0x08049593: 53                |S     |   push   ebx
-0x08049594: 50                |P     |   push   eax
-0x08049595: e8 00 00 00 00    |..... |   call   0x0804959a
-0x0804959a: 5b                |[     |   pop    ebx
-0x0804959b: 81 c3 0e 11 00 00 |......|   add    ebx, 0x0000110e
-0x080495a1: e8 ea fd ff ff    |..... |   call   0x08049390
-            (successors: 0x08049390 0x080495a6)
-
-0x080495a6: 47b62772997a687d17e207367e226f4e18aa1f3b
-0x080495a6: 58                |X     |   pop    eax
-0x080495a7: 5b                |[     |   pop    ebx
-0x080495a8: c9                |.     |   leave  
-0x080495a9: c3                |.     |   ret    
             (successors:...)
 
 

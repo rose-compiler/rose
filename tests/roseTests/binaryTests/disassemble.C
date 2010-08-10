@@ -36,6 +36,15 @@ Description:\n\
     Convenience switch that turns on the --debug-disassembler and\n\
     --debug-partitioner switches\n\
 \n\
+  --disassemble\n\
+    Call the disassembler explicitly, using the instruction search flags\n\
+    specified with the -rose:disassembler_search switch.  Without this\n\
+    --disassemble switch, the disassembler is called by the instruction\n\
+    partitioner whenever the partitioner needs an instruction. When the\n\
+    partitioner drives the disassembly we might spend substantially less time\n\
+    disassembling, but fail to discover functions that are never statically\n\
+    called.\n\
+\n\
   --dos\n\
     Normally, when the disassembler is invoked on a Windows PE or related\n\
     container file it will ignore the DOS interpretation. This switch causes\n\
@@ -575,6 +584,7 @@ main(int argc, char *argv[])
     bool do_show_functions = false;
     bool do_raw = false;
     bool do_rose_help = false;
+    bool do_call_disassembler = false;
 
     rose_addr_t raw_entry_va = 0;
     MemoryMap raw_map;
@@ -598,6 +608,8 @@ main(int argc, char *argv[])
             do_ast_dot = true;
         } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
             do_cfg_dot = true;
+        } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
+            do_call_disassembler = true;
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
@@ -800,6 +812,8 @@ main(int argc, char *argv[])
      * Decide what to disassemble.
      *------------------------------------------------------------------------------------------------------------------------*/
 
+    /* Note that if we using an active partitioner that calls the disassembler whenever an instruction is needed, then there's
+     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here. */
     MemoryMap *map = NULL;
     Disassembler::AddressSet worklist;
 
@@ -807,6 +821,7 @@ main(int argc, char *argv[])
          /* We computed the memory map when we processed command-line arguments. */
         map = &raw_map;
         worklist.insert(raw_entry_va);
+        partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
     } else {
         /* See Disassembler::disassembleInterp() for how to construct a memory map from an interpretation. */
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
@@ -832,49 +847,31 @@ main(int argc, char *argv[])
                 disassembler->search_function_symbols(&worklist, map, *hi);
         }
     }
+
+    /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
+     * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
+     * disassembly. It is redundant to call set_map() with an activer paritioner, but doesn't hurt anything. */
     partitioner->set_map(map);
 
     printf("using this memory map for disassembly:\n");
     map->dump(stdout, "    ");
-    
-    /*------------------------------------------------------------------------------------------------------------------------
-     * Run the disassembler
-     *------------------------------------------------------------------------------------------------------------------------*/
-
-    Disassembler::InstructionMap insns;
-    Disassembler::AddressSet successors;
-    Disassembler::BadMap bad;
-    insns = disassembler->disassembleBuffer(map, worklist, &successors, &bad);
-    printf("disassembled %zu instruction%s + %zu failure%s",
-           insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
-    if (bad.size()>0) {
-        if (show_bad) {
-            printf(":\n");
-            for (Disassembler::BadMap::iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
-                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
-        } else {
-            printf(" (use --show-bad to see errors)\n");
-        }
-    } else {
-        printf("\n");
-    }
-
-    if (!successors.empty()) {
-        printf("disassembler encountered %zu unresolved successor%s\n", successors.size(), 1==successors.size()?"":"s");
-    } else if (do_raw) {
-        printf("buffer is self contained.\n");
-    }
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Partition instructions into basic blocks and functions
+     * Run the disassembler and partitioner
      *------------------------------------------------------------------------------------------------------------------------*/
-
-    if (do_raw)
-        partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
-
     SgAsmBlock *block = NULL;
+    Disassembler::BadMap bad;
+    Disassembler::InstructionMap insns;
+
     try {
-        block = partitioner->partition(interp, insns);
+        if (do_call_disassembler) {
+            insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
+            block = partitioner->partition(interp, insns);
+        } else {
+            block = partitioner->partition(interp, disassembler, map);
+            insns = partitioner->get_instructions();
+            bad = partitioner->get_disassembler_errors();
+        }
     } catch (const Partitioner::Exception &e) {
         std::cerr <<"partitioner exception: " <<e <<"\n";
         exit(1);
@@ -889,6 +886,20 @@ main(int argc, char *argv[])
     /*------------------------------------------------------------------------------------------------------------------------
      * Show the results
      *------------------------------------------------------------------------------------------------------------------------*/
+
+    printf("disassembled %zu instruction%s and %zu failure%s",
+           insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
+    if (!bad.empty()) {
+        if (show_bad) {
+            printf(":\n");
+            for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
+                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
+        } else {
+            printf(" (use --show-bad to see errors)\n");
+        }
+    } else {
+        printf("\n");
+    }
 
     if (do_show_functions)
         ShowFunctions().show(block);
