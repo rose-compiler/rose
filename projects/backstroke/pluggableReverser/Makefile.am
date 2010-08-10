@@ -5,14 +5,13 @@ SUBDIRS =
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
 # Build a library of all the reverser code
-noinst_LTLIBRARIES =  libBackstrokePluggableReverser.la
+noinst_LIBRARIES =  libBackstrokePluggableReverser.a
 
-libBackstrokePluggableReverser_ladir = .
-libBackstrokePluggableReverser_la_DEPENDENCIES =
-libBackstrokePluggableReverser_la_SOURCES = expressionProcessor.C statementProcessor.C eventProcessor.C variableVersionTable.C akgulStyleExpressionProcessor.C \
+libBackstrokePluggableReverser_a_DEPENDENCIES =
+libBackstrokePluggableReverser_a_SOURCES = expressionProcessor.C statementProcessor.C eventProcessor.C variableVersionTable.C akgulStyleExpressionProcessor.C \
 						straightlineStatementProcessor.C
-libBackstrokePluggableReverser_includedir = $(includedir)/backstroke
-libBackstrokePluggableReverser_include_HEADERS = expressionProcessor.h statementProcessor.h eventProcessor.h variableVersionTable.h akgulStyleExpressionProcessor.h \
+libBackstrokePluggableReverser_a_includedir = $(includedir)/backstroke
+libBackstrokePluggableReverser_a_include_HEADERS = expressionProcessor.h statementProcessor.h eventProcessor.h variableVersionTable.h akgulStyleExpressionProcessor.h \
 						straightlineStatementProcessor.h
 
 EXTRA_DIST = 
