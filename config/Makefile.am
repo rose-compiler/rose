@@ -44,7 +44,6 @@ FILES_NOT_REQUIRED_FOR_DISTRIBUTIONS = \
      support-doxygen.m4 \
      support-insure.m4 \
      support-maple.m4 \
-     support-mysql.m4 \
      support-omp.m4 \
      support-gcc-omp.m4 \
      support-purify.m4 \

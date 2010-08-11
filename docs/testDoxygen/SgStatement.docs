@@ -186,3 +186,10 @@ which symbols can be constructed.
 \return Returns SgSymbol pointer.
 */
 
+/*!
+\fn SgStatement::isChildUsedAsLValue(SgExpression *)
+\brief Virtual function to determine if the provided expression is used as an l-value within the cotext of this statement.
+\return True if the expression is used within this statement as an l-value.
+*/
+
+
