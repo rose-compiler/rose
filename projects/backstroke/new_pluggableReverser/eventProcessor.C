@@ -20,14 +20,26 @@ SgExpression* ProcessorBase::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-ExpressionReversalVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
+#if 0
+InstrumentedExpressionVec ProcessorBase::processExpression(const ExpressionPackage& exp_pkg)
 {
-    return event_processor_->processExpression(exp, var_table, isReverseValueUsed);
+    return event_processor_->processExpression(exp_pkg);
 }
 
-StatementReversalVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage& stmt_pkg)
 {
-    return event_processor_->processStatement(stmt, var_table);
+    return event_processor_->processStatement(stmt_pkg);
+}
+#endif
+
+vector<EvaluationResult> ProcessorBase::evaluateExpression(const ExpressionPackage& exp_pkg)
+{
+    return event_processor_->evaluateExpression(exp_pkg);
+}
+
+vector<EvaluationResult> ProcessorBase::evaluateStatement(const StatementPackage& stmt_pkg)
+{
+    return event_processor_->evaluateStatement(stmt_pkg);
 }
 
 bool ProcessorBase::isStateVariable(SgExpression* exp)
@@ -35,52 +47,56 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-ExpressionReversalVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
+ProcessedStatement EventProcessor::processStatement(SgStatement* stmt, EvaluationResult& result)
 {
-    ExpressionReversalVec output;
+    StatementProcessor* stmt_processor = result.stmt_processors.top();
+    result.stmt_processors.pop();
+    return stmt_processor->process(stmt, result.exp_processors, result.stmt_processors);
+}
+
+vector<EvaluationResult> EventProcessor::evaluateExpression(const ExpressionPackage& exp_pkg)
+{
+    vector<EvaluationResult> results;
 
     // If two results have the same variable table, we remove the one which has the higher cost.
     
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        ExpressionReversalVec result = exp_processor->process(exp, var_table, isReverseValueUsed);
+        vector<EvaluationResult> res = exp_processor->evaluate(exp_pkg);
 
-        foreach (const ExpressionReversal& exp1, result)
+        foreach (const EvaluationResult& r1, res)
         {
             bool discard = false;
-            for (size_t i = 0; i < output.size(); ++i)
+            for (size_t i = 0; i < results.size(); ++i)
             {
-                ExpressionReversal& exp2 = output[i];
-                if (exp1.var_table == exp2.var_table) 
+                EvaluationResult& r2 = results[i];
+                if (r1.var_table == r2.var_table) 
                 {
-                    if (exp1.cost > exp2.cost)
+                    if (r1.cost > r2.cost)
                     {
                         discard = true;
-                        deepDelete(exp1.fwd_exp);
-                        deepDelete(exp1.rvs_exp);
                         break;
                     }
-                    else if (exp1.cost < exp2.cost)
+                    else if (r1.cost < r2.cost)
                     {
-                        deepDelete(exp2.fwd_exp);
-                        deepDelete(exp2.rvs_exp);
-                        output.erase(output.begin() + i);
+                        results.erase(results.begin() + i);
                         --i;
                     }
                 }
             }
 
             if (!discard)
-                output.push_back(exp1);
+                results.push_back(r1);
         }
         //output.insert(output.end(), result.begin(), result.end());
     }
-    return output;
+    return results;
 }
 
-StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+
+vector<EvaluationResult> EventProcessor::evaluateStatement(const StatementPackage& stmt_pkg)
 {
-    StatementReversalVec output;
+    vector<EvaluationResult> results;
 
     // Here we update the variable version table, remove those which are not used any more.
     // Note that we process statements in reverse order in any scope, a variable is not used means
@@ -91,7 +107,7 @@ StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const V
     // after processing statement 3, we can remove t from the variable version table because it's not
     // useful for our transformation anymore.
 
-    vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt);
+    vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt_pkg.stmt);
     vector<SgExpression*> vars_to_remove;
 #if 0
     foreach (SgExpression* var, vars)
@@ -103,47 +119,44 @@ StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const V
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        StatementReversalVec result = stmt_processor->process(stmt, var_table);
-        foreach (StatementReversal& stmt1, result)
+        vector<EvaluationResult> res = stmt_processor->evaluate(stmt_pkg);
+        foreach (EvaluationResult& r1, res)
         {
             // Remove those variables from variable version table if they are not useful anymore.
             foreach (SgExpression* var, vars_to_remove)
             {
-                stmt1.var_table.removeVariable(var);
+                r1.var_table.removeVariable(var);
             }
 
             // If two results have the same variable table, we remove the one which has the higher cost.
 
             bool discard = false;
-            for (size_t i = 0; i < output.size(); ++i)
+            for (size_t i = 0; i < results.size(); ++i)
             {
-                StatementReversal& stmt2 = output[i];
-                if (stmt1.var_table == stmt2.var_table) 
+                EvaluationResult& r2 = results[i];
+                if (r1.var_table == r2.var_table) 
                 {
-                    if (stmt1.cost > stmt2.cost)
+                    if (r1.cost > r2.cost)
                     {
                         discard = true;
-                        deepDelete(stmt1.fwd_stmt);
-                        deepDelete(stmt1.rvs_stmt);
                         break;
                     }
-                    else if (stmt1.cost < stmt2.cost)
+                    else if (r1.cost < r2.cost)
                     {
-                        deepDelete(stmt2.fwd_stmt);
-                        deepDelete(stmt2.rvs_stmt);
-                        output.erase(output.begin() + i);
+                        results.erase(results.begin() + i);
                         --i;
                     }
                 }
             }
 
             if (!discard)
-                output.push_back(stmt1);
+                results.push_back(r1);
         }
-        //output.insert(output.end(), result.begin(), result.end());
+        //results.insert(results.end(), result.begin(), result.end());
     }
-    return output;
+    return results;
 }
+
 
 SgExpression* EventProcessor::getStackVar(SgType* type)
 {
@@ -217,17 +230,20 @@ FuncDeclPairs EventProcessor::processEvent()
     FuncDeclPairs outputs;
 
     SimpleCostModel cost_model;
-    StatementReversalVec bodies = processStatement(body, var_table);
+    //InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table));
+    vector<EvaluationResult> results = evaluateStatement(StatementPackage(body, var_table));
 
     
     static int ctr = 0;
     // Sort the generated bodies so that those with the least cost appears first.
-    sort(bodies.begin(), bodies.end());
+    sort(results.begin(), results.end());
 
-    foreach (StatementReversal& stmt_obj, bodies)
+    foreach (EvaluationResult& res, results)
     {
-        fixVariableReferences(stmt_obj.fwd_stmt);
-        fixVariableReferences(stmt_obj.rvs_stmt);
+        ProcessedStatement stmt = processStatement(body, res);
+
+        fixVariableReferences(stmt.fwd_stmt);
+        fixVariableReferences(stmt.rvs_stmt);
 
         string ctr_str = lexical_cast<string > (ctr++);
 
@@ -237,7 +253,7 @@ FuncDeclPairs EventProcessor::processEvent()
                     fwd_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-        SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt_obj.fwd_stmt));
+        SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
         SgName rvs_func_name = event_->get_name() + "_reverse" + ctr_str;
         SgFunctionDeclaration* rvs_func_decl =
@@ -245,11 +261,11 @@ FuncDeclPairs EventProcessor::processEvent()
                     rvs_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-        SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt_obj.rvs_stmt));
+        SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
 
         // Add the cost information as comments to generated functions.
-        string comment = "Cost: " + lexical_cast<string>(stmt_obj.cost.getCost());
+        string comment = "Cost: " + lexical_cast<string>(res.cost.getCost());
         attachComment(fwd_func_decl, comment);
         attachComment(rvs_func_decl, comment);
 

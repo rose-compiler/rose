@@ -6,11 +6,11 @@
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
+#include <boost/timer.hpp>
 
 #include "utilities/CPPDefinesAndNamespaces.h"
 
 
-#include <VariableRenaming.h>
 
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -78,9 +78,11 @@ int main(int argc, char * argv[])
        // VariableRenaming var_renaming(project);
         //var_renaming.run();
 
+        timer t;
         // Here reverse the event function into several versions.
         FuncDeclPairs output = event_processor.processEvent(decl);
 
+        cout << "Time used: " << t.elapsed() << endl;
         cout << "Event is processed successfully!\n";
         
         foreach (FuncDeclPair& func_decl_pair, output)
