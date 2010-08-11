@@ -55,6 +55,8 @@ FixupInClassDataInitialization::visit (SgNode* node)
                               ROSE_ASSERT(modifierType != NULL);
                               modifierType->get_typeModifier().get_constVolatileModifier().setConst();
 
+                              printf ("DEBUGGING: just called new SgModifierType() modifierType = %p \n",modifierType);
+
 #if DEBUG_SAGE_ACCESS_FUNCTIONS
                            // DQ (6/13/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and 
                            // DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION in sage3.h indicate this is required.
@@ -68,6 +70,13 @@ FixupInClassDataInitialization::visit (SgNode* node)
                               (*variable)->set_typeptr(modifierType);
                             }
                          ROSE_ASSERT(modifierType != NULL);
+
+                         // FMZ (12/18/2009): 
+                         //    the flag may set in the SgVariableDeclaration instead of individual variable entry
+                         if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ==false ) {
+                                  ROSE_ASSERT (modifierType->get_typeModifier().get_constVolatileModifier().isConst());
+                         }
+
                          if (modifierType->get_typeModifier().get_constVolatileModifier().isConst() == false)
                             {
                               printf ("Error: this should be a const variable (might be a fortran specific problem) \n");

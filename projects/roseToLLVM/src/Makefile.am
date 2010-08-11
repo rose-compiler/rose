@@ -1,9 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_LLVM
-
 #############################################################################
 SUBDIRS 		= rosetollvm
+
+if ROSE_USE_LLVM
 
 #############################################################################
 #MAINTAINERCLEANFILES	= Makefile.in
@@ -32,5 +32,6 @@ rose2llvm_CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Wno-depreca
 rose2llvm_LDADD		= rosetollvm/librosetollvm.la
 
 endif
+
 
 #############################################################################

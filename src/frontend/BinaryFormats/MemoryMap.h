@@ -61,7 +61,7 @@ public:
             : va(va), size(size), base(const_cast<void*>(base)), offset(offset), read_only(true), mapperms(perms), anonymous(NULL)
             {}
 
-        /** Creates an anonymous mapping where all addresses of the mapping are initially contain zero bytes. Note that memory
+        /** Creates an anonymous mapping where all addresses of the mapping initially contain zero bytes. Note that memory
          *  is not allocated (and the base address is not assigned) until a write attempt is made. The implementation is free
          *  to coalesce compatible adjacent anonymous regions as it sees fit, reallocating memory as necessary. */
         MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_READ)
@@ -99,6 +99,13 @@ public:
             return mapperms;
         }
 
+        /** Modifies the mapping permissions.  The mapping permissions are orthogonal to is_read_only(). For instance, an
+         *  element can indicate that memory would be mapped read-only by the loader even when the underlying storage in ROSE
+         *  is writable. */
+        void set_mapperms(unsigned new_perms) {
+            mapperms = new_perms;
+        }
+
         /** Returns the buffer to which the offset applies.  The base for anonymous elements is probably not of interest to a
          *  caller since the implementation is free to allocate anonymous memory as it sees fit (in fact, it might not even
          *  use a large contiguous buffer). */
@@ -126,6 +133,16 @@ public:
          *  cannot. If the two elements overlap but are inconsistent then a MemoryMap::Inconsistent exception is thrown. */
         bool merge(const MapElement &other);
 		
+        /** Give the map entry a name. This can be used for debugging, but don't rely too heavily on it because a MemoryMap
+         *  may sometimes combine two adjacent elements that have different names. Returns a reference to @p this object so
+         *  that it is convenient to use this method in the argument expression for MemoryMap::insert(). */
+        MapElement& set_name(const std::string &name);
+        
+        /** Return the name assigned to this map element.  Names are used primarily for debugging purposes. */
+        const std::string &get_name() const {
+            return name;
+        }
+
 #ifdef _MSC_VER
         /* CH (4/15/2010): Make < operator be its member function instead of non-member function outside to avoid template
          * parameter deduction failure in MSVC */
@@ -146,6 +163,7 @@ public:
             offset = other.offset;
             read_only = other.read_only;
             mapperms = other.mapperms;
+            name = other.name;
             if (anonymous && *anonymous>0)
                 (*anonymous)++;
         }
@@ -165,6 +183,7 @@ public:
             offset = 0;
             read_only = 0;
             mapperms = MM_PROT_NONE;
+            name = "";
         }
 
         /** Helper function for merge() when this and @p other element are both anonymous. This method will allocate storage
@@ -172,12 +191,38 @@ public:
          *  oldsize argument is the size of this element before we merged it with the other. */
         void merge_anonymous(const MapElement &other, size_t oldsize);
 
+        /** Adjust the debugging name when merging two map elements. */
+        void merge_names(const MapElement &other);
+
+        /** Changes the virtual address of a mapped region.  This is private because changing the starting address can cause
+         *  the mapping to become inconsistent. In general, it is safe to split a map element into smaller pieces and this
+         *  method can be used to adjust the starting addresses of those pieces. The set_offset() method should also be called
+         *  when adjusting the starting address. */
+        void set_va(rose_addr_t new_va) {
+            va = new_va;
+        }
+
+        /** Changes the starting offset with respect to the 'base'.  The starting offset sometimes needs to be adjusted when
+         *  splitting a map element into multiple parts. */
+        void set_offset(rose_addr_t new_offset) {
+            offset = new_offset;
+        }
+
+        /** Changes the size of a mapped region. This is private because changing the size can cause the mapping to become
+         *  inconsistent. In general, it is safe to split a map element into smaller pieces and this method can be used to
+         *  adjust the size of those pieces. */
+        void set_size(size_t sz) {
+            ROSE_ASSERT(sz>0);
+            size = sz;
+        }
+
         rose_addr_t va;                 /**< Virtual address for start of region */
         size_t size;                    /**< Number of bytes in region */
         mutable void *base;             /**< The buffer to which 'offset' applies */
         rose_addr_t offset;             /**< Offset with respect to 'base' */
         bool read_only;                 /**< If set then write() is not allowed */
         unsigned mapperms;              /**< Mapping permissions (MM_PROT_{READ,WRITE,EXEC} from Protection enum) */
+        std::string name;               /**< Name used for debugging purposes */
 
         /** If non-null then the element describes an anonymous mapping, one that is initially all zero.  The 'base' data
          *  member in this case will initially be NULL and will be allocated when a MemoryMap::write() modifies the anonymous
@@ -261,6 +306,9 @@ public:
 
     /** Returns the highest mapped address. */
     rose_addr_t highest_va() const;
+
+    /** Sets protection bits for the specified address range.  The entire address range must already be mapped. */
+    void mprotect(const MapElement &elmt);
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output. */

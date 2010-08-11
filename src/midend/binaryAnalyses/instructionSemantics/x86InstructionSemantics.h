@@ -851,6 +851,35 @@ struct X86InstructionSemantics {
                 break;
             }
 
+            case x86_xadd: {
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
+                switch (numBytesInAsmType(operands[0]->get_type())) {
+                    case 1: {
+                        Word(8) result = doAddOperation<8>(read8(operands[0]), read8(operands[1]), false, policy.false_());
+                        write8(operands[1], read8(operands[0]));
+                        write8(operands[0], result);
+                        break;
+                    }
+                    case 2: {
+                        Word(16) result = doAddOperation<16>(read16(operands[0]), read16(operands[1]), false, policy.false_());
+                        write16(operands[1], read16(operands[0]));
+                        write16(operands[0], result);
+                        break;
+                    }
+                    case 4: {
+                        Word(32) result = doAddOperation<32>(read32(operands[0]), read32(operands[1]), false, policy.false_());
+                        write32(operands[1], read32(operands[0]));
+                        write32(operands[0], result);
+                        break;
+                    }
+                    default:
+                        throw Exception("size not implemented", insn);
+                        break;
+                }
+                break;
+            }
+
             case x86_add: {
                 if (operands.size()!=2)
                     throw Exception("instruction must have two operands", insn);
@@ -2455,10 +2484,10 @@ struct X86InstructionSemantics {
                 break;
             }
         }
-    } catch(const Exception&) {
-        throw;
-    } catch(...) {
-        throw Exception("instruction translation failed", insn);
+    } catch(Exception e) {
+        if (!e.insn)
+            e.insn = insn;
+        throw e;
     }
 #endif
 

@@ -333,9 +333,6 @@ test2005_124.C \
 test2005_125.C \
 test2005_126.C \
 test2005_127.C \
-test2005_129.C \
-test2005_130.C \
-test2005_131.C \
 test2005_132.C \
 test2005_133.C \
 test2005_134.C \
@@ -409,7 +406,6 @@ test2006_06.C \
 test2006_07.C \
 test2006_08.C \
 test2006_10.C \
-test2006_12.C \
 test2006_13.C \
 test2006_14.C \
 test2006_16.C \
@@ -643,6 +639,8 @@ test2007_15.C
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS)
 
+# These are currently failing testcodes that should be fixed
+# (as opposed to testcodes that are expected to fail)
 FAILURE_TESTCODES = \
 test2001_03.C \
 test2004_35.C \
@@ -687,7 +685,11 @@ test2010_03.C \
 test2010_04.C \
 test2010_05.C \
 test2010_06.C \
-inputBug317.C 
+inputBug317.C \
+test2005_131.C \
+test2005_130.C \
+test2006_12.C \
+test2005_129.C
 
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}

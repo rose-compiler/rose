@@ -2,7 +2,6 @@ CMake is now checked in by Andreas, so we can play with it building ROSE using C
 under both Linux and Windows.
 
 
-
 For Windows:
 To run rdesktop from my Linux machine:
      wxp -g 5 -s tux245-0

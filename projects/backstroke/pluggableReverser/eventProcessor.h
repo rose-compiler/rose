@@ -6,38 +6,12 @@
 #include "variableVersionTable.h"
 #include "costModel.h"
 
-struct ExpressionPackage
+/** Stores the results of reversing an expression. These include the forward and reverse expressions,
+  * along with the cost of the reversal. */
+struct ExpressionReversal
 {
-    ExpressionPackage(
-            SgExpression* e,
-            const VariableVersionTable& table,
-            bool is_rvs_val_used = false)
-    : exp(e), var_table(table), is_value_used(is_rvs_val_used)
-    {}
-
-    SgExpression* exp;
-    VariableVersionTable var_table;
-    bool is_value_used;
-};
-
-struct StatementPackage
-{
-    StatementPackage(
-            SgStatement* s,
-            const VariableVersionTable& table)
-    : stmt(s), var_table(table)
-    {}
-
-    SgStatement* stmt;
-    VariableVersionTable var_table;
-};
-
-
-
-struct InstrumentedExpression
-{
-    InstrumentedExpression() {}
-    InstrumentedExpression(
+    ExpressionReversal() {}
+    ExpressionReversal(
         SgExpression* exp1,
         SgExpression* exp2,
         const VariableVersionTable& table,
@@ -45,9 +19,9 @@ struct InstrumentedExpression
             : fwd_exp(exp1), rvs_exp(exp2), var_table(table), cost(cst)
     {}
 
-    InstrumentedExpression clone()
+    ExpressionReversal clone()
     {
-        return InstrumentedExpression(
+        return ExpressionReversal(
                 SageInterface::copyExpression(fwd_exp),
                 SageInterface::copyExpression(rvs_exp),
                 var_table, cost);
@@ -62,10 +36,12 @@ struct InstrumentedExpression
     SimpleCostModel cost;
 };
 
-struct InstrumentedStatement
+/** Stores the result of reversing a statement. These include the instrumented forward statement
+ * as well as the reverse statement and cost of the reversal. */
+struct StatementReversal
 {
-    InstrumentedStatement() {}
-    InstrumentedStatement(
+    StatementReversal() {}
+    StatementReversal(
         SgStatement* stmt1,
         SgStatement* stmt2,
         const VariableVersionTable& table,
@@ -73,9 +49,9 @@ struct InstrumentedStatement
             : fwd_stmt(stmt1), rvs_stmt(stmt2), var_table(table), cost(cst)
     {}
 
-    InstrumentedStatement clone()
+    StatementReversal clone()
     {
-        return InstrumentedStatement(
+        return StatementReversal(
                 SageInterface::copyStatement(fwd_stmt),
                 SageInterface::copyStatement(rvs_stmt),
                 var_table, cost);
@@ -90,22 +66,16 @@ struct InstrumentedStatement
     SimpleCostModel cost;
 };
 
-//! Comparison functions for structure InstrumentedStatement and InstrumentedExpression.
-
-inline bool operator < (const InstrumentedExpression& e1, const InstrumentedExpression& e2)
+//! Comparison functions for structure ExpressionReversal and StatementReversal.
+inline bool operator < (const ExpressionReversal& e1, const ExpressionReversal& e2)
 { return e1.cost.getCost() < e2.cost.getCost(); }
 
-inline bool operator < (const InstrumentedStatement& s1, const InstrumentedStatement& s2)
+//! Comparison functions for structure ExpressionReversal and StatementReversal.
+inline bool operator < (const StatementReversal& s1, const StatementReversal& s2)
 { return s1.cost.getCost() < s2.cost.getCost(); }
 
-
-typedef std::vector<InstrumentedExpression> InstrumentedExpressionVec;
-typedef std::vector<InstrumentedStatement> InstrumentedStatementVec;
-
-
-
-
-
+typedef std::vector<ExpressionReversal> ExpressionReversalVec;
+typedef std::vector<StatementReversal> StatementReversalVec;
 
 
 // Forward declaration of the class EventProcessor.
@@ -117,8 +87,8 @@ class ProcessorBase
 
 protected:
 
-    InstrumentedExpressionVec processExpression(const ExpressionPackage& exp_pkg);
-    InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);
+    ExpressionReversalVec processExpression(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed);
+    StatementReversalVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
@@ -140,7 +110,7 @@ class ExpressionProcessor : public ProcessorBase
 {
 public:
 
-    virtual InstrumentedExpressionVec process(const ExpressionPackage& exp_pkg) = 0;
+    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed) = 0;
     //virtual void getCost() = 0;
 
 };
@@ -150,7 +120,7 @@ class StatementProcessor : public ProcessorBase
 {
 public:
 
-    virtual InstrumentedStatementVec process(const StatementPackage& stmt_pkg) = 0;
+    virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
 
     //virtual S
 
@@ -185,10 +155,10 @@ class EventProcessor
 private:
 
     //! Given an expression, return all transformations using all expression processors.
-    InstrumentedExpressionVec processExpression(const ExpressionPackage& exp_pkg);
+    ExpressionReversalVec processExpression(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed);
 
     //! Given a statement, return all transformations using all statement processors.
-    InstrumentedStatementVec processStatement(const StatementPackage& stmt_pkg);
+    StatementReversalVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
     //! The following methods are for expression and statement processors for store and restore.
     SgExpression* getStackVar(SgType* type);

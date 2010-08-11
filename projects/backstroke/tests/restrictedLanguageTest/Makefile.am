@@ -1,15 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the test language restrictor executable
-noinst_PROGRAMS = eventChecker
+bin_PROGRAMS = eventChecker
 eventChecker_SOURCES = EventChecker.C
-eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
+			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
 
 TESTCODES_REQUIRED_TO_PASS = \
    testcode_01.C \
@@ -67,7 +65,6 @@ test2001_27.C \
 test2001_28.C \
 test2001_29.C \
 test2002_01.C \
-test2003_01.C \
 test2003_02.C \
 test2003_03.C \
 test2003_04.C \
@@ -174,6 +171,7 @@ test2004_78.C \
 test2004_79.C \
 test2004_80.C \
 test2004_81.C \
+test2004_83.C \
 test2004_82.C \
 test2004_84.C \
 test2004_85.C \
@@ -262,7 +260,6 @@ test2005_05.C \
 test2005_06.C \
 test2005_07.C \
 test2005_08.C \
-test2005_09.C \
 test2005_10.C \
 test2005_11.C \
 test2005_12.C \
@@ -353,7 +350,6 @@ test2005_100.C \
 test2005_101.C \
 test2005_102.C \
 test2005_103.C \
-test2005_104.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -363,7 +359,6 @@ test2005_110.C \
 test2005_111.C \
 test2005_112.C \
 test2005_113.C \
-test2005_114.C \
 test2005_116.C \
 test2005_117.C \
 test2005_118.C \
@@ -414,10 +409,12 @@ test2005_163.C \
 test2005_164.C \
 test2005_165.C \
 test2005_166.C \
+test2005_168.C \
 test2005_167.C \
 test2005_169.C \
 test2005_170.C \
 test2005_171.C \
+test2005_172.C \
 test2005_173.C \
 test2005_174.C \
 test2005_175.C \
@@ -478,7 +475,6 @@ test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
-test2006_44.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -512,7 +508,6 @@ test2006_81.C \
 test2006_82.C \
 test2006_83.C \
 test2006_84.C \
-test2006_85.C \
 test2006_86.C \
 test2006_87.C \
 test2006_88.C \
@@ -520,9 +515,11 @@ test2006_89.C \
 test2006_90.C \
 test2006_91.C \
 test2006_92.C \
+test2006_93.C \
 test2006_94.C \
 test2006_95.C \
 test2006_96.C \
+test2006_97.C \
 test2006_98.C \
 test2006_99.C \
 test2006_101.C \
@@ -559,16 +556,13 @@ test2006_144.C \
 test2006_145.C \
 test2006_146.C \
 test2006_147.C \
+test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_151.C \
 test2006_152.C \
 test2006_153.C \
 test2006_154.C \
-test2006_155.C \
-test2006_156.C \
-test2006_157.C \
-test2006_158.C \
 test2006_159.C \
 test2006_160.C \
 test2006_161.C \
@@ -577,18 +571,146 @@ test2006_163.C \
 test2006_164.C \
 test2006_165.C \
 test2006_166.C \
-test2006_180.C \
+test2006_181.C \
+test2006_183.C \
+test2006_185.C \
+test2007_01.C \
+test2007_02.C \
+test2007_03.C \
+test2007_04.C \
+test2007_05.C \
+test2007_06.C \
+test2007_07.C \
+test2007_08.C \
+test2007_09.C \
+test2007_10.C \
+test2007_11.C \
+test2007_12.C \
+test2007_13.C \
+test2007_14.C \
+test2007_16.C \
+test2007_17.C \
+test2007_21.C \
+test2007_23.C \
+test2007_24.C \
+test2007_25.C \
+test2007_26.C \
+test2007_28.C \
+test2007_29.C \
+test2007_38.C \
+test2007_40.C \
+test2007_41.C \
+test2007_43.C \
+test2007_44.C \
+test2007_46.C \
+test2007_47.C \
+test2007_48.C \
+test2007_49.C \
+test2007_50.C \
+test2007_51.C \
+test2007_52.C \
+test2007_53.C \
+test2007_55.C \
+test2007_57.C \
+test2007_59.C \
+test2007_62.C \
+test2007_70.C \
+test2007_72.C \
+test2007_75.C \
+test2007_77.C \
+test2007_78.C \
+test2007_81.C \
+test2007_82.C \
+test2007_83.C \
+test2007_84.C \
+test2007_85.C \
+test2007_90.C \
+test2007_94.C \
+test2007_98.C \
+test2007_102.C \
+test2007_103.C \
+test2007_128.C \
+test2007_130.C \
+test2007_133.C \
+test2007_135.C \
+test2007_137.C \
+test2007_140.C \
+test2007_141.C \
+test2007_142.C \
+test2007_147.C \
+test2007_150.C \
+test2007_151.C \
+test2007_152.C \
+test2007_154.C \
+test2007_155.C \
+test2007_157.C \
+test2007_159.C \
+test2007_160.C \
+test2007_161.C \
+test2007_162.C \
+test2007_163.C \
+test2007_164.C \
+test2007_165.C \
+test2007_166.C \
+test2007_167.C \
+test2007_170.C \
+test2007_171.C \
+test2007_172.C \
+test2007_173.C \
+test2008_01.C \
+test2008_04.C \
+test2008_05.C \
+test2008_06.C \
+test2008_09.C \
+test2008_10.C \
+test2008_11.C \
+test2008_12.C \
+test2008_13.C \
+test2008_14.C \
+test2008_16.C \
+test2009_01.C \
+test2009_02.C \
+test2009_12.C \
+test2009_15.C \
+test2009_20.C \
+test2009_30.C \
+test2009_31.C \
+test2009_37.C \
+test2009_39.C \
+test2009_40.C \
+test2009_41.C \
+test2009_42.C \
+test2010_03.C \
+test2010_04.C \
+test2010_05.C \
+test2010_06.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
 lexPhase2003_01.C \
 math.C \
-inputForLoopLocator.C
+inputForLoopLocator.C \
+X.C \
+inputBug317.C \
+inputBug327.C \
+test2003_01.C \
+test2005_09.C \
+test2005_104.C \
+test2006_155.C \
+test2006_156.C \
+test2006_157.C \
+test2006_158.C \
+test2007_15.C 
+
+FAILURE_TESTCODES = \
+test2006_85.C \
+test2007_158.C \
+test2005_114.C 
 
 $(ROSE_TESTCODES_REQUIRED_TO_PASS):eventChecker
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./eventChecker $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./eventChecker --edg:no_warnings $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)

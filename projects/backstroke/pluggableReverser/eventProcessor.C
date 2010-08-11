@@ -20,14 +20,14 @@ SgExpression* ProcessorBase::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-InstrumentedExpressionVec ProcessorBase::processExpression(const ExpressionPackage& exp_pkg)
+ExpressionReversalVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    return event_processor_->processExpression(exp_pkg);
+    return event_processor_->processExpression(exp, var_table, isReverseValueUsed);
 }
 
-InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage& stmt_pkg)
+StatementReversalVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    return event_processor_->processStatement(stmt_pkg);
+    return event_processor_->processStatement(stmt, var_table);
 }
 
 bool ProcessorBase::isStateVariable(SgExpression* exp)
@@ -35,22 +35,22 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-InstrumentedExpressionVec EventProcessor::processExpression(const ExpressionPackage& exp_pkg)
+ExpressionReversalVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    InstrumentedExpressionVec output;
+    ExpressionReversalVec output;
 
     // If two results have the same variable table, we remove the one which has the higher cost.
     
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        InstrumentedExpressionVec result = exp_processor->process(exp_pkg);
+        ExpressionReversalVec result = exp_processor->process(exp, var_table, isReverseValueUsed);
 
-        foreach (const InstrumentedExpression& exp1, result)
+        foreach (const ExpressionReversal& exp1, result)
         {
             bool discard = false;
             for (size_t i = 0; i < output.size(); ++i)
             {
-                InstrumentedExpression& exp2 = output[i];
+                ExpressionReversal& exp2 = output[i];
                 if (exp1.var_table == exp2.var_table) 
                 {
                     if (exp1.cost > exp2.cost)
@@ -78,9 +78,9 @@ InstrumentedExpressionVec EventProcessor::processExpression(const ExpressionPack
     return output;
 }
 
-InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage& stmt_pkg)
+StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    InstrumentedStatementVec output;
+    StatementReversalVec output;
 
     // Here we update the variable version table, remove those which are not used any more.
     // Note that we process statements in reverse order in any scope, a variable is not used means
@@ -91,7 +91,7 @@ InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage
     // after processing statement 3, we can remove t from the variable version table because it's not
     // useful for our transformation anymore.
 
-    vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt_pkg.stmt);
+    vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt);
     vector<SgExpression*> vars_to_remove;
 #if 0
     foreach (SgExpression* var, vars)
@@ -103,8 +103,8 @@ InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        InstrumentedStatementVec result = stmt_processor->process(stmt_pkg);
-        foreach (InstrumentedStatement& stmt1, result)
+        StatementReversalVec result = stmt_processor->process(stmt, var_table);
+        foreach (StatementReversal& stmt1, result)
         {
             // Remove those variables from variable version table if they are not useful anymore.
             foreach (SgExpression* var, vars_to_remove)
@@ -117,7 +117,7 @@ InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage
             bool discard = false;
             for (size_t i = 0; i < output.size(); ++i)
             {
-                InstrumentedStatement& stmt2 = output[i];
+                StatementReversal& stmt2 = output[i];
                 if (stmt1.var_table == stmt2.var_table) 
                 {
                     if (stmt1.cost > stmt2.cost)
@@ -217,14 +217,14 @@ FuncDeclPairs EventProcessor::processEvent()
     FuncDeclPairs outputs;
 
     SimpleCostModel cost_model;
-    InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table));
+    StatementReversalVec bodies = processStatement(body, var_table);
 
     
     static int ctr = 0;
     // Sort the generated bodies so that those with the least cost appears first.
     sort(bodies.begin(), bodies.end());
 
-    foreach (InstrumentedStatement& stmt_obj, bodies)
+    foreach (StatementReversal& stmt_obj, bodies)
     {
         fixVariableReferences(stmt_obj.fwd_stmt);
         fixVariableReferences(stmt_obj.rvs_stmt);

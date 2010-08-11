@@ -51,6 +51,8 @@ include_HEADERS = \
 EXTRA_DIST = CMakeLists.txt AstProcessing.docs
 
 
+test_code_size:
+	g++ -E -I$(top_builddir) -I. $(ROSE_INCLUDES) $(srcdir)/AstNodeVisitMapping.C | wc -l
 
 
 

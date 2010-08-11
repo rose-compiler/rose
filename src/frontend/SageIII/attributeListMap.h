@@ -530,7 +530,8 @@ class AttributeListMap {
 
 			       std::pair<std::string,int> mapKey;
 
-			       if( (macro.get_position().get_file().size() != 0 ) && (macro.get_position().get_file()!="<built-in>") ){
+			       if( (macro.get_position().get_file().size() != 0 ) && (macro.get_position().get_file()!="<built-in>") 
+				   && (macro.get_position().get_file()!="<command line>") ){
 				       mapKey.first  = string(macro.get_position().get_file().c_str());
 				       mapKey.second = macro.get_position().get_line();
 
@@ -762,6 +763,8 @@ bool AttributeListMap::found_include_directive(TokenT directive, std::string rel
         {
           case boost::wave::T_PP_INCLUDE:
                break;
+	  case boost::wave::T_EOI: //end of input reached
+	       break;
           default:
 
                if( directive.get_position().get_file().size() == 0 ) break;

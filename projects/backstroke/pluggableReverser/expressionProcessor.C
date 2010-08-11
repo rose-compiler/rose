@@ -6,10 +6,9 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace backstroke_util;
 
-InstrumentedExpressionVec NullExpressionProcessor::process(const ExpressionPackage& exp_pkg)
+ExpressionReversalVec NullExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed)
 {
-    InstrumentedExpressionVec output;
-    SgExpression* exp = exp_pkg.exp;
+    ExpressionReversalVec output;
 
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp) || isAssignmentOp(exp))
     {
@@ -21,18 +20,17 @@ InstrumentedExpressionVec NullExpressionProcessor::process(const ExpressionPacka
         
         ROSE_ASSERT(isSgVarRefExp(var) || isSgDotExp(var) || isSgArrowExp(var));
         
-        if (isStateVariable(var) && exp_pkg.var_table.isUsingFirstDefinition(var))
+        if (isStateVariable(var) && table.isUsingFirstDefinition(var))
             return output;
     }
-    output.push_back(InstrumentedExpression(copyExpression(exp), NULL, exp_pkg.var_table));
+    output.push_back(ExpressionReversal(copyExpression(exp), NULL, table));
     return output;
 }
 
 
-InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(const ExpressionPackage& exp_pkg)
+ExpressionReversalVec StoreAndRestoreExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    InstrumentedExpressionVec output;
-    SgExpression* exp = exp_pkg.exp;
+    ExpressionReversalVec output;
 
     // If an expression modifies any value, we consider to store the value 
     // before being modified and restore it in reverse event.
@@ -54,14 +52,14 @@ InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(const Expr
                 popVal(operand->get_type()));
 
         // Update the variable version table.
-        VariableVersionTable new_var_table = exp_pkg.var_table;
+        VariableVersionTable new_var_table = var_table;
         new_var_table.reverseVersion(operand);
 
         // Update the cost.
         SimpleCostModel cost;
         cost.increaseStoreCount();
 
-        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table, cost));
+        output.push_back(ExpressionReversal(fwd_exp, rvs_exp, new_var_table, cost));
         //}
     }
 
@@ -76,14 +74,14 @@ InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(const Expr
                 popVal(lhs_operand->get_type()));
 
         // Update the variable version table.
-        VariableVersionTable new_var_table = exp_pkg.var_table;
+        VariableVersionTable new_var_table = var_table;
         new_var_table.reverseVersion(lhs_operand);
 
         // Update the cost.
         SimpleCostModel cost;
         cost.increaseStoreCount();
 
-        output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table, cost));
+        output.push_back(ExpressionReversal(fwd_exp, rvs_exp, new_var_table, cost));
     }
 
     // function call?
@@ -91,12 +89,11 @@ InstrumentedExpressionVec StoreAndRestoreExpressionProcessor::process(const Expr
     return output;
 }
 
-InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const ExpressionPackage& exp_pkg)
+ExpressionReversalVec ConstructiveExpressionProcessor::process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    InstrumentedExpressionVec output;
-    SgExpression* exp = exp_pkg.exp;
+    ExpressionReversalVec output;
 
-    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
+	if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
     {
         // Note that after normalization, a plusplus or minusminus operator expression
         // is not used by another expression, which makes its transformation much easier.
@@ -115,10 +112,10 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
             // in the variable version table.
 
 
-            if (exp_pkg.var_table.checkVersion(operand))
+            if (var_table.checkVersion(operand))
             {
                 // Once reversed, the version number should backward.
-                VariableVersionTable new_table(exp_pkg.var_table);
+                VariableVersionTable new_table(var_table);
                 new_table.reverseVersion(operand);
 
                 if (SgPlusPlusOp* pp_op = isSgPlusPlusOp(exp))
@@ -126,7 +123,7 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
                     SgExpression* new_exp = buildMinusMinusOp(
                             copyExpression(operand),
                             backstroke_util::reverseOpMode(pp_op->get_mode()));
-                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
+                    ExpressionReversal result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
 
@@ -135,7 +132,7 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
                     SgExpression* new_exp = buildPlusPlusOp(
                             copyExpression(operand),
                             backstroke_util::reverseOpMode(mm_op->get_mode()));
-                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
+                    ExpressionReversal result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
             }
@@ -172,11 +169,11 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
             // To make sure it is reversed correctly, a should has the version number 1 and 
             // b should has the version number 2 in the variable version table.
 
-            if (exp_pkg.var_table.checkVersion(lhs_operand, rhs_operand) &&
+            if (var_table.checkVersion(lhs_operand, rhs_operand) &&
                     constructive)
             {
                 // Once reversed, the version number should backward.
-                VariableVersionTable new_table(exp_pkg.var_table);
+                VariableVersionTable new_table(var_table);
                 new_table.reverseVersion(lhs_operand);
 
                 if (isSgPlusAssignOp(exp))
@@ -184,7 +181,7 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
                     SgExpression* new_exp = buildBinaryExpression<SgMinusAssignOp>(
                             copyExpression(lhs_operand),
                             copyExpression(rhs_operand));
-                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
+                    ExpressionReversal result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
 
@@ -193,13 +190,13 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
                     SgExpression* new_exp = buildBinaryExpression<SgPlusAssignOp>(
                             copyExpression(lhs_operand),
                             copyExpression(rhs_operand));
-                    InstrumentedExpression result(copyExpression(exp), new_exp, new_table);
+                    ExpressionReversal result(copyExpression(exp), new_exp, new_table);
                     output.push_back(result);
                 }
 
                 if (isSgXorAssignOp(exp))
                 {
-                    InstrumentedExpression result(copyExpression(exp), copyExpression(exp), new_table);
+                    ExpressionReversal result(copyExpression(exp), copyExpression(exp), new_table);
                     output.push_back(result);
                 }     
 
@@ -229,10 +226,9 @@ InstrumentedExpressionVec ConstructiveExpressionProcessor::process(const Express
 
 
 // This function deals with assignment like a = b + c + a, which is still constructive.
-InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(const ExpressionPackage& exp_pkg)
+ExpressionReversalVec ConstructiveAssignmentProcessor::process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    InstrumentedExpressionVec output;
-    SgExpression* exp = exp_pkg.exp;
+    ExpressionReversalVec output;
 
     if (isSgAssignOp(exp))
     {
@@ -280,7 +276,7 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(const Express
         //       a = a + a * b;
         //   Then check the version of every variable.
 
-        bool constructive = exp_pkg.var_table.checkVersion(lhs_operand, rhs_operand);
+        bool constructive = var_table.checkVersion(lhs_operand, rhs_operand);
         for (size_t i = 0; i < vars.size(); ++i)
         {
             if (areSameVariable(vars[i].first, lhs_operand))
@@ -302,7 +298,7 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(const Express
         if (constructive && count == 1)
         {
             // Once reversed, the version number should backward.
-            VariableVersionTable new_var_table(exp_pkg.var_table);
+            VariableVersionTable new_var_table(var_table);
             new_var_table.reverseVersion(lhs_operand);
 
             // The form a = b - a, the reverse expression is the same.
@@ -311,7 +307,7 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(const Express
                 SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
                         copyExpression(lhs_operand),
                         copyExpression(rhs_operand));
-                output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
+                output.push_back(ExpressionReversal(fwd_exp, rvs_exp, new_var_table));
                 return output;
             }
 
@@ -374,7 +370,7 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(const Express
                     copyExpression(lhs_operand),
                     rvs_exp);
 
-            output.push_back(InstrumentedExpression(fwd_exp, rvs_exp, new_var_table));
+            output.push_back(ExpressionReversal(fwd_exp, rvs_exp, new_var_table));
         }
     }
 
@@ -387,10 +383,9 @@ InstrumentedExpressionVec ConstructiveAssignmentProcessor::process(const Express
 // evaluation of the true or false expression. That is:
 //     a ? b : c  ==>  a ? (b, push(1)) : (c, push(0))
 //                     pop() ? r(b) : r(c)
-InstrumentedExpressionVec processConditionalExpression(const ExpressionPackage& exp_pkg)
+ExpressionReversalVec processConditionalExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
-    InstrumentedExpressionVec output;
-    SgExpression* exp = exp_pkg.exp;
+    ExpressionReversalVec output;
 
     if (isSgConditionalExp(exp))
     {

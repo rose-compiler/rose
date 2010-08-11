@@ -42,9 +42,20 @@ endif
 #   libroseBinaryLibraries =
 # endif
 
+if ROSE_USE_MYSQL
+  OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
+else
+  OPT_MYSQL_LDFLAGS =
+endif
+
 if ROSE_USE_SQLITE_DATABASE
-   libroseSqlite3xConnection = $(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
+   libroseSqlite3xConnection = \
+		$(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
    OPT_SQLITE3_LDFLAGS       = $(SQLITE3_LDFLAGS)
+
+# side effect requires sqlite3
+   libsideEffect_LIBS = \
+			$(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/libsideEffect.la
 else
    libroseSqlite3xConnection = 
    OPT_SQLITE3_LDFLAGS =
@@ -110,6 +121,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(libroseSqlite3xConnection) \
+   $(libsideEffect_LIBS) \
    $(libroseQtExtension)
 
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
@@ -123,7 +135,14 @@ include_HEADERS = \
      rose.h \
      roseInternal.h \
      rose_msvc.h \
-     msvc_stdint.h
+     msvc_stdint.h \
+	 roseSupport/utility_functionsImpl.C \
+	 midend/astProcessing/AstDOTGeneration.h \
+	 midend/astProcessing/AstDOTGenerationImpl.C \
+	 frontend/SageIII/sage3basic.h \
+	 frontend/SageIII/sage3basic.hhh \
+	 midend/astDiagnostics/AstConsistencyTests.h \
+	 backend/asmUnparser/AsmUnparser_compat.h
 
 # DQ (9/22/2006): Because we now use libtool, the shared library is a reference to the separate
 # dynamic libraries in each directory and so testMultiRoseLib is redundant with testSharedRoseLib.
@@ -158,7 +177,8 @@ librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIB
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
 		    $(BOOST_WAVE_LIB) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
-		    $(OPT_SQLITE3_LDFLAGS) 
+		    $(OPT_SQLITE3_LDFLAGS) \
+        $(OPT_MYSQL_LDFLAGS)
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_USE_DWARF

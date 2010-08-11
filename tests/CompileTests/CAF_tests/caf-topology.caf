@@ -1,0 +1,8 @@
+program topotest
+
+Topology :: cart
+
+cart = 1
+print *, cart
+
+end program

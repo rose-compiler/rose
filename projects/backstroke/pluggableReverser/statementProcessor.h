@@ -4,33 +4,27 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
-#if 0
-StmtPairs processBasicStatement(SgStatement* stmt);
-StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl);
-StmtPairs processExprStatement(SgExprStatement* exp_stmt);
-StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl);
-StmtPairs processBasicBlock(SgBasicBlock* body);
-StmtPairs processIfStmt(SgIfStmt* if_stmt);
-#endif
-
 class BasicStatementProcessor : public StatementProcessor
 {
-    InstrumentedStatementVec processReturnStatement(const StatementPackage& stmt_pkg);
+    StatementReversalVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processFunctionDeclaration(const StatementPackage& stmt_pkg);
+    StatementReversalVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processExprStatement(const StatementPackage& stmt_pkg);
+    StatementReversalVec processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processVariableDeclaration(const StatementPackage& stmt_pkg);
+    StatementReversalVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processBasicBlock(const StatementPackage& stmt_pkg);
-
-    InstrumentedStatementVec processIfStmt(const StatementPackage& stmt_pkg);
 
 public:
-    virtual InstrumentedStatementVec process(const StatementPackage& stmt_pkg);
+    virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 
+/** Handles return statements. The reverse of a return statement is a no-op. */
+class ReturnStatementProcessor : public StatementProcessor
+{
+	public:
+		virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+};
 
 #endif

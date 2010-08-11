@@ -145,7 +145,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
       }
       }
     } else {
-      //      if (DEBUG_MODE)
+       if (DEBUG_MODE)
 	cerr << " **********  UNARY OP : CANT HANDLE YET: "
 	     << l_expr->class_name() << endl;
       dont_handle = true;

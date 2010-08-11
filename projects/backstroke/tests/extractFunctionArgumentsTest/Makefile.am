@@ -7,9 +7,9 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = normalizationTranslator
 
 normalizationTranslator_SOURCES =  NormalizationTranslator.C
-normalizationTranslator_LDADD = $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
-			$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+normalizationTranslator_LDADD = $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
+			$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
+			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = test_basic.C test_failingTests.C test_forLoops.C test_Swap.C test_whileLoops.C
@@ -703,7 +703,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects):normalizationTranslator
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./normalizationTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./normalizationTranslator --edg:no_warnings $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)
