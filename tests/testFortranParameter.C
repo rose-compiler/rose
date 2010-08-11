@@ -1,6 +1,8 @@
 // ROSE Translator to make sure that Fortran parameters come through as const
 #include "rose.h"
 #include <boost/foreach.hpp>
+using namespace SageBuilder;
+using namespace SageInterface;
 
 int main(int argc, char* argv[])
 {
