@@ -40,56 +40,20 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 # (if rose.docs.in is modified)
 all-local: rose.docs 
 
-# DQ (3/21/2009): This takes several minutes under Cygwin, so skip these test there.
-if ROSE_BUILD_OS_IS_CYGWIN
-  PROJECT_SOURCE_CODE_TESTS = 
-else
+all: remove_sage3basic_h_pch enforce_policies
 
-# Liao, 6/27/2009 skip the test if PCH is not used
-# tps (02/01/2010) : We should check this all the time... I leave it for now
-if ROSE_PCH 
-PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec detect_carriage-return
-else  
-PROJECT_SOURCE_CODE_TESTS = 
-endif
-
-endif
-
-# all: detect_roseh detect_rosec
-all: $(PROJECT_SOURCE_CODE_TESTS)
-
-# tps: script that checks that no header file includes sage3basic.h
-# rpm: exclude build directories (they contain "include-staging") since ROSE itself creates some source files.
-detect_roseh:
+remove_sage3basic_h_pch:
 	touch $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch
-	rm $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch
-	@echo "***************************************************************************************"
-	@echo "***** ROSE uses pre-compiled headers and needs to check integrity. ********************"
-	@echo "***** ROSE ensures that no header files includes sage3basic.h and that   ********************"
-	@echo "***** the first header file in a source file is sage3basic.h (if used)   ********************"
-	@echo "***************************************************************************************"
-	@echo Testing for sage3basic.h and rose.h and sage3.h in header files...
-	sh $(srcdir)/scripts/checkForInvalidHeaders.sh $(top_srcdir)
-#@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code2" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h or rose.h or sage3.h header check passed."; else echo "header files exist that include sage3basic.h or rose.h or sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
+	rm    $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch
 
-# tps: added script from Andreas with small modifications - find all C files that dont include rose in the top of the file 
-# rpm: exclude build directories (they contain "include-staging") since ROSE itself creates some source files.
-detect_rosec:
-	@echo Testing for sage3basic.h in source files...
-	sh $(srcdir)/scripts/checkForInvalidSourceFiles.sh $(top_srcdir)
-#@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h source file check passed.";  else echo "There are source files that dont include sage3basic.h as the first header file."; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"sage3basic.h\"\|<sage3basic.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "sage3basic.h\|mpi.h"; exit 1; fi
-
-# TV (06/28/2010): checking carriage return caracteres
-detect_carriage-return:
-	@echo Testing presence of carriage return in header/source files...
-	sh $(srcdir)/scripts/checkCarriageReturn.sh $(top_srcdir)
-
-# DQ (3/9/2009): Additional things that we can enforce within ROSE (written by Andreas).
-# Additional rules to enforce:
-#    1) Finding using declarations in header files:
-#       find -name "*.h" -exec grep -nPH "^[ \t]*using[ \t]+namespace" {} \;
-#    2) Finding link dependences in Makefile.am files:
-#       find -name Makefile.am -exec grep -nPH "^[ \t]*[a-zA-Z]*[_]?LDADD[ \t]*" {} \;
+# These are policies that we'd like to enforce for ROSE developers.  Things like:
+#    1. source files should not use CR+LF line termination common on Windows platforms
+#    2. header files should not include certain ROSE headers like "rose.h"
+#    3. file names must be unique on a case-insensitive file system
+#    4. header files must not have names that conflict with headers in other directories
+# etc.
+enforce_policies:
+	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
 
 
 # DQ (6/29/2004): I don't think we need this!
@@ -101,7 +65,8 @@ detect_carriage-return:
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
-EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
+EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
+             LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 
 # Liao, 12/11/2009. we should force this rule to run every time we want to make a distribution
 # otherwise the stale one can go into the distribution package
@@ -184,7 +149,8 @@ if ENABLE_JAVAPORT
 endif
 
 # DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
-DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+DISTCHECK_CONFIGURE_FLAGS += \
+   --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # SRIRAM (8/2/2010): changing distcheck configuration for LLVM translator
 if ROSE_USE_LLVM
@@ -311,7 +277,8 @@ ProblemAreas:
 	grep -rl USE_ROSE $(top_srcdir) | grep "\.C"
 	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_ANALYSIS in each ROSE source file)."
 	grep -rl CXX_IS_ROSE_ANALYSIS $(top_srcdir) | grep "\.C"
-	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_CODE_GENERATION in each ROSE source file)."
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_CODE_GENERATION"
+	echo "in each ROSE source file)."
 	grep -rl CXX_IS_ROSE_CODE_GENERATION $(top_srcdir) | grep "\.C"
 #	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
 #	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
