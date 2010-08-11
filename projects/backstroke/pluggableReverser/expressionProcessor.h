@@ -4,6 +4,16 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
+
+/*
+ * If a variable is modified using destruction operation, it can be 
+ * recovered by restoring or retrieving its value from others. That is 
+ * store and restore and akgul style expression processor in our current
+ * implementation. I think those two functions should be reused by all 
+ * destructive operations: assignment, function call, a local variable 
+ * leaving its scope, etc.
+ */
+
 //! This handler generates a NULL reverse expression.
 class NullExpressionProcessor : public ExpressionProcessor
 {

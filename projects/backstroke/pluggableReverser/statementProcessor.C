@@ -279,8 +279,6 @@ InstrumentedStatementVec BasicStatementProcessor::processBasicBlock(const Statem
     {
         foreach (SgInitializedName* var, local_vars)
             stmt.var_table.removeVariable(var);
-        stmt.var_table.print();
-        cout << stmt.cost.getCost() << endl << endl;
     }
 
 

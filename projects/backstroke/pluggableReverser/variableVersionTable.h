@@ -36,8 +36,8 @@ public:
     /** Remove a variable from the current table. */
     void removeVariable(SgNode* node)
     { 
-        ROSE_ASSERT(table_.count(getVarName(node)) > 0);
-        table_.erase(getVarName(node)); 
+        if (table_.count(getVarName(node)) > 0)
+            table_.erase(getVarName(node)); 
     }
 
     /** If a local variable is not restored at the begining of the reverse basic block, set its
@@ -49,11 +49,16 @@ public:
     //FIXME I don't like this name!
     bool isUsingFirstDefinition(SgNode* node) const;
 
+    /** If the given node is using its first use. It's useful to decide whether to remove a variable from variable version table. */
+    //FIXME I don't like this name!
+    bool isUsingFirstUse(SgNode* node) const;
+
 //    /** Set the version with the same name of the node to the previous version of the given node.
 //      This function if mainly for store and restore mechanism. */
 //    void setPreviousVersion(SgNode* node);
 
     static bool isEmptyVarName(const VarName& var) { return var.empty(); }
+    static std::vector<SgExpression*> getAllVariables(SgNode* node);
 
     //! Check if the current index of a variable is the same as the given one.
     bool variableHasIndex(const std::vector<int>& index) const;

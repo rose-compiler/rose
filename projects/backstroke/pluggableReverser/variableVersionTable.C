@@ -54,7 +54,7 @@ void VariableVersionTable::print(const VarName& name)
 
 /** This function get all variables in an AST node. Note that for a variable a.b or a->b,
     only a.b or a->b is returned, not a or b. */
-vector<SgExpression*> getAllVariables(SgNode* node)
+vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
 {
     vector<SgExpression*> vars;
 
@@ -89,7 +89,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
     // but not the version of a or b.
 
     // First, get all variables in lhs expression.
-    // Note that a expression contains several variables can be passed in.
+    // Note that a expression containing several variables can be passed in.
     vector<SgExpression*> lhs_vars = getAllVariables(lhs);
 
     // Currently, the lhs operand of an assignment should contain only one variable.
@@ -104,6 +104,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
         VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(lhs_var->get_parent(), name);
 
         ROSE_ASSERT(!defs.empty());
+        ROSE_ASSERT(table_.count(name) > 0);
 
         foreach (VariableRenaming::NumNodeRenameEntry::value_type num_to_node, defs)
         {
@@ -133,6 +134,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
         VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
         ROSE_ASSERT(!defs.empty());
+        ROSE_ASSERT(table_.count(name) > 0);
 
         foreach (VariableRenaming::NumNodeRenameEntry::value_type num_to_node, defs)
         {
@@ -238,8 +240,21 @@ bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
             var_renaming_->getReachingDefsAtNodeForName(node, getVarName(node));
 
     // The first definition has the number 1
+    // This is also true for branch case.
     if (num_table.size() == 1 && num_table.count(1) > 0)
         return true;
+    return false;
+}
+
+bool VariableVersionTable::isUsingFirstUse(SgNode* node) const
+{
+    VariableRenaming::NumNodeRenameEntry num_table =
+            var_renaming_->getUsesAtNodeForName(node, getVarName(node));
+
+    // The first definition has the number 1
+    // FIXME This may not be true for branch case!
+    if (num_table.size() == 1 && num_table.count(1) > 0)
+        return isUsingFirstDefinition(node);
     return false;
 }
 

@@ -82,13 +82,38 @@ InstrumentedStatementVec EventProcessor::processStatement(const StatementPackage
 {
     InstrumentedStatementVec output;
 
-    // If two results have the same variable table, we remove the one which has the higher cost.
+    // Here we update the variable version table, remove those which are not used any more.
+    // Note that we process statements in reverse order in any scope, a variable is not used means
+    // it is not used in statements above this point. For example,
+    //  1   int t = 0;
+    //  2   a = b;
+    //  3   c = t;
+    // after processing statement 3, we can remove t from the variable version table because it's not
+    // useful for our transformation anymore.
+
+    vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt_pkg.stmt);
+    vector<SgExpression*> vars_to_remove;
+#if 0
+    foreach (SgExpression* var, vars)
+    {
+        if (stmt_pkg.var_table.isUsingFirstUse(var))
+            vars_to_remove.push_back(var);
+    }
+#endif
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
         InstrumentedStatementVec result = stmt_processor->process(stmt_pkg);
-        foreach (const InstrumentedStatement& stmt1, result)
+        foreach (InstrumentedStatement& stmt1, result)
         {
+            // Remove those variables from variable version table if they are not useful anymore.
+            foreach (SgExpression* var, vars_to_remove)
+            {
+                stmt1.var_table.removeVariable(var);
+            }
+
+            // If two results have the same variable table, we remove the one which has the higher cost.
+
             bool discard = false;
             for (size_t i = 0; i < output.size(); ++i)
             {
@@ -153,10 +178,9 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
 
     foreach (SgInitializedName* name, event_->get_args())
     {
-        if (name == var->get_symbol()->get_declaration() )
-        {
-            return true;
-        }
+        if (name == var->get_symbol()->get_declaration())
+            if (isSgPointerType(name->get_type()) || isReferenceType(name->get_type()))
+                return true;
     }
 
     return false;

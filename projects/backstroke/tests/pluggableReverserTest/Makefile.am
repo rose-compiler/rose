@@ -46,4 +46,8 @@ test: FORCE
 	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/test0.C test0.C
 	./pluggableReverser $(TESTCODE_INCLUDES) -c test0.C
 
+test2: FORCE
+	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test_Basic.C test0.C
+	./pluggableReverser $(TESTCODE_INCLUDES) -c test0.C
+
 FORCE:
