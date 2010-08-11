@@ -35,6 +35,16 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
+VariableRenaming* ProcessorBase::getVariableRenaming()
+{
+	return event_processor_->getVariableRenaming();
+}
+
+vector<SgExpression*> ProcessorBase::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite, VariableRenaming::NumNodeRenameEntry definitions)
+{
+	return event_processor_->restoreVariable(variable, useSite, definitions);
+}
+
 ExpressionReversalVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
 {
     ExpressionReversalVec output;
@@ -143,6 +153,34 @@ StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const V
         //output.insert(output.end(), result.begin(), result.end());
     }
     return output;
+}
+
+/**
+ * Given a variable and a version, returns an expression evaluating to the value of the variable
+ * at the given version.
+ *
+ * @param variable name of the variable to be restored
+ * @param useSite location where the reverse expression will go
+ * @return definitions the version of the variable which should be restored
+ */
+vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+	VariableRenaming::NumNodeRenameEntry definitions)
+{
+	//First, check if the variable needs restoring at all. If it has the desired version, there is nothing to do
+	vector<SgExpression*> results;
+	if (definitions == getVariableRenaming()->getReachingDefsAtNodeForName(useSite, variable))
+	{
+		results.push_back(VariableRenaming::buildVariableReference(variable));
+		return results;
+	}
+
+	foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
+	{
+		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, useSite, definitions);
+		results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
+	}
+
+	return results;
 }
 
 SgExpression* EventProcessor::getStackVar(SgType* type)
