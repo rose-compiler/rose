@@ -5,8 +5,8 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 # Build the test language restrictor executable
 bin_PROGRAMS = eventChecker
 eventChecker_SOURCES = EventChecker.C
-eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+eventChecker_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
+			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = \
