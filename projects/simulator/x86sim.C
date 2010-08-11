@@ -676,6 +676,18 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 14: { /*0xe, mknod*/
+            syscall_enter("mknod", "sdd");
+            uint32_t path_va = arg(0);
+            uint32_t mode = arg(1);
+            uint32_t dev = arg(2);
+            std::string path = read_string(path_va);
+            int result = mknod(path.c_str(),mode,dev);
+            writeGPR(x86_gpr_ax, result<0 ? -errno : result);
+            syscall_leave("d");
+            break;
+        }
+
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
             writeGPR(x86_gpr_ax, getpid());
