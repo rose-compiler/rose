@@ -1093,9 +1093,12 @@ EmulationPolicy::emulate_syscall()
 
         case 192: { /*0xc0, mmap2*/
             static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
-            static const Translate mflags[] = { TF(MAP_SHARED), TF(MAP_PRIVATE), TF(MAP_32BIT), TF(MAP_ANONYMOUS), 
-                                                TF(MAP_DENYWRITE), TF(MAP_EXECUTABLE), TF(MAP_FILE), TF(MAP_FIXED), 
-                                                TF(MAP_GROWSDOWN), TF(MAP_LOCKED), TF(MAP_NONBLOCK), TF(MAP_NORESERVE),
+            static const Translate mflags[] = { TF(MAP_SHARED), TF(MAP_PRIVATE), TF(MAP_ANONYMOUS), TF(MAP_DENYWRITE),
+                                                TF(MAP_EXECUTABLE), TF(MAP_FILE), TF(MAP_FIXED), TF(MAP_GROWSDOWN),
+                                                TF(MAP_LOCKED), TF(MAP_NONBLOCK), TF(MAP_NORESERVE),
+#ifdef MAP_32BIT
+                                                TF(MAP_32BIT),
+#endif
                                                 TF(MAP_POPULATE), T_END };
             syscall_enter("mmap2", "pdffdd", pflags, mflags);
             uint32_t start=arg(0), size=arg(1), prot=arg(2), flags=arg(3), fd=arg(4), offset=arg(5)*PAGE_SIZE;
@@ -1247,8 +1250,8 @@ EmulationPolicy::emulate_syscall()
             ROSE_ASSERT(nread==sizeof ud);
 #if 1 /*FIXME: should be using syscall_enter*/
             if (debug && trace_syscall) {
-                fprintf(debug, "  set_thread_area({%d, 0x%08x, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
-                        (int)ud.entry_number, ud.base_addr, ud.limit,
+                fprintf(debug, "  set_thread_area({%d, 0x%08lx, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
+                        (int)ud.entry_number, (unsigned long)ud.base_addr, ud.limit,
                         ud.seg_32bit ? "32bit" : "16bit",
                         ud.contents, ud.read_exec_only ? "read_exec" : "writable",
                         ud.limit_in_pages ? "page_gran" : "byte_gran",
