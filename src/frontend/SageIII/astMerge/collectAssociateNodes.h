@@ -1,5 +1,5 @@
-#ifndef __collectAssNode
-#define __collectAssNode
+#ifndef COLLECT_ASSOCIATE_NODES_H
+#define COLLECT_ASSOCIATE_NODES_H
 // Main function
 void addAssociatedNodes ( SgNode* node, std::set<SgNode*> & nodeList, bool markMemberNodesDefinedToBeDeleted, SgNode* matchingNodeInMergedAST = NULL );
 

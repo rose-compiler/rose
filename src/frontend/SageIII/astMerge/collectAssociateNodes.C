@@ -1,3 +1,6 @@
+#ifndef COLLECT_ASSOCIATE_NODES_C
+#define COLLECT_ASSOCIATE_NODES_C
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "collectAssociateNodes.h"
@@ -2017,4 +2020,5 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
 
 
+#endif // COLLECT_ASSOCIATE_NODES_C
 
