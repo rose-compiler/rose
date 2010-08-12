@@ -142,9 +142,9 @@ SgVarRefExp * SpinPStructContainer::createNewVarRefPStructVarInstanziation()
 SgVarRefExp * SpinPStructContainer::get_pidVarRef()
 {
 	return new  SgVarRefExp (
-	    Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-			    new SgVariableSymbol (_pidDecl->get_definition()->get_vardefn ())
-					    );
+		Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
+                new SgVariableSymbol (_pidDecl->get_definition()->get_vardefn ())
+                );
 
 }
 
