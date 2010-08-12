@@ -21,7 +21,7 @@ class BufferOverflow : public BinAnalyses,  RoseBin_DataFlowAbstract {
   std::string getDescription();
 
   bool run(std::string& name, SgGraphNode* node,
-	   SgGraphNode* previous);
+           SgGraphNode* previous);
 
   bool twoFiles() {return false;}
   std::map<SgNode*,std::string> getResult(){return result;}

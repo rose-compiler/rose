@@ -17,7 +17,7 @@ using namespace __gnu_cxx;
 
 // Constructor
 BinQinteractive::BinQinteractive(std::string fA, std::string fB, std::vector<std::string> dllAA, 
-		     std::vector<std::string> dllBB, bool t) {
+                                 std::vector<std::string> dllBB, bool t) {
   window=0;
   fileNameA=fA;
   fileNameB=fB;

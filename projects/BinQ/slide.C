@@ -8,7 +8,7 @@ using namespace Qt;
 using namespace std;
 
 Slide::Slide(BinQGUI* g,
-	     QWidget *parent)
+             QWidget *parent)
   : QWidget(parent) // cant get this to work
 {
   lastStringA=QString("  ");
@@ -125,9 +125,9 @@ void Slide::updateMouse() {
 	  gui->console->append(res);
 	}
       } else if (isSgAsmElfSection(stmt) ||
-		 isSgAsmElfSectionTableEntry(stmt) ||
+                 isSgAsmElfSectionTableEntry(stmt) ||
 		 isSgAsmElfSegmentTableEntry(stmt)) {
-	QString res = QString("");
+        QString res = QString("");
 	if (isSgAsmElfSection(stmt))
 	  res = QString("FILE_A: selected Section %1")
 	    .arg(isSgAsmElfSection(stmt)->get_name()->get_string().c_str());
@@ -228,9 +228,9 @@ void Slide::updateMouse() {
 	  }
 	}
       }else if (isSgAsmElfSection(stmt) ||
-		 isSgAsmElfSectionTableEntry(stmt) ||
-		 isSgAsmElfSegmentTableEntry(stmt)) {
-	QString res = QString("");
+                isSgAsmElfSectionTableEntry(stmt) ||
+                isSgAsmElfSegmentTableEntry(stmt)) {
+        QString res = QString("");
 	if (isSgAsmElfSection(stmt))
 	  res = QString("FILE_B: selected Section %1")
 	.arg(isSgAsmElfSection(stmt)->get_name()->get_string().c_str());
