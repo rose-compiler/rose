@@ -39,12 +39,12 @@ InstrumentedStatementVec BasicStatementProcessor::processReturnStatement(const S
 }
 #endif
 
-ProcessedStatement ExprStatementProcessor::process(SgStatement* stmt) 
+StatementReversal ExprStatementProcessor::process(SgStatement* stmt) 
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
     
-    ProcessedExpression exp = processExpression(exp_stmt->get_expression());
+    ExpressionReversal exp = processExpression(exp_stmt->get_expression());
 
     SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -53,18 +53,18 @@ ProcessedStatement ExprStatementProcessor::process(SgStatement* stmt)
     if (exp.rvs_exp)
         rvs_stmt = buildExprStatement(exp.rvs_exp);
 
-    return ProcessedStatement(fwd_stmt, rvs_stmt);
+    return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> ExprStatementProcessor::evaluate(const StatementPackage& stmt_pkg)
+vector<EvaluationResult> ExprStatementProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
-    SgExprStatement* exp_stmt = isSgExprStatement(stmt_pkg.stmt);
+    SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     if (exp_stmt == NULL)
         return results;
     
     results = evaluateExpression(
-            ExpressionPackage(exp_stmt->get_expression(), stmt_pkg.var_table));
+            exp_stmt->get_expression(), var_table);
 
     ROSE_ASSERT(!results.empty());
 
@@ -96,7 +96,7 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(con
 }
 #endif
 
-ProcessedStatement BasicBlockProcessor::process(SgStatement* stmt) 
+StatementReversal BasicBlockProcessor::process(SgStatement* stmt) 
 {
     SgBasicBlock* body = isSgBasicBlock(stmt);
     ROSE_ASSERT(body);
@@ -106,7 +106,7 @@ ProcessedStatement BasicBlockProcessor::process(SgStatement* stmt)
 
     foreach (SgStatement* stmt, body->get_statements())
     {
-        ProcessedStatement proc_stmt = processStatement(stmt);
+        StatementReversal proc_stmt = processStatement(stmt);
 
         if (proc_stmt.fwd_stmt)
             appendStatement(proc_stmt.fwd_stmt, fwd_body);
@@ -114,14 +114,14 @@ ProcessedStatement BasicBlockProcessor::process(SgStatement* stmt)
             prependStatement(proc_stmt.rvs_stmt, rvs_body);
     }
 
-    return ProcessedStatement(fwd_body, rvs_body);
+    return StatementReversal(fwd_body, rvs_body);
 }
 
 
-vector<EvaluationResult> BasicBlockProcessor::evaluate(const StatementPackage& stmt_pkg)
+vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
-    SgBasicBlock* body = isSgBasicBlock(stmt_pkg.stmt);
+    SgBasicBlock* body = isSgBasicBlock(stmt);
     if (body == NULL)
         return results;
 
@@ -129,13 +129,13 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(const StatementPackage& s
     vector<EvaluationResult> queue[2];
 
     int i = 0;
-    queue[i].push_back(EvaluationResult(stmt_pkg.var_table));
+    queue[i].push_back(EvaluationResult(var_table));
 
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {
         foreach (EvaluationResult& result, queue[i])
         {
-            vector<EvaluationResult> results = evaluateStatement(StatementPackage(stmt, result.var_table));
+            vector<EvaluationResult> results = evaluateStatement(stmt, result.getVarTable());
             
             ROSE_ASSERT(!results.empty());
 

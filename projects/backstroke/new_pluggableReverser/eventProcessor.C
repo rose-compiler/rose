@@ -20,36 +20,24 @@ SgExpression* ProcessorBase::popVal(SgType* type)
     return event_processor_->popVal(type);
 }
 
-#if 0
-InstrumentedExpressionVec ProcessorBase::processExpression(const ExpressionPackage& exp_pkg)
-{
-    return event_processor_->processExpression(exp_pkg);
-}
-
-InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage& stmt_pkg)
-{
-    return event_processor_->processStatement(stmt_pkg);
-}
-#endif
-
-ProcessedExpression ProcessorBase::processExpression(SgExpression* exp)
+ExpressionReversal ProcessorBase::processExpression(SgExpression* exp)
 {
     return event_processor_->processExpression(exp);
 }
 
-ProcessedStatement ProcessorBase::processStatement(SgStatement* stmt)
+StatementReversal ProcessorBase::processStatement(SgStatement* stmt)
 {
     return event_processor_->processStatement(stmt);
 }
 
-vector<EvaluationResult> ProcessorBase::evaluateExpression(const ExpressionPackage& exp_pkg)
+vector<EvaluationResult> ProcessorBase::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
-    return event_processor_->evaluateExpression(exp_pkg);
+    return event_processor_->evaluateExpression(exp, var_table, is_value_used);
 }
 
-vector<EvaluationResult> ProcessorBase::evaluateStatement(const StatementPackage& stmt_pkg)
+vector<EvaluationResult> ProcessorBase::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    return event_processor_->evaluateStatement(stmt_pkg);
+    return event_processor_->evaluateStatement(stmt, var_table);
 }
 
 bool ProcessorBase::isStateVariable(SgExpression* exp)
@@ -57,7 +45,7 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-ProcessedExpression EventProcessor::processExpression(SgExpression* exp)
+ExpressionReversal EventProcessor::processExpression(SgExpression* exp)
 {
     ROSE_ASSERT(!exp_processors.empty());
     ExpressionProcessor* processor = exp_processors.back();
@@ -65,7 +53,7 @@ ProcessedExpression EventProcessor::processExpression(SgExpression* exp)
     return processor->process(exp);
 }
 
-ProcessedStatement EventProcessor::processStatement(SgStatement* stmt)
+StatementReversal EventProcessor::processStatement(SgStatement* stmt)
 {
     ROSE_ASSERT(!stmt_processors.empty());
     StatementProcessor* processor = stmt_processors.back();
@@ -73,15 +61,15 @@ ProcessedStatement EventProcessor::processStatement(SgStatement* stmt)
     return processor->process(stmt);
 }
 
-ProcessedStatement EventProcessor::processStatement(SgStatement* stmt, EvaluationResult& result)
+StatementReversal EventProcessor::processStatement(SgStatement* stmt, const EvaluationResult& result)
 {
-    exp_processors = result.exp_processors;
-    stmt_processors = result.stmt_processors;
+    exp_processors = result.getExpressionProcessors();
+    stmt_processors = result.getStatementProcessors();
 
     return processStatement(stmt);
 }
 
-vector<EvaluationResult> EventProcessor::evaluateExpression(const ExpressionPackage& exp_pkg)
+vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
     vector<EvaluationResult> results;
 
@@ -89,7 +77,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(const ExpressionPack
     
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        vector<EvaluationResult> res = exp_processor->evaluate_(exp_pkg);
+        vector<EvaluationResult> res = exp_processor->evaluate_(exp, var_table, is_value_used);
 
         foreach (const EvaluationResult& r1, res)
         {
@@ -97,14 +85,14 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(const ExpressionPack
             for (size_t i = 0; i < results.size(); ++i)
             {
                 EvaluationResult& r2 = results[i];
-                if (r1.var_table == r2.var_table) 
+                if (r1.getVarTable() == r2.getVarTable()) 
                 {
-                    if (r1.cost > r2.cost)
+                    if (r1.getCost() > r2.getCost())
                     {
                         discard = true;
                         break;
                     }
-                    else if (r1.cost < r2.cost)
+                    else if (r1.getCost() < r2.getCost())
                     {
                         results.erase(results.begin() + i);
                         --i;
@@ -121,7 +109,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(const ExpressionPack
 }
 
 
-vector<EvaluationResult> EventProcessor::evaluateStatement(const StatementPackage& stmt_pkg)
+vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
 
@@ -134,7 +122,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(const StatementPackag
     // after processing statement 3, we can remove t from the variable version table because it's not
     // useful for our transformation anymore.
 
-    vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt_pkg.stmt);
+    vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt);
     vector<SgExpression*> vars_to_remove;
 #if 0
     foreach (SgExpression* var, vars)
@@ -146,13 +134,13 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(const StatementPackag
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        vector<EvaluationResult> res = stmt_processor->evaluate_(stmt_pkg);
+        vector<EvaluationResult> res = stmt_processor->evaluate_(stmt, var_table);
         foreach (EvaluationResult& r1, res)
         {
             // Remove those variables from variable version table if they are not useful anymore.
             foreach (SgExpression* var, vars_to_remove)
             {
-                r1.var_table.removeVariable(var);
+                r1.getVarTable().removeVariable(var);
             }
 
             // If two results have the same variable table, we remove the one which has the higher cost.
@@ -161,14 +149,14 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(const StatementPackag
             for (size_t i = 0; i < results.size(); ++i)
             {
                 EvaluationResult& r2 = results[i];
-                if (r1.var_table == r2.var_table) 
+                if (r1.getVarTable() == r2.getVarTable()) 
                 {
-                    if (r1.cost > r2.cost)
+                    if (r1.getCost() > r2.getCost())
                     {
                         discard = true;
                         break;
                     }
-                    else if (r1.cost < r2.cost)
+                    else if (r1.getCost() < r2.getCost())
                     {
                         results.erase(results.begin() + i);
                         --i;
@@ -257,8 +245,7 @@ FuncDeclPairs EventProcessor::processEvent()
     FuncDeclPairs outputs;
 
     SimpleCostModel cost_model;
-    //InstrumentedStatementVec bodies = processStatement(StatementPackage(body, var_table));
-    vector<EvaluationResult> results = evaluateStatement(StatementPackage(body, var_table));
+    vector<EvaluationResult> results = evaluateStatement(body, var_table);
 
     
     static int ctr = 0;
@@ -267,10 +254,10 @@ FuncDeclPairs EventProcessor::processEvent()
 
     foreach (EvaluationResult& res, results)
     {
-        cout << res.exp_processors.size() << endl;
-        cout << res.stmt_processors.size() << endl;
+        //cout << res.getExpressionProcessors().size() << endl;
+        //cout << res.getStatementProcessors().size() << endl;
 
-        ProcessedStatement stmt = processStatement(body, res);
+        StatementReversal stmt = processStatement(body, res);
 
         fixVariableReferences(stmt.fwd_stmt);
         fixVariableReferences(stmt.rvs_stmt);
@@ -295,7 +282,7 @@ FuncDeclPairs EventProcessor::processEvent()
 
 
         // Add the cost information as comments to generated functions.
-        string comment = "Cost: " + lexical_cast<string>(res.cost.getCost());
+        string comment = "Cost: " + lexical_cast<string>(res.getCost().getCost());
         attachComment(fwd_func_decl, comment);
         attachComment(rvs_func_decl, comment);
 

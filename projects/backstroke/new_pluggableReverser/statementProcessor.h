@@ -17,15 +17,15 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt);
 class ExprStatementProcessor : public StatementProcessor
 {
 public:
-    virtual ProcessedStatement process(SgStatement* stmt); 
-    virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg);
+    virtual StatementReversal process(SgStatement* stmt); 
+    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 class BasicBlockProcessor : public StatementProcessor
 {
 public:
-    virtual ProcessedStatement process(SgStatement* stmt); 
-    virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg);
+    virtual StatementReversal process(SgStatement* stmt); 
+    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 
