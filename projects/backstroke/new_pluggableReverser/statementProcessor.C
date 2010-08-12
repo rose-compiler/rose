@@ -39,19 +39,12 @@ InstrumentedStatementVec BasicStatementProcessor::processReturnStatement(const S
 }
 #endif
 
-ProcessedStatement ExprStatementProcessor::process(
-        SgStatement* stmt, 
-        vector<ExpressionProcessor*>& exp_processors,
-        vector<StatementProcessor*>& stmt_processors)
+ProcessedStatement ExprStatementProcessor::process(SgStatement* stmt) 
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
     
-    ROSE_ASSERT(!exp_processors.empty());
-    ExpressionProcessor* exp_processor = exp_processors.back();
-    exp_processors.pop_back();
-
-    ProcessedExpression exp = exp_processor->process(exp_stmt->get_expression());
+    ProcessedExpression exp = processExpression(exp_stmt->get_expression());
 
     SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -103,9 +96,7 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(con
 }
 #endif
 
-ProcessedStatement BasicBlockProcessor::process(SgStatement* stmt, 
-        vector<ExpressionProcessor*>& exp_processors,
-        vector<StatementProcessor*>& stmt_processors)
+ProcessedStatement BasicBlockProcessor::process(SgStatement* stmt) 
 {
     SgBasicBlock* body = isSgBasicBlock(stmt);
     ROSE_ASSERT(body);
@@ -115,11 +106,7 @@ ProcessedStatement BasicBlockProcessor::process(SgStatement* stmt,
 
     foreach (SgStatement* stmt, body->get_statements())
     {
-        ROSE_ASSERT(!stmt_processors.empty());
-        StatementProcessor* stmt_processor = stmt_processors.back();
-        stmt_processors.pop_back();
-
-        ProcessedStatement proc_stmt = stmt_processor->process(stmt, exp_processors, stmt_processors);
+        ProcessedStatement proc_stmt = processStatement(stmt);
 
         if (proc_stmt.fwd_stmt)
             appendStatement(proc_stmt.fwd_stmt, fwd_body);

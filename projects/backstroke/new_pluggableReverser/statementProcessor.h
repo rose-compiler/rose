@@ -17,20 +17,14 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt);
 class ExprStatementProcessor : public StatementProcessor
 {
 public:
-    virtual ProcessedStatement process(
-                SgStatement* stmt, 
-                std::vector<ExpressionProcessor*>& exp_processors,
-                std::vector<StatementProcessor*>& stmt_processors);
+    virtual ProcessedStatement process(SgStatement* stmt); 
     virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg);
 };
 
 class BasicBlockProcessor : public StatementProcessor
 {
 public:
-    virtual ProcessedStatement process(
-                SgStatement* stmt, 
-                std::vector<ExpressionProcessor*>& exp_processors,
-                std::vector<StatementProcessor*>& stmt_processors);
+    virtual ProcessedStatement process(SgStatement* stmt); 
     virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg);
 };
 

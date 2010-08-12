@@ -32,6 +32,16 @@ InstrumentedStatementVec ProcessorBase::processStatement(const StatementPackage&
 }
 #endif
 
+ProcessedExpression ProcessorBase::processExpression(SgExpression* exp)
+{
+    return event_processor_->processExpression(exp);
+}
+
+ProcessedStatement ProcessorBase::processStatement(SgStatement* stmt)
+{
+    return event_processor_->processStatement(stmt);
+}
+
 vector<EvaluationResult> ProcessorBase::evaluateExpression(const ExpressionPackage& exp_pkg)
 {
     return event_processor_->evaluateExpression(exp_pkg);
@@ -47,11 +57,28 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
+ProcessedExpression EventProcessor::processExpression(SgExpression* exp)
+{
+    ROSE_ASSERT(!exp_processors.empty());
+    ExpressionProcessor* processor = exp_processors.back();
+    exp_processors.pop_back();
+    return processor->process(exp);
+}
+
+ProcessedStatement EventProcessor::processStatement(SgStatement* stmt)
+{
+    ROSE_ASSERT(!stmt_processors.empty());
+    StatementProcessor* processor = stmt_processors.back();
+    stmt_processors.pop_back();
+    return processor->process(stmt);
+}
+
 ProcessedStatement EventProcessor::processStatement(SgStatement* stmt, EvaluationResult& result)
 {
-    StatementProcessor* stmt_processor = result.stmt_processors.back();
-    result.stmt_processors.pop_back();
-    return stmt_processor->process(stmt, result.exp_processors, result.stmt_processors);
+    exp_processors = result.exp_processors;
+    stmt_processors = result.stmt_processors;
+
+    return processStatement(stmt);
 }
 
 vector<EvaluationResult> EventProcessor::evaluateExpression(const ExpressionPackage& exp_pkg)

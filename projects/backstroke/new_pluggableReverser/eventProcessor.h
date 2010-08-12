@@ -113,8 +113,8 @@ class ProcessorBase
 
 protected:
 
-    std::vector<ProcessedExpression*> processExpression(const ExpressionPackage& exp_pkg);
-    std::vector<ProcessedStatement*>  processStatement(const StatementPackage& stmt_pkg);
+    ProcessedExpression processExpression(SgExpression* exp);
+    ProcessedStatement processStatement(SgStatement* stmt);
 
     std::vector<EvaluationResult> evaluateExpression(const ExpressionPackage& exp_pkg);
     std::vector<EvaluationResult> evaluateStatement(const StatementPackage& stmt_pkg);
@@ -176,10 +176,7 @@ class StatementProcessor : public ProcessorBase
 {
 public:
 
-    virtual ProcessedStatement process(
-            SgStatement* stmt, 
-            std::vector<ExpressionProcessor*>& exp_processors,
-            std::vector<StatementProcessor*>& stmt_processors) = 0;
+    virtual ProcessedStatement process(SgStatement* stmt) = 0; 
     virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg) = 0;
 
     // Note this function is a wrapper which is called by event processor.
@@ -211,6 +208,11 @@ class EventProcessor
     //! All statement processors which are added by the user.
     std::vector<StatementProcessor*> stmt_processors_;
 
+    /*! The following processors are different from the ones above, and they 
+     are for generating code. */
+    std::vector<ExpressionProcessor*> exp_processors;
+    std::vector<StatementProcessor*> stmt_processors;
+
     //! All declarations of stacks which store values of different types.
     std::map<std::string, SgVariableDeclaration*> stack_decls_;
 
@@ -224,6 +226,8 @@ class EventProcessor
 
 private:
 
+    ProcessedExpression processExpression(SgExpression* exp);
+    ProcessedStatement processStatement(SgStatement* stmt);
     ProcessedStatement processStatement(SgStatement* stmt, EvaluationResult& result);
 
     //! Given an expression, return all evaluation results using all expression processors.
