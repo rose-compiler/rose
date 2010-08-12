@@ -198,10 +198,10 @@ int main(int argc, char** argv)
 	("input-file", po::value<string>(), "file to be analyzed")
 	("target-path,P", po::value<string>(), "target path including headers")
 	("include-path,I", po::value< vector<string> >()->composing(), 
-	 "include path")
-	("macro-defined,D", po::value< vector<string> >()->composing(), 
-	 "macro defined")
-	;
+         "include path")
+        ("macro-defined,D", po::value< vector<string> >()->composing(), 
+         "macro defined")
+        ;
     po::positional_options_description p;
     p.add("input-file", -1);
 
