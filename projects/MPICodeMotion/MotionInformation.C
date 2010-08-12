@@ -494,9 +494,9 @@ SgNode* MotionInformation::leastCommonAncestor(SgNode* a, SgNode* b)
 	}
 
 	while (b) {
-	  vector<SgNode*>::const_iterator i = std::find(ancestorsOfA.begin(), ancestorsOfA.end(), b);
-	  if (i != ancestorsOfA.end()) return *i;
-	  b = b->get_parent();
+	        vector<SgNode*>::const_iterator i = std::find(ancestorsOfA.begin(), ancestorsOfA.end(), b);
+                if (i != ancestorsOfA.end()) return *i;
+                b = b->get_parent();
 	}
 	return NULL;
 }
