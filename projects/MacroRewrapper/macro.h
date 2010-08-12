@@ -49,10 +49,10 @@ void create_database_tables();
 int add_macro_def(const std::string& filename, int lineno, int colno, const std::string& name, 
 		  const std::string& def, std::vector<std::string>& args);
 int add_macro_call(const std::string& filename, int lineno, int colno, std::vector<std::string>& tokenlist,
-		   std::vector<std::string>& args, const std::string& macdeffilename, int macdeflineno,
+                   std::vector<std::string>& args, const std::string& macdeffilename, int macdeflineno,
 		   const std::string& expanded, const std::string& unparsed);
 int replace_macro_call(const std::string& filename, int lineno, int colno, std::vector<std::string>& tokenlist,
-		       std::vector<std::string>& args, const std::string& macdeffilename, int macdeflineno,
+                       std::vector<std::string>& args, const std::string& macdeffilename, int macdeflineno,
 		       const std::string& expanded, const std::string& unparsed);
 
 bool exist_macro_def(const std::string& filename, int lineno); // if found, return true; otherwise, return false. TODO: check uniqueness
