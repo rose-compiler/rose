@@ -83,7 +83,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgBasicBlock* appendToGlobalConstructor(SgScopeStatement* scope, std::string name);
   void appendGlobalConstructor(SgScopeStatement* scope, SgStatement* stmt);
   void appendGlobalConstructorVariable(SgScopeStatement* scope,
-				       SgStatement* stmt);
+                                       SgStatement* stmt);
   SgVariableDeclaration* getGlobalVariableForClass(SgGlobal* globel, SgClassDeclaration* classStmt);
 
 
@@ -238,7 +238,7 @@ class RtedTransformation : public AstSimpleProcessing {
   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrow(SgArrowExp* arrow , std::string str, SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str,
-								 SgVarRefExp* varRef);
+                                                                 SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getPlusPlusOp(SgPlusPlusOp* plus ,std::string str, SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
@@ -291,12 +291,10 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertInitializeVariable(SgInitializedName* initName,
 		  SgExpression* varRefE, bool ismalloc );
   //std::vector<SgExpression*>
-  SgExpression*
-   buildVariableInitCallExpr(
-				SgInitializedName* name,
-				SgExpression* varRefE,
-				SgStatement* stmt,
-				bool ismalloc );
+  SgExpression* buildVariableInitCallExpr(SgInitializedName* name,
+                                          SgExpression* varRefE,
+                                          SgStatement* stmt,
+                                          bool ismalloc );
   SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
   // TODO 2 djh: test docs
   /**
@@ -391,7 +389,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void appendClassName( SgExprListExp* arg_list, SgType* type );
 
 	/** 
-	 * Handle instrumenting function calls in for initializer statements, which may
+         * Handle instrumenting function calls in for initializer statements, which may
 	 * contain variable declarations.  The basic approach is to instead add the
 	 * function calls to the test, and ensuring that:
 	 *
