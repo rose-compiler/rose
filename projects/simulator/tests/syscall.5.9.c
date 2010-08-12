@@ -5,10 +5,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
 #include <stdio.h>
-#include <stdlib.h>
-#include "assert.h"
+
+#include <err.h>
 
 char tempfile[40] = "";
 
@@ -19,35 +18,38 @@ int main() {
 
   sprintf(tempfile, "tfile_%d", getpid());
 
-  if( (fd = open(tempfile, O_RDWR | O_CREAT, 0600)) == -1 ) {
-      fprintf(stderr, "  can't create '%s'", tempfile);
-      abort();
-  } else {
-      close(fd);
-      if( (fd = open(tempfile, 1) ) == -1) {
-          fprintf(stderr, "  open failed");
-          abort();
-      }
+  if( (fd = open(tempfile, O_RDWR | O_CREAT, 0600)) == -1 )
+    err(1,"can't create %s",tempfile);
+  else {
+      result = close(fd);
+      if( result == -1 )
+        err(1,"close failed");
+
+      if( (fd = open(tempfile, O_WRONLY) ) == -1)
+        err(1,"open %s failed",tempfile);
   }
   result = read(fd, pbuf, 1);
-  if( result != -1 ) {
-      fprintf(stderr, "  read shouldn ot succeed");
-      abort();
-  }
-  close(fd);
+  if( result != -1 )
+    errx(1,"read should not have succeeded");
 
-  if( (fd = open(tempfile, 0)) == -1 ) {
-      fprintf(stderr, "  open failed");
-      abort();
-  } else {
+  result = close(fd);
+  if( result == -1 )
+    err(1,"close failed");
+
+  if( (fd = open(tempfile, O_RDONLY)) == -1 )
+    err(1,"open failed");
+  else {
       result = write(fd, pbuf, 1);
-      if( result != -1) {
-          fprintf(stderr, "  write should not succeed");
-          abort();
-      }
+      if( result != -1)
+        errx(1,"write should not have succeeded");
   }
-  close(fd);
 
-  unlink(tempfile);
+  result = close(fd);
+  if( result == -1 )
+    err(1,"close failed");
+
+  result = unlink(tempfile);
+  if( result == -1 )
+    err(1,"unlink failed");
   return 0;
 }
