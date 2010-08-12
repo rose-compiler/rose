@@ -2322,6 +2322,7 @@ projects/PolyhedralDependenceAnalysis/Common/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
 projects/PolyhedralDependenceAnalysis/Schedule/Makefile
+projects/PolyhedralDependenceAnalysis/CodeGenerator/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2420,6 +2421,7 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
 tests/roseTests/utilTests/Makefile
+tests/roseTests/variableRenamingTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
