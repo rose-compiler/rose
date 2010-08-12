@@ -5,23 +5,23 @@ NANOS STYLE CODE GENERATION
 c
 c lu - LU computation
 c
-	subroutine lu (C,N)
-	implicit none
-	integer*4 N
-	real C(N, N)
+        subroutine lu (C,N)
+        implicit none
+        integer*4 N
+        real C(N, N)
 
-	integer*4 i, j, k
+        integer*4 i, j, k
 
- 	do k = 1, N-1
+        do k = 1, N-1
 C$OMP PARALLEL DO PRIVATE(i,j) SCHEDULE(STATIC)
-	   do i = k+1, N
-	      C(i,k) = C(i,k) / C(k,k)
-	      do j = k+1, N
-	         C(i,j) = C(i,j) - C(i,k)*C(k,j)
-	      enddo
-	   enddo
- 	enddo
-	end
+           do i = k+1, N
+              C(i,k) = C(i,k) / C(k,k)
+              do j = k+1, N
+                 C(i,j) = C(i,j) - C(i,k)*C(k,j)
+              enddo
+           enddo
+        enddo
+        end
 
 // Transformed Code
 
