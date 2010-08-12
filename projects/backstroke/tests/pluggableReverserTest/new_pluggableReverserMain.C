@@ -1,7 +1,6 @@
-#include <pluggableReverser/eventProcessor.h>
-#include <pluggableReverser/expressionProcessor.h>
-#include <pluggableReverser/statementProcessor.h>
-#include <pluggableReverser/akgulStyleExpressionProcessor.h>
+#include <new_pluggableReverser/eventProcessor.h>
+#include <new_pluggableReverser/expressionProcessor.h>
+#include <new_pluggableReverser/statementProcessor.h>
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
@@ -47,12 +46,12 @@ int main(int argc, char * argv[])
     event_processor.addExpressionProcessor(new NullExpressionProcessor);
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
-    event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+    //event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
     //event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
 
     // Add all statement handlers to the statement pool.
-	event_processor.addStatementProcessor(new ReturnStatementProcessor);
-    event_processor.addStatementProcessor(new BasicStatementProcessor);
+    event_processor.addStatementProcessor(new ExprStatementProcessor);
+    event_processor.addStatementProcessor(new BasicBlockProcessor);
 
     pushScopeStack(isSgScopeStatement(global));
 
