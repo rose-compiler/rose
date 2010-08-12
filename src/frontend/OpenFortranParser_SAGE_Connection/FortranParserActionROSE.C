@@ -639,7 +639,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                     int rank = astExpressionStack.size();
                     ROSE_ASSERT(rank == 1);
 
-#if 0
+#if 1
+                 // DQ (8/12/2010): I need to make an intermediate release with this older version of the code.
+                    printf ("Using older version of code to support intermediate release! \n");
                     SgArrayType* arrayType = convertTypeOnStackToArrayType(rank);
                     astBaseTypeStack.pop_front();
                     astBaseTypeStack.push_front(arrayType);

@@ -297,9 +297,10 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      SgExprListExp* dim = array_type->get_dim_info();
 
   // DQ (8/5/2010): It is an error to treat an array of char as a string (see test2010_16.f90).
-#if 0
+#if 1
   // if (isCharType(array_type->get_base_type()))
-     if (false && isCharType(array_type->get_base_type()))
+  // if (false && isCharType(array_type->get_base_type()))
+     if (isCharType(array_type->get_base_type()))
         {
        // a character type: must be treated specially
           ROSE_ASSERT(array_type->get_rank() == 1);

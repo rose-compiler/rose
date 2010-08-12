@@ -128,8 +128,12 @@ namespace StringUtility
        //! Convert a unsigned integer (size_t) to a string
        //  string numberToString ( unsigned int x );
        //  std::string numberToString ( size_t x );
+
+
+       // DQ (8/10/2010): Changed to take parameter as const.
        //! Convert a pointer value to a string
-           std::string numberToString ( void* x );
+           std::string numberToString ( const void* x );
+
        //! Convert a number to a string
            std::string numberToString ( double x );
        //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.
