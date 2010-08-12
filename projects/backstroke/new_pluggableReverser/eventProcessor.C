@@ -49,8 +49,8 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
 
 ProcessedStatement EventProcessor::processStatement(SgStatement* stmt, EvaluationResult& result)
 {
-    StatementProcessor* stmt_processor = result.stmt_processors.top();
-    result.stmt_processors.pop();
+    StatementProcessor* stmt_processor = result.stmt_processors.back();
+    result.stmt_processors.pop_back();
     return stmt_processor->process(stmt, result.exp_processors, result.stmt_processors);
 }
 
@@ -62,7 +62,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(const ExpressionPack
     
     foreach (ExpressionProcessor* exp_processor, exp_processors_)
     {
-        vector<EvaluationResult> res = exp_processor->evaluate(exp_pkg);
+        vector<EvaluationResult> res = exp_processor->evaluate_(exp_pkg);
 
         foreach (const EvaluationResult& r1, res)
         {
@@ -119,7 +119,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(const StatementPackag
 
     foreach (StatementProcessor* stmt_processor, stmt_processors_)
     {
-        vector<EvaluationResult> res = stmt_processor->evaluate(stmt_pkg);
+        vector<EvaluationResult> res = stmt_processor->evaluate_(stmt_pkg);
         foreach (EvaluationResult& r1, res)
         {
             // Remove those variables from variable version table if they are not useful anymore.
@@ -240,6 +240,9 @@ FuncDeclPairs EventProcessor::processEvent()
 
     foreach (EvaluationResult& res, results)
     {
+        cout << res.exp_processors.size() << endl;
+        cout << res.stmt_processors.size() << endl;
+
         ProcessedStatement stmt = processStatement(body, res);
 
         fixVariableReferences(stmt.fwd_stmt);

@@ -3,8 +3,11 @@
 
 #include <rose.h>
 #include <utilities/types.h>
+#include <boost/foreach.hpp>
 #include "variableVersionTable.h"
 #include "costModel.h"
+
+#define foreach BOOST_FOREACH
 
 class ExpressionProcessor;
 class StatementProcessor;
@@ -21,12 +24,6 @@ struct ExpressionPackage
     SgExpression* exp;
     VariableVersionTable var_table;
     bool is_value_used;
-
-    // The following two stacks are for tracking what kind of expression
-    // or statement processors are used in order to make the correct transformation
-    // finally.
-    std::stack<ExpressionProcessor*> exp_processors;
-    std::stack<StatementProcessor*> stmt_processors;
 };
 
 struct StatementPackage
@@ -39,12 +36,6 @@ struct StatementPackage
 
     SgStatement* stmt;
     VariableVersionTable var_table;
-
-    // The following two stacks are for tracking what kind of expression
-    // or statement processors are used in order to make the correct transformation
-    // finally.
-    std::stack<ExpressionProcessor*> exp_processors;
-    std::stack<StatementProcessor*> stmt_processors;
 };
 
 struct EvaluationResult
@@ -53,16 +44,37 @@ struct EvaluationResult
             const SimpleCostModel& cost_model = SimpleCostModel())
         : var_table(table), cost(cost_model) {}
 
+    EvaluationResult(const VariableVersionTable& table,
+            const std::vector<ExpressionProcessor*>& exp_proc,
+            const std::vector<StatementProcessor*>& stmt_proc,
+            const SimpleCostModel& cost_model = SimpleCostModel())
+      : var_table(table), 
+        cost(cost_model), 
+        exp_processors(exp_proc), 
+        stmt_processors(stmt_proc) 
+    {}
+
+    // In this update function, update every possible item in this structure.
+    // Note the order!
+    void update(const EvaluationResult& result)
+    {
+        var_table = result.var_table;
+        cost += result.cost;
+
+        exp_processors.insert(exp_processors.end(), result.exp_processors.begin(), result.exp_processors.end());
+        stmt_processors.insert(stmt_processors.end(), result.stmt_processors.begin(), result.stmt_processors.end());
+    }
+
     // Variable version table
     VariableVersionTable var_table;
     // Cost model
     SimpleCostModel cost;
 
-    // The following two stacks are for tracking what kind of expression
+    // The following two vectors are for tracking what kind of expression
     // or statement processors are used in order to make the correct transformation
     // finally.
-    std::stack<ExpressionProcessor*> exp_processors;
-    std::stack<StatementProcessor*> stmt_processors;
+    std::vector<ExpressionProcessor*> exp_processors;
+    std::vector<StatementProcessor*> stmt_processors;
 };
 
 struct ProcessedExpression
@@ -131,14 +143,22 @@ public:
     virtual std::vector<EvaluationResult> evaluate(const ExpressionPackage& exp_pkg) = 0;
     //virtual void getCost() = 0;
 
+    // Note this function is a wrapper which is called by event processor.
+    std::vector<EvaluationResult> evaluate_(const ExpressionPackage& exp_pkg)
+    {
+        std::vector<EvaluationResult> results = evaluate(exp_pkg);
+        foreach (EvaluationResult& result, results)
+            result.exp_processors.push_back(this);
+        return results;
+    }
+
+
     EvaluationResult makeEvaluationResult(
             const ExpressionPackage& exp_pkg,
             const VariableVersionTable& var_table,
             const SimpleCostModel& cost = SimpleCostModel())
     {
         EvaluationResult result(var_table, cost);
-        result.exp_processors = exp_pkg.exp_processors;
-        result.exp_processors.push(this);
         return result;
     }
 
@@ -147,8 +167,6 @@ public:
             const SimpleCostModel& cost = SimpleCostModel())
     {
         EvaluationResult result(exp_pkg.var_table, cost);
-        result.exp_processors = exp_pkg.exp_processors;
-        result.exp_processors.push(this);
         return result;
     }
 };
@@ -160,9 +178,19 @@ public:
 
     virtual ProcessedStatement process(
             SgStatement* stmt, 
-            std::stack<ExpressionProcessor*>& exp_processors,
-            std::stack<StatementProcessor*>& stmt_processors) = 0;
+            std::vector<ExpressionProcessor*>& exp_processors,
+            std::vector<StatementProcessor*>& stmt_processors) = 0;
     virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg) = 0;
+
+    // Note this function is a wrapper which is called by event processor.
+    std::vector<EvaluationResult> evaluate_(const StatementPackage& stmt_pkg)
+    {
+        std::vector<EvaluationResult> results = evaluate(stmt_pkg);
+        foreach (EvaluationResult& result, results)
+            result.stmt_processors.push_back(this);
+        return results;
+    }
+
 
     //virtual S
 

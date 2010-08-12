@@ -41,14 +41,15 @@ InstrumentedStatementVec BasicStatementProcessor::processReturnStatement(const S
 
 ProcessedStatement ExprStatementProcessor::process(
         SgStatement* stmt, 
-        stack<ExpressionProcessor*>& exp_processors,
-        stack<StatementProcessor*>& stmt_processors)
+        vector<ExpressionProcessor*>& exp_processors,
+        vector<StatementProcessor*>& stmt_processors)
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
     
-    ExpressionProcessor* exp_processor = exp_processors.top();
-    exp_processors.pop();
+    ROSE_ASSERT(!exp_processors.empty());
+    ExpressionProcessor* exp_processor = exp_processors.back();
+    exp_processors.pop_back();
 
     ProcessedExpression exp = exp_processor->process(exp_stmt->get_expression());
 
@@ -74,10 +75,6 @@ vector<EvaluationResult> ExprStatementProcessor::evaluate(const StatementPackage
 
     ROSE_ASSERT(!results.empty());
 
-    foreach (EvaluationResult& result, results)
-    {
-        result.stmt_processors.push(this);
-    }
     return results;
 }
 
@@ -107,24 +104,27 @@ InstrumentedStatementVec BasicStatementProcessor::processVariableDeclaration(con
 #endif
 
 ProcessedStatement BasicBlockProcessor::process(SgStatement* stmt, 
-        stack<ExpressionProcessor*>& exp_processors,
-        stack<StatementProcessor*>& stmt_processors)
+        vector<ExpressionProcessor*>& exp_processors,
+        vector<StatementProcessor*>& stmt_processors)
 {
     SgBasicBlock* body = isSgBasicBlock(stmt);
     ROSE_ASSERT(body);
 
-    SgBasicBlock* fwd_body = NULL;
-    SgBasicBlock* rvs_body = NULL;
+    SgBasicBlock* fwd_body = buildBasicBlock();
+    SgBasicBlock* rvs_body = buildBasicBlock();
 
     foreach (SgStatement* stmt, body->get_statements())
     {
-        StatementProcessor* stmt_processor = stmt_processors.top();
-        stmt_processors.pop();
+        ROSE_ASSERT(!stmt_processors.empty());
+        StatementProcessor* stmt_processor = stmt_processors.back();
+        stmt_processors.pop_back();
 
         ProcessedStatement proc_stmt = stmt_processor->process(stmt, exp_processors, stmt_processors);
 
-        appendStatement(proc_stmt.fwd_stmt, fwd_body);
-        prependStatement(proc_stmt.rvs_stmt, rvs_body);
+        if (proc_stmt.fwd_stmt)
+            appendStatement(proc_stmt.fwd_stmt, fwd_body);
+        if (proc_stmt.rvs_stmt)
+            prependStatement(proc_stmt.rvs_stmt, rvs_body);
     }
 
     return ProcessedStatement(fwd_body, rvs_body);
@@ -154,12 +154,9 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(const StatementPackage& s
 
             foreach (EvaluationResult& res, results)
             {
-                EvaluationResult new_result = result;
-
-                /****** Update the variable version table and cost. ******/
-                new_result.var_table = res.var_table;
-                new_result.cost += res.cost;
-
+                // Update the result.
+                EvaluationResult new_result(result);
+                new_result.update(res);
                 queue[1-i].push_back(new_result);
             }
         }
@@ -168,7 +165,6 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(const StatementPackage& s
         // Switch the index between 0 and 1.
         i = 1 - i;
     }
-
 
 #if 0
     // Remove all local variables from variable version table since we will not use them anymore. 

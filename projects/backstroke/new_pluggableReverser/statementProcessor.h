@@ -19,8 +19,8 @@ class ExprStatementProcessor : public StatementProcessor
 public:
     virtual ProcessedStatement process(
                 SgStatement* stmt, 
-                std::stack<ExpressionProcessor*>& exp_processors,
-                std::stack<StatementProcessor*>& stmt_processors);
+                std::vector<ExpressionProcessor*>& exp_processors,
+                std::vector<StatementProcessor*>& stmt_processors);
     virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg);
 };
 
@@ -29,8 +29,8 @@ class BasicBlockProcessor : public StatementProcessor
 public:
     virtual ProcessedStatement process(
                 SgStatement* stmt, 
-                std::stack<ExpressionProcessor*>& exp_processors,
-                std::stack<StatementProcessor*>& stmt_processors);
+                std::vector<ExpressionProcessor*>& exp_processors,
+                std::vector<StatementProcessor*>& stmt_processors);
     virtual std::vector<EvaluationResult> evaluate(const StatementPackage& stmt_pkg);
 };
 

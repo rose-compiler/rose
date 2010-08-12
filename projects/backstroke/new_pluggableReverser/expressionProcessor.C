@@ -16,7 +16,7 @@ ProcessedExpression NullExpressionProcessor::process(SgExpression* exp)
 
 vector<EvaluationResult> NullExpressionProcessor::evaluate(const ExpressionPackage& exp_pkg)
 {
-    vector<EvaluationResult> output;
+    vector<EvaluationResult> results;
     SgExpression* exp = exp_pkg.exp;
 
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp) || isAssignmentOp(exp))
@@ -30,10 +30,10 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(const ExpressionPacka
         ROSE_ASSERT(isSgVarRefExp(var) || isSgDotExp(var) || isSgArrowExp(var));
         
         if (isStateVariable(var) && exp_pkg.var_table.isUsingFirstDefinition(var))
-            return output;
+            return results;
     }
-    output.push_back(makeEvaluationResult(exp_pkg));
-    return output;
+    results.push_back(makeEvaluationResult(exp_pkg));
+    return results;
 }
 
 
@@ -42,69 +42,56 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(const ExpressionPacka
 
 ProcessedExpression StoreAndRestoreExpressionProcessor::process(SgExpression* exp)
 {
-    SgExpression* operand = NULL;
+    SgExpression* var_to_save = NULL;
 
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
-    {
-        operand = isSgUnaryOp(exp)->get_operand();
-    }
+        var_to_save = isSgUnaryOp(exp)->get_operand();
     else if (isAssignmentOp(exp))
-    {
-        operand = isSgBinaryOp(exp)->get_lhs_operand();
-    }
+        var_to_save = isSgBinaryOp(exp)->get_lhs_operand();
 
-    ROSE_ASSERT(operand);
+    ROSE_ASSERT(var_to_save);
 
     SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-            pushVal(copyExpression(operand), operand->get_type()),
+            pushVal(copyExpression(var_to_save), var_to_save->get_type()),
             copyExpression(exp));
     SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-            copyExpression(operand),
-            popVal(operand->get_type()));
+            copyExpression(var_to_save),
+            popVal(var_to_save->get_type()));
 
     return ProcessedExpression(fwd_exp, rvs_exp);
 }
 
 vector<EvaluationResult> StoreAndRestoreExpressionProcessor::evaluate(const ExpressionPackage& exp_pkg)
 {
-    vector<EvaluationResult> output;
+    vector<EvaluationResult> results;
     SgExpression* exp = exp_pkg.exp;
 
     // Every type can be stored using the following way.
+    
+    SgExpression* var_to_save = NULL;
+
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
-    {
-        SgExpression* operand = isSgUnaryOp(exp)->get_operand();
+        var_to_save = isSgUnaryOp(exp)->get_operand();
+    else if (isAssignmentOp(exp))
+        var_to_save = isSgBinaryOp(exp)->get_lhs_operand();
 
+
+    if (var_to_save)
+    {
         // Update the variable version table.
         VariableVersionTable new_var_table = exp_pkg.var_table;
-        new_var_table.reverseVersion(operand);
+        new_var_table.reverseVersion(var_to_save);
 
         // Update the cost.
         SimpleCostModel cost;
         cost.increaseStoreCount();
 
-        output.push_back(EvaluationResult(new_var_table, cost));
-        //}
-    }
-
-    if (isAssignmentOp(exp))
-    {
-        SgExpression* lhs_operand = isSgBinaryOp(exp)->get_lhs_operand();
-
-        // Update the variable version table.
-        VariableVersionTable new_var_table = exp_pkg.var_table;
-        new_var_table.reverseVersion(lhs_operand);
-
-        // Update the cost.
-        SimpleCostModel cost;
-        cost.increaseStoreCount();
-
-        output.push_back(makeEvaluationResult(exp_pkg, new_var_table, cost));
+        results.push_back(makeEvaluationResult(exp_pkg, new_var_table, cost));
     }
 
     // function call?
 
-    return output;
+    return results;
 }
 
 /******************************************************************************
@@ -228,7 +215,7 @@ ProcessedExpression ConstructiveExpressionProcessor::process(SgExpression* exp)
 
 vector<EvaluationResult> ConstructiveExpressionProcessor::evaluate(const ExpressionPackage& exp_pkg)
 {
-    vector<EvaluationResult> output;
+    vector<EvaluationResult> results;
     SgExpression* exp = exp_pkg.exp;
 
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
@@ -259,7 +246,7 @@ vector<EvaluationResult> ConstructiveExpressionProcessor::evaluate(const Express
                 if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
                 {
                     EvaluationResult result = makeEvaluationResult(exp_pkg, new_table);
-                    output.push_back(result);
+                    results.push_back(result);
                 }
             }
         }
@@ -307,7 +294,7 @@ vector<EvaluationResult> ConstructiveExpressionProcessor::evaluate(const Express
                         isSgXorAssignOp(exp))
                 {
                     EvaluationResult result = makeEvaluationResult(exp_pkg, new_table);
-                    output.push_back(result);
+                    results.push_back(result);
                 }
 
 #if 0
@@ -331,7 +318,7 @@ vector<EvaluationResult> ConstructiveExpressionProcessor::evaluate(const Express
         } // if (lhs_operand->get_type()->isIntegerType())
     }
 
-    return output;
+    return results;
 }
 
 /*
