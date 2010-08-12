@@ -5,7 +5,7 @@ SUBDIRS =
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
 # Build a library of all the reverser code
-noinst_LTLIBRARIES =  libBackstrokenew_PluggableReverser.a
+noinst_LIBRARIES =  libBackstrokenew_PluggableReverser.a
 
 libBackstrokenew_PluggableReverser_a_DEPENDENCIES =
 libBackstrokenew_PluggableReverser_a_SOURCES = expressionProcessor.C statementProcessor.C eventProcessor.C variableVersionTable.C 
