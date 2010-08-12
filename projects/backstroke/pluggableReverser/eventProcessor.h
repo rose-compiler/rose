@@ -5,6 +5,7 @@
 #include <utilities/types.h>
 #include "variableVersionTable.h"
 #include "costModel.h"
+#include "VariableRenaming.h"
 
 /** Stores the results of reversing an expression. These include the forward and reverse expressions,
   * along with the cost of the reversal. */
@@ -90,11 +91,24 @@ protected:
     ExpressionReversalVec processExpression(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed);
     StatementReversalVec processStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
+	/**
+	 * Given a variable and a version, returns an expression evaluating to the value of the variable
+	 * at the given version.
+	 *
+     * @param variable name of the variable to be restored
+     * @param useSite location where the reverse expression will go
+     * @return definitions the version of the variable which should be restored
+     */
+	std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+		VariableRenaming::NumNodeRenameEntry definitions);
+
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
 
     //! Return if the given variable is a state variable (currently, it should be the parameter of event function).
     bool isStateVariable(SgExpression* exp);
+
+	VariableRenaming* getVariableRenaming();
 
 public:
 
@@ -111,7 +125,6 @@ class ExpressionProcessor : public ProcessorBase
 public:
 
     virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& table, bool isReverseValueUsed) = 0;
-    //virtual void getCost() = 0;
 
 };
 
@@ -121,14 +134,44 @@ class StatementProcessor : public ProcessorBase
 public:
 
     virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
-
-    //virtual S
-
-    //virtual void getCost() = 0;
 };
 
 
-class VariableRenaming;
+/** These types of reverse handlers recalculate a specific value of a variable at a different point
+  * in the program. */
+class VariableValueRestorer
+{
+public:
+
+	/**
+	 * Given a variable and a version, returns an expression evaluating to the value of the variable
+	 * at the given version.
+	 *
+     * @param variable name of the variable to be restored
+     * @param useSite location where the reverse expression will go
+     * @return definitions the version of the variable which should be restored
+     */
+	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+		VariableRenaming::NumNodeRenameEntry definitions) = 0;
+
+	VariableValueRestorer() : eventProcessor(NULL)
+	{
+	}
+
+	void setEventProcessor(EventProcessor* eventProcessor)
+	{
+		this->eventProcessor = eventProcessor;
+	}
+
+	EventProcessor* getEventProcessor()
+	{
+		return eventProcessor;
+	}
+
+private:
+
+	EventProcessor* eventProcessor;
+};
 
 class EventProcessor
 {
@@ -140,6 +183,9 @@ class EventProcessor
 
     //! All statement processors which are added by the user.
     std::vector<StatementProcessor*> stmt_processors_;
+
+	/** Handlers which can restore a variable value without state saving. */
+	std::vector<VariableValueRestorer*> variableValueRestorers;
 
     //! All declarations of stacks which store values of different types.
     std::map<std::string, SgVariableDeclaration*> stack_decls_;
@@ -171,17 +217,27 @@ public:
     EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
     : event_(func_decl), var_renaming_(var_renaming) {}
 
+	/** Add a new expression processor to the pool. Expression processor objects can only be used
+	 * with one event processor at a time. */
     void addExpressionProcessor(ExpressionProcessor* exp_processor)
     {
         exp_processor->setEventProcessor(this);
         exp_processors_.push_back(exp_processor);
     }
 
+	/** Add a new statement processor to the pool. Statement processor objects can only be used with one
+	 * event processor at a time. */
     void addStatementProcessor(StatementProcessor* stmt_processor)
     {
         stmt_processor->setEventProcessor(this);
         stmt_processors_.push_back(stmt_processor);
     }
+
+	void addVariableValueRestorer(VariableValueRestorer* restorer)
+	{
+		restorer->setEventProcessor(this);
+		variableValueRestorers.push_back(restorer);
+	}
 
     FuncDeclPairs processEvent();
 
@@ -197,6 +253,22 @@ public:
 
     //! Get all declarations of stacks which store values of different types.
     std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
+
+	VariableRenaming* getVariableRenaming()
+	{
+		return var_renaming_;
+	}
+
+	/**
+	 * Given a variable and a version, returns an expression evaluating to the value of the variable
+	 * at the given version.
+	 *
+     * @param variable name of the variable to be restored
+     * @param useSite location where the reverse expression will go
+     * @return definitions the version of the variable which should be restored
+     */
+	std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+		VariableRenaming::NumNodeRenameEntry definitions);
 };
 
 

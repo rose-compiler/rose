@@ -681,13 +681,12 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 inputBug317.C \
-inputBug327.C 
+inputBug327.C \
+test2006_148.C \
+test2007_51.C
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
-
-# These fail because we don't support SgStatementExpression
-TESTCODES_EXPECTED_TO_FAIL = test2006_148.C test2007_51.C
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
@@ -695,7 +694,7 @@ simple_test = test_norm.C
 
 $(simple_test):expNormTest 
 	@cp $(top_srcdir)/projects/backstroke/tests/expNormalizationTest/test_norm.C test_norm.C
-	./expNormTest -c test_norm.C      		
+	./expNormTest --edg:no_warnings -c test_norm.C
 
 
 ## Include the path to A++ and the transformation specification
@@ -705,7 +704,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects):expNormTest 
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./expNormTest --edg:no_warnings $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)
