@@ -93,7 +93,7 @@ main (int argc, char **argv)
       crossfailed = 0;
       result = 1;
       fprintf (logFile,
-	       "--------------------------------------------------\n%s\n--------------------------------------------------\n",
+               "--------------------------------------------------\n%s\n--------------------------------------------------\n",
 	       alltests[i].name);
       printf ("%s ... ", alltests[i].name);
       fflush (stdout);
@@ -104,8 +104,8 @@ main (int argc, char **argv)
 	  if (alltests[i].pass (logFile))
 	    {
 	      fprintf (logFile, "No errors occured during the %d. test.\n",
-		       j + 1);
-	      if (!alltests[i].fail (logFile))
+                       j + 1);
+              if (!alltests[i].fail (logFile))
 		{
 		  fprintf (logFile, "# Crosscheck: Verified result\n");
 		  crossfailed++;
@@ -118,8 +118,8 @@ main (int argc, char **argv)
 	  else
 	    {
 	      fprintf (logFile, "--> Erroros occured during the %d. test.\n",
-		       j + 1);
-	      result = 0;
+                       j + 1);
+              result = 0;
 	    }
 	}
       if (result == 0)
@@ -138,9 +138,9 @@ main (int argc, char **argv)
       if (result)
 	{
 	  fprintf (logFile,
-		   "Directiv worked without errors.\nCrosschecks verified this result with %5.2f%% certainty.\n",
+                   "Directiv worked without errors.\nCrosschecks verified this result with %5.2f%% certainty.\n",
 		   100.0 * crossfailed / N);
-	  printf (" verified with %5.2f%% certainty\n",
+          printf (" verified with %5.2f%% certainty\n",
 		  100.0 * crossfailed / N);
 	}
       else
@@ -157,7 +157,7 @@ main (int argc, char **argv)
      i, failed, success, crosschecked, logFileName);
   printf ("Also check failed.compilation for tests which did not pass the compilation.\n");
   fprintf (logFile,
-	   "\n\n Performed a total of %d tests, %d failed and %d successful with %d cross checked\n",
+           "\n\n Performed a total of %d tests, %d failed and %d successful with %d cross checked\n",
 	   i, failed, success, crosschecked);
   fclose (logFile);
   return failed;

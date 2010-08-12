@@ -68,9 +68,9 @@ printf("End of debug---------------------\n");
 	ii= (i/chunk_size) % threads; /*round-robin for static chunk*/
 	  if (tids[i] != ii)
 	    {
-             result++;
-	      fprintf (logFile,
-		       "Iteration %d should be assigned to %d instead of %d\n",
+              result++;
+              fprintf (logFile,
+                       "Iteration %d should be assigned to %d instead of %d\n",
                         i,ii,tids[i]);
 	    }
 	}
@@ -132,9 +132,9 @@ printf("End of debug---------------------\n");
 	ii= (i/chunk_size) % threads; /*round-robin for static chunk*/
 	  if (tids[i] != ii)
 	    {
-             result++;
+              result++;
 	      fprintf (logFile,
-		       "Iteration %d should be assigned to %d instead of %d\n",
+                       "Iteration %d should be assigned to %d instead of %d\n",
                         i,ii,tids[i]);
 	    }
 	}
