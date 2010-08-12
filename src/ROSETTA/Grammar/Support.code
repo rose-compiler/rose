@@ -3806,6 +3806,9 @@ HEADER_INITIALIZED_NAME_START
 
           SgStorageModifier & get_storageModifier();
 
+       // DQ (8/10/2010): Added const version of this function!
+          const SgStorageModifier & get_storageModifier() const;
+
       //  These are automatically generated! (not an option currently)
       //  SgInitializedName();
       // ~SgInitializedName();
@@ -8120,6 +8123,14 @@ SgInitializedName::set_file_info(Sg_File_Info* X)
 
 SgStorageModifier &
 SgInitializedName::get_storageModifier()
+   {
+     assert (this != NULL);
+     assert (p_storageModifier != NULL);
+     return *p_storageModifier;
+   }
+
+const SgStorageModifier &
+SgInitializedName::get_storageModifier() const
    {
      assert (this != NULL);
      assert (p_storageModifier != NULL);
