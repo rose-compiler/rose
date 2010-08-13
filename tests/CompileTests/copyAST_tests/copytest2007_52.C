@@ -43,7 +43,7 @@
     inline bool
     operator<(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
     { return __x.first < __y.first
-	     || (!(__y.first < __x.first) && __x.second < __y.second); }
+             || (!(__y.first < __x.first) && __x.second < __y.second); }
 
   /// Uses @c operator== to find the result.
   template<class _T1, class _T2>
