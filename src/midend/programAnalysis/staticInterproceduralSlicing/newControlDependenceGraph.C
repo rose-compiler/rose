@@ -99,7 +99,7 @@ void ControlDependenceGraph::buildCDG()
 	// init with start 
 	controlerStack.push(currentID);
 	// the next node is the folow up node from start..
-  SliceCFGNode b=currentNode.outEdges()[0].target();
+        SliceCFGNode b=currentNode.outEdges()[0].target();
 	cout <<"next node is "<<dominatorTree.getID(b)<<endl;
 	unvisitedNodes.push(dominatorTree.getID(b));	
 	int nextControler;

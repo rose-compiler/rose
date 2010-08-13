@@ -58,7 +58,7 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
     assert(false);
 
  /* Avoid MSVC warning */
-	return "error";
+    return "error";
 }
 
 static std::string 

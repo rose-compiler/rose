@@ -182,7 +182,7 @@ std::string ToString(T t) {
 
   template <typename EdgeT>
   inline void printDFAEdge(ostream& o, const EdgeT& e, bool isInEdge, DefUseAnalysis* dfa,
-			   LivenessAnalysis* live) {
+                           LivenessAnalysis* live) {
     //cout << " printDFAEdge: label: " << getEdgeString(e) << endl;
     string nodeColor = "black";
     SgNode* ns = e.source().getNode();
@@ -202,7 +202,7 @@ std::string ToString(T t) {
 
   template <typename NodeT, typename EdgeT>
   void printDFANodePlusEdges(ostream& o, NodeT n, DefUseAnalysis* dfa,
-			     LivenessAnalysis* live) {
+                             LivenessAnalysis* live) {
     printDFANode<NodeT>(o, n, dfa);
     vector<EdgeT> outEdges = n.outEdges();
     for (unsigned int i = 0; i < outEdges.size(); ++i) {
@@ -258,7 +258,7 @@ std::string ToString(T t) {
   template <typename NodeT, typename EdgeT>
   void DfaToDotImpl<NodeT, EdgeT>::processNodes(SgNode*) {
     for (typename multimap<SgNode*, NodeT>::const_iterator it = exploredNodes.begin();
-	 it != exploredNodes.end(); ++it) {
+         it != exploredNodes.end(); ++it) {
       printDFANodePlusEdges<NodeT, EdgeT>(o, it->second, dfa, live);
     }
   }
