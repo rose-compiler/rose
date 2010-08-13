@@ -825,7 +825,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                             {
                               if (matchingName(name,".EQV.") == true)
                                  {
-                                   result = new SgEqualityOp(lhs,rhs,NULL);
+                                   result = new SgAndOp(lhs,rhs,NULL);
                                  }
                                 else
                                  {
@@ -841,8 +841,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                            // This is the case for ".NEQV." etc.
                               if (matchingName(name,".NEQV.") == true)
                                  {
-                                // DQ (8/5/2010): This might output .NE. instead of .NEQV. and the two are .NEQV.! 
-                                   result = new SgNotEqualOp(lhs,rhs,NULL);
+                                   result = new SgAndOp(lhs,rhs,NULL);
                                  }
                                 else
                                  {

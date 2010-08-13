@@ -21,10 +21,6 @@ int main( int argc, char * argv[] )
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 
-#if 0
-     SgNode::get_globalTypeTable()->print_typetable();
-#endif
-
   // regenerate the source code and call the vendor 
   // compiler, only backend error code is reported.
      return backend(project);

@@ -9,7 +9,7 @@ using namespace std;
 
 // This function is local to this file
 string
-SageInterface::declarationPositionString( const SgDeclarationStatement* declaration )
+SageInterface::declarationPositionString( SgDeclarationStatement* declaration )
    {
   // This function generates a unique string for a declaration
   // and is used in the generateUniqueName() function.
@@ -45,9 +45,8 @@ SageInterface::declarationPositionString( const SgDeclarationStatement* declarat
      return returnString;
    }
 
-// DQ (8/10/2010): Change to take node parameter as const.
 string
-SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations )
+SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations )
    {
   // This function handles details in the differences between 
   // the unique names that we require for declarations and where the
@@ -70,7 +69,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
      string key;
      string additionalSuffix;
 
-     const SgType* type = isSgType(node);
+     SgType* type = isSgType(node);
      if (type != NULL)
         {
           switch(type->variantT())
@@ -85,7 +84,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                  // Note that a fixup pass on the AST (fixupTypes.[hC]) forces the same declaration
                  // (defining or nondefining) to be used for all SgNamedType objects referencing 
                  // the same declaration.
-                    const SgNamedType* namedType = isSgNamedType(node);
+                    SgNamedType* namedType = isSgNamedType(node);
                     ROSE_ASSERT(namedType != NULL);
                     SgDeclarationStatement* declaration = namedType->get_declaration();
                     ROSE_ASSERT(declaration != NULL);
@@ -194,7 +193,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 #endif
         }
 
-     const SgStatement* statement = isSgStatement(node);
+     SgStatement* statement = isSgStatement(node);
      if (statement != NULL)
         {
        // SgScopeStatement*       scopeStatement = isSgScopeStatement(node);
@@ -214,7 +213,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
              {
                case V_SgFunctionTypeTable:
                   {
-                    const SgFunctionTypeTable* symbolTable = isSgFunctionTypeTable(node);
+                    SgFunctionTypeTable* symbolTable = isSgFunctionTypeTable(node);
                     ROSE_ASSERT(symbolTable->get_parent() != NULL);
                     key = generateUniqueName(symbolTable->get_parent(),false);
                     additionalSuffix = "__function_type_table";
@@ -225,7 +224,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgClassDefinition:
                case V_SgTemplateInstantiationDefn:
                   {
-                    const SgClassDefinition* classDefinition = isSgClassDefinition(statement);
+                    SgClassDefinition* classDefinition = isSgClassDefinition(statement);
                     ROSE_ASSERT(classDefinition != NULL);
                  // SgClassDeclaration* classDeclaration = isSgClassDeclaration(classDefinition->get_parent());
                     SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
@@ -255,7 +254,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgFunctionDefinition:
                   {
-                    const SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(statement);
+                    SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(statement);
                     ROSE_ASSERT(functionDefinition != NULL);
                  // SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionDefinition->get_parent());
                     SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
@@ -281,7 +280,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     key = "__global_file_id_";
 
                  // Make the key unique for each file!
-                    const SgGlobal* globalScope = isSgGlobal(statement);
+                    SgGlobal* globalScope = isSgGlobal(statement);
                     int fileId = globalScope->get_file_info()->get_file_id();
                     key = key + StringUtility::numberToString(fileId);
                     break;
@@ -303,7 +302,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgTemplateInstantiationFunctionDecl:
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
-                    const SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(statement);
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(statement);
                     key = functionDeclaration->get_mangled_name();
 
                  // if ( functionDeclaration == functionDeclaration->get_definingDeclaration() )
@@ -331,7 +330,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                       // Check for default parameters (function protypes with default parameter should
                       // not be mixed with function prototypes that don't have default arguments).
                          bool defaultArgumentsSpecified = false;
-                         SgInitializedNamePtrList::const_iterator i = functionDeclaration->get_args().begin();
+                         SgInitializedNamePtrList::iterator i = functionDeclaration->get_args().begin();
                          while (i != functionDeclaration->get_args().end())
                             {
                               SgInitializedName* functionParameter = *i;
@@ -356,7 +355,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgFunctionParameterList:
                   {
-                    const SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(statement);
+                    SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(statement);
                     ROSE_ASSERT(functionParameterList != NULL);
 
                     key = functionParameterList->get_mangled_name();
@@ -400,7 +399,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                   {
                     additionalSuffix = "__variable";
 
-                    const SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(statement);
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(statement);
                     key = variableDeclaration->get_mangled_name();
                  // printf ("In case V_SgVariableDeclaration: key (mangled name) = %s \n",key.c_str());
 
@@ -442,7 +441,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgVariableDefinition:
                   {
-                    const SgVariableDefinition* variableDefinition = isSgVariableDefinition(statement);
+                    SgVariableDefinition* variableDefinition = isSgVariableDefinition(statement);
                     key = variableDefinition->get_mangled_name();
                     additionalSuffix = "__variable_definition";
                     break;
@@ -450,7 +449,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgTypedefDeclaration:
                   {
-                    const SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(statement);
+                    SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(statement);
                     key = typedefDeclaration->get_mangled_name();
                     additionalSuffix = "__typedef_declaration";
                     break;
@@ -460,13 +459,13 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                   {
                  // additionalSuffix = "__enum_declaration";
 
-                    const SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(statement);
+                    SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(statement);
                     key = enumDeclaration->get_mangled_name();
 
                  // DQ (2/21/2007): Added to support AST merge.
                     if (enumDeclaration->get_name().getString().find_first_of("__generatedName_") != string::npos)
                        {
-                          key += "__uniqueValue_" + declarationPositionString(enumDeclaration) + "_";
+                         key += "__uniqueValue_" + declarationPositionString(enumDeclaration) + "_";
 
                       // printf ("Found an un-named class = %p = %s key = %s \n",enumDeclaration,enumDeclaration->get_name().str(),key.c_str());
                       // ROSE_ASSERT(false);
@@ -550,7 +549,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgTemplateDeclaration:
                   {
-                    const SgTemplateDeclaration* declaration = isSgTemplateDeclaration(statement);
+                    SgTemplateDeclaration* declaration = isSgTemplateDeclaration(statement);
 
                  // DQ (2/18/2007): Note that for template declarations built for member functions of a templated 
                  // class (EDG kind: templk_member_function) the declaration only has the template name (or the member 
@@ -707,11 +706,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                               printf ("Error: declaration->get_string().is_null() == true declaration = %p = %s \n",declaration,declaration->class_name().c_str());
                               declaration->get_file_info()->display("Error: declaration->get_string().is_null() == true");
 
-                           // DQ (8/10/2010): Place a const cast here to avoid changing the StringUtility::numberToString() function just yet.
                            // DQ (7/11/2010): This will make sure the IR node is unshared
-                           // additionalSuffix += string("_empty_template_string_") + StringUtility::numberToString(node);
-                              additionalSuffix += string("_empty_template_string_") + StringUtility::numberToString(declaration);
-
+                              additionalSuffix += string("_empty_template_string_") + StringUtility::numberToString(node);
                             }
                       // DQ (7/11/2010): Commenting out this assertion (triggered by astFileIO test test-read-large).
                       // ROSE_ASSERT(declaration->get_string().is_null() == false);
@@ -723,7 +719,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgUsingDeclarationStatement:
                   {
-                    const SgUsingDeclarationStatement* declaration = isSgUsingDeclarationStatement(statement);
+                    SgUsingDeclarationStatement* declaration = isSgUsingDeclarationStatement(statement);
                     key = declaration->get_mangled_name();
                     additionalSuffix = "__using_declaration";
                     break;
@@ -731,7 +727,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgUsingDirectiveStatement:
                   {
-                    const SgUsingDirectiveStatement* declaration = isSgUsingDirectiveStatement(statement);
+                    SgUsingDirectiveStatement* declaration = isSgUsingDirectiveStatement(statement);
                     key = declaration->get_mangled_name();
                     additionalSuffix = "__using_directive";
                     break;
@@ -740,7 +736,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgClassDeclaration:
                case V_SgTemplateInstantiationDecl:
                   {
-                    const SgClassDeclaration* classDeclaration = isSgClassDeclaration(statement);
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(statement);
                     key = classDeclaration->get_mangled_name();
 
                  // if (classDeclaration->get_definition() != NULL)
@@ -764,7 +760,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                  // DQ (2/9/2007): Need to make sure the SgTemplateInstantiationDecl is different from SgClassDeclaration 
                  // to avoid sharing within AST merge.
-                    const SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(statement);
+                    SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(statement);
                     if (templateInstantiationDeclaration != NULL)
                        {
                          additionalSuffix += "__template_instantiation";
@@ -903,14 +899,14 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgNamespaceAliasDeclarationStatement:
                case V_SgNamespaceDeclarationStatement:
                   {
-                    const SgDeclarationStatement* declaration = isSgDeclarationStatement(statement);
+                    SgDeclarationStatement* declaration = isSgDeclarationStatement(statement);
                     key = declaration->get_mangled_name();
                     break;
                   }
 
                case V_SgNamespaceDefinitionStatement:
                   {
-                    const SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(statement);
+                    SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(statement);
                     key = namespaceDefinition->get_namespaceDeclaration()->get_mangled_name();
                     break;
                   }
@@ -918,7 +914,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
             // DQ (2/10/2007): Added support for unique names from template instatiation directives
                case V_SgTemplateInstantiationDirectiveStatement:
                   {
-                    const SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = isSgTemplateInstantiationDirectiveStatement(statement);
+                    SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = isSgTemplateInstantiationDirectiveStatement(statement);
                     ROSE_ASSERT(templateInstantiationDirective->get_declaration() != NULL);
                     key = templateInstantiationDirective->get_declaration()->get_mangled_name();
                     additionalSuffix = "__template_instantiation_directive_declaration";
@@ -957,7 +953,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgPragmaDeclaration:
                   {
-                    const SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(node);
+                    SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(node);
                     key = "__pragma_declaration_";
                     ROSE_ASSERT(pragmaDeclaration->get_pragma() != NULL);
                     key = key + generateUniqueName(pragmaDeclaration->get_pragma(),ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
@@ -966,7 +962,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 #if 0
                case V_SgDefaultOptionStmt:
                   {
-                    const SgDefaultOptionStmt* defaultOptionDeclaration = isSgDefaultOptionStmt(node);
+                    SgDefaultOptionStmt* defaultOptionDeclaration = isSgDefaultOptionStmt(node);
                     key = "__default_option_declaration_";
                     ROSE_ASSERT(defaultOptionDeclaration->get_xxx() != NULL);
                     key = key + generateUniqueName(pragmaDeclaration->get_pragma(),ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
@@ -982,7 +978,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                   }
              }
 
-          const SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(statement);
+          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(statement);
           if (declarationStatement != NULL)
              {
             // Build a prefix to contain the access permissions (and friend specifier)
@@ -1065,14 +1061,14 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
              }
         }
 
-     const SgSymbol* symbol = isSgSymbol(node);
+     SgSymbol* symbol = isSgSymbol(node);
      if (symbol != NULL)
         {
           switch(symbol->variantT())
              {
                case V_SgVariableSymbol:
                   {
-                    const SgVariableSymbol* valiableSymbol = isSgVariableSymbol(symbol);
+                    SgVariableSymbol* valiableSymbol = isSgVariableSymbol(symbol);
                     SgInitializedName* initializedName = valiableSymbol->get_declaration();
                  // key = initializedName->get_mangled_name();
                     key = generateUniqueName(initializedName,false);
@@ -1082,7 +1078,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgClassSymbol:
                   {
-                    const SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
+                    SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
                     SgDeclarationStatement* declaration = classSymbol->get_declaration();
                  // key = declaration->get_mangled_name();
                     key = generateUniqueName(declaration,false);
@@ -1092,7 +1088,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgTypedefSymbol:
                   {
-                    const SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(symbol);
+                    SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(symbol);
                     SgDeclarationStatement* declaration = typedefSymbol->get_declaration();
                     ROSE_ASSERT(declaration != NULL);
                     key = generateUniqueName(declaration,false);
@@ -1102,7 +1098,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgFunctionSymbol:
                   {
-                    const SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
+                    SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
                     SgDeclarationStatement* declaration = functionSymbol->get_declaration();
                     key = generateUniqueName(declaration,false);
                     additionalSuffix = "__function_symbol";
@@ -1111,7 +1107,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgMemberFunctionSymbol:
                   {
-                    const SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(symbol);
+                    SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(symbol);
                     SgDeclarationStatement* declaration = memberFunctionSymbol->get_declaration();
                     key = generateUniqueName(declaration,false);
                     additionalSuffix = "__member_function_symbol";
@@ -1120,7 +1116,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgEnumSymbol:
                   {
-                    const SgEnumSymbol* enumSymbol = isSgEnumSymbol(symbol);
+                    SgEnumSymbol* enumSymbol = isSgEnumSymbol(symbol);
                     SgDeclarationStatement* declaration = enumSymbol->get_declaration();
                  // key = declaration->get_mangled_name();
                     key = generateUniqueName(declaration,false);
@@ -1130,7 +1126,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgNamespaceSymbol:
                   {
-                    const SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(symbol);
+                    SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(symbol);
                     ROSE_ASSERT(namespaceSymbol != NULL);
                     SgDeclarationStatement* declaration = namespaceSymbol->get_declaration();
 #if 1
@@ -1155,7 +1151,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgEnumFieldSymbol:
                   {
-                    const SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
+                    SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
                     SgInitializedName* declaration = enumFieldSymbol->get_declaration();
                  // key = declaration->get_mangled_name();
                     key = generateUniqueName(declaration,false);
@@ -1165,7 +1161,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgTemplateSymbol:
                   {
-                    const SgTemplateSymbol* templateSymbol = isSgTemplateSymbol(symbol);
+                    SgTemplateSymbol* templateSymbol = isSgTemplateSymbol(symbol);
                     SgTemplateDeclaration* declaration = templateSymbol->get_declaration();
                     key = generateUniqueName(declaration,false);
                     additionalSuffix = "__template_symbol";
@@ -1174,7 +1170,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgFunctionTypeSymbol:
                   {
-                    const SgFunctionTypeSymbol* functionTypeSymbol = isSgFunctionTypeSymbol(symbol);
+                    SgFunctionTypeSymbol* functionTypeSymbol = isSgFunctionTypeSymbol(symbol);
                     key = functionTypeSymbol->get_name();
                     additionalSuffix = "__function_type_symbol";
                     break;
@@ -1183,7 +1179,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
             // RV: 05/11/2007
                case V_SgLabelSymbol:
                   {
-                    const SgLabelSymbol* labelSymbol = isSgLabelSymbol (symbol);
+                    SgLabelSymbol* labelSymbol = isSgLabelSymbol (symbol);
                     key = labelSymbol->get_name();
                     additionalSuffix = "__label_symbol";
                     break;
@@ -1192,7 +1188,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
             // DQ (7/4/2010): It might be that these should not be shared!
                case V_SgAliasSymbol:
                   {
-                    const SgAliasSymbol* aliasSymbol = isSgAliasSymbol (symbol);
+                    SgAliasSymbol* aliasSymbol = isSgAliasSymbol (symbol);
                     key = aliasSymbol->get_name();
                     additionalSuffix = "__alias_symbol";
                     break;
@@ -1209,7 +1205,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
         }
 
   // Never share expressions within the merge process
-     const SgExpression* expression = isSgExpression(node);
+     SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
         {
        // printf ("expression = %p = %s \n",expression,expression->class_name().c_str());
@@ -1227,7 +1223,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
              }
         }
 
-     const SgSupport* support = isSgSupport(node);
+     SgSupport* support = isSgSupport(node);
      if (support != NULL)
         {
        // printf ("support = %p = %s \n",support,support->class_name().c_str());
@@ -1249,7 +1245,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     key = "__sourceFile_file_id_";
 
                  // Make the key unique for each file!
-                    const SgFile* file = isSgFile(node);
+                    SgFile* file = isSgFile(node);
                     int fileId = file->get_file_info()->get_file_id();
                     key = key + StringUtility::numberToString(fileId);
                     break;
@@ -1257,7 +1253,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgInitializedName:
                   {
-                    const SgInitializedName* initializedName = isSgInitializedName(node);
+                    SgInitializedName* initializedName = isSgInitializedName(node);
                  // Make the mangled name from a SgInitializedName unique (not finished yet).
                  // This case will handle "extern A::x" vs. "namespace A { int x; }" which
                  // I expect will gnerate the same unique name but which are clearly different!
@@ -1271,9 +1267,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                     additionalSuffix = "__initialized_name";
 
-                 // DQ (8/10/2010): Change to represent as const variable declaration.
                  // DQ (6/20/2006): Fixup to avoid "int x;" from being confused with "extern int x;"
-                    const SgStorageModifier & storage = initializedName->get_storageModifier();
+                    SgStorageModifier & storage = initializedName->get_storageModifier();
                     if (storage.isExtern())
                        {
                          additionalSuffix += "__extern_initialized_name";
@@ -1331,7 +1326,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
             // DQ (7/24/2010): Added to support local and global type tables.
                case V_SgTypeTable:
                   {
-                 // const SgTypeTable* symbolTable = isSgTypeTable(node);
+                    SgTypeTable* symbolTable = isSgTypeTable(node);
                  // ROSE_ASSERT(symbolTable->get_parent() != NULL);
                  // key = generateUniqueName(symbolTable->get_parent(),false);
                     key = "__type_table_" + StringUtility::numberToString(node);
@@ -1341,7 +1336,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgSymbolTable:
                   {
-                    const SgSymbolTable* symbolTable = isSgSymbolTable(node);
+                    SgSymbolTable* symbolTable = isSgSymbolTable(node);
                     ROSE_ASSERT(symbolTable->get_parent() != NULL);
                     key = generateUniqueName(symbolTable->get_parent(),false);
                     additionalSuffix = "__symbol_table";
@@ -1350,7 +1345,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgStorageModifier:
                   {
-                    const SgStorageModifier* storageModifier = isSgStorageModifier(node);
+                    SgStorageModifier* storageModifier = isSgStorageModifier(node);
                     ROSE_ASSERT(storageModifier->get_parent() != NULL);
                     key = generateUniqueName(storageModifier->get_parent(),false);
                     additionalSuffix = "__storage_modifier";
@@ -1376,7 +1371,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgTypedefSeq:
                   {
 #if 0
-                    const SgSymbolTable* symbolTable = isSgSymbolTable(node);
+                    SgSymbolTable* symbolTable = isSgSymbolTable(node);
                     ROSE_ASSERT(symbolTable->get_parent() != NULL);
                     key = generateUniqueName(symbolTable->get_parent(),false);
                     additionalSuffix = "__symbol_table";
@@ -1390,7 +1385,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgTemplateArgument:
                   {
-                    const SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
+                    SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
                     key = "__template_argument_";
                  // Make the key unique for each file info object!
                  // key = key + StringUtility::numberToString(node);
@@ -1482,7 +1477,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
             // DQ (1/19/2007): previously unhandled case ...
                case V_SgBaseClass:
                   {
-                    const SgBaseClass* baseClass = isSgBaseClass(node);
+                    SgBaseClass* baseClass = isSgBaseClass(node);
                     key = "__base_class_";
                     ROSE_ASSERT(baseClass->get_base_class() != NULL);
                     key = key + generateUniqueName(baseClass->get_base_class(),false);
@@ -1491,7 +1486,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                case V_SgPragma:
                   {
-                    const SgPragma* pragma = isSgPragma(node);
+                    SgPragma* pragma = isSgPragma(node);
                     key = "__pragma_";
                  // Make the key unique for each file info object!
                  // key = key + StringUtility::numberToString(node);

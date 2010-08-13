@@ -24,8 +24,7 @@ $(TESTCODES_REQUIRED_TO_PASS)
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
 
-# ROSE_FLAGS = -rose:skip_syntax_check -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:caf2.0 -rose:skip_syntax_check -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:skip_syntax_check -rose:skipfinalCompileStep
 
 PASSING_TEST_Objects = ${TESTCODES:.f90=.o}
 TEST_Objects = ${ALL_TESTCODES:.f90=.o}

@@ -670,7 +670,6 @@ test2010_04.C \
 test2010_05.C \
 test2010_06.C \
 test2010_18.C \
-test2010_19.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \

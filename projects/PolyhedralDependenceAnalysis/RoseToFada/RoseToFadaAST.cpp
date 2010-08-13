@@ -86,23 +86,25 @@ void parseSgStatementToFadaAST(SgStatement * stmt, Statement * parent) {
 //		}
 		case V_SgForStatement:
 		{
-			int current = statement_counter++;
 			SgForStatement * for_stmt = isSgForStatement(stmt);
 			ROSE_ASSERT(for_stmt != NULL);
 			Statement * sub_ast = new Statement(parseSgForStatementToFadaControl(for_stmt));
 			parseSgStatementToFadaAST(for_stmt->get_loop_body (), sub_ast);
 			parent->Enclose(sub_ast);
-			sub_ast->SetID(current);
-			stmt->setAttribute("FadaStatement", new FadaStatementAttribute(current));
+			//stmt->setAttribute("FadaStatement", new FadaStatementAttribute(sub_ast->GetReferences()->GetStmtID()));
+			sub_ast->SetID(statement_counter);
+			stmt->setAttribute("FadaStatement", new FadaStatementAttribute(statement_counter));
+			statement_counter++;
 			break;
 		}
 		case V_SgExprStatement:
 		{
-			int current = statement_counter++;
 			Statement * sub_ast = new Statement(parseSgExpressionToFadaAssignment(isSgExprStatement(stmt)->get_expression()));
 			parent->Enclose(sub_ast);
-			sub_ast->SetID(current);
-			stmt->setAttribute("FadaStatement", new FadaStatementAttribute(current, true));
+			//stmt->setAttribute("FadaStatement", new FadaStatementAttribute(sub_ast->GetReferences()->GetStmtID()));
+			sub_ast->SetID(statement_counter);
+			stmt->setAttribute("FadaStatement", new FadaStatementAttribute(statement_counter));
+			statement_counter++;
 			break;
 		}
 		default:{}

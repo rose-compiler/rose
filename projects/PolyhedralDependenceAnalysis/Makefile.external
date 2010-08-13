@@ -9,7 +9,7 @@ LD_DIR=-L$(BOOST_HOME)/lib -L$(FADA_HOME)/lib -L$(ROSE_HOME)$(ROSE_SUFFIX)/lib -
 
 INCLUDE=-I$(BOOST_HOME)/include -I$(ROSE_HOME)$(ROSE_SUFFIX)/include -I$(PIP_HOME)/include -I$(FADA_HOME)/include -I$(PPL_HOME)/include 
 
-all: PMDAtoMDA/TestPMDAtoMDA RoseToFada/TestRoseToFada RoseToPPL/TestRoseToPPL Schedule/TestSchedulePPL CodeGenerator/TestCodeGenerator
+all: RoseToFada/TestRoseToFada RoseToPPL/TestRoseToPPL Schedule/TestSchedulePPL PMDAtoMDA/TestPMDAtoMDA
 	
 # PMDAtoMDA: Extraction of Access Verctor for  Pseudo-Multidimensional Array (use Rose)
 
@@ -31,22 +31,12 @@ RoseToFada/RoseToFadaAST.o: RoseToFada/RoseToFadaAST.cpp RoseToFada/RoseToFadaAS
 
 RoseToPPL/FadaToPPL.o: RoseToPPL/FadaToPPL.cpp RoseToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
 	$(CC) $(CFLAGS) $(INCLUDE) -IRoseToPPL -ICommon -c $< -o $@
-
-# Convex-Hull Interior computation:
-
-Schedule/ConvexHullInterior.o: Schedule/ConvexHullInterior.cpp Schedule/ConvexHullInterior.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-
+	
 # Schedule: Implements the Farkas Multipliers Method to obtains the space (polyhedron) of valid schedule 
 #     (use FadaToPPL and RoseToFadaCommon)
 
-Schedule/Schedule.o: Schedule/Schedule.cpp Schedule/Schedule.hpp RoseToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp Schedule/ConvexHullInterior.hpp
+Schedule/Schedule.o: Schedule/Schedule.cpp Schedule/Schedule.hpp RoseToPPL/FadaToPPL.hpp Common/RoseToFadaCommon.hpp
 	$(CC) $(CFLAGS) $(INCLUDE) -ISchedule -IRoseToPPL -IRoseToFadaAST -ICommon -c $< -o $@
-
-# Code Generator:
-
-CodeGenerator/CodeGenerator.o: CodeGenerator/CodeGenerator.cpp CodeGenerator/CodeGenerator.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -ICodeGenerator -ISchedule -IRoseToPPL -IRoseToFadaAST -ICommon -c $< -o $@
 
 # *********************************************************************************************************
 	
@@ -76,18 +66,10 @@ RoseToPPL/TestRoseToPPL: RoseToPPL/TestRoseToPPL.o RoseToPPL/FadaToPPL.o RoseToF
 
 # TestSchedulePPL
 
-Schedule/TestSchedulePPL.o: Schedule/TestSchedulePPL.cpp Schedule/Schedule.hpp RoseToPPL/FadaToPPL.hpp RoseToFada/RoseToFadaAST.hpp Schedule/ConvexHullInterior.hpp
+Schedule/TestSchedulePPL.o: Schedule/TestSchedulePPL.cpp Schedule/Schedule.hpp RoseToPPL/FadaToPPL.hpp RoseToFada/RoseToFadaAST.hpp
 	$(CC) $(CFLAGS) $(INCLUDE) -IPMDAtoMDA -ICommon -IRoseToFada -IRoseToPPL -ISchedule -c $< -o $@
 
-Schedule/TestSchedulePPL: Schedule/TestSchedulePPL.o Schedule/Schedule.o RoseToPPL/FadaToPPL.o RoseToFada/RoseToFadaAST.o Common/RoseToFadaCommon.o PMDAtoMDA/PMDAtoMDA.o Schedule/ConvexHullInterior.o
-	$(CC) $^ $(LD_DIR) $(LDFLAGS) -o $@
-
-# TestCodeGenerator
-
-CodeGenerator/TestCodeGenerator.o: CodeGenerator/TestCodeGenerator.cpp CodeGenerator/CodeGenerator.hpp Schedule/Schedule.hpp RoseToPPL/FadaToPPL.hpp RoseToFada/RoseToFadaAST.hpp Schedule/ConvexHullInterior.hpp
-	$(CC) $(CFLAGS) $(INCLUDE) -IPMDAtoMDA -ICommon -IRoseToFada -IRoseToPPL -ISchedule -ICodeGenerator -c $< -o $@
-
-CodeGenerator/TestCodeGenerator: CodeGenerator/TestCodeGenerator.o CodeGenerator/CodeGenerator.o Schedule/Schedule.o RoseToPPL/FadaToPPL.o RoseToFada/RoseToFadaAST.o Common/RoseToFadaCommon.o PMDAtoMDA/PMDAtoMDA.o Schedule/ConvexHullInterior.o
+Schedule/TestSchedulePPL: Schedule/TestSchedulePPL.o Schedule/Schedule.o RoseToPPL/FadaToPPL.o RoseToFada/RoseToFadaAST.o Common/RoseToFadaCommon.o PMDAtoMDA/PMDAtoMDA.o
 	$(CC) $^ $(LD_DIR) $(LDFLAGS) -o $@
 
 clean:

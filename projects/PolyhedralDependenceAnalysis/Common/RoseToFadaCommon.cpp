@@ -5,16 +5,13 @@ namespace RoseToFada {
 
 /* class FadaStatementAttribute */
 
-FadaStatementAttribute::FadaStatementAttribute(int id, bool need_schedule):
-	p_id(id),
-	p_need_schedule(need_schedule)
+FadaStatementAttribute::FadaStatementAttribute(int id):
+	p_id(id)
 {
 //	std::cout << "new Attribute: " << p_id << "." << std::endl;
 }
 		
 int FadaStatementAttribute::getID() { return p_id; }
-
-bool FadaStatementAttribute::needSchedule() { return p_need_schedule; }
 		
 void FadaStatementAttribute::setIterators(std::vector<std::string *> * iterators) { p_iterators = iterators; }
 std::vector<std::string *> * FadaStatementAttribute::getIterators() { return p_iterators; }
@@ -24,25 +21,25 @@ fada::Condition * FadaStatementAttribute::getDomain() { return p_domain; }
 
 /* function getFadaStatementByID(...) */
 
-fada::Statement * getFadaStatementByID(fada::Statement * root, int id) {
-	if (!root)
+fada::Statement * getFadaStatementByID(fada::Statement * stmt, int id) {
+	if (!stmt)
 		return NULL;
 
-	if (root->GetID() == id)
-		return root;
+	if (stmt->GetID() == id)
+		return stmt;
 	
 	std::vector<Statement * > * vect;	
 	std::vector<Statement * >::iterator it;
 	fada::Statement * tmp;
 	
-	vect = root->GetSurroundedStatements();
+	vect = stmt->GetSurroundedStatements();
 	for (it = vect->begin(); it != vect->end(); it++) {
 		tmp = getFadaStatementByID(*it, id);
 		if (tmp)
 			return tmp;
 	}
 	
-	vect = root->GetElseSurroundedStatements();
+	vect = stmt->GetElseSurroundedStatements();
 	for (it = vect->begin(); it != vect->end(); it++) {
 		tmp = getFadaStatementByID(*it, id);
 		if (tmp)
@@ -62,8 +59,7 @@ FadaRoseCrossContext::FadaRoseCrossContext(fada::Program * program, SgFunctionDe
 	std::vector<std::string> * globals = p_fada_program->GetGlobalParameters();
 	std::vector<std::string>::iterator it;
 	for (it = globals->begin(); it != globals->end(); it++) {
-//		if (!( (*it).size() == 1 && (*it)[0] >= '0' && (*it)[0] <= '9' ))
-		if (!( (*it)[0] >= '0' && (*it)[0] <= '9' ))
+		if (!( (*it).size() == 1 && (*it)[0] >= '0' && (*it)[0] <= '9' ))
 			p_globals.push_back(new std::string(*it));
 	}
 	
@@ -79,14 +75,6 @@ FadaRoseCrossContext::FadaRoseCrossContext(fada::Program * program, SgFunctionDe
 SgStatement * FadaRoseCrossContext::getSgStatementByID(int id) { return p_rose_statement_mapped_by_fada_index[id]; }
 		
 std::vector<std::string *> * FadaRoseCrossContext::getGlobals() { return &p_globals; }
-
-std::vector<SgStatement *> * FadaRoseCrossContext::getStatements() {
-	std::vector<SgStatement *> * res = new std::vector<SgStatement *>();
-	std::map<int, SgStatement *>::iterator it;
-	for (it = p_rose_statement_mapped_by_fada_index.begin(); it != p_rose_statement_mapped_by_fada_index.end(); it++)
-		res->push_back(it->second);
-	return res;
-}
 
 
 void FadaRoseCrossContext::addSgStatement(SgStatement * statement) {
@@ -114,7 +102,6 @@ void FadaRoseCrossContext::addSgStatement(SgStatement * statement) {
 			break;
 		}
 		case V_SgExprStatement:
-//			appendSgStatement(statement);
 			break;
 		case V_SgVariableDeclaration:
 			break;
@@ -141,7 +128,7 @@ bool FadaRoseCrossContext::appendSgStatement(SgStatement * statement) {
 	fada::Statement * fada_statement = getFadaStatementByID(p_fada_program->GetSyntaxTree(), attribute->getID());
 			
 	if (!fada_statement) {
-		std::cerr << "Error in FadaRoseCrossContext::appendSgStatement(...): Referenced id ( = " << attribute->getID() << ") doesn't match with a Fada's statement !" << std::endl;
+		std::cerr << "Error in FadaRoseCrossContext::appendSgStatement(...): Referenced id doesn't match with a Fada's statement !" << std::endl;
 		ROSE_ASSERT(false);
 	}
 			

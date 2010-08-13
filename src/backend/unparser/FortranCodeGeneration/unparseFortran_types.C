@@ -295,11 +295,6 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 
   // dimension information
      SgExprListExp* dim = array_type->get_dim_info();
-
-  // DQ (8/5/2010): It is an error to treat an array of char as a string (see test2010_16.f90).
-#if 1
-  // if (isCharType(array_type->get_base_type()))
-  // if (false && isCharType(array_type->get_base_type()))
      if (isCharType(array_type->get_base_type()))
         {
        // a character type: must be treated specially
@@ -358,15 +353,6 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
        // unp->u_fortran_locatedNode->unparseExpression(array_type->get_dim_info(),info);
           unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
         }
-#else
-     ROSE_ASSERT(array_type->get_rank() >= 1);
-     curprint(", DIMENSION");
-
-     ROSE_ASSERT(unp != NULL);
-     ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
-
-     unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
-#endif
    }
 
 void 

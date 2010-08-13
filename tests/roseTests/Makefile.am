@@ -33,8 +33,6 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               loopProcessingTests ompLoweringTests programAnalysisTests programTransformationTests \
               roseHPCToolkitTests utilTests fileLocation_tests graph_tests mergeTraversal_tests \
 	      variableRenamingTests
-
-	SUBDIRS += astLValueTests
 endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT

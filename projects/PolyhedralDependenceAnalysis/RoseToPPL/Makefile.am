@@ -15,4 +15,4 @@ TestRoseToPPL_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(PIP_LDFLAGS) $(FADA_LDFL
 EXTRA_DIST = FadaToPPL.hpp
 
 clean-local:
-	rm -rf TestRoseToPPL *.o
+	rm -rf TestRoseToFadaAST *.o
