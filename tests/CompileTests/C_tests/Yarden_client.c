@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
   }
 
   printf("%s: sending data to '%s' (IP : %s) \n", argv[0], h->h_name,
-	 inet_ntoa(*(struct in_addr *)h->h_addr_list[0]));
+         inet_ntoa(*(struct in_addr *)h->h_addr_list[0]));
 
 
   /* bind any port */
@@ -184,7 +184,7 @@ void *thread_func_tcp(void *p)
 
   remoteTCPServAddr.sin_family = h->h_addrtype;
   memcpy((char *) &remoteTCPServAddr.sin_addr.s_addr,
-	 h->h_addr_list[0], h->h_length);
+         h->h_addr_list[0], h->h_length);
   remoteTCPServAddr.sin_port = htons(REMOTE_SERVER_TCP_PORT);
 //  printf("before connect \n");
   rc = connect(stcp, (struct sockaddr *)&remoteTCPServAddr, sizeof(remoteTCPServAddr));
