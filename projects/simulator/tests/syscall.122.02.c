@@ -77,9 +77,9 @@ int main(int ac, char **av)
 #if 0
 	/* parse standard options */
 	if ((msg = parse_opts(ac, av, (option_t *) NULL, NULL))
-	    != (char *)NULL) {
-		tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
-	 /*NOTREACHED*/}
+            != (char *)NULL) {
+                tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
+	        /*NOTREACHED*/}
 #endif
 
 	setup();		/* global setup */
@@ -89,22 +89,22 @@ int main(int ac, char **av)
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 #endif
 
-		/*
-		 * call the system call with the TEST() macro
-		 * send -1 for an illegal address
-		 */
+                /*
+                 * call the system call with the TEST() macro
+                 * send -1 for an illegal address
+                 */
 
-    int result = uname((struct utsname *)-1);
-    fprintf(stderr,"Result: %d",result);
-    assert( result == -1 );
-    assert( errno == EFAULT );
+                int result = uname((struct utsname *)-1);
+                fprintf(stderr,"Result: %d",result);
+                assert( result == -1 );
+                assert( errno == EFAULT );
 #if 0
 	}
 #endif
 
 	cleanup();
 
-	 /*NOTREACHED*/ return 0;
+        /*NOTREACHED*/ return 0;
 
 }
 
@@ -132,13 +132,13 @@ void setup(void)
 void cleanup(void)
 {
 #if 0
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
+        /*
+         * print timing stats if that option was specified.
+         * print errno log if that option was specified.
+         */
+        TEST_CLEANUP;
 
-	/* exit with return code appropriate for results */
-	tst_exit();
+        /* exit with return code appropriate for results */
+        tst_exit();
 #endif
 }

@@ -79,7 +79,7 @@ int main(int ac, char **av)
 	/* parse standard options */
 	if ((msg = parse_opts(ac, av, (option_t *) NULL, NULL)) != (char *)NULL) {
 		tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
-	 /*NOTREACHED*/}
+                /*NOTREACHED*/}
 #endif
 
 	setup();		/* global setup */
@@ -87,10 +87,10 @@ int main(int ac, char **av)
 	/* allocate some space for buf */
 
 	if ((buf = (struct utsname *)malloc((size_t)
-					    sizeof(struct utsname))) == NULL) {
-    abort();
+                                            sizeof(struct utsname))) == NULL) {
+                abort();
 		//tst_brkm(TBROK, cleanup, "malloc failed for buf");
-	 /*NOTREACHED*/}
+                /*NOTREACHED*/}
 
 	/* The following loop checks looping state if -i option given */
 
@@ -111,7 +111,7 @@ int main(int ac, char **av)
 
 	cleanup();
 
-	 /*NOTREACHED*/ return 0;
+        /*NOTREACHED*/ return 0;
 
 }
 
@@ -136,13 +136,13 @@ void setup(void)
 void cleanup(void)
 {
 #if 0
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
+        /*
+         * print timing stats if that option was specified.
+         * print errno log if that option was specified.
+         */
+        TEST_CLEANUP;
 
-	/* exit with return code appropriate for results */
-	tst_exit();
+        /* exit with return code appropriate for results */
+        tst_exit();
 #endif
 }
