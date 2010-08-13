@@ -9,6 +9,7 @@
 #include <llvm/Analysis/Passes.h>
 #include <AliasAnalysisGatherer.h>
 #include <AliasSetContainer.h>
+#include <AssociateRoseAST.h>
 
 using namespace std;
 
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
     llvm::PassManager *PM = new llvm::PassManager();    
 
     /*
-     * Apply Alias Analysis passes on all LLVM Modules
+     * Apply Alias Analysis passes on all LLVM Modules (currently one)
      */
     for(int i = 0; i < AAModule->getLLVMModuleSize(); ++i) {
         llvm::Module *ModRef = AAModule->getModule(i);
@@ -51,11 +52,17 @@ int main(int argc, char *argv[])
          */
         PM->run(*ModRef);
 
+        /*
+         * process alias set information for each module
+         */
+        AliasSetHandler::getInstance()->processAliasInformation(ModRef->getModuleIdentifier());
     }
 
-    AliasSetHandler::getInstance()->processAliasInformation();
+    AAModule->associateAST(astRoot);
 
-//    AAModule->annotateAST(astRoot);   
+    AAModule->annotateAST(astRoot);   
+
+    AAModule->queryAST(astRoot);
 
 //    AliasSetHandler::getInstance()->print();
 
