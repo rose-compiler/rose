@@ -175,7 +175,7 @@ class ArrayCollection
  public:
   // DQ (11/30/2009): MSVC reports a warning about use of "this" in preinitialization
   // list, but I don't think we can modify this code to avoid the warning.
-	 ArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
+         ArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
 
   void Dump() const 
     { std::cerr << "arrays: \n"; BaseClass::Dump(); }
@@ -283,7 +283,7 @@ class ArrayAnnotation
                                         const AstNodePtr& array,
 				  const CPPAstInterface::AstNodeList& args);
   AstNodePtr create_access_array_length( CPPAstInterface& fa, const AstNodePtr& array, 
-					 int dim);
+                                         int dim);
 
   bool is_reshape_array( CPPAstInterface& fa, const AstNodePtr& orig,
 			AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
