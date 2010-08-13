@@ -101,7 +101,7 @@ SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs 
   switch(isa & ISA_FAMILY_MASK){
     case ISA_IA32_Family:
       switch (t) {
-	case R_386_NONE:         return "R_386_NONE";
+        case R_386_NONE:         return "R_386_NONE";
 	case R_386_32:           return "R_386_32";
 	case R_386_PC32:         return "R_386_PC32";
 	case R_386_GOT32:        return "R_386_GOT32";
@@ -138,12 +138,12 @@ SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs 
 	case R_386_TLS_DTPOFF32: return "R_386_TLS_DTPOFF32";
 	case R_386_TLS_TPOFF32:  return "R_386_TLS_TPOFF32";
 	default: 
-	  snprintf(buf,sizeof(buf),"unknown relocation - IA32 (%zu)",size_t(t)) ;
+          snprintf(buf,sizeof(buf),"unknown relocation - IA32 (%zu)",size_t(t)) ;
 	  return buf;
       };
     case ISA_X8664_Family:
       switch(t){
-	/** First Entry for X86-64 */
+        /** First Entry for X86-64 */
 	case R_X86_64_NONE:	return "R_X86_64_NONE";
 	case R_X86_64_64:	return "R_X86_64_64";
 	case R_X86_64_PC32:	return "R_X86_64_PC32";
@@ -169,8 +169,8 @@ SgAsmElfRelocEntry::to_string(RelocType t,InsSetArchitecture isa)// TODO, needs 
 	case R_X86_64_GOTTPOFF:	return "R_X86_64_GOTTPOFF";
 	case R_X86_64_TPOFF32:	return "R_X86_64_TPOFF32";
 	default:
-	  snprintf(buf,sizeof(buf),"unknown relocation - X86-64 (%zu)",size_t(t)) ;
-	  return buf;
+          snprintf(buf,sizeof(buf),"unknown relocation - X86-64 (%zu)",size_t(t)) ;
+          return buf;
       };
     default:
       return "unsupported isa for relocation";

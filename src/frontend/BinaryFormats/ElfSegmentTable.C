@@ -160,7 +160,7 @@ SgAsmElfSegmentTableEntry::to_string(SegmentType kind)
       case PT_SUNWSTACK:    s = "PT_SUNWSTACK"; break; // 0x6ffffffb Stack segment */
 
       default:
-	{
+        {
           s = "error";
 
           // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
@@ -180,9 +180,9 @@ SgAsmElfSegmentTableEntry::to_string(SegmentFlags val)
       str += ' ';
     if(val & (1 << i)){
       switch(1 << i){
-	case PF_XPERM: str += "EXECUTE";break;
-	case PF_WPERM: str += "WRITE"; break;
-	case PF_RPERM: str += "READ";break;
+        case PF_XPERM: str += "EXECUTE";break;
+        case PF_WPERM: str += "WRITE"; break;
+        case PF_RPERM: str += "READ";break;
       };
     }
   }
