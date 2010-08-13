@@ -2994,11 +2994,11 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
 	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
 	if (decl)
 	  makeEdge(CFGNode(this, idx), decl->cfgForBeginning(),
-		   result);
-	else
-	  makeEdge(CFGNode(this, idx),
-		   CFGNode(this, 3), result);
-	break;
+                   result);
+        else
+          makeEdge(CFGNode(this, idx),
+                   CFGNode(this, 3), result);
+        break;
       }
       case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
@@ -3016,13 +3016,13 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
 	SgFunctionDeclaration* decl =
 	  interproceduralControlFlowGraph ?
 	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
-	if (decl)
-	  makeEdge(decl->cfgForEnd(), CFGNode(this, idx),
-		   result);
-	else
-	  makeEdge(CFGNode(this, 2),
-		   CFGNode(this, idx), result);
-	break;
+        if (decl)
+          makeEdge(decl->cfgForEnd(), CFGNode(this, idx),
+                   result);
+        else
+          makeEdge(CFGNode(this, 2),
+                   CFGNode(this, idx), result);
+        break;
       }
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
     }
@@ -3256,9 +3256,9 @@ SgCastExp::cfgFindChildIndex(SgNode* n)
    {
      if (n == this->get_operand()) return 0;
 
-	 ROSE_ASSERT (!"Bad child in cfgFindChildIndex on SgCastExp");
-  // DQ (11/29/2009): Avoid MSVC warning about missing return.
-	 return 0;
+         ROSE_ASSERT (!"Bad child in cfgFindChildIndex on SgCastExp");
+         // DQ (11/29/2009): Avoid MSVC warning about missing return.
+         return 0;
    }
 
 
@@ -3704,8 +3704,8 @@ SgDesignatedInitializer::cfgFindChildIndex(SgNode* n)
      if (n == this->get_memberInit()) return 0;
      ROSE_ASSERT (!"Bad child in cfgFindChildIndex on SgDesignatedInitializer");
 
-  // DQ (11/29/2009): Avoid MSVC warning about missing return.
-	 return 0;
+     // DQ (11/29/2009): Avoid MSVC warning about missing return.
+     return 0;
    }
 
 unsigned int
@@ -3749,7 +3749,7 @@ SgInitializedName::cfgOutEdges(unsigned int idx) {
     case 0:
     if (this->get_initializer()) {
       makeEdge(CFGNode(this, idx), this->get_initializer()->cfgForBeginning(),
-	       result);
+               result);
     } else {
       makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
     }
@@ -3776,7 +3776,7 @@ SgInitializedName::cfgInEdges(unsigned int idx) {
     case 1:
     ROSE_ASSERT (this->get_initializer());
     makeEdge(this->get_initializer()->cfgForEnd(),
-	     CFGNode(this, idx), result);
+             CFGNode(this, idx), result);
     break;
 
     default: ROSE_ASSERT (!"Bad index in SgInitializedName");

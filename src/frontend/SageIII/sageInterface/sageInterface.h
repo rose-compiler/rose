@@ -121,238 +121,238 @@ struct hash_nodeptr
 // CH (4/9/2010): Use boost::hash instead 
 //#ifndef _MSC_VER
 #if 0
-	   //rose_hash::hash<char*> hasher;
+           //rose_hash::hash<char*> hasher;
 #endif
      public:
           size_t operator()(SgNode* node) const
              {
 // CH (4/9/2010): Use boost::hash instead 
 //#ifdef _MSC_VER
-#if 0
-				 return (size_t) hash_value(node);
-#else
-				 return (size_t) node;
-#endif
-		  }
-   };
+ #if 0
+                                  return (size_t) hash_value(node);
+ #else
+                                  return (size_t) node;
+ #endif
+                   }
+    };
 
- void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
+  void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
 
-//------------------------------------------------------------------------
-//@{
-/*! @name Symbol tables
-  \brief  utility functions for symbol tables
-*/
-  // Liao 1/22/2008, used for get symbols for generating variable reference nodes
-  // ! Find a variable symbol in current and ancestor scopes for a given name
-  SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName &	name,
-							SgScopeStatement *currentScope=NULL);
-  //! Find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
-  SgSymbol *lookupSymbolInParentScopes (const SgName &	name,
-							SgScopeStatement *currentScope=NULL);
+ //------------------------------------------------------------------------
+ //@{
+ /*! @name Symbol tables
+   \brief  utility functions for symbol tables
+ */
+   // Liao 1/22/2008, used for get symbols for generating variable reference nodes
+   // ! Find a variable symbol in current and ancestor scopes for a given name
+   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName &	name,
+                                                         SgScopeStatement *currentScope=NULL);
+   //! Find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
+   SgSymbol *lookupSymbolInParentScopes (const SgName &	name,
+                                                         SgScopeStatement *currentScope=NULL);
 
-  // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
-  //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
-  SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &	functionName,
-							SgScopeStatement *currentScope=NULL);
+   // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
+   //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
+   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &	functionName,
+                                                         SgScopeStatement *currentScope=NULL);
 
-  // Liao, 1/24/2008, find exact match for a function
-  //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL
-  SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &  functionName, 
-                                                        const SgType* t,
-                                                        SgScopeStatement *currentScope=NULL);
+   // Liao, 1/24/2008, find exact match for a function
+   //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL
+   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &  functionName, 
+                                                         const SgType* t,
+                                                         SgScopeStatement *currentScope=NULL);
 
-  /*! \brief set_name of symbol in symbol table.
+   /*! \brief set_name of symbol in symbol table.
 
-      This function extracts the symbol from the relavant symbol table, 
-      changes the name (at the declaration) and reinserts it into the 
-      symbol table.
+       This function extracts the symbol from the relavant symbol table, 
+       changes the name (at the declaration) and reinserts it into the 
+       symbol table.
 
-      \internal  I think this is what this function does, I need to double check.
-   */
-  // DQ (12/9/2004): Moved this function (by Alin Jula) from being a member of SgInitializedName
-  // to this location where it can be a part of the interface for the Sage III AST.
-  int set_name (SgInitializedName * initializedNameNode, SgName new_name);
+       \internal  I think this is what this function does, I need to double check.
+    */
+   // DQ (12/9/2004): Moved this function (by Alin Jula) from being a member of SgInitializedName
+   // to this location where it can be a part of the interface for the Sage III AST.
+   int set_name (SgInitializedName * initializedNameNode, SgName new_name);
 
-  /*! \brief Output function type symbols in global function type symbol table.
-   */
-  void outputGlobalFunctionTypeSymbolTable ();
+   /*! \brief Output function type symbols in global function type symbol table.
+    */
+   void outputGlobalFunctionTypeSymbolTable ();
 
-  // DQ (6/27/2005):
-  /*! \brief Output the local symbol tables.
+   // DQ (6/27/2005):
+   /*! \brief Output the local symbol tables.
 
-      \implementation Each symbol table is output with the file infor where it is located in the source code.
-   */
-  void outputLocalSymbolTables (SgNode * node);
+       \implementation Each symbol table is output with the file infor where it is located in the source code.
+    */
+   void outputLocalSymbolTables (SgNode * node);
 
-  class OutputLocalSymbolTables:public AstSimpleProcessing
-        {
-          public:
-    void visit (SgNode * node);
-        };
-  /*! \brief Regenerate the symbol table.
+   class OutputLocalSymbolTables:public AstSimpleProcessing
+         {
+           public:
+     void visit (SgNode * node);
+         };
+   /*! \brief Regenerate the symbol table.
 
-     \implementation current symbol table must be NULL pointer before calling this 
-     function (for safety, but is this a good idea?)
-   */
-  // DQ (9/28/2005):
-  void rebuildSymbolTable (SgScopeStatement * scope);
+      \implementation current symbol table must be NULL pointer before calling this 
+      function (for safety, but is this a good idea?)
+    */
+   // DQ (9/28/2005):
+   void rebuildSymbolTable (SgScopeStatement * scope);
 
-  /*! \brief Clear those variable symbols (together with initialized names) which are not referenced by any variable references or declarations.
-   */
-  void clearUnusedVariableSymbols ();
+   /*! \brief Clear those variable symbols (together with initialized names) which are not referenced by any variable references or declarations.
+    */
+   void clearUnusedVariableSymbols ();
 
-  //SgNode::get_globalFunctionTypeTable() ;
+   //SgNode::get_globalFunctionTypeTable() ;
 
-//@}
+ //@}
 
-//------------------------------------------------------------------------
-//@{
-/*! @name Stringify 
-  \brief Generate a useful string (name) to describe a SgNode
-*/
-  /*! \brief Generate a useful name to describe the SgNode
+ //------------------------------------------------------------------------
+ //@{
+ /*! @name Stringify 
+   \brief Generate a useful string (name) to describe a SgNode
+ */
+   /*! \brief Generate a useful name to describe the SgNode
 
-      \internal default names are used for SgNode objects that can not be associated with a name.
-   */
-  // DQ (9/21/2005): General function for extracting the name of declarations (when they have names)
-    std::string get_name (const SgNode * node);
+       \internal default names are used for SgNode objects that can not be associated with a name.
+    */
+   // DQ (9/21/2005): General function for extracting the name of declarations (when they have names)
+     std::string get_name (const SgNode * node);
 
-  /*! \brief Generate a useful name to describe the declaration
+   /*! \brief Generate a useful name to describe the declaration
 
-      \internal default names are used for declarations that can not be associated with a name.
-   */
-  // DQ (6/13/2005): General function for extracting the name of declarations (when they have names)
-    std::string get_name (const SgStatement * stmt);
+       \internal default names are used for declarations that can not be associated with a name.
+    */
+   // DQ (6/13/2005): General function for extracting the name of declarations (when they have names)
+     std::string get_name (const SgStatement * stmt);
 
-  /*! \brief Generate a useful name to describe the expression
+   /*! \brief Generate a useful name to describe the expression
 
-      \internal default names are used for expressions that can not be associated with a name.
-   */
-    std::string get_name (const SgExpression * expr);
+       \internal default names are used for expressions that can not be associated with a name.
+    */
+     std::string get_name (const SgExpression * expr);
 
-  /*! \brief Generate a useful name to describe the declaration
+   /*! \brief Generate a useful name to describe the declaration
 
-      \internal default names are used for declarations that can not be associated with a name.
-   */
-  // DQ (6/13/2005): General function for extracting the name of declarations (when they have names)
-    std::string get_name (const SgDeclarationStatement * declaration);
+       \internal default names are used for declarations that can not be associated with a name.
+    */
+   // DQ (6/13/2005): General function for extracting the name of declarations (when they have names)
+     std::string get_name (const SgDeclarationStatement * declaration);
 
-  /*! \brief Generate a useful name to describe the scope
+   /*! \brief Generate a useful name to describe the scope
 
-      \internal default names are used for scope that cannot be associated with a name.
-   */
-  // DQ (6/13/2005): General function for extracting the name of declarations (when they have names)
-    std::string get_name (const SgScopeStatement * scope);
+       \internal default names are used for scope that cannot be associated with a name.
+    */
+   // DQ (6/13/2005): General function for extracting the name of declarations (when they have names)
+     std::string get_name (const SgScopeStatement * scope);
 
-  /*! \brief Generate a useful name to describe the SgSymbol
+   /*! \brief Generate a useful name to describe the SgSymbol
 
-      \internal default names are used for SgSymbol objects that cannot be associated with a name.
-   */
-  // DQ (2/11/2007): Added this function to make debugging support more complete (useful for symbol table debugging support).
-    std::string get_name (const SgSymbol * symbol);
+       \internal default names are used for SgSymbol objects that cannot be associated with a name.
+    */
+   // DQ (2/11/2007): Added this function to make debugging support more complete (useful for symbol table debugging support).
+     std::string get_name (const SgSymbol * symbol);
 
-  /*! \brief Generate a useful name to describe the SgType
+   /*! \brief Generate a useful name to describe the SgType
 
-      \internal default names are used for SgType objects that cannot be associated with a name.
-   */
-    std::string get_name (const SgType * type);
-      
-
-  /*! \brief Generate a useful name to describe the SgSupport IR node
-   */
-    std::string get_name (const SgSupport * node);
+       \internal default names are used for SgType objects that cannot be associated with a name.
+    */
+     std::string get_name (const SgType * type);
 
 
-  /*! \brief Generate a useful name to describe the SgLocatedNodeSupport IR node
-   */
-    std::string get_name (const SgLocatedNodeSupport * node);
+   /*! \brief Generate a useful name to describe the SgSupport IR node
+    */
+     std::string get_name (const SgSupport * node);
 
-  /*! \brief Generate a useful name to describe the SgC_PreprocessorDirectiveStatement IR node
-   */
-    std::string get_name ( const SgC_PreprocessorDirectiveStatement* directive );
 
-//@}
+   /*! \brief Generate a useful name to describe the SgLocatedNodeSupport IR node
+    */
+     std::string get_name (const SgLocatedNodeSupport * node);
 
-//------------------------------------------------------------------------
-//@{
-/*! @name Class utilities
-  \brief
-*/
-  /*! \brief Get the default destructor from the class declaration
-   */
-  // DQ (6/21/2005): Get the default destructor from the class declaration
-  SgMemberFunctionDeclaration *getDefaultDestructor (SgClassDeclaration *
-						     classDeclaration);
+   /*! \brief Generate a useful name to describe the SgC_PreprocessorDirectiveStatement IR node
+    */
+     std::string get_name ( const SgC_PreprocessorDirectiveStatement* directive );
 
-  /*! \brief Get the default constructor from the class declaration
-   */
-  // DQ (6/22/2005): Get the default constructor from the class declaration
-  SgMemberFunctionDeclaration *getDefaultConstructor (SgClassDeclaration *
-						      classDeclaration);
-  /*! \brief Return true if template definition is in the class, false if outside of class.
-   */
-  // DQ (8/27/2005): 
-  bool templateDefinitionIsInClass (SgTemplateInstantiationMemberFunctionDecl
-				    * memberFunctionDeclaration);
+ //@}
 
-  /*! \brief Generate a non-defining (forward) declaration from a defining function declaration.
+ //------------------------------------------------------------------------
+ //@{
+ /*! @name Class utilities
+   \brief
+ */
+   /*! \brief Get the default destructor from the class declaration
+    */
+   // DQ (6/21/2005): Get the default destructor from the class declaration
+   SgMemberFunctionDeclaration *getDefaultDestructor (SgClassDeclaration *
+                                                      classDeclaration);
 
-     \internal should put into sageBuilder ?
-   */
-  // DQ (9/17/2005):
-     SgTemplateInstantiationMemberFunctionDecl*
-     buildForwardFunctionDeclaration
-        (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
+   /*! \brief Get the default constructor from the class declaration
+    */
+   // DQ (6/22/2005): Get the default constructor from the class declaration
+   SgMemberFunctionDeclaration *getDefaultConstructor (SgClassDeclaration *
+                                                       classDeclaration);
+   /*! \brief Return true if template definition is in the class, false if outside of class.
+    */
+   // DQ (8/27/2005): 
+   bool templateDefinitionIsInClass (SgTemplateInstantiationMemberFunctionDecl
+                                     * memberFunctionDeclaration);
 
-  //! Check if a SgNode is a declaration for a structure
-  bool isStructDeclaration(SgNode * node);
-#if 0
-// DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration 
-// (so that it can handle template functions and member functions)
+   /*! \brief Generate a non-defining (forward) declaration from a defining function declaration.
 
-  /*! \brief Return true if member function of a template member function,
-             of false if a non-template member function in a templated class.
-   */
+      \internal should put into sageBuilder ?
+    */
+   // DQ (9/17/2005):
+      SgTemplateInstantiationMemberFunctionDecl*
+      buildForwardFunctionDeclaration
+         (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
+
+   //! Check if a SgNode is a declaration for a structure
+   bool isStructDeclaration(SgNode * node);
+ #if 0
+ // DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration 
+ // (so that it can handle template functions and member functions)
+
+   /*! \brief Return true if member function of a template member function,
+              of false if a non-template member function in a templated class.
+    */
+    // DQ (8/27/2005):
+   bool isTemplateMemberFunction (SgTemplateInstantiationMemberFunctionDecl *
+                                  memberFunctionDeclaration);
+ #endif
+
+ //@}
+
+ //------------------------------------------------------------------------
+ //@{
+ /*! @name Unsorted
+   \brief Not sure the classifications right now
+ */
+
+   /*! \brief Return true if function is overloaded.
+    */
    // DQ (8/27/2005):
-  bool isTemplateMemberFunction (SgTemplateInstantiationMemberFunctionDecl *
-				 memberFunctionDeclaration);
-#endif
+   bool isOverloaded (SgFunctionDeclaration * functionDeclaration);
 
-//@}
+   //! Check if a SgNode is a main() function declaration
+   bool isMain (const SgNode* node);
+   // DQ (6/22/2005):
+   /*! \brief Generate unique name from C and C++ constructs. The name may contain space. 
 
-//------------------------------------------------------------------------
-//@{
-/*! @name Unsorted
-  \brief Not sure the classifications right now
-*/
+       This is support for the AST merge, but is generally useful as a more general mechanism than 
+       name mangling which is more closely ties to the generation of names to support link-time function name 
+       resolution.  This is more general than common name mangling in that it resolves more relavant differences
+       between C and C++ declarations. (e.g. the type within the declaration: "struct { int:8; } foo;").
 
-  /*! \brief Return true if function is overloaded.
-   */
-  // DQ (8/27/2005):
-  bool isOverloaded (SgFunctionDeclaration * functionDeclaration);
+       \implementation current work does not support expressions.
 
-  //! Check if a SgNode is a main() function declaration
-  bool isMain (const SgNode* node);
-  // DQ (6/22/2005):
-  /*! \brief Generate unique name from C and C++ constructs. The name may contain space. 
+    */
+     std::string generateUniqueName (SgNode * node,
+                                     bool
+                                     ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-      This is support for the AST merge, but is generally useful as a more general mechanism than 
-      name mangling which is more closely ties to the generation of names to support link-time function name 
-      resolution.  This is more general than common name mangling in that it resolves more relavant differences
-      between C and C++ declarations. (e.g. the type within the declaration: "struct { int:8; } foo;").
-
-      \implementation current work does not support expressions.
-
-   */
-    std::string generateUniqueName (SgNode * node,
-				    bool
-				    ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
-
-  // DQ (3/10/2007): 
-  //! Generate a unique string from the source file position information
-    std::string declarationPositionString (SgDeclarationStatement *
-					   declaration);
+   // DQ (3/10/2007): 
+   //! Generate a unique string from the source file position information
+     std::string declarationPositionString (SgDeclarationStatement *
+                                            declaration);
 
   // DQ (1/20/2007): 
   //! Added mechanism to generate project name from list of file names
@@ -373,7 +373,7 @@ struct hash_nodeptr
   void resetMangledNameCache (SgGlobal * globalScope);
   std::string getMangledNameFromCache (SgNode * astNode);
   std::string addMangledNameToCache (SgNode * astNode,
-				       const std::string & mangledName);
+                                     const std::string & mangledName);
 
   SgDeclarationStatement * getNonInstantiatonDeclarationForClass
     (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
@@ -404,7 +404,7 @@ struct hash_nodeptr
      This is part of a test done by the copy function to compute those IR nodes in the copy that still reference the original AST.
   */
     std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy,
-					     SgCopyHelp * help = NULL);
+                                             SgCopyHelp * help = NULL);
   //! Deep copy an arbitrary subtree
    SgNode* deepCopyNode (const SgNode* subtree); 
 
@@ -536,7 +536,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 //  SgNamespaceDefinitionStatement * getEnclosingNamespaceScope (SgNode * node);
 
   bool isPrototypeInScope (SgScopeStatement * scope,
-			   SgFunctionDeclaration * functionDeclaration,
+                           SgFunctionDeclaration * functionDeclaration,
 			   SgDeclarationStatement * startingAtDeclaration);
 
   //!check if node1 is an ancestor of node 2, mostly used to compare which scope node is in higher level
@@ -1480,7 +1480,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   //bool isMemberVariable(const SgNode& in);
 
   bool isPrototypeInScope (SgScopeStatement * scope,
-			   SgFunctionDeclaration * functionDeclaration,
+                           SgFunctionDeclaration * functionDeclaration,
 			   SgDeclarationStatement * startingAtDeclaration);
 
   bool MayRedefined(SgExpression* expr, SgNode* root);
