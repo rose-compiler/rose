@@ -55,7 +55,7 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
         cout << "in loop" << endl;
     }
     int tmppathcount = 0;
-    
+    cout << "childs name: " << child->get_name();
     set<vector<SgGraphNode*> > newPathList;
     
     cout << "Number Of Inherited Attributes In Set:" << inheritedAttributesSet.size() << endl;
@@ -65,6 +65,7 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
         for (vector<InheritedAttribute>::iterator i = inheritedAttributesSet.begin(); i != inheritedAttributesSet.end(); i++) {
             
             InheritedAttribute inh = *i;
+        //    ROSE_ASSERT(inh != NULL);
             cout << "adding " << inh.pathcount << " to pathcount" << endl;
             tmppathcount += inh.pathcount;
             set<vector<SgGraphNode*> > colpath = inh.collected_paths;
@@ -101,7 +102,7 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
         cout << "This should match:" << tmppathcount << endl;
         
 }
-        return InheritedAttribute(tmppathcount, newPathList);
+        return InheritedAttribute(tmppathcount, newPathList);;
     }
     else {
     cout << "no inherited attributes given" << endl;
