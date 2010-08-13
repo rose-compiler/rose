@@ -379,7 +379,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
     int cur = result.size();
     SymbolicExpr *r = exp.DistributeExpr(SYMOP_NIL, SymbolicVal());
     for (SymbolicExpr::OpdIterator iter = exp.GetOpdIterator();
-	 !iter.ReachEnd(); iter.Advance()) {
+         !iter.ReachEnd(); iter.Advance()) {
       SymbolicVal cur = exp.Term2Val(iter.Current());
       orig = cur;
       orig.Visit(this);
@@ -417,7 +417,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
         }
     }
    else if (buf == "repeat") {
-	assert(u.NumOfArgs() == 4);
+        assert(u.NumOfArgs() == 4);
         SymbolicFunction::const_iterator i = u.args_begin();
 	buf = (*i).toString();
 	int lb = 0, ub = 0;
