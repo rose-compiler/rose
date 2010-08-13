@@ -1092,7 +1092,7 @@ it will return a pointer to the lnode in which case we can not traverse farther 
      std::set<SgGraphNode*> successorset2;
      std::set<SgDirectedGraphEdge*>::iterator i;
      std::set<SgDirectedGraphEdge*>::iterator j;
-     	
+
      for (i = edgeset.begin(); i != edgeset.end(); i++) {
         if (traversed.find((*i)->get_to()) == traversed.end()) {				
         successorset.insert((*i)->get_to());
@@ -1110,28 +1110,28 @@ it will return a pointer to the lnode in which case we can not traverse farther 
         SgGraphNode *child = NULL;
         child = (*it);
         if (child != NULL) {
-        //      cout << "Child is not null" << endl;
-         
-	      if (traversed.find(child) == traversed.end() /*& traversed2.find(child) == traversed2.end()*/ ) {
-          //        cout << "performing traversal" << endl;
-		  performTraversal(child, g, inheritedValue, nullInherit, graphTraversal, traversedlocal, traversedreverse, false);
-		  
-//                   if (traversedlocal.find(node) == traversedlocal.end()) {
-//                      trav
-              }
-//                   }
-         }
-//	      else {
- //               traversedlocal.insert(child);
-//	      }
-              
-         else {
-	   
-           if (graphTraversal == BOTH || graphTraversal == SYNTHESIZED) {
-                synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
+           // cout << "Child is not null" << endl;
+
+           if (traversed.find(child) == traversed.end() /*& traversed2.find(child) == traversed2.end()*/ ) {
+              // cout << "performing traversal" << endl;
+              performTraversal(child, g, inheritedValue, nullInherit, graphTraversal, traversedlocal, traversedreverse, false);
+                  
+              // if (traversedlocal.find(node) == traversedlocal.end()) {
+              //    trav
            }
-         }
-         }
+           // }
+        }
+        // else {
+        // traversedlocal.insert(child);
+        // }
+              
+        else {
+           
+           if (graphTraversal == BOTH || graphTraversal == SYNTHESIZED) {
+              synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
+           }
+        }
+     }
      //cout << "completed descension" << endl;
      //cout << "completed descension" << endl;
      size_t numberOfSuccessors = successorset.size();
@@ -1215,9 +1215,9 @@ performTraversal(SgNode* node,
 
                if (child != NULL)
                   {
-		
-	   	    
-		   
+
+
+
                     	performTraversal(child, inheritedValue, treeTraversalOrder);
 		    	
 		
