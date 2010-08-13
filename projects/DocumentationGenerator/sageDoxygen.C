@@ -681,7 +681,16 @@ Doxygen::annotate(SgProject *n)
                  if ((*symTab)[proto].count(dxSt) == 0)
                     {
                       DoxygenCommentListAttribute *attr = new DoxygenCommentListAttribute();
-                      dxSt->addNewAttribute("DoxygenCommentList", attr);
+					  // King84 (2010.08.03) : This seems to be called with the same node multiple times.
+					  // From what I can tell, this is because a single function has been documented multiple times.
+					  // At the moment this function is AssemblerX86::AssemblerX86() from src/frontend/Disassemblers/AssemblerX86.h
+					  // For now, we will print out a warning and use the new documentation (instead of addNewAttribute we use setAttribute).
+					  if (dxSt->attributeExists("DoxygenCommentList"))
+					  {
+						  std::cerr << "Warning: Multiple Doxygen comments found for function " << dxSt->get_mangled_name().getString() << " at file " << dxSt->get_file_info()->get_filenameString() << ":" << dxSt->get_file_info()->get_line() << "," << dxSt->get_file_info()->get_col() << ".  Picking the last." << std::endl;
+					  }
+                      dxSt->setAttribute("DoxygenCommentList", attr);
+//                      dxSt->addNewAttribute("DoxygenCommentList", attr);
                       (*symTab)[proto][dxSt] = &(attr->commentList);
                     }
                  list<DoxygenComment *> *commentList = (*symTab)[proto][dxSt];

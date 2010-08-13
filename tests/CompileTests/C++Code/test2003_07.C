@@ -16,7 +16,8 @@ int main()
 	if(i==0)
 	{
 		return 0;
-	}		else if(i>0)
+	}
+	else if(i>0)
 	{
 		return 1;
 	}

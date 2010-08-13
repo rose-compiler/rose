@@ -12,7 +12,7 @@ endif
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge
+bin_PROGRAMS = testParser testFortranParameter testDataMemberOfConst testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge
 
 
 # Phase 0 tests code:
@@ -21,6 +21,9 @@ bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAst
 # This test only works with C/C++ and Fortran.  Not clear what it means for the binary, 
 # which has its own options for skipping different phases.
 testParser_SOURCES = testParser.C
+
+testFortranParameter_SOURCES = testFortranParameter.C
+testDataMemberOfConst_SOURCES = testDataMemberOfConst.C
 
 # Phase 1 tests code:
 # This is used in specialized tests outside of ROSE testing for analysis only of large projects.
@@ -54,6 +57,13 @@ INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt inputFile.C tests.tex
+
+test_testFortranParameter: testFortranParameter
+	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null
+
+test_testDataMemberOfConst: testDataMemberOfConst
+	./testDataMemberOfConst $(srcdir)/CompileTests/Cxx_tests/dataMemberOfConst.C -o /dev/null
+
 
 # ********************************
 # *******  Analysis Tests  *******
