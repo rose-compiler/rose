@@ -110,7 +110,7 @@ class Profiler
 {
 public:
 	Profiler(FunctionInfo * fi, TauGroup_t ProfileGroup = TAU_DEFAULT, 
-	  bool StartStop = false, int tid = RtsLayer::myThread());
+                 bool StartStop = false, int tid = RtsLayer::myThread());
 
 	void Start(int tid = RtsLayer::myThread());
 	Profiler(const Profiler& X);
@@ -127,21 +127,21 @@ public:
 #endif // TAU_MULTIPLE_COUNTERS 
 #endif // TAU_CALLPATH 
   	static void ProfileExit(const char *message=0, 
-	  int tid = RtsLayer::myThread());
-	static bool createDirectories();
+                                int tid = RtsLayer::myThread());
+        static bool createDirectories();
 	static int StoreData(int tid = RtsLayer::myThread()); 
 	static int DumpData(bool increment = false,
-			    int tid = RtsLayer::myThread(), char *prefix = "dump"); 
-	static void PurgeData(int tid = RtsLayer::myThread());
+                            int tid = RtsLayer::myThread(), char *prefix = "dump"); 
+        static void PurgeData(int tid = RtsLayer::myThread());
 	static void theFunctionList(const char ***inPtr, int *numOfFunctions,
-				    bool addName = false, const char * inString = NULL);
-	static void dumpFunctionNames();
+                                    bool addName = false, const char * inString = NULL);
+        static void dumpFunctionNames();
 #ifndef TAU_MULTIPLE_COUNTERS
 	static void theCounterList(const char ***inPtr, int *numOfCounters);
 #endif //TAU_MULTIPLE_COUNTERS
 
 	static void getFunctionValues(const char **inFuncs,
-				      int numOfFuncs,
+                                      int numOfFuncs,
 				      double ***counterExclusiveValues,
 				      double ***counterInclusiveValues,
 				      int **numOfCalls,
@@ -149,8 +149,8 @@ public:
 				      const char ***counterNames,
 				      int *numOfCounters,
 				      int tid = RtsLayer::myThread());
-	static int dumpFunctionValues(const char **inFuncs,
-				      int numOfFuncs,
+        static int dumpFunctionValues(const char **inFuncs,
+                                      int numOfFuncs,
 				      bool increment = false,
 				      int tid = RtsLayer::myThread(), 
 				      char *prefix = "dump");
@@ -158,7 +158,7 @@ public:
 	static void getUserEventList(const char ***inPtr, int *numUserEvents);
 
 	static void getUserEventValues(const char **inUserEvents, int numUserEvents,
-				       int **numEvents, double **max, double **min,
+                                       int **numEvents, double **max, double **min,
 				       double **mean, double **sumSqr, 
 				       int tid = RtsLayer::myThread());
 
@@ -214,10 +214,10 @@ private:
 	bool	StartStopUsed_;
 	bool 	AddInclFlag; 
 	/* There is a class that will do some initialization
-	   of FunctionStack that can't be done with
+           of FunctionStack that can't be done with
 	   just the constructor.
 	   friend class ProfilerInitializer; */
-	bool 	PhaseFlag;
+        bool    PhaseFlag;
 #ifdef TAU_DEPTH_LIMIT
 	int  profiledepth; 
 #endif /* TAU_DEPTH_LIMIT */

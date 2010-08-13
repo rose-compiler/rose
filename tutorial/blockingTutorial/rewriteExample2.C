@@ -121,8 +121,8 @@ MyTraversal::evaluateRewriteSynthesizedAttribute (
 				cout << " found V_SgVariableDeclaration " << astNode->unparseToString() <<  endl;
 				// replace only integer variables called "i"
 				if( (varDecl->get_traversalSuccessorContainer().size() > 0) &&
-				    isSgInitializedName( varDecl->get_traversalSuccessorContainer()[0]) && 
-						( strcmp(isSgInitializedName(varDecl->get_traversalSuccessorContainer()[0])->get_name().str(), VARIABLE_NAME )==0 ) &&
+                                    isSgInitializedName( varDecl->get_traversalSuccessorContainer()[0]) && 
+                                                ( strcmp(isSgInitializedName(varDecl->get_traversalSuccessorContainer()[0])->get_name().str(), VARIABLE_NAME )==0 ) &&
 						( isSgTypeInt(isSgInitializedName(varDecl->get_traversalSuccessorContainer()[0])->get_type()) )
 					) {
 					// found declaration of "int i"
@@ -140,8 +140,8 @@ MyTraversal::evaluateRewriteSynthesizedAttribute (
 
 	bool synth = false;
 	for( SubTreeSynthesizedAttributes::iterator i=synthesizedAttributeList.begin();
-			 i!= synthesizedAttributeList.end(); i++ ) {
-		if( (*i).getVarRefFound() ) synth = true;
+             i!= synthesizedAttributeList.end(); i++ ) {
+                if( (*i).getVarRefFound() ) synth = true;
 	}
 	if( synth ) {
 		returnAttribute.setVarRefFound( true );
