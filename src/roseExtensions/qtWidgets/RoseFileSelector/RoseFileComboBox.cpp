@@ -10,7 +10,7 @@
 
 RoseFileComboBox::RoseFileComboBox(QWidget * par)
 	: QComboBox(par),
-	  project(NULL),
+          project(NULL),
 	  dispOnlyFilename(true)
 {
 	connect(this,SIGNAL(currentIndexChanged(int)),this,SLOT(curIndexChanged(int)));

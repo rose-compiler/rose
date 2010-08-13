@@ -153,9 +153,9 @@ class DisplayTreeNode : public DisplayNode
 		/// @param n1    left subtree
 		/// @param n2    right subtree
 		static DisplayTreeNode * mergeTrees(QGraphicsScene * scene,
-										    const QString & name,
-										    DisplayTreeNode * n1,
-										    DisplayTreeNode * n2);
+                                                    const QString & name,
+                                                    DisplayTreeNode * n1,
+                                                    DisplayTreeNode * n2);
 
 
 		/// If n successing children have no subchildren and have same caption

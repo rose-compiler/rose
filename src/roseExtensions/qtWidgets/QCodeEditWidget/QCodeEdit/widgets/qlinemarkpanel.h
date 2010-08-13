@@ -17,10 +17,10 @@
 #define _QLINE_MARK_PANEL_H_
 
 /*!
-	\file qlinemarkpanel.h
-	\brief Definition of the QLineMarkPanel class.
+        \file qlinemarkpanel.h
+        \brief Definition of the QLineMarkPanel class.
 
-	\see QLineMarkPanel
+        \see QLineMarkPanel
 */
 
 #include "qpanel.h"
@@ -33,30 +33,30 @@ class QDocumentLine;
 
 class QCE_EXPORT QLineMarkPanel : public QPanel
 {
-	Q_OBJECT
+        Q_OBJECT
 
-	public:
-		Q_PANEL(QLineMarkPanel, "Line Mark Panel")
+        public:
+                Q_PANEL(QLineMarkPanel, "Line Mark Panel")
 
-		QLineMarkPanel(QWidget *p = 0);
-		virtual ~QLineMarkPanel();
+                QLineMarkPanel(QWidget *p = 0);
+                virtual ~QLineMarkPanel();
 
-		virtual QString type() const;
+                virtual QString type() const;
 
-		void setDisableClicks(bool val) { disableClicks=val; }
-		bool clicksDisabled() const     { return disableClicks; }
+                void setDisableClicks(bool val) { disableClicks=val; }
+                bool clicksDisabled() const     { return disableClicks; }
 
-	protected:
-		virtual void paint(QPainter *p, QEditor *e);
-		virtual void mousePressEvent(QMouseEvent *e);
-		virtual void mouseReleaseEvent(QMouseEvent *e);
-		virtual void contextMenuEvent(QContextMenuEvent *e);
+        protected:
+                virtual void paint(QPainter *p, QEditor *e);
+                virtual void mousePressEvent(QMouseEvent *e);
+                virtual void mouseReleaseEvent(QMouseEvent *e);
+                virtual void contextMenuEvent(QContextMenuEvent *e);
 
-	private:
-		QList<QRect> m_rects;
-		QList<int> m_lines;
+        private:
+                QList<QRect> m_rects;
+                QList<int> m_lines;
 
-		bool disableClicks;
+                bool disableClicks;
 };
 
 #endif // _QLINE_MARK_PANEL_H_

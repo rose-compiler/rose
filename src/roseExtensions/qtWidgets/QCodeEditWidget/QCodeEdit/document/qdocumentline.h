@@ -19,8 +19,8 @@
 #include "../qce-config.h"
 
 /*!
-	\file qdocumentline.h
-	\brief Definition of the QDocumentLine class
+        \file qdocumentline.h
+        \brief Definition of the QDocumentLine class
 */
 
 #include "../qformat.h"
@@ -35,150 +35,150 @@ struct QNFAMatchContext;
 
 struct QParenthesis
 {
-	enum Role
-	{
-		Open		= 1,
-		Close		= 2,
-		Indent		= 4,
-		Fold		= 8,
-		Match		= 16
-	};
+        enum Role
+        {
+                Open            = 1,
+                Close           = 2,
+                Indent          = 4,
+                Fold            = 8,
+                Match           = 16
+        };
 
-	inline QParenthesis()
-	 : id(0), role(0), offset(0), length(0)
-	{}
+        inline QParenthesis()
+         : id(0), role(0), offset(0), length(0)
+        {}
 
-	inline QParenthesis(int i, quint8 r, int pos, int len)
-	 : id(i), role(r), offset(pos), length(len)
-	{}
+        inline QParenthesis(int i, quint8 r, int pos, int len)
+         : id(i), role(r), offset(pos), length(len)
+        {}
 
-	int id;
-	int role;
-	int offset;
-	int length;
+        int id;
+        int role;
+        int offset;
+        int length;
 };
 
 Q_DECLARE_TYPEINFO(QParenthesis, Q_MOVABLE_TYPE);
 
 class QCE_EXPORT QDocumentLine
 {
-	friend class QDocumentLineHandle;
-	friend class QDocumentCursorHandle;
+        friend class QDocumentLineHandle;
+        friend class QDocumentCursorHandle;
 
-	public:
-		enum State
-		{
-			None				= 0,
-			Hidden				= 1,
-			CollapsedBlockStart	= 2,
-			CollapsedBlockEnd	= 4,
+        public:
+                enum State
+                {
+                        None                            = 0,
+                        Hidden                          = 1,
+                        CollapsedBlockStart     = 2,
+                        CollapsedBlockEnd       = 4,
 
-			LayoutDirty			= 16,
-			FormatsApplied		= 32
-		};
+                        LayoutDirty                     = 16,
+                        FormatsApplied          = 32
+                };
 
-		Q_DECLARE_FLAGS(States, State);
+                Q_DECLARE_FLAGS(States, State);
 
-		explicit QDocumentLine(QDocument *doc);
-		QDocumentLine(const QDocumentLine& line);
-		QDocumentLine(QDocumentLineHandle *h = 0);
+                explicit QDocumentLine(QDocument *doc);
+                QDocumentLine(const QDocumentLine& line);
+                QDocumentLine(QDocumentLineHandle *h = 0);
 
-		~QDocumentLine();
+                ~QDocumentLine();
 
-		bool isNull() const;
-		bool isValid() const;
+                bool isNull() const;
+                bool isValid() const;
 
-		inline bool operator == (const QDocumentLineHandle* h) const
-		{
-			return m_handle == h;
-		}
+                inline bool operator == (const QDocumentLineHandle* h) const
+                {
+                        return m_handle == h;
+                }
 
-		inline bool operator != (const QDocumentLineHandle* h) const
-		{
-			return m_handle != h;
-		}
+                inline bool operator != (const QDocumentLineHandle* h) const
+                {
+                        return m_handle != h;
+                }
 
-		bool operator == (const QDocumentLine& l) const;
-		bool operator != (const QDocumentLine& l) const;
+                bool operator == (const QDocumentLine& l) const;
+                bool operator != (const QDocumentLine& l) const;
 
-		bool operator < (const QDocumentLine& l) const;
-		bool operator >= (const QDocumentLine& l) const;
+                bool operator < (const QDocumentLine& l) const;
+                bool operator >= (const QDocumentLine& l) const;
 
-		bool operator > (const QDocumentLine& l) const;
-		bool operator <= (const QDocumentLine& l) const;
+                bool operator > (const QDocumentLine& l) const;
+                bool operator <= (const QDocumentLine& l) const;
 
-		QDocumentLine& operator ++ ();
-		QDocumentLine& operator -- ();
+                QDocumentLine& operator ++ ();
+                QDocumentLine& operator -- ();
 
-		void operator ++ (int);
-		void operator -- (int);
+                void operator ++ (int);
+                void operator -- (int);
 
-		QDocumentLine& operator = (const QDocumentLine& l);
+                QDocumentLine& operator = (const QDocumentLine& l);
 
-		int lineNumber() const;
-		int position() const;
+                int lineNumber() const;
+                int position() const;
 
-		QString text() const;
+                QString text() const;
 
-		int length() const;
-		int lineSpan() const;
+                int length() const;
+                int lineSpan() const;
 
-		int firstChar() const;
-		int lastChar() const;
+                int firstChar() const;
+                int lastChar() const;
 
-		int nextNonSpaceChar(int pos) const;
-		int previousNonSpaceChar(int pos) const;
+                int nextNonSpaceChar(int pos) const;
+                int previousNonSpaceChar(int pos) const;
 
-		inline QString indentation() const
-		{ int idx = firstChar(); return idx != -1 ? text().left(idx) : text(); }
+                inline QString indentation() const
+                { int idx = firstChar(); return idx != -1 ? text().left(idx) : text(); }
 
-		inline bool isHidden() const
-		{ return hasFlag(Hidden); }
+                inline bool isHidden() const
+                { return hasFlag(Hidden); }
 
-		bool hasFlag(State s) const;
-		void setFlag(State s, bool y = true);
+                bool hasFlag(State s) const;
+                void setFlag(State s, bool y = true);
 
-		QDocumentLine next() const;
-		QDocumentLine previous() const;
+                QDocumentLine next() const;
+                QDocumentLine previous() const;
 
-		QDocument* document() const;
+                QDocument* document() const;
 
-		int xToCursor(int x) const;
-		int cursorToX(int cpos) const;
+                int xToCursor(int x) const;
+                int cursorToX(int cpos) const;
 
-		int wrappedLineForCursor(int cpos) const;
+                int wrappedLineForCursor(int cpos) const;
 
-		int documentOffsetToCursor(int x, int y) const;
-		void cursorToDocumentOffset(int cpos, int& x, int& y) const;
+                int documentOffsetToCursor(int x, int y) const;
+                void cursorToDocumentOffset(int cpos, int& x, int& y) const;
 
-		QPoint cursorToDocumentOffset(int cpos) const;
+                QPoint cursorToDocumentOffset(int cpos) const;
 
-		void addMark(int id);
-		void removeMark(int id);
-		void toggleMark(int id);
+                void addMark(int id);
+                void removeMark(int id);
+                void toggleMark(int id);
 
-		QList<int> marks() const;
-		bool hasMark(int id) const;
+                QList<int> marks() const;
+                bool hasMark(int id) const;
 
-		bool hasOverlay(int fid) const;
-		QList<QFormatRange> overlays() const;
+                bool hasOverlay(int fid) const;
+                QList<QFormatRange> overlays() const;
 
-		void clearOverlays();
-		void addOverlay(const QFormatRange& over);
-		void removeOverlay(const QFormatRange& over);
+                void clearOverlays();
+                void addOverlay(const QFormatRange& over);
+                void removeOverlay(const QFormatRange& over);
 
-		void setFormats(const QVector<int>& formats);
+                void setFormats(const QVector<int>& formats);
 
-		const QVector<QParenthesis>& parentheses() const;
-		void setParentheses(const QVector<QParenthesis>& parentheses);
+                const QVector<QParenthesis>& parentheses() const;
+                void setParentheses(const QVector<QParenthesis>& parentheses);
 
-		inline QDocumentLineHandle* handle() const
-		{ return m_handle; }
+                inline QDocumentLineHandle* handle() const
+                { return m_handle; }
 
-		QNFAMatchContext* matchContext();
+                QNFAMatchContext* matchContext();
 
-	private:
-		QDocumentLineHandle *m_handle;
+        private:
+                QDocumentLineHandle *m_handle;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QDocumentLine::States)

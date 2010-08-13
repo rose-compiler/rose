@@ -41,7 +41,7 @@
 QEditConfig::QEditConfig(QWidget *w)
  : QWidget(w), m_direct(false)
 {
-    ui = new Ui::EditorConfig();
+        ui = new Ui::EditorConfig();
 	ui->setupUi(this);
 
 	QStringList l;
@@ -376,36 +376,36 @@ void QEditConfig::loadKeys(const QMap<QString, QVariant>& keys)
 			ui->lblSampleText->setFont(f);
 
 		} else if ( it.key() == "tab_width" ) {
-		    ui->spnTabWidth->setValue(it->toInt());
+		        ui->spnTabWidth->setValue(it->toInt());
 
 			if ( m_direct )
 				on_spnTabWidth_valueChanged(it->toInt());
 		} else if ( it.key() == "replace_tabs" ) {
-		    ui->chkReplaceTabs->setChecked(it->toBool());
+		        ui->chkReplaceTabs->setChecked(it->toBool());
 			if ( m_direct )
 				on_chkReplaceTabs_toggled(it->toBool());
 		} else if ( it.key() == "remove_trailing" ) {
-		    ui->chkAutoRemoveTrailingWhitespace->setChecked(it->toBool());
+		        ui->chkAutoRemoveTrailingWhitespace->setChecked(it->toBool());
 			if ( m_direct )
 				on_chkAutoRemoveTrailingWhitespace_toggled(it->toBool());
 		} else if ( it.key() == "preserve_trailing_indent" ) {
-		    ui->chkPreserveTrailingIndent->setChecked(it->toBool());
+		        ui->chkPreserveTrailingIndent->setChecked(it->toBool());
 			if ( m_direct )
 				on_chkPreserveTrailingIndent_toggled(it->toBool());
 		} else if ( it.key() == "show_tabs_in_text" ) {
-		    ui->chkShowTabsInText->setChecked(it->toBool());
+		        ui->chkShowTabsInText->setChecked(it->toBool());
 			if ( m_direct )
 				on_chkShowTabsInText_toggled(it->toBool());
 		} else if ( it.key() == "show_leading_whitespace" ) {
-		    ui->chkShowLeadingWhitespace->setChecked(it->toBool());
+		        ui->chkShowLeadingWhitespace->setChecked(it->toBool());
 			if ( m_direct )
 				on_chkShowLeadingWhitespace_toggled(it->toBool());
 		} else if ( it.key() == "show_trailing_whitespace" ) {
-		    ui->chkShowTrailingWhitespace->setChecked(it->toBool());
+		        ui->chkShowTrailingWhitespace->setChecked(it->toBool());
 			if ( m_direct )
 				on_chkShowTrailingWhitespace_toggled(it->toBool());
 		} else if ( it.key() == "encoding" ) {
-		    ui->cbEncoding->setCurrentIndex(ui->cbEncoding->findText(it->toString()));
+		        ui->cbEncoding->setCurrentIndex(ui->cbEncoding->findText(it->toString()));
 			if ( m_direct )
 				on_cbEncoding_currentIndexChanged(it->toString());
 		} else if ( it.key() == "line_endings" ) {
@@ -413,11 +413,11 @@ void QEditConfig::loadKeys(const QMap<QString, QVariant>& keys)
 
 			if ( le )
 			{
-			    ui->chkDetectLE->setChecked(false);
-			    ui->cbLineEndings->setCurrentIndex(le - 1);
+			        ui->chkDetectLE->setChecked(false);
+			        ui->cbLineEndings->setCurrentIndex(le - 1);
 			} else {
-			    ui->cbLineEndings->setCurrentIndex(0);
-			    ui->chkDetectLE->setChecked(true);
+			        ui->cbLineEndings->setCurrentIndex(0);
+			        ui->chkDetectLE->setChecked(true);
 			}
 		} else {
 			/*
