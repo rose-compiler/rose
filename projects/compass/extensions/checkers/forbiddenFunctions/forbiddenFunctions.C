@@ -187,7 +187,7 @@ visit(SgNode* node)
 	 if (isSgFunctionDeclaration(parent))
 	   funcname=isSgFunctionDeclaration(parent)->get_name();
 	 std::string reason="\tin function: "+funcname+" \treason: "+fItr->second;
-	 
+
          output->addOutput(
            new CheckerOutput( node, fItr->first, reason )
          ); //output->addOutput

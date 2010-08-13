@@ -65,11 +65,11 @@ protected:
 	ROSE_ASSERT (pos);
 
 	cout << "  [" << ++found_count_ << ']'
-	     << " function:"
+             << " function:"
 	     << sig->getName () << " (" << sig->getNumArgs () << " args)"
 	     << " at " << toLoc (call)
 	     << endl;
-	return true;
+        return true;
       }
     return false; // Not recognized
   }
@@ -83,10 +83,10 @@ protected:
 	ROSE_ASSERT (sig);
 
 	cout << "  [" << ++found_count_ << ']'
-	     << " constant:" << sig->getName ()
+             << " constant:" << sig->getName ()
 	     << " at " << toLoc (var_ref)
 	     << endl;
-	return true;
+        return true;
       }
     return false; // Not recognized
   }

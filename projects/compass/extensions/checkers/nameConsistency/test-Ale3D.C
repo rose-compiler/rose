@@ -20,11 +20,9 @@ class Dd{
    bool isVar;
    bool hasVar;
 
-   void Dtest_function()
-      {
-	int conformsToRule;
-	
-      }
+   void Dtest_function(){
+      int conformsToRule;
+   }
  
 };
 int main(){};

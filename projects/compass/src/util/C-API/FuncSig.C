@@ -58,11 +58,11 @@ namespace C_API
     args_map_.clear ();
     size_t arg_num = 0;
     for (Args_t::const_iterator arg = args_.begin ();
-	 arg != args_.end ();
-	 ++arg)
+         arg != args_.end ();
+         ++arg)
       {
-	++arg_num;
-	args_map_[*arg] = arg_num;
+        ++arg_num;
+        args_map_[*arg] = arg_num;
       }
   }
 

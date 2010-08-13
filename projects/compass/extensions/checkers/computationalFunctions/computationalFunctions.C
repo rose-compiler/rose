@@ -32,7 +32,7 @@ namespace CompassAnalyses
 	: public Compass::AstSimpleProcessingWithRunFunction
 	{
 	  // Checker specific parameters should be allocated here.
-               Compass::OutputObject* output;
+          Compass::OutputObject* output;
 	  static int intOps;
 	  static int floatOps;
 	  static int intOps_actual;
