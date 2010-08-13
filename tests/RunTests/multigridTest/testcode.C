@@ -140,7 +140,7 @@ int main(int argc, char** argv)
 
   APP_DEBUG = 0;
   where (A>(TYPE)1. && A<(TYPE)9.) m1 = max(A);  // only value besides 1 
-				     // and 9 is 4
+                                     // and 9 is 4
   APP_DEBUG = 0;
 //printf("Exit until this part is working! \n");
 //APP_ABORT();
@@ -171,11 +171,11 @@ int main(int argc, char** argv)
   Index Ispan3(7,2,2);
   Index Jspan3(2,2,2);
   m1 = max(A(all,all,Kspan1,all)); // all of A, tests mix of
-				   // different Index types
+                                   // different Index types
   //A(all,Jspan2,Kspan2,Lspan2).display("A(all,Jspan2,Kspan2,Lspan2)");
 
   m2 = max(A(all,Jspan2,all,all)); // subset of A that includes
-				   // elements set to 9
+                                   // elements set to 9
   m3 = max(B(Ispan2,all,all,all)); // middle section of B in
                                    // direction 0, includes vals
 				   // 6, 7 and 8
@@ -401,14 +401,14 @@ int main(int argc, char** argv)
   TYPEArray T6(A);
   T6 = 0;
   where (A>(TYPE)2. && A<(TYPE)7.) T6 = sqrt(A); // where masks all elements of
-				     // A except 4
+                                     // A except 4
   datptr = T6.getDataPointer();
   sum1=0.;
   for (i=0;i<4356;i++) 
     sum1+=datptr[i];
 
   m1 = 1080; // 540 elements of A are 4 so 540 elements of T6 are 2,
-	     // the rest are 0
+             // the rest are 0
   if (sum1 != m1)
   {
     cout<<"ERROR in sqrt(X), test4"<<endl<<"  sum1="<<sum1<<endl;
@@ -432,7 +432,7 @@ int main(int argc, char** argv)
   //============================================================
 
   TYPEArray F1 = A(all,all,-6,100)-C; // view of A includes only
-				       // elements that are set to 1
+                                       // elements that are set to 1
   datptr = F1.getDataPointer();
   sum1=0.;
   for (i=0;i<121;i++) 
@@ -911,7 +911,7 @@ int main(int argc, char** argv)
   Q2 = B+D; // Q2 is set to 12 everywhere
 //Q2.view("Q2");
   where (B(all,all,-5)< (TYPE)2.) Q2(all,all,3)/=C; 
-		     // no elements of B are < 2 so Q2 isn't
+                     // no elements of B are < 2 so Q2 isn't
 		     // changed
 
   datptr = Q2.getDataPointer();
@@ -1033,7 +1033,7 @@ int main(int argc, char** argv)
   //H1.setBase(3,1);  put this in when bug is fixed
   int h1base1 = H1.getBase(1);
   H2 = H1(all,h1base1+10); // H1 only varies with i, H2 is 1d
-			   // with even values -8 to 12 
+                           // with even values -8 to 12 
   //H2 = H1(all,13); non bug version
   TYPEArray H3(Ispan);
   H3 = 2.;
@@ -1042,7 +1042,7 @@ int main(int argc, char** argv)
 //H2.display("H2");
 //H3.display("H3");
   IA1 = H2 < H3; // H2 is less than H3 for H2 values -8,-6,-4,-2
-		 // and 0
+                 // and 0
 //IA1.display("IA1");
 
   idatptr = IA1.getDataPointer();
@@ -1141,7 +1141,7 @@ int main(int argc, char** argv)
   x=3.;
   y=7.;
   where (A(all,all,-6,100) < (TYPE)2.) U1 = x+y; // A(all,all,-6,100) has
-					 // all 121 elements set to 1
+                                         // all 121 elements set to 1
 					 // so U1 has 121 elements
 					 // set  to 10.
 
@@ -1235,7 +1235,7 @@ int main(int argc, char** argv)
 
   TYPEArray W1;
    W1 = sum(sum(B,0),1); // Sum(B,0) is a 1 x 11 x 6 array with
-			// each element set to 2+3+...+12=77,
+                        // each element set to 2+3+...+12=77,
 			// sum(sum(B,0),1) is a 1 x 1 x 11 array
 			// with each element set to 11*77 
 
@@ -1255,7 +1255,7 @@ int main(int argc, char** argv)
 // We need to specify the type since there are sum functions 
 // taking each of doubleArray, floatArray, and intArray
   W2 = sum(TYPEArray(B(all,JJ,-3)*ONE(all,JJ,-3)),1); 
-			     // Sum(B(all,JJ,-3)*ONE(all,JJ,-3),1) is an 
+                             // Sum(B(all,JJ,-3)*ONE(all,JJ,-3),1) is an 
 			     // 11 x 1 x 1 with each element set
 			     // to i*3 for B(i,j,k)
   datptr = W2.getDataPointer();
