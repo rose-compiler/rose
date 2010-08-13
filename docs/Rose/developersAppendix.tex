@@ -68,17 +68,12 @@ each developer should first clone his/her own repository from a shared repositor
 Then a feature or a bugfix can be developed in isolation within the private repository.
 He can create any number of private branches. Each branch should relate to a
 feature that this developer is working on and be relatively short-lived. 
-%and offline (can commit without active connection with the shared repository).
 The developer can commit changes to the private repository without
 maintaining an active connection to 
 the shared repository.  When work is finished and locally tested, he can push all accumulated commits within the private repository 
 to his branch within the shared repository. 
 We create a dedicated branch within the shared repository for each developer and establish access control of the
 branch so only an authorized developer can push commits to a particular branch of the shared repository. 
-%will submit the code so that it can be considered for
-%integration as soon as possible. When a developer submits a code for integration
-%it will be tested by our test suite and integrated into our master branch if
-%it passes all tests.
 
 Any commits from a developer's private repository will not be immediately merged to the master branch
 of the shared repository. In fact, we have access control to prevent any developer from pushing commits 
@@ -90,12 +85,6 @@ If a single test fails, Hudson will report the error and the responsible develop
 his private repository and push improved commits again. 
 As a result, the master branch of the shared git repository is always stable and can be readily released.  
 
-%We provide developers with a git repository where a repository
-%where 
-%the actual development is done on a develop copy of this repository and a developer
-%will push to a branch when his work is ready for integration. When a developer push
-%to the ROSE git repository his work will be automatically added to a queue of
-%jobs that will be tested by Hudson.
 \subsection{The Internal Repository}
 
 The ROSE internal repository (the shared git repository shown in
