@@ -19,8 +19,9 @@ CheckIsModifiedFlagSupport(SgNode *node)
 {
     bool retval=false;
 
-#if 0
- // DQ (7/21/2010): This appears to be consuming 8-9 Gig of memory for the case of ROSE compiling a large source file. 
+ // DQ (7/21/2010): This appears to be consuming 8-9 Gig of memory for the case of ROSE compiling a large source file.
+ // RPM (8/2/2010): However, binary unparsing depends on being able to see when the AST has been modified.
+#if 1
     if (node->get_isModified()) {
         node->set_isModified(false);
         retval = true;

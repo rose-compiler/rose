@@ -1879,11 +1879,13 @@ SgType::getCurrentScope()
 #endif     
 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
   // This is what is used in the Open Fortran Parser connection.
      extern SgScopeStatement* getTopOfScopeStack();
 
   // This is what is used to test when we can use the fortran specific function (above).
      extern bool emptyFortranStateStack();
+#endif
 #endif
 
   // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
@@ -1901,6 +1903,7 @@ SgType::getCurrentScope()
 
         {
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
        // DQ (7/31/2010): If Fortran is not enabled then these functions will not be available.
           if (emptyFortranStateStack() == false)
              {
@@ -1909,6 +1912,7 @@ SgType::getCurrentScope()
                ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
              }
             else
+#endif             
              {
             // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
                printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
@@ -3460,19 +3464,22 @@ SOURCE_PARTIAL_FUNCTION_TYPE_END
 SOURCE_ARRAY_TYPE_START
 // RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName
-SgArrayType::get_mangled (void) const
+SgArrayType::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
 
      const SgType* base_type = get_base_type();
      ROSE_ASSERT (base_type != NULL);
-     SgName base_name  = base_type->get_mangled();
+     SgName base_name = base_type->get_mangled();
+
+  // printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
 
      const SgExpression* index_exp = get_index();
      SgName index_name;
      if (index_exp != NULL)
         {
           index_name = index_exp->unparseToString();
+       // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
         }
 
   // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)
@@ -4375,6 +4382,8 @@ SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_START
 SgArrayType*
 SgArrayType::createType ( SgType* base_type, SgExpression* idx )
    {
+  // DQ (8/11/2010): It is OK for idx to be NULL, since it implies a declaration such as: "int array[]" which can be OK.
+
 #if 0
      SgArrayType* returnType = new SgArrayType(base_type, idx);
      ROSE_ASSERT(returnType != NULL);
@@ -4385,7 +4394,7 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx )
      SgName name = returnType->get_mangled();
 
 #if 0
-     printf ("Building an array of base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+     printf ("In SgArrayType::createType(): Building an array [exp = %p] of base_type = %p = %s name = %s \n",idx,base_type,base_type->class_name().c_str(),name.str());
 #endif
 
   // Only look for pointers to type in the global type table.
