@@ -104,7 +104,7 @@ class PtrSetWrap
 #else
 	  for (VoidPtrSet::iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
 #endif
-	     {
+             {
            VoidPtrSet::iterator p1 = impl.find(*p);
            if (p1 != impl.end())
                 impl.erase(p1);
