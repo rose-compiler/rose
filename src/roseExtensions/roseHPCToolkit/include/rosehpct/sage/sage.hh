@@ -139,11 +139,11 @@ namespace RoseHPCT
 
   protected:
     virtual MetricAttr evaluateSynthesizedAttribute (SgNode* node,
-						     SynthesizedAttributesList attr_list);
+                                                     SynthesizedAttributesList attr_list);
 
     template <class SgType>
     bool eval (SgType* node,
-	       const SynthesizedAttributesList& attr_list);
+               const SynthesizedAttributesList& attr_list);
 
   private:
     std::string metric_name_;
@@ -169,12 +169,12 @@ namespace RoseHPCT
 
   //! Propagate a list of metrics by name
   void propagateMetrics (SgProject* node,
-			 const MetricNameList_t& metrics,
+                         const MetricNameList_t& metrics,
 			 const std::string& prefix = std::string(""));
 
   //! Propagate a list of metrics by name
   void propagateMetrics (SgProject* node,
-			 const MetricNameList_t& metrics,
+                         const MetricNameList_t& metrics,
 			 const char* prefix);
 
   /*! \brief Attribute storing the depth of a tree node (path length
