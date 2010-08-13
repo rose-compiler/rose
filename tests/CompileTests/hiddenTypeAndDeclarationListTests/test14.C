@@ -2,7 +2,7 @@
 
 class A {
 
-	public:
+        public:
 
 		//A() {}
 
@@ -16,7 +16,7 @@ class A {
 
 int main() {
 
-	return 0;
+        return 0;
 
 }
 

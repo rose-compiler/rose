@@ -26,7 +26,7 @@ int main() {
 
 	{
    // Here an explicit function will hide the template function (and I think any explicit instantiation as well)
-		int min(int, int);
+                int min(int, int);
 		int wwwwwwwwwwwwwww;
 		int yyy;
 		yyy =  min(wwwwwwwwwwwwwww, yyy); // prefers "handwritten" min
