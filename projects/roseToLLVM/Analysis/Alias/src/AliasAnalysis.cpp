@@ -9,6 +9,7 @@
 #include <llvm/Analysis/Passes.h>
 #include <AliasAnalysisGatherer.h>
 #include <AliasSetContainer.h>
+#include <AssociateRoseAST.h>
 
 using namespace std;
 
@@ -55,11 +56,13 @@ int main(int argc, char *argv[])
          * process alias set information for each module
          */
         AliasSetHandler::getInstance()->processAliasInformation(ModRef->getModuleIdentifier());
-
     }
 
+    AAModule->associateAST(astRoot);
 
     AAModule->annotateAST(astRoot);   
+
+    AAModule->queryAST(astRoot);
 
     AliasSetHandler::getInstance()->print();
 

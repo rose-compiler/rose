@@ -37,22 +37,42 @@ void AliasSetContainer::printAliasType(AliasType _type)
         std::cout << "No" << std::endl;
 }
 
+std::string AliasSetContainer::printRoseAliasNode(SgNode *node)
+{
+    std::string class_name = node->class_name();
+    std::string value;
+
+/*    if(!class_name.compare("SgPointerDerefExp") || !class_name.compare("SgPntrArrRefExp")) {
+        if(node->attributeExists(Control::LLVM_REFERENCE_NAME)) {
+            value = ((StringAstAttribute*)node->getAttribute(Control::LLVM_REFERENCE_NAME))->getValue();
+        }
+    }
+    else if(!class_name.compare("SgInitializedName")) {
+         if(node->attributeExists(Control::LLVM_NAME)) {
+            value = ((StringAstAttribute*)node->getAttribute(Control::LLVM_NAME))->getValue();
+         }
+    }
+    return value; */
+    return node->unparseToString();
+}
+
 void AliasSetContainer::print()
 {
     std::cout << "Number of Alias Sets : " << _aliasSetList.size() << std::endl;
 
-    AliasDataSet::AliasSetList::iterator I, E;
-    AliasDataSet::AliasRef::iterator sI, sE;
+    AliasDataSet::RoseAliasSetList::iterator I, E;
+    AliasDataSet::AliasNodes::iterator sI, sE;
 
-    for(I = _aliasSetList.begin(), E = _aliasSetList.end(); I != E; ++I) {
+    for(I = _roseAliasSetList.begin(), E = _roseAliasSetList.end(); I != E; ++I) {
         printAliasType(I->first);
 
         std::cout << "{";
 
-        AliasDataSet::AliasRef &aRef = I->second;
+        AliasDataSet::AliasNodes &aRef = I->second;
 
         for(sI = aRef.begin(), sE = aRef.end(); sI != sE; ++sI) {
-            std::cout << *sI <<",";
+            SgNode *node = *sI;
+            std::cout <<  printRoseAliasNode(node) <<",";
         }
 
         std::cout << "}" << std::endl;
@@ -120,6 +140,65 @@ void AliasSetContainer::parseAliasSet()
     }
 }
 
+int AliasSetContainer::getSize()
+{
+    return _aliasSetList.size();
+}
+
+void AliasSetContainer::initSets()
+{
+    int size = _aliasSetList.size();
+    _roseAliasSetList.reserve(size);
+
+    AliasType _aType;
+
+    for(int i = 0; i < size; ++i) {
+       _aType = _aliasSetList[i].first;
+       AliasDataSet::AliasNodes _anodes;
+       AliasDataSet::RoseAliasSet _rosealiasset = std::make_pair(_aType, _anodes);
+       _roseAliasSetList.push_back(_rosealiasset);
+    }
+}
+
+bool AliasSetContainer::isPresent(int index, std::string _element)
+{
+    AliasDataSet::AliasRef &set = _aliasSetList.at(index).second;
+    if(set.find(_element) != set.end())
+        return true;
+    else
+        return false;
+}
+
+bool AliasSetContainer::isSgNodePresent(int index, SgNode *node)
+{
+    AliasDataSet::AliasNodes &ref = _roseAliasSetList[index].second;
+
+    if(ref.find(node) != ref.end())
+        return true;
+    else
+        return false;
+}
+
+std::set<SgNode*> AliasSetContainer::getSet(int index)
+{
+    AliasDataSet::AliasNodes ref = _roseAliasSetList[index].second;
+    return ref;
+}
+
+void AliasSetContainer::addSgNode(int index, SgNode *node)
+{
+    AliasDataSet::AliasNodes &_nodeset = _roseAliasSetList[index].second;
+    _nodeset.insert(node);
+}
+
+AliasType AliasSetContainer::getAliasType(int index)
+{
+    AliasType type = _roseAliasSetList[index].first;
+    return type;
+}
+
+
+
 /*
  * Definition for AliasSetContainerList
  */
@@ -151,7 +230,7 @@ void AliasSetContainerList::parseAliasSet()
 {
     std::map<std::string, AliasSetContainer*>::iterator I;
     for(I = _list.begin(); I != _list.end(); ++I) {
-        std::cout << I->first << std::endl;
+//        std::cout << I->first << std::endl;
         I->second->parseAliasSet();
         std::cout << std::endl;
     }
@@ -165,3 +244,11 @@ void AliasSetContainerList::print()
     }
 }
 
+bool AliasSetContainerList::isFunctionPresent(std::string _functionname)
+{
+    bool res = false;
+    if(_list.find(_functionname) != _list.end()) {
+        res = true;
+    }
+    return res;
+}

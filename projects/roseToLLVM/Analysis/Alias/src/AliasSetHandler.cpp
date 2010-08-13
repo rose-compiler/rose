@@ -37,3 +37,17 @@ AliasSetContainerList* AliasSetHandler::getAliasSetContainerList(std::string mod
     return _mlist.find(modulename)->second;
 }
 
+std::string AliasSetHandler::getModuleName(std::string _functionname)
+{
+    std::string _modulename;
+    AliasSetContainerList *list;
+    std::map<std::string, AliasSetContainerList*>::iterator I;
+    for(I = _mlist.begin(); I != _mlist.end(); ++I) {
+        _modulename = I->first;
+        list = I->second;
+        if(list->isFunctionPresent(_functionname))
+            break;
+    }
+
+    return _modulename;
+}
