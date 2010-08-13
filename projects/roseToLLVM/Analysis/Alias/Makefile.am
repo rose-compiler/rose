@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = src
+SUBDIRS = src tests
 
 EXTRA_DIST = include
