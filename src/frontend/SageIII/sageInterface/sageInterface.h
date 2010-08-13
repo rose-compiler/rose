@@ -334,6 +334,8 @@ struct hash_nodeptr
 
   //! Check if a SgNode is a main() function declaration
   bool isMain (const SgNode* node);
+
+  // DQ (8/10/2010): Added const to first paramater.
   // DQ (6/22/2005):
   /*! \brief Generate unique name from C and C++ constructs. The name may contain space. 
 
@@ -345,14 +347,12 @@ struct hash_nodeptr
       \implementation current work does not support expressions.
 
    */
-    std::string generateUniqueName (SgNode * node,
-				    bool
-				    ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
+    std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
+  // DQ (8/10/2010): Added const to first paramater.
   // DQ (3/10/2007): 
   //! Generate a unique string from the source file position information
-    std::string declarationPositionString (SgDeclarationStatement *
-					   declaration);
+    std::string declarationPositionString (const SgDeclarationStatement * declaration);
 
   // DQ (1/20/2007): 
   //! Added mechanism to generate project name from list of file names
