@@ -117,7 +117,7 @@ void QFormatScheme::load(const QString& f)
 		load(doc.documentElement());
 	}
 	else
-	    qDebug() << "Failed to load format file: " << f;
+	        qDebug() << "Failed to load format file: " << f;
 }
 
 /*!

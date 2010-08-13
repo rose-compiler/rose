@@ -17,67 +17,67 @@ class DisplayNode;
  */
 class DisplayEdge : public QGraphicsItem
 {
-	public:
-		DisplayEdge(DisplayNode * from, DisplayNode * to);
-		virtual ~DisplayEdge() {}
+        public:
+                DisplayEdge(DisplayNode * from, DisplayNode * to);
+                virtual ~DisplayEdge() {}
 
-		DisplayNode *sourceNode() const  { return source; }
-	    DisplayNode *destNode()   const  { return dest; }
+                DisplayNode *sourceNode() const  { return source; }
+                DisplayNode *destNode()   const  { return dest; }
 
-	    /// Call this function after the position of a node changed
-	    void adjust();
+                /// Call this function after the position of a node changed
+                void adjust();
 
-		/// Each user defined QGraphicsItem needs a unique constant
-	    /// UserType+1 is the DisplayNode
-		enum { EdgeType = UserType + 2 };
-		int type() const { return EdgeType; }
+                /// Each user defined QGraphicsItem needs a unique constant
+                /// UserType+1 is the DisplayNode
+                enum { EdgeType = UserType + 2 };
+                int type() const { return EdgeType; }
 
-		/// Changes the edge color
-		void setColor(const QColor & c)  { color=c; }
-		/// Changes edge width
-		void setWidth(double width)		 { penWidth=1; }
+                /// Changes the edge color
+                void setColor(const QColor & c)  { color=c; }
+                /// Changes edge width
+                void setWidth(double width)              { penWidth=1; }
 
-		enum PaintMode { STRAIGHT,    ///< rendered as straight line between nodes
-		                 RECTANGULAR, ///< edge is splitted up into two lines, which are parallel to x/y axis, (half of a rectangle)
-		                 BEZIER_QUAD, ///< quadratic bezier curve
-		                 BEZIER_CUBIC ///< cubic bezier curve
-		};
+                enum PaintMode { STRAIGHT,    ///< rendered as straight line between nodes
+                                 RECTANGULAR, ///< edge is splitted up into two lines, which are parallel to x/y axis, (half of a rectangle)
+                                 BEZIER_QUAD, ///< quadratic bezier curve
+                                 BEZIER_CUBIC ///< cubic bezier curve
+                };
 
-        ///Changes the painting mode
-		void setPaintMode(PaintMode m) { paintMode=m; }
-
-
-		void setEdgeLabel(const QString & label);
-		const QString & getEdgeLabel()  const     { return edgeLabel; }
-
-	protected:
-         void setSourceNode(DisplayNode *node) { source=node; adjust(); }
-	     void setDestNode  (DisplayNode *node) { dest=node;   adjust(); }
+                ///Changes the painting mode
+                void setPaintMode(PaintMode m) { paintMode=m; }
 
 
+                void setEdgeLabel(const QString & label);
+                const QString & getEdgeLabel()  const     { return edgeLabel; }
 
-	     QRectF boundingRect() const;
-	     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+        protected:
+                void setSourceNode(DisplayNode *node) { source=node; adjust(); }
+                void setDestNode  (DisplayNode *node) { dest=node;   adjust(); }
 
 
-	private:
-	    bool intersectPolyWithLine(QPointF & res, const QPolygonF & poly, const QLineF & l);
 
-		DisplayNode * source;
-		DisplayNode * dest;
+                QRectF boundingRect() const;
+                void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
-		QPointF sourcePoint;
-		QPointF destPoint;
 
-		PaintMode paintMode;
+        private:
+                bool intersectPolyWithLine(QPointF & res, const QPolygonF & poly, const QLineF & l);
 
-		QString edgeLabel;
+                DisplayNode * source;
+                DisplayNode * dest;
 
-		double arrowSize;
+                QPointF sourcePoint;
+                QPointF destPoint;
 
-		double penWidth;
+                PaintMode paintMode;
 
-		QColor color;
+                QString edgeLabel;
+
+                double arrowSize;
+
+                double penWidth;
+
+                QColor color;
 };
 
 #endif
