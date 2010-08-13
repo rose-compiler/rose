@@ -190,6 +190,9 @@ HEADER_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // get lvalue
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
+
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;

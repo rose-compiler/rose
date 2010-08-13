@@ -1,5 +1,6 @@
 #!/bin/sh -ex
 
+
 # We need to be using compiler specific versions of Boost.
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
@@ -23,9 +24,9 @@ if [ "${num[0]}" == "0" ]; then
 else
     echo 0 > $win_file
     jobstartingwin=1
-    echo "Starting Windows test."
+    echo "Starting Windows test with REVISION: $ROSE_TEST_REVISION"
 #starting Windows process
-    curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN
+    curl http://hudson-rose.llnl.gov:8080/job/v8-test-windows-node2/build?token=WIN\&BUILDNR=$ROSE_TEST_REVISION
 fi
 done
 
@@ -219,7 +220,7 @@ else
 fi
 
 # tps (02/04/2010) : Checking the EDG submodule version
-git submodule status
+#git submodule status
 
 if test -e ROSE-install ; then chmod -R u+w ROSE-install ; fi
 rm -rf ROSE-install

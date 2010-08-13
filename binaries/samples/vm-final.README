@@ -1,0 +1,5 @@
+Raw buffer (a memory dump) of IA-32 code.
+Should be mapped at 0x00c00000
+Entry point is 0x00c01000
+Block 0x00c01115 exits through a 256-element jump table at 0x00c037fa
+vm-final.ipd describes the jump table

@@ -7,8 +7,9 @@
 using namespace std;
 using namespace boost;
 
-/** Perform the function argument extraction on all function calls in the given subtree of the AST. */
-void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
+/** Perform the function argument extraction on all function calls in the given subtree of the AST.
+  * Returns true on sucess, false on failure (unsupported code). */
+bool ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 {
 	//Check if there are any constructor calls whose arguments need to be normalized
 	//This is not supported by this normalization
@@ -23,7 +24,7 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 					constructor->get_file_info()->get_line(),
 					constructor->get_file_info()->get_filename(),
 					constructor->unparseToString().c_str());
-			exit(1);
+			return false;
 		}
 	}
 
@@ -31,17 +32,21 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 	vector<FunctionCallInfo> functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
 
 	//Go through all the function calls and replace the arguments of each one
+	bool success = true;
 	for (vector<FunctionCallInfo>::const_iterator fnCallIter = functionCalls.begin(); fnCallIter != functionCalls.end(); fnCallIter++)
 	{
 		const FunctionCallInfo& functionCallInfo = *fnCallIter;
-		RewriteFunctionCallArguments(functionCallInfo);
+		success = success & RewriteFunctionCallArguments(functionCallInfo);
 	}
+
+	return success;
 }
 
 
 /** Given the information about a function call (obtained through a traversal), extract its arguments
- * into temporary variables where it is necessary. */
-void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo)
+ * into temporary variables where it is necessary.
+ * Returns true on sucess, false on failure (unsupported code). */
+bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo)
 {
 	SgFunctionCallExp* functionCall = functionCallInfo.functionCall;
 
@@ -51,7 +56,7 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 				functionCall->get_file_info()->get_filename(), functionCall->get_file_info()->get_line());
 		fprintf(stderr, "\t%s\n", functionCall->unparseToString().c_str());
 		fprintf(stderr, "If you are using function pointers, save the function pointer first and then call the function on another line.\n");
-		exit(1);
+		return false;
 	}
 
 	SgExprListExp* functionArgs = functionCall->get_args();
@@ -86,6 +91,8 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		SageInterface::replaceExpression(functionCall, comma, true);
 		SageInterface::replaceExpression(placeholderExp, functionCall);
 	}
+
+	return true;
 }
 
 
@@ -96,7 +103,7 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
 {
 	//For right now, move everything but a constant value or an explicit variable access
-	if (backstroke_util::IsVariableReference(argument) || isSgValueExp(argument))
+	if (backstroke_util::IsVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument))
 		return false;
 
 	return true;
