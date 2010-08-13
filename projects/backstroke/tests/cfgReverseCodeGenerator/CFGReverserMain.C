@@ -29,15 +29,15 @@ int main(int argc, char** argv)
 	backstroke_norm::normalizeEvent(functionDeclaration);
 
 	//Create a reverser for this function
-    VariableRenaming var_renaming(project);
-    var_renaming.run();
+        VariableRenaming var_renaming(project);
+        var_renaming.run();
 	EventProcessor event_processor(NULL, &var_renaming);
 
 	//Add the processors in order of priority. The lower ones will be used only if higher ones do not produce results
-    event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
-    event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+        event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
+        event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
 	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
-    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+        event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
 
 	event_processor.addStatementProcessor(new StraightlineStatementProcessor);
 
