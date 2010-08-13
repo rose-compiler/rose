@@ -89,110 +89,116 @@ As a result, the master branch of the shared git repository is always stable and
 ROSE uses customized versions of Hudson and the Git plugin that display Git branch names
 in the build list. This section describes the steps necessary to patch
 and build the latest version of Hudson and the Git plugin from source.
-Building both requires Apache Maven >= 2.2.1. 
+Building both requires Apache Maven $\geq$ 2.2.1. 
 
 \begin{enumerate}
 \item{
 Changes to Hudson and the Git plugin are tracked in a repository located
-at \texttt{file:///nfs/casc/overture/ROSE/git/hudson-rose.git}. Clone
-this repository, whose path we'll refer to as \texttt{\$HUDSONROSE}. In
-\texttt{\$HUDSONROSE}, run \texttt{git submodule update \-\-init} to
-initialize the appropriate Hudson and Git plugin submodules.  
+at \texttt{/nfs/casc/overture/ROSE/git/hudson-rose.git}. Clone
+this repository, which will be referred to as \texttt{\$HUDSONROSE}. In
+\texttt{\$HUDSONROSE}, run 
+\begin{quote}
+\texttt{git submodule update -{}-init}
+\end{quote}
+to initialize the appropriate Hudson and Git plugin submodules.  
 }
 \item{
-To patch the latest version of Hudson, \texttt{cd \$HUDSONROSE/hudson}
+To patch the latest version of Hudson, enter \texttt{\$HUDSONROSE/hudson}
 and retrieve the latest version of Hudson from the developers' site. With Git,
 this is accomplished by:
-  \begin{enumerate}
-  \item{\texttt{git remote add github
-git://github.com/kohsuke/hudson.git}}
-  \item{\texttt{git fetch github}}
-  \item{\texttt{git checkout -b b1.370\_custom 1.370}}
-  \end{enumerate}
+  \begin{quote}
+  \texttt{git remote add github git://github.com/kohsuke/hudson.git \\
+    git fetch github \\
+    git checkout -b b1.370\_custom 1.370
+  }
+  \end{quote}
 This will create a new branch (named \texttt{b1.370\_custom}) in your
-local repository that's identical to the tagged release for Hudson
+local repository that is identical to the tagged release for Hudson
 version 1.370. Notes: 
-  \begin{enumerate}
-  \item{\texttt{Replace \texttt{1.370} with the version number that
-you're interested in.}}
-  \item{\texttt{The GitHub URL may change as development progresses.
-Verify that you are using the appropriate URL.}}
-  \item{\texttt{For developers within LLNL, it may be necessary to
-submit an Egress Open Request to \texttt{cspservices.llnl.gov} to open
-the ports required to clone the remote repository.}}
-  \end{enumerate}
+  \begin{itemize}
+  \item{Replace \texttt{1.370} with the latest version number.}
+  \item{The GitHub URL may change as development progresses.
+Verify that you are using the appropriate URL.}
+  \item{For developers within LLNL, it may be necessary to open ports in order to
+clone the remote repository. This can be accomplished by submitting an Egress 
+Open Request to \texttt{cspservices.llnl.gov}.}
+  \end{itemize}
 }
 \item{
-Next, apply the required patches to the current branch. Since the number
-of patches is small (\~ five at present time), it is easier to
-cherry-pick them from previous customized versions of Hudson. Use your
+Next, apply the custom patches to the current branch. Since the number
+of patches is small (five at present time), it is easier to
+cherry-pick them from previously customized versions of Hudson. Use your
 favorite repository browser to locate the required changes. If the
 changes are represented by commits \texttt{\$PATCH1} and
 \texttt{\$PATCH2}, the following applies them to the latest version of
 Hudson: 
-  \begin{itemize}
-  \item{\texttt{git cherry-pick --no-commit \$PATCH1}}
-  \item{\texttt{git cherry-pick --no-commit \$PATCH2}}
-  \item{\texttt{git commit}}
-  \end{itemize}
+  \begin{quote}
+  \texttt{git cherry-pick --no-commit \$PATCH1} \\
+  \texttt{git cherry-pick --no-commit \$PATCH2} \\
+  \texttt{git commit}
+  \end{quote}
 }
 
 \item{
 Next, patch the Git plugin by changing to the
-\texttt{\$HUDSONROSE/hudson-git} directory and following the same steps
-above.
+\texttt{\$HUDSONROSE/hudson-git} directory and following the same
+procedure above.
 }
 
 \item{
-To build the source trees, \texttt{cd \$HUDSONROSE}. Verify that patches
+To build Hudson and the plugin, return to the \texttt{\$HUDSONROSE}
+directory. Verify that patches
 in \texttt{\$HUDSONROSE/patches} are still required; if not, disable
 them with:
-  \begin{itemize}
-  \item{\texttt{git mv \$PATCHPATH\{,-disabled\}}}
-  \end{itemize}
+  \begin{quote}
+  \texttt{git mv \$PATCHPATH\{,-disabled\}}
+  \end{quote}
 Run the customized build script that applies patches, calls Maven, and
 copies the resulting \texttt{hudson.war} and \texttt{git.hpi} to
 \texttt{\$HUDSONROSE}:
-  \begin{itemize}
-  \item{\texttt{./build}}
-  \end{itemize}
+  \begin{quote}
+  \texttt{./build}
+  \end{quote}
 The following errors may occur: 
   \begin{description}
-  \item[patch did not apply]{Significant changes to Hudson or the Git
-plugin may prevent \texttt{git am} from applying patches automatically. Edit the
+  \item[Patch did not apply]{\hfill \\ Significant changes to Hudson or the Git
+plugin may prevent \texttt{git-am} from applying patches automatically. Edit the
 patches by hand to resolve this issue.}
-  \item[Not a v4.0.0 pom or not this project's pom]{For developers
+  \item[Not a v4.0.0 pom or not this project's pom]{\hfill \\ For developers
 within LLNL, the firewall may insert HTTP redirect pages when Maven is
-pulling in dependencies. Remove the offending \texttt{pom} files
+pulling in dependencies. Remove the offending \texttt{pom} or
+\texttt{xml} files
 (usually found in \texttt{\~/.m2/repository}) and rerun
 \texttt{./build}.}
   \end{description}
 When \texttt{./build} succeeds, the files \texttt{hudson.war} and
-\texttt{git.hpi} will be copied to \texttt{\$HUDSONROSE}. 
+\texttt{git.hpi} will be copied to \texttt{\$HUDSONROSE}. See the Hudson
+documentation for directions on deploying these files.
 }
 
 \item{
 To save your work, tag it and push the
 tag to the central repository:
-  \begin{itemize}
-  \item{\texttt{cd \$HUDSONROSE/hudson}}
-  \item{\texttt{git tag 1.370\_custom}}
-  \item{\texttt{git push origin : 1.370\_custom}}
-  \item{\texttt{cd \$HUDSONROSE/hudson-git}}
-  \item{\texttt{git tag git-1.0.1\_custom}}
-  \item{\texttt{git push origin : git-1.0.1\_custom}}
-  \item{\texttt{cd \$HUDSONROSE}}
-  \item{\texttt{git commit}}
-  \item{\texttt{git push origin HEAD}}
-  \end{itemize}
+  \begin{quote} \texttt{cd \$HUDSONROSE/hudson \\
+  git tag 1.370\_custom \\
+  git push origin : 1.370\_custom \\
+  cd \$HUDSONROSE/hudson-git \\
+  git tag git-1.0.1\_custom \\
+  git push origin : git-1.0.1\_custom \\
+  cd \$HUDSONROSE \\
+  git commit \\
+  git push origin HEAD}
+  \end{quote}
 }
 \end{enumerate}
 
-Note: Because of changes after Hudson v1.345, the Git plugin no longer
+\paragraph{Issues Upgrading Hudson}
+Because of changes after Hudson v1.345, the Git plugin no longer
 compiles against the latest source. Until the plugin is updated, the
-developer recommends compiling the plugin against Hudson v1.345. Such a
-plugin will work with the latest version of Hudson (compiled
-separately).
+developer recommends compiling the plugin against Hudson v1.345. A plugin 
+compiled against Hudson-1.345 will work with the latest version of Hudson, compiled
+separately. If using \texttt{build}, be sure to comment out the logic to 
+build the plugin when building the latest version.
 
 \subsection{The Internal Repository}
 
