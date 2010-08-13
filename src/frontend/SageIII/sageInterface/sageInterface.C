@@ -4624,7 +4624,7 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
 //#if 1		  
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
 #endif
-	 }
+	}
    }
 
 // Add a step statement to the end of a loop body
@@ -5068,7 +5068,7 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
       astnode = astnode->get_parent ();
     }
   while ((astnode != NULL) &&
-	 (isSgFunctionDeclaration (astnode) == NULL) &&
+         (isSgFunctionDeclaration (astnode) == NULL) &&
 	 (isSgMemberFunctionDeclaration (astnode) == NULL));
   if (astnode==NULL) return NULL;
   else return isSgFunctionDeclaration(astnode);
@@ -6921,7 +6921,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   // Liao,2/5/2008  constructor of SgFunctionDeclaration will automatically generate SgFunctionParameterList, so be cautious when set new paralist!!
     if (func->get_parameterList() != NULL)
       if (func->get_parameterList() != paralist)
-	 delete func->get_parameterList();
+	delete func->get_parameterList();
     func->set_parameterList(paralist);
     paralist->set_parent(func);
 
@@ -7003,19 +7003,19 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
        // TODO move into a support function, useful for other statement insertion functions
       if (isSgVariableDeclaration(stmt))
       {
-	SgInitializedNamePtrList namelist = isSgVariableDeclaration(stmt)->get_variables();
-	SgInitializedNamePtrList::iterator i;
-	for (i=namelist.begin(); i!=namelist.end(); i++)
-	{
-	  if ((*i)->get_scope() != scope) // this should indicate it comes right after copying
-	 {
-	   (*i)->set_scope(scope);
-	   ROSE_ASSERT ((*i)->get_symbol_from_symbol_table() ==NULL); // no symbol yet
-	 // patch symbol for the declartion copied
-	   SgVariableSymbol*  symbol = new SgVariableSymbol(*i);
-	    scope->insert_symbol((*i)->get_name(), symbol);
-	 } // end if scope
-	}// end for
+        SgInitializedNamePtrList namelist = isSgVariableDeclaration(stmt)->get_variables();
+        SgInitializedNamePtrList::iterator i;
+        for (i=namelist.begin(); i!=namelist.end(); i++)
+        {
+          if ((*i)->get_scope() != scope) // this should indicate it comes right after copying
+         {
+           (*i)->set_scope(scope);
+           ROSE_ASSERT ((*i)->get_symbol_from_symbol_table() ==NULL); // no symbol yet
+         // patch symbol for the declartion copied
+           SgVariableSymbol*  symbol = new SgVariableSymbol(*i);
+            scope->insert_symbol((*i)->get_name(), symbol);
+         } // end if scope
+        }// end for
       }
 #endif
 
@@ -7251,8 +7251,8 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 	else 
 	  { 
             cout<<"SageInterface::setOperand(): unhandled case for target expression of type "
-	           <<target->class_name()<<endl; 
-	    ROSE_ASSERT(false); 
+                <<target->class_name()<<endl; 
+            ROSE_ASSERT(false); 
 	  }
     }// end switch
     operand->set_parent(target);
@@ -7952,7 +7952,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
     if (stmtList.size()>0) // the source file is not empty
      { 
       for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
-	     j != stmtList.end (); j++)
+           j != stmtList.end (); j++)
       {
 	    //must have this judgement, otherwise wrong file will be modified!
             //It could also be the transformation generated statements with #include attached
@@ -7960,13 +7960,13 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
               ((*j)->get_file_info ())->isTransformation() 
            )
 	 {
-       result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-                content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
-	   ROSE_ASSERT(result);
+           result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+                                          content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+           ROSE_ASSERT(result);
 	   (*j)->addToAttachedPreprocessingInfo(result,position);
            successful = true;
-	    break;
-	  }
+           break;
+         }
       }
      }
     else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
@@ -8540,7 +8540,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                  //   label: e;
                  // }
                  // std::cout << "Converting for step" << std::endl;
-		    SgExprStatement* incrStmt = SageBuilder::buildExprStatement(forStatement->get_increment());
+                    SgExprStatement* incrStmt = SageBuilder::buildExprStatement(forStatement->get_increment());
                     forStatement->get_increment()->set_parent(incrStmt);
 
                     SageInterface::addStepToLoopBody(forStatement, incrStmt);
@@ -10094,7 +10094,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 //#ifdef _MSC_VER
 #if 0
 //#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
-	 printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
+     printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
 #else
      ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
@@ -10854,7 +10854,7 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
     {
 #ifdef _MSC_VER
      // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+                SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
 
 #pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
 		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
