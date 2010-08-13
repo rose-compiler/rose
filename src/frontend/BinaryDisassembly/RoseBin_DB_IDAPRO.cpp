@@ -550,7 +550,7 @@ void RoseBin_DB_IDAPRO::process_instruction_query(MYSQL* conn, MYSQL_RES* res_se
       hexaddr << hex << setw(8) << address ;
       if (RoseBin_support::DEBUG_MODE())
 	cout << " .rememberInstruction " << instruction->class_name() 
-	     << "  at : " << address << " hex: " << hexaddr.str() << endl;
+             << "  at : " << address << " hex: " << hexaddr.str() << endl;
       rememberInstructions[address]= instruction ;
 
 
@@ -718,7 +718,7 @@ void RoseBin_DB_IDAPRO::process_expression_tree_query(MYSQL* conn, MYSQL_RES* re
       } // for
       if (RoseBin_support::DEBUG_MODE())
 	cout << ">> creating exprTree : " << exprTree.id << " - " << exprTree.expr_type << " - " 
-	     << exprTree.symbol << " - " << exprTree.immediate << " - " << exprTree.position 
+             << exprTree.symbol << " - " << exprTree.immediate << " - " << exprTree.position 
 	     << " - " << exprTree.parent_id << endl;
 
       if (exprTree.id >= (int)rememberExpressionTree.size())
@@ -822,7 +822,7 @@ void RoseBin_DB_IDAPRO::process_substitutions_query(MYSQL* conn, MYSQL_RES* res_
       RoseBin_support::checkText(subst.replacement);
       if (RoseBin_support::DEBUG_MODE())
 	cout << ">> creating substitutions : " << subst.address << " - " << subst.operand_id << " - " 
-	     << subst.expr_id << " - " << subst.replacement << endl;
+             << subst.expr_id << " - " << subst.replacement << endl;
       rememberSubstitution[subst.address] = subst;
     } // while
   } // if (res_set==NULL)
@@ -940,7 +940,7 @@ void RoseBin_DB_IDAPRO::process_operand_tuples_query(MYSQL* conn, MYSQL_RES* res
 	}
 #endif
 	binExp = buildROSE->resolveRecursivelyExpression(address,expr_id_root, 
-							 subTree, 
+                                                         subTree, 
 							 typeOfOperand,
 							 &rememberExpressionTree,
 							 operand_id,
@@ -1009,8 +1009,8 @@ void RoseBin_DB_IDAPRO::process_operand_tuples_query(MYSQL* conn, MYSQL_RES* res
 	  exprTreeType exprTree = buildROSE->getDebugHelp(binExp);
 	  if (RoseBin_support::DEBUG_MODE())
 	    cout << ">> append operand (to instruction): binExp: " <<binExp  
-		 << " - sym: " <<exprTree.symbol << " - immedi: " << exprTree.immediate << endl;
-	}
+                 << " - sym: " <<exprTree.symbol << " - immedi: " << exprTree.immediate << endl;
+        }
 	tmp_instruction_map.erase(it);
       }
     }

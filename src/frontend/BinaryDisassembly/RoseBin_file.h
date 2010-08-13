@@ -66,7 +66,7 @@ class RoseBin_FILE  {
   // converts string to hex
   template <class T>
     bool from_string(T& t, 
-		     const std::string& s, 
+                     const std::string& s, 
 		     std::ios_base& (*f)(std::ios_base&))
     {
       std::istringstream iss(s);
@@ -101,12 +101,12 @@ class RoseBin_FILE  {
     /*
     std::map <int, SgAsmFunctionDeclaration* >::iterator it;
     for (it = rememberFunctions.begin(); 
-	 it!= rememberFunctions.end(); it++) {
+         it!= rememberFunctions.end(); it++) {
       delete it->second;
     }
     std::map <int, SgAsmInstruction* >::iterator it3;
     for (it3 = rememberInstructions.begin(); 
-	 it3!= rememberInstructions.end(); it3++) {
+         it3!= rememberInstructions.end(); it3++) {
       delete it3->second;
     }
     */
@@ -128,8 +128,8 @@ class RoseBin_FILE  {
    * resolve for each instruction which type it has
    ****************************************************/
   SgAsmInstruction* createInstruction(int address, 
-					 SgAsmFunctionDeclaration* bb, 
-					 std::string mnemonic);
+                                      SgAsmFunctionDeclaration* bb, 
+                                      std::string mnemonic);
 
 
 
@@ -165,7 +165,7 @@ class RoseBin_FILE  {
    * process all functions in the DB
    ****************************************************/
   void process_functions_query(
-			       SgAsmBlock* globalBlock,
+                               SgAsmBlock* globalBlock,
 			       std::list<std::string> functionName);
 
   /****************************************************
