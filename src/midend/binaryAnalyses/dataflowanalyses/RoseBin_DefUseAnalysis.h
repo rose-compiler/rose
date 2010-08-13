@@ -17,15 +17,15 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
 
 
   void addDefElement(SgGraphNode* sgNode,
-		     std::pair<X86RegisterClass, int>  initName,
+                     std::pair<X86RegisterClass, int>  initName,
 		     SgGraphNode* defNode);
 
   void addUseElement(SgGraphNode* sgNode,
-		     std::pair<X86RegisterClass, int>  initName,
+                     std::pair<X86RegisterClass, int>  initName,
 		     SgGraphNode* defNode);
 
   void addAnyElement(tabletype* tabl, SgGraphNode* sgNode,
-		     std::pair<X86RegisterClass, int>  initName,
+                     std::pair<X86RegisterClass, int>  initName,
 		     SgGraphNode* defNode);
 
 

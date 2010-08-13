@@ -12,16 +12,16 @@ using namespace RoseBin_Arch;
 
 std::string
 InterruptAnalysis::getIntCallName(uint64_t rax,
-					 DataTypes& data_ebx,
-					 DataTypes& data_ecx,
-					 DataTypes& data_edx,
-					 vector<uint64_t>& val_rbx,
-					 vector<uint64_t>& val_rcx,
-					 vector<uint64_t>& val_rdx,
-					 std::vector<uint64_t>& pos_rbx,
-					 std::vector<uint64_t>& pos_rcx,
-					 std::vector<uint64_t>& pos_rdx,
-					 uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx ) {
+                                  DataTypes& data_ebx,
+                                  DataTypes& data_ecx,
+                                  DataTypes& data_edx,
+                                  vector<uint64_t>& val_rbx,
+                                  vector<uint64_t>& val_rcx,
+                                  vector<uint64_t>& val_rdx,
+                                  std::vector<uint64_t>& pos_rbx,
+                                  std::vector<uint64_t>& pos_rcx,
+                                  std::vector<uint64_t>& pos_rdx,
+                                  uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx ) {
   string int_name = "unknown";
   data_ebx = d_none;
   data_ecx = d_none;
@@ -32,7 +32,7 @@ InterruptAnalysis::getIntCallName(uint64_t rax,
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit32)
     int_name = getIntCallName_Linux32bit(rax, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
   if ((os_ver==linux_22 ||
@@ -40,7 +40,7 @@ InterruptAnalysis::getIntCallName(uint64_t rax,
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit64)
     int_name = getIntCallName_Linux64bit(rax, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
 
@@ -306,16 +306,16 @@ InterruptAnalysis::getIntCallName_Linux32bit(uint64_t rax,
 
 std::string
 InterruptAnalysis::getIntCallName_Linux64bit(uint64_t rax,
-						    DataTypes& data_ebx,
-						    DataTypes& data_ecx,
-						    DataTypes& data_edx,
-						    vector<uint64_t>& val_rbx,
-						    vector<uint64_t>& val_rcx,
-						    vector<uint64_t>& val_rdx,
-						    std::vector<uint64_t>& pos_rbx,
-						    std::vector<uint64_t>& pos_rcx,
-						    std::vector<uint64_t>& pos_rdx,
-						    uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx) {
+                                             DataTypes& data_ebx,
+                                             DataTypes& data_ecx,
+                                             DataTypes& data_edx,
+                                             vector<uint64_t>& val_rbx,
+                                             vector<uint64_t>& val_rcx,
+                                             vector<uint64_t>& val_rdx,
+                                             std::vector<uint64_t>& pos_rbx,
+                                             std::vector<uint64_t>& pos_rcx,
+                                             std::vector<uint64_t>& pos_rdx,
+                                             uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx) {
   string int_name = "unknown";
   // linux system calls for kernel 2.6 - 64bit
   // check in linux src : uinstd.h and syscalls.h
@@ -479,10 +479,10 @@ InterruptAnalysis::run(string& name, SgGraphNode* node,
 	vector<uint64_t>::iterator it = val_rax.begin();
 	for (;it!=val_rax.end();++it) {
 	  string i_name = getIntCallName(*it, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
-	  value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
+          value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
 	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false);
 	}
 
@@ -499,7 +499,7 @@ InterruptAnalysis::run(string& name, SgGraphNode* node,
 
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
 	if (RoseBin_support::DEBUG_MODE())
-	 cerr << " found INT call : "  << int_name << endl;
+          cerr << " found INT call : "  << int_name << endl;
 	node->append_properties(SgGraph::dfa_variable,int_name);
       }
     }

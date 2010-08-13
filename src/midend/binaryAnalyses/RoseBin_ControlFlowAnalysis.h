@@ -48,7 +48,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
 
     std::map <std::string, SgAsmFunctionDeclaration* >::iterator it;
     for (it = bin_funcs.begin();
-	 it!= bin_funcs.end(); it++) {
+         it!= bin_funcs.end(); it++) {
       delete it->second;
     }
   }

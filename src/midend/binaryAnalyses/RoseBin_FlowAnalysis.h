@@ -240,7 +240,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
 
   void visit(SgNode* node);
   void checkControlFlow( SgAsmInstruction* binInst,
-			 int functionSize, int countDown,
+                         int functionSize, int countDown,
 			 std::string& currentFunctionName, int func_nr);
 
   SgGraphNode*
@@ -253,7 +253,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
   // converts string to hex
   template <class T>
     bool from_string(T& t,
-		     const std::string& s,
+                     const std::string& s,
 		     std::ios_base& (*f)(std::ios_base&))
     {
       std::istringstream iss(s);
