@@ -63,8 +63,20 @@ void QueryAST::atTraversalEnd()
     for(it = _aliasSetList.begin(); it != _aliasSetList.end(); ++it) {
         QueryASTData::_Set myset = *it;
         AliasType _type = myset.first;
+
+        std::cout << "Alias Type : ";
+
+        if(_type == May) {
+            std::cout << "May" << std::endl;
+        }
+        else if(_type == Must) {
+            std::cout << "Must" << std::endl;
+        }
+        else
+            std::cout << "No" << std::endl;
+
         QueryASTData::_Locations &_tempset = myset.second;
-        std::cout << "{";
+        std::cout << "AliasSet = {";
         for(sit = _tempset.begin(); sit != _tempset.end(); ++sit) {
             std::cout << *sit << ",";
         }

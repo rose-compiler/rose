@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 TESTCODE_INCLUDES = 
 
-ROSE2LLVM_FLAGS =
+ROSE2LLVM_FLAGS = --edg:no-warnings -rose:verbose 0
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 							   example0.c \
@@ -33,7 +33,7 @@ C_TESTS = $(C_TESTCODES_REQUIRED_TO_PASS)
 
 $(C_TESTS): ../src/rose2llvmAA 
 	@cp $(srcdir)/$@ $@
-	../src/rose2llvmAA $@
+	../src/rose2llvmAA $@ > $@.out
 
 check-local:
 	@echo "Test for rose2llvm translator."	
@@ -41,7 +41,7 @@ check-local:
 	@echo "======== make check rule for rose2llvmAA terminated normally ========"
 
 clean-local:	
-	rm -f *.o
+	rm -f *.out *.c
 
 endif
 

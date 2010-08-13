@@ -85,13 +85,13 @@ bool AAGatherer::runOnFunction(Function &F)
 
     container->addaliasinglocations(_AAResults);
 
-     _ASTracker->dump();
+//     _ASTracker->dump();
 
     delete _ASTracker;
 }
 
 bool AAGatherer::doFinalization(Module &M) 
 {
-    std::cout << "End of AA Gatherer Pass " << std::endl;
+//    std::cout << "End of AA Gatherer Pass " << std::endl;
     return false;
 }

@@ -2,15 +2,14 @@
 
 int main()
 {
-   // Must alias
    int *p, *q;
    int i;
    i = 10;
    p = &i;
-   //q = p;
+   q = p;
    (*p)++;
-   //*q = *p + 5;
-   printf("%d\n", i);
+   *q = *p + 5;
+   //printf("%d\n", i);
 
    return 0;
 }
