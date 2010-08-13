@@ -13,7 +13,7 @@ bool isFunctionSideEffectFree(SgExpression* decl) {
 }
 
 bool expressionTreeEqualStar(const SgExpressionPtrList& as,
-			     const SgExpressionPtrList& bs) {
+                             const SgExpressionPtrList& bs) {
   SgExpressionPtrList::const_iterator i, j;
   for (i = as.begin(), j = bs.begin(); i != as.end() && j != bs.end(); ++i, ++j)
     if (!expressionTreeEqual(*i, *j))
@@ -30,19 +30,19 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
   if (isSgBinaryOp(a)) {
     assert (isSgBinaryOp(b));
     return expressionTreeEqual(isSgBinaryOp(a)->get_lhs_operand(),
-			       isSgBinaryOp(b)->get_lhs_operand()) &&
+                               isSgBinaryOp(b)->get_lhs_operand()) &&
 	   expressionTreeEqual(isSgBinaryOp(a)->get_rhs_operand(),
 			       isSgBinaryOp(b)->get_rhs_operand());
   }
   if (isSgUnaryOp(a)) {
     assert (isSgUnaryOp(b));
     return expressionTreeEqual(isSgUnaryOp(a)->get_operand(),
-			       isSgUnaryOp(b)->get_operand());
+                               isSgUnaryOp(b)->get_operand());
   }
   if (isSgConditionalExp(a)) {
     assert (isSgConditionalExp(b));
     return expressionTreeEqual(isSgConditionalExp(a)->get_conditional_exp(),
-			       isSgConditionalExp(b)->get_conditional_exp()) &&
+                               isSgConditionalExp(b)->get_conditional_exp()) &&
 	   expressionTreeEqual(isSgConditionalExp(a)->get_true_exp(),
 			       isSgConditionalExp(b)->get_true_exp()) &&
 	   expressionTreeEqual(isSgConditionalExp(a)->get_false_exp(),
@@ -55,12 +55,12 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
   if (isSgExprListExp(a)) {
     assert (isSgExprListExp(b));
     return expressionTreeEqualStar(isSgExprListExp(a)->get_expressions(),
-				   isSgExprListExp(b)->get_expressions());
+                                   isSgExprListExp(b)->get_expressions());
   }
   if (isSgFunctionCallExp(a)) {
     assert (isSgFunctionCallExp(b));
     return expressionTreeEqual(isSgFunctionCallExp(a)->get_function(),
-			       isSgFunctionCallExp(b)->get_function()) &&
+                               isSgFunctionCallExp(b)->get_function()) &&
 	   expressionTreeEqual(isSgFunctionCallExp(a)->get_args(),
 			       isSgFunctionCallExp(b)->get_args()) &&
 	   isFunctionSideEffectFree(isSgFunctionCallExp(a)->get_function());
@@ -73,12 +73,12 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
   if (isSgAssignInitializer(a)) {
     assert (isSgAssignInitializer(b));
     return expressionTreeEqual(isSgAssignInitializer(a)->get_operand(),
-			       isSgAssignInitializer(b)->get_operand());
+                               isSgAssignInitializer(b)->get_operand());
   }
   if (isSgAggregateInitializer(a)) {
     assert (isSgAggregateInitializer(b));
     return expressionTreeEqual(isSgAggregateInitializer(a)->get_initializers(),
-			       isSgAggregateInitializer(b)->get_initializers());
+                               isSgAggregateInitializer(b)->get_initializers());
   }
   if (isSgConstructorInitializer(a)) {
     assert (isSgConstructorInitializer(b));
@@ -100,7 +100,7 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
   if (isSgSizeOfOp(a)) {
     assert (isSgSizeOfOp(b));
     return expressionTreeEqual(isSgSizeOfOp(a)->get_operand_expr(),
-			       isSgSizeOfOp(b)->get_operand_expr());
+                               isSgSizeOfOp(b)->get_operand_expr());
   }
   if (isSgThisExp(a)) {
     assert (isSgThisExp(b));

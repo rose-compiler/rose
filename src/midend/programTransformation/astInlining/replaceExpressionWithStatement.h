@@ -51,7 +51,7 @@ void pushTestIntoBody(SgScopeStatement* loopStmt);
 //! initializer of a for statement.
 //! Needs to be merged
 void myStatementInsert(SgStatement* target, 
-		       SgStatement* newstmt,
+                       SgStatement* newstmt,
 		       bool before,
 		       bool allowForInit = false);
 
