@@ -165,13 +165,13 @@ class Mapping : public ReferenceCounting
 
   // map a grid of points: r(0:n1,1), or r(0:n1,0:n2,2) or r((0:n1,0:n2,0:n3,3) for 1, 2 or 3d
   virtual void mapGrid(const realArray & r, 
-		       realArray & x, 
+                       realArray & x, 
 		       realArray & xr =Overture::nullRealDistributedArray(),
 		       MappingParameters & params=Overture::nullMappingParameters() );
 
   // determine if one mapping (or face of) intersects another mapping (or face of)
   virtual int intersects(Mapping & map2, 
-			 const int & side1=-1, 
+                         const int & side1=-1, 
 			 const int & axis1=-1,
 			 const int & side2=-1, 
 			 const int & axis2=-1,
@@ -209,7 +209,7 @@ class Mapping : public ReferenceCounting
   
 
   void secondOrderDerivative(const Index & I,      // compute second derivatives by finite differences.
-			     const realArray & r, 
+                             const realArray & r, 
 			     realArray & xrr, 
 			     const int axis,
 			     const int & rAxis );
@@ -322,7 +322,7 @@ class Mapping : public ReferenceCounting
   virtual void inverseMapCD( const realArray & x, const realArray & r, const realArray & rx =Overture::nullRealDistributedArray(),
 			  MappingParameters & params =Overture::nullMappingParameters());
   virtual void mapGridD(const realArray & r, 
-		       realArray & x, 
+                       realArray & x, 
 		       realArray & xr =Overture::nullRealDistributedArray(),
 		       MappingParameters & params=Overture::nullMappingParameters() );
 

@@ -61,7 +61,7 @@ protected:
 
   //void generateInitialFaceList(CompositeGrid &cg, intArray *vertexIndex, intArray &numberOfVertices, intArray *vertexIDMap, intArray &vertexGridIJKMap, intArray &initialFaces);
   void generateInitialFaceList(CompositeGrid &cg, intArray *vertexIndex, 
-			       intArray &numberOfVertices, intArray *vertexIDMap, 
+                               intArray &numberOfVertices, intArray *vertexIDMap, 
 			       intArray &vertexGridIndexMap, intArray *gridIndexVertexMap, 
 			       intArray &initialFaces, intArray &initialFaceZones);
 

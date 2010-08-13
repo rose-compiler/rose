@@ -19,8 +19,8 @@
 
 OGFunction* 
 setTwilightZoneFlowFunction (const TwilightZoneFlowFunctionType & TZType, 
-			     const int & numberOfDimensions);
-		
+                             const int & numberOfDimensions);
+
 
 OGFunction*
 setTwilightZoneFlowFunction (const int & numberOfDimensions);

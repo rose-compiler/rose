@@ -113,7 +113,7 @@ public:
   
 
   virtual int intersects(Mapping & map2, 
-			 const int & side1=-1, 
+                         const int & side1=-1, 
 			 const int & axis1=-1,
 			 const int & side2=-1, 
 			 const int & axis2=-1,
@@ -233,7 +233,7 @@ public:
   void getNormal( int e, real *normalVector );
 
   bool isDuplicateNode(int i, int n, int e, int s, int s2, real & r0, real & r1,
-		       realArray & x,
+                       realArray & x,
 		       real epsDup,
 		       intArray & bNode,
 		       intArray & nodeInfo,

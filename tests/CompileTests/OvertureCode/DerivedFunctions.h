@@ -45,11 +45,11 @@ class DerivedFunctions
   int add( int derivative, const aString & name_, int n1=0, int n2=0 );
 
   int getASolution(int & solutionNumber,
-		   MappedGrid & cg,
+                   MappedGrid & cg,
 		   realMappedGridFunction & u);
 
   int getASolution(int & solutionNumber,
-		   CompositeGrid & cg,
+                   CompositeGrid & cg,
 		   realCompositeGridFunction & u);
 
   int numberOfDerivedTypes() const { return numberOfDerivedFunctions; }

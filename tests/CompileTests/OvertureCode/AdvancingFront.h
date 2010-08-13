@@ -118,7 +118,7 @@ protected:
   void gatherExistingCandidates(const Face & face, real distance, realArray & pIdealTrans,
 				realArray & T, realArray & Tinv, vector<int> &existing_candidates);
   void computeVertexCandidates(const realArray &currentFaceVerticesTrans, 
-			       const realArray &pIdealTrans, vector<int> &existing_candidates, 
+                               const realArray &pIdealTrans, vector<int> &existing_candidates, 
 			       const realArray &T, realArray &new_candidates, real rad);
 
   bool makeTriTetFromExistingVertices(const Face &currentFace, int newElementID,
@@ -126,7 +126,7 @@ protected:
 				      vector<PriorityQueue::iterator > &oldFrontFaces);
 
   bool makeTriTetFromNewVertex(const Face & currentFace, int newElementID, 
-			       realArray &new_candidates);
+                               realArray &new_candidates);
 
   bool isFaceConsistent(const IntegerArray &, const Face & filterFace) const;  // essentially checks for intersections
   bool isFaceConsistent(const realArray & , const Face & filterFace) const; // again.

@@ -23,12 +23,12 @@ class InterpolateRefinements
 
   // interpolate ghost boundaries of refinements from grids at same level or below:
   int interpolateRefinementBoundaries( realGridCollectionFunction & u,
-				       int levelToInterpolate = allLevels,
+                                       int levelToInterpolate = allLevels,
 				       const Range & C = nullRange  );
 
   // interpolate coarse grid points covered by finer grids:
   int interpolateCoarseFromFine( realGridCollectionFunction & u,
-				 int levelToInterpolate= allLevels,
+                                 int levelToInterpolate= allLevels,
 				 const Range & C = nullRange  );
   
 
@@ -57,7 +57,7 @@ class InterpolateRefinements
   int numberOfGhostLines;
   
   bool boxWasAdjustedInPeriodicDirection(BOX & box, GridCollection & gc, int baseGrid, int level,
-					 int & periodicDirection, int & periodShift  );
+                                         int & periodicDirection, int & periodShift  );
 
   Box buildBaseBox( MappedGrid & mg );
   

@@ -118,7 +118,7 @@ protected:
   // sometimes more curves if we don't resolve the quadtree far enough
 
   void remake( TrimmedMapping& tm, const real& centerX, const real& centerY,
-	       const real& dx_, TMcurves& curves_ );
+               const real& dx_, TMcurves& curves_ );
 
 public:
   // Variables to control stopping the subdivision process.
@@ -142,7 +142,7 @@ public:
   const TMcurves& the_curves() const { return curves; };
 
   bool insideSquare( const real x, const real y,
-		     const real x0, const real x1, const real y0, const real y1 ) const {
+                     const real x0, const real x1, const real y0, const real y1 ) const {
     if ( x>=x0 && x<=x1 && y>=y0 && y<=y1 ) {
       return true; }
     else {
@@ -173,7 +173,7 @@ public:
   };
 
   real distancePointToSegment( real x, real y,
-			       real x0, real y0, real u0, real v0 ) const;
+                               real x0, real y0, real u0, real v0 ) const;
   real distanceBetweenSegments( real x1, real y1, real u1, real v1,
 				real x2, real y2, real u2, real v2 ) const;
   real distanceToCurve( int c, TrimmedMapping& tm ) const;
@@ -181,9 +181,9 @@ public:
   void divide( TrimmedMapping& tm, int& sizeOfMesh, real& minWidth );
   void plot( PlotStuff & gi, PlotStuffParameters parameters ) const;
   void accumulateCenterPoints( realArray& points,
-			       const int startID = nextID ) const;
+                               const int startID = nextID ) const;
   void accumulateCenterPoints( realArray& points, realArray& inout,
-			       const int startID = nextID ) const;
+                               const int startID = nextID ) const;
   //  const TMquad& squareItsIn( Point pt ); ... the way I'd like to do it
   const TMquad* squareItsIn( real pointX, real pointY ) const;
   const TMquad* squareItsIn( real pointX, real pointY, TMquad*& parent ) const;
@@ -200,7 +200,7 @@ public:
   // centerX,centerY,dx,and children for each square) but recompute insideness
   // information rather than saving it.
   int TMget( const GenericDataBase & dir, const aString & name,
-	 TrimmedMapping& tm, TMcurves * curves_ = NULL );
+         TrimmedMapping& tm, TMcurves * curves_ = NULL );
   virtual int put( GenericDataBase & dir, const aString & name) const;
   void getStatics( GenericDataBase & dir ) const;
   void putStatics( GenericDataBase & dir ) const;
@@ -234,7 +234,7 @@ public:
     return *this;
   };
   int TMget( const GenericDataBase & dir, const aString & name,
-	     TrimmedMapping& tm, TMcurves * curves_ = NULL );
+             TrimmedMapping& tm, TMcurves * curves_ = NULL );
   virtual int put( GenericDataBase & dir, const aString & name) const;
 
 private:

@@ -208,14 +208,14 @@ class GenericGridCollectionOperators : public GenericCollectionOperators
 
   //compute (u.grad)w (convective derivative of passive variable(s))
   virtual realGridCollectionFunction convectiveDerivative (
-					       const realGridCollectionFunction &u, 
+                                               const realGridCollectionFunction &u, 
 					       const realGridCollectionFunction &w,
 					       const Index & C1 = nullIndex,
 					       const Index & C2 = nullIndex,
 					       const Index & C3 = nullIndex
 							   );
   virtual realGridCollectionFunction convectiveDerivative (
-							   const realGridCollectionFunction &u, 
+                                                           const realGridCollectionFunction &u, 
 							   const GridFunctionParameters & gfType,
 							   const realGridCollectionFunction &w,
 							   const Index & C1 = nullIndex,
@@ -312,14 +312,14 @@ class GenericGridCollectionOperators : public GenericCollectionOperators
 
   //returns face-centered gradients
   virtual realGridCollectionFunction FCgrad (const realGridCollectionFunction & phi,		
-					     const int c0 = 0,
+                                             const int c0 = 0,
 					     const int c1 = 0,
 					     const int c2 = 0,
 					     const int c3 = 0,
 					     const int c4 = 0
 					     );
   virtual realGridCollectionFunction FCgrad (const realGridCollectionFunction & phi,		
-					     const GridFunctionParameters & gfType,
+                                             const GridFunctionParameters & gfType,
 					     const int c0 = 0,
 					     const int c1 = 0,
 					     const int c2 = 0,
@@ -336,7 +336,7 @@ class GenericGridCollectionOperators : public GenericCollectionOperators
  public:
     
   virtual void applyBoundaryConditions(realGridCollectionFunction & u, 
-				       const real & time = 0.,
+                                       const real & time = 0.,
 				       const int & grid =forAll);
   // fill in coefficients for the boundary conditions
   virtual void assignBoundaryConditionCoefficients(realGridCollectionFunction & coeff, 

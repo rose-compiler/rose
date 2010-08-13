@@ -85,14 +85,14 @@ moglBuildPopup(const aString menu[]);
 
 void 
 moglInit(int & argc, 
-	 char *argv[], 
+         char *argv[], 
 	 const aString &windowTitle, 
 	 aString fileMenuItems[],
 	 aString helpMenuItems[]);
 
 int 
 moglGetAnswer( aString &answer, const aString prompt = "", 
-	       PickInfo *pick_ =NULL, int blocking = 1 );
+               PickInfo *pick_ =NULL, int blocking = 1 );
 
 
 int 
@@ -133,7 +133,7 @@ void
 moglSetViewFunction( MOGL_VIEW_FUNCTION viewFunction );
 int
 makeGraphicsWindow(const aString &windowTitle, 
-		   aString fileMenuItems[],
+                   aString fileMenuItems[],
 		   aString helpMenuItems[],
 		   ClippingPlaneInfo & clippingPlaneInfo,
 		   ViewCharacteristics & viewChar,
@@ -173,7 +173,7 @@ void graphics_setOrthoKeepAspectRatio( GLdouble aspectRatio,
 				GLdouble near,   GLdouble far);
 
 void graphics_setPerspective ( GLdouble fovy,   GLdouble aspect,
-			       GLdouble near,   GLdouble far);
+                               GLdouble near,   GLdouble far);
 
 //void graphics_setLookAt (GLdouble eyeX,    GLdouble eyeY,    GLdouble eyeZ, 
 //			 GLdouble centerX, GLdouble centerY, GLdouble centerZ,// 
