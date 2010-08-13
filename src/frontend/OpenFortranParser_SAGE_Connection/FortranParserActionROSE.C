@@ -62,7 +62,6 @@ build_implicit_program_statement_if_required()
 
 // ********************************************************************
 // ********************************************************************
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -639,13 +638,22 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                     ROSE_ASSERT(astExpressionStack.empty() == false);
                     int rank = astExpressionStack.size();
                     ROSE_ASSERT(rank == 1);
-                    SgArrayType* arrayType = convertTypeOnStackToArrayType(rank);
 
-                 // DQ (12/8/2007): Use the new mechanism using the astBaseTypeStack.
-                 // astTypeStack.pop_front();
-                 // astTypeStack.push_front(arrayType);
+#if 1
+                 // DQ (8/12/2010): I need to make an intermediate release with this older version of the code.
+                    printf ("Using older version of code to support intermediate release! \n");
+                    SgArrayType* arrayType = convertTypeOnStackToArrayType(rank);
                     astBaseTypeStack.pop_front();
                     astBaseTypeStack.push_front(arrayType);
+#else
+                 // DQ (8/6/2010): We were improperly using SgArrayType instead of SgTypeString.
+                    SgIntVal* value = new SgIntVal(rank,"42");
+                    SgTypeString* stringType = new SgTypeString(value);
+                    ROSE_ASSERT(stringType != NULL);
+
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(stringType);
+#endif
                   }
                  else
                   {
@@ -8308,6 +8316,9 @@ void c_action_level_2_expr(int numConcatOps)
 
                result = createBinaryOperator(lhs,accumulator_rhs,relOp->text, /* is_user_defined_operator */ false);
                setSourcePosition(result,relOp);
+
+            // DQ (8/5/2010): Bug fix suggested by Matt.
+               accumulator_rhs = result;
              }
 
           astExpressionStack.push_front(result);
@@ -8675,10 +8686,47 @@ void c_action_equiv_operand(int numEquivOps)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_equiv_operand(): numEquivOps = %d \n",numEquivOps);
    }
+
 void c_action_equiv_operand__equiv_op(Token_t * equivOp)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_equiv_operand__equiv_op(): equivOp = %p \n",equivOp);
+
+#if !SKIP_C_ACTION_IMPLEMENTATION
+     if (equivOp != NULL)
+        {
+          ROSE_ASSERT(equivOp->text != NULL);
+          printf ("In c_action_equiv_operand__equiv_op() (level 5 expr): equivOp->text = %s \n",equivOp->text);
+
+          SgExpression* result = NULL;
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* rhs = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* lhs = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          ROSE_ASSERT(equivOp != NULL);
+
+          result = createBinaryOperator(lhs,rhs,equivOp->text, /* is_user_defined_operator */ false);
+
+          ROSE_ASSERT(result != NULL);
+          setSourcePosition(result,equivOp);
+
+          astExpressionStack.push_front(result);
+
+       // DQ (10/7/2008): There should uniformally be a toke on the stack for the ".<operator>." name.
+          ROSE_ASSERT(astNameStack.empty() == false);
+          astNameStack.pop_front();
+        }
+#endif
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R716 c_action_level_3_expr()");
+#endif
    }
 
 /** R717: note, moved leading optional to equiv_operand
@@ -13020,8 +13068,10 @@ void c_action_output_item_list(int count)
      ROSE_ASSERT(exprListExp != NULL);
 
   // while (astExpressionStack.empty() == false)
+     printf ("In R916: count = %d \n",count);
      for (int i = 0; i < count; i++)
         {
+          ROSE_ASSERT(astExpressionStack.empty() == false);
           exprListExp->prepend_expression(astExpressionStack.front());
           astExpressionStack.front()->set_parent(exprListExp);
           astExpressionStack.pop_front();
