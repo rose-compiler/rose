@@ -135,7 +135,14 @@ include_HEADERS = \
      rose.h \
      roseInternal.h \
      rose_msvc.h \
-     msvc_stdint.h
+     msvc_stdint.h \
+	 roseSupport/utility_functionsImpl.C \
+	 midend/astProcessing/AstDOTGeneration.h \
+	 midend/astProcessing/AstDOTGenerationImpl.C \
+	 frontend/SageIII/sage3basic.h \
+	 frontend/SageIII/sage3basic.hhh \
+	 midend/astDiagnostics/AstConsistencyTests.h \
+	 backend/asmUnparser/AsmUnparser_compat.h
 
 # DQ (9/22/2006): Because we now use libtool, the shared library is a reference to the separate
 # dynamic libraries in each directory and so testMultiRoseLib is redundant with testSharedRoseLib.
