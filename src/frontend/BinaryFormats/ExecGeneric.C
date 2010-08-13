@@ -197,10 +197,10 @@ std::string SgAsmExecutableFileFormat::isa_family_to_string(SgAsmExecutableFileF
     case ISA_ARM_Family:   return "ARM";           /* Acorn RISC Machine, Advanced RISC Machines, ARM Limited */
     case ISA_OTHER_Family: 
       switch(isa){
-	case ISA_PowerPC:
-	case ISA_PowerPC_64bit: return "PowerPC"; 
+        case ISA_PowerPC:
+        case ISA_PowerPC_64bit: return "PowerPC"; 
         default:
-	  return "Other Family";
+          return "Other Family";
       };
     default:
       break;
