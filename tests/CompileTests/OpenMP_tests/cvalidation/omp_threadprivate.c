@@ -85,8 +85,8 @@ check_omp_threadprivate (FILE * logFile)
 	if (myvalue != data[rank])
 	  {
 	    fprintf (logFile, " myvalue = %d, data[rank]= %d\n", myvalue,
-		     data[rank]);
-	  }
+                     data[rank]);
+          }
       }
     }
   free (data);
