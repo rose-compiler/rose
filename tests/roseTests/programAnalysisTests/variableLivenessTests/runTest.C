@@ -251,8 +251,8 @@ void testOneFunction( std::string funcParamName,
 	  }
 	  if (debug)
 	    cout << " nodeNr: " << tableNr << ".  ResultSize IN should be:" << results.size() << " -  resultSize is: " << in.size()
-		 << "  foundMatches == : " << hitIn << "/" << resultsIn.size() << endl;
-	}
+                 << "  foundMatches == : " << hitIn << "/" << resultsIn.size() << endl;
+        }
       }
       k =resultsOut.begin();
       for (;k!=resultsOut.end();++k) {
@@ -295,8 +295,8 @@ void testOneFunction( std::string funcParamName,
 	  }
 	  if (debug)
 	    cout << " nodeNr: " << tableNr << ".  ResultSize OUT should be:" << results.size() << " -  resultSize is: " << out.size()
-		 << "  foundMatches == : " << hitOut << "/" << resultsOut.size() << endl;
-	}
+                 << "  foundMatches == : " << hitOut << "/" << resultsOut.size() << endl;
+        }
       }
       if (hitIn==0 && hitOut==0) {
 	if (debug)
@@ -314,7 +314,7 @@ void testOneFunction( std::string funcParamName,
     cerr << "Writing out to var.dot... " << endl;
   std::ofstream f2("var.dot");
   dfaToDot(f2, string("var"), dfaFunctions,
-	   (DefUseAnalysis*)defuse, liv);
+           (DefUseAnalysis*)defuse, liv);
   f2.close();
 
   if (abortme) {
@@ -343,7 +343,7 @@ void testOneFunction( std::string funcParamName,
     cerr << "Writing out to varFix.dot... " << endl;
   std::ofstream f3("varFix.dot");
   dfaToDot(f3, string("varFix"), dfaFunctions2,
-	   (DefUseAnalysis*)defuse, liv);
+           (DefUseAnalysis*)defuse, liv);
   f3.close();
 
   if (debug)
@@ -395,7 +395,7 @@ void runCurrentFile(vector<string> &argvList, bool debug, bool debug_map) {
 
   std::ofstream f2("var.dot");
   dfaToDot(f2, string("var"), dfaFunctions,
-	   (DefUseAnalysis*)defuse, liv);
+           (DefUseAnalysis*)defuse, liv);
   f2.close();
   if (abortme) {
     cerr<<"ABORTING ." << endl;

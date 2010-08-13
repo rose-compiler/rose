@@ -13,7 +13,7 @@ class InheritedAttribute
          
          
          
- 	 //Naming paths code
+         //Naming paths code
 	 set<vector<SgGraphNode*> > collected_paths;
          int pathcount;
 
