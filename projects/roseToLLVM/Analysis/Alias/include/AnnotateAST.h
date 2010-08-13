@@ -19,6 +19,7 @@ class AliasSetAstAttribute : public RootAstAttribute
 
     public:
     AliasSetAstAttribute(AliasDataSet::RoseAliasSet aliassets) { _AliasSets = aliassets; }
+    AliasDataSet::RoseAliasSet getAliasSet() { return _AliasSets; }
 
 };
 

@@ -179,7 +179,7 @@ bool AliasSetContainer::isSgNodePresent(int index, SgNode *node)
         return false;
 }
 
-std::set<SgNode*> AliasSetContainer::getSet(int index)
+std::set<SgNode*> AliasSetContainer::getSgNodeSet(int index)
 {
     AliasDataSet::AliasNodes ref = _roseAliasSetList[index].second;
     return ref;

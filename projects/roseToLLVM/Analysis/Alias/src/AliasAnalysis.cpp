@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     AAModule->queryAST(astRoot);
 
-    AliasSetHandler::getInstance()->print();
+//    AliasSetHandler::getInstance()->print();
 
     delete AAModule;
     delete PM;

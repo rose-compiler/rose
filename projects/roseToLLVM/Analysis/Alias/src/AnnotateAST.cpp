@@ -33,7 +33,7 @@ void AnnotateAST::postOrderVisit(SgNode *node)
     for(int i = 0; i < size; ++i) {
         if(_container->isSgNodePresent(i, node)) {
             singleton.insert(node);
-            const std::set<SgNode*> &ref = _container->getSet(i);
+            const std::set<SgNode*> &ref = _container->getSgNodeSet(i);
             std::set_difference(ref.begin(), ref.end(), singleton.begin(), singleton.end(), std::inserter(diff, diff.end())); 
             AliasType type = _container->getAliasType(i);
             AliasDataSet::RoseAliasSet _rosealiasset = std::make_pair(type, diff);

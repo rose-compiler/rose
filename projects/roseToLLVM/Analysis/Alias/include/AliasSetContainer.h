@@ -96,7 +96,7 @@ class AliasSetContainer
      /*
       * return set<sgnode*>
       */
-     std::set<SgNode*> getSet(int index);
+     std::set<SgNode*> getSgNodeSet(int index);
 
      /*
       * return type of alias set at index
