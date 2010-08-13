@@ -39,25 +39,28 @@ std::string AAGatherer::WriteAsString(AliasSetTracker* _asTracker, Function &F)
         AliasSet *_aliasset = static_cast<AliasSet*> (_asIter);
         AliasSet::iterator I, E;
 
-        /*
-         * Write the Type of Alias Set
-         */
-
-        if (_aliasset->isMayAlias() )
-            _aaResults << "May ";
-        else if(_aliasset->isMustAlias() )
-            _aaResults << "Must ";
-        else
-            _aaResults << "No "; 
+        _aaResults << "{";
 
         for( I = _aliasset->begin(), E = _aliasset->end(); I != E ; ++I) {
 
             // iterate over each pointer to write it as string
             WriteAsOperand(_aaResults, I.getPointer(), false, F.getParent());
-            _aaResults << " ";
-        } 
+            _aaResults << ",";
+        }
 
-        _aaResults << "\n";      
+         /*
+         * Write the Type of Alias Set
+         */
+
+        if (_aliasset->isMayAlias() )
+            _aaResults << "May";
+        else if(_aliasset->isMustAlias() )
+            _aaResults << "Must";
+        else
+            _aaResults << "No"; 
+
+
+        _aaResults << "}";      
         
     }
     return _aaResults.str();   
@@ -89,6 +92,6 @@ bool AAGatherer::runOnFunction(Function &F)
 
 bool AAGatherer::doFinalization(Module &M) 
 {
-    std::cout << "End of AA Gatherer Pass " << std::endl;
+//    std::cout << "End of AA Gatherer Pass " << std::endl;
     return false;
 }
