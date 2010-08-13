@@ -26,7 +26,7 @@ RoseBin_GMLGraph::printEpilog(  std::ofstream& myfile) {
 
 void
 RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forward_analysis,
-				 std::ofstream& myfile, string& recursiveFunctionName) {
+                                 std::ofstream& myfile, string& recursiveFunctionName) {
   //bool firstFunc = true;
   // traverse nodes and visualize results of graph
 
@@ -217,7 +217,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 
 std::string
 RoseBin_GMLGraph::getInternalNodes(  SgGraphNode* node,
-				     bool forward_analysis, SgAsmNode* internal) {
+                                     bool forward_analysis, SgAsmNode* internal) {
 
   SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
   SgAsmx86Instruction* control = isSgAsmx86Instruction(internal);

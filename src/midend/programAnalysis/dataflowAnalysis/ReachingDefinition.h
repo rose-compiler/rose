@@ -128,7 +128,7 @@ class ReachingDefinitionAnalysis
 	delete g;
     }
   void operator() ( AstInterface& fa, const AstNodePtr& h, 
-		 FunctionSideEffectInterface* anal = 0);
+                    FunctionSideEffectInterface* anal = 0);
   //Collecting all definition data represented by a bit vector 'repr', saving the data into 'collect'
   void collect_ast( const ReachingDefinitions& repr, 
 		    CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect);
