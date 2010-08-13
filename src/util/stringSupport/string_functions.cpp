@@ -459,8 +459,9 @@ StringUtility::numberToString ( size_t x )
    }
 #endif
 
+// DQ (8/10/2010): Changed to take parameter as const.
 string
-StringUtility::numberToString ( void* x )
+StringUtility::numberToString ( const void* x )
    {
   // Build a string representing the dimensionOfArrayStatement
      char numberString[128];
