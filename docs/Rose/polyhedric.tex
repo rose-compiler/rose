@@ -87,10 +87,10 @@ More about "polyhedral representation of dependences".
 
 A integer polyhedron (which would be the only polyhedron that we will consider) is a set of integers points.
 
-$\forall n \in \mathbb{N}, \mathbb{P} = \{\bar{z} \in \mathbb{Z}^{n} | \mathcal{P}(\bar{z}) \geq 0 \}$ where:
+$\forall n \in \mathbb{N}, \mathbb{P} = \{\bar{z} \in \mathbb{N}^{n} | \mathcal{P}(\bar{z}) \geq 0 \}$ where:
 \begin{itemize}
 	\item $n$ is the dimension of the polyhedron
-	\item $\mathcal{P}: \mathbb{Z}^{n} \rightarrow \mathbb{Z}^{m}$ is an affine application
+	\item $\mathcal{P}: \mathbb{N}^{n} \rightarrow \mathbb{N}^{m}$ is an affine application
 	\item $m$ is the number of intersected half-space
 \end{itemize}
 ($\bar{z} \geq 0$ means $\forall i, z_{i} \geq 0$)
@@ -115,11 +115,11 @@ All considered programs are on the scope of Affine Control Loop (ACL), follow so
 	\item A set of statement $\mathbb{S}$, define by:
 	\begin{itemize}
 		\item An iteration domain: $\mathbb{D} = \{\bar{z} | f(\bar{z}, \bar{g}) \geq 0\}$ where f is an affine
-				form $f: \mathbb{Z}^{n} \times \mathbb{G} \rightarrow \mathbb{Z}$ where n is the number
+				form $f: \mathbb{N}^{n} \times \mathbb{G} \rightarrow \mathbb{N}$ where n is the number
 				of iterators.
 		\item Two set of variables: read and write.\\
 		A variable can be a scalar or an array element. In second case, the access vector to this element need to
-		be an affine application $f: \mathbb{D} \times \mathbb{G} \rightarrow \mathbb{Z}^{dim(array)}$.\\
+		be an affine application $f: \mathbb{D} \times \mathbb{G} \rightarrow \mathbb{N}^{dim(array)}$.\\
 		NB: for a pseudo-multi-dimensionnal array, index needs to be 
 		$\sum_{i=1}^{dim(array)} f_{i} \times \prod_{j=1}^{i} size(dim_{j})$
 	\end{itemize}
@@ -133,7 +133,7 @@ Given two statements $S_{1}$ and $S_{2}$ with $\mathbb{D}_{1}$ and $\mathbb{D}_{
 A vertex from $S_{1}$ to $S_{2}$ will be qualified by:
 \begin{itemize}
 	\item a condition $q_{1 \rightarrow 2}(\bar{z}, \bar{g}) \geq 0$ where $q_{1 \rightarrow 2}$ is an affine application
-		$q_{1 \rightarrow 2}: \mathbb{D}_{1} \times \mathbb{G} \rightarrow \mathbb{Z}^{n}$ where is the number of
+		$q_{1 \rightarrow 2}: \mathbb{D}_{1} \times \mathbb{G} \rightarrow \mathbb{N}^{n}$ where is the number of
 		sub-conditions.
 	\item an affine application $f_{1 \rightarrow 2} : \mathbb{D}_{1} \rightarrow \mathbb{D}_{2}$
 \end{itemize}
@@ -144,7 +144,7 @@ $f_{1 \rightarrow 2}(\bar{z}) \in \mathbb{D}_{1}$ if $q_{1 \rightarrow 2}(\bar{z
 
 An affine application $f: \mathbb{E}_{1} \rightarrow \mathbb{E}_{2}$ can be represent as a polyhedron
 $\mathbb{P} \subset \mathbb{E}_{1} \times \mathbb{E}_{2}$.\\
-Given $\mathbb{P}_{1 \rightarrow 2} \subset \mathbb{Z}^{n_{1} + n_{2} + n_{g}}$ where $n_{1}$ and $n_{2}$ and $n_{g}$ are
+Given $\mathbb{P}_{1 \rightarrow 2} \subset \mathbb{N}^{n_{1} + n_{2} + n_{g}}$ where $n_{1}$ and $n_{2}$ and $n_{g}$ are
 respectively the number of iterators of $S_{1}$ and $S_{2}$, and the number of globals.\\
 
 $\mathbb{P}_{1 \rightarrow 2}$ will be the polyhedron associate to the dependence between $S_{1}$ and $S_{2}$ iff:
@@ -159,7 +159,7 @@ $\mathbb{P}_{1 \rightarrow 2}$ will be the polyhedron associate to the dependenc
 %\end{center}
 %An other version of $\mathbb{P}_{1 \rightarrow 2}$, more restrictive, that consider also the domains (this one is use ):
 \begin{center}
-$\forall (\bar{z_{1}}, \bar{z_{2}}, \bar{g}) \in \mathbb{Z}^{n_{1} + n_{2} + n_{g}}$
+$\forall (\bar{z_{1}}, \bar{z_{2}}, \bar{g}) \in \mathbb{N}^{n_{1} + n_{2} + n_{g}}$
 
 ($\bar{z_{1}} \in \mathbb{D}_{1} \wedge \bar{z_{2}} \in \mathbb{D}_{2} \wedge \bar{g} \in \mathbb{G} \wedge q_{1 \rightarrow 2}(\bar{z_{1}}, \bar{g}) \geq 0 \wedge \bar{z_{2}} = f_{1 \rightarrow 2}(\bar{z_{1}})$ )
 
@@ -224,7 +224,7 @@ So, the dependence graph is composed from two nodes $\{S_{1}, S_{2}\}$ and two e
 We have two dependances, then two polyhedrons 
 \begin{itemize}
 	\item $\mathbb{P}_{S_{2} \rightarrow S_{1}}$ associate with the following affine application:\\
-	$\mathcal{P}_{S_{2} \rightarrow S_{1}}: \mathbb{Z}^{2 + 1 + 1} \rightarrow  \mathbb{Z}^{4 + 2 + 2 + 2} $\\
+	$\mathcal{P}_{S_{2} \rightarrow S_{1}}: \mathbb{N}^{2 + 1 + 1} \rightarrow  \mathbb{N}^{4 + 2 + 2 + 2} $\\
 	$$\mathcal{P}_{S_{2} \rightarrow S_{1}}(i, j, i', n) = 
 	\begin{pmatrix}
 		1  & 0  & 0  & 0 \\
@@ -247,19 +247,19 @@ We have two dependances, then two polyhedrons
 	\end{pmatrix}
 	+
 	\begin{pmatrix}
-		0 \\
-		1 \\
-		0 \\
-		1 \\
-		0 \\
-		1 \\
-		0 \\
-		0 \\
-		0 \\
-		0 \\
+		0  \\
+		-1 \\
+		0  \\
+		-1 \\
+		0  \\
+		-1 \\
+		0  \\
+		0  \\
+		0  \\
+		0  \\
 	\end{pmatrix}$$
 	\item $\mathbb{P}_{S_{2} \rightarrow S_{2}}$ associate with the following affine application:\\
-	$\mathcal{P}_{S_{2} \rightarrow S_{2}}: \mathbb{Z}^{2 + 2 + 1} \rightarrow  \mathbb{Z}^{4 + 4 + 1 + 4} $\\
+	$\mathcal{P}_{S_{2} \rightarrow S_{2}}: \mathbb{N}^{2 + 2 + 1} \rightarrow  \mathbb{N}^{4 + 4 + 1 + 4} $\\
 	$$\mathcal{P}_{S_{2} \rightarrow S_{2}}(i, j, i', j', n) = 
 	\begin{pmatrix}
 		1  & 0  & 0  & 0  & 0  \\
@@ -311,11 +311,11 @@ We have two dependances, then two polyhedrons
 	Says  that an operation is the execution of statement $S \in \mathbb{S}$ at an iteration point 
 $\bar{z} \in \mathbb{D}_{S}$, we will note it $<\!S, \bar{z}\!>$.\\
 	A schedule $\Theta$ will associate a date to an operation $<\!S, \bar{z}\!>$. An affine schedule is a set (one
-by statement) of affine applications $\Theta_{S}: \mathbb{D}_{S} \times \mathbb{G} \rightarrow \mathbb{Z}^{n}$ where $n$
+by statement) of affine applications $\Theta_{S}: \mathbb{D}_{S} \times \mathbb{G} \rightarrow \mathbb{N}^{n}$ where $n$
 is the dimension of the schedule (date).
 
 	We look for 1-dimensional schedules only. In this case:
-$$\Theta_{S}(\bar{z}, \bar{g}) = \bar{\alpha_{S}} . \bar{z} + \bar{\beta_{S}} . \bar{g} + \kappa_{S}$$
+$$\Theta_{S}(\bar{z}, \bar{g}) = \bar{\alpha_{S}} . \bar{z} + \bar{\beta_{S}} \bar{g} + \kappa_{S}$$
 
 		\subsection{Generating the set of Valid Schedule}
 		\label{polyhedric:schedule:vss}
@@ -496,17 +496,12 @@ $$\Theta_{S_{2}}(i, j, n) = \alpha_{S_{2}}^{1} \times i + \alpha_{S_{2}}^{2} \ti
 			\subsubsection{Dimension of the Valid Schedule space}
 
 
+		\subsection{Reducing the number of Valid Schedule}
 
-		\subsection{The Code Generation Problem}
-		
-		
+			\subsubsection{Some heuristics}
 
-%		\subsection{Reducing the number of Valid Schedule}
-%
-%			\subsubsection{Some heuristics}
-%
-%	Previous work (...) have introduced some heuristic to diminish the number of valid schedule (that may be infinite).
-%
-%			\subsubsection{Architectural Constraints}
-%			
-%	...
+	Previous work (...) have introduced some heuristic to diminish the number of valid schedule (that may be infinite).
+
+			\subsubsection{Architectural Constraints}
+			
+	...
