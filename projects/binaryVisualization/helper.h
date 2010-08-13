@@ -90,15 +90,15 @@ public:
   std::vector<std::string> names;
   void addName(std::string name) {names.push_back(name);}
   FunctionInfo(int x, int y, int height, int weight,
-	       std::string name):x(x),y(y),
-				 height(height), weight(weight)
+               std::string name):x(x),y(y),
+                                 height(height), weight(weight)
   { addName(name);};
 
 };
 
 
 typedef rose_hash::unordered_map< std::pair<int,int>,
-			     FunctionInfo* > FunctionType;
+                                  FunctionInfo* > FunctionType;
 
 class Traversal : public AstSimpleProcessing {
 
@@ -142,10 +142,10 @@ public:
 	      ) {
 	    control++;
 	  } else if (x86InstructionIsDataTransfer(inst) ||
-		     x86InstructionIsConditionalFlagDataTransfer(inst) ||
+                     x86InstructionIsConditionalFlagDataTransfer(inst) ||
 		     x86InstructionIsConditionalDataTransfer(inst)
 		     ) {
-	    call++;
+            call++;
 	  }
 	}
       } // for
