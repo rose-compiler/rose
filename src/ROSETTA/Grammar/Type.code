@@ -4557,8 +4557,8 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
   // replace the result type, if already available in the type table, with 
   // the type from type table.
 
-  // An assuption (that I don't know how to check currently) is that this is a newly built 
-  // type not previously used and not yet returned from any fo the fullowing functions 
+  // An assumption (that I don't know how to check currently) is that this is a newly built 
+  // type not previously used and not yet returned from any of the following functions 
   // calling this function. Thus is has not been added yet to any (global or local) type table.
      ROSE_ASSERT(result != NULL);
 
