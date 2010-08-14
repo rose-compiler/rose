@@ -17,6 +17,8 @@ rose2llvmAA_SOURCES  = AliasSetHandler.cpp \
 					   AliasAnalysisGatherer.cpp \
 					   AnnotateAST.cpp \
 					   AliasSetContainer.cpp \
+					   AssociateRoseAST.cpp \
+					   QueryAST.cpp \
 					   AliasAnalysis.cpp 
 
 												   

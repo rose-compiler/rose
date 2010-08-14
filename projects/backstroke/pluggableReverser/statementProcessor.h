@@ -4,41 +4,27 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
-#if 0
-StmtPairs processBasicStatement(SgStatement* stmt);
-StmtPairs processFunctionDeclaration(SgFunctionDeclaration* func_decl);
-StmtPairs processExprStatement(SgExprStatement* exp_stmt);
-StmtPairs processVariableDeclaration(SgVariableDeclaration* var_decl);
-StmtPairs processBasicBlock(SgBasicBlock* body);
-StmtPairs processIfStmt(SgIfStmt* if_stmt);
-#endif
-
 class BasicStatementProcessor : public StatementProcessor
 {
-    InstrumentedStatementVec processFunctionDeclaration(
-        SgFunctionDeclaration* func_decl,
-        const VariableVersionTable& var_table);
+    StatementReversalVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processExprStatement(
-        SgExprStatement* exp_stmt,
-        const VariableVersionTable& var_table);
+    StatementReversalVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processVariableDeclaration(
-        SgVariableDeclaration* var_decl,
-        const VariableVersionTable& var_table);
+    StatementReversalVec processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processBasicBlock(
-        SgBasicBlock* body,
-        const VariableVersionTable& var_table);
+    StatementReversalVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    InstrumentedStatementVec processIfStmt(
-        SgIfStmt* if_stmt,
-        const VariableVersionTable& var_table);
 
 public:
-    virtual InstrumentedStatementVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+    virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 
+/** Handles return statements. The reverse of a return statement is a no-op. */
+class ReturnStatementProcessor : public StatementProcessor
+{
+	public:
+		virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+};
 
 #endif

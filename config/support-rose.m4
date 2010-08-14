@@ -2296,6 +2296,7 @@ projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/new_pluggableReverser/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
@@ -2316,6 +2317,7 @@ projects/roseToLLVM/tests/Makefile
 projects/roseToLLVM/Analysis/Makefile
 projects/roseToLLVM/Analysis/Alias/Makefile
 projects/roseToLLVM/Analysis/Alias/src/Makefile
+projects/roseToLLVM/Analysis/Alias/tests/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile

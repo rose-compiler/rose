@@ -703,7 +703,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects):normalizationTranslator
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./normalizationTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./normalizationTranslator --edg:no_warnings $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)
