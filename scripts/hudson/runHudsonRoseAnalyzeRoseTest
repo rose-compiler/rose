@@ -255,7 +255,8 @@ echo "Calling configure to build compile tree to build ROSE using ROSE."
 # ../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
 # ../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
 # ../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
-../configure CXX=testAnalysis --with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --without-java
+# ../configure CXX=testAnalysis --with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --without-java
+../configure CXX=testAnalysis --with-boost=${ROSE_TEST_BOOST_PATH}/../../boost_1_37_0.gxx-4.2.4 --without-java
 
 echo "Done with configure step to use ROSE to compile ROSE"
 
