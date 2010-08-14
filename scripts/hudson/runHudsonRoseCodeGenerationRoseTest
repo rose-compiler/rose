@@ -248,11 +248,12 @@ testCodeGeneration --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 
-# DQ (8/14/2010): The environment variable ROSE_TEST_BOOST_PATH should be used.
+# DQ (8/14/2010): The environment variable ROSE_TEST_BOOST_PATH should be used (but we need to use a modified version of BOOST to test with ROSE).
 # DQ (1/28/2010): Simplify the testing initially by skipping the Java support and Fortran support.
 # ../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
 # ../configure CXX=testCodeGeneration --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
-../configure CXX=testCodeGeneration --with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --without-java
+# ../configure CXX=testCodeGeneration --with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --without-java
+../configure CXX=testCodeGeneration --with-boost=${ROSE_TEST_BOOST_PATH}/../../boost_1_37_0.gxx-4.2.4 --without-java
 
 
 echo "Done with configure step to use ROSE to compile ROSE"

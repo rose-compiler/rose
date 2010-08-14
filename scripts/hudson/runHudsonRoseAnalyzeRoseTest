@@ -249,7 +249,7 @@ testAnalysis --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 
-# DQ (8/14/2010): The environment variable ROSE_TEST_BOOST_PATH should be used.
+# DQ (8/14/2010): The environment variable ROSE_TEST_BOOST_PATH should be used (but we need to use a modified version of BOOST to test with ROSE).
 # DQ (2/6/2010): Separate tests confirm that we don't need to exclude the java and Fortran support from analysis via ROSE.
 # DQ (1/28/2010): Simplify the testing initially by skipping the Java support and Fortran support.
 # ../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
