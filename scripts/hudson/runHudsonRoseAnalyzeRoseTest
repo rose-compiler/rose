@@ -5,6 +5,7 @@
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
+# DQ (8/14/2010): This environment variable should not be reset (already set before calling this script).
 # DQ (2/7/2010): Force the same version to be used as will be used with ROSE (testing).
 # export ROSE_TEST_BOOST_PATH=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
 
@@ -248,11 +249,13 @@ testAnalysis --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 
+# DQ (8/14/2010): The environment variable ROSE_TEST_BOOST_PATH should be used.
 # DQ (2/6/2010): Separate tests confirm that we don't need to exclude the java and Fortran support from analysis via ROSE.
 # DQ (1/28/2010): Simplify the testing initially by skipping the Java support and Fortran support.
 # ../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
 # ../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
-../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
+# ../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
+../configure CXX=testAnalysis --with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --without-java
 
 echo "Done with configure step to use ROSE to compile ROSE"
 

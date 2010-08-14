@@ -249,9 +249,11 @@ testAstFileIO --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 
+# DQ (8/14/2010): The environment variable ROSE_TEST_BOOST_PATH should be used.
 # DQ (2/6/2010): Separate tests confirm that we don't need to exclude the java and Fortran support from analysis via ROSE.
 # DQ (1/28/2010): Simplify the testing initially by skipping the Java support and Fortran support.
-../configure CXX=testAstFileIO --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
+# ../configure CXX=testAstFileIO --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
+../configure CXX=testAstFileIO --with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --without-java
 
 echo "Done with configure step to use ROSE to compile ROSE"
 
