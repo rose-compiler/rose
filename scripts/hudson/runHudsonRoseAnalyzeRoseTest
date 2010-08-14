@@ -6,7 +6,7 @@
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
 # DQ (2/7/2010): Force the same version to be used as will be used with ROSE (testing).
-export ROSE_TEST_BOOST_PATH=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
+# export ROSE_TEST_BOOST_PATH=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
 
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
 
