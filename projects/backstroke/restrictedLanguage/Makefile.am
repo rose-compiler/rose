@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
 # Build a library for the language restrictor
-noinst_LTLIBRARIES = libBackstrokeRestrictedLanguage.a
+noinst_LIBRARIES = libBackstrokeRestrictedLanguage.a
 libBackstrokeRestrictedLanguage_a_DEPENDENCIES =
 libBackstrokeRestrictedLanguage_a_SOURCES = LanguageRestrictions.C
 libBackstrokeRestrictedLanguage_a_includedir = $(includedir)/backstroke

@@ -1,15 +1,16 @@
 #include <pluggableReverser/eventProcessor.h>
 #include <pluggableReverser/expressionProcessor.h>
 #include <pluggableReverser/statementProcessor.h>
+#include <pluggableReverser/akgulStyleExpressionProcessor.h>
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
+#include <boost/timer.hpp>
 
 #include "utilities/CPPDefinesAndNamespaces.h"
 
 
-#include <VariableRenaming.h>
 
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -43,12 +44,14 @@ int main(int argc, char * argv[])
     EventProcessor event_processor(NULL, &var_renaming);
 
     // Add all expression handlers to the expression pool.
-    //event_processor.addExpressionProcessor(new NullExpressionProcessor);
+    event_processor.addExpressionProcessor(new NullExpressionProcessor);
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+    //event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
 
     // Add all statement handlers to the statement pool.
+	event_processor.addStatementProcessor(new ReturnStatementProcessor);
     event_processor.addStatementProcessor(new BasicStatementProcessor);
 
     pushScopeStack(isSgScopeStatement(global));
@@ -74,26 +77,19 @@ int main(int argc, char * argv[])
         // A small test here :)
        // VariableRenaming var_renaming(project);
         //var_renaming.run();
-#if 0
-        VariableVersionTable var_table(decl, &var_renaming);
-        cout << "!!!\n";
-        var_table.print();
-#endif
 
-#if 1
+        timer t;
         // Here reverse the event function into several versions.
         FuncDeclPairs output = event_processor.processEvent(decl);
 
+        cout << "Time used: " << t.elapsed() << endl;
         cout << "Event is processed successfully!\n";
         
-        foreach (FuncDeclPair func_decl_pair, output)
+        foreach (FuncDeclPair& func_decl_pair, output)
         {
            appendStatement(func_decl_pair.first); 
            appendStatement(func_decl_pair.second); 
         }
-
-        cout << "Done!\n";
-#endif
     }
 
     // Declare all stack variables on top of the generated file.
@@ -103,9 +99,10 @@ int main(int argc, char * argv[])
 
     popScopeStack();
 
-    fixVariableReferences(global);
-    cout << "VarRef fixed\n";
-    //fixVariableReferences(global);
+    // Fix all variable references here.
+    cout << "VarRef fixed: " <<
+            fixVariableReferences(global) << endl;
+    
 
 
     //generateWholeGraphOfAST("Cong");

@@ -42,6 +42,13 @@ class AliasSetHandler
         /*
          * break result string for LLVM Pass to sets
          */
-        void processAliasInformation();
+        void processAliasInformation(std::string _modulename);
+
+        /*
+         * Find the module name from functionname
+         */
+
+        std::string getModuleName(std::string _functionaname);
+
 };
 #endif

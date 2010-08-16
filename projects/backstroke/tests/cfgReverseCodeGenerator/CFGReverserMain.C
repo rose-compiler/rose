@@ -34,12 +34,18 @@ int main(int argc, char** argv)
 	EventProcessor event_processor(NULL, &var_renaming);
 
 	//Add the processors in order of priority. The lower ones will be used only if higher ones do not produce results
+	//Expression processors:
     event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
     event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
-	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
+	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor);
     event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
 
+	//Statement processors
+	event_processor.addStatementProcessor(new ReturnStatementProcessor);
 	event_processor.addStatementProcessor(new StraightlineStatementProcessor);
+
+	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
+	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
 
 	//Call the reverser and get the results
 	SageBuilder::pushScopeStack(globalScope);
