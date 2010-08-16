@@ -483,6 +483,10 @@ public:
      * Miscellaneous methods
      *========================================================================================================================== */
 public:
+    /** Updates progress information. This should be called each time the subclass' disassembleOne() is about to return a new
+     *  instruction. */
+    void update_progress(SgAsmInstruction*);
+
     /** Makes an unknown instruction from an exception. */
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&) = 0;
 
