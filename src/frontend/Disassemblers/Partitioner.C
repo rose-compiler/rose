@@ -955,7 +955,9 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
 
         for (size_t j=0; j<symbols.size(); j++) {
             SgAsmGenericSymbol *symbol = symbols[j];
-            if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
+            if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
+                symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
+                symbol->get_value()!=0) {
                 rose_addr_t value = symbol->get_value();
                 if (find_instruction(value))
                     add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());

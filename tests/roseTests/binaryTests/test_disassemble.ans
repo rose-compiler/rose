@@ -12,7 +12,7 @@ using this memory map for disassembly:
     va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at anonymous + 0x00000000 ELF Load (segment 2)
     va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000 .data+.got.plt+.got+.dynamic+.jc...
     va 0x080496d4 + 0x0000092c = 0x0804a000 rw- at anonymous + 0x00000000 .bss+ELF Load (segment 3)
-disassembled 1915 instructions and 1 failure (use --show-bad to see errors)
+disassembled 1915 instructions and 0 failures
 Functions detected in this interpretation:
     Key for reason(s) address is a suspected function:
       E = entry address         C = call target           X = exception frame
