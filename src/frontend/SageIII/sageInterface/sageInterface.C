@@ -6101,7 +6101,7 @@ bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, siz
 
   // Add a controlling loop around the top loop nest
   // Ensure the parent can hold more than one children
-  SgStatement* parent = ensureBasicBlockAsParent(loopNest);
+  SgLocatedNode* parent = ensureBasicBlockAsParent(loopNest);
   ROSE_ASSERT(parent!= NULL);
      // Now we can prepend a controlling loop index variable: __lt_var_originalIndex
   string ivar2_name = "_lt_var_"+ivar->get_name().getString(); 
@@ -8390,73 +8390,98 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
 }
 
 
-  SgStatement* SageInterface::ensureBasicBlockAsParent(SgStatement* s) {
-  //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
-    ROSE_ASSERT(s);
-    SgStatement* p = isSgStatement(s->get_parent());
-    ROSE_ASSERT (p);
-    switch (p->variantT()) {
-      case V_SgBasicBlock: return isSgBasicBlock(p);
-      case V_SgForStatement: {
-        if (isSgForStatement(p)->get_loop_body() == s)
-          return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
-        else if (isSgForStatement(p)->get_test() == s) {
-        }else if (isSgForStatement(p)->get_for_init_stmt() == s) {
-        }else ROSE_ASSERT (false);
-	break;
-      }
-      case V_SgWhileStmt: {
-        if (isSgWhileStmt(p)->get_body() == s)
-          return ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(p));
-        else if (isSgWhileStmt(p)->get_condition() == s) {
-        } else ROSE_ASSERT (false);
-	break;
-      }
-      case V_SgDoWhileStmt: {
-        if (isSgDoWhileStmt(p)->get_body() == s)
-          return ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
-        else if (isSgDoWhileStmt(p)->get_condition() == s) {
-	}  else ROSE_ASSERT (false);
-	break;
-      }
-      case V_SgSwitchStatement: {
-        if (isSgSwitchStatement(p)->get_body() == s)
-          return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
-        else if (isSgSwitchStatement(p)->get_item_selector() == s) {
-        } else ROSE_ASSERT (false);
-	break;
-      }
-      case V_SgCatchOptionStmt: {
-        if (isSgCatchOptionStmt(p)->get_body() == s)
-          return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
-        else if (isSgCatchOptionStmt(p)->get_condition() == s) {
-        } else ROSE_ASSERT (false);
-	break;
-      }
-      case V_SgIfStmt: {
-        if (isSgIfStmt(p)->get_true_body() == s)
-          return ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(p));
-        else if (isSgIfStmt(p)->get_false_body() == s)
-          return ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(p));
-        else if (isSgIfStmt(p)->get_conditional() == s) {
-	}  else ROSE_ASSERT (false);
-	break;
-      }
-      default: {
-        if (isSgOmpBodyStatement(p))
-        {
-          return ensureBasicBlockAsBodyOfOmpBodyStmt (isSgOmpBodyStatement(p));
-        }
-        else
-        // Liao, 7/3/2008 We allow other conditions to fall through, 
-        // they are legal parents with list of statements as children. 
-        //cerr << "Unhandled parent block:"<< p->class_name() << endl;
-        // ROSE_ASSERT (!"Bad parent in ensureBasicBlockAsParent");
-       break;
-      }
-    }
-    return p;
-  }
+SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
+{
+	//SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
+	ROSE_ASSERT(s);
+
+	//Vulov: The parent of a statement is not necessarily a statement. It could be SgStatementExpression
+	SgLocatedNode* p = isSgLocatedNode(s->get_parent());
+	ROSE_ASSERT(p);
+	switch (p->variantT())
+	{
+		case V_SgBasicBlock: return isSgBasicBlock(p);
+		case V_SgForStatement:
+		{
+			if (isSgForStatement(p)->get_loop_body() == s)
+				return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
+			else if (isSgForStatement(p)->get_test() == s)
+			{
+			}
+			else if (isSgForStatement(p)->get_for_init_stmt() == s)
+			{
+			}
+			else ROSE_ASSERT(false);
+			break;
+		}
+		case V_SgWhileStmt:
+		{
+			if (isSgWhileStmt(p)->get_body() == s)
+				return ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(p));
+			else if (isSgWhileStmt(p)->get_condition() == s)
+			{
+			}
+			else ROSE_ASSERT(false);
+			break;
+		}
+		case V_SgDoWhileStmt:
+		{
+			if (isSgDoWhileStmt(p)->get_body() == s)
+				return ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
+			else if (isSgDoWhileStmt(p)->get_condition() == s)
+			{
+			}
+			else ROSE_ASSERT(false);
+			break;
+		}
+		case V_SgSwitchStatement:
+		{
+			if (isSgSwitchStatement(p)->get_body() == s)
+				return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
+			else if (isSgSwitchStatement(p)->get_item_selector() == s)
+			{
+			}
+			else ROSE_ASSERT(false);
+			break;
+		}
+		case V_SgCatchOptionStmt:
+		{
+			if (isSgCatchOptionStmt(p)->get_body() == s)
+				return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
+			else if (isSgCatchOptionStmt(p)->get_condition() == s)
+			{
+			}
+			else ROSE_ASSERT(false);
+			break;
+		}
+		case V_SgIfStmt:
+		{
+			if (isSgIfStmt(p)->get_true_body() == s)
+				return ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(p));
+			else if (isSgIfStmt(p)->get_false_body() == s)
+				return ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(p));
+			else if (isSgIfStmt(p)->get_conditional() == s)
+			{
+			}
+			else ROSE_ASSERT(false);
+			break;
+		}
+		default:
+		{
+			if (isSgOmpBodyStatement(p))
+			{
+				return ensureBasicBlockAsBodyOfOmpBodyStmt(isSgOmpBodyStatement(p));
+			}
+			else
+				// Liao, 7/3/2008 We allow other conditions to fall through,
+				// they are legal parents with list of statements as children.
+				//cerr << "Unhandled parent block:"<< p->class_name() << endl;
+				// ROSE_ASSERT (!"Bad parent in ensureBasicBlockAsParent");
+				break;
+		}
+	}
+	return p;
+}
 
   void SageInterface::changeAllLoopBodiesToBlocks(SgNode* top) {
     struct Visitor: public AstSimpleProcessing {

@@ -201,6 +201,7 @@ DisassemblerArm::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
         successors->insert(suc2.begin(), suc2.end());
     }
 
+    update_progress(insn);
     return insn;
 }
 

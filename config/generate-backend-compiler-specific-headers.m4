@@ -24,6 +24,29 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS"
    "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS" "${absolutePath_srcdir}"
+
+   echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+   echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+
+ # DQ (8/14/2010): GNU 4.5 includes some code that will not compile and appears to not be valid C++ code.
+ # We fixup a specific GNU 4.5 issues use of "return { __mask };"
+   if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+      if test x$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == x5; then
+         echo "Note: we have identified version 4.5 of GNU C/C++ which triggers use of a modified copy of iomanip header file."
+         cp ${srcdir}/config/iomanip-gnu-4.5 ./include-staging/iomanip-gnu-4.5
+         echo "remove the links..."
+         rm ./include-staging/gcc_HEADERS/hdrs4/c++/4.5.0/iomanip;
+         rm ./include-staging/g++_HEADERS/hdrs7/c++/4.5.0/iomanip;
+         rm ./include-staging/g++_HEADERS/hdrs3/iomanip;
+         echo "rebuild links to the modified file..."
+         ln -s ./include-staging/iomanip-gnu-4.5 ./include-staging/gcc_HEADERS/hdrs4/c++/4.5.0/iomanip
+         ln -s ./include-staging/iomanip-gnu-4.5 ./include-staging/g++_HEADERS/hdrs7/c++/4.5.0/iomanip
+         ln -s ./include-staging/iomanip-gnu-4.5 ./include-staging/g++_HEADERS/hdrs3/iomanip
+      fi
+   fi
+
+ # echo "Exiting as a test in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
+ # exit 1
 ])
 
 
