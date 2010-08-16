@@ -4,12 +4,275 @@
 #include "FadaToPPL.hpp"
 
 #include <iterator>
+#include <utility>
 
 //#define __VERBOSE_
 //#define __VERBOSE_PLUS_
 
 
 namespace FadaToPPL {
+
+/****************************************************************************************/
+/*                    Processing context without FadaLib references                     */
+/****************************************************************************************/
+
+PolyhedricContext::PolyhedricContext(RoseToFada::FadaRoseCrossContext * ctx):
+	p_iteration_domains(),
+	p_globals()
+{
+	std::vector<std::string *>::iterator globals_it;
+	for (globals_it = ctx->getGlobals()->begin(); globals_it != ctx->getGlobals()->end(); globals_it++)
+		p_globals.push_back(**globals_it);
+	
+	std::vector<SgStatement *>::iterator stmt_it;
+	std::vector<SgStatement *> * stmt_list = ctx->getStatements();
+	for (stmt_it = stmt_list->begin(); stmt_it != stmt_list->end(); stmt_it++) {
+		RoseToFada::FadaStatementAttribute * attribute = dynamic_cast<RoseToFada::FadaStatementAttribute *>((*stmt_it)->getAttribute("FadaStatement"));
+		
+		if (!attribute) {
+			std::cerr << "Error in FadaToPPL::PolyhedricContext::PolyhedricContext(...) wrong FadaStatementAttribute !" << std::endl;
+			ROSE_ASSERT(false);
+		}
+		
+		if (attribute->needSchedule())
+			p_iteration_domains.insert(std::pair<SgStatement *, PolyhedricIterationDomain *>(*stmt_it, new PolyhedricIterationDomain(attribute, ctx)));
+		
+		(*stmt_it)->removeAttribute("FadaStatement");
+	}
+	delete stmt_list;
+}
+	
+int PolyhedricContext::getNbrGlobals() { return p_globals.size(); }
+std::string & PolyhedricContext::getGlobalName(int idx) { return p_globals[idx]; }
+std::vector<std::string> * PolyhedricContext::getGlobals() { return &p_globals; }
+
+std::vector<SgStatement *> * PolyhedricContext::getStatements() {
+	std::map<SgStatement *, PolyhedricIterationDomain *>::iterator it;
+	std::vector<SgStatement *> * res = new std::vector<SgStatement *>();
+	for (it = p_iteration_domains.begin(); it != p_iteration_domains.end(); it++)
+			res->push_back(it->first);
+
+	return res;
+}
+		
+PolyhedricIterationDomain * PolyhedricContext::getDomain(SgStatement * statement) {
+	std::map<SgStatement *, PolyhedricIterationDomain *>::iterator it = p_iteration_domains.find(statement);
+	if (it != p_iteration_domains.end())
+		return it->second;
+	else
+		return NULL;
+}
+
+/****************************************************************************************/
+/*                   Representation of the iteration domain with PPL                    */
+/****************************************************************************************/
+
+PolyhedricIterationDomain::PolyhedricIterationDomain(RoseToFada::FadaStatementAttribute * attr, RoseToFada::FadaRoseCrossContext * ctx):
+	p_iterators(),
+	p_globals(),
+	p_iterator_list()
+{	
+	int cnt = 0;
+	std::vector<std::string *>::iterator it;
+	for (it = attr->getIterators()->begin(); it != attr->getIterators()->end(); it++) {
+		p_iterators.insert(std::pair<std::string, Parma_Polyhedra_Library::Variable>(**it, Parma_Polyhedra_Library::Variable(cnt++)));
+		p_iterator_list.push_back(**it);
+	}
+	for (it = ctx->getGlobals()->begin(); it != ctx->getGlobals()->end(); it++) {
+		p_iterators.insert(std::pair<std::string, Parma_Polyhedra_Library::Variable>(**it, Parma_Polyhedra_Library::Variable(cnt++)));
+	}
+	
+	p_domain = new Parma_Polyhedra_Library::C_Polyhedron(cnt);
+	
+	parseDomain(attr->getDomain(), false);
+}
+
+std::vector<std::string> * PolyhedricIterationDomain::getIteratorsList() { return &p_iterator_list; }
+		
+int PolyhedricIterationDomain::getNbrIterator() { return p_iterator_list.size(); }
+
+std::string & PolyhedricIterationDomain::getIteratorName(int idx) {
+	return p_iterator_list[idx];
+}
+
+Parma_Polyhedra_Library::Variable * PolyhedricIterationDomain::getIteratorVariable(int idx) {
+	std::map<std::string, Parma_Polyhedra_Library::Variable>::iterator it = p_iterators.find(p_iterator_list[idx]);
+	if (it != p_iterators.end())
+		return &it->second;
+	else
+		return NULL;
+}
+
+Parma_Polyhedra_Library::Variable * PolyhedricIterationDomain::getIteratorVariable(std::string & iterator) {
+	std::map<std::string, Parma_Polyhedra_Library::Variable>::iterator it = p_iterators.find(iterator);
+	if (it != p_iterators.end())
+		return &it->second;
+	else
+		return NULL;
+}
+
+Parma_Polyhedra_Library::Variable * PolyhedricIterationDomain::getGlobalVariable(std::string & global) {
+	std::map<std::string, Parma_Polyhedra_Library::Variable>::iterator it = p_globals.find(global);
+	if (it != p_globals.end())
+		return &it->second;
+	else
+		return NULL;
+}
+		
+Parma_Polyhedra_Library::C_Polyhedron * PolyhedricIterationDomain::getDomain() { return p_domain; }
+
+Parma_Polyhedra_Library::Linear_Expression * PolyhedricIterationDomain::parseExpression(fada::Expression * expression) {
+
+	Parma_Polyhedra_Library::Linear_Expression * res = NULL;
+
+	if(expression->IsLeaf()) {
+		if (expression->IsValue()) {
+			res = new Parma_Polyhedra_Library::Linear_Expression(expression->GetValue());
+		}
+		else if (expression->IsVariable()) {
+			std::string var = expression->GetVariableName();
+			Parma_Polyhedra_Library::Variable * ppl_var = NULL;
+			
+			bool var_found = ( ppl_var = getIteratorVariable(var) ) || ( ppl_var = getGlobalVariable(var) );
+			
+			if (!var_found) {
+				if (var.size() >= 1 && var[0] >= '0' && var[0] <= '9') {
+					int int_var = 0;
+					for (int i = 0; i < var.size(); i++) {
+						int_var = int_var * 10 + (var[i] - '0');
+					}
+					res = new Parma_Polyhedra_Library::Linear_Expression(int_var);
+				}
+				else {
+					std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseExpression(...)  unrecognized Variable !" << std::endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else {
+				res = new Parma_Polyhedra_Library::Linear_Expression(*ppl_var);
+			}
+		}
+		else {
+			std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseExpression(...) unrecognized Quast's leaf !" << std::endl;
+			ROSE_ASSERT(false);
+		}
+	}
+	else {
+		Parma_Polyhedra_Library::Linear_Expression * lhs;
+		Parma_Polyhedra_Library::Linear_Expression * rhs;
+	
+		switch(expression->GetOperation()) {
+			case FADA_ADD:
+				lhs = parseExpression(expression->GetLeftChild());
+				rhs = parseExpression(expression->GetRightChild());
+				res = new Parma_Polyhedra_Library::Linear_Expression(*lhs + *rhs);
+				delete rhs;
+				delete lhs;
+				break;
+			case FADA_SUB:
+				lhs = parseExpression(expression->GetLeftChild());
+				rhs = parseExpression(expression->GetRightChild());
+				res = new Parma_Polyhedra_Library::Linear_Expression(*lhs - *rhs);
+				delete rhs;
+				delete lhs;
+				break;
+			case FADA_MUL:
+				// TODO (at least one operand need to be a constant)
+			case FADA_DIV:
+			case FADA_MOD:
+			default:
+				std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseExpression(...) unsupported Operator !" << std::endl;
+				ROSE_ASSERT(false);
+		}
+	}
+	
+	if (!res) {
+		std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseExpression(...) result value is NULL !" << std::endl;
+		ROSE_ASSERT(false);
+	}
+	
+	return res;
+}
+
+void PolyhedricIterationDomain::parseDomain(fada::Condition * condition, bool negation) {
+	if(condition->IsLeaf()) {
+		Inequation * ineq = condition->GetInequation();
+		if (!ineq->IsValue()) {
+
+			Parma_Polyhedra_Library::Linear_Expression * rhs = parseExpression(ineq->GetRHS());
+			Parma_Polyhedra_Library::Linear_Expression * lhs = parseExpression(ineq->GetLHS());
+			
+			Parma_Polyhedra_Library::Constraint * constraint;
+			
+			switch(ineq->GetPredicate()) {
+				case FADA_LESS:
+					constraint = new Parma_Polyhedra_Library::Constraint(negation ? *lhs >= *rhs : *lhs + 1 <= *rhs);
+					break;
+				case FADA_LESS_EQ:
+					constraint = new Parma_Polyhedra_Library::Constraint(negation ? *lhs >= 1 + *rhs : *lhs <= *rhs);
+					break;
+				case FADA_GREATER:
+					constraint = new Parma_Polyhedra_Library::Constraint(negation ? *lhs <= *rhs : *lhs >= 1 + *rhs);
+					break;
+				case FADA_GREATER_EQ:
+					constraint = new Parma_Polyhedra_Library::Constraint(negation ? *lhs + 1 <= *rhs : *lhs >= *rhs);
+					break;
+				case FADA_EQ:
+					if (!negation)
+						constraint = new Parma_Polyhedra_Library::Constraint(*lhs == *rhs);
+					else {
+						std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseDomain(...) unsupported Predicate !" << std::endl;
+						ROSE_ASSERT(false);
+					}
+					break;
+				case FADA_NEQ:
+					if (negation)
+						constraint = new Parma_Polyhedra_Library::Constraint(*lhs == *rhs);
+					else {
+						std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseDomain(...) unsupported Predicate !" << std::endl;
+						ROSE_ASSERT(false);
+					}
+					break;
+				default: 
+					std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseDomain(...) unsupported Predicate !" << std::endl;
+					ROSE_ASSERT(false);
+			}
+			
+			p_domain->add_constraint(*constraint);
+			
+			delete constraint;
+			
+			delete rhs;
+			delete lhs;
+		}
+	}
+	else {
+		switch(condition->GetOperation()) {
+			case FADA_AND:
+				parseDomain(
+					condition->GetLeftChild(),
+					negation
+				);
+				parseDomain(
+					condition->GetRightChild(),
+					negation
+				);
+				break;
+			case FADA_NOT :
+				parseDomain(
+					condition->GetLeftChild(),
+					!negation
+				);
+				// if an error come from here it can come from 'GetLeftChild' that need to be replace by 'GetRightChild'
+				// other issue can come when (not-)equalities will be implemented
+				break;
+			case FADA_OR : // We work with convex spaces...
+			default:
+				std::cerr << "Error in FadaToPPL::PolyhedricIterationDomain::parseDomain(...) unsupported Operator !" << std::endl;
+				ROSE_ASSERT(false);
+		}
+	}
+}
 
 /****************************************************************************************/
 /*           Implementation of the Polyhedrique representation of dependence            */
@@ -51,6 +314,11 @@ PolyhedricDependence::PolyhedricDependence(SgStatement * source, SgStatement * d
 	}
 
 	p_polyhedron = new Parma_Polyhedra_Library::C_Polyhedron(cpt);
+	
+	/*std::map<std::string, Parma_Polyhedra_Library::Variable>::iterator map_it;
+	for (map_it = p_globals.begin(); map_it != p_globals.end(); map_it++) {
+		p_polyhedron->add_constraint(map_it->second >= 1);
+	}*/
 }
 
 void PolyhedricDependence::addConstraint(Parma_Polyhedra_Library::Constraint * constraint) {
@@ -108,6 +376,7 @@ Parma_Polyhedra_Library::Constraint_System * PolyhedricDependence::createConstra
 
 	Parma_Polyhedra_Library::Constraint_System * res = new Parma_Polyhedra_Library::Constraint_System();
 	const Parma_Polyhedra_Library::Constraint_System & constraints = p_polyhedron->minimized_constraints();
+//	const Parma_Polyhedra_Library::Constraint_System & constraints = p_polyhedron->constraints();
 	
 	Parma_Polyhedra_Library::Constraint_System::const_iterator constraint_it;
 	for (constraint_it = constraints.begin(); constraint_it != constraints.end(); constraint_it++) {
@@ -134,6 +403,32 @@ Parma_Polyhedra_Library::Constraint_System * PolyhedricDependence::createConstra
 	}
 	
 	return res;
+}
+
+
+
+std::vector<PolyhedricDependence *> * constructAllPolyhedricDependences(RoseToFada::FadaRoseCrossContext * ctx, fada::Program * program) {
+
+	std::vector<FadaToPPL::PolyhedricDependence *> * deps = new std::vector<FadaToPPL::PolyhedricDependence *>();
+	std::vector<fada::References*>::iterator it0;
+	for(it0 = program->GetNormalizedStmts()->begin(); it0 != program->GetNormalizedStmts()->end(); it0++) {
+		if (!(*it0)->GetWV()->empty()) {
+			std::vector<fada::Read_Reference*>::iterator it1;
+			for(it1 = (*it0)->GetRV()->begin(); it1 != (*it0)->GetRV()->end(); it1++) {
+				std::vector<FadaToPPL::PolyhedricDependence *> * vect = FadaToPPL::traverseQuast(
+					ctx,
+					ctx->getSgStatementByID((*it0)->GetStmtID()),
+					(*it1)->GetDefinition()
+				);
+				std::vector<FadaToPPL::PolyhedricDependence *>::iterator it2;
+				for (it2 = vect->begin(); it2 != vect->end(); it2++)
+					deps->push_back(*it2);
+				delete vect;
+			}
+		}
+	}
+	
+	return deps;
 }
 
 /****************************************************************************************/
@@ -170,8 +465,12 @@ Parma_Polyhedra_Library::Linear_Expression * parseFadaExpressionToPPLLinExp(
 			);
 			
 			if (!var_found) {
-				if (var.size() == 1 && var[0] >= '0' && var[0] <= '9') {
-					res = new Parma_Polyhedra_Library::Linear_Expression((int)(var[0] - '0'));
+				if (var.size() >= 1 && var[0] >= '0' && var[0] <= '9') {
+					int int_var = 0;
+					for (int i = 0; i < var.size(); i++) {
+						int_var = int_var * 10 + (var[i] - '0');
+					}
+					res = new Parma_Polyhedra_Library::Linear_Expression(int_var);
 				}
 				else {
 					std::cerr << "Error in FadaToPPL::parseFadaExpressionToPPLLinExp(...) unrecognized Variable !" << std::endl;

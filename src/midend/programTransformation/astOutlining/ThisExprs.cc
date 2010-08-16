@@ -89,9 +89,13 @@ createThisShadowDecl (const string& name,
     SgType* var_type = 0;
     if (ASTtools::isConstMemFunc (func_decl))
     {
+#if 0   // Liao 8/13/2010 changes needed to use the new type table   
       SgModifierType* mod_type = SageBuilder::buildModifierType (class_type);
       ROSE_ASSERT (mod_type);
       mod_type->get_typeModifier ().get_constVolatileModifier ().setConst ();
+#else
+      SgModifierType* mod_type = SageBuilder::buildConstType (class_type);
+#endif      
       var_type = SgPointerType::createType (mod_type);
     }
     else

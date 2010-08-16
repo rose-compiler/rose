@@ -2,6 +2,7 @@
 #include <string.h>
 
 int main(int argc, char** argv) {
+    time(NULL);
   write(1, "ZZZWWW\n", 7);
   fputs("XXXYYY\n", stdout);
   fputs("XXXYYYXXXYYY\n", stdout);

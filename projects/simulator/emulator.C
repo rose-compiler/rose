@@ -353,7 +353,9 @@ int main(int argc, char** argv) {
     targetForSignals = &policy.ms;
     setup(policy.ms, argc - 1, argv + 1);
     Semantics t(policy);
+#ifdef DO_SIMULATION_TRACING
     size_t ninsns = 0;
+#endif
 
     while (true) {
         if (policy.ms.ip == 0x00536967) { /* "\0Sig" in big-endian notation */
