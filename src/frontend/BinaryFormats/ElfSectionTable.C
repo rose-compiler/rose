@@ -626,7 +626,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
         ROSE_ASSERT(section!=NULL);
         SgAsmElfSectionTableEntry *shdr = section->get_section_entry();
         ROSE_ASSERT(shdr!=NULL);
-        ROSE_ASSERT(shdr->get_sh_offset()==section->get_offset()); /*section table entry should have been updated in reallocate()*/
+        ROSE_ASSERT(shdr->get_sh_offset()==section->get_offset());/*section table entry should have been updated in reallocate()*/
 
         int id = section->get_id();
         ROSE_ASSERT(id>=0 && (size_t)id<nentries);
