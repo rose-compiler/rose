@@ -342,17 +342,15 @@ struct hash_nodeptr
        resolution.  This is more general than common name mangling in that it resolves more relavant differences
        between C and C++ declarations. (e.g. the type within the declaration: "struct { int:8; } foo;").
 
-       \implementation current work does not support expressions.
+      \implementation current work does not support expressions.
 
-    */
-     std::string generateUniqueName (SgNode * node,
-                                     bool
-                                     ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
+   */
+    std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-   // DQ (3/10/2007): 
-   //! Generate a unique string from the source file position information
-     std::string declarationPositionString (SgDeclarationStatement *
-                                            declaration);
+  // DQ (8/10/2010): Added const to first paramater.
+  // DQ (3/10/2007): 
+  //! Generate a unique string from the source file position information
+    std::string declarationPositionString (const SgDeclarationStatement * declaration);
 
   // DQ (1/20/2007): 
   //! Added mechanism to generate project name from list of file names

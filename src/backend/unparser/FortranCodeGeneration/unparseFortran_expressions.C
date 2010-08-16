@@ -420,19 +420,73 @@ FortranCodeGeneration_locatedNode::unparseOrOp(SgExpression* expr, SgUnparse_Inf
    }
 
 
+// DQ (8/6/2010): Output the logical operator when the operands are logical (SgBoolType)
+// the type of the expression is not enough to test, we have to test the lhs and rhs type.
+bool
+outputLogicalOperator(SgExpression* expr)
+   {
+     bool outputLogicalOperator = false;
+
+     SgBinaryOp* binaryOp = isSgBinaryOp(expr);
+     if (binaryOp != NULL)
+        {
+          SgExpression* lhs = binaryOp->get_lhs_operand();
+          SgExpression* rhs = binaryOp->get_rhs_operand();
+          SgType* lhs_type = lhs->get_type();
+          SgType* rhs_type = rhs->get_type();
+          if (isSgTypeBool(lhs_type) != NULL)
+             {
+               ROSE_ASSERT(isSgTypeBool(rhs_type) != NULL);
+               outputLogicalOperator = true;
+             }
+        }
+       else
+        {
+          printf ("Error: this function only needs to handle binary operators. ");
+          ROSE_ASSERT(false);
+        }
+
+     return outputLogicalOperator;
+   }
+
 void
 FortranCodeGeneration_locatedNode::unparseEqOp(SgExpression* expr, SgUnparse_Info& info)
-{ 
+   { 
   // Sage node corresponds to Fortran equals operator
-  unparseBinaryOperator(expr, "==", info);
-}
+     ROSE_ASSERT(expr != NULL);
+  // printf ("In FortranCodeGeneration_locatedNode::unparseEqOp(): type = %s ",expr->get_type()->class_name().c_str());
+
+     
+  // SgTypeBool* logicalType = isSgTypeBool(expr->get_type());
+  // if (logicalType != NULL)
+     if (outputLogicalOperator(expr) == true)
+        {
+          unparseBinaryOperator(expr, ".EQV.", info);
+        }
+       else
+        {
+          unparseBinaryOperator(expr, "==", info);
+        }
+   }
 
 void
 FortranCodeGeneration_locatedNode::unparseNeOp(SgExpression* expr, SgUnparse_Info& info)
-{ 
+   { 
+     ROSE_ASSERT(expr != NULL);
   // Sage node corresponds to Fortran not-equals operator
-  unparseBinaryOperator(expr, "/=", info);
-}
+  // unparseBinaryOperator(expr, "/=", info);
+
+  // SgTypeBool* logicalType = isSgTypeBool(expr->get_type());
+  // if (logicalType != NULL)
+     if (outputLogicalOperator(expr) == true)
+        {
+          unparseBinaryOperator(expr, ".NEQV.", info);
+        }
+       else
+        {
+          unparseBinaryOperator(expr, "/=", info);
+        }
+   }
 
 void
 FortranCodeGeneration_locatedNode::unparseLtOp(SgExpression* expr, SgUnparse_Info& info)

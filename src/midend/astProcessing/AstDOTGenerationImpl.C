@@ -13,10 +13,10 @@
 #		include "sage3basic.h"
 #	endif
 //	#include "AstConsistencyTests.h"
-//#	ifndef __STDC_FORMAT_MACROS
+#	ifndef __STDC_FORMAT_MACROS
 #		define __STDC_FORMAT_MACROS
 //#		define PRIx64 "I64x"
-//#	endif
+#	endif
 #	include <inttypes.h>
 #	include "AsmUnparser_compat.h"
 #	include "wholeAST_API.h"

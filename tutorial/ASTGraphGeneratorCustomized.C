@@ -15,13 +15,13 @@ struct ExtraNodeInfo
 		AstDOTGenerationExtended_Defaults::TypeExtraNodeInfo ty;
 		AstDOTGenerationExtended_Defaults::LValueExtraNodeInfo lv;
 		std::string extra = "";
-                if (SgExpression* expr = isSgExpression(node))
-                {
-//			extra += std::string("Mods: ") +
-//				     (SageInterface::isConstType    (expr->get_type()) ? "c" : "") +
-//				     (SageInterface::isVolatileType (expr->get_type()) ? "v" : "") +
-//				     (SageInterface::isReferenceType(expr->get_type()) ? "&" : "") +
-//				     "\\n";
+		     if (SgExpression* expr = isSgExpression(node))
+		{
+			extra += std::string("Mods: ") +
+				     (SageInterface::isConstType    (expr->get_type()) ? "c" : "") +
+				     (SageInterface::isVolatileType (expr->get_type()) ? "v" : "") +
+				     (SageInterface::isReferenceType(expr->get_type()) ? "&" : "") +
+				     "\\n";
 			extra += (expr->isDefinable() ? "Definable\\n" : "!Definable\\n");
 		}
 		else if (SgPointerDerefExp* expr = isSgPointerDerefExp(node))
