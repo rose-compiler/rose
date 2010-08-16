@@ -313,6 +313,25 @@ Disassembler::set_alignment(size_t n)
     p_alignment = n;
 }
 
+/* Update progress, keeping track of the number of instructions disassembled. */
+void
+Disassembler::update_progress(SgAsmInstruction *insn)
+{
+    static const time_t progress_interval = 10;
+    static time_t progress_time = 0;
+    if (!progress_time)
+        progress_time = time(NULL);
+
+    if (insn)
+        p_ndisassembled++;
+    
+    if (0==p_ndisassembled % 2500 && (p_debug || time(NULL)-progress_time > progress_interval)) {
+        progress_time = time(NULL);
+        fprintf(p_debug?p_debug:stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
+                insn->get_address(), p_ndisassembled);
+    }
+}
+
 /* Disassemble one instruction. */
 SgAsmInstruction *
 Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
@@ -327,11 +346,6 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
 Disassembler::InstructionMap
 Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors, InstructionMap *cache)
 {
-    static const time_t progress_interval = 10;
-    static time_t progress_time = 0;
-    if (!progress_time)
-        progress_time = time(NULL);
-
     InstructionMap insns;
     SgAsmInstruction *insn;
     rose_addr_t va=0, next_va=start_va;
@@ -358,7 +372,6 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
             try {
                 if (!insn) {
                     insn = disassembleOne(map, va, NULL);
-                    p_ndisassembled++;
                     if (cache)
                         cache->insert(std::make_pair(va, insn));
                 }
@@ -385,13 +398,6 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
             }
             next_va = va + insn->get_raw_bytes().size();
             insns.insert(std::make_pair(va, insn));
-
-            /* Progress report */
-            if (0==p_ndisassembled % 2500 && (p_debug || time(NULL)-progress_time > progress_interval)) {
-                progress_time = time(NULL);
-                fprintf(p_debug?p_debug:stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
-                        va, p_ndisassembled);
-            }
 
             /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
              * A more thorough analysis can be performed below in the get_block_successors() call. */          

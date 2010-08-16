@@ -210,9 +210,13 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     //Take advantage of the const modifier
     if (ASTtools::isConstObj (init_type))
     {
+#if 0      // Liao, 8/13/2010, change to use new interfaces on top of the type table.
       SgModifierType* mod = SageBuilder::buildModifierType (param_base_type);
       ROSE_ASSERT (mod);
       mod->get_typeModifier ().get_constVolatileModifier ().setConst ();
+#else
+      SgModifierType* mod = SageBuilder::buildConstType(param_base_type);
+#endif      
       param_base_type = mod;
     }
   }

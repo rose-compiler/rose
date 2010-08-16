@@ -1,7 +1,8 @@
 
 struct model
 {
-    //int i;
+    int i;
+    int j;
     //static int k;
 };
 
@@ -16,9 +17,22 @@ int g;
 
 void event0(model* m)
 {
-    int a = 0;
-    int b = 0;
-    int q,w,e,r,t,y;
+    //int a = 0;
+    //int t = m->i;
+    //m->i = m->j;
+    //m->j = t;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i += 1;
+    m->i += 1;
+    m->i += 1;
+    //m->i = -m->i + t;
+    //int q,w,e,r,t,y;
     //g = 0;
     //model::k = 0;
     //my::x = 0;

@@ -397,8 +397,9 @@ Partitioner::clear()
         delete bci->second;
     block_config.clear();
 
-    /* Release (do not delete) all instructions */
+    /* Release all instructions (but do not delete) and disassembly failures from the cache. */
     insns.clear();
+    clear_disassembler_errors();
 }
 
 void
@@ -515,6 +516,23 @@ Partitioner::remove(Function* f, BasicBlock* bb)
     f->blocks.erase(address(bb));
 }
 
+/* Finds (or possibly creates) an instruction at the specified address. */
+SgAsmInstruction *
+Partitioner::find_instruction(rose_addr_t va, bool create/*=true*/)
+{
+    Disassembler::InstructionMap::iterator ii = insns.find(va);
+    if (create && disassembler && ii==insns.end() && bad_insns.find(va)==bad_insns.end()) {
+        SgAsmInstruction *insn = NULL;
+        try {
+            insn = disassembler->disassembleOne(map, va, NULL);
+            ii = insns.insert(std::make_pair(va, insn)).first;
+        } catch (const Disassembler::Exception &e) {
+            bad_insns.insert(std::make_pair(va, e));
+        }
+    }
+    return ii==insns.end() ? NULL : ii->second;
+}
+
 /** Finds a basic block containing the specified instruction address. If no basic block exists and @p create is set, then a
  *  new block is created which starts at the specified address.  The return value, in the case when a block already exists,
  *  may be a block where the specified virtual address is either the beginning of the block or somewhere inside the block. In
@@ -544,12 +562,9 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 
     BasicBlock *bb = NULL;
     while (1) {
-        Disassembler::InstructionMap::const_iterator ii = insns.find(va);
-        if (ii==insns.end())
-            break; /*no instruction*/
-        if (insn2block[va]!=NULL)
-            break; /*we've reached another block*/
-        SgAsmInstruction *insn = ii->second;
+        if (insn2block[va]!=NULL) break; /*we've reached another block*/
+        SgAsmInstruction *insn = find_instruction(va);
+        if (!insn) break;
         if (!bb) {
             bb = new BasicBlock;
             blocks.insert(std::make_pair(va, bb));
@@ -664,7 +679,7 @@ Partitioner::mark_ipd_configuration()
             /* "Execute" the program that will detect successors. We do this by interpreting the basic block to initialize
              * registers, loading the successor program, pushing some arguments onto the program's stack, interpreting the
              * program, extracting return values from memory, and unloading the program. */
-            bool debug = true;
+            bool debug = false;
             char block_name_str[64];
             sprintf(block_name_str, "B%08"PRIx64, va);
             std::string block_name = block_name_str;
@@ -809,7 +824,7 @@ Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr)
     SgRVAList entries = fhdr->get_entry_rvas();
     for (size_t i=0; i<entries.size(); i++) {
         rose_addr_t entry_va = entries[i].get_rva() + fhdr->get_base_va();
-        if (insns.find(entry_va)!=insns.end())
+        if (find_instruction(entry_va))
             add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT);
     }
 }
@@ -829,7 +844,7 @@ Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr)
                 for (size_t k=0; k<fd_entries->get_entries().size(); k++) {
                     SgAsmElfEHFrameEntryFD *fde = fd_entries->get_entries()[k];
                     rose_addr_t target = fde->get_begin_rva().get_rva();
-                    if (insns.find(target)!=insns.end())
+                    if (find_instruction(target))
                         add_function(target, SgAsmFunctionDeclaration::FUNC_EH_FRAME);
                 }
             }
@@ -869,16 +884,16 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
     while (plt_offset<plt->get_mapped_size()) {
 
         /* Find an x86 instruction */
-        Disassembler::InstructionMap::iterator ii = insns.find(plt->get_mapped_actual_rva()+plt_offset);
-        if (ii==insns.end()) {
+        SgAsmInstruction *insn = find_instruction(plt->get_mapped_actual_rva()+plt_offset);
+        if (!insn) {
             ++plt_offset;
             continue;
         }
-        plt_offset += ii->second->get_raw_bytes().size();
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
-        if (!insn) continue;
+        plt_offset += insn->get_raw_bytes().size();
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        if (!insn_x86) continue;
             
-        rose_addr_t gotplt_va = get_indirection_addr(insn);
+        rose_addr_t gotplt_va = get_indirection_addr(insn_x86);
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size()) {
             continue; /* jump is not indirect through the .got.plt section */
@@ -940,9 +955,11 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
 
         for (size_t j=0; j<symbols.size(); j++) {
             SgAsmGenericSymbol *symbol = symbols[j];
-            if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
+            if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
+                symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
+                symbol->get_value()!=0) {
                 rose_addr_t value = symbol->get_value();
-                if (insns.find(value)!=insns.end())
+                if (find_instruction(value))
                     add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());
 
                 /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
@@ -950,7 +967,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
                 SgAsmGenericSection *section = symbol->get_bound();
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_header()->get_base_va() + section->get_mapped_actual_rva();
-                if (insns.find(value)!=insns.end())
+                if (find_instruction(value))
                     add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());
             }
         }
@@ -1045,7 +1062,9 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     return ii;
 }
         
-/* Look for instruction patterns. */
+/** Seeds functions according to instruction patterns.  Note that this pattern matcher only looks at existing instructions--it
+ *  does not actively disassemble new instructions.  In other words, this matcher is intended mostly for passive-mode
+ *  partitioners where the disassembler has already disassembled everything it can. */
 void
 Partitioner::mark_func_patterns()
 {
@@ -1104,7 +1123,8 @@ Partitioner::create_nop_padding()
     }
 }
 
-/* Look for zero padding between functions. */
+/** Creates functions to hold zero padding. This is done by looking at existing instructions only -- not disassembling any new
+ *  instructions. */
 void
 Partitioner::create_zero_padding()
 {
@@ -1126,15 +1146,15 @@ Partitioner::create_zero_padding()
         /* Are all bytes between begin_va (inclusive) and end_va (exclusive) zero? */
         bool all_zero = true;
         for (rose_addr_t va=begin_va; va<end_va && all_zero; /*void*/) {
-            Disassembler::InstructionMap::const_iterator ii=insns.find(va);
-            if (ii==insns.end()) {
+            SgAsmInstruction *i2 = find_instruction(va, false); /*do not disassemble more*/
+            if (NULL==i2) {
                 end_va = va;
                 break;
             }
-            size_t nbytes = std::min((rose_addr_t)ii->second->get_raw_bytes().size(), end_va-va);
+            size_t nbytes = std::min((rose_addr_t)i2->get_raw_bytes().size(), end_va-va);
             for (size_t i=0; i<nbytes && all_zero; i++)
-                all_zero = (ii->second->get_raw_bytes()[i]==0);
-            va += ii->second->get_raw_bytes().size();
+                all_zero = (i2->get_raw_bytes()[i]==0);
+            va += i2->get_raw_bytes().size();
         }
         if (all_zero && begin_va<end_va)
             new_functions[begin_va] = end_va;
@@ -1249,14 +1269,15 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
         /* Sometimes the first instruction of a basic block cannot be disassembled and the basic block will have a different
          * starting address than its first instruction.  If that basic block is also the start of a function then the
          * function also will have no initial instruction. */
-        Disassembler::InstructionMap::const_iterator ii = insns.find(func_addr);
-        if (ii==insns.end())
+        SgAsmInstruction *insn = find_instruction(func_addr);
+        if (NULL==insn)
             continue;
 
         /* The target in the ".plt" section will be an indirect (through the .got.plt section) jump to the actual dynamically
          * linked function (or to the dynamic linker itself). The .got.plt address is what we're really interested in. */
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
-        rose_addr_t gotplt_va = get_indirection_addr(insn);
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        ROSE_ASSERT(insn_x86!=NULL);
+        rose_addr_t gotplt_va = get_indirection_addr(insn_x86);
 
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size())
@@ -1309,12 +1330,12 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
             for (size_t i=0; i<user_detectors.size(); i++) {
                 for (size_t j=0; j<=headers.size(); j++) {
                     SgAsmGenericHeader *hdr = 0==j ? NULL : headers[j-1];
-                    user_detectors[i](this, hdr, insns);
+                    user_detectors[i](this, hdr);
                 }
             }
         } else {
             for (size_t i=0; i<user_detectors.size(); i++) {
-                user_detectors[i](this, NULL, insns);
+                user_detectors[i](this, NULL);
             }
         }
     }
@@ -1380,8 +1401,8 @@ void
 Partitioner::discover_blocks(Function *f, rose_addr_t va)
 {
     if (debug) fprintf(debug, " B%08"PRIx64, va);
-    Disassembler::InstructionMap::const_iterator ii = insns.find(va);
-    if (ii==insns.end()) return; /* No instruction at this address. */
+    SgAsmInstruction *insn = find_instruction(va);
+    if (!insn) return; /* No instruction at this address. */
     rose_addr_t target_va = NO_TARGET; /*target of function call instructions (e.g., x86 CALL and FARCALL)*/
 
     /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. This
@@ -1749,18 +1770,31 @@ Partitioner::build_ast(BasicBlock* bb)
     return retval;
 }
 
-/* Top-level function to run the partitioner on some instructions and build an AST */
+/* Top-level function to run the partitioner in passive mode. */
 SgAsmBlock *
 Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns)
 {
+    disassembler = NULL;
     add_instructions(insns);
     pre_cfg(interp);
     analyze_cfg();
     post_cfg(interp);
-    SgAsmBlock *ast = build_ast();
-    return ast;
+    return build_ast();
 }
 
+/* Top-level function to run the partitioner in active mode. */
+SgAsmBlock *
+Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, MemoryMap *m)
+{
+    ROSE_ASSERT(d!=NULL);
+    disassembler = d;
+    ROSE_ASSERT(m!=NULL);
+    set_map(m);
+    pre_cfg(interp);
+    analyze_cfg();
+    post_cfg(interp);
+    return build_ast();
+}
 
 /* FIXME: Deprecated 2010-01-01 */
 Partitioner::BasicBlockStarts
