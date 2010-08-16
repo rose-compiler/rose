@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "assert.h"
+#include <err.h>
 
 char fileName[40] = "";
 
@@ -26,21 +26,19 @@ int main() {
   }
   pwbuf[255] = '\n';
 
-  if( (fd = open(fileName, O_RDWR | O_CREAT, 0777)) == -1) {
-    fprintf(stderr,"Can't open tempfile\n");
-    abort();
-  }
+  if( (fd = open(fileName, O_RDWR | O_CREAT, 0777)) == -1)
+    err(1,"open %s failed",fileName);
 
   for (iws = 254; iws > 0; iws--) {
     if( (cwrite = write(fd, pwbuf, iws) ) != iws ) {
       badcount++;
     }
   }
+  close(fd);
+  unlink(fileName);
 
-  if( badcount != 0 ) {
-    fprintf(stderr, "write() failed to return proper count\n");
-    abort();
-  }
+  if( badcount != 0 )
+    errx(1,"write() failed to return proper count");
 
   return 0;
 }

@@ -9,30 +9,23 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "assert.h"
+#include <err.h>
 
 char fname[255];
 int fd;
 struct stat64 statter;
 
-void setup() {
+int main() {
+
   sprintf(fname, "tfile_%d", getpid());
   fd = open(fname, O_RDWR | O_CREAT, 0700);
-  assert( fd != -1 );
-}
-
-void cleanup() {
-  int result = close(fd);
-  assert( result != -1 );
-}
-
-int main() {
-  setup();
 
   int result = fstat64(fd, &statter);
-  assert( result != -1);
+  if( result == -1 )
+    err(1,"fstat64 failed");
 
-  cleanup();
+  close(fd);
+  unlink(fname);
 
-  exit(0);
+  return 0;
 }

@@ -20,7 +20,7 @@ endef
 define checkFile
 $(addprefix check-, $(1)): $(1)
 # Ignore output of actual files. Some require non 0 exit values
-	-$(addprefix ./, $(1))
+	$(addprefix ./, $(1))
 	../x86sim $(1)
 endef
 
@@ -32,4 +32,4 @@ $(foreach file, $(SYSCALL_FILES), $(eval $(call checkFile, $(basename $(notdir $
 check-local: $(foreach file,$(SYSCALL_FILES), $(addprefix check-,$(basename $(notdir $(file)))))
 
 clean-local:
-	-rm syscall* tfile*
+	-rm -r syscall* tfile*

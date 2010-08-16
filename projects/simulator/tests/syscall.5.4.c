@@ -53,7 +53,9 @@ int main() {
 
   int result = open(fname, O_RDWR | O_CREAT, 0777);
 
-  if( result != -1 || errno != EMFILE )
+  if( result != -1 )
+    errx(1,"open succeeded unexpectedly");
+  if( errno != EMFILE )
     err(1,"Expected EMFILE");
 
   cleanup();

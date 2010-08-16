@@ -7,13 +7,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "assert.h"
+#include <err.h>
 
 char pfilname[40] = "";
 
 int main() {
-	char *msg;		/* message returned from parse_opts */
-
 	struct stat statbuf;
 	int fd;
 	unsigned short filmode;
@@ -21,8 +19,11 @@ int main() {
   sprintf(pfilname, "tfile_%d", getpid());
   fd = open(pfilname, O_RDWR, 01444);
 
-  assert( fd == -1 );
-  assert( errno == ENOENT );
+  if( fd != -1 )
+    errx(1,"open succeeded unexpectedly");
+
+  if( errno != ENOENT )
+    err(1,"Expected ENOENT");
 
 	return 0;
 }

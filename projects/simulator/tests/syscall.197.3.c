@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "assert.h"
+#include <err.h>
 
 char fname[255];
 int fd;
@@ -18,23 +18,21 @@ struct stat64 statter;
 void setup() {
   sprintf(fname, "tfile_%d", getpid());
   fd = open(fname, O_RDWR | O_CREAT, 0666);
-  assert( fd != -1 );
-
-  int result = close(fd);
-  assert( result != -1 );
-}
-
-void cleanup() {
+  close(fd);
 }
 
 int main() {
   setup();
 
   int result = fstat64(fd, &statter);
-  assert( result == -1);
-  assert( errno = EBADF );
 
-  cleanup();
+  if( result != -1 )
+    err(1,"fstat64 succeeded unexpectantly");
+  if( errno != EBADF )
+    err(1,"Expected EBADF");
 
-  exit(0);
+  close(fd);
+  unlink(fname);
+
+  return 0;
 }

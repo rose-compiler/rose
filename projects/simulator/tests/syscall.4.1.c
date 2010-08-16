@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "assert.h"
+#include <err.h>
 
 char pfilname[40] = "";
 char buf = 'w';
@@ -17,10 +17,16 @@ int main() {
 
   sprintf(pfilname, "tfile_%d", getpid());
   fd = open(pfilname, O_RDWR | O_CREAT, 0700);
-  assert( fd != -1 );
+  if( fd == -1 )
+    err(1,"open failed");
 
   int result = write(fd, &buf, 1);
 
-  assert( result != -1 );
+  if( fd == -1 )
+    err(1,"write failed");
+
+  close(fd);
+  unlink(pfilname);
+
   return 0;
 }

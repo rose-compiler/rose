@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "assert.h"
+#include <err.h>
 
 char pfilname[40] = "";
 
@@ -21,38 +21,30 @@ int main() {
   sprintf(pfilname, "tfile_%d", getpid());
   fd0 = open(pfilname, O_RDWR | O_CREAT, 01444);
 
-  assert( fd0 != -1 );
+  if( fd0 == -1 )
+    err(1,"open failed");
 
 	fstat(fd0, &statbuf);
 	filmode = statbuf.st_mode;
-	if (!(filmode & S_ISVTX)) {
-		fprintf(stderr,"Save test bit cleared, but should not have been");
-    abort();
-  }
+	if (!(filmode & S_ISVTX))
+    errx(1,"Save test bit cleared, but should not have been");
 
 	fd1 = open("/tmp", O_DIRECTORY);
 
-  assert( fd1 != -1 );
+  if( fd1 == -1 )
+    err(1,"open failed");
 
 	fstat(fd1, &statbuf);
 	filmode = statbuf.st_mode;
-	if (!(filmode & S_IFDIR)) {
-    fprintf(stderr, "directory bit cleared, but should not have been");
-    abort();
-  }
+	if (!(filmode & S_IFDIR))
+    errx(1,"directory bit cleared, but should not have been");
 
-	/* clean up things is case we are looping */
-	if (close(fd0) == -1) {
-    fprintf(stderr, "close #1 failed");
-	}
-
-  if (unlink(pfilname) == -1) {
-    fprintf(stderr, "can't remove file");
-  }
-
-  if (close(fd1) == -1) {
-    fprintf(stderr, "close #2 failed");
-	}
+	if (close(fd0) == -1)
+    err(1,"close #1 failed");
+  if (unlink(pfilname) == -1)
+    err(1,"can't remove file");
+  if (close(fd1) == -1) 
+    err(1,"close #2 failed");
 
 	return 0;
 }
