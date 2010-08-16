@@ -288,10 +288,12 @@ SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t 
     for (size_t i=0; i<p_entries->get_entries().size(); i++)
         extra_sizes.push_back(p_entries->get_entries()[i]->get_extra().size());
     if (p_uses_addend) {
-        retval =  calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelaEntry_disk), sizeof(SgAsmElfRelocEntry::Elf64RelaEntry_disk),
+        retval =  calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelaEntry_disk),
+                                  sizeof(SgAsmElfRelocEntry::Elf64RelaEntry_disk),
                                   extra_sizes, entsize, required, optional, entcount);
     } else {
-        retval =  calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelEntry_disk),  sizeof(SgAsmElfRelocEntry::Elf64RelEntry_disk),
+        retval =  calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelEntry_disk),
+                                  sizeof(SgAsmElfRelocEntry::Elf64RelEntry_disk),
                                   extra_sizes, entsize, required, optional, entcount);
     }
     return retval;
