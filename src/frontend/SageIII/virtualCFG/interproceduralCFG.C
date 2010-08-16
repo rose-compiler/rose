@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "CallGraph.h"
 #include "interproceduralCFG.h"
 #include <boost/foreach.hpp>
 
@@ -22,6 +23,7 @@ void InterproceduralCFG::buildFullCFG()
 
 void InterproceduralCFG::buildFilteredCFG()
 {
+  assert(!"InterproceduralCFG:buildFilteredCFG() is unimplemented");
   all_nodes_.clear();
   clearNodesAndEdges();
 
@@ -68,9 +70,11 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       case V_SgFunctionCallExp: {
         if (idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
           SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
-          SgFunctionDeclaration* fxnDecl = fxnCall->getAssociatedFunctionDeclaration(); 
-          std::cerr << "found fxn call: " << fxnDecl->get_qualified_name().str() << std::endl;
-          outEdges = n.outEdges(); //TODO remove
+          Rose_STL_Container<SgFunctionDefinition*> defs;
+          CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
+          Rose_STL_Container<SgFunctionDefinition*>::iterator def;
+          for (def = defs.begin(); def != defs.end(); ++def)
+            makeEdge(CFGNode(fxnCall, idx), (*def)->cfgForBeginning(), outEdges);
         } else 
           outEdges = n.outEdges();
         break;
