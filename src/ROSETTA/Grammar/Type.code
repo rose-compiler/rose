@@ -3464,19 +3464,22 @@ SOURCE_PARTIAL_FUNCTION_TYPE_END
 SOURCE_ARRAY_TYPE_START
 // RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName
-SgArrayType::get_mangled (void) const
+SgArrayType::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
 
      const SgType* base_type = get_base_type();
      ROSE_ASSERT (base_type != NULL);
-     SgName base_name  = base_type->get_mangled();
+     SgName base_name = base_type->get_mangled();
+
+  // printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
 
      const SgExpression* index_exp = get_index();
      SgName index_name;
      if (index_exp != NULL)
         {
           index_name = index_exp->unparseToString();
+       // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
         }
 
   // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)
@@ -4379,6 +4382,8 @@ SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_START
 SgArrayType*
 SgArrayType::createType ( SgType* base_type, SgExpression* idx )
    {
+  // DQ (8/11/2010): It is OK for idx to be NULL, since it implies a declaration such as: "int array[]" which can be OK.
+
 #if 0
      SgArrayType* returnType = new SgArrayType(base_type, idx);
      ROSE_ASSERT(returnType != NULL);
@@ -4389,7 +4394,7 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx )
      SgName name = returnType->get_mangled();
 
 #if 0
-     printf ("Building an array of base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+     printf ("In SgArrayType::createType(): Building an array [exp = %p] of base_type = %p = %s name = %s \n",idx,base_type,base_type->class_name().c_str(),name.str());
 #endif
 
   // Only look for pointers to type in the global type table.
@@ -4552,8 +4557,8 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
   // replace the result type, if already available in the type table, with 
   // the type from type table.
 
-  // An assuption (that I don't know how to check currently) is that this is a newly built 
-  // type not previously used and not yet returned from any fo the fullowing functions 
+  // An assumption (that I don't know how to check currently) is that this is a newly built 
+  // type not previously used and not yet returned from any of the following functions 
   // calling this function. Thus is has not been added yet to any (global or local) type table.
      ROSE_ASSERT(result != NULL);
 

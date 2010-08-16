@@ -2296,6 +2296,7 @@ projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/new_pluggableReverser/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
@@ -2316,12 +2317,14 @@ projects/roseToLLVM/tests/Makefile
 projects/roseToLLVM/Analysis/Makefile
 projects/roseToLLVM/Analysis/Alias/Makefile
 projects/roseToLLVM/Analysis/Alias/src/Makefile
+projects/roseToLLVM/Analysis/Alias/tests/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
 projects/PolyhedralDependenceAnalysis/Schedule/Makefile
+projects/PolyhedralDependenceAnalysis/CodeGenerator/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2355,7 +2358,6 @@ tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
-tests/CompileTests/CAF_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2471,6 +2473,11 @@ binaries/Makefile
 binaries/samples/Makefile
 ])
 
+# DQ (8/12/2010): We want to get permission to distribute these files as test codes.
+# tests/CompileTests/Fortran_tests/LANL_POP/Makefile
+
+# DQ (8/4/2010): Removed this directory
+# tests/CompileTests/CAF_tests/Makefile
 
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile
