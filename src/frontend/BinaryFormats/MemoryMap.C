@@ -284,12 +284,12 @@ MemoryMap::prune(bool(*predicate)(const MapElement&))
 }
 
 size_t
-MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
+MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
 {
     size_t ncopied = 0;
     while (ncopied < desired) {
         const MemoryMap::MapElement *m = find(start_va);
-        if (!m || 0==(m->get_mapperms() & MM_PROT_READ))
+        if (!m || (m->get_mapperms() & req_perms)!=req_perms)
             break;
         ROSE_ASSERT(start_va >= m->get_va());
         size_t m_offset = start_va - m->get_va();
@@ -308,12 +308,12 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
 }
 
 size_t
-MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
+MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/) const
 {
     size_t ncopied = 0;
     while (ncopied < nbytes) {
         const MemoryMap::MapElement *m = find(start_va);
-        if (!m || m->is_read_only() || 0==(m->get_mapperms() & MM_PROT_READ))
+        if (!m || m->is_read_only() || (m->get_mapperms() & req_perms)!=req_perms)
             break;
         ROSE_ASSERT(start_va >= m->get_va());
         size_t m_offset = start_va - m->get_va();
@@ -346,7 +346,7 @@ MemoryMap::mprotect(const MapElement &region)
     while (i!=elements.end()) {
         MapElement &other = *i;
         if (other.get_va() >= region.get_va()) {
-            if (other.get_va()+other.get_offset() <= region.get_va()+region.get_offset()) {
+            if (other.get_va()+other.get_size() <= region.get_va()+region.get_size()) {
                 /* other is fully contained in (or congruent to) region; change other's permissions */
                 other.set_mapperms(region.get_mapperms());
                 i++;

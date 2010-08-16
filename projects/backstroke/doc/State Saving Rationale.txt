@@ -1,0 +1,28 @@
+Automatic State Saving
+
+Overview
+---------
+At the core of all strategies for reversing computation lies the idea of state saving, also known as checkpointing. The simplest approach to reverse computation is to conservatively save all the potentially modified state before performing the forward computation; the reverse computation then simply consists of restoring the saved state. While this approach can be inefficient, it is easy to implement and is less prone to implementation errors. Moreover, in long computations with small state, saving the whole state up front is the most efficient approach.  Our implementation of state saving would serve two roles as both a performance baseline for other reverse computation approaches and as a debugging tool for testing the correctness of those approaches.
+
+Implementation Details
+----------------------
+The state saving approach will be implemented by instrumenting each simulation event function to save its state to a stack local to the logical process. The reverse function for the event would simply restore the state from the stack. State saving will also be used for debugging by instrumenting an already-instrumented forward event method. In this case, the reverse method would run the original reverse method, and then compare the regenerated state with the saved state.
+
+*Pointers and Dynamic Memory Allocation*
+The presence of pointers makes it difficult to impossible to statically determine the state that would be potentially modified. Similarly, dynamic memory allocation creates new state at runtime. Automatic state saving will not support methods that directly work with pointers. Indirect use of pointers, such as using a linked-list data structure with a well-defined external interface, will be allowed under certain conditions.
+
+*User-defined Classes and Structures*
+Correctly saving and restoring user-defined classes is difficult due to copy constructors and overloaded assignment operators. A user structure's custom copy constructor might have side effects, such as modifying a global variable. Similarly, overloaded assignment operators would be called when trying to save a structure (or even a native type). There are two options for implementing state saving of classes – either calling the assignment operator (or copy constructor) and mandating that it be side-effect free, or using a direct memory copy of the object. A direct memory copy fails for classes containing pointers, as well as for classes with virtual functions and subclasses. Moreover, calling user-defined copy constructors is unavoidable for other approaches to reverse computation, such as execution logging. Therefore, the automated state saving will require that user-implemented copy constructors and overloaded assignment operators be side-effect free and correctly copy all state within the contained object. Furthermore, any user-defined object containing pointers (e.g. a linked list data structure) will be required to implement a copy constructor.
+
+User-defined classes and structures also pose challenges when comparing two objects for equality when performing automated debugging. Structures that do not contain pointers can be compared by recursively enumerating all the native types contained within and comparing those basic types. Structures with pointers  can either be supported through user-provided equality operators or banned completely. Since data structures are immensely useful for programming, user-defined data structures with pointers will be allowed as long as they  correctly implement copy constructors that perform deep copies and equality operators that check for deep equality. Note that common data structures from the C++ Standard Template Library already conform to these requirements and will thus be immediately usable in event functions.
+
+*Scope Issues*
+Some of the modified state might not be in the scope of the original event function, due to namespaces and the use of objects. For example, a static variable within a class might be modified by functions called from the event function, without being directly accessible from the event function.  Moreover, such a variable would not not be saved by the copy constructor of the corresponding object, because it is static. The first implementation of automatic state saving will require that all state be accessible from the function being reversed. Consequently, static variables not directly accessible from the event function will not be saved.
+
+Summary of Language Restrictions
+--------------------------------
+Let M() be the method being reversed.
+Source code in M does not directly use pointers
+Any structure or class that is part of state has a public and side-effect free copy constructor and assignment operator that correctly deeply copy the object. Similar restrictions apply to the assignment operator. Note that for simple structures, the default constructor and the default assignment operator satisfy these requirements.
+Any structure or class that contains pointers must be the sole owner of the memory modified through those pointers and must implement a copy constructor implementing a deep copy and an equality operator implementing deep compare
+All state variables must be accessible from the scope of the event function being reversed
