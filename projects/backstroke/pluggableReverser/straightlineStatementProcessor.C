@@ -6,50 +6,48 @@
 #include "statementProcessor.h"
 
 
-vector<InstrumentedStatement> StraightlineStatementProcessor::process(SgStatement* statement, const VariableVersionTable& variableTable)
+vector<StatementReversal> StraightlineStatementProcessor::process(SgStatement* statement, const VariableVersionTable& var_table)
 {
 	if (SgBasicBlock * basicBlock = isSgBasicBlock(statement))
 	{
-		return processBasicBlock(basicBlock, variableTable);
+		return processBasicBlock(basicBlock, var_table);
 	}
 	else if (SgExprStatement * expressionStatement = isSgExprStatement(statement))
 	{
-		return processExpressionStatement(expressionStatement, variableTable);
-	}
-	else if (isSgReturnStmt(statement))
-	{
-		InstrumentedStatementVec results;
-		results.push_back(InstrumentedStatement(SageInterface::copyStatement(statement), NULL, variableTable));
-		return results;
+		return processExpressionStatement(expressionStatement, var_table);
 	}
 
-	return vector<InstrumentedStatement > ();
+	return vector<StatementReversal > ();
 }
 
 
 /** Process an expression statement by using the first expression handler returning a valid result. */
-vector<InstrumentedStatement> StraightlineStatementProcessor::processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& variableTable)
+vector<StatementReversal> StraightlineStatementProcessor::processExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
 {
-	vector<InstrumentedExpression> expressions = processExpression(statement->get_expression(), variableTable, false);
+    ROSE_ASSERT(statement);
+    
+	vector<ExpressionReversal> expressions = processExpression(statement->get_expression(), var_table, false);
 
 	//If none of the expression handlers could handle the code, we can't reverse it!
 	ROSE_ASSERT(!expressions.empty());
 
 	//This simple processor just takes the first valid reverse expression returned
-	InstrumentedExpression& instrumentedExpression = expressions.front();
+	ExpressionReversal& instrumentedExpression = expressions.front();
 
 	SgStatement* forwardStatement = SageBuilder::buildExprStatement(instrumentedExpression.fwd_exp);
 	SgStatement* reverseStatement = SageBuilder::buildExprStatement(instrumentedExpression.rvs_exp);
 
-	vector<InstrumentedStatement> results;
-	results.push_back(InstrumentedStatement(forwardStatement, reverseStatement, instrumentedExpression.var_table));
+	vector<StatementReversal> results;
+	results.push_back(StatementReversal(forwardStatement, reverseStatement, instrumentedExpression.var_table, instrumentedExpression.cost));
 
 	return results;
 }
 
 
-vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& variableTable)
+vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
 {
+    ROSE_ASSERT(basicBlock);
+    
 	SgBasicBlock* forwardBody = SageBuilder::buildBasicBlock();
 	SgBasicBlock* reverseBody = SageBuilder::buildBasicBlock();
 
@@ -88,7 +86,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 		}
 
 		//In this simple processor, we just take the first valid statement available
-		vector<InstrumentedStatement> instrumentedStatements = processStatement(s, variableTable);
+		vector<StatementReversal> instrumentedStatements = processStatement(s, var_table);
 
 		if (instrumentedStatements.empty())
 		{
@@ -97,7 +95,7 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 			exit(1);
 		}
 
-		InstrumentedStatement instrumentedStatement = instrumentedStatements.front();
+		StatementReversal instrumentedStatement = instrumentedStatements.front();
 		SgStatement* forwardStatement = instrumentedStatement.fwd_stmt;
 		SgStatement* reverseStatement = instrumentedStatement.rvs_stmt;
 
@@ -137,9 +135,9 @@ vector<InstrumentedStatement> StraightlineStatementProcessor::processBasicBlock(
 		reverseBody->prepend_statement(stmt);
 	}
 
-	InstrumentedStatement result(forwardBody, reverseBody, variableTable);
+	StatementReversal result(forwardBody, reverseBody, var_table);
 
-	vector<InstrumentedStatement> out;
+	vector<StatementReversal> out;
 	out.push_back(result);
 	return out;
 }
