@@ -334,6 +334,8 @@ struct hash_nodeptr
 
   //! Check if a SgNode is a main() function declaration
   bool isMain (const SgNode* node);
+
+  // DQ (8/10/2010): Added const to first paramater.
   // DQ (6/22/2005):
   /*! \brief Generate unique name from C and C++ constructs. The name may contain space. 
 
@@ -345,14 +347,12 @@ struct hash_nodeptr
       \implementation current work does not support expressions.
 
    */
-    std::string generateUniqueName (SgNode * node,
-				    bool
-				    ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
+    std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
+  // DQ (8/10/2010): Added const to first paramater.
   // DQ (3/10/2007): 
   //! Generate a unique string from the source file position information
-    std::string declarationPositionString (SgDeclarationStatement *
-					   declaration);
+    std::string declarationPositionString (const SgDeclarationStatement * declaration);
 
   // DQ (1/20/2007): 
   //! Added mechanism to generate project name from list of file names
@@ -1322,7 +1322,7 @@ SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStm
 /** A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scope statement with list of statements as children,
   * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
   * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
-SgStatement* ensureBasicBlockAsParent(SgStatement* s);
+SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
 //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 
 //! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
