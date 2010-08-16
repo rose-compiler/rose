@@ -600,7 +600,13 @@ EmulationPolicy::emulate_syscall()
             std::string filename = read_string(filename_va);
             uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
             int fd = open(filename.c_str(), flags, mode);
-            writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+
+            if( fd <= 256 ) // 256 is getdtablesize() in the simulator
+                writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+            else {
+                writeGPR(x86_gpr_ax, -EMFILE);
+                close(fd);
+            }
             syscall_leave("d");
             break;
         }

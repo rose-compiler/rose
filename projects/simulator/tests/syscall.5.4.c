@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "assert.h"
+#include "err.h"
 
 int fd, ifile, mypid, first;
 int nfile;
@@ -20,29 +20,31 @@ void setup() {
 
   sprintf(fname, "tfile_%d", mypid);
 
-  if ((first = fd = open(fname, O_RDWR | O_CREAT, 0777)) == -1) {
-    fprintf(stderr,"open failed");
-    abort();
-  }
+  if ((first = fd = open(fname, O_RDWR | O_CREAT, 0777)) == -1)
+    err(1,"open failed");
+
   close(fd);
-  close(first);
   unlink(fname);
 
-  if(( buf = (int *)malloc( sizeof(int) * nfile - first ) ) == NULL ) {
-    fprintf(stderr,"malloc failed");
-    abort();
-  }
+  if(( buf = (int *)malloc( sizeof(int) * nfile - first ) ) == NULL )
+    err(1,"malloc failed");
 
   for( ifile = first; ifile <= nfile; ifile++ ) {
     sprintf(fname, "tfile_%d", ifile, mypid);
     if( (fd = open(fname, O_RDWR | O_CREAT, 0777)) == -1) {
-        if( errno != EMFILE) {
-            fprintf(stderr,"open succeeded unexpectantly");
-            abort();
-        }
+        if( errno != EMFILE)
+          errx(1,"open succeeded unexpectantly");
         break;
     }
     buf[ifile - first] = fd;
+  }
+}
+
+void cleanup() {
+  for( ifile = first; ifile <= nfile; ifile++ ) {
+    close(ifile);
+    sprintf(fname, "tfile_%d", ifile, mypid);
+    unlink(fname);
   }
 }
 
@@ -51,11 +53,10 @@ int main() {
 
   int result = open(fname, O_RDWR | O_CREAT, 0777);
 
-  assert( result == -1 );
-  assert( errno = EMFILE );
+  if( result != -1 || errno != EMFILE )
+    err(1,"Expected EMFILE");
 
-  close(first);
-  close(fd);
+  cleanup();
 
 	return 0;
 }
