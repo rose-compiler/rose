@@ -201,7 +201,13 @@ Please configure this copy with your name and email before starting work.
 It is highly recommended to pull and merge the shared master branch before doing this step.
    \begin{itemize}
           \item Push all commits of the current local branch to a branch of the central repository:\\ \textit{git push origin HEAD:branch-name}
-\item Or if you have set git to automatically push the current branch to the remotely tracked branch by  \textit{git config push.default 'tracking'},
+ Please always try to synchronize with the
+          remote master branch (using git pull and merge as mentioned
+          above) before pushing commits. \textbf{Note}: It is highly recommended not to push too often than
+          needed since each git push will trigger a large set of
+          Hudson tests which tax our own workstations and many other test machines.
+
+          \item Or if you have set git to automatically push the current branch to the remotely tracked branch by  \textit{git config push.default 'tracking'},
       you can just type \textit{git push}. 
 
    \end{itemize}
