@@ -93,7 +93,15 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
           SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
           SgFunctionDeclaration* fxnDecl = isSgFunctionDeclaration(funDef->get_declaration());
           std::cerr << "found fxn def: " << fxnDecl->get_qualified_name().str() << std::endl;
-          outEdges = std::vector<EdgeT>(); //TODO remove
+
+          std::set<SgDirectedGraphEdge*> sgEdges = graph_->computeEdgeSetIn(from);
+          std::cerr << "found " << sgEdges.size() << " edges" << std::endl;
+          foreach (SgDirectedGraphEdge* edge, sgEdges) {
+            SgGraphNode* sourceGN = edge->get_from();
+            SgNode* source = sourceGN->get_SgNode();
+            std::cerr << "edge to " << source->class_name() << std::endl;
+            makeEdge(CFGNode(funDef, idx), CFGNode(source, 0), outEdges);
+          }
         } else 
           outEdges = n.outEdges();
         break;
