@@ -81,8 +81,10 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       case V_SgConstructorInitializer: {
         if (idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
           SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
-          std::cerr << "found ctor init" << std::endl;
-          outEdges = n.outEdges(); //TODO remove
+          Rose_STL_Container<SgFunctionDefinition*> defs;
+          CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
+          foreach (SgFunctionDefinition* def, defs) 
+            makeEdge(CFGNode(ctorInit, idx), def->cfgForBeginning(), outEdges);
         } else 
           outEdges = n.outEdges();
         break;
