@@ -72,8 +72,9 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
           SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
           Rose_STL_Container<SgFunctionDefinition*> defs;
           CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
+          //if (defs.size() < 1) std::cerr << "call has no defs!" << std::endl;
           foreach (SgFunctionDefinition* def, defs) 
-            makeEdge(CFGNode(fxnCall, idx), def->cfgForBeginning(), outEdges);
+            makeEdge(n, def->cfgForBeginning(), outEdges);
         } else 
           outEdges = n.outEdges();
         break;
@@ -84,7 +85,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
           Rose_STL_Container<SgFunctionDefinition*> defs;
           CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
           foreach (SgFunctionDefinition* def, defs) 
-            makeEdge(CFGNode(ctorInit, idx), def->cfgForBeginning(), outEdges);
+            makeEdge(n, def->cfgForBeginning(), outEdges);
         } else 
           outEdges = n.outEdges();
         break;
@@ -102,13 +103,13 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
             // Determine the index to which the interprocedural edge returns. TODO make member function of SgNode ?
             unsigned int index;
             if (source->variantT() == V_SgConstructorInitializer)
-              index = SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX + 1;
+              index = SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX;
             else if (source->variantT() == V_SgFunctionCallExp)
-              index = SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX + 1;
+              index = SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX;
             else
               ROSE_ASSERT(!"Error: unable to determine interprocedural return index");
 
-            makeEdge(CFGNode(funDef, idx), CFGNode(source, index), outEdges);
+            makeEdge(n, CFGNode(source, index+1), outEdges);
           }
         } else 
           outEdges = n.outEdges();
