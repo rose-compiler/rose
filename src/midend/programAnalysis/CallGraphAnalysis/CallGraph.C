@@ -818,63 +818,20 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
              SgFunctionCallExp* call = isSgFunctionCallExp(exp);
              SgFunctionDeclaration* targetDecl = call->getAssociatedFunctionDeclaration();
 
-             // If function pointer call, match types.
-             if (targetDecl == NULL) {
-                // Get candidate type 
-                SgExpression* fxn = call->get_function();
-                ROSE_ASSERT(fxn != NULL);
-                SgFunctionType* targetType = isSgFunctionType(fxn->get_type());
-
-                VariantVector vv(V_SgFunctionDefinition);     
-                Rose_STL_Container<SgNode*> candidateDefs = NodeQuery::queryMemoryPool(vv);
-                Rose_STL_Container<SgNode*>::iterator candidateDefIter;
-                for (candidateDefIter = candidateDefs.begin(); 
-                     candidateDefIter != candidateDefs.end(); ++candidateDefIter) { 
-                  // Get target type
-                  SgFunctionDefinition* candidateDef = isSgFunctionDefinition(*candidateDefIter);
-                  SgFunctionDeclaration* candidateDecl = isSgFunctionDefinition(candidateDef)->get_declaration();
-                  ROSE_ASSERT(candidateDecl);
-                  SgFunctionType* candidateType = isSgFunctionType(candidateDecl->get_type());
-
-                  //Compare types.
-                  if (candidateType->unparseToString() == targetType->unparseToString()) 
-                    defs.push_back(candidateDef);
-                }
-                break;
-             } 
-
-             // If virtual function, resolve with class heirarchy 
-             
-             // MD 07-21-2010 
-             // Currently, get_definingDeclaration returns a declaration for virtual functions.
-             // However, this is incorrect since the defining declaration cannot be resolved 
-             // statically. Future work on ROSE will make get_definingDeclaration return NULL for 
-             // virtual functions. Until this is implemented, this check is necessary. 
-             SgFunctionModifier fnMod = targetDecl->get_functionModifier();
-             SgFunctionDeclaration* targetDefDecl = isSgFunctionDeclaration(targetDecl->get_definingDeclaration());
-             bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
-             if (targetDefDecl == NULL || isVirtual) {
-                Rose_STL_Container<Properties*> functionList;
-                ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-                CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
-                Rose_STL_Container<Properties*>::iterator prop;
-                for (prop = functionList.begin(); prop != functionList.end(); prop++) {
-                  SgFunctionDeclaration* candidateDecl = (*prop)->functionDeclaration;
-                  ROSE_ASSERT(candidateDecl);
-                  candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
-                  if (candidateDecl == NULL) // member function pointer call?
-                    break;
-                  SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
-                  if (candidateDef != NULL) 
-                    defs.push_back(candidateDef);
-                }
-                break;
+             Rose_STL_Container<Properties*> functionList;
+             ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+             CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
+             Rose_STL_Container<Properties*>::iterator prop;
+             for (prop = functionList.begin(); prop != functionList.end(); prop++) {
+               SgFunctionDeclaration* candidateDecl = (*prop)->functionDeclaration;
+               ROSE_ASSERT(candidateDecl);
+               candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
+               if (candidateDecl == NULL) // member function pointer call?
+                 break;
+               SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
+               if (candidateDef != NULL) 
+                 defs.push_back(candidateDef);
              }
-
-             // Otherwise, it's a statically-resolveable call. Use the AST.
-             SgFunctionDefinition* targetDef = targetDefDecl->get_definition();
-             if (targetDef != NULL) 
-               defs.push_back(targetDef);
              break;
     }
     case V_SgConstructorInitializer: {
