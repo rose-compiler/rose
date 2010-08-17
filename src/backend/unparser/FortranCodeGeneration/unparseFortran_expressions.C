@@ -142,6 +142,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
        // DQ (10/10/2008): Added support for unser defined unary and binary operators.
           case V_SgUserDefinedUnaryOp:        unparseUserDefinedUnaryOp (expr, info); break;
           case V_SgUserDefinedBinaryOp:       unparseUserDefinedBinaryOp(expr, info); break;
+          case V_SgCAFCoExpression:           unparseCoArrayExpression(expr, info); break;
 
 #if 0
        // DQ (8/15/2007): These are handled in the base class
@@ -419,19 +420,73 @@ FortranCodeGeneration_locatedNode::unparseOrOp(SgExpression* expr, SgUnparse_Inf
    }
 
 
+// DQ (8/6/2010): Output the logical operator when the operands are logical (SgBoolType)
+// the type of the expression is not enough to test, we have to test the lhs and rhs type.
+bool
+outputLogicalOperator(SgExpression* expr)
+   {
+     bool outputLogicalOperator = false;
+
+     SgBinaryOp* binaryOp = isSgBinaryOp(expr);
+     if (binaryOp != NULL)
+        {
+          SgExpression* lhs = binaryOp->get_lhs_operand();
+          SgExpression* rhs = binaryOp->get_rhs_operand();
+          SgType* lhs_type = lhs->get_type();
+          SgType* rhs_type = rhs->get_type();
+          if (isSgTypeBool(lhs_type) != NULL)
+             {
+               ROSE_ASSERT(isSgTypeBool(rhs_type) != NULL);
+               outputLogicalOperator = true;
+             }
+        }
+       else
+        {
+          printf ("Error: this function only needs to handle binary operators. ");
+          ROSE_ASSERT(false);
+        }
+
+     return outputLogicalOperator;
+   }
+
 void
 FortranCodeGeneration_locatedNode::unparseEqOp(SgExpression* expr, SgUnparse_Info& info)
-{ 
+   { 
   // Sage node corresponds to Fortran equals operator
-  unparseBinaryOperator(expr, "==", info);
-}
+     ROSE_ASSERT(expr != NULL);
+  // printf ("In FortranCodeGeneration_locatedNode::unparseEqOp(): type = %s ",expr->get_type()->class_name().c_str());
+
+     
+  // SgTypeBool* logicalType = isSgTypeBool(expr->get_type());
+  // if (logicalType != NULL)
+     if (outputLogicalOperator(expr) == true)
+        {
+          unparseBinaryOperator(expr, ".EQV.", info);
+        }
+       else
+        {
+          unparseBinaryOperator(expr, "==", info);
+        }
+   }
 
 void
 FortranCodeGeneration_locatedNode::unparseNeOp(SgExpression* expr, SgUnparse_Info& info)
-{ 
+   { 
+     ROSE_ASSERT(expr != NULL);
   // Sage node corresponds to Fortran not-equals operator
-  unparseBinaryOperator(expr, "/=", info);
-}
+  // unparseBinaryOperator(expr, "/=", info);
+
+  // SgTypeBool* logicalType = isSgTypeBool(expr->get_type());
+  // if (logicalType != NULL)
+     if (outputLogicalOperator(expr) == true)
+        {
+          unparseBinaryOperator(expr, ".NEQV.", info);
+        }
+       else
+        {
+          unparseBinaryOperator(expr, "/=", info);
+        }
+   }
 
 void
 FortranCodeGeneration_locatedNode::unparseLtOp(SgExpression* expr, SgUnparse_Info& info)
@@ -606,8 +661,26 @@ FortranCodeGeneration_locatedNode::unparseArrayOp(SgExpression* expr, SgUnparse_
 void
 FortranCodeGeneration_locatedNode::unparseRecRef(SgExpression* expr, SgUnparse_Info& info)
 { 
+
+ // FMZ (7/16/2009): 
+ //     cannot treat the operator "%" in same way with C/C++ modulo operator
+ //     for example: X%(Y(1,2)) is not legal fortran expression
+#if 0
   // Sage node corresponds to Fortran record selector
   unparseBinaryOperator(expr, "%",info);
+#else
+     SgDotExp* dotExpr = isSgDotExp(expr);
+     unparseExpression(dotExpr->get_lhs_operand(),info);
+     curprint("%");
+     SgPntrArrRefExp* arrayRefExp=isSgPntrArrRefExp(dotExpr->get_rhs_operand());
+     if (arrayRefExp != NULL) {
+         unparseExpression(arrayRefExp->get_lhs_operand(),info);
+         curprint("(");
+         unparseExpression(arrayRefExp->get_rhs_operand(),info);
+         curprint(")");
+      } else 
+         unparseExpression(dotExpr->get_rhs_operand(),info);
+#endif
 }
 
 void
@@ -2091,12 +2164,16 @@ FortranCodeGeneration_locatedNode::isSubroutineCall(SgFunctionCallExp* fcall)
 
      SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(fcall->get_function());
      ROSE_ASSERT(functionRefExp != NULL);
+
+
      SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
      ROSE_ASSERT(functionSymbol != NULL);
+     //cout << "function name is : " << functionSymbol->get_name().str()<<endl;
+
      SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
      ROSE_ASSERT(functionDeclaration != NULL);
 
-  // printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+     //printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
 
      SgProcedureHeaderStatement* procedureHeaderStatement = isSgProcedureHeaderStatement(functionDeclaration);
      ROSE_ASSERT(procedureHeaderStatement != NULL);
@@ -2137,3 +2214,57 @@ FortranCodeGeneration_locatedNode::unparseUserDefinedBinaryOp (SgExpression* exp
      unparseBinaryOperator(expr, userDefinedBinaryOp->get_operator_name().str(), info);
    }
 
+
+//FMZ (02/02/2009): Added for unparsing co_expression
+void
+FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression* expr, SgUnparse_Info& info)
+   {
+    
+    // printf("unparseCoArrayExpression\n");
+ 
+    bool hasImageSelec = false;
+
+    SgCAFCoExpression* coExpr = isSgCAFCoExpression(expr);  
+
+    ROSE_ASSERT(coExpr != NULL);
+
+    SgExpression *dataExpr = coExpr->get_referData();
+   
+    ROSE_ASSERT(dataExpr != NULL);
+
+    SgExpression *teamRank = coExpr->get_teamRank();
+
+    unparseLanguageSpecificExpression(dataExpr,info);
+
+    //SgName teamID = coExpr->get_teamId();
+    SgVarRefExp* teamIdRef = coExpr->get_teamId();
+
+     SgInitializedName* teamDecl = NULL;
+    
+    if (teamIdRef) {
+        teamDecl  = teamIdRef->get_symbol()->get_declaration();
+     }
+
+    hasImageSelec =  teamDecl || teamRank;
+
+    if (hasImageSelec) 
+        curprint("[");
+
+    if (teamRank) { 
+        SgIntVal* intRank = isSgIntVal(teamRank);
+
+        if (intRank)
+           unparseIntVal(intRank, info);
+        else
+           unparseLanguageSpecificExpression(teamRank,info);
+    }
+
+
+    if (teamDecl) {
+        curprint("@");
+        curprint(teamDecl->get_name().str());
+    }
+
+    if (hasImageSelec)
+        curprint("]");
+  }

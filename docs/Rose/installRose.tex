@@ -386,20 +386,20 @@ install tree). For Boost versions 1.39 or greater:
      \item Create a separate install tree. \\
            Type {\tt mkdir installTree} to create a location for the install files to reside (e.g. BOOST\_INSTALL).
      \item Run the {\tt bootstrap.sh} script. \\
-           Type {\tt ./bootstrap.sh --prefix=[installTree]} 
+           Type \verb! ./bootstrap.sh --prefix=[installTree]! 
            to run the BOOST {\tt bootstrap.sh} script.  The path to the bootstrap.sh script 
            may be either relative or absolute. The prefix option specifies the
            installation directory (e.g. BOOST\_INSTALL). Note that 
            {\tt ./bootstrap.sh --help} can be used to provide more information about how
            to install Boost.
      \item Run {\tt bjam}. \\
-           Type {\tt ./bjam install --prefix=[installTree] --libdir=[installTree]/lib} to
-           copy all build files into the install directory. BOOST is now available in your 
+           Type \verb!./bjam install --prefix=[installTree]! to compile boost and
+           copy all build files into the install directory. If you're compiling ROSE with the flag \_GLIBCXX\_DEBUG, you also
+           need to use the flag when compiling boost; in that case the build command would be
+           \verb!./bjam debug define=_GLIBCXX_DEBUG install --prefix=[installTree]!. 
+            The  BOOST library is now available in your 
            installTree (e.g. BOOST\_INSTALL) to be used by ROSE.
-           Note that that {\tt ./bjam install} (without the {\tt --libdir} option) will
-           install the include files into the prefix directory, but not install the libs
-           into the lib directory.
-     \item {\bf Important:} In running configure to build ROSE it is sometimes also required to use the 
+           \item {\bf Important:} In running configure to build ROSE it is sometimes also required to use the 
            {\tt --with-boost-libdir=BOOST\_INSTALL/lib} in addition to the {\tt --with-boost=BOOST\_INSTALL}
            mentioned imediately below.
 \end{enumerate}
@@ -593,14 +593,15 @@ make: *** [all] Error 2
          {\tt /usr/local}.  Most users don't have permission to write to this directory,
          so we suggest always including the {\em prefix option} (e.g. {\tt
          --prefix=`pwd`}).
-   \item Minimal configuration (prefered) \\
+   \item Minimal configuration (preferred) \\
          {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
          Configure in the current directory so that installation will also happen in the
          current  directory (a {\tt install} subdirectory will be built).
-   \item Turning on compiler debugging options (prefered) \\
-         {\tt ../ROSE/configure --with-CXX\_DEBUG=-g --with-CXX\_WARNINGS=-Wall --prefix=`pwd`--with-boost=[BOOST\_installTree]} \\
-         Configure as above, but with debugging and warnings turned on ({\tt -Wall} is
-         specific to the gnu compilers).
+   \item Turning on compiler debugging options (\textbf{strongly recommended}) \\
+         {\tt ../ROSE/configure --with-CXX\_DEBUG="-g  -D\_GLIBCXX\_DEBUG -D\_GLIBCXX\_DEBUG\_PEDANTIC" --with-CXX\_WARNINGS=-Wall --prefix=`pwd`--with-boost=[BOOST\_installTree]} \\
+         Configure as above, but with debugging and warnings turned on.
+          Note that if you compile ROSE with \verb!_GLIBCXX_DEBUG!, you should also compile
+         boost with the same debug flag (Section \ref{gettingStarted:BOOST}). 
    \item Adding Fortran support \\
          {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree] --with-java} \\
          The Open Fortran Parser will also be enabled, allowing ROSE to process Fortran
@@ -772,17 +773,20 @@ additional tests to be run.
    Haskell (ghc) is available at {\it http://www.haskell.org/ghc/}.
 To install ghc (from the binary distribution) run "configure" and 
 "make install". Specifically (for example): \\
-{\tt configure --prefix=/home/dquinlan/local/Haskell/ghc-6.12.2\_install}
+{\tt configure --prefix=/home/dquinlan/local/Haskell/ghc-6.10.4\_install}
 and
 {\tt make install}.
-Then modify the path in your .bashrc to include: \\
-   {\tt /home/dquinlan/local/Haskell/ghc-6.12.2\_install/bin}
+(This assumes that the path in your .bashrc includes ghc, e.g.: \\
+   {\tt /home/dquinlan/local/Haskell/ghc-6.10.4\_install/bin}
 
 That should be all that is required.  ROSE will detect
 the existence of "ghc" at "configure" time and setup
-what is required internally.
+what is required internally.  To turn off the use of Haskell support, 
+use the configure option {\em --with-haskell=no}.
 
-
+Note that we enforce and require version {\em 6.10.x} of ghc, this is
+because we assume some default modules that have been removed in more 
+recently releaced versions of ghc.
 
 \subsection{Testing ROSE}
      A set of test programs is available.  %More details are in section \ref{testing}.
@@ -925,7 +929,7 @@ The Intel compiler can run out of space compiling some of the larger files in RO
 Although not previously seen by anyone on the ROSE team, one user has reported
 that the Intel compiler option {\em -override-limits} was required.  As used on
 the followign configure line:
-{\em /usr/casc/aleamr/yana-local/rose/build/rose-sourcetree/configure CXX=icpc CC=icc CXXFLAGS=-override-limits --prefix=`pwd` --with-boost=<path to boost>}
+{\em /nfs/casc/aleamr/yana-local/rose/build/rose-sourcetree/configure CXX=icpc CC=icc CXXFLAGS=-override-limits --prefix=`pwd` --with-boost=<path to boost>}
 More information is on this option and when to use it is at:
 {\em http://software.intel.com/en-us/articles/internal-threshold-was-exceeded}.
 The problem that this appears to fix is that on some machines the ROSE 

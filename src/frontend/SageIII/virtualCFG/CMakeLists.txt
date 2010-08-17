@@ -9,7 +9,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #add_dependencies( virtualCFG ROSETTA )
 ########### install files ###############
 
-install(FILES  virtualCFG.h       virtualBinCFG.h       cfgToDot.h       filteredCFG.h       filteredCFGImpl.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  virtualCFG.h       virtualBinCFG.h       staticCFG.h       cfgToDot.h       filteredCFG.h       filteredCFGImpl.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

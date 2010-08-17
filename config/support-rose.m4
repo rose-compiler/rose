@@ -241,6 +241,8 @@ case "$enableval" in
       support_fortran_language=yes
       support_php_language=yes
       support_binaries=yes
+      support_cuda_language=yes
+      support_opencl_language=yes
       AC_MSG_RESULT(all)
      ;;
   none | no) LANGUAGES_TO_BUILD="none"
@@ -249,6 +251,8 @@ case "$enableval" in
       support_fortran_language=no
       support_php_language=no
       support_binaries=no
+      support_cuda_language=no
+      support_opencl_language=no
       AC_MSG_RESULT(none)
      ;;
   *)for a_language in `echo $enableval|sed -e 's/,/ /g' ` ; do
@@ -268,6 +272,12 @@ case "$enableval" in
         binaries) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD binaries"
            support_binaries=yes
            ;;
+        cuda) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+           support_cuda_language=yes
+           ;;
+        opencl) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+           support_opencl_language=yes
+           ;;
         *) AC_MSG_ERROR([Unrecognized language $a_language]) ;;
       esac
   done
@@ -284,6 +294,8 @@ echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
+echo "support_cuda_language    = $support_cuda_language"
+echo "support_opencl_language  = $support_opencl_language"
 
 AC_MSG_CHECKING([for language specific options to generate a minimal ROSE configuration])
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only C language support is required
@@ -292,6 +304,8 @@ if test "x$support_c_only" = "xyes"; then
    support_fortran_language=no
    support_php_language=no
    support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off fortran:off php:off)
 fi
@@ -330,6 +344,8 @@ if test "x$support_fortran_only" = "xyes"; then
    support_cxx_language=no
    support_php_language=no
    support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off php:off binary-analysis-tests:off)
 
@@ -362,6 +378,8 @@ echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
+echo "support_cuda_language    = $support_cuda_language"
+echo "support_opencl_language  = $support_opencl_language"
 
 # Set the macros that will appears in the rose_config.h header file.
 if test "x$support_c_language" = "xyes"; then
@@ -394,12 +412,26 @@ else
    echo "Support for binary analysis support is disabled..."
 fi
 
+if test "x$support_cuda_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
+else
+   echo "Support for CUDA language support is disabled..."
+fi
+
+if test "x$support_opencl_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
+else
+   echo "Support for OpenCL language support is disabled..."
+fi
+
 # Set the automake conditional macros that will be used in Makefiles.
 AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
 
 # echo "Exiting after handling initial language specification..."
 # exit 1
@@ -725,6 +757,7 @@ AX_BOOST_WAVE
 
 AX_LIB_SQLITE3
 AX_LIB_MYSQL
+AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 
 # DQ (9/15/2009): I have moved this to before the backend compiler selection so that
 # we can make the backend selection a bit more compiler dependent. Actually we likely
@@ -914,16 +947,6 @@ AC_SUBST(YACC)
 # only "gmake distcheck" seems to work.  I don't know why!
 AC_PROG_MAKE_SET
 
-# Call supporting macro for MySQL (more complex than SQLite, MySQL will be removed from optional use within ROSE)
-ROSE_SUPPORT_MYSQL
-# echo "In configure: with_MySQL = $with_MySQL"
-
-# Setup Automake conditional in Projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_MYSQL_DATABASE,[test "x$MYSQL_VERSION" != "x"])
-
-# Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,[test "x$SQLITE3_VERSION" != "x"])
-
 # DQ (9/21/2009): Debugging for RH release 5
 echo "Testing the value of CC: (CC = $CC)"
 echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
@@ -947,9 +970,6 @@ AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
-
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_YICES,test ! "$with_yices" = no)
 
 # Call supporting macro to internal Satisfiability (SAT) Solver
 ROSE_SUPPORT_SAT
@@ -1009,11 +1029,10 @@ ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
-#TPS (03/13/08) introduced optional DB support for binary work
-HASH_ROSE_BINARY_SQL
+#ASR
+ROSE_SUPPORT_LLVM
 
-AM_CONDITIONAL(ROSE_USE_BINARY_SQL,test ! "$with_binarysql" = no)
-
+AM_CONDITIONAL(ROSE_USE_LLVM,test ! "$with_llvm" = no)
 
 # Call supporting macro for Windows Source Code Analysis
 ROSE_SUPPORT_WINDOWS_ANALYSIS
@@ -1027,10 +1046,6 @@ ROSE_SUPPORT_EDG_DEBUGGING
 # Call supporting macro for Omni OpenMP
 # 
 ROSE_SUPPORT_OMNI_OPENMP
-
-# Configuration commandline support for OMP project using ROSE
-#AM_CONDITIONAL(ROSE_USE_OPENMP,test ! "$with_omp_runtime_support" = no)
-AM_CONDITIONAL(ROSE_USE_OMNI_OPENMP,test ! "$with_omni_omp_runtime_support" = no)
 
 # call supporting macro for GCC 4.4.x gomp OpenMP runtime library
 # AM_CONDITIONAL is already included into the macro
@@ -1080,7 +1095,7 @@ AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 # TP SUPPORT FOR OPENGL
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
-# echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
+echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno)
 
 # Call supporting macro for python
@@ -1165,12 +1180,13 @@ AC_ARG_ENABLE(ofp-version,
 [ echo "Setting up OFP version"
 ])
 
+# DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.7.2)"
+   echo "Default version of OFP used (0.8.1)"
    ofp_major_version_number=0
-   ofp_minor_version_number=7
-   ofp_patch_version_number=2
+   ofp_minor_version_number=8
+   ofp_patch_version_number=1
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1183,12 +1199,12 @@ echo "ofp_patch_version_number = $ofp_patch_version_number"
 
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
-   if test "x$ofp_minor_version_number" = "x7"; then
+   if test "x$ofp_minor_version_number" = "x8"; then
       echo "Recognized an accepted minor version number."
-      if test "x$ofp_patch_version_number" = "x2"; then
+      if test "x$ofp_patch_version_number" = "x1"; then
          echo "Recognized an accepted patch version number."
       else
-         if test "x$ofp_patch_version_number" = "x1"; then
+         if test "x$ofp_patch_version_number" = "x2"; then
             echo "Recognized an accepted patch version number ONLY for testing."
          else
             echo "ERROR: Could not identify the OFP patch version number."
@@ -1197,8 +1213,8 @@ if test "x$ofp_major_version_number" = "x0"; then
        # exit 1
       fi
    else
-      if test "x$ofp_minor_version_number" = "x8"; then
-#     We accept any patch level with minor version number 8 releases. 
+      if test "x$ofp_minor_version_number" = "x7"; then
+       # We accept any patch level with minor version number 7 releases. 
          echo "Recognized an accepted minor version number using ofp_patch_version_number = $ofp_patch_version_number."
       else
          echo "ERROR: Could not identify the OFP minor version number."
@@ -1318,6 +1334,125 @@ if test "x$enable_opencl" = "xyes"; then
   AC_DEFINE([ROSE_USE_OPENCL_SUPPORT], [], [Whether to use OpenCL language support or not within ROSE])
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
+
+# *****************************************************************************
+# Option to control internal support of FadaLib (Fuzzy Array Dataflow Analysis)
+# *****************************************************************************
+
+# TV (05/25/2010): Check for FadaLib
+
+AC_ARG_WITH(
+	[fada],
+	AS_HELP_STRING([--with-fada@<:@=DIR@:>@], [use FadaLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
+		exit 1
+	else
+		has_fada_path="yes"
+		fada_path="$withval"
+	fi
+	],
+	[has_fada_path="no"]
+)
+
+# TV (05/25/2010): Check for PipLib
+
+AC_ARG_WITH(
+	[pip],
+	AS_HELP_STRING([--with-pip@<:@=DIR@:>@], [use PipLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
+		exit 1
+	else
+		has_pip_path="yes"
+		pip_path="$withval"
+	fi
+	],
+	[has_pip_path="no"]
+)
+
+# TV (05/25/2010): Optional support for FadaLib.
+
+AC_MSG_CHECKING([for enabled FadaLib support])
+AC_ARG_ENABLE(
+	fadalib,
+	AS_HELP_STRING(
+		[--enable-fadalib],
+		[Support for FadaLib (Fuzzy Array Dataflow Analysis)]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_FADALIB,
+	[test "x$enable_fadalib" = "xyes"])
+if test "x$enable_fadalib" = "xyes"; then
+	if test "x$has_fada_path" = "xyes"; then
+#		FADA_LDFLAGS=" $fada_path/lib/libfada.a"
+		FADA_LDFLAGS=" -L$fada_path/lib/ -lfada"
+		FADA_CPPFLAGS="-I$fada_path/include"
+	fi
+	if test "x$has_pip_path" = "xyes"; then
+#		PIP_LDFLAGS=" $pip_path/lib/libpiplib64.a"
+		PIP_LDFLAGS=" -L$pip_path/lib -lpiplib64"
+		PIP_CPPFLAGS="-I$pip_path/include"
+	fi
+	if test "x$has_fada_path" = "xyes" && test "x$has_pip_path" = "xyes"; then
+		AC_DEFINE([ROSE_USE_FADALIB], [], [Whether to use FadaLib (Fuzzy Array Dataflow Analysis) support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_FADALIB)
+AC_SUBST(FADA_LDFLAGS)
+AC_SUBST(FADA_CPPFLAGS)
+AC_SUBST(PIP_LDFLAGS)
+AC_SUBST(PIP_CPPFLAGS)
+
+# TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
+
+AC_ARG_WITH(
+	[ppl],
+	AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
+		exit 1
+	else
+		has_ppl_path="yes"
+		ppl_path="$withval"
+	fi
+	],
+	[has_ppl_path="no"]
+)
+
+AC_ARG_ENABLE(
+	ppl,
+	AS_HELP_STRING(
+		[--enable-ppl],
+		[Support for Parma Polyhedral Library (PPL)]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_PPL,
+	[test "x$enable_fadalib" = "xyes"])
+if test "x$enable_fadalib" = "xyes"; then
+	if test "x$has_ppl_path" = "xyes"; then
+		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
+		PPL_CPPFLAGS="-I$ppl_path/include"
+		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_PPL)
+AC_SUBST(PPL_LDFLAGS)
+AC_SUBST(PPL_CPPFLAGS)
 
 # allow either user or developer level documentation using Doxygen
 ROSE_SUPPORT_DOXYGEN
@@ -1640,7 +1775,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
 ## Setup the EDG specific stuff
 SETUP_EDG
 
-# Setup Automake conditional in Projects/DataBase/Makefile.am
 # AM_CONDITIONAL(ROSE_USE_EDG_3_3,test "$with_EDG_3_3" = yes)
 
 # Find md5 or md5sum and create a signature for ROSE binary compatibility
@@ -1825,6 +1959,12 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
+# These headers and types are needed by projects/simulator [matzke 2009-07-02]
+AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
+AC_CHECK_TYPE(user_desc,
+              AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
+              [],
+	      [#include <asm/ldt.h>])
 
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
@@ -1966,6 +2106,7 @@ src/midend/programAnalysis/CFG/Makefile
 src/midend/programAnalysis/dataflowAnalysis/Makefile
 src/midend/programAnalysis/pointerAnal/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
+src/midend/programAnalysis/variableRenaming/Makefile
 src/midend/programAnalysis/defUseAnalysis/Makefile
 src/midend/programAnalysis/dominanceAnalysis/Makefile
 src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
@@ -1997,10 +2138,7 @@ src/backend/unparser/PHPCodeGeneration/Makefile
 src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
-src/roseExtensions/SQLiteConnection/Makefile
 src/roseExtensions/sqlite3x/Makefile
-src/roseExtensions/databaseConnection/Makefile
-src/roseExtensions/databaseConnection/GlobalDatabaseConnection.C
 src/roseExtensions/dataStructureTraversal/Makefile
 src/roseExtensions/highLevelGrammar/Makefile
 src/roseExtensions/qtWidgets/Makefile
@@ -2083,9 +2221,9 @@ projects/compass/tools/compass/gui2/Makefile
 projects/compass/tools/compass/buildInterpreter/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
-projects/compass/tools/compass/tests/C_tests/Makefile
-projects/compass/tools/compass/tests/Cxx_tests/Makefile
-projects/compass/tools/compass/tests/OpenMP_tests/Makefile
+projects/compass/tools/compass/tests/Compass_C_tests/Makefile
+projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
+projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile
@@ -2097,7 +2235,6 @@ projects/binaryVisualization/Makefile
 projects/highLevelGrammars/Makefile
 projects/BabelPreprocessor/Makefile
 projects/checkPointExample/Makefile
-projects/simpleCallGraphAnalysis/Makefile
 projects/CloneDetection/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
@@ -2138,7 +2275,6 @@ projects/haskellport/Makefile
 projects/haskellport/rose.cabal.in
 projects/haskellport/Setup.hs
 projects/palette/Makefile
-projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile
 projects/assemblyToSourceAst/tests/Makefile
 projects/SemanticSignatureVectors/Makefile
@@ -2158,10 +2294,37 @@ projects/backstroke/reverseComputation/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
+projects/backstroke/normalizations/Makefile
+projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/new_pluggableReverser/Makefile
+projects/backstroke/tests/Makefile
+projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
+projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
+projects/backstroke/tests/pluggableReverserTest/Makefile
+projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
+projects/simulator/Makefile
+projects/simulator/tests/Makefile
+projects/roseToLLVM/Makefile
+projects/roseToLLVM/src/Makefile
+projects/roseToLLVM/src/rosetollvm/Makefile
+projects/roseToLLVM/tests/Makefile
+projects/roseToLLVM/Analysis/Makefile
+projects/roseToLLVM/Analysis/Alias/Makefile
+projects/roseToLLVM/Analysis/Alias/src/Makefile
+projects/roseToLLVM/Analysis/Alias/tests/Makefile
+projects/PolyhedralDependenceAnalysis/Makefile
+projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
+projects/PolyhedralDependenceAnalysis/Common/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
+projects/PolyhedralDependenceAnalysis/Schedule/Makefile
+projects/PolyhedralDependenceAnalysis/CodeGenerator/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2208,6 +2371,7 @@ tests/CompileTests/mergeAST_tests/Makefile
 tests/CompileTests/unparseToString_tests/Makefile
 tests/CompileTests/boost_tests/Makefile
 tests/CompileTests/virtualCFG_tests/Makefile
+tests/CompileTests/staticCFG_tests/Makefile
 tests/CompileTests/uninitializedField_tests/Makefile
 tests/CompileTests/sourcePosition_tests/Makefile
 tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
@@ -2259,13 +2423,15 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
 tests/roseTests/utilTests/Makefile
+tests/roseTests/variableRenamingTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
+tests/roseTests/cudaTests/Makefile
+tests/roseTests/openclTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
-tutorial/database/Makefile
 tutorial/roseHPCT/Makefile
 tutorial/outliner/Makefile
 tutorial/intelPin/Makefile
@@ -2307,6 +2473,11 @@ binaries/Makefile
 binaries/samples/Makefile
 ])
 
+# DQ (8/12/2010): We want to get permission to distribute these files as test codes.
+# tests/CompileTests/Fortran_tests/LANL_POP/Makefile
+
+# DQ (8/4/2010): Removed this directory
+# tests/CompileTests/CAF_tests/Makefile
 
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile

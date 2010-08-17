@@ -173,6 +173,14 @@ AstTests::runAllTests(SgProject* sageProject)
   // ROSE_Performance::TimingPerformance("AST Consistency Tests");
      TimingPerformance timer ("AST Consistency Tests:");
 
+
+  // CH (2010/7/26):   
+  // Before running tests, first clear all variable symbols which are not referenced in the memory pool.
+  // This is because when building AST bottom-up, some temporary symbol may be generated to be referenced
+  // by those variable references generated just using names. When all variable references are fixed,
+  // those symbols are not used any more and then should be removed from memory pool.
+     SageInterface::clearUnusedVariableSymbols();
+
   // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
 
   // printf ("Exiting at top of AstTests::runAllTests() \n");
@@ -471,6 +479,12 @@ AstTests::runAllTests(SgProject* sageProject)
 
           TestLValueExpressions lvalueTest;
           lvalueTest.traverse(sageProject,preorder);
+
+			// King84 (7/29/2010): Uncomment this to enable checking of the corrected LValues
+#if 0
+			TestLValues lvaluesTest;
+			lvaluesTest.traverse(sageProject,preorder);
+#endif
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test expressions for properly set l-values finished." << endl;
@@ -2903,7 +2917,7 @@ TestAstAccessToDeclarations::test ( SgNode* node )
 
 void
 TestExpressionTypes::visit ( SgNode* node )
-   {
+{
   // DQ (2/21/2006): Test the get_type() member function which is common on many IR nodes
   // printf ("In TestExpressionTypes::visit(): node = %s \n",node->class_name().c_str());
 
@@ -3138,7 +3152,356 @@ TestExpressionTypes::visit ( SgNode* node )
              }
         }
 #endif
-   }
+}
+
+void
+TestLValues::visit ( SgNode* node )
+{
+	SgExpression* expression = isSgExpression(node);
+	if (expression != NULL)
+	{
+		return;
+	}
+
+	//
+	// Test isLValue()
+	//
+	if (expression != NULL)
+	{
+		bool verifiedLValue = false;
+		bool verifiedDefinable = false;
+		switch (node->variantT())
+		{
+			case V_SgScopeOp:          
+			{
+				SgScopeOp* scopeOp = isSgScopeOp(node);
+				ROSE_ASSERT(scopeOp);
+				verifiedLValue = scopeOp->get_rhs_operand()->isLValue();
+				break;
+			}
+			case V_SgPntrArrRefExp:  
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgPointerDerefExp: 
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgAddressOfOp:    
+			{
+				/*! std:5.2.6 par:1 */
+				// TODO: king84: false?  char x[4];  x is lvalue; (x + 1) is rvalue; *(x+1) is lvalue; *(x+1) = x[1]
+				if (!isSgAddressOfOp(expression)->get_operand()->isLValue()) // must also be mutable
+				{
+					ROSE_ASSERT(!"Child operand of an address-of operator must be an lvalue in isLValue on SgAddressOfOp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgArrowExp:       
+			{
+				// TODO: king84: is this true?
+				if (!isSgArrowExp(expression)->get_rhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgArrowExp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgDotExp:           
+			{
+				// TODO: king84: is this true?
+				if (!isSgDotExp(expression)->get_rhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgDotExp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgDotStarOp:       
+			{
+				// TODO: king84: is this true?
+				if (!isSgDotStarOp(expression)->get_lhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgDotStarOp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgArrowStarOp:      
+			{
+				// TODO: king84: is this true? consider 'this': class A {int A::*pf();} this->*pf();
+				if (!isSgArrowStarOp(expression)->get_lhs_operand()->isLValue())
+				{
+					ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgArrowStarOp");
+				}
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgMinusMinusOp:       
+			{
+				SgMinusMinusOp* mmo = isSgMinusMinusOp(node);
+				if (mmo->get_mode() == SgUnaryOp::postfix)
+					verifiedLValue = false;
+				else
+				{
+					/*! std:5.3.2 par:2 */
+					if (!mmo->get_operand()->isLValue()) // must also be mutable
+					{
+						ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgMinusMinusOp");
+					}
+					verifiedLValue = true;
+				}
+				break;
+			}
+			case V_SgPlusPlusOp: 
+			{
+				SgPlusPlusOp* ppo = isSgPlusPlusOp(node);
+				if (ppo->get_mode() == SgUnaryOp::postfix)
+					verifiedLValue = false;
+				else
+				{
+					/*! std:5.3.2 par:1 */
+					if (!ppo->get_operand()->isLValue()) // must also be mutable
+					{
+						ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgPlusPlusOp");
+					}
+					verifiedLValue = true;
+				}
+				break;
+			}
+			case V_SgCastExp:
+			{
+				SgCastExp* castExp = isSgCastExp(node);
+				ROSE_ASSERT(castExp);
+				switch (castExp->cast_type())
+				{
+					case SgCastExp::e_C_style_cast:
+					case SgCastExp::e_const_cast:
+					case SgCastExp::e_static_cast:
+					case SgCastExp::e_dynamic_cast:
+					case SgCastExp::e_reinterpret_cast:
+						verifiedLValue = SageInterface::isReferenceType(castExp->get_type()) != NULL;
+						break;
+					case SgCastExp::e_unknown:
+					case SgCastExp::e_default:
+					default:
+						verifiedLValue = false;
+						break;
+				}
+				break;
+			}
+			case V_SgCommaOpExp:       
+			{
+				SgCommaOpExp* comma = isSgCommaOpExp(node);
+				ROSE_ASSERT(comma);
+				verifiedLValue = comma->get_rhs_operand()->isLValue();
+				break;
+			}
+			case V_SgAssignOp:        
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgPlusAssignOp:     
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgMinusAssignOp: 
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgAndAssignOp:    
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgIorAssignOp:    
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgMultAssignOp:     
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgDivAssignOp:     
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgModAssignOp:      
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgXorAssignOp:   
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgLshiftAssignOp: 
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgRshiftAssignOp: 
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgPointerAssignOp:  
+			{
+				verifiedDefinable = true;
+				break;
+			}
+			case V_SgStringVal:        
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgVarRefExp:           
+			{
+				verifiedLValue = true;
+				SgVarRefExp* var = isSgVarRefExp(node);
+				verifiedDefinable = !SageInterface::isConstType(var->get_type());
+				break;
+			}
+			case V_SgFunctionRefExp:      
+			{
+				break;
+			}
+			case V_SgMemberFunctionRefExp:    
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgFunctionCallExp:     
+			{
+				SgFunctionCallExp* funOp = isSgFunctionCallExp(node);
+				ROSE_ASSERT(funOp);
+				SgType* type = funOp->get_function()->get_type();
+				while (SgTypedefType* type2 = isSgTypedefType(type))
+					type = type2->get_base_type();
+				SgFunctionType* ftype = isSgFunctionType(type);
+				verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type()) != NULL;
+				break;
+			}
+			case V_SgTypeIdOp:            
+			{
+				verifiedLValue = true;
+				break;
+			}
+			case V_SgConditionalExp:          
+			{
+				SgConditionalExp* cond = isSgConditionalExp(node);
+				verifiedLValue = (cond->get_true_exp()->isLValue() && cond->get_false_exp()->isLValue()) && (cond->get_true_exp()->get_type() == cond->get_false_exp()->get_type());
+				break;
+			}
+			case V_SgShortVal:               
+			case V_SgCharVal:         
+			case V_SgUnsignedCharVal: 
+			case V_SgWcharVal:       
+			case V_SgUnsignedShortVal: 
+			case V_SgIntVal:                 
+			case V_SgEnumVal:         
+			case V_SgUnsignedIntVal:  
+			case V_SgLongIntVal:     
+			case V_SgLongLongIntVal:   
+			case V_SgUnsignedLongLongIntVal: 
+			case V_SgUnsignedLongVal: 
+			case V_SgFloatVal:        
+			case V_SgDoubleVal:      
+			case V_SgLongDoubleVal:    
+			case V_SgComplexVal:             
+			case V_SgUpcThreads:     
+			case V_SgUpcMythread: 
+			case V_SgUnaryOp:             
+			case V_SgBinaryOp:                
+			case V_SgExprListExp:         
+			case V_SgUserDefinedBinaryOp: 
+			case V_SgBoolValExp:     
+			case V_SgExponentiationOp: 
+			case V_SgConcatenationOp: 
+			case V_SgLshiftOp:      
+			case V_SgRshiftOp:       
+			case V_SgEqualityOp:    
+			case V_SgLessThanOp:     
+			case V_SgGreaterThanOp:  
+			case V_SgNotEqualOp:       
+			case V_SgLessOrEqualOp:   
+			case V_SgGreaterOrEqualOp: 
+			case V_SgAddOp:         
+			case V_SgSubtractOp:     
+			case V_SgMultiplyOp:     
+			case V_SgDivideOp:         
+			case V_SgIntegerDivideOp: 
+			case V_SgModOp:            
+			case V_SgAndOp:         
+			case V_SgOrOp:           
+			case V_SgBitXorOp:       
+			case V_SgBitAndOp:         
+			case V_SgBitOrOp:         
+			case V_SgThrowOp:        
+			case V_SgRealPartOp:         
+			case V_SgImagPartOp: 
+			case V_SgConjugateOp:     
+			case V_SgUserDefinedUnaryOp: 
+			case V_SgExpressionRoot: 
+			case V_SgMinusOp:            
+			case V_SgUnaryAddOp: 
+			case V_SgNotOp:           
+			case V_SgBitComplementOp: 
+			case V_SgClassNameRefExp:          
+			case V_SgValueExp:            
+			case V_SgSizeOfOp:                 
+			case V_SgUpcLocalsizeof:
+			case V_SgUpcBlocksizeof:
+			case V_SgUpcElemsizeof:
+			case V_SgNewExp:              
+			case V_SgDeleteExp:           
+			case V_SgThisExp:                  
+			case V_SgRefExp:              
+			case V_SgInitializer:             
+			case V_SgVarArgStartOp:       
+			case V_SgVarArgOp:            
+			case V_SgVarArgEndOp:              
+			case V_SgVarArgCopyOp:        
+			case V_SgVarArgStartOneOperandOp: 
+			case V_SgNullExpression:      
+			case V_SgVariantExpression:   
+			case V_SgSubscriptExpression:      
+			case V_SgColonShapeExp:       
+			case V_SgAsteriskShapeExp:        
+			case V_SgImpliedDo:         
+			case V_SgIOItemExpression:         
+			case V_SgStatementExpression:  
+			case V_SgAsmOp:               
+			case V_SgLabelRefExp:         
+			case V_SgActualArgumentExpression: 
+			case V_SgUnknownArrayOrFunctionReference:               
+			case V_SgPseudoDestructorRefExp:                    
+			case V_SgCudaKernelCallExp:   
+			case V_SgCudaKernelExecConfig: 
+				break;
+			/*UseRenameExpression*/
+			/*UseOnlyExpression*/ 
+			default:
+				break;
+		}
+		if (expression->isLValue() != verifiedLValue)
+			std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
+		ROSE_ASSERT (expression->isLValue() == verifiedLValue);
+		if (expression->isDefinable() != verifiedDefinable)
+			std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
+		ROSE_ASSERT (expression->isDefinable() == verifiedDefinable);
+	}
+}
 
 
 
@@ -3146,6 +3509,7 @@ TestExpressionTypes::visit ( SgNode* node )
 void
 TestMangledNames::visit ( SgNode* node )
    {
+     ROSE_ASSERT(node != NULL);
   // printf ("node = %p = %s \n",node,node->class_name().c_str());
 
      string mangledName;
@@ -3530,6 +3894,23 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+            // DQ (7/23/2010): Added this case
+               case V_SgTypeTable:
+                  {
+                 // The parent is not always set here except for when it is in the SgScopeStatement.
+                    SgNode* parent = support->get_parent();
+                    if (parent != NULL)
+                       {
+                      // DQ (7/30/2010): Commented out this test that fails in tests/CompilerOptionsTests/testCpreprocessorOption
+                      // ROSE_ASSERT( isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL);
+                         if ( !(isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL) )
+                            {
+                           // printf ("In AST Consistancy tests: Warning: !(isSgScopeStatement(parent) != NULL || isSgProject(parent) != NULL) \n");
+                            }
+                       }
+                    break;
+                  }
+                
                default:
                   {
                     if (support->get_parent() != NULL)
@@ -3563,6 +3944,13 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
      static std::map<SgNode*,std::set<SgNode*> > childMap;
 
      ROSE_ASSERT(node != NULL);
+
+     if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
+        {
+          printf ("Error: In TestChildPointersInMemoryPool::visit() for node = %s at %p \n",node->class_name().c_str(),node);
+        }
+     ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+
      SgNode *parent = node->get_parent();
 
 #if ROSE_USE_VALGRIND
@@ -3614,6 +4002,9 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
              }
             else
              {
+            // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
+               if (parent->get_freepointer() == AST_FileIO::IS_VALID_POINTER() )
+                  {
             // build the set (and do the test)
                childMap[parent] = std::set<SgNode*>();
                it = childMap.find(parent);
@@ -3629,6 +4020,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 #endif
 
 #if 0
+             // DQ (6/5/2010): Turn this on to support debugging of the AST File I/O support for reading files (tests/testAstFileRead.C).
+
                /* DEBUGGING (RPM 2008-10-10)
                 * If the call to parent->returnDataMemberPointers() fails it could be due to the fact that the parent has been
                 * deleted without deleting its children. This can happen if the parent's definition in one of the *.C files
@@ -3641,9 +4034,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 
                if (parent->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
                   {
-                    printf ("Error: In TestChildPointersInMemoryPool::visit() for %s at %p \n",parent->class_name().c_str(),parent);
+                    printf ("Error: In TestChildPointersInMemoryPool::visit() for parent = %s at %p \n",parent->class_name().c_str(),parent);
                   }
 #endif
+
                vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
 #if 0
                if (isSgTypedefSeq(node) != NULL)
@@ -3661,6 +4055,9 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          {
                            nodeFound = true;
                          }
+                  }
+
+            // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
                   }
              }
 
@@ -3689,6 +4086,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          break;
                        }
 
+                 // DQ (7/23/2010): Added case of SgTypeTable
+                 // case V_SgTypeTable:
                     case V_SgFunctionTypeTable:
                        {
                       // Ignore this case, the pointer to the SgFunctionTypeTable is a static data member

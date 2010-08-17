@@ -41,6 +41,7 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeDefault         , "TypeDefault",          "T_DEFAULT" );
      NEW_TERMINAL_MACRO ( PointerMemberType   , "PointerMemberType",    "T_MEMBER_POINTER" );
      NEW_TERMINAL_MACRO ( ReferenceType       , "ReferenceType",        "T_REFERENCE" );
+     NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
   // DQ (5/7/2004): Made this a terminal, was previously a nonterminal 
   // with a TemplateInstantiationType derived from it.
@@ -68,6 +69,9 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( PartialFunctionModifierType, "PartialFunctionModifierType", "T_PARTIAL_FUNCTION_MODIFIER" );
      NEW_TERMINAL_MACRO ( ArrayType           , "ArrayType",            "T_ARRAY" );
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
+
+ // FMZ (4/8/2009): Added for Cray Pointer
+     NEW_TERMINAL_MACRO ( TypeCrayPointer           , "TypeCrayPointer",            "T_CRAY_POINTER" );
 
 #if 0
      NEW_TERMINAL_MACRO ( PartialFunctionType , "PartialFunctionType",  "T_PARTIAL_FUNCTION" );
@@ -130,8 +134,8 @@ Grammar::setUpTypes ()
           TypeLongDouble   | TypeString        | TypeBool          | PointerType          |
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
-          TypeComplex      | TypeImaginary     | TypeDefault ,
-     "Type","TypeTag", false);
+          TypeComplex      | TypeImaginary     | TypeDefault       | TypeCAFTeam          |
+          TypeCrayPointer , "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -153,6 +157,10 @@ Grammar::setUpTypes ()
 
      Type.setSubTreeFunctionPrototype               ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
      Type.excludeFunctionPrototype                  ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
+
+  // FMZ (2/9/2009): Added a flag for CoArray
+     Type.setDataPrototype("bool","isCoArray","= 0",
+			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/7/2004): This functionality was added to EDG 1.4 (and has not yet been added to EDG_3.3)
   // The purpose it to allow types to be marked internally as being associated with a template 
@@ -277,6 +285,10 @@ Grammar::setUpTypes ()
      QualifiedNameType.excludeFunctionPrototype       ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      QualifiedNameType.excludeFunctionSource          ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
+  // FMZ (4/8/2009): Added for Cray Pointer
+     TypeCrayPointer.excludeFunctionPrototype   ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TypeCrayPointer.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
   // DQ (6/18/2007): Not sure if we need this.
      TemplateType.excludeFunctionPrototype      ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
 
@@ -313,8 +325,18 @@ Grammar::setUpTypes ()
      TypeLongLong.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeSignedLongLong.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeUnsignedLongLong.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     TypeCAFTeam.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     // FMZ (4/8/2009): Added for Cray pointer
+     TypeCrayPointer.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
      TypeLongDouble.setDataPrototype       ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (8/6/2010): Add string lenght to type (this tyoe is used only in Fortran support).
+     TypeString.setDataPrototype           ("SgExpression*", "index"    , "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+
      TypeBool.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PointerType.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -648,6 +670,9 @@ Grammar::setUpTypes ()
      TypeLongLong.editSubstitute( "MANGLED_ID_STRING", "L" );
      TypeSignedLongLong.editSubstitute( "MANGLED_ID_STRING", "SL" );
      TypeUnsignedLongLong.editSubstitute( "MANGLED_ID_STRING", "UL" );
+
+     TypeCAFTeam.editSubstitute( "MANGLED_ID_STRING", "s" );
+
      TypeLongDouble.editSubstitute( "MANGLED_ID_STRING", "ld" );
      TypeString.editSubstitute( "MANGLED_ID_STRING", "str" );
      TypeBool.editSubstitute( "MANGLED_ID_STRING", "b" );
@@ -678,6 +703,7 @@ Grammar::setUpTypes ()
      ArrayType.setFunctionSource           ( "SOURCE_ARRAY_TYPE", "../Grammar/Type.code");
      ModifierType.setFunctionSource        ( "SOURCE_MODIFIER_TYPE", "../Grammar/Type.code");
      QualifiedNameType.setFunctionSource   ( "SOURCE_QUALIFIED_NAME_TYPE", "../Grammar/Type.code");
+     TypeCrayPointer.editSubstitute( "MANGLED_ID_STRING", "s" );
 #endif
    }
 

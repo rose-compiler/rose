@@ -275,7 +275,10 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgFortranIncludeLine:         unparseFortranIncludeLine(stmt, info); break;
 
           case V_SgAllocateStatement:          unparseAllocateStatement(stmt, info); break;
+
           case V_SgDeallocateStatement:        unparseDeallocateStatement(stmt, info); break;
+
+          case V_SgCAFWithTeamStatement:           unparseWithTeamStatement(stmt, info); break;
 
        // Language independent code generation (placed in base class)
        // scope
@@ -1421,7 +1424,28 @@ FortranCodeGeneration_locatedNode::unparseElseWhereStmt(SgStatement* stmt, SgUnp
 void
 FortranCodeGeneration_locatedNode::unparseNullifyStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+#if 0
      printf ("Sorry, unparseNullifyStmt() not implemented \n");
+#else  //(FMZ 10/12/2009) Added unparsing nullify statement
+       curprint("NULLIFY ");
+       curprint("(");
+       SgExprListExp* dlist = (isSgNullifyStatement(stmt))->get_pointer_list();
+       SgExpressionPtrList::iterator i = dlist->get_expressions().begin();
+       while (i != dlist->get_expressions().end())
+        {
+          unparseExpression(*i,info);
+          i++;
+
+          if (i != dlist->get_expressions().end())
+             {
+               curprint(", ");
+             }
+        }
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+
+#endif
    }
 
 void
@@ -1628,6 +1652,7 @@ FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnpar
 
             // Output 2 new lines to better separate functions visually in the output
                unp->cur.insert_newline(1);
+               unp->cur.insert_newline(2); //FMZ
              }
             else
              {
@@ -2100,7 +2125,11 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
           SgType* baseType = (*p)->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE);
 #else
        // This strips off more than just a single layer of types
-          SgType* baseType = (*p)->get_type()->findBaseType();
+//          SgType* baseType = (*p)->get_type()->findBaseType();
+
+/* FMZ (11/30/2009): need to keep the modifier */
+          SgType* baseType = (*p)->get_type()->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+
 #endif
        // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 
@@ -2190,9 +2219,11 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
              }
         }
 #else
-     curprint(", ");
+     //FMZ  curprint(", ");
      if (useStmt->get_only_option() == true)
         {
+         // FMZ: move comma here
+          curprint(", ");
           curprint("ONLY : ");
 
        // printf ("Need to output use-only name/rename list \n");
@@ -3764,7 +3795,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
   // SgStorageModifier& storage = initializedName->get_storageModifier();
 
   // printf ("In unparseVarDecl(SgStatement,SgInitializedName,SgUnparse_Info): info.SkipBaseType() = %s \n",info.SkipBaseType() ? "true" : "false");
-     if (info.SkipBaseType() == false)
+     if (info.SkipBaseType() == false )
         {
        // printf ("In unparseVarDecl(): calling unparseType on type = %p = %s \n",type,type->class_name().c_str());
 
@@ -3830,6 +3861,9 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
        // printf ("variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() = %s \n",variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() == true)
              {
+               if (type->variantT()==V_SgTypeVoid) //FMZ 6/17/2009
+                  curprint("EXTERNAL");
+               else 
                curprint(", EXTERNAL");
              }
 
@@ -3923,10 +3957,25 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                curprint(", VALUE");
              }
 
+       //FMZ (4/14/2009): Cray Pointer
+          if (isSgTypeCrayPointer(type) == NULL)
           curprint(" :: ");
+          else {
+                curprint(" (");
         }
-
+        }
+      // FMZ 
+      // FIXME: currenly use "prev_decl_item" to denote the pointee
      curprint(name.str());
+
+     if (isSgTypeCrayPointer(type) != NULL) {
+          SgInitializedName *pointeeVar = initializedName->get_prev_decl_item();
+          ROSE_ASSERT(pointeeVar != NULL);
+          SgName pointeeName = pointeeVar->get_name();
+          curprint(",");
+          curprint(pointeeName.str());
+          curprint(") ");
+     }
 
   // Fortran permits alternative use of type attributes instead of explicit declaration for each variable when handle groups of variables in a declaration.
      if (info.useTypeAttributes() == false)
@@ -3941,6 +3990,15 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              }
 
         }
+
+       // FMZ (3/23/2009) after the caf translator translates the coarray to be a f90 pointer
+       // we are no longer need to keep this unparsed
+       // We actually better use intializedName to hold the flag, 
+       // since type is shared by more variables
+
+       // FMZ (need to keep this in .rmod file)
+    if (initializedName->get_isCoArray() == true && info.outputFortranModFile())
+               curprint("[*]");
 
   // Unparse the initializers if any exist
   // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
@@ -4185,6 +4243,7 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
 
        // Output 2 new lines to better separate functions visually in the output
           unp->cur.insert_newline(1);
+          unp->cur.insert_newline(2); //FMZ
         }
        else
         {
@@ -4208,7 +4267,25 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
        // printf ("Output the forward declaration only \n");
        // curprint ("! Output the forward declaration only \n ");
 
-          if (procedureHeader->isFunction() == true)
+       //FMZ (5/13/2010): If there is declaration of "result", we need to check if the 
+       //                 type of the function is already declared by the "result"
+          bool need_type = true;
+          string result_name_str;
+          
+          if (procedureHeader->get_result_name() != NULL) {
+              SgInitializedName* rslt_name = procedureHeader->get_result_name();
+              SgDeclarationStatement* rslt_decl = rslt_name->get_definition();
+
+              // check declaraion stmts
+              if (rslt_decl !=NULL) {
+                   need_type = false;
+                   result_name_str = rslt_name->get_name().str();
+              }
+   
+          } 
+
+
+          if (procedureHeader->isFunction() == true && need_type == true)
              {
             // DQ (12/18/2007): Unparse the return type
                SgFunctionType* functionType = procedureHeader->get_type();
@@ -4238,7 +4315,7 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
           unparseBindAttribute(procedureHeader);
 
        // Unparse the result(<name>) suffix if present
-          if (procedureHeader->get_result_name() != NULL)
+          if (procedureHeader->get_result_name() != NULL && procedureHeader->get_name().str() != result_name_str)
              {
                curprint(" result(");
                curprint(procedureHeader->get_result_name()->get_name());
@@ -5021,6 +5098,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_module(SgStatement* stmt
 
           ROSE_ASSERT(unp != NULL);
           unp->cur.insert_newline(1); 
+          unp->cur.insert_newline(2);  //FMZ
         }
        else
         {
@@ -5255,3 +5333,64 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
      curprint(" )");
      unp->cur.insert_newline(1); 
    }
+
+
+
+void
+FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgCAFWithTeamStatement* withTeamStmt = isSgCAFWithTeamStatement(stmt);
+     ROSE_ASSERT(withTeamStmt != NULL);
+     // print out "withteam" stmt
+     curprint("WITHTEAM ");
+    // curprint(withTeamStmt->get_teamId());
+    
+     SgVarRefExp* teamIdRef = withTeamStmt->get_teamId(); 
+
+     SgInitializedName* teamDecl = teamIdRef->get_symbol()->get_declaration();
+
+     curprint(teamDecl->get_name().str());
+
+     unp->cur.insert_newline(1); 
+
+     // unparser the body
+     SgBasicBlock * body = isSgBasicBlock(withTeamStmt->get_body());
+     ROSE_ASSERT(body != NULL);
+
+     unparseBasicBlockStmt(body, info);
+
+    // "end withteam()" stmt
+     curprint("END WITHTEAM ");
+     //curprint(withTeamStmt->get_teamId());
+     curprint(teamDecl->get_name().str());
+     unp->cur.insert_newline(1); 
+ 
+   }
+
+
+
+//FMZ (3/22/2010) added for continue line
+void
+FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
+{
+  bool is_fortran90 = (unp->currentFile !=NULL) && (unp->currentFile->get_F90_only()||
+                                                    unp->currentFile->get_CoArrayFortran_only());
+
+  int cur_str_len = str.size();
+  int len_in_line = unp->cur.current_col();
+
+  if (is_fortran90 && 
+         len_in_line  != 0  &&
+         (len_in_line + cur_str_len) > MAX_F90_LINE_LEN) {
+
+          unp->u_sage->curprint("&");
+          unp->cur.insert_newline(1);
+  }
+
+   unp->u_sage->curprint(str);
+
+}
+
+
+
+

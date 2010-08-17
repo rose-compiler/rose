@@ -162,5 +162,26 @@ dnl bugfix: dont forget to cache this variables, too
   have_GLU="$mdl_cv_have_GLU"
   have_GLX="$mdl_cv_have_GLX"
   have_glut="$mdl_cv_have_glut"
+
+# DQ (7/19/2010): Added support to detect OpenGL in code at compile time.
+  AC_DEFINE([HAVE_OPENGL],$have_GL,[Include OpenGL (non-glut) support.])
+
+  echo "GL_CFLAGS=$GL_CFLAGS"
+  echo "GL_LIBS=$GL_LIBS"
+  echo "have_GL=$have_GL"
+  echo "have_GLU=$have_GLU"
+  echo "have_GLX=$have_GLX"
+  echo "have_glut=$have_glut"
+
+# DQ (7/19/2010): Test for existence of libGL.la, if not found then turn off the OpenGL support.
+  if test "x$have_GL" = xyes; then
+     if test -e /usr/lib64/libGL.la; then
+        echo "Found /usr/lib64/libGL.la"
+     else
+        echo "Could NOT find /usr/lib64/libGL.la"
+        have_GL="no"
+     fi
+  fi
+
 ])
 dnl endof bugfix -ainan

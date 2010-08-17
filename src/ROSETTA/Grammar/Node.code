@@ -535,60 +535,30 @@ class SgSharedVector {
     typedef const _Tp&  const_reference;
     typedef size_t      size_type;
 
+    /**** Iterators ****/
+
     class iterator {
         public:
-     // DQ (8/29/2008): Added iterator support for an STL style interface exected by ROSE.
-            iterator operator++()
-              {
-                return (this->p)++;
-              }
-
-            bool operator!=( const iterator & x ) const
-              {
-                return (this->p != x->p);
-              }
-
-         // Should this be: value_type & operator*() const
-            value_type & operator*()
-              {
-                return *(this->p);
-              }
-
+            iterator operator++() { return (this->p)++; }
+            bool operator!=( const iterator & x ) const { return (this->p != x->p); }
+            value_type & operator*() const { return *(this->p); }
             iterator(pointer x) : p(x) {}
-
         private:          
             value_type *p;
     };
 
     class const_iterator {
         public:
-     // DQ (8/29/2008): Added iterator support for an STL style interface exected by ROSE.
-            const_iterator operator++()
-              {
-                return (this->p)++;
-              }
-
-            bool operator!=( const const_iterator & x ) const
-              {
-                return (this->p != x.p);
-              }
-
-         // Should this be: const value_type & operator*() const
-            value_type & operator*()
-              {
-                return *(this->p);
-              }
-
-          const_iterator(pointer x) : p(x) {}
-
+            const_iterator operator++() { return (this->p)++; }
+            bool operator!=( const const_iterator & x ) const { return (this->p != x.p); }
+	    const value_type & operator*() const { return *(this->p); }
+            const_iterator(pointer x) : p(x) {}
         private:          
             value_type *p;
     };
 
- // DQ (8/29/2008): Added const_iterator to support STL style interface exected by ROSE.
- // typedef const iterator const_iterator;
-    
     /**** Construct/Copy/Destroy ****/
+
     // constructs a vector having no data
     explicit SgSharedVector()
         : p_pool(0), p_capacity(0), p_size(0) {}
@@ -661,15 +631,11 @@ class SgSharedVector {
     }
         
     /**** Iterators ****/
-    // FIXME
-
- // DQ (8/29/2008): Added iterator support for an STL style interface exected by ROSE.
     iterator begin() { return iterator(p_pool); };
-    iterator end() { return iterator(p_pool+p_size+1); };
+    iterator end() { return iterator(p_pool+p_size); };
 
     const_iterator  begin() const { return const_iterator(p_pool); };
- // const_iterator  end() const { return const_iterator((pointer)(p_pool+size+1)); };
-    const_iterator  end() const { return const_iterator(p_pool+p_size+1); };
+    const_iterator  end() const { return const_iterator(p_pool+p_size); };
 
     /**** Element Reference ****/
     reference operator[](size_type n) {
@@ -1525,10 +1491,14 @@ void traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor );
 // This traversal helps support intrnal tools that call static member functions.
 void traverseRepresentativeNodes ( ROSE_VisitTraversal & traversal );
 
+// DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+// using values that overflow signed values of int.
 // DQ (1/2/2006): Support for computing the total number of IR nodes in use within an AST
 // computation is done based on the memory pools (so it is exact).
-int numberOfNodes();
-int memoryUsage();
+// int numberOfNodes();
+// int memoryUsage();
+size_t numberOfNodes();
+size_t memoryUsage();
 
 // DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
 //     (this function prototype is replicated in the ROSE/src/unparser/unparser.h)
@@ -2065,7 +2035,15 @@ HEADER_START
 
       /*! \brief Find the in edges of a CFG node -- internal version. */
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#if 0
+      /*! \brief Find the out edges of a CFG node from a static CFG -- internal version. */
+          virtual std::vector<SgDirectedGraphEdge*> cfgOutEdges(unsigned int index, StaticCFG::CFG* cfg)
+          { return cfg->getOutEdges(this, index); }
 
+      /*! \brief Find the in edges of a CFG node from a static CFG -- internal version. */
+          virtual std::vector<SgDirectedGraphEdge*> cfgInEdges(unsigned int index, StaticCFG::CFG* cfg)
+          { return cfg->getInEdges(this, index); }
+#endif
       /* */
 
        // DQ (1/31/2006): These must be built to be static access member functions (so they can't be built by ROSETTA).
@@ -2078,6 +2056,12 @@ HEADER_START
        //! Access function for symbol table specific to function types.
           static void set_globalFunctionTypeTable(SgFunctionTypeTable* globalFunctionTypeTable);
       /* */
+
+       // DQ (7/22/2010): Added seperate type table to support construction of unique types.
+       //! Access function for symbol table specific to non-function types.
+          static SgTypeTable* get_globalTypeTable();
+       //! Access function for symbol table specific to non-function types.
+          static void set_globalTypeTable(SgTypeTable* globalTypeTable);
 
       /* \brief Mangled name cache for improved performance of mangled name generation
           This mangle name caching is implemented to support better performance.
@@ -2170,6 +2154,9 @@ bool interproceduralControlFlowGraph = false;
 // SgFunctionTypeTable* SgNode::p_globalFunctionTypeTable = new SgFunctionTypeTable();
 SgFunctionTypeTable* SgNode::p_globalFunctionTypeTable = NULL;
 
+// DQ (7/22/2010): Added type table for non-function types (supports construction of unique types).
+SgTypeTable*         SgNode::p_globalTypeTable         = NULL;
+
 // Static variable used to hold language specific information for each IR node
 // long SgNode::language_classification_bit_vector;
 
@@ -2231,6 +2218,29 @@ void
 SgNode::set_globalFunctionTypeTable ( SgFunctionTypeTable* globalFunctionTypeTable )
    {
      p_globalFunctionTypeTable = globalFunctionTypeTable;
+   }
+
+SgTypeTable*
+SgNode::get_globalTypeTable()
+   {
+  // DQ (1/31/2006): If there is no global function type symbol table then build one
+     if (p_globalTypeTable == NULL)
+        {
+       // printf ("In SgNode::get_globalTypeTable(): p_globalTypeTable == NULL (allocating the global non-function type symbol table) \n");
+          p_globalTypeTable = new SgTypeTable();
+          ROSE_ASSERT(p_globalTypeTable != NULL);
+       // p_globalTypeTable->set_parent(this);
+       // p_globalFunctionTypeTable->set_parent(???);
+        }
+
+     ROSE_ASSERT(p_globalTypeTable != NULL);
+     return p_globalTypeTable;
+   }
+
+void
+SgNode::set_globalTypeTable ( SgTypeTable* globalTypeTable )
+   {
+     p_globalTypeTable = globalTypeTable;
    }
 
 // DQ (3/17/2007): return reference to the global mangled name map (the use
@@ -2498,8 +2508,10 @@ SgNode::set_parent ( SgNode* parent )
           ROSE_ASSERT(false);
         }
 
-  // We should not be setting the parent on SgType IR nodes
-     ROSE_ASSERT( isSgType(this) == NULL );
+  // DQ (7/26/2010): Make the pointer a valid pointer by defining that it 
+  // should point to its associated SgSymbol as used in the type table.
+  // OLD COMMENT: We should not be setting the parent on SgType IR nodes
+  // ROSE_ASSERT( isSgType(this) == NULL );
    }
 
 /*! \brief Set the parent node.

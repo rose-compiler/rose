@@ -9,7 +9,7 @@ SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
           valuePropagation  defUseAnalysis dominanceAnalysis \
           staticInterproceduralSlicing pointerAnal \
 	  annotationLanguageParser sideEffectAnalysis distributedMemoryAnalysis \
-          graphAnalysis
+          graphAnalysis variableRenaming
 
 # DQ (9/6/2005): Commented out these directories since they
 # represent code that used the older graph interface and they

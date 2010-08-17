@@ -51,7 +51,9 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
              }
 
        // case V_SgTypeVoid:             curprint(type->sage_class_name()); break;
-          case V_SgTypeVoid:             curprint("void"); break;
+       //   case V_SgTypeVoid:             curprint("void"); break;
+          //FMZ 6/17/2009 
+          case V_SgTypeVoid:              break;
 
        // DQ (8/16/2007): I don't think that SgGlobalVoid is used!
        // case V_SgTypeGlobalVoid:       curprint(type->sage_class_name()); break;
@@ -128,6 +130,11 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
        // DQ (12/1/2007): We need to unparse the kind and type parameters
           case V_SgModifierType:         unparseModifierType(type, info); break;
+
+       // FMZ (2/2/2009): Add image_team for co-array team declaration
+          case V_SgTypeCAFTeam:          curprint("TEAM"); break;
+       // FMZ (4/14/2009): Added cray pointer
+          case V_SgTypeCrayPointer:      curprint("POINTER "); break;
 
 #if 0
        // DQ (8/15/2007): I don't think these apply to Fortran.
@@ -288,6 +295,11 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 
   // dimension information
      SgExprListExp* dim = array_type->get_dim_info();
+
+  // DQ (8/5/2010): It is an error to treat an array of char as a string (see test2010_16.f90).
+#if 1
+  // if (isCharType(array_type->get_base_type()))
+  // if (false && isCharType(array_type->get_base_type()))
      if (isCharType(array_type->get_base_type()))
         {
        // a character type: must be treated specially
@@ -346,6 +358,15 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
        // unp->u_fortran_locatedNode->unparseExpression(array_type->get_dim_info(),info);
           unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
         }
+#else
+     ROSE_ASSERT(array_type->get_rank() >= 1);
+     curprint(", DIMENSION");
+
+     ROSE_ASSERT(unp != NULL);
+     ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
+
+     unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
+#endif
    }
 
 void 
