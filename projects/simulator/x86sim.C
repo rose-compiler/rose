@@ -629,7 +629,13 @@ EmulationPolicy::emulate_syscall()
             std::string filename = read_string(filename_va);
             uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
             int fd = open(filename.c_str(), flags, mode);
-            writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+
+            if( fd <= 256 ) // 256 is getdtablesize() in the simulator
+                writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+            else {
+                writeGPR(x86_gpr_ax, -EMFILE);
+                close(fd);
+            }
             syscall_leave("d");
             break;
         }
@@ -669,6 +675,26 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+                
+        case 10: { /*0xa, unlink*/
+            char sflags[255];
+            int length;
+
+            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
+            uint32_t flags = readGPR(x86_gpr_cx).known_value();
+            uint32_t mode = readGPR(x86_gpr_dx).known_value();
+
+            std::string filename = read_string(name_va);
+
+            if (debug)
+              fprintf(debug, "  unlink(%s)\n", filename.c_str());
+
+            int result = unlink(filename.c_str());
+            if (result == -1) 
+                result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
 
 	case 11: { /* 0xb, execve */
             syscall_enter("execve", "spp");
@@ -705,6 +731,18 @@ EmulationPolicy::emulate_syscall()
               ROSE_ASSERT(4==nwritten);    }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("t");
+            break;
+        }
+
+        case 14: { /*0xe, mknod*/
+            syscall_enter("mknod", "sdd");
+            uint32_t path_va = arg(0);
+            uint32_t mode = arg(1);
+            uint32_t dev = arg(2);
+            std::string path = read_string(path_va);
+            int result = mknod(path.c_str(),mode,dev);
+            writeGPR(x86_gpr_ax, result<0 ? -errno : result);
+            syscall_leave("d");
             break;
         }
 
@@ -955,6 +993,16 @@ EmulationPolicy::emulate_syscall()
             }
             writeGPR(x86_gpr_ax, 0);
             syscall_leave("d");
+            break;
+        }
+
+        case 102: { // socketcall
+            uint32_t call = readGPR(x86_gpr_bx).known_value();
+            uint32_t args = readGPR(x86_gpr_cx).known_value();
+            if (debug) {
+              fprintf(stderr, "socketcall(%d, 0x%08X)\n", call, args);
+            }
+            writeGPR(x86_gpr_ax, -ENOSYS);
             break;
         }
 
@@ -1269,6 +1317,35 @@ EmulationPolicy::emulate_syscall()
             uid_t id = getegid();
             writeGPR(x86_gpr_ax, id);
             syscall_leave("d");
+            break;
+        }
+
+        case 221: { // fcntl
+            uint32_t fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t cmd = readGPR(x86_gpr_cx).known_value();
+            uint32_t other_arg = readGPR(x86_gpr_dx).known_value();
+            int result = -EINVAL;
+            if (debug)
+                fprintf(debug, "fcntl(%d, %d, %lu) --> ", fd, cmd, other_arg);
+            switch (cmd) {
+                case F_DUPFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                case F_SETFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                default: {
+                    if (debug)
+                        fprintf(debug, "Unhandled fcntl %d on fd %d\n", cmd, fd);
+                    result = -EINVAL;
+                    break;
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
             break;
         }
 
