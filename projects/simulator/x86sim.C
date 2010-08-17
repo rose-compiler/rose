@@ -677,22 +677,14 @@ EmulationPolicy::emulate_syscall()
         }
                 
         case 10: { /*0xa, unlink*/
-            char sflags[255];
-            int length;
-
-            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
-            uint32_t flags = readGPR(x86_gpr_cx).known_value();
-            uint32_t mode = readGPR(x86_gpr_dx).known_value();
-
-            std::string filename = read_string(name_va);
-
-            if (debug)
-              fprintf(debug, "  unlink(%s)\n", filename.c_str());
-
+            syscall_enter("unlink", "s");
+            uint32_t filename_va = arg(0);
+            std::string filename = read_string(filename_va);
             int result = unlink(filename.c_str());
             if (result == -1) 
                 result = -errno;
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
@@ -997,12 +989,10 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 102: { // socketcall
-            uint32_t call = readGPR(x86_gpr_bx).known_value();
-            uint32_t args = readGPR(x86_gpr_cx).known_value();
-            if (debug) {
-              fprintf(stderr, "socketcall(%d, 0x%08X)\n", call, args);
-            }
+            syscall_enter("socketcall", "dp");
+            //uint32_t call=arg(0), args=arg(1);
             writeGPR(x86_gpr_ax, -ENOSYS);
+            syscall_leave("d");
             break;
         }
 
@@ -1321,12 +1311,9 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 221: { // fcntl
-            uint32_t fd = readGPR(x86_gpr_bx).known_value();
-            uint32_t cmd = readGPR(x86_gpr_cx).known_value();
-            uint32_t other_arg = readGPR(x86_gpr_dx).known_value();
+            syscall_enter("fcntl", "ddp");
+            uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
             int result = -EINVAL;
-            if (debug)
-                fprintf(debug, "fcntl(%d, %d, %lu) --> ", fd, cmd, other_arg);
             switch (cmd) {
                 case F_DUPFD: {
                     result = fcntl(fd, cmd, (long)other_arg);
@@ -1339,13 +1326,12 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
                 default: {
-                    if (debug)
-                        fprintf(debug, "Unhandled fcntl %d on fd %d\n", cmd, fd);
                     result = -EINVAL;
                     break;
                 }
             }
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
@@ -1564,9 +1550,9 @@ main(int argc, char *argv[])
     Semantics t(policy);
 
 #if 1 /*DEBUGGING [RPM 2010-08-06]*/
-    policy.trace_insn = false;
+    policy.trace_insn = true;
     policy.trace_syscall = true;
-    policy.trace_mmap = false;
+    policy.trace_mmap = true;
 #endif
 
     /* Parse command-line */
