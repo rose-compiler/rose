@@ -98,7 +98,17 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
           foreach (SgDirectedGraphEdge* edge, sgEdges) {
             SgGraphNode* sourceGN = edge->get_from();
             SgNode* source = sourceGN->get_SgNode();
-            makeEdge(CFGNode(funDef, idx), CFGNode(source, 3), outEdges);
+
+            // Determine the index to which the interprocedural edge returns. TODO make member function of SgNode ?
+            unsigned int index;
+            if (source->variantT() == V_SgConstructorInitializer)
+              index = SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX + 1;
+            else if (source->variantT() == V_SgFunctionCallExp)
+              index = SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX + 1;
+            else
+              ROSE_ASSERT(!"Error: unable to determine interprocedural return index");
+
+            makeEdge(CFGNode(funDef, idx), CFGNode(source, index), outEdges);
           }
         } else 
           outEdges = n.outEdges();
