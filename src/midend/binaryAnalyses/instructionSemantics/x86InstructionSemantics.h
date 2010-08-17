@@ -36,6 +36,11 @@ struct X86InstructionSemantics {
 
     struct Exception {
         Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+            o <<"instruction semantics: " <<e.mesg;
+            if (e.insn) o <<" [" <<unparseInstructionWithAddress(e.insn) <<"]";
+            return o;
+        }
         std::string mesg;
         SgAsmInstruction *insn;
     };
@@ -836,6 +841,35 @@ struct X86InstructionSemantics {
                     }
                     case 4: {
                         Word(32) result = policy.invert(read32(operands[0]));
+                        write32(operands[0], result);
+                        break;
+                    }
+                    default:
+                        throw Exception("size not implemented", insn);
+                        break;
+                }
+                break;
+            }
+
+            case x86_xadd: {
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
+                switch (numBytesInAsmType(operands[0]->get_type())) {
+                    case 1: {
+                        Word(8) result = doAddOperation<8>(read8(operands[0]), read8(operands[1]), false, policy.false_());
+                        write8(operands[1], read8(operands[0]));
+                        write8(operands[0], result);
+                        break;
+                    }
+                    case 2: {
+                        Word(16) result = doAddOperation<16>(read16(operands[0]), read16(operands[1]), false, policy.false_());
+                        write16(operands[1], read16(operands[0]));
+                        write16(operands[0], result);
+                        break;
+                    }
+                    case 4: {
+                        Word(32) result = doAddOperation<32>(read32(operands[0]), read32(operands[1]), false, policy.false_());
+                        write32(operands[1], read32(operands[0]));
                         write32(operands[0], result);
                         break;
                     }
@@ -1955,8 +1989,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_ret: {
-                if (operands.size()!=0)
-                    throw Exception("instruction must have one operand", insn);
+                if (operands.size()>1)
+                    throw Exception("instruction must have zero or one operand", insn);
                 if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
                     throw Exception("size not implemented", insn);
                 Word(32) extraBytes = (operands.size() == 1 ? read32(operands[0]) : number<32>(0));
@@ -2450,10 +2484,10 @@ struct X86InstructionSemantics {
                 break;
             }
         }
-    } catch(const Exception&) {
-        throw;
-    } catch(...) {
-        throw Exception("instruction translation failed", insn);
+    } catch(Exception e) {
+        if (!e.insn)
+            e.insn = insn;
+        throw e;
     }
 #endif
 

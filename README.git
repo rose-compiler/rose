@@ -1,11 +1,11 @@
 
-##################### How to use smgit2 #####################
+##################### How to use smgit #####################
 
 git pull not as well supported as git fetch and get merge used directly:
-   smgit2 fetch
-   smgit2 merge origin/master
+   smgit fetch
+   smgit merge origin/master
 
-Alternative to smgit2 to checkin:
+Alternative to smgit to checkin:
    cd to EDG dir
    git commit -a -m " "
    git push origin/<YOUR BRANCH>
@@ -15,6 +15,7 @@ Alternative to smgit2 to checkin:
    cd TOPDIR
    git commit -a -m " "
    git push origin <YOUR BRANCH>
+
 
 #################### Sources of information on git ####################
 
@@ -27,10 +28,10 @@ We will try to give you a fast introduction to git, but you should also consider
 
 The first step of using a ROSE git repository is to create a local copy 
     
-     git clone /usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
+     git clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
 
 on laptop use:
-     git clone ssh://dquinlan@tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
+     git clone ssh://dquinlan@tux281.llnl.gov/nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
 
 
 
@@ -65,12 +66,12 @@ X     git push origin matt
       git checkout master
       git pull
 
-    < must edit /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive 
+    < must edit /nfs/casc/overture/ROSE/git/ROSE.git/hooks/pre-receive 
       file (bottom) to uncomment access control. >
 
       git push origin master:refs/heads/dj-main-test
 
-    < change back the file: /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive >
+    < change back the file: /nfs/casc/overture/ROSE/git/ROSE.git/hooks/pre-receive >
 
 
 ############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
@@ -278,7 +279,7 @@ and the old one has been saved (and should be accessible for a short while).
 
    1) Build a new local repository:
       a. build the local repository:
-           "git clone /usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc"
+           "git clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc"
       b. build a local branch to match a branch in the remote repository:
            "git branch git-dq-main-rc --track origin/git-dq-main-rc"
       c. checkout that local branch (switch to it):

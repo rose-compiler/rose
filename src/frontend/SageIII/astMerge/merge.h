@@ -1,3 +1,5 @@
+#ifndef MERGE_H
+#define MERGE_H
 
 
 // #include "colorTraversal.h"
@@ -27,4 +29,12 @@ void deleteNodes ( std::set<SgNode*> & listToDelete );
 void deleteSetErrorCheck( SgProject* project, const std::set<SgNode*> & listToDelete );
 
 void mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes = false );
+
+
+// DQ (7/3/2010): Implementation of alternative appraoch to define the list 
+// of redundant nodes to delete based on the detection of nodes disconnected 
+// from the modified AST after the merge.
+std::set<SgNode*> buildDeleteSet( SgProject* project );
+
+#endif // MERGE_H
 

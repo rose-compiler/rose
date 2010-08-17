@@ -1,35 +1,46 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS = eventDetection
+SUBDIRS = 
 
-# This file does not compile using ROSE (skip testing it for now)
-if !ROSE_USING_ROSE_ANALYSIS
-   bin_PROGRAMS = reverse 
-   reverse_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C
-endif
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
-INCLUDES = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# Build a library of all the reverser code
+noinst_LIBRARIES =  libBackstrokeReverser.a
 
-EXTRA_DIST = eventReverser.h facilityBuilder.h test
+libBackstrokeReverser_a_DEPENDENCIES = 
+libBackstrokeReverser_a_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C stateSaver.C 
+libBackstrokeReverser_a_includedir = $(includedir)/backstroke
+libBackstrokeReverser_a_include_HEADERS = eventReverser.h facilityBuilder.h stateSaver.h
+
+
+# Build the reverse code generator
+noinst_PROGRAMS = reverse stateSaving 
+
+reverse_SOURCES = reverseCodeGeneratorMain.C
+reverse_LDADD =  libBackstrokeReverser.a $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+stateSaving_SOURCES = stateSavingMain.C
+stateSaving_LDADD = libBackstrokeReverser.a $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+EXTRA_DIST = 
 
 CLEANFILES = 
-
-include_HEADERS =
 
 ALL_TESTCODES =
 
 TEST_Objects=test0.C test1.C test2.C test3.C 
 
 $(TEST_Objects): reverse
-	@cp $(srcdir)/test/$(@:.o=.C) $(@:.o=.C)
+	@cp $(srcdir)/reverseCodeTest/$(@:.o=.C) $(@:.o=.C)
 #./reverse -I$(srcdir)/test -c $(@:.o=.C) -DROSE_LANGUAGE_MODE=0       		
-	./reverse -I$(srcdir)/test -c $(@:.o=.C)      		
-	@g++ -I$(srcdir)/test rose_$(@:.o=.C) -o $(@:.o=.C).o -w
+	./reverse -I$(srcdir)/reverseCodeTest -c $(@:.o=.C)
+	@g++ -I$(srcdir)/reverseCodeTest rose_$(@:.o=.C) -o $(@:.o=.C).o -w
 	./$(@:.o=.C).o		
 
 check-local:
-#@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/reverseComputation: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
+
+mytest:
+	@$(MAKE) $(TEST_Objects)

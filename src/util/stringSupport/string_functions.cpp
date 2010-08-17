@@ -9,7 +9,7 @@
 #include "rose_msvc.h"
 
 // DQ (1/21/2010): Use this to turn off the use of #line in ROSETTA generated code.
-// #define SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+#define SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
 
 
 #if !ROSE_MICROSOFT_OS
@@ -459,8 +459,9 @@ StringUtility::numberToString ( size_t x )
    }
 #endif
 
+// DQ (8/10/2010): Changed to take parameter as const.
 string
-StringUtility::numberToString ( void* x )
+StringUtility::numberToString ( const void* x )
    {
   // Build a string representing the dimensionOfArrayStatement
      char numberString[128];

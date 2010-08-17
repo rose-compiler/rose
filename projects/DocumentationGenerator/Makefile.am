@@ -77,7 +77,7 @@ testDocsROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documenta
 
 testDocsROSE_small: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) removeHashLineDirectivesFromGeneratedCode
-	$(VALGRIND) ./createDocumentationForROSE -rose:verbose 2 --edg:no_warnings -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(srcdir)/roseLite.C
+	$(VALGRIND) ./createDocumentationForROSE -rose:verbose 0 --edg:no_warnings -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(srcdir)/roseLite.C
 	@echo "Due to possible bug in ROSE, a few header files are generated ... remove them"
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 	@echo "Overwrite a copy of the test files in $(top_srcdir)/docs/testDoxygen_copy"

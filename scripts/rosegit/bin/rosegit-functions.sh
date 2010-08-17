@@ -33,7 +33,7 @@ rosegit_elapsed_human () {
 
 # Configure certain environment variables:
 #   Adjust LD_LIBRARY_PATH so we can run executables without installing them and without going through the libtool shell script.
-#   This allows us to run debuggers on the uninstalled executables.
+#   This allows us to run debuggers on the uninstalled executables.  DYLD_LIBRARY_PATH is for Darwin.
 rosegit_environment () {
     [ -d "$ROSEGIT_SRC" ] || rosegit_die "no source directory"
     [ -d "$ROSEGIT_BLD" ] || rosegit_die "no build directory"
@@ -252,5 +252,5 @@ rosegit_show_environment () {
 	echo "    boost: not in /usr/include (see configure output for version)"
     fi
     echo "Configuration:"
-    eval "perl -e 'print qq{    \$_\n} for @ARGV' -- $ROSEGIT_CONFIGURE"
+    eval "perl -e 'print qq{    \$_\n} for sort {(split q{=},\$a)[0] cmp (split q{=},\$b)[0]} @ARGV' -- $ROSEGIT_CONFIGURE"
 }

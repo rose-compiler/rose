@@ -60,7 +60,7 @@ class_function_pairs event_detect()
 		    {
 			string class_name, func_name;
 			//int args_num = macro->arguments.size() - 3;
-			for(int i = 1; i < macro->arguments.size(); ++i)
+			for(size_t i = 1; i < macro->arguments.size(); ++i)
 			{
 			    for(token_list_container::iterator tk = macro->arguments[i].begin();
 				    tk != macro->arguments[i].end(); ++tk)
@@ -105,7 +105,7 @@ void visitorTraversal::visit(SgNode* n)
 	if(SgClassDefinition* class_def = memfunc_decl->get_class_scope())
 	{
 	    string class_name = class_def->get_declaration()->get_name().getString();
-	    for(int i = 0; i < class_func.size(); ++i)
+	    for(size_t i = 0; i < class_func.size(); ++i)
 	    {
 		// check if the class name and function name are both the same to names detected
 		if(class_func[i].first == class_name && 

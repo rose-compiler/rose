@@ -271,7 +271,15 @@ CustomMemoryPoolDOTGenerationData::addEdge(EdgeType e)
 void
 CustomMemoryPoolDOTGenerationData::skipNode(SgNode* n)
    {
+#if 1
+  // This is the normal (non-debugging) mode.
      skipNodeList.insert(n);
+#else
+  // DQ (7/26/2010): For debugging we want to include the frontend IR nodes so that we can debug the type table.
+     printf ("Avoid skipping Frontend specific IR nodes to support debugging: avoid skipping %p = %s \n",n,n->class_name().c_str());
+     if (isSg_File_Info(n) != NULL)
+          skipNodeList.insert(n);
+#endif
   // visitedNodes.insert(n);
    }
 
@@ -1687,38 +1695,57 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         }
 #endif
    }
+
+
 /* Initialize the filters for the default case */
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags()
 {
   setDefault();
 }
 
+// DQ (7/4/2010): This destructor does not appear to have been implemented!
+CustomMemoryPoolDOTGeneration::s_Filter_Flags::~s_Filter_Flags()
+   {
+  // Nothing to do here!
+   }
+
 void
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::setDefault()
-{
+   {
   // Initial values for the filters
-  m_asmFileFormat = 0;         /*asmFileFormatFilter()*/
-  m_asmType = 0;               /* asmTypeFilter()*/
-  m_binaryExecutableFormat = 0;/*binaryExecutableFormatFilter()*/
-  m_commentAndDirective = 1;   /* commentAndDirectiveFilter()*/
-  m_ctorInitializer = 0;       /*ctorInitializerListFilter()*/
+     m_asmFileFormat = 0;         /*asmFileFormatFilter()*/
+     m_asmType = 0;               /* asmTypeFilter()*/
+     m_binaryExecutableFormat = 0;/*binaryExecutableFormatFilter()*/
+     m_commentAndDirective = 1;   /* commentAndDirectiveFilter()*/
+     m_ctorInitializer = 0;       /*ctorInitializerListFilter()*/
 
-  m_default = 1;              /* defaultFilter ()*/
-  m_defaultColor = 1;         /*defaultColorFilter()*/
-  m_edge    = 1;              /* edgeFilter ()*/
-  m_emptySymbolTable = 0;    /*emptySymbolTableFilter()*/
-  m_expression = 0 ;          /* expressionFilter ()*/
+     m_default = 1;              /* defaultFilter ()*/
+     m_defaultColor = 1;         /*defaultColorFilter()*/
+     m_edge    = 1;              /* edgeFilter ()*/
+     m_emptySymbolTable = 0;    /*emptySymbolTableFilter()*/
+     m_expression = 0 ;          /* expressionFilter ()*/
 
-  m_fileInfo =  1;             /* fileInfoFilter ()*/
-  m_frontendCompatibility = 1;/* frontendCompatibilityFilter()*/
-  m_symbol     = 0;           /*symbolFilter ()*/
-  m_type    = 0;              /* typeFilter ()*/
-  m_variableDeclaration = 0;  /*variableDeclarationFilter()*/
+     m_fileInfo =  1;             /* fileInfoFilter ()*/
 
-  m_variableDefinition = 0 ;  /*variableDefinitionFilter()*/
+  // DQ (7/25/2010): Temporary testing (debugging).
+  // m_frontendCompatibility = 1;/* frontendCompatibilityFilter()*/
+     m_frontendCompatibility = 0;/* frontendCompatibilityFilter()*/
 
-  m_noFilter = 0;               /* no filtering */
-}
+     m_symbol     = 0;           /*symbolFilter ()*/
+     m_type    = 0;              /* typeFilter ()*/
+     m_variableDeclaration = 0;  /*variableDeclarationFilter()*/
+
+     m_variableDefinition = 0 ;  /*variableDefinitionFilter()*/
+
+#if 1
+  // This is the normal (non-debugging) mode.
+     m_noFilter = 0;               /* no filtering */
+#else
+  // DQ (7/25/2010): Temporary testing (debugging).
+     printf ("Disable all filtering as a test! \n");
+     m_noFilter = 1;               /* no filtering */
+#endif
+   }
 
 void CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_filter_flags ()
 {
@@ -1746,6 +1773,7 @@ void CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_filter_flags ()
 
   printf ("\t m_noFilter = %d \n", m_noFilter);
 }
+
 /* Construct an instance from */
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags(std::vector <std::string>& argvList)
 {
@@ -2276,7 +2304,15 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
   // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
 	 extern set<SgNode*> getSetOfFrontendSpecificNodes();
 #endif
+
+#if 1
+  // Normally we want to skip the frontend IR nodes so avoid cluttering the graphs for users.
      set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
+#else
+  // DQ (7/26/2010): We want to include the frontend IR nodes so that we can debug the type table.
+     printf ("Generating an empty set of Frontend specific IR nodes to skip \n");
+     set<SgNode*> skippedNodeSet;
+#endif
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet, flags);
    }
 

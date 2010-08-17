@@ -40,8 +40,8 @@ developers who are comfortable with using git.
 Otherwise, external developers are suggested to use our external SVN repository as
 described in Section~\ref{gettingStarted::svn}.
 
-We have two git repositories for ROSE: an internal one at LLNL and an external
-one hosted at \url{http://www.rosecompiler.org}. These two repositories share histories so that
+We have two git repositories for ROSE: an internal one at LLNL (\textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}) and an external
+one hosted at \url{http://www.rosecompiler.org/rose.git}. These two repositories share histories so that
 you can work closely with us as an external developing using our latest work. 
 Some tips for using them are gathered in this section.
 
@@ -68,17 +68,12 @@ each developer should first clone his/her own repository from a shared repositor
 Then a feature or a bugfix can be developed in isolation within the private repository.
 He can create any number of private branches. Each branch should relate to a
 feature that this developer is working on and be relatively short-lived. 
-%and offline (can commit without active connection with the shared repository).
 The developer can commit changes to the private repository without
 maintaining an active connection to 
 the shared repository.  When work is finished and locally tested, he can push all accumulated commits within the private repository 
 to his branch within the shared repository. 
 We create a dedicated branch within the shared repository for each developer and establish access control of the
 branch so only an authorized developer can push commits to a particular branch of the shared repository. 
-%will submit the code so that it can be considered for
-%integration as soon as possible. When a developer submits a code for integration
-%it will be tested by our test suite and integrated into our master branch if
-%it passes all tests.
 
 Any commits from a developer's private repository will not be immediately merged to the master branch
 of the shared repository. In fact, we have access control to prevent any developer from pushing commits 
@@ -90,15 +85,11 @@ If a single test fails, Hudson will report the error and the responsible develop
 his private repository and push improved commits again. 
 As a result, the master branch of the shared git repository is always stable and can be readily released.  
 
-%We provide developers with a git repository where a repository
-%where 
-%the actual development is done on a develop copy of this repository and a developer
-%will push to a branch when his work is ready for integration. When a developer push
-%to the ROSE git repository his work will be automatically added to a queue of
-%jobs that will be tested by Hudson.
+
 \subsection{The Internal Repository}
 
-The ROSE internal repository (the shared git repository shown in Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/usr/casc/overture/ROSE/git/ROSE.git}.
+The ROSE internal repository (the shared git repository shown in
+Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/nfs/casc/overture/ROSE/git/ROSE.git}.
 It keeps track of the latest work of each
 internal developer (who have an account with LLNL). Each
 developer will make a complete local copy of the repository which he can use to
@@ -150,17 +141,19 @@ Please configure this copy with your name and email before starting work.
 
 \item Configuration:
   \begin{itemize}
-          \item set your name \textit{git config --global user.name 'John Doe' }
-	  \item set your email \textit{git config --global user.email johndoe@example.com}
-	  \item tells git-branch and git-checkout to setup new branches so that git-pull(1)
-    will appropriately merge from that remote branch \textit{git config branch.autosetupmerge true}
+          \item Set your name: \textit{git config --global user.name 'John Doe' }
+	  \item Set your email: \textit{git config --global user.email johndoe@example.com}
+	  \item Tell git-branch and git-checkout to setup new branches so that git-pull(1)
+    will appropriately merge from that remote branch: \textit{git config branch.autosetupmerge true}
           \item This setting tells git to convert the newlines to the system’s standard
 	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
+	 \item Tell git to automatically push to the remotely tracked branch: 
+	 	\textit{git config push.default 'tracking'}
    \end{itemize}       
 \item Get content in the repository:
   \begin{itemize}
           \item Clone a private repository from the shared repository: \textit{git clone 
-          file:///usr/casc/overture/ROSE/git/ROSE.git} . A directory named ROSE will show up after this 
+          file:///nfs/casc/overture/ROSE/git/ROSE.git} . A directory named ROSE will show up after this 
            command. Type \textit{cd ROSE} to operate within the private repository from now on.
            \item Retrieve EDG source files: we use a separated git
            repository for EDG to protect its proprietary source files. The
@@ -191,27 +184,60 @@ Please configure this copy with your name and email before starting work.
 	  \item add all files under the current directory to the project \textit{git add .}
 	  \item remove $<$file$>$ from the project \textit{git rm $<$file$>$}
    \end{itemize}     
-
-\item Pulling and Merging: It is recommended to synchronize the master branches often and merge new commits from others to 
-   your local branch.
+\item Committing : intermediate changes can be committed locally. You don't have to have active connection to the shared repository to do your daily work at all. 
    \begin{itemize}
-          \item Synchronize a local master branch: \textit{git checkout master; git pull origin master}
-          \item Merge new commits to your local branch: \textit{git checkout branch-name; git merge master}
+          \item Commit changes to the local repository: \textit{git commit -a} 
+   \end{itemize}   
+\item Pulling and Merging the shared master branch: It is recommended to synchronize the master branches often and merge new commits from others to  your local branch. 
+   \begin{itemize}
+          \item Switch to and synchronize a local master branch: \textit{git checkout master; git pull origin master}
+          \item Don't forget to update the link to the EDG submodule: \textit{git submodule update}
+          \item Switch to your local branch and merge with local master: \textit{git checkout your-local-branch-name; git merge master}
+    \item Alternatively, you can stay in your local branch and directly pull the remote master and update the EDG submodule: 
+           \textit{git pull origin master; git submodule update}
    \end{itemize}   
 
-
-\item Committing and pushing: intermediate changes can be committed locally. A set of local commits can be pushed to the central repository when ready.
+\item Pushing: A set of local commits can be pushed to the central repository when ready.
+It is highly recommended to pull and merge the shared master branch before doing this step.
    \begin{itemize}
-          \item Commit changes to the local repository: \textit{git commit -a} . You can commit your changes as often as you like here. 
-          \item Push all commits of the current local branch to a branch of
-          the central repository:\\ \textit{git push origin
-          HEAD:branch-name} . Please always try to synchronize with the
+          \item Push all commits of the current local branch to a branch of the central repository:\\ \textit{git push origin HEAD:branch-name}
+ Please always try to synchronize with the
           remote master branch (using git pull and merge as mentioned
           above) before pushing commits. \textbf{Note}: It is highly recommended not to push too often than
           needed since each git push will trigger a large set of
           Hudson tests which tax our own workstations and many other test machines.
-   \end{itemize}   
-\item Info on the repository:
+
+          \item Or if you have set git to automatically push the current branch to the remotely tracked branch by  \textit{git config push.default 'tracking'},
+      you can just type \textit{git push}. 
+
+   \end{itemize}
+
+\item Modifying the EDG submodule. In rare cases, you may have to modify the EDG files within the submodule and update the link between ROSE and the EDG module. Please be {\bf EXTREMELY cautious} when you have to do this and always
+ask for help from senior LLNL developers for your first attempt. Here are some brief instructions about how to do this right.
+     \begin{itemize}
+
+  \item First, make sure you have tried to pull the content from the EDG submodule. You can run \textit{git submodule init; git submodule update} again from the top level of your private ROSE git repository to be safe. 
+  \item By default, the EDG submodule files checked out via \textit{git submodule init; git submodule update} is not on any branch (You can verify this by typing \textit{git status} within \textit{src/frontend/CxxFrontend/EDG}.  
+You can create a local branch based on the current content before you modify the EDG related files. Just type \textit{git checkout -b local-branch-name} under \textit{src/frontend/CxxFrontend/EDG} so you can create a local branch off the current content and switch to the branch.
+   \item You can then modify EDG files and commit changes to your private repository of the submodule. 
+         You should also be able to push your commits to the remote EDG repository.
+         Again, always be sure do all commits and push within \textit{src/frontend/CxxFrontend/EDG} for EDG related changes. 
+         Similar to the ROSE git repository, we have access control to the git repository of the EDG submodule. You have to have a remote branch there 
+         and can only push your commits to your own remote branch. Please ask senior developers to add the remote branch if it does
+         not exist.   
+   \item In the end, change ROSE git repository's link to the changed submodule. 
+  \begin{verbatim}
+  $ cd ROSE/src/frontend/CxxFrontend  # Go to submodule's parent repository's path 
+  $ git add EDG  # Do not type 'git add EDG/', 
+                 # which will add all files under EDG/ to the super project!!!
+  $ git commit -m "Updated submodule EDG."
+  $ git push   # assuming you are on your local ROSE branch tracking your own remote branch 
+               # and have set up the push mode by: git config push.default 'tracking'
+  \end{verbatim}  
+   
+   \end{itemize}
+
+\item Get more info on the repository:
    \begin{itemize}
           \item show a diff of the changes made since your last commit \textit{git diff}
 	  \item show files added to the staging area, files with changes, and untracked files \textit{git status}
@@ -517,20 +543,20 @@ Please save it to your own .subversion/config before committing files.
 \item List content in the repository:
   \begin{itemize}
           \item list root info: \textit{svn list
-          file:///usr/casc/overture/ROSE/svn/ROSE}
+          file:///nfs/casc/overture/ROSE/svn/ROSE}
           \item list all branches: \textit{svn list
-          file:///usr/casc/overture/ROSE/svn/ROSE/branches}
+          file:///nfs/casc/overture/ROSE/svn/ROSE/branches}
           \item list all tags: \textit{svn list
-          file:///usr/casc/overture/ROSE/svn/ROSE/tags} 
+          file:///nfs/casc/overture/ROSE/svn/ROSE/tags} 
    \end{itemize}       
 \item Check out something:
    \begin{itemize}
           \item the main trunk: \textit{svn co
-          file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE rose-svn} 
+          file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE rose-svn} 
           \item a tag: \textit{svn co
-          file:///usr/casc/overture/ROSE/svn/ROSE/tags/tag-name}
+          file:///nfs/casc/overture/ROSE/svn/ROSE/tags/tag-name}
           \item a branch: \textit{svn co
-          file:///usr/casc/overture/ROSE/svn/ROSE/branches/branch-name} 
+          file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name} 
           \item Either of these can be used on a separate machine (not CASC
           or LC) with LLNL VPN access by changing \textit{file:///} to
           \textit{svn+ssh://username@hostname/}. 
@@ -559,14 +585,14 @@ contribution is from r4 to r5,
 \item branches   
     \begin{itemize}
     \item Add a new branch based on the head of the main trunk:\\
-    \textit{svn cp file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE file:///usr/casc/overture/ROSE/svn/ROSE/branches/branch-name}
+    \textit{svn cp file:///nfs/casc/overture/ROSE/svn/ROSE/trunk/ROSE file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name}
     \item Delete a branch: \\
-    \textit{svn delete file:///usr/casc/overture/ROSE/svn/ROSE/branches/branch-name}
+    \textit{svn delete file:///nfs/casc/overture/ROSE/svn/ROSE/branches/branch-name}
     \end{itemize}
 
 \item Email notification: A perl script named post-commit (under
 svn/text/hooks or svn/ROSE/hooks) keeps our email recipient list.\\
-          \textit{/usr/casc/overture/ROSE/svn/ROSE/hooks/post-commit}
+          \textit{/nfs/casc/overture/ROSE/svn/ROSE/hooks/post-commit}
 \item To upgrade, do \textit{svn switch} to new tag URL
 \item Building distributions of ROSE MUST be done with \textit{svn export}. Otherwise, .svn directories are copied into the distribution trees. 
 
@@ -4891,3 +4917,118 @@ function (located in sageSupport.C):
 Also, don't forget to document your option in SgFile::usage() (also in sageSupport.C).
 
 
+\section{Managing Hudson}
+\subsection{Upgrading and Customizing Hudson}
+ROSE uses customized versions of Hudson and the Git plugin that display Git branch names
+in the build list. This section describes the steps necessary to patch
+and build the latest version of Hudson and the Git plugin from source.
+Building both requires Apache Maven $\geq$ 2.2.1. 
+
+\begin{enumerate}
+\item{
+Changes to Hudson and the Git plugin are tracked in a repository located
+at \texttt{/nfs/casc/overture/ROSE/git/hudson-rose.git}. Clone
+this repository, which will be referred to as \texttt{\$HUDSONROSE}. In
+\texttt{\$HUDSONROSE}, run 
+\begin{quote}
+\texttt{git submodule update -{}-init}
+\end{quote}
+to initialize the appropriate Hudson and Git plugin submodules.  
+}
+\item{
+To patch the latest version of Hudson, enter \texttt{\$HUDSONROSE/hudson}
+and retrieve the latest version of Hudson from the developers' site. With Git,
+this is accomplished by:
+  \begin{quote}
+  \texttt{git remote add github git://github.com/kohsuke/hudson.git \\
+    git fetch github \\
+    git checkout -b b1.370\_custom 1.370
+  }
+  \end{quote}
+This will create a new branch (named \texttt{b1.370\_custom}) in your
+local repository that is identical to the tagged release for Hudson
+version 1.370. Notes: 
+  \begin{itemize}
+  \item{Replace \texttt{1.370} with the latest version number.}
+  \item{The GitHub URL may change as development progresses.
+Verify that you are using the appropriate URL.}
+  \item{For developers within LLNL, it may be necessary to open ports in order to
+clone the remote repository. This can be accomplished by submitting an Egress 
+Open Request to \texttt{cspservices.llnl.gov}.}
+  \end{itemize}
+}
+\item{
+Next, apply the custom patches to the current branch. Since the number
+of patches is small (five at present time), it is easier to
+cherry-pick them from previously customized versions of Hudson. Use your
+favorite repository browser to locate the required changes. If the
+changes are represented by commits \texttt{\$PATCH1} and
+\texttt{\$PATCH2}, the following applies them to the latest version of
+Hudson: 
+  \begin{quote}
+  \texttt{git cherry-pick --no-commit \$PATCH1} \\
+  \texttt{git cherry-pick --no-commit \$PATCH2} \\
+  \texttt{git commit}
+  \end{quote}
+}
+
+\item{
+Next, patch the Git plugin by changing to the
+\texttt{\$HUDSONROSE/hudson-git} directory and following the same
+procedure above.
+}
+
+\item{
+To build Hudson and the plugin, return to the \texttt{\$HUDSONROSE}
+directory. Verify that patches
+in \texttt{\$HUDSONROSE/patches} are still required; if not, disable
+them with:
+  \begin{quote}
+  \texttt{git mv \$PATCHPATH\{,-disabled\}}
+  \end{quote}
+Run the customized build script that applies patches, calls Maven, and
+copies the resulting \texttt{hudson.war} and \texttt{git.hpi} to
+\texttt{\$HUDSONROSE}:
+  \begin{quote}
+  \texttt{./build}
+  \end{quote}
+The following errors may occur: 
+  \begin{description}
+  \item[Patch did not apply]{\hfill \\ Significant changes to Hudson or the Git
+plugin may prevent \texttt{git-am} from applying patches automatically. Edit the
+patches by hand to resolve this issue.}
+  \item[Not a v4.0.0 pom or not this project's pom]{\hfill \\ For developers
+within LLNL, the firewall may insert HTTP redirect pages when Maven is
+pulling in dependencies. Remove the offending \texttt{pom} or
+\texttt{xml} files
+(usually found in \texttt{\~/.m2/repository}) and rerun
+\texttt{./build}.}
+  \end{description}
+When \texttt{./build} succeeds, the files \texttt{hudson.war} and
+\texttt{git.hpi} will be copied to \texttt{\$HUDSONROSE}. See the Hudson
+documentation for directions on deploying these files.
+}
+
+\item{
+To save your work, tag it and push the
+tag to the central repository:
+  \begin{quote} \texttt{cd \$HUDSONROSE/hudson \\
+  git tag 1.370\_custom \\
+  git push origin : 1.370\_custom \\
+  cd \$HUDSONROSE/hudson-git \\
+  git tag git-1.0.1\_custom \\
+  git push origin : git-1.0.1\_custom \\
+  cd \$HUDSONROSE \\
+  git commit \\
+  git push origin HEAD}
+  \end{quote}
+}
+\end{enumerate}
+
+\paragraph{Issues Upgrading Hudson}
+Because of changes after Hudson v1.345, the Git plugin no longer
+compiles against the latest source. Until the plugin is updated, the
+developer recommends compiling the plugin against Hudson v1.345. A plugin 
+compiled against Hudson-1.345 will work with the latest version of Hudson, compiled
+separately. If using \texttt{build}, be sure to comment out the logic to 
+build the plugin when building the latest version.

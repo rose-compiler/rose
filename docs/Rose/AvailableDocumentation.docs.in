@@ -62,12 +62,8 @@
      ********** This is the OLd information about ROSE email lists **********
 
      - \b ROSE \b Email \b Lists \n
-           The ROSE project maintains a mailing list (casc-rose *at* llnl *dot* gov).
-           The email list is only used to get help and announce internal and external releases.
-           Anyone who would like to be on the email list (or removed from it) can send me
-           email (dquinlan *at* llnl *dot* gov).
-           Those with access to LLNL internal web pages may see who is on the email list at (this helps the
-           ROSE development team make sure people are correctly added to the list): \n
-           http://cmg-r.llnl.gov/casc/computing/mailing_lists/casc-rose.html
+           The ROSE project maintains a mailing list (rose-public *at* nersc *dot* gov).
+           Anyone who would like to be on the email list (or removed from it) can 
+           visit https://mailman.nersc.gov/mailman/listinfo/rose-public .
 
 */

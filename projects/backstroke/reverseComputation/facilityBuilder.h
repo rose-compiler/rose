@@ -1,23 +1,27 @@
 #ifndef REVERSE_COMPUTATAION_FACILITYBUILDER_H 
 #define REVERSE_COMPUTATAION_FACILITYBUILDER_H 
 
+#include <rose.h>
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
-class SgFunctionDeclaration;
-class SgStatement;
-class SgClassType;
-
-const string INT_MEM_NAME = "i_";
-const string INT_ARRAY_MEM_NAME = "a_";
-const int ARRAY_SIZE = 100;
 
 SgFunctionDeclaration* buildCompareFunction(SgClassType*);
-SgFunctionDeclaration* buildMainFunction(const vector<SgStatement*>& inits, int events_num, bool klee);
 SgFunctionDeclaration* buildInitializationFunction(SgClassType*);
+
+//*****************************************************************************
+// inits:       global varibles which should be initialized.
+// event_names: all event funtions.
+//*****************************************************************************
+SgFunctionDeclaration* buildMainFunction(const std::vector<SgAssignOp*>& inits,
+        const std::vector<std::string>& event_names, bool klee = false);
+
+inline SgFunctionDeclaration* buildMainFunction(const std::string& event_name) 
+{
+    std::vector<SgAssignOp*> inits;
+    std::vector<std::string> event_names(1, event_name);
+    return buildMainFunction(inits, event_names, false);
+}
 
 
 #endif

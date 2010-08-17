@@ -27,7 +27,10 @@ else
    dwarf_path=$with_dwarf
    echo "Setup Dwarf support in ROSE! path = $dwarf_path"
    AC_DEFINE([USE_ROSE_DWARF_SUPPORT],1,[Controls use of ROSE support for Dwarf (libdwarf) library.])
-   DWARF_LINK="$dwarf_path/libdwarf.a -lelf"
+ # DQ (6/5/2010): Note that Haskell support requires the dynamic library, and in general we want to require the dynamic library anyway.
+ # DWARF_LINK="$dwarf_path/libdwarf.a -lelf"
+ # DWARF_LINK="$dwarf_path/libdwarf.so -lelf"
+   DWARF_LINK="-L$dwarf_path -ldwarf -lelf"
    DWARF_INCLUDE="-I$dwarf_path"
 
    echo "DWARF_INCLUDE = $DWARF_INCLUDE"

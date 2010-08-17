@@ -3,6 +3,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
+#include "AsmUnparser_compat.h"
 
 #define __STDC_FORMAT_MACROS
 #include <boost/math/common_factor.hpp>
@@ -831,7 +832,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
     }
 
     for (size_t pass=0; pass<2; pass++) {
-        if (debug) fprintf(stderr, "%s    -- PASS %zu --\n", p, pass);
+        if (debug) {
+            fprintf(stderr, "%s    -- %s --\n",
+                    p, pass?"FIRST PASS":"SECOND PASS (after making a larger hole)");
+        }
 
         /* S offset and size in file or memory address space */
         if (filespace) {
@@ -1073,9 +1077,11 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             break;
         }
         if (debug) {
+            const char *space_name = filespace ? "file" : "mem";
             addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
-            fprintf(stderr, "%s   %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
-                    p, 0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
+            fprintf(stderr, "%s   %4s-%c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                    p, space_name, ExtentMap::category(ap, sp), 
+                    0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
             ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     0==newap.first%(x?x:1)?' ':'!', newap.first, newap.second, newap.first+newap.second);
@@ -1083,6 +1089,64 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         }
     }
     if (debug) fprintf(stderr, "%s    -- END --\n", p);
+}
+
+/** Print text file containing all known information about a binary file.  If in_cwd is set, then the file is created in the
+ *  current working directory rather than the directory containing the binary file (the default is to create the file in the
+ *  current working directory).  If @p ext is non-null then these characters are added to the end of the binary file name. The
+ *  default null pointer causes the string ".dump" to be appended to the file name. */
+void
+SgAsmGenericFile::dump_all(bool in_cwd, const char *ext)
+{
+    if (!ext)
+        ext = ".dump";
+    std::string dump_name = get_name() + ext;
+    if (in_cwd) {
+        size_t slash = dump_name.find_last_of('/');
+        if (slash!=dump_name.npos)
+            dump_name.replace(0, slash+1, "");
+    }
+    dump_all(dump_name);
+}    
+
+/** Print text file containing all known information about a binary file. */
+void
+SgAsmGenericFile::dump_all(const std::string &dump_name)
+{
+    FILE *dumpFile = fopen(dump_name.c_str(), "wb");
+    ROSE_ASSERT(dumpFile != NULL);
+    try {
+        // The file type should be the first; test harness depends on it
+        fprintf(dumpFile, "%s\n", format_name());
+
+        // A table describing the sections of the file
+        dump(dumpFile);
+
+        // Detailed info about each section
+        const SgAsmGenericSectionPtrList &sections = get_sections();
+        for (size_t i = 0; i < sections.size(); i++) {
+            fprintf(dumpFile, "Section [%zd]:\n", i);
+            ROSE_ASSERT(sections[i] != NULL);
+            sections[i]->dump(dumpFile, "  ", -1);
+        }
+
+        /* Dump interpretations that point only to this file. */
+        SgBinaryComposite *binary = isSgBinaryComposite(get_parent());
+        ROSE_ASSERT(binary!=NULL);
+        const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
+        for (size_t i=0; i<interps.size(); i++) {
+            SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
+            if (interp_files.size()==1 && interp_files[0]==this) {
+                std::string assembly = unparseAsmInterpretation(interps[i]);
+                fputs(assembly.c_str(), dumpFile);
+            }
+        }
+        
+    } catch(...) {
+        fclose(dumpFile);
+        throw;
+    }
+    fclose(dumpFile);
 }
 
 /* Print basic info about the sections of a file */

@@ -17,24 +17,24 @@ ostream & out = cout;
     rs->checkpoint(SourcePosition( (MSG), __LINE__, __LINE__ ));              \
 
 
+//#ASR 07/07/10
+//Fixed RuntimeViolation object creation for Cxx Standard
 #define TEST_CATCH( TYPE)                                          \
     catch (RuntimeViolation & e)  {                                \
         if( e.getType() != ( TYPE) ) {                             \
             out << "Wrong error detected: "                        \
                 << e.getShortDesc() << " instead of "              \
-                << RuntimeViolation::RuntimeViolation(TYPE)        \
-                .getShortDesc()                                    \
+                << RuntimeViolation(TYPE).getShortDesc()           \
                 << " : " <<  __LINE__                              \
                 << endl;                                           \
             exit(1);                                               \
-        }                                                          \
+        }                                                          \       
         errorFound=true;                                           \
     }                                                              \
     if(!errorFound)                                                \
     {                                                              \
       out   << "Failed to detect error "                           \
-            << RuntimeViolation::RuntimeViolation(TYPE)            \
-                .getShortDesc()                                    \
+            << RuntimeViolation(TYPE).getShortDesc()           \
                 << " : " <<  __LINE__                              \
             << endl;                                               \
       exit(1);                                                     \

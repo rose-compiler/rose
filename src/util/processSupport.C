@@ -125,7 +125,7 @@ const char *rose_exception::what() const throw()
 #ifdef USE_ROSE
 void ROSE_ABORT() __THROW
 #else
-void ROSE_ABORT()
+void ROSE_ABORT() throw()
 #endif
 {
     throw rose_exception( "abort" );

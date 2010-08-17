@@ -54,6 +54,28 @@ MemoryMap::MapElement::merge_anonymous(const MapElement &other, size_t oldsize)
     *anonymous = 1;
 }
 
+void
+MemoryMap::MapElement::merge_names(const MapElement &other)
+{
+    if (name.empty()) {
+        set_name(other.get_name());
+    } else if (other.name.empty()) {
+        /*void*/
+    } else {
+        set_name(get_name()+"+"+other.get_name());
+    }
+}
+
+MemoryMap::MapElement &
+MemoryMap::MapElement::set_name(const std::string &s)
+{
+    static const size_t limit = 35;
+    name = s;
+    if (name.size()>limit)
+        name = name.substr(0, limit-3) + "...";
+    return *this;
+}
+
 bool
 MemoryMap::MapElement::merge(const MapElement &other)
 {
@@ -73,6 +95,7 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         size = other.size;
+        merge_names(other);
     } else if (other.va + other.size == va) {
         /* Other element is left contiguous with this element. */
         if (!consistent(other))
@@ -81,11 +104,13 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         offset = other.offset;
+        merge_names(other);
     } else if (va + size == other.va) {
         /* Other element is right contiguous with this element. */
         if (!consistent(other))
             return false; /*no exception since they don't overlap*/
         size += other.size;
+        merge_names(other);
     } else if (other.va < va) {
         /* Other element overlaps left part of this element. */
         if (!consistent(other))
@@ -94,11 +119,13 @@ MemoryMap::MapElement::merge(const MapElement &other)
         va = other.va;
         base = other.base;
         offset = other.offset;
+        merge_names(other);
     } else {
         /* Other element overlaps right part of this element. */
         if (!consistent(other))
             throw Inconsistent(NULL, *this, other);
         size = (other.va + other.size) - va;
+        merge_names(other);
     }
 
     /* Adjust backing store for anonymous elements. This is necessary because two anonymous elements are consistent if they
@@ -190,17 +217,7 @@ const MemoryMap::MapElement *
 MemoryMap::find(rose_addr_t va) const
 {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-	
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
 
@@ -223,16 +240,7 @@ rose_addr_t
 MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
 {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
 
@@ -258,16 +266,7 @@ MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) c
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
     return elements;
@@ -285,18 +284,18 @@ MemoryMap::prune(bool(*predicate)(const MapElement&))
 }
 
 size_t
-MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
+MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
 {
     size_t ncopied = 0;
     while (ncopied < desired) {
         const MemoryMap::MapElement *m = find(start_va);
-        if (!m)
+        if (!m || (m->get_mapperms() & req_perms)!=req_perms)
             break;
         ROSE_ASSERT(start_va >= m->get_va());
         size_t m_offset = start_va - m->get_va();
         ROSE_ASSERT(m_offset < m->get_size());
         size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
-        if (m->is_anonymous()) {
+        if (m->is_anonymous() && NULL==m->get_base()) {
             memset((uint8_t*)dst_buf+ncopied, 0, n);
         } else {
             memcpy((uint8_t*)dst_buf+ncopied, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
@@ -309,12 +308,12 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
 }
 
 size_t
-MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
+MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/) const
 {
     size_t ncopied = 0;
     while (ncopied < nbytes) {
         const MemoryMap::MapElement *m = find(start_va);
-        if (!m || m->is_read_only())
+        if (!m || m->is_read_only() || (m->get_mapperms() & req_perms)!=req_perms)
             break;
         ROSE_ASSERT(start_va >= m->get_va());
         size_t m_offset = start_va - m->get_va();
@@ -324,11 +323,106 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
             ROSE_ASSERT(*m->anonymous==0);
             *(m->anonymous) = 1;
             m->base = new uint8_t[m->get_size()];
+            memset(m->base, 0, m->get_size());
         }
         memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, (uint8_t*)src_buf+ncopied, n);
         ncopied += n;
     }
     return ncopied;
+}
+
+void
+MemoryMap::mprotect(const MapElement &region)
+{
+    /* Check whether the region refers to addresses not in the memory map. */
+    ExtentMap e;
+    e.insert(ExtentPair(region.get_va(), region.get_size()));
+    e.erase(va_extents());
+    if (!e.empty())
+        throw NotMapped(this, e.begin()->first);
+
+    std::vector<MapElement> created;
+    std::vector<MapElement>::iterator i=elements.begin();
+    while (i!=elements.end()) {
+        MapElement &other = *i;
+        if (other.get_va() >= region.get_va()) {
+            if (other.get_va()+other.get_size() <= region.get_va()+region.get_size()) {
+                /* other is fully contained in (or congruent to) region; change other's permissions */
+                other.set_mapperms(region.get_mapperms());
+                i++;
+            } else if (other.get_va() < region.get_va()+region.get_size()) {
+                /* left part of other is contained in region; split other into two parts */
+                size_t left_sz = region.get_va() + region.get_size() - other.get_va();
+                ROSE_ASSERT(left_sz>0);
+                MapElement left = other;
+                left.set_size(left_sz);
+                left.set_mapperms(region.get_mapperms());
+                created.push_back(left);
+
+                size_t right_sz = other.get_size() - left_sz;
+                MapElement right = other;
+                ROSE_ASSERT(right_sz>0);
+                right.set_va(other.get_va() + left_sz);
+                right.set_offset(right.get_offset() + left_sz);
+                right.set_size(right_sz);
+                created.push_back(right);
+
+                elements.erase(i);
+            } else {
+                /* other is right of region; skip it */
+                i++;
+            }
+        } else if (other.get_va()+other.get_size() <= region.get_va()) {
+            /* other is left of desired region; skip it */
+            i++;
+        } else if (other.get_va()+other.get_size() <= region.get_va() + region.get_size()) {
+            /* right part of other is contained in region; split other into two parts */
+            size_t left_sz = region.get_va() - other.get_va();
+            ROSE_ASSERT(left_sz>0);
+            MapElement left = other;
+            left.set_size(left_sz);
+            created.push_back(left);
+
+            size_t right_sz = other.get_size() - left_sz;
+            MapElement right = other;
+            right.set_va(other.get_va() + left_sz);
+            right.set_offset(right.get_offset() + left_sz);
+            right.set_size(right_sz);
+            right.set_mapperms(region.get_mapperms());
+            created.push_back(right);
+
+            elements.erase(i);
+        } else {
+            /* other contains entire region and extends left and right; split into three parts */
+            size_t left_sz = region.get_va() - other.get_va();
+            ROSE_ASSERT(left_sz>0);
+            MapElement left = other;
+            left.set_size(left_sz);
+            created.push_back(left);
+            
+            size_t mid_sz = region.get_size();
+            ROSE_ASSERT(mid_sz>0);
+            MapElement mid = other;
+            mid.set_va(region.get_va());
+            mid.set_offset(mid.get_offset() + left_sz);
+            mid.set_size(region.get_size());
+            mid.set_mapperms(region.get_mapperms());
+            created.push_back(mid);
+            
+            size_t right_sz = other.get_size() - (left_sz + mid_sz);
+            ROSE_ASSERT(right_sz>0);
+            MapElement right = other;
+            right.set_va(region.get_va()+region.get_size());
+            right.set_offset(mid.get_offset() + mid_sz);
+            right.set_size(right_sz);
+            created.push_back(right);
+            
+            elements.erase(i);
+        }
+    }
+
+    elements.insert(elements.end(), created.begin(), created.end());
+    sorted = false;
 }
 
 ExtentMap
@@ -342,20 +436,27 @@ MemoryMap::va_extents() const
     return retval;
 }
 
+rose_addr_t
+MemoryMap::highest_va() const
+{
+    if (elements.empty())
+        throw NotMapped(this, 0);
+    
+    if (!sorted) {
+	std::sort(elements.begin(), elements.end());
+        sorted = true;
+    }
+
+    MapElement &me = elements.back();
+    ROSE_ASSERT(me.get_size()>0);
+    return me.get_va() + me.get_size() - 1;
+}
+
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
     if (!sorted) {
-
-// CH (4/6/2010): std::sort is in C++ standard library which should work. Add 
-// namespace in case of name conflict.
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
-//		printf ("ERROR: commented out use of std::sort() for MSVS.");
-//		ROSE_ASSERT(false);
-//#else
 	std::sort(elements.begin(), elements.end());
-//#endif
         sorted = true;
     }
 
@@ -387,11 +488,16 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         }
 
 
-        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64"\n",
+        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64,
                 prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
                 0==(me.get_mapperms()&MM_PROT_READ) ?'-':'r',
                 0==(me.get_mapperms()&MM_PROT_WRITE)?'-':'w',
                 0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
                 basename.c_str(), elements[i].get_offset());
+
+        if (!me.name.empty())
+            fprintf(f, " %s", me.name.c_str());
+        
+        fputc('\n', f);
     }
 }

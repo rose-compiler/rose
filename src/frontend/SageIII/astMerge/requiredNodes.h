@@ -1,3 +1,6 @@
+#ifndef REQUIRED_NODES_H
+#define REQUIRED_NODES_H
+
 class RequiredIRNodes
    : // public CustomAstDOTGeneration,
      public SgSimpleProcessing
@@ -19,3 +22,6 @@ class RequiredIRNodes
    };
 
 std::set<SgNode*> buildRequiredNodeList ( SgNode* node );
+
+#endif // REQUIRED_NODES_H
+

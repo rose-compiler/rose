@@ -1040,7 +1040,9 @@ HEADER_GENERIC_FILE_START
 		void reallocate();					/* Make consistent before calling unparse */
 		void unparse(std::ostream&) const;			/* Unparse the file -- mirror image of parsing */
 		void extend_to_eof(std::ostream&);			/* Write zeros to logical EOF */
-		void dump(FILE*) const;                                 /* Print some debugging info */
+		void dump(FILE*) const;                                 /* Print some top-level debugging info */
+		void dump_all(bool in_cwd=true, const char *ext=NULL);	/* Recursively print all known info about the file */
+		void dump_all(const std::string& dumpname);		/* Recursively print all known info about the file */
 
 		/* Tracking references */
 		const ExtentMap& get_unreferenced_extents() const;	/* Returns parts of file that have not been referenced */
@@ -4755,7 +4757,7 @@ SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info
     } // else
   } // if
 
-  if ((!isSgAsmx86Instruction(this) || isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ ) {
+  if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ ) {
     //cout << "Next insn is at " << std::hex << nextAddr << endl;
     SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
     //ROSE_ASSERT (next);
