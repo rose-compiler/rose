@@ -1,7 +1,10 @@
 #include <sys/types.h>
-#include <unistd.h>
+#include <err.h>
 
 int main() {
-  syscall(224);
+  int result = syscall(224);
+  
+  if( result == -1 )
+    err(1,"gettid syscall(224) failed");
   return 0;
 }
