@@ -13,8 +13,9 @@ class AkgulStyleExpressionProcessor : public ExpressionProcessor
 public:
 
 	/** Attempts to reverse an expression. If the reversal fails,
-	  * this function returns an empty vector. */
-	virtual std::vector<ExpressionReversal> process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+          * this function returns an empty vector. */
+	virtual std::vector<ExpressionReversal> process(SgExpression* exp, const VariableVersionTable& var_table,
+                                                        bool isReverseValueUsed);
 
 	/** Returns the variable name referred by the expression. Also returns
 	  * the AST expression for referring to that variable (using the variable renaming analysis).
@@ -38,11 +39,11 @@ class RedefineValueRestorer : public VariableValueRestorer
 	 * Given a variable and a version, returns an expression evaluating to the value of the variable
 	 * at the given version.
 	 *
-     * @param variable name of the variable to be restored
-     * @param useSite location where the reverse expression will go
-     * @return definitions the version of the variable which should be restored
-     */
-	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+         * @param variable name of the variable to be restored
+         * @param useSite location where the reverse expression will go
+         * @return definitions the version of the variable which should be restored
+         */
+        virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
 		VariableRenaming::NumNodeRenameEntry definitions);
 
 private:
@@ -56,13 +57,13 @@ private:
 class ExtractFromUseRestorer : public VariableValueRestorer
 {
 	/**
-	 * Given a variable and a version, returns an expression evaluating to the value of the variable
+         * Given a variable and a version, returns an expression evaluating to the value of the variable
 	 * at the given version.
 	 *
-     * @param variable name of the variable to be restored
-     * @param useSite location where the reverse expression will go
-     * @return definitions the version of the variable which should be restored
-     */
-	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+         * @param variable name of the variable to be restored
+         * @param useSite location where the reverse expression will go
+         * @return definitions the version of the variable which should be restored
+         */
+        virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
 		VariableRenaming::NumNodeRenameEntry definitions);
 };

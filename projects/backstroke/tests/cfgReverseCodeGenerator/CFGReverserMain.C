@@ -35,10 +35,10 @@ int main(int argc, char** argv)
 
 	//Add the processors in order of priority. The lower ones will be used only if higher ones do not produce results
 	//Expression processors:
-    event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
-    event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+        event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
+        event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
 	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor);
-    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+        event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
 
 	//Statement processors
 	event_processor.addStatementProcessor(new ReturnStatementProcessor);

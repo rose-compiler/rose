@@ -308,7 +308,7 @@ std::string SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::
     case ISA_ARM_ARM9E:           return "ARM9E";           /* ARM{946E-S,966E-S,968E-S,926EJ-S,966HS} cores */
     case ISA_ARM_ARM10E:          return "ARM10E";          /* ARM{1020E,1022E,1026EJ-S} cores */
     case ISA_ARM_XScale:          return "ARM_XScale";      /* 80200, IOP310, IOP315, 80219, IOP321, IOP33x, IOP34x, PXA210,
-							     * PXA250, PXA255, PXA26x, PXA27x, PXA800(E)F, Monahans, PXA900,
+                                                             * PXA250, PXA255, PXA26x, PXA27x, PXA800(E)F, Monahans, PXA900,
 							     * IXC1100, IXP2400, IXP2800, IXP2850, IXP2325, IXP2350, IXP42x,
 							     * IXP460, IXP465 cores */
     case ISA_ARM_ARM11:           return "ARM11";            /* ARMv{6,6T2,6KZ,6K} cores */
