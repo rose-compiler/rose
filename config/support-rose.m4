@@ -2387,6 +2387,7 @@ tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
 tests/roseTests/astInterfaceTests/Makefile
+tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
 tests/roseTests/astOutliningTests/fortranTests/Makefile
