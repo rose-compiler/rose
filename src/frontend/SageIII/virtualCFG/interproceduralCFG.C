@@ -66,9 +66,8 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
 
     std::vector<EdgeT> outEdges;
     unsigned int idx = n.getIndex();
-    int variantT = sgnode->variantT();
 
-    if (variantT == V_SgFunctionCallExp &&
+    if (isSgFunctionCallExp(sgnode) &&
         idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
       SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
       Rose_STL_Container<SgFunctionDefinition*> defs;
@@ -76,7 +75,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       foreach (SgFunctionDefinition* def, defs) 
         makeEdge(CFGNode(fxnCall, idx), def->cfgForBeginning(), outEdges);
     }
-    else if (variantT == V_SgConstructorInitializer &&
+    else if (isSgConstructorInitializer(sgnode) &&
         idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
       SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
       Rose_STL_Container<SgFunctionDefinition*> defs;
@@ -84,7 +83,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       foreach (SgFunctionDefinition* def, defs) 
         makeEdge(CFGNode(ctorInit, idx), def->cfgForBeginning(), outEdges);
     }
-    else if (variantT == V_SgFunctionDefinition &&
+    else if (isSgFunctionDefinition(sgnode) &&
         idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
       SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
       SgGraphNode* funDefGraphNode = all_nodes[funDef->cfgForBeginning()];
