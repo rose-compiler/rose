@@ -880,7 +880,9 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
     case V_SgConstructorInitializer: {
              SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
              SgMemberFunctionDeclaration* decl = ctor->get_declaration();
-             SgFunctionDefinition* defn = decl->get_definition();
+             SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+             if (defDecl == NULL) break;
+             SgFunctionDefinition* defn = defDecl->get_definition();
              ROSE_ASSERT(defn);
              defs.push_back(defn);
              break;
