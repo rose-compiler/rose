@@ -16,7 +16,8 @@ use strict;
 use FileLister;
 use Text::Tabs;
 
-my $max_line_length = 132;  # change desc above also
+my $warning = " (warning)";	# if non-empty and policy violated, exit with a warning only
+my $max_line_length = 132;	# change desc above also if you change this constant
 
 my $verbose;
 while ($ARGV[0] =~ /^-/) {
@@ -43,19 +44,18 @@ while (my $filename = $files->next_file) {
       if (0==$nlines++) {
 	last if /^<\?xml /;	# skip XML files since nobody looks at these anyway
       }
-      if (length(expand($_)) >= $max_line_length) {
+      if (length(expand($_)) > $max_line_length) {
 	$nlong++;
-	print "$filename:$nlines: warning: line length exceeds $max_line_length columns\n" if $verbose;
+	print "$filename:$nlines: line length exceeds $max_line_length columns\n" if $verbose;
       }
     }
     close FILE;
     if ($nlong && !$verbose) {
       print $desc unless $nfail++;
-      printf "  %6d (%4d%%) lines in %1s\n", $nlong, 100*$nlong/$nlines, $filename;
+      printf "  %6d (%4d%%) lines in %1s%1s\n", $nlong, 100*$nlong/$nlines, $filename, $warning;
     }
   }
 }
 
-# This is only a warning for now (exit with 128-255)
-exit($nfail>0 ? 128 : 0);
+exit($nfail>0 ? ($warning ? 128 : 1) : 0);
 

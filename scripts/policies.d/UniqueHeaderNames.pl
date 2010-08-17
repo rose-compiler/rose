@@ -14,6 +14,7 @@ EOF
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
+my $warning = " (warning)";	# non-empty means issue warnings rather than errors
 
 # Create an index of all header files.
 # Each key is the base name of the header file;
@@ -34,9 +35,9 @@ my $nfail = 0;
 for my $key (sort keys %index) {
   next if 1==@{$index{$key}};
   print $desc unless $nfail++;
-  print "  $key\n";
+  print "  $key$warning\n";
   print "    $_\n" for @{$index{$key}};
 }
 
 # This is only a warning for now (exit with 128-255)
-exit($nfail>0 ? 128 : 0);
+exit($nfail>0 ? ($warning?128:1) : 0);

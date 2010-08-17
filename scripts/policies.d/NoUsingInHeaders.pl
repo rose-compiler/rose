@@ -8,6 +8,7 @@ EOF
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
+my $warning = "warning ";	# non-empty means issue warnings rather than errors
 
 my $nfail=0;
 my $files = FileLister->new();
@@ -16,7 +17,7 @@ while (my $filename = $files->next_file) {
     while (<FILE>) {
       if (/^\b(using\s+namespace\s+[a-z_A-Z]\w*)/) {
 	print $desc unless $nfail++;
-	print "  $filename ($1)\n";
+	print "  $filename ($warning$1)\n";
 	last;
       }
     }
@@ -24,5 +25,4 @@ while (my $filename = $files->next_file) {
   }
 }
 
-# This is only a warning for now (exit with 128-255)
-exit($nfail>0 ? 128 : 0);
+exit($nfail>0 ? ($warning?128:1) : 0);
