@@ -221,6 +221,9 @@ public:
     /* Reads a NUL-terminated string from specimen memory. The NUL is not included in the string. */
     std::string read_string(uint32_t va);
 
+    /* Reads a vector of NUL-terminated strings from specimen memory. */
+    std::vector<std::string> read_string_vector(uint32_t va);
+
     /* Copies a stat buffer into specimen memory. */
     void copy_stat64(struct stat64 *sb, uint32_t va);
 
@@ -527,6 +530,32 @@ EmulationPolicy::read_string(uint32_t va)
     }
 }
 
+std::vector<std::string>
+EmulationPolicy::read_string_vector(uint32_t va)
+{
+    std::vector<std::string> vec;
+    size_t size = 4;
+    while(1) {
+      char buf[size];
+      size_t nread = map.read(buf, va, size);
+
+      ROSE_ASSERT(nread == size);
+
+      uint64_t result = 0;
+      for (size_t i=0, j=0; i<size; i+=8, j++)
+                result |= buf[j] << i;
+
+      //FIXME (?) is this the correct test for memory being null?
+      if ( result == 0 ) break;
+
+      vec.push_back(read_string( result  ));
+      
+      va+=4;
+    }
+    return vec;
+}
+
+
 void
 EmulationPolicy::copy_stat64(struct stat64 *sb, uint32_t va) {
     writeMemory<16>(x86_segreg_ds, va+0,  sb->st_dev,     true_());
@@ -600,7 +629,13 @@ EmulationPolicy::emulate_syscall()
             std::string filename = read_string(filename_va);
             uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
             int fd = open(filename.c_str(), flags, mode);
-            writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+
+            if( fd <= 256 ) // 256 is getdtablesize() in the simulator
+                writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+            else {
+                writeGPR(x86_gpr_ax, -EMFILE);
+                close(fd);
+            }
             syscall_leave("d");
             break;
         }
@@ -640,6 +675,50 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+                
+        case 10: { /*0xa, unlink*/
+            char sflags[255];
+            int length;
+
+            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
+            uint32_t flags = readGPR(x86_gpr_cx).known_value();
+            uint32_t mode = readGPR(x86_gpr_dx).known_value();
+
+            std::string filename = read_string(name_va);
+
+            if (debug)
+              fprintf(debug, "  unlink(%s)\n", filename.c_str());
+
+            int result = unlink(filename.c_str());
+            if (result == -1) 
+                result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+	case 11: { /* 0xb, execve */
+            syscall_enter("execve", "spp");
+            std::string filename = read_string(arg(0));
+            std::vector<std::string > argv = read_string_vector(arg(1));
+            std::vector<std::string > envp = read_string_vector(arg(2));
+            std::vector<char*> sys_argv;
+            for (unsigned int i = 0; i < argv.size(); ++i) sys_argv.push_back(&argv[i][0]);
+            sys_argv.push_back(NULL);
+            std::vector<char*> sys_envp;
+            for (unsigned int i = 0; i < envp.size(); ++i) sys_envp.push_back(&envp[i][0]);
+            sys_envp.push_back(NULL);
+            int result;
+            if (std::string(&filename[0]) == "/usr/bin/man") {
+                result = -EPERM;
+            } else {
+                result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
+                if (result == -1) result = -errno;
+            }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+	 }
+
 
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
@@ -649,10 +728,21 @@ EmulationPolicy::emulate_syscall()
               uint32_t t_le;
               SgAsmExecutableFileFormat::host_to_le(t, &t_le);
               size_t nwritten = map.write(&t_le, result, 4);
-              ROSE_ASSERT(4==nwritten);
-            }
+              ROSE_ASSERT(4==nwritten);    }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("t");
+            break;
+        }
+
+        case 14: { /*0xe, mknod*/
+            syscall_enter("mknod", "sdd");
+            uint32_t path_va = arg(0);
+            uint32_t mode = arg(1);
+            uint32_t dev = arg(2);
+            std::string path = read_string(path_va);
+            int result = mknod(path.c_str(),mode,dev);
+            writeGPR(x86_gpr_ax, result<0 ? -errno : result);
+            syscall_leave("d");
             break;
         }
 
@@ -682,6 +772,18 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 37: { /* 0x25, kill */
+            syscall_enter("kill", "dd");
+            pid_t pid = readGPR(x86_gpr_bx).known_value();
+            int   sig = readGPR(x86_gpr_cx).known_value();
+            int result = kill(pid, sig);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
 
         case 41: { /*0x29, dup*/
             syscall_enter("dup", "d");
@@ -891,6 +993,16 @@ EmulationPolicy::emulate_syscall()
             }
             writeGPR(x86_gpr_ax, 0);
             syscall_leave("d");
+            break;
+        }
+
+        case 102: { // socketcall
+            uint32_t call = readGPR(x86_gpr_bx).known_value();
+            uint32_t args = readGPR(x86_gpr_cx).known_value();
+            if (debug) {
+              fprintf(stderr, "socketcall(%d, 0x%08X)\n", call, args);
+            }
+            writeGPR(x86_gpr_ax, -ENOSYS);
             break;
         }
 
@@ -1205,6 +1317,35 @@ EmulationPolicy::emulate_syscall()
             uid_t id = getegid();
             writeGPR(x86_gpr_ax, id);
             syscall_leave("d");
+            break;
+        }
+
+        case 221: { // fcntl
+            uint32_t fd = readGPR(x86_gpr_bx).known_value();
+            uint32_t cmd = readGPR(x86_gpr_cx).known_value();
+            uint32_t other_arg = readGPR(x86_gpr_dx).known_value();
+            int result = -EINVAL;
+            if (debug)
+                fprintf(debug, "fcntl(%d, %d, %lu) --> ", fd, cmd, other_arg);
+            switch (cmd) {
+                case F_DUPFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                case F_SETFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                default: {
+                    if (debug)
+                        fprintf(debug, "Unhandled fcntl %d on fd %d\n", cmd, fd);
+                    result = -EINVAL;
+                    break;
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
             break;
         }
 
