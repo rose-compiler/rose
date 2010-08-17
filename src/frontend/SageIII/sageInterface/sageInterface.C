@@ -10635,6 +10635,8 @@ void
 SageInterface::deleteAST ( SgNode* n )
    {
 //Tan, July/15/2010:       //Re-implement DeleteAST function
+
+#if 0
              class DeleteAST : public SgSimpleProcessing
                 {
                  public:
@@ -10686,6 +10688,512 @@ SageInterface::deleteAST ( SgNode* n )
                                 delete node;
                         }
               };
+
+#endif 
+
+
+
+	
+	class ClassicVisitor : public ROSE_VisitorPattern
+	{
+		private: 
+		int SgVariable_count;
+		int SgFunction_count;
+		int SgClassDeclaration_count;
+		int SgTypedef_count;
+		int SgMemFunc_count;
+	
+		SgVariableSymbol* SgVariablePtr;
+		SgFunctionSymbol* SgFunctionPtr;
+		SgClassSymbol * SgClassPtr;
+		SgTypedefSymbol * SgTypedefPtr;
+		SgMemberFunctionSymbol * SgMemFuncPtr;
+		SgClassDeclaration * defining;
+		SgMemberFunctionDeclaration * memFunc;
+		SgTypedefDeclaration * typedef_defining;
+		SgFunctionDeclaration * function_decl;
+	
+	
+		public:
+		ClassicVisitor(SgVariableSymbol* symbol){
+			SgVariable_count = 0;
+			SgVariablePtr = symbol;
+			SgFunctionPtr =NULL;
+			SgClassPtr =NULL;
+			SgTypedefPtr = NULL;
+			SgMemFuncPtr =NULL;
+			defining = NULL;
+			memFunc =NULL;
+			typedef_defining =NULL;
+			function_decl = NULL;		
+		}
+		
+		ClassicVisitor(SgFunctionSymbol* symbol){
+			SgFunction_count = 0;
+			SgFunctionPtr = symbol;
+			SgVariablePtr = NULL;
+			SgClassPtr =NULL;
+			SgTypedefPtr = NULL;
+			SgMemFuncPtr =NULL;
+			defining = NULL;
+			memFunc =NULL;
+			typedef_defining =NULL;
+			function_decl = NULL;	
+		}
+		
+		ClassicVisitor(SgClassSymbol* symbol){
+			SgClassDeclaration_count = 0;
+			SgClassPtr = symbol;
+			SgFunctionPtr = NULL;
+			SgVariablePtr = NULL;
+			SgTypedefPtr = NULL;
+			SgMemFuncPtr =NULL;
+			defining = NULL;
+			memFunc =NULL;
+			typedef_defining =NULL;
+			function_decl = NULL;			
+		}
+		
+		ClassicVisitor(SgTypedefSymbol* node){
+			SgTypedef_count =0;
+			SgTypedefPtr = node;
+			SgClassPtr = NULL;		
+			SgFunctionPtr = NULL;
+			SgVariablePtr = NULL;
+			SgMemFuncPtr =NULL;
+			defining = NULL;
+			memFunc =NULL;
+			typedef_defining =NULL;
+			function_decl = NULL;	
+				
+		}	
+		
+		ClassicVisitor(SgMemberFunctionSymbol* node){
+			SgMemFuncPtr = node;		
+			SgMemFunc_count =0;
+			SgTypedefPtr = NULL;		
+			SgClassPtr = NULL;		
+			SgFunctionPtr = NULL;
+			SgVariablePtr = NULL;
+			defining = NULL;
+			memFunc =NULL;
+			typedef_defining =NULL;
+			function_decl = NULL;			
+				
+		}	
+	
+		ClassicVisitor(SgClassDeclaration* node){
+			defining = node;
+			SgMemFuncPtr = NULL;
+			SgTypedefPtr = NULL;		
+			SgClassPtr = NULL;		
+			SgFunctionPtr = NULL;
+			SgVariablePtr = NULL;
+			memFunc =NULL;
+			typedef_defining =NULL;
+			function_decl = NULL;			
+		}
+		
+		ClassicVisitor(SgFunctionDeclaration* node){
+			function_decl =node;
+			defining = NULL;		
+			SgMemFuncPtr = NULL;
+			SgTypedefPtr = NULL;		
+			SgClassPtr = NULL;		
+			SgFunctionPtr = NULL;
+			SgVariablePtr = NULL;
+			memFunc =NULL;
+			typedef_defining =NULL;			
+		}
+		
+		ClassicVisitor(SgMemberFunctionDeclaration* node){
+			memFunc = node;
+			function_decl =NULL;
+			defining = NULL;		
+			SgMemFuncPtr = NULL;
+			SgTypedefPtr = NULL;		
+			SgClassPtr = NULL;		
+			SgFunctionPtr = NULL;
+			SgVariablePtr = NULL;
+			typedef_defining =NULL;			
+		}
+		
+		ClassicVisitor(SgTypedefDeclaration* node){
+			typedef_defining = node;
+			memFunc = NULL;
+			function_decl =NULL;
+			defining = NULL;		
+			SgMemFuncPtr = NULL;
+			SgTypedefPtr = NULL;		
+			SgClassPtr = NULL;		
+			SgFunctionPtr = NULL;
+			SgVariablePtr = NULL;			
+		}
+		
+		
+	// Override virtural function defined in base class
+		void visit(SgInitializedName* node)
+		{
+			SgSymbol* s = node->get_symbol_from_symbol_table();	
+			if ((SgVariableSymbol *)s == SgVariablePtr) SgVariable_count++;
+		}
+		
+		void visit(SgVarRefExp* node)
+		{
+			SgVariableSymbol* s = node->get_symbol();	
+			if (s == SgVariablePtr) SgVariable_count++;
+		}
+		
+		int get_num_variable_pointers(){return SgVariable_count;}
+	
+		void visit(SgFunctionDeclaration* node)
+		{
+			if(SgFunctionPtr !=NULL){		
+				SgSymbol* s = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+				if ((SgFunctionSymbol *)s == SgFunctionPtr) SgFunction_count++;
+			}
+			if(function_decl!=NULL){
+				//SgDeclarationStatement * define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+				//SgDeclarationStatement * first_nondefine = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
+				//if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
+			}
+		}
+	
+		void visit(SgFunctionRefExp* node)
+		{
+			SgFunctionSymbol* s = node->get_symbol_i();	
+			if (isSgFunctionSymbol(s) == SgFunctionPtr) SgFunction_count++;
+		}
+		
+		void visit(SgUserDefinedBinaryOp* node)
+		{
+			SgFunctionSymbol* s = node->get_symbol();	
+			if (isSgFunctionSymbol(s) == SgFunctionPtr) SgFunction_count++;
+		}
+		
+		
+		int get_num_Function_pointers(){return SgFunction_count;}
+	
+		void visit(SgClassDeclaration* node)
+		{
+			if(defining==NULL){			
+					SgSymbol* s = node->get_symbol_from_symbol_table();	
+					if (isSgClassSymbol(s) == SgClassPtr) SgClassDeclaration_count++;	
+			}else
+			{
+				SgDeclarationStatement * class_decl = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+				if(class_decl==defining && node!=defining ) 
+					delete node; 						
+			}
+		}
+	
+		void visit(SgThisExp* node)
+		{
+			SgSymbol* s = node->get_class_symbol();	
+			if (s == SgClassPtr) SgClassDeclaration_count++;	
+			
+		}		
+	
+	
+		
+		int get_num_Typedef_pointers(){return SgTypedef_count;}
+	
+	
+		void visit(SgCtorInitializerList* node)
+		{
+			SgMemberFunctionDeclaration * func= (SgMemberFunctionDeclaration*) (node->get_parent());
+			if(func == memFunc){ 
+				delete node;
+			}
+		}
+		
+		
+		int get_num_memFunc_pointers(){return SgMemFunc_count;}
+	
+	
+		void visit(SgMemberFunctionDeclaration* node)
+		{
+			SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+			if(symbol == SgMemFuncPtr){ 
+				SgMemFunc_count++;
+			}
+		}
+				
+		
+		void visit(SgTypedefDeclaration* node)
+		{		 	
+			if(SgTypedefPtr!=NULL){
+				SgSymbol* s = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
+				if ((SgTypedefSymbol *)s == SgTypedefPtr) SgTypedef_count++;
+			}
+			if(typedef_defining!=NULL){
+				SgDeclarationStatement * typedef_define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+				if(typedef_define == typedef_defining && node != typedef_defining ) {			
+					delete node; 								
+				}
+			}
+		}
+		
+		int get_num_Class_pointers(){return SgClassDeclaration_count;}
+	
+	};
+	
+	
+	
+	class DeleteAST : public SgSimpleProcessing,  ROSE_VisitTraversal  
+		{
+			public:
+			
+			void visit (SgNode* node)
+			{
+			//These nodes are manually deleted because they cannot be visited by the traversal
+	
+				/*////////////////////////////////////////////////
+				/remove SgVariableDefinition and SgVariableSymbol
+				/////////////////////////////////////////////////*/
+				if(isSgInitializedName(node) !=NULL){
+					//remove SgVariableDefinition
+					SgDeclarationStatement* var_def;
+					var_def =  ((SgInitializedName *)node)->get_definition();
+					if(isSgVariableDefinition(var_def) !=NULL){						
+						delete var_def;
+						//printf("A SgVariableDefinition was deleted\n");
+					}
+					//remove SgVariableSymbol
+					SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
+					if(isSgVariableSymbol(symbol) !=NULL){
+						ClassicVisitor visitor((SgVariableSymbol*)symbol);
+						traverseMemoryPoolVisitorPattern(visitor);
+						if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete	
+						((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol); 				
+							delete symbol;
+							//printf("A SgVariableSymbol was deleted\n");
+						}
+					}
+	
+				}
+	
+				if(isSgVarRefExp(node) !=NULL){
+						SgVariableSymbol *symbol = ((SgVarRefExp*)node)->get_symbol();
+						ClassicVisitor visitor(symbol);
+						traverseMemoryPoolVisitorPattern(visitor);
+						if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete
+							delete symbol;
+							//printf("A SgVariableSymbol was deleted\n");
+						}
+				}
+	
+				/*////////////////////////////////////////////////
+				/remove SgFunctionSymbol 
+				/////////////////////////////////////////////////*/
+	
+				if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){ 					
+					SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();				
+					ClassicVisitor visitor((SgFunctionSymbol *)symbol);
+					traverseMemoryPoolVisitorPattern(visitor);
+					if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete 
+						((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol); 
+						delete symbol;																
+						//printf("A SgFunctionSymbol was deleted\n");
+					}					
+					//ClassicVisitor visitor1((SgFunctionDeclaration *)node);
+					//traverseMemoryPoolVisitorPattern(visitor1);								
+				}
+	
+			
+				if(isSgFunctionRefExp(node) !=NULL){
+						SgFunctionSymbol *symbol = ((SgFunctionRefExp*)node)->get_symbol_i();
+						ClassicVisitor visitor(symbol);
+						traverseMemoryPoolVisitorPattern(visitor);
+						if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
+						delete symbol;
+						//printf("A SgFunctionSymbol was deleted\n");
+						}
+	
+				}
+							
+				if(isSgUserDefinedBinaryOp(node) !=NULL){
+						SgFunctionSymbol *symbol = ((SgUserDefinedBinaryOp*)node)->get_symbol();
+						ClassicVisitor visitor(symbol);
+						traverseMemoryPoolVisitorPattern(visitor);
+						if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
+						delete symbol;
+						//printf("A SgFunctionSymbol was deleted\n");
+						}
+				}
+				
+				/*////////////////////////////////////////////////
+				/remove SgTypedefSymbol 
+				/////////////////////////////////////////////////*/
+				
+				if(isSgTypedefDeclaration(node) !=NULL){
+					SgSymbol* symbol = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
+					if(isSgTypedefSymbol(symbol)){
+						ClassicVisitor visitor((SgTypedefSymbol*) symbol);
+						traverseMemoryPoolVisitorPattern(visitor);	
+						if(visitor.get_num_Typedef_pointers()==1){ //only one reference to this SgTypedefSymbol  => safe to delete	
+							((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+							delete symbol;
+							//printf("A SgTypedefSymbol was deleted\n");
+						}
+					}
+										
+					if(node == isSgTypedefDeclaration(node)->get_definingDeclaration()){
+						ClassicVisitor visitor1((SgTypedefDeclaration*) node);
+						traverseMemoryPoolVisitorPattern(visitor1);						
+					}
+				}
+				
+				/*////////////////////////////////////////////////
+				/remove SgNamespaceDeclarationSymbol 
+				/////////////////////////////////////////////////*/
+				
+				if(isSgNamespaceDeclarationStatement(node) !=NULL){
+					SgSymbol* symbol = ((SgNamespaceDeclarationStatement*)node)->get_symbol_from_symbol_table();
+					if(isSgNamespaceSymbol(symbol)){
+						((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+							delete symbol;
+							//printf("A SgNamespaceSymbol was deleted\n");
+					}
+				}
+				
+				
+				if(isSgNamespaceAliasDeclarationStatement(node) !=NULL){
+					SgSymbol* symbol = ((SgNamespaceAliasDeclarationStatement*)node)->get_symbol_from_symbol_table();
+					if(isSgNamespaceSymbol(symbol)){
+							((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+							delete symbol;
+							//printf("A SgNamespaceSymbol was deleted\n");
+					}
+				}
+				
+				
+				/*////////////////////////////////////////////////
+				/remove SgLabelSymbol 
+				/////////////////////////////////////////////////*/
+				
+				if(isSgLabelStatement(node) !=NULL){
+					SgSymbol* symbol = ((SgLabelStatement*)node)->get_symbol_from_symbol_table();
+					if(isSgLabelSymbol(symbol)){
+						((SgLabelStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+							delete symbol;
+							//printf("A SgLabelSymbol was deleted\n");
+					}
+				}
+				
+				if(isSgLabelRefExp(node) !=NULL){
+					SgLabelSymbol* symbol = ((SgLabelRefExp*)node)->get_symbol();	
+					delete symbol;
+					//printf("A SgLabelSymbol was deleted\n");
+				}
+				
+	
+				/*////////////////////////////////////////////////
+				/remove SgEnumSymbol 
+				/////////////////////////////////////////////////*/				
+	
+				if(isSgEnumDeclaration(node) !=NULL){
+					SgSymbol* symbol = ((SgEnumDeclaration*)node)->get_symbol_from_symbol_table();
+					if(isSgEnumSymbol(symbol) !=NULL){
+							delete symbol;
+							//printf("A SgEnumSymbol was deleted\n");
+					}
+					SgEnumType* type= ((SgEnumDeclaration*)node)->get_type();
+					if(type !=NULL){
+							delete type;
+							//printf("A SgEnumType was deleted\n");
+					}
+				}
+								
+	
+				/*////////////////////////////////////////////////
+				/remove SgClassSymbol
+				/////////////////////////////////////////////////*/				
+								
+				if(isSgClassDeclaration(node) !=NULL){					
+		
+					SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
+					if(isSgClassSymbol(symbol) !=NULL){
+						ClassicVisitor visitor((SgClassSymbol*)symbol);
+						traverseMemoryPoolVisitorPattern(visitor);
+						if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
+							((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+							delete symbol;
+							//printf("A SgClassSymbol was deleted\n");
+						}
+					}
+					
+					ClassicVisitor visitor((SgClassDeclaration*) node );
+					traverseMemoryPoolVisitorPattern(visitor); 						 						
+	
+					SgClassType* type= ((SgClassDeclaration*)node)->get_type();
+					if(type !=NULL){
+						delete type;
+						//printf("A SgClassType was deleted\n");
+					}
+				}
+				
+				if(isSgThisExp(node) !=NULL){
+					SgSymbol* symbol = ((SgThisExp*)node)->get_class_symbol();
+					ClassicVisitor visitor((SgClassSymbol*)symbol);
+					traverseMemoryPoolVisitorPattern(visitor);
+					if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete                                         
+						delete symbol;
+						//printf("A SgClassSymbol was deleted\n");
+					}
+				
+				}
+				
+				if(isSgClassNameRefExp(node) !=NULL){
+					SgSymbol* symbol = ((SgClassNameRefExp*)node)->get_symbol();
+					ClassicVisitor visitor((SgClassSymbol*)symbol);
+					traverseMemoryPoolVisitorPattern(visitor);
+					if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete                                         
+						delete symbol;
+						//printf("A SgClassSymbol was deleted\n");
+					}
+				
+				}
+				
+				/*////////////////////////////////////////////////
+				/remove SgMemberFunctionSymbol
+				/////////////////////////////////////////////////*/				
+				
+	
+				if(isSgMemberFunctionDeclaration(node) !=NULL){        
+					SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+					if(isSgMemberFunctionSymbol(symbol)){
+						ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
+						traverseMemoryPoolVisitorPattern(visitor);
+						if(visitor.get_num_memFunc_pointers()==1){
+							((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+							delete symbol; 				                                       
+							//printf("A SgMemberFunctionSymbol was deleted\n");
+						}
+					}										
+					ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
+					traverseMemoryPoolVisitorPattern(visitor);
+				}
+				
+				
+				
+				if(isSgMemberFunctionRefExp(node) !=NULL){
+					SgMemberFunctionSymbol* symbol = ((SgMemberFunctionRefExp*)node)->get_symbol_i();
+					ClassicVisitor visitor(symbol);
+					traverseMemoryPoolVisitorPattern(visitor);
+					if(visitor.get_num_memFunc_pointers()==1){ //only one reference to this symbol => safe to delete                                         
+						delete symbol;
+						//printf("A SgClassSymbol was deleted\n");
+					}
+				
+				}				
+				
+				
+				
+			//Normal nodes  will be removed in a post-order way
+			delete node;
+			}
+		};
 
      	  DeleteAST deleteTree;
 
