@@ -1,0 +1,84 @@
+#define TEST_NOTHING                   0x000000000
+#define TEST_CASTS                     0x000000001
+#define TEST_CASTS                     0x000000002
+#define TEST \
+	    TEST_NOTHING
+#define CHECK_WRAP(x, block) if (TEST & (x)) { block }
+struct HasFloat ;
+
+struct HasInt 
+{
+  int d;
+//	static int num_objs;
+//	HasInt() { ++num_objs; }
+  
+
+  virtual inline void foo()
+{
+  }
+
+  operator HasFloat();
+  operator HasFloat *();
+}
+
+;
+//int HasInt::num_objs = 0;
+
+struct HasFloat 
+{
+  float f;
+}
+
+;
+
+struct HasDouble : public HasInt
+{
+  float f;
+}
+
+;
+
+HasInt::operator HasFloat()
+{
+  struct HasFloat a;
+  return a;
+}
+
+
+HasInt::operator HasFloat *()
+{
+  struct HasFloat a;
+  return &a;
+}
+
+
+void HasLValues()
+{
+// Casts
+#if TEST & TEST_CASTS
+//		const_cast<const int&>(4);
+//		dynamic_cast<const float&>(4);
+//		static_cast<const double&>(4);
+//		reinterpret_cast<const char&>(4);
+//		dynamic_cast<float&>(f);
+#endif
+}
+
+
+void NoLValues()
+{
+// Casts
+#if TEST & TEST_CASTS
+//		const_cast<int>(4);
+//		dynamic_cast<float>(4);
+//		reinterpret_cast<char>(4);
+//		dynamic_cast<HasDouble*>(&L_VALUE_hs);
+#endif
+}
+
+
+int main()
+{
+  return 1;
+}
+
