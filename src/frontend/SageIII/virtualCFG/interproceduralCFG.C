@@ -66,57 +66,54 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
 
     std::vector<EdgeT> outEdges;
     unsigned int idx = n.getIndex();
-    switch (sgnode->variantT()) {
-      case V_SgFunctionCallExp: {
-        if (idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
-          SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
-          Rose_STL_Container<SgFunctionDefinition*> defs;
-          CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
-          foreach (SgFunctionDefinition* def, defs) 
-            makeEdge(CFGNode(fxnCall, idx), def->cfgForBeginning(), outEdges);
-        } else 
-          outEdges = n.outEdges();
-        break;
-      } 
-      case V_SgConstructorInitializer: {
-        if (idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
-          SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
-          Rose_STL_Container<SgFunctionDefinition*> defs;
-          CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
-          foreach (SgFunctionDefinition* def, defs) 
-            makeEdge(CFGNode(ctorInit, idx), def->cfgForBeginning(), outEdges);
-        } else 
-          outEdges = n.outEdges();
-        break;
-      }
-      case V_SgFunctionDefinition: {
-        if (idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
-          SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
-          SgGraphNode* funDefGraphNode = all_nodes[funDef->cfgForBeginning()];
-          ROSE_ASSERT(funDefGraphNode != NULL);
-          std::set<SgDirectedGraphEdge*> sgEdges = graph_->computeEdgeSetIn(funDefGraphNode);
-          foreach (SgDirectedGraphEdge* edge, sgEdges) {
-            SgGraphNode* sourceGN = edge->get_from();
-            SgNode* source = sourceGN->get_SgNode();
+    int variantT = sgnode->variantT();
 
-            // Determine the index to which the interprocedural edge returns. TODO make member function of SgNode ?
-            unsigned int index;
-            if (source->variantT() == V_SgConstructorInitializer)
-              index = SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX + 1;
-            else if (source->variantT() == V_SgFunctionCallExp)
-              index = SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX + 1;
-            else
-              ROSE_ASSERT(!"Error: unable to determine interprocedural return index");
+    if (variantT == V_SgFunctionCallExp &&
+        idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
+      SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
+      Rose_STL_Container<SgFunctionDefinition*> defs;
+      CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
+      foreach (SgFunctionDefinition* def, defs) 
+        makeEdge(CFGNode(fxnCall, idx), def->cfgForBeginning(), outEdges);
+    }
+    else if (variantT == V_SgConstructorInitializer &&
+        idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
+      SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
+      Rose_STL_Container<SgFunctionDefinition*> defs;
+      CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
+      foreach (SgFunctionDefinition* def, defs) 
+        makeEdge(CFGNode(ctorInit, idx), def->cfgForBeginning(), outEdges);
+    }
+    else if (variantT == V_SgFunctionDefinition &&
+        idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
+      SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
+      SgGraphNode* funDefGraphNode = all_nodes[funDef->cfgForBeginning()];
+      ROSE_ASSERT(funDefGraphNode != NULL);
+      std::set<SgDirectedGraphEdge*> sgEdges = graph_->computeEdgeSetIn(funDefGraphNode);
+      foreach (SgDirectedGraphEdge* edge, sgEdges) {
+        SgGraphNode* sourceGN = edge->get_from();
+        SgNode* source = sourceGN->get_SgNode();
 
-            makeEdge(CFGNode(funDef, idx), CFGNode(source, index), outEdges);
-          }
-        } else 
-          outEdges = n.outEdges();
-        break;
+        // Determine the index to which the interprocedural edge returns. TODO make member function of SgNode ?
+        unsigned int index;
+        if (source->variantT() == V_SgConstructorInitializer)
+          index = SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX + 1;
+        else if (source->variantT() == V_SgFunctionCallExp)
+          index = SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX + 1;
+        else
+          ROSE_ASSERT(!"Error: unable to determine interprocedural return index");
+
+        makeEdge(CFGNode(funDef, idx), CFGNode(source, index), outEdges);
       }
-      default: {
-        outEdges = n.outEdges();
-      }
+    }
+    else {
+      outEdges = n.outEdges();
+    }
+
+    if (outEdges.size() < 1) {
+      std::cerr << "warning: couldn't find edges from " << n.getNode()->class_name() << 
+        " on line: " << n.getNode()->get_file_info()->get_line() << std::endl;
+      outEdges = n.outEdges();
     }
 
     foreach (const EdgeT& edge, outEdges)
