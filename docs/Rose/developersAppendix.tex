@@ -40,8 +40,8 @@ developers who are comfortable with using git.
 Otherwise, external developers are suggested to use our external SVN repository as
 described in Section~\ref{gettingStarted::svn}.
 
-We have two git repositories for ROSE: an internal one at LLNL and an external
-one hosted at \url{http://www.rosecompiler.org}. These two repositories share histories so that
+We have two git repositories for ROSE: an internal one at LLNL (\textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}) and an external
+one hosted at \url{http://www.rosecompiler.org/rose.git}. These two repositories share histories so that
 you can work closely with us as an external developing using our latest work. 
 Some tips for using them are gathered in this section.
 
@@ -184,19 +184,54 @@ Please configure this copy with your name and email before starting work.
 	  \item add all files under the current directory to the project \textit{git add .}
 	  \item remove $<$file$>$ from the project \textit{git rm $<$file$>$}
    \end{itemize}     
-\item Committing and pushing: intermediate changes can be committed locally. A set of local commits can be pushed to the central repository when ready.
+\item Committing : intermediate changes can be committed locally. You don't have to have active connection to the shared repository to do your daily work at all. 
    \begin{itemize}
           \item Commit changes to the local repository: \textit{git commit -a} 
-          \item Push all commits of the current local branch to a branch of the central repository:\\ \textit{git push origin HEAD:branch-name}
    \end{itemize}   
-\item Pulling and Merging: It is recommended to synchronize the master branches often and merge new commits from others to 
-   your local branch.
+\item Pulling and Merging the shared master branch: It is recommended to synchronize the master branches often and merge new commits from others to  your local branch. 
    \begin{itemize}
-          \item Synchronize a local master branch: \textit{git checkout master; git pull origin master}
-          \item Merge new commits to your local branch: \textit{git checkout branch-name; git merge master}
+          \item Switch to and synchronize a local master branch: \textit{git checkout master; git pull origin master}
+          \item Don't forget to update the link to the EDG submodule: \textit{git submodule update}
+          \item Switch to your local branch and merge with local master: \textit{git checkout your-local-branch-name; git merge master}
+    \item Alternatively, you can stay in your local branch and directly pull the remote master and update the EDG submodule: 
+           \textit{git pull origin master; git submodule update}
    \end{itemize}   
 
-\item Info on the repository:
+\item Pushing: A set of local commits can be pushed to the central repository when ready.
+It is highly recommended to pull and merge the shared master branch before doing this step.
+   \begin{itemize}
+          \item Push all commits of the current local branch to a branch of the central repository:\\ \textit{git push origin HEAD:branch-name}
+\item Or if you have set git to automatically push the current branch to the remotely tracked branch by  \textit{git config push.default 'tracking'},
+      you can just type \textit{git push}. 
+
+   \end{itemize}
+
+\item Modifying the EDG submodule. In rare cases, you may have to modify the EDG files within the submodule and update the link between ROSE and the EDG module. Please be {\bf EXTREMELY cautious} when you have to do this and always
+ask for help from senior LLNL developers for your first attempt. Here are some brief instructions about how to do this right.
+     \begin{itemize}
+
+  \item First, make sure you have tried to pull the content from the EDG submodule. You can run \textit{git submodule init; git submodule update} again from the top level of your private ROSE git repository to be safe. 
+  \item By default, the EDG submodule files checked out via \textit{git submodule init; git submodule update} is not on any branch (You can verify this by typing \textit{git status} within \textit{src/frontend/CxxFrontend/EDG}.  
+You can create a local branch based on the current content before you modify the EDG related files. Just type \textit{git checkout -b local-branch-name} under \textit{src/frontend/CxxFrontend/EDG} so you can create a local branch off the current content and switch to the branch.
+   \item You can then modify EDG files and commit changes to your private repository of the submodule. 
+         You should also be able to push your commits to the remote EDG repository.
+         Again, always be sure do all commits and push within \textit{src/frontend/CxxFrontend/EDG} for EDG related changes. 
+         Similar to the ROSE git repository, we have access control to the git repository of the EDG submodule. You have to have a remote branch there 
+         and can only push your commits to your own remote branch. Please ask senior developers to add the remote branch if it does
+         not exist.   
+   \item In the end, change ROSE git repository's link to the changed submodule. 
+  \begin{verbatim}
+  $ cd ROSE/src/frontend/CxxFrontend  # Go to submodule's parent repository's path 
+  $ git add EDG  # Do not type 'git add EDG/', 
+                 # which will add all files under EDG/ to the super project!!!
+  $ git commit -m "Updated submodule EDG."
+  $ git push   # assuming you are on your local ROSE branch tracking your own remote branch 
+               # and have set up the push mode by: git config push.default 'tracking'
+  \end{verbatim}  
+   
+   \end{itemize}
+
+\item Get more info on the repository:
    \begin{itemize}
           \item show a diff of the changes made since your last commit \textit{git diff}
 	  \item show files added to the staging area, files with changes, and untracked files \textit{git status}

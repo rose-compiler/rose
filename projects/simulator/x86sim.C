@@ -221,6 +221,9 @@ public:
     /* Reads a NUL-terminated string from specimen memory. The NUL is not included in the string. */
     std::string read_string(uint32_t va);
 
+    /* Reads a vector of NUL-terminated strings from specimen memory. */
+    std::vector<std::string> read_string_vector(uint32_t va);
+
     /* Copies a stat buffer into specimen memory. */
     void copy_stat64(struct stat64 *sb, uint32_t va);
 
@@ -527,6 +530,32 @@ EmulationPolicy::read_string(uint32_t va)
     }
 }
 
+std::vector<std::string>
+EmulationPolicy::read_string_vector(uint32_t va)
+{
+    std::vector<std::string> vec;
+    size_t size = 4;
+    while(1) {
+      char buf[size];
+      size_t nread = map.read(buf, va, size);
+
+      ROSE_ASSERT(nread == size);
+
+      uint64_t result = 0;
+      for (size_t i=0, j=0; i<size; i+=8, j++)
+                result |= buf[j] << i;
+
+      //FIXME (?) is this the correct test for memory being null?
+      if ( result == 0 ) break;
+
+      vec.push_back(read_string( result  ));
+      
+      va+=4;
+    }
+    return vec;
+}
+
+
 void
 EmulationPolicy::copy_stat64(struct stat64 *sb, uint32_t va) {
     writeMemory<16>(x86_segreg_ds, va+0,  sb->st_dev,     true_());
@@ -667,6 +696,30 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 11: { /* 0xb, execve */
+            syscall_enter("execve", "spp");
+            std::string filename = read_string(arg(0));
+            std::vector<std::string > argv = read_string_vector(arg(1));
+            std::vector<std::string > envp = read_string_vector(arg(2));
+            std::vector<char*> sys_argv;
+            for (unsigned int i = 0; i < argv.size(); ++i) sys_argv.push_back(&argv[i][0]);
+            sys_argv.push_back(NULL);
+            std::vector<char*> sys_envp;
+            for (unsigned int i = 0; i < envp.size(); ++i) sys_envp.push_back(&envp[i][0]);
+            sys_envp.push_back(NULL);
+            int result;
+            if (std::string(&filename[0]) == "/usr/bin/man") {
+                result = -EPERM;
+            } else {
+                result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
+                if (result == -1) result = -errno;
+            }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+	 }
+
+
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
             uint32_t t = arg(0);
@@ -675,8 +728,7 @@ EmulationPolicy::emulate_syscall()
               uint32_t t_le;
               SgAsmExecutableFileFormat::host_to_le(t, &t_le);
               size_t nwritten = map.write(&t_le, result, 4);
-              ROSE_ASSERT(4==nwritten);
-            }
+              ROSE_ASSERT(4==nwritten);    }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("t");
             break;
@@ -720,6 +772,18 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 37: { /* 0x25, kill */
+            syscall_enter("kill", "dd");
+            pid_t pid = readGPR(x86_gpr_bx).known_value();
+            int   sig = readGPR(x86_gpr_cx).known_value();
+            int result = kill(pid, sig);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
 
         case 41: { /*0x29, dup*/
             syscall_enter("dup", "d");
