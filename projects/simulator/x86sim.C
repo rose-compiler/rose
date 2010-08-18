@@ -112,7 +112,6 @@ public:
 
     /* Debugging, tracing, etc. */
     FILE *debug;                                /* Stream to which debugging output is sent (or NULL to suppress it) */
-    bool tty;                                   /* True if 'debug' stream is a tty; affects output of trace_insn */
     bool trace_insn;                            /* Show each instruction that's executed */
     bool trace_state;                           /* Show machine state after each instruction */
     bool trace_mem;                             /* Show memory read/write operations */
@@ -122,7 +121,7 @@ public:
 
     EmulationPolicy()
         : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          debug(NULL), tty(true),
+          debug(NULL),
           trace_insn(true), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false) {
 
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
@@ -250,7 +249,7 @@ public:
     /* Called by X86InstructionSemantics */
     void startInstruction(SgAsmInstruction* insn) {
         if (debug && trace_insn) {
-            if (tty) {
+            if (isatty(fileno(debug))) {
                 fprintf(debug, "\033[K\n[%07zu] %s\033[K\r\033[1A", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
             } else {
                 fprintf(debug, "[%07zu] %s\n", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
