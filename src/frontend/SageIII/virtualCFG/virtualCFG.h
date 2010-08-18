@@ -306,7 +306,7 @@ namespace VirtualCFG {
 #define SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX 2
 
 //! Utility function to make CFG Edges
-template <class NodeT, class EdgeT>
-void makeEdge(NodeT from, NodeT to, std::vector<EdgeT>& result);
+template <class NodeT1, class NodeT2, class EdgeT>
+void makeEdge(NodeT1 from, NodeT2 to, std::vector<EdgeT>& result);
 
 #endif // VIRTUAL_CFG_H

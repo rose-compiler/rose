@@ -73,7 +73,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       Rose_STL_Container<SgFunctionDefinition*> defs;
       CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
       foreach (SgFunctionDefinition* def, defs) 
-        makeEdge(CFGNode(fxnCall, idx), def->cfgForBeginning(), outEdges);
+        makeEdge(n, def->cfgForBeginning(), outEdges);
     }
     else if (isSgConstructorInitializer(sgnode) &&
         idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
@@ -81,7 +81,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
       Rose_STL_Container<SgFunctionDefinition*> defs;
       CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
       foreach (SgFunctionDefinition* def, defs) 
-        makeEdge(CFGNode(ctorInit, idx), def->cfgForBeginning(), outEdges);
+        makeEdge(n, def->cfgForBeginning(), outEdges);
     }
     else if (isSgFunctionDefinition(sgnode) &&
         idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
@@ -102,7 +102,7 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
         else
           ROSE_ASSERT(!"Error: unable to determine interprocedural return index");
 
-        makeEdge(CFGNode(funDef, idx), CFGNode(source, index), outEdges);
+        makeEdge(n, CFGNode(source, index), outEdges);
       }
     }
     else {
