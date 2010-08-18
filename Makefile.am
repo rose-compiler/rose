@@ -40,7 +40,7 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 # (if rose.docs.in is modified)
 all-local: rose.docs 
 
-all: remove_sage3basic_h_pch enforce_policies
+all: remove_sage3basic_h_pch
 
 remove_sage3basic_h_pch:
 	touch $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch
@@ -103,7 +103,7 @@ nodist_include_HEADERS = rose_config.h
 # JJW (8/25/2008): Changed to a .c file
 include $(top_srcdir)/config/build_rose_paths.Makefile
 
-check-local:
+check-local: enforce_policies
 	@echo '************************************************************'
 	@echo '****** make check rule complete (terminated normally) ******'
 	@echo '************************************************************'
