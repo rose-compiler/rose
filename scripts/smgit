@@ -2216,10 +2216,6 @@ my @gvers = `git --version` =~ /(\d+)\.(\d+)\.(\d+)/;
 die "$arg0: requires Git version 1.6.4 or later\n"
   unless $gvers[0]>1 || ($gvers[0]==1 && ($gvers[1]>6 || ($gvers[1]==6 && $gvers[2]>=4)));
 
-die "$arg0: you have no submodules; use plain old git instead.
-    (smgit is a wrapper around git that limits the functionality in order to
-    make it easier to use submodules.)\n" unless submodules;
-
 my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
             clone       => \&do_clone,
@@ -2232,4 +2228,7 @@ my %cmds = (branch      => \&do_branch,
 
 my $cmd = shift @ARGV;
 usage if $cmd =~ /^-/ || !$cmd || ($cmd eq "help" && 0==@ARGV);
+die "$arg0: you have no submodules; use plain old git instead.
+    (smgit is a wrapper around git that limits the functionality in order to
+    make it easier to use submodules.)\n" unless submodules;
 $cmds{$cmd} ? &{$cmds{$cmd}}(@ARGV) : postorder $cmd, @ARGV;
