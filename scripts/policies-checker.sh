@@ -13,7 +13,7 @@
 # Find the directory containing the scripts that enforce individual policies
 mydir="${0%/*}"
 arg0="${0#$mydir/}"
-policies_dir="$mydir/policies.d"
+policies_dir="$mydir/policies"
 if [[ ! -d "$policies_dir" ]]; then
     echo "$arg0: cannot find policies directory: $policies_dir" >&2
     exit 1
