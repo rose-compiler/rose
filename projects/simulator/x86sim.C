@@ -1210,6 +1210,7 @@ EmulationPolicy::emulate_syscall()
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+            prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
 
             if (!start) {
                 try {
