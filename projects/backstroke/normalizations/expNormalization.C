@@ -25,7 +25,7 @@ void normalizeEvent(SgFunctionDefinition* func)
     //Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(func->get_body(), V_SgExpression, postorder);
 
     // Note that postorder traversal is required here.
-    vector<SgExpression*> exp_list = querySubTree<SgExpression>(func->get_body(), postorder);
+    vector<SgExpression*> exp_list = backstroke_util::querySubTree<SgExpression>(func->get_body(), postorder);
     foreach (SgExpression* exp, exp_list)
     {
         // First step, transform modifying expressions, like assignment, into comma expressions.
@@ -411,7 +411,7 @@ void moveDeclarationsOut(SgNode* node)
     // This is because that SgForInitStatement is special in which several declarations can
     // coexist. We will hoist it outside of its for loop statement.
     
-    vector<SgForInitStatement*> for_init_stmts = querySubTree<SgForInitStatement >(node);
+    vector<SgForInitStatement*> for_init_stmts = backstroke_util::querySubTree<SgForInitStatement >(node);
     foreach (SgForInitStatement* for_init_stmt, for_init_stmts)
     {
         // A SgForInitStatement object can contain several variable declarations, or one expression statement.
@@ -445,7 +445,7 @@ void moveDeclarationsOut(SgNode* node)
     // Separate variable's definition from its declaration
     // FIXME It is not sure that whether to permit declaration in condition of if (if the varible declared
     // is not of scalar type?).
-    vector<SgVariableDeclaration*> var_decl_list = querySubTree<SgVariableDeclaration>(node);
+    vector<SgVariableDeclaration*> var_decl_list = backstroke_util::querySubTree<SgVariableDeclaration>(node);
     foreach (SgVariableDeclaration* var_decl, var_decl_list)
     {
         SgInitializedName* init = var_decl->get_variables()[0];
@@ -498,7 +498,7 @@ void preprocess(SgFunctionDefinition* func)
     /******************************************************************************/
     // To ensure every if, while, etc. has a basic block as its body.
     
-    vector<SgStatement*> stmt_list = querySubTree<SgStatement>(func->get_body());
+    vector<SgStatement*> stmt_list = backstroke_util::querySubTree<SgStatement>(func->get_body());
     foreach (SgStatement* stmt, stmt_list)
     {
         ensureBasicBlockAsParent(stmt);
@@ -527,7 +527,7 @@ void preprocess(SgFunctionDefinition* func)
     // a && b  ==>  a ? b : false
     // a || b  ==>  a ? true : b
 
-    vector<SgAndOp*> and_exps = querySubTree<SgAndOp>(func->get_body());
+    vector<SgAndOp*> and_exps = backstroke_util::querySubTree<SgAndOp>(func->get_body());
     foreach (SgAndOp* and_op, and_exps)
     {
         if (containsModifyingExpression(and_op->get_rhs_operand()))
@@ -540,7 +540,7 @@ void preprocess(SgFunctionDefinition* func)
         }
     }
 
-    vector<SgOrOp*> or_exps = querySubTree<SgOrOp>(func->get_body());
+    vector<SgOrOp*> or_exps = backstroke_util::querySubTree<SgOrOp>(func->get_body());
     foreach (SgOrOp* or_op, or_exps)
     {
         if (containsModifyingExpression(or_op->get_rhs_operand()))

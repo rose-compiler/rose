@@ -152,7 +152,7 @@ ExpressionReversalVec ConstructiveExpressionProcessor::process(SgExpression* exp
             // This can also be done by def-use analysis.
 
             bool constructive = true;
-            vector<SgExpression*> exp_list = querySubTree<SgExpression>(rhs_operand);
+            vector<SgExpression*> exp_list = backstroke_util::querySubTree<SgExpression>(rhs_operand);
             foreach (SgExpression* exp, exp_list)
             {
                 if (areSameVariable(exp, lhs_operand))
