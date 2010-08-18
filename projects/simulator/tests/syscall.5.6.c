@@ -8,13 +8,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 
 char fname[100] = "";
 
 void setup() {
   sprintf(fname,"tfile_%d",getpid());
 
-  if( mknod(fname, S_IFIFO | 0644, (dev_t)NULL) == -1 )
+  if( mknod(fname, S_IFIFO | 0644, (dev_t)NULL) < 0 )
     err(1,"mknod failed");
 }
 
@@ -31,7 +32,7 @@ int main() {
     errx(1,"open succeeded unexpectedly");
 
   if( errno != ENXIO )
-    errx(1,"expected ENXIO");
+    errx(1,"Expected ENXIO");
 
   cleanup();
 
