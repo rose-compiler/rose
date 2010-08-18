@@ -314,6 +314,17 @@ public:
      *  and typically is used to indent the output. */
     void dump(FILE*, const char *prefix="") const;
 
+    /** Dumps the entire map and its contents into a set of files.  The file names are constructed from the @p basename by
+     *  appending a hypen and a hexadecimal address (without the leading "0x") and the extension ".data".  The text file whose
+     *  name is constructed by appending ".index" to the @p basename contains an index of the memory map. */
+    void dump(const std::string &basename) const;
+
+    /** Read a memory map from a set of memory dump files. The argument should be the same basename that was given to an
+     *  invocation of the dump() method. The memory map is adjusted according to the contents of the index file. Returns true
+     *  if the data was successfully read in its entirety; note that when returning false, this memory map object might
+     *  be partially changed (although still in a consistent state). */
+    bool load(const std::string &basename);
+
 private:
     /* Mutable because some constant methods might sort the elements. */
     mutable bool sorted;                        /**< True if the 'elements' are sorted by virtual address. */
