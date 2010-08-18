@@ -492,6 +492,8 @@ EmulationPolicy::current_insn()
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
+        std::cerr <<"dumping specimen's memory into core* files (this might take a while)...\n";
+        map.dump("core");
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
