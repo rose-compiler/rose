@@ -1,3 +1,4 @@
+#-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_1.
@@ -804,6 +805,7 @@ fi
 )
 
 
+#-----------------------------------------------------------------------------
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
@@ -1485,6 +1487,12 @@ AC_DISABLE_STATIC
 # echo "In configure.in (before libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
 LT_AC_PROG_SED dnl This seems to not be called, even though it is needed in the other macros
 m4_pattern_allow([LT_LIBEXT])dnl From http://www.mail-archive.com/libtool-commit@gnu.org/msg01369.html
+
+# Liao 8/17/2010. Tried to work around a undefined SED on NERSC hopper.
+# But this line is expanded after AC_PROG_LIBTOOL.
+# I had to promote it to configure.in, right before calling  ROSE_SUPPORT_ROSE_PART_2
+#test -z "$SED" && SED=sed
+
 AC_PROG_LIBTOOL
 AC_LIBLTDL_CONVENIENCE dnl We need to use our version because libtool can't handle when we use libtool v2 but the v1 libltdl is installed on a system
 AC_SUBST(LTDLINCL)
@@ -1766,6 +1774,7 @@ rm -rf Templates.DB
 ]
 )
 
+#-----------------------------------------------------------------------------
 
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
@@ -1804,6 +1813,7 @@ AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, si
 ]
 )
 
+#-----------------------------------------------------------------------------
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_4],
 [
@@ -1993,6 +2003,7 @@ AC_DEFUN([CLASSPATH_COND_IF],
    fi
 ])])
 
+#-----------------------------------------------------------------------------
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_5],
 [
@@ -2031,6 +2042,7 @@ src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ]
 )
 
+#-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_6.
@@ -2519,6 +2531,7 @@ binaries/samples/Makefile
 )
 
 
+#-----------------------------------------------------------------------------
 
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_7],
