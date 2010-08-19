@@ -66,7 +66,7 @@ Description:\n\
     --no-ast-dot and --no-cfg-dot).\n\
 \n\
   --quiet\n\
-  --no-quiet
+  --no-quiet\n\
     Suppresses (or not) the instruction listing that is normally emitted to the\n\
     standard output stream.  The default is to not suppress.\n\
 \n\
@@ -106,6 +106,14 @@ Description:\n\
   --no-show-functions\n\
     Display (or not) a list of functions in tabular format.  The default is to\n\
     not show this list.\n\
+\n\
+  --show-hashes\n\
+  --no-show-hashes\n\
+    Display (or not) SHA1 hashes for basic blocks and functions in the assembly\n\
+    listing. These hashes are based on basic block semantics.  The default is\n\
+    to not show these hashes in the listing. Regardless of this switch, the\n\
+    hashes still appear in the function listing (--show-functions) and the\n\
+    CFG dot files (--cfg-dot) if they can be computed.\n\
 \n\
 In addition to the above switches, this disassembler tool passes all other\n\
 switches to the underlying ROSE library's frontend() function if that function\n\
@@ -298,20 +306,23 @@ public:
 
 /* Unparser that outputs some extra information */
 class MyAsmUnparser: public AsmUnparser {
+private:
+    bool show_hashes;
 public:
-    MyAsmUnparser() {
+    MyAsmUnparser(bool show_hashes)
+        : show_hashes(show_hashes) {
         blk_detect_noop_seq = true;
     }
     virtual void pre(std::ostream &o, SgAsmBlock *blk) {
         unsigned char sha1[20];
-        if (block_hash(blk, sha1)) {
+        if (show_hashes && block_hash(blk, sha1)) {
             o <<StringUtility::addrToString(blk->get_address()) 
               <<": " <<digest_to_str(sha1) <<"\n";
         }
     }
     virtual void pre(std::ostream &o, SgAsmFunctionDeclaration *func) {
         unsigned char sha1[20];
-        if (function_hash(func, sha1)) {
+        if (show_hashes && function_hash(func, sha1)) {
             o <<StringUtility::addrToString(func->get_entry_va())
               <<": ============================ " <<digest_to_str(sha1) <<"\n";
         }
@@ -606,6 +617,7 @@ main(int argc, char *argv[])
     bool do_raw = false;
     bool do_rose_help = false;
     bool do_call_disassembler = false;
+    bool do_show_hashes = false;
 
     rose_addr_t raw_entry_va = 0;
     MemoryMap raw_map;
@@ -672,6 +684,10 @@ main(int argc, char *argv[])
             do_show_extents = true;
         } else if (!strcmp(argv[i], "--no-show-extents")) {
             do_show_extents = false;
+        } else if (!strcmp(argv[i], "--show-hashes")) {         /* show SHA1 hashes in assembly listing */
+            do_show_hashes = true;
+        } else if (!strcmp(argv[i], "--no-show-hashes")) {
+            do_show_hashes = false;
         } else if (!strcmp(argv[i], "--reassemble")) {          /* reassemble in order to test the assembler */
             do_reassemble = true;
         } else if (!strcmp(argv[i], "--no-reassemble")) {
@@ -963,7 +979,7 @@ main(int argc, char *argv[])
         ShowFunctions().show(block);
 
     if (!do_quiet) {
-        MyAsmUnparser unparser;
+        MyAsmUnparser unparser(do_show_hashes);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }
