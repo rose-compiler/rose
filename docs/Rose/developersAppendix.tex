@@ -4918,12 +4918,30 @@ Also, don't forget to document your option in SgFile::usage() (also in sageSuppo
 
 
 \section{Managing Hudson}
-\subsection{Upgrading and Customizing Hudson}
 ROSE uses customized versions of Hudson and the Git plugin that display Git branch names
 in the build list. This section describes the steps necessary to patch
 and build the latest version of Hudson and the Git plugin from source.
 Building both requires Apache Maven $\geq$ 2.2.1. 
 
+\subsection{Building the Customized Version}
+Developers can build an the latest customized version of Hudson and the
+Git plugin by running the \texttt{build} script in the top level of the
+\texttt{hudson-rose} repository:
+\begin{quote}\texttt{git clone /usr/casc/overture/ROSE/git/hudson-rose.git \\
+  cd hudson-rose \\
+  ./build \\
+}
+\end{quote}
+The build products (\texttt{hudson.war} and \texttt{git.hpi}) will
+appear in the top level of the local repository. The plugin can be installed
+using the Hudson web interface at:
+\begin{quote}\texttt{http://hudson-rose.llnl.gov:8080/pluginManager/advanced}\end{quote}
+or by copying \texttt{git.hpi} into Hudson's plugins directory, usually:
+\begin{quote}\texttt{\~{}/.hudson/plugins/}\end{quote}
+
+\subsection{Upgrading and Customizing Hudson}
+These steps are intend to guide a developer through the process of
+patching a newly-released version of Hudson or the Git Plugin.
 \begin{enumerate}
 \item{
 Changes to Hudson and the Git plugin are tracked in a repository located
