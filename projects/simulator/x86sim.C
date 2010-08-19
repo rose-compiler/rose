@@ -112,7 +112,6 @@ public:
 
     /* Debugging, tracing, etc. */
     FILE *debug;                                /* Stream to which debugging output is sent (or NULL to suppress it) */
-    bool tty;                                   /* True if 'debug' stream is a tty; affects output of trace_insn */
     bool trace_insn;                            /* Show each instruction that's executed */
     bool trace_state;                           /* Show machine state after each instruction */
     bool trace_mem;                             /* Show memory read/write operations */
@@ -122,7 +121,7 @@ public:
 
     EmulationPolicy()
         : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          debug(NULL), tty(true),
+          debug(NULL),
           trace_insn(true), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false) {
 
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
@@ -250,7 +249,7 @@ public:
     /* Called by X86InstructionSemantics */
     void startInstruction(SgAsmInstruction* insn) {
         if (debug && trace_insn) {
-            if (tty) {
+            if (isatty(fileno(debug))) {
                 fprintf(debug, "\033[K\n[%07zu] %s\033[K\r\033[1A", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
             } else {
                 fprintf(debug, "[%07zu] %s\n", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
@@ -493,6 +492,8 @@ EmulationPolicy::current_insn()
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
+        std::cerr <<"dumping specimen's memory into core* files (this might take a while)...\n";
+        map.dump("core");
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
@@ -677,22 +678,14 @@ EmulationPolicy::emulate_syscall()
         }
                 
         case 10: { /*0xa, unlink*/
-            char sflags[255];
-            int length;
-
-            uint32_t name_va = readGPR(x86_gpr_bx).known_value();
-            uint32_t flags = readGPR(x86_gpr_cx).known_value();
-            uint32_t mode = readGPR(x86_gpr_dx).known_value();
-
-            std::string filename = read_string(name_va);
-
-            if (debug)
-              fprintf(debug, "  unlink(%s)\n", filename.c_str());
-
+            syscall_enter("unlink", "s");
+            uint32_t filename_va = arg(0);
+            std::string filename = read_string(filename_va);
             int result = unlink(filename.c_str());
             if (result == -1) 
                 result = -errno;
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
@@ -997,12 +990,10 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 102: { // socketcall
-            uint32_t call = readGPR(x86_gpr_bx).known_value();
-            uint32_t args = readGPR(x86_gpr_cx).known_value();
-            if (debug) {
-              fprintf(stderr, "socketcall(%d, 0x%08X)\n", call, args);
-            }
+            syscall_enter("socketcall", "dp");
+            //uint32_t call=arg(0), args=arg(1);
             writeGPR(x86_gpr_ax, -ENOSYS);
+            syscall_leave("d");
             break;
         }
 
@@ -1219,6 +1210,7 @@ EmulationPolicy::emulate_syscall()
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+            prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
 
             if (!start) {
                 try {
@@ -1321,12 +1313,9 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 221: { // fcntl
-            uint32_t fd = readGPR(x86_gpr_bx).known_value();
-            uint32_t cmd = readGPR(x86_gpr_cx).known_value();
-            uint32_t other_arg = readGPR(x86_gpr_dx).known_value();
+            syscall_enter("fcntl", "ddp");
+            uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
             int result = -EINVAL;
-            if (debug)
-                fprintf(debug, "fcntl(%d, %d, %lu) --> ", fd, cmd, other_arg);
             switch (cmd) {
                 case F_DUPFD: {
                     result = fcntl(fd, cmd, (long)other_arg);
@@ -1339,13 +1328,12 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
                 default: {
-                    if (debug)
-                        fprintf(debug, "Unhandled fcntl %d on fd %d\n", cmd, fd);
                     result = -EINVAL;
                     break;
                 }
             }
             writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
         }
 
@@ -1564,9 +1552,9 @@ main(int argc, char *argv[])
     Semantics t(policy);
 
 #if 1 /*DEBUGGING [RPM 2010-08-06]*/
-    policy.trace_insn = false;
+    policy.trace_insn = true;
     policy.trace_syscall = true;
-    policy.trace_mmap = false;
+    policy.trace_mmap = true;
 #endif
 
     /* Parse command-line */

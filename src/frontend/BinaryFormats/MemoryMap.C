@@ -2,7 +2,11 @@
 #include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 #include "Loader.h"
+#include "rose_getline.h"
 /* See header file for full documentation */
 
 rose_addr_t
@@ -500,4 +504,147 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         
         fputc('\n', f);
     }
+}
+
+void
+MemoryMap::dump(const std::string &basename) const
+{
+    FILE *f = fopen((basename+".index").c_str(), "w");
+    ROSE_ASSERT(f!=NULL);
+    dump(f);
+    fclose(f);
+
+    ROSE_ASSERT(sorted);
+    for (size_t i=0; i<elements.size(); i++) {
+        const MapElement &me = elements[i];
+
+        char ext[256];
+        sprintf(ext, "-0x%08"PRIx64".data", me.get_va());
+        int fd = open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
+        ROSE_ASSERT(fd>0);
+        if (!me.get_base()) {
+            /* anonymous and no memory allocated. Zero-fill the file */
+            ROSE_ASSERT(me.get_size()>0);
+            off_t offset = lseek(fd, me.get_size()-1, SEEK_SET);
+            ROSE_ASSERT(offset=me.get_size()-1);
+            const int zero = 0;
+            ssize_t n = ::write(fd, &zero, 1);
+            ROSE_ASSERT(1==n);
+        } else {
+            const char *ptr = (const char*)me.get_base() + me.get_offset();
+            size_t nremain = me.get_size();
+            while (nremain>0) {
+                ssize_t n = TEMP_FAILURE_RETRY(::write(fd, ptr, nremain));
+                if (n<0) perror("MemoryMap::dump: write() failed");
+                ROSE_ASSERT(n>0);
+                ptr += n;
+                nremain -= n;
+            }
+        }
+        close(fd);
+    }
+}
+
+bool
+MemoryMap::load(const std::string &basename)
+{
+    FILE *f = fopen((basename+".index").c_str(), "r");
+    if (!f) return false;
+
+    char *line = NULL;
+    size_t line_nalloc = 0;
+    ssize_t nread;
+    while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
+        char *rest, *s=line;
+
+        /* Starting virtual address */
+        if (strncmp(line, "va ", 3)) break;
+        errno = 0;
+        rose_addr_t va = strtoull(s+3, &rest, 0);
+        if (rest==s+3 || errno) break;
+        s = rest;
+        
+        /* Size */
+        if (strncmp(s, " + ", 3)) break;
+        errno = 0;
+        rose_addr_t sz = strtoull(s+3, &rest, 0);
+        if (rest==s+3 || errno) break;
+        s = rest;
+        
+        /* Ending virtual address (not used) */
+        if (strncmp(s, " = ", 3)) break;
+        errno = 0;
+        (void)strtoull(s+3, &rest, 0);
+        if (rest==s+3 || errno) break;
+        s = rest;
+        
+        /* Permissions */
+        unsigned perm = 0;
+        while (isspace(*s)) s++;
+        if (s[0]=='r') {
+            perm |= MM_PROT_READ;
+        } else if (s[0]!='-') {
+            break;
+        }
+        if (s[1]=='w') {
+            perm |= MM_PROT_WRITE;
+        } else if (s[1]!='-') {
+            break;
+        }
+        if (s[2]=='x') {
+            perm |= MM_PROT_EXEC;
+        } else if (s[2]!='-') {
+            break;
+        }
+        s += 3;
+        
+        /* Base address name (such as "at  aaa" or "anonymous") */
+        while (isspace(*s)) s++;
+        if (strncmp(s, "at ", 3)) break;
+        s += 3;
+        while (isspace(*s)) s++;
+        char *plus = strchr(s, '+');
+        if (!plus) break;
+        while (plus>s && isspace(plus[-1])) --plus;
+        std::string region_name(s, plus-s);
+        s = plus;
+        
+        /* Offset from base address (unused) */
+        while (isspace(*s)) s++;
+        if ('+'!=*s++) break;
+        errno = 0;
+        (void)strtoull(s, &rest, 0);
+        if (rest==s || errno) break;
+        s = rest;
+        
+        /* Comment (optional) */
+        while (isspace(*s)) s++;
+        char *end = s + strlen(s);
+        while (end>s && isspace(end[-1])) --end;
+        std::string comment(s, end-1);
+
+        /* Open data file into memory */
+        char ext[256];
+        sprintf(ext, "-0x%08"PRIx64".data", va);
+        int fd = open((basename+ext).c_str(), O_RDONLY);
+        if (fd<0) break;
+        void *buf = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+        close(fd);
+        if (!buf) break;
+
+        /* Add map element to this memory map. */
+        MapElement me(va, sz, buf, 0, perm);
+        me.set_name(comment);
+        try {
+            insert(me);
+        } catch (const Exception&) {
+            munmap(buf, sz);
+            fclose(f);
+            free(line);
+            throw;
+        }
+    }
+    fclose(f); f=NULL;
+    if (line) free(line); line=NULL; line_nalloc=0;
+    return nread<=0;
 }

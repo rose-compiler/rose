@@ -113,10 +113,10 @@ SgNullStatement and a SgNullExpression.
     the type explicitly.  It might be required for SgBinaryOp IR nodes to store the type
     if it is not clearly from either the lhs or rhs (if no simple rule exists).
 
-\todo SgScopeOp is depricated and will be removed in a future version of ROSE.
+\todo SgScopeOp is deprecated and will be removed in a future version of ROSE.
       It is a hold over from support for CC++ which is not supported in SAGE III anymore.
 
-\todo SgRefExp is depricated and will be removed in a future version of ROSE.
+\todo SgRefExp is deprecated and will be removed in a future version of ROSE.
       It is not used anywhere within SAGE III and I don't know why it is there.
 
 \todo Need to find an example of where SgClassNameRefExp is used.  It is build in
@@ -145,7 +145,7 @@ SgNullStatement and a SgNullExpression.
 \var SgExpression::p_lvalue
 \brief This boolean variable marks the current expression as a 
 left hand side value (lvalue).
-\depricated This computation of this value is innacurate.  It identifies expressions which have been assigned to.  This does not include all lvalues as defined by the C++ standard.  For "int* p", "*p" and "&p" are both lvalues, despite not being assigned to (section 3.10).
+\deprecated This computation of this value is innacurate.  It identifies expressions which have been assigned to.  This does not include all lvalues as defined by the C++ standard.  For "int* p", "*p" and "&p" are both lvalues, despite not being assigned to (section 3.10).
 */
 
 /*!
@@ -240,7 +240,7 @@ the correct code (which si the purpose of adding parenthesis in source code).
 /*!
 \fn SgExpression::get_lvalue (void) const
 \brief Returns a bool value if the current expression is assigned to.
-\depricated The computation of this value is innacurate in terms of the lvalue as defined by the standard.  It identifies expressions which have been assigned to.  This does not include all lvalues as defined by the C++ standard.  For "int* p", "*p" and "&p" are both lvalues, despite not being assigned to (section 3.10).  See SgExpression::p_lvalue.
+\deprecated The computation of this value is innacurate in terms of the lvalue as defined by the standard.  It identifies expressions which have been assigned to.  This does not include all lvalues as defined by the C++ standard.  For "int* p", "*p" and "&p" are both lvalues, despite not being assigned to (section 3.10).  See SgExpression::p_lvalue.
 \return Returns true if the current expression is assigned to.
 */
 
