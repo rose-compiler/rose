@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <utility>
 #include <iostream>
+
 //using namespace boost;
 
 
@@ -917,20 +918,12 @@ solveInheritedAttribute(SgGraphNode* child, std::set<SgGraphNode*> parentset, Sg
         InheritedAttributeType inheritedValue, InheritedAttributeType nullInherit, int graphTraversal, std::set<SgGraphNode*> traversedlocal, std::set<SgGraphNode*> traversedreverse, bool loop, bool inloop, SgGraphNode* endnode)
 {
 
-if (graphnodeinheritedmap.find(child) != graphnodeinheritedmap.end()) {
-      //cout << "child already explored" << endl;
-      if (traversedreverse.find(child) == traversedreverse.end()) {
-          traversedreverse.insert(child);
-      }
-      return graphnodeinheritedmap[child];
-  }
 /* testing whether or not we have traversed the node before while trying to calculate it's value. 
 If it has been traversed then we are in a loop, and need to set the loop boolean to true */
   if (traversedreverse.find(child) != traversedreverse.end()) {
       //cout << "in loop" << endl;
       loop = true;
-      
-      }
+  }
 /* otherwise we need to insert the child node into traversedreverse so that it can be used to
 detect if we run into a loop later */
   else {
@@ -954,15 +947,13 @@ not. */
   std::vector<InheritedAttributeType> loopInheritedAttributeSet;
   //bool end = false;
 /* proxyloopnode is used to create a node whose parents are the nodes that were classified as loopnodes */
-   SgGraphNode* proxyloopnode = new SgGraphNode();
+   SgGraphNode* proxyloopnode = new SgGraphNode;
 /* Here we iterate through the parent set, checking if loop is true and if the node is inside traversedreverse. If both are true we
 attach this node to the set of loop nodes*/
    for (std::set<SgGraphNode*>::iterator i = parentset.begin(); i != parentset.end(); i++) {
      if (loop == true) {
-     if (traversedreverse.find(*i) != traversedreverse.end() || child == *i) {
-          
-          loopnodes.insert(*i);
-          
+     if (traversedreverse.find(*i) != traversedreverse.end()) {
+         loopnodes.insert(*i);
      }
      else {
           noloopnodes.insert(*i);
@@ -994,32 +985,25 @@ otherwise a preorder must be defined and, as stated earlier, this is not an easy
      else {
      std::set<SgDirectedGraphEdge*> edgeset2 = g->computeEdgeSetIn(tofind);
      /* Calculating the in edges for our parent to compute it from the values of its parents */
-     if (loopnodes.find(tofind) == loopnodes.end()) {
      for (std::set<SgDirectedGraphEdge*>::iterator r = edgeset2.begin(); r != edgeset2.end(); r++) {
-           SgGraphNode* gn = new SgGraphNode();
-           gn = (*r)->get_from();
-          
+           SgGraphNode* gn = (*r)->get_from();
+           if (loop == false || (loop == true && loopnodes.find(tofind) == loopnodes.end())) {
            //if (child != gn) {
            //cout << "inserting grandparent" << endl;
            parentsetnew.insert(gn);
-          
-      // 
-         }
-      }
-      }
-      
+      //     }
+           }
       if (parentsetnew.size() != 0) {
       //Checking to see if the parent is already computed...
-     
+      if (graphnodeinheritedmap.find(tofind) == graphnodeinheritedmap.end()) {
       /* Solving the inherited Attribute */
       InheritedAttributeType inh = solveInheritedAttribute(tofind, parentsetnew, g, inheritedValue, nullInherit, graphTraversal, traversedlocal, traversedreverse, false, inloop, endnode);
-      ROSE_ASSERT(tofind != NULL);
       graphnodeinheritedmap[tofind] = inh;
       //graphnodeinheritedmaploop[tofind] = inh;
       inheritedAttributeSet.push_back(inh);
-      }
-      else {
-           inheritedAttributeSet.push_back(nullInherit);
+     }
+     }
+     }
      }
      }
      //ROSE_ASSERT(inheritedAttributeSet.size() != 0);
@@ -1028,7 +1012,7 @@ otherwise a preorder must be defined and, as stated earlier, this is not an easy
      graphnodeinheritedmap[child] = noLoopAtt; //Attaching the attribute to the node via our map
      // Checking if we're in a loop.
      if (loop == true) {
-     //std::cout << "In a loop" << std::endl;
+     //cout << "In a loop" << endl;
      std::set<SgGraphNode*> loopparentset;
      //Creating a proxy node that has all the loop nodes coming into child, but none of it's children so as to avoid a loop.
      for (std::set<SgGraphNode*>::iterator it = loopnodes.begin(); it != loopnodes.end(); it++) {
@@ -1036,15 +1020,9 @@ otherwise a preorder must be defined and, as stated earlier, this is not an easy
      }
      //traversedreverse.clear();
      //Solving the value at the loop, storing in a separate map.
-     //if (graphnodeinheritedmaploop.find(child) == graphnodeinheritedmaploop.end()) {
-         
      InheritedAttributeType inhe = solveInheritedAttribute(proxyloopnode, loopnodes, g, inheritedValue, nullInherit, graphTraversal, traversedlocal, traversedreverse, false, true, child);
      graphnodeinheritedmaploop[child] = inhe;
-     return nullInherit;
-     //}
      }
-     //std::cout << "returning" << std::endl;
-     return noLoopAtt;
 }
  
  
