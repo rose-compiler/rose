@@ -621,7 +621,7 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "-?") ||
                    !strcmp(argv[i], "-help") ||
                    !strcmp(argv[i], "--help")) {
-            printf(usage, argv[0], argv[0]);
+            printf(usage, argv[0], argv[0], argv[0]);
             exit(0);
         } else if (!strcmp(argv[i], "--rose-help")) {
             new_argv[new_argc++] = strdup("--help");
