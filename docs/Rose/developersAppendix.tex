@@ -4924,7 +4924,7 @@ and build the latest version of Hudson and the Git plugin from source.
 Building both requires Apache Maven $\geq$ 2.2.1. 
 
 \subsection{Building the Customized Version}
-Developers can build an the latest customized version of Hudson and the
+Developers can build an the latest, customized version of Hudson and the
 Git plugin by running the \texttt{build} script in the top level of the
 \texttt{hudson-rose} repository:
 \begin{quote}\texttt{git clone /usr/casc/overture/ROSE/git/hudson-rose.git \\
@@ -4989,6 +4989,19 @@ Hudson:
   \texttt{git commit}
   \end{quote}
 }
+When upgrading from Hudson 1.334 to Hudson 1.370 and Git-Plugin 0.7.3 to
+Git-Plugin 1.0, the following commits were cherry-picked:
+\texttt{
+\begin{itemize} 
+\item 036444f61316dd8f0ca0d2f191e55045f99762ca
+\item 1cb5bf79df2d4fdf2caf1b73dcaf417f1b14329f
+\item 3b7a34503610dbd9f6984371d9436f6100648d10
+\item 7f9c697fb2b2bc8d71a8ac76a425582c2f60000f
+\item ad2fd58439a85a02242dfda5d0fab7c8f970d17c
+\end{itemize}
+}
+
+
 
 \item{
 Next, patch the Git plugin by changing to the
@@ -4999,11 +5012,34 @@ procedure above.
 \item{
 To build Hudson and the plugin, return to the \texttt{\$HUDSONROSE}
 directory. Verify that patches
-in \texttt{\$HUDSONROSE/patches} are still required; if not, disable
-them with:
+in \texttt{\$HUDSONROSE/patches} are still required by reading them and
+comparing them to the latest version of the vanilla distribution. If a
+patch at location \texttt{\$PATCHPATH} is no longer required, disable it
+by appending \texttt{-disabled} to the filename:
   \begin{quote}
-  \texttt{git mv \$PATCHPATH\{,-disabled\}}
+  \texttt{git mv \$PATCHPATH \$PATCHPATH-disabled}
   \end{quote}
+Currently, there are three patches in the repository:
+\begin{description}
+
+\item[\texttt{patches/hudson-git/0001-Hacked-the-pom.xml-to-point-it-to-our-hudson-repo.patch}]
+\hfill \\
+Adds the ROSE team's Hudson repository to the Project Object Model.
+
+\item[\texttt{patches/hudson/0002-Comment-out-some-code-that-fails-to-compile.patch-disabled}]
+\hfill \\
+(Disabled) Commented out code that prevented compilation in Hudson 1.334.
+
+\item[\texttt{patches/hudson/0001-Specify-local-repository.patch}]
+\hfill \\
+Adds the ROSE team's Hudson repository to the Project Object Model.
+
+\end{description}
+
+
+}
+
+\item{
 Run the customized build script that applies patches, calls Maven, and
 copies the resulting \texttt{hudson.war} and \texttt{git.hpi} to
 \texttt{\$HUDSONROSE}:
@@ -5045,8 +5081,8 @@ tag to the central repository:
 
 \paragraph{Issues Upgrading Hudson}
 Because of changes after Hudson v1.345, the Git plugin no longer
-compiles against the latest source. Until the plugin is updated, the
-developer recommends compiling the plugin against Hudson v1.345. A plugin 
-compiled against Hudson-1.345 will work with the latest version of Hudson, compiled
-separately. If using \texttt{build}, be sure to comment out the logic to 
-build the plugin when building the latest version.
+compiles against the latest Hudson version. Until the plugin is updated, the
+developer recommends compiling the plugin against Hudson 1.345. A plugin 
+compiled against Hudson 1.345 will work with the latest version of Hudson, compiled
+separately. The current \texttt{./build} script automatically builds the
+Git Plugin against a customized version of Hudson 1.345. 
