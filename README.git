@@ -230,7 +230,7 @@ If you don't like that, undo with:
    git checkout -b dan_andreas_merge_test
 
 
-########### Build a new branch to test an merge with someone elses branch ################
+########### Build a new branch to test an merge with someone else's branch ################
 
 Build a new brach to test a merge
    112  12:22   git checkout -b dan_andreas_merge_test
