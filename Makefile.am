@@ -215,9 +215,9 @@ docs: FORCE_DOCS_TO_BE_MADE
 	   $(MAKE) -Cprojects/autoParallelization/tests check && \
 	   $(MAKE) -Cdocs docs && \
 	   $(MAKE) -C$(compass_build_tooldir)/compass docs; \
-   else \
-      echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
-   fi
+	else \
+	   echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
+	fi
 
 if ROSE_HAS_EDG_SOURCE
 
