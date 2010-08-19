@@ -37,8 +37,6 @@ EXTRA_DIST = input1.C
 
 check-local:
 	@$(MAKE) testTraversals
-        @$(MAKE) testGraphs
-        @$(MAKE) testGraphShort
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astProcessingTests: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************"
