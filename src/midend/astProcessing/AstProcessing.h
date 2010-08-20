@@ -1159,6 +1159,7 @@ findChildren(SgGraphNode* node, SgIncidenceDirectedGraph* g) {
      return(successorset);
 }
 
+template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 calcChildrenInherited(SgGraphNode* node, SgIncidenceDirectedGraph* g, int graphTraversal) {
