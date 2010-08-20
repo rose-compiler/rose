@@ -12,13 +12,13 @@ int main(int argc, char *argv[])
   ROSE_ASSERT (proj != NULL); 
 
   SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
-  if (mainDefDecl != NULL) {
+  if (mainDefDecl == NULL) {
     warnx ("Could not find main(). Skipping Inteprocedural CFG test");
     return 0; 
   }
 
   SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
-  if (mainDef != NULL) {
+  if (mainDef == NULL) {
     warnx ("Could not find main(). Skipping Inteprocedural CFG test");
     return 0; 
   }
