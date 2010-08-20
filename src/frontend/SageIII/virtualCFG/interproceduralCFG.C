@@ -110,14 +110,28 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
     }
 
     if (outEdges.size() < 1) {
-      std::cerr << "warning: couldn't find edges from " << n.getNode()->class_name() << 
-        " on line: " << n.getNode()->get_file_info()->get_line() << std::endl;
       outEdges = n.outEdges();
     }
+
+    std::set<NodeT> targets; 
+
+#if 0
+    foreach (const EdgeT& edge, outEdges)
+    {
+        NodeT tar = edge.target();
+        targets.insert(tar);
+        if (isSgFunctionDefinition(tar.getNode()) && all_nodes.count(tar) > 0) {
+          CFGNode returnNode = CFGNode(edge.source().getNode(), edge.source().getIndex() + 1);
+          makeEdge(sgnode->cfgForEnd(), edge.source(), outEdges);
+          targets.insert(edge.source());
+        }
+    }
+#endif
 
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
+        targets.insert(tar);
 
         SgGraphNode* to = NULL;
         if (all_nodes.count(tar) > 0)
@@ -136,10 +150,9 @@ void InterproceduralCFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_no
         graph_->addDirectedEdge(new_edge);
     }
 
-    foreach (const EdgeT& edge, outEdges)
+    foreach (const NodeT& target, targets)
     {
-        ROSE_ASSERT(edge.source() == n);
-        buildCFG<NodeT, EdgeT>(edge.target(), all_nodes, explored);
+        buildCFG<NodeT, EdgeT>(target, all_nodes, explored);
     }
 }
 
