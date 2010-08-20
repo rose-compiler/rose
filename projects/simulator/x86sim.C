@@ -122,7 +122,7 @@ public:
     EmulationPolicy()
         : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
           debug(NULL),
-          trace_insn(true), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false) {
+          trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false) {
 
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
             writeGPR((X86GeneralPurposeRegister)i, 0);
@@ -1551,20 +1551,39 @@ main(int argc, char *argv[])
     EmulationPolicy policy;
     Semantics t(policy);
 
-#if 1 /*DEBUGGING [RPM 2010-08-06]*/
-    policy.trace_insn = true;
-    policy.trace_syscall = true;
-    policy.trace_mmap = true;
-#endif
-
     /* Parse command-line */
     int argno = 1;
     while (argno<argc && '-'==argv[argno][0]) {
         if (!strcmp(argv[argno], "--")) {
             argno++;
             break;
+        } else if (!strncmp(argv[argno], "--debug=", 8)) {
+            policy.debug = stderr;
+            char *s = argv[argno]+8;
+            while (s && *s) {
+                char *comma = strchr(s, ',');
+                std::string word(s, comma?comma-s:strlen(s));
+                s = comma ? comma+1 : NULL;
+                if (word=="insn") {
+                    policy.trace_insn = true;
+                } else if (word=="state") {
+                    policy.trace_state = true;
+                } else if (word=="mem") {
+                    policy.trace_mem = true;
+                } else if (word=="mmap") {
+                    policy.trace_mmap = true;
+                } else if (word=="syscall") {
+                    policy.trace_syscall = true;
+                } else {
+                    fprintf(stderr, "%s: debug words must be from the set: insn, state, mem, mmap, syscall\n", argv[0]);
+                    exit(1);
+                }
+            }
+            argno++;
         } else if (!strcmp(argv[argno], "--debug")) {
             policy.debug = stderr;
+            policy.trace_insn = true;
+            policy.trace_syscall = true;
             argno++;
         } else {
             fprintf(stderr, "usage: %s [--debug] PROGRAM ARGUMENTS...\n", argv[0]);
