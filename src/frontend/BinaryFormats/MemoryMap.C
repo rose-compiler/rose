@@ -4,7 +4,11 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifndef _MSC_VER
 #include <sys/mman.h>
+#else
+#include <io.h>
+#endif
 #include "Loader.h"
 #include "rose_getline.h"
 /* See header file for full documentation */
@@ -520,28 +524,50 @@ MemoryMap::dump(const std::string &basename) const
 
         char ext[256];
         sprintf(ext, "-0x%08"PRIx64".data", me.get_va());
+#ifdef _MSC_VER
+        int fd = _open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
+#else
         int fd = open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
+#endif
         ROSE_ASSERT(fd>0);
         if (!me.get_base()) {
             /* anonymous and no memory allocated. Zero-fill the file */
             ROSE_ASSERT(me.get_size()>0);
+#ifdef _MSC_VER
+            off_t offset = _lseek(fd, me.get_size()-1, SEEK_SET);
+#else
             off_t offset = lseek(fd, me.get_size()-1, SEEK_SET);
+#endif
             ROSE_ASSERT(offset=me.get_size()-1);
             const int zero = 0;
+#ifdef _MSC_VER
+            ssize_t n = _write(fd, &zero, 1);
+#else
             ssize_t n = ::write(fd, &zero, 1);
+#endif
             ROSE_ASSERT(1==n);
         } else {
             const char *ptr = (const char*)me.get_base() + me.get_offset();
             size_t nremain = me.get_size();
             while (nremain>0) {
+#ifdef _MSC_VER
+                ssize_t n = 0; 
+				// todo
+				ROSE_ASSERT(false);
+#else
                 ssize_t n = TEMP_FAILURE_RETRY(::write(fd, ptr, nremain));
+#endif
                 if (n<0) perror("MemoryMap::dump: write() failed");
                 ROSE_ASSERT(n>0);
                 ptr += n;
                 nremain -= n;
             }
         }
+#ifdef _MSC_VER
         close(fd);
+#else
+        close(fd);
+#endif
     }
 }
 
@@ -560,21 +586,33 @@ MemoryMap::load(const std::string &basename)
         /* Starting virtual address */
         if (strncmp(line, "va ", 3)) break;
         errno = 0;
+#ifdef _MSC_VER
+        rose_addr_t va = _strtoui64(s+3, &rest, 0);
+#else
         rose_addr_t va = strtoull(s+3, &rest, 0);
+#endif
         if (rest==s+3 || errno) break;
         s = rest;
         
         /* Size */
         if (strncmp(s, " + ", 3)) break;
         errno = 0;
+#ifdef _MSC_VER
+        rose_addr_t sz = _strtoui64(s+3, &rest, 0);
+#else
         rose_addr_t sz = strtoull(s+3, &rest, 0);
+#endif
         if (rest==s+3 || errno) break;
         s = rest;
         
         /* Ending virtual address (not used) */
         if (strncmp(s, " = ", 3)) break;
         errno = 0;
+#ifdef _MSC_VER
+        (void)_strtoui64(s+3, &rest, 0);
+#else
         (void)strtoull(s+3, &rest, 0);
+#endif
         if (rest==s+3 || errno) break;
         s = rest;
         
@@ -613,7 +651,11 @@ MemoryMap::load(const std::string &basename)
         while (isspace(*s)) s++;
         if ('+'!=*s++) break;
         errno = 0;
+#ifdef _MSC_VER
+        (void)_strtoui64(s, &rest, 0);
+#else
         (void)strtoull(s, &rest, 0);
+#endif
         if (rest==s || errno) break;
         s = rest;
         
@@ -628,7 +670,12 @@ MemoryMap::load(const std::string &basename)
         sprintf(ext, "-0x%08"PRIx64".data", va);
         int fd = open((basename+ext).c_str(), O_RDONLY);
         if (fd<0) break;
+#ifdef _MSC_VER
+        void *buf = NULL;
+		ROSE_ASSERT(false);
+#else
         void *buf = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+#endif
         close(fd);
         if (!buf) break;
 
@@ -638,7 +685,12 @@ MemoryMap::load(const std::string &basename)
         try {
             insert(me);
         } catch (const Exception&) {
+#ifdef _MSC_VER
+        void *buf = NULL;
+		ROSE_ASSERT(false);
+#else
             munmap(buf, sz);
+#endif
             fclose(f);
             free(line);
             throw;
