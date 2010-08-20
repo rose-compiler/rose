@@ -29,7 +29,7 @@ namespace VirtualCFG {
 #ifndef _MSC_VER 
     assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
 #endif
-    if (node && index <= node->cfgIndexForEnd()) {
+    if (!(node && index <= node->cfgIndexForEnd())) {
       warnx ("created CFGNode with illegal index");
     }
   }
