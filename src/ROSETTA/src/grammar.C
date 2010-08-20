@@ -100,7 +100,6 @@ Grammar::Grammar ( const string& inputGrammarName,
      {
 
 #if 1
-//#if !ROSE_MICROSOFT_OS
 		 // TPS (11/4/2009) : This will work now not using cygwin
 	   std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
 #else
@@ -448,7 +447,6 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 
 #define PREORDER_TRAVERSAL 0
 
-//#if !ROSE_MICROSOFT_OS
 #if PREORDER_TRAVERSAL 
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -481,7 +479,6 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-//#if !ROSE_MICROSOFT_OS
 #if !PREORDER_TRAVERSAL 
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -521,7 +518,6 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   
 #define PREORDER_TRAVERSAL 0
 
-//#if !ROSE_MICROSOFT_OS
 #if PREORDER_TRAVERSAL
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -554,7 +550,6 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-//#if !ROSE_MICROSOFT_OS
 #if !PREORDER_TRAVERSAL
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -1777,7 +1772,6 @@ Grammar::buildHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
 
-//#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file (each class in its own file)!
      string fileExtension = ".h";
@@ -1785,7 +1779,6 @@ Grammar::buildHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers &
   // printf ("In buildHeaderFiles(): directoryName = %s \n",directoryName.c_str());
      writeFile ( editedHeaderFileString, directoryName, node.getName(), fileExtension );
 #endif
-//#endif
 
   // Also output strings to single file (this outputs everything to a single file)
      outputFile += editedHeaderFileString;
@@ -2068,7 +2061,6 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
-//#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file!
      string fileExtension = ".C";
@@ -2076,7 +2068,6 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
      writeFile ( editedSourceFileString, directoryName, node.getName(), fileExtension );
 #endif
-//#endif
 
 #if 1
 // Also output strings to single file

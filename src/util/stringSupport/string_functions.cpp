@@ -15,6 +15,10 @@
 #if !ROSE_MICROSOFT_OS
 // AS added to support the function getAbsolutePathFromRelativePath
 #include <sys/param.h>
+#else
+#include <windows.h>
+#include "Shlwapi.h"
+
 #endif
 #include <algorithm>
 // AS added to support the function findfile
@@ -24,14 +28,12 @@
 #if !ROSE_MICROSOFT_OS
 #include <dirent.h>             /* readdir(), etc.                    */
 #include <sys/stat.h>           /* stat(), etc.                       */
+#include <libgen.h>             /* basename(), dirame()               */
+#include <unistd.h>             /* getcwd(), etc.                     */
 #endif
 
 #include <string.h>             /* strstr(), etc.                     */
 
-#if !ROSE_MICROSOFT_OS
-#include <libgen.h>             /* basename(), dirame()               */
-#include <unistd.h>             /* getcwd(), etc.                     */
-#endif
 #include <iostream>              /* std::cerr */
 #include <sstream>              /* std::ostringstream */
 #include <fstream>
@@ -81,9 +83,7 @@ StringUtility::findfile(std::string patternString, std::string pathString)
 
 #if ROSE_MICROSOFT_OS
 	 printf ("Error: MSVS implementation of StringUtility::findfile required (not implemented) \n");
-#ifdef _MSC_VER
 #define __builtin_constant_p(exp) (0)
-#endif
 	 ROSE_ASSERT(false);
 #else
      DIR* dir;			      /* pointer to the scanned directory. */
@@ -160,29 +160,8 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
      resolved_path[0] = '\0';
 
 #if ROSE_MICROSOFT_OS
-     resolved_path[0] = '\0';
-  // const char* resultingPath = NULL;
-	 printf ("WARNING: realPath() not supported in MSVC (attempt at work around implemented) relativePath = %s \n",relativePath.c_str());
-
-  // tps (11/10/200): Did not find corresponding function call in Windows. Commented out for now. Seems to work.
-  // ROSE_ASSERT(false);
-
-  // DQ (11/27/2009): This is a try at work around for realpath() not being available in Windows (does not work yet).
-  // DWORD WINAPI GetFullPathName( __in   LPCTSTR lpFileName, __in   DWORD nBufferLength, __out  LPTSTR lpBuffer, __out  LPTSTR *lpFilePart );
-  // char resolved_file[MAXPATHLEN];
-  // resolved_file[0] = '\0';
-	 LPSTR* resolved_file = NULL;
-  // LPSTR resolved_path[MAXPATHLEN];
-  // char resultingPath[MAXPATHLEN];
-  // resultingPath[0] = '\0';
-	 ROSE_ASSERT(relativePath.empty() == false);
-	 int status = ::GetFullPathName(relativePath.c_str(), relativePath.size(), resolved_path, resolved_file);
-  // if (status != 0)
-  //      ::WCMD_print_error();
-  // ROSE_ASSERT(status != 0);
-	 printf ("In MSVC -- StringUtility::getAbsolutePathFromRelativePath(): relativePath = %s resolved_path = %s \n",relativePath.c_str(),(resolved_path[0] != '\0') ? resolved_path : "NULL STRING");
-
-	 string resultingPath="";
+	 PathCanonicalize(resolved_path,relativePath.c_str());
+	 string resultingPath=string(resolved_path);
 #else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 
@@ -227,10 +206,6 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
 	// printf("returnString1 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
           returnString = resolved_path;
         }
-
-#if ROSE_MICROSOFT_OS
- //         returnString = "../"+returnString;
-#endif
 
      //printf("returnString3 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
 
@@ -930,12 +905,9 @@ StringUtility::readFileWithPos ( const string& fileName )
 
      ifstream inputFile;
 
-  // tps (01/05/2010) Changed to get this to work under Windows
-//#if ROSE_MICROSOFT_OS
-//     inputFile.open( fullFileName.c_str(), ios::binary );
-//#else
+
 	 inputFile.open( fileName.c_str(), ios::binary );
-//#endif
+
 
      if (inputFile.good() != true)
         {
@@ -1238,8 +1210,18 @@ StringUtility::stripPathFromFileName ( const string & fileNameWithPath )
      strcpy(c_version, fileNameWithPath.c_str());
 
 #if ROSE_MICROSOFT_OS
-	 printf ("Error: basename() not available in MSVS (work around not implemented) \n");
-	 ROSE_ASSERT(false);
+//	 printf ("Error: basename() not available in MSVS (work around not implemented) \n");
+//	 ROSE_ASSERT(false);
+   char drive[_MAX_DRIVE];
+   char dir[_MAX_DIR];
+   char fname[_MAX_FNAME];
+   char ext[_MAX_EXT];
+
+   _splitpath(c_version,drive,dir,fname,ext);
+	 // tps (08/17/2010) - Made this work under Windows. 
+	 string fnamestr(fname);
+	 string extstr(ext);
+	 returnString = fnamestr+extstr;
 #else
      returnString = basename(c_version);
 #endif
@@ -1386,9 +1368,19 @@ StringUtility::getPathFromFileName ( const string & fileNameWithPath )
      strcpy(c_version, fileNameWithPath.c_str());
 
 #if ROSE_MICROSOFT_OS
-     string returnString;
-	 printf ("Error: dirname() not supported in MSVS 9work around not implemented) \n");
-	 ROSE_ASSERT(false);
+   char drive[_MAX_DRIVE];
+   char dir[_MAX_DIR];
+   char fname[_MAX_FNAME];
+   char ext[_MAX_EXT];
+
+	 _splitpath(c_version,drive,dir,fname,ext);
+//	 printf ("Error: dirname() not supported in MSVS 9work around not implemented) \n");
+//	 printf ("dirname = %s \n",dir);
+	 // tps (08/17/2010) - Made this work under Windows.
+	 string drivestr(drive);
+	 string dirstr(dir);
+	 string returnString = drivestr+dirstr;
+//	 ROSE_ASSERT(false);
 #else
      string returnString = dirname(c_version);
 #endif
