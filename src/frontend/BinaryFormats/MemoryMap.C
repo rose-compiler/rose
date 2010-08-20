@@ -580,7 +580,12 @@ MemoryMap::load(const std::string &basename)
     char *line = NULL;
     size_t line_nalloc = 0;
     ssize_t nread;
+#ifdef _MSC_VER
+	while (true) {
+	ROSE_ASSERT(false);
+#else
     while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
+#endif
         char *rest, *s=line;
 
         /* Starting virtual address */
