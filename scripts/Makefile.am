@@ -18,6 +18,7 @@ distributedScripts =				\
      policies-checker.sh			\
      policies/CaseInsensitiveFileNames.pl	\
      policies/EightColumnTabstops.pl		\
+     policies/FileLister.pm                     \
      policies/NoExceedinglyLongLines.pl		\
      policies/NoRoseIncludes.pl			\
      policies/NoUsingInHeaders.pl		\
