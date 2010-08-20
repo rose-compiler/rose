@@ -2,6 +2,9 @@
 #include <unistd.h>
 
 int main() {
-  getuid();
+  int result = getuid();
+  
+  if( result == -1 )
+    err(1,"getuid failed");
   return 0;
 }

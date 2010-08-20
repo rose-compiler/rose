@@ -302,8 +302,10 @@ MangledNameMapTraversal::addToMap ( string key, SgNode* node)
 #if 0
           addAssociatedNodes(node,setOfNodesToDelete,false,matchingNodeInMergedAST);
 #else
+#ifndef _MSC_VER
    #warning "Skipping call to addAssociatedNodes()"
-       // printf ("Skipping call to addAssociatedNodes() \n");
+#endif
+		  // printf ("Skipping call to addAssociatedNodes() \n");
 #endif
         }
 #else
