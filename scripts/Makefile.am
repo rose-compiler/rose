@@ -16,11 +16,13 @@ distributedScripts =				\
      lsdot					\
      nmiBuildAndTestFarm			\
      policies-checker.sh			\
-     policies.d/CaseInsensitiveFileNames.pl	\
-     policies.d/NoRoseIncludes.pl		\
-     policies.d/NoUsingInHeaders.pl		\
-     policies.d/UniqueHeaderNames.pl		\
-     policies.d/UnixLineTermination.pl		\
+     policies/CaseInsensitiveFileNames.pl	\
+     policies/EightColumnTabstops.pl		\
+     policies/NoExceedinglyLongLines.pl		\
+     policies/NoRoseIncludes.pl			\
+     policies/NoUsingInHeaders.pl		\
+     policies/UniqueHeaderNames.pl		\
+     policies/UnixLineTermination.pl		\
      runscript					\
      sample_binary_rules.pl
 
