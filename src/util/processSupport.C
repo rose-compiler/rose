@@ -53,7 +53,8 @@ int systemFromVector(const vector<string>& argv) {
 	si.cb=sizeof(si);
 	ZeroMemory(&pi,sizeof(pi));
 	if(!CreateProcess(argv[0].c_str(),(char* )&argvC[0],0,0,0,0,0,0,&si,&pi)) {
-	//Could not start process;
+		// todo Windows: tps: Does not work right now. This is called when a generated program is compiled
+		//Could not start process;
 	     printf ("Error: no MSVS implementation available. Final code not compiled for now. \n");
 		// assert(false);
 		 return 1;
@@ -94,7 +95,7 @@ FILE* popenReadFromVector(const vector<string>& argv) {
     return fdopen(pipeDescriptors[0], "r");
   }
 #else
-
+	// tps: does not work right now. Have not hit this assert yet.
   printf ("Error: no MSVS implementation available popenReadFromVector() (not implemented) \n");
   assert(false);
 

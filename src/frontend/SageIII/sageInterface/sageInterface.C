@@ -494,7 +494,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
   // insert the new_name in the symbol table
 // CH (4/9/2010): Use boost::unordered instead   
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
   // DQ (11/28/2009): Unclear if this code is a problem (testing).
 
@@ -2958,7 +2958,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
 // CH (4/9/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 //#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
      printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
@@ -4623,6 +4623,8 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
 #ifndef _MSC_VER
 //#if 1		  
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
+#else
+		  ROSE_ASSERT(false);
 #endif
 	 }
    }
@@ -5131,6 +5133,8 @@ void SageInterface::removeStatement(SgStatement* stmt)
   ROSE_ASSERT(stmt);
 #ifndef _MSC_VER
   LowLevelRewrite::remove(stmt);
+#else
+  ROSE_ASSERT(false);
 #endif
 }
 
@@ -10880,7 +10884,6 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
 #ifdef _MSC_VER
      // DQ (11/28/2009): This is related to the use of covariant return types (I think).
 		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
-
 #pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
 		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
 		ROSE_ASSERT(false);

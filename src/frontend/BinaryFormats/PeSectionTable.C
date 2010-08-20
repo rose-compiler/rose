@@ -53,9 +53,7 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
         fprintf(stderr, "warning: section name too long to store in PE file: \"%s\" (truncated)\n", p_name.c_str());
     memset(disk->name, 0, sizeof(disk->name));
 
-//#ifdef _MSC_VER
-//    memcpy(disk->name, p_name.c_str(), _cpp_min(sizeof(disk->name), p_name.size()));
-//#else
+
 #ifdef USE_ROSE
  // DQ (1/27/2010): std::min() does not appear to be handle different type of arguments for ROSE. Need to look into this later.
  // memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), (size_t)p_name.size()));
@@ -63,7 +61,7 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
 #else
     memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), p_name.size()));
 #endif
-//#endif
+
 
     host_to_le(p_virtual_size,     &(disk->virtual_size));
     host_to_le(p_rva,              &(disk->rva));
@@ -87,11 +85,9 @@ SgAsmPESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sPESectionTableEntry.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "virtual_size",     p_virtual_size);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",              p, w, "rva",              p_rva);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "physical_size",    p_physical_size);
@@ -181,11 +177,9 @@ SgAsmPESectionTable::add_section(SgAsmPESection *section)
         int max_id=0; /*assume zero is used so we start at one*/
         for (size_t i=0; i<seclist->get_sections().size(); i++) {
             SgAsmGenericSection *s = seclist->get_sections()[i];
-//#ifdef _MSC_VER
-//			max_id = _cpp_max(max_id, s->get_id());
-//#else
+
 			max_id = std::max(max_id, s->get_id());
-//#endif
+
 		}
         section->set_id(max_id+1);
     }
@@ -208,11 +202,9 @@ SgAsmPESectionTable::reallocate()
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
     int max_id = 0;
     for (size_t i=0; i<sections.size(); i++) {
-//#ifdef _MSC_VER
-//        max_id = _cpp_max(max_id, sections[i]->get_id());
-//#else
+
         max_id = std::max(max_id, sections[i]->get_id());
-//#endif
+
 	}
     
     size_t nsections = max_id; /*PE section IDs are 1-origin*/

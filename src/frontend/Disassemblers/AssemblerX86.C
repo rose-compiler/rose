@@ -1844,6 +1844,9 @@ AssemblerX86::assembleProgram(const std::string &_source)
     close(fd);
     unlink(src_file_name);
     unlink(dst_file_name);
+#else
+	printf ("ERROR: MSVC function not impemented yet.");
+	ROSE_ASSERT(false);
 #endif
     return retval;
 }
