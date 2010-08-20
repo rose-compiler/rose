@@ -13,6 +13,9 @@
 
 //extern int gensym_counter;
 
+// King84: there seems to be a circular dependency with including sage interface (which happens before this file is included), so we just predeclare the one class we use from it.
+namespace SageInterface { class StatementGenerator; };
+
 //! Create a list with one element
 inline static Rose_STL_Container<SgStatement*> make_unit_list(SgStatement* x) {
   Rose_STL_Container<SgStatement*> result;

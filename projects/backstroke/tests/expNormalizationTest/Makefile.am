@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a
 
 noinst_PROGRAMS = expNormTest
 expNormTest_SOURCES = main.C
@@ -560,19 +560,133 @@ test2006_164.C \
 test2006_165.C \
 test2006_166.C \
 test2006_180.C \
+test2006_181.C \
+test2006_183.C \
+test2006_185.C \
+test2007_01.C \
+test2007_02.C \
+test2007_03.C \
+test2007_04.C \
+test2007_05.C \
+test2007_06.C \
+test2007_07.C \
+test2007_08.C \
+test2007_09.C \
+test2007_10.C \
+test2007_11.C \
+test2007_12.C \
+test2007_13.C \
+test2007_14.C \
+test2007_16.C \
+test2007_17.C \
+test2007_21.C \
+test2007_23.C \
+test2007_24.C \
+test2007_25.C \
+test2007_26.C \
+test2007_28.C \
+test2007_29.C \
+test2007_38.C \
+test2007_40.C \
+test2007_41.C \
+test2007_43.C \
+test2007_44.C \
+test2007_46.C \
+test2007_47.C \
+test2007_48.C \
+test2007_49.C \
+test2007_50.C \
+test2007_52.C \
+test2007_53.C \
+test2007_55.C \
+test2007_57.C \
+test2007_59.C \
+test2007_62.C \
+test2007_70.C \
+test2007_72.C \
+test2007_75.C \
+test2007_77.C \
+test2007_78.C \
+test2007_81.C \
+test2007_82.C \
+test2007_83.C \
+test2007_84.C \
+test2007_85.C \
+test2007_90.C \
+test2007_94.C \
+test2007_98.C \
+test2007_102.C \
+test2007_103.C \
+test2007_128.C \
+test2007_130.C \
+test2007_133.C \
+test2007_135.C \
+test2007_137.C \
+test2007_140.C \
+test2007_141.C \
+test2007_142.C \
+test2007_147.C \
+test2007_150.C \
+test2007_151.C \
+test2007_152.C \
+test2007_154.C \
+test2007_155.C \
+test2007_157.C \
+test2007_159.C \
+test2007_160.C \
+test2007_161.C \
+test2007_162.C \
+test2007_163.C \
+test2007_164.C \
+test2007_165.C \
+test2007_166.C \
+test2007_167.C \
+test2007_170.C \
+test2007_171.C \
+test2007_172.C \
+test2007_173.C \
+test2008_01.C \
+test2008_04.C \
+test2008_05.C \
+test2008_06.C \
+test2008_09.C \
+test2008_10.C \
+test2008_11.C \
+test2008_12.C \
+test2008_13.C \
+test2008_14.C \
+test2008_16.C \
+test2009_01.C \
+test2009_02.C \
+test2009_12.C \
+test2009_15.C \
+test2009_20.C \
+test2009_30.C \
+test2009_31.C \
+test2009_37.C \
+test2009_39.C \
+test2009_40.C \
+test2009_41.C \
+test2009_42.C \
+test2010_03.C \
+test2010_04.C \
+test2010_05.C \
+test2010_06.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
 lexPhase2003_01.C \
 math.C \
-inputForLoopLocator.C
-
+inputForLoopLocator.C \
+X.C \
+inputBug317.C \
+inputBug327.C \
+test2006_148.C \
+test2007_51.C
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
-
-FAILURE_TESTCODES = test2006_148.C 
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
@@ -580,7 +694,7 @@ simple_test = test_norm.C
 
 $(simple_test):expNormTest 
 	@cp $(top_srcdir)/projects/backstroke/tests/expNormalizationTest/test_norm.C test_norm.C
-	./expNormTest -c test_norm.C      		
+	./expNormTest --edg:no_warnings -c test_norm.C
 
 
 ## Include the path to A++ and the transformation specification
@@ -590,7 +704,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects):expNormTest 
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)      		
+	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)

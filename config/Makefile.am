@@ -8,6 +8,8 @@ include_HEADERS = \
      rose-g++-headerfilefixup.h \
      rose_specific_cdefs.h
 
+# DQ (8/14/2010): Added modified header file iomanip-gnu-4.5 to fix code in new 4.5 header files 
+# that ROSE can't compile and which appear to be C++0X specific code included by mistake.
 # DQ (9/3/2006): Reorganized the lists of EXTRA_DIST and include_HEADERS.
 # Note that without the file: config.guess, depend, install-sh, and dirincludes;
 # the configuration will exit and the backend specific compiler header file are not built.
@@ -25,7 +27,8 @@ EXTRA_DIST = CMakeLists.txt \
      create_system_headers \
      macro_names_to_remove \
      cleanConfigGuessOutput \
-     get_compiler_header_dirs
+     get_compiler_header_dirs \
+     iomanip-gnu-4.5
 
 # DQ (9/3/2006): I think that if we have config.guess, depend, install-sh, and dirincludes; then we don't need "missing"
 # missing
@@ -44,7 +47,6 @@ FILES_NOT_REQUIRED_FOR_DISTRIBUTIONS = \
      support-doxygen.m4 \
      support-insure.m4 \
      support-maple.m4 \
-     support-mysql.m4 \
      support-omp.m4 \
      support-gcc-omp.m4 \
      support-purify.m4 \

@@ -464,6 +464,7 @@ HEADER_CV_TYPE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -614,6 +615,7 @@ HEADER_STORAGE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -672,6 +674,7 @@ HEADER_ACCESS_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -888,6 +891,7 @@ HEADER_FUNCTION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -943,6 +947,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechanism to clear all bits
           void reset();
@@ -1011,6 +1016,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1112,6 +1118,7 @@ HEADER_DECLARATION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1398,6 +1405,7 @@ HEADER_TYPE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgTypeModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1459,6 +1467,7 @@ HEADER_ELABORATED_TYPE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1513,6 +1522,7 @@ HEADER_LINKAGE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1561,6 +1571,7 @@ HEADER_BASECLASS_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m );
+		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1681,6 +1692,20 @@ HEADER_FORMAT_ITEM_LIST_START
           void set_format_item_list ( const SgFormatItemPtrList & formatItemList );
 
 HEADER_FORMAT_ITEM_LIST_END
+
+
+HEADER_TYPE_TABLE_START
+          $CLASSNAME ();
+          void insert_type(const SgName&, SgType *);
+
+          SgType* lookup_type (const SgName&);
+
+       // DQ (7/22/2010): Added to support AST merge.
+          void remove_type(const SgName&);
+
+          void print_typetable(std::ostream& os = std::cout);
+
+HEADER_TYPE_TABLE_END
 
 
 
@@ -1924,12 +1949,6 @@ bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
 void $CLASSNAME::setVolatile()      { p_modifier = e_volatile; }
 void $CLASSNAME::unsetVolatile()    { setDefault(); }
 
-std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -1955,6 +1974,23 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
 #endif
    }
+
+std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
+	       (lhs.isDefault()  == rhs.isDefault() ) &&
+	       (lhs.isConst()    == rhs.isConst()   ) &&
+	       (lhs.isVolatile() == rhs.isVolatile()) &&
+		   true;
+}
+
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2063,12 +2099,6 @@ void SgStorageModifier::setOpenclConstant()      { p_modifier = e_opencl_constan
 bool SgStorageModifier::isOpenclPrivate() const { return p_modifier == e_opencl_private; }
 void SgStorageModifier::setOpenclPrivate()      { p_modifier = e_opencl_private; }
 
-std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2100,6 +2130,36 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()        == rhs.isUnknown() ) &&
+	       (lhs.isDefault()        == rhs.isDefault() ) &&
+	       (lhs.isExtern()         == rhs.isExtern()  ) &&
+	       (lhs.isStatic()         == rhs.isStatic()  ) &&
+	       (lhs.isAuto()           == rhs.isAuto()  ) &&
+	       (lhs.isUnspecified()    == rhs.isUnspecified()  ) &&
+	       (lhs.isRegister()       == rhs.isRegister()  ) &&
+	       (lhs.isMutable()        == rhs.isMutable()  ) &&
+	       (lhs.isTypedef()        == rhs.isTypedef()  ) &&
+	       (lhs.isAsm()            == rhs.isAsm()  ) &&
+	       (lhs.isCudaGlobal()     == rhs.isCudaGlobal()  ) &&
+	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
+	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
+	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared()  ) &&
+	       (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()  ) &&
+	       (lhs.isOpenclLocal()    == rhs.isOpenclLocal()  ) &&
+	       (lhs.isOpenclConstant() == rhs.isOpenclConstant()  ) &&
+	       (lhs.isOpenclPrivate()  == rhs.isOpenclPrivate()  ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2148,12 +2208,6 @@ void SgAccessModifier::setPublic()      { p_modifier = e_public; }
 bool SgAccessModifier::isUndefined() const { return p_modifier == e_undefined; }
 void SgAccessModifier::setUndefined()      { p_modifier = e_undefined; }
 
-std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 SgAccessModifier::displayString() const
    {
@@ -2174,6 +2228,23 @@ SgAccessModifier::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   } 
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
+	       (lhs.isDefault()  == rhs.isDefault() ) &&
+	       (lhs.isPrivate()  == rhs.isPrivate() ) &&
+	       (lhs.isProtected()== rhs.isProtected()) &&
+	       (lhs.isPublic()   == rhs.isPublic()  ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void SgAccessModifier::reset()
@@ -2355,22 +2426,6 @@ void SgFunctionModifier::setOpenclWorkGroupSizeReq()       { setBit(e_opencl_wor
 void SgFunctionModifier::unsetOpenclWorkGroupSizeReq()     { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
 
 
-std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
-   {
-      os << m.get_modifierVector(); 
-     return os;
-   }
-
-std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv ) 
-   {
-  // DQ (1/26/2006): Modified to handle 64 bit machines
-  // for (unsigned int i=0; i < bv.size(); i++)
-  // for (vector<bool>::size_type i=0; i < bv.size(); i++)
-     for (unsigned int i=0; i < bv.size(); i++)
-          os << ((bv[i] == true) ? "T" : "F");
-     return os;
-   }
-
 string
 SgFunctionModifier::displayString() const
    {
@@ -2393,6 +2448,64 @@ SgFunctionModifier::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
+   {
+      os << m.get_modifierVector(); 
+     return os;
+   }
+
+std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv ) 
+   {
+  // DQ (1/26/2006): Modified to handle 64 bit machines
+  // for (unsigned int i=0; i < bv.size(); i++)
+  // for (vector<bool>::size_type i=0; i < bv.size(); i++)
+     for (unsigned int i=0; i < bv.size(); i++)
+          os << ((bv[i] == true) ? "T" : "F");
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown() == rhs.isUnknown() ) &&
+	       (lhs.isDefault() == rhs.isDefault() ) &&
+	       (lhs.isInline()  == rhs.isInline()  ) &&
+	       // C++ specific
+	       (lhs.isVirtual()     == rhs.isVirtual()    ) &&
+	       (lhs.isPureVirtual() == rhs.isPureVirtual()) &&
+	       // Fortran specific
+	       (lhs.isExplicit()  == rhs.isExplicit() ) &&
+	       (lhs.isPure()      == rhs.isPure()     ) &&
+	       (lhs.isElemental() == rhs.isElemental()) &&
+	       (lhs.isRecursive() == rhs.isRecursive()) &&
+	       // GNU specific
+	       (lhs.isGnuAttributeConstructor() == rhs.isGnuAttributeConstructor()) &&
+	       (lhs.isGnuAttributeDestructor()  == rhs.isGnuAttributeDestructor() ) &&
+	       (lhs.isGnuAttributePure()        == rhs.isGnuAttributePure()       ) &&
+	       (lhs.isGnuAttributeWeak()        == rhs.isGnuAttributeWeak()       ) &&
+	       (lhs.isGnuAttributeUnused()      == rhs.isGnuAttributeUnused()     ) &&
+	       (lhs.isGnuAttributeUsed()        == rhs.isGnuAttributeUsed()       ) &&
+	       (lhs.isGnuAttributeDeprecated()  == rhs.isGnuAttributeDeprecated() ) &&
+	       (lhs.isGnuAttributeMalloc()      == rhs.isGnuAttributeMalloc()     ) &&
+	       (lhs.isGnuAttributeNaked()       == rhs.isGnuAttributeNaked()      ) &&
+	       (lhs.isGnuAttributeNoInstrumentFunction() == rhs.isGnuAttributeNoInstrumentFunction()) &&
+	       (lhs.isGnuAttributeNoCheckMemoryUsage() == rhs.isGnuAttributeNoCheckMemoryUsage()) &&
+	       (lhs.isGnuAttributeNoInline()           == rhs.isGnuAttributeNoInline()          ) &&
+	       (lhs.isGnuAttributeAlwaysInline()       == rhs.isGnuAttributeAlwaysInline()      ) &&
+	       (lhs.isGnuAttributeNoThrow()            == rhs.isGnuAttributeNoThrow()           ) &&
+	       (lhs.isGnuAttributeWeakReference()      == rhs.isGnuAttributeWeakReference()     ) &&
+	       // Cuda specific
+	       (lhs.isCudaDevice() == rhs.isCudaDevice()) &&
+	       (lhs.isCudaKernel() == rhs.isCudaKernel()) &&
+	       (lhs.isCudaHost()   == rhs.isCudaHost()  ) &&
+	       // OpenCL specific
+	       (lhs.isOpenclKernel()             == rhs.isOpenclKernel()            ) &&
+	       (lhs.hasOpenclVecTypeHint()       == rhs.hasOpenclVecTypeHint()      ) &&
+	       (lhs.hasOpenclWorkGroupSizeHint() == rhs.hasOpenclWorkGroupSizeHint()) &&
+	       (lhs.hasOpenclWorkGroupSizeReq()  == rhs.hasOpenclWorkGroupSizeReq() ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void SgFunctionModifier::reset()
@@ -2448,12 +2561,6 @@ void $CLASSNAME::setUPC_Strict()      { p_modifier = e_upc_strict; }
 bool $CLASSNAME::isUPC_Relaxed() const { return p_modifier == e_upc_relaxed; }
 void $CLASSNAME::setUPC_Relaxed()      { p_modifier = e_upc_relaxed; }
 
-std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2478,6 +2585,22 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()     == rhs.isUnknown()    ) &&
+	       (lhs.isDefault()     == rhs.isDefault()    ) &&
+	       (lhs.isUPC_Strict()  == rhs.isUPC_Strict() ) &&
+	       (lhs.isUPC_Relaxed() == rhs.isUPC_Relaxed()) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2538,12 +2661,6 @@ bool $CLASSNAME::isOperator() const    { return checkBit(e_operator,p_modifierVe
 void $CLASSNAME::setOperator()         { setBit(e_operator,p_modifierVector); }
 void $CLASSNAME::unsetOperator()       { unsetBit(e_operator,p_modifierVector); }
 
-std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m) 
-   {
-      os << m.get_modifierVector(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2565,6 +2682,25 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m) 
+   {
+      os << m.get_modifierVector(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()     == rhs.isUnknown()    ) &&
+	       (lhs.isDefault()     == rhs.isDefault()    ) &&
+	       (lhs.isNotSpecial()  == rhs.isNotSpecial() ) &&
+	       (lhs.isConstructor() == rhs.isConstructor()) &&
+	       (lhs.isDestructor()  == rhs.isDestructor() ) &&
+	       (lhs.isConversion()  == rhs.isConversion() ) &&
+	       (lhs.isOperator()    == rhs.isOperator()   ) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -2642,12 +2778,6 @@ bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifier
 void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
 
-std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m) 
-   {
-      os << m.get_modifierVector(); 
-     return os;
-   }
-
 string
 SgDeclarationModifier::displayString() const
    {
@@ -2673,6 +2803,29 @@ SgDeclarationModifier::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m) 
+   {
+      os << m.get_modifierVector(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+		   (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
+		   (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
+		   (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
+	       (lhs.isUnknown() == rhs.isUnknown()) &&
+	       (lhs.isDefault() == rhs.isDefault()) &&
+	       (lhs.isFriend()  == rhs.isFriend() ) &&
+	       (lhs.isTypedef() == rhs.isTypedef()) &&
+	       (lhs.isExport()  == rhs.isExport() ) &&
+	       (lhs.isThrow()   == rhs.isThrow()  ) &&
+	       (lhs.isBind()    == rhs.isBind()   ) &&
+	       (lhs.isFinal()   == rhs.isFinal()  ) &&
+		   true;
+}
 
 SgTypeModifier &
 SgDeclarationModifier::get_typeModifier ()
@@ -2922,12 +3075,6 @@ bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_att
 void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 
-std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
-   {
-      os << tm.get_modifierVector(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -2948,6 +3095,51 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
+   {
+      os << tm.get_modifierVector(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+		   (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
+		   (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
+		   (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
+	       (lhs.isUnknown() == rhs.isUnknown()) &&
+	       (lhs.isDefault() == rhs.isDefault()) &&
+           // C specific
+	       (lhs.isRestrict() == rhs.isRestrict()) &&
+           // Fortran specific
+	       (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
+	       (lhs.isBind()         == rhs.isBind()        ) &&
+	       (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
+	       (lhs.isData()         == rhs.isData()        ) &&
+	       (lhs.isDimension()    == rhs.isDimension()   ) &&
+	       (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
+	       (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
+	       (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
+	       (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
+	       (lhs.isOptional()     == rhs.isOptional()    ) &&
+	       (lhs.isSave()         == rhs.isSave()        ) &&
+	       (lhs.isTarget()       == rhs.isTarget()      ) &&
+	       (lhs.isValue()        == rhs.isValue()       ) &&
+           // GNU specific
+	       (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
+	       (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
+	       (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
+	       (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
+	       (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
+	       (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
+	       (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
+	       (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
+	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
+	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
+	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+		   true;
+}
 
 SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier ()
@@ -3053,12 +3245,6 @@ void $CLASSNAME::setEnum()      { p_modifier = e_enum; }
 bool $CLASSNAME::isTypename() const { return p_modifier == e_typename; }
 void $CLASSNAME::setTypename()      { p_modifier = e_typename; }
 
-std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -3080,6 +3266,25 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
+	       (lhs.isDefault()  == rhs.isDefault() ) &&
+	       (lhs.isClass()    == rhs.isClass()   ) &&
+	       (lhs.isStruct()   == rhs.isStruct()  ) &&
+	       (lhs.isUnion()    == rhs.isUnion()   ) &&
+	       (lhs.isEnum()     == rhs.isEnum()    ) &&
+	       (lhs.isTypename() == rhs.isTypename()) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -3125,12 +3330,6 @@ void $CLASSNAME::setCppLinkage()      { p_modifier = e_Cpp_linkage; }
 bool $CLASSNAME::isFortranLinkage() const { return p_modifier == e_fortran_linkage; }
 void $CLASSNAME::setFortranLinkage()      { p_modifier = e_fortran_linkage; }
 
-std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -3150,6 +3349,23 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.isUnknown()        == rhs.isUnknown()       ) &&
+	       (lhs.isDefault()        == rhs.isDefault()       ) &&
+	       (lhs.isC_Linkage()      == rhs.isC_Linkage()     ) &&
+	       (lhs.isCppLinkage()     == rhs.isCppLinkage()    ) &&
+	       (lhs.isFortranLinkage() == rhs.isFortranLinkage()) &&
+		   true;
+}
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void $CLASSNAME::reset()
@@ -3191,12 +3407,6 @@ void $CLASSNAME::setDefault()      { p_modifier = e_default; }
 bool $CLASSNAME::isVirtual() const { return p_modifier == e_virtual; }
 void $CLASSNAME::setVirtual()      { p_modifier = e_virtual; }
 
-std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m) 
-   {
-      os << m.get_modifier(); 
-     return os;
-   }
-
 string
 $CLASSNAME::displayString() const
    {
@@ -3215,6 +3425,22 @@ $CLASSNAME::display ( std::string label ) const
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
      printf ("%s \n",displayString().c_str());
    }
+
+std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m) 
+   {
+      os << m.get_modifier(); 
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+	return
+	       (lhs.get_accessModifier() == rhs.get_accessModifier()) &&
+	       (lhs.isUnknown() == rhs.isUnknown()) &&
+	       (lhs.isDefault() == rhs.isDefault()) &&
+	       (lhs.isVirtual() == rhs.isVirtual()) &&
+		   true;
+}
 
 SgAccessModifier &
 $CLASSNAME::get_accessModifier ()
@@ -3791,6 +4017,9 @@ HEADER_INITIALIZED_NAME_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
           SgStorageModifier & get_storageModifier();
+
+       // DQ (8/10/2010): Added const version of this function!
+          const SgStorageModifier & get_storageModifier() const;
 
       //  These are automatically generated! (not an option currently)
       //  SgInitializedName();
@@ -5771,10 +6000,16 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
   // DQ (3/10/2007): This is a simpler assertion equivalent to the one above but without generating any error output 
-     assert(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
+     ROSE_ASSERT(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
 
   // DQ (3/10/2007): Test for if the symbol exists
-     assert (p_symbolSet.find(sp) == p_symbolSet.end());
+     if (p_symbolSet.find(sp) != p_symbolSet.end())
+        {
+           SgType* t = sp->get_type();
+           ROSE_ASSERT(t != NULL);
+           printf ("ERROR: p_symbolSet.find(sp) != p_symbolSet.end(): base type = %p = %s \n",t,t->class_name().c_str());
+        }
+     ROSE_ASSERT(p_symbolSet.find(sp) == p_symbolSet.end());
 
 #if 0
   // #if SYMBOL_TABLE_ERROR_CHECKING
@@ -5943,6 +6178,9 @@ SgSymbolTable::remove_function_type( const SgName & name )
           deleteList.push_back(it);
           it++;
         }
+#if 1
+     printf ("In SgSymbolTable::remove_function_type( const SgName & name ): name = %s deleteList.size() = %zu \n",name.str(),deleteList.size());
+#endif
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
 // CH (4/8/2010): Use boost::unordered instead     
@@ -6901,20 +7139,27 @@ SgFunctionSymbol*
 SgSymbolTable::find_function (const SgName &nm, const SgType* t)
    {
   // AS (083006): cleaned up logic so that the function only have one return statement.
+
      SgFunctionSymbol *s = NULL;
      assert(p_table != NULL);
      if(p_table)
         {
+
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
        // SgSymbolHashBase::iterator i=p_table->find(nm);
        // JW and AS (08/30/06) changed to use equal range rather than find and
        //    iterating through the hash table. This is an optimization.
+
           std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
           for (hash_iterator i = range.first; i != range.second; ++i)
              {
             // s = isSgFunctionSymbol((*i).second);
                s = isSgFunctionSymbol(i->second);
-               if ( (s != NULL) && (s->get_declaration()->get_type() == t))
+
+                //  if ( (s != NULL) && (s->get_declaration()->get_type() == t))
+                // FMZ (10/29/2009) should compare name also
+                if ( (s != NULL) && (s->get_declaration()->get_type() == t) && s->get_name().str()==nm.str())
                   {
                     p_name    = nm;
                     p_no_name = false;
@@ -6946,7 +7191,7 @@ SgSymbolTable::find_function(const SgName &nm)
 
      while(p_iterator != p_table->end())
         {
-          if (isSgFunctionSymbol(p_iterator->second))
+          if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
              {
                p_name    = nm;
                p_no_name = false;
@@ -8096,6 +8341,14 @@ SgInitializedName::get_storageModifier()
      return *p_storageModifier;
    }
 
+const SgStorageModifier &
+SgInitializedName::get_storageModifier() const
+   {
+     assert (this != NULL);
+     assert (p_storageModifier != NULL);
+     return *p_storageModifier;
+   }
+
 SgName
 SgInitializedName::get_qualified_name() const
    {
@@ -8156,6 +8409,10 @@ SgInitializedName::post_construction_initialization()
 
   // Borrow the enum definition (and default value from SgDeclarationModifier).
      p_gnu_attribute_visability              = SgDeclarationModifier::e_unknown_visibility;
+
+  // FMZ added for coarray
+     p_isCoArray = false;
+
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
@@ -8288,6 +8545,7 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
      p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
      p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
+     p_isCoArray                             = ptr.p_isCoArray;
    }
 
 SgInitializedName&
@@ -8372,6 +8630,7 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
           p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
           p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
+          p_isCoArray                             = ptr.p_isCoArray;
         }
        else
         {
@@ -14428,3 +14687,131 @@ $CLASSNAME::display ( std::string label ) const
 SOURCE_OPENCL_ACCESS_MODE_MODIFIER_END
 
 
+SOURCE_TYPE_TABLE_START
+
+/* \brief Hash table of types (table is stored on global scope).
+
+   Hash table of types (table is stored on global scope and includes types
+   from all scopes). Types are placed into and retrieved from this data 
+   base (simple hash table) of SgTypes.
+ */
+SgTypeTable::SgTypeTable ()
+   {
+  // DQ (2/19/2007): Use a much larger size symbol table for the function types (the input value is the hash table size, which should be a prime number)!
+  // p_function_type_table = new SgSymbolTable();
+     p_type_table = new SgSymbolTable(1001);
+     ROSE_ASSERT(p_type_table != NULL);
+
+  // DQ (2/16/2006): Set this parent directly (now tested)
+     p_type_table->set_parent(this);
+   }
+
+#if 0
+// DQ (2/19/2007): This appears to not be called but is here because 
+// the ROSETTA code requires it (I think).
+void
+SgTypeTable::post_construction_initialization()
+   {
+   }
+#endif
+
+void
+SgTypeTable::print_typetable(std::ostream& os)
+   {
+  // printf ("ERROR: Sage $CLASSNAME::print_functypetable function called! \n");
+  // abort();
+
+     os << endl << "...TypeTbl..." << endl;
+  // p_type_table.print(os);
+
+     ROSE_ASSERT(p_type_table != NULL);
+  // p_type_table->print(os);
+     p_type_table->print("Called from $CLASSNAME::print_typetable");
+   }
+
+void
+SgTypeTable::insert_type(const SgName& n, SgType *t)
+   {
+     ROSE_ASSERT (p_type_table != NULL);
+     ROSE_ASSERT (t != NULL);
+
+  // DQ (7/22/2010): We might want to reuse the SgFunctionTypeSymbol or change the name of it to SgTypeSymbol
+     SgFunctionTypeSymbol* newSymbol = new SgFunctionTypeSymbol(n,t);
+     ROSE_ASSERT (newSymbol != NULL);
+#if 0
+  // DQ (7/29/2010): This can sometimes fail in unparsing types.  This is important becasse we now support type tables in ROSE.
+     printf ("Inside of SgTypeTable::insert_function_type(SgName,SgType*): n = %s type = %s = %s newSymbol = %p \n",
+             n.str(),t->sage_class_name(),t->unparseToString().c_str(),newSymbol);
+#endif
+#if 0
+  // DQ (7/29/2010): This is more robust for the new type table support.
+     printf ("Inside of SgTypeTable::insert_function_type(SgName,SgType*): n = %s type = %s newSymbol = %p \n",
+             n.str(),t->sage_class_name(),newSymbol);
+#endif
+  // printf ("Is the qualified name being used! \n");
+  // ROSE_ASSERT(false);
+
+  // DQ (7/26/2010): Set the parent of the type to it symbol.
+  // This is a new idea and will allow the parent pointer to be valid for all types and also 
+  // point to something meaningful.  This is another benefit of using the type table idea.
+     t->set_parent(newSymbol);
+
+     p_type_table->insert(n, newSymbol);
+   }
+
+// DQ (1/31/2007): Added support for removing function type symbols (used in AST merge)
+void
+SgTypeTable::remove_type(const SgName& n)
+   {
+     ROSE_ASSERT (p_type_table != NULL);
+     p_type_table->remove_function_type(n);
+   }
+
+#if 0
+// see if this is ever used!
+void
+SgTypeTable::insert_type(const SgFunctionDeclaration *fdecl)
+   {
+     assert(fdecl != NULL);
+     printf ("Inside of SgTypeTable::insert_function_type(SgFunctionDeclaration = %s) \n",fdecl->get_name().str());
+     SgFunctionType* type = isSgFunctionType(fdecl->get_type());
+     ROSE_ASSERT(type != NULL);
+
+     SgName n = type->get_mangled_type();
+  // printf ("Using function name = %s  should be using qualified function type name \n",n.str());
+
+     printf ("Looking up %s in function table \n",n.str());
+     if (lookup_function_type(n) != NULL)
+        {
+          printf ("Found function %s (skip reinsertion) \n",n.str());
+       // return; // DQ: no need for multiple return!
+        }
+       else
+        {
+       // printf ("Function NOT Found: so insert in table %s \n",n.str());
+          insert_function_type(n,type);
+        }
+   }
+#endif
+
+SgType*
+SgTypeTable::lookup_type(const SgName& n)
+   {
+  // printf ("In SgTypeTable::lookup_function_type: Looking for %s \n",n.str());
+     ROSE_ASSERT (p_type_table != NULL);
+  // SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(p_function_type_table->findfunctype(n));
+     SgSymbol *symbol = p_type_table->find_function_type(n);
+     SgFunctionTypeSymbol *fsymb = isSgFunctionTypeSymbol(symbol);
+     SgType* returnType = NULL;
+
+     if (fsymb != NULL)
+        {
+          returnType = fsymb->get_type();
+          ROSE_ASSERT(returnType != NULL);
+       // printf ("In SgTypeTable::lookup_function_type(): found function type %s \n",returnType->class_name().c_str());
+        }
+
+     return returnType;
+   }
+
+SOURCE_TYPE_TABLE_END

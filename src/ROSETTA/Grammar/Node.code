@@ -2053,6 +2053,12 @@ HEADER_START
           static void set_globalFunctionTypeTable(SgFunctionTypeTable* globalFunctionTypeTable);
       /* */
 
+       // DQ (7/22/2010): Added seperate type table to support construction of unique types.
+       //! Access function for symbol table specific to non-function types.
+          static SgTypeTable* get_globalTypeTable();
+       //! Access function for symbol table specific to non-function types.
+          static void set_globalTypeTable(SgTypeTable* globalTypeTable);
+
       /* \brief Mangled name cache for improved performance of mangled name generation
           This mangle name caching is implemented to support better performance.
        */
@@ -2140,6 +2146,9 @@ int SAGE_DEBUG = 0;  // default value is zero
 // SgFunctionTypeTable* SgNode::p_globalFunctionTypeTable = new SgFunctionTypeTable();
 SgFunctionTypeTable* SgNode::p_globalFunctionTypeTable = NULL;
 
+// DQ (7/22/2010): Added type table for non-function types (supports construction of unique types).
+SgTypeTable*         SgNode::p_globalTypeTable         = NULL;
+
 // Static variable used to hold language specific information for each IR node
 // long SgNode::language_classification_bit_vector;
 
@@ -2201,6 +2210,29 @@ void
 SgNode::set_globalFunctionTypeTable ( SgFunctionTypeTable* globalFunctionTypeTable )
    {
      p_globalFunctionTypeTable = globalFunctionTypeTable;
+   }
+
+SgTypeTable*
+SgNode::get_globalTypeTable()
+   {
+  // DQ (1/31/2006): If there is no global function type symbol table then build one
+     if (p_globalTypeTable == NULL)
+        {
+       // printf ("In SgNode::get_globalTypeTable(): p_globalTypeTable == NULL (allocating the global non-function type symbol table) \n");
+          p_globalTypeTable = new SgTypeTable();
+          ROSE_ASSERT(p_globalTypeTable != NULL);
+       // p_globalTypeTable->set_parent(this);
+       // p_globalFunctionTypeTable->set_parent(???);
+        }
+
+     ROSE_ASSERT(p_globalTypeTable != NULL);
+     return p_globalTypeTable;
+   }
+
+void
+SgNode::set_globalTypeTable ( SgTypeTable* globalTypeTable )
+   {
+     p_globalTypeTable = globalTypeTable;
    }
 
 // DQ (3/17/2007): return reference to the global mangled name map (the use
@@ -2468,8 +2500,10 @@ SgNode::set_parent ( SgNode* parent )
           ROSE_ASSERT(false);
         }
 
-  // We should not be setting the parent on SgType IR nodes
-     ROSE_ASSERT( isSgType(this) == NULL );
+  // DQ (7/26/2010): Make the pointer a valid pointer by defining that it 
+  // should point to its associated SgSymbol as used in the type table.
+  // OLD COMMENT: We should not be setting the parent on SgType IR nodes
+  // ROSE_ASSERT( isSgType(this) == NULL );
    }
 
 /*! \brief Set the parent node.

@@ -14,13 +14,16 @@ namespace RoseToFada {
 class FadaStatementAttribute : public AstAttribute {
 	protected:
 		int p_id;
+		bool p_need_schedule;
 		std::vector<std::string *> * p_iterators;
 		fada::Condition * p_domain;
 	
 	public:
-		FadaStatementAttribute(int id);
+		FadaStatementAttribute(int id, bool need_schedule = false);
 		
 		int getID();
+		
+		bool needSchedule();
 		
 		void setIterators(std::vector<std::string *> * iterators);
 		std::vector<std::string *> * getIterators();
@@ -29,7 +32,7 @@ class FadaStatementAttribute : public AstAttribute {
 		fada::Condition * getDomain();
 };
 
-fada::Statement * getFadaStatementByID(fada::Statement * stmt, int id);
+fada::Statement * getFadaStatementByID(fada::Statement * root, int id);
 
 class FadaRoseCrossContext {
 	protected:
@@ -43,6 +46,8 @@ class FadaRoseCrossContext {
 		SgStatement * getSgStatementByID(int id);
 		
 		std::vector<std::string *> * getGlobals();
+		
+		std::vector<SgStatement *> * getStatements();
 		
 	protected:
 		// recursivelly add statement from SgFunctionDeclaration argument of the constructor.

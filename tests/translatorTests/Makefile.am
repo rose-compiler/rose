@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 # an better alternative to identityTranslator
 # Liao 1/29/2009
-bin_PROGRAMS = roseCompiler
+bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter 
 
 roseCompiler_SOURCES = roseCompiler.C
 
@@ -24,6 +24,8 @@ noinst_PROGRAMS = \
 # Example translators used in regression tests
 bug125_SOURCES = bug125.C
 qualifiedName_SOURCES = qualifiedName.C
+testDataMemberOfConst_SOURCES = testDataMemberOfConst.C
+testFortranParameter_SOURCES = testFortranParameter.C
 
 testTranslator2010_01_SOURCES = testTranslator2010_01.C
 testTranslator2010_02_SOURCES = testTranslator2010_02.C
@@ -40,14 +42,21 @@ testbug125: bug125
 testqualifiedName: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 
+test_testDataMemberOfConst: testDataMemberOfConst
+	./testDataMemberOfConst $(srcdir)/../CompileTests/Cxx_tests/dataMemberOfConst.C -o /dev/null
+
+test_testFortranParameter: testFortranParameter
+	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null
+
+
 #testTranslator2010_01_test: testTranslator2010_01 
 #	./testTranslator2010_01 -rose:verbose 2
 # a few translators without input parameters to run	
 check_PROGRAMS = testTranslator2010_01
-TESTS = $(check_PROGRAMS)
+TESTS = $(check_PROGRAMS) #test_testDataMemberOfConst test_testFortranParameter
 
 testTranslator2010_02_test: testTranslator2010_02 
-	./testTranslator2010_02 -rose:verbose 2 $(srcdir)/input_testTranslator2010_2.C
+	./testTranslator2010_02 -rose:verbose 0 $(srcdir)/input_testTranslator2010_2.C
 
 EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C
 

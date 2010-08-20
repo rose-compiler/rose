@@ -1311,7 +1311,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Fortran_only(true);
 
        // It is requested (by Laksono at Rice) that CoArray Fortran defaults be to skip the syntax checking
-          set_skip_syntax_check(false);
+	// Laksono 2009.01.27: I think we should put the boolean to 'true' instead of 'false'
+          set_skip_syntax_check(true);
 
           if (get_sourceFileUsesCoArrayFortranFileExtension() == false)
              {
@@ -2376,7 +2377,11 @@ SgSourceFile::initializeGlobalScope()
 
 
 SgFile* 
+#if 0 //FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
 determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
+#else 
+determineFileType ( vector<string> argv, int& nextErrorCode, SgProject* project )
+#endif
    {
      SgFile* file = NULL;
 
@@ -3767,6 +3772,10 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(functionTypeTable != NULL);
      if (functionTypeTable->get_parent() == NULL)
         {
+#if 0
+          printf ("This (globalFunctionTypeTable) should have been set to point to the SgProject not the SgFile \n");
+          ROSE_ASSERT(false);
+#endif
        // ROSE_ASSERT(numberOfFiles() > 0);
        // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgFunctionTypeTable \n");
           if (numberOfFiles() > 0)
@@ -3778,6 +3787,35 @@ SgProject::parse(const vector<string>& argv)
 
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
+#endif
+
+#if 1
+  // DQ (7/25/2010): We test the parent of SgTypeTable in the AST post processing,
+  // so we need to make sure that it is set.
+     SgTypeTable* typeTable = SgNode::get_globalTypeTable();
+     ROSE_ASSERT(typeTable != NULL);
+     if (typeTable->get_parent() == NULL)
+        {
+#if 0
+          printf ("This (globalTypeTable) should have been set to point to the SgProject not the SgFile \n");
+          ROSE_ASSERT(false);
+#endif
+       // ROSE_ASSERT(numberOfFiles() > 0);
+       // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgTypeTable \n");
+          if (numberOfFiles() > 0)
+               typeTable->set_parent(&(get_file(0)));
+            else
+               typeTable->set_parent(this);
+        }
+     ROSE_ASSERT(typeTable->get_parent() != NULL);
+
+  // DQ (7/30/2010): This test fails in tests/CompilerOptionsTests/testCpreprocessorOption
+  // DQ (7/25/2010): Added new test.
+  // printf ("typeTable->get_parent()->class_name() = %s \n",typeTable->get_parent()->class_name().c_str());
+  // ROSE_ASSERT(isSgProject(typeTable->get_parent()) != NULL);
+
+     ROSE_ASSERT(SgNode::get_globalTypeTable() != NULL);
+     ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
 #endif
 
      return errorCode;
@@ -3888,7 +3926,10 @@ SgProject::parse()
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
      FortranModuleInfo::setCurrentProject(this);
+     FortranModuleInfo::set_inputDirs(this );
+
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
@@ -4338,7 +4379,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
           //the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
-
+          argument == "-outputdir" ||  //FMZ (12/22/1009) added for caf compiler
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
           argument == "-rose:partitioner_config" ||
@@ -5971,12 +6012,12 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
 #else
-          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
+          fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) and gfortran \n");
           ROSE_ASSERT(false);
 #endif
 
 #else
-          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
+          fprintf(stderr, "ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
           ROSE_ASSERT(false);
 #endif
 

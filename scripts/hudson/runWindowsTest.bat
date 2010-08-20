@@ -5,9 +5,6 @@
 @echo Path : %Path%
 @echo JAVA_HOME : %JAVA_HOME%
 
-REM @echo 0 > rose_win_test.rose
-REM pscp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/rose_win_test.rose
-
 @echo Testing cl.exe
 cl.exe
 
@@ -44,6 +41,5 @@ cmake -DBOOST_ROOT=%BOOST_ROOT% -DCMAKE_BUILD_TYPE=Release -G"Visual Studio 9 20
 vcbuild.exe ROSE.sln "Release|Win32"
 
 @echo 1 > rose_win_test.rose
-REM scp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/
-pscp rose_win_test.rose hudson-rose@tux269:/nfs/casc/overture/ROSE/git/rose_win_test.rose
+@pscp rose_win_test.rose hudson-rose@hudson-rose.llnl.gov:/nfs/casc/overture/ROSE/git/rose_win_test.rose
 
