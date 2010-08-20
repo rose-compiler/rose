@@ -4,6 +4,100 @@
  * buffers of machine instructions.  This test also does a variety of analyses and Robb uses it as a general tool and staging
  * area for testing new features before they're added to ROSE. */
 
+static const char *usage = "\
+Synopsis:\n\
+  %s [SWITCHES] CONTAINER_FILE\n\
+  %s [SWITCHES] --raw=ENTRY RAW_FILE ADDRESS ...\n\
+  %s [SWITCHES] --raw=ENTRY MEMORY_MAP.index\n\
+\n\
+Description:\n\
+  Disassembles machine instructions from a container such as ELF or PE, or from\n\
+  a raw buffer such as a memory dump.\n\
+\n\
+  --ast-dot\n\
+    Generate GraphViz dot files for the entire AST. This switch is applicable\n\
+    only when the input file is a container such as ELF or PE.\n\
+\n\
+  --cfg-dot\n\
+    Generate a GraphViz dot file containing the control flow graph of each\n\
+    function.  These files will be named \"x-FXXXXXXXX.dot\" where \"XXXXXXXX\"\n\
+    is a function entry address.  This switch also generates a function call\n\
+    graph with the name \"x-cg.dot\". These files can be converted to HTML with\n\
+    the generate_html script found in tests/roseTests/binaryTests.\n\
+\n\
+  --debug-disassembler\n\
+    Causes the disassembler to spew diagnostics to standard error. This is\n\
+    intended for ROSE developers.\n\
+\n\
+  --debug-partitioner\n\
+    Causes the instruction partitioner to spew diagnostics to standard error.\n\
+    This is intended for ROSE developers.\n\
+\n\
+  --debug\n\
+    Convenience switch that turns on the --debug-disassembler and\n\
+    --debug-partitioner switches\n\
+\n\
+  --disassemble\n\
+    Call the disassembler explicitly, using the instruction search flags\n\
+    specified with the -rose:disassembler_search switch.  Without this\n\
+    --disassemble switch, the disassembler is called by the instruction\n\
+    partitioner whenever the partitioner needs an instruction. When the\n\
+    partitioner drives the disassembly we might spend substantially less time\n\
+    disassembling, but fail to discover functions that are never statically\n\
+    called.\n\
+\n\
+  --dos\n\
+    Normally, when the disassembler is invoked on a Windows PE or related\n\
+    container file it will ignore the DOS interpretation. This switch causes\n\
+    the disassembler to use the DOS interpretation instead of the PE\n\
+    interpretation.\n\
+\n\
+  --dot\n\
+    Convenience switch that is equivalent to --ast-dot and --cfg-dot.\n\
+\n\
+  --quiet\n\
+    Suppresses the instruction listing that is normally emitted to the standard\n\
+    output stream.\n\
+\n\
+  --raw=ENTRY\n\
+    Indicates that the specified file(s) contains raw machine instructions\n\
+    rather than a binary container such as ELF or PE.  The non-switch,\n\
+    positional arguments are either the name of an index file that was\n\
+    created by MemoryMap::dump(), or pairs of file names and virtual\n\
+    addresses where the file contents are to be mapped.  The virtual addresses\n\
+    can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
+    (execute) to specify mapping permissions other than the default read and\n\
+    execute permission.\n\
+\n\
+  --reassemble\n\
+    Assemble each disassembled instruction and compare the generated\n\
+    machine code with the bytes originally disassembled.  This switch is\n\
+    intended mostly to check the consistency of the disassembler with the\n\
+    assembler.\n\
+\n\
+  --show-bad\n\
+    Show details about why instructions at certain addresses could not be\n\
+    disassembled.\n\
+\n\
+  --show-coverage\n\
+    Show what percent of the disassembly memory map was actually disassembled.\n\
+\n\
+  --show-extents\n\
+    Show detailed information about what parts of the file were not\n\
+    disassembled.\n\
+\n\
+  --show-functions\n\
+    Display a list of functions in tabular format.\n\
+\n\
+In addition to the above switches, this disassembler tool passes all other\n\
+switches to the underlying ROSE library's frontend() function if that function\n\
+is actually called.  Of particular note are the following. Documentation for\n\
+these switches can be obtained by specifying the \"--rose-help\" switch.\n\
+  -rose:disassembler_search FLAGS\n\
+  -rose:partitioner_search FLAGS\n\
+  -rose:partitioner_config IPD_FILE\n\
+";
+
 #include "rose.h"
 
 #define __STDC_FORMAT_MACROS
@@ -492,6 +586,8 @@ main(int argc, char *argv[])
     bool do_show_coverage = false;
     bool do_show_functions = false;
     bool do_raw = false;
+    bool do_rose_help = false;
+    bool do_call_disassembler = false;
 
     rose_addr_t raw_entry_va = 0;
     MemoryMap raw_map;
@@ -515,11 +611,21 @@ main(int argc, char *argv[])
             do_ast_dot = true;
         } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
             do_cfg_dot = true;
+        } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
+            do_call_disassembler = true;
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
         } else if (!strcmp(argv[i], "--dos")) {                 /* use MS-DOS header in preference to PE when both exist */
             do_dos = true;
+        } else if (!strcmp(argv[i], "-?") ||
+                   !strcmp(argv[i], "-help") ||
+                   !strcmp(argv[i], "--help")) {
+            printf(usage, argv[0], argv[0]);
+            exit(0);
+        } else if (!strcmp(argv[i], "--rose-help")) {
+            new_argv[new_argc++] = strdup("--help");
+            do_rose_help = true;
         } else if (!strcmp(argv[i], "--skip-dos")) {
             fprintf(stderr, "%s: --skip-dos behavior is the default now; use --dos if you want the MS-DOS header\n", argv[0]);
             exit(1);
@@ -600,49 +706,58 @@ main(int argc, char *argv[])
         } else if (argv[i][0]=='-') {
             new_argv[new_argc++] = argv[i];
         } else if (do_raw) {
-            /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
-             * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
-             * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
-             * is 'rx'. */
-            char *raw_filename = argv[i++];
-            if (i>=argc) {
-                fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
-                exit(1);
-            }
-            char *suffix;
-            errno = 0;
-            rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
-            if (suffix==argv[i] || errno) {
-                fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
-                exit(1);
-            }
-            unsigned perm = 0;
-            while (suffix && *suffix) {
-                switch (*suffix++) {
-                    case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
-                    case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
-                    case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
-                    default: fprintf(stderr, "%s: invalid map permissions: %s\n", argv[0], suffix-1); exit(1);
+            char *raw_filename = argv[i];
+            char *extension = strrchr(raw_filename, '.');
+            if (extension && !strcmp(extension, ".index")) {
+                std::string basename(raw_filename, extension-raw_filename);
+                if (!raw_map.load(basename)) {
+                    fprintf(stderr, "%s: error parsing memory dump: %s\n", argv[0], raw_filename);
+                    exit(1);
                 }
+            } else {
+                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
+                 * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
+                 * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
+                 * is 'rx'. */
+                if (++i>=argc) {
+                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
+                    exit(1);
+                }
+                char *suffix;
+                errno = 0;
+                rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
+                if (suffix==argv[i] || errno) {
+                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
+                    exit(1);
+                }
+                unsigned perm = 0;
+                while (suffix && *suffix) {
+                    switch (*suffix++) {
+                        case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
+                        case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
+                        case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
+                        default: fprintf(stderr, "%s: invalid map permissions: %s\n", argv[0], suffix-1); exit(1);
+                    }
+                }
+                if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
+                int fd = open(raw_filename, O_RDONLY);
+                if (fd<0) {
+                    fprintf(stderr, "%s: cannot open %s: %s\n", argv[0], raw_filename, strerror(errno));
+                    exit(1);
+                }
+                struct stat sb;
+                if (fstat(fd, &sb)<0) {
+                    fprintf(stderr, "%s: cannot stat %s: %s\n", argv[0], raw_filename, strerror(errno));
+                    exit(1);
+                }
+                uint8_t *buffer = new uint8_t[sb.st_size];
+                ssize_t nread = read(fd, buffer, sb.st_size);
+                ROSE_ASSERT(nread==sb.st_size);
+                close(fd);
+                MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
+                melmt.set_name(strrchr(raw_filename, '/')?strrchr(raw_filename, '/')+1:raw_filename);
+                raw_map.insert(melmt);
             }
-            if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
-            int fd = open(raw_filename, O_RDONLY);
-            if (fd<0) {
-                fprintf(stderr, "%s: cannot open %s: %s\n", argv[0], raw_filename, strerror(errno));
-                exit(1);
-            }
-            struct stat sb;
-            if (fstat(fd, &sb)<0) {
-                fprintf(stderr, "%s: cannot stat %s: %s\n", argv[0], raw_filename, strerror(errno));
-                exit(1);
-            }
-            uint8_t *buffer = new uint8_t[sb.st_size];
-            ssize_t nread = read(fd, buffer, sb.st_size);
-            ROSE_ASSERT(nread==sb.st_size);
-            close(fd);
-            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
-            melmt.set_name(strrchr(raw_filename, '/')?strrchr(raw_filename, '/')+1:raw_filename);
-            raw_map.insert(melmt);
         } else {
             new_argv[new_argc++] = argv[i];
         }
@@ -656,7 +771,7 @@ main(int argc, char *argv[])
     SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
     SgProject *project = NULL;                  /* Project if not disassembling a raw buffer */
 
-    if (do_raw) {
+    if (do_raw && !do_rose_help) {
         /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
         disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
     } else {
@@ -709,6 +824,8 @@ main(int argc, char *argv[])
      * Decide what to disassemble.
      *------------------------------------------------------------------------------------------------------------------------*/
 
+    /* Note that if we using an active partitioner that calls the disassembler whenever an instruction is needed, then there's
+     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here. */
     MemoryMap *map = NULL;
     Disassembler::AddressSet worklist;
 
@@ -716,6 +833,7 @@ main(int argc, char *argv[])
          /* We computed the memory map when we processed command-line arguments. */
         map = &raw_map;
         worklist.insert(raw_entry_va);
+        partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
     } else {
         /* See Disassembler::disassembleInterp() for how to construct a memory map from an interpretation. */
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
@@ -741,49 +859,31 @@ main(int argc, char *argv[])
                 disassembler->search_function_symbols(&worklist, map, *hi);
         }
     }
+
+    /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
+     * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
+     * disassembly. It is redundant to call set_map() with an activer paritioner, but doesn't hurt anything. */
     partitioner->set_map(map);
 
     printf("using this memory map for disassembly:\n");
     map->dump(stdout, "    ");
-    
-    /*------------------------------------------------------------------------------------------------------------------------
-     * Run the disassembler
-     *------------------------------------------------------------------------------------------------------------------------*/
-
-    Disassembler::InstructionMap insns;
-    Disassembler::AddressSet successors;
-    Disassembler::BadMap bad;
-    insns = disassembler->disassembleBuffer(map, worklist, &successors, &bad);
-    printf("disassembled %zu instruction%s + %zu failure%s",
-           insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
-    if (bad.size()>0) {
-        if (show_bad) {
-            printf(":\n");
-            for (Disassembler::BadMap::iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
-                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
-        } else {
-            printf(" (use --show-bad to see errors)\n");
-        }
-    } else {
-        printf("\n");
-    }
-
-    if (!successors.empty()) {
-        printf("disassembler encountered %zu unresolved successor%s\n", successors.size(), 1==successors.size()?"":"s");
-    } else if (do_raw) {
-        printf("buffer is self contained.\n");
-    }
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Partition instructions into basic blocks and functions
+     * Run the disassembler and partitioner
      *------------------------------------------------------------------------------------------------------------------------*/
-
-    if (do_raw)
-        partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
-
     SgAsmBlock *block = NULL;
+    Disassembler::BadMap bad;
+    Disassembler::InstructionMap insns;
+
     try {
-        block = partitioner->partition(interp, insns);
+        if (do_call_disassembler) {
+            insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
+            block = partitioner->partition(interp, insns);
+        } else {
+            block = partitioner->partition(interp, disassembler, map);
+            insns = partitioner->get_instructions();
+            bad = partitioner->get_disassembler_errors();
+        }
     } catch (const Partitioner::Exception &e) {
         std::cerr <<"partitioner exception: " <<e <<"\n";
         exit(1);
@@ -798,6 +898,20 @@ main(int argc, char *argv[])
     /*------------------------------------------------------------------------------------------------------------------------
      * Show the results
      *------------------------------------------------------------------------------------------------------------------------*/
+
+    printf("disassembled %zu instruction%s and %zu failure%s",
+           insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
+    if (!bad.empty()) {
+        if (show_bad) {
+            printf(":\n");
+            for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
+                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
+        } else {
+            printf(" (use --show-bad to see errors)\n");
+        }
+    } else {
+        printf("\n");
+    }
 
     if (do_show_functions)
         ShowFunctions().show(block);
@@ -879,30 +993,27 @@ main(int argc, char *argv[])
     }
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Final statistics
+     * Test the assembler
      *------------------------------------------------------------------------------------------------------------------------*/
-    
-    if (SMTSolver::total_calls>0)
-        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
 
-
-
-#if 0
-    /* Test assembler */
     if (do_reassemble) {
         size_t assembly_failures = 0;
 
         /* Choose an encoding that must match the encoding used originally by the disassembler. If such an encoding cannot
          * be found by the assembler then assembleOne() will throw an exception. */
-        Assembler *asmb = Assembler::create(interp);
+        Assembler *asmb = NULL;
+        if (interp) {
+            asmb = Assembler::create(interp);
+        } else {
+            asmb = Assembler::create(new SgAsmPEFileHeader(new SgAsmGenericFile()));
+        }
+        ROSE_ASSERT(asmb!=NULL);
         asmb->set_encoding_type(Assembler::ET_MATCHES);
 
-        std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
-        printf("reassembling to check consistency...\n");
-        for (size_t j=0; j<insns.size(); j++) {
+        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             /* Attempt to encode the instruction silently since most attempts succeed and we only want to produce
              * diagnostics for failures.  If there's a failure, turn on diagnostics and do the same thing again. */
-            SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
+            SgAsmInstruction *insn = ii->second;
             SgUnsignedCharList bytes;
             try {
                 bytes = asmb->assembleOne(insn);
@@ -922,7 +1033,6 @@ main(int argc, char *argv[])
             }
         }
         if (assembly_failures>0) {
-            exit_status = 1;
             printf("reassembly failed for %zu instruction%s.%s\n",
                    assembly_failures, 1==assembly_failures?"":"s", 
                    show_bad ? "" : " (use --show-bad to see details)");
@@ -930,8 +1040,17 @@ main(int argc, char *argv[])
             printf("reassembly succeeded for all instructions.\n");
         }
         delete asmb;
+        if (assembly_failures>0)
+            exit(1);
     }
-#endif
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Final statistics
+     *------------------------------------------------------------------------------------------------------------------------*/
+    
+    if (SMTSolver::total_calls>0)
+        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
+    return 0;
 }
 
 

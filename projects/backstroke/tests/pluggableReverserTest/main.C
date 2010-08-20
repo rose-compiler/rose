@@ -17,7 +17,7 @@ int main(int argn, char** argv)
     new_block->append_statement(buildExprStatement(buildVarRefExp("i")));
 #endif
 
-    vector<SgBasicBlock*> blocks = querySubTree<SgBasicBlock>(project);
+    vector<SgBasicBlock*> blocks = backstroke_util::querySubTree<SgBasicBlock>(project);
     foreach(SgBasicBlock* block, blocks)
         if (isSgBasicBlock(block->get_parent()))
         {

@@ -291,15 +291,15 @@ public:
      *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
      *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
      *  than the number of  bytes desired if the mapping does not include part of the address space requested or part of the
-     *  address space does not have MM_PROT_READ permission. The @p dst_buf bytes that do not correpond to mapped virtual
-     *  addresses will be zero filled so that @p desired bytes are always initialized. */
-    size_t read(void *dst_buf, rose_addr_t start_va, size_t desired) const;
+     *  address space does not have MM_PROT_READ permission (or the specified permissions). The @p dst_buf bytes that do not correpond
+     *  to mapped virtual addresses will be zero filled so that @p desired bytes are always initialized. */
+    size_t read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
-     *  aborted early if a map element is marked read-only or if its protection lacks the MM_PROT_READ bit.  The return value
-     *  is the number of bytes copied. */
-    size_t write(const void *src_buf, rose_addr_t start_va, size_t size) const;
+     *  aborted early if a map element is marked read-only or if its protection lacks the MM_PROT_WRITE bit (or specified bits).  The
+     *  return value is the number of bytes copied. */
+    size_t write(const void *src_buf, rose_addr_t start_va, size_t size, unsigned req_perms=MM_PROT_WRITE) const;
 
     /** Returns just the virtual address extents for a memory map. */
     ExtentMap va_extents() const;
@@ -313,6 +313,17 @@ public:
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output. */
     void dump(FILE*, const char *prefix="") const;
+
+    /** Dumps the entire map and its contents into a set of files.  The file names are constructed from the @p basename by
+     *  appending a hypen and a hexadecimal address (without the leading "0x") and the extension ".data".  The text file whose
+     *  name is constructed by appending ".index" to the @p basename contains an index of the memory map. */
+    void dump(const std::string &basename) const;
+
+    /** Read a memory map from a set of memory dump files. The argument should be the same basename that was given to an
+     *  invocation of the dump() method. The memory map is adjusted according to the contents of the index file. Returns true
+     *  if the data was successfully read in its entirety; note that when returning false, this memory map object might
+     *  be partially changed (although still in a consistent state). */
+    bool load(const std::string &basename);
 
 private:
     /* Mutable because some constant methods might sort the elements. */

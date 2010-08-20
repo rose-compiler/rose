@@ -110,7 +110,6 @@ generatedCodeExamples = \
   rose_inputcollectReadWriteVariables.C \
   rose_inputtypeTraits.C \
   rose_inputlivenessAnalysis.C \
-  rose_inputbuildProcedureHeaderStatement.f \
   rose_inputreplaceMacroCalls.C \
   rose_inputbuildAbstractHandle.C \
   rose_inputbuildTypedefDeclaration.C \
@@ -119,6 +118,12 @@ generatedCodeExamples = \
   rose_inputloopInterchange.C \
   rose_inputloopTiling.C
 
+# Liao 8/17/2010
+#if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+if ROSE_USE_OPEN_FORTRAN_PARSER
+  generatedCodeExamples += \
+    rose_inputbuildProcedureHeaderStatement.f 
+endif
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3

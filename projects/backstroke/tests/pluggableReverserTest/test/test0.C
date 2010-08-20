@@ -18,11 +18,20 @@ int g;
 void event0(model* m)
 {
     //int a = 0;
-    int t = m->i;
+    //int t = m->i;
     //m->i = m->j;
     //m->j = t;
-    m->i = m->i + t;
-    m->i = -m->i + t;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i = 1;
+    m->i += 1;
+    m->i += 1;
+    m->i += 1;
+    //m->i = -m->i + t;
     //int q,w,e,r,t,y;
     //g = 0;
     //model::k = 0;

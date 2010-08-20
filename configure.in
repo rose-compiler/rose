@@ -29,6 +29,12 @@ ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES
 
 # Debugging strange behaviour associated with changing 
 # the order of the header file generation.
+
+# Liao 8/17/2010. A work around a undefined SED on NERSC hopper.
+# I had to promote it here instead of put it into ROSE_SUPPORT_ROSE_PART_2
+# since the expansion order there is wrong.
+test -z "$SED" && SED=sed
+
 ROSE_SUPPORT_ROSE_PART_2
 ROSE_SUPPORT_ROSE_PART_3
 ROSE_SUPPORT_ROSE_PART_4

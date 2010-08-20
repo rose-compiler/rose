@@ -1,10 +1,15 @@
-This project is being phased out since we have a new OpenMP
+This project has been phased out since we have a new OpenMP
 implementation in src/midend/ompLowering.
 Please refer to the ROSE Manual's "OpenMP Support" Chapter for 
 details. 
 http://www.rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf
 
+
+We keep this directory just for testing purpose.
+Don't use any work from this directory!!!
+
 By Liao, 10/23/2009
+-------------------------------------------
 
 The ROSE OpenMP Translator V 0.9
 
