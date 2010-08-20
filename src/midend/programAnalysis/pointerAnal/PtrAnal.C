@@ -290,8 +290,13 @@ ProcessMod(AstInterface& fa, const std::string& readname,
           std::list<std::string>& fields, const AstNodePtr& mod)
 {
   std::string modname;
+#if 0   // Liao, 8/16/2010, change code based on Qing's suggestion
   // Stmt first = 0;
   if (fa.IsVarRef(mod)) {
+#else
+   AstNodePtr p = mod;
+   if (fa.IsVarRef(mod) || fa.IsArrayAccess(mod, &p)) {
+#endif    
       modname = Get_VarName(fa,mod);
       Stmt stmt_last = fields.size()?
                       field_x_eq_y(modname, fields, readname)

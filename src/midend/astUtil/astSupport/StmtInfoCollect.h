@@ -96,6 +96,7 @@ class Ast2StringMap {
   Ast2StringMap() : cur(0) {}
   std::string get_string( const AstNodePtr& s); 
   std::string get_string( const AstNodePtr& s) const; 
+  std::string lookup_string( const AstNodePtr& s) const;
 };
 
 class InterProcVariableUniqueRepr {
