@@ -86,9 +86,14 @@ add_def( ReachingDefinitions& repr, const std::string& varname, const AstNodePtr
 ReachingDefinitions ReachingDefinitionGenerator::
 get_def_set( const std::string& varname, const AstNodePtr& scope) const
 {
-   std::string scopename = scopemap.get_string(scope);
-   std::string name = varname + scopename;
-   return get_data_set(name);
+  //std::string scopename = scopemap.get_string(scope);
+  std::string scopename = scopemap.lookup_string(scope);
+  if (scopename != "") {
+    std::string name = varname + scopename;
+    return get_data_set(name);
+  }
+  /*QY: if scope is not mapped, the variable hasn't been defined*/
+  return get_empty_set();
 }
 
 class CollectLocalDefinitions : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >

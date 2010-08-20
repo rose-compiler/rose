@@ -112,7 +112,6 @@ public:
 
     /* Debugging, tracing, etc. */
     FILE *debug;                                /* Stream to which debugging output is sent (or NULL to suppress it) */
-    bool tty;                                   /* True if 'debug' stream is a tty; affects output of trace_insn */
     bool trace_insn;                            /* Show each instruction that's executed */
     bool trace_state;                           /* Show machine state after each instruction */
     bool trace_mem;                             /* Show memory read/write operations */
@@ -122,7 +121,7 @@ public:
 
     EmulationPolicy()
         : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          debug(NULL), tty(true),
+          debug(NULL),
           trace_insn(true), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false) {
 
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
@@ -250,7 +249,7 @@ public:
     /* Called by X86InstructionSemantics */
     void startInstruction(SgAsmInstruction* insn) {
         if (debug && trace_insn) {
-            if (tty) {
+            if (isatty(fileno(debug))) {
                 fprintf(debug, "\033[K\n[%07zu] %s\033[K\r\033[1A", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
             } else {
                 fprintf(debug, "[%07zu] %s\n", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
@@ -493,6 +492,8 @@ EmulationPolicy::current_insn()
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
+        std::cerr <<"dumping specimen's memory into core* files (this might take a while)...\n";
+        map.dump("core");
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
@@ -629,7 +630,13 @@ EmulationPolicy::emulate_syscall()
             std::string filename = read_string(filename_va);
             uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
             int fd = open(filename.c_str(), flags, mode);
-            writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+
+            if( fd <= 256 ) // 256 is getdtablesize() in the simulator
+                writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
+            else {
+                writeGPR(x86_gpr_ax, -EMFILE);
+                close(fd);
+            }
             syscall_leave("d");
             break;
         }
@@ -665,6 +672,18 @@ EmulationPolicy::emulate_syscall()
                   ROSE_ASSERT(4==nwritten);
                 }
             }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+                
+        case 10: { /*0xa, unlink*/
+            syscall_enter("unlink", "s");
+            uint32_t filename_va = arg(0);
+            std::string filename = read_string(filename_va);
+            int result = unlink(filename.c_str());
+            if (result == -1) 
+                result = -errno;
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
@@ -705,6 +724,18 @@ EmulationPolicy::emulate_syscall()
               ROSE_ASSERT(4==nwritten);    }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("t");
+            break;
+        }
+
+        case 14: { /*0xe, mknod*/
+            syscall_enter("mknod", "sdd");
+            uint32_t path_va = arg(0);
+            uint32_t mode = arg(1);
+            uint32_t dev = arg(2);
+            std::string path = read_string(path_va);
+            int result = mknod(path.c_str(),mode,dev);
+            writeGPR(x86_gpr_ax, result<0 ? -errno : result);
+            syscall_leave("d");
             break;
         }
 
@@ -958,6 +989,14 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 102: { // socketcall
+            syscall_enter("socketcall", "dp");
+            //uint32_t call=arg(0), args=arg(1);
+            writeGPR(x86_gpr_ax, -ENOSYS);
+            syscall_leave("d");
+            break;
+        }
+
         case 114: { /*0x72, wait4*/
             static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
             syscall_enter("wait4", "dpfp", wflags);
@@ -1171,6 +1210,7 @@ EmulationPolicy::emulate_syscall()
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+            prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
 
             if (!start) {
                 try {
@@ -1268,6 +1308,31 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("getegid32", "");
             uid_t id = getegid();
             writeGPR(x86_gpr_ax, id);
+            syscall_leave("d");
+            break;
+        }
+
+        case 221: { // fcntl
+            syscall_enter("fcntl", "ddp");
+            uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
+            int result = -EINVAL;
+            switch (cmd) {
+                case F_DUPFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                case F_SETFD: {
+                    result = fcntl(fd, cmd, (long)other_arg);
+                    if (result == -1) result = -errno;
+                    break;
+                }
+                default: {
+                    result = -EINVAL;
+                    break;
+                }
+            }
+            writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
         }
@@ -1487,9 +1552,9 @@ main(int argc, char *argv[])
     Semantics t(policy);
 
 #if 1 /*DEBUGGING [RPM 2010-08-06]*/
-    policy.trace_insn = false;
+    policy.trace_insn = true;
     policy.trace_syscall = true;
-    policy.trace_mmap = false;
+    policy.trace_mmap = true;
 #endif
 
     /* Parse command-line */

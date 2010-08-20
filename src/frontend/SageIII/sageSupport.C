@@ -6015,12 +6015,12 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
 #else
-          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
+          fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) and gfortran \n");
           ROSE_ASSERT(false);
 #endif
 
 #else
-          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
+          fprintf(stderr, "ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
           ROSE_ASSERT(false);
 #endif
 

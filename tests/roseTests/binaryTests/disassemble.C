@@ -8,6 +8,7 @@ static const char *usage = "\
 Synopsis:\n\
   %s [SWITCHES] CONTAINER_FILE\n\
   %s [SWITCHES] --raw=ENTRY RAW_FILE ADDRESS ...\n\
+  %s [SWITCHES] --raw=ENTRY MEMORY_MAP.index\n\
 \n\
 Description:\n\
   Disassembles machine instructions from a container such as ELF or PE, or from\n\
@@ -61,10 +62,12 @@ Description:\n\
   --raw=ENTRY\n\
     Indicates that the specified file(s) contains raw machine instructions\n\
     rather than a binary container such as ELF or PE.  The non-switch,\n\
-    positional arguments are pairs, each consisting of a file name and a\n\
-    virtual address at which the file contents is mapped. The starting address\n\
+    positional arguments are either the name of an index file that was\n\
+    created by MemoryMap::dump(), or pairs of file names and virtual\n\
+    addresses where the file contents are to be mapped.  The virtual addresses\n\
     can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
-    (execute) to specify mapping permissions other than the default read+exec.\n\
+    (execute) to specify mapping permissions other than the default read and\n\
+    execute permission.\n\
 \n\
   --reassemble\n\
     Assemble each disassembled instruction and compare the generated\n\
@@ -703,49 +706,58 @@ main(int argc, char *argv[])
         } else if (argv[i][0]=='-') {
             new_argv[new_argc++] = argv[i];
         } else if (do_raw) {
-            /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
-             * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
-             * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
-             * is 'rx'. */
-            char *raw_filename = argv[i++];
-            if (i>=argc) {
-                fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
-                exit(1);
-            }
-            char *suffix;
-            errno = 0;
-            rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
-            if (suffix==argv[i] || errno) {
-                fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
-                exit(1);
-            }
-            unsigned perm = 0;
-            while (suffix && *suffix) {
-                switch (*suffix++) {
-                    case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
-                    case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
-                    case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
-                    default: fprintf(stderr, "%s: invalid map permissions: %s\n", argv[0], suffix-1); exit(1);
+            char *raw_filename = argv[i];
+            char *extension = strrchr(raw_filename, '.');
+            if (extension && !strcmp(extension, ".index")) {
+                std::string basename(raw_filename, extension-raw_filename);
+                if (!raw_map.load(basename)) {
+                    fprintf(stderr, "%s: error parsing memory dump: %s\n", argv[0], raw_filename);
+                    exit(1);
                 }
+            } else {
+                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
+                 * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
+                 * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
+                 * is 'rx'. */
+                if (++i>=argc) {
+                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
+                    exit(1);
+                }
+                char *suffix;
+                errno = 0;
+                rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
+                if (suffix==argv[i] || errno) {
+                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
+                    exit(1);
+                }
+                unsigned perm = 0;
+                while (suffix && *suffix) {
+                    switch (*suffix++) {
+                        case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
+                        case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
+                        case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
+                        default: fprintf(stderr, "%s: invalid map permissions: %s\n", argv[0], suffix-1); exit(1);
+                    }
+                }
+                if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
+                int fd = open(raw_filename, O_RDONLY);
+                if (fd<0) {
+                    fprintf(stderr, "%s: cannot open %s: %s\n", argv[0], raw_filename, strerror(errno));
+                    exit(1);
+                }
+                struct stat sb;
+                if (fstat(fd, &sb)<0) {
+                    fprintf(stderr, "%s: cannot stat %s: %s\n", argv[0], raw_filename, strerror(errno));
+                    exit(1);
+                }
+                uint8_t *buffer = new uint8_t[sb.st_size];
+                ssize_t nread = read(fd, buffer, sb.st_size);
+                ROSE_ASSERT(nread==sb.st_size);
+                close(fd);
+                MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
+                melmt.set_name(strrchr(raw_filename, '/')?strrchr(raw_filename, '/')+1:raw_filename);
+                raw_map.insert(melmt);
             }
-            if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
-            int fd = open(raw_filename, O_RDONLY);
-            if (fd<0) {
-                fprintf(stderr, "%s: cannot open %s: %s\n", argv[0], raw_filename, strerror(errno));
-                exit(1);
-            }
-            struct stat sb;
-            if (fstat(fd, &sb)<0) {
-                fprintf(stderr, "%s: cannot stat %s: %s\n", argv[0], raw_filename, strerror(errno));
-                exit(1);
-            }
-            uint8_t *buffer = new uint8_t[sb.st_size];
-            ssize_t nread = read(fd, buffer, sb.st_size);
-            ROSE_ASSERT(nread==sb.st_size);
-            close(fd);
-            MemoryMap::MapElement melmt(start_va, sb.st_size, buffer, 0, perm);
-            melmt.set_name(strrchr(raw_filename, '/')?strrchr(raw_filename, '/')+1:raw_filename);
-            raw_map.insert(melmt);
         } else {
             new_argv[new_argc++] = argv[i];
         }
