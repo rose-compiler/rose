@@ -1,3 +1,4 @@
+#-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_1.
@@ -757,6 +758,7 @@ AX_BOOST_WAVE
 
 AX_LIB_SQLITE3
 AX_LIB_MYSQL
+AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 
 # DQ (9/15/2009): I have moved this to before the backend compiler selection so that
 # we can make the backend selection a bit more compiler dependent. Actually we likely
@@ -803,6 +805,7 @@ fi
 )
 
 
+#-----------------------------------------------------------------------------
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
@@ -946,15 +949,6 @@ AC_SUBST(YACC)
 # only "gmake distcheck" seems to work.  I don't know why!
 AC_PROG_MAKE_SET
 
-# Call supporting macro for MySQL (more complex than SQLite, MySQL will be removed from optional use within ROSE)
-ROSE_SUPPORT_MYSQL
-# echo "In configure: with_MySQL = $with_MySQL"
-
-# Setup Automake conditional in Projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_MYSQL_DATABASE,[test "x$MYSQL_VERSION" != "x"])
-
-# Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
-
 # DQ (9/21/2009): Debugging for RH release 5
 echo "Testing the value of CC: (CC = $CC)"
 echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
@@ -1041,12 +1035,6 @@ AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 ROSE_SUPPORT_LLVM
 
 AM_CONDITIONAL(ROSE_USE_LLVM,test ! "$with_llvm" = no)
-
-#TPS (03/13/08) introduced optional DB support for binary work
-HASH_ROSE_BINARY_SQL
-
-AM_CONDITIONAL(ROSE_USE_BINARY_SQL,test ! "$with_binarysql" = no)
-
 
 # Call supporting macro for Windows Source Code Analysis
 ROSE_SUPPORT_WINDOWS_ANALYSIS
@@ -1194,12 +1182,13 @@ AC_ARG_ENABLE(ofp-version,
 [ echo "Setting up OFP version"
 ])
 
+# DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.7.2)"
+   echo "Default version of OFP used (0.8.1)"
    ofp_major_version_number=0
-   ofp_minor_version_number=7
-   ofp_patch_version_number=2
+   ofp_minor_version_number=8
+   ofp_patch_version_number=1
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1212,12 +1201,12 @@ echo "ofp_patch_version_number = $ofp_patch_version_number"
 
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
-   if test "x$ofp_minor_version_number" = "x7"; then
+   if test "x$ofp_minor_version_number" = "x8"; then
       echo "Recognized an accepted minor version number."
-      if test "x$ofp_patch_version_number" = "x2"; then
+      if test "x$ofp_patch_version_number" = "x1"; then
          echo "Recognized an accepted patch version number."
       else
-         if test "x$ofp_patch_version_number" = "x1"; then
+         if test "x$ofp_patch_version_number" = "x2"; then
             echo "Recognized an accepted patch version number ONLY for testing."
          else
             echo "ERROR: Could not identify the OFP patch version number."
@@ -1226,8 +1215,8 @@ if test "x$ofp_major_version_number" = "x0"; then
        # exit 1
       fi
    else
-      if test "x$ofp_minor_version_number" = "x8"; then
-#     We accept any patch level with minor version number 8 releases. 
+      if test "x$ofp_minor_version_number" = "x7"; then
+       # We accept any patch level with minor version number 7 releases. 
          echo "Recognized an accepted minor version number using ofp_patch_version_number = $ofp_patch_version_number."
       else
          echo "ERROR: Could not identify the OFP minor version number."
@@ -1498,6 +1487,12 @@ AC_DISABLE_STATIC
 # echo "In configure.in (before libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
 LT_AC_PROG_SED dnl This seems to not be called, even though it is needed in the other macros
 m4_pattern_allow([LT_LIBEXT])dnl From http://www.mail-archive.com/libtool-commit@gnu.org/msg01369.html
+
+# Liao 8/17/2010. Tried to work around a undefined SED on NERSC hopper.
+# But this line is expanded after AC_PROG_LIBTOOL.
+# I had to promote it to configure.in, right before calling  ROSE_SUPPORT_ROSE_PART_2
+#test -z "$SED" && SED=sed
+
 AC_PROG_LIBTOOL
 AC_LIBLTDL_CONVENIENCE dnl We need to use our version because libtool can't handle when we use libtool v2 but the v1 libltdl is installed on a system
 AC_SUBST(LTDLINCL)
@@ -1779,6 +1774,7 @@ rm -rf Templates.DB
 ]
 )
 
+#-----------------------------------------------------------------------------
 
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
@@ -1788,7 +1784,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
 ## Setup the EDG specific stuff
 SETUP_EDG
 
-# Setup Automake conditional in Projects/DataBase/Makefile.am
 # AM_CONDITIONAL(ROSE_USE_EDG_3_3,test "$with_EDG_3_3" = yes)
 
 # Find md5 or md5sum and create a signature for ROSE binary compatibility
@@ -1818,6 +1813,7 @@ AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, si
 ]
 )
 
+#-----------------------------------------------------------------------------
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_4],
 [
@@ -2007,6 +2003,7 @@ AC_DEFUN([CLASSPATH_COND_IF],
    fi
 ])])
 
+#-----------------------------------------------------------------------------
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_5],
 [
@@ -2045,6 +2042,7 @@ src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ]
 )
 
+#-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_6.
@@ -2152,10 +2150,7 @@ src/backend/unparser/PHPCodeGeneration/Makefile
 src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
-src/roseExtensions/SQLiteConnection/Makefile
 src/roseExtensions/sqlite3x/Makefile
-src/roseExtensions/databaseConnection/Makefile
-src/roseExtensions/databaseConnection/GlobalDatabaseConnection.C
 src/roseExtensions/dataStructureTraversal/Makefile
 src/roseExtensions/highLevelGrammar/Makefile
 src/roseExtensions/qtWidgets/Makefile
@@ -2238,9 +2233,9 @@ projects/compass/tools/compass/gui2/Makefile
 projects/compass/tools/compass/buildInterpreter/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
-projects/compass/tools/compass/tests/C_tests/Makefile
-projects/compass/tools/compass/tests/Cxx_tests/Makefile
-projects/compass/tools/compass/tests/OpenMP_tests/Makefile
+projects/compass/tools/compass/tests/Compass_C_tests/Makefile
+projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
+projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile
@@ -2313,6 +2308,7 @@ projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/new_pluggableReverser/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
@@ -2325,16 +2321,22 @@ projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/SatSolver/Makefile
 projects/simulator/Makefile
+projects/simulator/tests/Makefile
 projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
+projects/roseToLLVM/Analysis/Makefile
+projects/roseToLLVM/Analysis/Alias/Makefile
+projects/roseToLLVM/Analysis/Alias/src/Makefile
+projects/roseToLLVM/Analysis/Alias/tests/Makefile
 projects/PolyhedralDependenceAnalysis/Makefile
 projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
 projects/PolyhedralDependenceAnalysis/Common/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
 projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
 projects/PolyhedralDependenceAnalysis/Schedule/Makefile
+projects/PolyhedralDependenceAnalysis/CodeGenerator/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2397,6 +2399,7 @@ tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
 tests/roseTests/astInterfaceTests/Makefile
+tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
 tests/roseTests/astOutliningTests/fortranTests/Makefile
@@ -2433,6 +2436,7 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
 tests/roseTests/utilTests/Makefile
+tests/roseTests/variableRenamingTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
@@ -2441,7 +2445,6 @@ tests/roseTests/openclTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
-tutorial/database/Makefile
 tutorial/roseHPCT/Makefile
 tutorial/outliner/Makefile
 tutorial/intelPin/Makefile
@@ -2483,6 +2486,11 @@ binaries/Makefile
 binaries/samples/Makefile
 ])
 
+# DQ (8/12/2010): We want to get permission to distribute these files as test codes.
+# tests/CompileTests/Fortran_tests/LANL_POP/Makefile
+
+# DQ (8/4/2010): Removed this directory
+# tests/CompileTests/CAF_tests/Makefile
 
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile
@@ -2523,6 +2531,7 @@ binaries/samples/Makefile
 )
 
 
+#-----------------------------------------------------------------------------
 
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_7],

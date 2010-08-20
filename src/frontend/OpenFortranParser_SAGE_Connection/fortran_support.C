@@ -514,6 +514,35 @@ createType(int typeCode)
           case IntrinsicTypeSpec_COMPLEX:         result = SgTypeComplex::createType(SgTypeFloat::createType());  break;
           case IntrinsicTypeSpec_CHARACTER:       result = SgTypeChar::createType();    break;
           case IntrinsicTypeSpec_LOGICAL:         result = SgTypeBool::createType();    break;
+ 
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+          // FMZ (2/2/2009): generate SgCAFTeamType for the image_type
+          case IntrinsicTypeSpec_TEAM:       result = SgTypeCAFTeam::createType();    break;
+          case IntrinsicTypeSpec_CRAYPOINTER:     result = SgTypeCrayPointer::createType();    break;
+          // Laksono 2009.10.19: add a new intrinsic type: Topology
+          case IntrinsicTypeSpec_TOPOLOGY:       result = SgTypeInt::createType();    break;
+          // Laksono 2009.10.20: add a new intrinsic type: Event 
+          // FMZ:: currently set event/lock/lockset with type complex(8)
+          case IntrinsicTypeSpec_EVENT:
+          case IntrinsicTypeSpec_LOCK: 
+          case IntrinsicTypeSpec_LOCKSET:  
+#endif
+               {
+                   SgType * tmpType = SgTypeComplex::createType(SgTypeDouble::createType());
+                   SgModifierType* tmpM = new SgModifierType(tmpType);
+                   ROSE_ASSERT(tmpM!=NULL);
+                   SgIntVal* int8 = new SgIntVal(8,"8");
+                   setSourcePosition(int8);
+                   tmpM->set_type_kind(int8);
+                   result = tmpM;
+                   break;
+               }
+#if 0 // FMZ (1/23/2010) using complex(8) 
+           case IntrinsicTypeSpec_LOCK:       result = SgTypeInt::createType();    break;
+           case IntrinsicTypeSpec_LOCKSET:       result = SgTypeInt::createType();    break;
+#endif 
+
+
           default:
              {
                printf ("Default reached in creatType: typeCode = %d \n",typeCode);
@@ -796,7 +825,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                             {
                               if (matchingName(name,".EQV.") == true)
                                  {
-                                   result = new SgAndOp(lhs,rhs,NULL);
+                                   result = new SgEqualityOp(lhs,rhs,NULL);
                                  }
                                 else
                                  {
@@ -812,7 +841,8 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                            // This is the case for ".NEQV." etc.
                               if (matchingName(name,".NEQV.") == true)
                                  {
-                                   result = new SgAndOp(lhs,rhs,NULL);
+                                // DQ (8/5/2010): This might output .NE. instead of .NEQV. and the two are .NEQV.! 
+                                   result = new SgNotEqualOp(lhs,rhs,NULL);
                                  }
                                 else
                                  {
@@ -1778,6 +1808,21 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // if ( (variableSymbol == NULL) || ((functionSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false)) )
      if ( (variableSymbol == NULL) && functionSymbol == NULL && classSymbol == NULL && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
         {
+
+//FMZ(1/8/2010)
+//  if the Id name is "team_world" or "team_default", generate team,external:: declarations
+{
+   string teamName = variableName.str();
+   std::transform(teamName.begin(),teamName.end(),teamName.begin(),::tolower);
+
+   string teamWorld =   "team_world";
+   string teamDefault = "team_default";
+   if (teamName == teamWorld || teamName == teamDefault) {
+                return   add_external_team_decl(teamName);
+          }
+ 
+}
+
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified type %s in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
        // printf ("astNameStack.front() = %p = %s = %s \n",astNameStack.front(),astNameStack.front()->class_name().c_str(),SageInterface::get_name(astNameStack.front()).c_str());
@@ -3401,14 +3446,23 @@ static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+5;
 static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 */
           case ComponentAttrSpec_pointer:
+#if 0 //FMZ 6/15/2009 : this should be ok
                printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
+#endif
                break;
 
 #if ROSE_OFP_MINOR_VERSION_NUMBER == 7
        // DQ (4/5/2010): These have been removed from OFP 0.8.0
           case ComponentAttrSpec_dimension_paren:
+#if 0 //FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
+#endif
+		// Laksono 2009.10.16: This is a Fortran legal syntax to have an array inside a type !
+	       variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();    break; 
+               //printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
+               //ROSE_ASSERT(false);
+         
                break;
 
           case ComponentAttrSpec_dimension_bracket:
@@ -3433,8 +3487,10 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                break;
 
           case ComponentAttrSpec_len:
+#if 0 //FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_len used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
+#endif
                break;
 
           default:
@@ -3714,6 +3770,12 @@ convertTypeOnStackToArrayType( int count )
         {
           ROSE_ASSERT(astExpressionStack.empty() == false);
        // printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
+#if 0
+        printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
+          SgExpression* DebugTmp = astExpressionStack.front();
+          int tmpInt = (int)DebugTmp->variantT();
+          printf("F_DEBUG::node is %s\n",Cxx_GrammarTerminalNames[tmpInt].name.c_str());
+#endif
           ROSE_ASSERT(arrayType->get_dim_info() != NULL);
           arrayType->get_dim_info()->prepend_expression(astExpressionStack.front());
           astExpressionStack.pop_front();
@@ -3938,6 +4000,9 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 
   // This will be the defining declaration
      ROSE_ASSERT(procedureDeclaration != NULL);
+//FMZTEST
+//cout <<"NAME::" << procedureDeclaration->get_name().str()<<endl;
+
      procedureDeclaration->set_definingDeclaration(procedureDeclaration);
      procedureDeclaration->set_firstNondefiningDeclaration(NULL);
 
@@ -4020,6 +4085,8 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
      SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),currentScopeOfFunctionDeclaration);
      if (functionSymbol != NULL)
         {
+//FMZTEST
+//cout <<"FMZTEST:Frontend::" << functionSymbol->get_name().str()<<endl;
           SgFunctionDeclaration* nondefiningDeclaration = functionSymbol->get_declaration();
           ROSE_ASSERT(nondefiningDeclaration != NULL);
 
@@ -4027,6 +4094,11 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 
        // And set the defining declaration in the non-defining declaration
           nondefiningDeclaration->set_definingDeclaration(procedureDeclaration);
+
+// if the procedure is defined in same module, it should be visiable for the non-definingDeclaration.
+         if (isSgClassDefinition(currentScopeOfFunctionDeclaration) != NULL) {
+                   nondefiningDeclaration->set_scope(currentScopeOfFunctionDeclaration);
+          }
         }
        else
         {
@@ -4225,6 +4297,14 @@ buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStrid
                     astExpressionStack.pop_front();
 
                     subscript = new SgSubscriptExpression(lowerBound,upperBound,stride);
+#if 0 
+ SgExpression* debugTmp1 = lowerBound; 
+ SgExpression* debugTmp2 = upperBound; 
+ int tmpInt = (int)debugTmp1->variantT();
+ printf("F_DEBUG::lowerbnd is %s\n",Cxx_GrammarTerminalNames[tmpInt].name.c_str());
+ tmpInt = (int)debugTmp2->variantT();
+ printf("F_DEBUG::upperbnd is %s\n",Cxx_GrammarTerminalNames[tmpInt].name.c_str());
+#endif
 
                     setSourcePosition(stride);
                   }
@@ -4664,3 +4744,40 @@ convertBaseTypeOnStackToPointer()
      SgPointerType* pointerType = new SgPointerType(baseType);
      astBaseTypeStack.push_front(pointerType);
    }
+
+// FMZ(12/21/2009): added support for "team_default"/"team_world"
+SgVariableSymbol*
+add_external_team_decl(string teamName) {
+
+          // make external team :: team_world
+              // create the team "type"
+             SgTypeCAFTeam* cafTeamType = SgTypeCAFTeam::createType();
+             ROSE_ASSERT( cafTeamType != NULL);
+
+             // build variable 
+             SgInitializedName* teamVar= NULL;
+
+             teamVar = new SgInitializedName(teamName,cafTeamType,NULL);
+
+             ROSE_ASSERT(teamVar != NULL);
+             setSourcePosition(teamVar);
+
+             SgVariableDeclaration* teamDec = new SgVariableDeclaration();
+             ROSE_ASSERT(teamDec!=NULL);
+             setSourcePosition(teamDec);
+             teamDec->set_parent(astScopeStack.front());
+             teamDec->set_definingDeclaration(teamDec);
+             teamDec->get_declarationModifier().get_storageModifier().setExtern() ;
+
+             teamDec->append_variable(teamVar,NULL);
+             teamVar->set_declptr(teamDec);
+             teamVar->set_scope(astScopeStack.front());
+
+             SgVariableSymbol* teamId = new SgVariableSymbol(teamVar);
+             ROSE_ASSERT(teamId != NULL);
+
+             astScopeStack.front()->insert_symbol(teamName,teamId);
+
+             return teamId;
+ }
+

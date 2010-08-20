@@ -4,8 +4,11 @@
 #include "sage3basic.hhh"
 #include <stdint.h>
 
-
+#if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
+#else
+SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, SgProject* project );
+#endif
 
 #include "rewrite.h"
 
@@ -331,6 +334,8 @@ struct hash_nodeptr
 
   //! Check if a SgNode is a main() function declaration
   bool isMain (const SgNode* node);
+
+  // DQ (8/10/2010): Added const to first paramater.
   // DQ (6/22/2005):
   /*! \brief Generate unique name from C and C++ constructs. The name may contain space. 
 
@@ -342,14 +347,12 @@ struct hash_nodeptr
       \implementation current work does not support expressions.
 
    */
-    std::string generateUniqueName (SgNode * node,
-				    bool
-				    ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
+    std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
+  // DQ (8/10/2010): Added const to first paramater.
   // DQ (3/10/2007): 
   //! Generate a unique string from the source file position information
-    std::string declarationPositionString (SgDeclarationStatement *
-					   declaration);
+    std::string declarationPositionString (const SgDeclarationStatement * declaration);
 
   // DQ (1/20/2007): 
   //! Added mechanism to generate project name from list of file names
@@ -491,6 +494,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_C99_language ();
   bool is_Cxx_language ();
   bool is_Fortran_language ();
+  bool is_CAF_language ();
   bool is_PHP_language();
   bool is_binary_executable();
   bool is_mixed_C_and_Cxx_language ();
@@ -838,7 +842,7 @@ bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
 
 //! Query a subtree to get all nodes of a given type, with an appropriate downcast.
 template <typename NodeType>
-std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant)
+std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = NodeType::static_variant)
 {
   Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
   std::vector<NodeType*> result(nodes.size(), NULL);
@@ -1318,7 +1322,7 @@ SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStm
 /** A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scope statement with list of statements as children,
   * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
   * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
-SgStatement* ensureBasicBlockAsParent(SgStatement* s);
+SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
 //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 
 //! Fix up ifs, loops, etc. to have blocks as all components and add dummy else

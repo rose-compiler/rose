@@ -391,6 +391,14 @@ std::string Ast2StringMap :: get_string( const AstNodePtr& s) const
   return (*p).second;
 }
 
+std::string Ast2StringMap :: lookup_string( const AstNodePtr& s) const
+{
+  if ( s == AST_NULL) return "";
+  MapType::const_iterator p = astmap.find(s);
+  if (p == astmap.end())  return "";
+  return (*p).second;
+}
+
 Ast2StringMap InterProcVariableUniqueRepr:: astmap;
 
 std:: string InterProcVariableUniqueRepr::

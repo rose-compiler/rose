@@ -13,6 +13,8 @@ using namespace std;
 
 namespace VirtualCFG {
 
+#if !CXX_IS_ROSE_CODE_GENERATION
+
   unsigned int cfgIndexForEndWrapper(SgNode* n) {
     return n->cfgIndexForEnd();
   }
@@ -715,5 +717,8 @@ namespace VirtualCFG {
     ROSE_ASSERT (sym);
     return getCFGTargetOfFortranLabelSymbol(sym);
   }
+
+// if !CXX_IS_ROSE_CODE_GENERATION
+#endif
 
 }

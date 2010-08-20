@@ -113,10 +113,10 @@ SgNullStatement and a SgNullExpression.
     the type explicitly.  It might be required for SgBinaryOp IR nodes to store the type
     if it is not clearly from either the lhs or rhs (if no simple rule exists).
 
-\todo SgScopeOp is depricated and will be removed in a future version of ROSE.
+\todo SgScopeOp is deprecated and will be removed in a future version of ROSE.
       It is a hold over from support for CC++ which is not supported in SAGE III anymore.
 
-\todo SgRefExp is depricated and will be removed in a future version of ROSE.
+\todo SgRefExp is deprecated and will be removed in a future version of ROSE.
       It is not used anywhere within SAGE III and I don't know why it is there.
 
 \todo Need to find an example of where SgClassNameRefExp is used.  It is build in
@@ -145,6 +145,7 @@ SgNullStatement and a SgNullExpression.
 \var SgExpression::p_lvalue
 \brief This boolean variable marks the current expression as a 
 left hand side value (lvalue).
+\deprecated This computation of this value is innacurate.  It identifies expressions which have been assigned to.  This does not include all lvalues as defined by the C++ standard.  For "int* p", "*p" and "&p" are both lvalues, despite not being assigned to (section 3.10).
 */
 
 /*!
@@ -238,18 +239,9 @@ the correct code (which si the purpose of adding parenthesis in source code).
 
 /*!
 \fn SgExpression::get_lvalue (void) const
-\brief returns true if the expression is used where an lvalue is required.
-
-	Note that if get_lvalue() == false, the expression could still be an lvalue as
-	defined in the C++ language standard. An lvalue expression could be used with an operator
-	requiring an rvalue, in which case it is treated as an rvalue and get_lvalue() would return false.
-	TODO: Add another field to SgExpression defining whether and expression is an lvalue, independently
-	of how it is used.
-	
-	This value is also used during unparsing to determine whether place parentheses around this
-	expression or not.  
-
-\return true if the expression is used as an lvalue in the AST
+\brief Returns a bool value if the current expression is assigned to.
+\deprecated The computation of this value is innacurate in terms of the lvalue as defined by the standard.  It identifies expressions which have been assigned to.  This does not include all lvalues as defined by the C++ standard.  For "int* p", "*p" and "&p" are both lvalues, despite not being assigned to (section 3.10).  See SgExpression::p_lvalue.
+\return Returns true if the current expression is assigned to.
 */
 
 /*!
@@ -260,10 +252,50 @@ the correct code (which si the purpose of adding parenthesis in source code).
 specific expression trees. In general it is set by the frontend, but not used elsewhere
 within SAGE III (will be tested in the future).
 
-\param lvalue - sets value of internal p_lvalue flag (true if the current is to be
-    a left hand side value (lvalue)).
+\param lvalue - sets value of internal p_lvalue flag (true if the current is to be a left hand side value (lvalue)).
 \return Returns void.
 */
+
+/*!
+\fn SgExpression::isDefinable (void) const
+\brief For Fortran.  When called from a node of any other language, behavior is undefined (see SageInterface::is_Fortran_language).
+Returns a bool value which is true if the current expression is "almost definable".
+"Almost definable" here means as defined by the Fortran standard (2.5.5), with the caveat that allocatable variables are always called an lvalue.
+The Fortran standard dictates that an allocatable variable which has not been allocated is not definable.
+In the general case, it cannot be statically determined whether an allocatable variable has been allocated or not.
+Note: constants in Fortran are not lvalues, while in C and C++ lvalues may be const.
+\return Returns true if the current expression is almost definable.
+*/
+
+/*!
+\fn SgExpression::isUsedAsDefinable (void) const
+\brief For Fortran.  When called from a node of any other language, behavior is undefined (see SageInterface::is_Fortran_language).
+\brief Returns a bool value which is true if the current expression is used as a definable value.  That is, it is definable (assigned to).
+\return Returns true if the current expression is used as a definable value.
+*/
+
+/*!
+\fn SgExpression::isLValue (void) const
+\brief For C and C++. When called from a node of any other language, behavior is undefined (see SageInterface::is_C*_language).
+Returns a bool value which is true if the current expression is an lvalue, as defined by the C++ standard.
+\return Returns true if the current expression is an lvalue.
+*/
+
+/*!
+\fn SgExpression::isUsedAsLValue (void) const
+\brief For C and C++. When called from a node of any other language, behavior is undefined (see SageInterface::is_C*_language).
+\brief Returns a bool value which is true if the current expression is used as an lvalue.  That is, it is an lvalue and does not get converted to an rvalue by its parent expression.
+\return Returns true if the current expression is used as an lvalue.
+*/
+
+/*!
+\fn SgExpression::isChildUsedAsLValue (SGExpression) const
+\brief For C and C++. When called from a node of any other language, behavior is undefined (see SageInterface::is_C*_language).
+\brief Returns a bool value which is true if the specified expression is used as an lvalue.  That is, it is an lvalue and does not get converted to an rvalue by its parent expression.
+\internal For use by children calling their parents.
+\return Returns true if the specified expression is used as an lvalue.
+*/
+
 
 /*!
 \fn SgExpression::get_type() const

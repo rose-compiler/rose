@@ -8,6 +8,9 @@
 
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
+#define TEMPLATE_IMPLEMENTATIONS
+#include "AstDOTGenerationImpl.C"
+#undef TEMPLATE_IMPLEMENTATIONS
 #include "AstConsistencyTests.h"
 
 // DQ (11/6/2008): Added to support the PRIx64 macro for portable (32/64)-bit address I/O.
@@ -271,7 +274,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
        // cout << "problematic node found." << endl;
           nodeoption="color=\"orange\" ";
         }
-     string nodelabel=string("\\n")+node->sage_class_name();
+     string nodelabel=string("\\n")+node->class_name();
 
   // DQ (1/24/2009): Added support for output of isForward flag in the dot graph.
      SgDeclarationStatement* genericDeclaration = isSgDeclarationStatement(node);
@@ -689,12 +692,6 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
      AstSuccessorsSelectors::selectDefaultSuccessors(node,c);
      ss << c.size() << "\\n";
 
-  // add class name
-     if (SgClassDeclaration* n = dynamic_cast<SgClassDeclaration*>(node))
-        {
-          ss << n->get_qualified_name().str() << "\\n";
-        }
-
   // add memory location of node to dot output
      ss << node << "\\n";
 
@@ -805,7 +802,6 @@ AstDOTGeneration::commentOutNodeInGraph(SgNode* node)
 
      return resultValue;
    }
-
 
 
 #endif
