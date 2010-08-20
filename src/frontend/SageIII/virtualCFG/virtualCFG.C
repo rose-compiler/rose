@@ -7,6 +7,7 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "err.h"
 
 using namespace std;
 
@@ -28,7 +29,9 @@ namespace VirtualCFG {
 #ifndef _MSC_VER 
     assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
 #endif
-    assert (node && index <= node->cfgIndexForEnd());
+    if (node && index <= node->cfgIndexForEnd()) {
+      warnx ("created CFGNode with illegal index");
+    }
   }
 
   string CFGNode::toString() const {
