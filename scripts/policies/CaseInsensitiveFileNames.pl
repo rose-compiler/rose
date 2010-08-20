@@ -7,6 +7,7 @@ EOF
 
 
 use strict;
+my $warning = "warning ";
 my $nfail=0;
 
 sub checkdir {
@@ -28,10 +29,10 @@ sub checkdir {
   my @failures = grep {@$_>1} values %index;
   if (@failures) {
     print $desc unless $nfail++;
-    print "  $dir (", join(" ", @$_), ")\n" for @failures;
+    print "  $dir ($warning", join(" ", @$_), ")\n" for @failures;
   }
 }
 
 checkdir ".";
-exit($nfail>0 ? 1 : 0);
+exit($nfail>0 ? ($warning?128:1) : 0);
 
