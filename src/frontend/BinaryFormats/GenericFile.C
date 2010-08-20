@@ -44,7 +44,7 @@ SgAsmGenericFile::parse(std::string fileName)
     set_name(fileName);
 
 // CH (4/6/2010): The "io.h" in MSVS does support open()
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //#pragma message ("WARNING: MSVS des not support Linux open() function.")
 //    printf ("ERROR: MSVS des not support Linux open() function.");
 //    ROSE_ASSERT(false);
@@ -63,7 +63,7 @@ SgAsmGenericFile::parse(std::string fileName)
         throw FormatError("Could not allocate memory for binary file");
 
 // CH (4/6/2010): The "io.h" in MSVS does support read()
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //#pragma message ("WARNING: MSVS des not support Linux read() function.")
 //    printf ("ERROR: MSVS des not support Linux read() function.");
 //    ROSE_ASSERT(false);
@@ -109,7 +109,7 @@ SgAsmGenericFile::~SgAsmGenericFile()
     if ( p_fd >= 0 ) {
 
 // CH (4/6/2010): The "io.h" in MSVS does support "close(int)"
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //#pragma message ("WARNING: MSVS des not support Linux close() function.")
 //        printf ("ERROR: MSVS des not support Linux close() function.");
 //        ROSE_ASSERT(false);

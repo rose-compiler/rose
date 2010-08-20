@@ -30,6 +30,8 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
             close(fd);
             break;
         }
+#else
+		ROSE_ASSERT(false);
 #endif
     }
     std::ofstream config(config_name);
@@ -55,6 +57,7 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
 #ifdef _MSC_VER
     // tps (06/23/2010) : popen not understood in Windows
     FILE *output=NULL;
+	ROSE_ASSERT(false);
 #else
     FILE *output = popen(cmd.c_str(), "r");
 #endif
@@ -82,6 +85,7 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     } else {
 #ifdef _MSC_VER
         // tps (06/23/2010) : execl not understood in Windows
+		ROSE_ASSERT(false);
 #else
         std::cout <<"    input=" <<config_name <<", status=" <<status <<", result=" <<line;
         execl("/bin/cat", "cat", "-n", config_name, NULL);

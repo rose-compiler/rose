@@ -51,7 +51,6 @@
 // tps (11/10/2009): This include is needed in windows to find the realpath
 #if ROSE_MICROSOFT_OS
 #include <unistd.h>
-
 // DQ (11/27/2009): this is required for use of GetFullPathName() (below).
 #include <windows.h>
 #endif
@@ -84,6 +83,7 @@ StringUtility::findfile(std::string patternString, std::string pathString)
 #if ROSE_MICROSOFT_OS
 	 printf ("Error: MSVS implementation of StringUtility::findfile required (not implemented) \n");
 #define __builtin_constant_p(exp) (0)
+	 // tps: todo Windows: have not hit this assert yet.
 	 ROSE_ASSERT(false);
 #else
      DIR* dir;			      /* pointer to the scanned directory. */
@@ -160,6 +160,7 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
      resolved_path[0] = '\0';
 
 #if ROSE_MICROSOFT_OS
+	 // tps (08/19/2010): added this function
 	 PathCanonicalize(resolved_path,relativePath.c_str());
 	 string resultingPath=string(resolved_path);
 #else

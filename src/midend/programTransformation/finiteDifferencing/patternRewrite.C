@@ -214,7 +214,8 @@ class NullPattern: public Pattern {
     ROSE_ASSERT (!"Should not use NullPattern in substitutions");
 
 #ifdef _MSC_VER
-    return false;
+	#pragma message ("patternrewrite: Returning arbitrary value")
+    return false; // Windows requires return value
 #endif
   }
 };
@@ -281,7 +282,8 @@ class AddIntsPattern: public Pattern {
     ROSE_ASSERT (false);
 
 #ifdef _MSC_VER
-    return false;
+	#pragma message ("patternRewrite: Returning arbitrary value")
+    return false; // Windows requires return value
 #endif
   }
 

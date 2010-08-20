@@ -16,14 +16,14 @@
 #include "sageBuilder.h"
 
 #ifdef _MSC_VER
-#pragma message ("WARNING: wait.h header file not available in MSVC.")
+//#pragma message ("WARNING: wait.h header file not available in MSVC.")
 #else
 #include <sys/wait.h>
 #include "PHPFrontend.h"
 #endif
 
 #ifdef _MSC_VER
-#pragma message ("WARNING: libgen.h header file not available in MSVC.")
+//#pragma message ("WARNING: libgen.h header file not available in MSVC.")
 #else
 #include <libgen.h>
 #endif
@@ -6895,6 +6895,8 @@ SgProject::compileOutput( const std::string& compilerName )
 		  // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
 		  // todo windows: put this back in.
 		  linkingReturnVal = link (compilerName);
+#else
+#pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
 #endif
         } // end if preprocessing-only is false
 
@@ -7775,11 +7777,7 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
      result = vector<string>();
 
 
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: Linux popen() not supported within MSVC.")
-//	 printf ("WARNING: Linux popen() not supported within MSVC.");
-//	 ROSE_ASSERT(false);
-//#else
+
 
      // CH (4/6/2010): The Windows version of popen is _popen
 #ifdef _MSC_VER

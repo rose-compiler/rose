@@ -230,21 +230,11 @@ void RoseBin_FILE::process_instruction_query( ) {
 
   map<uint64_t, uint64_t> function_of_basic_block;
   for (size_t i = 0; i < vec_basic_blocks_1.size(); ++i) {
-//#ifdef _MSC_VER
-//#pragma message ("Linux atoll() function not available in MSVC.")
- //   printf ("atoll() is not available in MSCV (need a MSC equivalent or use boost equivalent). \n");
-	//ROSE_ASSERT(false);
 
-	//uint64_t id = 0; // atoll(vec_basic_blocks_1[i].id.c_str());
- //   uint64_t parent_function = 0; // atoll(vec_basic_blocks_1[i].parent_function.c_str());
-//#else
-    //uint64_t id = atoll(vec_basic_blocks_1[i].id.c_str());
-    //uint64_t parent_function = atoll(vec_basic_blocks_1[i].parent_function.c_str());
-    //
     // CH (4/7/2010): Use boost::lexical_cast to cast string to long long type.
     uint64_t id = boost::lexical_cast<long long>(vec_basic_blocks_1[i].id.c_str());
     uint64_t parent_function = boost::lexical_cast<long long>(vec_basic_blocks_1[i].parent_function.c_str());
-//#endif
+
     function_of_basic_block[id] = parent_function;
   }
 
