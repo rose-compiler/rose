@@ -8695,7 +8695,7 @@ void c_action_equiv_operand__equiv_op(Token_t * equivOp)
      if (equivOp != NULL)
         {
           ROSE_ASSERT(equivOp->text != NULL);
-          printf ("In c_action_equiv_operand__equiv_op() (level 5 expr): equivOp->text = %s \n",equivOp->text);
+       // printf ("In c_action_equiv_operand__equiv_op() (level 5 expr): equivOp->text = %s \n",equivOp->text);
 
           SgExpression* result = NULL;
 
