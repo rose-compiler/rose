@@ -1069,11 +1069,12 @@ if (graphnodeinheritedmap.find(child) != graphnodeinheritedmap.end()) {
       //}
      
 }
+
 /*
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 std::set<SgGraphNode*>* SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
  findParents(SgGraphNode* node, SgIncidenceDirectedGraph* g) {
-/*     if (traversedreverse.find(node) != traversedreverse.end()) {
+    if (traversedreverse.find(node) != traversedreverse.end()) {
          std::set<SgGraphNode*> parentset;
          return parentset;
      } 
@@ -1103,7 +1104,7 @@ if (graphnodeinheritedmap.find(child) != graphnodeinheritedmap.end()) {
       }
       return graphnodeinheritedmap[child];
   }
-/* testing whether or not we have traversed the node before while trying to calculate it's value. 
+testing whether or not we have traversed the node before while trying to calculate it's value. 
 If it has been traversed then we are in a loop, and need to set the loop boolean to true
   if (traversedreverse->find(child) != traversedreverse->end()) {
       //loop = true;
@@ -1111,15 +1112,14 @@ If it has been traversed then we are in a loop, and need to set the loop boolean
       return nullInherit;
       
   }
-/* otherwise we need to insert the child node into traversedreverse so that it can be used to
+otherwise we need to insert the child node into traversedreverse so that it can be used to
 detect if we run into a loop later
   else {
       traversedreverse->insert(child);
       loop = false;
   }
-/* This test checks to make sure we need to traverse the parents at all. It may be that the node has
-already been calculated, in which case we don't need to visit the node */
-   /*
+This test checks to make sure we need to traverse the parents at all. It may be that the node has
+already been calculated, in which case we don't need to visit the node
   if (graphnodeinheritedmap.find(child) != graphnodeinheritedmap.end()) {
       //cout << "child already explored" << endl;
       return graphnodeinheritedmap[child];
@@ -1165,6 +1165,7 @@ findChildren(SgGraphNode* node, SgIncidenceDirectedGraph* g) {
      return(successorset);
 }
 */
+
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
