@@ -135,7 +135,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_249.f90 \
      test2007_250.f90 \
      test2007_262.f90 \
+     test2010_15.f90 \
+     test2010_16.f90 \
+     test2010_18.f90 \
      test2010_20.f90 \
+     test2010_23.f90 \
+     test2010_25.f90 \
      test2010_28.f90 \
      canonicalExample.f90 
 
@@ -302,16 +307,11 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_03.f90 \
      test2010_04.f90 \
      test2010_05.f90 \
-     test2010_15.f90 \
-     test2010_16.f90 \
      test2010_17.f90 \
-     test2010_18.f90 \
      test2010_19.f90 \
      test2010_21.f90 \
      test2010_22.f90 \
-     test2010_23.f90 \
      test2010_24.f90 \
-     test2010_25.f90 \
      test2010_26.f90 \
      fCaller.f90 \
      triangle.f90
