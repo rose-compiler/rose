@@ -545,6 +545,5 @@ $(F03_FILES): ./testInterproceduralCFG
 #	./testInterproceduralCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
 # Make rule to build the QMTest database files
-CURRENT_DIRECTORY = `pwd`
 $(QMTEST_Objects): testInterproceduralCFG $(srcdir)/$(@:.qmt=.C)
 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testInterproceduralCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
