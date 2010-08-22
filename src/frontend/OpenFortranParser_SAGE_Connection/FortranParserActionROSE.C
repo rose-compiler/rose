@@ -590,6 +590,41 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           printf ("In c_action_intrinsic_type_spec(): keyword1 = %p = %s keyword2 = %p = %s type = %d, hasKindSelector = %s \n",
                keyword1,keyword1 != NULL ? keyword1->text : "NULL",keyword2,keyword2 != NULL ? keyword2->text : "NULL",type,hasKindSelector ? "true" : "false");
 
+/*
+     Details of when a declaration of character is an array of char vs. a string type:
+
+     Comparison between strings and character arrays
+     -----------------------------------------------
+                                  |   Strings            |   Character arrays
+     =============================|======================|========================
+      Substring notation          | ST(I:J)              | not allowed
+     -----------------------------|----------------------|------------------------
+      Array notation              | not allowed          | AR(I)
+     =============================|======================|========================
+      Constant declaration syntax | CHARACTER ST*10      | CHARACTER AR(10)
+     -----------------------------|----------------------|------------------------
+      Block I/O operations        | whole [sub]string    | only with an implied DO
+      of the constant notation    |                      |
+     =============================|======================|========================
+      Star declaration syntax     | CHARACTER ST*(*)     | CHARACTER AR(*)
+     -----------------------------|----------------------|------------------------
+      Semantics of the star       | the length is passed | no length information
+      declaration syntax          | transparently        | is passed
+     -----------------------------|----------------------|------------------------
+      Block I/O operations        | whole [sub]string    | only with an implied DO
+      of the star notation        |                      |
+     -----------------------------|----------------------|------------------------
+      Mechanisms used for         | hidden argument,     | you are responsible
+      passing the length          | descriptor,          | to keep inside bounds
+     =============================|======================|========================
+      Variable declaration syntax | CHARACTER ST*(N)     | CHARACTER ST*(N)
+     -----------------------------|----------------------|------------------------
+      Variable declaration        |                      | the usual adjustable
+      semantics                   |                      | array mechanism
+     -----------------------------|----------------------|------------------------
+*/
+
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R403 c_action_intrinsic_type_spec()");
@@ -598,8 +633,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 #if !SKIP_C_ACTION_IMPLEMENTATION
   // Build a SgType from the type code
      SgType* intrinsicType = createType(type);
-
      ROSE_ASSERT(intrinsicType != NULL);
+
+  // printf ("At TOP of R403 c_action_intrinsic_type_spec(): intrinsicType = %s \n",intrinsicType->class_name().c_str());
 
   // DQ (12/8/2007): Use the new mechanism using the astBaseTypeStack.
   // astTypeStack.push_front(intrinsicType);
@@ -618,6 +654,290 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
+
+#if 1
+       // DQ (8/14/2010): Newer code to generalize the cases below.
+       // printf ("astExpressionStack.empty() = %s \n",(astExpressionStack.empty() == true) ? "true" : "false");
+
+       // This is not always a non-empty stack (see test2007_48.f90).
+       // ROSE_ASSERT(astExpressionStack.empty() == false);
+          int rank = astExpressionStack.size();
+
+       // We want this to be either a SgAsteriskShapeExp or an SgIntVal
+       // SgIntVal* integerExpression = NULL;
+          SgExpression* lengthExpression = NULL;
+
+       // printf ("In R403 c_action_intrinsic_type_spec(): rank = %d \n",rank);
+
+       // DQ (8/21/2010): The length expression (kind, length, or tyep-spec) for the 
+       // type is what we are trying to identify.  Depending on the version of Fortran 
+       // and the syntax used to specify the kind.
+
+       // Note that for CHARACTER types the length of the string is on the astExpressionStack, but for 
+       // where it is a kind parameter it is on the astTypeKindStack.
+          if (astExpressionStack.empty() == false)
+             {
+               lengthExpression = astExpressionStack.front();
+               astExpressionStack.pop_front();
+             }
+            else
+             {
+               if (astTypeKindStack.empty() == false)
+                  {
+                 // Note that it is (I think) possible for a string to be declared "character*n" where
+                 // "n" is an integer expression.  I need a test code for this before I can fix it.
+                 // lengthExpression = isSgIntVal(astTypeKindStack.front());
+                    lengthExpression = astTypeKindStack.front();
+                    ROSE_ASSERT(lengthExpression != NULL);
+                    astTypeKindStack.pop_front();
+                  }
+
+               if (isSgTypeChar(intrinsicType) != NULL)
+                  {
+                 // For character strings the kind should always be 1.
+                 // ROSE_ASSERT(lengthExpression->get_value() == 1);
+
+                    delete lengthExpression;
+                    lengthExpression = NULL;
+
+                 // Find the length of the string in the astTypeParameterStack
+                    if (astTypeParameterStack.empty() == false)
+                       {
+                         rank = astTypeParameterStack.size();
+                         ROSE_ASSERT(rank == 1);
+
+                         lengthExpression = isSgIntVal(astTypeParameterStack.front());
+                         ROSE_ASSERT(lengthExpression != NULL);
+                         astTypeParameterStack.pop_front();
+                       }
+                  }
+             }
+
+       // The string type is a special type in the IR for Fortran, instead of arrays of char as is the case for C/C++.
+       // if (rank == 1 && isSgTypeChar(intrinsicType) != NULL)
+          if (isSgTypeChar(intrinsicType) != NULL)
+             {
+               if (rank == 1)
+                  {
+                    ROSE_ASSERT(lengthExpression != NULL);
+                 // SgTypeString* stringType = new SgTypeString(integerExpression);
+                 // SgTypeString* stringType = SgTypeString::createType(integerExpression);
+                    SgTypeString* stringType = NULL;
+                    SgIntVal* integerValue = isSgIntVal(lengthExpression);
+                    if (integerValue != NULL)
+                       {
+                      // create a string type using an integer literal instead of an integer expression.
+                         size_t value = integerValue->get_value();
+                      // printf ("Building a string type (SgTypeString) using an integer literal = %zu \n",value);
+                         stringType = SgTypeString::createType(NULL,value);
+
+                      // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
+                         delete lengthExpression;
+                         lengthExpression = NULL;
+                       }
+                      else
+                       {
+                      // create a string type using an integer expression.
+                         ROSE_ASSERT(lengthExpression != NULL);
+                         stringType = SgTypeString::createType(lengthExpression,0);
+                       }
+                    ROSE_ASSERT(stringType != NULL);
+
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(stringType);
+                  }
+                 else
+                  {
+                    printf ("Not clear what case this if (string or array of character) \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+            else
+             {
+            // This is the more general case (interpreted as an type with some specific bitwidth).
+            // ROSE_ASSERT(astExpressionStack.empty() == false);
+
+               ROSE_ASSERT(lengthExpression != NULL);
+
+               if (isSgTypeBool(intrinsicType) != NULL)
+                  {
+                 // Ignore this case since will for more the moment map logical types of all sizes to a SgTypeBool.
+                 // We may want to add fortran specific logical type to the ROSE IR to support this in the future.
+                 // This would allow us to save the information about the byte width of the representation.
+                    printf ("WARNING: For more the moment, we map all logical types (of all sizes: logical*1 logical*2, logical*4, and logical*8) to a SgTypeBool. \n");
+
+                 // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
+                    delete lengthExpression;
+                    lengthExpression = NULL;
+#if 0
+                 // Output debugging information about saved state (stack) information.
+                    outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec(): LOGICAL mapped to SgTypeBool.");
+#endif
+                  }
+                 else
+                  {
+                    if (isSgTypeFloat(intrinsicType) != NULL)
+                       {
+                      // Floating point is mapped to existing and different SgType IR nodes in ROSE.
+                         SgIntVal* integerValue = isSgIntVal(lengthExpression);
+                         ROSE_ASSERT(integerValue != NULL);
+                         if (integerValue != NULL)
+                            {
+                              int value = integerValue->get_value();
+                              switch(value)
+                                 {
+                                   case 4: 
+                                      {
+                                     // Nothing to do here, this is the 4 byte floating point type (already on the astBaseTypeStack).
+                                        break;
+                                      }
+
+                                   case 8: 
+                                      {
+                                        SgTypeDouble* doubleType = SgTypeDouble::createType();
+                                        ROSE_ASSERT(doubleType != NULL);
+
+                                     // Replace the base type with the just built string type
+                                        astBaseTypeStack.pop_front();
+                                        astBaseTypeStack.push_front(doubleType);
+                                        break;
+                                      }
+
+                                   case 16: 
+                                      {
+                                        SgTypeLongDouble* longdoubleType = SgTypeLongDouble::createType();
+                                        ROSE_ASSERT(longdoubleType != NULL);
+
+                                     // Replace the base type with the just built string type
+                                        astBaseTypeStack.pop_front();
+                                        astBaseTypeStack.push_front(longdoubleType);
+                                        break;
+                                      }
+
+                                   default:
+                                      {
+                                        printf ("Error: not clear what size of float is required kind specified as %d \n",value);
+                                        ROSE_ASSERT(false);
+                                      }
+                                 }
+                            }
+
+                      // We can ignore the lengthExpression because we use different specific types 
+                      // (IR nodes) to distinguish the floating point sizes.
+                      // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
+                         delete lengthExpression;
+                         lengthExpression = NULL;
+                       }
+                      else
+                       {
+                      // printf ("This should be an integer type \n");
+                         if (isSgTypeInt(intrinsicType) != NULL)
+                            {
+                              SgIntVal* integerValue = isSgIntVal(lengthExpression);
+                              if (integerValue != NULL)
+                                 {
+                                   ROSE_ASSERT(integerValue != NULL);
+                                   if (integerValue != NULL)
+                                      {
+                                        int value = integerValue->get_value();
+                                        switch(value)
+                                           {
+                                             case 1: 
+                                                {
+                                                  SgTypeSignedChar* byteType = SgTypeSignedChar::createType();
+                                                  ROSE_ASSERT(byteType != NULL);
+
+                                               // Replace the base type with the just built string type
+                                                  astBaseTypeStack.pop_front();
+                                                  astBaseTypeStack.push_front(byteType);
+                                                  break;
+                                                }
+
+                                             case 2: 
+                                                {
+                                                  SgTypeShort* shortType = SgTypeShort::createType();
+                                                  ROSE_ASSERT(shortType != NULL);
+
+                                               // Replace the base type with the just built string type
+                                                  astBaseTypeStack.pop_front();
+                                                  astBaseTypeStack.push_front(shortType);
+                                                  break;
+                                                }
+
+                                             case 4: 
+                                                {
+                                               // Nothing to do here, this is the 4 byte integer type (already on the astBaseTypeStack).
+                                                  break;
+                                                }
+
+                                             case 8: 
+                                                {
+                                                  SgTypeLong* longType = SgTypeLong::createType();
+                                                  ROSE_ASSERT(longType != NULL);
+
+                                               // Replace the base type with the just built string type
+                                                  astBaseTypeStack.pop_front();
+                                                  astBaseTypeStack.push_front(longType);
+                                                  break;
+                                                }
+
+                                             default:
+                                                {
+                                                  printf ("Error: not clear what size of integer is required kind specified as %d \n",value);
+                                                  ROSE_ASSERT(false);
+                                                }
+                                           }
+                                      }
+                                 }
+                                else
+                                 {
+                                // This is a non-integer kind specifier, but we can't support this currently, so just map it 
+                                // to the default SgTypeInt that is already present on the astBaseTypeStack (i.e. do nothing).
+                                   printf ("Warning: Integer kind mapped to default integer SgTypeInt! \n");
+                                 }
+
+                           // We can ignore the lengthExpression because we use different specific types 
+                           // (IR nodes) to distinguish the floating point sizes.
+                           // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
+                              delete lengthExpression;
+                              lengthExpression = NULL;
+                            }
+                           else
+                            {
+                           // I think that only the COMPLEX type is left.
+                              printf ("Error: unimplemented type = %s \n",intrinsicType->class_name().c_str());
+                              ROSE_ASSERT(false);
+                            }
+
+#if 0
+                      // Output debugging information about saved state (stack) information.
+                         outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec(): LOGICAL mapped to SgTypeBool.");
+#endif
+#if 0
+                         printf ("ERROR: This new version of the code is not finished! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+             }
+
+#if 0
+          printf ("Test 2: astExpressionStack.empty() = %s \n",(astExpressionStack.empty() == true) ? "true" : "false");
+          printf ("Test 2: astTypeKindStack.empty()   = %s \n",(astTypeKindStack.empty()   == true) ? "true" : "false");
+#endif
+          if ( (astTypeParameterStack.empty() == false) || (astTypeKindStack.empty() == false) )
+             {
+            // Build a SgModifierType object (use new interface that supports type table).
+               printf ("Build a SgModifierType object (use new interface that supports type table). -- not done yet! \n");
+               ROSE_ASSERT(false);
+             }
+#else
+       // Start of old code from before (8/14/2010).
+
+#error "OLD VERSION OF CODE"
+
+       // DQ (8/14/2010): We can't convert these to charater arrays if they are ment to be string types (not the same in Fortran)).
        // Strings are handled special (converted to character arrays to be consistent within ROSE.
           if (isSgTypeChar(intrinsicType) != NULL)
              {
@@ -639,14 +959,14 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                     int rank = astExpressionStack.size();
                     ROSE_ASSERT(rank == 1);
 
-#if 1
+#if 0
                  // DQ (8/12/2010): I need to make an intermediate release with this older version of the code.
                     printf ("Using older version of code to support intermediate release! \n");
                     SgArrayType* arrayType = convertTypeOnStackToArrayType(rank);
                     astBaseTypeStack.pop_front();
                     astBaseTypeStack.push_front(arrayType);
 #else
-                 // DQ (8/6/2010): We were improperly using SgArrayType instead of SgTypeString.
+                 // DQ (8/6/2010): Fix where we were improperly using SgArrayType instead of SgTypeString.
                     SgIntVal* value = new SgIntVal(rank,"42");
                     SgTypeString* stringType = new SgTypeString(value);
                     ROSE_ASSERT(stringType != NULL);
@@ -797,6 +1117,11 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                          outputState("Default reached in R403 c_action_intrinsic_type_spec()");
 #endif
 
+                         printf ("This is the general case of a type specified with \"*n\" where \"n\" is a literal. \n");
+                         printf ("   integerExpression->get_value() = %d \n",integerExpression->get_value());
+
+
+
                          ROSE_ASSERT(false);
                        }
                   }
@@ -848,6 +1173,14 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                   }
              }
 
+       // End of old code from before (8/14/2010).
+#endif
+
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("hasKindSelector == true (BOTTOM) in R403 c_action_intrinsic_type_spec()");
+#endif
+
        // We should have drained these stacks
           ROSE_ASSERT(astTypeKindStack.empty() == true);
           ROSE_ASSERT(astTypeParameterStack.empty() == true);
@@ -861,7 +1194,14 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
+
         }
+       else
+        {
+       // DQ (8/14/2010): Not clear if this is a problem so output a message for now to support debugging. (NOT A PROBLEM)
+       // printf ("hasKindSelector == false (not clear if this is a problem!) \n");
+        }
+
 #if 0
      ROSE_ASSERT(intrinsicType != NULL);
      astTypeStack.push_front(intrinsicType);
@@ -924,7 +1264,7 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
           setSourcePosition(integerValue,token2);
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("token2 = %s integerValue = %d \n",token2->text,integerValue->get_value());
+               printf ("In c_action_kind_selector(): token2 = %s integerValue = %d \n",token2->text,integerValue->get_value());
 
 #if 0       // FMZ (07/06/2010): fix the bug cause "kind" value lost for decl like: integer*8 etc.
        // Push the integer value onto the expression stack
@@ -1337,19 +1677,19 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_char_length(): hasTypeParamValue = %s \n",hasTypeParamValue ? "true" : "false");
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R426 list c_action_char_length()");
 #endif
 
-  // printf ("astBaseTypeStack.empty() = %s \n",astBaseTypeStack.empty() ? "true" : "false");
+     printf ("astBaseTypeStack.empty() = %s \n",astBaseTypeStack.empty() ? "true" : "false");
 
   // if (astTypeStack.empty() == true)
      if (astBaseTypeStack.empty() == true)
         {
        // This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length>.
        // The details of this case will be handled in the construciton of the type.
-       // printf ("This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length> \n");
+          printf ("In R426: This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length> \n");
         }
        else
         {
@@ -1360,7 +1700,7 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
        // SgTypeChar* charType = isSgTypeChar(astTypeStack.front());
           SgTypeChar* charType = isSgTypeChar(astBaseTypeStack.front());
           ROSE_ASSERT(charType != NULL);
-#if 0
+#if 1
        // Output debugging information about saved state (stack) information.
           outputState("Before convertTypeOnStackToArrayType() in R426 c_action_char_length()");
 #endif
@@ -1378,7 +1718,7 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
         }
 
   // Output debugging information about saved state (stack) information.
-  // outputState("At BOTTOM of R426 list c_action_char_length()");
+     outputState("At BOTTOM of R426 list c_action_char_length()");
 
   // printf ("Exiting as a test! \n");
   // ROSE_ASSERT(false);
@@ -6339,7 +6679,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
         {
        // The variable has not previously been declared.
 
-       // Note that the second time we look fro it we will get a valid symbol.
+       // Note that the second time we look for it we will get a valid symbol.
           variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
           ROSE_ASSERT(variableSymbol != NULL);
 
@@ -6968,16 +7308,23 @@ void c_action_data_ref(int numPartRef)
 data_type = variableType;
           ROSE_ASSERT(variableType != NULL);
           SgArrayType* arrayType = isSgArrayType(variableType);
-//---
-//FMZ(10/30/2009) could be a pointer type which also need to be count as an array type
-SgPointerType* pointerType = isSgPointerType(variableType);
-if (pointerType != NULL) {
-     data_type = pointerType->get_base_type();
-     arrayType = isSgArrayType(data_type);
-}
 
-if (arrayType != NULL) data_type = arrayType->get_base_type();
-//---
+       // DQ (8/21/2010): Adding support for string types and string indexing (using SgPntrArrRefExp IR node).
+          SgTypeString* stringType = isSgTypeString(variableType);
+       // ROSE_ASSERT(stringType == NULL);
+
+       // ---
+       // FMZ(10/30/2009) could be a pointer type which also need to be count as an array type
+          SgPointerType* pointerType = isSgPointerType(variableType);
+          if (pointerType != NULL)
+             {
+               data_type = pointerType->get_base_type();
+               arrayType = isSgArrayType(data_type);
+             }
+
+          if (arrayType != NULL)
+               data_type = arrayType->get_base_type();
+       // ---
 
           SgExpression* variable = NULL;
 
@@ -7008,8 +7355,10 @@ if (arrayType != NULL) data_type = arrayType->get_base_type();
        // Output debugging information about saved state (stack) information.
           outputState("At variableSymbol != NULL of R612 c_action_data_ref()");
 #endif
-          if ( (arrayType != NULL) && (stackHoldsAnIndexExpression == true) 
-                                   && (isSgNullExpression(astExpressionStack.front())==NULL))
+
+       // DQ (8/21/2010): Extending indexing support to variables of string type (SgTypeString).
+       // if ( (arrayType != NULL) && (stackHoldsAnIndexExpression == true) && (isSgNullExpression(astExpressionStack.front()) == NULL))
+          if ( (arrayType != NULL || stringType != NULL) && (stackHoldsAnIndexExpression == true) && (isSgNullExpression(astExpressionStack.front()) == NULL))
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("Processing this variable a SgPntrArrRefExp \n");
@@ -7030,6 +7379,7 @@ if (arrayType != NULL) data_type = arrayType->get_base_type();
             // setSourcePosition(indexExpression);
                setSourcePosition(arrayVariable,nameToken);
 
+            // DQ (8/21/2010): It is OK to use the SgPntrArrRefExp as a way of indexing a variable of type SgTypeString!
                variable = new SgPntrArrRefExp(arrayVariable,indexExpression,NULL);
 
             // outputState("What is the representation of the stack for an array reference expression");
@@ -7183,23 +7533,30 @@ SgClassType* class_type = NULL;
 
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("variableType = %s \n",variableType->class_name().c_str());
+
                SgArrayType* arrayType = isSgArrayType(variableType);
 
-
-               // FMZ (10/30/2009) could be pointer type 
-               //-----
+            // FMZ (10/30/2009) could be pointer type 
                SgPointerType* pointerType = isSgPointerType(variableType);
-               if (pointerType !=NULL) {
-                      arrayType = isSgArrayType(pointerType->get_base_type());
-                }
-
-               if (arrayType != NULL)
+               if (pointerType !=NULL) 
                   {
-                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                         printf ("This is an array type so it is OK for it to be indexed \n");
+                    arrayType = isSgArrayType(pointerType->get_base_type());
+                  }
 
-                //FMZ (2/9/2010) derived type
-                class_type = isSgClassType(arrayType->get_base_type());
+            // DQ (8/21/2010): Added support for string type so we have to eliminate SgTypeString as a posability before we conclude that we should build a function.
+               SgTypeString* stringType = isSgTypeString(variableType);
+
+            // If this is either an array or a string type don't convert it to a function.
+               if (arrayType != NULL || stringType != NULL)
+                  {
+                    if (arrayType != NULL)
+                       {
+                         if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                              printf ("This is an array type so it is OK for it to be indexed \n");
+
+                      // FMZ (2/9/2010) derived type
+                         class_type = isSgClassType(arrayType->get_base_type());
+                       }
                   }
                  else
                   {
@@ -13068,7 +13425,7 @@ void c_action_output_item_list(int count)
      ROSE_ASSERT(exprListExp != NULL);
 
   // while (astExpressionStack.empty() == false)
-     printf ("In R916: count = %d \n",count);
+  // printf ("In R916: count = %d \n",count);
      for (int i = 0; i < count; i++)
         {
           ROSE_ASSERT(astExpressionStack.empty() == false);
