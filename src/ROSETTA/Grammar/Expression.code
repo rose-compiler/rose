@@ -3169,14 +3169,16 @@ SgPointerDerefExp::get_type() const
 // #ifndef ROSE_USE_EDG_VERSION_4
 #ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (12/31/2008): This is the old behavior from EDG version 3.x (which I don't want to change since it is stable)
-       // Note also that calling the static creatType() function, is the same as returning "someType".
+       // Note also that calling the static createType() function, is the same as returning "someType".
 
        // Liao (1/25/2008) SgTypeUnknown is used (abused ?) to specify a temporary InitializedName generated 
        // in translation when the corresponding variable declaration is not yet available. SageBuilder::fixVariableReferences() 
        // will fix this temporary inconsistence in AST after transformation is complete.
           case V_SgTypeUnknown:
              {
+            // DQ (8/17/2010): I think this is redundant.
                returnType = SgTypeUnknown::createType();
+               printf ("Warning: I think we should be short circuiting redundant call to SgTypeUnknown::createType() \n");
                break;
              }
 
@@ -3192,19 +3194,28 @@ SgPointerDerefExp::get_type() const
        // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
           case V_SgTypeString:
              {
-               returnType = SgTypeString::createType();
+            // DQ (8/17/2010): I think it is a bug to redundant to call SgTypeString::createType() here.
+            // returnType = SgTypeString::createType();
+               returnType = someType;
+
+            // Output a message about this in case I am wrong.
+               printf ("Short circuited redundant call to SgTypeString::createType() \n");
                break;
              }
 
        // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
           case V_SgTypeInt:
              {
+            // DQ (8/17/2010): I think this is redundant.
                returnType = SgTypeInt::createType();
+               printf ("Warning: I think we should be short circuiting redundant call to SgTypeInt::createType() \n");
                break;
              }
-       //Liao, 8/28/2009      
+
+       // Liao, 8/28/2009      
           case V_SgTypeFloat:
              {
+            // DQ (8/17/2010): I think that this is the correct handling of the return value generation.
                returnType = someType;
                break;
              }
@@ -4569,8 +4580,8 @@ $CLASSNAME::get_type() const
 
 SOURCE_GET_TYPE_FUNCTION_REFERENCE_EXPRESSION_END
 
+// DQ (8/17/2010): Removed SgStringVal from the list of types using the generic form of get_type()
 // SgBoolValExp
-// SgStringVal
 // SgShortVal
 // SgCharVal
 // SgUnsignedCharVal
@@ -4596,6 +4607,29 @@ $CLASSNAME::get_type(void) const
    }
 
 SOURCE_GET_TYPE_GENERIC_END
+
+// SgStringVal
+SOURCE_GET_TYPE_STRING_START
+
+SgType*
+SgStringVal::get_type(void) const
+   {
+  // Since this is a literal, it must have a defined size (even if it is length zero).
+     size_t stringSize = get_value().size();
+
+#if 0
+  // Debugging...
+     if (stringSize == 0)
+        {
+          printf ("SgStringVal::get_type(): string generated an empty string type -- get_value() = %s \n",get_value().c_str());
+        }
+#endif
+
+  // Use the literal size and assume that there is no associated expression.
+     return SgTypeString::createType(NULL,stringSize);
+   }
+
+SOURCE_GET_TYPE_STRING_END
 
 SOURCE_GET_TYPE_COMPLEX_START
 
