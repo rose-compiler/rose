@@ -91,6 +91,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_99.f90 \
      test2007_100.f90 \
      test2007_101.f90 \
+     test2007_102.f90 \
+     test2007_103.f90 \
      test2007_104.f90 \
      test2007_105.f90 \
      test2007_106.f90 \
@@ -108,6 +110,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_136.f90 \
      test2007_137.f90 \
      test2007_138.f90 \
+     test2007_139.f90 \
      test2007_140.f90 \
      test2007_141.f90 \
      test2007_143.f90 \
@@ -135,11 +138,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_20.f90 \
      test2010_28.f90 \
      canonicalExample.f90 
-
-# DQ (8/6/2010): string built as array of char by mistake.
-#    test2007_102.f90
-#    test2007_103.f90
-#    test2007_139.f90
 
 
 if !ROSE_USING_GFORTRAN_VERSION_4_0
@@ -173,6 +171,7 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_186.f \
      test2007_187.f \
      test2007_188.f \
+     test2007_189.f \
      test2007_191.f \
      test2007_192.f \
      test2007_193.f \
@@ -204,6 +203,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_223.f \
      test2007_224.f \
      test2007_226.f \
+     test2007_227.f \
+     test2007_228.f \
      test2007_229.f \
      test2007_230.f \
      test2007_231.f \
@@ -220,12 +221,9 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_258.f \
      test2007_259.f \
      test2007_260.f \
-     test2007_261.f
-
-# DQ (8/6/2010): string built as array of char by mistake.
-#    test2007_189.f
-#    test2007_227.f
-#    test2007_228.f
+     test2007_261.f \
+     test2010_29.f \
+     test2010_30.f
 
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \

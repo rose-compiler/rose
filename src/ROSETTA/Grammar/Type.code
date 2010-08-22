@@ -908,6 +908,14 @@ HEADER_POINTER_MEMBER_TYPE_START
           SgClassDefinition* get_class_of() const;
 HEADER_POINTER_MEMBER_TYPE_END
 
+HEADER_TYPE_STRING_TYPE_START
+       // DQ (8/17/2010): Support for Fortran use of SgTypeString.
+          static $CLASSNAME* createType(SgExpression*, size_t length);
+
+      //! Performs final initialization of data members (called by constructors)
+          void post_construction_initialization();
+HEADER_TYPE_STRING_TYPE_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -1048,6 +1056,41 @@ $CLASSNAME::get_mangled ( SgUnparse_Info& info )
 #endif
 
 SOURCE_POINTER_MEMBER_GET_MANGLED_END
+
+
+SOURCE_GET_MANGLED_STRING_TYPE_START
+
+/*! Returns a mangled name representation of strings types with the size of the string
+ *  (e.g., literal, *, or integer expression).
+ */
+SgName
+SgTypeString::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgName mangled_length_name;
+     if (this->p_definedUsingScalarLength == true)
+        {
+          mangled_length_name = StringUtility::numberToString(this->p_lengthScalar);
+        }
+       else
+        {
+          ROSE_ASSERT(this->p_lengthExpression != NULL);
+       // mangled_length_name = this->p_lengthExpression->get_mangled_name();
+          mangled_length_name = SageInterface::generateUniqueName(p_lengthExpression,false);
+        }
+
+     SgName mangled_name;
+     mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << mangled_length_name.str () // length
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+
+  // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %zu lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
+
+     return mangled_name;
+   }
+
+SOURCE_GET_MANGLED_STRING_TYPE_END
 
 
 SOURCE_CONSTRUCTOR_START
@@ -2040,6 +2083,22 @@ SOURCE_TYPE_LONG_DOUBLE_TYPE_END
 
 
 SOURCE_TYPE_STRING_TYPE_START
+
+// DQ (8/17/2010): Added support for SgTypeString.
+void
+SgTypeString::post_construction_initialization()
+   {
+  // printf ("Inside of SgTypeString::post_construction_initialization() \n");
+
+     p_definedUsingScalarLength = (p_lengthExpression == NULL);
+
+     if (p_definedUsingScalarLength && p_lengthScalar == 0)
+        {
+       // DQ (8/21/2010): This is not a problem.
+       // printf ("Warning: Zero length string specified, might be OK. \n");
+        }
+   }
+
 SOURCE_TYPE_STRING_TYPE_END
 
 
@@ -3609,46 +3668,7 @@ $CLASSNAME::createType(void)
 SOURCE_COMMON_CREATE_TYPE_END
 
 
-// NOT USED!
-SOURCE_CREATE_TYPE_WITH_PARAMETER_START
-/* now the textually included definitions*/
-// DQ (1/31/2006): Modified to build all types in the memory pools
-// $CLASSNAME $CLASSNAME::builtin_type;
-// $CLASSNAME* $CLASSNAME::builtin_type = new $CLASSNAME();
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-$CLASSNAME*
-$CLASSNAME::createType ( TYPE_INITIALIZER_LIST_SOURCE ) 
-   {
-     static bool firstCallToFunction = true;
-     if (firstCallToFunction == true)
-        {
-       // printf ("Build the $CLASSNAME object for the p_builtin_type \n");
-#if 0
-          p_builtin_type = new $CLASSNAME();
-#else
-       // DQ (7/22/2010): Use the global type table to get the type.
-          p_builtin_type = new $CLASSNAME();
-          SgName name = p_builtin_type->get_mangled();
-#if 0
-          printf ("Mangled type name for $CLASSNAME = %s \n",name.str());
-#endif
-          get_globalTypeTable()->insert_type(name,p_builtin_type);
-#endif
-        }
-     firstCallToFunction = false;
-
-  // DQ (12/22/2005): Jochen thinks that we need this because the SgNode constructor 
-  // is not called (likely because static initialization is compiler dependent).
-  // DQ (1/31/2006): Modified to build all types in the memory pools
-  // builtin_type.p_freepointer = AST_FileIO::IS_VALID_POINTER();
-  // return &builtin_type;
-     ROSE_ASSERT(p_builtin_type != NULL);
-     p_builtin_type->p_freepointer = AST_FileIO::IS_VALID_POINTER();
-     return p_builtin_type; 
-   }
-
-SOURCE_CREATE_TYPE_WITH_PARAMETER_END
+// DQ (8/17/2010): removed SOURCE_CREATE_TYPE_WITH_PARAMETER (not used).
 
 
 SOURCE_CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE_START
@@ -4453,6 +4473,65 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx )
    }
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_STRING_TYPE_START
+
+SgTypeString*
+SgTypeString::createType ( SgExpression* idx, size_t length )
+   {
+  // DQ (8/17/2010): This is the new SgStringType IR node (now used in Fortran, but not previously used in C/C++).
+
+  // DQ (8/17/2010): idx can be NULL, and even the length could be zero (e.g. for a empty string).
+  // ROSE_ASSERT(idx != NULL);
+  // ROSE_ASSERT((idx != NULL) || (length > 0));
+
+     SgTypeString* returnType = new SgTypeString(idx,length);
+     ROSE_ASSERT(returnType != NULL);
+
+     SgName name = returnType->get_mangled();
+
+#if 0
+     printf ("In SgTypeString::createType(): Building an character string [exp = %p] mangled name = %s \n",idx,name.str());
+#endif
+
+  // Only look for pointers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+
+     if (t == NULL)
+        {
+       // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+          get_globalTypeTable()->insert_type(name,returnType);
+        }
+       else
+        {
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+          printf ("Mangled type name for SgStringType = %s (already exists in type table) \n",name.str());
+#endif
+          ROSE_ASSERT(t != returnType);
+
+          delete returnType;
+          returnType = NULL;
+
+          returnType = isSgTypeString(t);
+        }
+
+  // DQ (2/20/2007): Added setting the parent (which should not have been set already)
+  // note also that the index expression is not required to be specified.
+     if (idx != NULL)
+        {
+          ROSE_ASSERT(idx->get_parent() == NULL);
+          idx->set_parent(returnType);
+        }
+
+     return returnType;
+   }
+
+SOURCE_CREATE_TYPE_FOR_STRING_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_START

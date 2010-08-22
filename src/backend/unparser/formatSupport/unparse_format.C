@@ -182,8 +182,8 @@ UnparseFormat& UnparseFormat::operator << ( string out)
      //         int nn; 
      //
      //      BZ_ITER(I);
-     // In the example above, the extra new line after int nn; \ must be preserved!
-     // Otherwise, the following statement will be treated as a continuation line of int nn;\
+     // In the example above, the extra new line after "int nn; \" must be preserved!
+     // Otherwise, the following statement will be treated as a continuation line of "int nn;\"
      // 
      // So the code below is changed to lookback two characters to decide if the line continuation
      // case is encountered and call a special version of insert_newline() to always insert a line. 	  

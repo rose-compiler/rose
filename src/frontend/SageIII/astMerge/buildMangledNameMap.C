@@ -62,7 +62,7 @@ MangledNameMapTraversal::MangledNameMapTraversal ( MangledNameMapType & m, SetOf
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgTypeSignedLongLong)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgTypeUnsignedLongLong)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgTypeLongDouble)
-     MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgTypeString)
+  // MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgTypeString)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgTypeBool)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgNamedType)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgPartialFunctionModifierType)

@@ -2917,7 +2917,7 @@ TestAstAccessToDeclarations::test ( SgNode* node )
 
 void
 TestExpressionTypes::visit ( SgNode* node )
-{
+   {
   // DQ (2/21/2006): Test the get_type() member function which is common on many IR nodes
   // printf ("In TestExpressionTypes::visit(): node = %s \n",node->class_name().c_str());
 
@@ -3152,7 +3152,7 @@ TestExpressionTypes::visit ( SgNode* node )
              }
         }
 #endif
-}
+   }
 
 void
 TestLValues::visit ( SgNode* node )

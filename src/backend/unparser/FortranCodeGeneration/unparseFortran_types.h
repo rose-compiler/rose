@@ -15,7 +15,7 @@ class UnparseFortran_type
           void curprint (const std::string & str) const;
           virtual void unparseType(SgType* type, SgUnparse_Info& info);
 
-          virtual void unparseTypeForConstExprs(SgType* type, SgUnparse_Info& info);
+       // virtual void unparseTypeForConstExprs(SgType* type, SgUnparse_Info& info);
 
       //! unparse type functions implemented in unparse_type.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
@@ -29,6 +29,8 @@ class UnparseFortran_type
           virtual void unparseModifierType(SgType* type, SgUnparse_Info& info);
           virtual void unparseFunctionType(SgType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgType* type, SgUnparse_Info& info);
+
+          virtual void unparseStringType(SgType* type, SgUnparse_Info& info);
 
        // These are C++ specific code generation functions that are not likely required for Fortran
        // virtual void unparseMemberPointerType(SgType* type, SgUnparse_Info& info);

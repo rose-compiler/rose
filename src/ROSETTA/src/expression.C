@@ -1710,8 +1710,13 @@ Grammar::setUpExpressions ()
      MemberFunctionRefExp.setFunctionSource   ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
      BoolValExp.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
-     StringVal.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ShortVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
+  // DQ (8/17/2010): types for strings need to be handled using a lenght parameter to the SgTypeString::createType function.
+  // For fortran the lenght can be specified as an expression, but for a literal it has to be a known value of an integer.
+  // StringVal.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     StringVal.setFunctionSource              ( "SOURCE_GET_TYPE_STRING","../Grammar/Expression.code" );
+
      CharVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      WcharVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
