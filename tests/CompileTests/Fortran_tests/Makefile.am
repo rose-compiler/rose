@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
-# SUBDIR = LANL_POP
+SUBDIR = LANL_POP
 
 ###########################################################################
 # These are Fortran testcodes targeting aspects F66, F77, F90, F95, F2003 #
