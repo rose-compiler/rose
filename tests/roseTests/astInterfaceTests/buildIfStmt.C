@@ -14,7 +14,11 @@ int main (int argc, char *argv[])
   pushScopeStack(global);
 
   SgInitializedName* arg1 = buildInitializedName("n",buildPointerType(buildVoidType()));
-  SgInitializedName* arg2 = buildInitializedName("desc",buildStringType());
+
+// DQ (8/21/2010): buildStringType constructs a SgTypeString which is only used in Fortran!
+// SgInitializedName* arg2 = buildInitializedName("desc",buildStringType());
+  SgInitializedName* arg2 = buildInitializedName("desc",buildStringType(NULL,4));
+
   SgFunctionParameterList * paraList = buildFunctionParameterList();
   appendArg(paraList, arg1);
   appendArg(paraList, arg2);
