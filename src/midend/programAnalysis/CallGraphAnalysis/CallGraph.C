@@ -837,6 +837,7 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
     case V_SgConstructorInitializer: {
              SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
              SgMemberFunctionDeclaration* decl = ctor->get_declaration();
+             if (decl == NULL) break;
              SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
              if (defDecl == NULL) break;
              SgFunctionDefinition* defn = defDecl->get_definition();
