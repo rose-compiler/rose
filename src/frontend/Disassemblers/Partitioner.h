@@ -3,11 +3,34 @@
 #include "Disassembler.h"
 /** Partitions instructions into basic blocks and functions.
  *
- *  The Partitioner classes are responsible for partitioning the set of instructions previously disassembled by a Disassembler
- *  class into AST nodes for basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration).  A basic block is a contiguous
- *  sequence of nonoverlapping instructions where control flow enters at only the first instruction and exits at only the last
- *  instruction. A function is a collection of basic blocks with a single entry point. In the final ROSE AST, each instruction
- *  belongs to exactly one basic block, and each basic block belongs to exactly one function.
+ *  The Partitioner classes are responsible for assigning instructions to basic blocks, and basic blocks to functions.  A
+ *  "basic block" is a sequence of instructions where control flow enters at only the first instruction and exits at only the
+ *  last instruction. The definition can be further restricted to include only those instructions that are contiguous and
+ *  non-overlapping in virtual memory by setting the set_allow_discontiguous_blocks() property to false.  Every instruction
+ *  belongs to exactly one basic block.  A "function" is a collection of basic blocks having a single entry point. Every basic
+ *  block belongs to exactly one function. If ROSE cannot determine what function a block belongs to, it will be placed in a
+ *  special function created for the purpose of holding such blocks.
+ *
+ *  A partitioner can operate in one of two modes:  it can use a list of instructions that has been previously disassembled
+ *  (a.k.a. "passive mode"), or it can drive a Disassembler to obtain instructions as necessary (a.k.a. "active mode").  Each
+ *  mode has its  benefits:
+ *
+ *  <ul>
+ *    <li>Active mode disassembles only what is actually necessary. Although the disassembler is recursive and can follow
+ *        the flow of control, its analyses are not as thorough or robust as the partitioner. Therfore, in order to be sure
+ *        that the partitioner has all the instructions it needs in this mode, the disassembler is usually run in a very
+ *        aggressive mode. In the end, much of what was disassembled is then thrown away.</li>
+ *    <li>Passive mode allows the partitioner to search for instruction sequences in parts of the specimen address space that
+ *        the partitioner otherwise would not have disassembled in active mode.  Thus, passive mode can detect function entry
+ *        addresses by searching for function prologues such as the common x86 pair "push ebp; mov ebp, esp".</li>
+ *    <li>Passive mode delegates all disassembling to some other software layer. This gives the user full control over the
+ *        disassembly process before partitioning even starts.</li>
+ *    <li>Passive mode can be used to force the partitioner to omit certain address ranges or instruction sequences from
+ *        consideration.  For example, one could disassemble certain parts of program while skipping over instructions that
+ *        were inserted maliciously in order to thwart disassembly.  On the other hand a similar effect can be had by
+ *        manipulating the MemoryMap used by an active partitioner.  The case where this doesn't work is when two instruction
+ *        streams overlap and we want to exclude one of them from consideration.</li>
+ *  </ul>
  *
  *  The partitioner organizes instructions into basic blocks by starting at a particular instruction and then looking at its
  *  set of successor addresses. Successor addresses are edges of the eventual control-flow graph (CFG) that are calculated
@@ -187,7 +210,7 @@ protected:
     typedef std::map<rose_addr_t, Function*> Functions;
 
     /** Data type for user-defined function detectors. */
-    typedef void (*FunctionDetector)(Partitioner*, SgAsmGenericHeader*, const Disassembler::InstructionMap&);
+    typedef void (*FunctionDetector)(Partitioner*, SgAsmGenericHeader*);
 
     /** Basic block configuration information. This is information which is set by loading an IPD configuration file. */
     struct BlockConfig {
@@ -252,7 +275,8 @@ public:
 public:
 
     Partitioner()
-        : func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true), map(NULL)
+        : disassembler(NULL), map(NULL), func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL),
+          allow_discont_blocks(true)
         {}
     virtual ~Partitioner() { clear(); }
 
@@ -361,6 +385,9 @@ public:
      *  If it is null then those function seeding operations that depend on having file headers are not run. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
+    /** Top-level function to run the partitioner, calling the specified disassembler as necessary to generate instructions. */
+    virtual SgAsmBlock* partition(SgAsmInterpretation*, Disassembler*, MemoryMap*);
+
     /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, functions, and configuration
      *  file settings and definitions. */
     virtual void clear();
@@ -374,6 +401,32 @@ public:
     virtual void add_instructions(const Disassembler::InstructionMap& insns) {
         this->insns.insert(insns.begin(), insns.end());
     }
+
+    /** Get the list of all instructions.  This includes instructions that were added with add_instructions(), instructions
+     *  added by a passive partition() call, and instructions added by an active partitioner. */
+    const Disassembler::InstructionMap& get_instructions() const {
+        return insns;
+    }
+
+    /** Get the list of disassembler errors. Only active partitioners accumulate this information since only active
+     *  partitioners call the disassembler to obtain instructions. */
+    const Disassembler::BadMap& get_disassembler_errors() const {
+        return bad_insns;
+    }
+
+    /** Clears errors from the disassembler.  This might be useful in order to cause the partitioner to call the disassembler
+     *  again for certain addresses. Normally, if the partitioner fails to obtain an instruction at a particular address it
+     *  remembers the failure and does not try again.  The bad map is also cleared by the Partitioner::clear() method, which
+     *  clears various other things in addition. */
+    void clear_disassembler_errors() {
+        bad_insns.clear();
+    }
+
+    /** Finds an instruction at the specified address.  If the partitioner is operating in active mode and @p create is true,
+     *  then the disassembler will be invoked if necessary to obtain the instruction.  This function returns the null pointer
+     *  if no instruction is available.  If the disassembler was called and threw an exception, then we catch the exception
+     *  and add it to the bad instruction list. */
+    virtual SgAsmInstruction* find_instruction(rose_addr_t, bool create=true);
 
     /** Adds a new function definition to the partitioner.  New functions can be added at any time, including during the
      *  analyze_cfg() call.  When this method is called with an entry_va for an existing function, the specified @p reasons
@@ -392,7 +445,8 @@ public:
      *                                                 Low-level Functions
      *************************************************************************************************************************/
 protected:
-    /* NOTE: Some of these are documented at their implementation... */
+    /* NOTE: Some of these are documented at their implementation because the documentation is more than what conveniently
+     *       fits here. */
     struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery */
 
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
@@ -422,10 +476,10 @@ protected:
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
-    virtual void mark_func_patterns();                          /**< Seeds functions according to instruction patterns */
+    virtual void mark_func_patterns();                          /* Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
     virtual void create_nop_padding();                          /**< Creates functions to hold NOP padding */
-    virtual void create_zero_padding();                         /**< Creates functions to hold zero padding */
+    virtual void create_zero_padding();                         /* Creates functions to hold zero padding */
 
     /** Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
      *  instructions:
@@ -688,17 +742,21 @@ public:
      *                                                     Data Members
      *************************************************************************************************************************/
 protected:
+    Disassembler *disassembler;                         /**< Optional disassembler to call when an instruction is needed. */
+    Disassembler::InstructionMap insns;                 /**< Instruction cache, filled in by user or populated by disassembler. */
+    MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
+    Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
-    Disassembler::InstructionMap insns;                 /**< Set of all instructions to partition. */
+    BasicBlocks blocks;                                 /**< All known basic blocks. */
     std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block. */
     Functions functions;                                /**< All known functions, pending and complete. */
-    BasicBlocks blocks;                                 /**< All known basic blocks. */
+
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
+
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory. */
     BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
-    MemoryMap *map;                                     /**< Memory map used for disassembly. */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

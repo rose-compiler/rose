@@ -3283,7 +3283,7 @@ TestLValues::visit ( SgNode* node )
 					case SgCastExp::e_static_cast:
 					case SgCastExp::e_dynamic_cast:
 					case SgCastExp::e_reinterpret_cast:
-						verifiedLValue = SageInterface::isReferenceType(castExp->get_type()) != NULL;
+						verifiedLValue = SageInterface::isReferenceType(castExp->get_type());
 						break;
 					case SgCastExp::e_unknown:
 					case SgCastExp::e_default:
@@ -3389,7 +3389,7 @@ TestLValues::visit ( SgNode* node )
 				while (SgTypedefType* type2 = isSgTypedefType(type))
 					type = type2->get_base_type();
 				SgFunctionType* ftype = isSgFunctionType(type);
-				verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type()) != NULL;
+				verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type());
 				break;
 			}
 			case V_SgTypeIdOp:            
