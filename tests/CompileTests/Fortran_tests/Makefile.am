@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# DQ (8/12/2010): We want to get permission to distribute these files as test codes.
-# SUBDIR = LANL_POP
+# DQ (8/22/2010): These files are open source and distributed on the web.
+SUBDIRS = LANL_POP
 
 ###########################################################################
 # These are Fortran testcodes targeting aspects F66, F77, F90, F95, F2003 #
@@ -91,6 +91,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_99.f90 \
      test2007_100.f90 \
      test2007_101.f90 \
+     test2007_102.f90 \
+     test2007_103.f90 \
      test2007_104.f90 \
      test2007_105.f90 \
      test2007_106.f90 \
@@ -108,6 +110,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_136.f90 \
      test2007_137.f90 \
      test2007_138.f90 \
+     test2007_139.f90 \
      test2007_140.f90 \
      test2007_141.f90 \
      test2007_143.f90 \
@@ -132,14 +135,14 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_249.f90 \
      test2007_250.f90 \
      test2007_262.f90 \
+     test2010_15.f90 \
+     test2010_16.f90 \
+     test2010_18.f90 \
      test2010_20.f90 \
+     test2010_23.f90 \
+     test2010_25.f90 \
      test2010_28.f90 \
      canonicalExample.f90 
-
-# DQ (8/6/2010): string built as array of char by mistake.
-#    test2007_102.f90
-#    test2007_103.f90
-#    test2007_139.f90
 
 
 if !ROSE_USING_GFORTRAN_VERSION_4_0
@@ -173,6 +176,7 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_186.f \
      test2007_187.f \
      test2007_188.f \
+     test2007_189.f \
      test2007_191.f \
      test2007_192.f \
      test2007_193.f \
@@ -204,6 +208,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_223.f \
      test2007_224.f \
      test2007_226.f \
+     test2007_227.f \
+     test2007_228.f \
      test2007_229.f \
      test2007_230.f \
      test2007_231.f \
@@ -220,12 +226,9 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_258.f \
      test2007_259.f \
      test2007_260.f \
-     test2007_261.f
-
-# DQ (8/6/2010): string built as array of char by mistake.
-#    test2007_189.f
-#    test2007_227.f
-#    test2007_228.f
+     test2007_261.f \
+     test2010_29.f \
+     test2010_30.f
 
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
@@ -304,16 +307,11 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_03.f90 \
      test2010_04.f90 \
      test2010_05.f90 \
-     test2010_15.f90 \
-     test2010_16.f90 \
      test2010_17.f90 \
-     test2010_18.f90 \
      test2010_19.f90 \
      test2010_21.f90 \
      test2010_22.f90 \
-     test2010_23.f90 \
      test2010_24.f90 \
-     test2010_25.f90 \
      test2010_26.f90 \
      fCaller.f90 \
      triangle.f90
