@@ -89,7 +89,11 @@ SgTypeLong*    buildLongType();
 SgTypeLongDouble* buildLongDoubleType();
 SgTypeLongLong * buildLongLongType();
 SgTypeShort*    buildShortType();
+
+// DQ (8/21/2010): We want to move to the new buildStringType( SgExpression*,size_t) function over the older buildStringType() function.
 SgTypeString* buildStringType();
+SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );   
+
 SgTypeVoid * buildVoidType();
 SgTypeWchar* buildWcharType();
 
@@ -112,8 +116,8 @@ SgPointerType* buildPointerType(SgType *base_type = NULL);
 //! Build a reference type
 SgReferenceType* buildReferenceType(SgType *base_type = NULL);
 
-//! Build a modifier type with no modifiers set
-SgModifierType* buildModifierType(SgType *base_type = NULL);
+// Liao, entirely phase out this function ! Build a modifier type with no modifiers set
+//SgModifierType* buildModifierType(SgType *base_type = NULL);
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
 //! Build a const type.
