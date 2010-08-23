@@ -124,9 +124,6 @@ ALL_F03_TESTCODES = \
 $(F03_TESTCODES_REQUIRED_TO_PASS) \
 $(F03_TESTCODES_CURRENTLY_FAILING)
 
-# "if" for DQ_DEVELOPER_TESTS (AutoMake conditional block)
-# if DQ_DEVELOPER_TESTS
-
 if ROSE_USE_OPEN_FORTRAN_PARSER
 
 TRANSLATOR_EXECUTABLE=testAnalysis
@@ -228,27 +225,24 @@ $(TEST_F03_Objects): $(TRANSLATOR)
 listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) $(F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
 	egrep -n "*"  $(srcdir)/$(?)
 
-
 check-local:
 	@echo "Tests for Fortran (LANL POP)."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "********************************************************************************************************************"
-	@echo "****** ROSE/developersScratchSpace/Dan/Fortran_tests/LANL_POP: make check rule complete (terminated normally) ******"
-	@echo "********************************************************************************************************************"
+	@echo "************************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally) ******"
+	@echo "************************************************************************************************************"
+else
+check-local:
+	@echo "\nROSE Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
+	@echo "******************************************************************************************"
+	@echo "******************* make check not run here: configure --with-java ***********************"
+	@echo "******************************************************************************************"
 endif
 
 copyFiles:
 	echo "LANL POP files not copied to ROSE/tests directory..."
-
-#else
-#check-local:
-#	@echo "\nDan Quinlan's Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
-#	@echo "**********************************************************************************************************"
-#	@echo "******************* make check not run here: configure --enable-dq-developer-tests ***********************"
-#	@echo "**********************************************************************************************************"
-#endif
 
 EXTRA_DIST = CMakeLists.txt $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES)
 
