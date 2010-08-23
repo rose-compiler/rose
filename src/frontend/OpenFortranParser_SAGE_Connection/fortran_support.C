@@ -1798,30 +1798,34 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol);
      trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
 
-  // printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p \n",variableSymbol);
-  // printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): functionSymbol = %p \n",functionSymbol);
+#if 0
+     printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p \n",variableSymbol);
+     printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): functionSymbol = %p \n",functionSymbol);
+     printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): classSymbol    = %p \n",classSymbol);
+#endif
 
   // DQ (12/12/2007): Added test for if this is a function!
   // Returning a variableSymbol which is NULL is OK, it means that this is an implicitly defined variable (if it is not an implicit function).
   // if ( (variableSymbol == NULL) && (matchAgainstImplicitFunctionList(variableName.str()) == false) )
   // if ( (variableSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
   // if ( (variableSymbol == NULL) || ((functionSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false)) )
+  // if ( (variableSymbol == NULL) && functionSymbol == NULL && classSymbol == NULL && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
+  // if ( (variableSymbol == NULL) || ((functionSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false)) )
      if ( (variableSymbol == NULL) && functionSymbol == NULL && classSymbol == NULL && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
         {
+       // FMZ(1/8/2010)
+       // if the Id name is "team_world" or "team_default", generate team,external:: declarations
+          {
+            string teamName = variableName.str();
+            std::transform(teamName.begin(),teamName.end(),teamName.begin(),::tolower);
 
-//FMZ(1/8/2010)
-//  if the Id name is "team_world" or "team_default", generate team,external:: declarations
-{
-   string teamName = variableName.str();
-   std::transform(teamName.begin(),teamName.end(),teamName.begin(),::tolower);
-
-   string teamWorld =   "team_world";
-   string teamDefault = "team_default";
-   if (teamName == teamWorld || teamName == teamDefault) {
-                return   add_external_team_decl(teamName);
+            string teamWorld =   "team_world";
+            string teamDefault = "team_default";
+            if (teamName == teamWorld || teamName == teamDefault)
+               {
+                 return   add_external_team_decl(teamName);
+               }
           }
- 
-}
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified type %s in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
@@ -3749,6 +3753,7 @@ convertTypeOnStackToArrayType( int count )
      setSourcePosition(sizeExpression);
 
   // Build the array type
+     printf ("I think we need to call the SgArrayType::createType() interface instead of new SgArrayType()\n");
      SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
      ROSE_ASSERT(arrayType != NULL);
 
@@ -3771,7 +3776,7 @@ convertTypeOnStackToArrayType( int count )
           ROSE_ASSERT(astExpressionStack.empty() == false);
        // printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
 #if 0
-        printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
+          printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
           SgExpression* DebugTmp = astExpressionStack.front();
           int tmpInt = (int)DebugTmp->variantT();
           printf("F_DEBUG::node is %s\n",Cxx_GrammarTerminalNames[tmpInt].name.c_str());
@@ -3789,7 +3794,7 @@ convertTypeOnStackToArrayType( int count )
   // Need to set the parent of the sizeExpression since we don't traverse the types to set such things in the AST postprocessing.
      sizeExpression->set_parent(arrayType);
 
-  // This is an error since we never know when it is the base_type and when it is an origianl type in a variable declaration.
+  // This is an error since we never know when it is the base_type and when it is an original type in a variable declaration.
   // Remove the base_type from the astTypeStack, before we push the new arrayType
   // astTypeStack.pop_front();
 
@@ -4707,7 +4712,7 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
   // This is needed for test2007_67.f90
      astNodeStack.push_front(expressionStatement);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R734 c_action_assignment_stmt()");
 #endif

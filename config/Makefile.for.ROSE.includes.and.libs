@@ -237,7 +237,6 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
      -I$(top_srcdir)/src/midend/binaryAnalyses \
      -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
-     -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
      -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/computation \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depGraph \
@@ -271,14 +270,12 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programTransformation/functionCallNormalization \
      -I$(top_srcdir)/src/midend/programTransformation/constantFolding \
      -I$(top_srcdir)/src/midend/programTransformation/implicitCodeGeneration \
-     -I$(top_srcdir)/src/midend/programTransformation/runtimeTransformation \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
      -I$(top_srcdir)/src/3rdPartyLibraries/libharu-2.1.0/include \
      -I$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/include \
      -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework \
      -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets  \
-     -I$(top_srcdir)/projects/dataBase \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/libltdl \
@@ -292,6 +289,13 @@ ROSE_INCLUDES = \
      $(ROSE_PCH_INCLUDE) \
      $(INTEL_PIN_INCLUDE_PATHS) \
      $(ROSE_ETHER_INCLUDE)
+
+
+# DQ (8/15/2010): I have removed these directories from the include paths since it no longer exists.
+# I expect that the directories were removed and the include list not properly cleaned up.
+# -I$(top_srcdir)/src/midend/binaryAnalyses/graph 
+# -I$(top_srcdir)/src/midend/programTransformation/runtimeTransformation
+# -I$(top_srcdir)/projects/dataBase
 
 # DQ (12/22/2008): Move Boost directory to front and used "-isystem" option so
 # that a system with a previous (older) installation of boost does not interfer 
