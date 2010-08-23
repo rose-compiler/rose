@@ -770,7 +770,7 @@ this child traversal is absolutely necessary and the program will segfault witho
 \subsection{An Example: Counting And Enumerating Paths}
 The prototypical example utilizing inheritedAttributes is counting and enumerating paths. The algorithm works
 as follows. We assign the value of 1 to the number of paths at the root node. Then we solve it's children which
-are dependent on this value. Normally this yields the value 1 on all children and the path {ROOT, NODE_i}. The simplest
+are dependent on this value. Normally this yields the value 1 on all children and the path (ROOT, NODEi). The simplest
 example now would be if all i children converged to a single node. Then the value at that node would be i, the sum of
 the values of all parent nodes.
 \subsection{Example Code} 
@@ -844,4 +844,23 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
 }
 \end{verbatim}
 \em{NOTE}: Currently the loop detection that sends the traversal a boolean regarding loop value is not in operation
+
+\subsection{Use of SgGraphTraversals}
+Here is an example of a SgGraphTraversal traverse method
+\begin{verbatim}
+vis->traverse(node1, sgDG, inheritedAttribute, nullInherit, 2, false);
+\end{verbatim}
+The first argument is a start node, the second is a SgIncidenceDirectedGraph, which can be retrieved in the following manner:
+\begin{verbatim}
+    StaticCFG::CFG cfg(proc);
+    cfg.buildFullCFG();
+    SgGraphNode* cfgb;
+    cfgb = cfg.cfgForBeginning(proc);
+    SgIncidenceDirectedGraph* cfggraph;
+    cfggraph = cfg.getGraph();
+\end{verbatim}
+The third argument in the root inheritedAttribute, the fourth is a null inheritedAttribute which should be a value
+that does nothing when combined with your other inheritedAttributes. Next we have the traversal argument, which takes
+one of the following values: 0 inherited attributes only, 1 synthesized attributes only, 2 both. And the final argument should
+always be false.
 
