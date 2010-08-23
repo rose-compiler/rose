@@ -32,7 +32,6 @@ F90_EXTRA_TESTS = \
    diagnostics.F90 \
    distribution.F90 \
    drifters.F90 \
-   fix_64.C \
    forcing_ap.F90 \
    forcing_coupled.F90 \
    forcing.F90 \
@@ -76,6 +75,9 @@ F90_EXTRA_TESTS = \
    vmix_kpp.F90 \
    vmix_rich.F90 \
    xdisplay.F90
+
+# Not clear why this is here!
+# fix_64.C 
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = 
 
@@ -168,24 +170,24 @@ TEST_F03_Objects = ${ALL_F03_TESTCODES:.F03=.o}
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
 
-kinds_mod.o:  $(TRANSLATOR)
-	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+#kinds_mod.o:  $(TRANSLATOR)
+#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-constants.o:  $(TRANSLATOR) kinds_mod.o
-	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+#constants.o:  $(TRANSLATOR) kinds_mod.o
+#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 # DQ (8/5/2010): This test needs access to MPI (not a requirement for ROSE, so it is copied to this directory).
-communicate.o:  $(TRANSLATOR) kinds_mod.o 
-	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+#communicate.o:  $(TRANSLATOR) kinds_mod.o 
+#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-exit_mod.o:  $(TRANSLATOR) communicate.o
-	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+#exit_mod.o:  $(TRANSLATOR) communicate.o
+#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-domain.o:  $(TRANSLATOR) 
-	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+#domain.o:  $(TRANSLATOR) 
+#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-blocks.o:  $(TRANSLATOR) kinds_mod.o exit_mod.o domain.o
-	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+#blocks.o:  $(TRANSLATOR) kinds_mod.o exit_mod.o domain.o
+#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
 
@@ -229,7 +231,7 @@ check-local:
 	@echo "Tests for Fortran (LANL POP)."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************************"
