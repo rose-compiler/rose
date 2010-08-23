@@ -4,6 +4,7 @@
 
 #include "rose.h"
 #include "statementProcessor.h"
+#include "new_pluggableReverser/eventProcessor.h"
 
 
 vector<StatementReversal> StraightlineStatementProcessor::process(SgStatement* statement, const VariableVersionTable& var_table)
@@ -67,17 +68,33 @@ vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBa
 			forwardBody->prepend_statement(forwardBodyDeclaration);
 
 
-			foreach(SgInitializedName* localVar, forwardBodyDeclaration->get_variables())
+			foreach(SgInitializedName* localVar, variableDeclaration->get_variables())
 			{
-				//Push(save) the variable at the bottom of the forward statement
-				SgExpression* storeVarValue = pushVal(SageBuilder::buildVarRefExp(localVar, forwardBody), localVar->get_type());
-				SgExprStatement* varSaveStatement = SageBuilder::buildExprStatement(storeVarValue);
-				scopeExitStores.push_back(varSaveStatement);
+				//First, check if we can restore the variable without savings its value
+				VariableRenaming::VarName varName;
+				varName.push_back(localVar);
+				SgFunctionDefinition* enclosingFunction = SageInterface::getEnclosingFunctionDefinition(basicBlock);
+				VariableRenaming::NumNodeRenameEntry definitions = getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosingFunction, varName);
 
-				//In the reverse body, declare & pop the variable at the very top
-				SgAssignInitializer* popInitializer = SageBuilder::buildAssignInitializer(popVal(localVar->get_type()));
+				vector<SgExpression*> restoredValue = restoreVariable(varName, basicBlock->get_statements().back(), definitions);
+				SgAssignInitializer* reverseVarInitializer;
+				/*if (!restoredValue.empty())
+				{
+					reverseVarInitializer = NULL;//SageBuilder::buildAssignInitializer(restoredValue.front());
+				}
+				else*/
+				{
+					//Push(save) the variable at the bottom of the forward statement
+					SgExpression* storeVarValue = pushVal(SageBuilder::buildVarRefExp(localVar, forwardBody), localVar->get_type());
+					SgExprStatement* varSaveStatement = SageBuilder::buildExprStatement(storeVarValue);
+					scopeExitStores.push_back(varSaveStatement);
+
+					//In the reverse body, declare & pop the variable at the very top
+					reverseVarInitializer = SageBuilder::buildAssignInitializer(popVal(localVar->get_type()));
+				}
+		
 				SgVariableDeclaration* reverseDeclaration = SageBuilder::buildVariableDeclaration(localVar->get_name(),
-						localVar->get_type(), popInitializer);
+						localVar->get_type(), reverseVarInitializer);
 				localVarDeclarations.push_back(reverseDeclaration);
 			}
 

@@ -1,5 +1,16 @@
 /* Documentation is in AssemblerX86.h */
 
+#ifndef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(expression) \
+    ({ \
+        long int _result; \
+        do _result = (long int) (expression); \
+        while (_result == -1L && errno == EINTR); \
+        _result; \
+    })
+#endif
+
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "Assembler.h"
@@ -1765,7 +1776,7 @@ AssemblerX86::assembleProgram(const std::string &_source)
     try {
         /* Write source code to a temporary file */
         for (int i=0; i<10 && !src_file_name[0]; i++) {
-            if (!tmpnam_r(src_file_name))
+            if (!tmpnam(src_file_name))
                 throw Exception("tmpnam failed");
             fd = open(src_file_name, O_CREAT|O_EXCL|O_RDWR, 0666);
             if (fd<0) {
