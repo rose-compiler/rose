@@ -2948,12 +2948,14 @@ SgReferenceType* SageBuilder::buildReferenceType(SgType * base_type /*= NULL*/)
      return result;
    }
 
+#if 0    // Liao, 8/16/2010, This function is being phased out. Please don't call this!!
 SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
    {
   // DQ (7/30/2010): Note that this is called by the outline test: tests/roseTests/astOutliningTests/moreTest3.cpp
   // DQ (7/28/2010): Now we want to make calling this function an error, the functions buildConst() will return SgModifierType objects instead.
      printf ("Error: this function SageBuilder::buildModifierType() should not be called! (call the buildConst() function (or whatever other function is required) directly \n");
-  // ROSE_ASSERT(false);
+   ROSE_ASSERT(false); 
+   // Liao, 8/13/2010, This function is being phased out. Please don't call this!!
 
   // DQ (7/26/2010): This needs to call the SgModifierType::createType() function so that we can properly abstract the creation of types into the type table.
      SgModifierType* result = new SgModifierType(base_type);
@@ -2967,6 +2969,7 @@ SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
 
      return result;
    }
+#endif
 
 SgTypeBool * SageBuilder::buildBoolType() { 
   SgTypeBool * result =SgTypeBool::createType(); 
@@ -3130,12 +3133,35 @@ SgTypeLong * SageBuilder::buildLongType()
   ROSE_ASSERT(result); 
   return result;
 }
+
 SgTypeString * SageBuilder::buildStringType() 
-{ 
-  SgTypeString * result =SgTypeString::createType(); 
-  ROSE_ASSERT(result); 
-  return result;
-}
+   {
+  // DQ (8/17/2010): This function needs to use a different API to handle a literal 
+  // value for the string size (typical) or an expression for the string size (rare).
+  // For now we will make it an error to call this function.
+
+  // SgTypeString * result =SgTypeString::createType(); 
+     SgTypeString * result = NULL;
+     ROSE_ASSERT(result != NULL); 
+     return result;
+   }
+
+SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral ) 
+   {
+  // DQ (8/21/2010): This is a new API for this function.  This type is specific to Fortran use,
+  // in C/C++ a string is just an array of char. We could have a consistant handling between
+  // C/C++ and Fortrna, but we have just corrected the implementation in Fortran to use this IR 
+  // node and we would have to add such support to C/C++.  The current implementation reflects 
+  // the grammar of the two languages.
+
+  // This function needs to use a different API to handle a literal 
+  // value for the string size (typical) or an expression for the string size (rare).
+
+     SgTypeString* result = SgTypeString::createType(stringLengthExpression,stringLengthLiteral); 
+     ROSE_ASSERT(result != NULL); 
+     return result;
+   }
+
 SgTypeInt * SageBuilder::buildIntType() 
 { 
   SgTypeInt * result =SgTypeInt::createType(); 
@@ -3174,9 +3200,10 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
   // DQ (7/28/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
-
-     return result;
+      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
 #endif
  }
 
@@ -3192,9 +3219,10 @@ SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
-
-     return result;
+     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
    }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
@@ -3215,9 +3243,10 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
-
-     return result;
+     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
    }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
@@ -3232,9 +3261,10 @@ SgModifierType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
-
-     return result;
+     SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
    }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
@@ -3249,9 +3279,10 @@ SgModifierType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
-
-     return result;
+     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
    }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
@@ -3270,9 +3301,10 @@ SgModifierType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/, lon
   // DQ (7/29/2010): Insert result type into type table and return it, or 
   // replace the result type, if already available in the type table, with 
   // the type from type table.
-     result = SgModifierType::insertModifierTypeIntoTypeTable(result);
-
-     return result;
+     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
    }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType

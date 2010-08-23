@@ -1772,7 +1772,7 @@ AssemblerX86::assembleProgram(const std::string &_source)
 
     /* Boiler plate */
     std::string source = std::string("BITS 32\n") + _source;
-
+#ifndef _MSC_VER
     try {
         /* Write source code to a temporary file */
         for (int i=0; i<10 && !src_file_name[0]; i++) {
@@ -1855,5 +1855,6 @@ AssemblerX86::assembleProgram(const std::string &_source)
     close(fd);
     unlink(src_file_name);
     unlink(dst_file_name);
+#endif
     return retval;
 }

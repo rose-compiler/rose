@@ -17,7 +17,9 @@ HEADER_START
           virtual VariantT variantT() const; // MS: new variant used in tree traversal
 
       /*! \brief static variant value */
-          static const VariantT static_variant = V_$CLASSNAME;
+		  // King84 (2010.08.16): Moved this to an enum to save space, since it's only used at compiler-time anyway.
+          // static const VariantT static_variant = V_$CLASSNAME;
+          enum { static_variant = V_$CLASSNAME };
 
        /* the generated cast function */
       /*! \brief Casts pointer from base class to derived class */
