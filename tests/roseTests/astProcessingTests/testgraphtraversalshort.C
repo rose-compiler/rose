@@ -68,8 +68,9 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
             cout << "adding " << inh.pathcount << " to pathcount" << endl;
             tmppathcount += inh.pathcount;
             set<vector<SgGraphNode*> > colpath = inh.collected_paths;
+            cout << "enumerating subpaths" << endl;
             for (set<vector<SgGraphNode*> >::iterator k = colpath.begin(); k != colpath.end(); k++) {
-                cout << "enumerating subpaths" << endl;
+                
                 vector<SgGraphNode*> cp1 = *k;
                 for (vector<SgGraphNode*>::iterator kt = cp1.begin(); kt != cp1.end(); kt++) {
                     cout << (*kt)->get_name() << " ";
@@ -101,11 +102,12 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
             ROSE_ASSERT(tmppathcount == newPathList.size());
         }
         else {
-        //set<vector<SgGraphNode*> > cp = collect_paths(child, newPathList);
+        set<vector<SgGraphNode*> > cp = collect_paths(child, newPathList);
         cout << "Number Of Paths:" << newPathList.size() << endl;
         cout << "This should match:" << tmppathcount << endl;
+        ROSE_ASSERT(tmppathcount == newPathList.size());
         
-}
+        }
         return InheritedAttribute(tmppathcount, newPathList);
     }
     else {

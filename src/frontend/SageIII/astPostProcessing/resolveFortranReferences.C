@@ -83,7 +83,7 @@ FixupFortranReferences::visit ( SgNode* node )
 
           for (int i=0; i < 3; i++)
              {
-               printf ("labelArray[%d] = %p \n",i,labelArray[i]);
+            // printf ("labelArray[%d] = %p \n",i,labelArray[i]);
 
                SgLabelSymbol* labelSymbol = labelArray[i];
                if (labelSymbol != NULL)
