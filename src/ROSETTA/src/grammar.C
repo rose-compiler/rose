@@ -131,7 +131,7 @@ Grammar::Grammar ( const string& inputGrammarName,
        std::ifstream astNodeList(astNodeListFilename.c_str());
        size_t c = 1;
        while (astNodeList) {
-         std::string name;
+         std::string name = "hello";
          astNodeList >> name;
          if (name == "") continue;
          this->astNodeToVariantMap[name] = c;
