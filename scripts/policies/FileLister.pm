@@ -26,6 +26,8 @@ sub is_generated {
   return 1 if m(/projects/compass/tools/compass/buildCheckers\.C$);
   return 1 if m(/projects/compass/tools/compassVerifier/buildCheckers\.C$);
   return 1 if m(/projects/compass/tools/sampleCompassSubset/buildCheckers\.C$);
+  return 1 if m(/src/frontend/SageIII/ompparser\.h$);
+  return 1 if m(/src/roseIndependentSupport/dot2gml/parseDotGrammar\.h$);
   return 0;
 }
 
