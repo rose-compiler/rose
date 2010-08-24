@@ -89,14 +89,18 @@ fi
 
 if test "x$USE_JAVA" = x1; then
 
-# DQ (11/3/2009): This was moved from down below to check for java before the jvm
-# Fix the case of Apple OSX support.
+# George Vulov (08/23/2010) The fix below is not necessary. If java home is set correctly,
+# the java directory under OS X has the same structure as under any other UNIX. Make sure to append
+# /Home to the end of the java path. For example,
+# /System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
+# 			DQ (11/3/2009): This was moved from down below to check for java before the jvm
+# 			Fix the case of Apple OSX support.
 # echo "Before OS specific JAVA = ${JAVA}"
-  if test "x$build_vendor" = xapple; then
-     JAVA_BIN="${JAVA_PATH}/Commands"
-  else
+#  if test "x$build_vendor" = xapple; then
+#     JAVA_BIN="${JAVA_PATH}/Commands"
+#  else
      JAVA_BIN="${JAVA_PATH}/bin"
-  fi
+#  fi
 
   JAVA="${JAVA_BIN}/java"
 # echo "JAVA = ${JAVA}"
