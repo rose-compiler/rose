@@ -179,8 +179,9 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:verbose 3 -rose:output_warnings -rose:output_parser_actions -rose:compileFixed
 # ROSE_FLAGS = -rose:verbose 0 -rose:compileFixed
 # ROSE_FLAGS = -rose:verbose 3
-ROSE_FLAGS = -rose:verbose 3 -rose:output_warnings -rose:output_parser_actions
 # ROSE_FLAGS = -rose:verbose 0
+ROSE_FLAGS = -rose:verbose 0 -rose:output_warnings -rose:output_parser_actions
+ROSE_FLAGS = -rose:verbose 0 
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -222,10 +223,10 @@ domain.o: $(TRANSLATOR) constants.o blocks.o io_types.o boundary.o
 blocks.o: $(TRANSLATOR) kinds_mod.o exit_mod.o domain_size.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-domain_size.o: $(TRANSLATOR)
+domain_size.o: $(TRANSLATOR) kinds_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-distribution.o: $(TRANSLATOR)
+distribution.o: $(TRANSLATOR) kinds_mod.o communicate.o blocks.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 grid.o: $(TRANSLATOR) domain.o io.o global_reductions.o
@@ -234,37 +235,37 @@ grid.o: $(TRANSLATOR) domain.o io.o global_reductions.o
 io_types.o: $(TRANSLATOR) broadcast.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-broadcast.o: $(TRANSLATOR)
+broadcast.o: $(TRANSLATOR) kinds_mod.o communicate.o 
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-boundary.o: $(TRANSLATOR)
+boundary.o: $(TRANSLATOR) kinds_mod.o communicate.o constants.o blocks.o distribution.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 io.o: $(TRANSLATOR) io_netcdf.o io_binary.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-io_binary.o: $(TRANSLATOR)
+io_binary.o: $(TRANSLATOR) kinds_mod.o domain_size.o domain.o constants.o boundary.o communicate.o broadcast.o gather_scatter.o exit_mod.o io_types.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 io_netcdf.o: $(TRANSLATOR) gather_scatter.o netcdf.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-gather_scatter.o: $(TRANSLATOR)
+gather_scatter.o: $(TRANSLATOR) kinds_mod.o communicate.o constants.o blocks.o distribution.o domain.o domain_size.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-global_reductions.o: $(TRANSLATOR)
+global_reductions.o: $(TRANSLATOR) kinds_mod.o communicate.o constants.o blocks.o distribution.o domain_size.o domain.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 diagnostics.o: $(TRANSLATOR) prognostic.o time_management.o solvers.o forcing.o timers.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-prognostic.o: $(TRANSLATOR)
+prognostic.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o domain.o domain_size.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-time_management.o: $(TRANSLATOR)
+time_management.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o domain.o domain_size.o broadcast.o grid.o io.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-solvers.o: $(TRANSLATOR)
+solvers.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o global_reductions.o gather_scatter.o broadcast.o grid.o io.o time_management.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 forcing.o: $(TRANSLATOR) forcing_ap.o forcing_coupled.o forcing_pt_interior.o forcing_sfwf.o forcing_shf.o forcing_s_interior.o forcing_tools.o forcing_ws.o tavg.o
@@ -276,52 +277,52 @@ forcing_ap.o: $(TRANSLATOR) forcing_tools.o
 forcing_coupled.o: $(TRANSLATOR) ice.o forcing_shf.o forcing_sfwf.o timers.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-forcing_pt_interior.o: $(TRANSLATOR)
+forcing_pt_interior.o: $(TRANSLATOR) kinds_mod.o domain.o constants.o broadcast.o boundary.o io.o forcing_tools.o time_management.o prognostic.o grid.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-forcing_sfwf.o: $(TRANSLATOR)
+forcing_sfwf.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o grid.o io.o global_reductions.o forcing_tools.o forcing_shf.o time_management.o prognostic.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-forcing_shf.o: $(TRANSLATOR)
+forcing_shf.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o grid.o io.o forcing_tools.o time_management.o prognostic.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-forcing_s_interior.o: $(TRANSLATOR)
+forcing_s_interior.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o boundary.o io.o forcing_tools.o time_management.o prognostic.o grid.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-forcing_tools.o: $(TRANSLATOR)
+forcing_tools.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o io.o io_types.o grid.o time_management.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-forcing_ws.o: $(TRANSLATOR)
+forcing_ws.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o domain.o boundary.o io.o forcing_tools.o time_management.o grid.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-tavg.o: $(TRANSLATOR)
+tavg.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o domain.o prognostic.o grid.o time_management.o global_reductions.o broadcast.o io.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-timers.o: $(TRANSLATOR)
+timers.o: $(TRANSLATOR) kinds_mod.o constants.o domain.o global_reductions.o io.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-ice.o: $(TRANSLATOR)
+ice.o: $(TRANSLATOR) kinds_mod.o blocks.o constants.o broadcast.o io_types.o time_management.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-state_mod.o: $(TRANSLATOR)
+state_mod.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o io.o broadcast.o time_management.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-operators.o: $(TRANSLATOR)
+operators.o: $(TRANSLATOR) kinds_mod.o blocks.o domain_size.o domain.o constants.o grid.o 
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 hmix_gm.o: $(TRANSLATOR) vertical_mix.o vmix_kpp.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-vertical_mix.o: $(TRANSLATOR) vmix_kpp.o vmix_const.o vmix_rich.o
+vertical_mix.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o state_mod.o broadcast.o io.o timers.o tavg.o time_management.o diagnostics.o vmix_kpp.o vmix_const.o vmix_rich.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-vmix_kpp.o: $(TRANSLATOR)
+vmix_kpp.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o state_mod.o exit_mod.o forcing_shf.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-vmix_const.o: $(TRANSLATOR)
+vmix_const.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o state_mod.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-vmix_rich.o: $(TRANSLATOR)
+vmix_rich.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o broadcast.o io.o state_mod.o time_management.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
