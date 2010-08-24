@@ -1158,41 +1158,19 @@ it will return a pointer to the lnode in which case we can not traverse farther 
         SgGraphNode *child = NULL;
         child = (*it);
         if (child != NULL) {
-<<<<<<< HEAD
-           // cout << "Child is not null" << endl;
-
-           if (traversed.find(child) == traversed.end() /*& traversed2.find(child) == traversed2.end()*/ ) {
-              // cout << "performing traversal" << endl;
-              performTraversal(child, g, inheritedValue, nullInherit, graphTraversal, traversedlocal, traversedreverse, false);
-                  
-              // if (traversedlocal.find(node) == traversedlocal.end()) {
-              //    trav
+           //cout << "Child is not null" << endl;
+	   if (traversed->find(child) == traversed->end()) {/*& traversed2.find(child) == traversed2.end() */
+              //std::cout << "performing traversal" << std::endl;
+	      performTraversal(child, g, graphTraversal, false);
+              //if (traversedlocal.find(node) == traversedlocal.end()) {
+              //   trav
+              //}
            }
-           // }
         }
-        // else {
-        // traversedlocal.insert(child);
-        // }
-=======
-        //      cout << "Child is not null" << endl;
-         
- 
-	      if (traversed->find(child) == traversed->end()) {/*& traversed2.find(child) == traversed2.end() */
-                  //std::cout << "performing traversal" << std::endl;
-		  performTraversal(child, g, graphTraversal, false);
-		  
-//                   if (traversedlocal.find(node) == traversedlocal.end()) {
-//                      trav
-              }
-//                   }
-         }
-//	      else {
- //               traversedlocal.insert(child);
-//	      }
->>>>>>> origin/master
-              
+        //else {
+        //   traversedlocal.insert(child);
+        //}
         else {
-           
            if (graphTraversal == BOTH || graphTraversal == SYNTHESIZED) {
                 synthesizedAttributes->push(defaultSynthesizedAttribute(defaultInheritedValue));
            }
