@@ -8,7 +8,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #      PASSING TESTS
 # #######################
 
-F90_TESTCODES_REQUIRED_TO_PASS = 
+F90_TESTCODES_REQUIRED_TO_PASS = advection.F90
 
 # Make all the code dependent upon the kinds_mod.F90 file
 # advection.o : kinds_mod.o
@@ -24,71 +24,99 @@ F03_TESTCODES_REQUIRED_TO_PASS =
 
 F90_TESTCODES_CURRENTLY_FAILING = $(F90_EXTRA_TESTS)
 
+# This are the POP source files (excluding module files)
 F90_EXTRA_TESTS = \
    advection.F90 \
    baroclinic.F90 \
    barotropic.F90 \
    current_meters.F90 \
-   diagnostics.F90 \
-   distribution.F90 \
    drifters.F90 \
-   forcing_ap.F90 \
-   forcing_coupled.F90 \
-   forcing.F90 \
-   forcing_pt_interior.F90 \
-   forcing_sfwf.F90 \
-   forcing_shf.F90 \
-   forcing_s_interior.F90 \
-   forcing_tools.F90 \
-   forcing_ws.F90 \
-   grid.F90 \
    history.F90 \
+   horizontal_mix.F90 \
+   hydro_sections.F90 \
+   initial.F90 \
    hmix_aniso.F90 \
    hmix_del2.F90 \
    hmix_del4.F90 \
-   hmix_gm.F90 \
-   horizontal_mix.F90 \
-   hydro_sections.F90 \
-   ice.F90 \
-   initial.F90 \
-   io_binary.F90 \
-   io.F90 \
-   io_netcdf.F90 \
-   io_types.F90 \
    movie.F90 \
-   operators.F90 \
    output.F90 \
    POP.F90 \
    pressure_grad.F90 \
-   prognostic.F90 \
    restart.F90 \
-   solvers.F90 \
-   state_mod.F90 \
    step_mod.F90 \
    surface_hgt.F90 \
-   tavg.F90 \
-   time_management.F90 \
-   timers.F90 \
    topostress.F90 \
-   vertical_mix.F90 \
-   vmix_const.F90 \
-   vmix_kpp.F90 \
-   vmix_rich.F90 \
    xdisplay.F90
 
-# Not clear why this is here!
+
+# NET CDF library source files (from the web)
+NET_CDF_FILES = \
+   netcdf.f90 \
+   netcdf3_file.f90 \
+   netcdf_attributes.f90 \
+   netcdf_constants.f90 \
+   netcdf_dims.f90 \
+   netcdf_eightbyte.f90 \
+   netcdf_expanded.f90 \
+   netcdf_externals.f90  \
+   netcdf_file.f90 \
+   netcdf_overloads.f90 \
+   netcdf_text_variables.f90 \
+   netcdf_variables.f90 \
+   netcdf_visibility.f90 \
+   typeSizes.F90
+
+# These file are required as dependent modules and will be compiled as part
+# of compiling the other files.  They should not be listed as explicit files
+# to be compiled else we will generate circular makefile dependencies.
 # fix_64.C 
+F90_INCLUDED_MODULES = \
+   kinds_mod.F90 \
+   constants.F90 \
+   communicate.F90 \
+   exit_mod.F90 \
+   domain.F90 \
+   blocks.F90 \
+   domain_size.F90 \
+   distribution.F90 \
+   grid.F90 \
+   io_types.F90 \
+   broadcast.F90 \
+   boundary.F90 \
+   io.F90 \
+   io_binary.F90 \
+   io_netcdf.F90 \
+   gather_scatter.F90 \
+   global_reductions.F90 \
+   diagnostics.F90 \
+   prognostic.F90 \
+   time_management.F90 \
+   solvers.F90 \
+   forcing.F90 \
+   forcing_ap.F90 \
+   forcing_coupled.F90 \
+   forcing_sfwf.F90 \
+   forcing_shf.F90 \
+   forcing_pt_interior.F90 \
+   forcing_s_interior.F90 \
+   forcing_tools.F90 \
+   forcing_ws.F90 \
+   tavg.F90 \
+   timers.F90 \
+   ice.F90 \
+   state_mod.F90 \
+   operators.F90 \
+   hmix_gm.F90 \
+   vertical_mix.F90 \
+   vmix_kpp.F90 \
+   vmix_const.F90 \
+   vmix_rich.F90 \
+   $(NET_CDF_FILES)
+
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = 
 
 F03_TESTCODES_CURRENTLY_FAILING = 
-
-
-
-
-
-
-
 
 F77_TESTCODES_REQUIRED_TO_PASS = 
 
@@ -128,7 +156,10 @@ $(F03_TESTCODES_CURRENTLY_FAILING)
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
 
-TRANSLATOR_EXECUTABLE=testAnalysis
+# DQ (8/23/2010): This tests only the ability to read the Fortran code and generate the AST.
+# TRANSLATOR_EXECUTABLE=testAnalysis
+TRANSLATOR_EXECUTABLE=testParser
+
 TRANSLATOR= ../../../$(TRANSLATOR_EXECUTABLE)
 # Go back and build the translator we are using to test Fortran (in case make check 
 # is run directly in this directory before make has been run from the root of the 
@@ -170,24 +201,137 @@ TEST_F03_Objects = ${ALL_F03_TESTCODES:.F03=.o}
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
 
-#kinds_mod.o:  $(TRANSLATOR)
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+kinds_mod.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-#constants.o:  $(TRANSLATOR) kinds_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+# constants.o:  $(TRANSLATOR) kinds_mod.o blocks.o
+constants.o: $(TRANSLATOR) kinds_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 # DQ (8/5/2010): This test needs access to MPI (not a requirement for ROSE, so it is copied to this directory).
-#communicate.o:  $(TRANSLATOR) kinds_mod.o 
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+communicate.o: $(TRANSLATOR) kinds_mod.o 
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-#exit_mod.o:  $(TRANSLATOR) communicate.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+exit_mod.o: $(TRANSLATOR) communicate.o constants.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-#domain.o:  $(TRANSLATOR) 
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+domain.o: $(TRANSLATOR) constants.o blocks.o io_types.o boundary.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-#blocks.o:  $(TRANSLATOR) kinds_mod.o exit_mod.o domain.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+# blocks.o:  $(TRANSLATOR) kinds_mod.o exit_mod.o domain.o
+blocks.o: $(TRANSLATOR) kinds_mod.o exit_mod.o domain_size.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+domain_size.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+distribution.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+grid.o: $(TRANSLATOR) domain.o io.o global_reductions.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+io_types.o: $(TRANSLATOR) broadcast.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+broadcast.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+boundary.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+io.o: $(TRANSLATOR) io_netcdf.o io_binary.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+io_binary.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+io_netcdf.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+gather_scatter.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+global_reductions.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+diagnostics.o: $(TRANSLATOR) prognostic.o time_management.o solvers.o forcing.o timers.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+prognostic.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+time_management.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+solvers.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing.o: $(TRANSLATOR) forcing_ap.o forcing_coupled.o forcing_pt_interior.o forcing_sfwf.o forcing_shf.o forcing_s_interior.o forcing_tools.o forcing_ws.o tavg.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_ap.o: $(TRANSLATOR) forcing_tools.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_coupled.o: $(TRANSLATOR) ice.o forcing_shf.o forcing_sfwf.o timers.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_pt_interior.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_sfwf.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_shf.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_s_interior.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_tools.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+forcing_ws.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+tavg.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+timers.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+ice.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+state_mod.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+operators.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+hmix_gm.o: $(TRANSLATOR) vertical_mix.o vmix_kpp.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+vertical_mix.o: $(TRANSLATOR) vmix_kpp.o vmix_const.o vmix_rich.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+vmix_kpp.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+vmix_const.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+vmix_rich.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+
+
+# DQ (8/23/2010): Added support for NetCDFlib
+netcdf.o: $(TRANSLATOR) typeSizes.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+
+typeSizes.o: $(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
 
@@ -195,7 +339,7 @@ PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $
 #	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
 
 # $(TEST_F90_Objects): ../preprocessor ${ALL_TESTCODES}
-$(TEST_F90_Objects): $(TRANSLATOR) kinds_mod.o constants.o blocks.o
+$(TEST_F90_Objects): $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o grid.o diagnostics.o state_mod.o operators.o hmix_gm.o
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
 #	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../preprocessor $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
@@ -246,7 +390,7 @@ endif
 copyFiles:
 	echo "LANL POP files not copied to ROSE/tests directory..."
 
-EXTRA_DIST = CMakeLists.txt $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES)
+EXTRA_DIST = CMakeLists.txt $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) $(F90_INCLUDED_MODULES)
 
 clean-local:
 	rm -f *.o *.s *.mod *.rmod rose_*.C rose_*.f rose_*.F* rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *_postprocessed.* *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
