@@ -166,7 +166,7 @@ int
 print_leave(FILE *f, char fmt, const ArgInfo *info)
 {
     int retval = 0;
-    int en = (int32_t)info->val < 0 ? -(int32_t)info->val : 0;
+    int en = (int32_t)info->val<0 && (int32_t)info->val>-256 ? -(int32_t)info->val : 0;
     if (en!=0) {
         /*FIXME: are we sure that these host numbers are valid for the target machine also? I hope so, because we use
          *       these symbolic names throughout the syscall handling code in x86sim.C [RPM 2010-08-07] */
