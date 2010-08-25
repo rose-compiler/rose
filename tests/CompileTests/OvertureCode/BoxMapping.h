@@ -14,7 +14,7 @@ class BoxMapping : public Mapping{
  public:
 
   BoxMapping(const real xMin=0., const real xMax=1., 
-	     const real yMin=0., const real yMax=1.,
+             const real yMin=0., const real yMax=1.,
 	     const real zMin=0., const real zMax=1.);
 
 
@@ -26,7 +26,7 @@ class BoxMapping : public Mapping{
   BoxMapping & operator =( const BoxMapping & X );
 
   int rotate(const real angle, 
-	     const int axisOfRotation = 2 ,
+             const int axisOfRotation = 2 ,
 	     const real x0 = 0.,
 	     const real y0 = 0.,
 	     const real z0 = 0. );
@@ -45,7 +45,7 @@ class BoxMapping : public Mapping{
   Mapping* make( const aString & mappingClassName );
 
   void map( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	   MappingParameters & params=Overture::nullMappingParameters());
+            MappingParameters & params=Overture::nullMappingParameters());
 
   void basicInverse( const realArray & x, realArray & r, realArray & rx= Overture::nullRealDistributedArray(), 
                      MappingParameters & params =Overture::nullMappingParameters());

@@ -223,7 +223,7 @@ is_array_exp( CPPAstInterface& fa, const AstNodePtr& array,
 
 bool ArrayInterface::
 is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, AstNodePtr* arrayp, int *dimp, 
-		 SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem, 
+                 SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem, 
 		 bool *reshape)
 {
   AstNodePtr array;
@@ -264,7 +264,7 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, AstNodePtr* ar
 bool ArrayInterface::
 is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
                        AstInterface::AstNodeList* alias,int *dimp, 
- 			      SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem)
+                       SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem)
 {
   ArrayDescriptor desc;
   if (ArrayAnnotation::get_inst()->is_array_construct_op( fa, arrayExp, alias, &desc) ) {
@@ -372,7 +372,7 @@ impl_reshape_array( CPPAstInterface& fa,
 
 AstNodePtr ArrayInterface::
 impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
-			   AstInterface::AstNodeList& ivarAst)
+                        AstInterface::AstNodeList& ivarAst)
 {
   SymbolicFunctionDeclarationGroup elem;
 
@@ -399,7 +399,7 @@ impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
 
 AstNodePtr ArrayInterface::
 impl_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
-			 int dim, int plus)
+                          int dim, int plus)
 {
   SymbolicVal rval;
   ArrayOptDescriptor desc;

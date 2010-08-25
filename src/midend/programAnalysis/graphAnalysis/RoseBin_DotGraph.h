@@ -14,7 +14,7 @@
 class RoseBin_DotGraph : public RoseBin_Graph {
  private:
   void printInternalNodes( bool dfg,  bool forward_analysis,
-			   std::ofstream &myfile, std::string& recursiveFunctionName,
+                           std::ofstream &myfile, std::string& recursiveFunctionName,
 			   SgAsmFunctionDeclaration* p_binFunc);
 
   typedef std::multimap < SgAsmFunctionDeclaration*,
@@ -33,11 +33,11 @@ class RoseBin_DotGraph : public RoseBin_Graph {
   ~RoseBin_DotGraph() {}
 
   void printNodes( bool dfg,  RoseBin_FlowAnalysis* flow, bool forward_analysis,
-		     std::ofstream &myfile, std::string& recursiveFunctionName);
+                   std::ofstream &myfile, std::string& recursiveFunctionName);
   void printNodesCallGraph(std::ofstream& myfile);
 
   void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-		  bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
+                   bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
 
   void printProlog(  std::ofstream& myfile, std::string& fileType);
   void printEpilog(  std::ofstream& myfile);

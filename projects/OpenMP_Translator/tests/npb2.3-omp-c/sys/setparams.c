@@ -94,7 +94,7 @@ main(int argc, char *argv[])
   if (class != 'U') {
 #ifdef VERBOSE
     printf("setparams: For benchmark %s: class = %c\n", 
-	   argv[1], class); 
+           argv[1], class); 
 #endif
     check_info(type, class);
   }
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
     if (class_old != 'X') {
 #ifdef VERBOSE
       printf("setparams:     old settings: class = %c\n", 
-	     class_old); 
+             class_old); 
 #endif
     }
   } else {

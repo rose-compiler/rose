@@ -266,7 +266,7 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
 	string addrS =  RoseBin_support::ToString(addr);
 	if (!testFlag)
 	  instance->analysisResult->append(QString(" Addr: %1 Found Symbol : %2       Type : %3")
-					   .arg(addrS.c_str())
+                                           .arg(addrS.c_str())
 					   .arg(name.c_str())
 					   .arg(type.c_str()));
       }
@@ -291,7 +291,7 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
 	  Rose_STL_Container<unsigned char> chars = entry->get_extra();
 	  if (!testFlag)
 	    instance->analysisResult->append(QString("  Found DL_NEEDED: %1    -- Contains %2 chars.   loc: %3")
-					     .arg(QString(name.c_str()))
+                                             .arg(QString(name.c_str()))
 					     .arg(chars.size())
 					     .arg(RoseBin_support::ToString(address).c_str()));
 

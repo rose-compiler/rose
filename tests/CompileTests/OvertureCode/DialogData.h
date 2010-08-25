@@ -134,7 +134,7 @@ addPulldownMenu(const aString &pdMainLabel, aString commands[], aString labels[]
 
 int
 setToggleButtons(aString tbCommands[], aString tbLabels[], int initState[], 
-		 int numberOfColumns = 2);
+                 int numberOfColumns = 2);
 
 int
 setPushButtons(aString pbCommands[], aString pbLabels[], int numberOfRows = 2);

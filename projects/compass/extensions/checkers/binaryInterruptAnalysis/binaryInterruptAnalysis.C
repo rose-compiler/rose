@@ -195,7 +195,7 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::getIntCallName(uint64_t rax
        os_ver==linux_26 ||
        os_ver==linux_27) && arch==bit32)
     int_name = getIntCallName_Linux32bit(rax, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
   if ((os_ver==linux_22 ||
@@ -203,7 +203,7 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::getIntCallName(uint64_t rax
        os_ver==linux_26 ||
        os_ver==linux_27) && arch==bit64)
     int_name = getIntCallName_Linux64bit(rax, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
 
@@ -647,10 +647,10 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::run(string& name, SgGraphNo
 	vector<uint64_t>::iterator it = val_rax.begin();
 	for (;it!=val_rax.end();++it) {
 	  string i_name = getIntCallName(*it, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx, 
+                                         val_rbx, val_rcx, val_rdx, 
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
-	  value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
+          value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
 	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false); 
 	}
 

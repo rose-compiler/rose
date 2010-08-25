@@ -32,7 +32,7 @@ class CompositeSurface  : public Mapping
 
   // add a surface to the composite surface
   int add( Mapping & surface,
-	   const int & surfaceID = -1 );
+           const int & surfaceID = -1 );
   // Is this surface visible?
   int isVisible(const int & surfaceNumber) const;
 
@@ -62,7 +62,7 @@ class CompositeSurface  : public Mapping
 
   // project points onto the surface
   void oldProject( intArray & subSurfaceIndex,
-		   realArray & x, 
+                   realArray & x, 
 		   realArray & rProject, 
 		   realArray & xProject,
 		   realArray & xrProject,

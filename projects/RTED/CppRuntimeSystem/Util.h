@@ -77,15 +77,13 @@ class RuntimeViolation
                                          // has been deregistered
                 POINTER_CHANGED_MEMAREA, // a pointer changed the memory area which it points to
                                          // (may be an error if changed by pointer arithmetic)
-				INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
-									     // other memory chunk illegaly, e.g. in arguments to memcpy
-				INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
-
-				UNEXPECTED_FUNCTION_SIGNATURE,	// a c program compiled with a missing or wrong 
-												// prototype gave the wrong types at the callsite
-
-                NONE,                    // no violation
-				UNKNOWN_VIOLATION
+                INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
+                                         // other memory chunk illegaly, e.g. in arguments to memcpy
+                INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
+                UNEXPECTED_FUNCTION_SIGNATURE,  // a c program compiled with a missing or wrong 
+					// prototype gave the wrong types at the callsite
+                NONE,                   // no violation
+		UNKNOWN_VIOLATION
         };
 
 

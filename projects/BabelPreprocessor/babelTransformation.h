@@ -5,54 +5,54 @@
 
 class BabelTransformationSynthesizedAttributeType
 {
-	public:
-		// These are a list of the classes declared in the application. Later we will define a more
-		// complex representation of the class which will include the member function declarations
-		// and all for their information required to generate each entry in a SIDL file.
-		list<string> sidlDeclarationList;
-		bool baseTypeNeeded;
-	public:
+        public:
+                // These are a list of the classes declared in the application. Later we will define a more
+                // complex representation of the class which will include the member function declarations
+                // and all for their information required to generate each entry in a SIDL file.
+                list<string> sidlDeclarationList;
+                bool baseTypeNeeded;
+        public:
 
-		// ########################################
-		// Access functions for global declarations
-		// ########################################
-		list<string> getSIDLDeclaraionStringList() const
-		{ return sidlDeclarationList; };
+                // ########################################
+                // Access functions for global declarations
+                // ########################################
+                list<string> getSIDLDeclaraionStringList() const
+                { return sidlDeclarationList; };
 
-		void setSIDLDeclarationStringList ( list<string> inputList )
-		{ sidlDeclarationList = inputList; };
+                void setSIDLDeclarationStringList ( list<string> inputList )
+                { sidlDeclarationList = inputList; };
 
-		void addSIDLDeclarationString ( string X )
-		{
-			sidlDeclarationList.push_back(X);
-		};
+                void addSIDLDeclarationString ( string X )
+                {
+                        sidlDeclarationList.push_back(X);
+                };
 
-		const string getSIDLDeclarationString () const
-		{
-			// Build a single string from the strings in the list
-			string sidlString;
-			list<string>::const_iterator i;
-			for (i = sidlDeclarationList.begin(); i != sidlDeclarationList.end(); i++)
-			{
-				// printf ("sidlString = \n%s\n",(*i).c_str());
-				sidlString += *i;
-			}
-			
-			return sidlString;
-		};
+                const string getSIDLDeclarationString () const
+                {
+                        // Build a single string from the strings in the list
+                        string sidlString;
+                        list<string>::const_iterator i;
+                        for (i = sidlDeclarationList.begin(); i != sidlDeclarationList.end(); i++)
+                        {
+                                // printf ("sidlString = \n%s\n",(*i).c_str());
+                                sidlString += *i;
+                        }
+                        
+                        return sidlString;
+                };
 
-		// ##############################################
-		// Function used accumulate variable declarations
-		// ##############################################
-		BabelTransformationSynthesizedAttributeType & operator+=
-			( const BabelTransformationSynthesizedAttributeType & X )
-			{
-				// sidlDeclarationList.merge(X.getSIDLDeclaraionStringList());
-				list<string> list = X.getSIDLDeclaraionStringList();
+                // ##############################################
+                // Function used accumulate variable declarations
+                // ##############################################
+                BabelTransformationSynthesizedAttributeType & operator+=
+                        ( const BabelTransformationSynthesizedAttributeType & X )
+                        {
+                                // sidlDeclarationList.merge(X.getSIDLDeclaraionStringList());
+                                list<string> list = X.getSIDLDeclaraionStringList();
                                 sidlDeclarationList.splice(sidlDeclarationList.end(), list);
                                 //sidlDeclarationList.merge(list);
-				return *this;
-			}
+                                return *this;
+                        }
 };
 
 class overloadInformation{

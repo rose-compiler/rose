@@ -19,8 +19,8 @@
 #include "../qce-config.h"
 
 /*!
-	\file qdocumentcursor.h
-	\brief Definition of the QDocumentCursor class
+        \file qdocumentcursor.h
+        \brief Definition of the QDocumentCursor class
 */
 
 class QChar;
@@ -35,160 +35,160 @@ class QDocumentCursorHandle;
 
 class QCE_EXPORT QDocumentCursor
 {
-	public:
-		enum MoveFlag
-		{
-			MoveAnchor	= 0,
-			KeepAnchor	= 1,
-			ThroughWrap	= 2
-		};
+        public:
+                enum MoveFlag
+                {
+                        MoveAnchor      = 0,
+                        KeepAnchor      = 1,
+                        ThroughWrap     = 2
+                };
 
-		Q_DECLARE_FLAGS(MoveMode, MoveFlag);
+                Q_DECLARE_FLAGS(MoveMode, MoveFlag);
 
-		enum MoveOperation
-		{
-			NoMove,
-			Up,
-			Down,
-			Left,
-			PreviousCharacter = Left,
-			Right,
-			NextCharacter = Right,
-			Start,
-			StartOfLine,
-			StartOfBlock = StartOfLine,
-			StartOfWord,
-			PreviousBlock,
-			PreviousLine = PreviousBlock,
-			PreviousWord,
-			WordLeft,
-			WordRight,
-			End,
-			EndOfLine,
-			EndOfBlock = EndOfLine,
-			EndOfWord,
-			NextWord,
-			NextBlock,
-			NextLine = NextBlock
-		};
+                enum MoveOperation
+                {
+                        NoMove,
+                        Up,
+                        Down,
+                        Left,
+                        PreviousCharacter = Left,
+                        Right,
+                        NextCharacter = Right,
+                        Start,
+                        StartOfLine,
+                        StartOfBlock = StartOfLine,
+                        StartOfWord,
+                        PreviousBlock,
+                        PreviousLine = PreviousBlock,
+                        PreviousWord,
+                        WordLeft,
+                        WordRight,
+                        End,
+                        EndOfLine,
+                        EndOfBlock = EndOfLine,
+                        EndOfWord,
+                        NextWord,
+                        NextBlock,
+                        NextLine = NextBlock
+                };
 
-		enum SelectionType
-		{
-			WordUnderCursor,
-			LineUnderCursor
-		};
+                enum SelectionType
+                {
+                        WordUnderCursor,
+                        LineUnderCursor
+                };
 
-		explicit QDocumentCursor(QDocument *doc);
-		QDocumentCursor(const QDocumentCursor& cursor);
-		QDocumentCursor(QDocument *doc, int line, int column = 0);
-		//QDocumentCursor(const QDocumentLine& line, int column = 0);
-		QDocumentCursor(QDocumentCursorHandle* handle = 0);
+                explicit QDocumentCursor(QDocument *doc);
+                QDocumentCursor(const QDocumentCursor& cursor);
+                QDocumentCursor(QDocument *doc, int line, int column = 0);
+                //QDocumentCursor(const QDocumentLine& line, int column = 0);
+                QDocumentCursor(QDocumentCursorHandle* handle = 0);
 
-		~QDocumentCursor();
+                ~QDocumentCursor();
 
-		QDocumentCursor clone() const;
+                QDocumentCursor clone() const;
 
-		QDocumentCursor& operator = (const QDocumentCursor& c);
+                QDocumentCursor& operator = (const QDocumentCursor& c);
 
-		bool operator == (const QDocumentCursor& c) const;
-		bool operator != (const QDocumentCursor& c) const;
+                bool operator == (const QDocumentCursor& c) const;
+                bool operator != (const QDocumentCursor& c) const;
 
-		bool operator < (const QDocumentCursor& c) const;
-		bool operator > (const QDocumentCursor& c) const;
+                bool operator < (const QDocumentCursor& c) const;
+                bool operator > (const QDocumentCursor& c) const;
 
-		bool operator <= (const QDocumentCursor& c) const;
-		bool operator >= (const QDocumentCursor& c) const;
+                bool operator <= (const QDocumentCursor& c) const;
+                bool operator >= (const QDocumentCursor& c) const;
 
-		bool isNull() const;
-		bool isValid() const;
+                bool isNull() const;
+                bool isValid() const;
 
-		bool atEnd() const;
-		bool atStart() const;
+                bool atEnd() const;
+                bool atStart() const;
 
-		bool atBlockEnd() const;
-		bool atBlockStart() const;
+                bool atBlockEnd() const;
+                bool atBlockStart() const;
 
-		bool atLineEnd() const;
-		bool atLineStart() const;
+                bool atLineEnd() const;
+                bool atLineStart() const;
 
-		bool hasSelection() const;
+                bool hasSelection() const;
 
-		bool isSilent() const;
-		void setSilent(bool y);
+                bool isSilent() const;
+                void setSilent(bool y);
 
-		bool isAutoUpdated() const;
-		void setAutoUpdated(bool y);
+                bool isAutoUpdated() const;
+                void setAutoUpdated(bool y);
 
-		int position() const;
+                int position() const;
 
-		int lineNumber() const;
-		int columnNumber() const;
+                int lineNumber() const;
+                int columnNumber() const;
 
-		int anchorLineNumber() const;
-		int anchorColumnNumber() const;
+                int anchorLineNumber() const;
+                int anchorColumnNumber() const;
 
-		int visualColumnNumber() const;
+                int visualColumnNumber() const;
 
-		void setColumnNumber(int c, MoveMode m = MoveAnchor);
+                void setColumnNumber(int c, MoveMode m = MoveAnchor);
 
-		int wrappedLineOffset() const;
-		int anchorWrappedLineOffset() const;
+                int wrappedLineOffset() const;
+                int anchorWrappedLineOffset() const;
 
-		QPoint documentPosition() const;
-		QPoint anchorDocumentPosition() const;
+                QPoint documentPosition() const;
+                QPoint anchorDocumentPosition() const;
 
-		QPolygon documentRegion() const;
+                QPolygon documentRegion() const;
 
-		QDocumentLine line() const;
-		QDocumentLine anchorLine() const;
+                QDocumentLine line() const;
+                QDocumentLine anchorLine() const;
 
-		void shift(int offset);
-		void setPosition(int pos, MoveMode m = MoveAnchor);
-		bool movePosition(int offset, MoveOperation op = NextCharacter, MoveMode m = MoveAnchor);
+                void shift(int offset);
+                void setPosition(int pos, MoveMode m = MoveAnchor);
+                bool movePosition(int offset, MoveOperation op = NextCharacter, MoveMode m = MoveAnchor);
 
-		void moveTo(int line, int column);
-		void moveTo(const QDocumentCursor &c);
-		void moveTo(const QDocumentLine &l, int column);
+                void moveTo(int line, int column);
+                void moveTo(const QDocumentCursor &c);
+                void moveTo(const QDocumentLine &l, int column);
 
-		void eraseLine();
-		void insertLine();
-		void insertText(const QString& s);
+                void eraseLine();
+                void insertLine();
+                void insertText(const QString& s);
 
-		QDocumentCursor selectionStart() const;
-		QDocumentCursor selectionEnd() const;
+                QDocumentCursor selectionStart() const;
+                QDocumentCursor selectionEnd() const;
 
-		QString selectedText() const;
+                QString selectedText() const;
 
-		void clearSelection();
-		void removeSelectedText();
+                void clearSelection();
+                void removeSelectedText();
 
-		void select(SelectionType t);
-		void setSelectionBoundary(const QDocumentCursor& c);
+                void select(SelectionType t);
+                void setSelectionBoundary(const QDocumentCursor& c);
 
-		bool isWithinSelection(const QDocumentCursor& c) const;
+                bool isWithinSelection(const QDocumentCursor& c) const;
 
-		QChar nextChar() const;
-		QChar previousChar() const;
+                QChar nextChar() const;
+                QChar previousChar() const;
 
-		void deleteChar();
-		void deletePreviousChar();
+                void deleteChar();
+                void deletePreviousChar();
 
-		void beginEditBlock();
-		void endEditBlock();
+                void beginEditBlock();
+                void endEditBlock();
 
-		void refreshColumnMemory();
-		bool hasColumnMemory() const;
-		void setColumnMemory(bool y);
+                void refreshColumnMemory();
+                bool hasColumnMemory() const;
+                void setColumnMemory(bool y);
 
-		QDocumentSelection selection() const;
+                QDocumentSelection selection() const;
 
-		QDocument* document() const;
+                QDocument* document() const;
 
-		inline QDocumentCursorHandle* handle() const
-		{ return m_handle; }
+                inline QDocumentCursorHandle* handle() const
+                { return m_handle; }
 
-	private:
-		QDocumentCursorHandle *m_handle;
+        private:
+                QDocumentCursorHandle *m_handle;
 };
 
 #endif

@@ -61,12 +61,12 @@ class Interpolant : public ReferenceCounting
   void updateToMatchGrid(CompositeGrid & cg, int refinementLevel=0 );  
 
   int interpolate( realCompositeGridFunction & u, 
-		   const Range & C0 = nullRange,      // optionally specify components to interpolate
+                   const Range & C0 = nullRange,      // optionally specify components to interpolate
 		   const Range & C1 = nullRange,  
 		   const Range & C2 = nullRange );
 
   int interpolate( realGridCollectionFunction & u, 
-		   const Range & C0 = nullRange,
+                   const Range & C0 = nullRange,
 		   const Range & C1 = nullRange,
 		   const Range & C2 = nullRange );
 
@@ -180,7 +180,7 @@ class Interpolant : public ReferenceCounting
   int initializeExplicitInterpolation();
 
   int internalInterpolate( realCompositeGridFunction & u, 
-			   const Range C[],
+                           const Range C[],
 			   IntegerArray & gridToInterpolate = Overture::nullIntArray(),
                            IntegerArray & gridsToInterpolateFrom = Overture::nullIntArray());
 
@@ -190,7 +190,7 @@ class Interpolant : public ReferenceCounting
 			  IntegerArray & gridsToInterpolateFrom = Overture::nullIntArray() ) const;
 
   int implicitInterpolateByIteration(realCompositeGridFunction & u,
-				     const Range C[],
+                                     const Range C[],
                                      IntegerArray & gridToInterpolate = Overture::nullIntArray(),
 				     IntegerArray & gridsToInterpolateFrom = Overture::nullIntArray() ) const;
 

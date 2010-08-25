@@ -13,14 +13,14 @@ MenuItemBase* MenuLists:: addItem
   )
 {
   MenuItemBase* item = new MenuField(command,
-				     cl_option_string,
-				     description_,
-				     default_answer,
-				     valid_answer,
-				     hot_key,
-				     cl_option_char,
-				     func
-				     );
+                                     cl_option_string,
+                                     description_,
+                                     default_answer,
+                                     valid_answer,
+                                     hot_key,
+                                     cl_option_char,
+                                     func
+                                     );
   bool ok;
   if (!itemlist.ok())  // first item put into list
     {
@@ -35,7 +35,7 @@ MenuItemBase* MenuLists:: addItem
     }
   if (!ok)
     errorFP("MenuLists::addItem",
-	    "could not add item, fundamental error or too little RAM");
+            "could not add item, fundamental error or too little RAM");
 
   if (!virtual_first.ok())
     virtual_first.rebind(item);
@@ -90,20 +90,20 @@ void MenuLists::initCommandLine()
 
       // check typical typos:
       if (cmd == "-GUI")
-	fatalerrorFP("MenuList::initCommandLine",
-	"Found the reserved option -GUI, but you probably mean --GUI?");
+        fatalerrorFP("MenuList::initCommandLine",
+        "Found the reserved option -GUI, but you probably mean --GUI?");
       else if (cmd == "-iss")
-	fatalerrorFP("MenuList::initCommandLine",
-	"Found the reserved option -iss, but you probably mean --iss?");
+        fatalerrorFP("MenuList::initCommandLine",
+        "Found the reserved option -iss, but you probably mean --iss?");
       else if (cmd == "-iscl")
-	fatalerrorFP("MenuList::initCommandLine",
-	"Found the reserved option -iscl, but you probably mean --iscl?");
+        fatalerrorFP("MenuList::initCommandLine",
+        "Found the reserved option -iscl, but you probably mean --iscl?");
       else if (cmd == "-batch")
-	fatalerrorFP("MenuList::initCommandLine",
-	"Found the reserved option -batch, but you probably mean --batch?");
+        fatalerrorFP("MenuList::initCommandLine",
+        "Found the reserved option -batch, but you probably mean --batch?");
       else if (cmd == "+btmfc" || cmd == "--btmfc")
-	fatalerrorFP("MenuList::initCommandLine",
-	"The old option %s is no longer supported, use --GUI",cmd.c_str());
+        fatalerrorFP("MenuList::initCommandLine",
+        "The old option %s is no longer supported, use --GUI",cmd.c_str());
 
 
       i++;
@@ -165,7 +165,7 @@ String MenuLists:: get (const String& in_command, bool sublevels)
 
 
 void MenuLists:: set (const String& in_command, const String& value,
-		      bool sublevels)
+                      bool sublevels)
 {
   MenuItemBase* item = NULL;
   if (itemlist.ok())
@@ -179,7 +179,7 @@ void MenuLists:: set (const String& in_command, const String& value,
     }
     else
       fatalerrorFP("MenuLists::set",
-		   "Command \"%s\" was not found",in_command.c_str());
+                   "Command \"%s\" was not found",in_command.c_str());
   }
 }
 
@@ -190,7 +190,7 @@ void MenuLists:: search4multipleAnswers (MenuAnswerTable& table)
     virtual_first->search4multipleAnswers (table);
   else
     errorFP("MenuLists::search4multipleAnswers",
-	    "You are using MenuSystem::multipleLoop and have erased the\
+            "You are using MenuSystem::multipleLoop and have erased the\
             \nmenu by calling MenuSystem::forget (f.ex. after scan). The\
             \nmenu is therefor empty now. You must remove your forget-call\
             \nto make the multiple answer functionality available.");
@@ -246,8 +246,8 @@ void MenuLists::prompt (Is in)
       break;
     default:
       errorFP("Menu:prompt",
-	      "This type of input source ($d) is not implemented",
-	      input_source);
+              "This type of input source ($d) is not implemented",
+              input_source);
     }
 }
 
@@ -382,7 +382,7 @@ void MenuLists::promptStream(Is in, bool interactive)
       if (in_command.empty())
       {
         warningFP("MenuLists::promptStream",
-	        "You wrote \"sub\", but where is the submenu name?");
+                "You wrote \"sub\", but where is the submenu name?");
         break;
       }
       if (in_command.size() == 1)
@@ -439,22 +439,22 @@ void MenuLists::promptCommandLine()
       //DBP(oform("promptCmdL 1: command=[%s]",cmd.c_str()))
 
       if (( cmd == "-D") || (cmd == "+Default") || (cmd == "--Default"))
-	{
-	  if (i+1 >= cl_argc)
-	    errorFP("MenuLists::promptCommandLine",
-		    "Missing argument (filename) to %s command",cmd.c_str());
+        {
+          if (i+1 >= cl_argc)
+            errorFP("MenuLists::promptCommandLine",
+                    "Missing argument (filename) to %s command",cmd.c_str());
 
-	  Is defaultfile (cl_argv[++i], INFILE);
-	  promptStream (defaultfile, false);
-	}
+          Is defaultfile (cl_argv[++i], INFILE);
+          promptStream (defaultfile, false);
+        }
       // this one is likely not to be supported in the future:
       else if (cmd == "+logfile" || cmd == "--logfile")
-	{
-	  if (i+1 >= cl_argc)
-	    fatalerrorFP("MenuLists::promptCommandLine",
-	    "Missing argument (filename) to %s command",cmd.c_str());
-	  file(cl_argv[++i]);
-	}
+        {
+          if (i+1 >= cl_argc)
+            fatalerrorFP("MenuLists::promptCommandLine",
+            "Missing argument (filename) to %s command",cmd.c_str());
+          file(cl_argv[++i]);
+        }
       i++;
     }
 
@@ -472,54 +472,54 @@ void MenuLists::promptCommandLine()
       //DBP(oform("promptCmdL 2: command=[%s]",cmd.c_str()))
 
       if (cmd.size() == 2 && cmd[0] == '-') {    // short command
-	cmd_stripped = String(cmd[1]);
-	ch = cmd[1];
-	possible_menu_command = true;
+        cmd_stripped = String(cmd[1]);
+        ch = cmd[1];
+        possible_menu_command = true;
       }
       else if (cmd[0] == '-' && cmd[1] == '-') {// command starting with --
-	cmd_stripped = cl_argv[i]+2;
-	possible_menu_command = true;
+        cmd_stripped = cl_argv[i]+2;
+        possible_menu_command = true;
       }
       else if (cmd[0] == '+') {                 // for backward compatibility
-	cmd_stripped = cl_argv[i]+1;
-	possible_menu_command = true;
+        cmd_stripped = cl_argv[i]+1;
+        possible_menu_command = true;
       }
       else if (cmd[0] == '-' && cmd[1] != '-') {
-	cmd_stripped = cl_argv[i]+1;
-	possible_error = true;
-	possible_menu_command = true;
+        cmd_stripped = cl_argv[i]+1;
+        possible_error = true;
+        possible_menu_command = true;
       }
       if (possible_menu_command) {
-	item.rebind(getItemPtr (cmd_stripped.c_str(), ch));
-	//s_o<<"Searching for i="<<i<<" :"<<cl_argv[i]<<" ["<<cmd_stripped<<"] and found="<<item.ok()<<'\n';
-	if (item.ok() && possible_error) {
-	  // the command started with -, must start with --
-	  fatalerrorFP("MenuLists::promptCommandLine",
-		       "You gave the command "
-		       "line option \"-%s\", but according to the menu,\n"
-		       "it should read \"--%s\".",
-		       cmd_stripped.c_str(),cmd_stripped.c_str());
-	}
+        item.rebind(getItemPtr (cmd_stripped.c_str(), ch));
+        //s_o<<"Searching for i="<<i<<" :"<<cl_argv[i]<<" ["<<cmd_stripped<<"] and found="<<item.ok()<<'\n';
+        if (item.ok() && possible_error) {
+          // the command started with -, must start with --
+          fatalerrorFP("MenuLists::promptCommandLine",
+                       "You gave the command "
+                       "line option \"-%s\", but according to the menu,\n"
+                       "it should read \"--%s\".",
+                       cmd_stripped.c_str(),cmd_stripped.c_str());
+        }
       }
       else
-	item.detach();
+        item.detach();
 
 
       if (!item.ok()) {
-	// ignore warning here, --casename and --GUI are f.ex. not
-	// among the commands defined in the menu and they must be
-	// silently processed...
+        // ignore warning here, --casename and --GUI are f.ex. not
+        // among the commands defined in the menu and they must be
+        // silently processed...
       }
       else if (i+1 < cl_argc)
-	{
-	  value = cl_argv[++i];
-	  //s_o<<"Just assigned value=["<<value<<"]\n";
-	  item->setAnswer(value);
-	}
+        {
+          value = cl_argv[++i];
+          //s_o<<"Just assigned value=["<<value<<"]\n";
+          item->setAnswer(value);
+        }
       else
-	fatalerrorFP("MenuLists::promptCommandLine",
-		     "Missing next argument of command line arg. \"%s\"",
-		     cl_argv[i]);
+        fatalerrorFP("MenuLists::promptCommandLine",
+                     "Missing next argument of command line arg. \"%s\"",
+                     cl_argv[i]);
       i++;
     }
 }

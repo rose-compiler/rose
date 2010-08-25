@@ -90,7 +90,7 @@ void ERR30() {
   errno = 0;
   number = strtoul(string, &endptr, 0);
   if (endptr == string || (number == ULONG_MAX 
-			   && errno == ERANGE)) 
+                           && errno == ERANGE)) 
     {
       /* handle the error */
     }

@@ -74,7 +74,7 @@ void analyseFunction(SgFunctionDefinition * def,DFAnalysis *defUseAnalysis)
 //					cout <<"\t\t*def in: "<<defPlaces[j]->unparseToString()<<endl;
 					interstingDefParent=DUVariableAnalysisExt::getNextParentInterstingNode(defPlaces[j]);
 					if (isSgInitializedName(interstingDefParent))
-							 cout <<"\t\t*def in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
+                                                cout <<"\t\t*def in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
 					else cout <<"\t\t*def in: "<<interstingDefParent->unparseToString()<<endl;
 				}
 				
@@ -93,7 +93,7 @@ void analyseFunction(SgFunctionDefinition * def,DFAnalysis *defUseAnalysis)
 					def=isSgVarRefExp(defPlaces[j]);
 					interstingDefParent=DUVariableAnalysisExt::getNextParentInterstingNode(defPlaces[j]);
 					if (isSgInitializedName(interstingDefParent))
-							 cout <<"\t\t*def in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
+                                                cout <<"\t\t*def in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
 					else cout <<"\t\t*def in: "<<interstingDefParent->unparseToString()<<endl;
 				}
 			}
@@ -111,7 +111,7 @@ void analyseFunction(SgFunctionDefinition * def,DFAnalysis *defUseAnalysis)
 					def=isSgVarRefExp(defPlaces[j]);
 					interstingDefParent=DUVariableAnalysisExt::getNextParentInterstingNode(defPlaces[j]);
 					if (isSgInitializedName(interstingDefParent))
-							 cout <<"\t\t*def in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
+                                                cout <<"\t\t*def in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
 					else cout <<"\t\t*def in: "<<interstingDefParent->unparseToString()<<endl;
 				}
 				defPlaces=defUseAnalysis->getUseFor(use,initName);
@@ -121,7 +121,7 @@ void analyseFunction(SgFunctionDefinition * def,DFAnalysis *defUseAnalysis)
 					if (isIDef(def))
 					interstingDefParent=DUVariableAnalysisExt::getNextParentInterstingNode(defPlaces[j]);
 					if (isSgInitializedName(interstingDefParent))
-							 cout <<"\t\t*idef in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
+                                                cout <<"\t\t*idef in: "<<isSgInitializedName(interstingDefParent)->get_name ().getString()<<endl;					
 					else cout <<"\t\t*idef in: "<<interstingDefParent->unparseToString()<<endl;
 				}
 			}
@@ -208,43 +208,43 @@ int main(int argc, char *argv[])
 {
 	std::string filename;
 
-    SgProject *project = frontend(argc, argv);
-		// Create the global def-use analysis
-		DFAnalysis *defUseAnalysis=new DefUseAnalysis(project);
-		if (defUseAnalysis->run(false)==1)
-		{
-			std::cerr<<"newDU:: DFAnalysis failed!  defUseAnalysis->run()==0"<<endl;
-			exit(0);
-		}
-		std::vector<InterproceduralInfo*> ip;
+        SgProject *project = frontend(argc, argv);
+	// Create the global def-use analysis
+	DFAnalysis *defUseAnalysis=new DefUseAnalysis(project);
+	if (defUseAnalysis->run(false)==1)
+	{
+		std::cerr<<"newDU:: DFAnalysis failed!  defUseAnalysis->run()==0"<<endl;
+		exit(0);
+	}
+	std::vector<InterproceduralInfo*> ip;
 
-    list < SgNode * >functionDeclarations = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
+        list < SgNode * >functionDeclarations = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
 
-    for (list < SgNode * >::iterator i = functionDeclarations.begin(); i != functionDeclarations.end(); i++)
-    {
-        DataDependenceGraph *ddg;
-        InterproceduralInfo *ipi;
-
-        SgFunctionDeclaration *fD = isSgFunctionDeclaration(*i);
-
-        // SGFunctionDefinition * fDef;
-        ROSE_ASSERT(fD != NULL);
-
-        // CI (01/08/2007): A missing function definition is an indicator to a 
-        // 
-        // 
-        // librarycall. 
-        // * An other possibility would be a programmer-mistake, which we
-        // don't treat at this point.  // I assume librarycall
-        if (fD->get_definition() == NULL)
+        for (list < SgNode * >::iterator i = functionDeclarations.begin(); i != functionDeclarations.end(); i++)
         {
+                DataDependenceGraph *ddg;
+                InterproceduralInfo *ipi;
+
+                SgFunctionDeclaration *fD = isSgFunctionDeclaration(*i);
+
+                // SGFunctionDefinition * fDef;
+                ROSE_ASSERT(fD != NULL);
+
+                // CI (01/08/2007): A missing function definition is an indicator to a 
+                // 
+                // 
+                // librarycall. 
+                // * An other possibility would be a programmer-mistake, which we
+                // don't treat at this point.  // I assume librarycall
+                if (fD->get_definition() == NULL)
+                {
+                }
+                else
+                {
+                        cout <<"--------------------------------------------------------------"<<endl;
+                        analyseFunction(fD->get_definition(),defUseAnalysis);
+
+                }   
         }
-        else
-        {
-           cout <<"--------------------------------------------------------------"<<endl;
-           analyseFunction(fD->get_definition(),defUseAnalysis);
-
-        }   
-    }
-		return 0;
+	return 0;
 }

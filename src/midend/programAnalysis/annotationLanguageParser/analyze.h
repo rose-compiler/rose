@@ -40,7 +40,7 @@ public:
    * */
 
   analyzeAnn(Annotations * anns,
-	     const parserID * property_name,
+             const parserID * property_name,
 	     rule_list * rules,
 	     int line);
 

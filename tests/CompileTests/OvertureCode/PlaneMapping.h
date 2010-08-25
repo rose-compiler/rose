@@ -36,7 +36,7 @@ class PlaneMapping : public Mapping{
   Mapping* make( const aString & mappingClassName );
 
   void map( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	   MappingParameters & params=Overture::nullMappingParameters());
+            MappingParameters & params=Overture::nullMappingParameters());
 
   void basicInverse( const realArray & x, realArray & r, realArray & rx= Overture::nullRealDistributedArray(), 
                      MappingParameters & params =Overture::nullMappingParameters());

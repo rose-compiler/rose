@@ -8,7 +8,7 @@ using namespace Qt;
 using namespace std;
 
 MyBars::MyBars(BinQGUI* g,
-	       QWidget *parent)
+               QWidget *parent)
   : QWidget(parent) // cant get this to work
 {
   gui = g;

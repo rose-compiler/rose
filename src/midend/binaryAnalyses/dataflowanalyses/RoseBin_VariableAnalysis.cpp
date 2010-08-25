@@ -70,7 +70,7 @@ RoseBin_VariableAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
 
 std::string
 RoseBin_VariableAnalysis::getIntCallName(uint64_t rax,
-					 DataTypes& data_ebx,
+                                         DataTypes& data_ebx,
 					 DataTypes& data_ecx,
 					 DataTypes& data_edx,
 					 vector<uint64_t>& val_rbx,
@@ -90,7 +90,7 @@ RoseBin_VariableAnalysis::getIntCallName(uint64_t rax,
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit32)
     int_name = getIntCallName_Linux32bit(rax, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
   if ((os_ver==linux_22 ||
@@ -98,7 +98,7 @@ RoseBin_VariableAnalysis::getIntCallName(uint64_t rax,
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit64)
     int_name = getIntCallName_Linux64bit(rax, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
 
@@ -480,10 +480,10 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
 	vector<uint64_t>::iterator it = val_rax.begin();
 	for (;it!=val_rax.end();++it) {
 	  string i_name = getIntCallName(*it, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx,
+                                         val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
-	  value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
+          value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
 	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false);
 	}
 
@@ -636,8 +636,8 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
 		array = true;
 	      if (RoseBin_support::DEBUG_MODE() )
 		cerr << "  malloc:  variable found :  " << varName << " array? " << RoseBin_support::resBool(array)
-	             << "    instr : " << unparseInstruction(asmNode) <<endl;
-	      // now that we have found the usage of an array, we check
+                     << "    instr : " << unparseInstruction(asmNode) <<endl;
+              // now that we have found the usage of an array, we check
 	      // in a forward analysis, whether we access a value that is greater than
 	      // the length of the array
 	      if (array) {
@@ -665,13 +665,13 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
 		    if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 		      if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			cout << "   malloc - access to eax : " << unparseInstruction(asmAft)
-			     << "   length array (var) " << length << "  access array point: " << arrayLength  <<endl;
-		      }
+                             << "   length array (var) " << length << "  access array point: " << arrayLength  <<endl;
+                      }
 		      if (arrayLength> array) {
 			if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft)
-			       <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
-			  aft->append_properties(SgGraph::dfa_bufferoverflow,varName);
+                               <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
+                          aft->append_properties(SgGraph::dfa_bufferoverflow,varName);
 			}
 		      }
 		    }

@@ -36,7 +36,7 @@ CompassViolation::CompassViolation(
       // tps : Jan 22 2009 changed this because this does not hold for binaries!
       //ROSE_ASSERT(start != NULL);
       if (start) {
-	lineStart = start->get_line();
+        lineStart = start->get_line();
 	colStart = start->get_col();
 	filename = start->get_filenameString();
 	lineEnd = colEnd = -1;

@@ -17,10 +17,10 @@ typedef struct PyGetSetDef {
 } PyGetSetDef;
 
 typedef PyObject *(*wrapperfunc)(PyObject *self, PyObject *args,
-				 void *wrapped);
+                                 void *wrapped);
 
 typedef PyObject *(*wrapperfunc_kwds)(PyObject *self, PyObject *args,
-				      void *wrapped, PyObject *kwds);
+                                      void *wrapped, PyObject *kwds);
 
 struct wrapperbase {
 	char *name;
@@ -71,9 +71,9 @@ extern DL_IMPORT(PyTypeObject) PyWrapperDescr_Type;
 
 extern DL_IMPORT(PyObject *) PyDescr_NewMethod(PyTypeObject *, PyMethodDef *);
 extern DL_IMPORT(PyObject *) PyDescr_NewMember(PyTypeObject *,
-					       struct PyMemberDef *);
+                                               struct PyMemberDef *);
 extern DL_IMPORT(PyObject *) PyDescr_NewGetSet(PyTypeObject *,
-					       struct PyGetSetDef *);
+                                               struct PyGetSetDef *);
 extern DL_IMPORT(PyObject *) PyDescr_NewWrapper(PyTypeObject *,
 						struct wrapperbase *, void *);
 extern DL_IMPORT(int) PyDescr_IsData(PyObject *);

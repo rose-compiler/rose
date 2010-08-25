@@ -110,7 +110,7 @@ class doubleGridCollectionFunction : public doubleGenericGridCollectionFunction
   // This constructor takes ranges, the first 3 "nullRange" values are taken to be the
   // coordinate directions in the grid function.
   doubleGridCollectionFunction(GridCollection & grid, 
-			 const Range & R0, 
+                         const Range & R0, 
 			 const Range & R1=nullRange,
 			 const Range & R2=nullRange,
 			 const Range & R3=nullRange,
@@ -120,7 +120,7 @@ class doubleGridCollectionFunction : public doubleGenericGridCollectionFunction
 			 const Range & R7=nullRange );
 
   doubleGridCollectionFunction(GridCollectionData & gcData, 
-			 const Range & R0, 
+                         const Range & R0, 
 			 const Range & R1=nullRange,
 			 const Range & R2=nullRange,
 			 const Range & R3=nullRange,
@@ -130,7 +130,7 @@ class doubleGridCollectionFunction : public doubleGenericGridCollectionFunction
 			 const Range & R7=nullRange );
 
   doubleGridCollectionFunction(GridCollection & grid, 
-			 const int   & i0, 
+                         const int   & i0, 
 			 const Range & R1=nullRange,
 			 const Range & R2=nullRange,
 			 const Range & R3=nullRange,
@@ -140,7 +140,7 @@ class doubleGridCollectionFunction : public doubleGenericGridCollectionFunction
 			 const Range & R7=nullRange );
 
   doubleGridCollectionFunction(GridCollectionData & gcData, 
-			 const int   & i0, 
+                         const int   & i0, 
 			 const Range & R1=nullRange,
 			 const Range & R2=nullRange,
 			 const Range & R3=nullRange,
@@ -153,7 +153,7 @@ class doubleGridCollectionFunction : public doubleGenericGridCollectionFunction
   // This constructor takes a GridFunctionType
   // 
   doubleGridCollectionFunction(GridCollection & gc,
-			 const GridFunctionParameters::GridFunctionType & type, 
+                         const GridFunctionParameters::GridFunctionType & type, 
 			 const Range & component0=nullRange,       // defaults to Range(0,0)
 			 const Range & component1=nullRange,
 			 const Range & component2=nullRange,
@@ -214,7 +214,7 @@ class doubleGridCollectionFunction : public doubleGenericGridCollectionFunction
   bool isNull();  // TRUE is this is a null grid function (no grid)
 
   virtual void setIsACoefficientMatrix(const bool trueOrFalse=TRUE, 
-				       const int stencilSize=defaultValue, 
+                                       const int stencilSize=defaultValue, 
 				       const int numberOfGhostLines=1,
 				       const int numberOfComponentsForCoefficients=1,
 				       const int offset=0 );
@@ -246,7 +246,7 @@ class doubleGridCollectionFunction : public doubleGenericGridCollectionFunction
 	    const Range & R4=nullRange );
 
   void getRanges(Range & R0,     // return the current values for the Ranges
-		 Range & R1,
+                 Range & R1,
 		 Range & R2,
 		 Range & R3,
 		 Range & R4,

@@ -1,0 +1,25 @@
+This directory contains policy checkers to enforce policies that ROSE places on its developers.
+Each checker is an executable script (usually Perl) that can be executed from any source
+directory and which will check that the policy is adhered to in that directory and below.
+
+Each script name should be CamelCase (extensions are removed) and the name should be indicative
+of the policy that is being enforced.  The script name will be used to generate messages about
+what is being checked.  A script can be disabled by either removing execute permission or by
+changing its name to end with ".disabled".
+
+A policy checker should produce output (on stdout) only when a policy is violated. The format
+that works best is to emit a line or paragraph describing the nature of the violation, followed
+by a list, indented by two spaces, of all the locations and details of where the policy was
+violated.
+
+Policy checkers should not enter the following directories:
+  * Directories containing an "include-staging" subdirectory. Such directoriess are
+    build trees.
+  * The src/frontend/CxxFrontend/EDG/EDG_* directories. ROSE has no control over
+    the contents of these files since they belong to the Edison Design Group.
+  * Any directory that contains a file name ".3rd_party_software"
+
+Although each policy checker can be run individually, the scripts/policies-checker.sh is a
+harness that runs all the policy checkers and then exits with non-zero status if any of them
+failed.  Policy checkers should exit with zero status for success, 1-127 for errors, and 128-255
+for warnings.

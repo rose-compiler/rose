@@ -231,7 +231,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
   // This constructor takes a GridFunctionType
   // 
   doubleMappedGridFunction(MappedGrid & mg, 
-		     const GridFunctionParameters::GridFunctionType & type, 
+                     const GridFunctionParameters::GridFunctionType & type, 
 		     const Range & component0=nullRange,       // defaults to Range(0,0)
 		     const Range & component1=nullRange,
 		     const Range & component2=nullRange,
@@ -239,7 +239,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 		     const Range & component4=nullRange );
 
   doubleMappedGridFunction(const GridFunctionParameters::GridFunctionType & type, 
-		     const Range & component0=nullRange,       // defaults to Range(0,0)
+                     const Range & component0=nullRange,       // defaults to Range(0,0)
 		     const Range & component1=nullRange,
 		     const Range & component2=nullRange,
 		     const Range & component3=nullRange,
@@ -299,28 +299,28 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 
   // -------- Four Argument functions -------------
   doubleDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3 ) const
     { return doubleDistributedArray::operator()(I0,I1,I2,I3); }
 
   // -------- Five Argument functions -------------
   doubleDistributedArray operator()(const IndexArg & I0,             // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4 ) const
     { return (*this)(I0,I1,I2,I3+rcData->R[3].length()*(i4-rcData->R[4].getBase())); }  
 
   doubleDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4 ) const;
 
   // -------- Six Argument functions -------------
   doubleDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4,
@@ -329,7 +329,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
                                         +rcData->R[4].length()*(i5-rcData->R[5].getBase())));  }
 
   doubleDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4,
@@ -337,7 +337,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 
   // -------- Seven Argument functions -------------
   doubleDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4,
@@ -348,7 +348,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
                                         +rcData->R[5].length()*(i6-rcData->R[6].getBase()))));  }
 
   doubleDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4,
@@ -357,7 +357,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 
   // -------- Eight Argument functions -------------
   doubleDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4,
@@ -370,7 +370,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
                                         +rcData->R[6].length()*(i7-rcData->R[7].getBase())))));  }
 
   doubleDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4,
@@ -458,7 +458,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
   int dataCopy( const doubleMappedGridFunction & mgf );  // copy the array data only
 
   void getRanges(Range & R0,     // return the current values for the Ranges
-		 Range & R1,
+                 Range & R1,
 		 Range & R2,
 		 Range & R3,
 		 Range & R4,
@@ -762,13 +762,13 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 
   //compute (u.grad)w (convective derivative of passive variable(s))
     virtual doubleMappedGridFunction convectiveDerivative (
-						     const doubleMappedGridFunction &w,
+                                                     const doubleMappedGridFunction &w,
 						     const Index & I1 = nullIndex,
 						     const Index & I2 = nullIndex,
 						     const Index & I3 = nullIndex
 						     ) const;
   virtual doubleMappedGridFunction convectiveDerivative (const GridFunctionParameters & gfType,
-						   const doubleMappedGridFunction &w,
+                                                   const doubleMappedGridFunction &w,
 						   const Index & I1 = nullIndex,
 						   const Index & I2 = nullIndex,
 						   const Index & I3 = nullIndex
@@ -776,7 +776,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 
 #define SCALAR_FUNCTION(type) \
   virtual doubleMappedGridFunction type(\
-					   const doubleMappedGridFunction & s,\
+                                           const doubleMappedGridFunction & s,\
 					   const Index & I1 = nullIndex, \
 					   const Index & I2 = nullIndex, \
 					   const Index & I3 = nullIndex, \
@@ -787,7 +787,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 					   const Index & I8 = nullIndex\
 					   ) const;  \
   virtual doubleMappedGridFunction type(const GridFunctionParameters & gfType,\
-					   const doubleMappedGridFunction & s,\
+                                           const doubleMappedGridFunction & s,\
 					   const Index & I1 = nullIndex, \
 					   const Index & I2 = nullIndex, \
 					   const Index & I3 = nullIndex, \
@@ -814,7 +814,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 #undef SCALAR_FUNCTION
 
   virtual doubleMappedGridFunction derivativeScalarDerivative(
-					   const doubleMappedGridFunction & s,
+                                           const doubleMappedGridFunction & s,
 				           const int & direction1,
 				           const int & direction2,
 					   const Index & I1 = nullIndex, 
@@ -828,7 +828,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 					   ) const;  
 
   virtual doubleMappedGridFunction derivativeScalarDerivative(const GridFunctionParameters & gfType,
-					   const doubleMappedGridFunction & s,
+                                           const doubleMappedGridFunction & s,
 				           const int & direction1,
 				           const int & direction2,
 					   const Index & I1 = nullIndex, 
@@ -841,7 +841,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 					   const Index & I8 = nullIndex
 					   ) const;  
   virtual doubleMappedGridFunction derivativeScalarDerivativeCoefficients(				
-						       const doubleMappedGridFunction & s,
+                                                       const doubleMappedGridFunction & s,
 				                       const int & direction1,
 				                       const int & direction2,
 						       const Index & I1 = nullIndex,
@@ -871,7 +871,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 
   //returns face-centered gradients
   virtual doubleMappedGridFunction FCgrad (
-				     const int c0 = 0,
+                                     const int c0 = 0,
 				     const int c1 = 0,
 				     const int c2 = 0,
 				     const int c3 = 0,
@@ -887,7 +887,7 @@ class doubleMappedGridFunction : public doubleDistributedArray, public doubleGen
 				     ) const;
 
   virtual doubleMappedGridFunction FCgrad (const GridFunctionParameters & gfType,
-				     const int c0 = 0,
+                                     const int c0 = 0,
 				     const int c1 = 0,
 				     const int c2 = 0,
 				     const int c3 = 0,

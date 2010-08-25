@@ -96,8 +96,8 @@ std::string unparseX86Register(X86RegisterClass cl, int reg, X86PositionInRegist
     default:
       std::cerr << " Undefined Register - class=" << regclassToString(cl) << " number=" << reg << std::endl;
       abort();
-   // DQ (11/29/2009): Avoid MSVC warning.
-	  return "error in unparseX86Register()";
+      // DQ (11/29/2009): Avoid MSVC warning.
+      return "error in unparseX86Register()";
       break;
   }
 }

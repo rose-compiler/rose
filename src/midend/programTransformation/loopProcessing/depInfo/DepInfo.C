@@ -29,7 +29,7 @@ public:
   virtual AstNodePtr SrcRef() const { return src; }
   virtual AstNodePtr SnkRef() const { return snk; }
   DepEDDRefInfo( DepType _t, int dim1, int dim2, 
-		 AstNodePtr _src, const AstNodePtr& _snk, bool p, int cl)
+                 AstNodePtr _src, const AstNodePtr& _snk, bool p, int cl)
     : DepEDDTypeInfo(_t, dim1, dim2,p,cl), src(_src),  snk(_snk) {}
   DepEDDRefInfo( const DepEDDRefInfo &that) : DepEDDTypeInfo(that), 
        src(that.SrcRef()), snk(that.SnkRef()) {}
@@ -70,7 +70,7 @@ DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, bool p, int commLevel)
 
 DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, DepType t, bool p, int commLevel )
   { return (t==DEPTYPE_NONE)? DepInfo(new DepInfoImpl( nr, nc, p, commLevel)) 
-		     : DepInfo(new DepEDDTypeInfo( t, nr, nc, p, commLevel )); }
+          : DepInfo(new DepEDDTypeInfo( t, nr, nc, p, commLevel )); }
 
 DepInfo DepInfoGenerator:: 
 GetDepInfo( int nr, int nc, DepType t, const AstNodePtr& srcRef, const AstNodePtr& snkRef,

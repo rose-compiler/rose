@@ -34,16 +34,16 @@ public:
 
   int getPoints( real & xa, real & xb ) const;
   int getPoints( real & xa, real & ya,
-		 real & xb, real & yb ) const;
+                 real & xb, real & yb ) const;
   int getPoints( real & xa, real & ya, real & za, 
-		 real & xb, real & yb, real & zb ) const;
+                 real & xb, real & yb, real & zb ) const;
 
 
   int setPoints( const real & xa, const real & xb );
   int setPoints( const real & xa, const real & ya,
-		 const real & xb, const real & yb );
+                 const real & xb, const real & yb );
   int setPoints( const real & xa, const real & ya, const real & za, 
-		 const real & xb, const real & yb, const real & zb );
+                 const real & xb, const real & yb, const real & zb );
 
   void map(const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
            MappingParameters & params =Overture::nullMappingParameters());

@@ -193,7 +193,7 @@ void STR35() {
     else {
       /* newline not found, flush stdin to end of line */
       while (((ch = getchar()) != '\n') 
-	     && !feof(stdin) 
+             && !feof(stdin) 
 	     && !ferror(stdin) 
 	     );
     }

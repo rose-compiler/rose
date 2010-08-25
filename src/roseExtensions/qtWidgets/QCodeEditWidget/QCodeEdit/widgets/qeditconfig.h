@@ -19,10 +19,10 @@
 #include "qce-config.h"
 
 /*!
-	\file qeditconfig.h
-	\brief Definition of the QEditConfig widget
+        \file qeditconfig.h
+        \brief Definition of the QEditConfig widget
 
-	\see QEditConfig
+        \see QEditConfig
 */
 
 
@@ -32,52 +32,52 @@ namespace Ui { class EditorConfig; }
 
 class QCE_EXPORT QEditConfig : public QWidget
 {
-	Q_OBJECT
+        Q_OBJECT
 
-	public:
-		QEditConfig(QWidget *w = 0);
-		~QEditConfig();
-		bool hasUnsavedChanges() const;
+        public:
+                QEditConfig(QWidget *w = 0);
+                ~QEditConfig();
+                bool hasUnsavedChanges() const;
 
-		bool applyImmediately() const;
+                bool applyImmediately() const;
 
-		QMap<QString, QVariant> dumpKeys() const;
+                QMap<QString, QVariant> dumpKeys() const;
 
-	public slots:
-		void retranslate();
+        public slots:
+                void retranslate();
 
-		void apply();
-		void cancel();
-		void restore();
+                void apply();
+                void cancel();
+                void restore();
 
-		void loadKeys(const QMap<QString, QVariant>& keys);
+                void loadKeys(const QMap<QString, QVariant>& keys);
 
-		void setApplyImmediately(bool y);
+                void setApplyImmediately(bool y);
 
-	signals:
-		void keyChanged(const QString& key, const QVariant& value);
+        signals:
+                void keyChanged(const QString& key, const QVariant& value);
 
-	private slots:
-		void on_spnFontSize_valueChanged(int size);
-		void on_cbFont_currentFontChanged(QFont font);
+        private slots:
+                void on_spnFontSize_valueChanged(int size);
+                void on_cbFont_currentFontChanged(QFont font);
 
-		void on_spnTabWidth_valueChanged(int n);
+                void on_spnTabWidth_valueChanged(int n);
 
-		void on_chkReplaceTabs_toggled(bool y);
+                void on_chkReplaceTabs_toggled(bool y);
 
-		void on_chkShowTabsInText_toggled(bool y);
-		void on_chkShowLeadingWhitespace_toggled(bool y);
-		void on_chkShowTrailingWhitespace_toggled(bool y);
+                void on_chkShowTabsInText_toggled(bool y);
+                void on_chkShowLeadingWhitespace_toggled(bool y);
+                void on_chkShowTrailingWhitespace_toggled(bool y);
 
-		void on_cbEncoding_currentIndexChanged(const QString& name);
-		void on_cbLineEndings_currentIndexChanged(int idx);
-		void on_chkDetectLE_toggled(bool y);
-		void on_chkAutoRemoveTrailingWhitespace_toggled(bool y);
-		void on_chkPreserveTrailingIndent_toggled(bool y);
+                void on_cbEncoding_currentIndexChanged(const QString& name);
+                void on_cbLineEndings_currentIndexChanged(int idx);
+                void on_chkDetectLE_toggled(bool y);
+                void on_chkAutoRemoveTrailingWhitespace_toggled(bool y);
+                void on_chkPreserveTrailingIndent_toggled(bool y);
 
-	private:
-		bool m_direct;
-		Ui::EditorConfig * ui;
+        private:
+                bool m_direct;
+                Ui::EditorConfig * ui;
 };
 
 #endif // _QEDIT_CONFIG_H_

@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 	cout << "bounds size = " << bounds.size() << endl;
       for (int i = 0; i<(int)bounds.size();i++) {
 	if (DEBUG_OUTPUT_MORE) 
-	 cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
+	  cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
 	if (bounds[i]== my_rank) {
 	  //if (DEBUG_OUTPUT_MORE) 
 	  // std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*

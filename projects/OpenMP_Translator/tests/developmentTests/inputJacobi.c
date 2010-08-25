@@ -188,7 +188,7 @@ jacobi ()
 	  for (j = 1; j < (m - 1); j++)
 	    {
 	      resid = (ax * (uold[i - 1][j] + uold[i + 1][j])
-		       + ay * (uold[i][j - 1] + uold[i][j + 1]) +
+                       + ay * (uold[i][j - 1] + uold[i][j + 1]) +
 		       b * uold[i][j] - f[i][j]) / b;
 
 	      u[i][j] = uold[i][j] - omega * resid;

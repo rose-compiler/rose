@@ -77,12 +77,12 @@ namespace RoseHPCT
 
   //! Replace short-hand metric names with full names.
   bool translateMetricNames (IRTree_t* root,
-			     const std::map<std::string, std::string>& mets);
+                             const std::map<std::string, std::string>& mets);
 
   /*! \brief Scan a program tree and return a list of all unique
     metric names. */
   void collectMetricNames (const IRTree_t* root,
-			   std::map<std::string, size_t>& metrics);
+                           std::map<std::string, size_t>& metrics);
 
   //! Function that creates an IRNode from an XMLElem
   typedef IRNode * (*IRNodeCreator_t) (const XMLUtil::XMLElem&);

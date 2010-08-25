@@ -18,16 +18,16 @@ struct default_return_type<A>
 template <template <class> class RetType>
 struct Base
 {
-	  typedef typename RetType<A>::type surrogate_t;
-	    
-	    template <class T>
-		      void foo(T&, typename RetType<T>::type * ret) {}
-	        
-	      void foo1(A&, surrogate_t * ret) {}  
+          typedef typename RetType<A>::type surrogate_t;
+            
+            template <class T>
+                      void foo(T&, typename RetType<T>::type * ret) {}
+                
+              void foo1(A&, surrogate_t * ret) {}  
 };
 
 struct Concrete : Base<default_return_type>
 { void bar(A& a) { foo(a, NULL); }
-	  void bar0(A& a) { int * x = NULL; foo(a, x); }
-	    void bar1(A& a) { foo1(a, NULL); }
+          void bar0(A& a) { int * x = NULL; foo(a, x); }
+            void bar1(A& a) { foo1(a, NULL); }
 };

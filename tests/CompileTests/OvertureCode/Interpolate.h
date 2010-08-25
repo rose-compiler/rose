@@ -21,7 +21,7 @@ class Interpolate
   Interpolate();
 
   Interpolate (const InterpolateParameters& interpParams_, 
-	       const bool timing=LogicalFalse);
+               const bool timing=LogicalFalse);
   
   ~Interpolate();
 
@@ -30,13 +30,13 @@ class Interpolate
 		  
 
   int interpolateCoarseToFine (realArray&                   fineGridArray,
-			       const Index                  Iv[3],
+                               const Index                  Iv[3],
 			       const realArray&             coarseGridArray,
 			       const IntegerArray&          amrRefinementRatio_=Overture::nullIntArray());
 
     
   int interpolateFineToCoarse (realArray&                   coarseGridArray,
-			       const Index                  Iv[3],
+                               const Index                  Iv[3],
 			       const realArray&             fineGridArray,
 			       const IntegerArray&          amrRefinementRatio_=Overture::nullIntArray());
   
@@ -65,7 +65,7 @@ class Interpolate
 		      InterpolateParameters::InterpolateOffsetDirection* iod);
 
   int displayEverything (const int* r, const int* extra, const int* offset, const int* lm, const int* lmr,
-			 const Index* Iv, const Index* If, const Index* Jf, const Index* Jc);
+                         const Index* Iv, const Index* If, const Index* Jf, const Index* Jc);
   
 };
 

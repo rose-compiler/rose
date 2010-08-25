@@ -62,7 +62,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
 
   bool containsHash( nodeHashSetType& vec,
-		     SgGraphNode* node);
+                     SgGraphNode* node);
 
 
   RoseBin_DefUseAnalysis* defuse;
@@ -76,7 +76,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
  public:
 
   RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract*
-			   ,GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
+                           ,GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
 #ifdef _MSC_VER
 //#define __builtin_constant_p(exp) (0)
 #endif
@@ -98,7 +98,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
     std::map <std::string, SgAsmFunctionDeclaration* >::iterator it;
     for (it = bin_funcs.begin();
-	 it!= bin_funcs.end(); it++) {
+         it!= bin_funcs.end(); it++) {
       delete it->second;
     }
   }
@@ -110,7 +110,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   void init();
 
   void traverseGraph(std::vector <SgGraphNode*>& rootNodes,
-		     RoseBin_DataFlowAbstract* defuse,
+                     RoseBin_DataFlowAbstract* defuse,
 		     bool interprocedural);
 
 

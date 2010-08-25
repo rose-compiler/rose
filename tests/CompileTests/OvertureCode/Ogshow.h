@@ -21,7 +21,7 @@ class Ogshow
   HDF_DataBase* getFrame();  
 
   int open(const aString & nameOfShowFile, 
-	   const aString & nameOfDirectory = ".",
+           const aString & nameOfDirectory = ".",
 	   int useStreamMode=false );
 
   int close();

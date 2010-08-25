@@ -161,7 +161,7 @@ public:
     };
     typedef reverse_bidirectional_iterator<const_iterator, value_type,
                                            const_reference, difference_type>
-	const_reverse_iterator;
+    const_reverse_iterator;
     typedef reverse_bidirectional_iterator<iterator, value_type, reference,
                                            difference_type>
         reverse_iterator; 
@@ -356,7 +356,7 @@ void list<T>::insert(iterator position, const T* first, const T* last) {
 	 
 template <class T>
 void list<T>::insert(iterator position, const_iterator first,
-		     const_iterator last) {
+                     const_iterator last) {
     while (first != last) insert(position, *first++);
 }
 

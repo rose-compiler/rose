@@ -88,7 +88,7 @@ MYSQL* RoseBin_DB::connect_DB(const char* socket) {
 
   //const char* socket = "/home/panas2/mysql/mysql.sock";
   if (mysql_real_connect(
-			 conn,
+                         conn,
 			 def_host_name,
 			 def_user_name,
 			 def_password,

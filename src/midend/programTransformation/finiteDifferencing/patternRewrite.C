@@ -159,7 +159,7 @@ class BinaryPattern: public Pattern {
     if (dynamic_cast<Operator*>(top)) {
       Operator* t = dynamic_cast<Operator*>(top);
       return lhs->match(t->get_lhs_operand(), vars) &&
-	     rhs->match(t->get_rhs_operand(), vars);
+             rhs->match(t->get_rhs_operand(), vars);
     } else
       return false;
   }
@@ -170,7 +170,7 @@ class BinaryPattern: public Pattern {
     ROSE_ASSERT (isSgExpression(new_lhs));
     ROSE_ASSERT (isSgExpression(new_rhs));
     SgExpression* op = new Operator(SgNULL_FILE, isSgExpression(new_lhs), 
-						 isSgExpression(new_rhs));
+                                                 isSgExpression(new_rhs));
     op->set_endOfConstruct(SgNULL_FILE);
     new_lhs->set_parent(op);
     new_rhs->set_parent(op);
@@ -189,9 +189,9 @@ class VariablePattern: public Pattern {
     NodeClass* n2 = dynamic_cast<NodeClass*>(n);
     if (n2 && 
 	(!vars[name] || 
- 	 (isSgExpression(n2) && isSgExpression(vars[name]) &&
+         (isSgExpression(n2) && isSgExpression(vars[name]) &&
 	   expressionTreeEqual(isSgExpression(n2), 
-	 		        isSgExpression(vars[name]))))) {
+                               isSgExpression(vars[name]))))) {
       vars[name] = n2;
       return true;
     } else

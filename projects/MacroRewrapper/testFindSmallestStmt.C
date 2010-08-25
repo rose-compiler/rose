@@ -25,13 +25,13 @@ getRoseOptionValues (int* p_argc, char** argv, const char* opt_name)
    {
      std::vector<std::string> newArgv(&argv[0],&argv[0]+*p_argc);
      int num_matches = sla_str (newArgv,
-		     OPTION_PREFIX_ROSE,
-		     OPTION_VALUE_SEPARATOR,
-		     opt_name,
-		     (std::string*)NULL);
+                     OPTION_PREFIX_ROSE,
+                     OPTION_VALUE_SEPARATOR,
+                     opt_name,
+                     (std::string*)NULL);
      string value = "";
      if (num_matches > 0)
-	{
+        {
           vector<string> raw_values(num_matches);
                     sla_str (newArgv,
                         OPTION_PREFIX_ROSE, OPTION_VALUE_SEPARATOR, opt_name,
@@ -42,8 +42,8 @@ getRoseOptionValues (int* p_argc, char** argv, const char* opt_name)
              exit(1);
           }
 
-	  value = string(raw_values[0]);
-	}
+          value = string(raw_values[0]);
+        }
      return value;
    }
 

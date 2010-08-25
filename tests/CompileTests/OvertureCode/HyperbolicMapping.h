@@ -169,7 +169,7 @@ public:
                                    GraphicsParameters & referenceSurfaceParameters );
   // old way:
   bool updateOld(aString & answer,
-		 MappingInformation & mapInfo,
+                 MappingInformation & mapInfo,
 		 GraphicsParameters & referenceSurfaceParameters );
 
   int initialize();
@@ -192,7 +192,7 @@ public:
 			      realArray & ss  );
 
   int getCurvatureDependentSpeed(realArray & ds, 
-				 realArray & kappa,
+                                 realArray & kappa,
 				 const realArray & xrr, 
 				 const realArray & normal, 
 				 const realArray & normXr, 
@@ -201,7 +201,7 @@ public:
   int getNormalGridSpacing(const int & i3Delta, realArray & ds, const int & growthDirection );
   int adjustDistanceToMarch(const int & numberOfAdditionalSteps, const int & growthDirection );
   int applyBoundaryConditions( realArray & x, 
-			       const int & i3p, 
+                               const int & i3p, 
 			       const int & i3, 
 			       const int & marchingDirection,
 			       realArray & normal,
@@ -242,7 +242,7 @@ public:
 			    Mapping* &curve );
   
   int computeCellVolumes(const realArray & xt, const int & i3Mod2,
-			 real & minCellVolume, real & maxCellVolume, 
+                         real & minCellVolume, real & maxCellVolume, 
 			 const real & dSign );
   int equidistribute( const int & i3, realArray & x, const real & weight );
   

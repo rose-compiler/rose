@@ -25,7 +25,7 @@ void printSet(std::set<uint64_t> res) {
  * check if definition of a node is correct (dataflow test)
  *******************************************/
 void checkNode(RoseBin_DataFlowAnalysis* dfanalysis,
-	       uint64_t address, 
+               uint64_t address, 
 	       set<uint64_t>& result, 
                X86RegisterClass regclass,
                int regnum) {
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
   const char* cfgFileName = "cfg.dot";
   GraphAlgorithms* graphalgo = new GraphAlgorithms(info);
   RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, 
-									     new RoseObj(), edges, graphalgo);
+                                                                             new RoseObj(), edges, graphalgo);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
   //cerr << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
   //cerr << " Number of edges == " << cfganalysis->edgesVisited() << endl;

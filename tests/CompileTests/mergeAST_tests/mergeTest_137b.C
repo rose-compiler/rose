@@ -128,7 +128,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       _CharT*
       basic_string<_CharT, _Traits, _Alloc>::
       _S_construct(_InIterator __beg, _InIterator __end, const _Alloc& __a,
-		   input_iterator_tag)
+                   input_iterator_tag)
       {
 #ifndef _GLIBCXX_FULLY_DYNAMIC_STRING
 	if (__beg == __end && __a == _Alloc())
@@ -180,7 +180,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       _CharT*
       basic_string<_CharT, _Traits, _Alloc>::
       _S_construct(_InIterator __beg, _InIterator __end, const _Alloc& __a,
-		   forward_iterator_tag)
+                   forward_iterator_tag)
       {
 #ifndef _GLIBCXX_FULLY_DYNAMIC_STRING
 	if (__beg == __end && __a == _Alloc())
@@ -241,20 +241,20 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     basic_string<_CharT, _Traits, _Alloc>::
     basic_string(const basic_string& __str, size_type __pos, size_type __n)
     : _M_dataplus(_S_construct(__str._M_data()
-			       + __str._M_check(__pos,
-						"basic_string::basic_string"),
-			       __str._M_data() + __str._M_limit(__pos, __n)
+                               + __str._M_check(__pos,
+                                                "basic_string::basic_string"),
+                               __str._M_data() + __str._M_limit(__pos, __n)
 			       + __pos, _Alloc()), _Alloc())
     { }
 
   template<typename _CharT, typename _Traits, typename _Alloc>
     basic_string<_CharT, _Traits, _Alloc>::
     basic_string(const basic_string& __str, size_type __pos,
-		 size_type __n, const _Alloc& __a)
+                 size_type __n, const _Alloc& __a)
     : _M_dataplus(_S_construct(__str._M_data()
-			       + __str._M_check(__pos,
-						"basic_string::basic_string"),
-			       __str._M_data() + __str._M_limit(__pos, __n)
+                               + __str._M_check(__pos,
+                                                "basic_string::basic_string"),
+                               __str._M_data() + __str._M_limit(__pos, __n)
 			       + __pos, __a), __a)
     { }
 
@@ -270,7 +270,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     basic_string<_CharT, _Traits, _Alloc>::
     basic_string(const _CharT* __s, const _Alloc& __a)
     : _M_dataplus(_S_construct(__s, __s ? __s + traits_type::length(__s) :
-			       __s + npos, __a), __a)
+                               __s + npos, __a), __a)
     { }
 
   template<typename _CharT, typename _Traits, typename _Alloc>
@@ -455,8 +455,8 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
        if (_M_disjunct(__s) || _M_rep()->_M_is_shared())
          return _M_replace_safe(__pos, __n1, __s, __n2);
        else if ((__left = __s + __n2 <= _M_data() + __pos)
-		|| _M_data() + __pos + __n1 <= __s)
-	 {
+                || _M_data() + __pos + __n1 <= __s)
+         {
 	   // Work in-place: non-overlapping case.
 	   size_type __off = __s - _M_data();
 	   __left ? __off : (__off += __n2 - __n1);
@@ -484,7 +484,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     _M_destroy(const _Alloc& __a) throw ()
     {
       const size_type __size = sizeof(_Rep_base) +
-	                       (this->_M_capacity + 1) * sizeof(_CharT);
+                               (this->_M_capacity + 1) * sizeof(_CharT);
       _Raw_bytes_alloc(__a).deallocate(reinterpret_cast<char*>(this), __size);
     }
 
@@ -716,14 +716,14 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	const size_type __n1 = __i2 - __i1;
 	_M_check_length(__n1, __s.size(), "basic_string::_M_replace_dispatch");
 	return _M_replace_safe(__i1 - _M_ibegin(), __n1, __s._M_data(),
-			       __s.size());
+                               __s.size());
       }
 
   template<typename _CharT, typename _Traits, typename _Alloc>
     basic_string<_CharT, _Traits, _Alloc>&
     basic_string<_CharT, _Traits, _Alloc>::
     _M_replace_aux(size_type __pos1, size_type __n1, size_type __n2,
-		   _CharT __c)
+                   _CharT __c)
     {
       _M_check_length(__n1, __n2, "basic_string::_M_replace_aux");
       _M_mutate(__pos1, __n1, __n2);

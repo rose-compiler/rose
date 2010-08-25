@@ -69,9 +69,9 @@ printf("End of debug---------------------\n");
 	  if (tids[i] != ii)
 	    {
              result++;
-	      fprintf (logFile,
-		       "Iteration %d should be assigned to %d instead of %d\n",
-                        i,ii,tids[i]);
+             fprintf (logFile,
+                      "Iteration %d should be assigned to %d instead of %d\n",
+                      i,ii,tids[i]);
 	    }
 	}
       /*printf("Alles OK beim Test von schedule(static)\n"); */
@@ -133,9 +133,9 @@ printf("End of debug---------------------\n");
 	  if (tids[i] != ii)
 	    {
              result++;
-	      fprintf (logFile,
-		       "Iteration %d should be assigned to %d instead of %d\n",
-                        i,ii,tids[i]);
+             fprintf (logFile,
+                      "Iteration %d should be assigned to %d instead of %d\n",
+                      i,ii,tids[i]);
 	    }
 	}
       /*printf("Alles OK beim Test von schedule(static)\n"); */

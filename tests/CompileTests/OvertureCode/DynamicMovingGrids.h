@@ -31,7 +31,7 @@ class DynamicMovingGrids
 
       //... Here's another constructor using ogen instead of cgsh
       DynamicMovingGrids (CompositeGrid& compositeGrid_, 
-			  GenericGridMotion* genericGridMotion_,
+                          GenericGridMotion* genericGridMotion_,
 			  Ogen* ogenGridGenerator_,
 			  PlotStuff* ps_ = NULL);
 
@@ -41,12 +41,12 @@ class DynamicMovingGrids
 //		       Cgsh* gridGenerator_);
 
       void initialize (CompositeGrid& compositeGrid_,
-		       GenericGridMotion* genericGridMotion,
+                       GenericGridMotion* genericGridMotion,
 		       Ogen* ogenGridGenerator_);
 
    private:
       void initialize (CompositeGrid& compositeGrid_,
-		       GenericGridMotion* genericGridMotion);
+                       GenericGridMotion* genericGridMotion);
    public:
   
       virtual ~DynamicMovingGrids ();
@@ -60,7 +60,7 @@ class DynamicMovingGrids
       //...move the grids, recompute overlap
       
       void updateMovedGrids (const real & time,
-			     const real & timestep);
+                             const real & timestep);
 
       //...eventually there needs to be an interface for the nonlinear case (when
       //   the grid motion depends on the solution), but I
@@ -69,7 +69,7 @@ class DynamicMovingGrids
       //...return a pointer to the grid velocity function for the level'th grid; this can call
       //   a function in GenericGridMotion, or compute it by differencing
       void getGridVelocity (realCompositeGridFunction& velocity,
-			    const int & level,
+                            const int & level,
 			    const real & time);
 
       void getGridBoundaryVelocity (realCompositeGridFunction& velocity,

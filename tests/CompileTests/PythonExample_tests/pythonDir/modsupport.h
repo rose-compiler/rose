@@ -83,11 +83,11 @@ extern DL_IMPORT(PyObject *) Py_InitModule4(char *name, PyMethodDef *methods,
                                             int apiver);
 
 #define Py_InitModule(name, methods) \
-	Py_InitModule4(name, methods, (char *)NULL, (PyObject *)NULL, \
+        Py_InitModule4(name, methods, (char *)NULL, (PyObject *)NULL, \
 		       PYTHON_API_VERSION)
 
 #define Py_InitModule3(name, methods, doc) \
-	Py_InitModule4(name, methods, doc, (PyObject *)NULL, \
+        Py_InitModule4(name, methods, doc, (PyObject *)NULL, \
 		       PYTHON_API_VERSION)
 
 extern DL_IMPORT(char *) _Py_PackageContext;

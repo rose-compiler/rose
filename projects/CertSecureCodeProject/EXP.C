@@ -68,9 +68,9 @@ bool EXP01_C( const SgNode *node ) {
 	if (!isSgPointerType(t2_ptr_type) && !isSgArrayType(t2_ptr_type))
 		return false; // memory not allocated for array
 	/**
-	 * \bug ROSE is missing const derefence()
+         * \bug ROSE is missing const derefence()
 	 */
-	const SgType *t2 = const_cast<SgType*>(t2_ptr_type)->dereference()->dereference();
+        const SgType *t2 = const_cast<SgType*>(t2_ptr_type)->dereference()->dereference();
 
 	if (t1 == t2) {
 		return false;
@@ -114,18 +114,18 @@ bool EXP05_C( const SgNode *node ) {
 	if(!cast)
 		return false;
 	/**
-	 * Ignore compiler generated casts
+         * Ignore compiler generated casts
 	 */
-	if(isCompilerGeneratedNode(node))
+        if(isCompilerGeneratedNode(node))
 		return false;
 
 	const SgExpression *expr = cast->get_operand();
 	assert(expr);
 
 	/**
-	 * This allows things like a = (int) b, where b is const and is not
+         * This allows things like a = (int) b, where b is const and is not
 	 */
-	const SgType *exprType = expr->get_type();
+        const SgType *exprType = expr->get_type();
 	if (!(isSgPointerType(exprType) || isSgArrayType(exprType)))
 		return false;
 
@@ -198,19 +198,19 @@ bool EXP09_C( const SgNode *node ) {
 	const SgCastExp* typecast = isSgCastExp( parent->get_parent());
 	if (typecast != NULL) {
 		const SgType *alloc_type = typecast->get_type()->stripType(
-			 SgType::STRIP_REFERENCE_TYPE
-			|SgType::STRIP_POINTER_TYPE
+                         SgType::STRIP_REFERENCE_TYPE
+                        |SgType::STRIP_POINTER_TYPE
 			|SgType::STRIP_ARRAY_TYPE);
 		if (isSgTypeChar(alloc_type)
-		  ||isSgTypeSignedChar(alloc_type)
-		  ||isSgTypeUnsignedChar(alloc_type))
+		  	||isSgTypeSignedChar(alloc_type)
+		  	||isSgTypeUnsignedChar(alloc_type))
 			return false;
 	}
 
 	/**
-	 * We should allow size_t or rsize_t arguments
+         * We should allow size_t or rsize_t arguments
 	 */
-	const SgType *t = stripModifiers(exp->get_type());
+        const SgType *t = stripModifiers(exp->get_type());
 	if (isSgTypedefType(t)
 	&& (isTypeSizeT(t) || isTypeRSizeT(t)))
 		return false;
@@ -257,9 +257,9 @@ bool EXP11_C( const SgNode *node ) {
 		return false;
 
 	/**
-	 * \todo Find a better way to do this w/o unparseToString()
+         * \todo Find a better way to do this w/o unparseToString()
 	 */
-	const std::string lhsBase = stripModifiers(lhsSgType->findBaseType())->unparseToString();
+        const std::string lhsBase = stripModifiers(lhsSgType->findBaseType())->unparseToString();
 
 	const SgExpression* castExpr = cast->get_operand();
 
@@ -317,10 +317,10 @@ bool EXP12_C( const SgNode *node ) {
 		assert(parent);
 		if (isSgCastExp(parent)) {
 			/**
-			 * \bug Due to a bug in ROSE which ignores these casts, this
+                         * \bug Due to a bug in ROSE which ignores these casts, this
 			 * condition will always be false :(
 			 */
-			if (isTypeVoid(isSgCastExp(parent)->get_type()))
+                        if (isTypeVoid(isSgCastExp(parent)->get_type()))
 				return false;
 		} else if (isSgExprStatement(parent)) {
 			std::string msg = "Do not ignore values returned by functions: " + ref->unparseToString();
@@ -348,10 +348,10 @@ class traverseSequencePoints: public AstPrePostProcessing {
 			return;
 
 		/**
-		 * Set a flag when entering a different sequence point
+                 * Set a flag when entering a different sequence point
 		 * \see C99 Annex C
 		 */
-		if(isSgConditionalExp(node)
+                if(isSgConditionalExp(node)
 		|| isSgFunctionCallExp(node)) {
 			ignore_node = node;
 			return;
@@ -363,10 +363,10 @@ class traverseSequencePoints: public AstPrePostProcessing {
 			return;
 
 		/** 
-		 * Trigger a violation if we write to the same variable more than
+                 * Trigger a violation if we write to the same variable more than
 		 * once
 		 */
-		if (seen[getRefDecl(var)]) {
+                if (seen[getRefDecl(var)]) {
 			violation = true;
 		} else {
 			seen[getRefDecl(var)] = true;
@@ -488,10 +488,10 @@ bool EXP34_C( const SgNode *node ) {
 			continue;
 
 		/**
-		 * Allow references inside sizeof() since no actual memory derefencing
+                 * Allow references inside sizeof() since no actual memory derefencing
 		 * happens
 		 */
-		if (findParentOfType(i_ref, SgSizeOfOp))
+                if (findParentOfType(i_ref, SgSizeOfOp))
 			continue;
 
 		if (isTestForNullOp( i_ref)) return false;
@@ -521,29 +521,29 @@ bool EXP36_C( const SgNode *node ) {
 	const SgPointerType *rhsP = isSgPointerType(rhsT);
 	if (!rhsP && isSgArrayType(rhsT)) {
 		/**
-		 * \bug ROSE is missing const dereference
+                 * \bug ROSE is missing const dereference
 		 */
-		rhsP = isSgPointerType(const_cast<SgType *>(rhsT)->dereference());
+                rhsP = isSgPointerType(const_cast<SgType *>(rhsT)->dereference());
 	}
 	if (!rhsP)
 		return false;
 
 	/*
-	 * \bug ROSE is missing const dereference
+         * \bug ROSE is missing const dereference
 	 */
-	if (isTypeVoidStar(lhsP) || isZeroVal(removeCasts(cast)))
+        if (isTypeVoidStar(lhsP) || isZeroVal(removeCasts(cast)))
 		return false;
 	const unsigned int lhsSize = sizeOfType(const_cast<SgPointerType *>(lhsP)->dereference());
 	const unsigned int rhsSize = sizeOfType(const_cast<SgPointerType *>(rhsP)->dereference());
 	/**
-	 * Allow casting to char's for pointer arith
+         * Allow casting to char's for pointer arith
 	 */
-	if (lhsSize == 1)
+        if (lhsSize == 1)
 		return false;
 	/**
-	 * If we see a void * and the cast is implicit, then also flag
+         * If we see a void * and the cast is implicit, then also flag
 	 */
-	if ((!isTypeVoidStar(rhsP) && (lhsSize > rhsSize))
+        if ((!isTypeVoidStar(rhsP) && (lhsSize > rhsSize))
 	|| (isTypeVoidStar(rhsP) && isCompilerGeneratedNode(cast))) {
 		print_error(cast->get_operand(), "EXP36-C", "Do not convert pointers into more strictly aligned pointer types");
 		return true;
@@ -563,10 +563,10 @@ bool EXP37_C( const SgNode *node ) {
 	bool o_creat = false;
 	FOREACH_SUBNODE(getFnArg(fnRef, 1), nodes, i, V_SgExpression) {
 		/**
-		 * If there's a variable present, we have no idea what the flags could
+                 * If there's a variable present, we have no idea what the flags could
 		 * be
 		 */
-		if (isSgVarRefExp(*i))
+                if (isSgVarRefExp(*i))
 			return false;
 		if (isVal(isSgValueExp(*i), O_CREAT))
 			o_creat = true;

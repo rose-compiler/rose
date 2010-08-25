@@ -233,7 +233,7 @@ void Compass::saveDFA(std::string name, SgProject* project) {
 
 
 void Compass::serializeDefUseResults(unsigned int *values,
-				     std::map< SgNode* , std::vector <std::pair < SgInitializedName* , SgNode* > > > &defmap,
+                                     std::map< SgNode* , std::vector <std::pair < SgInitializedName* , SgNode* > > > &defmap,
 				     std::map<SgNode*,unsigned int > &nodeMapInv) {
   int counter=0;
   std::map< SgNode* , std::vector <std::pair < SgInitializedName* , SgNode* > > >::const_iterator it;
@@ -256,7 +256,7 @@ void Compass::serializeDefUseResults(unsigned int *values,
 }
 
 void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
-				       std::vector<SgNode* > &nodeMap, 
+                                       std::vector<SgNode* > &nodeMap, 
 				       bool definition) {
   struct timespec b_time_node, e_time_node;
   //  defuse->flushHelp();
@@ -769,7 +769,7 @@ Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArra
 
 void
 Compass::outputTgui( std::string & tguiXML,
-		     std::vector<const Compass::Checker*> & checkers,
+                     std::vector<const Compass::Checker*> & checkers,
 		     Compass::OutputObject *output )
 {
   // DQ (1/3/2008): This has to be read/write since we generate an output file for use with ToolGear.
@@ -791,8 +791,8 @@ Compass::outputTgui( std::string & tguiXML,
 	  << "  <tool_title>Compass Analysis Static View</tool_title>\n";
 
       for( std::vector<const Compass::Checker*>::const_iterator itr = 
-	     checkers.begin(); itr != checkers.end(); itr++ )
-	{
+             checkers.begin(); itr != checkers.end(); itr++ )
+        {
 	  std::string checkerName( (*itr)->checkerName );
 
 	  xml << "  <message_folder>\n"
@@ -837,8 +837,8 @@ Compass::outputTgui( std::string & tguiXML,
 
 void
 Compass::outputDb( std::string  dbName,
-		     std::vector<const Compass::Checker*> & checkers,
-		     Compass::OutputObject *output )
+                   std::vector<const Compass::Checker*> & checkers,
+                   Compass::OutputObject *output )
 {
   using namespace std;
   sqlite3x::sqlite3_connection con(dbName.c_str());

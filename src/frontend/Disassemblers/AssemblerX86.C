@@ -752,8 +752,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("operand type not implemented", insn);
     }
     abort();
- /* avoid MSCV warning by adding return stmt */
-	return false;
+    /* avoid MSCV warning by adding return stmt */
+    return false;
 }
 
 void

@@ -128,7 +128,7 @@ struct bandwidth_handler_input_data
         double delta_time;	/*length of time to collect events for each block*/
         int fsize;		/*maximum size for tracefile.  Set to 0 for default size*/
         int fname_size;		/*Number of bytes following this struct in the data stream.
-				  These bytes are a null terminated ASCII stream representing
+                                  These bytes are a null terminated ASCII stream representing
 				  the tracefile name.  Set to zero for no tracefile*/
 
 };
@@ -159,7 +159,7 @@ struct tcpbandwidth_handler_input_data
         double delta_time;	/*length of time to collect events for each block*/
         int fsize;		/*maximum size for tracefile.  Set to 0 for default size*/
         int fname_size;		/*Number of bytes following this struct in the data stream.
-				  These bytes are a null terminated ASCII stream representing
+                                  These bytes are a null terminated ASCII stream representing
 				  the tracefile name.  Set to zero for no tracefile*/
 
 };

@@ -11,17 +11,17 @@ Thanks,
 
 template <typename T>
 struct foo
-   {
-     enum {
-	  one,
-	  two,
-	  three,
-     };
-   };
+{
+    enum {
+        one,
+        two,
+        three,
+    };
+};
 
 int main()
-   {
+{
      foo<int>::one;
-   }
+}
 
 

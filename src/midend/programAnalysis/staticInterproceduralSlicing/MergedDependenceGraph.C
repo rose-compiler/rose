@@ -27,7 +27,7 @@ DependenceNode *MergedDependenceGraph::_importNode(DependenceNode * node)
 void MergedDependenceGraph::mergeGraph(DependenceGraph * graph)
 {
 	set < SimpleDirectedGraphNode * >nodes = graph->getNodes();
-  // for all nodes in this graph...
+        // for all nodes in this graph...
 	set < SimpleDirectedGraphNode * >::iterator i;
 	DependenceNode * srcDepParent;
 	SgNode * parentSgNode,*childSgNode;
@@ -44,7 +44,7 @@ void MergedDependenceGraph::mergeGraph(DependenceGraph * graph)
 		set < SimpleDirectedGraphNode * > srcDepChildren = srcDepParent->getSuccessors(); 
 		for (j = srcDepChildren.begin(); j != srcDepChildren.end(); j++)
 		{
-		  // get the child node in the src-graph	
+ 		        // get the child node in the src-graph	
 			DependenceNode * srcDepChild=dynamic_cast < DependenceNode * >(*j);
 			childSgNode=srcDepChild->getSgNode();
 			childType=srcDepChild->getType();

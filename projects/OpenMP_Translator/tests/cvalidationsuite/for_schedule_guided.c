@@ -83,7 +83,7 @@ check_for_schedule_guided (FILE * logFile)
 	  }
 
 	/* if it is not our turn we wait 
-	   a) until another thread executed an iteration 
+           a) until another thread executed an iteration 
 	   with a higher iteration count
 	   b) we are at the end of the loop (first thread finished                           and set notout=0 OR
 	   c) timeout arrived */
@@ -131,8 +131,8 @@ printf("\nEnd debug--------\n");
 	  }
 	else
 	  {
-	   tmp_count ++;
-           tmp[tmp_count]=1;
+            tmp_count ++;
+            tmp[tmp_count]=1;
 	  }
       }
 /*
@@ -149,19 +149,21 @@ printf("\nEndDebug2----\n");
     for (i = 0; i < count-1; i++)
       {
        if ((i>0)&&(tmp[i]==tmp[i+1])) flag=1; 
-/*set flag to indicate the Chunk sizes should be the same from now on*/
-       if(flag==0){
- 	if (tmp[i]<=tmp[i+1]) {
-		result++;
-		fprintf(logFile,"chunk size from %d to %d not decreased.\n",
-		i,i+1);
-		}
+       /*set flag to indicate the Chunk sizes should be the same from now on*/
+       if(flag==0)
+         {
+ 	   if (tmp[i]<=tmp[i+1]) {
+             result++;
+	     fprintf(logFile,"chunk size from %d to %d not decreased.\n",
+                     i,i+1);
+             }
          }
-       else if (tmp[i]!=tmp[i+1]) {
-		result++;
-		fprintf(logFile,"chunk size not maintained.\n");
-		}
-      }
+       else if (tmp[i]!=tmp[i+1])
+         {
+           result++;
+	   fprintf(logFile,"chunk size not maintained.\n");
+         }
+     }
 
   return (result==0);
 }
@@ -250,8 +252,8 @@ Since it takes quite long to finish the check_x(), I skip the cross_check_X() he
 	  }
 	else
 	  {
-	   tmp_count ++;
-           tmp[tmp_count]=1;
+	    tmp_count ++;
+            tmp[tmp_count]=1;
 	  }
       }
   flag=0;
@@ -259,14 +261,14 @@ Since it takes quite long to finish the check_x(), I skip the cross_check_X() he
       {
        if ((i>0)&&(tmp[i]==tmp[i+1])) flag=1; 
        if(flag==0){
- 	if (tmp[i]<=tmp[i+1]) {
+        if (tmp[i]<=tmp[i+1]) {
 		result++;
 		fprintf(logFile,"chunk size from %d to %d not decreased.\n",
 		i,i+1);
 		}
          }
        else if (tmp[i]!=tmp[i+1]) {
-		result++;
+                result++;
 		fprintf(logFile,"chunk size not maintained.\n");
 		}
       }

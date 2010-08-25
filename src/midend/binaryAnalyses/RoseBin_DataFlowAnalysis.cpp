@@ -302,12 +302,12 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 	  std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
 	// if function call is call to malloc we have an exception and follow the call path
 	if ((exceptionCallNode && !exceptionCallNext)) {
-	} else if (
-		   //if (
-		   (nodeN && nodeN->get_kind() == x86_call) ||
-		   (nextN && nextN->get_kind() == x86_ret) )
-	  call = true;
-	//bool sameParent = analysis->sameParents(node, next);
+        } else if (
+                   //if (
+                   (nodeN && nodeN->get_kind() == x86_call) ||
+                   (nextN && nextN->get_kind() == x86_ret) )
+          call = true;
+        //bool sameParent = analysis->sameParents(node, next);
 
 	bool validNode=false;
 	if (g_algo->isValidCFGEdge(next, node) || exceptionCallNode)
@@ -318,9 +318,9 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 	  string nodeBeforeStr="";
 	  if (nodeBefore) nodeBeforeStr= nodeBefore->get_name();
 	  cout << "  DEBUG : >>>>>>>> previous node " << nodeBeforeStr
-	       << "      This node : " << name << "  next node : " << name_n
+               << "      This node : " << name << "  next node : " << name_n
 	       << "  ** validNode : " << RoseBin_support::resBool(validNode) << endl;
-	}
+        }
 
 
 	// ----------------------------------
@@ -365,7 +365,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 		  "  -- contained in hash? : " << RoseBin_support::resBool(containsHash(worklist_hash,next)) <<
 		  "  ---- nr of Defs: " << RoseBin_support::ToString(analysis->getDefinitionSize()) <<
 		  "  ---- nr of Use: " << RoseBin_support::ToString(analysis->getUsageSize())
-		     << endl;
+                     << endl;
 
 	      if (interprocedural || (!interprocedural && !call)){ //sameParent)) { //!call && ) {
 		if (!containsHash(worklist_hash,next)) {

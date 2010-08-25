@@ -82,7 +82,7 @@ private:
 public:
 
   expressionReportElementAnn(Broadway::FlowSensitivity flow_sensitivity,
-			     exprAnn * expr, int line);
+                             exprAnn * expr, int line);
 
   virtual void lookup(enumPropertyAnn * default_property,
 		      procedureAnn * procedure,

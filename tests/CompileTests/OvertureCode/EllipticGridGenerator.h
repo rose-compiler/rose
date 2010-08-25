@@ -61,7 +61,7 @@ class EllipticGridGenerator
   
   // supply a starting grid.
   int startingGrid(const realArray & u0,
-		   const realArray & r0 = Overture::nullRealDistributedArray(),
+                   const realArray & r0 = Overture::nullRealDistributedArray(),
                    const IntegerArray & indexBounds=Overture::nullIntArray() );
 
   // Interactively choose parameters and compute elliptic grid.
@@ -87,14 +87,14 @@ class EllipticGridGenerator
   int defineSurfaceControlFunction();
   
   int determineBoundarySpacing(const int & side, 
-			       const int & axis,
+                               const int & axis,
 			       real & averageSpacing,
 			       real & minimumSpacing,
 			       real & maximumSpacing );
 
   // dot product
   realArray dot( const realArray & a, 
-		 const realArray & b, 
+                 const realArray & b, 
 		 const Index & I1=nullIndex, 
 		 const Index & I2=nullIndex, 
 		 const Index & I3=nullIndex);
@@ -108,7 +108,7 @@ class EllipticGridGenerator
 
   // get coefficients of the elliptic system
   int  getCoefficients(realArray & coeff, 
-		       const Index & J1, 
+                       const Index & J1, 
 		       const Index & J2, 
 		       const Index & J3,
 		       const realArray & ur, 
@@ -118,10 +118,10 @@ class EllipticGridGenerator
   int getControlFunctions(const int & level );
 
   int jacobi(const int & level, 
-	     RealMappedGridFunction & uu );
+             RealMappedGridFunction & uu );
 
   int restrictMovement(const int & level,
-		       const RealMappedGridFunction & u0, 
+                       const RealMappedGridFunction & u0, 
 		       RealMappedGridFunction & u1,
 		       const Index & I1 =nullIndex, 
 		       const Index & I2 =nullIndex, 
@@ -138,7 +138,7 @@ class EllipticGridGenerator
   int multigridVcycle(const int & level );
 
   int redBlack(const int & level, 
-	       RealMappedGridFunction & uu );
+               RealMappedGridFunction & uu );
 
   void getResidual(realArray &resid1, 
                    const int & level);
@@ -170,7 +170,7 @@ class EllipticGridGenerator
   realArray signOf(const realArray & uarray);
 
   int smooth(const int & level, 
-	     const SmoothingTypes & smoothingType,
+             const SmoothingTypes & smoothingType,
 	     const int & numberOfSubIterations =1 );
 
   int stretchTheGrid(Mapping & mapToStretch);

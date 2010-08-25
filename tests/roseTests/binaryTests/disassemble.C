@@ -15,27 +15,34 @@ Description:\n\
   a raw buffer such as a memory dump.\n\
 \n\
   --ast-dot\n\
-    Generate GraphViz dot files for the entire AST. This switch is applicable\n\
-    only when the input file is a container such as ELF or PE.\n\
+  --no-ast-dot\n\
+    Generate (or don't generate) GraphViz dot files for the entire AST. This\n\
+    switch is applicable only when the input file is a container such as ELF or\n\
+    PE.  The default is to not generate an AST dot file.\n\
 \n\
   --cfg-dot\n\
-    Generate a GraphViz dot file containing the control flow graph of each\n\
-    function.  These files will be named \"x-FXXXXXXXX.dot\" where \"XXXXXXXX\"\n\
-    is a function entry address.  This switch also generates a function call\n\
-    graph with the name \"x-cg.dot\". These files can be converted to HTML with\n\
-    the generate_html script found in tests/roseTests/binaryTests.\n\
+  --no-cfg-dot\n\
+    Generate (or don't generate) a GraphViz dot file containing the control flow\n\
+    graph of each function.  These files will be named \"x-FXXXXXXXX.dot\" where\n\
+    \"XXXXXXXX\" is a function entry address.  This switch also generates a\n\
+    function call graph with the name \"x-cg.dot\". These files can be converted\n\
+    to HTML with the generate_html script found in tests/roseTests/binaryTests.\n\
+    The default is to not generate these dot files.\n\
 \n\
   --debug-disassembler\n\
-    Causes the disassembler to spew diagnostics to standard error. This is\n\
-    intended for ROSE developers.\n\
+  --no-debug-disassembler\n\
+    Causes the disassembler to spew (or not) diagnostics to standard error.\n\
+    This is intended for ROSE developers. The default is to not spew.\n\
 \n\
   --debug-partitioner\n\
-    Causes the instruction partitioner to spew diagnostics to standard error.\n\
-    This is intended for ROSE developers.\n\
+  --no-debug-partitioner\n\
+    Causes the instruction partitioner to spew (or not) diagnostics to standard\n\
+    error.  This is intended for ROSE developers. The default is to not spew.\n\
 \n\
   --debug\n\
-    Convenience switch that turns on the --debug-disassembler and\n\
-    --debug-partitioner switches\n\
+  --no-debug\n\
+    Convenience switch that turns on (or off) the --debug-disassembler and\n\
+    --debug-partitioner switches.\n\
 \n\
   --disassemble\n\
     Call the disassembler explicitly, using the instruction search flags\n\
@@ -47,17 +54,21 @@ Description:\n\
     called.\n\
 \n\
   --dos\n\
+  --no-dos\n\
     Normally, when the disassembler is invoked on a Windows PE or related\n\
     container file it will ignore the DOS interpretation. This switch causes\n\
-    the disassembler to use the DOS interpretation instead of the PE\n\
-    interpretation.\n\
+    the disassembler to use (or not use) the DOS interpretation instead of the\n\
+    PE interpretation.\n\
 \n\
   --dot\n\
-    Convenience switch that is equivalent to --ast-dot and --cfg-dot.\n\
+  --no-dot\n\
+    Convenience switch that is equivalent to --ast-dot and --cfg-dot (or\n\
+    --no-ast-dot and --no-cfg-dot).\n\
 \n\
   --quiet\n\
-    Suppresses the instruction listing that is normally emitted to the standard\n\
-    output stream.\n\
+  --no-quiet\n\
+    Suppresses (or not) the instruction listing that is normally emitted to the\n\
+    standard output stream.  The default is to not suppress.\n\
 \n\
   --raw=ENTRY\n\
     Indicates that the specified file(s) contains raw machine instructions\n\
@@ -70,24 +81,39 @@ Description:\n\
     execute permission.\n\
 \n\
   --reassemble\n\
-    Assemble each disassembled instruction and compare the generated\n\
+  --no-reassemble\n\
+    Assemble (or not) each disassembled instruction and compare the generated\n\
     machine code with the bytes originally disassembled.  This switch is\n\
     intended mostly to check the consistency of the disassembler with the\n\
-    assembler.\n\
+    assembler.  The default is to not reassemble.\n\
 \n\
   --show-bad\n\
-    Show details about why instructions at certain addresses could not be\n\
-    disassembled.\n\
+  --no-show-bad\n\
+    Show (or not) details about why instructions at certain addresses could not\n\
+    be disassembled.  The default is to not show these details.\n\
 \n\
   --show-coverage\n\
-    Show what percent of the disassembly memory map was actually disassembled.\n\
+  --no-show-coverage\n\
+    Show (or not) what percent of the disassembly memory map was actually\n\
+    disassembled.  The default is to not show this information.\n\
 \n\
   --show-extents\n\
-    Show detailed information about what parts of the file were not\n\
-    disassembled.\n\
+  --no-show-extents\n\
+    Show (or not) detailed information about what parts of the file were not\n\
+    disassembled.  The default is to not show these details.\n\
 \n\
   --show-functions\n\
-    Display a list of functions in tabular format.\n\
+  --no-show-functions\n\
+    Display (or not) a list of functions in tabular format.  The default is to\n\
+    not show this list.\n\
+\n\
+  --show-hashes\n\
+  --no-show-hashes\n\
+    Display (or not) SHA1 hashes for basic blocks and functions in the assembly\n\
+    listing. These hashes are based on basic block semantics.  The default is\n\
+    to not show these hashes in the listing. Regardless of this switch, the\n\
+    hashes still appear in the function listing (--show-functions) and the\n\
+    CFG dot files (--cfg-dot) if they can be computed.\n\
 \n\
 In addition to the above switches, this disassembler tool passes all other\n\
 switches to the underlying ROSE library's frontend() function if that function\n\
@@ -280,20 +306,23 @@ public:
 
 /* Unparser that outputs some extra information */
 class MyAsmUnparser: public AsmUnparser {
+private:
+    bool show_hashes;
 public:
-    MyAsmUnparser() {
+    MyAsmUnparser(bool show_hashes)
+        : show_hashes(show_hashes) {
         blk_detect_noop_seq = true;
     }
     virtual void pre(std::ostream &o, SgAsmBlock *blk) {
         unsigned char sha1[20];
-        if (block_hash(blk, sha1)) {
+        if (show_hashes && block_hash(blk, sha1)) {
             o <<StringUtility::addrToString(blk->get_address()) 
               <<": " <<digest_to_str(sha1) <<"\n";
         }
     }
     virtual void pre(std::ostream &o, SgAsmFunctionDeclaration *func) {
         unsigned char sha1[20];
-        if (function_hash(func, sha1)) {
+        if (show_hashes && function_hash(func, sha1)) {
             o <<StringUtility::addrToString(func->get_entry_va())
               <<": ============================ " <<digest_to_str(sha1) <<"\n";
         }
@@ -588,6 +617,7 @@ main(int argc, char *argv[])
     bool do_raw = false;
     bool do_rose_help = false;
     bool do_call_disassembler = false;
+    bool do_show_hashes = false;
 
     rose_addr_t raw_entry_va = 0;
     MemoryMap raw_map;
@@ -609,36 +639,59 @@ main(int argc, char *argv[])
             exit(1);
         } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
             do_ast_dot = true;
+        } else if (!strcmp(argv[i], "--no-ast-dot")) {
+            do_ast_dot = false;
         } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
             do_cfg_dot = true;
+        } else if (!strcmp(argv[i], "--no-cfg-dot")) {
+            do_cfg_dot = false;
         } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
             do_call_disassembler = true;
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
+        } else if (!strcmp(argv[i], "--no-dot")) {
+            do_ast_dot = false;
+            do_cfg_dot = false;
         } else if (!strcmp(argv[i], "--dos")) {                 /* use MS-DOS header in preference to PE when both exist */
             do_dos = true;
+        } else if (!strcmp(argv[i], "--no-dos")) {
+            do_dos = false;
         } else if (!strcmp(argv[i], "-?") ||
                    !strcmp(argv[i], "-help") ||
                    !strcmp(argv[i], "--help")) {
-            printf(usage, argv[0], argv[0]);
+            printf(usage, argv[0], argv[0], argv[0]);
             exit(0);
         } else if (!strcmp(argv[i], "--rose-help")) {
             new_argv[new_argc++] = strdup("--help");
             do_rose_help = true;
         } else if (!strcmp(argv[i], "--skip-dos")) {
-            fprintf(stderr, "%s: --skip-dos behavior is the default now; use --dos if you want the MS-DOS header\n", argv[0]);
-            exit(1);
+            fprintf(stderr, "%s: --skip-dos has been replaced by --no-dos, which is now the default.\n", argv[0]);
+            do_dos = false;
         } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
             show_bad = true;
+        } else if (!strcmp(argv[i], "--no-show-bad")) {
+            show_bad = false;
         } else if (!strcmp(argv[i], "--show-coverage")) {       /* show disassembly coverage */
             do_show_coverage = true;
+        } else if (!strcmp(argv[i], "--no-show-coverage")) {
+            do_show_coverage = false;
         } else if (!strcmp(argv[i], "--show-functions")) {      /* show function summary */
             do_show_functions = true;
+        } else if (!strcmp(argv[i], "--no-show-functions")) {
+            do_show_functions = false;
         } else if (!strcmp(argv[i], "--show-extents")) {        /* show parts of file that were not disassembled */
             do_show_extents = true;
+        } else if (!strcmp(argv[i], "--no-show-extents")) {
+            do_show_extents = false;
+        } else if (!strcmp(argv[i], "--show-hashes")) {         /* show SHA1 hashes in assembly listing */
+            do_show_hashes = true;
+        } else if (!strcmp(argv[i], "--no-show-hashes")) {
+            do_show_hashes = false;
         } else if (!strcmp(argv[i], "--reassemble")) {          /* reassemble in order to test the assembler */
             do_reassemble = true;
+        } else if (!strcmp(argv[i], "--no-reassemble")) {
+            do_reassemble = false;
         } else if (!strcmp(argv[i], "--raw")) {                 /* disassemble a naked buffer of instructions; arg is entry va */
             ROSE_ASSERT(i+1<argc);
             do_raw = true;
@@ -659,12 +712,21 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
             do_debug_partitioner = true;
+        } else if (!strcmp(argv[i], "--no-debug")) {
+            do_debug_disassembler = false;
+            do_debug_partitioner = false;
         } else if (!strcmp(argv[i], "--debug-disassembler")) {
             do_debug_disassembler = true;
+        } else if (!strcmp(argv[i], "--no-debug-disassembler")) {
+            do_debug_disassembler = false;
         } else if (!strcmp(argv[i], "--debug-partitioner")) {
             do_debug_partitioner = true;
+        } else if (!strcmp(argv[i], "--no-debug-partitioner")) {
+            do_debug_partitioner = false;
         } else if (!strcmp(argv[i], "--quiet")) {               /* do not emit instructions to stdout */
             do_quiet = true;
+        } else if (!strcmp(argv[i], "--no-quiet")) {
+            do_quiet = false;
         } else if (!strcmp(argv[i], "-rose:disassembler_search")) {
             /* Keep track of disassembler search flags because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
@@ -917,7 +979,7 @@ main(int argc, char *argv[])
         ShowFunctions().show(block);
 
     if (!do_quiet) {
-        MyAsmUnparser unparser;
+        MyAsmUnparser unparser(do_show_hashes);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }

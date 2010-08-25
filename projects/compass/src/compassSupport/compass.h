@@ -125,7 +125,7 @@ namespace Compass {
   public:
   ParseError(const std::string& badString, const std::string& wanted)
     : errorMessage(strdup(("Error parsing " + wanted + " from string '" +
-			   badString + "'").c_str()))
+                           badString + "'").c_str()))
       {}
 
     virtual const char* what() const throw () {

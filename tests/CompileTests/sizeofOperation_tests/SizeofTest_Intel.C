@@ -43,8 +43,8 @@ void visitorTraversal::visit(SgNode* currentNode)
 			else
 			{
 				cout << "\n DIFFERENT! Compile time size is " << directSize 
-					 << " and Computed size is " << computedSize << "\n" << endl;
-				flag = false;
+                                         << " and Computed size is " << computedSize << "\n" << endl;
+                                flag = false;
 			}
 		}
 	}

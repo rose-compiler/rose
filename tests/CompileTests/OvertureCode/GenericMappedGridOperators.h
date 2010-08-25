@@ -229,14 +229,14 @@ class GenericMappedGridOperators
 
   //compute (u.grad)w (convective derivative of passive variable(s))
     virtual realMappedGridFunction convectiveDerivative (
-							 const realMappedGridFunction &u, 
+                                                         const realMappedGridFunction &u, 
 							 const realMappedGridFunction &w,
 							 const Index & I1 = nullIndex,
 							 const Index & I2 = nullIndex,
 							 const Index & I3 = nullIndex
 							 );
   virtual realMappedGridFunction convectiveDerivative (
-						       const realMappedGridFunction &u,
+                                                       const realMappedGridFunction &u,
 						       const GridFunctionParameters & gfType, 
 						       const realMappedGridFunction &w,
 						       const Index & I1 = nullIndex,
@@ -363,7 +363,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 
   //returns face-centered gradients
   virtual realMappedGridFunction FCgrad (const realMappedGridFunction & phi,		
-					 const int c0 = 0,
+                                         const int c0 = 0,
 					 const int c1 = 0,
 					 const int c2 = 0,
 					 const int c3 = 0,
@@ -379,7 +379,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
                                         );
 
   virtual realMappedGridFunction FCgrad (const realMappedGridFunction & phi,		
-					 const GridFunctionParameters & gfType, 
+                                         const GridFunctionParameters & gfType, 
 					 const int c0 = 0,
 					 const int c1 = 0,
 					 const int c2 = 0,
@@ -463,7 +463,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 				      const Index & Components,
 				      const BCTypes::BCNames & boundaryConditionType 
                                            = BCTypes::dirichlet,
-				      const int & boundaryCondition = allBoundaries,
+                                      const int & boundaryCondition = allBoundaries,
 				      const real & forcing = 0.,
 				      const real & time = 0.,
 				      const BoundaryConditionParameters & bcParameters 
@@ -532,7 +532,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
   // fill in the BC's for a coefficient grid function
   virtual void 
   applyBoundaryConditionCoefficients(
-				     realMappedGridFunction & coeff, 
+                                     realMappedGridFunction & coeff, 
 				     const Index & Equations,
 				     const Index & Components,
 				     const BCTypes::BCNames & boundaryConditionType=BCTypes::dirichlet,
@@ -561,7 +561,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
   // These next functions are called by finishBoundaryConditions
 
   virtual void setCornerCoefficients(realMappedGridFunction & coeff,
-				     const int n, 
+                                     const int n, 
 				     const Index & I1, 
 				     const Index & I2, 
 				     const Index & I3,
@@ -578,7 +578,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 				    const int order);
 
   virtual void setSymmetryCoefficients(realMappedGridFunction & coeff,
-				       const int n, 
+                                       const int n, 
 				       const Index & I1, 
 				       const Index & I2, 
 				       const Index & I3,

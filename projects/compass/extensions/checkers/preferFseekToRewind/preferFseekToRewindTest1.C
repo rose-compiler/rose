@@ -6,7 +6,7 @@ void foo()
 {
 	FILE* fptr = fopen("file.ext", "r");
 	if (fptr == NULL) {
-		  /* handle open error */
+		/* handle open error */
 	}
 
 	/* read data */

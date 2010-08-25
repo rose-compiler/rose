@@ -97,7 +97,7 @@ char *message = (char *)malloc(10);
 	message_type = 2;
 	/* ...*/
 	if (message_type == 2) {
-	   /* Process message type 2 */
+          /* Process message type 2 */
 	  free(message);
 	}
 }
@@ -339,7 +339,7 @@ void MEM32(void) {
 
 	p = realloc(p, new_size);
 	if (p == NULL)   {
-	 /* handle error */
+	  /* handle error */
 	}
 	free(p);
 }
@@ -360,16 +360,16 @@ void MEM33(void) {
 	/* space is allocated for the struct */
 	struct flexArrayStruct *structP 
 	  = (struct flexArrayStruct *) 
-		 malloc(sizeof(struct flexArrayStruct) 
-			  + sizeof(int) * (array_size - 1));
+		malloc(sizeof(struct flexArrayStruct) 
+			+ sizeof(int) * (array_size - 1));
 	if (structP == NULL) {
 	  /* handle malloc failure */
 	}
 	structP->num = 0;
 
 	/* access data[] as if it had been allocated
-	 *  * as data[array_size] */
-	for (i = 0; i < array_size; i++) {
+         * as data[array_size] */
+        for (i = 0; i < array_size; i++) {
 	  structP->data[i] = 1;
 	}
 }

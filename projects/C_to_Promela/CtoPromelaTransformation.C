@@ -260,8 +260,9 @@ int main(int argc,char ** argv)
 	
 	announceStep(4,6,"transform for loops to whjile loops");
 	for (int procNr=0;procNr<procFuncVec.size();procNr++)
-	    {	changeForLoops(procFuncVec[procNr]);
-			}
+        {
+		changeForLoops(procFuncVec[procNr]);
+	}
 	
 	announceStep(4,6,"MPI-Specific: Moving globals into main");
 	for(int i=0;i<globalVarDeclVec.size();i++)
@@ -388,14 +389,14 @@ int main(int argc,char ** argv)
 				
 				// generate a VariableDeclaration
 				SgVariableDeclaration * tempVarDecl=new SgVariableDeclaration(
-				    Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-						    SgName("spinBoolTmp"), new SgTypeBool());
+					Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
+					SgName("spinBoolTmp"), new SgTypeBool());
 				// get the expression form the statement
 				assert(isSgExprStatement(conditional)!=NULL);
 				SgExpression * condExpr=isSgExprStatement(conditional)->get_expression ();
 				// generate a initial assignment using the existing stmt
 				SgInitializer * initializer=new SgAssignInitializer(
-				    Sg_File_Info::generateDefaultFileInfoForTransformationNode(),condExpr);
+					Sg_File_Info::generateDefaultFileInfoForTransformationNode(),condExpr);
 				// attach initializer
 				tempVarDecl->get_definition()->get_vardefn()->set_initializer (initializer);
 				// create a sgvarRefExpr
@@ -414,8 +415,8 @@ int main(int argc,char ** argv)
 				if (isWhile)
 				{
 					
-					 ref=new  SgVarRefExp (Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-				new SgVariableSymbol (tempVarDecl->get_definition()->get_vardefn ()));
+					ref=new  SgVarRefExp (Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
+						new SgVariableSymbol (tempVarDecl->get_definition()->get_vardefn ()));
 					// copy the other expression
 					SgExpression *rhs=isSgExpression(SgTreeCopy().copyAst(condExpr));					
 					SgAssignOp * assgnExpr=new SgAssignOp(Sg_File_Info::generateDefaultFileInfoForTransformationNode(),ref,rhs);
@@ -451,9 +452,9 @@ int main(int argc,char ** argv)
 	debugPromelaAst->generate(string((*(project->get_fileList ()->begin()))->getFileName())+".SPIN.transformations.dot");
 	
 	cout <<"-------------------------------------------------------------------------------"<<endl
-			 <<"\tFrom here on the C-Ast will be modified into a Promela/C-AST"<<endl
-			<<"-------------------------------------------------------------------------------"<<endl;
-	
+             <<"\tFrom here on the C-Ast will be modified into a Promela/C-AST"<<endl
+             <<"-------------------------------------------------------------------------------"<<endl;
+
 	announceStep(6,1,"using the initial promela targets mark the ast");
 	// using the sdg traverse the project to unparse to promela
 	// the important step is to identify staements which can not be transformed to
@@ -630,7 +631,7 @@ int main(int argc,char ** argv)
 				
 
 		
-		  /*CI (4/19/2007) not all variable-uses need to be inc-block style, determine that later
+			/*CI (4/19/2007) not all variable-uses need to be inc-block style, determine that later
 			c_stateAttr->add(isSgInitializedName(*setIt));
 			setStateVecVarAttrib(*setIt,new StateVecVarASTAttrib(true));*/
 			// now force all nodes that contain a variable that is declared using the c_state stmt to be converted to c!!!!
@@ -645,7 +646,7 @@ int main(int argc,char ** argv)
 	
 
 	announceStep(6,4,"inserting promela proctype variable to the proc-functions");
- // * 3.4: insert the promela proctype variable to the proc-functions
+	// * 3.4: insert the promela proctype variable to the proc-functions
 	for (int i=0;i<procFuncVec.size();i++)
 	{
 	/*
