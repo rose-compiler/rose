@@ -435,7 +435,11 @@ check-local:
 	@echo "Tests for Fortran (LANL POP)."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
+if !ROSE_USING_GFORTRAN_VERSION_4_0
 	@$(MAKE) $(PASSING_TEST_Objects)
+else
+	@echo "Skipping POP code tests when using the gfortran version 4.0.x compiler (fails to compile POP code).
+endif
 	@echo "************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************************"
