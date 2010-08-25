@@ -64,7 +64,7 @@ namespace XMLUtil
     /*! \brief Construct XML attribute from a name, attribute type,
       and value. */
     XMLAttr (const std::string& n, const std::string& t,
-	     const std::string& v);
+             const std::string& v);
     //! Copy constructor.
     XMLAttr (const XMLAttr& a);
 
@@ -232,7 +232,7 @@ namespace XMLUtil
      *  specified document.
      */
     XMLElemFinder (const std::string& elem_name,
-		   const XMLHandler::node_t* doc = NULL);
+                   const XMLHandler::node_t* doc = NULL);
 
     //! Request elements matching the specified name.
     void setElemNamePattern (const std::string& elem_name);

@@ -208,7 +208,7 @@ public:
     {
        if(SgProject::get_verbose() >= 1)
            std::cout << "Found include directive: " << filename << std::endl;
-	 
+
        includeDirective = filename;
        return false;
     }
@@ -360,31 +360,30 @@ public:
         //A define statement is handled differently from all other preprocessor
         //directives. Therefore it should not be handled by found_directive;
         switch(id){
-	     case T_PP_QHEADER:   //#include "..."
-	     case T_PP_HHEADER:   //#include <...>
-	//	std::cout << "Token to include directive: " << directive.get_value() << std::endl;        
-		includeDirectiveToken = directive;
-             //   attributeListMap->found_directive(directive);
-
-		break;	     
-	     case T_PP_INCLUDE:   //#include
-	     case T_PP_IF:        //#if
-	     case T_PP_IFDEF:     //#ifdef
-	     case T_PP_IFNDEF:    //#ifndef
-	     case T_PP_DEFINE:    //#define
-	     case T_PP_WARNING:   //#warning
-	     case T_PP_LINE:      //#line
-	     case T_PP_UNDEF:     //#undef
-		break;
-	     case T_PP_ELIF:      //#elif
-               last_elif = directive;
-               // std::cout << "Found #elif\n";
+             case T_PP_QHEADER:   //#include "..."
+             case T_PP_HHEADER:   //#include <...>
+                // std::cout << "Token to include directive: " << directive.get_value() << std::endl;        
+                includeDirectiveToken = directive;
+                // attributeListMap->found_directive(directive);
+                break;       
+             case T_PP_INCLUDE:   //#include
+             case T_PP_IF:        //#if
+             case T_PP_IFDEF:     //#ifdef
+             case T_PP_IFNDEF:    //#ifndef
+             case T_PP_DEFINE:    //#define
+             case T_PP_WARNING:   //#warning
+             case T_PP_LINE:      //#line
+             case T_PP_UNDEF:     //#undef
+                break;
+             case T_PP_ELIF:      //#elif
+                last_elif = directive;
+                // std::cout << "Found #elif\n";
                 break; 
-	     default:
-		if(id!=T_PP_DEFINE)
-		     attributeListMap->found_directive(directive);
-		break;
-	}
+             default:
+                if(id!=T_PP_DEFINE)
+                     attributeListMap->found_directive(directive);
+                break;
+        }
       return false;  
     }
 
@@ -402,28 +401,28 @@ public:
  //
  ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename TokenT, typename ContainerT>
-	    bool
-	    evaluated_conditional_expression(ContextT const& ctx, 
-			    TokenT const& directive, ContainerT const& expression, 
-			    bool expression_value)
-	       {
+            bool
+            evaluated_conditional_expression(ContextT const& ctx, 
+                            TokenT const& directive, ContainerT const& expression, 
+                            bool expression_value)
+               {
 
                  using namespace boost::wave;
                  token_id wave_typeid = token_id(directive);
 
-		 if(SgProject::get_verbose() >= 1){
-						     
+                 if(SgProject::get_verbose() >= 1){
+                                                     
                       if( T_PP_ELIF  == wave_typeid)
                              std::cout << "Found an #elif\n";
-		 }
-		      
+                 }
+                      
  
 
-		 attributeListMap->found_directive(lastPreprocDirective,expression, expression_value);
-		 return false;  // ok to continue, do not re-evaluate expression
+                 attributeListMap->found_directive(lastPreprocDirective,expression, expression_value);
+                 return false;  // ok to continue, do not re-evaluate expression
 
 
-	       }
+               }
 
  ///////////////////////////////////////////////////////////////////////////
  //
@@ -436,51 +435,51 @@ public:
  //
  ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename TokenT>
-	    void
-	    skipped_token(ContextT const& ctx, TokenT const& token)
-	       {
-	      //Process all tokens to be skipped except the ones without a filename,
-	      //e.g macro definitions from the commandline
-	      //       if(tokenmacro_name.get_position().get_file().size()!=0)  
+            void
+            skipped_token(ContextT const& ctx, TokenT const& token)
+               {
+              //Process all tokens to be skipped except the ones without a filename,
+              //e.g macro definitions from the commandline
+              //       if(tokenmacro_name.get_position().get_file().size()!=0)  
 
-		 int lineNo = token.get_position().get_line(); 
-		 //int colNo  = token.get_position().get_column(); 
+                 int lineNo = token.get_position().get_line(); 
+                 //int colNo  = token.get_position().get_column(); 
                  string filename = std::string(token.get_position().get_file().c_str());
 
-             	 int lineNoElif = last_elif.get_position().get_line(); 
-		 //int colNoElif  = last_elif.get_position().get_column(); 
+                 int lineNoElif = last_elif.get_position().get_line(); 
+                 //int colNoElif  = last_elif.get_position().get_column(); 
 
 
                  //AS(01/16/07) If the false-block of a preprocessor #if #elif #endif is an #elif the #elif token is not
                  //registered as a skipped token. This is a temporary fix for this problem. FIXME               
                  if(lineNo==lineNoElif)
                    if(filename == std::string(last_elif.get_position().get_file().c_str()) ){
-        		 attributeListMap->skipped_token(last_elif);
+                         attributeListMap->skipped_token(last_elif);
                          last_elif = token_type(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),lineNo,0));
-        		 attributeListMap->skipped_token(last_elif);
+                         attributeListMap->skipped_token(last_elif);
 
                          last_elif = token_type(boost::wave::T_PP_ELIF,"#elif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
 
                    }
  
 
-		 attributeListMap->skipped_token(token);
+                 attributeListMap->skipped_token(token);
                  using namespace boost::wave;
 
                  token_id wave_typeid = token_id(token);
 
 
 
-		 if(SgProject::get_verbose() >= 1)
+                 if(SgProject::get_verbose() >= 1)
                       if( T_PP_ELIF  == wave_typeid)
                              std::cout << "Found an #elif\n";
  
 
 
-	      //     else
-	      //      std::cout << "SKIPPED BECAUSE FILE IS NULL: " << token.get_value().c_str();
+              //     else
+              //      std::cout << "SKIPPED BECAUSE FILE IS NULL: " << token.get_value().c_str();
 
-	       }
+               }
 
  ///////////////////////////////////////////////////////////////////////////
  //
@@ -492,23 +491,23 @@ public:
  //
  ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename TokenT>
-	    void
-	    undefined_macro(ContextT const& ctx, TokenT const& macro_name)
-	       {
-		 token_list_container tokListCont;
-		 tokListCont.push_back(macro_name);
-		 attributeListMap->found_directive(lastPreprocDirective,tokListCont, false);
-	       }
+            void
+            undefined_macro(ContextT const& ctx, TokenT const& macro_name)
+               {
+                 token_list_container tokListCont;
+                 tokListCont.push_back(macro_name);
+                 attributeListMap->found_directive(lastPreprocDirective,tokListCont, false);
+               }
 
 #if 0
     template <typename ContainerT>
-	    void
-	    on_warning(ContainerT const& tokenStream)
-	       {
-		 attributeListMap->found_directive(lastPreprocDirective,tokenStream, false);
+            void
+            on_warning(ContainerT const& tokenStream)
+               {
+                 attributeListMap->found_directive(lastPreprocDirective,tokenStream, false);
 
-		 std::cout << "ON TOKEN WARNING: " << boost::wave::util::impl::as_string(tokenStream) << std::endl;
-	       }
+                 std::cout << "ON TOKEN WARNING: " << boost::wave::util::impl::as_string(tokenStream) << std::endl;
+               }
 #endif
 
  ///////////////////////////////////////////////////////////////////////////
@@ -524,17 +523,17 @@ public:
  //
  ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename ContainerT>
-	    bool
-	    found_warning_directive(ContextT const& ctx, ContainerT const& message)
-	       { 
-		 attributeListMap->found_directive(lastPreprocDirective,message, false);
+            bool
+            found_warning_directive(ContextT const& ctx, ContainerT const& message)
+               { 
+                 attributeListMap->found_directive(lastPreprocDirective,message, false);
 
-		 if(SgProject::get_verbose() >= 1)
-		     std::cout << "ON TOKEN WARNING: " << boost::wave::util::impl::as_string(message) << std::endl;
+                 if(SgProject::get_verbose() >= 1)
+                     std::cout << "ON TOKEN WARNING: " << boost::wave::util::impl::as_string(message) << std::endl;
 
-	      //Do not throw warning message
-		 return true; 
-	       }
+              //Do not throw warning message
+                 return true; 
+               }
 
 
  ///////////////////////////////////////////////////////////////////////////
@@ -556,39 +555,39 @@ public:
  //
  ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename ContainerT>
-	    void
-	    found_line_directive(ContextT const& ctx, ContainerT const& arguments,
-			    unsigned int line, std::string const& filename)
-	       {
-		 std::string filenameString(filename.c_str());
-		                             
-		 if(SgProject::get_verbose() >= 1)
-		      std::cout << "On line found" << std::endl;
-	      /*
-		 token_list_container toexpand;
-		 std::copy(first, make_ref_transform_iterator(end, boost::wave::util::get_value),
-		 std::inserter(toexpand, toexpand.end()));
-	       */
+            void
+            found_line_directive(ContextT const& ctx, ContainerT const& arguments,
+                            unsigned int line, std::string const& filename)
+               {
+                 std::string filenameString(filename.c_str());
+                                             
+                 if(SgProject::get_verbose() >= 1)
+                      std::cout << "On line found" << std::endl;
+              /*
+                 token_list_container toexpand;
+                 std::copy(first, make_ref_transform_iterator(end, boost::wave::util::get_value),
+                 std::inserter(toexpand, toexpand.end()));
+               */
 
-		 attributeListMap->found_directive(lastPreprocDirective,arguments, false);
+                 attributeListMap->found_directive(lastPreprocDirective,arguments, false);
 
-	       }
+               }
 
 
     template <typename ContextT, typename TokenT>
-	    bool
-	    may_skip_whitespace(ContextT const& ctx, TokenT& token, bool& skipped_newline)
-	       { 
-		 if(SgProject::get_verbose() >= 1)
-	            std::cout << "MAX_SKIP_WHITESPACE: " << token.get_value().c_str() << std::endl;
+            bool
+            may_skip_whitespace(ContextT const& ctx, TokenT& token, bool& skipped_newline)
+               { 
+                 if(SgProject::get_verbose() >= 1)
+                    std::cout << "MAX_SKIP_WHITESPACE: " << token.get_value().c_str() << std::endl;
 
-		 attributeListMap->may_skip_whitespace(ctx,token,skipped_newline);
-		 return false; }
+                 attributeListMap->may_skip_whitespace(ctx,token,skipped_newline);
+                 return false; }
 
 
 
 #if 0
-		 bool need_comment;
+                 bool need_comment;
 #endif
 };
 

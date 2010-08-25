@@ -245,7 +245,7 @@ public:
    *  @param line the line number of the source annotation in the file */
 
   procedureAnn(parserID * name, parserid_list * params, Annotations * anns,
-	       const int line);
+               const int line);
 
   /** @brief Delete a procedure
    *
@@ -491,7 +491,7 @@ public:
    * Analyzer::process_on_exit() to set them up. */
 
   void add_global_structures(Annotations * annotations,
-			     annVariable * parent_var,
+                             annVariable * parent_var,
 			     structureTreeAnn * parent_node);
 
   /** @brief Add an analysis annotation
@@ -585,7 +585,7 @@ private:
   //@}
 
   void postprocess_variables(parserid_list & uses_or_defs,
-			     bool is_defs);
+                             bool is_defs);
 };
   
 #endif /*  */

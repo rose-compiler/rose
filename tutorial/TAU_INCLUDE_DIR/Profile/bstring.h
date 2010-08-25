@@ -238,8 +238,8 @@ struct string_char_baggage<char> {
     length (const char_type* s) _THROW_NONE
     {
  	if (s == 0) 
- 	  return 0 ;
-	else 
+          return 0 ;
+        else 
           return strlen(s);
     }
     static char_type*

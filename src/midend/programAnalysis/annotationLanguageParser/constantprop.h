@@ -54,7 +54,7 @@ public:
   // -- Computational functions
 
   void binary_operator(const Operator * op,
-		       const ipConstant & right_operand);
+                       const ipConstant & right_operand);
 
   void unary_operator(const Operator * op);
 
@@ -86,7 +86,7 @@ public:
 private:
 
   bool merge_constants(memorydef_set & defs,
-		       memoryuse_set & uses);
+                       memoryuse_set & uses);
 
   void rebuild_constant(memoryuse_set & uses,
 			ipConstant & value);

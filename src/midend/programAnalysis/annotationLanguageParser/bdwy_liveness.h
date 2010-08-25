@@ -24,7 +24,7 @@ public:
   void clear();
 
   void record_defs(procLocation * libproc_location,
-		   procedureAnn * libproc_anns);
+                   procedureAnn * libproc_anns);
 
   virtual void at_threeAddr(stmtLocation * stmt,
 			    threeAddrNode * threeaddr,

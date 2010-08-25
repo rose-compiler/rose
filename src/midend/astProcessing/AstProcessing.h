@@ -1139,8 +1139,6 @@ it will return a pointer to the lnode in which case we can not traverse farther 
      
      std::set<SgDirectedGraphEdge*>::iterator i;
      std::set<SgDirectedGraphEdge*>::iterator j;
-     	
-      
     std::set<SgDirectedGraphEdge*> edgeset = g->computeEdgeSetOut(node);
     std::set<SgGraphNode*> successorset;
     for (std::set<SgDirectedGraphEdge*>::iterator i = edgeset.begin(); i != edgeset.end(); i++) {
@@ -1160,29 +1158,24 @@ it will return a pointer to the lnode in which case we can not traverse farther 
         SgGraphNode *child = NULL;
         child = (*it);
         if (child != NULL) {
-        //      cout << "Child is not null" << endl;
-         
- 
-	      if (traversed->find(child) == traversed->end()) {/*& traversed2.find(child) == traversed2.end() */
-                  //std::cout << "performing traversal" << std::endl;
-		  performTraversal(child, g, graphTraversal, false);
-		  
-//                   if (traversedlocal.find(node) == traversedlocal.end()) {
-//                      trav
-              }
-//                   }
-         }
-//	      else {
- //               traversedlocal.insert(child);
-//	      }
-              
-         else {
-	   
+           //cout << "Child is not null" << endl;
+	   if (traversed->find(child) == traversed->end()) {/*& traversed2.find(child) == traversed2.end() */
+              //std::cout << "performing traversal" << std::endl;
+	      performTraversal(child, g, graphTraversal, false);
+              //if (traversedlocal.find(node) == traversedlocal.end()) {
+              //   trav
+              //}
+           }
+        }
+        //else {
+        //   traversedlocal.insert(child);
+        //}
+        else {
            if (graphTraversal == BOTH || graphTraversal == SYNTHESIZED) {
                 synthesizedAttributes->push(defaultSynthesizedAttribute(defaultInheritedValue));
            }
-         }
-         }
+        }
+     }
      //cout << "completed descension" << endl;
      //cout << "completed descension" << endl;
      size_t numberOfSuccessors = successorset.size();
@@ -1267,9 +1260,9 @@ performTraversal(SgNode* node,
 
                if (child != NULL)
                   {
-		
-	   	    
-		   
+
+
+
                     	performTraversal(child, inheritedValue, treeTraversalOrder);
 		    	
 		

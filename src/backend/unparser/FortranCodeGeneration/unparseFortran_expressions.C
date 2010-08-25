@@ -1269,7 +1269,7 @@ FortranCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_I
           if (cdef != NULL)
              {
 #ifndef _MSC_VER
-				 // tps (02/02/2010): Does not work for some reason under Windows: SgClassDeclaration unknown.
+	    // tps (02/02/2010): Does not work for some reason under Windows: SgClassDeclaration unknown.
                SgClassDeclaration* cdecl = isSgClassDeclaration(cdef->get_declaration());
                if (cdecl != NULL && vd->get_declarationModifier().get_storageModifier().isStatic()) 
                   {
@@ -2016,7 +2016,7 @@ GetOperatorVariant(SgExpression* expr)
     
     else {
       printf("GetOperatorVariant: Error: no handler for '%s'\n", 
-	     fname.c_str());
+             fname.c_str());
       ROSE_ASSERT(false);
     }
   }
