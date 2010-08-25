@@ -236,6 +236,9 @@ public:
     struct Exception {
         Exception(const MemoryMap *map)
             : map(map) {}
+        virtual ~Exception() {}
+        friend std::ostream& operator<<(std::ostream&, const Exception&);
+        virtual void print(std::ostream&) const;
         const MemoryMap *map;           /**< Map that caused the exception if the map is available (null otherwise). */
     };
 
@@ -245,6 +248,9 @@ public:
     struct Inconsistent : public Exception {
         Inconsistent(const MemoryMap *map, const MapElement &a, const MapElement &b)
             : Exception(map), a(a), b(b) {}
+        virtual ~Inconsistent() {}
+        friend std::ostream& operator<<(std::ostream&, const Inconsistent&);
+        virtual void print(std::ostream&) const;
         MapElement a, b;
     };
 
@@ -252,6 +258,9 @@ public:
     struct NotMapped : public Exception {
         NotMapped(const MemoryMap *map, rose_addr_t va)
             : Exception(map), va(va) {}
+        virtual ~NotMapped() {}
+        friend std::ostream& operator<<(std::ostream&, const NotMapped&);
+        virtual void print(std::ostream&) const;
         rose_addr_t va;
     };
 
@@ -259,7 +268,23 @@ public:
     struct NoFreeSpace : public Exception {
         NoFreeSpace(const MemoryMap *map, size_t size)
             : Exception(map), size(size) {}
+        virtual ~NoFreeSpace() {}
+        friend std::ostream& operator<<(std::ostream&, const NoFreeSpace&);
+        virtual void print(std::ostream&) const;
         size_t size;
+    };
+
+    /** Exception thrown by load() when there's a syntax error in the index file. */
+    struct Syntax: public Exception {
+        Syntax(const MemoryMap *map, const std::string &mesg, const std::string &filename, unsigned linenum, int colnum=-1)
+            : Exception(map), mesg(mesg), filename(filename), linenum(linenum), colnum(colnum) {}
+        virtual ~Syntax() {}
+        friend std::ostream& operator<<(std::ostream&, const Syntax&);
+        virtual void print(std::ostream&) const;
+        std::string mesg;                       /**< Error message. */
+        std::string filename;                   /**< Name of index file where error occurred. */
+        unsigned linenum;                       /**< Line number (1 origin) where error occurred. */
+        int colnum;                             /**< Optional column number (0-origin; negative if unknown). */
     };
 
     MemoryMap() : sorted(false) {}
@@ -322,7 +347,28 @@ public:
     /** Read a memory map from a set of memory dump files. The argument should be the same basename that was given to an
      *  invocation of the dump() method. The memory map is adjusted according to the contents of the index file. Returns true
      *  if the data was successfully read in its entirety; note that when returning false, this memory map object might
-     *  be partially changed (although still in a consistent state). */
+     *  be partially changed (although still in a consistent state).
+     *  
+     *  This method also understands a more user-friendly dump index format. Each line of the index is either blank
+     *  (containing only white space), a comment (introduced with a '#') or a map element specification.  A map element
+     *  specification contains the following fields separated by white space (and/or a comma):
+     * 
+     *  <ul>
+     *    <li>The virtual address for the start of this memory area.</li>
+     *    <li>The size of this memory area in bytes.</li>
+     *    <li>Mapping permissions consisting of the letters "r" (read), "w" (write), or "x" (execute).
+     *        Hyphens also be present in this field and do not affect the permissions.</li>
+     *    <li>The source of the data. This is the word "anonymous", or the word "base" followed by an ignored name,
+     *        or the name of a file.  An "anonymous" mapping indicates that a zero-filled buffer should be allocated
+     *        for the data; an "at" mapping generates a file name by appending "-XXXXXXXX.data" to the base name of the
+     *        index file where "XXXXXXXX" is the hexadecimal virtual starting address. If a file name is supplied and
+     *        it is a relative name, it will be interpreted relative to the index file.</li>
+     *    <li>The byte offset of the start of data within the file.  This is ignored for anonymous mappings and is
+     *        often zero for files.  It allows a single file to contain multiple memory areas.</li>
+     *    <li>An optional comment which will appear as the map element name for debugging.</li>
+     *  </ul>
+     *
+     *  If an error occurs an exception is thrown. */
     bool load(const std::string &basename);
 
 private:
