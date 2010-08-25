@@ -252,7 +252,7 @@ public:
             if (isatty(fileno(debug))) {
                 fprintf(debug, "\033[K\n[%07zu] %s\033[K\r\033[1A", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
             } else {
-                fprintf(debug, "[%07zu] %s\n", get_ninsns(), unparseInstructionWithAddress(insn).c_str());
+                fprintf(debug, "[%07zu] 0x%08"PRIx64": %s\n", get_ninsns(), insn->get_address(), unparseInstruction(insn).c_str());
             }
         }
         VirtualMachineSemantics::Policy::startInstruction(insn);
