@@ -10,7 +10,7 @@ class DefUseChainNode : public MultiGraphElem
   AstNodePtr ref, stmt;
  public:
   DefUseChainNode( MultiGraphCreate* c, const AstNodePtr& _ref, 
-		   const AstNodePtr& _stmt, bool def)
+                   const AstNodePtr& _stmt, bool def)
     : MultiGraphElem(c), isdef(def), ref(_ref), stmt(_stmt) {}
   bool is_definition() const { return isdef; }
   AstNodePtr get_ref() const { return ref; }
@@ -78,7 +78,7 @@ class DefaultDUchain : public DefUseChain<DefUseChainNode>
 
 template<class Node>
 void PropagateDefUseChainUpdate( DefUseChain<Node> *graph, 
-				 UpdateDefUseChainNode<Node>& update);
+                                 UpdateDefUseChainNode<Node>& update);
 
 
 
@@ -256,9 +256,9 @@ class ProcessUseInfo
   }
 public:
   ProcessUseInfo( DefUseChain<Node>* _graph, std::vector<Node*>& _defvec,
-		     const ReachingDefinitionGenerator *_g,
-		     AliasAnalysisInterface& _alias,
-		     AstInterface& _fa, ReachingDefinitions& _in)
+                  const ReachingDefinitionGenerator *_g,
+                  AliasAnalysisInterface& _alias,
+                  AstInterface& _fa, ReachingDefinitions& _in)
     :  BuildDefUseChain<Node>(_graph, _defvec, _g, _alias, _fa), in(_in)  {}
 };
 
@@ -330,8 +330,8 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
       ProcessKillInfo<Node> opkill( this, defvec, g, alias, fa, defmap, in);
       std::list <AstNodePtr>& stmts = cur->GetStmts();
       for (std::list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();
-	   ++p) {
-	AstNodePtr cur = *p;
+           ++p) {
+        AstNodePtr cur = *p;
         if (DebugDefUseChain())  
             std::cerr << "processing stmt : " << AstToString(cur) << std::endl;
 	collect(fa, cur, &opgen, &opread, &opkill); 
@@ -362,7 +362,7 @@ class AppendWorkListWrap : public CollectObject<Node*>
 
 template<class Node>
 void PropagateDefUseChainUpdate( DefUseChain<Node> *graph, 
-				 UpdateDefUseChainNode<Node>& update)
+                                 UpdateDefUseChainNode<Node>& update)
 {
   std::set<Node*> worklist;
   AppendWorkListWrap<Node> append(worklist);
@@ -372,10 +372,10 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
     worklist.erase(worklist.begin());
     if (cur->is_definition()) {
       for (GraphNodeSuccessorIterator<DefUseChain<Node> > usep(graph,cur);
-	   !usep.ReachEnd(); ++usep) {
-	Node* use = *usep;
+           !usep.ReachEnd(); ++usep) {
+        Node* use = *usep;
         if (use->is_definition())
-           continue;
+          continue;
 	GraphNodePredecessorIterator<DefUseChain<Node> > defp(graph,use);
         Node *tmp = *defp;
 	++defp;
@@ -388,22 +388,22 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
     else {
       GraphNodePredecessorIterator<DefUseChain<Node> > defp(graph,cur);
       if (defp.ReachEnd()) {
-          if (DebugDefUseChain())  {
-             std::cerr << "Error: use of reference with no definition: ";
-             cur->Dump();
-             std::cerr << std::endl;
-          }
+        if (DebugDefUseChain())  {
+          std::cerr << "Error: use of reference with no definition: ";
+          cur->Dump();
+          std::cerr << std::endl;
+        }
       }
       else {
         // Node* def = *defp;
         if (!defp.ReachEnd()) {
-           Node* def = *defp;
-           ++defp;
-           if (defp.ReachEnd()) {
-	      if (update.update_def_node(def, cur, append)) 
-                       append(def);
-            }
-         }
+          Node* def = *defp;
+          ++defp;
+          if (defp.ReachEnd()) {
+	    if (update.update_def_node(def, cur, append)) 
+              append(def);
+          }
+        }
       }
     }
   }

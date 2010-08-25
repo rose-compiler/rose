@@ -20,13 +20,13 @@ class CycleDetection: public BC_GraphAnalysisInterface {
   ~CycleDetection() {}
 
   bool run(std::string& name, SgGraphNode* node,
-	   SgGraphNode* previous);
+           SgGraphNode* previous);
 
   bool runEdge(SgGraphNode* node, SgGraphNode* next) {
     return false;
   }
   bool checkIfValidCycle(SgGraphNode* node,
-			 SgGraphNode* next);
+                         SgGraphNode* next);
 
   void init(RoseBin_Graph* vg) {
     vizzGraph = vg;

@@ -15,7 +15,7 @@ using namespace std;
  * return information about the register
  ****************************************************/
 void RoseBin_buildTree::resolveRegister(string symbol, 
-		     SgAsmArmRegisterReferenceExpression::arm_register_enum *registerSg) {
+                                        SgAsmArmRegisterReferenceExpression::arm_register_enum *registerSg) {
   // ARM architecture 
   if (symbol=="R0") {
     *registerSg = SgAsmArmRegisterReferenceExpression::reg0;
@@ -94,9 +94,9 @@ void RoseBin_buildTree::resolveRegister(string symbol,
  * return information about the register
  ****************************************************/
 void RoseBin_buildTree::resolveRegister(string symbol, 
-		     X86RegisterClass *regClassSg,
-                     int *registerSg,
-		     X86PositionInRegister *regSize) {
+                                        X86RegisterClass *regClassSg,
+                                        int *registerSg,
+                                        X86PositionInRegister *regSize) {
   if (symbol=="ST(0)" || symbol=="ST(1)" || symbol=="ST(2)" ||
       symbol=="ST(3)" || symbol=="ST(4)" || symbol=="ST(5)" ||
       symbol=="ST(6)" || symbol=="ST(7)") {

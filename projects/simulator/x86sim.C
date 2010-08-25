@@ -710,7 +710,7 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
-	 }
+        }
 
 
         case 13: { /*0xd, time */

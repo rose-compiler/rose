@@ -60,8 +60,8 @@ int main(int argc, char* argv[])
 	desc.add_options()
 	  ("help", "produce a help message")
 	  ("database,q", value< string >()->composing(), 
-	   "the sqlite database that we are to use")
-	  ;
+           "the sqlite database that we are to use")
+          ;
 
 	variables_map vm;
 	store(command_line_parser(argc, argv).options(desc)

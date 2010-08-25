@@ -367,7 +367,7 @@ typedef struct {
     Py_UNICODE *str;		/* Raw Unicode buffer */
     long hash;			/* Hash value; -1 if not set */
     PyObject *defenc;		/* (Default) Encoded version as Python
-				   string, or NULL; this is used for
+                                   string, or NULL; this is used for
 				   implementing the buffer protocol */
 } PyUnicodeObject;
 
@@ -665,7 +665,7 @@ extern DL_IMPORT(PyObject*) PyUnicode_EncodeUTF8(
    If byteorder is non-NULL, the decoder starts decoding using the
    given byte order:
 
-	*byteorder == -1: little endian
+        *byteorder == -1: little endian
 	*byteorder == 0:  native order
 	*byteorder == 1:  big endian
 
@@ -684,7 +684,7 @@ extern DL_IMPORT(PyObject*) PyUnicode_DecodeUTF16(
     int length,	 		/* size of string */
     const char *errors,		/* error handling */
     int *byteorder		/* pointer to byteorder to use
-				   0=native;-1=LE,1=BE; updated on
+                                   0=native;-1=LE,1=BE; updated on
 				   exit */
     );
 
@@ -826,21 +826,21 @@ extern DL_IMPORT(PyObject*) PyUnicode_DecodeCharmap(
     const char *string, 	/* Encoded string */
     int length,	 		/* size of string */
     PyObject *mapping,		/* character mapping 
-				   (char ordinal -> unicode ordinal) */
+                                   (char ordinal -> unicode ordinal) */
     const char *errors		/* error handling */
     );
 
 extern DL_IMPORT(PyObject*) PyUnicode_AsCharmapString(
     PyObject *unicode,	 	/* Unicode object */
     PyObject *mapping		/* character mapping 
-				   (unicode ordinal -> char ordinal) */
+                                   (unicode ordinal -> char ordinal) */
     );
 
 extern DL_IMPORT(PyObject*) PyUnicode_EncodeCharmap(
     const Py_UNICODE *data, 	/* Unicode char buffer */
     int length,	 		/* Number of Py_UNICODE chars to encode */
     PyObject *mapping,		/* character mapping 
-				   (unicode ordinal -> char ordinal) */
+                                   (unicode ordinal -> char ordinal) */
     const char *errors		/* error handling */
     );
 
@@ -903,7 +903,7 @@ extern DL_IMPORT(PyObject*) PyUnicode_EncodeMBCS(
 
       NULL or "strict": raise a ValueError
       "ignore": ignore the wrong characters (these are not copied to the
-		output buffer)
+                output buffer)
       "replace": replaces illegal characters with '?'
 
    Returns 0 on success, -1 on failure.
@@ -1022,7 +1022,7 @@ extern DL_IMPORT(PyObject *) PyUnicode_Replace(
     PyObject *substr,		/* Substring to find */
     PyObject *replstr,		/* Substring to replace */
     int maxcount		/* Max. number of replacements to apply;
-				   -1 = all */
+                                   -1 = all */
     );
 
 /* Compare two strings and return -1, 0, 1 for less than, equal,

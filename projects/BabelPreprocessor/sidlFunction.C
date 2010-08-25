@@ -51,19 +51,19 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 			case '+': operatorString = "Plus"; break;
 			case '-': operatorString = "Minus"; break;
 			case '*':
-					  // Both the multiplication operator and the reference operator return "*"
-					  operatorString = "Multiply";
-					  break;
+					// Both the multiplication operator and the reference operator return "*"
+					operatorString = "Multiply";
+					break;
 			case '/': operatorString = "Divide"; break;
 			case '%': operatorString = "Mod"; break;
 			case '&': 
-					  // Both the bitwise AND operator and the address operator return "&"
-					  operatorString = "BitwiseAnd";
-					  break;
+					// Both the bitwise AND operator and the address operator return "&"
+					operatorString = "BitwiseAnd";
+					break;
 			case '|': operatorString = "BitwiseOr"; break;
 			case '^': operatorString = "BitwiseXor"; break;
 			default:
-					  isAnOperator = false;
+					isAnOperator = false;
 		}
 	}
 	else
@@ -80,23 +80,23 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 						case '=': operatorString = "BooleanEquality"; break;
 						case '!': operatorString = "BooleanInequality"; break;
 						case '<':  // distinguish between <= and <<=
-								  if (thirdLastCharacter == '<')
-									  operatorString = "LShiftEquals";
-								  else
-								  {
-									  ROSE_ASSERT (thirdLastCharacter == 'r');
-									  operatorString = "LessThanOrEquals";
-								  }
-								  break;
+								if (thirdLastCharacter == '<')
+									operatorString = "LShiftEquals";
+								else
+								{
+									ROSE_ASSERT (thirdLastCharacter == 'r');
+									operatorString = "LessThanOrEquals";
+								}
+								break;
 						case '>':  // distinguish between >= and >>=
-								  if (thirdLastCharacter == '>')
-									  operatorString = "RshiftEquals";
-								  else
-								  {
-									  ROSE_ASSERT (thirdLastCharacter == 'r');
-									  operatorString = "GreaterThanOrEquals";
-								  }
-								  break;
+								if (thirdLastCharacter == '>')
+									operatorString = "RshiftEquals";
+								else
+								{
+									ROSE_ASSERT (thirdLastCharacter == 'r');
+									operatorString = "GreaterThanOrEquals";
+								}
+								break;
 						case '+': operatorString = "PlusEquals"; break;
 						case '-': operatorString = "MinusEquals"; break;
 						case '*': operatorString = "MultiplyEquals"; break;
@@ -106,7 +106,7 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 						case '|': operatorString = "BitwiseOrEquals"; break;
 						case '^': operatorString = "BitwiseXorEquals"; break;
 						default:
-								  isAnOperator = false;
+								isAnOperator = false;
 					}
 					break;
 				}
@@ -260,7 +260,7 @@ SIDL_TreeTraversal::isOverloaded ( SgClassDefinition* classDefinition, string fu
 	{
 // #ifndef __INTEL_COMPILER
 #if !defined(__INTEL_COMPILER) && !defined(USE_ROSE)
-   // DQ (6/26/2006): The declaration of arguments uses a GNU extension when we can not support on other compilers.
+		// DQ (6/26/2006): The declaration of arguments uses a GNU extension when we can not support on other compilers.
 		vector<SgType*> arguments[numberOfOverloadedFunctionNames];
 		
 	
@@ -395,11 +395,11 @@ SIDL_TreeTraversal::generateSIDLFunctionDeclaration(SgFunctionDeclaration* funct
 	string functionName = functionDeclarationStatement->get_name().str();
 	string sidlFunctionName ;
 	if (functionModifier.isConstructor()) {
-	  if (functionDeclarationStatement->get_args().size() == 0) return ""; // skip empty constructor
-	  sidlFunctionName = constructorName;
+		if (functionDeclarationStatement->get_args().size() == 0) return ""; // skip empty constructor
+                sidlFunctionName = constructorName;
 	}
 	else{
-	  sidlFunctionName = functionName;
+                sidlFunctionName = functionName;
 	}
 
 	// We have to force the mangled name to be generated before we access it (else we just get "defaultName")

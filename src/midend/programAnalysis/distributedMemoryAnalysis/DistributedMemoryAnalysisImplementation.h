@@ -55,10 +55,10 @@ computeFunctionIndices(
 
 #if DIS_DEBUG_OUTPUT
     std::cout << " >>>  nr of funcs: " << funcDecls.size() << "  inheritedValues:" << initialInheritedValues.size() 
-	      << "   nodeCounts: " << nodeCounts.size() << std::endl;
+              << "   nodeCounts: " << nodeCounts.size() << std::endl;
     if (funcDecls.size()>0) 
       std::cout << " >>>  example entry 0: funcs[0] " << funcDecls.back() << "  inheritedValues[0]:" 
-		<< initialInheritedValues.back() << "   nodeCounts[0]: " << nodeCounts.back() << std::endl;
+                << initialInheritedValues.back() << "   nodeCounts[0]: " << nodeCounts.back() << std::endl;
       std::cout << " >>> >>>>>>>>>>>>> done traversal of nodeCounter (preTraversal) \n\n\n" << std::endl;
 #endif
 
@@ -76,10 +76,10 @@ computeFunctionIndices(
     {
     nrOfNodes = totalNodes;
 
-    //#if DIS_DEBUG_OUTPUT
-        std::cout << "ROOT - splitting functions: " << funcDecls.size() << ", total nodes: " << totalNodes << 
-	  "   totalWeight: " << totalWeight << std::endl;
-	//#endif
+//#if DIS_DEBUG_OUTPUT
+        std::cout << "ROOT - splitting functions: " << funcDecls.size() << ", total nodes: " << totalNodes
+                  << "   totalWeight: " << totalWeight << std::endl;
+//#endif
     }
 
 
@@ -96,8 +96,8 @@ computeFunctionIndices(
         nodesOfPredecessors = nodesSoFar;
         size_t myNodes = nodesOfPredecessors + nodeCounts[hi];
 #if DIS_DEBUG_OUTPUT
-        std::cout << "SPLITTING - rank : " << rank << " myNodesHigh " << myNodesHigh << "  myNodes: " << myNodes << 
-	  "  lo: " << lo << "  hi: " << hi << std::endl;
+        std::cout << "SPLITTING - rank : " << rank << " myNodesHigh " << myNodesHigh << "  myNodes: " << myNodes
+                  << "  lo: " << lo << "  hi: " << hi << std::endl;
 #endif
         // find upper limit
         for (hi = lo + 1; hi < funcDecls.size(); hi++)
@@ -106,7 +106,7 @@ computeFunctionIndices(
         std::cout << "  SPLITTING - func-hi : " << hi << " myNodes: "  << myNodes << std::endl;
         std::cout << "  SPLITTING - mynodes > mynodesHigh : " << myNodes << " > "  << myNodesHigh << std::endl;
         std::cout << "  SPLITTING - mynodesHigh - myNodes < nodeCounts["<<hi<<"]/2 : " << (myNodesHigh-myNodes)
-		  << " < "  << (nodeCounts[hi]/2) << std::endl;
+                  << " < "  << (nodeCounts[hi]/2) << std::endl;
 #endif
             if (myNodes > myNodesHigh)
                 break;
@@ -161,7 +161,7 @@ template <class InheritedAttributeType>
 void
 DistributedMemoryAnalysisBase<InheritedAttributeType>::
 sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<InheritedAttributeType>& inheritedValues,
-	      std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights)
+              std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights)
 {
 
   std::vector<SgFunctionDeclaration*> funcDecls_temp(funcDecls.size());
@@ -185,9 +185,9 @@ sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<Inheri
     funcWeights_temp[i]=funcWeights[weights[i].second];
     if (my_rank==0)
 	if (DIS_DEBUG_OUTPUT)
-      std::cout << "    function : " << funcDecls_temp[i]->get_qualified_name().str() << 
-	"  weight_mul : " << (weights[i].first) << "   nodes: " << nodeCounts_temp[i] <<
-	"  weight : " << funcWeights_temp[i] << std::endl;
+      std::cout << "    function : " << funcDecls_temp[i]->get_qualified_name().str()
+                << "  weight_mul : " << (weights[i].first) << "   nodes: " << nodeCounts_temp[i]
+                << "  weight : " << funcWeights_temp[i] << std::endl;
   }
   funcDecls.swap(funcDecls_temp);
   inheritedValues.swap(inheritedValues_temp);
@@ -204,7 +204,7 @@ template <class InheritedAttributeType>
 void
 DistributedMemoryAnalysisBase<InheritedAttributeType>::
 computeFunctionIndicesPerNode(
-			      SgNode *root, std::vector<int>& functionToProcessor,
+                              SgNode *root, std::vector<int>& functionToProcessor,
         InheritedAttributeType rootInheritedValue,
         AstTopDownProcessing<InheritedAttributeType> *preTraversal)
 {
@@ -229,10 +229,10 @@ computeFunctionIndicesPerNode(
 
 #if DIS_DEBUG_OUTPUT
     std::cout << " >>>  nr of funcs: " << funcDecls.size() << "  inheritedValues:" << initialInheritedValues.size() 
-	      << "   nodeCounts: " << nodeCounts.size() << std::endl;
+              << "   nodeCounts: " << nodeCounts.size() << std::endl;
     if (funcDecls.size()>0) 
       std::cout << " >>>  example entry 0: funcs[0] " << funcDecls.back() << "  inheritedValues[0]:" 
-		<< initialInheritedValues.back() << "   nodeCounts[0]: " << nodeCounts.back() << std::endl;
+                << initialInheritedValues.back() << "   nodeCounts[0]: " << nodeCounts.back() << std::endl;
       std::cout << " >>> >>>>>>>>>>>>> done traversal of nodeCounter (preTraversal) \n\n\n" << std::endl;
 #endif
 
@@ -251,10 +251,10 @@ computeFunctionIndicesPerNode(
     {
     nrOfNodes = totalNodes;
 
-    //#if DIS_DEBUG_OUTPUT
-        std::cout << "ROOT - splitting functions: " << funcDecls.size() << ", total nodes: " << totalNodes << 
-	  "   totalWeight: " << totalWeight << std::endl;
-	//#endif
+//#if DIS_DEBUG_OUTPUT
+        std::cout << "ROOT - splitting functions: " << funcDecls.size() << ", total nodes: " << totalNodes
+                  << "   totalWeight: " << totalWeight << std::endl;
+//#endif
     }
 
     // changed this so it can be used for defuse for all processors
@@ -278,24 +278,24 @@ computeFunctionIndicesPerNode(
       int min_rank=start_rank;
       // find the minimum weight processor
       for (int rank = start_rank; rank < processes; rank++) {
-	if (processorWeight[rank]<min) {
-	  min = processorWeight[rank];
-	  min_rank = rank;
-	}
+        if (processorWeight[rank]<min) {
+          min = processorWeight[rank];
+          min_rank = rank;
+        }
       }
       processorWeight[min_rank]+=currentWeight;
       functionToProcessor.push_back(min_rank);
       nrOfFunctions[min_rank]+=1;
       if (my_rank ==0 ) {
-	if (DIS_DEBUG_OUTPUT)
-	std::cout << " Function per Processor : " << funcDecls[i]->get_name().str() << "  weight : " <<
-	  currentWeight << "/" << totalWeight << "  on proc: " << min_rank << std::endl;
+        if (DIS_DEBUG_OUTPUT)
+        std::cout << " Function per Processor : " << funcDecls[i]->get_name().str() << "  weight : " <<
+          currentWeight << "/" << totalWeight << "  on proc: " << min_rank << std::endl;
       }
     }
     for (int rank = 0; rank < processes; rank++) {
       if (my_rank ==0 ) {
-	std::cerr << " Processor : " << rank << "  has " << nrOfFunctions[rank] <<
-	  " functions. Processor weight: " << processorWeight[rank] << std::endl;
+        std::cerr << " Processor : " << rank << "  has " << nrOfFunctions[rank] <<
+          " functions. Processor weight: " << processorWeight[rank] << std::endl;
       }
     }
 
@@ -371,8 +371,8 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
         sizeSoFar += serializedResults[i].first;
      // now that we have made a copy of the serialized attribute, we can free the user-allocated memory
 #if DIS_DEBUG_OUTPUT
-	std::cout << " buffer ["<<i<<"]  = " << ((char*)serializedResults[i].second)  << 
-	  "   myStateSizes["<<i<<"]  = " << myStateSizes[i] << std::endl;
+	std::cout << " buffer ["<<i<<"]  = " << ((char*)serializedResults[i].second)
+                  << "   myStateSizes["<<i<<"]  = " << myStateSizes[i] << std::endl;
 #endif
 
         deleteSerializedAttribute(serializedResults[i]);
@@ -390,35 +390,35 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
       int *stateSizes = NULL;
       int *displacements = NULL;
       if (ALLGATHER_MPI || DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == 0) {
-	displacements = new int[DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses()];
-	displacements[0] = 0;
-	for (int i = 1; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
-	  {
-	    // Displacements are in units of data elements, not bytes
-	    displacements[i] = displacements[i-1] + DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[i-1];
+        displacements = new int[DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses()];
+        displacements[0] = 0;
+        for (int i = 1; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
+          {
+            // Displacements are in units of data elements, not bytes
+            displacements[i] = displacements[i-1] + DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[i-1];
 #if DIS_DEBUG_OUTPUT
-	    std::cout << " displacements["<<i<<"] = " << displacements[i] << "    == functionsPerProcess[i] " << std::endl;
+            std::cout << " displacements["<<i<<"] = " << displacements[i] << "    == functionsPerProcess[i] " << std::endl;
 #endif
-	  }
-	stateSizes = new int[functions];
+          }
+        stateSizes = new int[functions];
       }
 
 #if ALLGATHER_MPI
       MPI_Allgatherv(myStateSizes, myFunctionsPerProcess, MPI_INT,
-		     stateSizes, &DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[0], 
-		     displacements, MPI_INT, MPI_COMM_WORLD);
+                     stateSizes, &DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[0], 
+                     displacements, MPI_INT, MPI_COMM_WORLD);
 #else
       MPI_Gatherv(myStateSizes, myFunctionsPerProcess, MPI_INT,
-		  stateSizes, &DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[0], 
-		  displacements, MPI_INT, 0, MPI_COMM_WORLD);
+                  stateSizes, &DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[0], 
+                  displacements, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
 #if DIS_DEBUG_OUTPUT
       if (ALLGATHER_MPI || DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == 0) {
-	std::cout << " MPI_Allgatherv: " << functions << std::endl;
-	for (unsigned int k=0; k<functions;k++) {
-	  std::cout << "      stateSize["<<k<<"] = " << stateSizes[k] << std::endl;
-	}
+        std::cout << " MPI_Allgatherv: " << functions << std::endl;
+        for (unsigned int k=0; k<functions;k++) {
+          std::cout << "      stateSize["<<k<<"] = " << stateSizes[k] << std::endl;
+        }
       }
 #endif
 
@@ -431,14 +431,14 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
       totalStateSizes = new int[DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses()];
       int j = 0;
       for (int i = 0; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
-	{
-	  displacements[i] = totalSize;
-	  totalStateSizes[i] = 0;
-	  int j_lim = j + DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[i];
-	  while (j < j_lim)
+        {
+          displacements[i] = totalSize;
+          totalStateSizes[i] = 0;
+          int j_lim = j + DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[i];
+          while (j < j_lim)
             totalStateSizes[i] += stateSizes[j++];
-	  totalSize += totalStateSizes[i];
-	}
+          totalSize += totalStateSizes[i];
+        }
       recvbuf = new unsigned char[totalSize];
     }
 
@@ -463,25 +463,25 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
       std::cout << " >>> >>>>>>>>>>>>> start deserialize" << std::endl;
 #endif 
       if (ALLGATHER_MPI || DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == 0) {
-	/* unpack the serialized states and store them away for the post traversal to use */
-	functionResults.clear();
-	
-	int j = 0;
-	for (int i = 0; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
-	  {
-	    int j_lim = j + DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[i];
-	    int sizeSoFar = 0;
-	    while (j < j_lim)
-	      {
-		std::pair<int, void *> serializedAttribute
-		  = std::make_pair(stateSizes[j], recvbuf + displacements[i] + sizeSoFar);
-		SynthesizedAttributeType attribute = deserializeAttribute(serializedAttribute);
-		functionResults.push_back(attribute);
-		sizeSoFar += stateSizes[j];
-		j++;
-		//    std::cout << " getting results " << std::endl;
-	      }
-	  }
+        /* unpack the serialized states and store them away for the post traversal to use */
+        functionResults.clear();
+        
+        int j = 0;
+        for (int i = 0; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
+          {
+            int j_lim = j + DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[i];
+            int sizeSoFar = 0;
+            while (j < j_lim)
+              {
+                std::pair<int, void *> serializedAttribute
+                  = std::make_pair(stateSizes[j], recvbuf + displacements[i] + sizeSoFar);
+                SynthesizedAttributeType attribute = deserializeAttribute(serializedAttribute);
+                functionResults.push_back(attribute);
+                sizeSoFar += stateSizes[j];
+                j++;
+                //    std::cout << " getting results " << std::endl;
+              }
+          }
 
 #if DIS_DEBUG_OUTPUT
 	std::cout << " >>> >>>>>>>>>>>>> end deserialize\n" << std::endl;
@@ -552,9 +552,9 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     if (funcDecl) {
       std::string funcname = funcDecl->get_name().str();
       if (funcname.find("__")!=std::string::npos) {
-	stdFunc=true;
+        stdFunc=true;
       } else {
-	stdFunc=false;
+        stdFunc=false;
   #if DIS_DEBUG_OUTPUT
         std::cout << " >>>>   found function :  " << funcname << std::endl;
   #endif
@@ -578,8 +578,8 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
         initialInheritedValues.push_back(inheritedValue);
 	std::string funcname = funcDecl->get_name().str();
 #if DIS_DEBUG_OUTPUT
-	std::cout << " >>>>   found defining function declaration:  " << funcname << 
-	  "   inheritedValue: " << inheritedValue << std::endl;
+	std::cout << " >>>>   found defining function declaration:  " << funcname
+                  << "   inheritedValue: " << inheritedValue << std::endl;
 #endif
     }
 
@@ -600,28 +600,28 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     else
     {
 #if DIS_DEBUG_OUTPUT
-      std::cerr << "     inside function: " << node->class_name() << "  nodeCount =" << nodeCount << 
-	"   depth=" << inheritedValue << std::endl;
+      std::cerr << "     inside function: " << node->class_name() << "  nodeCount =" << nodeCount
+                << "   depth=" << inheritedValue << std::endl;
 #endif
         nodeCount++;
-	// calculate the weight of the function
-	// this weight is mostly used for the def-use checker
-	if (isSgNode(node))
-	  weightAssignOp++;
-	// for defuse we weight loops heigher
-	if (isSgWhileStmt(node) || isSgForStatement(node)
-	    || isSgDoWhileStmt(node)) {
-	    weightAssignOp+=(weightAssignOp)/5;
-	}
-	// the following weight should be used if null-deref is checked for
-	/*
-	if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
-	    isSgAssignInitializer(node) || isSgFunctionCallExp(node) ) { 
-	  weightNullDeref++;
-	  } else if (isSgAssignOp(node)) {
-	  weightAssignOp++;
-	}
-	*/
+        // calculate the weight of the function
+        // this weight is mostly used for the def-use checker
+        if (isSgNode(node))
+          weightAssignOp++;
+        // for defuse we weight loops heigher
+        if (isSgWhileStmt(node) || isSgForStatement(node)
+            || isSgDoWhileStmt(node)) {
+            weightAssignOp+=(weightAssignOp)/5;
+        }
+        // the following weight should be used if null-deref is checked for
+        /*
+        if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
+            isSgAssignInitializer(node) || isSgFunctionCallExp(node) ) { 
+          weightNullDeref++;
+          } else if (isSgAssignOp(node)) {
+          weightAssignOp++;
+        }
+        */
         return inheritedValue;
     }
 }
@@ -693,12 +693,12 @@ evaluateInheritedAttribute(SgNode *node, bool inFunction)
     if (funcDecl) {
       funcname = funcDecl->get_name().str();
       if (funcname.find("__")!=std::string::npos) 
-	stdFunc=true;
+        stdFunc=true;
       else
-	stdFunc=false;
+        stdFunc=false;
     }  
     if (stdFunc)
-	return false;
+        return false;
   #if DIS_DEBUG_OUTPUT
     if (funcDecl)
       std::cout << " >>> postTraversal - inheritedAttribute: found function:  " << funcname << std::endl;
@@ -747,9 +747,9 @@ evaluateSynthesizedAttribute(SgNode *node, bool inFunction,
     if (funcDecl) {
       funcname = funcDecl->get_name().str();
       if (funcname.find("__")!=std::string::npos) {
-	stdFunc=true;
+        stdFunc=true;
       } else {
-	stdFunc=false;
+        stdFunc=false;
   #if DIS_DEBUG_OUTPUT
       std::cout << " .. post synthesizedAttribute function: " << funcname << "   id-nr:" << functionCounter << std::endl;
   #endif
@@ -776,15 +776,15 @@ evaluateSynthesizedAttribute(SgNode *node, bool inFunction,
     if (inFunction)
     {
       if (!synAttrs.empty()) {
-	SynthesizedAttributeType attr = synAttrs.front(); // this is a default attribute computed somewhere below
-	return attr;
+        SynthesizedAttributeType attr = synAttrs.front(); // this is a default attribute computed somewhere below
+        return attr;
       } else {
             return defaultSynthesizedAttribute(inFunction);
       }
     }
 
 #if DIS_DEBUG_OUTPUT
-	std::cout << " ... EVALUATE synthesized Attribute "  << std::endl;
+        std::cout << " ... EVALUATE synthesized Attribute "  << std::endl;
 #endif
     return postTraversal->evaluateSynthesizedAttribute(node, synAttrs);
 }

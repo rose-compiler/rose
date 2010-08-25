@@ -13,7 +13,7 @@ class EquationSolver
 		    realCompositeGridFunction & f)=0;
 
   virtual int saveBinaryMatrix(aString filename00,
-			       realCompositeGridFunction & u,
+                               realCompositeGridFunction & u,
 			       realCompositeGridFunction & f);
 
   const aString & getName() const;

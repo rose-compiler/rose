@@ -10,6 +10,6 @@ int main(void) {
 
 	/* Setup file */
 	if (setvbuf(file, buf, buf ? _IOFBF : _IONBF, BUFSIZ) != 0) {
-	  /* Handle error */
+		/* Handle error */
 	}
 }

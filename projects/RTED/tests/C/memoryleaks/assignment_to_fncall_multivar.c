@@ -2,11 +2,11 @@
 
 
 int* foo() {
-	int* y;
+  int* y;
   int* z;
   y = (int*) malloc( sizeof( int ));
   z = y;
-	return y;
+  return y;
 }
 
 int main( int argc, char** argv ) {

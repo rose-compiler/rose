@@ -21,7 +21,7 @@ public:
 
   // supply 0, 2, 4 or 6 curves.
   TFIMapping(Mapping *left    =NULL,   // r_1=0
-	     Mapping *right   =NULL,   // r_1=1
+             Mapping *right   =NULL,   // r_1=1
 	     Mapping *bottom  =NULL,   // r_2=0
 	     Mapping *top     =NULL,   // r_2=1
 	     Mapping *front   =NULL,   // r_3=0
@@ -36,7 +36,7 @@ public:
 
   // supply 0, 2, 4 or 6 curves.
   int setSides(Mapping *left    =NULL,   // r_1=0
-	       Mapping *right   =NULL,   // r_1=1
+               Mapping *right   =NULL,   // r_1=1
 	       Mapping *bottom  =NULL,   // r_2=0
 	       Mapping *top     =NULL,   // r_2=1
 	       Mapping *front   =NULL,   // r_3=0
@@ -44,7 +44,7 @@ public:
 
   // set the interpolation type along each axis
   int setInterpolationType(const InterpolationType & direction1, 
-			   const InterpolationType & direction2 =linear, 
+                           const InterpolationType & direction2 =linear, 
 			   const InterpolationType & direction3 =linear);
 
   void map( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
@@ -79,7 +79,7 @@ public:
   int setMappingProperties();
 
   int checkEdge( const int & sideCurve1, const int & axisCurve1, const int & side1, const int & dir1, 
-		 const int & sideCurve2, const int & axisCurve2, const int & side2, const int & dir2 );
+                 const int & sideCurve2, const int & axisCurve2, const int & side2, const int & dir2 );
 
 
 

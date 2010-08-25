@@ -4665,10 +4665,10 @@ int Type_Of_Copy)
                Difference = APP_Global_Array_Base - Data_Base [temp];
                Data_Base [temp] += Difference;
                User_Base [temp] += Difference;
-	    // ... (10/31/96,kdb) also need to reset Global and Local_Mask_Index
-	   //  to be consistent with this ...
+            // ... (10/31/96,kdb) also need to reset Global and Local_Mask_Index
+           //  to be consistent with this ...
              }
-	  */
+          */
 
           // Mark the array as a temporary (very important step)
           this -> Is_A_Temporary = 1; 

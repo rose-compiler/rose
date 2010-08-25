@@ -72,10 +72,10 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
       SgStatement* parentStmt = isSgStatement(stmt->get_parent());
       cerr << "    @@@ parent == " << parentStmt->class_name() << endl;
       if (parentStmt && (
-			 isSgUpcForAllStatement(parentStmt) ||
+                         isSgUpcForAllStatement(parentStmt) ||
 			 isSgForStatement(parentStmt) ||
 			 isSgWhileStmt(parentStmt))) {
-	SgBasicBlock* bb = buildBasicBlock();
+        SgBasicBlock* bb = buildBasicBlock();
 	bb->set_parent(parentStmt);
 	bb->append_statement(fncall_enter);
 	bb->append_statement(stmt);

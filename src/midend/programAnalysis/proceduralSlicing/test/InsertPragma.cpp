@@ -83,7 +83,7 @@ void InsertPragma:: visit(SgNode* astNode){
 
 // move this function and do this after we know how many arguements we will need.
 void InsertPragma::createFunctionDeclaration(SgGlobal* global,
-					     list<SgNode*> var_list, SgFunctionDeclaration*& printf_func,
+                                             list<SgNode*> var_list, SgFunctionDeclaration*& printf_func,
 					     SgFunctionDeclaration*& fopen_func,
 					     SgFunctionDeclaration*& fclose_func){
   // create SgfunctionDeclaration 
@@ -188,7 +188,7 @@ void InsertPragma::createFunctionCallprintf(SgGlobal*& root,SgFunctionDeclaratio
   SgFunctionCallExp *  func_call_expr=new SgFunctionCallExp(SgNULL_FILE,func_ref_exp,
 							    exp_list_exp,func_type);
   SgFunctionCallExp* func_call = new SgFunctionCallExp(SgNULL_FILE,func_ref_exp,
-						       exp_list_exp, func_type);
+                                                       exp_list_exp, func_type);
   SgExpressionRoot* expr_root_func_call = new SgExpressionRoot();
   func_expr = new SgExprStatement(SgNULL_FILE, func_call_expr);
   func_call_expr->set_parent(func_expr->get_expression_root());

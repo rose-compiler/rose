@@ -1,6 +1,6 @@
 class X
    {
      int x;
-	  unsigned int:16;
+     unsigned int:16;
    };
 

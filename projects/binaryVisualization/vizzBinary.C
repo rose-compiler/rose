@@ -162,7 +162,7 @@ int initGL(string name,int pX, int pY) {
 
 
 void widenFields(unsigned int maxX, unsigned int maxY, int max,
-		 unsigned int pointsX, unsigned int pointsY) {
+                 unsigned int pointsX, unsigned int pointsY) {
 
   GLfloat maxHeightPatch[pointsX][pointsY];
   for (unsigned int x=0; x<maxX;x++) {
@@ -288,7 +288,7 @@ void widenFields(unsigned int maxX, unsigned int maxY, int max,
 
 
 void postProcess(unsigned int maxX,
-		 unsigned int maxY, int max,
+                 unsigned int maxY, int max,
 		 unsigned int& pointsX, unsigned int& pointsY) 
 {
 
@@ -359,7 +359,7 @@ void postProcess(unsigned int maxX,
 }
 
 void postProcess(array_type* arr, unsigned int maxX,
-		 unsigned int maxY, int max,
+                 unsigned int maxY, int max,
 		 unsigned int& pointsX, unsigned int& pointsY) 
 {
 
@@ -671,7 +671,7 @@ bool evaluateTwoFiles(array_type* arr1, array_type* arr2, array_type*& arr3,
 
 
 void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, int max,
-	       unsigned int& pointsX, unsigned int& pointsY) {
+               unsigned int& pointsX, unsigned int& pointsY) {
 
   GLfloat input[maxX][maxY][2];
   for (unsigned int x=0; x<maxX;x++) {
@@ -817,13 +817,13 @@ void saveFile(string filenC, unsigned int maxX, unsigned int maxY, int max,
 
 
 void displayAll( array_type* arr, int nrknots, int max,
-		 const unsigned int pointsX, const unsigned int pointsY) {
+                 const unsigned int pointsX, const unsigned int pointsY) {
   render(arr, pointsX, pointsY, nrknots, max);
   glutDisplayFunc(display);
 }
 
 void displayAll( int nrknots, int max,
-		 const unsigned int pointsX, const unsigned int pointsY) {
+                 const unsigned int pointsX, const unsigned int pointsY) {
   array_type* n=NULL;
   render(n,pointsX, pointsY, nrknots, max);
 
@@ -1105,11 +1105,11 @@ int main(int argc, char** argv) {
 	  string name2 = filesCoord[k];
 	  if (debug_me)
 	  cout << "\nEvaluating " << i << "/" << k << "/" << filesCoord.size()
-	       <<"  Binary and Visualizing footprint: " << name << " and " << name2 <<endl;
-	  if ((i%10)==0 && k==(i+1))
+               <<"  Binary and Visualizing footprint: " << name << " and " << name2 <<endl;
+          if ((i%10)==0 && k==(i+1))
 	  cerr << "\nEvaluating " << i << "/" << k << "/" << filesCoord.size()
-	       <<"  Binary and Visualizing footprint: " << name << " and " << name2 <<endl;
-	  element2 = getElement(name2);
+               <<"  Binary and Visualizing footprint: " << name << " and " << name2 <<endl;
+          element2 = getElement(name2);
 	  array2 = getArray(name2);
 	  if (element2!=NULL && array2!=NULL) {
 	    bool interesting = evaluateTwoFiles(array,array2,arrayDiff,maxX, maxY,  max,  pointsX, pointsY);

@@ -44,9 +44,9 @@ class TridiagonalSolver
   realArray matrixVectorMultiply( const realArray & d, const int & i1, const realArray & e);
 
   realArray multiply(const realArray & d, const Index & I1, const Index & I2, const Index & I3, 
-		     const realArray & e, const Index & J1, const Index & J2, const Index & J3);
+                     const realArray & e, const Index & J1, const Index & J2, const Index & J3);
   realArray matrixVectorMultiply(const realArray & d, const Index & I1, const Index & I2, const Index & I3, 
-				 realArray & e, const Index & J1, const Index & J2, const Index & J3);
+                                 realArray & e, const Index & J1, const Index & J2, const Index & J3);
 
   int blockFactor();
   int blockSolve(realArray & r);

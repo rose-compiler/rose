@@ -18,8 +18,6 @@ bool x86InstructionIsUnconditionalBranch(SgAsmx86Instruction* inst);
 bool x86InstructionIsConditionalBranch(SgAsmx86Instruction* inst);
 bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst);
 bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr);
-// SgAsmx86Instruction* x86GetInstructionDestination(SgAsmx86Instruction* inst); // Returns non-fallthrough destination
-// std::vector<SgAsmx86Instruction*> x86GetInstructionOutEdges(SgAsmx86Instruction* inst); // Returns all possible targets and fallthrough
 
 const char* regclassToString(X86RegisterClass n);
 const char* gprToString(X86GeneralPurposeRegister n);

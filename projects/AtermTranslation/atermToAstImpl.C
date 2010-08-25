@@ -23,16 +23,16 @@ string myUnparse(SgNode* n) {
     SgInitializer* init = initname->get_initializer();
     SgName name = initname->get_name();
     return string("") +
-	   initname->get_type()->unparseToString() +
-	   " " +
-	   (name.str() ? name.str() : "") +
-	   " " +
-	   (init ? string("= ") + init->unparseToString() : "");
+        initname->get_type()->unparseToString() +
+        " " +
+        (name.str() ? name.str() : "") +
+        " " +
+        (init ? string("= ") + init->unparseToString() : "");
   } else if (isSgFunctionParameterList(n)) {
     SgFunctionParameterList* pl = isSgFunctionParameterList(n);
     string result = "(";
     for (SgInitializedNamePtrList::iterator i = pl->get_args().begin();
-	 i != pl->get_args().end(); ++i)
+         i != pl->get_args().end(); ++i)
       result += string(i == pl->get_args().begin() ? "" : ", ") 
 	        + myUnparse(*i);
     result += ")";
@@ -42,7 +42,7 @@ string myUnparse(SgNode* n) {
   } else if (isSgClassDeclaration(n) && !(n->get_parent())) {
     return "FIXME: classdecl";
   } else if (isSgClassType(n) && 
-	     !(isSgClassType(n)->get_declaration()->get_parent())) {
+             !(isSgClassType(n)->get_declaration()->get_parent())) {
     return "FIXME: classtype";
   } else {
     return n->unparseToString();
@@ -277,13 +277,13 @@ class AtermToNodeConverter {
 	isSgFunctionDefinition(convertAtermToNode(temp3));
       SgFunctionType* ft = new SgFunctionType(return_type, false);
       for (SgInitializedNamePtrList::iterator i = pl->get_args().begin();
-	   i != pl->get_args().end(); ++i)
-	ft->get_arguments().push_back((*i)->get_type());
+           i != pl->get_args().end(); ++i)
+        ft->get_arguments().push_back((*i)->get_type());
       SgFunctionDeclaration* decl =
 	new SgFunctionDeclaration(fi, funcname.c_str(), ft, 0);
       for (SgInitializedNamePtrList::iterator i = pl->get_args().begin();
-	   i != pl->get_args().end(); ++i) {
-	(*i)->set_definition(decl);
+           i != pl->get_args().end(); ++i) {
+        (*i)->set_definition(decl);
 	decl->get_args().push_back(*i);
       }
       if (def)
@@ -512,10 +512,10 @@ SgNode* convertAtermToNode(ATerm term) {
   AtermToNodeConverter converter;
   SgNode* root = converter.convertAtermToNode(term);
   for (map<string, list<LinkUpdater*> >::iterator i = 
-	 converter.idUpdates.begin();
+           converter.idUpdates.begin();
        i != converter.idUpdates.end(); ++i) {
     for (list<LinkUpdater*>::iterator j = i->second.begin(); 
-	 j != i->second.end(); ++j) {
+         j != i->second.end(); ++j) {
       (*j)->update(converter.targetLocations[i->first]);
     }
   }

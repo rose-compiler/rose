@@ -333,14 +333,14 @@ RuntimeSystem_roseGatherTypes( int type_count, va_list vl ) {
     int indirection_level = va_arg( vl, int );
 
     types.push_back( RuntimeSystem_getRsType(
-					     type_name, base_type_name, indirection_level ));
+                                             type_name, base_type_name, indirection_level ));
   }
 
   return types;
 }
 
 void RuntimeSystem_roseAssertFunctionSignature(
-					       const char* filename, const char* line, const char* lineTransformed,
+                                               const char* filename, const char* line, const char* lineTransformed,
 					       const char* name, int type_count, ... ) {
 
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
@@ -384,7 +384,7 @@ int
 RuntimeSystem_isInterestingFunctionCall(const char* name) {
   int interesting=0;//false;
   if ( ( strcmp(name,"memcpy")==0 ||
-	 strcmp(name ,"memmove")==0 ||
+         strcmp(name ,"memmove")==0 ||
 	 strcmp(name ,"strcpy")==0 ||
 	 strcmp(name ,"strncpy")==0 ||
 	 strcmp(name ,"strcat")==0 ||
@@ -424,8 +424,8 @@ RuntimeSystem_isInterestingFunctionCall(const char* name) {
 #define HANDLE_STRING_CONSTANT( i )					\
   if( isdigit(  args[ i + 1 ][0]))					\
     RuntimeSystem_ensure_allocated_and_initialized(			\
-						   args[ i ], strtol( args[ i + 1 ], NULL, 10) \
-									      );
+                                                   args[ i ], strtol( args[ i + 1 ], NULL, 10) \
+                                                   );
 void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t size) {
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
@@ -442,13 +442,13 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
   rs->checkMemWrite( (addr_type) mem, size);
 }
 
-#define NUM_ARG( i )							\
-  strtol(								\
-	 i < argsSize - 1 && isdigit( args[ i + 1 ][ 0 ])		\
-	 ? args[ i + 1 ] : args[ i ],					\
-	 NULL,								\
-	 10								\
-									      )
+#define NUM_ARG( i )                                                    \
+  strtol(                                                               \
+         i < argsSize - 1 && isdigit( args[ i + 1 ][ 0 ])               \
+         ? args[ i + 1 ] : args[ i ],                                   \
+         NULL,                                                          \
+         10                                                             \
+         )
     
 
 /*********************************************************
@@ -466,7 +466,7 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
  ********************************************************/
 void
 RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, int argsSize,
-					 const char* filename, const char* line,
+                                         const char* filename, const char* line,
 					 const char* lineTransformed,
 					 const char* stmtStr, const char* leftHandSideVar) {
 
@@ -481,7 +481,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 
     if( 0 == strcmp("memcpy", fname)) {
       rs->check_memcpy(
-		       (void*) args[0], 
+                       (void*) args[0], 
 		       (const void*) args[2], 
 		       (int) NUM_ARG( 4)
 		       );
@@ -496,7 +496,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
       HANDLE_STRING_CONSTANT( 2);
 
       rs->check_strcpy(
-		       (char*) args[0],
+                       (char*) args[0],
 		       (const char*) args[2]
 		       );
     } else if ( 0 == strcmp("strncpy", fname)) {
@@ -510,7 +510,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
       HANDLE_STRING_CONSTANT( 2);
 
       rs->check_strcat(
-		       (char*) args[0], 
+                       (char*) args[0], 
 		       (const char*) args[2]
 		       );
     } else if ( 0 == strcmp("strncat", fname)) {
@@ -521,7 +521,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 			);
     } else if ( 0 == strcmp("strchr", fname)) {
       rs->check_strchr(
-		       (const char*) args[0], 
+                       (const char*) args[0], 
 		       (int) NUM_ARG( 2)
 		       );
     } else if ( 0 == strcmp("strpbrk", fname)) {
@@ -531,17 +531,17 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 			);
     } else if ( 0 == strcmp("strspn", fname)) {
       rs->check_strspn(
-		       (const char*) args[0], 
+                       (const char*) args[0], 
 		       (const char*) args[2]
 		       );
     } else if ( 0 == strcmp("strstr", fname)) {
       rs->check_strstr(
-		       (const char*) args[0], 
+                       (const char*) args[0], 
 		       (const char*) args[2]
 		       );
     } else if ( 0 == strcmp("strlen", fname)) {
       rs->check_strlen(
-		       (const char*) args[0]
+                       (const char*) args[0]
 		       );
     } else {
       cerr << "Function " << fname << " not yet handled." << endl;
@@ -569,7 +569,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
  ********************************************************/
 void
 RuntimeSystem_roseIOFunctionCall(const char* fname,
-				 const char* filename, const char* line, const char* lineTransformed,
+                                 const char* filename, const char* line, const char* lineTransformed,
 				 const char* stmtStr, const char* leftHandSideVar, void* file,
 				 const char* arg1, const char* arg2) {
 
@@ -646,8 +646,8 @@ RuntimeSystem_roseIOFunctionCall(const char* fname,
        else
 	 rs -> checkFileAccess((std::fstream&) file,false /* is_read? */);
 #else
-	        cerr <<" fstream unhandled . " << arg1 << endl;
-	 abort();
+         cerr <<" fstream unhandled . " << arg1 << endl;
+         abort();
 #endif
     }
 
@@ -838,7 +838,7 @@ int RuntimeSystem_roseCreateObject(
  ********************************************************/
 int
 RuntimeSystem_roseInitVariable(
-			       const char* type,
+                               const char* type,
 			       const char* base_type,
 			       size_t indirection_level,
 			       const char* class_name,
@@ -855,7 +855,7 @@ RuntimeSystem_roseInitVariable(
 
   std::string message = "   Init Var at address:  "+HexToString(address)+"  type:"
     +type+ "   size: " + ToString(size);
-	 rs->printMessage(message);
+  rs->printMessage(message);
 
 
     RsType* rs_type = 
@@ -1034,8 +1034,8 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 
 void
 RuntimeSystem_roseFreeMemory(
-			     void* ptr,
-           int fromMalloc,
+                             void* ptr,
+                             int fromMalloc,
 			     const char* filename,
 			     const char* line,
 			     const char* lineTransformed
@@ -1051,7 +1051,7 @@ RuntimeSystem_roseFreeMemory(
 
 void
 RuntimeSystem_roseReallocateMemory(
-				   void* ptr,
+                                   void* ptr,
 				   unsigned long int size,
 				   const char* filename,
 				   const char* line,

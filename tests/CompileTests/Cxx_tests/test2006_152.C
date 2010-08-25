@@ -15,7 +15,7 @@ struct __gconv_step_data
 {
   unsigned char *__outbuf;    /* Output buffer for this step.  */
   unsigned char *__outbufend; /* Address of first byte after the output
-				 buffer.  */
+                                 buffer.  */
 
   /* Is this the last module in the chain.  */
   int __flags;
@@ -30,7 +30,7 @@ struct __gconv_step_data
 #if 0
   __mbstate_t *__statep;
   __mbstate_t __state;	/* This element must not be used directly by
-			   any module; always use STATEP!  */
+                           any module; always use STATEP!  */
 
   /* Transliteration information.  */
   struct __gconv_trans_data *__trans;

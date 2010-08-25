@@ -285,7 +285,8 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         get_segment_entry()->dump(f, p, -1);
 
     if (p_linked_section) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to", p_linked_section->get_id(), p_linked_section->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to",
+                p_linked_section->get_id(), p_linked_section->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }

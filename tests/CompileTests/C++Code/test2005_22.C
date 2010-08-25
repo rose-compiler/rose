@@ -83,7 +83,7 @@ void Insert:: visit(SgNode* astNode){
       SgStatement *g = isSgStatement(astNode);
       cout << "g is a sgStatement and a return statement" << g->unparseToString() << endl;
       MiddleLevelRewrite::insert(g, "int z_:", MidLevelCollectionTypedefs::SurroundingScope,
-				 MidLevelCollectionTypedefs::BeforeCurrentPosition);
+                                 MidLevelCollectionTypedefs::BeforeCurrentPosition);
     } 
   }
 }

@@ -117,16 +117,16 @@ GenRepresentation::endNode (TypeOfPrint printType)
 /*
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  string variable,
-				  string variableReferenceName)
+                                  string variable,
+                                  string variableReferenceName)
 {
   string returnString;
    if (variableReferenceName.length () > 0)
-	returnString =
-	  " |  <" + variableReferenceName + ">  " + variableType + " " +
-	  variableName;
+        returnString =
+          " |  <" + variableReferenceName + ">  " + variableType + " " +
+          variableName;
       else
-	returnString = " |" + variableType + " " + variableName;
+        returnString = " |" + variableType + " " + variableName;
       (*dotout) << returnString;
 //    }
   if (variable.length() > 0)

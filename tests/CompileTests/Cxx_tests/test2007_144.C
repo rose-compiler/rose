@@ -1,20 +1,20 @@
 /*
-Bug name:	omitted-qualifier3
+Bug name:       omitted-qualifier3
 
-Reported by:	Brian White
+Reported by:    Brian White
 
-Date:		Sep 30, 2007
+Date:           Sep 30, 2007
 
 Date sent:      Sep 30, 2007
 
 E-mail subject: more SPEC 2006 bugs
 
-Occurs in:  	SPEC CPU 2006 483.xalancbmk/src/XercesParserLiaison.cpp
- 			      483.xalancbmk/src/XercesDocumentWrapper.cpp
- 			      483.xalancbmk/src/XalanSourceTreeParserLiasion.cpp
+Occurs in:      SPEC CPU 2006 483.xalancbmk/src/XercesParserLiaison.cpp
+                              483.xalancbmk/src/XercesDocumentWrapper.cpp
+                              483.xalancbmk/src/XalanSourceTreeParserLiasion.cpp
 
 
-Brief description:  	A class DOMImplementationType within scope foo
+Brief description:      A class DOMImplementationType within scope foo
                         is typedef'ed to DOMImplementation in global scope.
                         When DOMImplementation is used as a qualifier,
                         the backend substitutes DOMImplementationType
@@ -23,7 +23,7 @@ Brief description:  	A class DOMImplementationType within scope foo
 
 Files
 -----
-bug.cc		Invocation of static method with qualifier:
+bug.cc          Invocation of static method with qualifier:
 
                 DOMImplementation::getImplementation();
 
@@ -40,7 +40,7 @@ rose_bug.cc:20: error: (Each undeclared identifier is reported only once for
 rose_bug.cc:20: error: syntax error before `::' token
 
 
-rose_bug.cc	Contains the backend output of bug.cc.  Notice that the
+rose_bug.cc     Contains the backend output of bug.cc.  Notice that the
                 invocation does not have the required qualifier foo:
 
                 DOMImplementationType::getImplementation();

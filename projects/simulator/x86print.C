@@ -175,22 +175,270 @@ print_leave(FILE *f, char fmt, const ArgInfo *info)
                                        TF(EBUSY), TF(EEXIST), TF(EXDEV), TF(ENODEV), TF(ENOTDIR), TF(EISDIR), TF(EINVAL),
                                        TF(ENFILE), TF(EMFILE), TF(ENOTTY), TF(ETXTBSY), TF(EFBIG), TF(ENOSPC), TF(ESPIPE),
                                        TF(EROFS), TF(EMLINK), TF(EPIPE), TF(EDOM), TF(ERANGE), TF(EDEADLK), TF(ENAMETOOLONG),
-                                       TF(ENOLCK), TF(ENOSYS), TF(ENOTEMPTY), TF(ELOOP), TF(ENOMSG), TF(EIDRM), TF(ECHRNG),
-                                       TF(EL2NSYNC), TF(EL3HLT), TF(EL3RST), TF(ELNRNG), TF(EUNATCH), TF(ENOCSI), TF(EL2HLT),
-                                       TF(EBADE), TF(EBADR), TF(EXFULL), TF(ENOANO), TF(EBADRQC), TF(EBADSLT), TF(EBFONT),
-                                       TF(ENOSTR), TF(ENODATA), TF(ETIME), TF(ENOSR), TF(ENONET), TF(ENOPKG), TF(EREMOTE),
-                                       TF(ENOLINK), TF(EADV), TF(ESRMNT), TF(ECOMM), TF(EPROTO), TF(EMULTIHOP), TF(EDOTDOT),
-                                       TF(EBADMSG), TF(EOVERFLOW), TF(ENOTUNIQ), TF(EBADFD), TF(EREMCHG), TF(ELIBACC),
-                                       TF(ELIBBAD), TF(ELIBSCN), TF(ELIBMAX), TF(ELIBEXEC), TF(EILSEQ), TF(ERESTART),
-                                       TF(ESTRPIPE), TF(EUSERS), TF(ENOTSOCK), TF(EDESTADDRREQ), TF(EMSGSIZE), TF(EPROTOTYPE),
-                                       TF(ENOPROTOOPT), TF(EPROTONOSUPPORT), TF(ESOCKTNOSUPPORT), TF(EOPNOTSUPP), TF(EPFNOSUPPORT),
-                                       TF(EAFNOSUPPORT), TF(EADDRINUSE), TF(EADDRNOTAVAIL), TF(ENETDOWN), TF(ENETUNREACH),
-                                       TF(ENETRESET), TF(ECONNABORTED), TF(ECONNRESET), TF(ENOBUFS), TF(EISCONN), TF(ENOTCONN),
-                                       TF(ESHUTDOWN), TF(ETOOMANYREFS), TF(ETIMEDOUT), TF(ECONNREFUSED), TF(EHOSTDOWN),
-                                       TF(EHOSTUNREACH), TF(EALREADY), TF(EINPROGRESS), TF(ESTALE), TF(EUCLEAN), TF(ENOTNAM),
-                                       TF(ENAVAIL), TF(EISNAM), TF(EREMOTEIO), TF(EDQUOT), TF(ENOMEDIUM), TF(EMEDIUMTYPE),
-                                       TF(ECANCELED), TF(ENOKEY), TF(EKEYEXPIRED), TF(EKEYREVOKED), TF(EKEYREJECTED),
-                                       TF(EOWNERDEAD), TF(ENOTRECOVERABLE), T_END };
+                                       TF(ENOLCK), TF(ENOSYS), TF(ENOTEMPTY), TF(ELOOP), TF(ENOMSG), TF(EIDRM),
+#ifdef ECHRNG
+                                       TF(ECHRNG),
+#endif
+#ifdef EL2NSYNC
+                                       TF(EL2NSYNC),
+#endif
+#ifdef EL3HLT
+                                       TF(EL3HLT),
+#endif
+#ifdef EL3RST
+                                       TF(EL3RST),
+#endif
+#ifdef ELNRNG
+                                       TF(ELNRNG),
+#endif
+#ifdef EUNATCH
+                                       TF(EUNATCH),
+#endif
+#ifdef ENOCSI
+                                       TF(ENOCSI),
+#endif
+#ifdef EL2HLT
+                                       TF(EL2HLT),
+#endif
+#ifdef EBADE
+                                       TF(EBADE),
+#endif
+#ifdef EBADR
+                                       TF(EBADR),
+#endif
+#ifdef EXFULL
+                                       TF(EXFULL),
+#endif
+#ifdef ENOANO
+                                       TF(ENOANO),
+#endif
+#ifdef EBADRQC
+                                       TF(EBADRQC),
+#endif
+#ifdef EBADSLT
+                                       TF(EBADSLT),
+#endif
+#ifdef EBFONT
+                                       TF(EBFONT),
+#endif
+#ifdef ENOSTR
+                                       TF(ENOSTR),
+#endif
+#ifdef ENODATA
+                                       TF(ENODATA),
+#endif
+#ifdef ETIME
+                                       TF(ETIME),
+#endif
+#ifdef ENOSR
+                                       TF(ENOSR),
+#endif
+#ifdef ENONET
+                                       TF(ENONET),
+#endif
+#ifdef ENOPKG
+                                       TF(ENOPKG),
+#endif
+#ifdef EREMOTE
+                                       TF(EREMOTE),
+#endif
+
+#ifdef ENOLINK
+                                       TF(ENOLINK),
+#endif
+#ifdef EADV
+                                       TF(EADV),
+#endif
+#ifdef ESRMNT
+                                       TF(ESRMNT),
+#endif
+#ifdef ECOMM
+                                       TF(ECOMM),
+#endif
+#ifdef EPROTO
+                                       TF(EPROTO),
+#endif
+#ifdef EMULTIHOP
+                                       TF(EMULTIHOP),
+#endif
+#ifdef EDOTDOT
+                                       TF(EDOTDOT),
+#endif
+#ifdef EBADMSG
+                                       TF(EBADMSG),
+#endif
+#ifdef EOVERFLOW
+                                       TF(EOVERFLOW),
+#endif
+#ifdef ENOTUNIQ
+                                       TF(ENOTUNIQ),
+#endif
+#ifdef EBADFD
+                                       TF(EBADFD),
+#endif
+#ifdef EREMCHG
+                                       TF(EREMCHG),
+#endif
+#ifdef ELIBACC
+                                       TF(ELIBACC),
+#endif
+#ifdef ELIBBAD
+                                       TF(ELIBBAD),
+#endif
+#ifdef ELIBSCN
+                                       TF(ELIBSCN),
+#endif
+#ifdef ELIBMAX
+                                       TF(ELIBMAX),
+#endif
+#ifdef ELIBEXEC
+                                       TF(ELIBEXEC),
+#endif
+#ifdef EILSEQ
+                                       TF(EILSEQ),
+#endif
+#ifdef ERESTART
+                                       TF(ERESTART),
+#endif
+#ifdef ESTRPIPE
+                                       TF(ESTRPIPE),
+#endif
+#ifdef EUSERS
+                                       TF(EUSERS),
+#endif
+#ifdef ENOTSOCK
+                                       TF(ENOTSOCK),
+#endif
+#ifdef EDESTADDRREQ
+                                       TF(EDESTADDRREQ),
+#endif
+#ifdef EMSGSIZE
+                                       TF(EMSGSIZE),
+#endif
+#ifdef EPROTOTYPE
+                                       TF(EPROTOTYPE),
+#endif
+#ifdef ENOPROTOOPT
+                                       TF(ENOPROTOOPT),
+#endif
+#ifdef EPROTONOSUPPORT
+                                       TF(EPROTONOSUPPORT),
+#endif
+#ifdef ESOCKTNOSUPPORT
+                                       TF(ESOCKTNOSUPPORT),
+#endif
+#ifdef EOPNOTSUPP
+                                       TF(EOPNOTSUPP),
+#endif
+#ifdef EPFNOSUPPORT
+                                       TF(EPFNOSUPPORT),
+#endif
+#ifdef EAFNOSUPPORT
+                                       TF(EAFNOSUPPORT),
+#endif
+#ifdef EADDRINUSE
+                                       TF(EADDRINUSE),
+#endif
+#ifdef EADDRNOTAVAIL
+                                       TF(EADDRNOTAVAIL),
+#endif
+#ifdef ENETDOWN
+                                       TF(ENETDOWN),
+#endif
+#ifdef ENETUNREACH
+                                       TF(ENETUNREACH),
+#endif
+#ifdef ENETRESET
+                                       TF(ENETRESET),
+#endif
+#ifdef ECONNABORTED
+                                       TF(ECONNABORTED),
+#endif
+#ifdef ECONNRESET
+                                       TF(ECONNRESET),
+#endif
+#ifdef ENOBUFS
+                                       TF(ENOBUFS),
+#endif
+#ifdef EISCONN
+                                       TF(EISCONN),
+#endif
+#ifdef ENOTCONN
+                                       TF(ENOTCONN),
+#endif
+#ifdef ESHUTDOWN
+                                       TF(ESHUTDOWN),
+#endif
+#ifdef ETOOMANYREFS
+                                       TF(ETOOMANYREFS),
+#endif
+#ifdef ETIMEDOUT
+                                       TF(ETIMEDOUT),
+#endif
+#ifdef ECONNREFUSED
+                                       TF(ECONNREFUSED),
+#endif
+#ifdef EHOSTDOWN
+                                       TF(EHOSTDOWN),
+#endif
+#ifdef EHOSTUNREACH
+                                       TF(EHOSTUNREACH),
+#endif
+#ifdef EALREADY
+                                       TF(EALREADY),
+#endif
+#ifdef EINPROGRESS
+                                       TF(EINPROGRESS),
+#endif
+#ifdef ESTALE
+                                       TF(ESTALE),
+#endif
+#ifdef EUCLEAN
+                                       TF(EUCLEAN),
+#endif
+#ifdef ENOTNAM
+                                       TF(ENOTNAM),
+#endif
+#ifdef ENAVAIL
+                                       TF(ENAVAIL),
+#endif
+#ifdef EISNAM
+                                       TF(EISNAM),
+#endif
+#ifdef EREMOTEIO
+                                       TF(EREMOTEIO),
+#endif
+#ifdef EDQUOT
+                                       TF(EDQUOT),
+#endif
+#ifdef ENOMEDIUM
+                                       TF(ENOMEDIUM),
+#endif
+#ifdef EMEDIUMTYPE
+                                       TF(EMEDIUMTYPE),
+#endif
+#ifdef ECANCELED
+                                       TF(ECANCELED),
+#endif
+#ifdef ENOKEY
+                                       TF(ENOKEY),
+#endif
+#ifdef EKEYEXPIRED
+                                       TF(EKEYEXPIRED),
+#endif
+#ifdef EKEYREVOKED
+                                       TF(EKEYREVOKED),
+#endif
+#ifdef EKEYREJECTED
+                                       TF(EKEYREJECTED),
+#endif
+#ifdef EOWNERDEAD
+                                       TF(EOWNERDEAD),
+#endif
+#ifdef ENOTRECOVERABLE
+                                       TF(ENOTRECOVERABLE),
+#endif
+                                       T_END };
         retval += fprintf(f, "%"PRId32" ", info->val);
         retval += print_enum(f, t, en);
         retval += fprintf(f, " (%s)\n", strerror(en));

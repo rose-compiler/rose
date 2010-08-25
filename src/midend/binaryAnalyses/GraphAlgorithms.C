@@ -6,7 +6,7 @@ using namespace std;
 
 SgGraphNode*
 GraphAlgorithms::getDefinitionForUsage(RoseBin_Graph* vizzGraph,
-				       SgGraphNode* node) {
+                                       SgGraphNode* node) {
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
     vizzGraph->get_node_index_to_edge_multimap_edgesIn().equal_range(node->get_index());
@@ -84,7 +84,7 @@ GraphAlgorithms::getDirectCFGPredecessors(RoseBin_Graph* vizzGraph,
 
 bool
 GraphAlgorithms::isDirectCFGEdge(SgGraphNode* sgNode,
-				       SgGraphNode* sgNodeBefore) {
+                                 SgGraphNode* sgNodeBefore) {
   bool isDirectedControlFlowEdge = false;
   SgAsmInstruction* instSgNode = isSgAsmInstruction(sgNode->get_SgNode());
   SgAsmInstruction* instSgNodeBefore = isSgAsmInstruction(sgNodeBefore->get_SgNode());
@@ -118,7 +118,7 @@ GraphAlgorithms::isDirectCFGEdge(SgGraphNode* sgNode,
 
 bool
 GraphAlgorithms::isValidCFGEdge(SgGraphNode* sgNode,
-				       SgGraphNode* sgNodeBefore) {
+                                SgGraphNode* sgNodeBefore) {
   if (!sgNode || !sgNodeBefore)
     return false;
   //  bool isAUnconditionalControlTransfer = false;
@@ -156,7 +156,7 @@ GraphAlgorithms::isValidCFGEdge(SgGraphNode* sgNode,
 	//if (!isAsmUnconditionalBranch(nodeBeforeInSet))
 	if (RoseBin_support::DEBUG_MODE())
 	cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
-	 isDirectedControlFlowEdge = true;
+        isDirectedControlFlowEdge = true;
       }
       if (RoseBin_support::DEBUG_MODE()) {
       cout << " *** f1 && f2 -- isDirectionalControlFlowEdge: " << isDirectedControlFlowEdge << endl;

@@ -5,15 +5,15 @@ typedef unsigned int size_t;
 MPI_Status status;
 main(int argc, char **argv) 
 {
-int	numtasks, 		/* total number of MPI process in partitiion */
-	numworkers,		/* number of worker tasks */
-	taskid;			/* task identifier */
-		#pragma SliceTarget
+        int     numtasks,               /* total number of MPI process in partitiion */
+                numworkers,             /* number of worker tasks */
+                taskid;                 /* task identifier */
+                #pragma SliceTarget
 MPI_Init(&argc, &argv);
-		#pragma SliceTarget
+                #pragma SliceTarget
 MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
-		#pragma SliceTarget
+                #pragma SliceTarget
 MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
-		#pragma SliceTarget
-  MPI_Finalize();
+                #pragma SliceTarget
+MPI_Finalize();
 }

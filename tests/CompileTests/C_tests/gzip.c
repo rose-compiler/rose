@@ -1,67 +1,67 @@
 typedef void *voidp;
 typedef char * __gnuc_va_list;
-extern	struct	_iobuf {
-	int	_cnt;
-	unsigned char *_ptr;
-	unsigned char *_base;
-	int	_bufsiz;
-	short	_flag;
-	char	_file;		 
+extern  struct  _iobuf {
+        int     _cnt;
+        unsigned char *_ptr;
+        unsigned char *_base;
+        int     _bufsiz;
+        short   _flag;
+        char    _file;           
 } _iob[];
 
-extern int 	fprintf  (struct _iobuf  *, char *, ...)  ;
+extern int      fprintf  (struct _iobuf  *, char *, ...)  ;
 extern int fclose(struct _iobuf  *);
 extern int system(const char*);
 /*extern int mkdir(const* char, int);*/
 extern int _flsbuf(unsigned char, struct _iobuf  *);
-extern int 	printf  (char *, ...)  ;
+extern int      printf  (char *, ...)  ;
 extern int memcmp(void*, void*, int);
-extern int 	fflush  (struct _iobuf  *)  ;
+extern int      fflush  (struct _iobuf  *)  ;
 extern void perror(const char*);
 extern void* memcpy(void*,void*, int);
 extern void* memset(void*,void*,int);
 
 
-extern struct _iobuf 	*fopen  (const char *, const char *)  ;
-extern struct _iobuf 	*fdopen  (int, const char *)  ;
-extern struct _iobuf 	*freopen  (const char *, const char *, struct _iobuf  *)  ;
-extern struct _iobuf 	*popen  (const char *, const char *)  ;
-extern struct _iobuf 	*tmpfile();
-extern long	ftell  (struct _iobuf  *)  ;
-extern char	*fgets  (char *, int, struct _iobuf  *)  ;
-extern char	*gets  (char *)  ;
-extern char	*sprintf  (char *, const char *, ...)  ;
-extern char	*ctermid  (char *)  ;
-extern char	*cuserid  (char *)  ;
-extern char	*tempnam  (const char *, const char *)  ;
-extern char	*tmpnam  (char *)  ;
-typedef	int		sigset_t;	 
-typedef	unsigned int	speed_t;	 
-typedef	unsigned long	tcflag_t;	 
-typedef	unsigned char	cc_t;		 
-typedef	int		pid_t;		 
-typedef	unsigned short	mode_t;		 
-typedef	short		nlink_t;	 
-typedef	long		clock_t;	 
-typedef	long		time_t;		 
-typedef /*long*/ unsigned int size_t;		 
-typedef int ptrdiff_t;	 
-typedef short unsigned int wchar_t;	 
-extern char *	strcat  (char *, const char *)  ;
-extern char *	strchr  (const char *, int)  ;
-extern int	strcmp  (const char *, const char *)  ;
-extern char *	strcpy  (char *, const char *)  ;
-extern size_t	strcspn  (const char *, const char *)  ;
-extern char *	strdup  (const char *)  ;
-extern size_t	strlen  (const char *)  ;
-extern char *	strncat  (char *, const char *, long unsigned int )  ;
-extern int	strncmp  (const char *, const char *, long unsigned int )  ;
-extern char *	strncpy  (char *, const char *, long unsigned int )  ;
-extern char *	strpbrk  (const char *, const char *)  ;
-extern char *	strrchr  (const char *, int)  ;
-extern size_t	strspn  (const char *, const char *)  ;
-extern char *	strstr  (const char *, const char *)  ;
-extern char *	strtok  (char *, const char *)  ;
+extern struct _iobuf    *fopen  (const char *, const char *)  ;
+extern struct _iobuf    *fdopen  (int, const char *)  ;
+extern struct _iobuf    *freopen  (const char *, const char *, struct _iobuf  *)  ;
+extern struct _iobuf    *popen  (const char *, const char *)  ;
+extern struct _iobuf    *tmpfile();
+extern long     ftell  (struct _iobuf  *)  ;
+extern char     *fgets  (char *, int, struct _iobuf  *)  ;
+extern char     *gets  (char *)  ;
+extern char     *sprintf  (char *, const char *, ...)  ;
+extern char     *ctermid  (char *)  ;
+extern char     *cuserid  (char *)  ;
+extern char     *tempnam  (const char *, const char *)  ;
+extern char     *tmpnam  (char *)  ;
+typedef int             sigset_t;        
+typedef unsigned int    speed_t;         
+typedef unsigned long   tcflag_t;        
+typedef unsigned char   cc_t;            
+typedef int             pid_t;           
+typedef unsigned short  mode_t;          
+typedef short           nlink_t;         
+typedef long            clock_t;         
+typedef long            time_t;          
+typedef /*long*/ unsigned int size_t;            
+typedef int ptrdiff_t;   
+typedef short unsigned int wchar_t;      
+extern char *   strcat  (char *, const char *)  ;
+extern char *   strchr  (const char *, int)  ;
+extern int      strcmp  (const char *, const char *)  ;
+extern char *   strcpy  (char *, const char *)  ;
+extern size_t   strcspn  (const char *, const char *)  ;
+extern char *   strdup  (const char *)  ;
+extern size_t   strlen  (const char *)  ;
+extern char *   strncat  (char *, const char *, long unsigned int )  ;
+extern int      strncmp  (const char *, const char *, long unsigned int )  ;
+extern char *   strncpy  (char *, const char *, long unsigned int )  ;
+extern char *   strpbrk  (const char *, const char *)  ;
+extern char *   strrchr  (const char *, int)  ;
+extern size_t   strspn  (const char *, const char *)  ;
+extern char *   strstr  (const char *, const char *)  ;
+extern char *   strtok  (char *, const char *)  ;
 typedef unsigned char  uch;
 typedef unsigned short ush;
 typedef unsigned long  ulg;
@@ -93,17 +93,17 @@ extern int level;
 extern int test;            
 extern int to_stdout;       
 extern int save_orig_name;  
-	 
+         
 extern int zip         (int in, int out)  ;
 extern int file_read   (char *buf,  unsigned size)  ;
-	 
+         
 extern int unzip       (int in, int out)  ;
 extern int check_zipfile  (int in)  ;
-	 
+         
 extern int unpack      (int in, int out)  ;
-	 
+         
 extern int unlzh       (int in, int out)  ;
-	 
+         
 void  abort_gzip  (void)  ;
 void lm_init  (int pack_level, ush *flags)  ;
 ulg  deflate  (void)  ;
@@ -116,7 +116,7 @@ unsigned bi_reverse  (unsigned value, int length)  ;
 void     bi_windup   (void)  ;
 void     copy_block  (char *buf, unsigned len, int header)  ;
 extern   int (*read_buf)  (char *buf, unsigned size)  ;
-	 
+         
 extern int copy            (int in, int out)  ;
 extern ulg  updcrc         (uch *s, unsigned n)  ;
 extern void clear_bufs     (void)  ;
@@ -134,7 +134,7 @@ extern void read_error     (void)  ;
 extern void write_error    (void)  ;
 extern void display_ratio  (long num, long den, struct _iobuf  *file)  ;
 extern voidp xmalloc       (unsigned int size)  ;
-	 
+         
 extern int inflate  (void)  ;
 static  file_t zfile;  
 static  unsigned short bi_buf;
@@ -147,7 +147,7 @@ void bi_init (zipfile)
     bi_buf = 0;
     bi_valid = 0;
     if (zfile != (-1) ) {
-	read_buf  = file_read;
+        read_buf  = file_read;
     }
 }
 void send_bits(value, length)
@@ -196,7 +196,7 @@ void copy_block(buf, len, header)
         { if (outcnt < 16384 -2) { outbuf[outcnt++] = (uch) (( (ush)~len ) & 0xff); outbuf[outcnt++] = (uch) ((ush)( (ush)~len ) >> 8); } else { {outbuf[outcnt++]=(uch)( (uch)(( (ush)~len ) & 0xff) ); if (outcnt==16384 ) flush_outbuf();} ; {outbuf[outcnt++]=(uch)( (uch)((ush)( (ush)~len ) >> 8) ); if (outcnt==16384 ) flush_outbuf();} ; } } ;
     }
     while (len--) {
-	{outbuf[outcnt++]=(uch)( *buf++ ); if (outcnt==16384 ) flush_outbuf();} ;
+        {outbuf[outcnt++]=(uch)( *buf++ ); if (outcnt==16384 ) flush_outbuf();} ;
     }
 }
 extern int maxbits;       
@@ -258,7 +258,7 @@ void lm_init (pack_level, flags)
     strstart = 0;
     block_start = 0L;
     lookahead = read_buf((char*)window,
-			 sizeof(int) <= 2 ? (unsigned)0x8000  : 2*0x8000 );
+                         sizeof(int) <= 2 ? (unsigned)0x8000  : 2*0x8000 );
     if (lookahead == 0 ) /* || lookahead == (unsigned)(-1) ) */ {
        eofile = 1, lookahead = 0;
        return;
@@ -308,7 +308,7 @@ int longest_match(cur_match)
             scan_end   = scan[best_len];
         }
     } while ((cur_match = prev[cur_match & (0x8000 -1) ]) > limit
-	     && --chain_length != 0);
+             && --chain_length != 0);
     return best_len;
 }
 static  void fill_window()
@@ -358,25 +358,25 @@ static  ulg deflate_fast()
              ;
             flush = ct_tally(strstart-match_start, match_length - 3 );
             lookahead -= match_length;
-	     
+             
             if (match_length <= max_lazy_match ) {
                 match_length--;  
                 do {
                     strstart++;
                     (( ins_h  = ((( ins_h )<<((15 +3 -1)/3 ) ) ^ (  window[( strstart ) + 3 -1] )) & ((unsigned)(1<<15 ) -1) ) , prev[( strstart ) & (0x8000 -1) ] =   hash_head  = (prev+0x8000 ) [ins_h], (prev+0x8000 ) [ins_h] = ( strstart )) ;
                 } while (--match_length != 0);
-	        strstart++; 
+                strstart++; 
             } else {
-	        strstart += match_length;
-	        match_length = 0;
-	        ins_h = window[strstart];
-	        ( ins_h  = ((( ins_h )<<((15 +3 -1)/3 ) ) ^ (  window[strstart+1] )) & ((unsigned)(1<<15 ) -1) ) ;
+                strstart += match_length;
+                match_length = 0;
+                ins_h = window[strstart];
+                ( ins_h  = ((( ins_h )<<((15 +3 -1)/3 ) ) ^ (  window[strstart+1] )) & ((unsigned)(1<<15 ) -1) ) ;
             }
         } else {
              ;
             flush = ct_tally (0, window[strstart]);
             lookahead--;
-	    strstart++; 
+            strstart++; 
         }
         if (flush) flush_block(block_start >= 0L ? (char*)&window[(unsigned)block_start] : (char*)0 , (long)strstart - block_start, ( 0 )) , block_start = strstart;
         while (lookahead < (258 +3 +1)  && !eofile) fill_window();
@@ -446,14 +446,14 @@ struct option
   int val;
 };
 extern int getopt_long (int argc, char *const *argv, const char *shortopts,
-		        const struct option *longopts, int *longind);
+                        const struct option *longopts, int *longind);
 extern int getopt_long_only (int argc, char *const *argv,
-			     const char *shortopts,
-		             const struct option *longopts, int *longind);
+                             const char *shortopts,
+                             const struct option *longopts, int *longind);
 extern int _getopt_internal (int argc, char *const *argv,
-			     const char *shortopts,
-		             const struct option *longopts, int *longind,
-			     int long_only);
+                             const char *shortopts,
+                             const struct option *longopts, int *longind,
+                             int long_only);
 char *optarg = 0;
 int optind = 0;
 static char *nextchar;
@@ -484,7 +484,7 @@ my_index (str, chr)
   while (*str)
     {
       if (*str == chr)
-	return (char *) str;
+        return (char *) str;
       str++;
     }
   return 0;
@@ -531,68 +531,68 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
       first_nonopt = last_nonopt = optind = 1;
       nextchar = 0 ;
       if (optstring[0] == '-')
-	{
-	  ordering = RETURN_IN_ORDER;
-	  ++optstring;
-	}
+        {
+          ordering = RETURN_IN_ORDER;
+          ++optstring;
+        }
       else if (optstring[0] == '+')
-	{
-	  ordering = REQUIRE_ORDER;
-	  ++optstring;
-	}
+        {
+          ordering = REQUIRE_ORDER;
+          ++optstring;
+        }
       else if (getenv ("POSIXLY_CORRECT") != 0 )
-	ordering = REQUIRE_ORDER;
+        ordering = REQUIRE_ORDER;
       else
-	ordering = PERMUTE;
+        ordering = PERMUTE;
     }
   if (nextchar == 0  || *nextchar == '\0')
     {
       if (ordering == PERMUTE)
-	{
-	   
-	  if (first_nonopt != last_nonopt && last_nonopt != optind)
-	    exchange ((char **) argv);
-	  else if (last_nonopt != optind)
-	    first_nonopt = optind;
-	   
-	  while (optind < argc
-		 && (argv[optind][0] != '-' || argv[optind][1] == '\0')
-		 )
-	    optind++;
-	  last_nonopt = optind;
-	}
+        {
+           
+          if (first_nonopt != last_nonopt && last_nonopt != optind)
+            exchange ((char **) argv);
+          else if (last_nonopt != optind)
+            first_nonopt = optind;
+           
+          while (optind < argc
+                 && (argv[optind][0] != '-' || argv[optind][1] == '\0')
+                 )
+            optind++;
+          last_nonopt = optind;
+        }
       if (optind != argc && !strcmp (argv[optind], "--"))
-	{
-	  optind++;
-	  if (first_nonopt != last_nonopt && last_nonopt != optind)
-	    exchange ((char **) argv);
-	  else if (first_nonopt == last_nonopt)
-	    first_nonopt = optind;
-	  last_nonopt = argc;
-	  optind = argc;
-	}
+        {
+          optind++;
+          if (first_nonopt != last_nonopt && last_nonopt != optind)
+            exchange ((char **) argv);
+          else if (first_nonopt == last_nonopt)
+            first_nonopt = optind;
+          last_nonopt = argc;
+          optind = argc;
+        }
       if (optind == argc)
-	{
-	   
-	  if (first_nonopt != last_nonopt)
-	    optind = first_nonopt;
-	  return (-1) ;
-	}
+        {
+           
+          if (first_nonopt != last_nonopt)
+            optind = first_nonopt;
+          return (-1) ;
+        }
       if ((argv[optind][0] != '-' || argv[optind][1] == '\0')
-	  )
-	{
-	  if (ordering == REQUIRE_ORDER)
-	    return (-1) ;
-	  optarg = argv[optind++];
-	  return 1;
-	}
+          )
+        {
+          if (ordering == REQUIRE_ORDER)
+            return (-1) ;
+          optarg = argv[optind++];
+          return 1;
+        }
       nextchar = (argv[optind] + 1
-		  + (longopts != 0  && argv[optind][1] == '-'));
+                  + (longopts != 0  && argv[optind][1] == '-'));
     }
   if (longopts != 0 
       && ((argv[optind][0] == '-'
-	   && (argv[optind][1] == '-' || long_only))
-	  ))
+           && (argv[optind][1] == '-' || long_only))
+          ))
     {
       const struct option *p;
       char *s = nextchar;
@@ -601,107 +601,107 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
       const struct option *pfound = 0 ;
       int indfound = 0;
       while (*s && *s != '=')
-	s++;
+        s++;
       for (p = longopts, option_index = 0; p->name;
-	   p++, option_index++)
-	if (!strncmp (p->name, nextchar, s - nextchar))
-	  {
-	    if (s - nextchar == my_strlen (p->name))
-	      {
-		 
-		pfound = p;
-		indfound = option_index;
-		exact = 1;
-		break;
-	      }
-	    else if (pfound == 0 )
-	      {
-		 
-		pfound = p;
-		indfound = option_index;
-	      }
-	    else
-	       
-	      ambig = 1;
-	  }
+           p++, option_index++)
+        if (!strncmp (p->name, nextchar, s - nextchar))
+          {
+            if (s - nextchar == my_strlen (p->name))
+              {
+                 
+                pfound = p;
+                indfound = option_index;
+                exact = 1;
+                break;
+              }
+            else if (pfound == 0 )
+              {
+                 
+                pfound = p;
+                indfound = option_index;
+              }
+            else
+               
+              ambig = 1;
+          }
       if (ambig && !exact)
-	{
-	  if (opterr)
-	    fprintf ((&_iob[2]) , "%s: option `%s' is ambiguous\n",
-		     argv[0], argv[optind]);
-	  nextchar += my_strlen (nextchar);
-	  optind++;
-	  return '\0' ;
-	}
+        {
+          if (opterr)
+            fprintf ((&_iob[2]) , "%s: option `%s' is ambiguous\n",
+                     argv[0], argv[optind]);
+          nextchar += my_strlen (nextchar);
+          optind++;
+          return '\0' ;
+        }
       if (pfound != 0 )
-	{
-	  option_index = indfound;
-	  optind++;
-	  if (*s)
-	    {
-	       
-	      if (pfound->has_arg)
-		optarg = s + 1;
-	      else
-		{
-		  if (opterr)
-		    {
-		      if (argv[optind - 1][1] == '-')
-			 
-			fprintf ((&_iob[2]) ,
-				 "%s: option `--%s' doesn't allow an argument\n",
-				 argv[0], pfound->name);
-		      else
-			 
-			fprintf ((&_iob[2]) ,
-			     "%s: option `%c%s' doesn't allow an argument\n",
-			     argv[0], argv[optind - 1][0], pfound->name);
-		    }
-		  nextchar += my_strlen (nextchar);
-		  return '\0' ;
-		}
-	    }
-	  else if (pfound->has_arg == 1)
-	    {
-	      if (optind < argc)
-		optarg = argv[optind++];
-	      else
-		{
-		  if (opterr)
-		    fprintf ((&_iob[2]) , "%s: option `%s' requires an argument\n",
-			     argv[0], argv[optind - 1]);
-		  nextchar += my_strlen (nextchar);
-		  return optstring[0] == ':' ? ':' : '\0' ;
-		}
-	    }
-	  nextchar += my_strlen (nextchar);
-	  if (longind != 0 )
-	    *longind = option_index;
-	  if (pfound->flag)
-	    {
-	      *(pfound->flag) = pfound->val;
-	      return 0;
-	    }
-	  return pfound->val;
-	}
+        {
+          option_index = indfound;
+          optind++;
+          if (*s)
+            {
+               
+              if (pfound->has_arg)
+                optarg = s + 1;
+              else
+                {
+                  if (opterr)
+                    {
+                      if (argv[optind - 1][1] == '-')
+                         
+                        fprintf ((&_iob[2]) ,
+                                 "%s: option `--%s' doesn't allow an argument\n",
+                                 argv[0], pfound->name);
+                      else
+                         
+                        fprintf ((&_iob[2]) ,
+                             "%s: option `%c%s' doesn't allow an argument\n",
+                             argv[0], argv[optind - 1][0], pfound->name);
+                    }
+                  nextchar += my_strlen (nextchar);
+                  return '\0' ;
+                }
+            }
+          else if (pfound->has_arg == 1)
+            {
+              if (optind < argc)
+                optarg = argv[optind++];
+              else
+                {
+                  if (opterr)
+                    fprintf ((&_iob[2]) , "%s: option `%s' requires an argument\n",
+                             argv[0], argv[optind - 1]);
+                  nextchar += my_strlen (nextchar);
+                  return optstring[0] == ':' ? ':' : '\0' ;
+                }
+            }
+          nextchar += my_strlen (nextchar);
+          if (longind != 0 )
+            *longind = option_index;
+          if (pfound->flag)
+            {
+              *(pfound->flag) = pfound->val;
+              return 0;
+            }
+          return pfound->val;
+        }
       if (!long_only || argv[optind][1] == '-'
-	  || my_index (optstring, *nextchar) == 0 )
-	{
-	  if (opterr)
-	    {
-	      if (argv[optind][1] == '-')
-		 
-		fprintf ((&_iob[2]) , "%s: unrecognized option `--%s'\n",
-			 argv[0], nextchar);
-	      else
-		 
-		fprintf ((&_iob[2]) , "%s: unrecognized option `%c%s'\n",
-			 argv[0], argv[optind][0], nextchar);
-	    }
-	  nextchar = (char *) "";
-	  optind++;
-	  return '\0' ;
-	}
+          || my_index (optstring, *nextchar) == 0 )
+        {
+          if (opterr)
+            {
+              if (argv[optind][1] == '-')
+                 
+                fprintf ((&_iob[2]) , "%s: unrecognized option `--%s'\n",
+                         argv[0], nextchar);
+              else
+                 
+                fprintf ((&_iob[2]) , "%s: unrecognized option `%c%s'\n",
+                         argv[0], argv[optind][0], nextchar);
+            }
+          nextchar = (char *) "";
+          optind++;
+          return '\0' ;
+        }
     }
   {
     char c = *nextchar++;
@@ -710,56 +710,56 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
       ++optind;
     if (temp == 0  || c == ':')
       {
-	if (opterr)
-	  {
-	     
-	    fprintf ((&_iob[2]) , "%s: illegal option -- %c\n", argv[0], c);
-	  }
-	optopt = c;
-	return '\0' ;
+        if (opterr)
+          {
+             
+            fprintf ((&_iob[2]) , "%s: illegal option -- %c\n", argv[0], c);
+          }
+        optopt = c;
+        return '\0' ;
       }
     if (temp[1] == ':')
       {
-	if (temp[2] == ':')
-	  {
-	     
-	    if (*nextchar != '\0')
-	      {
-		optarg = nextchar;
-		optind++;
-	      }
-	    else
-	      optarg = 0;
-	    nextchar = 0 ;
-	  }
-	else
-	  {
-	     
-	    if (*nextchar != '\0')
-	      {
-		optarg = nextchar;
-		 
-		optind++;
-	      }
-	    else if (optind == argc)
-	      {
-		if (opterr)
-		  {
-		     
-		    fprintf ((&_iob[2]) , "%s: option requires an argument -- %c\n",
-			     argv[0], c);
-		  }
-		optopt = c;
-		if (optstring[0] == ':')
-		  c = ':';
-		else
-		  c = '\0' ;
-	      }
-	    else
-	       
-	      optarg = argv[optind++];
-	    nextchar = 0 ;
-	  }
+        if (temp[2] == ':')
+          {
+             
+            if (*nextchar != '\0')
+              {
+                optarg = nextchar;
+                optind++;
+              }
+            else
+              optarg = 0;
+            nextchar = 0 ;
+          }
+        else
+          {
+             
+            if (*nextchar != '\0')
+              {
+                optarg = nextchar;
+                 
+                optind++;
+              }
+            else if (optind == argc)
+              {
+                if (opterr)
+                  {
+                     
+                    fprintf ((&_iob[2]) , "%s: option requires an argument -- %c\n",
+                             argv[0], c);
+                  }
+                optopt = c;
+                if (optstring[0] == ':')
+                  c = ':';
+                else
+                  c = '\0' ;
+              }
+            else
+               
+              optarg = argv[optind++];
+            nextchar = 0 ;
+          }
       }
     return c;
   }
@@ -771,9 +771,9 @@ getopt (argc, argv, optstring)
      const char *optstring;
 {
   return _getopt_internal (argc, argv, optstring,
-			   (const struct option *) 0,
-			   (int *) 0,
-			   0);
+                           (const struct option *) 0,
+                           (int *) 0,
+                           0);
 }
 int
 getopt_long (argc, argv, options, long_options, opt_index)
@@ -801,251 +801,251 @@ static char  *license_msg[] = {
 "   along with this program; if not, write to the Free Software",
 "   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.",
 0};
-extern	char	_ctype_[];
-typedef	unsigned char	u_char;
-typedef	unsigned short	u_short;
-typedef	unsigned int	u_int;
-typedef	unsigned long	u_long;
-typedef	unsigned short	ushort;		 
-typedef	unsigned int	uint;		 
-typedef	struct  _physadr_t { int r[1]; } *physadr_t;
-typedef	struct label_t {
-	int	val[2];
+extern  char    _ctype_[];
+typedef unsigned char   u_char;
+typedef unsigned short  u_short;
+typedef unsigned int    u_int;
+typedef unsigned long   u_long;
+typedef unsigned short  ushort;          
+typedef unsigned int    uint;            
+typedef struct  _physadr_t { int r[1]; } *physadr_t;
+typedef struct label_t {
+        int     val[2];
 } label_t;
-typedef	struct	_quad_t { long val[2]; } quad_t;
-typedef	long	daddr_t;
-typedef	char *	caddr_t;
-typedef	unsigned long	ino_t;
-typedef	short	dev_t;
-typedef	long	off_t;
-typedef	unsigned short	uid_t;
-typedef	unsigned short	gid_t;
-typedef	long	key_t;
-typedef	char *	addr_t;
-typedef	long	fd_mask;
-typedef	struct fd_set {
-	fd_mask	fds_bits[((( 256  )+((  (sizeof (fd_mask) * 8 )  )-1))/(  (sizeof (fd_mask) * 8 )  )) ];
+typedef struct  _quad_t { long val[2]; } quad_t;
+typedef long    daddr_t;
+typedef char *  caddr_t;
+typedef unsigned long   ino_t;
+typedef short   dev_t;
+typedef long    off_t;
+typedef unsigned short  uid_t;
+typedef unsigned short  gid_t;
+typedef long    key_t;
+typedef char *  addr_t;
+typedef long    fd_mask;
+typedef struct fd_set {
+        fd_mask fds_bits[((( 256  )+((  (sizeof (fd_mask) * 8 )  )-1))/(  (sizeof (fd_mask) * 8 )  )) ];
 } fd_set;
-typedef	int	faultcode_t;	 
-void	(*signal())();
+typedef int     faultcode_t;     
+void    (*signal())();
 void  (*sigset())();
 int   sighold  (int)  ;
 int   sigrelse  (int)  ;
 int   sigignore  (int)  ;
-struct	sigvec {
-	void	(*sv_handler)();	 
-	int	sv_mask;		 
-	int	sv_flags;		 
+struct  sigvec {
+        void    (*sv_handler)();         
+        int     sv_mask;                 
+        int     sv_flags;                
 };
-struct	sigstack {
-	char	*ss_sp;			 
-	int	ss_onstack;		 
+struct  sigstack {
+        char    *ss_sp;                  
+        int     ss_onstack;              
 };
-struct	sigcontext {
-	int	sc_onstack;		 
-	int	sc_mask;		 
-	int	sc_sp;			 
-	int	sc_pc;			 
-	int	sc_npc;			 
-	int	sc_psr;			 
-	int	sc_g1;			 
-	int	sc_o0;
-	int	sc_wbcnt;		 
-	char	*sc_spbuf[31 ];  
-	int	sc_wbuf[31 ][16];  
+struct  sigcontext {
+        int     sc_onstack;              
+        int     sc_mask;                 
+        int     sc_sp;                   
+        int     sc_pc;                   
+        int     sc_npc;                  
+        int     sc_psr;                  
+        int     sc_g1;                   
+        int     sc_o0;
+        int     sc_wbcnt;                
+        char    *sc_spbuf[31 ];  
+        int     sc_wbuf[31 ][16];  
 };
-struct	sigaction {
-	void 		(*sa_handler)();
-	sigset_t	sa_mask;
-	int		sa_flags;
+struct  sigaction {
+        void            (*sa_handler)();
+        sigset_t        sa_mask;
+        int             sa_flags;
 };
-void	(*signal())();
-int	kill  (int , int)  ;
-int	sigaction  (int, const struct sigaction *, struct sigaction *)  ;
-int	sigaddset  (sigset_t *, int)  ;
-int	sigdelset  (sigset_t *, int)  ;
-int	sigemptyset  (sigset_t *)  ;
-int	sigfillset  (sigset_t *)  ;
-int	sigismember  (const sigset_t *, int)  ;
-int	sigpending  (sigset_t *)  ;
-int	sigprocmask  (int, const sigset_t *, sigset_t *)  ;
-int	sigsuspend  (sigset_t *)  ;
-struct	stat {
-	dev_t	st_dev;
-	ino_t	st_ino;
-	mode_t	st_mode;
-	short	st_nlink;
-	uid_t	st_uid;
-	gid_t	st_gid;
-	dev_t	st_rdev;
-	off_t	st_size;
-	time_t	st_atime;
-	int	st_spare1;
-	time_t	st_mtime;
-	int	st_spare2;
-	time_t	st_ctime;
-	int	st_spare3;
-	long	st_blksize;
-	long	st_blocks;
-	long	st_spare4[2];
+void    (*signal())();
+int     kill  (int , int)  ;
+int     sigaction  (int, const struct sigaction *, struct sigaction *)  ;
+int     sigaddset  (sigset_t *, int)  ;
+int     sigdelset  (sigset_t *, int)  ;
+int     sigemptyset  (sigset_t *)  ;
+int     sigfillset  (sigset_t *)  ;
+int     sigismember  (const sigset_t *, int)  ;
+int     sigpending  (sigset_t *)  ;
+int     sigprocmask  (int, const sigset_t *, sigset_t *)  ;
+int     sigsuspend  (sigset_t *)  ;
+struct  stat {
+        dev_t   st_dev;
+        ino_t   st_ino;
+        mode_t  st_mode;
+        short   st_nlink;
+        uid_t   st_uid;
+        gid_t   st_gid;
+        dev_t   st_rdev;
+        off_t   st_size;
+        time_t  st_atime;
+        int     st_spare1;
+        time_t  st_mtime;
+        int     st_spare2;
+        time_t  st_ctime;
+        int     st_spare3;
+        long    st_blksize;
+        long    st_blocks;
+        long    st_spare4[2];
 };
-int	chmod  (const char *, unsigned short )  ;
-int	fstat  (int, struct stat *)  ;
-int	mkdir  (const char *, unsigned short )  ;
-int	mkfifo  (const char *, unsigned short )  ;
-int	stat  (const char *, struct stat *)  ;
-mode_t	umask  (unsigned short )  ;
-	 
-	 
-	 
+int     chmod  (const char *, unsigned short )  ;
+int     fstat  (int, struct stat *)  ;
+int     mkdir  (const char *, unsigned short )  ;
+int     mkfifo  (const char *, unsigned short )  ;
+int     stat  (const char *, struct stat *)  ;
+mode_t  umask  (unsigned short )  ;
+         
+         
+         
 extern int errno;
 extern int maxbits;       
 extern int block_mode;    
 extern int lzw     (int in, int out)  ;
 extern int unlzw   (int in, int out)  ;
-		 
-struct	tm {
-	int	tm_sec;
-	int	tm_min;
-	int	tm_hour;
-	int	tm_mday;
-	int	tm_mon;
-	int	tm_year;
-	int	tm_wday;
-	int	tm_yday;
-	int	tm_isdst;
-	char	*tm_zone;
-	long	tm_gmtoff;
+                 
+struct  tm {
+        int     tm_sec;
+        int     tm_min;
+        int     tm_hour;
+        int     tm_mday;
+        int     tm_mon;
+        int     tm_year;
+        int     tm_wday;
+        int     tm_yday;
+        int     tm_isdst;
+        char    *tm_zone;
+        long    tm_gmtoff;
 };
-extern	struct tm *gmtime  (const long *)  , *localtime  (const long *)  ;
-extern	char *asctime  (const struct tm *)  , *ctime  (const long *)  ;
-extern	void tzset(), tzsetwall();
+extern  struct tm *gmtime  (const long *)  , *localtime  (const long *)  ;
+extern  char *asctime  (const struct tm *)  , *ctime  (const long *)  ;
+extern  void tzset(), tzsetwall();
 extern  int dysize  (int)  ;
 extern  time_t timelocal(), timegm();
 struct flock {
-	short	l_type;		 
-	short	l_whence;	 
-	long	l_start;	 
-	long	l_len;		 
-	short	l_pid;		 
-	short	l_xxx;		 
+        short   l_type;          
+        short   l_whence;        
+        long    l_start;         
+        long    l_len;           
+        short   l_pid;           
+        short   l_xxx;           
 };
 struct eflock {
-	short	l_type;		 
-	short	l_whence;	 
-	long	l_start;	 
-	long	l_len;		 
-	short	l_pid;		 
-	short	l_xxx;		 
-	long	l_rpid;		 
-	long	l_rsys;		 
+        short   l_type;          
+        short   l_whence;        
+        long    l_start;         
+        long    l_len;           
+        short   l_pid;           
+        short   l_xxx;           
+        long    l_rpid;          
+        long    l_rsys;          
 };
-int	open  (const char *, int, ...)  ;
-int	creat  (const char *, unsigned short )  ;
-int	fcntl  (int, int, ...)  ;
-extern void	_exit  (int)  ;
-extern int	access  (const char *, int)  ;
-extern unsigned	alarm  (unsigned int)  ;
-extern int	chdir  (const char *)  ;
-extern int	chmod  (const char *, unsigned short )  ;
-extern int	chown  (const char *, unsigned short , unsigned short )  ;
-extern int	close  (int)  ;
-extern char	*ctermid  (char *)  ;
-extern char	*cuserid  (char *)  ;
-extern int	dup  (int)  ;
-extern int	dup2  (int, int)  ;
-extern int	execl  (const char *, const char *, ...)  ;
-extern int	execle  (const char *, const char *, ...)  ;
-extern int	execlp  (const char *, const char *, ...)  ;
-extern int	execv  (const char *, char *const *)  ;
-extern int	execve  (const char *, char *const *, char *const *)  ;
-extern int	execvp  (const char *, char *const *)  ;
-extern pid_t	fork( );
-extern long	fpathconf  (int, int)  ;
-extern char	*getcwd  (char *, long unsigned int )  ;
-extern gid_t	getegid( );
-extern uid_t	geteuid( );
-extern gid_t	getgid( );
-extern int	getgroups  (int, unsigned short *)  ;
-extern char	*getlogin( );
-extern pid_t	getpgrp( );
-extern pid_t	getpid( );
-extern pid_t	getppid( );
-extern uid_t	getuid( );
-extern int	isatty  (int)  ;
-extern int	link  (const char *, const char *)  ;
-extern off_t	lseek  (int, long , int)  ;
-extern long	pathconf  (const char *, int)  ;
-extern int	pause( );
-extern int	pipe  (int *)  ;
-extern int	read  (int, void *, long unsigned int )  ;
-extern int	rmdir  (const char *)  ;
-extern int	setgid  (unsigned short )  ;
-extern int	setpgid  (int , int )  ;
-extern pid_t	setsid( );
-extern int	setuid  (unsigned short )  ;
-extern unsigned	sleep  (unsigned int)  ;
-extern long	sysconf  (int)  ;
-extern pid_t	tcgetpgrp  (int)  ;
-extern int	tcsetpgrp  (int, int )  ;
-extern char	*ttyname  (int)  ;
-extern int	unlink  (const char *)  ;
-extern int	write  (int, const void *, long unsigned int )  ;
+int     open  (const char *, int, ...)  ;
+int     creat  (const char *, unsigned short )  ;
+int     fcntl  (int, int, ...)  ;
+extern void     _exit  (int)  ;
+extern int      access  (const char *, int)  ;
+extern unsigned alarm  (unsigned int)  ;
+extern int      chdir  (const char *)  ;
+extern int      chmod  (const char *, unsigned short )  ;
+extern int      chown  (const char *, unsigned short , unsigned short )  ;
+extern int      close  (int)  ;
+extern char     *ctermid  (char *)  ;
+extern char     *cuserid  (char *)  ;
+extern int      dup  (int)  ;
+extern int      dup2  (int, int)  ;
+extern int      execl  (const char *, const char *, ...)  ;
+extern int      execle  (const char *, const char *, ...)  ;
+extern int      execlp  (const char *, const char *, ...)  ;
+extern int      execv  (const char *, char *const *)  ;
+extern int      execve  (const char *, char *const *, char *const *)  ;
+extern int      execvp  (const char *, char *const *)  ;
+extern pid_t    fork( );
+extern long     fpathconf  (int, int)  ;
+extern char     *getcwd  (char *, long unsigned int )  ;
+extern gid_t    getegid( );
+extern uid_t    geteuid( );
+extern gid_t    getgid( );
+extern int      getgroups  (int, unsigned short *)  ;
+extern char     *getlogin( );
+extern pid_t    getpgrp( );
+extern pid_t    getpid( );
+extern pid_t    getppid( );
+extern uid_t    getuid( );
+extern int      isatty  (int)  ;
+extern int      link  (const char *, const char *)  ;
+extern off_t    lseek  (int, long , int)  ;
+extern long     pathconf  (const char *, int)  ;
+extern int      pause( );
+extern int      pipe  (int *)  ;
+extern int      read  (int, void *, long unsigned int )  ;
+extern int      rmdir  (const char *)  ;
+extern int      setgid  (unsigned short )  ;
+extern int      setpgid  (int , int )  ;
+extern pid_t    setsid( );
+extern int      setuid  (unsigned short )  ;
+extern unsigned sleep  (unsigned int)  ;
+extern long     sysconf  (int)  ;
+extern pid_t    tcgetpgrp  (int)  ;
+extern int      tcsetpgrp  (int, int )  ;
+extern char     *ttyname  (int)  ;
+extern int      unlink  (const char *)  ;
+extern int      write  (int, const void *, long unsigned int )  ;
 extern unsigned int _mb_cur_max;
-extern void	abort( );
-extern int	abs  (int)  ;
-extern double	atof  (const char *)  ;
-extern int	atoi  (const char *)  ;
-extern long int	atol  (const char *)  ;
-extern char *	bsearch  (const void *, const void *, long unsigned int , long unsigned int , int (*) (const void *, const void *))  ;
-extern void *	calloc  (long unsigned int , long unsigned int )  ;
-extern void	exit  (int)  ;
-extern void	free  (void *)  ;
-extern char *	getenv  (const char *)  ;
-extern void *	malloc  (long unsigned int )  ;
-extern int	qsort  (void *, long unsigned int , long unsigned int , int (*) (const void *, const void *))  ;
-extern int	rand( );
-extern void *	realloc  (void *, long unsigned int )  ;
-extern int	srand  (unsigned int)  ;
+extern void     abort( );
+extern int      abs  (int)  ;
+extern double   atof  (const char *)  ;
+extern int      atoi  (const char *)  ;
+extern long int atol  (const char *)  ;
+extern char *   bsearch  (const void *, const void *, long unsigned int , long unsigned int , int (*) (const void *, const void *))  ;
+extern void *   calloc  (long unsigned int , long unsigned int )  ;
+extern void     exit  (int)  ;
+extern void     free  (void *)  ;
+extern char *   getenv  (const char *)  ;
+extern void *   malloc  (long unsigned int )  ;
+extern int      qsort  (void *, long unsigned int , long unsigned int , int (*) (const void *, const void *))  ;
+extern int      rand( );
+extern void *   realloc  (void *, long unsigned int )  ;
+extern int      srand  (unsigned int)  ;
 extern int    mbtowc  (short unsigned int *, const char *, long unsigned int )  ;
 extern int    wctomb  (char *, short unsigned int )  ;
 extern size_t mbstowcs  (short unsigned int *, const char *, long unsigned int )  ;
 extern size_t wcstombs  (char *, const short unsigned int *, long unsigned int )  ;
-typedef	struct __dirdesc {
-	int	dd_fd;		 
-	long	dd_loc;		 
-	long	dd_size;	 
-	long	dd_bsize;	 
-	long	dd_off;		 
-	char	*dd_buf;	 
+typedef struct __dirdesc {
+        int     dd_fd;           
+        long    dd_loc;          
+        long    dd_size;         
+        long    dd_bsize;        
+        long    dd_off;          
+        char    *dd_buf;         
 } DIR;
-extern	DIR *opendir  (const char *)  ;
-extern	struct dirent *readdir  (DIR *)  ;
-extern	int closedir  (DIR *)  ;
-extern	void seekdir  (DIR *, long int)  ;
-extern	long telldir  (DIR *)  ;
-extern	void rewinddir  (DIR *)  ;
-struct	dirent {
-	off_t		d_off;		 
-	unsigned long	d_fileno;	 
-	unsigned short	d_reclen;	 
-	unsigned short	d_namlen;	 
-	char		d_name[255+1];	 
+extern  DIR *opendir  (const char *)  ;
+extern  struct dirent *readdir  (DIR *)  ;
+extern  int closedir  (DIR *)  ;
+extern  void seekdir  (DIR *, long int)  ;
+extern  long telldir  (DIR *)  ;
+extern  void rewinddir  (DIR *)  ;
+struct  dirent {
+        off_t           d_off;           
+        unsigned long   d_fileno;        
+        unsigned short  d_reclen;        
+        unsigned short  d_namlen;        
+        char            d_name[255+1];   
 };
    typedef struct dirent dir_type;
-struct	utimbuf {
-	time_t	actime;		 
-	time_t	modtime;	 
+struct  utimbuf {
+        time_t  actime;          
+        time_t  modtime;         
 };
-int	utime( );
+int     utime( );
 typedef void  (*sig_type)  (int)  ;
-		 
+                 
  uch    inbuf [   0x8000  +64  ] ;
  uch    outbuf [  16384 +2048  ] ;
  ush    d_buf [   0x8000  ] ;
  uch    window [  2L*0x8000  ] ;
      ush    prev  [  1L<<16  ] ;
-		 
+                 
 int ascii = 0;         
 int to_stdout = 0;     
 int decompress = 0;    
@@ -1079,7 +1079,7 @@ long total_in = 0;
 long total_out = 0;         
 char ifname[1024 ];  
 char ofname[1024 ];  
-int  remove_ofname = 0;	    
+int  remove_ofname = 0;     
 struct stat istat;          
 int  ifd;                   
 int  ofd;                   
@@ -1139,10 +1139,10 @@ static  void reset_times   (char *name, struct stat *statb)  ;
 static  void usage()
 {
     fprintf((&_iob[2]) , "usage: %s [-%scdfhlLnN%stvV19] [-S suffix] [file ...]\n",
-	    progname,
-	    "",
-	    "r"
-	    );
+            progname,
+            "",
+            "r"
+            );
 }
 static  void help()
 {
@@ -1200,87 +1200,87 @@ int main (argc, argv)
     if (env != 0 ) args = argv;
     foreground = signal(2 , (void (*)())1 ) != (void (*)())1 ;
     if (foreground) {
-	(void) signal (2 , (sig_type)abort_gzip);
+        (void) signal (2 , (sig_type)abort_gzip);
     }
     if (signal(15 , (void (*)())1 ) != (void (*)())1 ) {
-	(void) signal(15 , (sig_type)abort_gzip);
+        (void) signal(15 , (sig_type)abort_gzip);
     }
     if (signal(1 , (void (*)())1 ) != (void (*)())1 ) {
-	(void) signal(1 ,  (sig_type)abort_gzip);
+        (void) signal(1 ,  (sig_type)abort_gzip);
     }
     if (  strncmp(progname, "un",  2) == 0      
        || strncmp(progname, "gun", 3) == 0) {   
-	decompress = 1;
+        decompress = 1;
     } else if ((strcmp(( progname+1 ),(  "cat" )) == 0)         
-	    || (strcmp(( progname ),(  "gzcat" )) == 0) ) {     
-	decompress = to_stdout = 1;
+            || (strcmp(( progname ),(  "gzcat" )) == 0) ) {     
+        decompress = to_stdout = 1;
     }
     strncpy(z_suffix, ".gz" , sizeof(z_suffix)-1);
     z_len = strlen(z_suffix);
     while ((optc = getopt_long (argc, argv, "ab:cdfhH?lLmMnNqrS:tvVZ123456789",
-				longopts, (int *)0)) != (-1) ) {
-	switch (optc) {
+                                longopts, (int *)0)) != (-1) ) {
+        switch (optc) {
         case 'a':
             ascii = 1; break;
-	case 'b':
-	    maxbits = atoi(optarg);
-	    break;
-	case 'c':
-	    to_stdout = 1; break;
-	case 'd':
-	    decompress = 1; break;
-	case 'f':
-	    force++; break;
-	case 'h': case 'H': case '?':
-	    help(); do_exit(0 ); break;
-	case 'l':
-	    list = decompress = to_stdout = 1; break;
-	case 'L':
-	    license(); do_exit(0 ); break;
-	case 'm':  
-	    no_time = 1; break;
-	case 'M':  
-	    no_time = 0; break;
-	case 'n':
-	    no_name = no_time = 1; break;
-	case 'N':
-	    no_name = no_time = 0; break;
-	case 'q':
-	    quiet = 1; verbose = 0; break;
-	case 'r':
-	    recursive = 1; break;
-	case 'S':
+        case 'b':
+            maxbits = atoi(optarg);
+            break;
+        case 'c':
+            to_stdout = 1; break;
+        case 'd':
+            decompress = 1; break;
+        case 'f':
+            force++; break;
+        case 'h': case 'H': case '?':
+            help(); do_exit(0 ); break;
+        case 'l':
+            list = decompress = to_stdout = 1; break;
+        case 'L':
+            license(); do_exit(0 ); break;
+        case 'm':  
+            no_time = 1; break;
+        case 'M':  
+            no_time = 0; break;
+        case 'n':
+            no_name = no_time = 1; break;
+        case 'N':
+            no_name = no_time = 0; break;
+        case 'q':
+            quiet = 1; verbose = 0; break;
+        case 'r':
+            recursive = 1; break;
+        case 'S':
             z_len = strlen(optarg);
             strcpy(z_suffix, optarg);
             break;
-	case 't':
-	    test = decompress = to_stdout = 1;
-	    break;
-	case 'v':
-	    verbose++; quiet = 0; break;
-	case 'V':
-	    version(); do_exit(0 ); break;
-	case 'Z':
-	    fprintf((&_iob[2]) , "%s: -Z not supported in this version\n",
-		    progname);
-	    usage();
-	    do_exit(1 ); break;
-	case '1':  case '2':  case '3':  case '4':
-	case '5':  case '6':  case '7':  case '8':  case '9':
-	    level = optc - '0';
-	    break;
-	default:
-	     
-	    usage();
-	    do_exit(1 );
-	}
+        case 't':
+            test = decompress = to_stdout = 1;
+            break;
+        case 'v':
+            verbose++; quiet = 0; break;
+        case 'V':
+            version(); do_exit(0 ); break;
+        case 'Z':
+            fprintf((&_iob[2]) , "%s: -Z not supported in this version\n",
+                    progname);
+            usage();
+            do_exit(1 ); break;
+        case '1':  case '2':  case '3':  case '4':
+        case '5':  case '6':  case '7':  case '8':  case '9':
+            level = optc - '0';
+            break;
+        default:
+             
+            usage();
+            do_exit(1 );
+        }
     }  
     if (no_time < 0) no_time = decompress;
     if (no_name < 0) no_name = decompress;
     file_count = argc - optind;
     if (ascii && !quiet) {
-	fprintf((&_iob[2]) , "%s: option --ascii ignored on this system\n",
-		progname);
+        fprintf((&_iob[2]) , "%s: option --ascii ignored on this system\n",
+                progname);
     }
     if ((z_len == 0 && !decompress) || z_len > 30 ) {
         fprintf((&_iob[2]) , "%s: incorrect suffix '%s'\n",
@@ -1294,17 +1294,17 @@ int main (argc, argv)
      ;
      ;
     if (file_count != 0) {
-	if (to_stdout && !test && !list && (!decompress || !ascii)) {
-	     ;
-	}
+        if (to_stdout && !test && !list && (!decompress || !ascii)) {
+             ;
+        }
         while (optind < argc) {
-	    treat_file(argv[optind++]);
-	}
+            treat_file(argv[optind++]);
+        }
     } else {   
-	treat_stdin();
+        treat_stdin();
     }
     if (list && !quiet && file_count > 1) {
-	do_list(-1, -1);  
+        do_list(-1, -1);  
     }
     do_exit(exit_code);
     return exit_code;  
@@ -1312,117 +1312,117 @@ int main (argc, argv)
 static  void treat_stdin()
 {
     if (!force && !list &&
-	isatty((( (struct _iobuf  *)(decompress ? (&_iob[0])  : (&_iob[1]) ) )->_file) )) {
-	 
-	fprintf((&_iob[2]) ,
+        isatty((( (struct _iobuf  *)(decompress ? (&_iob[0])  : (&_iob[1]) ) )->_file) )) {
+         
+        fprintf((&_iob[2]) ,
     "%s: compressed data not %s a terminal. Use -f to force %scompression.\n",
-		progname, decompress ? "read from" : "written to",
-		decompress ? "de" : "");
-	fprintf((&_iob[2]) ,"For help, type: %s -h\n", progname);
-	do_exit(1 );
+                progname, decompress ? "read from" : "written to",
+                decompress ? "de" : "");
+        fprintf((&_iob[2]) ,"For help, type: %s -h\n", progname);
+        do_exit(1 );
     }
     if (decompress || !ascii) {
-	 ;
+         ;
     }
     if (!test && !list && (!decompress || !ascii)) {
-	 ;
+         ;
     }
     strcpy(ifname, "stdin");
     strcpy(ofname, "stdout");
     time_stamp = 0;  
     if (list || !no_time) {
-	if (fstat((( (&_iob[0])  )->_file) , &istat) != 0) {
-	    error("fstat(stdin)");
-	}
-	    time_stamp = istat.st_mtime;
+        if (fstat((( (&_iob[0])  )->_file) , &istat) != 0) {
+            error("fstat(stdin)");
+        }
+            time_stamp = istat.st_mtime;
     }
     ifile_size = -1L;  
     clear_bufs();  
     to_stdout = 1;
     part_nb = 0;
     if (decompress) {
-	method = get_method(ifd);
-	if (method < 0) {
-	    do_exit(exit_code);  
-	}
+        method = get_method(ifd);
+        if (method < 0) {
+            do_exit(exit_code);  
+        }
     }
     if (list) {
         do_list(ifd, method);
         return;
     }
     for (;;) {
-	if ((*work)((( (&_iob[0])  )->_file) , (( (&_iob[1])  )->_file) ) != 0 ) return;
-	if (!decompress || last_member || inptr == insize) break;
-	 
-	method = get_method(ifd);
-	if (method < 0) return;  
-	bytes_out = 0;             
+        if ((*work)((( (&_iob[0])  )->_file) , (( (&_iob[1])  )->_file) ) != 0 ) return;
+        if (!decompress || last_member || inptr == insize) break;
+         
+        method = get_method(ifd);
+        if (method < 0) return;  
+        bytes_out = 0;             
     }
     if (verbose) {
-	if (test) {
-	    fprintf((&_iob[2]) , " OK\n");
-	} else if (!decompress) {
-	    display_ratio(bytes_in-(bytes_out-header_bytes), bytes_in, (&_iob[2]) );
-	    fprintf((&_iob[2]) , "\n");
-	}
+        if (test) {
+            fprintf((&_iob[2]) , " OK\n");
+        } else if (!decompress) {
+            display_ratio(bytes_in-(bytes_out-header_bytes), bytes_in, (&_iob[2]) );
+            fprintf((&_iob[2]) , "\n");
+        }
     }
 }
 static  void treat_file(iname)
     char *iname;
 {
     if ((strcmp(( iname ),(  "-" )) == 0) ) {
-	int cflag = to_stdout;
-	treat_stdin();
-	to_stdout = cflag;
-	return;
+        int cflag = to_stdout;
+        treat_stdin();
+        to_stdout = cflag;
+        return;
     }
     if (get_istat(iname, &istat) != 0 ) return;
     if (((( istat.st_mode )&0170000 ) == 0040000 ) ) {
-	if (recursive) {
-	    struct stat st;
-	    st = istat;
-	    treat_dir(iname);
-	     
-	    reset_times (iname, &st);
-	} else
-	{if (!quiet) fprintf  ((&_iob[2]) ,"%s: %s is a directory -- ignored\n", progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	return;
+        if (recursive) {
+            struct stat st;
+            st = istat;
+            treat_dir(iname);
+             
+            reset_times (iname, &st);
+        } else
+        {if (!quiet) fprintf  ((&_iob[2]) ,"%s: %s is a directory -- ignored\n", progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        return;
     }
     if (!((( istat.st_mode )&0170000 ) == 0100000 ) ) {
-	{if (!quiet) fprintf  ((&_iob[2]) ,
-	      "%s: %s is not a directory or a regular file - ignored\n",
-	      progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	return;
+        {if (!quiet) fprintf  ((&_iob[2]) ,
+              "%s: %s is not a directory or a regular file - ignored\n",
+              progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        return;
     }
     if (istat.st_nlink > 1 && !to_stdout && !force) {
-	{if (!quiet) fprintf  ((&_iob[2]) , "%s: %s has %d other link%c -- unchanged\n",
-	      progname, ifname,
-	      (int)istat.st_nlink - 1, istat.st_nlink > 2 ? 's' : ' ')  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	return;
+        {if (!quiet) fprintf  ((&_iob[2]) , "%s: %s has %d other link%c -- unchanged\n",
+              progname, ifname,
+              (int)istat.st_nlink - 1, istat.st_nlink > 2 ? 's' : ' ')  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        return;
     }
     ifile_size = istat.st_size;
     time_stamp = no_time && !list ? 0 : istat.st_mtime;
     if (to_stdout && !list && !test) {
-	strcpy(ofname, "stdout");
+        strcpy(ofname, "stdout");
     } else if (make_ofname() != 0 ) {
-	return;
+        return;
     }
     ifd = open( ifname ,   ascii && !decompress ? 0  : 0  | 0  ,  
-	       (0000400  | 0000200 )  ) ;
+               (0000400  | 0000200 )  ) ;
     if (ifd == -1) {
-	fprintf((&_iob[2]) , "%s: ", progname);
-	perror(ifname);
-	exit_code = 1 ;
-	return;
+        fprintf((&_iob[2]) , "%s: ", progname);
+        perror(ifname);
+        exit_code = 1 ;
+        return;
     }
     clear_bufs();  
     part_nb = 0;
     if (decompress) {
-	method = get_method(ifd);  
-	if (method < 0) {
-	    close(ifd);
-	    return;                
-	}
+        method = get_method(ifd);  
+        if (method < 0) {
+            close(ifd);
+            return;                
+        }
     }
     if (list) {
         do_list(ifd, method);
@@ -1430,97 +1430,97 @@ static  void treat_file(iname)
         return;
     }
     if (to_stdout) {
-	ofd = (( (&_iob[1])  )->_file) ;
-	 
+        ofd = (( (&_iob[1])  )->_file) ;
+         
     } else {
-	if (create_outfile() != 0 ) return;
-	if (!decompress && save_orig_name && !verbose && !quiet) {
-	    fprintf((&_iob[2]) , "%s: %s compressed to %s\n",
-		    progname, ifname, ofname);
-	}
+        if (create_outfile() != 0 ) return;
+        if (!decompress && save_orig_name && !verbose && !quiet) {
+            fprintf((&_iob[2]) , "%s: %s compressed to %s\n",
+                    progname, ifname, ofname);
+        }
     }
     if (!save_orig_name) save_orig_name = !no_name;
     if (verbose) {
-	fprintf((&_iob[2]) , "%s:\t%s", ifname, (int)strlen(ifname) >= 15 ? 
-		"" : ((int)strlen(ifname) >= 7 ? "\t" : "\t\t"));
+        fprintf((&_iob[2]) , "%s:\t%s", ifname, (int)strlen(ifname) >= 15 ? 
+                "" : ((int)strlen(ifname) >= 7 ? "\t" : "\t\t"));
     }
     for (;;) {
-	if ((*work)(ifd, ofd) != 0 ) {
-	    method = -1;  
-	    break;
-	}
-	if (!decompress || last_member || inptr == insize) break;
-	 
-	method = get_method(ifd);
-	if (method < 0) break;     
-	bytes_out = 0;             
+        if ((*work)(ifd, ofd) != 0 ) {
+            method = -1;  
+            break;
+        }
+        if (!decompress || last_member || inptr == insize) break;
+         
+        method = get_method(ifd);
+        if (method < 0) break;     
+        bytes_out = 0;             
     }
     close(ifd);
     if (!to_stdout && close(ofd)) {
-	write_error();
+        write_error();
     }
     if (method == -1) {
-	if (!to_stdout) unlink (ofname);
-	return;
+        if (!to_stdout) unlink (ofname);
+        return;
     }
     if(verbose) {
-	if (test) {
-	    fprintf((&_iob[2]) , " OK");
-	} else if (decompress) {
-	    display_ratio(bytes_out-(bytes_in-header_bytes), bytes_out,(&_iob[2]) );
-	} else {
-	    display_ratio(bytes_in-(bytes_out-header_bytes), bytes_in, (&_iob[2]) );
-	}
-	if (!test && !to_stdout) {
-	    fprintf((&_iob[2]) , " -- replaced with %s", ofname);
-	}
-	fprintf((&_iob[2]) , "\n");
+        if (test) {
+            fprintf((&_iob[2]) , " OK");
+        } else if (decompress) {
+            display_ratio(bytes_out-(bytes_in-header_bytes), bytes_out,(&_iob[2]) );
+        } else {
+            display_ratio(bytes_in-(bytes_out-header_bytes), bytes_in, (&_iob[2]) );
+        }
+        if (!test && !to_stdout) {
+            fprintf((&_iob[2]) , " -- replaced with %s", ofname);
+        }
+        fprintf((&_iob[2]) , "\n");
     }
     if (!to_stdout) {
-	copy_stat(&istat);
+        copy_stat(&istat);
     }
 }
 static  int create_outfile()
 {
-    struct stat	ostat;  
+    struct stat ostat;  
     int flags = 1  | 0x0200   | 0x0800   | 0 ;
     if (ascii && decompress) {
-	flags &= ~0 ;  
+        flags &= ~0 ;  
     }
     for (;;) {
-	 
-	if (check_ofname() != 0 ) {
-	    close(ifd);
-	    return 1 ;
-	}
-	 
-	remove_ofname = 1;
-	ofd = open( ofname ,   flags ,   (0000400  | 0000200 )  ) ;
-	if (ofd == -1) {
-	    perror(ofname);
-	    close(ifd);
-	    exit_code = 1 ;
-	    return 1 ;
-	}
-	 
-	if (fstat(ofd, &ostat) != 0) {
-	    fprintf((&_iob[2]) , "%s: ", progname);
-	    perror(ofname);
-	    close(ifd); close(ofd);
-	    unlink(ofname);
-	    exit_code = 1 ;
-	    return 1 ;
-	}
-	if (!name_too_long(ofname, &ostat)) return 0 ;
-	if (decompress) {
-	     
-	    {if (!quiet) fprintf  ((&_iob[2]) , "%s: %s: warning, name truncated\n",
-		  progname, ofname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	    return 0 ;
-	}
-	close(ofd);
-	unlink(ofname);
-	shorten_name(ofname);
+         
+        if (check_ofname() != 0 ) {
+            close(ifd);
+            return 1 ;
+        }
+         
+        remove_ofname = 1;
+        ofd = open( ofname ,   flags ,   (0000400  | 0000200 )  ) ;
+        if (ofd == -1) {
+            perror(ofname);
+            close(ifd);
+            exit_code = 1 ;
+            return 1 ;
+        }
+         
+        if (fstat(ofd, &ostat) != 0) {
+            fprintf((&_iob[2]) , "%s: ", progname);
+            perror(ofname);
+            close(ifd); close(ofd);
+            unlink(ofname);
+            exit_code = 1 ;
+            return 1 ;
+        }
+        if (!name_too_long(ofname, &ostat)) return 0 ;
+        if (decompress) {
+             
+            {if (!quiet) fprintf  ((&_iob[2]) , "%s: %s: warning, name truncated\n",
+                  progname, ofname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+            return 0 ;
+        }
+        close(ofd);
+        unlink(ofname);
+        shorten_name(ofname);
     }
 }
 static  int do_stat(name, sbuf)
@@ -1529,7 +1529,7 @@ static  int do_stat(name, sbuf)
 {
     errno = 0;
     if (!to_stdout && !force) {
-	return stat(name, sbuf);
+        return stat(name, sbuf);
     }
     return stat(name, sbuf);
 }
@@ -1571,15 +1571,15 @@ static  int get_istat(iname, sbuf)
     strcpy(ifname, iname);
     if (do_stat(ifname, sbuf) == 0) return 0 ;
     if (!decompress || errno != 2 ) {
-	perror(ifname);
-	exit_code = 1 ;
-	return 1 ;
+        perror(ifname);
+        exit_code = 1 ;
+        return 1 ;
     }
     s = get_suffix(ifname);
     if (s != 0 ) {
-	perror(ifname);  
-	exit_code = 1 ;
-	return 1 ;
+        perror(ifname);  
+        exit_code = 1 ;
+        return 1 ;
     }
     ilen = strlen(ifname);
     if ((strcmp(( z_suffix ),(  ".gz" )) == 0) ) suf++;
@@ -1587,7 +1587,7 @@ static  int get_istat(iname, sbuf)
         s = *suf;
         strcat(ifname, s);
         if (do_stat(ifname, sbuf) == 0) return 0 ;
-	ifname[ilen] = '\0';
+        ifname[ilen] = '\0';
     } while (*++suf != 0 );
     strcat(ifname, z_suffix);
     perror(ifname);
@@ -1600,34 +1600,34 @@ static  int make_ofname()
     strcpy(ofname, ifname);
     suff = get_suffix(ofname);
     if (decompress) {
-	if (suff == 0 ) {
-	     
+        if (suff == 0 ) {
+             
             if (!recursive && (list || test)) return 0 ;
-	     
-	    if (verbose || (!recursive && !quiet)) {
-		{if (!quiet) fprintf  ((&_iob[2]) ,"%s: %s: unknown suffix -- ignored\n",
-		      progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	    }
-	    return 2 ;
-	}
-	 
-	strlwr(suff);
-	if ((strcmp(( suff ),(  ".tgz" )) == 0)  || (strcmp(( suff ),(  ".taz" )) == 0) ) {
-	    strcpy(suff, ".tar");
-	} else {
-	    *suff = '\0';  
-	}
+             
+            if (verbose || (!recursive && !quiet)) {
+                {if (!quiet) fprintf  ((&_iob[2]) ,"%s: %s: unknown suffix -- ignored\n",
+                      progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+            }
+            return 2 ;
+        }
+         
+        strlwr(suff);
+        if ((strcmp(( suff ),(  ".tgz" )) == 0)  || (strcmp(( suff ),(  ".taz" )) == 0) ) {
+            strcpy(suff, ".tar");
+        } else {
+            *suff = '\0';  
+        }
     } else if (suff != 0 ) {
-	 
-	if (verbose || (!recursive && !quiet)) {
-	    fprintf((&_iob[2]) , "%s: %s already has %s suffix -- unchanged\n",
-		    progname, ifname, suff);
-	}
-	if (exit_code == 0 ) exit_code = 2 ;
-	return 2 ;
+         
+        if (verbose || (!recursive && !quiet)) {
+            fprintf((&_iob[2]) , "%s: %s already has %s suffix -- unchanged\n",
+                    progname, ifname, suff);
+        }
+        if (exit_code == 0 ) exit_code = 2 ;
+        return 2 ;
     } else {
         save_orig_name = 0;
-	strcat(ofname, z_suffix);
+        strcat(ofname, z_suffix);
     }  
     return 0 ;
 }
@@ -1638,12 +1638,12 @@ static  int get_method(in)
     char magic[2];  
     ulg stamp;      
     if (force && to_stdout) {
-	magic[0] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(1)) ;
-	magic[1] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(1)) ;
-	 
+        magic[0] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(1)) ;
+        magic[1] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(1)) ;
+         
     } else {
-	magic[0] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	magic[1] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        magic[0] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        magic[1] = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
     }
     method = -1;                  
     part_nb++;                    
@@ -1651,125 +1651,125 @@ static  int get_method(in)
     last_member = 0 ;
     if (memcmp(magic, "\037\213" , 2) == 0
         || memcmp(magic, "\037\236" , 2) == 0) {
-	method = (int)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	if (method != 8 ) {
-	    fprintf((&_iob[2]) ,
-		    "%s: %s: unknown method %d -- get newer version of gzip\n",
-		    progname, ifname, method);
-	    exit_code = 1 ;
-	    return -1;
-	}
-	work = unzip;
-	flags  = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	if ((flags & 0x20 ) != 0) {
-	    fprintf((&_iob[2]) ,
-		    "%s: %s is encrypted -- get newer version of gzip\n",
-		    progname, ifname);
-	    exit_code = 1 ;
-	    return -1;
-	}
-	if ((flags & 0x02 ) != 0) {
-	    fprintf((&_iob[2]) ,
-	   "%s: %s is a a multi-part gzip file -- get newer version of gzip\n",
-		    progname, ifname);
-	    exit_code = 1 ;
-	    if (force <= 1) return -1;
-	}
-	if ((flags & 0xC0 ) != 0) {
-	    fprintf((&_iob[2]) ,
-		    "%s: %s has flags 0x%x -- get newer version of gzip\n",
-		    progname, ifname, flags);
-	    exit_code = 1 ;
-	    if (force <= 1) return -1;
-	}
-	stamp  = (ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	stamp |= ((ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ) << 8;
-	stamp |= ((ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ) << 16;
-	stamp |= ((ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ) << 24;
-	if (stamp != 0 && !no_time) time_stamp = stamp;
-	(void)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;   
-	(void)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;   
-	if ((flags & 0x02 ) != 0) {
-	    unsigned part = (unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	    part |= ((unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) )<<8;
-	    if (verbose) {
-		fprintf((&_iob[2]) ,"%s: %s: part number %u\n",
-			progname, ifname, part);
-	    }
-	}
-	if ((flags & 0x04 ) != 0) {
-	    unsigned len = (unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	    len |= ((unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) )<<8;
-	    if (verbose) {
-		fprintf((&_iob[2]) ,"%s: %s: extra field of %u bytes ignored\n",
-			progname, ifname, len);
-	    }
-	    while (len--) (void)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	}
-	 
-	if ((flags & 0x08 ) != 0) {
-	    if (no_name || (to_stdout && !list) || part_nb > 1) {
-		 
-		char c;  
-		do {c=(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;} while (c != 0);
-	    } else {
-		 
+        method = (int)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        if (method != 8 ) {
+            fprintf((&_iob[2]) ,
+                    "%s: %s: unknown method %d -- get newer version of gzip\n",
+                    progname, ifname, method);
+            exit_code = 1 ;
+            return -1;
+        }
+        work = unzip;
+        flags  = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        if ((flags & 0x20 ) != 0) {
+            fprintf((&_iob[2]) ,
+                    "%s: %s is encrypted -- get newer version of gzip\n",
+                    progname, ifname);
+            exit_code = 1 ;
+            return -1;
+        }
+        if ((flags & 0x02 ) != 0) {
+            fprintf((&_iob[2]) ,
+           "%s: %s is a a multi-part gzip file -- get newer version of gzip\n",
+                    progname, ifname);
+            exit_code = 1 ;
+            if (force <= 1) return -1;
+        }
+        if ((flags & 0xC0 ) != 0) {
+            fprintf((&_iob[2]) ,
+                    "%s: %s has flags 0x%x -- get newer version of gzip\n",
+                    progname, ifname, flags);
+            exit_code = 1 ;
+            if (force <= 1) return -1;
+        }
+        stamp  = (ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        stamp |= ((ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ) << 8;
+        stamp |= ((ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ) << 16;
+        stamp |= ((ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ) << 24;
+        if (stamp != 0 && !no_time) time_stamp = stamp;
+        (void)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;   
+        (void)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;   
+        if ((flags & 0x02 ) != 0) {
+            unsigned part = (unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+            part |= ((unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) )<<8;
+            if (verbose) {
+                fprintf((&_iob[2]) ,"%s: %s: part number %u\n",
+                        progname, ifname, part);
+            }
+        }
+        if ((flags & 0x04 ) != 0) {
+            unsigned len = (unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+            len |= ((unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) )<<8;
+            if (verbose) {
+                fprintf((&_iob[2]) ,"%s: %s: extra field of %u bytes ignored\n",
+                        progname, ifname, len);
+            }
+            while (len--) (void)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        }
+         
+        if ((flags & 0x08 ) != 0) {
+            if (no_name || (to_stdout && !list) || part_nb > 1) {
+                 
+                char c;  
+                do {c=(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;} while (c != 0);
+            } else {
+                 
                 char *p = basename(ofname);
                 char *base = p;
-		for (;;) {
-		    *p = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0))  ;
-		    if (*p++ == '\0') break;
-		    if (p >= ofname+sizeof(ofname)) {
-			error("corrupted input -- file name too large");
-		    }
-		}
+                for (;;) {
+                    *p = (char)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0))  ;
+                    if (*p++ == '\0') break;
+                    if (p >= ofname+sizeof(ofname)) {
+                        error("corrupted input -- file name too large");
+                    }
+                }
                 if (!list) {
                     ;
-		   if (base) list=0;  
+                   if (base) list=0;  
                 }
-	    }  
-	}  
-	 
-	if ((flags & 0x10 ) != 0) {
-	    while ((inptr < insize ? inbuf[inptr++] : fill_inbuf(0))   != 0)   ;
-	}
-	if (part_nb == 1) {
-	    header_bytes = inptr + 2*sizeof(long);  
-	}
+            }  
+        }  
+         
+        if ((flags & 0x10 ) != 0) {
+            while ((inptr < insize ? inbuf[inptr++] : fill_inbuf(0))   != 0)   ;
+        }
+        if (part_nb == 1) {
+            header_bytes = inptr + 2*sizeof(long);  
+        }
     } else if (memcmp(magic, "\120\113\003\004" , 2) == 0 && inptr == 2
-	    && memcmp((char*)inbuf, "\120\113\003\004" , 4) == 0) {
-	 
+            && memcmp((char*)inbuf, "\120\113\003\004" , 4) == 0) {
+         
         inptr = 0;
-	work = unzip;
-	if (check_zipfile(in) != 0 ) return -1;
-	 
-	last_member = 1;
+        work = unzip;
+        if (check_zipfile(in) != 0 ) return -1;
+         
+        last_member = 1;
     } else if (memcmp(magic, "\037\036" , 2) == 0) {
-	work = unpack;
-	method = 2 ;
+        work = unpack;
+        method = 2 ;
     } else if (memcmp(magic, "\037\235" , 2) == 0) {
-	work = unlzw;
-	method = 1 ;
-	last_member = 1;
+        work = unlzw;
+        method = 1 ;
+        last_member = 1;
     } else if (memcmp(magic, "\037\240" , 2) == 0) {
-	work = unlzh;
-	method = 3 ;
-	last_member = 1;
+        work = unlzh;
+        method = 3 ;
+        last_member = 1;
     } else if (force && to_stdout && !list) {  
-	method = 0 ;
-	work = copy;
+        method = 0 ;
+        work = copy;
         inptr = 0;
-	last_member = 1;
+        last_member = 1;
     }
     if (method >= 0) return method;
     if (part_nb == 1) {
-	fprintf((&_iob[2]) , "\n%s: %s: not in gzip format\n", progname, ifname);
-	exit_code = 1 ;
-	return -1;
+        fprintf((&_iob[2]) , "\n%s: %s: not in gzip format\n", progname, ifname);
+        exit_code = 1 ;
+        return -1;
     } else {
-	{if (!quiet) fprintf  ((&_iob[2]) , "\n%s: %s: decompression OK, trailing garbage ignored\n",
-	      progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	return -2;
+        {if (!quiet) fprintf  ((&_iob[2]) , "\n%s: %s: decompression OK, trailing garbage ignored\n",
+              progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        return -2;
     }
 }
 static  void do_list(ifd, method)
@@ -1787,25 +1787,25 @@ static  void do_list(ifd, method)
         "defla"};  
     char *date;
     if (first_time && method >= 0) {
-	first_time = 0;
-	if (verbose)  {
-	    printf("method  crc     date  time  ");
-	}
-	if (!quiet) {
-	    printf("compressed  uncompr. ratio uncompressed_name\n");
-	}
+        first_time = 0;
+        if (verbose)  {
+            printf("method  crc     date  time  ");
+        }
+        if (!quiet) {
+            printf("compressed  uncompr. ratio uncompressed_name\n");
+        }
     } else if (method < 0) {
-	if (total_in <= 0 || total_out <= 0) return;
-	if (verbose) {
-	    printf("                            %9lu %9lu ",
-		   total_in, total_out);
-	} else if (!quiet) {
-	    printf("%9ld %9ld ", total_in, total_out);
-	}
-	display_ratio(total_out-(total_in-header_bytes), total_out, (&_iob[1]) );
-	 
-	printf(" (totals)\n");
-	return;
+        if (total_in <= 0 || total_out <= 0) return;
+        if (verbose) {
+            printf("                            %9lu %9lu ",
+                   total_in, total_out);
+        } else if (!quiet) {
+            printf("%9ld %9ld ", total_in, total_out);
+        }
+        display_ratio(total_out-(total_in-header_bytes), total_out, (&_iob[1]) );
+         
+        printf(" (totals)\n");
+        return;
     }
     crc = (ulg)~0;  
     bytes_out = -1L;
@@ -1819,8 +1819,8 @@ static  void do_list(ifd, method)
                 read_error();
             }
             crc       = ((ulg)(((ush)(uch)((  buf  )[0]) | ((ush)(uch)((  buf  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf )+2 )[0]) | ((ush)(uch)(( ( buf )+2 )[1]) << 8)) ) << 16)) ;
-	    bytes_out = ((ulg)(((ush)(uch)((  buf+4  )[0]) | ((ush)(uch)((  buf+4  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+4 )+2 )[0]) | ((ush)(uch)(( ( buf+4 )+2 )[1]) << 8)) ) << 16)) ;
-	}
+            bytes_out = ((ulg)(((ush)(uch)((  buf+4  )[0]) | ((ush)(uch)((  buf+4  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+4 )+2 )[0]) | ((ush)(uch)(( ( buf+4 )+2 )[1]) << 8)) ) << 16)) ;
+        }
     }
     date = ctime((time_t*)&time_stamp) + 4;  
     date[12] = '\0';                
@@ -1829,16 +1829,16 @@ static  void do_list(ifd, method)
     }
     printf("%9ld %9ld ", bytes_in, bytes_out);
     if (bytes_in  == -1L) {
-	total_in = -1L;
-	bytes_in = bytes_out = header_bytes = 0;
+        total_in = -1L;
+        bytes_in = bytes_out = header_bytes = 0;
     } else if (total_in >= 0) {
-	total_in  += bytes_in;
+        total_in  += bytes_in;
     }
     if (bytes_out == -1L) {
-	total_out = -1L;
-	bytes_in = bytes_out = header_bytes = 0;
+        total_out = -1L;
+        bytes_in = bytes_out = header_bytes = 0;
     } else if (total_out >= 0) {
-	total_out += bytes_out;
+        total_out += bytes_out;
     }
     display_ratio(bytes_out-(bytes_in-header_bytes), bytes_out, (&_iob[1]) );
     printf(" %s\n", ofname);
@@ -1848,8 +1848,8 @@ static  int same_file(stat1, stat2)
     struct stat *stat2;
 {
     return stat1->st_ino   == stat2->st_ino
-	&& stat1->st_dev   == stat2->st_dev
-	    ;
+        && stat1->st_dev   == stat2->st_dev
+            ;
 }
 static  int name_too_long(name, statb)
     char *name;            
@@ -1857,7 +1857,7 @@ static  int name_too_long(name, statb)
 {
     int s = strlen(name);
     char c = name[s-1];
-    struct stat	tstat;  
+    struct stat tstat;  
     int res;
     tstat = *statb;       
     name[s-1] = '\0';
@@ -1876,84 +1876,84 @@ static  void shorten_name(name)
     char *p;
     len = strlen(name);
     if (decompress) {
-	if (len <= 1) error("name too short");
-	name[len-1] = '\0';
-	return;
+        if (len <= 1) error("name too short");
+        name[len-1] = '\0';
+        return;
     }
     p = get_suffix(name);
     if (p == 0 ) error("can't recover suffix\n");
     *p = '\0';
     save_orig_name = 1;
     if (len > 4 && (strcmp(( p-4 ),(  ".tar" )) == 0) ) {
-	strcpy(p-4, ".tgz");
-	return;
+        strcpy(p-4, ".tgz");
+        return;
     }
     do {
-	p = strrchr(name, '/' );
-	p = p ? p+1 : name;
-	while (*p) {
-	    plen = strcspn(p, "." );
-	    p += plen;
-	    if (plen > min_part) trunc = p-1;
-	    if (*p) p++;
-	}
+        p = strrchr(name, '/' );
+        p = p ? p+1 : name;
+        while (*p) {
+            plen = strcspn(p, "." );
+            p += plen;
+            if (plen > min_part) trunc = p-1;
+            if (*p) p++;
+        }
     } while (trunc == 0  && --min_part != 0);
     if (trunc != 0 ) {
-	do {
-	    trunc[0] = trunc[1];
-	} while (*trunc++);
-	trunc--;
+        do {
+            trunc[0] = trunc[1];
+        } while (*trunc++);
+        trunc--;
     } else {
-	trunc = strrchr(name, "." [0]);
-	if (trunc == 0 ) error("internal error in shorten_name");
-	if (trunc[1] == '\0') trunc--;  
+        trunc = strrchr(name, "." [0]);
+        if (trunc == 0 ) error("internal error in shorten_name");
+        if (trunc[1] == '\0') trunc--;  
     }
     strcpy(trunc, z_suffix);
 }
 static  int check_ofname()
 {
-    struct stat	ostat;  
+    struct stat ostat;  
     errno = 0;
     while (stat(ofname, &ostat) != 0) {
         if (errno != 63 ) return 0;  
-	shorten_name(ofname);
+        shorten_name(ofname);
     }
     if (!decompress && name_too_long(ofname, &ostat)) {
-	shorten_name(ofname);
-	if (stat(ofname, &ostat) != 0) return 0;
+        shorten_name(ofname);
+        if (stat(ofname, &ostat) != 0) return 0;
     }
     if (same_file(&istat, &ostat)) {
-	if ((strcmp(( ifname ),(  ofname )) == 0) ) {
-	    fprintf((&_iob[2]) , "%s: %s: cannot %scompress onto itself\n",
-		    progname, ifname, decompress ? "de" : "");
-	} else {
-	    fprintf((&_iob[2]) , "%s: %s and %s are the same file\n",
-		    progname, ifname, ofname);
-	}
-	exit_code = 1 ;
-	return 1 ;
+        if ((strcmp(( ifname ),(  ofname )) == 0) ) {
+            fprintf((&_iob[2]) , "%s: %s: cannot %scompress onto itself\n",
+                    progname, ifname, decompress ? "de" : "");
+        } else {
+            fprintf((&_iob[2]) , "%s: %s and %s are the same file\n",
+                    progname, ifname, ofname);
+        }
+        exit_code = 1 ;
+        return 1 ;
     }
     if (!force) {
-	char response[80];
-	strcpy(response,"n");
-	fprintf((&_iob[2]) , "%s: %s already exists;", progname, ofname);
-	if (foreground && isatty((( (&_iob[0])  )->_file) )) {
-	    fprintf((&_iob[2]) , " do you wish to overwrite (y or n)? ");
-	    fflush((&_iob[2]) );
-	    (void)fgets(response, sizeof(response)-1, (&_iob[0]) );
-	}
-	if ((((_ctype_+1)[  *response  ]&01 )  ? ( *response )-'A'+'a' : ( *response ))  != 'y') {
-	    fprintf((&_iob[2]) , "\tnot overwritten\n");
-	    if (exit_code == 0 ) exit_code = 2 ;
-	    return 1 ;
-	}
+        char response[80];
+        strcpy(response,"n");
+        fprintf((&_iob[2]) , "%s: %s already exists;", progname, ofname);
+        if (foreground && isatty((( (&_iob[0])  )->_file) )) {
+            fprintf((&_iob[2]) , " do you wish to overwrite (y or n)? ");
+            fflush((&_iob[2]) );
+            (void)fgets(response, sizeof(response)-1, (&_iob[0]) );
+        }
+        if ((((_ctype_+1)[  *response  ]&01 )  ? ( *response )-'A'+'a' : ( *response ))  != 'y') {
+            fprintf((&_iob[2]) , "\tnot overwritten\n");
+            if (exit_code == 0 ) exit_code = 2 ;
+            return 1 ;
+        }
     }
     (void) chmod(ofname, 0777);
     if (unlink(ofname)) {
-	fprintf((&_iob[2]) , "%s: ", progname);
-	perror(ofname);
-	exit_code = 1 ;
-	return 1 ;
+        fprintf((&_iob[2]) , "%s: ", progname);
+        perror(ofname);
+        exit_code = 1 ;
+        return 1 ;
     }
     return 0 ;
 }
@@ -1961,34 +1961,34 @@ static  void reset_times (name, statb)
     char *name;
     struct stat *statb;
 {
-    struct utimbuf	timep;
+    struct utimbuf      timep;
     timep.actime  = statb->st_atime;
     timep.modtime = statb->st_mtime;
     if (utime(name, &timep) && !((( statb->st_mode )&0170000 ) == 0040000 ) ) {
-	{if (!quiet) fprintf  ((&_iob[2]) , "%s: ", progname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	if (!quiet) perror(ofname);
+        {if (!quiet) fprintf  ((&_iob[2]) , "%s: ", progname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        if (!quiet) perror(ofname);
     }
 }
 static  void copy_stat(ifstat)
     struct stat *ifstat;
 {
     if (decompress && time_stamp != 0 && ifstat->st_mtime != time_stamp) {
-	ifstat->st_mtime = time_stamp;
-	if (verbose > 1) {
-	    fprintf((&_iob[2]) , "%s: time stamp restored\n", ofname);
-	}
+        ifstat->st_mtime = time_stamp;
+        if (verbose > 1) {
+            fprintf((&_iob[2]) , "%s: time stamp restored\n", ofname);
+        }
     }
     reset_times(ofname, ifstat);
     if (chmod(ofname, ifstat->st_mode & 07777)) {
-	{if (!quiet) fprintf  ((&_iob[2]) , "%s: ", progname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	if (!quiet) perror(ofname);
+        {if (!quiet) fprintf  ((&_iob[2]) , "%s: ", progname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        if (!quiet) perror(ofname);
     }
     chown(ofname, ifstat->st_uid, ifstat->st_gid);   
     remove_ofname = 0;
     (void) chmod(ifname, 0777);
     if (unlink(ifname)) {
-	{if (!quiet) fprintf  ((&_iob[2]) , "%s: ", progname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	if (!quiet) perror(ifname);
+        {if (!quiet) fprintf  ((&_iob[2]) , "%s: ", progname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        if (!quiet) perror(ifname);
     }
 }
 static  void treat_dir(dir)
@@ -2000,28 +2000,28 @@ static  void treat_dir(dir)
     int      len;
     dirp = opendir(dir);
     if (dirp == 0 ) {
-	fprintf((&_iob[2]) , "%s: %s unreadable\n", progname, dir);
-	exit_code = 1 ;
-	return ;
+        fprintf((&_iob[2]) , "%s: %s unreadable\n", progname, dir);
+        exit_code = 1 ;
+        return ;
     }
     while ((dp = readdir(dirp)) != 0 ) {
-	if ((strcmp(( dp->d_name ),( "." )) == 0)  || (strcmp(( dp->d_name ),( ".." )) == 0) ) {
-	    continue;
-	}
-	len = strlen(dir);
-	if (len + ((int)strlen(( dp )->d_name))  + 1 < 1024  - 1) {
-	    strcpy(nbuf,dir);
-	    if (len != 0  
-	    ) {
-		nbuf[len++] = '/' ;
-	    }
-	    strcpy(nbuf+len, dp->d_name);
-	    treat_file(nbuf);
-	} else {
-	    fprintf((&_iob[2]) ,"%s: %s/%s: pathname too long\n",
-		    progname, dir, dp->d_name);
-	    exit_code = 1 ;
-	}
+        if ((strcmp(( dp->d_name ),( "." )) == 0)  || (strcmp(( dp->d_name ),( ".." )) == 0) ) {
+            continue;
+        }
+        len = strlen(dir);
+        if (len + ((int)strlen(( dp )->d_name))  + 1 < 1024  - 1) {
+            strcpy(nbuf,dir);
+            if (len != 0  
+            ) {
+                nbuf[len++] = '/' ;
+            }
+            strcpy(nbuf+len, dp->d_name);
+            treat_file(nbuf);
+        } else {
+            fprintf((&_iob[2]) ,"%s: %s/%s: pathname too long\n",
+                    progname, dir, dp->d_name);
+            exit_code = 1 ;
+        }
     }
     closedir(dirp);
 }
@@ -2219,7 +2219,7 @@ int *m;
       {
         r.e = (uch)(*p < 256 ? 16 : 15);     
         r.v.n = (ush)(*p);              
-	p++;                            
+        p++;                            
       }
       else
       {
@@ -2324,7 +2324,7 @@ int bl, bd;
         else                       
           do {
             window [w++] = window [d++];
-	     ;
+             ;
           } while (--e);
         if (w == 0x8000 )
         {
@@ -2586,7 +2586,7 @@ int lzw(in, out)
     }
     return 1 ;
 }
-extern	char	_ctype_[];
+extern  char    _ctype_[];
 static  int   extra_lbits[29 ]  
    = {0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0};
 static  int   extra_dbits[30 ]  
@@ -3109,8 +3109,8 @@ static  void fillbuf       (int n)  ;
 static  unsigned getbits   (int n)  ;
 static  void init_getbits  (void)  ;
 static  void make_table  (int nchar, uch bitlen[],
-			  int tablebits, ush table[])  ;
-	 
+                          int tablebits, ush table[])  ;
+         
 static  uch pt_len[(16  + 3)  ];
 static  unsigned blocksize;
 static  ush pt_table[256];
@@ -3122,10 +3122,10 @@ static  void fillbuf(n)
 {
     bitbuf <<= n;
     while (n > bitcount) {
-	bitbuf |= subbitbuf << (n -= bitcount);
-	subbitbuf = (unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(1)) ;
-	if ((int)subbitbuf == (-1) ) subbitbuf = 0;
-	bitcount = 8 ;
+        bitbuf |= subbitbuf << (n -= bitcount);
+        subbitbuf = (unsigned)(inptr < insize ? inbuf[inptr++] : fill_inbuf(1)) ;
+        if ((int)subbitbuf == (-1) ) subbitbuf = 0;
+        bitcount = 8 ;
     }
     bitbuf |= subbitbuf >> (bitcount -= n);
 }
@@ -3153,46 +3153,46 @@ static  void make_table(nchar, bitlen, tablebits, table)
     for (i = 0; i < (unsigned)nchar; i++) count[bitlen[i]]++;
     start[1] = 0;
     for (i = 1; i <= 16; i++)
-	start[i + 1] = start[i] + (count[i] << (16 - i));
+        start[i + 1] = start[i] + (count[i] << (16 - i));
     if ((start[17] & 0xffff) != 0)
-	error("Bad table\n");
+        error("Bad table\n");
     jutbits = 16 - tablebits;
     for (i = 1; i <= (unsigned)tablebits; i++) {
-	start[i] >>= jutbits;
-	weight[i] = (unsigned) 1 << (tablebits - i);
+        start[i] >>= jutbits;
+        weight[i] = (unsigned) 1 << (tablebits - i);
     }
     while (i <= 16) {
-	weight[i] = (unsigned) 1 << (16 - i);
-	i++;
+        weight[i] = (unsigned) 1 << (16 - i);
+        i++;
     }
     i = start[tablebits + 1] >> jutbits;
     if (i != 0) {
-	k = 1 << tablebits;
-	while (i != k) table[i++] = 0;
+        k = 1 << tablebits;
+        while (i != k) table[i++] = 0;
     }
     avail = nchar;
     mask = (unsigned) 1 << (15 - tablebits);
     for (ch = 0; ch < (unsigned)nchar; ch++) {
-	if ((len = bitlen[ch]) == 0) continue;
-	nextcode = start[len] + weight[len];
-	if (len <= (unsigned)tablebits) {
-	    for (i = start[len]; i < nextcode; i++) table[i] = ch;
-	} else {
-	    k = start[len];
-	    p = &table[k >> jutbits];
-	    i = len - tablebits;
-	    while (i != 0) {
-		if (*p == 0) {
-		    (prev+0x8000 )  [avail] = prev [avail] = 0;
-		    *p = avail++;
-		}
-		if (k & mask) p = &(prev+0x8000 )  [*p];
-		else          p = &prev [*p];
-		k <<= 1;  i--;
-	    }
-	    *p = ch;
-	}
-	start[len] = nextcode;
+        if ((len = bitlen[ch]) == 0) continue;
+        nextcode = start[len] + weight[len];
+        if (len <= (unsigned)tablebits) {
+            for (i = start[len]; i < nextcode; i++) table[i] = ch;
+        } else {
+            k = start[len];
+            p = &table[k >> jutbits];
+            i = len - tablebits;
+            while (i != 0) {
+                if (*p == 0) {
+                    (prev+0x8000 )  [avail] = prev [avail] = 0;
+                    *p = avail++;
+                }
+                if (k & mask) p = &(prev+0x8000 )  [*p];
+                else          p = &prev [*p];
+                k <<= 1;  i--;
+            }
+            *p = ch;
+        }
+        start[len] = nextcode;
     }
 }
 static  void read_pt_len(nn, nbit, i_special)
@@ -3204,26 +3204,26 @@ static  void read_pt_len(nn, nbit, i_special)
     unsigned mask;
     n = getbits(nbit);
     if (n == 0) {
-	c = getbits(nbit);
-	for (i = 0; i < nn; i++) pt_len[i] = 0;
-	for (i = 0; i < 256; i++) pt_table[i] = c;
+        c = getbits(nbit);
+        for (i = 0; i < nn; i++) pt_len[i] = 0;
+        for (i = 0; i < 256; i++) pt_table[i] = c;
     } else {
-	i = 0;
-	while (i < n) {
-	    c = bitbuf >> ((8  * 2 * sizeof(char))  - 3);
-	    if (c == 7) {
-		mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 3);
-		while (mask & bitbuf) {  mask >>= 1;  c++;  }
-	    }
-	    fillbuf((c < 7) ? 3 : c - 3);
-	    pt_len[i++] = c;
-	    if (i == i_special) {
-		c = getbits(2);
-		while (--c >= 0) pt_len[i++] = 0;
-	    }
-	}
-	while (i < nn) pt_len[i++] = 0;
-	make_table(nn, pt_len, 8, pt_table);
+        i = 0;
+        while (i < n) {
+            c = bitbuf >> ((8  * 2 * sizeof(char))  - 3);
+            if (c == 7) {
+                mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 3);
+                while (mask & bitbuf) {  mask >>= 1;  c++;  }
+            }
+            fillbuf((c < 7) ? 3 : c - 3);
+            pt_len[i++] = c;
+            if (i == i_special) {
+                c = getbits(2);
+                while (--c >= 0) pt_len[i++] = 0;
+            }
+        }
+        while (i < nn) pt_len[i++] = 0;
+        make_table(nn, pt_len, 8, pt_table);
     }
 }
 static  void read_c_len()
@@ -3232,54 +3232,54 @@ static  void read_c_len()
     unsigned mask;
     n = getbits(9 );
     if (n == 0) {
-	c = getbits(9 );
-	for (i = 0; i < (255  + 256  + 2 - 3 ) ; i++) outbuf [i] = 0;
-	for (i = 0; i < 4096; i++) d_buf [i] = c;
+        c = getbits(9 );
+        for (i = 0; i < (255  + 256  + 2 - 3 ) ; i++) outbuf [i] = 0;
+        for (i = 0; i < 4096; i++) d_buf [i] = c;
     } else {
-	i = 0;
-	while (i < n) {
-	    c = pt_table[bitbuf >> ((8  * 2 * sizeof(char))  - 8)];
-	    if (c >= (16  + 3) ) {
-		mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 8);
-		do {
-		    if (bitbuf & mask) c = (prev+0x8000 )  [c];
-		    else               c = prev  [c];
-		    mask >>= 1;
-		} while (c >= (16  + 3) );
-	    }
-	    fillbuf((int) pt_len[c]);
-	    if (c <= 2) {
-		if      (c == 0) c = 1;
-		else if (c == 1) c = getbits(4) + 3;
-		else             c = getbits(9 ) + 20;
-		while (--c >= 0) outbuf [i++] = 0;
-	    } else outbuf [i++] = c - 2;
-	}
-	while (i < (255  + 256  + 2 - 3 ) ) outbuf [i++] = 0;
-	make_table((255  + 256  + 2 - 3 ) , outbuf , 12, d_buf );
+        i = 0;
+        while (i < n) {
+            c = pt_table[bitbuf >> ((8  * 2 * sizeof(char))  - 8)];
+            if (c >= (16  + 3) ) {
+                mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 8);
+                do {
+                    if (bitbuf & mask) c = (prev+0x8000 )  [c];
+                    else               c = prev  [c];
+                    mask >>= 1;
+                } while (c >= (16  + 3) );
+            }
+            fillbuf((int) pt_len[c]);
+            if (c <= 2) {
+                if      (c == 0) c = 1;
+                else if (c == 1) c = getbits(4) + 3;
+                else             c = getbits(9 ) + 20;
+                while (--c >= 0) outbuf [i++] = 0;
+            } else outbuf [i++] = c - 2;
+        }
+        while (i < (255  + 256  + 2 - 3 ) ) outbuf [i++] = 0;
+        make_table((255  + 256  + 2 - 3 ) , outbuf , 12, d_buf );
     }
 }
 static  unsigned decode_c()
 {
     unsigned j, mask;
     if (blocksize == 0) {
-	blocksize = getbits(16);
-	if (blocksize == 0) {
-	    return (255  + 256  + 2 - 3 ) ;  
-	}
-	read_pt_len((16  + 3) , 5 , 3);
-	read_c_len();
-	read_pt_len((13  + 1) , 4 , -1);
+        blocksize = getbits(16);
+        if (blocksize == 0) {
+            return (255  + 256  + 2 - 3 ) ;  
+        }
+        read_pt_len((16  + 3) , 5 , 3);
+        read_c_len();
+        read_pt_len((13  + 1) , 4 , -1);
     }
     blocksize--;
     j = d_buf [bitbuf >> ((8  * 2 * sizeof(char))  - 12)];
     if (j >= (255  + 256  + 2 - 3 ) ) {
-	mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 12);
-	do {
-	    if (bitbuf & mask) j = (prev+0x8000 )  [j];
-	    else               j = prev  [j];
-	    mask >>= 1;
-	} while (j >= (255  + 256  + 2 - 3 ) );
+        mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 12);
+        do {
+            if (bitbuf & mask) j = (prev+0x8000 )  [j];
+            else               j = prev  [j];
+            mask >>= 1;
+        } while (j >= (255  + 256  + 2 - 3 ) );
     }
     fillbuf((int) outbuf [j]);
     return j;
@@ -3289,12 +3289,12 @@ static  unsigned decode_p()
     unsigned j, mask;
     j = pt_table[bitbuf >> ((8  * 2 * sizeof(char))  - 8)];
     if (j >= (13  + 1) ) {
-	mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 8);
-	do {
-	    if (bitbuf & mask) j = (prev+0x8000 )  [j];
-	    else               j = prev  [j];
-	    mask >>= 1;
-	} while (j >= (13  + 1) );
+        mask = (unsigned) 1 << ((8  * 2 * sizeof(char))  - 1 - 8);
+        do {
+            if (bitbuf & mask) j = (prev+0x8000 )  [j];
+            else               j = prev  [j];
+            mask >>= 1;
+        } while (j >= (13  + 1) );
     }
     fillbuf((int) pt_len[j]);
     if (j != 0) j = ((unsigned) 1 << (j - 1)) + getbits((int) (j - 1));
@@ -3320,28 +3320,28 @@ static  unsigned decode(count, buffer)
     unsigned r, c;
     r = 0;
     while (--j >= 0) {
-	buffer[r] = buffer[i];
-	i = (i + 1) & (((unsigned) 1 << 13 )  - 1);
-	if (++r == count) return r;
+        buffer[r] = buffer[i];
+        i = (i + 1) & (((unsigned) 1 << 13 )  - 1);
+        if (++r == count) return r;
     }
     for ( ; ; ) {
-	c = decode_c();
-	if (c == (255  + 256  + 2 - 3 ) ) {
-	    done = 1;
-	    return r;
-	}
-	if (c <= 255 ) {
-	    buffer[r] = c;
-	    if (++r == count) return r;
-	} else {
-	    j = c - (255  + 1 - 3 );
-	    i = (r - decode_p() - 1) & (((unsigned) 1 << 13 )  - 1);
-	    while (--j >= 0) {
-		buffer[r] = buffer[i];
-		i = (i + 1) & (((unsigned) 1 << 13 )  - 1);
-		if (++r == count) return r;
-	    }
-	}
+        c = decode_c();
+        if (c == (255  + 256  + 2 - 3 ) ) {
+            done = 1;
+            return r;
+        }
+        if (c <= 255 ) {
+            buffer[r] = c;
+            if (++r == count) return r;
+        } else {
+            j = c - (255  + 1 - 3 );
+            i = (r - decode_p() - 1) & (((unsigned) 1 << 13 )  - 1);
+            while (--j >= 0) {
+                buffer[r] = buffer[i];
+                i = (i + 1) & (((unsigned) 1 << 13 )  - 1);
+                if (++r == count) return r;
+            }
+        }
     }
 }
 int unlzh(in, out)
@@ -3353,10 +3353,10 @@ int unlzh(in, out)
     ofd = out;
     decode_start();
     while (!done) {
-	n = decode((unsigned) ((unsigned) 1 << 13 ) , window);
-	if (!test && n > 0) {
-	    write_buf(out, (char*)window, n);
-	}
+        n = decode((unsigned) ((unsigned) 1 << 13 ) , window);
+        if (!test && n > 0) {
+            write_buf(out, (char*)window, n);
+        }
     }
     return 0 ;
 }
@@ -3364,16 +3364,16 @@ extern int maxbits;
 extern int block_mode;    
 extern int lzw     (int in, int out)  ;
 extern int unlzw   (int in, int out)  ;
-typedef	unsigned char	char_type;
+typedef unsigned char   char_type;
 typedef          long   code_int;
-typedef unsigned long 	count_int;
-typedef unsigned short	count_short;
-typedef unsigned long 	cmp_code_int;
-	
-union	bytes {
+typedef unsigned long   count_int;
+typedef unsigned short  count_short;
+typedef unsigned long   cmp_code_int;
+        
+union   bytes {
     long  word;
     struct {
-	int  dummy;
+        int  dummy;
     } bytes;
 };
 int block_mode = 0x80 ;  
@@ -3397,17 +3397,17 @@ int unlzw(in, out)
     maxbits = (inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
     block_mode = maxbits & 0x80 ;
     if ((maxbits & 0x60 ) != 0) {
-	{if (!quiet) fprintf  ((&_iob[2]) , "\n%s: %s: warning, unknown flags 0x%x\n",
-	      progname, ifname, maxbits & 0x60 )  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        {if (!quiet) fprintf  ((&_iob[2]) , "\n%s: %s: warning, unknown flags 0x%x\n",
+              progname, ifname, maxbits & 0x60 )  ; if (exit_code == 0 ) exit_code = 2 ;} ;
     }
     maxbits &= 0x1f ;
     maxmaxcode = (1L << ( maxbits )) ;
     if (maxbits > 16 ) {
-	fprintf((&_iob[2]) ,
-		"\n%s: %s: compressed with %d bits, can only handle %d bits\n",
-		progname, ifname, maxbits, 16 );
-	exit_code = 1 ;
-	return 1 ;
+        fprintf((&_iob[2]) ,
+                "\n%s: %s: compressed with %d bits, can only handle %d bits\n",
+                progname, ifname, maxbits, 16 );
+        exit_code = 1 ;
+        return 1 ;
     }
     rsize = insize;
     maxcode = (1L << ( n_bits = 9  )) -1;
@@ -3419,119 +3419,119 @@ int unlzw(in, out)
     free_ent = ((block_mode) ? (256 +1)  : 256);
     memset ((voidp)( prev  ), 0, (  256 )) ; ;  
     for (code = 255 ; code >= 0 ; --code) {
-	window [ code ]  = (char_type)code;
+        window [ code ]  = (char_type)code;
     }
     do {
-	register  int i;
-	int  e;
-	int  o;
-	
+        register  int i;
+        int  e;
+        int  o;
+        
     resetbuf:
-	e = insize-(o = (posbits>>3));
-	
-	for (i = 0 ; i < e ; ++i) {
-	    inbuf[i] = inbuf[i+o];
-	}
-	insize = e;
-	posbits = 0;
-	
-	if (insize < 64 ) {
-	    if ((rsize = read(in, (char*)inbuf+insize, 0x8000 )) == (-1) ) {
-		read_error();
-	    }
-	    insize += rsize;
-	    bytes_in += (ulg)rsize;
-	}
-	inbits = ((rsize != 0) ? ((long)insize - insize%n_bits)<<3 : 
-		  ((long)insize<<3)-(n_bits-1));
-	
-	while (inbits > posbits) {
-	    if (free_ent > maxcode) {
-		posbits = ((posbits-1) +
-			   ((n_bits<<3)-(posbits-1+(n_bits<<3))%(n_bits<<3)));
-		++n_bits;
-		if (n_bits == maxbits) {
-		    maxcode = maxmaxcode;
-		} else {
-		    maxcode = (1L << ( n_bits )) -1;
-		}
-		bitmask = (1<<n_bits)-1;
-		goto resetbuf;
-	    }
-	    { register  char_type *p = &( inbuf )[( posbits )>>3]; ( code ) = ((((long)(p[0]))|((long)(p[1])<<8)| ((long)(p[2])<<16))>>(( posbits )&0x7))&( bitmask ); ( posbits ) += ( n_bits ); } ;
-	     ;
-	    if (oldcode == -1) {
-		if (code >= 256) error("corrupt input.");
-		outbuf[outpos++] = (char_type)(finchar = (int)(oldcode=code));
-		continue;
-	    }
-	    if (code == 256  && block_mode) {
-		memset ((voidp)( prev  ), 0, (  256 )) ; ;
-		free_ent = (256 +1)  - 1;
-		posbits = ((posbits-1) +
-			   ((n_bits<<3)-(posbits-1+(n_bits<<3))%(n_bits<<3)));
-		maxcode = (1L << ( n_bits = 9  )) -1;
-		bitmask = (1<<n_bits)-1;
-		goto resetbuf;
-	    }
-	    incode = code;
-	    stackp = ((char_type *)(&d_buf[0x8000 -1])) ;
-	    
-	    if (code >= free_ent) {  
-		if (code > free_ent) {
-		    if (!test && outpos > 0) {
-			write_buf(out, (char*)outbuf, outpos);
-			bytes_out += (ulg)outpos;
-		    }
-		    error(to_stdout ? "corrupt input." :
-			  "corrupt input. Use zcat to recover some data.");
-		}
-		*--stackp = (char_type)finchar;
-		code = oldcode;
-	    }
-	    while ((cmp_code_int)code >= (cmp_code_int)256) {
-		 
-		*--stackp = window [ code ] ;
-		code = prev [ code ] ;
-	    }
-	    *--stackp =	(char_type)(finchar = window [ code ] );
-	    
-	     
-	    {
-		register  int	i;
-	    
-		if (outpos+(i = (((char_type *)(&d_buf[0x8000 -1])) -stackp)) >= 16384 ) {
-		    do {
-			if (i > 16384 -outpos) i = 16384 -outpos;
-			if (i > 0) {
-			    memcpy(outbuf+outpos, stackp, i);
-			    outpos += i;
-			}
-			if (outpos >= 16384 ) {
-			    if (!test) {
-				write_buf(out, (char*)outbuf, outpos);
-				bytes_out += (ulg)outpos;
-			    }
-			    outpos = 0;
-			}
-			stackp+= i;
-		    } while ((i = (((char_type *)(&d_buf[0x8000 -1])) -stackp)) > 0);
-		} else {
-		    memcpy(outbuf+outpos, stackp, i);
-		    outpos += i;
-		}
-	    }
-	    if ((code = free_ent) < maxmaxcode) {  
-		prev [ code ]  = (unsigned short)oldcode;
-		window [ code ]  = (char_type)finchar;
-		free_ent = code+1;
-	    } 
-	    oldcode = incode;	 
-	}
+        e = insize-(o = (posbits>>3));
+        
+        for (i = 0 ; i < e ; ++i) {
+            inbuf[i] = inbuf[i+o];
+        }
+        insize = e;
+        posbits = 0;
+        
+        if (insize < 64 ) {
+            if ((rsize = read(in, (char*)inbuf+insize, 0x8000 )) == (-1) ) {
+                read_error();
+            }
+            insize += rsize;
+            bytes_in += (ulg)rsize;
+        }
+        inbits = ((rsize != 0) ? ((long)insize - insize%n_bits)<<3 : 
+                  ((long)insize<<3)-(n_bits-1));
+        
+        while (inbits > posbits) {
+            if (free_ent > maxcode) {
+                posbits = ((posbits-1) +
+                           ((n_bits<<3)-(posbits-1+(n_bits<<3))%(n_bits<<3)));
+                ++n_bits;
+                if (n_bits == maxbits) {
+                    maxcode = maxmaxcode;
+                } else {
+                    maxcode = (1L << ( n_bits )) -1;
+                }
+                bitmask = (1<<n_bits)-1;
+                goto resetbuf;
+            }
+            { register  char_type *p = &( inbuf )[( posbits )>>3]; ( code ) = ((((long)(p[0]))|((long)(p[1])<<8)| ((long)(p[2])<<16))>>(( posbits )&0x7))&( bitmask ); ( posbits ) += ( n_bits ); } ;
+             ;
+            if (oldcode == -1) {
+                if (code >= 256) error("corrupt input.");
+                outbuf[outpos++] = (char_type)(finchar = (int)(oldcode=code));
+                continue;
+            }
+            if (code == 256  && block_mode) {
+                memset ((voidp)( prev  ), 0, (  256 )) ; ;
+                free_ent = (256 +1)  - 1;
+                posbits = ((posbits-1) +
+                           ((n_bits<<3)-(posbits-1+(n_bits<<3))%(n_bits<<3)));
+                maxcode = (1L << ( n_bits = 9  )) -1;
+                bitmask = (1<<n_bits)-1;
+                goto resetbuf;
+            }
+            incode = code;
+            stackp = ((char_type *)(&d_buf[0x8000 -1])) ;
+            
+            if (code >= free_ent) {  
+                if (code > free_ent) {
+                    if (!test && outpos > 0) {
+                        write_buf(out, (char*)outbuf, outpos);
+                        bytes_out += (ulg)outpos;
+                    }
+                    error(to_stdout ? "corrupt input." :
+                          "corrupt input. Use zcat to recover some data.");
+                }
+                *--stackp = (char_type)finchar;
+                code = oldcode;
+            }
+            while ((cmp_code_int)code >= (cmp_code_int)256) {
+                 
+                *--stackp = window [ code ] ;
+                code = prev [ code ] ;
+            }
+            *--stackp = (char_type)(finchar = window [ code ] );
+            
+             
+            {
+                register  int   i;
+            
+                if (outpos+(i = (((char_type *)(&d_buf[0x8000 -1])) -stackp)) >= 16384 ) {
+                    do {
+                        if (i > 16384 -outpos) i = 16384 -outpos;
+                        if (i > 0) {
+                            memcpy(outbuf+outpos, stackp, i);
+                            outpos += i;
+                        }
+                        if (outpos >= 16384 ) {
+                            if (!test) {
+                                write_buf(out, (char*)outbuf, outpos);
+                                bytes_out += (ulg)outpos;
+                            }
+                            outpos = 0;
+                        }
+                        stackp+= i;
+                    } while ((i = (((char_type *)(&d_buf[0x8000 -1])) -stackp)) > 0);
+                } else {
+                    memcpy(outbuf+outpos, stackp, i);
+                    outpos += i;
+                }
+            }
+            if ((code = free_ent) < maxmaxcode) {  
+                prev [ code ]  = (unsigned short)oldcode;
+                window [ code ]  = (char_type)finchar;
+                free_ent = code+1;
+            } 
+            oldcode = incode;    
+        }
     } while (rsize != 0);
     if (!test && outpos > 0) {
-	write_buf(out, (char*)outbuf, outpos);
-	bytes_out += (ulg)outpos;
+        write_buf(out, (char*)outbuf, outpos);
+        bytes_out += (ulg)outpos;
     }
     return 0 ;
 }
@@ -3554,26 +3554,26 @@ static  void read_tree()
     for (n = 1; n <= 4; n++) orig_len = (orig_len << 8) | (ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
     max_len = (int)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;  
     if (max_len > 25 ) {
-	error("invalid compressed data -- Huffman code > 32 bits");
+        error("invalid compressed data -- Huffman code > 32 bits");
     }
     n = 0;
     for (len = 1; len <= max_len; len++) {
-	leaves[len] = (int)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	n += leaves[len];
+        leaves[len] = (int)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        n += leaves[len];
     }
     if (n > 256 ) {
-	error("too many leaves in Huffman tree");
+        error("too many leaves in Huffman tree");
     }
      ;
     leaves[max_len]++;
     base = 0;
     for (len = 1; len <= max_len; len++) {
-	 
-	lit_base[len] = base;
-	 
-	for (n = leaves[len]; n > 0; n--) {
-	    literal[base++] = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	}
+         
+        lit_base[len] = base;
+         
+        for (n = leaves[len]; n > 0; n--) {
+            literal[base++] = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+        }
     }
     leaves[max_len]++;  
 }
@@ -3583,19 +3583,19 @@ static  void build_tree1()
     int len;        
     uch *prefixp;   
     for (len = max_len; len >= 1; len--) {
-	 
-	nodes >>= 1;
-	parents[len] = nodes;
-	 
-	lit_base[len] -= nodes;
-	 
-	nodes += leaves[len];
+         
+        nodes >>= 1;
+        parents[len] = nodes;
+         
+        lit_base[len] -= nodes;
+         
+        nodes += leaves[len];
     }
     peek_bits = (( max_len ) <= (  12  ) ? ( max_len ) : (  12  )) ;
     prefixp = &outbuf [1<<peek_bits];
     for (len = 1; len <= peek_bits; len++) {
-	int prefixes = leaves[len] << (peek_bits-len);  
-	while (prefixes--) *--prefixp = (uch)len;
+        int prefixes = leaves[len] << (peek_bits-len);  
+        while (prefixes--) *--prefixp = (uch)len;
     }
     while (prefixp > outbuf ) *--prefixp = 0;
 }
@@ -3615,31 +3615,31 @@ int unpack(in, out)
     eob = leaves[max_len]-1;
      ;
     for (;;) {
-	 
-	{ while (valid < (  peek_bits )) bitbuf = (bitbuf<<8) | (ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) , valid += 8;  peek  = (bitbuf >> (valid-(  peek_bits ))) & (  peek_mask ); } ;
-	len = outbuf [peek];
-	if (len > 0) {
-	    peek >>= peek_bits - len;  
-	} else {
-	     
-	    ulg mask = peek_mask;
-	    len = peek_bits;
-	    do {
+         
+        { while (valid < (  peek_bits )) bitbuf = (bitbuf<<8) | (ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) , valid += 8;  peek  = (bitbuf >> (valid-(  peek_bits ))) & (  peek_mask ); } ;
+        len = outbuf [peek];
+        if (len > 0) {
+            peek >>= peek_bits - len;  
+        } else {
+             
+            ulg mask = peek_mask;
+            len = peek_bits;
+            do {
                 len++, mask = (mask<<1)+1;
-		{ while (valid < (  len )) bitbuf = (bitbuf<<8) | (ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) , valid += 8;  peek  = (bitbuf >> (valid-(  len ))) & (  mask ); } ;
-	    } while (peek < (unsigned)parents[len]);
-	     
-	}
-	 
-	if (peek == eob && len == max_len) break;  
-	{window[outcnt++]=(uch)( literal[peek+lit_base[len]] ); if (outcnt==0x8000 ) flush_window();} ;
-	 ;
-	(valid -= ( len )) ;
+                { while (valid < (  len )) bitbuf = (bitbuf<<8) | (ulg)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) , valid += 8;  peek  = (bitbuf >> (valid-(  len ))) & (  mask ); } ;
+            } while (peek < (unsigned)parents[len]);
+             
+        }
+         
+        if (peek == eob && len == max_len) break;  
+        {window[outcnt++]=(uch)( literal[peek+lit_base[len]] ); if (outcnt==0x8000 ) flush_window();} ;
+         ;
+        (valid -= ( len )) ;
     }  
     flush_window();
      ;
     if (orig_len != (ulg)bytes_out) {
-	error("invalid compressed data--length error");
+        error("invalid compressed data--length error");
     }
     return 0 ;
 }
@@ -3654,24 +3654,24 @@ int check_zipfile(in)
     ifd = in;
     inptr += 30  + ((ush)(uch)(( h + 26  )[0]) | ((ush)(uch)(( h + 26  )[1]) << 8))  + ((ush)(uch)(( h + 28  )[0]) | ((ush)(uch)(( h + 28  )[1]) << 8)) ;
     if (inptr > insize || ((ulg)(((ush)(uch)((  h  )[0]) | ((ush)(uch)((  h  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( h )+2 )[0]) | ((ush)(uch)(( ( h )+2 )[1]) << 8)) ) << 16))  != 0x04034b50L ) {
-	fprintf((&_iob[2]) , "\n%s: %s: not a valid zip file\n",
-		progname, ifname);
-	exit_code = 1 ;
-	return 1 ;
+        fprintf((&_iob[2]) , "\n%s: %s: not a valid zip file\n",
+                progname, ifname);
+        exit_code = 1 ;
+        return 1 ;
     }
     method = h[8 ];
     if (method != 0  && method != 8 ) {
-	fprintf((&_iob[2]) ,
-		"\n%s: %s: first entry not deflated or stored -- use unzip\n",
-		progname, ifname);
-	exit_code = 1 ;
-	return 1 ;
+        fprintf((&_iob[2]) ,
+                "\n%s: %s: first entry not deflated or stored -- use unzip\n",
+                progname, ifname);
+        exit_code = 1 ;
+        return 1 ;
     }
     if ((decrypt = h[6 ] & 1 ) != 0) {
-	fprintf((&_iob[2]) , "\n%s: %s: encrypted file -- use unzip\n",
-		progname, ifname);
-	exit_code = 1 ;
-	return 1 ;
+        fprintf((&_iob[2]) , "\n%s: %s: encrypted file -- use unzip\n",
+                progname, ifname);
+        exit_code = 1 ;
+        return 1 ;
     }
     ext_header = (h[6 ] & 8 ) != 0;
     pkzip = 1;
@@ -3688,81 +3688,81 @@ int unzip(in, out)
     ofd = out;
     updcrc(0 , 0);            
     if (pkzip && !ext_header) {   
-	orig_crc = ((ulg)(((ush)(uch)((  inbuf + 14   )[0]) | ((ush)(uch)((  inbuf + 14   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 14  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 14  )+2 )[1]) << 8)) ) << 16)) ;
-	orig_len = ((ulg)(((ush)(uch)((  inbuf + 22   )[0]) | ((ush)(uch)((  inbuf + 22   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 22  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 22  )+2 )[1]) << 8)) ) << 16)) ;
+        orig_crc = ((ulg)(((ush)(uch)((  inbuf + 14   )[0]) | ((ush)(uch)((  inbuf + 14   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 14  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 14  )+2 )[1]) << 8)) ) << 16)) ;
+        orig_len = ((ulg)(((ush)(uch)((  inbuf + 22   )[0]) | ((ush)(uch)((  inbuf + 22   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 22  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 22  )+2 )[1]) << 8)) ) << 16)) ;
     }
     if (method == 8 )  {
-	int res = inflate();
-	if (res == 3) {
-	    error("out of memory");
-	} else if (res != 0) {
-	    error("invalid compressed data--format violated");
-	}
+        int res = inflate();
+        if (res == 3) {
+            error("out of memory");
+        } else if (res != 0) {
+            error("invalid compressed data--format violated");
+        }
     } else if (pkzip && method == 0 ) {
-	register ulg n = ((ulg)(((ush)(uch)((  inbuf + 22   )[0]) | ((ush)(uch)((  inbuf + 22   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 22  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 22  )+2 )[1]) << 8)) ) << 16)) ;
-	if (n != ((ulg)(((ush)(uch)((  inbuf + 18   )[0]) | ((ush)(uch)((  inbuf + 18   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 18  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 18  )+2 )[1]) << 8)) ) << 16))  - (decrypt ? 12  : 0)) {
-	    fprintf((&_iob[2]) , "len %ld, siz %ld\n", n, ((ulg)(((ush)(uch)((  inbuf + 18   )[0]) | ((ush)(uch)((  inbuf + 18   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 18  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 18  )+2 )[1]) << 8)) ) << 16)) );
-	    error("invalid compressed data--length mismatch");
-	}
-	while (n--) {
-	    uch c = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
-	    {window[outcnt++]=(uch)( c ); if (outcnt==0x8000 ) flush_window();} ;
-	}
-	flush_window();
+        register ulg n = ((ulg)(((ush)(uch)((  inbuf + 22   )[0]) | ((ush)(uch)((  inbuf + 22   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 22  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 22  )+2 )[1]) << 8)) ) << 16)) ;
+        if (n != ((ulg)(((ush)(uch)((  inbuf + 18   )[0]) | ((ush)(uch)((  inbuf + 18   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 18  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 18  )+2 )[1]) << 8)) ) << 16))  - (decrypt ? 12  : 0)) {
+            fprintf((&_iob[2]) , "len %ld, siz %ld\n", n, ((ulg)(((ush)(uch)((  inbuf + 18   )[0]) | ((ush)(uch)((  inbuf + 18   )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf + 18  )+2 )[0]) | ((ush)(uch)(( ( inbuf + 18  )+2 )[1]) << 8)) ) << 16)) );
+            error("invalid compressed data--length mismatch");
+        }
+        while (n--) {
+            uch c = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;
+            {window[outcnt++]=(uch)( c ); if (outcnt==0x8000 ) flush_window();} ;
+        }
+        flush_window();
     } else {
-	error("internal error, invalid method");
+        error("internal error, invalid method");
     }
     if (!pkzip) {
-	for (n = 0; n < 8; n++) {
-	    buf[n] = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;  
-	}
-	orig_crc = ((ulg)(((ush)(uch)((  buf  )[0]) | ((ush)(uch)((  buf  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf )+2 )[0]) | ((ush)(uch)(( ( buf )+2 )[1]) << 8)) ) << 16)) ;
-	orig_len = ((ulg)(((ush)(uch)((  buf+4  )[0]) | ((ush)(uch)((  buf+4  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+4 )+2 )[0]) | ((ush)(uch)(( ( buf+4 )+2 )[1]) << 8)) ) << 16)) ;
+        for (n = 0; n < 8; n++) {
+            buf[n] = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;  
+        }
+        orig_crc = ((ulg)(((ush)(uch)((  buf  )[0]) | ((ush)(uch)((  buf  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf )+2 )[0]) | ((ush)(uch)(( ( buf )+2 )[1]) << 8)) ) << 16)) ;
+        orig_len = ((ulg)(((ush)(uch)((  buf+4  )[0]) | ((ush)(uch)((  buf+4  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+4 )+2 )[0]) | ((ush)(uch)(( ( buf+4 )+2 )[1]) << 8)) ) << 16)) ;
     } else if (ext_header) {   
-	 
-	for (n = 0; n < 16 ; n++) {
-	    buf[n] = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;  
-	}
-	orig_crc = ((ulg)(((ush)(uch)((  buf+4  )[0]) | ((ush)(uch)((  buf+4  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+4 )+2 )[0]) | ((ush)(uch)(( ( buf+4 )+2 )[1]) << 8)) ) << 16)) ;
-	orig_len = ((ulg)(((ush)(uch)((  buf+12  )[0]) | ((ush)(uch)((  buf+12  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+12 )+2 )[0]) | ((ush)(uch)(( ( buf+12 )+2 )[1]) << 8)) ) << 16)) ;
+         
+        for (n = 0; n < 16 ; n++) {
+            buf[n] = (uch)(inptr < insize ? inbuf[inptr++] : fill_inbuf(0)) ;  
+        }
+        orig_crc = ((ulg)(((ush)(uch)((  buf+4  )[0]) | ((ush)(uch)((  buf+4  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+4 )+2 )[0]) | ((ush)(uch)(( ( buf+4 )+2 )[1]) << 8)) ) << 16)) ;
+        orig_len = ((ulg)(((ush)(uch)((  buf+12  )[0]) | ((ush)(uch)((  buf+12  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( buf+12 )+2 )[0]) | ((ush)(uch)(( ( buf+12 )+2 )[1]) << 8)) ) << 16)) ;
     }
     if (orig_crc != updcrc(outbuf, 0)) {
-	error("invalid compressed data--crc error");
+        error("invalid compressed data--crc error");
     }
     if (orig_len != (ulg)bytes_out) {
-	error("invalid compressed data--length error");
+        error("invalid compressed data--length error");
     }
     if (pkzip && inptr + 4 < insize && ((ulg)(((ush)(uch)((  inbuf+inptr  )[0]) | ((ush)(uch)((  inbuf+inptr  )[1]) << 8)) ) | ((ulg)(((ush)(uch)(( ( inbuf+inptr )+2 )[0]) | ((ush)(uch)(( ( inbuf+inptr )+2 )[1]) << 8)) ) << 16))  == 0x04034b50L ) {
-	if (to_stdout) {
-	    {if (!quiet) fprintf  ((&_iob[2]) ,
-		  "%s: %s has more than one entry--rest ignored\n",
-		  progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
-	} else {
-	     
-	    fprintf((&_iob[2]) ,
-		    "%s: %s has more than one entry -- unchanged\n",
-		    progname, ifname);
-	    exit_code = 1 ;
-	    ext_header = pkzip = 0;
-	    return 1 ;
-	}
+        if (to_stdout) {
+            {if (!quiet) fprintf  ((&_iob[2]) ,
+                  "%s: %s has more than one entry--rest ignored\n",
+                  progname, ifname)  ; if (exit_code == 0 ) exit_code = 2 ;} ;
+        } else {
+             
+            fprintf((&_iob[2]) ,
+                    "%s: %s has more than one entry -- unchanged\n",
+                    progname, ifname);
+            exit_code = 1 ;
+            ext_header = pkzip = 0;
+            return 1 ;
+        }
     }
     ext_header = pkzip = 0;  
     return 0 ;
 }
-extern	char	_ctype_[];
+extern  char    _ctype_[];
 extern ulg crc_32_tab[];    
 int copy(in, out)
     int in, out;    
 {
     errno = 0;
     while (insize != 0 && (int)insize != (-1) ) {
-	write_buf(out, (char*)inbuf, insize);
-	bytes_out += insize;
-	insize = read(in, (char*)inbuf, 0x8000 );
+        write_buf(out, (char*)inbuf, insize);
+        bytes_out += insize;
+        insize = read(in, (char*)inbuf, 0x8000 );
     }
     if ((int)insize == (-1)  && errno != 0) {
-	read_error();
+        read_error();
     }
     bytes_in = bytes_out;
     return 0 ;
@@ -3774,9 +3774,9 @@ ulg updcrc(s, n)
     register ulg c;          
     static ulg crc = (ulg)0xffffffffL;  
     if (s == 0 ) {
-	c = 0xffffffffL;
+        c = 0xffffffffL;
     } else {
-	c = crc;
+        c = crc;
         if (n) do {
             c = crc_32_tab[((int)c ^ (*s++)) & 0xff] ^ (c >> 8);
         } while (--n);
@@ -3797,13 +3797,13 @@ int fill_inbuf(eof_ok)
     insize = 0;
     errno = 0;
     do {
-	len = read(ifd, (char*)inbuf+insize, 0x8000 -insize);
+        len = read(ifd, (char*)inbuf+insize, 0x8000 -insize);
         if (len == 0 || len == (-1) ) break;
-	insize += len;
+        insize += len;
     } while (insize < 0x8000 );
     if (insize == 0) {
-	if (eof_ok) return (-1) ;
-	read_error();
+        if (eof_ok) return (-1) ;
+        read_error();
     }
     bytes_in += (ulg)insize;
     inptr = 1;
@@ -3821,7 +3821,7 @@ void flush_window()
     if (outcnt == 0) return;
     updcrc(window, outcnt);
     if (!test) {
-	write_buf(ofd, (char *)window, outcnt);
+        write_buf(ofd, (char *)window, outcnt);
     }
     bytes_out += (ulg)outcnt;
     outcnt = 0;
@@ -3833,11 +3833,11 @@ void write_buf(fd, buf, cnt)
 {
     unsigned  n;
     while ((n = write(fd, buf, cnt)) != cnt) {
-	if (n == (unsigned)(-1)) {
-	    write_error();
-	}
-	cnt -= n;
-	buf = (voidp)((char*)buf+n);
+        if (n == (unsigned)(-1)) {
+            write_error();
+        }
+        cnt -= n;
+        buf = (voidp)((char*)buf+n);
     }
 }
 char *strlwr(s)
@@ -3873,21 +3873,21 @@ char *add_envopt(argcp, argvp, env)
     char *p;              
     char **oargv;         
     char **nargv;         
-    int	 oargc = *argcp;  
+    int  oargc = *argcp;  
     int  nargc = 0;       
     env = (char*)getenv(env);
     if (env == 0 ) return 0 ;
     p = (char*)xmalloc(strlen(env)+1);
     env = strcpy(p, env);                     
     for (p = env; *p; nargc++ ) {             
-	p += strspn(p, " \t" );	      
-	if (*p == '\0') break;
-	p += strcspn(p, " \t" );	      
-	if (*p) *p++ = '\0';		      
+        p += strspn(p, " \t" );       
+        if (*p == '\0') break;
+        p += strcspn(p, " \t" );              
+        if (*p) *p++ = '\0';                  
     }
     if (nargc == 0) {
-	free(env);
-	return 0 ;
+        free(env);
+        return 0 ;
     }
     *argcp += nargc;
     nargv = (char**)calloc(*argcp+1, sizeof(char *));
@@ -3897,9 +3897,9 @@ char *add_envopt(argcp, argvp, env)
     if (oargc-- < 0) error("argc<=0");
     *(nargv++) = *(oargv++);
     for (p = env; nargc > 0; nargc--) {
-	p += strspn(p, " \t" );	      
-	*(nargv++) = p;			      
-	while (*p++) ;			      
+        p += strspn(p, " \t" );       
+        *(nargv++) = p;                       
+        while (*p++) ;                        
     }
     while (oargc--) *(nargv++) = *(oargv++);
     *nargv = 0 ;
@@ -3920,9 +3920,9 @@ void read_error()
 {
     fprintf((&_iob[2]) , "\n%s: ", progname);
     if (errno != 0) {
-	perror(ifname);
+        perror(ifname);
     } else {
-	fprintf((&_iob[2]) , "%s: unexpected end of file\n", ifname);
+        fprintf((&_iob[2]) , "%s: unexpected end of file\n", ifname);
     }
     abort_gzip();
 }
@@ -3939,17 +3939,17 @@ void display_ratio(num, den, file)
 {
     long ratio;   
     if (den == 0) {
-	ratio = 0;  
+        ratio = 0;  
     } else if (den < 2147483L) {  
-	ratio = 1000L*num/den;
+        ratio = 1000L*num/den;
     } else {
-	ratio = num/(den/1000L);
+        ratio = num/(den/1000L);
     }
     if (ratio < 0) {
-	(--(  file )->_cnt >= 0 ?	(int)(*(  file )->_ptr++ = (unsigned char)( '-' )) :	(((  file )->_flag & 0200 ) && -(  file )->_cnt < (  file )->_bufsiz ?	((*(  file )->_ptr = (unsigned char)( '-' )) != '\n' ?	(int)(*(  file )->_ptr++) :	_flsbuf(*(unsigned char *)(  file )->_ptr,   file )) :	_flsbuf((unsigned char)( '-' ),   file ))) ;
-	ratio = -ratio;
+        (--(  file )->_cnt >= 0 ?       (int)(*(  file )->_ptr++ = (unsigned char)( '-' )) :    (((  file )->_flag & 0200 ) && -(  file )->_cnt < (  file )->_bufsiz ?  ((*(  file )->_ptr = (unsigned char)( '-' )) != '\n' ?  (int)(*(  file )->_ptr++) :     _flsbuf(*(unsigned char *)(  file )->_ptr,   file )) :  _flsbuf((unsigned char)( '-' ),   file ))) ;
+        ratio = -ratio;
     } else {
-	(--(  file )->_cnt >= 0 ?	(int)(*(  file )->_ptr++ = (unsigned char)( ' ' )) :	(((  file )->_flag & 0200 ) && -(  file )->_cnt < (  file )->_bufsiz ?	((*(  file )->_ptr = (unsigned char)( ' ' )) != '\n' ?	(int)(*(  file )->_ptr++) :	_flsbuf(*(unsigned char *)(  file )->_ptr,   file )) :	_flsbuf((unsigned char)( ' ' ),   file ))) ;
+        (--(  file )->_cnt >= 0 ?       (int)(*(  file )->_ptr++ = (unsigned char)( ' ' )) :    (((  file )->_flag & 0200 ) && -(  file )->_cnt < (  file )->_bufsiz ?  ((*(  file )->_ptr = (unsigned char)( ' ' )) != '\n' ?  (int)(*(  file )->_ptr++) :     _flsbuf(*(unsigned char *)(  file )->_ptr,   file )) :  _flsbuf((unsigned char)( ' ' ),   file ))) ;
     }
     fprintf(file, "%2ld.%1ld%%", ratio / 10L, ratio % 10L);
 }
@@ -4014,7 +4014,7 @@ ulg crc_32_tab[] = {
   0x5d681b02L, 0x2a6f2b94L, 0xb40bbe37L, 0xc30c8ea1L, 0x5a05df1bL,
   0x2d02ef8dL
 };
-extern	char	_ctype_[];
+extern  char    _ctype_[];
 static  ulg crc;        
 long header_bytes;    
 int zip(in, out)
@@ -4031,7 +4031,7 @@ int zip(in, out)
     {outbuf[outcnt++]=(uch)( "\037\213" [1] ); if (outcnt==16384 ) flush_outbuf();} ;
     {outbuf[outcnt++]=(uch)( 8  ); if (outcnt==16384 ) flush_outbuf();} ;       
     if (save_orig_name) {
-	flags |= 0x08 ;
+        flags |= 0x08 ;
     }
     {outbuf[outcnt++]=(uch)( flags ); if (outcnt==16384 ) flush_outbuf();} ;          
     { { if (outcnt < 16384 -2) { outbuf[outcnt++] = (uch) (( ( time_stamp ) & 0xffff ) & 0xff); outbuf[outcnt++] = (uch) ((ush)( ( time_stamp ) & 0xffff ) >> 8); } else { {outbuf[outcnt++]=(uch)( (uch)(( ( time_stamp ) & 0xffff ) & 0xff) ); if (outcnt==16384 ) flush_outbuf();} ; {outbuf[outcnt++]=(uch)( (uch)((ush)( ( time_stamp ) & 0xffff ) >> 8) ); if (outcnt==16384 ) flush_outbuf();} ; } } ; { if (outcnt < 16384 -2) { outbuf[outcnt++] = (uch) (( ((ulg)( time_stamp )) >> 16 ) & 0xff); outbuf[outcnt++] = (uch) ((ush)( ((ulg)( time_stamp )) >> 16 ) >> 8); } else { {outbuf[outcnt++]=(uch)( (uch)(( ((ulg)( time_stamp )) >> 16 ) & 0xff) ); if (outcnt==16384 ) flush_outbuf();} ; {outbuf[outcnt++]=(uch)( (uch)((ush)( ((ulg)( time_stamp )) >> 16 ) >> 8) ); if (outcnt==16384 ) flush_outbuf();} ; } } ; } ;
@@ -4042,10 +4042,10 @@ int zip(in, out)
     {outbuf[outcnt++]=(uch)( (uch)deflate_flags ); if (outcnt==16384 ) flush_outbuf();} ;  
     {outbuf[outcnt++]=(uch)( 0x03  ); if (outcnt==16384 ) flush_outbuf();} ;             
     if (save_orig_name) {
-	char *p = basename(ifname);  
-	do {
-	    {outbuf[outcnt++]=(uch)(  *p  ); if (outcnt==16384 ) flush_outbuf();}  ;
-	} while (*p++);
+        char *p = basename(ifname);  
+        do {
+            {outbuf[outcnt++]=(uch)(  *p  ); if (outcnt==16384 ) flush_outbuf();}  ;
+        } while (*p++);
     }
     header_bytes = (long)outcnt;
     (void)deflate();

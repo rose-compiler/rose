@@ -8,7 +8,7 @@ class OGFunction;
   
 int
 interpolatePoints(const realArray & positionToInterpolate,
-		  const realCompositeGridFunction & u,
+                  const realCompositeGridFunction & u,
 		  realArray & uInterpolated, 
                   const Range & R0=nullRange,           
                   const Range & R1=nullRange,

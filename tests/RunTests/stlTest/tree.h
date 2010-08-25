@@ -291,7 +291,7 @@ public:
         reverse_iterator; 
     typedef reverse_bidirectional_iterator<const_iterator, value_type,
                                            const_reference, difference_type>
-	const_reverse_iterator;
+    const_reverse_iterator;
 private:
     iterator __insert(link_type x, link_type y, const value_type& v);
     link_type __copy(link_type x, link_type p);

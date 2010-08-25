@@ -57,9 +57,9 @@ extern DL_IMPORT(PyTypeObject) PyString_Type;
 extern DL_IMPORT(PyObject *) PyString_FromStringAndSize(const char *, int);
 extern DL_IMPORT(PyObject *) PyString_FromString(const char *);
 extern DL_IMPORT(PyObject *) PyString_FromFormatV(const char*, va_list)
-				__attribute__((format(printf, 1, 0)));
+                                __attribute__((format(printf, 1, 0)));
 extern DL_IMPORT(PyObject *) PyString_FromFormat(const char*, ...)
-				__attribute__((format(printf, 1, 2)));
+                                __attribute__((format(printf, 1, 2)));
 extern DL_IMPORT(int) PyString_Size(PyObject *);
 extern DL_IMPORT(char *) PyString_AsString(PyObject *);
 extern DL_IMPORT(void) PyString_Concat(PyObject **, PyObject *);
@@ -68,7 +68,7 @@ extern DL_IMPORT(int) _PyString_Resize(PyObject **, int);
 extern DL_IMPORT(int) _PyString_Eq(PyObject *, PyObject*);
 extern DL_IMPORT(PyObject *) PyString_Format(PyObject *, PyObject *);
 extern DL_IMPORT(PyObject *) _PyString_FormatLong(PyObject*, int, int,
-						  int, char**, int*);
+                                                  int, char**, int*);
 
 #ifdef INTERN_STRINGS
 extern DL_IMPORT(void) PyString_InternInPlace(PyObject **);
@@ -166,7 +166,7 @@ extern DL_IMPORT(int) PyString_AsStringAndSize(
     register PyObject *obj,	/* string or Unicode object */
     register char **s,		/* pointer to buffer variable */
     register int *len		/* pointer to length variable or NULL
-				   (only possible for 0-terminated
+                                   (only possible for 0-terminated
 				   strings) */
     );
     

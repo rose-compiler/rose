@@ -59,7 +59,7 @@ class DisplayParameters
 		      const DisplayParameters *displayParameters );
 
   friend int displayMaskPrivate( const intArray & mask, 
-				 const aString & label,
+                                 const aString & label,
 				 FILE *file,
 				 const DisplayParameters *displayParameters );
 

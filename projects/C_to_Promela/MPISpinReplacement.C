@@ -61,8 +61,8 @@ void MPISpinReplacement::initMPICallToIdMap()
 	*/
 	cout<<"mpiCallToIdMap = {"<<endl;
 	for (std::map<std::string,MPISpinReplacement::MPICallType>::iterator i =mpiCallToIdMap.begin();
-			 i!=mpiCallToIdMap.end();
-			 i++)
+		i!=mpiCallToIdMap.end();
+                i++)
 	{
 		cout <<(*i).first<<" -> "<<(*i).second<<endl;
 	}

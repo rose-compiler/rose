@@ -16,8 +16,8 @@ using namespace std;
 
 void
 RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
-					 X86PositionInRegister pos,
-					 uint64_t &val) {
+                                 X86PositionInRegister pos,
+                                 uint64_t &val) {
   uint8_t b_val=0xF;
   uint16_t w_val=0xFF;
   uint32_t dw_val=0xFFFF;
@@ -39,11 +39,11 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
 
 void
 RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
-					 X86PositionInRegister pos,
-					 uint8_t &b_val,
-					 uint16_t &w_val,
-					 uint32_t &dw_val,
-					 uint64_t &qw_val) {
+                                 X86PositionInRegister pos,
+                                 uint8_t &b_val,
+                                 uint16_t &w_val,
+                                 uint32_t &dw_val,
+                                 uint64_t &qw_val) {
 
 
   uint8_t b8,b7=0xF;
@@ -325,9 +325,9 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
             case x86_mov: {
 	      operands += " :: DataTrans :: Mov ";
 	      assignRegister(code, pos, b_val,
-			     w_val, dw_val,
+                             w_val, dw_val,
 			     qw_val);
-	      uint64_t addr_value=0;
+              uint64_t addr_value=0;
 	      getRegister_val(code, x86_regpos_qword, addr_value);
 	      //string str="";
 	      //string var = createVariable(addr_value, str, type, description, length);
@@ -393,9 +393,9 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 			      w_val, dw_val,
 			      qw_val);
 	      assignRegister(code, pos, b_val,
-			     w_val, dw_val,
+                             w_val, dw_val,
 			     qw_val);
-	    }
+            }
             break;
 	  } //mov instruction
 
@@ -494,11 +494,11 @@ RoseBin_Emulate::getMemory(uint64_t position) {
  ****************************************************/
 void
 RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
-					 X86PositionInRegister pos,
-					 uint8_t &b_val,
-					 uint16_t &w_val,
-					 uint32_t &dw_val,
-					 uint64_t &qw_val) {
+                                X86PositionInRegister pos,
+                                uint8_t &b_val,
+                                uint16_t &w_val,
+                                uint32_t &dw_val,
+                                uint64_t &qw_val) {
   switch (code.first) {
     case x86_regclass_gpr: {
       switch (code.second) {
@@ -675,7 +675,7 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
 
 void
 RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
-					 uint64_t &qw_val) {
+                                uint64_t &qw_val) {
   if (code.first != x86_regclass_gpr) return;
   switch (code.second) {
     case x86_gpr_ax: {
@@ -721,13 +721,13 @@ void RoseBin_Emulate::clearRegisters() {
   uint32_t cv3 = 0xFFFF;
   uint64_t cv4 = 0xFFFFFFFF;
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_ax) ,
-		 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 x86_regpos_qword, cv1, cv2, cv3, cv4);
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_bx) ,
-		 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 x86_regpos_qword, cv1, cv2, cv3, cv4);
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_cx) ,
-		 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 x86_regpos_qword, cv1, cv2, cv3, cv4);
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_dx) ,
-		 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 x86_regpos_qword, cv1, cv2, cv3, cv4);
 }
 
 
@@ -770,7 +770,7 @@ std::string RoseBin_Emulate::evaluateRegisters() {
 
 bool
 RoseBin_Emulate::run(string& name, SgGraphNode* node,
-		     SgGraphNode* pervious) {
+                     SgGraphNode* pervious) {
 
   // check known function calls and resolve variables
   ROSE_ASSERT(node);

@@ -966,8 +966,8 @@ DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64)
         default: ROSE_ASSERT(!"Bad segment register in makeSegmentRegister");
     }
 
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 
@@ -5544,8 +5544,8 @@ DisassemblerX86::decodeOpcode0F()
             ROSE_ASSERT(false);
     }
 
- // avoid MSCV warning by adding return stmt
-	return NULL;
+    // avoid MSCV warning by adding return stmt
+    return NULL;
 }
 
 /* SSSE3 (opcode 0F38) */
@@ -5684,8 +5684,8 @@ DisassemblerX86::decodeX87InstructionD9()
             default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xd9", this);
         }
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5719,8 +5719,8 @@ DisassemblerX86::decodeX87InstructionDA()
             default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xda", this);
         }
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5764,8 +5764,8 @@ DisassemblerX86::decodeX87InstructionDB()
             default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", this);
         }
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5797,8 +5797,8 @@ DisassemblerX86::decodeX87InstructionDC()
             default: ROSE_ASSERT(false);
         }
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5848,8 +5848,8 @@ DisassemblerX86::decodeX87InstructionDD()
             default: ROSE_ASSERT(false);
         }
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5886,8 +5886,8 @@ DisassemblerX86::decodeX87InstructionDE()
             default: ROSE_ASSERT(false);
         }
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5928,8 +5928,8 @@ DisassemblerX86::decodeX87InstructionDF()
             default: ROSE_ASSERT(false);
         }
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5946,8 +5946,8 @@ DisassemblerX86::decodeGroup1(SgAsmExpression* imm)
         case 7: return makeInstruction(x86_cmp, "cmp", modrm, imm);
         default: ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5972,8 +5972,8 @@ DisassemblerX86::decodeGroup2(SgAsmExpression* count)
         case 7: return makeInstruction(x86_sar, "sar", modrm, count);
         default: ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5999,8 +5999,8 @@ DisassemblerX86::decodeGroup3(SgAsmExpression* immMaybe)
         default:
             ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -6011,8 +6011,8 @@ DisassemblerX86::decodeGroup4()
         case 1: return makeInstruction(x86_dec, "dec", modrm);
         default: throw ExceptionX86("bad ModR/M value for Group 4 opcode", this);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -6040,8 +6040,8 @@ DisassemblerX86::decodeGroup5()
         default:
             ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -6058,8 +6058,8 @@ DisassemblerX86::decodeGroup6()
         case 7: throw ExceptionX86("bad ModR/M value for Group 6 opcode", this);
         default: ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -6148,8 +6148,8 @@ DisassemblerX86::decodeGroup7()
         default:
             ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -6166,8 +6166,8 @@ DisassemblerX86::decodeGroup8(SgAsmExpression* imm)
         case 7: return makeInstruction(x86_btc, "btc", modrm, imm);
         default: ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -6177,8 +6177,8 @@ DisassemblerX86::decodeGroup11(SgAsmExpression* imm)
         case 0: return makeInstruction(x86_mov, "mov", modrm, imm);
         default: throw ExceptionX86("bad ModR/M value for Group 11 opcode", this);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *
@@ -6227,8 +6227,8 @@ DisassemblerX86::decodeGroup15()
         default:
             ROSE_ASSERT(false);
     }
- /* avoid MSCV warning by adding return stmt */
-	return NULL;
+    /* avoid MSCV warning by adding return stmt */
+    return NULL;
 }
 
 SgAsmx86Instruction *

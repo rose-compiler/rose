@@ -82,18 +82,18 @@ extern "C" {
 #define TAU_GET_EVENT_VALS(v1,v2,v3,v4,v5,v6)   Tau_get_event_vals(v1,v2,&v3,&v4,&v5,&v6);
 
 /*
-#define TAU_REGISTER_EVENT(event, name)	static int tauuser##event = 1;\
-				        static void *event; \ 
-					if (tauuser##event == 1) { \ 
-					  event = Tau_get_userevent(name); \
-					  tauuser##event = 0; }
+#define TAU_REGISTER_EVENT(event, name) static int tauuser##event = 1;\
+                                        static void *event; \ 
+                                        if (tauuser##event == 1) { \ 
+                                          event = Tau_get_userevent(name); \
+                                          tauuser##event = 0; }
 */
 #define TAU_REGISTER_EVENT(event, name)	static int taufirst##event = 1;\
                                  static void *event; \
                                  if (taufirst##event == 1) { \
                                    event = Tau_get_userevent(name); \
                                    taufirst##event = 0; }
-				
+
 #define TAU_REGISTER_CONTEXT_EVENT(event, name)	static int taufirst##event = 1;\
                                  static void *event; \
                                  if (taufirst##event == 1) { \
@@ -207,7 +207,7 @@ extern void Tau_theFunctionList(const char ***functionList, int *num);
 extern void Tau_dump_function_names();
 extern void Tau_the_counter_names(const char **counterList, int num);
 extern void Tau_get_function_values(const char **inFuncs, int numOfFuncs,
-				    double ***counterExclusiveValues,
+                                    double ***counterExclusiveValues,
 				    double ***counterInclusiveValues,
 				    int **numOfCalls, int **numOfSubRoutines,
 				    const char ***counterNames, int *numOfCounters);

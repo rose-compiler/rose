@@ -28,7 +28,7 @@ extern "C" {
    pointer is NULL. */
 
 struct memberlist {
-	/* Obsolete version, for binary backwards compatibility */
+        /* Obsolete version, for binary backwards compatibility */
 	char *name;
 	int type;
 	int offset;
@@ -36,7 +36,7 @@ struct memberlist {
 };
 
 typedef struct PyMemberDef {
-	/* Current version, use this */
+        /* Current version, use this */
 	char *name;
 	int type;
 	int offset;
@@ -69,7 +69,7 @@ typedef struct PyMemberDef {
 #endif /* macintosh */
 
 #define T_OBJECT_EX	16	/* Like T_OBJECT, but raises AttributeError
-				   when the value is NULL, instead of
+                                   when the value is NULL, instead of
 				   converting to None. */
 
 /* Flags */

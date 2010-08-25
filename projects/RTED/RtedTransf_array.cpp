@@ -57,7 +57,7 @@ void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RTedArray* value)
 }
 
 void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
-					       RTedArray* value) {
+                                               RTedArray* value) {
   ROSE_ASSERT(value);
   ROSE_ASSERT(initName);
   SgStatement* stmt = value->surroundingStatement;
@@ -70,7 +70,7 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
 
 SgStatement* 
 RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, 
-					 SgVarRefExp* varRef,
+                                         SgVarRefExp* varRef,
 					 RTedArray* array,
 					 SgStatement* stmt) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
@@ -100,11 +100,11 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName,
 	SgClassDefinition* unionclass=NULL;
 
 	    if (varRef->get_parent()!=NULL)
-            appendAddressAndSize(//initName,
-				 scope, getExprBelowAssignment( varRef ), arg_list,0,unionclass);
-	    else
+              appendAddressAndSize(//initName,
+                                   scope, getExprBelowAssignment( varRef ), arg_list,0,unionclass);
+            else
 	      appendAddressAndSize(//initName,
-				   scope, varRef , arg_list,0,unionclass);
+                                   scope, varRef , arg_list,0,unionclass);
 
 
       //SgIntVal* ismalloc = buildIntVal( 0 );
@@ -150,8 +150,8 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName,
 }
 
 void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
-					       SgInitializedName* initName, 
-                           SgVarRefExp* varRef,
+                                               SgInitializedName* initName, 
+                                               SgVarRefExp* varRef,
 					       RTedArray* array) {
   // make sure there is no extern in front of stmt
   bool externQual = isGlobalExternVariable(stmt);
@@ -282,7 +282,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
  * Perform Transformation: insertArrayCreateAccessCall
  * -----------------------------------------------------------*/
 void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp,
-					       RTedArray* value) {
+                                               RTedArray* value) {
   SgStatement* stmt = value->surroundingStatement;
   if( !stmt )
       stmt = getSurroundingStatement( arrayExp );
@@ -293,7 +293,7 @@ void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp,
 
 
 void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
-					       SgExpression* arrayExp, RTedArray* array) {
+                                               SgExpression* arrayExp, RTedArray* array) {
 
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
@@ -689,7 +689,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       cerr << "RtedTransformation : isSgPointerDerefExp : " << endl;
       
       std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfPointerDeref(isSgPointerDerefExp(expr_ll),
-										 "Left of pntrArr - Right of PointerDeref  - line: "
+                                                                                 "Left of pntrArr - Right of PointerDeref  - line: "
 										 + expr_ll->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
@@ -699,7 +699,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     else if (isSgArrowExp(expr_ll)) {
       cerr << "RtedTransformation : isSgArrowExp : " << endl;
       std::pair<SgInitializedName*,SgVarRefExp*> mypair  = getRightOfArrow(isSgArrowExp(expr_ll),
-									   "Left of pntrArr - Right of Arrow  - line: "
+                                                                           "Left of pntrArr - Right of Arrow  - line: "
 									   + expr_ll->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
@@ -707,7 +707,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	ROSE_ASSERT(varRef);
     } else {
       cerr << "RtedTransformation : Left of pntrArr - Unknown : "
-	   << expr_ll->class_name() << "  line:"
+           << expr_ll->class_name() << "  line:"
 	   << expr_ll->unparseToString() << endl;
       ROSE_ASSERT(false);
     }
@@ -722,7 +722,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   }// ------------------------------------------------------------
   else if (isSgArrowExp(expr_l)) {
     std::pair<SgInitializedName*,SgVarRefExp*> mypair  = getRightOfArrow(isSgArrowExp(expr_l),
-									 "Right of Arrow  - line: " + expr_l->unparseToString()
+                                                                         "Right of Arrow  - line: " + expr_l->unparseToString()
 									 + " ", varRef);
     initName = mypair.first;
     varRef = mypair.second;
@@ -734,14 +734,14 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     ROSE_ASSERT(exp);
     if (isSgPlusPlusOp(exp)) {
       std::pair<SgInitializedName*,SgVarRefExp*> mypair  = getPlusPlusOp(isSgPlusPlusOp(exp),
-									 "PointerDerefExp PlusPlus  - line: "
+                                                                         "PointerDerefExp PlusPlus  - line: "
 									 + pointerDeref->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
       ROSE_ASSERT(varRef);
     } else if (isSgMinusMinusOp(exp)) {
       std::pair<SgInitializedName*,SgVarRefExp*> mypair  = getMinusMinusOp(isSgMinusMinusOp(exp),
-									   "PointerDerefExp MinusMinus  - line: "
+                                                                           "PointerDerefExp MinusMinus  - line: "
 									   + pointerDeref->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
@@ -762,7 +762,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     }// ------------------------------------------------------------
     else if (isSgPointerDerefExp(exp)) {
       std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfPointerDeref(isSgPointerDerefExp(exp),
-										 "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
+                                                                                 "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
       if (initName)
@@ -770,7 +770,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     }// ------------------------------------------------------------
     else if( isSgArrowExp( exp )) {
       std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfArrow(isSgArrowExp(exp),
-										 "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
+                                                                          "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
       if (initName)
@@ -788,7 +788,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     }// ------------------------------------------------------------
     else {
       cerr << "RtedTransformation : PointerDerefExp - Unknown : "
-	   << exp->class_name() << "  line:"
+           << exp->class_name() << "  line:"
 	   << pointerDeref->unparseToString() << endl;
 
       //      ROSE_ASSERT(false);
@@ -843,7 +843,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   }// ------------------------------------------------------------
   else {
     cerr << "RtedTransformation : Left of assign - Unknown : "
-	 << expr_l->class_name() << "  line:"
+         << expr_l->class_name() << "  line:"
 	 << expr_l->unparseToString() << endl;
     ROSE_ASSERT(false);
   }
@@ -1050,7 +1050,7 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArr
     SgForStatement* forloop = buildForStatement (init_stmt,cond_stmt,incr_exp,loop_body);
 
     SgBasicBlock* bb = buildBasicBlock(stmt1,
-				       forloop);
+                                       forloop);
     insertStatementAfter(isSgStatement(stmt), bb);
     string comment = "RS: Padding this newly generated array with empty space.";
     attachComment(bb,comment,PreprocessingInfo::before);
@@ -1129,7 +1129,7 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
       ROSE_ASSERT(initName);
 	  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement( n ), false);
       cerr << "!! CALL : " << varRef << " - "
-	   << varRef->unparseToString() << "    size : "
+           << varRef->unparseToString() << "    size : "
 	   << create_array_access_call.size() << "  -- "
 	   << array->unparseToString() << " : "
 	   << arrRefExp->unparseToString() << endl;

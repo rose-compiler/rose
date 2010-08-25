@@ -51,7 +51,7 @@ class GridCollectionFiniteVolumeOperators : public GenericGridCollectionOperator
  public:
     
   void setNumberOfBoundaryConditions(const int & number,
-				     const int & side = forAll,
+                                     const int & side = forAll,
 				     const int & axis = forAll,
 				     const int & grid0 = forAll
 				     );
@@ -60,7 +60,7 @@ class GridCollectionFiniteVolumeOperators : public GenericGridCollectionOperator
 
  
   void setBoundaryConditionValue( const real & value,
-				 const int & component,
+                                 const int & component,
 				 const int & index,
 				 const int & side = forAll,
 				 const int & axis = forAll,
@@ -70,7 +70,7 @@ class GridCollectionFiniteVolumeOperators : public GenericGridCollectionOperator
  
 /* use the generic one
   void applyBoundaryConditions(
-			       realGridCollectionFunction & u,
+                               realGridCollectionFunction & u,
 			       const real & time = 0.,
 			       const int & grid = forAll
 			       );
@@ -82,7 +82,7 @@ class GridCollectionFiniteVolumeOperators : public GenericGridCollectionOperator
 					    );
  
   void applyBoundaryConditionsToCoefficients(realGridCollectionFunction & coeff, // replaces ApplyBoundaryConditions
-					     const real & time = 0.);
+                                             const real & time = 0.);
   
 
  private:

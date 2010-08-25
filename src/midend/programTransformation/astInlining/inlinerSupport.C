@@ -191,8 +191,8 @@ class RemoveNullStatementsVisitor: public AstSimpleProcessing {
       while (changes) {
 	changes = false;
 	for (SgStatementPtrList::iterator i = stmts.begin();
-	     i != stmts.end(); ++i) {
-	  if (isSgExprStatement(*i)) {
+             i != stmts.end(); ++i) {
+          if (isSgExprStatement(*i)) {
 	    SgExpression* expr = isSgExprStatement(*i)->get_expression();
 	    if (isSgIntVal(expr) ||
                 isSgNullExpression(expr) ||
@@ -264,7 +264,7 @@ bool isDeclarationOf(SgVariableDeclaration* decl, SgInitializedName* var) {
 // toCheck and lifetime are equal, one can be used as a substitute for the
 // other.
 bool isPotentiallyModifiedDuringLifeOf(SgBasicBlock* sc, 
-				       SgInitializedName* toCheck, 
+                                       SgInitializedName* toCheck, 
 				       SgInitializedName* lifetime) {
   SgStatementPtrList& stmts = sc->get_statements();
   bool inLiveRange = false;
@@ -304,37 +304,37 @@ class FindReferenceVariablesVisitor: public AstSimpleProcessing {
       SgInitializedName* copy = copy_vr->get_symbol()->get_declaration();
       assert (copy);
       if (!SageInterface::isReferenceType(copy->get_type()))
-           return; // Fail if non-reference
+        return; // Fail if non-reference
 
       SgInitializer* copyinit = copy->get_initializer(); 
       SgNode* copyscope_ =
       copy->get_parent()->get_parent();
       while (!isSgScopeStatement(copyscope_))
-           copyscope_ = copyscope_->get_parent();
-   // cout << "copyscope is a " << copyscope_->sage_class_name() << endl;
-   // SgScopeStatement* copyscope = isSgScopeStatement(copyscope_);
+          copyscope_ = copyscope_->get_parent();
+      // cout << "copyscope is a " << copyscope_->sage_class_name() << endl;
+      // SgScopeStatement* copyscope = isSgScopeStatement(copyscope_);
       if (isSgAssignInitializer(copyinit)) {
-           SgAssignInitializer* init = isSgAssignInitializer(copyinit);
-      SgExpression* orig_expr = init->get_operand();
-	// cout << "orig is " << orig_expr->unparseToString() << ", copy is " << copy->get_name().str() << endl;
-      bool shouldReplace = false;
-      if (isSgVarRefExp(orig_expr)) {
-           SgVarRefExp* orig_vr = isSgVarRefExp(orig_expr);
-	// cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
-      SgInitializedName* orig = orig_vr->get_symbol()->get_declaration();
-	  assert (orig);
-	  SgNode* origscope = orig->get_parent()->get_parent();
-	  assert (origscope);
-	  shouldReplace = true;
-	}
-	if (shouldReplace) {
-	  assert (orig_expr);
-	  SgExpression* orig_copy = 
-	    isSgExpression(orig_expr /*->copy(SgTreeCopy()) */);
-	  assert (orig_copy);
-	  orig_copy->set_parent(copy_vr->get_parent());
-	  isSgExpression(copy_vr->get_parent())->
-	    replace_expression(copy_vr, orig_copy);
+        SgAssignInitializer* init = isSgAssignInitializer(copyinit);
+        SgExpression* orig_expr = init->get_operand();
+        // cout << "orig is " << orig_expr->unparseToString() << ", copy is " << copy->get_name().str() << endl;
+        bool shouldReplace = false;
+        if (isSgVarRefExp(orig_expr)) {
+          SgVarRefExp* orig_vr = isSgVarRefExp(orig_expr);
+          // cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
+          SgInitializedName* orig = orig_vr->get_symbol()->get_declaration();
+          assert (orig);
+          SgNode* origscope = orig->get_parent()->get_parent();
+          assert (origscope);
+          shouldReplace = true;
+        }
+        if (shouldReplace) {
+          assert (orig_expr);
+          SgExpression* orig_copy = 
+            isSgExpression(orig_expr /*->copy(SgTreeCopy()) */);
+          assert (orig_copy);
+          orig_copy->set_parent(copy_vr->get_parent());
+          isSgExpression(copy_vr->get_parent())->
+            replace_expression(copy_vr, orig_copy);
 	}
       }
     }
@@ -374,8 +374,8 @@ class FindCopiesVisitor: public AstSimpleProcessing {
 	    if (!hasAddressTaken(orig_vr, origscope) &&
 		isSgBasicBlock(copyscope) &&
 		!isPotentiallyModifiedDuringLifeOf(isSgBasicBlock(copyscope), 
-						   orig, copy) &&
-		!isSgGlobal(origscope) &&
+                                                   orig, copy) &&
+                !isSgGlobal(origscope) &&
 		!isSgNamespaceDefinitionStatement(origscope)) {
 	      shouldReplace = true;
 	    }
@@ -392,10 +392,10 @@ class FindCopiesVisitor: public AstSimpleProcessing {
 
        ROSE_ASSERT(copy_vr != NULL);
        ROSE_ASSERT(copy_vr->get_parent() != NULL);
-    // ROSE_ASSERT(isSgExpression(copy_vr->get_parent()) != NULL);
+       // ROSE_ASSERT(isSgExpression(copy_vr->get_parent()) != NULL);
 
-    // DQ (12/15/2006): Need to handle cases where the parent is a SgStatement or a SgExpression (or make it an error).
-	 // isSgExpression(copy_vr->get_parent())->replace_expression(copy_vr, orig_copy);
+       // DQ (12/15/2006): Need to handle cases where the parent is a SgStatement or a SgExpression (or make it an error).
+       // isSgExpression(copy_vr->get_parent())->replace_expression(copy_vr, orig_copy);
        SgStatement* statement = isSgStatement(copy_vr->get_parent());
        if (statement != NULL)
           {

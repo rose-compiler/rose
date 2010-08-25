@@ -50,11 +50,11 @@ namespace SageBuilder{
 Scope stack is provided as an alternative to manually passing scope parameters to builder functions. It is not required to be used. Please use the recommendeded operation functions for maintaining the scope stack. Don't use raw container access functions to ScopeStack.  e.g. avoid ScopeStack.push_back(), using pushScopeStack() instead. 
 
  \todo consider complex cases:   
-	- how many scope stacks to keep? one. examine only one transparently
-	- regular: push a child scope of current scope, add symbols etc.
-	- irregular: push an arbitrary scope temporarily,  add some symbol, then pop
-	- even push a chain of scopes
-	- restore scopes
+        - how many scope stacks to keep? one. examine only one transparently
+        - regular: push a child scope of current scope, add symbols etc.
+        - irregular: push an arbitrary scope temporarily,  add some symbol, then pop
+        - even push a chain of scopes
+        - restore scopes
 */
 
 /*! \brief intended to be a private member, don't access it directly. could be changed any time
@@ -89,7 +89,11 @@ SgTypeLong*    buildLongType();
 SgTypeLongDouble* buildLongDoubleType();
 SgTypeLongLong * buildLongLongType();
 SgTypeShort*    buildShortType();
+
+// DQ (8/21/2010): We want to move to the new buildStringType( SgExpression*,size_t) function over the older buildStringType() function.
 SgTypeString* buildStringType();
+SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );   
+
 SgTypeVoid * buildVoidType();
 SgTypeWchar* buildWcharType();
 
@@ -336,7 +340,7 @@ SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_m
 SgPlusPlusOp* buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
 SgNewExp * buildNewExp(SgType* type, 
-		       SgExprListExp* exprListExp, 
+                       SgExprListExp* exprListExp, 
 		       SgConstructorInitializer* constInit, 
 		       SgExpression* expr, 
 		       short int val, 

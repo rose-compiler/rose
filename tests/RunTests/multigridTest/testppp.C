@@ -124,13 +124,13 @@ int main(int argc, char** argv)
   for (k=BBloc->getBase(2);k<=BBloc->getBound(2);k++)
     for (j=BBloc->getBase(1);j<=BBloc->getBound(1);j++)
       for (i=BBloc->getBase(0);i<=BBloc->getBound(0);i++)
-       	(*BBloc)(i,j,k) = (TYPE)i;
-	*/
+        (*BBloc)(i,j,k) = (TYPE)i;
+        */
 #if 0
   for (k=B.getBase(2);k<=B.getBound(2);k++)
     for (j=B.getBase(1);j<=B.getBound(1);j++)
       for (i=B.getBase(0);i<=B.getBound(0);i++)
-       	B(i,j,k) = (TYPE)i;
+        B(i,j,k) = (TYPE)i;
 #endif
 
   C = -5.;
@@ -140,13 +140,13 @@ int main(int argc, char** argv)
   for (k=BBloc->getBase(2);k<=BBloc->getBound(2);k++)
     for (j=BBloc->getBase(1);j<=BBloc->getBound(1);j++)
       for (i=BBloc->getBase(0);i<=BBloc->getBound(0);i++)
-	(*DDloc)(i,j,k) = (TYPE)(DBound -i);
-	*/
+        (*DDloc)(i,j,k) = (TYPE)(DBound -i);
+        */
 #if 0
   for (k=B.getBase(2);k<=B.getBound(2);k++)
     for (j=B.getBase(1);j<=B.getBound(1);j++)
       for (i=B.getBase(0);i<=B.getBound(0);i++)
-	D(i,j,k) =(TYPE)(D.getBound(0)-i);
+        D(i,j,k) =(TYPE)(D.getBound(0)-i);
 #endif
   Optimization_Manager::Optimize_Scalar_Indexing = FALSE;
 
@@ -179,12 +179,12 @@ int main(int argc, char** argv)
 
   //where (Mask) m1 = max(A);  // only value besides 1 
   where (A>(TYPE)1. && A<(TYPE)9.) m1 = max(A);  // only value besides 1 
-				     // and 9 is 4
+                                     // and 9 is 4
   where (B < (TYPE)7.) m2 = max(B); // B has all integer vals between
-			      // 2 and 12
+                              // 2 and 12
   where (C < (TYPE)0.) m3 = max(C); // this is all of C
   where (B > (TYPE)6.) m4 = max(D); // vals in D are 12 - vals in B so
-			      // the max is where D is 0 to 5
+                              // the max is where D is 0 to 5
 
   if (m1 != 4. || m2!= 6. || m3 != -5. || m4 != 5.)
   {
@@ -199,12 +199,12 @@ int main(int argc, char** argv)
   Index Ispan3(7,2,2);
   Index Jspan3(2,2,2);
   m1 = max(A(all,all,Kspan1,all)); // all of A, tests mix of
-				   // different Index types
+                                   // different Index types
   m2 = max(A(all,Jspan2,all,all)); // subset of A that includes
-				   // elements set to 9
+                                   // elements set to 9
   m3 = max(B(Ispan2,all,all,all)); // middle section of B in
                                    // direction 0, includes vals
-				   // 6, 7 and 8
+                                   // 6, 7 and 8
   m4 = max(A(Ispan3,Jspan3,all,all)); // Ispan3 chooses values
                                       // between those set to 9
 
@@ -277,7 +277,7 @@ int main(int argc, char** argv)
   //      Prototype_0 Operation_Array_Data ,
   //      Prototype_1 Operation_Array_Data_Accumulate_To_Existing_Operand,
   //      int Operation_Type )
-  //		   
+  //               
   //   member function 
   //     A = -B
   //   friend functions 
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
   locT5.partition(*Single_Processor_Partition);
 
   T1 = -(B+D); // all values are -12, size is 11 x 11 x 6
-	       // (include ghost cells also)
+               // (include ghost cells also)
   locT1.redim(T1);
   locT1 = T1;
 
@@ -484,7 +484,7 @@ int main(int argc, char** argv)
 
   T6 = 0;
   where (A>(TYPE)2. && A<(TYPE)7.) T6 = sqrt(A); // where masks all elements of
-				     // A except 4
+                                     // A except 4
   locT6.redim(T6);
   locT6 = T6;
 
@@ -503,7 +503,7 @@ int main(int argc, char** argv)
     for (i=0;i<size4;i++) sum1+=datptr[i];
 
     m1 = 1080; // 540 elements of A are 4 so 540 elements of T6 are 2,
-  	     // the rest are 0
+             // the rest are 0
     if (sum1 != m1)
     {
       cout<<"ERROR in sqrt(X), test4"<<endl<<"  sum1="<<sum1<<endl;
@@ -527,7 +527,7 @@ int main(int argc, char** argv)
 
   /*
   TYPEArray F1 = A(all,all,-6,100)-C; // view of A includes only
-				       // elements that are set to 1
+                                       // elements that are set to 1
   TYPEArray locF1;
   locF1.partition(*Single_Processor_Partition);
   locF1.redim(F1);
@@ -561,9 +561,9 @@ int main(int argc, char** argv)
   TYPEArray F2(Ispan,Jspan,Kspan);
   F2=0.;
   where (B>(TYPE)6.) F2 = B-D; // B-D = B-(12-B) = 2*B-12 so masked 
-			// elements of F2 are 2*7-12 to 2*12 -12
-			// which is 2,4, ..., 12.  There
-			// are 11*6 of each of these
+                        // elements of F2 are 2*7-12 to 2*12 -12
+                        // which is 2,4, ..., 12.  There
+                        // are 11*6 of each of these
 
   TYPEArray locF2;
   locF2.partition(*Single_Processor_Partition);
@@ -877,12 +877,12 @@ int main(int argc, char** argv)
   intArray ILhs(Ispan,Jspan);
   ILhs = 1;
   where (B(all,all,-3) > (TYPE)2.) ILhs = 0; // ILhs is 0 except for j-k
-				      // plane at i=2
+                                      // plane at i=2
   TYPEArray M2;
   M2 = M1.replace(ILhs, B(all,all,-2)); 
-			    // j=k plane at i=2 of M1 is replaced with
-			    // same plane from B which is filled
-			    // with 2
+                            // j=k plane at i=2 of M1 is replaced with
+                            // same plane from B which is filled
+                            // with 2
 
   TYPEArray locM2;
   locM2.partition(*Single_Processor_Partition);
@@ -1085,7 +1085,7 @@ int main(int argc, char** argv)
 
   TYPEArray Q1;
   Q1 = B(all,all,-6); // B(all,all,-6) ranges from 2 to 12 only
-		      // changing in the i direction
+                      // changing in the i direction
   Q1+=C; // Q1 ranges from -3 to 7
 
   TYPEArray locQ1;
@@ -1125,8 +1125,8 @@ int main(int argc, char** argv)
   TYPEArray Q2;
   Q2 = B+D; // Q2 is set to 12 everywhere
   where (B(all,all,-5)<(TYPE)2.) Q2(all,all,3)/=C; 
-		     // no elements of B are < 2 so Q2 isn't
-		     // changed
+                     // no elements of B are < 2 so Q2 isn't
+                     // changed
 
   TYPEArray locQ2;
   locQ2.partition(*Single_Processor_Partition);
@@ -1266,12 +1266,12 @@ int main(int argc, char** argv)
   //H1.setBase(3,1);  put this in when bug is fixed
   int h1base1 = H1.getBase(1);
   H2 = H1(all,h1base1+10); // H1 only varies with i, H2 is 1d
-			   // with even values -8 to 12 
+                           // with even values -8 to 12 
   //H2 = H1(all,13); non bug version
   TYPEArray H3(Ispan);
   H3 = 2.;
   IA1 = H2 < H3; // H2 is less than H3 for H2 values -8,-6,-4,-2
-		 // and 0
+                 // and 0
 
   intArray locIA1;
   locIA1.partition(*Single_Processor_Partition);
@@ -1329,7 +1329,7 @@ int main(int argc, char** argv)
 
   TYPE w=0.;
   IA = w || O1; // IA is set to 1 only where O1 is nonzero
-		// at i=2,3,5 and 6
+                // at i=2,3,5 and 6
 
   intArray locIA;
   locIA.partition(*Single_Processor_Partition);
@@ -1382,9 +1382,9 @@ int main(int argc, char** argv)
   x=3.;
   y=7.;
   where (A(all,all,-6,100) <(TYPE)2.) U1 = x+y; // A(all,all,-6,100) has
-					 // all 121 elements set to 1
-					 // so U1 has 121 elements
-					 // set  to 10.
+                                         // all 121 elements set to 1
+                                         // so U1 has 121 elements
+                                         // set  to 10.
 
   TYPEArray locU1;
   locU1.partition(*Single_Processor_Partition);
@@ -1432,8 +1432,8 @@ int main(int argc, char** argv)
   X1 = 1.;
   TYPEArray X2;
   X2 = min(X1,B-D,B+D); // B-D ranges from -8 to 12, B+D is 12
-			// so X2 has elements -8,-6,-4,-2,0,
-			// and then 6 1's for each j-k plane.
+                        // so X2 has elements -8,-6,-4,-2,0,
+                        // and then 6 1's for each j-k plane.
 
   TYPEArray locX2;
   locX2.partition(*Single_Processor_Partition);
@@ -1475,10 +1475,10 @@ int main(int argc, char** argv)
   y = 10.;
   TYPEArray Z1;
   where (B>(TYPE)9.) Z1 = min(B,y,D); // B>9 at i=10,11,12 where elements
-				// have value i. D has elements 
-				// 2,1 and 0 at these positions.
-				// Z1 will have elements 2,1 and 0
-				// where i=10,11 and 12.
+                                // have value i. D has elements 
+                                // 2,1 and 0 at these positions.
+                                // Z1 will have elements 2,1 and 0
+                                // where i=10,11 and 12.
   where (B<=(TYPE)9.) Z1 = 0.;  // the rest of Z1 is set to 0.
 
   TYPEArray locZ1;
@@ -1519,9 +1519,9 @@ int main(int argc, char** argv)
   // ... sum along an axis doesn't work with P++ ...
   TYPEArray W1;
   W1 = sum(sum(B,0),1); // Sum(B,0) is a 1 x 11 x 6 array with
-			// each element set to 2+3+...+12=77,
-			// sum(sum(B,0),1) is a 1 x 1 x 11 array
-			// with each element set to 11*77 
+                        // each element set to 2+3+...+12=77,
+                        // sum(sum(B,0),1) is a 1 x 1 x 11 array
+                        // with each element set to 11*77 
  
   // displaying sum(sum(B,0),1) should make this but the data in
   // the wrong place (looks like sum(B,0) too)
@@ -1567,9 +1567,9 @@ int main(int argc, char** argv)
   TYPEArray W2;
   Index JJ(0,3);
   W2 = sum(B(all,JJ,-3)*ONE(all,JJ,-3),1); 
-			     // Sum(B(all,JJ,-3)*ONE(all,JJ,-3),1) is an 
-			     // 11 x 1 x 1 with each element set
-			     // to i*3 for B(i,j,k)
+                             // Sum(B(all,JJ,-3)*ONE(all,JJ,-3),1) is an 
+                             // 11 x 1 x 1 with each element set
+                             // to i*3 for B(i,j,k)
   TYPEArray locW2;
   locW2.partition(*Single_Processor_Partition);
   locW2.redim(W2);
@@ -1605,8 +1605,8 @@ int main(int argc, char** argv)
   /*
   TYPEArray V1,V2;
   V1 = transpose (B(all,all,-6)); // V1 is an 11 x 11 array with
-				  // elements varying with j ranging
-				  // from 2 to 12
+                                  // elements varying with j ranging
+                                  // from 2 to 12
   V2 = V1(all,0); // V2 is an 11 x1 array that has 2 for its
                   // elements
 
@@ -1893,11 +1893,11 @@ int main(int argc, char** argv)
      int i;
      for (i=0; i< Number_Of_Processors; i++)
      {
-	Partition.SpecifyProcessorRange (Range(0,i));
+        Partition.SpecifyProcessorRange (Range(0,i));
      }
      for (i=0; i< Number_Of_Processors; i++)
      {
-	Partition.SpecifyProcessorRange (Range(i,Number_Of_Processors-1));
+        Partition.SpecifyProcessorRange (Range(i,Number_Of_Processors-1));
      }
 
      TYPEArray GGG(Size,Partition);
@@ -1984,8 +1984,8 @@ int main(int argc, char** argv)
     {
       if (prev_number != num_arrays) 
       {
-	 cout<<"ERROR: number of Array_ID's increasing at iter "<<i<<endl;
-	 all_ok = FALSE;
+         cout<<"ERROR: number of Array_ID's increasing at iter "<<i<<endl;
+         all_ok = FALSE;
       }
     }
     prev_number = num_arrays;

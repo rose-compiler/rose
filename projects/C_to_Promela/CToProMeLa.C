@@ -10,7 +10,7 @@ bool CToProMeLa::evaluateInheritedAttribute(SgNode * node, bool inher)
 
 bool CToProMeLa::evaluateSynthesizedAttribute(SgNode * node,bool inher,SubTreeSynthesizedAttributes atts)
 {
-  if (isSgStatement(node))
+	if (isSgStatement(node))
 	{
 //		cout <<"Unparsing statement "<<node->class_name()<<":\n";
 //		cout << (node->unparseToCompleteString ())<<endl;

@@ -14,7 +14,7 @@ namespace CompassAnalyses
         { 
         /*! \brief Loc Per Function: Add your description here 
          */
-	  
+
           extern const std::string checkerName;
           extern std::string shortDescription;
           extern std::string longDescription;

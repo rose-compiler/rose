@@ -45,7 +45,7 @@ DFAnalysis* defuse;
 // prototype. Implementation is in Compass.
 void
 buildCheckers( std::vector<const Compass::Checker*> &retVal, Compass::Parameters &params, 
-	       Compass::OutputObject &output, SgProject* pr );
+               Compass::OutputObject &output, SgProject* pr );
 
 
 // ************************************************************
@@ -249,7 +249,7 @@ void output_results(CountingOutputObject * &outputs) {
 
 
 void communicateResult(CountingOutputObject  &outputs, 
-		       double* times, double* memory, 
+                       double* times, double* memory, 
 		       unsigned int* output_values, 
 		       double my_time, double memusage) {
   /* communicate results */
@@ -261,18 +261,18 @@ void communicateResult(CountingOutputObject  &outputs,
   }
 
   MPI_Reduce(my_output_values, output_values, outputs.counts.size(), MPI_UNSIGNED,
-	     MPI_SUM, 0, MPI_COMM_WORLD);
+             MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* communicate times */
   MPI_Gather(&my_time, 1, MPI_DOUBLE, times, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&memusage, 1, MPI_DOUBLE, memory, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 }
 
 void communicateResult(CountingOutputObject  &outputs, 
-		       double* times, double* memory, 
+                       double* times, double* memory, 
 		       unsigned int* output_values, 
 		       double my_time, double memusage, double* nr_func, double thisfunction) {
   /* communicate results */
@@ -284,23 +284,23 @@ void communicateResult(CountingOutputObject  &outputs,
   }
 
   MPI_Reduce(my_output_values, output_values, outputs.counts.size(), MPI_UNSIGNED,
-	     MPI_SUM, 0, MPI_COMM_WORLD);
+             MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* communicate times */
   MPI_Gather(&my_time, 1, MPI_DOUBLE, times, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&memusage, 1, MPI_DOUBLE, memory, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&thisfunction, 1, MPI_DOUBLE, nr_func, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
   
 }
 
 
 void communicateResult(CountingOutputObject  &outputs, 
-		       double* times, double* memory, 
+                       double* times, double* memory, 
 		       unsigned int* output_values, 
 		       double my_time, double memusage, int* maxtime_nr, int max_time_i,  
 		       double* maxtime_val, double maxtime,
@@ -316,26 +316,26 @@ void communicateResult(CountingOutputObject  &outputs,
 
 
   MPI_Reduce(my_output_values, output_values, outputs.counts.size(), MPI_UNSIGNED,
-	     MPI_SUM, 0, MPI_COMM_WORLD);
+             MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* communicate times */
   MPI_Gather(&my_time, 1, MPI_DOUBLE, times, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&memusage, 1, MPI_DOUBLE, memory, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&max_time_i, 1, MPI_INT, maxtime_nr, 1, MPI_INT, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&maxtime, 1, MPI_DOUBLE, maxtime_val, 1, MPI_DOUBLE, 0,
-     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&calc_time_processor, 1, MPI_DOUBLE, calctimes, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
 
   MPI_Gather(&comm_time_processor, 1, MPI_DOUBLE, commtimes, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
   
 }
 

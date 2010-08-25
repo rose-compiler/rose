@@ -119,13 +119,13 @@ typedef int (*visitproc)(PyObject *, void *);
 typedef int (*traverseproc)(PyObject *, visitproc, void *);
 
 typedef struct {
-	/* For numbers without flag bit Py_TPFLAGS_CHECKTYPES set, all
-	   arguments are guaranteed to be of the object's type (modulo
-	   coercion hacks that is -- i.e. if the type's coercion function
-	   returns other types, then these are allowed as well).  Numbers that
-	   have the Py_TPFLAGS_CHECKTYPES flag bit set should check *both*
-	   arguments for proper type and implement the necessary conversions
-	   in the slot functions themselves. */
+        /* For numbers without flag bit Py_TPFLAGS_CHECKTYPES set, all
+           arguments are guaranteed to be of the object's type (modulo
+           coercion hacks that is -- i.e. if the type's coercion function
+           returns other types, then these are allowed as well).  Numbers that
+           have the Py_TPFLAGS_CHECKTYPES flag bit set should check *both*
+           arguments for proper type and implement the necessary conversions
+           in the slot functions themselves. */
 
 	binaryfunc nb_add;
 	binaryfunc nb_subtract;
@@ -317,7 +317,7 @@ extern DL_IMPORT(PyTypeObject) PySuper_Type; /* built-in 'super' */
 extern DL_IMPORT(int) PyType_Ready(PyTypeObject *);
 extern DL_IMPORT(PyObject *) PyType_GenericAlloc(PyTypeObject *, int);
 extern DL_IMPORT(PyObject *) PyType_GenericNew(PyTypeObject *,
-					       PyObject *, PyObject *);
+                                               PyObject *, PyObject *);
 extern DL_IMPORT(PyObject *) _PyType_Lookup(PyTypeObject *, PyObject *);
 
 /* Generic operations on objects */
@@ -340,7 +340,7 @@ extern DL_IMPORT(int) PyObject_HasAttr(PyObject *, PyObject *);
 extern DL_IMPORT(PyObject **) _PyObject_GetDictPtr(PyObject *);
 extern DL_IMPORT(PyObject *) PyObject_GenericGetAttr(PyObject *, PyObject *);
 extern DL_IMPORT(int) PyObject_GenericSetAttr(PyObject *,
-					      PyObject *, PyObject *);
+                                              PyObject *, PyObject *);
 extern DL_IMPORT(long) PyObject_Hash(PyObject *);
 extern DL_IMPORT(int) PyObject_IsTrue(PyObject *);
 extern DL_IMPORT(int) PyObject_Not(PyObject *);
@@ -532,7 +532,7 @@ extern DL_IMPORT(long) _Py_RefTotal;
        if (--_Py_RefTotal, 0 < (--((op)->ob_refcnt))) ;			\
        else if (0 == (op)->ob_refcnt) _Py_Dealloc( (PyObject*)(op));	\
        else (void)fprintf( stderr, "%s:%i negative ref count %i\n",	\
-		           __FILE__, __LINE__, (op)->ob_refcnt)
+                           __FILE__, __LINE__, (op)->ob_refcnt)
 #else /* !Py_REF_DEBUG */
 
 #ifdef COUNT_ALLOCS
@@ -667,9 +667,9 @@ times.
 
   Objects that want to be recursion safe need to use
   the macro's 
-		Py_TRASHCAN_SAFE_BEGIN(name)
+                Py_TRASHCAN_SAFE_BEGIN(name)
   and
-		Py_TRASHCAN_SAFE_END(name)
+                Py_TRASHCAN_SAFE_END(name)
   surrounding their actual deallocation code.
 
   It would be nice to do this using the thread state.

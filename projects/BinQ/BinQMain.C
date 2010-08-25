@@ -148,7 +148,7 @@ runListMode(string saveFile,
     analysisRes.clear();
     try {
       double timeForFile = createAndDeleteBinGUI(fileName, empty, emptyVec, 
-						 saveFile, analysisRes);
+                                                 saveFile, analysisRes);
 
       if (i==0) {
 	columns=analysisRes.size();
@@ -290,7 +290,7 @@ main( int argc, char **argv ) {
   
   if (debug)
     cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << "   batch : " 
-	 << batch << " List : " << listName << endl;
+         << batch << " List : " << listName << endl;
   if (fileA=="" && listName=="") exit(1);
   vector<std::string>::const_iterator it= dllA.begin();
   for (;it!=dllA.end();++it) {

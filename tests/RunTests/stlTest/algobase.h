@@ -60,25 +60,25 @@ inline const T& max(const T& a, const T& b, Compare comp) {
 
 template <class InputIterator, class Distance>
 void __distance(InputIterator first, InputIterator last, Distance& n, 
-		input_iterator_tag) {
+                input_iterator_tag) {
     while (first != last) { ++first; ++n; }
 }
 
 template <class ForwardIterator, class Distance>
 void __distance(ForwardIterator first, ForwardIterator last, Distance& n, 
-		forward_iterator_tag) {
+                forward_iterator_tag) {
     while (first != last) { ++first; ++n; }
 }
 
 template <class BidirectionalIterator, class Distance>
 void __distance(BidirectionalIterator first, BidirectionalIterator last, 
-		Distance& n, bidirectional_iterator_tag) {
+                Distance& n, bidirectional_iterator_tag) {
     while (first != last) { ++first; ++n; }
 }
 
 template <class RandomAccessIterator, class Distance>
 inline void __distance(RandomAccessIterator first, RandomAccessIterator last, 
-		       Distance& n, random_access_iterator_tag) {
+                       Distance& n, random_access_iterator_tag) {
     n += last - first;
 }
 
@@ -99,16 +99,16 @@ void __advance(ForwardIterator& i, Distance n, forward_iterator_tag) {
 
 template <class BidirectionalIterator, class Distance>
 void __advance(BidirectionalIterator& i, Distance n, 
-	       bidirectional_iterator_tag) {
+               bidirectional_iterator_tag) {
     if (n >= 0)
-	while (n--) ++i;
+        while (n--) ++i;
     else
-	while (n++) --i;
+        while (n++) --i;
 }
 
 template <class RandomAccessIterator, class Distance>
 inline void __advance(RandomAccessIterator& i, Distance n, 
-		      random_access_iterator_tag) {
+                      random_access_iterator_tag) {
     i += n;
 }
 
@@ -120,44 +120,44 @@ inline void advance(InputIterator& i, Distance n) {
 template <class ForwardIterator>
 void destroy(ForwardIterator first, ForwardIterator last) {
     while (first != last) {
-	/* Borland bug */
-	destroy(&*first);
-	++first;
-	//destroy(&*first++);
+        /* Borland bug */
+        destroy(&*first);
+        ++first;
+        //destroy(&*first++);
     }
 }
 
 template <class InputIterator, class ForwardIterator>
 ForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
-				   ForwardIterator result) {
+                                   ForwardIterator result) {
     while (first != last) construct(&*result++, *first++);
     return result;
 }
 
 template <class ForwardIterator, class T>
 void uninitialized_fill(ForwardIterator first, ForwardIterator last, 
-			const T& x) {
+                        const T& x) {
     while (first != last) construct(&*first++, x);
 }
 
 template <class ForwardIterator, class Size, class T>
 ForwardIterator uninitialized_fill_n(ForwardIterator first, Size n,
-				     const T& x) {
+                                     const T& x) {
     while (n--) construct(&*first++, x);
     return first;
 }
 
 template <class InputIterator, class OutputIterator>
 OutputIterator copy(InputIterator first, InputIterator last,
-		    OutputIterator result) {
+                    OutputIterator result) {
     while (first != last) *result++ = *first++;
     return result;
 }
 
 template <class BidirectionalIterator1, class BidirectionalIterator2>
 BidirectionalIterator2 copy_backward(BidirectionalIterator1 first, 
-				     BidirectionalIterator1 last, 
-				     BidirectionalIterator2 result) {
+                                     BidirectionalIterator1 last, 
+                                     BidirectionalIterator2 result) {
     while (first != last) *--result = *--last;
     return result;
 }
@@ -175,56 +175,56 @@ OutputIterator fill_n(OutputIterator first, Size n, const T& value) {
 
 template <class InputIterator1, class InputIterator2>
 pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1,
-					      InputIterator1 last1,
-					      InputIterator2 first2) {
+                                              InputIterator1 last1,
+                                              InputIterator2 first2) {
     while (first1 != last1 && *first1 == *first2) {
-	++first1;
-	++first2;
+        ++first1;
+        ++first2;
     }
     return pair<InputIterator1, InputIterator2>(first1, first2);
 }
 
 template <class InputIterator1, class InputIterator2, class BinaryPredicate>
 pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1,
-					      InputIterator1 last1,
-					      InputIterator2 first2,
-					      BinaryPredicate binary_pred) {
+                                              InputIterator1 last1,
+                                              InputIterator2 first2,
+                                              BinaryPredicate binary_pred) {
     while (first1 != last1 && binary_pred(*first1, *first2)) {
-	++first1;
-	++first2;
+        ++first1;
+        ++first2;
     }
     return pair<InputIterator1, InputIterator2>(first1, first2);
 }
 
 template <class InputIterator1, class InputIterator2>
 inline bool equal(InputIterator1 first1, InputIterator1 last1,
-		  InputIterator2 first2) {
+                  InputIterator2 first2) {
     return mismatch(first1, last1, first2).first == last1;
 }
 
 template <class InputIterator1, class InputIterator2, class BinaryPredicate>
 inline bool equal(InputIterator1 first1, InputIterator1 last1,
-		  InputIterator2 first2, BinaryPredicate binary_pred) {
+                  InputIterator2 first2, BinaryPredicate binary_pred) {
     return mismatch(first1, last1, first2, binary_pred).first == last1;
 }
 
 template <class InputIterator1, class InputIterator2>
 bool lexicographical_compare(InputIterator1 first1, InputIterator1 last1,
-			     InputIterator2 first2, InputIterator2 last2) {
+                             InputIterator2 first2, InputIterator2 last2) {
     while (first1 != last1 && first2 != last2) {
-	if (*first1 < *first2) return true;
-	if (*first2++ < *first1++) return false;
+        if (*first1 < *first2) return true;
+        if (*first2++ < *first1++) return false;
     }
     return first1 == last1 && first2 != last2;
 }
 
 template <class InputIterator1, class InputIterator2, class Compare>
 bool lexicographical_compare(InputIterator1 first1, InputIterator1 last1,
-			     InputIterator2 first2, InputIterator2 last2,
-			     Compare comp) {
+                             InputIterator2 first2, InputIterator2 last2,
+                             Compare comp) {
     while (first1 != last1 && first2 != last2) {
-	if (comp(*first1, *first2)) return true;
-	if (comp(*first2++, *first1++)) return false;
+        if (comp(*first1, *first2)) return true;
+        if (comp(*first2++, *first1++)) return false;
     }
     return first1 == last1 && first2 != last2;
 }

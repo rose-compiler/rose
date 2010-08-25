@@ -61,7 +61,7 @@ class Slicing{
   */
 
   static void init(SgProject* sgproject,
-		 set<SgStatement*>& slicing_criterion, SgFunctionDefinition* &func_defn);
+                   set<SgStatement*>& slicing_criterion, SgFunctionDefinition* &func_defn);
 
   /*!
 \brief

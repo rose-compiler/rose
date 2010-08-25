@@ -106,7 +106,8 @@ enum ArmInstructionKind {
   arm_last_instruction
 };
 
-enum ArmInstructionCondition { // These are one more than the ARM condition codes in the instruction encoding, so the order is important
+// These are one more than the ARM condition codes in the instruction encoding, so the order is important
+enum ArmInstructionCondition {
   arm_cond_unknown = 0,
   arm_cond_eq = 1,                      /**< equal */
   arm_cond_ne = 2,                      /**< not equal */

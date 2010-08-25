@@ -118,7 +118,7 @@ private:
 public:
 
   structureAnn(annVariable * source, annVariable * target,
-	       const std::string * field_name,
+               const std::string * field_name,
 	       const int line);
 
   // --- Fields

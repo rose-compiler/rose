@@ -16,7 +16,7 @@ GenRepresentation::~GenRepresentation ()
 
 string
   GenRepresentation::beginArray (void *classPointer, string arrayName,
-				 TypeOfPrint printType)
+                                 TypeOfPrint printType)
 {
   string returnString;
 
@@ -55,7 +55,7 @@ GenRepresentation::endGraph ()
 
 string
   GenRepresentation::beginClass (void *classPointer, string className,
-				 TypeOfPrint printType)
+                                 TypeOfPrint printType)
 {
   string returnString;
 
@@ -105,7 +105,7 @@ string
 
 string
   GenRepresentation::beginUnion (void *unionPointer, string unionName,
-				 TypeOfPrint printType)
+                                 TypeOfPrint printType)
 {
   string returnString;
   if (printType == Container)
@@ -209,26 +209,26 @@ GenRepresentation::endArray (TypeOfPrint printType)
 string GenRepresentation::addVariable(string variableType, string variableName, ostringstream* variableValue, string variableReferenceName = "", bool separator = false)
 {
 
-	string returnString;
-	
-	if(separator == false){
-		if(variableReferenceName.length() > 0)
-	        	returnString = "<"+ variableReferenceName + ">  " + variableType + " " + variableName;
-		else
-			returnString = " " + variableType + " " + variableName;
-		
-		(*dotout) << returnString; 
-	}else{
-	        if(variableReferenceName.length() > 0)
-		     	returnString = " |  <" + variableReferenceName + ">  " +  variableType + " " + variableName;
-		else
-			returnString = " |" + variableType + " " + variableName;
+        string returnString;
+        
+        if(separator == false){
+                if(variableReferenceName.length() > 0)
+                        returnString = "<"+ variableReferenceName + ">  " + variableType + " " + variableName;
+                else
+                        returnString = " " + variableType + " " + variableName;
+                
+                (*dotout) << returnString; 
+        }else{
+                if(variableReferenceName.length() > 0)
+                        returnString = " |  <" + variableReferenceName + ">  " +  variableType + " " + variableName;
+                else
+                        returnString = " |" + variableType + " " + variableName;
                 (*dotout) << returnString ;
-	}
+        }
         if(variableValue->str().length() > 0) 
-	       (*dotout) << " = " << variableValue->str();
+               (*dotout) << " = " << variableValue->str();
 
-      	return returnString;
+        return returnString;
 }
 */
 string

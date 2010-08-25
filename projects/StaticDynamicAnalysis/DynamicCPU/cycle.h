@@ -123,7 +123,7 @@ static __inline double elapsed(ticks t1, ticks t0) /* time in nanoseconds */
      time_base_to_time(&t1, TIMEBASE_SZ);
      time_base_to_time(&t0, TIMEBASE_SZ);
      return (((double)t1.tb_high - (double)t0.tb_high) * 1.0e9 + 
-	     ((double)t1.tb_low - (double)t0.tb_low));
+             ((double)t1.tb_low - (double)t0.tb_low));
 }
 
 #define HAVE_TICK_COUNTER

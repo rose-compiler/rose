@@ -30,22 +30,22 @@ class GenericGridMotion
  public:
   GenericGridMotion ();
   GenericGridMotion (CompositeGrid& cg_, 
-		     const int& numberOfLevels_);
+                     const int& numberOfLevels_);
   GenericGridMotion (const GenericGridMotion& ggm);
   GenericGridMotion& operator=(const GenericGridMotion& ggm);
 
   virtual ~GenericGridMotion ();
 
   void initialize (CompositeGrid& cg_, 
-		   const int& numberOfLevels_);
+                   const int& numberOfLevels_);
 
   virtual void moveMappings (const real & time,
-			     const real & timestep, 
+                             const real & timestep, 
 			     const int & level)=0;
 
 
   virtual void moveMappings (const real & time,
-			     const real & timestep,
+                             const real & timestep,
 			     const realCompositeGridFunction & u,
 			     const int & level)=0;
   
@@ -59,7 +59,7 @@ class GenericGridMotion
   inline bool analyticVelocityAvailable();
   
   virtual void getAnalyticVelocity(realMappedGridFunction& velocity,
-				   const int& grid,
+                                   const int& grid,
 				   const int& level,
 				   const real& time,
 				   CompositeGrid** cgMoving,

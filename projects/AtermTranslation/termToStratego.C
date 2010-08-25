@@ -13,8 +13,8 @@ int main (int argc, char* argv[]) {
   AST_FILE_IO::startUp(sageProject);
   std::string astBlob = AST_FILE_IO::writeASTToString();
   term = ATsetAnnotation(term, 
-			 ATmake("ast"),
-			 ATmake("<blob>", astBlob.length(), astBlob.data()));
+                         ATmake("ast"),
+                         ATmake("<blob>", astBlob.length(), astBlob.data()));
 #endif
   ATwriteToBinaryFile(term, stdout);
 

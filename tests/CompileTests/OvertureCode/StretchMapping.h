@@ -60,13 +60,13 @@ class StretchMapping : public Mapping{
   virtual void setIsPeriodic( const int axis, const periodicType isPeriodic );
 
   int setHyperbolicTangentParameters(const real & a0, 
-				     const real & ar, 
+                                     const real & ar, 
 				     const real & a1, 
 				     const real & b1, 
 				     const real & c1);
 
   int setExponentialParameters(const real & a0, 
-			       const real & ar,
+                               const real & ar,
 			       const real & a1, 
 			       const real & b1, 
 			       const real & c1);

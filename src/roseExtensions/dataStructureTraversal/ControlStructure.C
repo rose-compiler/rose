@@ -75,7 +75,7 @@ list < string > queryFindPragmaString (SgNode * node)
  * 
  */
 string findPragmaStringUnionControl (string pragmaString,
-					       string unionName)
+                                     string unionName)
 {
   string name_prefix = "print_";
   string name_postfix = "_variable";
@@ -84,7 +84,7 @@ string findPragmaStringUnionControl (string pragmaString,
     {
       pragmaString =
 	StringUtility::copyEdit (pragmaString,
-				 name_prefix + unionName + name_postfix, "");
+                                 name_prefix + unionName + name_postfix, "");
       pragmaString = StringUtility::copyEdit (pragmaString, "=", "");
 
       return pragmaString;
@@ -116,7 +116,7 @@ parsePragmaStringRHS (string pragmaString, string prefix, string name)
       pragmaString = StringUtility::copyEdit (pragmaString, "=", "");*/
       pragmaString =
 	pragmaString.substr (pragmaString.find ("=") + 1,
-			     pragmaString.length ());
+                             pragmaString.length ());
 
       return trim (pragmaString);
     }
@@ -194,7 +194,7 @@ ControlStructureContainer::setAssociatedStatement (SgNode * tempStatement)
 list <
   ControlStructureContainer *
   >queryFindCommentsInScope (const string stringPrefixToMatch,
-			     const string stringToMatch,
+                             const string stringToMatch,
 			     SgScopeStatement * sageScopeStatement)
 {
   ROSE_ASSERT (stringPrefixToMatch.length () > 0);
@@ -207,7 +207,7 @@ list <
 
    list < SgNode * >pragmaDeclarations =
     NodeQuery::querySubTree (sageScopeStatement,
-			     new SgName (stringToMatch.c_str ()),
+                             new SgName (stringToMatch.c_str ()),
 			     NodeQuery::PragmaDeclarationFromName);
 
 
@@ -265,7 +265,7 @@ list <
 
 		      comment =
 			StringUtility::copyEdit (comment, stringPrefixToMatch,
-						 "");
+                                                 "");
 
 		      //see if the comment has an element which matches the stringToMatch
 		      if (comment.find (stringToMatch) != string::npos)
@@ -319,7 +319,7 @@ list <
 		    {		//+stringPrefixToMatch ){
 		      comment =
 			StringUtility::copyEdit (comment, stringPrefixToMatch,
-						 "");
+                                                 "");
 
 		      cout << "And the string is: " << comment << endl;
 
@@ -342,9 +342,9 @@ list <
 		    }
 		  printf
 		    ("          Attached Comment (relativePosition=%s):\n %s\n Next comment: \n",
-		     ((*j)->relativePosition ==
-		      PreprocessingInfo::before) ? "before" : "after",
-		     (*j)->getString ());
+                     ((*j)->relativePosition ==
+                      PreprocessingInfo::before) ? "before" : "after",
+                     (*j)->getString ());
 
 		}
 	    }
@@ -357,8 +357,8 @@ list <
 /*
 list  <ControlStructureContainer* > 
       queryFindCommentsInScope (const string stringPrefixToMatch,
-			     const string stringToMatch,
-			     SgScopeStatement * sageScopeStatement)
+                             const string stringToMatch,
+                             SgScopeStatement * sageScopeStatement)
 {
  
   ROSE_ASSERT (stringPrefixToMatch.length () > 0);
@@ -371,13 +371,13 @@ list  <ControlStructureContainer* >
 // AS(01/26/04) REMOVED BECAUSE OF BUG
    list < SgNode * >pragmaDeclarations =
     NodeQuery::querySubTree (sageScopeStatement,
-			     new SgName (stringToMatch.c_str ()),
-			     NodeQuery::PragmaDeclarationFromName);
+                             new SgName (stringToMatch.c_str ()),
+                             NodeQuery::PragmaDeclarationFromName);
 
 //  cout << "queryFindCommentsInScope is checkpoint 2" << endl;
 //  list < SgNode * >pragmaDeclarations =
-//	 PragmaDeclarationFromName2(sageScopeStatement, 
-//			     new SgName (stringToMatch.c_str ()));
+//       PragmaDeclarationFromName2(sageScopeStatement, 
+//                           new SgName (stringToMatch.c_str ()));
 
   //return the pragmas in containers
   for (list < SgNode * >::iterator i = pragmaDeclarations.begin ();
@@ -399,124 +399,124 @@ list  <ControlStructureContainer* >
   if (sageScopeStatement->variantT () == V_SgClassDefinition)
     {
       SgDeclarationStatementPtrList statementsInScope =
-	sageScopeStatement->getDeclarationList ();
+        sageScopeStatement->getDeclarationList ();
       SgDeclarationStatementPtrList::iterator i;
       for (i = statementsInScope.begin (); i != statementsInScope.end (); i++)
-	{
+        {
 
-	  SgLocatedNode *locatedNode = isSgLocatedNode (*i);
-	  ROSE_ASSERT (locatedNode != NULL);
+          SgLocatedNode *locatedNode = isSgLocatedNode (*i);
+          ROSE_ASSERT (locatedNode != NULL);
 
-	  //find all comments attached to current node.
-	  AttachedPreprocessingInfoType *comments =
-	    locatedNode->getAttachedPreprocessingInfo ();
+          //find all comments attached to current node.
+          AttachedPreprocessingInfoType *comments =
+            locatedNode->getAttachedPreprocessingInfo ();
 
-	  if (comments != NULL)
-	    {
-	      //We need to find comments which fits the crite
+          if (comments != NULL)
+            {
+              //We need to find comments which fits the crite
 #ifdef DEBUG_CGRAPHPP
-	      printf ("Found attached comments (at %p of type: %s): \n",
-		      locatedNode, locatedNode->sage_class_name ());
+              printf ("Found attached comments (at %p of type: %s): \n",
+                      locatedNode, locatedNode->sage_class_name ());
 #endif
-	      
-	      AttachedPreprocessingInfoType::iterator j;
-	      for (j = comments->begin (); j != comments->end (); j++)
-		{
-		  ROSE_ASSERT ((*j) != NULL);
-		  string comment = (*j)->getString ();
-		  //see if comment begins with stringPrefixToMatch
-		  string tempString = comment.substr (0, comment.find (' '));
-		  if (tempString == stringPrefixToMatch)
-		    {		//+stringPrefixToMatch ){
-		      //cout << "Found string" << endl;
+              
+              AttachedPreprocessingInfoType::iterator j;
+              for (j = comments->begin (); j != comments->end (); j++)
+                {
+                  ROSE_ASSERT ((*j) != NULL);
+                  string comment = (*j)->getString ();
+                  //see if comment begins with stringPrefixToMatch
+                  string tempString = comment.substr (0, comment.find (' '));
+                  if (tempString == stringPrefixToMatch)
+                    {           //+stringPrefixToMatch ){
+                      //cout << "Found string" << endl;
 
-		      comment =
-			StringUtility::copyEdit (comment, stringPrefixToMatch, "");
+                      comment =
+                        StringUtility::copyEdit (comment, stringPrefixToMatch, "");
 
-		      //see if the comment has an element which matches the stringToMatch
-		      if (comment.find (stringToMatch) != string::npos)
-			{
-			  cout << endl <<  comment << "  " << endl;
-			  //puit the matching comment into a container    
-			  ControlStructureContainer *container =
-			    new ControlStructureContainer ();
-			  container->setPragmaString (comment);
-			  container->setAssociatedStatement (locatedNode);
+                      //see if the comment has an element which matches the stringToMatch
+                      if (comment.find (stringToMatch) != string::npos)
+                        {
+                          cout << endl <<  comment << "  " << endl;
+                          //puit the matching comment into a container    
+                          ControlStructureContainer *container =
+                            new ControlStructureContainer ();
+                          container->setPragmaString (comment);
+                          container->setAssociatedStatement (locatedNode);
 
-			  returnList.push_back (container);
-			}
-		    }
+                          returnList.push_back (container);
+                        }
+                    }
 //                printf ("          Attached Comment (relativePosition=%s):\n %s\n Next comment: \n",
 //                    ((*j)->relativePosition == PreprocessingInfo::before) ? "before" : "after",(*j)->getString());
 
-		}
-	    }
-	}
+                }
+            }
+        }
     }
   else
     {
       // AS 12/18/03 PS!! The same as the above, but a different iterator. Will replace this when a
       // different solution has arisen. PS!! 
       SgStatementPtrList statementsInScope =
-	sageScopeStatement->getStatementList ();
+        sageScopeStatement->getStatementList ();
       SgStatementPtrList::iterator i;
 
       for (i = statementsInScope.begin (); i != statementsInScope.end (); i++)
-	{
+        {
 
-	  SgLocatedNode *locatedNode = isSgLocatedNode (*i);
-	  ROSE_ASSERT (locatedNode != NULL);
+          SgLocatedNode *locatedNode = isSgLocatedNode (*i);
+          ROSE_ASSERT (locatedNode != NULL);
 
-	  //find all comments attached to current node.
-	  AttachedPreprocessingInfoType *comments =
-	    locatedNode->getAttachedPreprocessingInfo ();
+          //find all comments attached to current node.
+          AttachedPreprocessingInfoType *comments =
+            locatedNode->getAttachedPreprocessingInfo ();
 
-	  if (comments != NULL)
-	    {
-	      //We need to find comments which fits the criteria    
-	      //printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
-	      AttachedPreprocessingInfoType::iterator j;
-	      for (j = comments->begin (); j != comments->end (); j++)
-		{
-		  ROSE_ASSERT ((*j) != NULL);
-		  string comment = (*j)->getString ();
-		  //see if comment begins with stringPrefixToMatch
-		  string tempString = comment.substr (0, comment.find (' '));
-		  if (tempString == stringPrefixToMatch)
-		    {		//+stringPrefixToMatch ){
-		      comment =
-			StringUtility::copyEdit (comment, stringPrefixToMatch,
-						 "");
+          if (comments != NULL)
+            {
+              //We need to find comments which fits the criteria    
+              //printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+              AttachedPreprocessingInfoType::iterator j;
+              for (j = comments->begin (); j != comments->end (); j++)
+                {
+                  ROSE_ASSERT ((*j) != NULL);
+                  string comment = (*j)->getString ();
+                  //see if comment begins with stringPrefixToMatch
+                  string tempString = comment.substr (0, comment.find (' '));
+                  if (tempString == stringPrefixToMatch)
+                    {           //+stringPrefixToMatch ){
+                      comment =
+                        StringUtility::copyEdit (comment, stringPrefixToMatch,
+                                                 "");
 
-		      if (comment.find (stringToMatch) != comment.length ())
-			{
-			  //ROSE_ASSERT(comment.find('=') != comment.length());
-			  //string variableName = comment.substr(comment.find(stringToMatch), comment.find('='));
+                      if (comment.find (stringToMatch) != comment.length ())
+                        {
+                          //ROSE_ASSERT(comment.find('=') != comment.length());
+                          //string variableName = comment.substr(comment.find(stringToMatch), comment.find('='));
 
-			  //puit the matching comment into a container    
-			  ControlStructureContainer *container =
-			    new ControlStructureContainer ();
-			  container->setPragmaString (comment);
-			  container->setAssociatedStatement (locatedNode);
+                          //puit the matching comment into a container    
+                          ControlStructureContainer *container =
+                            new ControlStructureContainer ();
+                          container->setPragmaString (comment);
+                          container->setAssociatedStatement (locatedNode);
 
-			  returnList.push_back (container);
-			}
-		    }
+                          returnList.push_back (container);
+                        }
+                    }
 #ifdef DEBUG_CGRAPHPP
-		  printf
-		    ("          Attached Comment (relativePosition=%s):\n %s\n Next comment: \n",
-		     ((*j)->relativePosition ==
-		      PreprocessingInfo::before) ? "before" : "after",
-		     (*j)->getString ());
+                  printf
+                    ("          Attached Comment (relativePosition=%s):\n %s\n Next comment: \n",
+                     ((*j)->relativePosition ==
+                      PreprocessingInfo::before) ? "before" : "after",
+                     (*j)->getString ());
 #endif
 
-		}
-	    }
-	}
+                }
+            }
+        }
 
     }
   return returnList;
-}	*/			/* End function:  queryFindCommentsInScope() */
+}       */                      /* End function:  queryFindCommentsInScope() */
 
 string
 checkPragmaRHSUnionControl (const list < SgNode * >unionFields,

@@ -258,12 +258,12 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 	if (input[x][y][0]>0) {
 	  cerr << " x = "<<x<<"  y = " <<y<<endl;
 	  cerr << " pts["<<fieldX<<"]["<<fieldY<<"]["<<offsetX<<"]["<<offsetY
-	       << "][0]="<<factor*((GLfloat)offsetX+((max-1)*fieldX))<<endl;
-	  cerr << " pts["<<fieldX<<"]["<<fieldY<<"]["<<offsetX<<"]["<<offsetY
-	       << "][1]="<<factor*((GLfloat)offsetY+((max-1)*fieldY))<<endl;
-	  cerr << " pts["<<fieldX<<"]["<<fieldY<<"]["<<offsetX<<"]["<<offsetY
-	       << "][2]="<<input[x][y][0]<<endl<<endl;
-	}
+               << "][0]="<<factor*((GLfloat)offsetX+((max-1)*fieldX))<<endl;
+          cerr << " pts["<<fieldX<<"]["<<fieldY<<"]["<<offsetX<<"]["<<offsetY
+               << "][1]="<<factor*((GLfloat)offsetY+((max-1)*fieldY))<<endl;
+          cerr << " pts["<<fieldX<<"]["<<fieldY<<"]["<<offsetX<<"]["<<offsetY
+               << "][2]="<<input[x][y][0]<<endl<<endl;
+        }
       }
       pts[fieldX][fieldY][offsetX][offsetY][0]=factor*((GLfloat)offsetX+((max-1)*fieldX));
       pts[fieldX][fieldY][offsetX][offsetY][1]=factor*((GLfloat)offsetY+((max-1)*fieldY));

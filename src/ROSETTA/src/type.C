@@ -304,6 +304,12 @@ Grammar::setUpTypes ()
      TypeImaginary.excludeFunctionSource        ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 #endif
 
+  // DQ (8/17/2010): Don't use the static builtin type for the SgTypeString IR node.
+     TypeString.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TypeString.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TypeString.excludeFunctionPrototype ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
+  // TypeString.excludeFunctionPrototype ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
+
      TypeUnknown.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeChar.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeSignedChar.setDataPrototype       ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -328,14 +334,19 @@ Grammar::setUpTypes ()
 
      TypeCAFTeam.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-     // FMZ (4/8/2009): Added for Cray pointer
+  // FMZ (4/8/2009): Added for Cray pointer
      TypeCrayPointer.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      TypeLongDouble.setDataPrototype       ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-  // DQ (8/6/2010): Add string lenght to type (this tyoe is used only in Fortran support).
-     TypeString.setDataPrototype           ("SgExpression*", "index"    , "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+  // This type now has a length parameter, so we cannot use a single static builtin_type to represent all of the variations.
+  // TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (8/6/2010): Add string length to type (this type is used only in Fortran support, as I recall, but might be used for string literals in all langauges).
+  // A fixed length string is the most common form, but fortran also permits a variable length string so we have to support an expression as well.
+     TypeString.setDataPrototype           ("SgExpression*", "lengthExpression"        , "= NULL" , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+     TypeString.setDataPrototype           ("size_t"       , "lengthScalar"            , "= 0"    , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeString.setDataPrototype           ("bool"         , "definedUsingScalarLength", "= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeBool.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -401,6 +412,12 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(ArrayType,
             "SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE",
             "SgType* type = NULL, SgExpression* expr = NULL");
+
+  // DQ (8/17/2010): Added support for create function for StringType (Fortran specific)
+     CUSTOM_CREATE_TYPE_MACRO(TypeString,
+            "SOURCE_CREATE_TYPE_FOR_STRING_TYPE",
+            "SgExpression* expr = NULL, size_t length = 0");
+
 #if 0
   // DQ (8/27/2006): Complex types should just take an enum value to indicate there size (float, double, long double).
      CUSTOM_CREATE_TYPE_MACRO(TypeComplex,
@@ -601,6 +618,9 @@ Grammar::setUpTypes ()
      TypeImaginary.setDataPrototype ("SgType*", "base_type", "= NULL",
 				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/17/2010): Added support for string types for Fortran (in C/C++ they are just arrays of char).
+     TypeString.setFunctionPrototype ("HEADER_TYPE_STRING_TYPE", "../Grammar/Type.code" );
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -703,7 +723,13 @@ Grammar::setUpTypes ()
      ArrayType.setFunctionSource           ( "SOURCE_ARRAY_TYPE", "../Grammar/Type.code");
      ModifierType.setFunctionSource        ( "SOURCE_MODIFIER_TYPE", "../Grammar/Type.code");
      QualifiedNameType.setFunctionSource   ( "SOURCE_QUALIFIED_NAME_TYPE", "../Grammar/Type.code");
-     TypeCrayPointer.editSubstitute( "MANGLED_ID_STRING", "s" );
+     TypeCrayPointer.editSubstitute        ( "MANGLED_ID_STRING", "s" );
+
+  // DQ (8/17/2010): Added support for SgTypeString (used in Fortran).
+     TypeString.setFunctionSource         ( "SOURCE_TYPE_STRING_TYPE", "../Grammar/Type.code");
+  // DQ (8/17/2010): Added support for SgTypeString name mangling.
+     TypeString.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     TypeString.setFunctionSource         ( "SOURCE_GET_MANGLED_STRING_TYPE", "../Grammar/Type.code");
 #endif
    }
 

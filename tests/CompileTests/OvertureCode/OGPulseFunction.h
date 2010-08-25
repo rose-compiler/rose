@@ -42,14 +42,14 @@ class OGPulseFunction : public OGFunction
   int setRadius( real radius );
   int setShape( real p_ );
   int setCentre( real c0_ =0.,
-		 real c1_ =0.,
+                 real c1_ =0.,
 		 real c2_ =0. );
   int setVelocity( real v0_ =1.,
-		   real v1_ =1.,
+                   real v1_ =1.,
 		   real v2_ =1. );
 
   void setParameters(int numberOfDimensions_ = 2,
-		     int numberOfComponents_ =1,
+                     int numberOfComponents_ =1,
 		     real a0_ =1., 
 		     real a1_ =5.,
 		     real c0_ =0.,
@@ -369,7 +369,7 @@ class OGPulseFunction : public OGFunction
            const GridFunctionParameters::GridFunctionType & centering=GridFunctionParameters::defaultCentering);
 
   realCompositeGridFunction gd(const int & ntd, const int & nxd, const int & nyd, const int & nzd,
-			       CompositeGrid & cg, const Index & N=nullIndex, const real t=0.,
+                               CompositeGrid & cg, const Index & N=nullIndex, const real t=0.,
 			       const GridFunctionParameters::GridFunctionType & centering
                                  =GridFunctionParameters::defaultCentering);
 

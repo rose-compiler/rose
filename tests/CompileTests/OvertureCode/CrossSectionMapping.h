@@ -61,7 +61,7 @@ class CrossSectionMapping : public Mapping{
   int setCrossSectionType(CrossSectionTypes type);
 
   void map( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	 MappingParameters & params=Overture::nullMappingParameters() );
+            MappingParameters & params=Overture::nullMappingParameters() );
 
   void basicInverse(const realArray & x, realArray & r, realArray & rx = Overture::nullRealDistributedArray(),
                     MappingParameters & params = Overture::nullMappingParameters());
@@ -100,11 +100,11 @@ class CrossSectionMapping : public Mapping{
   int crossSectionMap( const int & cs, const realArray & r, realArray & x, realArray & xr);
 
   void mapGeneral( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	 MappingParameters & params=Overture::nullMappingParameters() );
+                   MappingParameters & params=Overture::nullMappingParameters() );
   void mapGeneralWithPolarSingularity( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	 MappingParameters & params=Overture::nullMappingParameters() );
+                                       MappingParameters & params=Overture::nullMappingParameters() );
   void mapBuiltin( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	 MappingParameters & params=Overture::nullMappingParameters() );
+                   MappingParameters & params=Overture::nullMappingParameters() );
 
   int initialize();
 

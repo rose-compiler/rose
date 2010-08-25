@@ -248,8 +248,8 @@ visit(SgNode* node)
 	SgIntVal* val = isSgIntVal(pntr->get_rhs_operand());
 	unsigned int value = val->get_value();
 	cerr << "  bufferoverflow : comparing " << value << " " 
-	     << arrayInit << "  violation? : " << (value>=arrayInit) << endl;
-	if (value>=arrayInit) {
+             << arrayInit << "  violation? : " << (value>=arrayInit) << endl;
+        if (value>=arrayInit) {
 	  violation(next);
 	}
 	break;
