@@ -45,6 +45,16 @@ elif test "x$javasetting" = xyes || test "x$javasetting" = xtry; then
       fi
     # AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVA}`/../..")
       AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVAC}`/..")
+      
+      # George Vulov (Aug. 25, 2010) On OS X the binaries found under /System/Library/Frameworks/JavaVM.framework/Versions/Current/Commands/
+      # aren't the true Java binaries; instead they check the java preferences app and then instantiate whatever version of Java
+      # is specified there. The actual java binaries are located in /System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home
+      if test "x$build_vendor" = xapple; then
+      	if (( `echo ${JAVA_PATH} | grep -c "/Commands/.."` > 0 )); then
+      		AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVAC}`/../../CurrentJDK/Home")
+      	fi
+	  fi
+      
     # echo "After setting value: JAVA_PATH = ${JAVA_PATH}"
     elif "x$javasetting" = "xyes"; then
       AC_MSG_ERROR([--with-java was given but "java" is not in PATH and JAVA_HOME was not set])
@@ -89,15 +99,7 @@ fi
 
 if test "x$USE_JAVA" = x1; then
 
-# DQ (11/3/2009): This was moved from down below to check for java before the jvm
-# Fix the case of Apple OSX support.
-# echo "Before OS specific JAVA = ${JAVA}"
-  if test "x$build_vendor" = xapple; then
-     JAVA_BIN="${JAVA_PATH}/Commands"
-  else
-     JAVA_BIN="${JAVA_PATH}/bin"
-  fi
-
+  JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
 # echo "JAVA = ${JAVA}"
   AC_MSG_CHECKING(for java)
