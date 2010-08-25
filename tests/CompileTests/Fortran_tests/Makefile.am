@@ -486,6 +486,12 @@ test2010_05.o:
 outputSpew.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:caf -rose:skip_syntax_check -c $(srcdir)/$(@:.o=.caf)
 
+# Makefile rule to reproduce a current OFP bug that causes OFP to fail silently (not returning a proper exit code).
+current_OFP_error:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:exit_after_parser -c $(srcdir)/test2010_31.f90
+
+
+
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 PASSING_MODULE_TEST_Objects = module_B_file.o
 
@@ -544,7 +550,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_01.f test2007_suffixTest_02.f77 test2007_suffixTest_03.f90 test2007_suffixTest_04.f95 \
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
-   module_A_file.f90 module_B_file.f90
+   module_A_file.f90 module_B_file.f90 test2010_31_header.f90
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests
