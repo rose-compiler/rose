@@ -170,273 +170,333 @@ print_leave(FILE *f, char fmt, const ArgInfo *info)
     if (en!=0) {
         /*FIXME: are we sure that these host numbers are valid for the target machine also? I hope so, because we use
          *       these symbolic names throughout the syscall handling code in x86sim.C [RPM 2010-08-07] */
-        static const Translate t[] = { TF(EPERM), TF(ENOENT), TF(ESRCH), TF(EINTR), TF(EIO), TF(ENXIO), TF(E2BIG), TF(ENOEXEC),
-                                       TF(EBADF), TF(ECHILD), TF(EAGAIN), TF(ENOMEM), TF(EACCES), TF(EFAULT), TF(ENOTBLK),
-                                       TF(EBUSY), TF(EEXIST), TF(EXDEV), TF(ENODEV), TF(ENOTDIR), TF(EISDIR), TF(EINVAL),
-                                       TF(ENFILE), TF(EMFILE), TF(ENOTTY), TF(ETXTBSY), TF(EFBIG), TF(ENOSPC), TF(ESPIPE),
-                                       TF(EROFS), TF(EMLINK), TF(EPIPE), TF(EDOM), TF(ERANGE), TF(EDEADLK), TF(ENAMETOOLONG),
-                                       TF(ENOLCK), TF(ENOSYS), TF(ENOTEMPTY), TF(ELOOP), TF(ENOMSG), TF(EIDRM),
+        static const Translate t[] = { TE(EPERM), TE(ENOENT), TE(ESRCH), TE(EINTR), TE(EIO), TE(ENXIO), TE(E2BIG), TE(ENOEXEC),
+                                       TE(EBADF), TE(ECHILD), TE(EAGAIN), TE(ENOMEM), TE(EACCES), TE(EFAULT), TE(ENOTBLK),
+                                       TE(EBUSY), TE(EEXIST), TE(EXDEV), TE(ENODEV), TE(ENOTDIR), TE(EISDIR), TE(EINVAL),
+                                       TE(ENFILE), TE(EMFILE), TE(ENOTTY), TE(ETXTBSY), TE(EFBIG), TE(ENOSPC), TE(ESPIPE),
+                                       TE(EROFS), TE(EMLINK), TE(EPIPE), TE(EDOM), TE(ERANGE), TE(EDEADLK), TE(ENAMETOOLONG),
+                                       TE(ENOLCK), TE(ENOSYS), TE(ENOTEMPTY), TE(ELOOP), TE(ENOMSG), TE(EIDRM),
+#ifdef EAGAIN
+                                       TE(EAGAIN),
+#endif
+#ifdef EWOULDBLOCK
+                                       TE(EWOULDBLOCK),
+#endif
 #ifdef ECHRNG
-                                       TF(ECHRNG),
+                                       TE(ECHRNG),
 #endif
 #ifdef EL2NSYNC
-                                       TF(EL2NSYNC),
+                                       TE(EL2NSYNC),
 #endif
 #ifdef EL3HLT
-                                       TF(EL3HLT),
+                                       TE(EL3HLT),
 #endif
 #ifdef EL3RST
-                                       TF(EL3RST),
+                                       TE(EL3RST),
 #endif
 #ifdef ELNRNG
-                                       TF(ELNRNG),
+                                       TE(ELNRNG),
 #endif
 #ifdef EUNATCH
-                                       TF(EUNATCH),
+                                       TE(EUNATCH),
 #endif
 #ifdef ENOCSI
-                                       TF(ENOCSI),
+                                       TE(ENOCSI),
 #endif
 #ifdef EL2HLT
-                                       TF(EL2HLT),
+                                       TE(EL2HLT),
 #endif
 #ifdef EBADE
-                                       TF(EBADE),
+                                       TE(EBADE),
 #endif
 #ifdef EBADR
-                                       TF(EBADR),
+                                       TE(EBADR),
 #endif
 #ifdef EXFULL
-                                       TF(EXFULL),
+                                       TE(EXFULL),
 #endif
 #ifdef ENOANO
-                                       TF(ENOANO),
+                                       TE(ENOANO),
 #endif
 #ifdef EBADRQC
-                                       TF(EBADRQC),
+                                       TE(EBADRQC),
 #endif
 #ifdef EBADSLT
-                                       TF(EBADSLT),
+                                       TE(EBADSLT),
 #endif
 #ifdef EBFONT
-                                       TF(EBFONT),
+                                       TE(EBFONT),
 #endif
 #ifdef ENOSTR
-                                       TF(ENOSTR),
+                                       TE(ENOSTR),
 #endif
 #ifdef ENODATA
-                                       TF(ENODATA),
+                                       TE(ENODATA),
 #endif
 #ifdef ETIME
-                                       TF(ETIME),
+                                       TE(ETIME),
 #endif
 #ifdef ENOSR
-                                       TF(ENOSR),
+                                       TE(ENOSR),
 #endif
 #ifdef ENONET
-                                       TF(ENONET),
+                                       TE(ENONET),
 #endif
 #ifdef ENOPKG
-                                       TF(ENOPKG),
+                                       TE(ENOPKG),
 #endif
 #ifdef EREMOTE
-                                       TF(EREMOTE),
+                                       TE(EREMOTE),
 #endif
 
 #ifdef ENOLINK
-                                       TF(ENOLINK),
+                                       TE(ENOLINK),
 #endif
 #ifdef EADV
-                                       TF(EADV),
+                                       TE(EADV),
 #endif
 #ifdef ESRMNT
-                                       TF(ESRMNT),
+                                       TE(ESRMNT),
 #endif
 #ifdef ECOMM
-                                       TF(ECOMM),
+                                       TE(ECOMM),
 #endif
 #ifdef EPROTO
-                                       TF(EPROTO),
+                                       TE(EPROTO),
 #endif
 #ifdef EMULTIHOP
-                                       TF(EMULTIHOP),
+                                       TE(EMULTIHOP),
 #endif
 #ifdef EDOTDOT
-                                       TF(EDOTDOT),
+                                       TE(EDOTDOT),
 #endif
 #ifdef EBADMSG
-                                       TF(EBADMSG),
+                                       TE(EBADMSG),
 #endif
 #ifdef EOVERFLOW
-                                       TF(EOVERFLOW),
+                                       TE(EOVERFLOW),
 #endif
 #ifdef ENOTUNIQ
-                                       TF(ENOTUNIQ),
+                                       TE(ENOTUNIQ),
 #endif
 #ifdef EBADFD
-                                       TF(EBADFD),
+                                       TE(EBADFD),
 #endif
 #ifdef EREMCHG
-                                       TF(EREMCHG),
+                                       TE(EREMCHG),
 #endif
 #ifdef ELIBACC
-                                       TF(ELIBACC),
+                                       TE(ELIBACC),
 #endif
 #ifdef ELIBBAD
-                                       TF(ELIBBAD),
+                                       TE(ELIBBAD),
 #endif
 #ifdef ELIBSCN
-                                       TF(ELIBSCN),
+                                       TE(ELIBSCN),
 #endif
 #ifdef ELIBMAX
-                                       TF(ELIBMAX),
+                                       TE(ELIBMAX),
 #endif
 #ifdef ELIBEXEC
-                                       TF(ELIBEXEC),
+                                       TE(ELIBEXEC),
 #endif
 #ifdef EILSEQ
-                                       TF(EILSEQ),
+                                       TE(EILSEQ),
 #endif
 #ifdef ERESTART
-                                       TF(ERESTART),
+                                       TE(ERESTART),
 #endif
 #ifdef ESTRPIPE
-                                       TF(ESTRPIPE),
+                                       TE(ESTRPIPE),
 #endif
 #ifdef EUSERS
-                                       TF(EUSERS),
+                                       TE(EUSERS),
 #endif
 #ifdef ENOTSOCK
-                                       TF(ENOTSOCK),
+                                       TE(ENOTSOCK),
 #endif
 #ifdef EDESTADDRREQ
-                                       TF(EDESTADDRREQ),
+                                       TE(EDESTADDRREQ),
 #endif
 #ifdef EMSGSIZE
-                                       TF(EMSGSIZE),
+                                       TE(EMSGSIZE),
 #endif
 #ifdef EPROTOTYPE
-                                       TF(EPROTOTYPE),
+                                       TE(EPROTOTYPE),
 #endif
 #ifdef ENOPROTOOPT
-                                       TF(ENOPROTOOPT),
+                                       TE(ENOPROTOOPT),
 #endif
 #ifdef EPROTONOSUPPORT
-                                       TF(EPROTONOSUPPORT),
+                                       TE(EPROTONOSUPPORT),
 #endif
 #ifdef ESOCKTNOSUPPORT
-                                       TF(ESOCKTNOSUPPORT),
+                                       TE(ESOCKTNOSUPPORT),
 #endif
 #ifdef EOPNOTSUPP
-                                       TF(EOPNOTSUPP),
+                                       TE(EOPNOTSUPP),
 #endif
 #ifdef EPFNOSUPPORT
-                                       TF(EPFNOSUPPORT),
+                                       TE(EPFNOSUPPORT),
 #endif
 #ifdef EAFNOSUPPORT
-                                       TF(EAFNOSUPPORT),
+                                       TE(EAFNOSUPPORT),
 #endif
 #ifdef EADDRINUSE
-                                       TF(EADDRINUSE),
+                                       TE(EADDRINUSE),
 #endif
 #ifdef EADDRNOTAVAIL
-                                       TF(EADDRNOTAVAIL),
+                                       TE(EADDRNOTAVAIL),
 #endif
 #ifdef ENETDOWN
-                                       TF(ENETDOWN),
+                                       TE(ENETDOWN),
 #endif
 #ifdef ENETUNREACH
-                                       TF(ENETUNREACH),
+                                       TE(ENETUNREACH),
 #endif
 #ifdef ENETRESET
-                                       TF(ENETRESET),
+                                       TE(ENETRESET),
 #endif
 #ifdef ECONNABORTED
-                                       TF(ECONNABORTED),
+                                       TE(ECONNABORTED),
 #endif
 #ifdef ECONNRESET
-                                       TF(ECONNRESET),
+                                       TE(ECONNRESET),
 #endif
 #ifdef ENOBUFS
-                                       TF(ENOBUFS),
+                                       TE(ENOBUFS),
 #endif
 #ifdef EISCONN
-                                       TF(EISCONN),
+                                       TE(EISCONN),
 #endif
 #ifdef ENOTCONN
-                                       TF(ENOTCONN),
+                                       TE(ENOTCONN),
 #endif
 #ifdef ESHUTDOWN
-                                       TF(ESHUTDOWN),
+                                       TE(ESHUTDOWN),
 #endif
 #ifdef ETOOMANYREFS
-                                       TF(ETOOMANYREFS),
+                                       TE(ETOOMANYREFS),
 #endif
 #ifdef ETIMEDOUT
-                                       TF(ETIMEDOUT),
+                                       TE(ETIMEDOUT),
 #endif
 #ifdef ECONNREFUSED
-                                       TF(ECONNREFUSED),
+                                       TE(ECONNREFUSED),
 #endif
 #ifdef EHOSTDOWN
-                                       TF(EHOSTDOWN),
+                                       TE(EHOSTDOWN),
 #endif
 #ifdef EHOSTUNREACH
-                                       TF(EHOSTUNREACH),
+                                       TE(EHOSTUNREACH),
 #endif
 #ifdef EALREADY
-                                       TF(EALREADY),
+                                       TE(EALREADY),
 #endif
 #ifdef EINPROGRESS
-                                       TF(EINPROGRESS),
+                                       TE(EINPROGRESS),
 #endif
 #ifdef ESTALE
-                                       TF(ESTALE),
+                                       TE(ESTALE),
 #endif
 #ifdef EUCLEAN
-                                       TF(EUCLEAN),
+                                       TE(EUCLEAN),
 #endif
 #ifdef ENOTNAM
-                                       TF(ENOTNAM),
+                                       TE(ENOTNAM),
 #endif
 #ifdef ENAVAIL
-                                       TF(ENAVAIL),
+                                       TE(ENAVAIL),
 #endif
 #ifdef EISNAM
-                                       TF(EISNAM),
+                                       TE(EISNAM),
 #endif
 #ifdef EREMOTEIO
-                                       TF(EREMOTEIO),
+                                       TE(EREMOTEIO),
 #endif
 #ifdef EDQUOT
-                                       TF(EDQUOT),
+                                       TE(EDQUOT),
 #endif
 #ifdef ENOMEDIUM
-                                       TF(ENOMEDIUM),
+                                       TE(ENOMEDIUM),
 #endif
 #ifdef EMEDIUMTYPE
-                                       TF(EMEDIUMTYPE),
+                                       TE(EMEDIUMTYPE),
 #endif
 #ifdef ECANCELED
-                                       TF(ECANCELED),
+                                       TE(ECANCELED),
 #endif
 #ifdef ENOKEY
-                                       TF(ENOKEY),
+                                       TE(ENOKEY),
 #endif
 #ifdef EKEYEXPIRED
-                                       TF(EKEYEXPIRED),
+                                       TE(EKEYEXPIRED),
 #endif
 #ifdef EKEYREVOKED
-                                       TF(EKEYREVOKED),
+                                       TE(EKEYREVOKED),
 #endif
 #ifdef EKEYREJECTED
-                                       TF(EKEYREJECTED),
+                                       TE(EKEYREJECTED),
 #endif
 #ifdef EOWNERDEAD
-                                       TF(EOWNERDEAD),
+                                       TE(EOWNERDEAD),
 #endif
 #ifdef ENOTRECOVERABLE
-                                       TF(ENOTRECOVERABLE),
+                                       TE(ENOTRECOVERABLE),
+#endif
+#ifdef ENOTSUP
+                                       TE(ENOTSUP),
+#endif
+#ifdef EPROCLIM
+                                       TE(EPROCLIM),
+#endif
+#ifdef EBADRPC
+                                       TE(EBADRPC),
+#endif
+#ifdef ERPCMISMATCH
+                                       TE(ERPCMISMATCH),
+#endif
+#ifdef EPROGUNAVAIL
+                                       TE(EPROGUNAVAIL),
+#endif
+#ifdef EPROGMISMATCH
+                                       TE(EPROGMISMATCH),
+#endif
+#ifdef EPROCUNAVAIL
+                                       TE(EPROCUNAVAIL),
+#endif
+#ifdef EFTYPE
+                                       TE(EFTYPE),
+#endif
+#ifdef EAUTH
+                                       TE(EAUTH),
+#endif
+#ifdef ENEEDAUTH
+                                       TE(ENEEDAUTH),
+#endif
+#ifdef EPWROFF
+                                       TE(EPWROFF),
+#endif
+#ifdef EDEVERR
+                                       TE(EDEVERR),
+#endif
+#ifdef EBADEXEC
+                                       TE(EBADEXEC),
+#endif
+#ifdef EBADARCH
+                                       TE(EBADARCH),
+#endif
+#ifdef ESHLIBVERS
+                                       TE(ESHLIBVERS),
+#endif
+#ifdef EBADMACHO
+                                       TE(EBADMACHO),
+#endif
+#ifdef ENOATTR
+                                       TE(ENOATTR), 
+#endif
+#ifdef ENOPOLICY
+                                       TE(ENOPOLICY),
 #endif
                                        T_END };
         retval += fprintf(f, "%"PRId32" ", info->val);
