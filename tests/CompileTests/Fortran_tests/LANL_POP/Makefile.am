@@ -8,7 +8,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #      PASSING TESTS
 # #######################
 
-F90_TESTCODES_REQUIRED_TO_PASS = advection.F90
+F90_TESTCODES_REQUIRED_TO_PASS = $(F90_PASSING_TESTS)
 
 # Make all the code dependent upon the kinds_mod.F90 file
 # advection.o : kinds_mod.o
@@ -24,30 +24,15 @@ F03_TESTCODES_REQUIRED_TO_PASS =
 
 F90_TESTCODES_CURRENTLY_FAILING = $(F90_EXTRA_TESTS)
 
-# This are the POP source files (excluding module files)
-F90_EXTRA_TESTS = \
-   advection.F90 \
-   baroclinic.F90 \
-   barotropic.F90 \
-   current_meters.F90 \
-   drifters.F90 \
-   history.F90 \
-   horizontal_mix.F90 \
-   hydro_sections.F90 \
-   initial.F90 \
-   hmix_aniso.F90 \
-   hmix_del2.F90 \
-   hmix_del4.F90 \
-   movie.F90 \
-   output.F90 \
-   POP.F90 \
-   pressure_grad.F90 \
-   restart.F90 \
-   step_mod.F90 \
-   surface_hgt.F90 \
-   topostress.F90 \
-   xdisplay.F90
+F90_PASSING_TESTS = POP.F90 
 
+# This are the POP source files (excluding module files)
+F90_EXTRA_TESTS = 
+
+# These modules are not used!
+# current_meters.F90
+# drifters.F90
+# hydro_sections.F90
 
 # NET CDF library source files (from the web)
 NET_CDF_FILES = \
@@ -71,6 +56,11 @@ NET_CDF_FILES = \
 # to be compiled else we will generate circular makefile dependencies.
 # fix_64.C 
 F90_INCLUDED_MODULES = \
+   advection.F90 \
+   baroclinic.F90 \
+   barotropic.F90 \
+   broadcast.F90 \
+   boundary.F90 \
    kinds_mod.F90 \
    constants.F90 \
    communicate.F90 \
@@ -79,19 +69,6 @@ F90_INCLUDED_MODULES = \
    blocks.F90 \
    domain_size.F90 \
    distribution.F90 \
-   grid.F90 \
-   io_types.F90 \
-   broadcast.F90 \
-   boundary.F90 \
-   io.F90 \
-   io_binary.F90 \
-   io_netcdf.F90 \
-   gather_scatter.F90 \
-   global_reductions.F90 \
-   diagnostics.F90 \
-   prognostic.F90 \
-   time_management.F90 \
-   solvers.F90 \
    forcing.F90 \
    forcing_ap.F90 \
    forcing_coupled.F90 \
@@ -101,16 +78,41 @@ F90_INCLUDED_MODULES = \
    forcing_s_interior.F90 \
    forcing_tools.F90 \
    forcing_ws.F90 \
+   grid.F90 \
+   history.F90 \
+   hmix_gm.F90 \
+   hmix_aniso.F90 \
+   hmix_del2.F90 \
+   hmix_del4.F90 \
+   horizontal_mix.F90 \
+   ice.F90 \
+   initial.F90 \
+   io_types.F90 \
+   io.F90 \
+   io_binary.F90 \
+   io_netcdf.F90 \
+   gather_scatter.F90 \
+   global_reductions.F90 \
+   diagnostics.F90 \
+   movie.F90 \
+   output.F90 \
+   prognostic.F90 \
+   restart.F90 \
+   time_management.F90 \
+   solvers.F90 \
+   step_mod.F90 \
+   surface_hgt.F90 \
    tavg.F90 \
    timers.F90 \
-   ice.F90 \
+   topostress.F90 \
    state_mod.F90 \
    operators.F90 \
-   hmix_gm.F90 \
+   pressure_grad.F90 \
    vertical_mix.F90 \
    vmix_kpp.F90 \
    vmix_const.F90 \
    vmix_rich.F90 \
+   xdisplay.F90 \
    $(NET_CDF_FILES)
 
 
@@ -180,7 +182,7 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:verbose 0 -rose:compileFixed
 # ROSE_FLAGS = -rose:verbose 3
 # ROSE_FLAGS = -rose:verbose 0
-ROSE_FLAGS = -rose:verbose 0 -rose:output_warnings -rose:output_parser_actions
+# ROSE_FLAGS = -rose:verbose 0 -rose:output_warnings -rose:output_parser_actions
 ROSE_FLAGS = -rose:verbose 0 
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
@@ -219,7 +221,6 @@ exit_mod.o: $(TRANSLATOR) communicate.o constants.o
 domain.o: $(TRANSLATOR) constants.o blocks.o io_types.o boundary.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-# blocks.o:  $(TRANSLATOR) kinds_mod.o exit_mod.o domain.o
 blocks.o: $(TRANSLATOR) kinds_mod.o exit_mod.o domain_size.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
@@ -310,6 +311,9 @@ state_mod.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constant
 operators.o: $(TRANSLATOR) kinds_mod.o blocks.o domain_size.o domain.o constants.o grid.o 
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
+pressure_grad.o: $(TRANSLATOR) vertical_mix.o vmix_kpp.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
 hmix_gm.o: $(TRANSLATOR) vertical_mix.o vmix_kpp.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
@@ -325,6 +329,62 @@ vmix_const.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain_size.o do
 vmix_rich.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o broadcast.o io.o state_mod.o time_management.o exit_mod.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
+horizontal_mix.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o communicate.o time_management.o broadcast.o grid.o io_types.o hmix_del2.o hmix_del4.o hmix_gm.o hmix_aniso.o topostress.o tavg.o timers.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+pressure_grad.o: $(TRANSLATOR) kinds_mod.o blocks.o constants.o operators.o grid.o broadcast.o communicate.o io.o io_types.o state_mod.o time_management.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+hmix_del2.o: $(TRANSLATOR) kinds_mod.o blocks.o communicate.o distribution.o domain_size.o domain.o broadcast.o boundary.o constants.o topostress.o diagnostics.o io.o global_reductions.o grid.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+topostress.o: $(TRANSLATOR) kinds_mod.o domain.o blocks.o distribution.o constants.o io.o grid.o broadcast.o boundary.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+output.o: $(TRANSLATOR) kinds_mod.o restart.o history.o movie.o tavg.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+restart.o: $(TRANSLATOR) kinds_mod.o domain.o constants.o blocks.o prognostic.o broadcast.o boundary.o communicate.o operators.o grid.o io.o io_types.o time_management.o ice.o forcing.o forcing_ap.o forcing_ws.o forcing_shf.o forcing_sfwf.o forcing_pt_interior.o forcing_s_interior.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+movie.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o grid.o io.o broadcast.o time_management.o forcing.o exit_mod.o operators.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+hmix_del4.o: $(TRANSLATOR) kinds_mod.o blocks.o communicate.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o global_reductions.o boundary.o diagnostics.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+hmix_aniso.o: $(TRANSLATOR) kinds_mod.o blocks.o communicate.o distribution.o domain.o constants.o broadcast.o global_reductions.o gather_scatter.o diagnostics.o time_management.o grid.o io.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+step_mod.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o boundary.o timers.o grid.o io.o diagnostics.o state_mod.o time_management.o xdisplay.o baroclinic.o barotropic.o surface_hgt.o tavg.o forcing.o forcing_coupled.o ice.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+xdisplay.o: $(TRANSLATOR) kinds_mod.o blocks.o domain_size.o domain.o constants.o communicate.o io_types.o broadcast.o prognostic.o grid.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+advection.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o grid.o diagnostics.o state_mod.o operators.o hmix_gm.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+baroclinic.o: $(TRANSLATOR) domain.o prognostic.o broadcast.o boundary.o communicate.o advection.o pressure_grad.o horizontal_mix.o vertical_mix.o vmix_kpp.o diagnostics.o state_mod.o ice.o time_management.o io_types.o tavg.o forcing.o forcing_shf.o forcing_pt_interior.o forcing_s_interior.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+barotropic.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o boundary.o solvers.o operators.o grid.o time_management.o global_reductions.o forcing.o forcing_ap.o tavg.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+history.o: $(TRANSLATOR) kinds_mod.o domain.o constants.o prognostic.o grid.o io.o broadcast.o time_management.o forcing.o forcing_shf.o exit_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+initial.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o communicate.o broadcast.o prognostic.o solvers.o grid.o io.o io_types.o baroclinic.o barotropic.o pressure_grad.o surface_hgt.o vertical_mix.o horizontal_mix.o advection.o diagnostics.o state_mod.o time_management.o topostress.o ice.o xdisplay.o output.o tavg.o forcing.o forcing_coupled.o exit_mod.o restart.o global_reductions.o timers.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+surface_hgt.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o forcing.o grid.o time_management.o tavg.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+# Main file to compile (includes all other files as modules)
+POP.o: $(TRANSLATOR) kinds_mod.o communicate.o domain.o timers.o time_management.o step_mod.o initial.o xdisplay.o diagnostics.o output.o solvers.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+
 
 
 # DQ (8/23/2010): Added support for NetCDFlib
@@ -335,12 +395,11 @@ typeSizes.o: $(TRANSLATOR)
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
-
 # Example of how to call the OpenFortranParser
 #	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
 
 # $(TEST_F90_Objects): ../preprocessor ${ALL_TESTCODES}
-$(TEST_F90_Objects): $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o grid.o diagnostics.o state_mod.o operators.o hmix_gm.o
+$(TEST_F90_Objects): $(TRANSLATOR) $(DEPENDENT_MODULE_FILES)
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
 #	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../preprocessor $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)

@@ -38,7 +38,7 @@
                        FourByteReal, EightByteReal
   implicit none
   private
-  
+
   include "netcdf_constants.f90"
   include "netcdf_externals.f90"
   include "netcdf_overloads.f90"
