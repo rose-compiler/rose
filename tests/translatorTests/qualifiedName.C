@@ -41,7 +41,6 @@ main (int argc, char *argv[])
   for (Rose_STL_Container<SgNode*>::const_iterator i = initNames.begin(); i != initNames.end(); ++i) {
     SgInitializedName* iName = isSgInitializedName(*i);
     string name = iName->get_qualified_name().str();
-	printf(" Found initName : %s",name);
   }
 
   return backend (project);
