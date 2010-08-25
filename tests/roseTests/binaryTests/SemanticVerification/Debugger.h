@@ -93,4 +93,156 @@ struct RegisterSet {
     uint64_t reg[REG_NREGISTERS];       /* Indexed by one of the *_REG_* constants above. */
 };
 
+/** Interface to the debugger implemented in Debugger*.c in this directory. */
+class Debugger {
+public:
+    /** Constructors all attach to a debugger via TCP/IP. Note that data member initializations are in ctor() so we don't
+     *  need to repeat them for each constructor. */
+    Debugger() {
+        ctor("localhost", default_port);
+    }
+    Debugger(const std::string &hostname) {
+        ctor(hostname, default_port);
+    }
+    Debugger(short port) {
+        ctor("localhost", port);
+    }
+    Debugger(const std::string &hostname, short port) {
+        ctor(hostname, port);
+    }
+
+    /** Destructor detaches from the debugger. */
+    ~Debugger() {
+        if (server>=0)
+            close(server);
+    }
+
+    /** Set breakpoint at specified address. */
+    int setbp(rose_addr_t addr) {
+        return setbp(addr, 1);
+    }
+    
+    /** Set beakpoints at all addresses in specified range. */
+    int setbp(rose_addr_t addr, rose_addr_t size) {
+        uint64_t status = execute(CMD_BREAK, addr, size);
+        return status>=0 ? 0 : -1;
+    }
+
+    /** Execute one instruction and then stop. Returns the address where the program stopped. */
+    rose_addr_t step() {
+        return execute(CMD_STEP);
+    }
+    
+    /** Continue execution until the next breakpoint is reached. Returns the address where the program stopped. */
+    rose_addr_t cont() {
+        return cont(0);
+    }
+
+    /** Continue execution until we reach the specified address, ignoring any breakpoints previously set. Returns the address
+     *  where the program stopped. */
+    int cont(rose_addr_t addr) {
+	return execute(CMD_CONT, addr);
+    }
+
+    /** Returns the memory values at the specified address. The caller should a sufficiently large buffer. The return value is
+     *  the number of bytes actually returned by the debugger, which might be less than requested if the debugger cannot read
+     *  part of the memory. */
+    size_t memory(rose_addr_t addr, size_t request_size, unsigned char *buffer);
+    
+    /** Obtain the four-byte word at the specified memory address. Returns zero if the word is not available. */
+    uint64_t memory(rose_addr_t addr);
+
+    /** Obtain registers from the debugger. The registers are cached in the client, so this is an efficient operation. */
+    const RegisterSet& registers();
+
+    /** Returns a particular register rather than the whole set. */
+    uint64_t registers(int regname) {
+        return registers().reg[regname];
+    }
+    
+    /** Return the current address (contents of register "rip"). */
+    rose_addr_t rip() {
+        return registers(X86_REG_rip);
+    }
+
+private:
+    /** Open a connection to the debugger. */
+    void ctor(const std::string &hostname, short port);
+
+    /** Replacement for system's htons(). Calling htons() on OSX gives an error "'exp' was not declared in this scope" even
+     *  though we've included <netinet/in.h>. Therefore we write our own version here. Furthermore, OSX apparently doesn't
+     *  define __BYTE_ORDER in <sys/param.h> so we have to figure it out ourselves. */
+    static short my_htons(short n);
+
+    /** Sends zero-argument command to the server */
+    void send(DebuggerCommand cmd);
+
+    /** Sends a one-argument command to the server. */
+    void send(DebuggerCommand cmd, uint64_t arg1);
+
+    /** Sends a two-argument command to the server. */
+    void send(DebuggerCommand cmd, uint64_t arg1, uint64_t arg2);
+
+    /** Reads the status word from the server and returns it, also saving it in the "status" data member. */
+    uint64_t recv();
+
+    /** Reads the status word (as a size) and the following data. The arguments and return value are like the GNU getline()
+     *  function. */
+    size_t recv(void **bufp, size_t *sizep);
+
+    /** Run a command with no arguments and no result data. */
+    uint64_t execute(DebuggerCommand cmd) {
+        send(cmd);
+        return recv();
+    }
+
+    /** Run a command with one argument and no result data. */
+    uint64_t execute(DebuggerCommand cmd, uint64_t arg1) {
+        send(cmd, arg1);
+        return recv();
+    }
+
+    /** Run a command with two arguments and no result data. */
+    uint64_t execute(DebuggerCommand cmd, uint64_t arg1, uint64_t arg2) {
+        send(cmd, arg1, arg2);
+	return recv();
+    }
+
+    /** Run a command with no arguments returning result data. */
+    const void* execute(DebuggerCommand cmd, size_t *sizeptr) {
+        send(cmd);
+	recv(&result, &result_nalloc);
+	if (sizeptr)
+	  *sizeptr = status;
+	return result;
+    }
+
+    /** Run a command with one argument returning result data. */
+    const void* execute(DebuggerCommand cmd, uint64_t arg1, size_t *sizeptr) {
+        send(cmd, arg1);
+	recv(&result, &result_nalloc);
+	if (sizeptr)
+	  *sizeptr = status;
+	return result;
+    }
+
+    /** Run a command with two arguments returning result data. */
+    const void* execute(DebuggerCommand cmd, uint64_t arg1, uint64_t arg2, size_t *sizeptr) {
+        send(cmd, arg1, arg2);
+	recv(&result, &result_nalloc);
+	if (sizeptr)
+	  *sizeptr = status;
+	return result;
+    }
+
+private:
+    static const short default_port = 32002;
+    int server;                                 /* Server socket */
+    uint64_t status;		                /* Status from last executed command. */
+    void *result;                               /* Result data from last executed command. */
+    size_t result_nalloc;                       /* Current allocated size of the result buffer. */
+    RegisterSet regs;                           /* Cached values of all registers */
+    bool regs_current;                          /* Is the contents of "regs" cache current? */
+};
+
 #endif
