@@ -19,7 +19,7 @@ extern "C" {
 struct _symtable_entry;
 
 struct symtable {
-	int st_pass;             /* pass == 1 or 2 */
+        int st_pass;             /* pass == 1 or 2 */
 	char *st_filename;       /* name of file being compiled */
 	struct _symtable_entry *st_cur; /* current symbol table entry */
 	PyObject *st_symbols;    /* dictionary of symbol table entries */
@@ -32,7 +32,7 @@ struct symtable {
 };
 
 typedef struct _symtable_entry {
-	PyObject_HEAD
+        PyObject_HEAD
 	PyObject *ste_id;        /* int: key in st_symbols) */
 	PyObject *ste_symbols;   /* dict: name to flags) */
 	PyObject *ste_name;      /* string: name of scope */
@@ -43,8 +43,8 @@ typedef struct _symtable_entry {
 	int ste_optimized;       /* true if namespace can't be optimized */
 	int ste_nested;          /* true if scope is nested */
 	int ste_child_free;      /* true if a child scope has free variables,
-				    including free refs to globals */
-	int ste_generator;       /* true if namespace is a generator */
+                                    including free refs to globals */
+        int ste_generator;       /* true if namespace is a generator */
 	int ste_opt_lineno;      /* lineno of last exec or import * */
 	int ste_tmpname;         /* temporary name counter */
 	struct symtable *ste_table;
@@ -55,7 +55,7 @@ extern DL_IMPORT(PyTypeObject) PySymtableEntry_Type;
 #define PySymtableEntry_Check(op) ((op)->ob_type == &PySymtableEntry_Type)
 
 extern DL_IMPORT(PyObject *) PySymtableEntry_New(struct symtable *,
-						 char *, int, int);
+                                                 char *, int, int);
 
 DL_IMPORT(struct symtable *) PyNode_CompileSymtable(struct _node *, char *);
 DL_IMPORT(void) PySymtable_Free(struct symtable *);

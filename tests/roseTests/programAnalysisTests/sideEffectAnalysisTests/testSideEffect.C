@@ -84,7 +84,7 @@ class testSideEffectTraversal
       default: 
 	{
 	  if ( (astNode->get_file_info() != NULL) &&
-	       (inheritedAttribute.getValid()) ) {
+               (inheritedAttribute.getValid()) ) {
 
 #if 0
 	    char stmt[512];
@@ -101,9 +101,9 @@ class testSideEffectTraversal
 	    if (sideEffects.begin() != sideEffects.end()) {
 	      cout << "Statement Side Effects " << stmt << ": ";
 	      for(iter i2 = sideEffects.begin(); i2 != sideEffects.end(); ++i2)
-          cout << *i2 << " ";
+                cout << *i2 << " ";
 	      cout << endl;
-      }
+            }
 
 	  }
 	} break;
@@ -170,7 +170,7 @@ class testNodeSideEffectTraversal
 	{
 
 	  if ( (astNode->get_file_info() != NULL) &&
-	       (inheritedAttribute.getValid()) ) {
+               (inheritedAttribute.getValid()) ) {
 
 #if 0
 	    mUniquifier = (long)astNode;

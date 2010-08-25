@@ -13,9 +13,9 @@ int main(int argc, char* argv[])
 	long long int slli;
 
 	if (argc > 3) {
-		  si = atoi(argv[1]);
-		  sscanf(argv[1], "%d", &si);
-			sli = atol(argv[2]);
-			slli = atoll(argv[3]);
+		si = atoi(argv[1]);
+		sscanf(argv[1], "%d", &si);
+		sli = atol(argv[2]);
+		slli = atoll(argv[3]);
 	}
 }

@@ -45,13 +45,13 @@ public:
             MappingParameters & params =Overture::nullMappingParameters() );
 
   virtual int project( realArray & x,    // project points onto the curve of intersection
-		       int & iStart, 
+                       int & iStart, 
 		       int & iEnd  );  
   virtual int project( realArray & x, 
                        MappingProjectionParameters & mpParams ){ return Mapping::project(x,mpParams); }
   
   virtual int reparameterize(const real & arcLengthWeight=1.,       // reparameterize by arc-length and curvature
-			     const real & curvatureWeight=.5 );
+                             const real & curvatureWeight=.5 );
   
   // intersect two curves in 2D
   int intersectCurves(Mapping & map1, Mapping & map2, 

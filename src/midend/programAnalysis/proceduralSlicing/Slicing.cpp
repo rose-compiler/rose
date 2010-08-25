@@ -9,7 +9,7 @@
 The function that initializes the slicing criterion and finds the function declaration in which the slicing will be done.
  */
 void Slicing::init(SgProject* sgproject, set<SgStatement*>& slicing_criterion,
-		   SgFunctionDefinition*& func_defn){
+                   SgFunctionDefinition*& func_defn){
   SgFile &sageFile = sgproject->get_file(0);
   SgGlobal *root = sageFile.get_root();
 
@@ -123,7 +123,7 @@ void Slicing::keepNeededFunc(SgProject* sgproject, MarkingNodes v, SgFunctionDef
     // attribute. This removes the whole subtree constituting the function in the AST.
     if(!isInList((*it), keepTheseFunc) && isSgFunctionDeclaration(*it)!=NULL){ 
      if((*it)->attribute.exists("keep")){      
-       	(*it)->attribute.remove("keep");
+       (*it)->attribute.remove("keep");
       }   
     }
   }
@@ -145,7 +145,7 @@ void Slicing::sliceOnlyStmtWithControl(SgProject* sgproject, set<SgNode*>& stmt_
 } 
 
 void Slicing::addControlStmts(SgProject* sgproject, MarkingNodes& v,SgFunctionDefinition* func_defn,
-			     set<SgNode*>& stmt_in_slice){
+                              set<SgNode*>& stmt_in_slice){
   v.initialize(stmt_in_slice, func_defn);  // copying these to the marking class, and we continue adding statements to this list in the following traversals????
   v.traverse(sgproject,false);
   set<SgNode*> new_stmt = v.get_newStatementList();
@@ -211,8 +211,8 @@ void Slicing::FindSlicingCriterion(SgGlobal* root,set<SgStatement*>& stmts){
   list<SgNode*> pragma = NodeQuery::querySubTree(root, V_SgPragmaDeclaration);
   if(pragma.empty()){
     cout << "The sgproject has no pragma declarations, that is no slicing criterion.\n" 
-	 << "Slicing program ends..." << endl;
-        exit(-1);
+         << "Slicing program ends..." << endl;
+    exit(-1);
   }
   // Finding the set of statements between two pragma declarations.
   // The pragmas must be declared within a basic block.

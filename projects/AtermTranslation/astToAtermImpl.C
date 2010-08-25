@@ -140,11 +140,11 @@ ATerm convertNodeToAterm(SgNode* n) {
     case V_SgMinusMinusOp:
     // Special cases needed to include prefix/postfix status
     term = ATmake("<appl(<appl>, <term>)>",
-	    getShortVariantName((VariantT)(n->variantT())).c_str(),
-	    (isSgUnaryOp(n)->get_mode() == SgUnaryOp::prefix ? "Prefix" :
-	     isSgUnaryOp(n)->get_mode() == SgUnaryOp::postfix ? "Postfix" :
-	     "Unknown"),
-	    convertNodeToAterm(isSgUnaryOp(n)->get_operand()));
+                  getShortVariantName((VariantT)(n->variantT())).c_str(),
+                  (isSgUnaryOp(n)->get_mode() == SgUnaryOp::prefix ? "Prefix" :
+                   isSgUnaryOp(n)->get_mode() == SgUnaryOp::postfix ? "Postfix" :
+                   "Unknown"),
+                  convertNodeToAterm(isSgUnaryOp(n)->get_operand()));
     break;
 
     case V_SgExpressionRoot:
@@ -168,8 +168,8 @@ ATerm convertNodeToAterm(SgNode* n) {
     case V_SgFunctionRefExp:
     // Special case needed to include id
     term = ATmake(
-	     "Func(<str>)", 
-	     uniqueId(isSgFunctionRefExp(n)->get_symbol()->get_declaration()).c_str());
+                  "Func(<str>)", 
+                  uniqueId(isSgFunctionRefExp(n)->get_symbol()->get_declaration()).c_str());
     break;
 
     case V_SgIntVal:
@@ -216,7 +216,7 @@ ATerm convertNodeToAterm(SgNode* n) {
 		      convertNodeToAterm(initializer),
 		      uniqueId(n).c_str());
 	term = ATsetAnnotation(term, ATmake("id"),
-			       ATmake("<str>", uniqueId(n).c_str()));
+                               ATmake("<str>", uniqueId(n).c_str()));
       }
     }
     break;
@@ -231,7 +231,7 @@ ATerm convertNodeToAterm(SgNode* n) {
 					      fd->get_args().end()),
 		    convertNodeToAterm(fd->get_definition()));
       term = ATsetAnnotation(term, ATmake("id"),
-			     ATmake("<str>", uniqueId(n).c_str()));
+                             ATmake("<str>", uniqueId(n).c_str()));
     }
     break;
 
@@ -258,7 +258,7 @@ ATerm convertNodeToAterm(SgNode* n) {
       else
 	term = ATmake("ClassFwd(<str>)", (name ? name : ""));
       term = ATsetAnnotation(term, ATmake("id"),
-			     ATmake("<str>", uniqueId(n).c_str()));
+                             ATmake("<str>", uniqueId(n).c_str()));
     }
     break;
 
@@ -274,7 +274,7 @@ ATerm convertNodeToAterm(SgNode* n) {
 		    convertSgNodeRangeToAterm(enumerators.begin(),
 					      enumerators.end()));
       term = ATsetAnnotation(term, ATmake("id"),
-			     ATmake("<str>", uniqueId(n).c_str()));
+                             ATmake("<str>", uniqueId(n).c_str()));
     }
     break;
 
@@ -342,7 +342,7 @@ ATerm convertNodeToAterm(SgNode* n) {
 				0;
       term = ATmake("Type(<term>)",
 		    (nt->get_autonomous_declaration() || !defn ? 
-		     ATmake("id(<str>)", uniqueId(decl).c_str()) :
+                     ATmake("id(<str>)", uniqueId(decl).c_str()) :
 		     convertNodeToAterm(nt->get_declaration())));
     }
     break;
@@ -352,14 +352,14 @@ ATerm convertNodeToAterm(SgNode* n) {
       char* name = isSgLabelStatement(n)->get_name().str();
       term = ATmake("Label(<str>)", (name ? name : ""));
       term = ATsetAnnotation(term, ATmake("id"),
-			     ATmake("<str>", uniqueId(n).c_str()));
+                             ATmake("<str>", uniqueId(n).c_str()));
     }
     break;
 
     case V_SgGotoStatement: {
       // Special case to put in label id
       term = ATmake("Goto(<str>)", 
-	     uniqueId(isSgGotoStatement(n)->get_label()).c_str());
+                    uniqueId(isSgGotoStatement(n)->get_label()).c_str());
     }
     break;
 
@@ -370,7 +370,7 @@ ATerm convertNodeToAterm(SgNode* n) {
       term = ATmake("Typedef(<str>, <term>)", (name.str() ? name.str() : ""), 
 		      convertNodeToAterm(type));
       term = ATsetAnnotation(term, ATmake("id"),
-			     ATmake("<str>", uniqueId(n).c_str()));
+                             ATmake("<str>", uniqueId(n).c_str()));
     }
     break;
 
@@ -480,9 +480,9 @@ ATerm convertNodeToAterm(SgNode* n) {
 	(AstTests::numSuccContainers(n) == 1) ||
 	(!isSgType(n) && (n->get_traversalSuccessorContainer().size() == 0));
       term = ATmake((isContainer ? "<appl(<term>)>" : "<appl(<list>)>"), 
-	       getShortVariantName((VariantT)(n->variantT())).c_str(),
-	       (isSgType(n) ? ATmake("[]") : getTraversalChildrenAsAterm(n)));
-	       // Special case for types is because of traversal problems
+                    getShortVariantName((VariantT)(n->variantT())).c_str(),
+                    (isSgType(n) ? ATmake("[]") : getTraversalChildrenAsAterm(n)));
+               // Special case for types is because of traversal problems
     }
     break;
   }
@@ -494,11 +494,11 @@ ATerm convertNodeToAterm(SgNode* n) {
 #if 1
   if (n->get_file_info())
     term = ATsetAnnotation(term, ATmake("location"),
-			   convertFileInfoToAterm(n->get_file_info()));
+                           convertFileInfoToAterm(n->get_file_info()));
 
   if (isSgExpression(n))
     term = ATsetAnnotation(term, ATmake("type"),
-	     convertNodeToAterm(isSgExpression(n)->get_type()));
+                           convertNodeToAterm(isSgExpression(n)->get_type()));
 #endif
 
   // cout << n->sage_class_name() << " -> " << ATwriteToString(term) << endl;

@@ -19,7 +19,7 @@
 
 void 
 xFDerivative42(const realMappedGridFunction & ugf,
-	     RealDistributedArray & derivative,
+             RealDistributedArray & derivative,
 	     const Index & I1,
 	     const Index & I2,
 	     const Index & I3,
@@ -58,7 +58,7 @@ xFDerivative42(const realMappedGridFunction & ugf,
 
 void 
 xFDerivative43(const realMappedGridFunction & ugf,
-	     RealDistributedArray & derivative,
+             RealDistributedArray & derivative,
 	     const Index & I1,
 	     const Index & I2,
 	     const Index & I3,
@@ -97,7 +97,7 @@ xFDerivative43(const realMappedGridFunction & ugf,
 
 void 
 xFDerivative22(const realMappedGridFunction & ugf,
-	     RealDistributedArray & derivative,
+             RealDistributedArray & derivative,
 	     const Index & I1,
 	     const Index & I2,
 	     const Index & I3,
@@ -134,7 +134,7 @@ xFDerivative22(const realMappedGridFunction & ugf,
 
 void 
 xFDerivative23(const realMappedGridFunction & ugf,
-	     RealDistributedArray & derivative,
+             RealDistributedArray & derivative,
 	     const Index & I1,
 	     const Index & I2,
 	     const Index & I3,
@@ -172,7 +172,7 @@ xFDerivative23(const realMappedGridFunction & ugf,
 
 void 
 xFDerivative(const realMappedGridFunction & ugf,
-	     RealDistributedArray & derivative,
+             RealDistributedArray & derivative,
 	     const Index & I1,
 	     const Index & I2,
 	     const Index & I3,

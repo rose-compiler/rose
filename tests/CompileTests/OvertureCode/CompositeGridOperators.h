@@ -50,7 +50,7 @@ class CompositeGridOperators : public GenericCompositeGridOperators
  public:
     
   void setNumberOfBoundaryConditions(const int & number, 
-				     const int & side=forAll, 
+                                     const int & side=forAll, 
                                      const int & axis=forAll, 
 				     const int & grid=forAll);
   

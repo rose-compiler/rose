@@ -4,23 +4,23 @@ typedef int B;
 
 class A {
 
-	public:
+        public:
 
 		int a;
 
 		A() {}
 
 		void foo() {
-			int A;
+                        int A;
 			double B;
 			//A* b;  // would cause an error because of overwritten class A by int A !!!! -> so ok, when int A hides constructor & class A
-		}
+                }
 
 };
 
 int main() {
 
-	return 0;
+        return 0;
 
 }
 

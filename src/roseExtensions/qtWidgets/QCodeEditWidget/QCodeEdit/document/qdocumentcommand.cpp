@@ -39,9 +39,9 @@ QList<QDocumentCursorHandle*> QDocumentCommand::m_autoUpdated;
 */
 QDocumentCommand::QDocumentCommand(Command c, QDocument *d, QDocumentCommand *p)
  : QUndoCommand(p),
-	m_state(false), m_first(true), m_doc(d),
-	m_redoOffset(0), m_undoOffset(0),
-	m_silent(false), m_command(c), m_cursor(0)
+   m_state(false), m_first(true), m_doc(d),
+   m_redoOffset(0), m_undoOffset(0),
+   m_silent(false), m_command(c), m_cursor(0)
 {
 	
 }

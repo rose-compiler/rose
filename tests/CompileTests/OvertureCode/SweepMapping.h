@@ -24,7 +24,7 @@ class SweepMapping : public Mapping
   };
 
   SweepMapping(Mapping *sweepmap=NULL,
-	       Mapping *dirsweepmap=NULL,
+               Mapping *dirsweepmap=NULL,
 	       Mapping *scale=NULL,
 	       const int domainDimension=3 );
 
@@ -36,7 +36,7 @@ class SweepMapping : public Mapping
   SweepMapping & operator =( const SweepMapping & X );
 
   void map( const realArray & r, realArray & x=Overture::nullRealDistributedArray(), realArray & xr = Overture::nullRealDistributedArray(),
-	 MappingParameters & params=Overture::nullMappingParameters() );
+         MappingParameters & params=Overture::nullMappingParameters() );
 
   void basicInverse( const realArray & x, realArray & r, realArray & rx = Overture::nullRealDistributedArray(),
 		    MappingParameters & params =Overture::nullMappingParameters() );

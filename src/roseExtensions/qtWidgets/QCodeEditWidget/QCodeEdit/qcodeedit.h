@@ -19,8 +19,8 @@
 #include "qce-config.h"
 
 /*!
-	\file qcodeedit.h
-	\brief Definition of the QCodeEdit class
+        \file qcodeedit.h
+        \brief Definition of the QCodeEdit class
 */
 
 #include <QList>
@@ -40,56 +40,56 @@ class QPanelWatcher;
 
 class QCE_EXPORT QCodeEdit
 {
-	friend class QPanelWatcher;
+        friend class QPanelWatcher;
 
-	public:
-		enum Position
-		{
-			West,
-			North,
-			South,
-			East
-		};
+        public:
+                enum Position
+                {
+                        West,
+                        North,
+                        South,
+                        East
+                };
 
-		QCodeEdit(QWidget *p = 0);
-        QCodeEdit(QEditor * e,QWidget *p = 0);
+                QCodeEdit(QWidget *p = 0);
+                QCodeEdit(QEditor * e,QWidget *p = 0);
 
-		QCodeEdit(bool actions, QWidget *p = 0);
-		QCodeEdit(const QString& layout, QWidget *p = 0);
-		QCodeEdit(const QString& layout, bool actions, QWidget *p = 0);
-		virtual ~QCodeEdit();
+                QCodeEdit(bool actions, QWidget *p = 0);
+                QCodeEdit(const QString& layout, QWidget *p = 0);
+                QCodeEdit(const QString& layout, bool actions, QWidget *p = 0);
+                virtual ~QCodeEdit();
 
-		QEditor* editor() const;
-		QPanelLayout* panelLayout() const;
+                QEditor* editor() const;
+                QPanelLayout* panelLayout() const;
 
-		QAction* addPanel(QPanel *panel, Position pos, bool _add = false);
-		QAction* addPanel(const QString& name, Position pos, bool _add = false);
+                QAction* addPanel(QPanel *panel, Position pos, bool _add = false);
+                QAction* addPanel(const QString& name, Position pos, bool _add = false);
 
-		QList<QPanel*> panels(const QString& type = QString()) const;
+                QList<QPanel*> panels(const QString& type = QString()) const;
 
-		QAction* toggleViewAction(QPanel *p) const;
+                QAction* toggleViewAction(QPanel *p) const;
 
-		void sendPanelCommand(	const QString& type,
-								const char *signature,
-								const QList<QGenericArgument>& args = Q_COMMAND);
+                void sendPanelCommand(  const QString& type,
+                                        const char *signature,
+                                        const QList<QGenericArgument>& args = Q_COMMAND);
 
-		static QCodeEdit* manager(QEditor *e);
-		static QEditor* managed(const QString& f);
+                static QCodeEdit* manager(QEditor *e);
+                static QEditor* managed(const QString& f);
 
 
-	protected:
-		QCodeEdit(QEditor *e, QPanelLayout *p);
-		QCodeEdit(QEditor *e, const QString& l);
+        protected:
+                QCodeEdit(QEditor *e, QPanelLayout *p);
+                QCodeEdit(QEditor *e, const QString& l);
 
-	private:
-		QPanelWatcher *m_watcher;
-		QPointer<QEditor> m_editor;
-		QPointer<QPanelLayout> m_layout;
+        private:
+                QPanelWatcher *m_watcher;
+                QPointer<QEditor> m_editor;
+                QPointer<QPanelLayout> m_layout;
 
-		QMenu *m_panelsMenu;
-		QList<QAction*> m_actions;
+                QMenu *m_panelsMenu;
+                QList<QAction*> m_actions;
 
-		static QList<QCodeEdit*> m_instances;
+                static QList<QCodeEdit*> m_instances;
 };
 
 #endif // _QCODE_EDIT_H_

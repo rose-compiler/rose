@@ -40,7 +40,7 @@ class CylinderMapping : public Mapping{
   int setRadius(const real & innerRadius=1., const real & outerRadius=1.5 );
 
   void map( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	 MappingParameters & params=Overture::nullMappingParameters() );
+            MappingParameters & params=Overture::nullMappingParameters() );
 
   void basicInverse( const realArray & x, realArray & r, realArray & rx = Overture::nullRealDistributedArray(),
 		    MappingParameters & params=Overture::nullMappingParameters() );

@@ -384,7 +384,7 @@ public:
   virtual ~setPropertyExprAnn() {};
 
   setPropertyExprAnn(Broadway::FlowSensitivity flow_sensitivity,
-		     const parserID * setProperty,
+                     const parserID * setProperty,
 		     const parserID * lhs,
 		     Broadway::Operator op,
 		     const parserID * rhs,
@@ -474,7 +474,7 @@ public:
 
 #ifdef __EXPRNODE
   numericExprAnn(exprNode * expr,
-		 int line);
+                 int line);
 #endif
 
   /** @brief Create a constant test
@@ -483,7 +483,7 @@ public:
    *  the left-hand side value has a constant value. */
 
   numericExprAnn(const parserID * lhs,
-		 int line);
+                 int line);
 
   /** @brief Create a numeric assignment
    *
@@ -494,7 +494,7 @@ public:
 
 #ifdef __EXPRNODE
   numericExprAnn(const parserID * lhs,
-		 exprNode * expr,
+                 exprNode * expr,
 		 int line);
 #endif
 
@@ -566,7 +566,7 @@ public:
   virtual ~pointerExprAnn() {};
 
   pointerExprAnn(Broadway::Operator op,
-		 const parserID * lhs,
+                 const parserID * lhs,
 		 const parserID * rhs);
 
 #ifdef __PROCLOCATION

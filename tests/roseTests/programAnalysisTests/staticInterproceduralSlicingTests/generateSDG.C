@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
 			// get control dependence for this function defintion
 			cdg = new ControlDependenceGraph(fDec->get_definition(), ipi);
-      cdg->computeAdditionalFunctioncallDepencencies();
+                        cdg->computeAdditionalFunctioncallDepencencies();
 			cdg->computeInterproceduralInformation(ipi);
 
 			// get the data dependence for this function

@@ -134,7 +134,7 @@ public:
 	return begin() + n;
     }
     void insert (iterator position, const_iterator first, 
-		 const_iterator last);
+                 const_iterator last);
     void insert (iterator position, size_type n, const T& x);
     void pop_back() {
 	/* Borland bug */
@@ -243,7 +243,7 @@ void vector<T>::insert(iterator position, size_type n, const T& x) {
 
 template <class T>
 void vector<T>::insert(iterator position, 
-		       const_iterator first, 
+                       const_iterator first, 
 		       const_iterator last) {
     if (first == last) return;
     size_type n = 0;

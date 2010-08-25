@@ -14,7 +14,7 @@ static bool debug = false;
 
 void
 RoseBin_CallGraphAnalysis::findClusterOfNode(SgGraphNode* next_n,
-					     int& currentCluster,
+                                             int& currentCluster,
 					     std::map<SgAsmFunctionDeclaration*,int>& visited) {
   int resultsCluster=0;
   std::map<SgAsmFunctionDeclaration*,int>::const_iterator t = visited.begin();

@@ -359,15 +359,15 @@ BinQGUI::insertSectionInformation(SgAsmElfSection* sec, std::string filename) {
     sectionInfo->append(elf->format_name());
     string num = RoseBin_support::ToString(elf->get_e_machine());
     sectionInfo->append( QString("Machine: %1")
-			 .arg(num.c_str()) );
+                         .arg(num.c_str()) );
     SgAsmElfSegmentTable *segments = elf->get_segment_table();
     string seg = RoseBin_support::ToString(segments);
     sectionInfo->append( QString("ElfSegmentTable: %1")
-			 .arg(seg.c_str()) );
+                         .arg(seg.c_str()) );
     SgAsmElfSectionTable *sections = elf->get_section_table();
     string sec = RoseBin_support::ToString(sections);
     sectionInfo->append( QString("ElfSectionTable: %1")
-			 .arg(sec.c_str()) );
+                         .arg(sec.c_str()) );
   } else {
     SgAsmElfSectionTableEntry* entry= sec->get_section_entry();
     if (entry) {
@@ -378,7 +378,7 @@ BinQGUI::insertSectionInformation(SgAsmElfSection* sec, std::string filename) {
       string sizeS = RoseBin_support::HexToString(size);
       string offsetS = RoseBin_support::HexToString(offset);
       sectionInfo->append( QString("%1           type:     %2 Addr: %3  Size: %4   Offset: %5")
-			   .arg(QString(sec->get_name()->get_string().c_str()))
+                           .arg(QString(sec->get_name()->get_string().c_str()))
 			   .arg(sec->class_name().c_str())
 			   .arg(addrS.c_str())
 			   .arg(sizeS.c_str())
@@ -429,7 +429,7 @@ BinQGUI::insertFileInformation() {
 
   SgAsmGenericHeaderPtrList headers = genericF->get_headers()->get_headers();
   fileInfo->append(QString("HEADERS ------------- %1")
-		   .arg(RoseBin_support::ToString(headers.size()).c_str()));	 
+                   .arg(RoseBin_support::ToString(headers.size()).c_str()));	 
   for (unsigned int i=0;i<headers.size();++i) {
     SgAsmGenericHeader* h = headers[i];
     fileInfo->append(h->class_name().c_str());	 
@@ -438,7 +438,7 @@ BinQGUI::insertFileInformation() {
 
   SgAsmGenericSectionPtrList sectionsList = genericF->get_sections();
   fileInfo->append(QString("SECTIONS ------------- %1")
-		   .arg(RoseBin_support::ToString(sectionsList.size()).c_str()));	 
+                   .arg(RoseBin_support::ToString(sectionsList.size()).c_str()));	 
   for (unsigned int i=0;i<sectionsList.size();++i) {
     SgAsmGenericSection* h = sectionsList[i];
     SgAsmElfSection* elfSec = isSgAsmElfSection(h);
@@ -465,7 +465,7 @@ BinQGUI::insertFileInformation() {
   }
   SgFileContentList fileList = genericF->get_data();
   fileInfo->append(QString("DATA ---------------- %1 ")
-		   .arg(fileList.size()));	 
+                   .arg(fileList.size()));	 
 #if 0
   string data="";
   for (unsigned int i=0;i<fileList.size();++i) {
@@ -476,7 +476,7 @@ BinQGUI::insertFileInformation() {
   // doesnt work
   SgFileContentList contentList = genericF->content();
   fileInfo->append(QString("CONTENT ------------- %1 ")
-		   .arg(contentList.size()));	 
+                   .arg(contentList.size()));	 
 #if 0
   string content="";
   for (unsigned int i=0;i<contentList.size();++i) {
@@ -923,7 +923,7 @@ BinQGUI::showFileTab() {
 
 // Creates the table for Instructions for FileB
 void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
-		       std::vector<SgNode*>& funcsFile,
+                       std::vector<SgNode*>& funcsFile,
 		       std::vector<Item*>& itemsFile) {
   QROSE::unlink(currentWidget, SIGNAL(activated(int, int, int, int)));
 

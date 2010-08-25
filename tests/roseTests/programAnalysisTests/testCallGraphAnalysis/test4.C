@@ -1,7 +1,7 @@
 class A 
 {
   public:
-	// return a pointer to a function returning a bool
+        // return a pointer to a function returning a bool
 	bool (A::*f1(char c))(int)
 	{
 		return &A::f2;

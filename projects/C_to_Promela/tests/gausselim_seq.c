@@ -108,7 +108,7 @@ void gausselim(double* matrix, int numRows, int numCols, int debug) {
 
     if (debug) {
       printf("Step 1 result: col=%d, pivotRow=%d, pivot=%lf.\n\n",
-	     col, pivotRow, pivot);
+             col, pivotRow, pivot);
     }
 	    
     /* Step 2: Interchange the top row with the pivot row, if
@@ -197,7 +197,7 @@ int main(int argc, char ** argv) {
   sscanf(argv[2+debug], "%d", &numCols);
   if (argc != 3 + debug + numRows*numCols) {
     printf("Incorrect number of matrix entries: %d expected, %d given.\n",
-	   numRows*numCols, argc-3-debug);
+           numRows*numCols, argc-3-debug);
     exit(1);
   }
   matrix = (double *) malloc(numRows*numCols * sizeof(double));

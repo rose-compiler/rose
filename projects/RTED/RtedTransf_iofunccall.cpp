@@ -119,14 +119,14 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     } else if (args->f_name=="std::fstream") {
       cerr << " Detected fstream" << endl;
       appendExpression(arg_list, args->varRefExp); // file handle
-    	std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
-    	for (;it!=args->arguments.end();++it) {
-    		SgExpression* exp = deepCopy(*it);
-    		appendExpression(arg_list, exp);
-    	}
-    	// 0 arguments
-    	appendExpression(arg_list, buildString("NULL"));
-	//    	appendExpression(arg_list, buildString("NULL"));
+      std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
+      for (;it!=args->arguments.end();++it) {
+          SgExpression* exp = deepCopy(*it);
+          appendExpression(arg_list, exp);
+      }
+      // 0 arguments
+      appendExpression(arg_list, buildString("NULL"));
+      // appendExpression(arg_list, buildString("NULL"));
 
     } else {
       cerr <<"Unknown io function call " << args->f_name << endl;

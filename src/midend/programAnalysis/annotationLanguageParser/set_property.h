@@ -107,7 +107,7 @@ public:
    * */
 
   setPropertyAnn(const parserID * name,
-		 Direction direction,
+                 Direction direction,
 		 SetPropertyKind kind,
 		 MeetFunction meet);
 
@@ -215,7 +215,7 @@ public:
    * implement the add_elements() method properly. */
 
   void current_set_value(memoryblock_bitset & bits,
-			 bool & found_reaching_value);
+                         bool & found_reaching_value);
 
   /** @brief Update current set value
    *
@@ -252,7 +252,7 @@ public:
    * */
 
   void apply_set_merge(memoryuse_list & phi_uses,
-		       memoryblock_set & changes);  
+                       memoryblock_set & changes);  
   //}
 
   /** @name Equivalence operations
@@ -306,7 +306,7 @@ public:
    * all the uses that are reached by the current def. */
 
   void current_equivalence_classes(memoryblock_bitset_list & bits,
-				   bool & found_reaching_value);
+                                   bool & found_reaching_value);
 
   /** @brief Update current set value
    *
@@ -321,21 +321,21 @@ public:
    * */
 
   bool is_equivalent(pointerValue & left,
-		     pointerValue & right);
+                     pointerValue & right);
 
   /** @brief Add an equivalence
    *
    * */
 
   void add_equivalence(pointerValue & left,
-		       pointerValue & right);
+                       pointerValue & right);
 
   /** @brief Merge equivalence classes
    *
    * */
 
   void apply_equivalence_merge(memoryuse_list & phi_uses,
-			       memoryblock_set & changes);
+                               memoryblock_set & changes);
 
   //}
 
@@ -353,7 +353,7 @@ public:
    * a set or an equivalence relation. */
 
   void apply_merge(memoryuse_list & phi_uses,
-		   memoryblock_set & changes);
+                   memoryblock_set & changes);
 
   /** @brief Self assignment
    *
@@ -395,14 +395,14 @@ private:
    * classes to accomodate the new information. */
 
   void add_equivalence_class(memoryblock_bitset_list & equiv,
-			     const memoryblock_bitset & new_class);
+                             const memoryblock_bitset & new_class);
 
   /** @brief Compare equivalences
    *
    * */
 
   bool is_same_equivalence(memoryblock_bitset_list & equiv1,
-			   memoryblock_bitset_list & equiv2);
+                           memoryblock_bitset_list & equiv2);
 
   /** @brief Print out a set or class */
 
@@ -412,7 +412,7 @@ private:
   /** @brief Print out equivalence classes */
 
   void print_memoryblock_bitset_list(const std::string & label,
-				     memoryblock_bitset_list & bits,
+                                     memoryblock_bitset_list & bits,
 				     std::ostream & out);
 #endif /* __FOO */
 };

@@ -61,15 +61,15 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
 
   void getRegister_val(std::pair<X86RegisterClass, int>  code,
-		   X86PositionInRegister pos,
-		   uint8_t &b_val,
-		   uint16_t &w_val,
-		   uint32_t &dw_val,
-		   uint64_t &qw_val);
+                       X86PositionInRegister pos,
+                       uint8_t &b_val,
+                       uint16_t &w_val,
+                       uint32_t &dw_val,
+                       uint64_t &qw_val);
 
   void getRegister_val(std::pair<X86RegisterClass, int>  code,
-		   X86PositionInRegister pos,
-		   uint64_t &qw_val);
+                       X86PositionInRegister pos,
+                       uint64_t &qw_val);
 
 
 

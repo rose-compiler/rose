@@ -58,19 +58,19 @@ public:
   /** @brief Kinds of operators */
 
   typedef enum { /* Logical connectives: */    And, Or, Not,
-		 /* Property tests: */         Is_Exactly, Is_AtLeast, Could_Be, Is_AtMost, Is_Bottom, Report,
-		 /* Numeric tests: */          Evaluate, Is_Constant,
-		 /* Pointer alias tests: */    Is_AliasOf, Is_SameAs, Is_Empty,
-		 /* Flow-value update: */      Assign,
-		 /* Sets: */                   Is_Element_Of, Is_EmptySet, Add_Elements,
-		 /* Equivalences: */           Is_Equivalent, Add_Equivalences
+                 /* Property tests: */         Is_Exactly, Is_AtLeast, Could_Be, Is_AtMost, Is_Bottom, Report,
+                 /* Numeric tests: */          Evaluate, Is_Constant,
+                 /* Pointer alias tests: */    Is_AliasOf, Is_SameAs, Is_Empty,
+                 /* Flow-value update: */      Assign,
+                 /* Sets: */                   Is_Element_Of, Is_EmptySet, Add_Elements,
+                 /* Equivalences: */           Is_Equivalent, Add_Equivalences
 
   } Operator;
 
   /** @brief Flow sensitivity modes */
 
   typedef enum { None, Before, After, Always, Ever,
-		 Trace, Confidence
+                 Trace, Confidence
   } FlowSensitivity;
 };
 

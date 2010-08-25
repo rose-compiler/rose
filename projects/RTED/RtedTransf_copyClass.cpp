@@ -26,7 +26,7 @@ void RtedTransformation::moveupPreprocessingInfo(SgProject* project) {
       // if the first located node has the preprocessing info then we are fine
       // otherwise move the info up to the first one
       cerr << "Moving up preprocessing info for file : "
-	   << sf->get_file_info()->get_filename() << endl;
+           << sf->get_file_info()->get_filename() << endl;
       vector<SgNode*> nodes =
 	NodeQuery::querySubTree(sf, V_SgLocatedNode);
       vector<SgNode*>::const_iterator nodesIT = nodes.begin();
@@ -49,9 +49,9 @@ void RtedTransformation::moveupPreprocessingInfo(SgProject* project) {
 	  //cerr << " firstNode : " << firstNode->class_name() << " surr(firstNode) : " << getSurroundingStatement(firstNode)->class_name() <<
 	  //  " node : " << node->class_name() << " surr(node) : " << getSurroundingStatement(node)->class_name() << endl;
 	  SageInterface::moveUpPreprocessingInfo(
-						 getSurroundingStatement(firstNode),
+                                                 getSurroundingStatement(firstNode),
 						 getSurroundingStatement(node));
-	}
+        }
       }
 
     }
@@ -87,7 +87,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
   cerr << "Building Namespace RTED2" << endl;
   // the second namespace is used for all class definitions
   SgNamespaceDeclarationStatement* rosenamesp2 = buildNamespaceDeclaration(
-									   "RTED", sf->get_globalScope());
+                                                                           "RTED", sf->get_globalScope());
 
   SageInterface::prependStatement(rosenamesp2, sf->get_globalScope());
   cerr << " *** Prepending namespace2 to sf->globalScope() : " <<  sf->get_globalScope() << endl;
@@ -99,7 +99,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
 }
 
 SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
-									   SgProject* project, SgClassDeclaration* classDecl) {
+                                                                           SgProject* project, SgClassDeclaration* classDecl) {
   // **********************
   cerr <<"@@@ instrumenting into top "<< endl;
   // deep copy the classdecl and make it unparseable
@@ -120,7 +120,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
   }
   cerr << "deep copy of firstnondefining" << endl;
   SgClassDeclaration* cdn_copy = isSgClassDeclaration(deepCopyNode(
-								   classDecl->get_firstNondefiningDeclaration()));
+                                                                   classDecl->get_firstNondefiningDeclaration()));
   ROSE_ASSERT(cdn_copy);
   vector<SgNode*> nodes = NodeQuery::querySubTree(cdn_copy, V_SgLocatedNode);
   vector<SgNode*>::const_iterator nodesIT = nodes.begin();
@@ -168,7 +168,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
       cerr << "Looking through sourcefile: " << sf -> get_file_info() -> get_filename() << endl;
       // once we have the new class_decl inserted, we remove all functions and the constructor and destructor
       vector<SgNode*> remNodes = NodeQuery::querySubTree(cd_copy,
-							 V_SgFunctionDeclaration);
+                                                         V_SgFunctionDeclaration);
       vector<SgNode*>::const_iterator remNodesIt = remNodes.begin();
       for (; remNodesIt != remNodes.end(); remNodesIt++) {
 	SgFunctionDeclaration* node = isSgFunctionDeclaration(

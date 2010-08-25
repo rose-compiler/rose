@@ -48,7 +48,7 @@ class NamespacesHandler
 {
 public:
 
-	class PrefixChecker
+        class PrefixChecker
 	{
 	public:
 	};

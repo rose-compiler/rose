@@ -11,7 +11,7 @@
 ATerm convertFileInfoToAterm(Sg_File_Info* fi);
 ATerm convertNodeToAterm(SgNode* n);
 ATerm convertVectorToAterm(const vector<ATerm>& v,
-			   int start = 0, int len = -1);
+                           int start = 0, int len = -1);
 
 inline std::string intToHex(unsigned int x) {
   std::ostringstream s;

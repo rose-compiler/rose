@@ -21,7 +21,7 @@ public:
   };
 
   AirfoilMapping(const AirfoilTypes & aft=arc, 
-		 const real xa=-1.5, 
+                 const real xa=-1.5, 
 		 const real xb=1.5, 
 		 const real ya=0., 
 		 const real yb=2. );
@@ -34,11 +34,11 @@ public:
   AirfoilMapping & operator =( const AirfoilMapping & X0 );
 
   void map(const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	   MappingParameters & params=Overture::nullMappingParameters());
+           MappingParameters & params=Overture::nullMappingParameters());
 
   // set bounds on the rectangle that the airfoil sits in
   int setBoxBounds(const real xa=-1.5, 
-		   const real xb=1.5, 
+                   const real xb=1.5, 
 		   const real ya=0., 
 		   const real yb=2. );
  

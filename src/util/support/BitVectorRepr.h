@@ -244,8 +244,8 @@ class BitVectorReprGenerator
     {
       BitVectorRepr result(base.size());
       for (typename BitVectorReprBase<Name,Data>::iterator p = base.find(name);
-	   p != base.end() && base.get_name(p) == name; ++p) {
-	int i = base.get_index( p );
+           p != base.end() && base.get_name(p) == name; ++p) {
+        int i = base.get_index( p );
 	result.add_member(i);
       }
       return result;
@@ -276,11 +276,11 @@ class BitVectorReprGenerator
     }
   // Finding all 1-valued bits in a bit vector 'repr', storing their corresponding data into 'collect'
   void collect_member( const BitVectorRepr& repr, 
-		       CollectObject<Data>& collect) const
+                       CollectObject<Data>& collect) const
     {
       for (typename BitVectorReprBase<Name,Data>::iterator lp = base.begin();  
-	   lp != base.end(); ++lp) {
-	if (repr.has_member( base.get_index(lp)))
+           lp != base.end(); ++lp) {
+        if (repr.has_member( base.get_index(lp)))
 	  collect( base.get_data(lp) );
       }
     }

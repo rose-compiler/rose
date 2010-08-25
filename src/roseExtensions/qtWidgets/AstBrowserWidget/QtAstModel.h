@@ -22,41 +22,41 @@ class SgNode;
  */
 class QtAstModel : public QAbstractItemModel
 {
-	Q_OBJECT
-		class ModelNode;
+        Q_OBJECT
+                class ModelNode;
 
-	public:
-		QtAstModel(SgNode * node, QObject * parent= 0);
-		virtual ~QtAstModel();
-
-
-		virtual Qt::ItemFlags flags (const QModelIndex & index) const;
-		virtual QVariant data       (const QModelIndex & index, int role = Qt::DisplayRole ) const;
-		virtual QVariant headerData (int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
-
-		virtual int  rowCount    (const QModelIndex & parent = QModelIndex() ) const;
-		virtual int  columnCount (const QModelIndex & parent = QModelIndex() ) const;
+        public:
+                QtAstModel(SgNode * node, QObject * parent= 0);
+                virtual ~QtAstModel();
 
 
-		virtual QModelIndex index ( int row, int column, const QModelIndex & parent = QModelIndex() ) const;
-		virtual QModelIndex parent ( const QModelIndex & index ) const;
+                virtual Qt::ItemFlags flags (const QModelIndex & index) const;
+                virtual QVariant data       (const QModelIndex & index, int role = Qt::DisplayRole ) const;
+                virtual QVariant headerData (int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
 
-		/// Should not be used any more, query for the SgNodeRole of an index
-		/// @warning may return NULL!
-		virtual SgNode * getNodeFromIndex(const QModelIndex & ind);
+                virtual int  rowCount    (const QModelIndex & parent = QModelIndex() ) const;
+                virtual int  columnCount (const QModelIndex & parent = QModelIndex() ) const;
 
-	public slots:
-        /// Set new root of the tree
-		void setNode(SgNode * node);
 
-		/** Tree can be filtered by ASTFilterInterface
-		 * Deletion of filter is done by this class
-		 * set to NULL, for unfiltered view  */
-		void setFilter(AstFilterInterface * filter);
+                virtual QModelIndex index ( int row, int column, const QModelIndex & parent = QModelIndex() ) const;
+                virtual QModelIndex parent ( const QModelIndex & index ) const;
 
-	protected:
-		ModelNode * treeRoot;
-		AstFilterInterface * filter;
+                /// Should not be used any more, query for the SgNodeRole of an index
+                /// @warning may return NULL!
+                virtual SgNode * getNodeFromIndex(const QModelIndex & ind);
+
+        public slots:
+                /// Set new root of the tree
+                void setNode(SgNode * node);
+
+                /** Tree can be filtered by ASTFilterInterface
+                 * Deletion of filter is done by this class
+                 * set to NULL, for unfiltered view  */
+                void setFilter(AstFilterInterface * filter);
+
+        protected:
+                ModelNode * treeRoot;
+                AstFilterInterface * filter;
 };
 
 #endif

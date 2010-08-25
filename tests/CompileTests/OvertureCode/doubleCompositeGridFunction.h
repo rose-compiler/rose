@@ -109,7 +109,7 @@ class doubleCompositeGridFunction : public doubleGridCollectionFunction
 
   // Return a link to some specfied components 
   doubleCompositeGridFunction operator()(const Range & component0,
-				   const Range & component1=nullRange,
+                                   const Range & component1=nullRange,
 				   const Range & component2=nullRange,
 				   const Range & component3=nullRange,
 				   const Range & component4=nullRange );
@@ -150,7 +150,7 @@ class doubleCompositeGridFunction : public doubleGridCollectionFunction
   void reference( const doubleGridCollectionFunction & cgf ); // *new*
 
   virtual void setIsACoefficientMatrix(const bool trueOrFalse=TRUE, 
-				       const int stencilSize=defaultValue, 
+                                       const int stencilSize=defaultValue, 
 				       const int numberOfGhostLines=1,
 				       const int numberOfComponentsForCoefficients=1,
 				       const int offset=0 );

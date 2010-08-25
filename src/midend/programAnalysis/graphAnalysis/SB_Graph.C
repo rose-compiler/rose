@@ -30,13 +30,13 @@ SB_DirectedGraph::getProperty(SgGraph::GraphProperties property, SgGraphNode* no
 
 void
 SB_DirectedGraph::setProperty(SgGraph::GraphProperties property, SgGraphNode* node,
-			   std::string value) {
+                              std::string value) {
   node->append_properties(property, value);
 }
 
 void
 SB_DirectedGraph::setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge,
-			   std::string value) {
+                              std::string value) {
   edge->append_properties(property, value);
 }
 
@@ -176,7 +176,7 @@ SB_DirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>&
 #if 0
 SgGraphNode*
 SB_DirectedGraph::createNode(string& name, string& type, int address, int graph_id,
-			     bool isFunction, SgNode* int_node) {
+                             bool isFunction, SgNode* int_node) {
   ROSE_ASSERT(int_node);
 #if 0
   ostringstream addrhex;
@@ -311,7 +311,7 @@ SB_DirectedGraph::getDirectCFGPredecessors(SgGraphNode* node, std::vector <SgGra
 
 bool
 SB_DirectedGraph::isDirectCFGEdge(SgGraphNode* sgNode,
-				       SgGraphNode* sgNodeBefore) {
+                                  SgGraphNode* sgNodeBefore) {
   bool isDirectedControlFlowEdge = false;
   SgAsmInstruction* instSgNode = isSgAsmInstruction(sgNode->get_SgNode());
   SgAsmInstruction* instSgNodeBefore = isSgAsmInstruction(sgNodeBefore->get_SgNode());
@@ -337,7 +337,7 @@ SB_DirectedGraph::isDirectCFGEdge(SgGraphNode* sgNode,
 
 bool
 SB_DirectedGraph::isValidCFGEdge(SgGraphNode* sgNode,
-				       SgGraphNode* sgNodeBefore) {
+                                 SgGraphNode* sgNodeBefore) {
   if (!sgNode || !sgNodeBefore)
     return false;
   //  bool isAUnconditionalControlTransfer = false;
@@ -374,7 +374,7 @@ SB_DirectedGraph::isValidCFGEdge(SgGraphNode* sgNode,
 	//if (!isAsmUnconditionalBranch(nodeBeforeInSet))
 	if (RoseBin_support::DEBUG_MODE())
 	cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
-	 isDirectedControlFlowEdge = true;
+        isDirectedControlFlowEdge = true;
       }
       if (RoseBin_support::DEBUG_MODE()) {
       cout << " *** f1 && f2 -- isDirectionalControlFlowEdge: " << isDirectedControlFlowEdge << endl;

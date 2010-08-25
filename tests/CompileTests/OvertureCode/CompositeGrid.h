@@ -777,7 +777,7 @@ class CompositeGrid:
     // set the hybridConnectivity for this CompositeGrid
     //
     void setHybridConnectivity(const int grid,
-			       intArray * gridIndex2UVertex_,
+                               intArray * gridIndex2UVertex_,
 			       intArray & uVertex2GridIndex_,
 			       intArray * gridVertex2UVertex_, // could be build from gridIndex2UVertex ?
 			       intArray & boundaryFaceMapping_);

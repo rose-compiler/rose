@@ -344,8 +344,8 @@ int main(int argc, char** argv)
     desc.add_options()
 	("help", "produce help message")    
 	("include-path,I", po::value< vector<string> >()->composing(), 
-	 "include path")
-	("target-path", po::value<string>(), "target path including headers")
+         "include path")
+        ("target-path", po::value<string>(), "target path including headers")
 	;
     po::positional_options_description p;
     p.add("target-path", -1);

@@ -103,25 +103,25 @@ extern DL_IMPORT(void) PyMem_Free(void *);
 
 /* Functions */
 #define PyMem_New(type, n) \
-	( (type *) PyMem_Malloc((n) * sizeof(type)) )
+        ( (type *) PyMem_Malloc((n) * sizeof(type)) )
 #define PyMem_Resize(p, type, n) \
-	( (p) = (type *) PyMem_Realloc((p), (n) * sizeof(type)) )
+        ( (p) = (type *) PyMem_Realloc((p), (n) * sizeof(type)) )
 #define PyMem_Del(p) PyMem_Free(p)
 
 /* Macros */
 #define PyMem_NEW(type, n) \
-	( (type *) PyMem_MALLOC(_PyMem_EXTRA + (n) * sizeof(type)) )
+        ( (type *) PyMem_MALLOC(_PyMem_EXTRA + (n) * sizeof(type)) )
 
 /* See comment near MALLOC_ZERO_RETURNS_NULL in pyport.h. */
 #define PyMem_RESIZE(p, type, n)			\
-	do {						\
-		size_t _sum = (n) * sizeof(type);	\
+        do {                                            \
+                size_t _sum = (n) * sizeof(type);       \
 		if (!_sum)				\
-			_sum = 1;			\
-		(p) = (type *)((p) ?			\
+                        _sum = 1;                       \
+                (p) = (type *)((p) ?                    \
 			       PyMem_REALLOC(p, _sum) :	\
 			       PyMem_MALLOC(_sum));	\
-	} while (0)
+        } while (0)
 
 #define PyMem_DEL(p) PyMem_FREE(p)
 

@@ -73,7 +73,7 @@ AliasAnnotAnal(AstInterface& fa,
        p1 != desc.end(); ++p1, ++index) {
     const NameGroup& cur = *p1;
     for (NameGroup::const_iterator p2 = cur.begin(); 
-	 p2 != cur.end(); ++p2) {
+         p2 != cur.end(); ++p2) {
       string varname = *p2;
       AstNodePtr arg = paramMap.find(varname).get_ast();
       if (arg != AST_NULL) {

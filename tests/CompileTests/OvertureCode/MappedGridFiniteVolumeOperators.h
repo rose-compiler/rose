@@ -220,7 +220,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 //
 
   virtual REALMappedGridFunction identityOperator (
-						   const Index & I1,
+                                                   const Index & I1,
 						   const Index & I2,
 						   const Index & I3);
   
@@ -282,14 +282,14 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 					  );
 
   virtual REALMappedGridFunction convectiveDerivative (
-						       const REALMappedGridFunction &u,  //compute (u.grad)w (convective derivative of passive variable(s))
+                                                       const REALMappedGridFunction &u,  //compute (u.grad)w (convective derivative of passive variable(s))
 						       const REALMappedGridFunction &w,
 						       const Index & I1 = nullIndex,
 						       const Index & I2 = nullIndex,
 						       const Index & I3 = nullIndex
 						       );
   virtual REALMappedGridFunction convectiveDerivative (
-						       const REALMappedGridFunction &u,  //compute (u.grad)w (convective derivative of passive variable(s))
+                                                       const REALMappedGridFunction &u,  //compute (u.grad)w (convective derivative of passive variable(s))
 						       const GridFunctionParameters & gft,
 						       const REALMappedGridFunction &w,
 						       const Index & I1 = nullIndex,
@@ -298,7 +298,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 						       );
 
   virtual REALMappedGridFunction difference (
-					     const REALMappedGridFunction &u,
+                                             const REALMappedGridFunction &u,
 					     const int axis,
 					     const int c0=0,
 					     const int c1=0,
@@ -310,7 +310,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 					     const Index &I3=nullIndex
 					     );
   virtual REALMappedGridFunction difference (
-					     const REALMappedGridFunction &u,
+                                             const REALMappedGridFunction &u,
 					     const GridFunctionParameters & gft,
 					     const int axis,
 					     const int c0=0,
@@ -380,7 +380,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 
 
   virtual REALMappedGridFunction FCgrad (const REALMappedGridFunction & phi,	//
-					 const int c0 = 0,
+                                         const int c0 = 0,
 					 const int c1 = 0,
 					 const int c2 = 0,
 					 const int c3 = 0,
@@ -395,7 +395,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 					 const Index & I8 = nullIndex 
 					 );
   virtual REALMappedGridFunction FCgrad (const REALMappedGridFunction & phi,
-					 const GridFunctionParameters & gft,	//
+                                         const GridFunctionParameters & gft,    //
 					 const int c0 = 0,
 					 const int c1 = 0,
 					 const int c2 = 0,
@@ -413,7 +413,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 
 /* Old version v6
   virtual REALMappedGridFunction FCgrad (const REALMappedGridFunction & phi,	//
-					 const c0 = 0,
+                                         const c0 = 0,
 					 const c1 = 0,
 					 const c2 = 0,
 					 const c3 = 0,
@@ -424,7 +424,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 					 );
 
   virtual REALMappedGridFunction FCgrad (const REALMappedGridFunction & phi,
-					 const GridFunctionParameters & gft,	//
+                                         const GridFunctionParameters & gft,    //
 					 const c0 = 0,
 					 const c1 = 0,
 					 const c2 = 0,
@@ -437,7 +437,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 */
 
   virtual REALMappedGridFunction divScalarGrad(				// div(s.grad(u))
-					       const REALMappedGridFunction & u,
+                                               const REALMappedGridFunction & u,
 					       const REALMappedGridFunction & s,
 					       const Index & I1 = nullIndex,
 					       const Index & I2 = nullIndex,
@@ -449,7 +449,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 					       const Index & I8 = nullIndex
 					       );
   virtual REALMappedGridFunction divScalarGrad(				// div(s.grad(u))
-					       const REALMappedGridFunction & u,
+                                               const REALMappedGridFunction & u,
 					       const GridFunctionParameters & gft,
 					       const REALMappedGridFunction & s,
 					       const Index & I1 = nullIndex,
@@ -490,7 +490,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 
 
   virtual REALMappedGridFunction divScalarGradCoefficients(				// div(s.grad( )) operator
-							   const REALMappedGridFunction & s,
+                                                           const REALMappedGridFunction & s,
 							   const Index & I1 = nullIndex,
 							   const Index & I2 = nullIndex,
 							   const Index & I3 = nullIndex,
@@ -501,7 +501,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 							   const Index & I8 = nullIndex);
 
   virtual REALMappedGridFunction divScalarGradCoefficients(const GridFunctionParameters & gft, // div(s.grad( )) operator
-							   const REALMappedGridFunction & s,
+                                                           const REALMappedGridFunction & s,
 							   const Index & I1 = nullIndex,
 							   const Index & I2 = nullIndex,
 							   const Index & I3 = nullIndex,
@@ -588,7 +588,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 			const real & time = 0.);
 
   void applyBoundaryConditionsToCoefficients(                                 //replaces ApplyBoundaryConditions
-					     REALMappedGridFunction & coeff,
+                                             REALMappedGridFunction & coeff,
 					     const real & time = 0.);
   
 
@@ -891,7 +891,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 			);
 
   realMappedGridFunction genericLaplacianCoefficientsForSystems (const LaplacianType lt,
-								 const realMappedGridFunction & scalar,
+                                                                 const realMappedGridFunction & scalar,
 								 const Index & I1 = nullIndex,
 								 const Index & I2 = nullIndex,
 								 const Index & I3 = nullIndex,
@@ -900,7 +900,7 @@ class MappedGridFiniteVolumeOperators : public GenericMappedGridOperators
 								 );
 
   void firstDerivatives (realMappedGridFunction & returnedValue,
-			 const int & direction,
+                         const int & direction,
 			 const GridFunctionParameters & gfParams,
 			 const realMappedGridFunction &u,
 			 const Index & I1 = nullIndex,

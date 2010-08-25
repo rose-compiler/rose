@@ -204,15 +204,15 @@ class RoseBin_support {
 
   template <class T>
     static bool from_string(T& t,
-		     const std::string& s,
-		     std::ios_base& (*f)(std::ios_base&)) {
+                            const std::string& s,
+                            std::ios_base& (*f)(std::ios_base&)) {
       std::istringstream iss(s);
       return !(iss >> f >> t).fail();
     }
 
   static std::string
     resolveValue(SgAsmValueExpression* expr,
-		 bool is_mnemonic_call,
+                 bool is_mnemonic_call,
 		 uint8_t &b_val,
 		 uint16_t &w_val,
 		 uint32_t &dw_val,

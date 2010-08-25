@@ -349,7 +349,7 @@ string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
 
 
 bool RoseBin_CompareAnalysis::isReturnStmt(SgNode* srcNode,
-					   SgAsmNode* binNode,
+                                           SgAsmNode* binNode,
 					   string *output,
 					   int &nodes_matched) {
   bool isreturn=false;
@@ -372,7 +372,7 @@ bool RoseBin_CompareAnalysis::isReturnStmt(SgNode* srcNode,
  * if we have a FgFunctionCallExp, then the binary instruction must be a binaryfunccall too
  *********************************************************/
 bool RoseBin_CompareAnalysis::isFunctionCall(SgNode* srcNode,
-					     SgAsmNode* binNode,
+                                             SgAsmNode* binNode,
 					     string *output,
 					     int &nodes_matched) {
   bool isfunction=false;
@@ -393,7 +393,7 @@ bool RoseBin_CompareAnalysis::isFunctionCall(SgNode* srcNode,
 }
 
 bool RoseBin_CompareAnalysis::isSgPlusPlus(SgNode* srcNode,
-					   SgAsmNode* binNode,
+                                           SgAsmNode* binNode,
 					   string *output,
 					   int &nodes_matched) {
   bool isplus=false;
@@ -480,9 +480,9 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
     bool a=false,b=false;
     //SgAsmValueExpression* thenode;
     string roh_val = resolve_binaryInstruction(mov, &left, 
-					       &value, name);
+                                               &value, name);
     resolve_bin_vardecl_or_assignment( isVarDecl0,  isVarDecl1, 
-				       a,b, mov);
+                                       a,b, mov);
     *output += " varDecl (left,right) = " + RoseBin_support::resBool(isVarDecl0) + "-" + RoseBin_support::resBool(isVarDecl1) + " , " +
       "\n";
     cerr << " varDecl (left,right) = " << RoseBin_support::resBool(isVarDecl0) << "-" << RoseBin_support::resBool(isVarDecl1) << " , " <<
@@ -594,7 +594,7 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
  * and whether it is the same variable
  *********************************************************/
 bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
-					 SgAsmNode* binNode,
+                                         SgAsmNode* binNode,
 					 string *output,
 					 int &nodes_matched,
 					 int array_bin_length,
@@ -632,9 +632,9 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
       name = varref->get_symbol()->get_name().str();
     }
     string roh_val = resolve_binaryInstruction(mov, &registerName, 
-					       &variable, name);
+                                               &variable, name);
     resolve_bin_vardecl_or_assignment( a,  b, 
-				       isAssign0, isAssign1, mov);
+                                       isAssign0, isAssign1, mov);
 
     string varname = getVariableName(roh_val);
     SgAsmValueExpression* valueExp = getVariableType(roh_val);
@@ -708,7 +708,7 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
     SgAsmInstruction* instr = isSgAsmInstruction(binNode);
     ROSE_ASSERT(instr);
     string roh_val = resolve_binaryInstruction(instr, &left, 
-					       &right, "none");
+                                               &right, "none");
     // we assume we are in an assignment (since SgAssignOp)
     // in this case "left" must be a variable
     *output += " >>>>> checking for variable : " + roh_val +
@@ -754,7 +754,7 @@ void RoseBin_CompareAnalysis::pushOnStack(SgExpression* expr){
 
 
 SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
-						     SgNode* src_statements[],
+                                                     SgNode* src_statements[],
 						     SgAsmNode* bin_statements[],
 						     string *output,
 						     int &bin_count,
@@ -783,7 +783,7 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
       string left="";
       string right="";
       string roh_val = resolve_binaryInstruction(sub, &left, 
-						 &right,"none" );
+                                                 &right,"none" );
       sub->set_comment("sub "+left+","+right);
       if (tookSrcNodeFromStack) {
 	subop->setAttribute(attributeName,createAttribute(3));
@@ -830,8 +830,8 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
 	string left="";
 	string right="";
 	string roh_val = resolve_binaryInstruction(add, &left, 
-						   &right,"none" );
-	addop->setAttribute(attributeName,createAttribute(2));
+                                                   &right,"none" );
+        addop->setAttribute(attributeName,createAttribute(2));
 	add->setAttribute(attributeName,createAttribute(2));
 	add->set_comment("add "+left+","+right);
 	//string isVariable = getVariableName(roh_val);
@@ -878,7 +878,7 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
 	  string left="";
 	  string right="";
 	  string roh_val = resolve_binaryInstruction(mov, &left, 
-						     &right,"none" );
+                                                     &right,"none" );
 
 	  addop->setAttribute(attributeName,createAttribute(2));
 	  mov->setAttribute(attributeName,createAttribute(2));
@@ -923,7 +923,7 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
 	    string left="";
 	    string right="";
 	    string roh_val = resolve_binaryInstruction(shr, &left, 
-						       &right,"none" );
+                                                       &right,"none" );
 
 	    addop->setAttribute(attributeName,createAttribute(2));
 	    shr->setAttribute(attributeName,createAttribute(2));
@@ -982,7 +982,7 @@ bool RoseBin_CompareAnalysis::isAnExpression(SgExpression* expr) {
 }
 
 bool RoseBin_CompareAnalysis::handleSourceExpression(
-						     SgExpression* expr,
+                                                     SgExpression* expr,
 						     SgNode* src_statements[],
 						     SgAsmNode* bin_statements[],
 						     std::string *output,
@@ -1140,11 +1140,11 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
       } else
 
 	if (isAssignOp(srcNode, binNode, output, nodes_matched,
-		       array_bin_length, array_src_length,bin_count, src_count,
+                       array_bin_length, array_src_length,bin_count, src_count,
 		       &src_statements[0],
 		       &bin_statements[0],
 		       increase_only_src)) {
-	  cerr << " >>> found AssignOp . Increasing source only ? " << RoseBin_support::resBool(increase_only_src) << endl;
+          cerr << " >>> found AssignOp . Increasing source only ? " << RoseBin_support::resBool(increase_only_src) << endl;
 	} else
 
 	  if (isSgPlusPlus(srcNode, binNode, output, nodes_matched)){
@@ -1187,7 +1187,7 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
  * in particular the sgnodes and instructions
  ****************************************************/
 void RoseBin_CompareAnalysis::checkFunctions(string name,
-					     SgFunctionDeclaration* funcDecl,
+                                             SgFunctionDeclaration* funcDecl,
 					     SgAsmFunctionDeclaration* binDecl) {
 
   string output="\n**** *************************\n";

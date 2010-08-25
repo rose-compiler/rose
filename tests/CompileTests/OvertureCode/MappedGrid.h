@@ -543,11 +543,11 @@ class MappedGrid:
 					const Integer& kd,
 					const Integer& boundaryDiscretizationWidth_);
     void setIsCellCentered(const Integer& kd,
-			   const Logical& isCellCentered_);
+                           const Logical& isCellCentered_);
     void setDiscretizationWidth(const Integer& kd,
 				const Integer& discretizationWidth_);
     void setGridIndexRange(const Integer& ks,
-			   const Integer& kd,
+                           const Integer& kd,
 			   const Integer& gridIndexRange_);
     
     //  Use a given mapping.
@@ -563,7 +563,7 @@ class MappedGrid:
     void setIsPeriodic(const Integer& kd, const Mapping::periodicType& isPeriodic_);
     
     void setSharedBoundaryFlag(const Integer& ks,
-			       const Integer& kd,
+                               const Integer& kd,
 			       const Integer& sharedBoundaryFlag_);
     void setSharedBoundaryTolerance(const Integer& ks,
 				    const Integer& kd,

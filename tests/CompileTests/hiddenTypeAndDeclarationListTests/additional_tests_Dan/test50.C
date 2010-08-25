@@ -2,7 +2,7 @@
 
 class A {
 
-	public:
+        public:
 
 		int x;
 
@@ -12,7 +12,7 @@ class A {
 
 class B : A {
 
-	public:
+        public:
 
 		using A::x;
 
@@ -26,9 +26,9 @@ class B : A {
 
 int B::foo() {
 
-	int wwwwww, x, c, i;
+        int wwwwww, x, c, i;
 
-	return 1;
+        return 1;
 
 }
 
@@ -36,7 +36,7 @@ int main() {
 
 
 
-	return 0;
+        return 0;
 
 }
 

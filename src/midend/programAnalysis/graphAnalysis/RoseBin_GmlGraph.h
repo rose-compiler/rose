@@ -14,7 +14,7 @@
 class RoseBin_GMLGraph : public RoseBin_Graph {
  private:
   std::string getInternalNodes(SgGraphNode* node,
-			       bool forward_analysis, SgAsmNode* internal);
+                               bool forward_analysis, SgAsmNode* internal);
 
   std::map < SgAsmStatement*, int > nodesMap;
   std::map < SgAsmFunctionDeclaration*, int > funcMap;
@@ -41,10 +41,10 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
   virtual ~RoseBin_GMLGraph() {}
 
   void printNodes( bool dfg, RoseBin_FlowAnalysis* flow,  bool forward_analysis,
-		     std::ofstream &myfile, std::string& recursiveFunctionName);
+                   std::ofstream &myfile, std::string& recursiveFunctionName);
 
   void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-		  bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
+                   bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
 
   void printProlog(  std::ofstream& myfile, std::string& fileType);
   void printEpilog(  std::ofstream& myfile);

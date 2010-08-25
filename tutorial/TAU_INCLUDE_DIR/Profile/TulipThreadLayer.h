@@ -47,7 +47,7 @@ using Smarts::Mutex;
 class TulipThreadLayer 
 { // Layer for RtsLayer to interact with pthreads 
   public:
- 	
+
  	TulipThreadLayer () { }  // defaults
 	~TulipThreadLayer () { } 
 

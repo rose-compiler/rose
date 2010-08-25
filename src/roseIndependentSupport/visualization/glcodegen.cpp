@@ -76,30 +76,30 @@ void GlCodegenState::set_mousepos(int x, int y)
 	// calculate intersection with graph plane
 	ntlVec3d camera( -CamX, -CamY, -CamZ );
 	ntlVec3d lookat( -LookatX, -LookatY, 0.0 );
-  ntlVec3d direction = lookat - camera;
+        ntlVec3d direction = lookat - camera;
 	double fovy = 90.0;
 	double aspect = (double)ViewSizeX/ViewSizeY;
-  /* calculate width of screen using perpendicular triangle diven by
-   * viewing direction and screen plane */
-  double screenWidth = direction.getNorm()*tan( (fovy*0.5/180.0)*M_PI );
+        /* calculate width of screen using perpendicular triangle diven by
+         * viewing direction and screen plane */
+        double screenWidth = direction.getNorm()*tan( (fovy*0.5/180.0)*M_PI );
 
-  /* calculate vector orthogonal to up and viewing direction */
-  ntlVec3d upVec(0.0, 1.0, 0.0);
-  ntlVec3d rightVec( upVec.crossProd(direction) );
-  rightVec.normalize();
+        /* calculate vector orthogonal to up and viewing direction */
+        ntlVec3d upVec(0.0, 1.0, 0.0);
+        ntlVec3d rightVec( upVec.crossProd(direction) );
+        rightVec.normalize();
 
-  /* calculate screen plane up vector, perpendicular to viewdir and right vec */
-  upVec = ntlVec3d( rightVec.crossProd(direction) );
-  upVec.normalize();
+        /* calculate screen plane up vector, perpendicular to viewdir and right vec */
+        upVec = ntlVec3d( rightVec.crossProd(direction) );
+        upVec.normalize();
 
-  /* check if vectors are valid FIXME what to do if not? */
-  if( (upVec==ntlVec3d(0.0)) || (rightVec==ntlVec3d(0.0)) ) {
-    return;
-  }
+        /* check if vectors are valid FIXME what to do if not? */
+        if( (upVec==ntlVec3d(0.0)) || (rightVec==ntlVec3d(0.0)) ) {
+          return;
+        }
 
-  /* length from center to border of screen plane */
-  rightVec *= (screenWidth*aspect * -1.0);
-  upVec *= (screenWidth * -1.0);
+        /* length from center to border of screen plane */
+        rightVec *= (screenWidth*aspect * -1.0);
+        upVec *= (screenWidth * -1.0);
 
 	/* calc edges positions */
 	double zplane = 0.0;
@@ -270,15 +270,15 @@ void GlCodegenState::select_fill_color( void ) {
 	if(EnhanceDisplay) {
 		// FIXME create display lists?
 		//glColor3f( color[0], color[1], color[2] );
-    //GLfloat MaterialAmbient[]= { 0.2f, 0.2f, 0.2f, 1.0f };
-    GLfloat MaterialDiffuse[]= { color[0], color[1], color[2], 1.0f };
+                //GLfloat MaterialAmbient[]= { 0.2f, 0.2f, 0.2f, 1.0f };
+                GLfloat MaterialDiffuse[]= { color[0], color[1], color[2], 1.0f };
 		//GLfloat MaterialSpecular[]= { 0.8f, 0.8f, 0.8f, 1.0f };
 		//GLfloat MaterialSpecular[]= { 0.0f, 0.0f, 0.0f, 1.0f };
-    GLfloat MaterialShininess[]= { 10.0f };
-    //glMaterialfv(GL_FRONT, GL_AMBIENT, MaterialAmbient);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, MaterialDiffuse);
-    //glMaterialfv(GL_FRONT, GL_SPECULAR, MaterialSpecular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, MaterialShininess);
+                GLfloat MaterialShininess[]= { 10.0f };
+                //glMaterialfv(GL_FRONT, GL_AMBIENT, MaterialAmbient);
+                glMaterialfv(GL_FRONT, GL_DIFFUSE, MaterialDiffuse);
+                //glMaterialfv(GL_FRONT, GL_SPECULAR, MaterialSpecular);
+                glMaterialfv(GL_FRONT, GL_SHININESS, MaterialShininess);
 	} else {
 		glColor3f( color[0], color[1], color[2] );
 	}
@@ -406,7 +406,7 @@ int GlCodegenState::get_edgeposition(float *tx, float *ty, float *tz, float *tlx
 	A[1].x = (source->head->u.coord.x + source->tail->u.coord.x)*0.5;
 	A[1].y = (source->head->u.coord.y + source->tail->u.coord.y)*0.5;
 	if( (isVisibleReducedF(&A[0], 1)) &&
-		  (isVisibleReducedF(&A[1], 1)) ) return false;
+            (isVisibleReducedF(&A[1], 1)) ) return false;
 
 	*tx = -A[0].x;
 	*ty = -A[0].y;
@@ -1015,7 +1015,7 @@ static void gl_ellipse(point p, int rx, int ry, int filled)
 //-----------------------------------------------------------------------------
 static void gl_polyline(point* A, int n)
 {
-  double lastX = -2.0, lastY = -2.0;
+        double lastX = -2.0, lastY = -2.0;
 	g->ObjectsTotal++;
 	if(g->Culling==CULL_DONTDISPLAY) return;
 	else if(g->Culling==CULL_UNDECIDED) {
@@ -1050,7 +1050,7 @@ static void gl_bezier(point *A, int n, int arrow_at_start, int arrow_at_end)
 	}
 	g->ObjectsDisplayed++;
 
-  pointf p0, p1, V[4];
+        pointf p0, p1, V[4];
 	short subdivide = SUBDIVISION_STEPS; // TODO
 
 	double detail = g->getScreenDistanceF2( A[0].x,A[0].y,(g->ZPos+0.0), A[n-1].x,A[n-1].y,(g->ZPos+0.0) );
@@ -1070,22 +1070,22 @@ static void gl_bezier(point *A, int n, int arrow_at_start, int arrow_at_end)
 	g->select_pen_color();
 	glBegin( GL_LINES );
 
-  V[3].x = A[0].x; 
+        V[3].x = A[0].x; 
 	V[3].y = A[0].y;
-  for(int i = 0; i+3 < n; i += 3) {
-    V[0] = V[3];
-    for(int j=1; j<=3; j++) {
-      V[j].x = A[i+j].x; 
+        for(int i = 0; i+3 < n; i += 3) {
+                V[0] = V[3];
+                for(int j=1; j<=3; j++) {
+                        V[j].x = A[i+j].x; 
 			V[j].y = A[i+j].y;
-    }
-    p0 = V[0];
-    for(int step=1; step<=subdivide; step++) {
-      p1 = Bezier(V, 3, (double)step/subdivide, NULL, NULL);
+                }
+                p0 = V[0];
+                for(int step=1; step<=subdivide; step++) {
+                        p1 = Bezier(V, 3, (double)step/subdivide, NULL, NULL);
 			glVertex3f( p0.x,p0.y, g->ZPos );
 			glVertex3f( p1.x,p1.y, g->ZPos );
-      p0 = p1;
-    }
-  }
+                        p0 = p1;
+                }
+        }
 
 	glEnd( );
 	return;

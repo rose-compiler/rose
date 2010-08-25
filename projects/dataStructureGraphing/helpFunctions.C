@@ -27,9 +27,9 @@ leftTrim (string str)
       // Iterate from the far left of string until we
       // don't have any more whitespace...
       for (j = 0;
-	   (j != s.size ()) && (whitespace.find (s.at (j)) != string::npos);
+           (j != s.size ()) && (whitespace.find (s.at (j)) != string::npos);
 	   ++j)
-	{
+        {
 	  //find the first none white space character
 	}
 
@@ -66,8 +66,8 @@ rightTrim (string str)
       // Iterate from the far right of string until we
       // don't have any more whitespace...
       for (j = s.size () - 1;
-	   (j != 0) && (whitespace.find (s.at (j)) != string::npos); --j)
-	{
+           (j != 0) && (whitespace.find (s.at (j)) != string::npos); --j)
+        {
 	  //find the first none white space character
 #ifdef DEBUG_CGRAPHPP
 	  cout << s.substr (0, j) << endl;
@@ -194,7 +194,7 @@ findScopes (SgNode * astNode)
 };
 
 Rose_STL_Container< SgNode * >queryNodeClassDeclarationFromTypedefName (SgNode * astNode,
-							   SgNode * nameNode)
+                                                                        SgNode * nameNode)
 {
   NodeQuerySynthesizedAttributeType returnList;
   ROSE_ASSERT (nameNode != NULL);
@@ -261,14 +261,14 @@ findTypedefFromTypeName (SgNodePtrVector nodeVector, const string sageName)
 
       typedefDeclarationList =
 	NodeQuery::querySubTree (*i,
-				 NodeQuery::TypedefDeclarations,
+                                 NodeQuery::TypedefDeclarations,
 				 NodeQuery::ChildrenOnly);
 
       Rose_STL_Container< SgNode * >::iterator j;
 
       for (j = typedefDeclarationList.begin ();
-	   j != typedefDeclarationList.end (); ++j)
-	{
+           j != typedefDeclarationList.end (); ++j)
+        {
 	  // Take an action on each typedef declarations: generate a list of variable declarations
 	  ROSE_ASSERT ((*j) != NULL);
 
@@ -299,7 +299,7 @@ findTypedefFromTypeName (SgNodePtrVector nodeVector, const string sageName)
  */
 Rose_STL_Container<
   SgNode * >findClassDeclarationsFromTypeName (SgNodePtrVector nodeVector,
-					       const string sageName)
+                                               const string sageName)
 {
   ROSE_ASSERT (sageName.length () > 0);
 
@@ -351,22 +351,22 @@ Rose_STL_Container<
 	ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
 	tempNodeList =
 	  NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				   NodeQuery::ClassDeclarationsFromTypeName,
+                                   NodeQuery::ClassDeclarationsFromTypeName,
 				   NodeQuery::ChildrenOnly);
 
   // DQ (9/26/2007): Moved from std::list to std::vector uniformly within ROSE.
   // foundClassDeclarations.merge (tempNodeList);
      foundClassDeclarations.insert(foundClassDeclarations.end(),tempNodeList.begin(),tempNodeList.end());
 
-	/*
-	   if (tempNodeList.empty () != true)
-	   {
-	   ROSE_ASSERT (tempNodeList.size () < 2);
-	   returnNode = isSgNode (*tempNodeList.begin ());
-	   ROSE_ASSERT (returnNode != NULL);
-	   foundClassDeclarations.push_back(returnNode);
-	   }
-	 */
+        /*
+           if (tempNodeList.empty () != true)
+           {
+           ROSE_ASSERT (tempNodeList.size () < 2);
+           returnNode = isSgNode (*tempNodeList.begin ());
+           ROSE_ASSERT (returnNode != NULL);
+           foundClassDeclarations.push_back(returnNode);
+           }
+         */
       }
 
   return foundClassDeclarations;
@@ -397,9 +397,9 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 
 	  tempNodeList =
 	    NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				     queryNodeClassDeclarationFromTypedefName,
+                                     queryNodeClassDeclarationFromTypedefName,
 				     NodeQuery::ChildrenOnly);
-	  if (tempNodeList.empty () != true)
+          if (tempNodeList.empty () != true)
 	    {
 	      ROSE_ASSERT (tempNodeList.size () < 2);
 	      returnNode = isSgNode (*tempNodeList.begin ());
@@ -421,12 +421,12 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
        */
       if (tempNodeList.empty () == true)
 	for (nodeIterator i = nodeVector.begin (); i != nodeVector.end ();
-	     ++i)
-	  {
+             ++i)
+          {
 	    ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
 	    tempNodeList =
 	      NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				       NodeQuery::ClassDeclarationFromName,
+                                       NodeQuery::ClassDeclarationFromName,
 				       NodeQuery::ChildrenOnly);
 
 	    if (tempNodeList.empty () != true)
@@ -443,18 +443,18 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 
 
         /****************************************************************************************
-	 *                         BEGIN DEFINITION OF typeInterpreter                          *
-	 ****************************************************************************************/
+         *                         BEGIN DEFINITION OF typeInterpreter                          *
+         ****************************************************************************************/
 
 
 	/* 
-	 * The function:
+         * The function:
 	 *      buildTypedefTranslationTable()
 	 * takes as a parameter a SgProject*. It will return a map<SgTypedefDeclaration*, SgType*>
 	 * where the idea is that all SgTypedefDeclaration* are unique, and therefore it is 
 	 * possible to create a map with it's corresponding type for easy access.  
 	 */
-	map< SgTypedefDeclaration*, SgType*> 
+        map< SgTypedefDeclaration*, SgType*> 
 	typeInterpreter::buildTypedefTranslationTable(SgProject* project){
 		ROSE_ASSERT (project != NULL);
 		const SgFilePtrList& sageFilePtrList = project->get_fileList ();
@@ -470,13 +470,13 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 		    SgTypedefDeclaration* typedefDeclaration;
 		    
 		    //Find all TypedefdefDeclarations in current global scope.
-		   Rose_STL_Container< SgNode * > typedefDeclarationList =
+		    Rose_STL_Container< SgNode * > typedefDeclarationList =
 		      NodeQuery::querySubTree (sageGlobal,
-					       NodeQuery::TypedefDeclarations);
+                                               NodeQuery::TypedefDeclarations);
 
-      // DQ (9/26/2007): Moved from std::list to std::vector uniformly within ROSE.
-         printf ("Commented out unique() member function since it is not in std::vector class \n");
-      // typedefDeclarationList.unique();
+                    // DQ (9/26/2007): Moved from std::list to std::vector uniformly within ROSE.
+                    printf ("Commented out unique() member function since it is not in std::vector class \n");
+                    // typedefDeclarationList.unique();
 
 		   //Iterate over all SgTypedefDeclarations in current global scope,
 		   //and find corresponding SgType*.
@@ -484,7 +484,7 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 			 typedefDeclarationList.begin ();
 			 typedefDeclarationElm != typedefDeclarationList.end ();
 			 ++typedefDeclarationElm)
-		      {
+                      {
 			typedefDeclaration =
 			  isSgTypedefDeclaration (*typedefDeclarationElm);
 			ROSE_ASSERT (typedefDeclaration != NULL);
@@ -528,7 +528,7 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
        }
 
        string typeInterpreter::typeFromTypedef(SgTypedefDeclaration* typedefDeclaration){
-	          ROSE_ASSERT( typedefDeclaration != NULL );
+                  ROSE_ASSERT( typedefDeclaration != NULL );
                   vector<SgType*> typeVector = typeVectorFromTypedef(typedefDeclaration); 
 
 		  SgType* sageType;
@@ -561,38 +561,38 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
        SgType* typeInterpreter::findBaseType(SgType* sageType){
 	           ROSE_ASSERT( sageType != NULL );
                SgType* baseType = sageType;
-		        
-		       switch(sageType->variantT())
-			       {
-				case V_SgReferenceType: 
-				   {
-				      baseType = isSgReferenceType(sageType)->get_base_type();
-				      ROSE_ASSERT ( baseType  != NULL );
-				      break;
-	                           }
-	                        case V_SgPointerType:
-	                           {
-	                              baseType =  isSgPointerType(sageType)->get_base_type(); 
-				      ROSE_ASSERT( baseType != NULL );
-	                              break;
-	                           }
-				 case V_SgTypedefType:
-				   {
-			              while(isSgTypedefType(baseType) != NULL) 
-				            baseType = isSgTypedefType(baseType)->get_base_type();
+
+                       switch(sageType->variantT())
+                               {
+                                case V_SgReferenceType: 
+                                   {
+                                      baseType = isSgReferenceType(sageType)->get_base_type();
+                                      ROSE_ASSERT ( baseType  != NULL );
+                                      break;
+                                   }
+                                case V_SgPointerType:
+                                   {
+                                      baseType =  isSgPointerType(sageType)->get_base_type(); 
+                                      ROSE_ASSERT( baseType != NULL );
+                                      break;
+                                   }
+                                 case V_SgTypedefType:
+                                   {
+                                      while(isSgTypedefType(baseType) != NULL) 
+                                            baseType = isSgTypedefType(baseType)->get_base_type();
                                       ROSE_ASSERT(baseType != NULL);
-					  break;
+                                          break;
                                    }
                                  default:
                                       break;
-						     
-			  };	
+                                                     
+                          };    
               return baseType;
        };       
 
        vector<SgType*> typeInterpreter::typeVectorFromTypedef(SgTypedefDeclaration* typedefDeclaration){
-	           vector<SgType*> typeVector;
-			
+  	                vector<SgType*> typeVector;
+
 			ROSE_ASSERT (typedefDeclaration != NULL);
 			SgType* baseType = NULL; 
 		        SgType* previousBaseType = NULL;
@@ -606,7 +606,7 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 			}while( baseType != previousBaseType );
 
 		   
-		   return typeVector;
+                        return typeVector;
 
        };
 		
@@ -615,86 +615,86 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
  *********************************************************************************************************/
 
        string typeStringFromType(SgType* sageType){
-	          ROSE_ASSERT( sageType != NULL );
-              vector<SgType*> typeVector = typeVectorFromType(sageType); 
+           ROSE_ASSERT( sageType != NULL );
+           vector<SgType*> typeVector = typeVectorFromType(sageType); 
 
-		      string typeParsed = "";
-		      for(int i = typeVector.size()-1; i>=0; i=i-1){
-		        sageType = typeVector[i];
+           string typeParsed = "";
+           for(int i = typeVector.size()-1; i>=0; i=i-1){
+               sageType = typeVector[i];
 
-		    	switch(sageType->variantT())
-			      {
-				   case V_SgReferenceType: 
-					break;
+               switch(sageType->variantT())
+                   {
+                       case V_SgReferenceType: 
+                           break;
 	               case V_SgPointerType:
-				 	typeParsed = typeParsed + "*";	
-	                break;
-                   case V_SgTypedefType:
-                    ROSE_ABORT();
-			       default:
-					typeParsed = typeParsed + TransformationSupport::getTypeName(sageType);
-					break;
-			};	
-		  }
-		  return typeParsed;
+                           typeParsed = typeParsed + "*";	
+                           break;
+                       case V_SgTypedefType:
+                           ROSE_ABORT();
+                       default:
+                           typeParsed = typeParsed + TransformationSupport::getTypeName(sageType);
+                           break;
+                   };	
+           }
+           return typeParsed;
        };
        
        SgType* findBaseType(SgType* sageType){
                ROSE_ASSERT( sageType != NULL);
                SgType* baseType = sageType;
-		           
-	       switch(sageType->variantT())
-		     {
-		    	case V_SgReferenceType: 
-		  	  { 
-	       		    	baseType = isSgReferenceType(sageType)->get_base_type();
-		 		break;
-	                  }
-	                case V_SgPointerType:
-	                  {
-	                        baseType =  isSgPointerType(sageType)->get_base_type(); 
-	                        break;
-	                   }
-			case V_SgTypedefType:
-	                   {
-		                while(isSgTypedefType(baseType) != NULL) 
-		         	        baseType = isSgTypedefType(baseType)->get_base_type();
-			        break;
-			   }
-			default:
+
+               switch(sageType->variantT())
+                     {
+                        case V_SgReferenceType: 
+                          { 
+                                baseType = isSgReferenceType(sageType)->get_base_type();
+                                break;
+                          }
+                        case V_SgPointerType:
+                          {
+                                baseType =  isSgPointerType(sageType)->get_base_type(); 
+                                break;
+                           }
+                        case V_SgTypedefType:
+                           {
+                                while(isSgTypedefType(baseType) != NULL) 
+                                        baseType = isSgTypedefType(baseType)->get_base_type();
+                                break;
+                           }
+                        default:
                            break; 
-     	            };	
-              	ROSE_ASSERT ( baseType  != NULL );
-                return baseType;
+                    };  
+               ROSE_ASSERT ( baseType  != NULL );
+               return baseType;
        };       
 
        vector<SgType*> typeVectorFromType(SgType* sageType){
-	           vector<SgType*> typeVector;
+           vector<SgType*> typeVector;
 			
-			ROSE_ASSERT (sageType != NULL);
-			SgType* baseType = sageType; 
-		    SgType* previousBaseType = NULL;
+           ROSE_ASSERT (sageType != NULL);
+           SgType* baseType = sageType; 
+           SgType* previousBaseType = NULL;
            
-            while(previousBaseType != baseType) 
-		{
-		 previousBaseType = baseType; 
+           while(previousBaseType != baseType) 
+               {
+                   previousBaseType = baseType; 
             
-                 switch(baseType->variantT()){
-		      case V_SgReferenceType:
-                      case V_SgPointerType:
-		       	typeVector.push_back(baseType);
-                      case V_SgTypedefType:
-   		        break;
-                      default:
-                          typeVector.push_back(baseType);
-                          break;
-            	      }
-                 baseType = findBaseType(baseType);
-		 ROSE_ASSERT(baseType != NULL);
+                   switch(baseType->variantT()){
+                       case V_SgReferenceType:
+                       case V_SgPointerType:
+                           typeVector.push_back(baseType);
+                       case V_SgTypedefType:
+                           break;
+                       default:
+                           typeVector.push_back(baseType);
+                           break;
+                   }
+                   baseType = findBaseType(baseType);
+                   ROSE_ASSERT(baseType != NULL);
 
-		    }; 
+               }; 
 		   
-		   return typeVector;
+           return typeVector;
 
        };
-		
+

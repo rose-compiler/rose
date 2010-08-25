@@ -59,8 +59,8 @@ void installQueries() {
 
    // install two variant queries
    queryBox->insertVariantQuery("Loops", VariantVector(V_SgDoWhileStmt) +
-		               VariantVector(V_SgForStatement) +
-			       VariantVector(V_SgWhileStmt));
+                                VariantVector(V_SgForStatement) +
+                                VariantVector(V_SgWhileStmt));
 
    queryBox->insertVariantQuery("Conditionals",
         VariantVector(V_SgIfStmt));

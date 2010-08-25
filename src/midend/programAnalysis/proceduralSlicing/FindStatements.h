@@ -62,7 +62,7 @@ class FindStatements {
     \param alias -
   */
   static void FindStatementsForSlice(SgNode* func_defn, SgNode* slicing_criterion, set<SgNode*>& slice,
-				     AliasAnalysisInterface* alias);
+                                     AliasAnalysisInterface* alias);
  protected:
   /*!
     Function to check if "node" is alrady in the set "slice".

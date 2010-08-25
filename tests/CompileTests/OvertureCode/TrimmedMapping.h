@@ -80,7 +80,7 @@ class TrimmedMapping : public Mapping
                  const int & numberOfInnerCurves=0, 
                  Mapping **innerCurve=NULL);
   TrimmedMapping(Mapping & surface, 
-		 const int & numberOfTrimCurves_=0,
+                 const int & numberOfTrimCurves_=0,
 		 Mapping **trimCurves_=NULL);
 #endif
 
@@ -107,7 +107,7 @@ class TrimmedMapping : public Mapping
 
   // map a grid of points: r(0:n1,1), or r(0:n1,0:n2,2) or r((0:n1,0:n2,0:n3,3) for 1, 2 or 3d
   virtual void mapGrid(const realArray & r, 
-		       realArray & x, 
+                       realArray & x, 
 		       realArray & xr,
 		       MappingParameters & params=Overture::nullMappingParameters() );
 
@@ -169,14 +169,14 @@ class TrimmedMapping : public Mapping
   int destroy();
   
   int findClosestCurve(const realArray & x, 
-		       intArray & cMin, 
+                       intArray & cMin, 
 		       realArray & rC,
 		       realArray & xC,
                        realArray & dist,                 
 		       const int & approximate =true );
   
   int findDistanceToACurve(const realArray & x, 
-			   IntegerArray  & cMin, 
+                           IntegerArray  & cMin, 
 			   realArray & dist,
                            const real & delta );
   int insideOrOutside( const realArray & rr, const int & c );

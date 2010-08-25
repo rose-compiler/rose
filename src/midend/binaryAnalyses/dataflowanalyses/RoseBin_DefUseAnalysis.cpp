@@ -44,7 +44,7 @@ bool RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, std::pair<X86Re
 bool
 RoseBin_DefUseAnalysis::searchMulti(const multitype* multi,
 				    std::pair<X86RegisterClass, int> initName,
-					 SgGraphNode* val) {
+                                    SgGraphNode* val) {
   multitype::const_iterator it1, it2;
   pair <multitype::const_iterator, multitype::const_iterator> iter = multi->equal_range(initName);
   it1 = iter.first;
@@ -124,7 +124,7 @@ void RoseBin_DefUseAnalysis::printMultiMap(const multitype* multi) {
  *********************************************************/
 void
 RoseBin_DefUseAnalysis::getOtherInNode(vector <SgGraphNode*>& otherNodes,
-				       SgGraphNode* cfgNode,
+                                       SgGraphNode* cfgNode,
 				       SgGraphNode* oneNode){
   vector <SgGraphNode*> in_edges;
   vizzGraph->getPredecessors(cfgNode, in_edges);
@@ -179,7 +179,7 @@ void RoseBin_DefUseAnalysis::mapUseUnion(SgGraphNode* before, SgGraphNode* other
  *  Union of two maps
  *********************************************************/
 void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgGraphNode* before,
-					 SgGraphNode* other, SgGraphNode* sgNode) {
+                                         SgGraphNode* other, SgGraphNode* sgNode) {
 
 
 
@@ -261,7 +261,7 @@ bool RoseBin_DefUseAnalysis::searchMap(const tabletype* ltable, SgGraphNode* nod
  *  Add an element to the table
  *********************************************************/
 void RoseBin_DefUseAnalysis::addDefElement(SgGraphNode* sgNode,
-					   std::pair<X86RegisterClass, int> initName,
+                                           std::pair<X86RegisterClass, int> initName,
 					   SgGraphNode* defNode) {
   addAnyElement(&deftable, sgNode, initName, defNode);
 }
@@ -270,7 +270,7 @@ void RoseBin_DefUseAnalysis::addDefElement(SgGraphNode* sgNode,
  *  Add an element to the table
  *********************************************************/
 void RoseBin_DefUseAnalysis::addUseElement(SgGraphNode* sgNode,
-					   std::pair<X86RegisterClass, int> initName,
+                                           std::pair<X86RegisterClass, int> initName,
 					   SgGraphNode* defNode) {
   addAnyElement( &usetable, sgNode, initName, defNode);
 }
@@ -279,7 +279,7 @@ void RoseBin_DefUseAnalysis::addUseElement(SgGraphNode* sgNode,
  *  Add an element to the table
  *********************************************************/
 void RoseBin_DefUseAnalysis::addAnyElement(tabletype* tabl, SgGraphNode* sgNode,
-					   std::pair<X86RegisterClass, int> initName,
+                                           std::pair<X86RegisterClass, int> initName,
 					   SgGraphNode* defNode) {
   bool contained = searchMulti(&(*tabl)[sgNode], initName, defNode);
   if (!contained)
@@ -466,8 +466,8 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
 	  // we have found a write to a register
 	  // find out the registerName
 	  string registerName = unparseX86Register(code.first, code.second,
-						   x86_regpos_qword);
-	  // for visualization add property that this
+                                                   x86_regpos_qword);
+          // for visualization add property that this
 	  // node is accessing and changing a register
 	  if (RoseBin_support::DEBUG_MODE())
 	    cout << "    Instruction does alter register . " << registerName << endl;
@@ -566,7 +566,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
 	    string type_n="not";
 	    for (;ed!=edges.end();++ed){
 	      SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(*ed);
-	     ROSE_ASSERT(edge);
+              ROSE_ASSERT(edge);
 	      if (edge)
 		type_n = vizzGraph->getProperty(SgGraph::type, edge);
 		if (type_n==RoseBin_support::ToString(SgGraph::usage))

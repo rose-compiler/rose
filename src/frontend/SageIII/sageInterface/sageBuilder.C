@@ -3537,10 +3537,10 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
 
        // DQ (1/25/2009): The scope is not the same as the parent, since the scope is logical, and the parent is structural (note that topScopeStack() is structural).
        // TPS (09/18/2009) added a condition to be able to build this properly
-	  if (scope==NULL)
-	    nondefdecl->set_parent(topScopeStack());
-	  else
-	    nondefdecl->set_parent(scope);
+          if (scope==NULL)
+            nondefdecl->set_parent(topScopeStack());
+          else
+            nondefdecl->set_parent(scope);
         }
 
   // The support for SgEnumDeclaration handles the type, but why not for SgClassDeclaration?

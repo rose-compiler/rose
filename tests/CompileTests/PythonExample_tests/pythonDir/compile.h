@@ -69,7 +69,7 @@ typedef struct {
 
 DL_IMPORT(PyFutureFeatures *) PyNode_Future(struct _node *, char *);
 DL_IMPORT(PyCodeObject *) PyNode_CompileFlags(struct _node *, char *,
-					      PyCompilerFlags *);
+                                              PyCompilerFlags *);
 
 #define FUTURE_NESTED_SCOPES "nested_scopes"
 #define FUTURE_GENERATORS "generators"
@@ -78,7 +78,7 @@ DL_IMPORT(PyCodeObject *) PyNode_CompileFlags(struct _node *, char *,
 /* for internal use only */
 #define _PyCode_GETCODEPTR(co, pp) \
 	((*(co)->co_code->ob_type->tp_as_buffer->bf_getreadbuffer) \
-	 ((co)->co_code, 0, (void **)(pp)))
+         ((co)->co_code, 0, (void **)(pp)))
 
 #ifdef __cplusplus
 }

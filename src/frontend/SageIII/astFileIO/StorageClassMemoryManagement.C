@@ -2979,7 +2979,7 @@ void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_
               Base::actual->storeDataInEasyStorageClass(*copy_);
              }
 #else
-	  // local else
+       // local else
        // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
           printf ("Error: support for file IO on graph nodes not implemented! \n");
           ROSE_ASSERT(false);

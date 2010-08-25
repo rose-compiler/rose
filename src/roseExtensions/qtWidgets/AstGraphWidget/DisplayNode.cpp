@@ -347,8 +347,8 @@ void DisplayTreeNode::simplifyTree(DisplayTreeNode * node)
 
 		//End of Sequence
 		if(inSequence && (child->childrenCount() > 0 ||
-						  child->getDisplayName() != curName) )
-		{
+                                  child->getDisplayName() != curName) )
+                {
 			if (i - startIndex > 1)
 			{
 			    node->getChild(startIndex)->caption=QString("%1 x ").arg(i-startIndex);

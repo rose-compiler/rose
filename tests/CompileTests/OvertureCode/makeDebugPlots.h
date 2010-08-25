@@ -11,7 +11,7 @@ void makeDebugContourPlots (const realCompositeGridFunction & u,
 			      PlotStuffParameters *psp);
 
 void makeDebugStreamLinePlots (const realCompositeGridFunction & u,
-			       const aString & label,
+                               const aString & label,
 			       PlotStuff *ps,
 			       PlotStuffParameters *psp);
 

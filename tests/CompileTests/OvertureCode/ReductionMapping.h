@@ -14,11 +14,11 @@ public:
 
   ReductionMapping();
   ReductionMapping(Mapping & mapToReduce, 
-		   const real & inactiveAxis1Value =0. ,
+                   const real & inactiveAxis1Value =0. ,
 		   const real & inactiveAxis2Value =-1.,
 		   const real & inactiveAxis3Value =-1. );
   ReductionMapping(Mapping & mapToReduce, 
-		   const int & inactiveAxis,
+                   const int & inactiveAxis,
 		   const real & inactiveAxisValue );
   
   // Copy constructor is deep by default
@@ -44,11 +44,11 @@ public:
 	  const real & inactiveAxisValue );
 
   int setInActiveAxes( const real & inactiveAxis1Value =0.,
-		       const real & inactiveAxis2Value =-1.,
+                       const real & inactiveAxis2Value =-1.,
 		       const real & inactiveAxis3Value =-1.);
   
   int setInActiveAxes( const int & inactiveAxis,
-		       const real & inactiveAxisValue );
+                       const real & inactiveAxisValue );
   
   Mapping *make( const aString & mappingClassName );
   aString getClassName() const { return ReductionMapping::className; }

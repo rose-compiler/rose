@@ -128,7 +128,7 @@ std::pair<int, int> computeNullDerefIndices(SgProject *project, int my_rank, int
 // algorithm that splits the files to processors
 // ************************************************************
 void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor,
-			   int my_rank, int processes, 
+                           int my_rank, int processes, 
 			   NodeNullDerefCounter nullderefCounter,
 			   std::vector<SgNode*>& nodeDecls)
 {
@@ -760,7 +760,7 @@ int main(int argc, char **argv)
 
 
     printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, 
-		   calctimes, commtimes, nodeDecls, totalCheckerTime);
+                   calctimes, commtimes, nodeDecls, totalCheckerTime);
 
 
     //if (my_rank==0)

@@ -31,9 +31,9 @@ struct cvs_MD5Context {
 
 void cvs_MD5Init PROTO ((struct cvs_MD5Context *context));
 void cvs_MD5Update PROTO ((struct cvs_MD5Context *context,
-			   unsigned char const *buf, unsigned len));
+                           unsigned char const *buf, unsigned len));
 void cvs_MD5Final PROTO ((unsigned char digest[16],
-			  struct cvs_MD5Context *context));
+                          struct cvs_MD5Context *context));
 void cvs_MD5Transform PROTO ((cvs_uint32 buf[4], const unsigned char in[64]));
 
 #endif /* !MD5_H */
@@ -182,8 +182,8 @@ cvs_MD5Final (digest, ctx)
 	count = (ctx->bits[0] >> 3) & 0x3F;
 
 	/* Set the first char of padding to 0x80.  This is safe since there is
-	   always at least one byte free */
-	p = ctx->in + count;
+           always at least one byte free */
+        p = ctx->in + count;
 	*p++ = 0x80;
 
 	/* Bytes of padding needed to make 64 bytes */

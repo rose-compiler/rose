@@ -254,7 +254,7 @@ void Control::generateOutput() {
         /**
          * generate .o files.
          */
-	//        ObjectGenerator og(option);
+        //        ObjectGenerator og(option);
 	//        if (! og.process(module)) {
 	//            // Scream!
 	//        }

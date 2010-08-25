@@ -478,7 +478,7 @@ void MemoryManager::allocateMemory(MemoryType * alloc)
     if(m)
     {
         // the start address of new chunk lies in already allocated area
-	  rs->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
+        rs->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
         return;
     }
 

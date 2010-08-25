@@ -60,7 +60,7 @@ check_section_reduction (FILE * logFile)
     {
       ++result;
       fprintf (logFile,
-	       "Error in sum with integers: Result was %d instead of %d\n",
+               "Error in sum with integers: Result was %d instead of %d\n",
 	       sum, known_sum);
     }
 
@@ -97,7 +97,7 @@ check_section_reduction (FILE * logFile)
     {
       result++;
       fprintf (logFile,
-	       "Error in Difference with integers: Result was %d instead of 0.\n",
+               "Error in Difference with integers: Result was %d instead of 0.\n",
 	       diff);
     }
 
@@ -138,7 +138,7 @@ check_section_reduction (FILE * logFile)
     {
       result++;
       fprintf (logFile,
-	       "Error in sum with doubles: Result was %f instead of %f (Difference: %E)\n",
+               "Error in sum with doubles: Result was %f instead of %f (Difference: %E)\n",
 	       dsum, dknown_sum, dsum - dknown_sum);
     }
 
@@ -182,7 +182,7 @@ check_section_reduction (FILE * logFile)
     {
       result++;
       fprintf (logFile,
-	       "Error in Difference with doubles: Result was %E instead of 0.0\n",
+               "Error in Difference with doubles: Result was %E instead of 0.0\n",
 	       ddiff);
     }
 
@@ -220,7 +220,7 @@ check_section_reduction (FILE * logFile)
     {
       result++;
       fprintf (logFile,
-	       "Error in Product with integers: Result was %d instead of %d\n",
+               "Error in Product with integers: Result was %d instead of %d\n",
 	       product, known_product);
     }
 
@@ -735,7 +735,7 @@ crosscheck_section_reduction (FILE * logFile)
     {
       result++;
       fprintf (logFile,
-	       "Error in sum with doubles: Result was %f instead of %f (Difference: %E)\n",
+               "Error in sum with doubles: Result was %f instead of %f (Difference: %E)\n",
 	       dsum, dknown_sum, dsum - dknown_sum);
     }
 
@@ -779,7 +779,7 @@ crosscheck_section_reduction (FILE * logFile)
     {
       result++;
       fprintf (logFile,
-	       "Error in Difference with doubles: Result was %E instead of 0.0\n",
+               "Error in Difference with doubles: Result was %E instead of 0.0\n",
 	       ddiff);
     }
 

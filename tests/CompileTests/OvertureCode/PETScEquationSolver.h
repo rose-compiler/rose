@@ -45,7 +45,7 @@ class PETScEquationSolver : public EquationSolver
 		    realCompositeGridFunction & f);
 
   virtual int saveBinaryMatrix(aString filename00,
-			       realCompositeGridFunction & u,
+                               realCompositeGridFunction & u,
 			       realCompositeGridFunction & f);
 
   virtual real sizeOf( FILE *file=NULL ); // return number of bytes allocated 
@@ -68,7 +68,7 @@ class PETScEquationSolver : public EquationSolver
 //  void setSolVectorElement(int,real);
 
   int solvePETSc(realCompositeGridFunction & u,
-		 realCompositeGridFunction & f);
+                 realCompositeGridFunction & f);
 
 
   void initializePetscSLES();
