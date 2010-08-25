@@ -450,7 +450,7 @@ endif
 copyFiles:
 	echo "LANL POP files not copied to ROSE/tests directory..."
 
-EXTRA_DIST = CMakeLists.txt $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) $(F90_INCLUDED_MODULES)
+EXTRA_DIST = CMakeLists.txt mpif.h $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) $(F90_INCLUDED_MODULES)
 
 clean-local:
 	rm -f *.o *.s *.mod *.rmod rose_*.C rose_*.f rose_*.F* rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *_postprocessed.* *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
