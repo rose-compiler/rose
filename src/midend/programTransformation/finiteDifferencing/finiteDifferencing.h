@@ -17,7 +17,7 @@
 //! an arbitrary expression (which will be used as-is) or one of the form (var,
 //! (something, value)) (which will be changed to (var = value)).
 void doFiniteDifferencingOne(SgExpression* e, 
-			     SgBasicBlock* root,
+                             SgBasicBlock* root,
 			     RewriteRule* rules);
 
 //! Propagate definitions of a variable to its uses.
@@ -25,7 +25,7 @@ void doFiniteDifferencingOne(SgExpression* e,
 //!              nothing var depends on is assigned within body
 //! Very simple algorithm designed to only handle simplest cases
 void simpleUndoFiniteDifferencingOne(SgBasicBlock* body,
-				     SgExpression* var);
+                                     SgExpression* var);
 
 //! Move variables declared in a for statement to just outside that statement.
 void moveForDeclaredVariables(SgNode* root);

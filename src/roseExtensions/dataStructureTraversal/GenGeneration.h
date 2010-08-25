@@ -36,22 +36,22 @@ public:
   void writeToFile (string filename);
   void writeStaticGraphToFile (string filename);
   void printCSVariables (list < SgNode * >classFields, string className,
-		    SgClassDeclaration * sageClassDeclaration);
+                         SgClassDeclaration * sageClassDeclaration);
   void printUnionVariables (list < SgNode * >unionFields,
-		       list < SgNode * >classFields,
-		       list < ControlStructureContainer * >pragmaList,
-		       string unionVariableName);
+                            list < SgNode * >classFields,
+                            list < ControlStructureContainer * >pragmaList,
+                            string unionVariableName);
   void printClassNotPrinted (list < SgNode * >classNotPrinted, string name);
   list<SgNode * > queryClassNotPrinted (list < SgNode * >classFields,
-			set < SgNode * >printedClasses,
-			string variablePrefix = "");
+                                        set < SgNode * >printedClasses,
+                                        string variablePrefix = "");
   SgVariableDeclaration*
   queryFindUnionControlVariableDeclaration (SgNode * subTree,
 					    string unionName);
   string generateCodeFindActiveUnionVariableTypeName (SgVariableDeclaration *
-					       controlVariableDeclarataion);
+                                                      controlVariableDeclarataion);
   map<SgTypedefDeclaration*,SgType*> 
-            buildTypedefTranslationTable(SgProject* project);
+    buildTypedefTranslationTable(SgProject* project);
 
   ostringstream* dotout; 
   set <SgNode * > printedClasses;

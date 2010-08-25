@@ -79,8 +79,8 @@ protected:
         std::stringstream s;
         s << "process " << myID() << ": at depth " << depth << ": function " << funcName;
 #if DEBUG_OUTPUT_FUNCNAMES
-	std::cout << " analyzeSubtree of funcDecl: " << funcName << "  id:" << myID()  <<  
-	  "       result:  " << s.str() << std::endl;
+	std::cout << " analyzeSubtree of funcDecl: " << funcName << "  id:" << myID()
+                  << "       result:  " << s.str() << std::endl;
 #endif
         return s.str();
     }

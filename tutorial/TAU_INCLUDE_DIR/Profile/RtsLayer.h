@@ -46,7 +46,7 @@ typedef std::map<std::string, TauGroup_t, std::less<string> > ProfileMap_t;
 class RtsLayer 
 { // Layer for Profiler to interact with the Runtime System
   public:
- 	
+
  	RtsLayer () { }  // defaults
 	~RtsLayer () { } 
 
@@ -98,9 +98,9 @@ class RtsLayer
 	static std::string GetRTTI(const char *name); 
 	inline
 	static const char * CheckNotNull(const char * str) {
-  	  if (str == 0) return "  ";
+          if (str == 0) return "  ";
           else return str;
-	}
+        }
 
 
   	static int 	SetEventCounter(void);

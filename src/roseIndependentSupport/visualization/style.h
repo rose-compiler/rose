@@ -13,7 +13,7 @@ Fl_Text_Display::Style_Table_Entry
 		     { FL_BLUE,       FL_COURIER_BOLD,   14 }  // G - Keywords
 		   };
 const char         *code_keywords[] = {	// List of known C/C++ keywords...
-		     "and",
+                     "and",
 		     "and_eq",
 		     "asm",
 		     "bitand",
@@ -49,7 +49,7 @@ const char         *code_keywords[] = {	// List of known C/C++ keywords...
 		     "xor_eq"
 		   };
 const char         *code_types[] = {	// List of known C/C++ types...
-		     "auto",
+                     "auto",
 		     "bool",
 		     "char",
 		     "class",
@@ -142,8 +142,8 @@ style_parse(const char *text,
       } else if (!last && islower(*text)) {
         // Might be a keyword...
 	for (temp = text, bufptr = buf;
-	     islower(*temp) && bufptr < (buf + sizeof(buf) - 1);
-	     *bufptr++ = *temp++);
+             islower(*temp) && bufptr < (buf + sizeof(buf) - 1);
+             *bufptr++ = *temp++);
 
         if (!islower(*temp)) {
 	  *bufptr = '\0';
@@ -165,9 +165,9 @@ style_parse(const char *text,
 	    last = 1;
 	    continue;
 	  } else if (bsearch(&bufptr, code_keywords,
-	                     sizeof(code_keywords) / sizeof(code_keywords[0]),
+                             sizeof(code_keywords) / sizeof(code_keywords[0]),
 		             sizeof(code_keywords[0]), compare_keywords)) {
-	    while (text < temp) {
+            while (text < temp) {
 	      *style++ = 'G';
 	      text ++;
 	      length --;

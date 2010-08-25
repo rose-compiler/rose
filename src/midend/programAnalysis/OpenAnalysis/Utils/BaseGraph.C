@@ -145,9 +145,9 @@ BaseGraph::BFSIterator::BFSIterator (BaseGraph& g)
 void
 BaseGraph::add (BaseGraph::Edge* e)
   throw (BaseGraph::DuplicateEdge, BaseGraph::EdgeInUse, BaseGraph::EmptyEdge,
-	 /* indirect: from BaseGraph::add(BaseGraph::Node) */
+         /* indirect: from BaseGraph::add(BaseGraph::Node) */
 	 BaseGraph::DuplicateNode, BaseGraph::NodeInUse, BaseGraph::EmptyNode)
-	 
+
 {
   if (e == 0)
     throw EmptyEdge();

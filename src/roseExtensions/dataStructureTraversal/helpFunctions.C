@@ -23,11 +23,11 @@ leftTrim (string str)
       // Iterate from the far left of string until we
       // don't have any more whitespace...
       for (j = 0;
-	   (j != s.size ()) && (whitespace.find (s.at (j)) != string::npos);
-	   ++j)
-	{
-	  //find the first none white space character
-	}
+           (j != s.size ()) && (whitespace.find (s.at (j)) != string::npos);
+           ++j)
+        {
+          //find the first none white space character
+        }
 
       // Get the substring from the first non-whitespace
       // character to the end of the string...
@@ -62,14 +62,14 @@ rightTrim (string str)
       // Iterate from the far right of string until we
       // don't have any more whitespace...
       for (j = s.size () - 1;
-	   (j != 0) && (whitespace.find (s.at (j)) != string::npos); --j)
-	{
-	  //find the first none white space character
+           (j != 0) && (whitespace.find (s.at (j)) != string::npos); --j)
+        {
+          //find the first none white space character
 #ifdef DEBUG_CGRAPHPP
-	  cout << s.substr (0, j) << endl;
+          cout << s.substr (0, j) << endl;
 #endif
-	  
-	}
+          
+        }
 
 
 
@@ -146,14 +146,14 @@ findScopes (SgNode * astNode)
       //Iterate over the list of files to find all Global Scopes
       SgNodePtrVector globalScopes;
       for (unsigned int i = 0; i < sageFilePtrList.size (); i += 1)
-	{
-	  const SgFile *sageFile = isSgFile (sageFilePtrList[i]);
-	  ROSE_ASSERT (sageFile != NULL);
-	  SgGlobal *sageGlobal = sageFile->get_root ();
-	  ROSE_ASSERT (sageGlobal != NULL);
+        {
+          const SgFile *sageFile = isSgFile (sageFilePtrList[i]);
+          ROSE_ASSERT (sageFile != NULL);
+          SgGlobal *sageGlobal = sageFile->get_root ();
+          ROSE_ASSERT (sageGlobal != NULL);
 
-	  returnVector.push_back (sageGlobal);
-	}
+          returnVector.push_back (sageGlobal);
+        }
     }
 
 
@@ -161,7 +161,7 @@ findScopes (SgNode * astNode)
 };
 
 list < SgNode * >queryNodeClassDeclarationFromTypedefName (SgNode * astNode,
-							   SgNode * nameNode)
+                                                           SgNode * nameNode)
 {
   NodeQuerySynthesizedAttributeType returnList;
   ROSE_ASSERT (nameNode != NULL);
@@ -184,16 +184,16 @@ list < SgNode * >queryNodeClassDeclarationFromTypedefName (SgNode * astNode,
       cout << TransformationSupport::getTypeName (isSgType (astNode)) << endl;
 #endif
       if (TransformationSupport::getTypeName (isSgType (astNode)) ==
-	  nameToMatch)
-	{
-	  returnList.push_back (astNode);
-	}
+          nameToMatch)
+        {
+          returnList.push_back (astNode);
+        }
 /*
-	  if(nameToMatch == name){
-		  SgClassDeclaration *sageClassDeclaration = isSgClassDeclaration (sageTypedefType->get_declaration());
-		  ROSE_ASSERT( sageClassDeclaration != NULL );
-		  returnList.push_back(sageClassDeclaration);
-	  }*/
+          if(nameToMatch == name){
+                  SgClassDeclaration *sageClassDeclaration = isSgClassDeclaration (sageTypedefType->get_declaration());
+                  ROSE_ASSERT( sageClassDeclaration != NULL );
+                  returnList.push_back(sageClassDeclaration);
+          }*/
     }
 
 
@@ -227,29 +227,29 @@ findTypedefFromTypeName (SgNodePtrVector nodeVector, const string sageName)
       ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
 
       typedefDeclarationList =
-	NodeQuery::querySubTree (*i,
-				 NodeQuery::TypedefDeclarations,
-				 NodeQuery::ChildrenOnly);
+        NodeQuery::querySubTree (*i,
+                                 NodeQuery::TypedefDeclarations,
+                                 NodeQuery::ChildrenOnly);
 
       list < SgNode * >::iterator j;
 
       for (j = typedefDeclarationList.begin ();
-	   j != typedefDeclarationList.end (); ++j)
-	{
-	  // Take an action on each typedef declarations: generate a list of variable declarations
-	  ROSE_ASSERT ((*j) != NULL);
+           j != typedefDeclarationList.end (); ++j)
+        {
+          // Take an action on each typedef declarations: generate a list of variable declarations
+          ROSE_ASSERT ((*j) != NULL);
 
-	  // list<SgNode*> variableDeclarationList = NodeQuery::getTypeDefDeclarations(astNode,NodeQuery::ChildrenOnly);
+          // list<SgNode*> variableDeclarationList = NodeQuery::getTypeDefDeclarations(astNode,NodeQuery::ChildrenOnly);
 
-	  SgTypedefDeclaration *typedefDeclaration =
-	    isSgTypedefDeclaration (*j);
-	  ROSE_ASSERT (typedefDeclaration != NULL);
+          SgTypedefDeclaration *typedefDeclaration =
+            isSgTypedefDeclaration (*j);
+          ROSE_ASSERT (typedefDeclaration != NULL);
 
-	  string typeName = typedefDeclaration->get_name ().str ();
+          string typeName = typedefDeclaration->get_name ().str ();
 
-	  if (typeName == sageName)
-	    return typedefDeclaration;
-	}
+          if (typeName == sageName)
+            return typedefDeclaration;
+        }
     }
 
   return NULL;
@@ -266,7 +266,7 @@ findTypedefFromTypeName (SgNodePtrVector nodeVector, const string sageName)
  */
 list <
   SgNode * >findClassDeclarationsFromTypeName (SgNodePtrVector nodeVector,
-					       const string sageName)
+                                               const string sageName)
 {
   ROSE_ASSERT (sageName.length () > 0);
 
@@ -315,22 +315,22 @@ list <
  // if (tempNodeList.empty () == true)
     for (nodeIterator i = nodeVector.begin (); i != nodeVector.end (); ++i)
       {
-	ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
-	tempNodeList =
-	  NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				   NodeQuery::ClassDeclarationsFromTypeName,
-				   NodeQuery::ChildrenOnly);
-	foundClassDeclarations.merge (tempNodeList);
+        ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
+        tempNodeList =
+          NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
+                                   NodeQuery::ClassDeclarationsFromTypeName,
+                                   NodeQuery::ChildrenOnly);
+        foundClassDeclarations.merge (tempNodeList);
 
-	/*
-	   if (tempNodeList.empty () != true)
-	   {
-	   ROSE_ASSERT (tempNodeList.size () < 2);
-	   returnNode = isSgNode (*tempNodeList.begin ());
-	   ROSE_ASSERT (returnNode != NULL);
-	   foundClassDeclarations.push_back(returnNode);
-	   }
-	 */
+        /*
+           if (tempNodeList.empty () != true)
+           {
+           ROSE_ASSERT (tempNodeList.size () < 2);
+           returnNode = isSgNode (*tempNodeList.begin ());
+           ROSE_ASSERT (returnNode != NULL);
+           foundClassDeclarations.push_back(returnNode);
+           }
+         */
       }
 
   return foundClassDeclarations;
@@ -356,26 +356,26 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
   if (isSgTypedefType (sageType) != NULL)
     {
       for (nodeIterator i = nodeVector.begin (); i != nodeVector.end (); ++i)
-	{
-	  ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
+        {
+          ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
 
-	  tempNodeList =
-	    NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				     queryNodeClassDeclarationFromTypedefName,
-				     NodeQuery::ChildrenOnly);
-	  if (tempNodeList.empty () != true)
-	    {
-	      ROSE_ASSERT (tempNodeList.size () < 2);
-	      returnNode = isSgNode (*tempNodeList.begin ());
-	      ROSE_ASSERT (returnNode != NULL);
-	    }
-	}
+          tempNodeList =
+            NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
+                                     queryNodeClassDeclarationFromTypedefName,
+                                     NodeQuery::ChildrenOnly);
+          if (tempNodeList.empty () != true)
+            {
+              ROSE_ASSERT (tempNodeList.size () < 2);
+              returnNode = isSgNode (*tempNodeList.begin ());
+              ROSE_ASSERT (returnNode != NULL);
+            }
+        }
 
 
       if (tempNodeList.empty () == true)
-	cerr << "the tempNodeList is empty.\n";
+        cerr << "the tempNodeList is empty.\n";
       else
-	cerr << "the tempNodeList is not empty.\n";
+        cerr << "the tempNodeList is not empty.\n";
     }
   else
     {
@@ -384,22 +384,22 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
        * 
        */
       if (tempNodeList.empty () == true)
-	for (nodeIterator i = nodeVector.begin (); i != nodeVector.end ();
-	     ++i)
-	  {
-	    ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
-	    tempNodeList =
-	      NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				       NodeQuery::ClassDeclarationFromName,
-				       NodeQuery::ChildrenOnly);
+        for (nodeIterator i = nodeVector.begin (); i != nodeVector.end ();
+             ++i)
+          {
+            ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
+            tempNodeList =
+              NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
+                                       NodeQuery::ClassDeclarationFromName,
+                                       NodeQuery::ChildrenOnly);
 
-	    if (tempNodeList.empty () != true)
-	      {
-		ROSE_ASSERT (tempNodeList.size () < 2);
-		returnNode = isSgNode (*tempNodeList.begin ());
-		ROSE_ASSERT (returnNode != NULL);
-	      }
-	  }
+            if (tempNodeList.empty () != true)
+              {
+                ROSE_ASSERT (tempNodeList.size () < 2);
+                returnNode = isSgNode (*tempNodeList.begin ());
+                ROSE_ASSERT (returnNode != NULL);
+              }
+          }
     }
 
   return returnNode;

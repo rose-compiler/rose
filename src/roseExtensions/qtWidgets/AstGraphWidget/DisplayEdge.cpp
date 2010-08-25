@@ -15,7 +15,7 @@ static double TwoPi = 2.0 * Pi;
 
 DisplayEdge::DisplayEdge(DisplayNode * from, DisplayNode * to)
 	: source(from),
-	  dest(to),
+          dest(to),
 	  paintMode(BEZIER_CUBIC),
 	  arrowSize(10),
 	  penWidth(2),

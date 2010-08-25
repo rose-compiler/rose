@@ -17,12 +17,12 @@
 #define _QPANEL_H_
 
 /*!
-	\file qpanel.h
-	\brief Definition of the QPanel class
+        \file qpanel.h
+        \brief Definition of the QPanel class
 
-	\see QPanel
+        \see QPanel
 
-	\defgroup widgets
+        \defgroup widgets
 */
 
 #include "qce-config.h"
@@ -40,93 +40,93 @@ class QPanelCreator;
 
 class QCE_EXPORT QPanel : public QWidget
 {
-	Q_OBJECT
+        Q_OBJECT
 
-	public:
-		QPanel(QWidget *p = 0);
-		virtual ~QPanel();
+        public:
+                QPanel(QWidget *p = 0);
+                virtual ~QPanel();
 
-		virtual QString id() const = 0;
-		virtual QString type() const = 0;
+                virtual QString id() const = 0;
+                virtual QString type() const = 0;
 
-		QEditor* editor();
-		void attach(QEditor *e);
+                QEditor* editor();
+                void attach(QEditor *e);
 
-		virtual bool shallShow() const;
+                virtual bool shallShow() const;
 
-		bool defaultVisibility() const;
-		void setDefaultVisibility(bool on);
+                bool defaultVisibility() const;
+                void setDefaultVisibility(bool on);
 
-		static QPanel* panel(const QString& id, QWidget *p = 0);
-		static void registerCreator(QPanelCreator *c);
+                static QPanel* panel(const QString& id, QWidget *p = 0);
+                static void registerCreator(QPanelCreator *c);
 
-	protected:
-		virtual bool forward(QMouseEvent *e);
+        protected:
+                virtual bool forward(QMouseEvent *e);
 
-		virtual void editorChange(QEditor *e);
+                virtual void editorChange(QEditor *e);
 
-		virtual void mouseMoveEvent(QMouseEvent *e);
-		virtual void mousePressEvent(QMouseEvent *e);
-		virtual void mouseReleaseEvent(QMouseEvent *e);
+                virtual void mouseMoveEvent(QMouseEvent *e);
+                virtual void mousePressEvent(QMouseEvent *e);
+                virtual void mouseReleaseEvent(QMouseEvent *e);
 
-		virtual void showEvent(QShowEvent *e);
-		virtual void hideEvent(QHideEvent *e);
-		virtual void paintEvent(QPaintEvent *e);
-		virtual void paint(QPainter *p, QEditor *e);
+                virtual void showEvent(QShowEvent *e);
+                virtual void hideEvent(QHideEvent *e);
+                virtual void paintEvent(QPaintEvent *e);
+                virtual void paint(QPainter *p, QEditor *e);
 
-	private:
-		QPointer<QEditor> m_editor;
-		bool m_defaultVisibility, m_shownOnce;
-		static QHash<QString, QPanelCreator*>& creators();
+        private:
+                QPointer<QEditor> m_editor;
+                bool m_defaultVisibility, m_shownOnce;
+                static QHash<QString, QPanelCreator*>& creators();
 };
 
 class QPanelCreator
 {
-	public:
-		virtual ~QPanelCreator() {}
-		virtual QString id() const = 0;
-		virtual QPanel* panel(QWidget *p) = 0;
+        public:
+                virtual ~QPanelCreator() {}
+                virtual QString id() const = 0;
+                virtual QPanel* panel(QWidget *p) = 0;
 };
 
-#define Q_PANEL(T, SID)									\
-	public:												\
-	class Creator : public QPanelCreator				\
-	{ 													\
-		public: 										\
-			virtual QString id() const					\
-			{											\
-				return SID;								\
-			}											\
-														\
-			virtual QPanel* panel(QWidget *p)			\
-			{											\
-				return new T(p);						\
-			}											\
-														\
-			static QPanelCreator* instance()			\
-			{											\
-				static Creator global;					\
-				return &global;							\
-			}											\
-														\
-			Creator() {}								\
-			virtual ~Creator() {}						\
-	};													\
-														\
-	QString id() const { return SID; }					\
-														\
-	static void _register()								\
-	{													\
-		QPanel::registerCreator(Creator::instance());	\
-	}													\
+#define Q_PANEL(T, SID)                                                                 \
+        public:                                                                                         \
+        class Creator : public QPanelCreator                            \
+        {                                                                                                       \
+                public:                                                                                 \
+                        virtual QString id() const                                      \
+                        {                                                                                       \
+                                return SID;                                                             \
+                        }                                                                                       \
+                                                                                                                \
+                        virtual QPanel* panel(QWidget *p)                       \
+                        {                                                                                       \
+                                return new T(p);                                                \
+                        }                                                                                       \
+                                                                                                                \
+                        static QPanelCreator* instance()                        \
+                        {                                                                                       \
+                                static Creator global;                                  \
+                                return &global;                                                 \
+                        }                                                                                       \
+                                                                                                                \
+                        Creator() {}                                                            \
+                        virtual ~Creator() {}                                           \
+        };                                                                                                      \
+                                                                                                                \
+        QString id() const { return SID; }                                      \
+                                                                                                                \
+        static void _register()                                                         \
+        {                                                                                                       \
+                QPanel::registerCreator(Creator::instance());   \
+        }                                                                                                       \
 
 
-#define Q_PANEL_ID(T)									\
-	T::Creator::instance()->id()						\
+#define Q_PANEL_ID(T)                                                                   \
+        T::Creator::instance()->id()                                            \
 
 
-#define Q_CREATE_PANEL(T)								\
-	QPanel::panel(Q_PANEL_ID(T))						\
+#define Q_CREATE_PANEL(T)                                                               \
+        QPanel::panel(Q_PANEL_ID(T))                                            \
 
 
 #endif // _QPANEL_H_

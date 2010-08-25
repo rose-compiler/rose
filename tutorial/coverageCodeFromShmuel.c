@@ -78,8 +78,8 @@ static void reportTask(const char *str) {
 
 static unsigned int hash_value(const char *str)
 {
-	unsigned int hash_value=0;
-	for(;*str;str++)
+    unsigned int hash_value=0;
+    for(;*str;str++)
     {
 		hash_value+= *str;
     }

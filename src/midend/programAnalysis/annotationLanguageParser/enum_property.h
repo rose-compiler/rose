@@ -55,7 +55,7 @@ public:
   /** @brief Create a new property value */
 
   enumValueAnn(const parserID * name,
-		   enumvalue_list * more_specific);
+               enumvalue_list * more_specific);
 
   // Fields
 
@@ -364,7 +364,7 @@ public:
    * the value of the first parameter. */
 
   void meet_with(enumvalue_set & first,
-		 const enumvalue_set & second);
+                 const enumvalue_set & second);
 
   /** @brief At-least function
    *
@@ -379,7 +379,7 @@ public:
    * Return true if left <= right ( left ^ right == left) */
 
   bool at_most(enumValueAnn * left,
-	       enumValueAnn * right);
+               enumValueAnn * right);
 
   /** @brief Look up a sub-block
    *
@@ -532,7 +532,7 @@ public:
    * for weakly updated blocks. */
 
   enumvalue_set construct_weak_now_value(Location * where,
-					 pointerValue & variable, std::string & name);
+                                         pointerValue & variable, std::string & name);
 
   //@}
 
@@ -544,7 +544,7 @@ public:
 
 #ifdef __MEMORYBLOCK
   enumvalue_set compute_next(Location * where,
-			     ruleAnn * rule,
+                             ruleAnn * rule,
 			     exprAnn * expr,
 			     pointerValue & right,
 			     std::string & right_name,
@@ -583,7 +583,7 @@ public:
 
 #ifdef __MEMORYBLOCK
   void apply_merge(Location * where,
-		   memoryBlock * property_block, memoryuse_list & phi_uses,
+                   memoryBlock * property_block, memoryuse_list & phi_uses,
 		   memoryblock_set & changes);
 #endif
 
@@ -608,7 +608,7 @@ public:
 
 #ifdef __MEMORYBLOCK
   void self_assignment(Location * source,
-		       Location * target,
+                       Location * target,
 		       memoryBlock * property_block, 
 		       memoryblock_set & changes,
            bool is_input);
@@ -621,7 +621,7 @@ public:
 
 #ifdef __MEMORYBLOCK
   void conservative_procedure_call(stmtLocation * current,
-				   pointerValue & reachable,
+                                   pointerValue & reachable,
 				   memoryblock_set & changes);
 #endif
 
@@ -740,7 +740,7 @@ private:
   /** @brief Number values */
 
   void number_values(enumValueAnn * prop,
-		     int & cur_index, int height, int & max_height);
+                     int & cur_index, int height, int & max_height);
 
 
   /** @brief Track destructive assignments
@@ -748,7 +748,7 @@ private:
 
 #ifdef __MEMORYBLOCK
   void track_destructive_assignments(Analyzer * analyzer,
-				     Location * where,
+                                     Location * where,
 				     memoryBlock * block,
 				     bool disallow_context_sensitivity,
 				     block_loc_set & already_seen,
@@ -772,7 +772,7 @@ private:
 
 #ifdef __MEMORYBLOCK
   void record_tested_objects(Location * where,
-			     pointerValue & ptr,
+                             pointerValue & ptr,
 			     enumvalue_set & value_set,
 			     memoryblock_set & complicit_property_blocks);
 #endif
@@ -828,7 +828,7 @@ private:
 
 #ifdef __MEMORYBLOCK
   bool validate_pointer_cs(memoryBlock * block,
-			   const callsite_objects_map & assignments,
+                           const callsite_objects_map & assignments,
                            procedureInfo *procedure, // TB
 			   std::string & indent);
 #endif
@@ -839,7 +839,7 @@ private:
 
 #ifdef __MEMORYBLOCK
   bool validate_pointer_fs(memoryBlock * block,
-			   stmtLocation * where,
+                           stmtLocation * where,
 			   std::string & indent);
 #endif
   /** @brief Is location reachable?
@@ -857,7 +857,7 @@ private:
   
 #ifdef __MEMORYBLOCK
   enumvalue_set reachable_values(stmtLocation * where,
-				 const memoryblock_set & blocks,
+                                 const memoryblock_set & blocks,
                                  procedureInfo *callee=NULL);
 #endif
   /** @brief Make context sensitive

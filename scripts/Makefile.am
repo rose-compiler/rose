@@ -1,16 +1,31 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # copy the tools (scripts only) from the source tree to the source destination in the distribution
-distributedScripts = \
-     configure_with_SQL            runscript              \
-     dotgen                                               \
-     dotgen2                       lsdot                  \
-     check-dist-file dotgenLetter  generateDirectoryGraph \
-     libtoolcp                     buildExampleRoseWorkspaceScript.sh \
-     dotgenLetterPDF               dotgenLetterPNG \
-     nmiBuildAndTestFarm           sample_binary_rules.pl \
-     bincompat-sig Error.pm Git.pm checkForInvalidSourceFiles.sh checkForInvalidHeaders.sh \
-     autoconf-filter.pl quiet-mode
+distributedScripts =				\
+     autoconf-filter.pl quiet-mode		\
+     bincompat-sig Error.pm Git.pm		\
+     buildExampleRoseWorkspaceScript.sh		\
+     check-dist-file dotgenLetter		\
+     configure_with_SQL				\
+     dotgen					\
+     dotgen2					\
+     dotgenLetterPDF				\
+     dotgenLetterPNG				\
+     generateDirectoryGraph			\
+     libtoolcp					\
+     lsdot					\
+     nmiBuildAndTestFarm			\
+     policies-checker.sh			\
+     policies/CaseInsensitiveFileNames.pl	\
+     policies/EightColumnTabstops.pl		\
+     policies/FileLister.pm                     \
+     policies/NoExceedinglyLongLines.pl		\
+     policies/NoRoseIncludes.pl			\
+     policies/NoUsingInHeaders.pl		\
+     policies/UniqueHeaderNames.pl		\
+     policies/UnixLineTermination.pl		\
+     runscript					\
+     sample_binary_rules.pl
 
 # scripts put into the distribution
 EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory hudson

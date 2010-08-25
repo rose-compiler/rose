@@ -278,7 +278,7 @@ namespace Trees
      *  not).
      */
     typedef typename Types::Select<isConst,
-				   const TreeType*,
+                                   const TreeType*,
 				   TreeType*>::Result
     TreeParamPtr_t;
 
@@ -294,7 +294,7 @@ namespace Trees
      *  Define child node iterator consistent with TreeParamPtr_t.
      */
     typedef typename Types::Select<isConst,
-				   typename TreeType::const_iterator,
+                                   typename TreeType::const_iterator,
 				   typename TreeType::iterator>::Result
     ChildIter_t;
 

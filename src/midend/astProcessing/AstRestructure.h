@@ -110,11 +110,11 @@ class AstRestructure
   /*
   RestructureInhType
     evaluateRewriteInheritedAttribute (SgNode* astNode,
-				       RestructureInhType inheritedValue );
+                                       RestructureInhType inheritedValue );
   RestructureSynType
     evaluateRewriteSynthesizedAttribute (SgNode* astNode,
-					 RestructureInhType inheritedValue,
-					 SubTreeSynthesizedAttributes attributeList );
+                                         RestructureInhType inheritedValue,
+                                         SubTreeSynthesizedAttributes attributeList );
   */
 };
 

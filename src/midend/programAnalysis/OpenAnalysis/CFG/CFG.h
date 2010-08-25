@@ -288,7 +288,7 @@ private:
 			    NodeLabelList* return_nodes, NodeLabelList* continue_nodes)
     throw (Unexpected_Break, Unexpected_Return, Unexpected_Continue);
   IRStmtType build_CFG_loop (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
-				 NodeLabelList* return_nodes);
+                             NodeLabelList* return_nodes);
   IRStmtType build_CFG_end_tested_loop (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
 				        NodeLabelList* return_nodes);
   IRStmtType build_CFG_twoway_branch (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
