@@ -213,7 +213,7 @@ private:
         send(cmd);
 	recv(&result, &result_nalloc);
 	if (sizeptr)
-	  *sizeptr = status;
+            *sizeptr = status;
 	return result;
     }
 
@@ -222,7 +222,7 @@ private:
         send(cmd, arg1);
 	recv(&result, &result_nalloc);
 	if (sizeptr)
-	  *sizeptr = status;
+            *sizeptr = status;
 	return result;
     }
 
@@ -231,7 +231,7 @@ private:
         send(cmd, arg1, arg2);
 	recv(&result, &result_nalloc);
 	if (sizeptr)
-	  *sizeptr = status;
+            *sizeptr = status;
 	return result;
     }
 
