@@ -3133,12 +3133,35 @@ SgTypeLong * SageBuilder::buildLongType()
   ROSE_ASSERT(result); 
   return result;
 }
+
 SgTypeString * SageBuilder::buildStringType() 
-{ 
-  SgTypeString * result =SgTypeString::createType(); 
-  ROSE_ASSERT(result); 
-  return result;
-}
+   {
+  // DQ (8/17/2010): This function needs to use a different API to handle a literal 
+  // value for the string size (typical) or an expression for the string size (rare).
+  // For now we will make it an error to call this function.
+
+  // SgTypeString * result =SgTypeString::createType(); 
+     SgTypeString * result = NULL;
+     ROSE_ASSERT(result != NULL); 
+     return result;
+   }
+
+SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral ) 
+   {
+  // DQ (8/21/2010): This is a new API for this function.  This type is specific to Fortran use,
+  // in C/C++ a string is just an array of char. We could have a consistant handling between
+  // C/C++ and Fortrna, but we have just corrected the implementation in Fortran to use this IR 
+  // node and we would have to add such support to C/C++.  The current implementation reflects 
+  // the grammar of the two languages.
+
+  // This function needs to use a different API to handle a literal 
+  // value for the string size (typical) or an expression for the string size (rare).
+
+     SgTypeString* result = SgTypeString::createType(stringLengthExpression,stringLengthLiteral); 
+     ROSE_ASSERT(result != NULL); 
+     return result;
+   }
+
 SgTypeInt * SageBuilder::buildIntType() 
 { 
   SgTypeInt * result =SgTypeInt::createType(); 
@@ -3514,10 +3537,10 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
 
        // DQ (1/25/2009): The scope is not the same as the parent, since the scope is logical, and the parent is structural (note that topScopeStack() is structural).
        // TPS (09/18/2009) added a condition to be able to build this properly
-	  if (scope==NULL)
-	    nondefdecl->set_parent(topScopeStack());
-	  else
-	    nondefdecl->set_parent(scope);
+          if (scope==NULL)
+            nondefdecl->set_parent(topScopeStack());
+          else
+            nondefdecl->set_parent(scope);
         }
 
   // The support for SgEnumDeclaration handles the type, but why not for SgClassDeclaration?

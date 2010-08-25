@@ -160,13 +160,13 @@ SgAsmElfSectionTable::parse()
 	    bool needRelLinked = false;
 	    if((entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_REL ||
 		entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_RELA) 
-	       && entry->get_sh_info() > 0){
+               && entry->get_sh_info() > 0){
 
-	      ROSE_ASSERT(entry->get_sh_info() < entries.size());
+              ROSE_ASSERT(entry->get_sh_info() < entries.size());
 	      // relocation sections have a second linked section stored in sh_info
 	      needRelLinked = true;
 	      relLinked = is_parsed[entry->get_sh_info()];
-	    }
+            }
 	       
             if (is_parsed[i]) {
                 /* This section has already been parsed. */
@@ -427,14 +427,14 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
         set_sh_addr(section->get_mapped_preferred_rva());
         set_sh_addralign(section->get_mapped_alignment());
         if (section->get_mapped_wperm()) {
-	     p_sh_flags |= SHF_WRITE;
+            p_sh_flags |= SHF_WRITE;
         } else {
-  	     p_sh_flags &= ~SHF_WRITE;
+            p_sh_flags &= ~SHF_WRITE;
         }
         if (section->get_mapped_xperm()) {
-	     p_sh_flags |=  SHF_EXECINSTR;
+            p_sh_flags |=  SHF_EXECINSTR;
         } else {
-	     p_sh_flags &= ~SHF_EXECINSTR;
+            p_sh_flags &= ~SHF_EXECINSTR;
         }
     } else {
         set_sh_addr(0);
@@ -473,19 +473,19 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
       case SHT_GNU_verneed: return "SHT_GNU_verneed";
       case SHT_GNU_versym: return "SHT_GNU_versym";
       default:{
-	char buf[128];
+        char buf[128];
 	if(t>=SHT_LOOS && t <= SHT_HIOS) {
-	  snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
-	  return buf;
+            snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
+            return buf;
 	} else if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
-	  snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
-	  return buf;
+            snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
+            return buf;
 	} else if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
-	  snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
-	  return buf;
+            snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
+            return buf;
 	} else {
-	  snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
-	  return buf;
+            snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
+            return buf;
         }
       }
     };
@@ -501,7 +501,7 @@ SgAsmElfSectionTableEntry::to_string(SectionFlags val)
       str += ' ';
     if(val & (1 << i)){
       switch(1 << i){
-	case SHF_NULL:      str += "NULL";break;
+        case SHF_NULL:      str += "NULL";break;
 	case SHF_WRITE:     str += "WRITE";break;
 	case SHF_ALLOC:     str += "ALLOC";break;
 	case SHF_EXECINSTR: str +=  "CODE";break;
@@ -626,7 +626,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
         ROSE_ASSERT(section!=NULL);
         SgAsmElfSectionTableEntry *shdr = section->get_section_entry();
         ROSE_ASSERT(shdr!=NULL);
-        ROSE_ASSERT(shdr->get_sh_offset()==section->get_offset()); /*section table entry should have been updated in reallocate()*/
+        ROSE_ASSERT(shdr->get_sh_offset()==section->get_offset());/*section table entry should have been updated in reallocate()*/
 
         int id = section->get_id();
         ROSE_ASSERT(id>=0 && (size_t)id<nentries);

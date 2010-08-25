@@ -42,8 +42,8 @@ class QDESIGNER_WIDGET_EXPORT AstBrowserWidget : public RoseTreeView
                 { return false; }
 
 		/** Filters the view by using an AstFilterInterface
-		 *   @param newFilter the filter, for resetting (show all nodes) use NULL */
-		virtual void setFilter(AstFilterInterface * newFilter);
+                 *   @param newFilter the filter, for resetting (show all nodes) use NULL */
+                virtual void setFilter(AstFilterInterface * newFilter);
 
 		/// Convenience function which creates an AstFilterFileById and filters the view with it
 		virtual void setFileFilter(int fileId);

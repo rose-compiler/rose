@@ -17,7 +17,7 @@ extern "C" {
 int
 main ()
    {
-	   int x;
+           int x;
    }
 
 

@@ -23,9 +23,9 @@ class PropertyTreeModel::ItemTreeHeaderNode : public ItemTreeNode
 
 		int getSectionId() const { return sectionId; }
 
-	    virtual QStringList sectionHeader() const;
+	        virtual QStringList sectionHeader() const;
 
-	    bool isFirstColumnSpanned () const    { return true;}
+	        bool isFirstColumnSpanned () const    { return true;}
 	protected:
 		QString title;
 		int sectionId;
@@ -34,7 +34,7 @@ class PropertyTreeModel::ItemTreeHeaderNode : public ItemTreeNode
 
 PropertyTreeModel::ItemTreeHeaderNode::ItemTreeHeaderNode(const QString & t, int sId)
 	: title(t),
-	  sectionId(sId)
+          sectionId(sId)
 {}
 
 QVariant PropertyTreeModel::ItemTreeHeaderNode::data(int role,int column) const
@@ -160,8 +160,8 @@ QModelIndex PropertyTreeModel::addEntryToSection(int sectionId, const QString & 
 }
 
 QModelIndex PropertyTreeModel::addEntry(const QModelIndex & par,
-									    const QString & prop,
-										const QVariant & val)
+                                        const QString & prop,
+                                        const QVariant & val)
 {
 	int curRowCount = rowCount(par);
 

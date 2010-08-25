@@ -752,8 +752,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("operand type not implemented", insn);
     }
     abort();
- /* avoid MSCV warning by adding return stmt */
-	return false;
+    /* avoid MSCV warning by adding return stmt */
+    return false;
 }
 
 void
@@ -1765,7 +1765,7 @@ AssemblerX86::assembleProgram(const std::string &_source)
     try {
         /* Write source code to a temporary file */
         for (int i=0; i<10 && !src_file_name[0]; i++) {
-            if (!tmpnam_r(src_file_name))
+            if (!tmpnam(src_file_name))
                 throw Exception("tmpnam failed");
             fd = open(src_file_name, O_CREAT|O_EXCL|O_RDWR, 0666);
             if (fd<0) {

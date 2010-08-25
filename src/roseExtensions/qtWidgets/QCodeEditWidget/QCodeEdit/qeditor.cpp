@@ -378,9 +378,9 @@ void QEditor::setDefaultCodec(QTextCodec *c, int update)
 */
 QEditor::QEditor(QWidget *p)
  : QAbstractScrollArea(p),
-	pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
-	m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
-	m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
+   pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
+   m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
+   m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
 {
 	m_editors << this;
 	
@@ -395,9 +395,9 @@ QEditor::QEditor(QWidget *p)
 */
 QEditor::QEditor(bool actions, QWidget *p)
  : QAbstractScrollArea(p),
-	pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
-	m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
-	m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
+   pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
+   m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
+   m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
 {
 	m_editors << this;
 	
@@ -414,9 +414,9 @@ QEditor::QEditor(bool actions, QWidget *p)
 */
 QEditor::QEditor(const QString& s, QWidget *p)
  : QAbstractScrollArea(p),
-	pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
-	m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
-	m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
+   pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
+   m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
+   m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
 {
 	m_editors << this;
 	
@@ -435,9 +435,9 @@ QEditor::QEditor(const QString& s, QWidget *p)
 */
 QEditor::QEditor(const QString& s, bool actions, QWidget *p)
  : QAbstractScrollArea(p),
-	pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
-	m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
-	m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
+   pMenu(0), m_lineEndingsMenu(0), m_lineEndingsActions(0),
+   m_bindingsMenu(0), aDefaultBinding(0), m_bindingsActions(0),
+   m_doc(0), m_codec(m_defaultCodec), m_binding(m_defaultBinding), m_definition(0), m_curPlaceHolder(-1), m_state(defaultFlags())
 {
 	m_editors << this;
 	
@@ -3609,7 +3609,7 @@ bool QEditor::moveKeyEvent(QDocumentCursor& cursor, QKeyEvent *e, bool *leave)
                         if (!block.next().isValid()
                             && line.isValid()
                             && line.lineNumber() ==
-                            	block.layout()->lineCount() - 1)
+                                block.layout()->lineCount() - 1)
                             op = QDocumentCursor::End;
                     }
                     */
@@ -3647,7 +3647,7 @@ bool QEditor::moveKeyEvent(QDocumentCursor& cursor, QKeyEvent *e, bool *leave)
             break;
         case Qt::Key_Home:
             if (e->modifiers() & (Qt::ControlModifier |
-            	Qt::MetaModifier | Qt::AltModifier) )
+                                  Qt::MetaModifier | Qt::AltModifier) )
             {
                 QApplication::beep();
                 if ( leave ) *leave = false;
@@ -3658,7 +3658,7 @@ bool QEditor::moveKeyEvent(QDocumentCursor& cursor, QKeyEvent *e, bool *leave)
             break;
         case Qt::Key_End:
             if (e->modifiers() & (Qt::ControlModifier |
-            	Qt::MetaModifier | Qt::AltModifier))
+                                  Qt::MetaModifier | Qt::AltModifier))
             {
                 QApplication::beep();
                 if ( leave ) *leave = false;

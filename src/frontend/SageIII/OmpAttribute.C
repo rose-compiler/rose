@@ -722,12 +722,12 @@ namespace OmpSupport{
 #if 0  // clauses are handled separately      
       // optional nowait for fortran: end do, end sections, end workshare, end single
       else if ((omp_type == e_for) 
-	     || (omp_type == e_sections)
-	     || (omp_type == e_single)
-	     || (omp_type == e_end_do)
-	     ||(omp_type == e_end_sections)
-	     ||(omp_type == e_end_workshare
-	     ||(omp_type == e_end_single)))
+               || (omp_type == e_sections)
+               || (omp_type == e_single)
+               || (omp_type == e_end_do)
+               ||(omp_type == e_end_sections)
+               ||(omp_type == e_end_workshare
+                  ||(omp_type == e_end_single)))
       {
         if (hasClause(e_nowait)) 
 	  result += " "+ OmpSupport::toString(e_nowait);
