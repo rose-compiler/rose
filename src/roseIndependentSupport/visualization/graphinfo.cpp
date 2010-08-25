@@ -297,43 +297,43 @@ void GraphInfo::showInfo(Agnode_t *node)
 			}
 			valueCount++;
 		}
-		//cerr << " FLINE " << line<<":"<< column << " to "<< endline<<":"<< endcolumn<< endl; // debug
+                //cerr << " FLINE " << line<<":"<< column << " to "<< endline<<":"<< endcolumn<< endl; // debug
 
-		/*if(ok) {
-			lastpos++;
-			pos = filesource.find( ':', lastpos);
-			if(pos != string::npos) {
-				filecolumn = filesource.substr(lastpos, pos-lastpos );
-				lastpos = pos;
-			} else {
-				filecolumn = filesource.substr(lastpos, filesource.length() );
-				ok = false;
-			}
-				//line = atoi( fileline.c_str() );
-			istringstream ist(filecolumn);
-			ist >> std::dec >> column;
-			if( ist.rdstate() != istringstream::goodbit ) column = -2;
-			cerr << " FCOLM " << filecolumn<<" : "<< column<<" : "<< column << endl; // debug
-		}
+                /*if(ok) {
+                        lastpos++;
+                        pos = filesource.find( ':', lastpos);
+                        if(pos != string::npos) {
+                                filecolumn = filesource.substr(lastpos, pos-lastpos );
+                                lastpos = pos;
+                        } else {
+                                filecolumn = filesource.substr(lastpos, filesource.length() );
+                                ok = false;
+                        }
+                                //line = atoi( fileline.c_str() );
+                        istringstream ist(filecolumn);
+                        ist >> std::dec >> column;
+                        if( ist.rdstate() != istringstream::goodbit ) column = -2;
+                        cerr << " FCOLM " << filecolumn<<" : "<< column<<" : "<< column << endl; // debug
+                }
 
-		if(ok) {
-			lastpos++;
-			pos = filesource.find( ':', lastpos);
-			if(pos != string::npos) {
-				filecolumn = filesource.substr(lastpos, pos-lastpos );
-				lastpos = pos;
-			} else {
-				filecolumn = filesource.substr(lastpos, filesource.length() );
-				ok = false;
-			}
-				//line = atoi( fileline.c_str() );
-			istringstream ist(filecolumn);
-			ist >> std::dec >> column;
-			if( ist.rdstate() != istringstream::goodbit ) column = -2;
-			cerr << " FCOLM " << filecolumn<<" : "<< column<<" : "<< column << endl; // debug
-		}
-		cerr << " FOUND " << filename<<" : "<< line<<" : "<< column << endl; // debug
-		 */
+                if(ok) {
+                        lastpos++;
+                        pos = filesource.find( ':', lastpos);
+                        if(pos != string::npos) {
+                                filecolumn = filesource.substr(lastpos, pos-lastpos );
+                                lastpos = pos;
+                        } else {
+                                filecolumn = filesource.substr(lastpos, filesource.length() );
+                                ok = false;
+                        }
+                                //line = atoi( fileline.c_str() );
+                        istringstream ist(filecolumn);
+                        ist >> std::dec >> column;
+                        if( ist.rdstate() != istringstream::goodbit ) column = -2;
+                        cerr << " FCOLM " << filecolumn<<" : "<< column<<" : "<< column << endl; // debug
+                }
+                cerr << " FOUND " << filename<<" : "<< line<<" : "<< column << endl; // debug
+                 */
 
 		// check if file is already loaded
 		Fl_Text_Buffer *buffer = NULL;

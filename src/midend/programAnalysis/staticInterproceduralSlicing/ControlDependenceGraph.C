@@ -389,20 +389,20 @@ void ControlDependenceGraph::_buildCDG()
 	      // to link it in the opposite direction too, to ensure that they
 	      // are correctly accounted for when calculating
 	      // slices.
-	      /* If we have something like this:
+              /* If we have something like this:
 
-		 while (x < 5) { if (x == 3) break; x++; }
+                 while (x < 5) { if (x == 3) break; x++; }
 
-		 We would determine that (x < 5) is control dependent on (x ==
-		 3). This is true, but is only the case because of the break
-		 statement. Thus, whenever (x == 3) is involved, we would also
-		 like the break statement to be involved.
+                 We would determine that (x < 5) is control dependent on (x ==
+                 3). This is true, but is only the case because of the break
+                 statement. Thus, whenever (x == 3) is involved, we would also
+                 like the break statement to be involved.
 
-		 NOTE: I'm not convinced that making (x == 3) control dependent
-		 on the break statement is the best way to do this, but it
-		 suffices for now. */
+                 NOTE: I'm not convinced that making (x == 3) control dependent
+                 on the break statement is the best way to do this, but it
+                 suffices for now. */
 
-	      ///if ((currentNode->getType() == DependenceNode::SGNODE)
+              ///if ((currentNode->getType() == DependenceNode::SGNODE)
 	      if ((currentNode->getType() == DominatorTreesAndDominanceFrontiers::ControlNode::SGNODE)
 		  && ((isSgBreakStmt(currentNode->getNode())) || (isSgContinueStmt(currentNode->getNode()))))
                 establishEdge(currentDepNode, parentDepNode);
@@ -469,7 +469,7 @@ void ControlDependenceGraph::_buildInterprocedural()
     {
       SgInitializedName *name = *i;
       DependenceNode *formal_in = new DependenceNode(DependenceNode::FORMALIN,
-						     name->get_name().str());
+                                                     name->get_name().str());
       DependenceNode *formal_out = new DependenceNode(DependenceNode::FORMALOUT,
 						      name->get_name().str());
 

@@ -3329,7 +3329,7 @@ void QDocumentLineHandle::draw(	QPainter *p,
 /////////////////////////
 QDocumentCursorHandle::QDocumentCursorHandle(QDocument *d, int line)
  :	m_flags(ColumnMemory), m_doc(d),
-	#if QT_VERSION >= 0x040400
+        #if QT_VERSION >= 0x040400
 	m_ref(0),
 	#endif
 	m_begOffset(0), m_endOffset(0), m_max(0), m_begLine(line), m_endLine(-1)
@@ -4967,7 +4967,7 @@ int QDocumentPrivate::m_wrapMargin = 15;
 
 QDocumentPrivate::QDocumentPrivate(QDocument *d)
  : 	m_doc(d),
-	m_editCursor(0),
+        m_editCursor(0),
 	m_lastGroupId(-1),
 	m_constrained(false),
 	m_width(0),

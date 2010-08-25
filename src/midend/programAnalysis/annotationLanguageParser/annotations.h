@@ -356,7 +356,7 @@ private:
    * isn't found. */
 
   annVariable * new_global(const std::string & varname,
-			   bool is_external,
+                           bool is_external,
 			   bool is_io);
 
   /** @brief OLD add globals method

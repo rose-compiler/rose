@@ -307,8 +307,8 @@ MyTraversal::evaluateRewriteSynthesizedAttribute (
 
 	bool synth = false;
 	for( SubTreeSynthesizedAttributes::iterator i=synthesizedAttributeList.begin();
-			 i!= synthesizedAttributeList.end(); i++ ) {
-		if( (*i).getVarRefFound() ) synth = true;
+             i!= synthesizedAttributeList.end(); i++ ) {
+                if( (*i).getVarRefFound() ) synth = true;
 	}
 	if( synth ) {
 		returnAttribute.setVarRefFound( true );

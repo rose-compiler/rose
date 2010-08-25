@@ -1,16 +1,5 @@
 /* Documentation is in AssemblerX86.h */
 
-#ifndef TEMP_FAILURE_RETRY
-#define TEMP_FAILURE_RETRY(expression) \
-    ({ \
-        long int _result; \
-        do _result = (long int) (expression); \
-        while (_result == -1L && errno == EINTR); \
-        _result; \
-    })
-#endif
-
-
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "Assembler.h"
@@ -763,8 +752,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("operand type not implemented", insn);
     }
     abort();
- /* avoid MSCV warning by adding return stmt */
-	return false;
+    /* avoid MSCV warning by adding return stmt */
+    return false;
 }
 
 void

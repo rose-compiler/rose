@@ -105,8 +105,8 @@ std::set<DependenceNode*> CreateSliceSet::getSliceDepNodes(set <DependenceNode*>
 		// get all predecessors for this node
 		set <SimpleDirectedGraphNode *> preds=current->getPredecessors();
 		for (set < SimpleDirectedGraphNode * >::iterator i = preds.begin();
-		                 i != preds.end(); i++)
-		{
+                     i != preds.end(); i++)
+                {
 			DependenceNode *pred = dynamic_cast < DependenceNode * >(*i);
 			set < DependenceGraph::EdgeType > connectingSet=sdg->edgeType(pred,current);
 			for (set < DependenceGraph::EdgeType >::iterator j=connectingSet.begin();j!=connectingSet.end();j++)

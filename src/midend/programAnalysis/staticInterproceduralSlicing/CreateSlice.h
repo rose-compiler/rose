@@ -30,43 +30,41 @@ class CreateSlice:public AstTopDownBottomUpProcessing < BooleanSafeKeeper,Boolea
 
   public:
 
-    CreateSlice(std::set < SgNode * >saveNodes):_toSave(saveNodes)
-    {
-		
-    }
+        CreateSlice(std::set < SgNode * >saveNodes):_toSave(saveNodes)
+        {
+        }
 
-    // bool traverse(SgNode * node) {return traverse(node, false);}
-    bool traverse(SgNode * node)
-    {
-			currentFile=NULL;
-//			return traverse(node,BooleanSafeKeeper(false));
-      return AstTopDownBottomUpProcessing <BooleanSafeKeeper,BooleanSafeKeeper>::traverse(node,BooleanSafeKeeper( false)).boolean;
-    }
+        // bool traverse(SgNode * node) {return traverse(node, false);}
+        bool traverse(SgNode * node)
+        {
+                currentFile=NULL;
+//		return traverse(node,BooleanSafeKeeper(false));
+                return AstTopDownBottomUpProcessing <BooleanSafeKeeper,BooleanSafeKeeper>::traverse(node,BooleanSafeKeeper( false)).boolean;
+        }
   protected:
-		SgFile  * currentFile;
+        SgFile  * currentFile;
 
-    virtual BooleanSafeKeeper evaluateInheritedAttribute(SgNode * node, BooleanSafeKeeper partOfSlice);
+        virtual BooleanSafeKeeper evaluateInheritedAttribute(SgNode * node, BooleanSafeKeeper partOfSlice);
 
-    virtual BooleanSafeKeeper evaluateSynthesizedAttribute(SgNode * node, BooleanSafeKeeper inherited,
-                                              SubTreeSynthesizedAttributes atts);
-		BooleanSafeKeeper defaultSynthesizedAttribute(BooleanSafeKeeper inh)
-		{
-		//	std::cout<<"DEFAULT SYNTHESIZED ATTRIBUTE CONSTRUCTOR CALLED\n";
-			return inh;
-		}
-		std::stack<std::list<SgNode *> > delayedRemoveListStack;
-/*    virtual bool defaultSynthesizedAttribute()
-    {
-        return false;
-    }	
-		virtual bool defaultInheritedAttribute()
-		{
-			return false;
-		}
-*/
+        virtual BooleanSafeKeeper evaluateSynthesizedAttribute(SgNode * node, BooleanSafeKeeper inherited,
+                                                               SubTreeSynthesizedAttributes atts);
+        BooleanSafeKeeper defaultSynthesizedAttribute(BooleanSafeKeeper inh)
+        {
+	        // std::cout<<"DEFAULT SYNTHESIZED ATTRIBUTE CONSTRUCTOR CALLED\n";
+                return inh;
+        }
+        std::stack<std::list<SgNode *> > delayedRemoveListStack;
+        /*    virtual bool defaultSynthesizedAttribute()
+          {
+          return false;
+          }	
+	  virtual bool defaultInheritedAttribute()
+	  {
+	  return false;
+	  } */
   private:
 
-    std::set < SgNode * >_toSave;
+        std::set < SgNode * >_toSave;
 
 };
 

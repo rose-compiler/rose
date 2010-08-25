@@ -107,8 +107,8 @@ DomTree::DomTree (DGraph& g)
 	if (!dom_set[node_num].empty()) {
 	  std::set<int> tmp;
 	  std::set_intersection(tmp_dom.begin(), tmp_dom.end(), dom_set[node_num].begin(), dom_set[node_num].end(),
-			   std::inserter(tmp, tmp.begin()));
-	  tmp_dom = tmp;
+                                std::inserter(tmp, tmp.begin()));
+          tmp_dom = tmp;
 	}
 	++src_iter;
       }

@@ -24,12 +24,12 @@
 
 
 AstGraphWidget::AstGraphWidget(QWidget * par)
-	: 	RoseGraphicsView(par),
-		scene(NULL),
-		root(NULL)
+        :       RoseGraphicsView(par),
+                scene(NULL),
+                root(NULL)
 {
-	scene=new QGraphicsScene();
-	setScene(scene);
+        scene=new QGraphicsScene();
+        setScene(scene);
 }
 
 AstGraphWidget::~AstGraphWidget()
@@ -43,21 +43,21 @@ void AstGraphWidget::updateGraph(SgNode * node, AstFilterInterface * filter)
     if(root)
         delete root;
 
-	root=NULL;
+        root=NULL;
 
-	if(node == NULL)
-	    return;
+        if(node == NULL)
+            return;
 
 
-	DisplayTreeGenerator gen;
-	root = gen.generateTree(node,filter);
+        DisplayTreeGenerator gen;
+        root = gen.generateTree(node,filter);
 
-	qDebug() << "Simplifying Tree";
-	DisplayTreeNode::simplifyTree(root);
-	qDebug() << "Done";
+        qDebug() << "Simplifying Tree";
+        DisplayTreeNode::simplifyTree(root);
+        qDebug() << "Done";
 
-	TreeLayoutGenerator layouter;
-	layouter.layoutTree(root);
+        TreeLayoutGenerator layouter;
+        layouter.layoutTree(root);
 
-	root->setScene(scene);
+        root->setScene(scene);
 }

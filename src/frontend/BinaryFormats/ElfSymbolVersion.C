@@ -85,7 +85,7 @@ SgAsmElfSymverSection::calculate_sizes(size_t *entsize, size_t *required, size_t
 {
   std::vector<size_t> extra_sizes;
   return calculate_sizes(sizeof(uint16_t),
-			 sizeof(uint16_t),
+                         sizeof(uint16_t),
 			 extra_sizes,
 			 entsize, required, optional, entcount);
 }
