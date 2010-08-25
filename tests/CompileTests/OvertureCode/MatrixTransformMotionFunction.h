@@ -22,11 +22,11 @@ class MatrixTransformMotionFunction
   virtual real translationalMotion (const real& time, const int& axis);
 
   virtual void setTranslationalParameters (const RealArray& trCoeff_,
-					   const RealArray& trFreq_,
+                                           const RealArray& trFreq_,
 					   const RealArray& trOffset_);
   
   virtual void setAngularParameters (const real& angCoeff_,
-				     const real& angFreq_,
+                                     const real& angFreq_,
 				     const real& angOffset_);
 
   virtual real rotationalVelocity (const real& time);

@@ -17,7 +17,7 @@ Major classes:
                top down traversal to build up OmpAttributeOld
 
 * OmpMidend:   a set of translators for different OpenMP constructs
-	       bottom up traversal and tree restructure using OmpAttributeOld
+               bottom up traversal and tree restructure using OmpAttributeOld
 
 * OmpProcessor: the driver(not in use)
 
@@ -95,7 +95,7 @@ public:
 
 //--------------------------------------------------------------
 // OpenMP construct name list
-enum	omp_construct_enum {
+enum    omp_construct_enum {
 // major directives
    e_parallel=0,
    e_for,
@@ -220,8 +220,8 @@ private:
         hasFirstprivate= false;
         hasReduction = false;
         nowait = false;
-	ordered = false;
-	isOrphaned = false;
+        ordered = false;
+        isOrphaned = false;
         sched_type = e_sched_none;
         chunk_size = NULL;
         wrapperCount=0;
@@ -233,8 +233,8 @@ private:
    SgPragmaDeclaration *parentPragma;
    omp_construct_enum  omp_type; //pragma type
    Rose_STL_Container<OmpSymbol*> var_list; // all used variables with OpenMP scope info. etc
-	   // two OmpSymbols could have the same variable but different clause type
-				
+           // two OmpSymbols could have the same variable but different clause type
+
    int wrapperCount; // the shared variables from the same scope which needs wrapper
    bool hasLastprivate;
    bool hasFirstprivate;
@@ -251,7 +251,7 @@ private:
   //constructor
    OmpAttributeOld()
     {
-	init();
+        init();
     }
    OmpAttributeOld(enum omp_construct_enum omptye):omp_type(omptye){
         init();
@@ -270,7 +270,7 @@ private:
      cout<<"Number of shared variables needing wrapping:"<<wrapperCount<<endl;
      cout<<"Variable list :"<<endl;
      for(Rose_STL_Container<OmpSymbol*>::iterator i= var_list.begin();i!=var_list.end();i++)
-	(*i)->print();
+        (*i)->print();
     if (omp_type == e_parallel_for || omp_type == e_for)
     {
        cout<<"sched_type is:"<<sched_type<<endl;
@@ -303,8 +303,8 @@ public:
   static void formalizePragma(SgPragmaDeclaration* decl)
     {
       //TODO one time processing to eliminate unnecessary spaces, unify lower case/uper case
-	// then OpenMP pragma recognization is easier
-	// skipped with the assumption that all test code is well written.
+        // then OpenMP pragma recognization is easier
+        // skipped with the assumption that all test code is well written.
     };
   static char *trim_leading_trailing_spaces(char*);
   static enum omp_construct_enum recognizePragma(SgPragmaDeclaration*);
@@ -360,15 +360,15 @@ private:
   static int addLastprivateStmts(SgPragmaDeclaration *, OmpAttributeOld *, SgBasicBlock *);
   static int addPrivateVarDeclarations(SgPragmaDeclaration *, OmpAttributeOld *, SgBasicBlock *);
   static int addSharedVarDeclarations(SgPragmaDeclaration *, SgFunctionDeclaration*, \
-		OmpAttributeOld *, SgBasicBlock *);
+                OmpAttributeOld *, SgBasicBlock *);
   static int variableSubstituting(SgPragmaDeclaration *,OmpAttributeOld*, SgNode*);
 
   static int splitCombinedParallelForSections(SgPragmaDeclaration* decl);
   static SgFunctionDeclaration* generateOutlinedFunction(SgPragmaDeclaration* decl);
   static void generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
-				SgFunctionDeclaration * func, OmpAttributeOld *ompattribute);
+                                SgFunctionDeclaration * func, OmpAttributeOld *ompattribute);
   static void insertOutlinedFunction(SgPragmaDeclaration* pragDecl, \
-				SgFunctionDeclaration *outlinedFunc);
+                                SgFunctionDeclaration *outlinedFunc);
   static void replacePragmaBlock(SgPragmaDeclaration* pragDecl, SgBasicBlock *bb1);
 
   static SgBasicBlock* generateParallelRTLcall(SgPragmaDeclaration* pragDecl, SgFunctionDeclaration * outlinedFunc, OmpAttributeOld *ompattribute);
@@ -395,8 +395,8 @@ int OmpMidend::labelCounter=0;
   {
     if (isSgInitializedName((*i)->origVar) == initname)
      {
-	 rttype=(*i)->ompType; 
-	 break;
+         rttype=(*i)->ompType; 
+         break;
      }
   }
   return rttype;
@@ -413,7 +413,7 @@ bool OmpAttributeOld::isInClause(SgInitializedName* initname, enum omp_construct
     if ((isSgInitializedName((*i)->origVar) == initname)&& (omptype==(*i)->ompType))
       {
         rt= true;
-	break;
+        break;
       }
   }
   return rt;
@@ -426,7 +426,7 @@ inline void OmpFrontend::print()
   {
     cout<<"Threadprivate string variables:-------"<<endl;
      for (Rose_STL_Container<string>::iterator i=threadprivatelist.begin();\
-	i!=threadprivatelist.end();i++)
+        i!=threadprivatelist.end();i++)
      cout<<*i<<endl;
   }
 
@@ -434,7 +434,7 @@ inline void OmpFrontend::print()
   {
     cout<<"Threadprivate initializedName variables:-------"<<endl;
     for (Rose_STL_Container<SgInitializedName *>::iterator i=threadprivateinitnamelist.begin();\
-	i!=threadprivateinitnamelist.end();i++)
+        i!=threadprivateinitnamelist.end();i++)
     {
       string varname = (*i)->get_name().getString();
       cout<<varname<<endl;
@@ -444,8 +444,8 @@ inline void OmpFrontend::print()
 //--------------------------
 inline bool OmpFrontend::isInStringList(Rose_STL_Container<string>* slist,string* input )
  {  bool rt=false;
- 	for (Rose_STL_Container<string>::iterator i=slist->begin();i!=slist->end();i++)
-		if ((*i)==(*input)) { rt=true; break; }
+        for (Rose_STL_Container<string>::iterator i=slist->begin();i!=slist->end();i++)
+                if ((*i)==(*input)) { rt=true; break; }
       return rt;
    }
 
@@ -470,7 +470,7 @@ char * OmpFrontend::trim_leading_trailing_spaces(char* input)
 // for example  parsePragma(e_private, "#pragma omp parallel private(x,y,z)") will
 //              return a pointer to a list of strings: "x","y","z".
 // for schedule clause, return the kind and chunk_size; 
-// 	limit chunk_size to one variable or a constant here, 
+//      limit chunk_size to one variable or a constant here, 
 // for reduction, Only handle the most frequently used 'reduction plus' here. 
 //
 // TODO: remove this when the frontend(FE) is ready
@@ -579,7 +579,7 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
 //For all used variable in the parallel region, only those with the same (or higher) scope
 //as( or than) the pragma matter in order to build up private and shared variable lists
 // e.g. Assume the default(shared) case, all variables of interest which are not in 
-//	private, reduction, firstprivate, ...lists should be treated as shared
+//      private, reduction, firstprivate, ...lists should be treated as shared
 // We do not need interprocedural analysis to find out all referenced variables in a parallel region
 //  since we really only care the variables in the same scope 
 
@@ -642,7 +642,7 @@ int OmpFrontend::createOmpAttributeOld(SgNode* node)
             // only care the used variables from the same scope and outer scope
             // interestingly, outer scope is 'smaller' currentscope >= orig_scope
                SgInitializedName* initname= isSgVarRefExp(*i)->get_symbol()->get_declaration();
-	       SgScopeStatement* orig_scope=isSgScopeStatement(ASTtools::get_scope(initname));
+               SgScopeStatement* orig_scope=isSgScopeStatement(ASTtools::get_scope(initname));
                if (( currentscope == orig_scope)||ASTtools::isAncestor(orig_scope,currentscope) )
                     all_var_list.push_back(initname);
              } //end for
@@ -789,12 +789,12 @@ int OmpFrontend::createOmpAttributeOld(SgNode* node)
          OmpSymbol * ompsymbol;
           string varName=string(isSgInitializedName(*i)->get_name().str());
       SgScopeStatement* varscope = isSgScopeStatement(ASTtools::get_scope(*i));
-	   //insert copyin variables
+           //insert copyin variables
           if ( isInStringList(copyin_name_listptr, &varName) ) {
             ompsymbol=new OmpSymbol((*i),e_copyin);
            dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
            }  
-	    //insert threadprivate variables
+            //insert threadprivate variables
           if ( isInStringList(&threadprivatelist, &varName) ) {
             ompsymbol=new OmpSymbol((*i),e_threadprivate);
            dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
@@ -805,18 +805,18 @@ int OmpFrontend::createOmpAttributeOld(SgNode* node)
            dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
            }
           else if ( isInStringList(firstprivate_name_listptr, &varName)||\
-		  isInStringList(lastprivate_name_listptr, &varName) )
-           { 	
-		// a variable could be both first and last private
+                  isInStringList(lastprivate_name_listptr, &varName) )
+           {    
+                // a variable could be both first and last private
 // both firstprivate and lastprivate need to access shared copy, which demands
 // a wapper
-	     // firstprivate
+             // firstprivate
             if ( isInStringList(firstprivate_name_listptr, &varName) ){
               if (currentscope==isSgScopeStatement(ASTtools::get_scope(*i)))
                  dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
               ompsymbol=new OmpSymbol((*i),e_firstprivate);
               dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
-	      dynamic_cast<OmpAttributeOld*> (ompattribute)->hasFirstprivate = true;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->hasFirstprivate = true;
             }
             if ( isInStringList(lastprivate_name_listptr, &varName) )
             { // lastprivate
@@ -824,7 +824,7 @@ int OmpFrontend::createOmpAttributeOld(SgNode* node)
                  dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
               ompsymbol=new OmpSymbol((*i),e_lastprivate);
               dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
-	      dynamic_cast<OmpAttributeOld*> (ompattribute)->hasLastprivate = true;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->hasLastprivate = true;
             }
            }
          else if ( isInStringList(reduction_plus_name_listptr, &varName) )
@@ -833,15 +833,15 @@ int OmpFrontend::createOmpAttributeOld(SgNode* node)
               dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
               ompsymbol=new OmpSymbol((*i),e_reduction_plus);
               dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
-	      dynamic_cast<OmpAttributeOld*> (ompattribute)->hasReduction = true;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->hasReduction = true;
             }
            else { // TODO: consider default(private) case
            // store the rest as the shared variables,
            //count the ones with the same scope as shared to be wrapped
-	// special handling for function parameters
-	// the scope of a function parameter has some problem(bug?)
+        // special handling for function parameters
+        // the scope of a function parameter has some problem(bug?)
             if (currentscope==varscope ||
-	 isSgFunctionParameterList(isSgInitializedName(*i)->get_parent()))
+         isSgFunctionParameterList(isSgInitializedName(*i)->get_parent()))
                dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
             ompsymbol=new OmpSymbol((*i),e_shared);
            dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
@@ -849,7 +849,7 @@ int OmpFrontend::createOmpAttributeOld(SgNode* node)
 
        }//end for
         node->addNewAttribute("OmpAttributeOld",ompattribute);
-     	//cout<<"L827,debug "<<endl;
+        //cout<<"L827,debug "<<endl;
         //dynamic_cast<OmpAttributeOld*>(ompattribute)->print();
    } // end if 
   else
@@ -921,7 +921,7 @@ int OmpFrontend::createOmpAttributeOld(SgNode* node)
           }
        }//end for
         node->addNewAttribute("OmpAttributeOld",ompattribute);
-	
+        
    } // end if single
    
    // Handle omp flush(x,y,z,...)
@@ -1018,31 +1018,31 @@ omp_construct_enum OmpFrontend::recognizePragma(SgPragmaDeclaration* pragmaDecl)
     string pragmaString = pragmaDecl->get_pragma()->get_pragma();
 
     if (pragmaString.find("omp parallel for")!=string::npos)
-	return e_parallel_for;
+        return e_parallel_for;
     if (pragmaString.find("omp parallel sections")!=string::npos)
-	return e_parallel_sections;
+        return e_parallel_sections;
     if (pragmaString.find("omp sections")!=string::npos)
-	return e_sections;
+        return e_sections;
     if (pragmaString.find("omp section")!=string::npos) 
-	return e_section;
+        return e_section;
     if (pragmaString.find("omp parallel")!=string::npos)
-	return e_parallel;
+        return e_parallel;
     if (pragmaString.find("omp critical")!=string::npos)
-	return e_critical;
+        return e_critical;
     if (pragmaString.find("omp atomic")!=string::npos)
-	return e_atomic;
+        return e_atomic;
     if (pragmaString.find("omp master")!=string::npos)
-	return e_master;
+        return e_master;
     if (pragmaString.find("omp single")!=string::npos)
-	return e_single;
+        return e_single;
     if (pragmaString.find("omp barrier")!=string::npos)
-	return e_barrier;
+        return e_barrier;
     if (pragmaString.find("omp for")!=string::npos)
-	return e_for;
+        return e_for;
     if (pragmaString.find("omp threadprivate")!=string::npos)
-	return e_threadprivate;
+        return e_threadprivate;
     if (pragmaString.find("omp flush")!=string::npos)
-	return e_flush;
+        return e_flush;
      return e_not_omp; 
 }
 
@@ -1095,7 +1095,7 @@ SgInitializedName * ASTtools::getLoopIndexVar(SgForStatement* forstmt)
       if (testList.size()>0){
         ROSE_ASSERT(testList.size()==1);// only handle the case of 1 declaration statement
         SgInitializedNamePtrList &namelist = isSgVariableDeclaration((*testList.begin()))\
-			->get_variables();
+                        ->get_variables();
         ROSE_ASSERT(namelist.size()==1); // declaration for only 1 variable
         return isSgInitializedName(*namelist.begin());
       //cout<<"debug:"<<"case for (int i=x)"<<endl;
@@ -1117,7 +1117,7 @@ bool ASTtools::isLoopIndexVarRef(SgForStatement* forstmt, SgVarRefExp *varref)
   SgInitializedName * refvar = varref->get_symbol()->get_declaration();
 
   return ( (loopvar->get_name() == refvar->get_name())
-	   &&(loopvar->get_scope() == refvar->get_scope()) );
+           &&(loopvar->get_scope() == refvar->get_scope()) );
 
 }
 //----------------------------
@@ -1134,7 +1134,7 @@ ASTtools::setForLoopTripleValues(int valuetype,SgForStatement* forstmt, SgExpres
         {
        // two cases: init_stmt is 
        //       SgVariableDeclaration or 
-       //	SgExprStatement (assignment) like i=0;
+       //       SgExprStatement (assignment) like i=0;
           Rose_STL_Container<SgNode* > testList = NodeQuery::querySubTree( *((forstmt->get_init_stmt()).begin()), V_SgAssignOp);
 
           if (testList.size()>0)
@@ -1154,7 +1154,7 @@ ASTtools::setForLoopTripleValues(int valuetype,SgForStatement* forstmt, SgExpres
                ROSE_ASSERT(testList.size()==1);// only handle the case of 1 statement, canonical form
                isSgAssignInitializer((*testList.begin()))->set_operand(exp);
             // set lhs name to _p_loop_index
-	    // TODO should not work in current AST with symbol table, Liao, 11/16/2007 Bug 120
+            // TODO should not work in current AST with symbol table, Liao, 11/16/2007 Bug 120
             // should set the whole SgInitializedName 
                SgVariableDeclaration * vardecl = isSgVariableDeclaration( (*(forstmt->get_init_stmt()).begin()) );
                ROSE_ASSERT(vardecl!=NULL);
@@ -1255,9 +1255,9 @@ ASTtools::setForLoopTripleValues(int valuetype,SgForStatement* forstmt, SgExpres
                ROSE_ASSERT(testList.size()==1);// should have only one
                SgVarRefExp *loopvarexp =isSgVarRefExp(SageInterface::deepCopy
                       (isSgMinusAssignOp(*testList.begin())->get_lhs_operand()));
-		//Liao (10/12/2007), SgExpressionRoot is deprecated!
+                //Liao (10/12/2007), SgExpressionRoot is deprecated!
               // SgExpressionRoot *exproot = isSgExpressionRoot((*testList.begin())->get_parent());
-  	       SgExprStatement* exprstmt = isSgExprStatement((*testList.begin())->get_parent());	
+               SgExprStatement* exprstmt = isSgExprStatement((*testList.begin())->get_parent());        
                ROSE_ASSERT(exprstmt !=NULL);
             // DQ (9/6/2006): skip explicit specification of type (which is computed dynamically).
                SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, exp);
@@ -1321,14 +1321,14 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
   { 
     // two cases: init_stmt is SgVariableDeclaration or SgExprStatement (assignment)
     Rose_STL_Container<SgNode* > testList = NodeQuery::querySubTree(\
-		*((forstmt->get_init_stmt()).begin()), V_SgAssignOp);
+                *((forstmt->get_init_stmt()).begin()), V_SgAssignOp);
 
     if (testList.size()>0){ 
       ROSE_ASSERT(testList.size()==1);// only handle the case of 1 statement
       return isSgAssignOp((*testList.begin()))->get_rhs_operand();
     } else { // SgVariableDeclaration
       Rose_STL_Container<SgNode* > testList = NodeQuery::querySubTree(\
-		*((forstmt->get_init_stmt()).begin()),  V_SgAssignInitializer);
+                *((forstmt->get_init_stmt()).begin()),  V_SgAssignInitializer);
       if (testList.size()>0){
         ROSE_ASSERT(testList.size()==1);// only handle the case of 1 statement 
         return isSgAssignInitializer((*testList.begin()))->get_operand();
@@ -1344,7 +1344,7 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
   }
  
   if(valuetype == 2){ //get stride expression
-	// case 1: i++  
+        // case 1: i++  
      Rose_STL_Container<SgNode*> testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgPlusPlusOp);
      if (testList.size()>0) {
        ROSE_ASSERT(testList.size()==1);// should have only one
@@ -1360,7 +1360,7 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
      }
      testList.empty();
 
-	// case 2: i+=X
+        // case 2: i+=X
      testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgPlusAssignOp);
      if (testList.size()>0) {
        ROSE_ASSERT(testList.size()==1);// should have only one
@@ -1369,7 +1369,7 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
        return assignop->get_rhs_operand(); 
      }
      testList.empty();
-	// case 2.5: i-=X
+        // case 2.5: i-=X
      testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgMinusAssignOp);
      if (testList.size()>0) {
        ROSE_ASSERT(testList.size()==1);// should have only one
@@ -1381,17 +1381,17 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
      testList.empty();
 
         // case 3: i=i + X or i =X +i  i
-	// TODO; what if users use i*=, i-=, etc ?? 
-	// 	send out a warning: OpenMP error: not cannonical FOR/DO loop
-	//	or do this in the real frontend. MUST conform to canonical form
+        // TODO; what if users use i*=, i-=, etc ?? 
+        //      send out a warning: OpenMP error: not cannonical FOR/DO loop
+        //      or do this in the real frontend. MUST conform to canonical form
      testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgAddOp);
      if (testList.size()>0) {
        ROSE_ASSERT(testList.size()==1);// should have only one ??
-		//TODO or consider only the first one
+                //TODO or consider only the first one
        SgAddOp * addop = isSgAddOp(*(testList.begin()));
        ROSE_ASSERT(addop!=NULL);
        string loopvar= (isSgVarRefExp(isSgAssignOp(addop->get_parent())->\
-			get_lhs_operand())->get_symbol()->get_name()).getString();
+                        get_lhs_operand())->get_symbol()->get_name()).getString();
        if(isSgVarRefExp(addop->get_rhs_operand())!=NULL){
            if ((isSgVarRefExp(addop->get_rhs_operand())->\
                 get_symbol()->get_name()).getString() ==loopvar)
@@ -1407,7 +1407,7 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
      testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgSubtractOp);
      if (testList.size()>0) {
        ROSE_ASSERT(testList.size()==1);// should have only one ??
-		//TODO or consider only the first one
+                //TODO or consider only the first one
        SgSubtractOp * assignop = isSgSubtractOp(*(testList.begin()));
        ROSE_ASSERT(assignop!=NULL);
 
@@ -1493,7 +1493,7 @@ int OmpMidend::insertHeaders(SgProject* project)
 //----------------------------
 // C++ outlined member function's wrapper generation
 // Reason: Pthreads API expects a c function pointer, 
-//	   not non-static member function pointer
+//         not non-static member function pointer
 //
 // 2 parameters: the class and the member function declaration
 //
@@ -1509,7 +1509,7 @@ int OmpMidend::insertHeaders(SgProject* project)
 //   hello->__ompc_func_4(__ompc_args);
 // }
 int OmpMidend::generateWrapperFunction(SgClassDefinition* classdef, \
-					SgMemberFunctionDeclaration* srcfunc)
+                                        SgMemberFunctionDeclaration* srcfunc)
 {
   ROSE_ASSERT(classdef!=NULL);
   ROSE_ASSERT(srcfunc!=NULL);
@@ -1577,7 +1577,7 @@ int OmpMidend::generateWrapperFunction(SgClassDefinition* classdef, \
 
   func_def->set_parent(func2); //necessary or not?
   // add function body
-	// Hello * currentobject;
+        // Hello * currentobject;
   //SgPointerType *pointertype = new SgPointerType(classdef->get_declaration()->get_type());
   // Must use the nondefiningdeclaration here, otherwise unparser will complain
   SgPointerType *pointertype = new SgPointerType(isSgClassDeclaration(classdef->get_declaration()->get_firstNondefiningDeclaration())->get_type());
@@ -1588,8 +1588,8 @@ int OmpMidend::generateWrapperFunction(SgClassDefinition* classdef, \
   initname->set_parent(vardecl);
   initname->set_file_info(TRANS_FILE);
   appendStatement(vardecl,func_body);
-	//---------------
-	// currentobject = reinterpret_cast<Hello *> (_pp_globalobject);
+        //---------------
+        // currentobject = reinterpret_cast<Hello *> (_pp_globalobject);
   //SgPointerType * vartype= new SgPointerType( SgTypeVoid::createType());
   SgVarRefExp *lhs = buildVarRefExp(initname,func_body );
 
@@ -1601,13 +1601,13 @@ int OmpMidend::generateWrapperFunction(SgClassDefinition* classdef, \
 
   SgVarRefExp *rhsvar = buildVarRefExp(SgName("_pp_globalobject"),func_body);
   SgCastExp * rhs = buildCastExp(rhsvar,\
-		pointertype, SgCastExp::e_reinterpret_cast);
+                pointertype, SgCastExp::e_reinterpret_cast);
 
     SgExprStatement * expstmti= buildAssignStatement(lhs,rhs); 
 
   appendStatement(expstmti,func_body);
-	//---------------
-	// currentobject->__ompc_func_4(__ompc_args);
+        //---------------
+        // currentobject->__ompc_func_4(__ompc_args);
   SgFunctionType *myFuncType= new SgFunctionType(func_return_type,false);
   SgMemberFunctionDeclaration *myfuncdecl = new SgMemberFunctionDeclaration(TRANS_FILE,(srcfunc->get_name()).getString(),myFuncType,srcfunc->get_definition());
   ROSE_ASSERT(myfuncdecl != NULL);
@@ -1682,15 +1682,15 @@ inline int OmpMidend::getSectionCount(SgPragmaDeclaration * decl)
 // variable substitute for shared, private, and reduction variables
 // only care the used variables from the same scope and outer scope
 // interestingly, outer scope is 'smaller'
-// 	search all variable reference site XX,
-// 	if in private list, use _p_XX,
-// 	if in reduction list, use _p_XX no matter what scope it belongs to
-// 	if in shared list and from the scope, use *__pp_XX
+//      search all variable reference site XX,
+//      if in private list, use _p_XX,
+//      if in reduction list, use _p_XX no matter what scope it belongs to
+//      if in shared list and from the scope, use *__pp_XX
 // the original variables? keep intact since they might be used in sequential part
 //  Ignore variables generated from previous viariable substituting, _p_XX, _pp_XX
 // bBlock2 is a BB containing a loop.
 int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
-	OmpAttributeOld* ompattribute, SgNode* bBlock2)
+        OmpAttributeOld* ompattribute, SgNode* bBlock2)
 {
   ROSE_ASSERT(bBlock2 != NULL);
   ROSE_ASSERT(ompattribute != NULL);
@@ -1698,7 +1698,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
 //cout<<"------1559, "<<"OmpMidend::variableSubstituting"<<endl; 
 //  SgScopeStatement* currentscope=isSgScopeStatement(ASTtools::get_scope(decl));
   SgScopeStatement* currentscope = isSgFunctionDeclaration(\
-		getEnclosingFunctionDeclaration(decl))\
+                getEnclosingFunctionDeclaration(decl))\
                 ->get_definition()->get_body();
   ROSE_ASSERT(currentscope != NULL);
 
@@ -1719,12 +1719,12 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
        //_ppthdprv_ for threadprivate variables
        if ((namestr.find("_p_",0)==0)|| (namestr.find("_ppthdpriv_",0)==0)|| (namestr.find("_pp_",0)==0)) continue;
 
-	//1. replace variables with _p_XX , only do this once for 'omp parallel'
+        //1. replace variables with _p_XX , only do this once for 'omp parallel'
 //Note:the scope condition will change if we also do this on inner pragma like 'omp for'
 // not for' omp for' since 'omp for' may not know the scope specified at 'omp parallel'
- 	// for variables not recognizable, treat them as shared .
+        // for variables not recognizable, treat them as shared .
         //e.g schedule(static,newvar1), TODO more elegant way when FE is ready
-	// e.g. SgPointerDerefExp   j --> (*_pp_j)
+        // e.g. SgPointerDerefExp   j --> (*_pp_j)
        if (((ompattribute->isInClause(initname,e_shared))|| (ompattribute->get_clause(initname)==e_not_omp)) && (  ( (currentscope == varscope)|| isSgFunctionParameterList(initname->get_parent()))) &&(ompattribute->omp_type==e_parallel))
         {// SgPointerDerefExp   j --> *_pp_j
           
@@ -1740,16 +1740,16 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
 
            replaceExpression(isSgExpression(*i),isSgExpression(derefexp));
         }
-	//2. replace variables with _p_XX for private, firstprivate, lastprivate and reduction
-	 //all private variables need to compare the scope to currentscope
-	 // except for reduction variables
+        //2. replace variables with _p_XX for private, firstprivate, lastprivate and reduction
+         //all private variables need to compare the scope to currentscope
+         // except for reduction variables
          // for orphaned 'omp for' pragma, the scope larger than its parent 'omp parallel'
-	 // i--> _p_i
+         // i--> _p_i
        if (( ((ompattribute->isInClause(initname,e_private))||
-	      (ompattribute->isInClause(initname,e_firstprivate))||
-	      (ompattribute->isInClause(initname,e_lastprivate)))
-//		&&(currentscope >= varscope))                         ||
-		&&((currentscope==varscope)|| ASTtools::isAncestor(varscope,currentscope)))                         ||
+              (ompattribute->isInClause(initname,e_firstprivate))||
+              (ompattribute->isInClause(initname,e_lastprivate)))
+//              &&(currentscope >= varscope))                         ||
+                &&((currentscope==varscope)|| ASTtools::isAncestor(varscope,currentscope)))                         ||
            (ompattribute->isInClause(initname,e_reduction_plus)))
        { 
         //cout<<"debug:private:"<<(initname->get_name()).getString()<<endl;
@@ -1757,9 +1757,9 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
         replaceExpression (isSgExpression(*i), buildVarRefExp(name2,varscope));
         // isSgVarRefExp(*i) =  buildgVarRefExp(name2,varscope);
        }
-	// 3. Replace threadprivate variables with (type)(*_ppthd_X)
+        // 3. Replace threadprivate variables with (type)(*_ppthd_X)
         if(ompattribute->isInClause(initname,e_threadprivate))
-	{
+        {
           // inner most scope containing the variable reference
           SgScopeStatement* cscope=isSgScopeStatement(ASTtools::get_scope(isSgVarRefExp(*i)));
           ROSE_ASSERT(cscope);
@@ -1767,9 +1767,9 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
           SgName name3("_ppthd_"+myname.getString());
           SgVariableSymbol *symbol3=lookupVariableSymbolInParentScopes(name3,cscope);
           if(symbol3){  // this function is called at several levels in a bottom up order, the symbol
-			// may not yet generated in the innermost level, 
-			// so, we can defer it until a higher level is processed when the symbol has
-			// generated already.
+                        // may not yet generated in the innermost level, 
+                        // so, we can defer it until a higher level is processed when the symbol has
+                        // generated already.
           SgPointerDerefExp *derefexp= buildPointerDerefExp(
                            buildVarRefExp(symbol3->get_declaration(),getScope(bBlock2)));
           replaceExpression(isSgExpression(*i),isSgExpression(derefexp));
@@ -1791,7 +1791,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
 //        }
 
 int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttributeOld *ompattribute,\
-	 SgBasicBlock *bBlock1)
+         SgBasicBlock *bBlock1)
 {
 
 #if 1
@@ -1800,7 +1800,7 @@ int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttributeOld *o
   ROSE_ASSERT(bBlock1 != NULL);
   SgScopeStatement* currentscope;
   currentscope = isSgFunctionDeclaration(getEnclosingFunctionDeclaration(decl))\
-		->get_definition()->get_body();
+                ->get_definition()->get_body();
 
   // 1. conditional expression
   SgExprListExp * exp_list_exp1 = buildExprListExp();
@@ -1887,7 +1887,7 @@ int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttributeOld *o
 // _ompc_reduction(&localcopy,&gi,datatype,operator); //
 
 int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttributeOld *ompattribute,\
-		 SgBasicBlock *bBlock1)
+                 SgBasicBlock *bBlock1)
 {
   ROSE_ASSERT(decl != NULL);
   ROSE_ASSERT(ompattribute != NULL);
@@ -1899,7 +1899,7 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttributeOld *omp
  // currentscope is the function body containing the pragma.
  // varscope is the scope of the original variable in the reduction list
   currentscope = isSgFunctionDeclaration(getEnclosingFunctionDeclaration(decl))\
-		->get_definition()->get_body();
+                ->get_definition()->get_body();
 
   for (Rose_STL_Container<OmpSymbol* >::iterator i= ompattribute->var_list.begin();\
         i!=ompattribute->var_list.end();i++ )
@@ -1935,7 +1935,7 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttributeOld *omp
         }
  //&gi for reduction variables from higher scope or for all orphaned case
       else if (((ompattribute->isOrphaned==false)&&(ASTtools::isAncestor(varscope,currentscope)))||\
-		(ompattribute->isOrphaned==true))
+                (ompattribute->isOrphaned==true))
         {
          SgName varName2(myname.getString());
           SgVarRefExp   * varlocal = buildVarRefExp(varName2,bBlock1);
@@ -1960,10 +1960,10 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttributeOld *omp
 //----------------------------
 // add statements into outlined function definition if the parallel region access
 // threadprivate variables (m,mm)
-//	auto double *_ppthd_mm;
-//	auto int *_ppthd_m;
-//	(_ppthd_mm) = (((double *) (_ompc_get_thdprv (&_thdprv_mm, 8, &mm))));
-//	(_ppthd_m) = (((int *) (_ompc_get_thdprv (&_thdprv_m, 4, &m))));
+//      auto double *_ppthd_mm;
+//      auto int *_ppthd_m;
+//      (_ppthd_mm) = (((double *) (_ompc_get_thdprv (&_thdprv_mm, 8, &mm))));
+//      (_ppthd_m) = (((int *) (_ompc_get_thdprv (&_thdprv_m, 4, &m))));
 // It also handles copyin() clause by adding one more runtime call
 //       _ompc_copyin_thdprv (_ppthd_mm, &mm, 4);
 
@@ -1985,7 +1985,7 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
      SgInitializedName *initname = isSgInitializedName((*i)->origVar);
      SgType * mytype= initname->get_type();
      SgName myname = initname->get_name();
- 	//used for sizeof(variable) function call expression
+        //used for sizeof(variable) function call expression
 //     SgVariableSymbol *varSymbol3=isSgVariableSymbol(initname->get_symbol_from_symbol_table());
 //     ROSE_ASSERT(varSymbol3);
      SgVarRefExp* varref3  = buildVarRefExp(initname,bBlock1);
@@ -2010,26 +2010,26 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
         SgVarRefExp* lhs = buildVarRefExp(name1,bBlock1);
                 //arguments for function calls
         SgExprListExp * exp_list_exp1 = buildExprListExp();
-			//arg 1 : &_thdprv_m, previously declared in global scope
-	SgName varname("_thdprv_"+myname);
-// 	SgPointerType * vartype= new SgPointerType( SgTypeVoid::createType());
+                        //arg 1 : &_thdprv_m, previously declared in global scope
+        SgName varname("_thdprv_"+myname);
+//      SgPointerType * vartype= new SgPointerType( SgTypeVoid::createType());
 //bug 346
 
         SgVariableSymbol *varSymbol1=isSgVariableSymbol(globalscope->lookup_variable_symbol(varname));
         ROSE_ASSERT(varSymbol1);
         SgVarRefExp* varglobal  = buildVarRefExp(varSymbol1->get_declaration(),bBlock1);
 
- 	appendExpression(exp_list_exp1,buildAddressOfOp(varglobal));
-			//arg 2: size of mytype
- 	appendExpression(exp_list_exp1,
-		buildFunctionCallExp(SgName("sizeof"), \
-			 SgTypeInt::createType(), exp_list_exp3,bBlock1));
-			//arg 3: &m, but m if mytype is array
+        appendExpression(exp_list_exp1,buildAddressOfOp(varglobal));
+                        //arg 2: size of mytype
+        appendExpression(exp_list_exp1,
+                buildFunctionCallExp(SgName("sizeof"), \
+                         SgTypeInt::createType(), exp_list_exp3,bBlock1));
+                        //arg 3: &m, but m if mytype is array
         SgVarRefExp* arg3  = buildVarRefExp(initname,bBlock1);
         if(mytype->variantT() != V_SgArrayType)
-    	  appendExpression(exp_list_exp1,buildAddressOfOp(arg3));
- 	else
-    	  appendExpression(exp_list_exp1,arg3);
+          appendExpression(exp_list_exp1,buildAddressOfOp(arg3));
+        else
+          appendExpression(exp_list_exp1,arg3);
 
          // build function call expression
        SgType *return_type = new SgPointerType( SgTypeVoid::createType() );
@@ -2039,35 +2039,35 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
            (funcName,return_type, exp_list_exp1,bBlock1);
        
         SgCastExp *rhs = buildCastExp(func_call_expr, \
-		pointertype, SgCastExp::e_C_style_cast); 
+                pointertype, SgCastExp::e_C_style_cast); 
 
         SgExprStatement * expstmti= buildAssignStatement(lhs,rhs);
 
       //cout<<"debug:in addThreadprivateDeclarations:"<<expstmti->unparseToString()<<endl;
         appendStatement(expstmti,bBlock1);
 
-	// handle copyin case, insert a call like:
-	//  _ompc_copyin_thdprv (_ppthd_mm, &mm, 4);
-	// reuse the variable reference expressions before
-	if (ompattribute->isInClause(initname,e_copyin))
-	{
+        // handle copyin case, insert a call like:
+        //  _ompc_copyin_thdprv (_ppthd_mm, &mm, 4);
+        // reuse the variable reference expressions before
+        if (ompattribute->isInClause(initname,e_copyin))
+        {
                 //arguments for function calls
-	  SgExprListExp * exp_list_exp2 = buildExprListExp();
+          SgExprListExp * exp_list_exp2 = buildExprListExp();
          
           appendExpression(exp_list_exp2,lhs);
         if(mytype->variantT() != V_SgArrayType)
-    	  appendExpression(exp_list_exp2,buildAddressOfOp
+          appendExpression(exp_list_exp2,buildAddressOfOp
                (isSgExpression(SageInterface::deepCopy(arg3)))); // no shared expression allowed
- 	else
-    	  appendExpression(exp_list_exp2,isSgExpression(SageInterface::deepCopy(arg3)));
+        else
+          appendExpression(exp_list_exp2,isSgExpression(SageInterface::deepCopy(arg3)));
 
           appendExpression(exp_list_exp2,
                buildFunctionCallExp(SgName("sizeof"),
-			 SgTypeInt::createType(), exp_list_exp3,bBlock1));
-    	  SgExprStatement * expStmt2 = buildFunctionCallStmt( 
-		SgName("_ompc_copyin_thdprv"),buildVoidType(), exp_list_exp2, bBlock1);
+                         SgTypeInt::createType(), exp_list_exp3,bBlock1));
+          SgExprStatement * expStmt2 = buildFunctionCallStmt( 
+                SgName("_ompc_copyin_thdprv"),buildVoidType(), exp_list_exp2, bBlock1);
           appendStatement(expStmt2,bBlock1);
-	}// end if copyin
+        }// end if copyin
 
      }// end if threadprivate()
    }// end for
@@ -2082,7 +2082,7 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
 //
 // Also handle the declaration reduction variables from the same scope
 int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDeclaration* func,\
-	OmpAttributeOld *ompattribute, SgBasicBlock *bBlock1)
+        OmpAttributeOld *ompattribute, SgBasicBlock *bBlock1)
 {
   ROSE_ASSERT(bBlock1 != NULL);
   ROSE_ASSERT(decl != NULL);
@@ -2092,7 +2092,7 @@ int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDec
 //   SgScopeStatement* currentscope=isSgScopeStatement(ASTtools::get_scope(decl));
 // currentscope is the original scope of the pragma declaration
  SgScopeStatement* currentscope = isSgFunctionDeclaration(\
-		getEnclosingFunctionDeclaration(decl))\
+                getEnclosingFunctionDeclaration(decl))\
                 ->get_definition()->get_body();
 
    int counter=0;
@@ -2105,13 +2105,13 @@ int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDec
      SgName myname = initname->get_name();
     //varscope is the original scope for the shared variables
      SgScopeStatement* varscope=isSgScopeStatement(\
-   		ASTtools::get_scope(isSgNode((*i)->origVar)));                     // function parameters have strange scope, special handling
+                ASTtools::get_scope(isSgNode((*i)->origVar)));                     // function parameters have strange scope, special handling
     if ( ((currentscope==varscope) ||
-	  (isSgFunctionParameterList(initname->get_parent())) )&&
+          (isSgFunctionParameterList(initname->get_parent())) )&&
          (((*i)->ompType==e_shared)||((*i)->ompType==e_reduction_plus)
-	   || ((*i)->ompType==e_firstprivate)||((*i)->ompType==e_lastprivate)) )
+           || ((*i)->ompType==e_firstprivate)||((*i)->ompType==e_lastprivate)) )
      { // add local declaration for shared pointers
-   	// firstprivate, lastprivate also need transferring value between local and master thread 
+        // firstprivate, lastprivate also need transferring value between local and master thread 
         //int *_pp_X
       
         SgType* finalType=mytype; 
@@ -2135,11 +2135,11 @@ int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDec
        appendStatement(sharedvar,bBlock1);
 
         // add dereferencing statements for shared variables
-		// _pp_i = argv[0]
+                // _pp_i = argv[0]
         SgInitializedName * name1 = sharedvar->get_decl_item (varname_1);
         ROSE_ASSERT(name1);
         SgVarRefExp* lhs = buildVarRefExp(name1,currentscope);
-	ROSE_ASSERT(lhs);
+        ROSE_ASSERT(lhs);
                 //Get the only argument
 //       SgName var1_name = "__ompc_args";
 //       SgPointerType* pType1= new SgPointerType( SgTypeVoid::createType()); 
@@ -2172,9 +2172,9 @@ int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDec
 //     lock for critical section
 //     object pointer to a class with outlined member function
 // for example:
-// 	void *_thdprv_m;  // global or namespace-scope
-//  	void * __ompc_lock_critical
-//	void * _pp_globalobject
+//      void *_thdprv_m;  // global or namespace-scope
+//      void * __ompc_lock_critical
+//      void * _pp_globalobject
 int OmpMidend::addGlobalOmpDeclarations(OmpFrontend* ompfrontend, SgGlobal* myscope, bool hasMain)
 {
   ROSE_ASSERT(ompfrontend != NULL);
@@ -2194,17 +2194,17 @@ int OmpMidend::addGlobalOmpDeclarations(OmpFrontend* ompfrontend, SgGlobal* mysc
 
 // set storage modifier according to the reach definition initializedName
   if( ((*i)->get_declaration()->get_declarationModifier()).\
-	get_storageModifier().isExtern() )
+        get_storageModifier().isExtern() )
     ((vardecl->get_declarationModifier()).get_storageModifier()).setExtern();
   if( ((*i)->get_declaration()->get_declarationModifier()).\
-	get_storageModifier().isStatic() )
+        get_storageModifier().isStatic() )
     ((vardecl->get_declarationModifier()).get_storageModifier()).setStatic();
 
   // add into the declaration, TODO better place to insert
    prependStatement(vardecl,myscope);
   }
 
-//  	void * __ompc_lock_critical
+//      void * __ompc_lock_critical
 //TODO insert only needed!
 //  extern or not depending on main() function's presence
   SgName varname("__ompc_lock_critical");
@@ -2217,7 +2217,7 @@ int OmpMidend::addGlobalOmpDeclarations(OmpFrontend* ompfrontend, SgGlobal* mysc
   //myscope->prepend_declaration(vardecl);
   prependStatement(vardecl,myscope);
 
-//	void * _pp_globalobject
+//      void * _pp_globalobject
 //TODO insert only needed!
 //  extern or not depending on main() function's presence
   SgName varname2("_pp_globalobject");
@@ -2236,7 +2236,7 @@ int OmpMidend::addGlobalOmpDeclarations(OmpFrontend* ompfrontend, SgGlobal* mysc
 //
 // Also handle the declaration and initialization of reduction variables
 int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
-	OmpAttributeOld *ompattribute, SgBasicBlock *bBlock1)
+        OmpAttributeOld *ompattribute, SgBasicBlock *bBlock1)
 {
   ROSE_ASSERT(bBlock1 != NULL);
   ROSE_ASSERT(decl != NULL);
@@ -2246,8 +2246,8 @@ int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
                 getEnclosingFunctionDeclaration(decl))\
                 ->get_definition()->get_body();
   Rose_STL_Container<SgNode*> decl_list; 
-	// record all variables declared, avoid duplicated declaration
-	//since two OmpSymbols may have the same variable but different omp attributes
+        // record all variables declared, avoid duplicated declaration
+        //since two OmpSymbols may have the same variable but different omp attributes
 
   for (Rose_STL_Container<OmpSymbol* >::iterator i= ompattribute->var_list.begin();\
         i!=ompattribute->var_list.end();i++ )
@@ -2255,22 +2255,22 @@ int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
     // TODO consider scope for private variables ??
     //for reduction variables local copies are needed also
     if ( ((*i)->ompType==e_private)||((*i)->ompType==e_reduction_plus)|| \
-	 ((*i)->ompType==e_firstprivate)||((*i)->ompType==e_lastprivate) )
+         ((*i)->ompType==e_firstprivate)||((*i)->ompType==e_lastprivate) )
     {
       //get the original private variable
       SgInitializedName *initname = isSgInitializedName((*i)->origVar);
       SgType * mytype= initname->get_type();
       SgName myname = initname->get_name();
       SgScopeStatement* varscope=isSgScopeStatement(\
-		ASTtools::get_scope(isSgNode((*i)->origVar)));   
+                ASTtools::get_scope(isSgNode((*i)->origVar)));   
        
       // internal private copy of private variable.
       SgVariableDeclaration* privatevar=NULL;
       SgInitializedName * name1 = NULL;
 
      //add intializer expression for firstprivate variables
-	// Not using separated assignment statement because copy constructor
-	//is required for class type in OpenMP specification
+        // Not using separated assignment statement because copy constructor
+        //is required for class type in OpenMP specification
         //mytype _p_k = (*_pp_k) if k's varscope == currentscope or
         //mytype _p_k = k  if k's varscope < currentscope
      SgExpression * rhsexp = NULL;
@@ -2317,7 +2317,7 @@ int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
       }
     // add initialization statements for reduction variables' local copies
         //TODO handle all reduction operators
-	// TODO copy constructor needed instead of operator=
+        // TODO copy constructor needed instead of operator=
     if ((*i)->ompType==e_reduction_plus)
        {
          
@@ -2342,74 +2342,74 @@ int OmpMidend::convertTypeId(SgType* sgtype)
   {
     case  V_SgTypeChar:
     case  V_SgTypeSignedChar:
-	{
-	rt=OMPC_REDUCTION_CHAR;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_CHAR;
+        break;
+        }
     case  V_SgTypeUnsignedChar:
-	{
-	rt=OMPC_REDUCTION_UNSIGNED_CHAR;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_UNSIGNED_CHAR;
+        break;
+        }
     case  V_SgTypeShort:
     case  V_SgTypeSignedShort:
-	{
-	rt=OMPC_REDUCTION_SHORT;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_SHORT;
+        break;
+        }
     case  V_SgTypeUnsignedShort:
-	{
-	rt=OMPC_REDUCTION_UNSIGNED_SHORT;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_UNSIGNED_SHORT;
+        break;
+        }
     case  V_SgTypeInt:
     case  V_SgTypeSignedInt:
-	{
-	rt=OMPC_REDUCTION_INT;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_INT;
+        break;
+        }
     case  V_SgTypeUnsignedInt:
-	{
-	rt=OMPC_REDUCTION_UNSIGNED_INT;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_UNSIGNED_INT;
+        break;
+        }
     case  V_SgTypeLong:
     case  V_SgTypeSignedLong:
-	{
-	rt=OMPC_REDUCTION_LONG;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_LONG;
+        break;
+        }
     case  V_SgTypeUnsignedLong:
-	{
-	rt=OMPC_REDUCTION_UNSIGNED_LONG;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_UNSIGNED_LONG;
+        break;
+        }
     case  V_SgTypeLongLong:
-	{
-	rt=OMPC_REDUCTION_LONGLONG;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_LONGLONG;
+        break;
+        }
     case  V_SgTypeUnsignedLongLong:
-	{
-	rt=OMPC_REDUCTION_UNSIGNED_LONGLONG;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_UNSIGNED_LONGLONG;
+        break;
+        }
     
     case  V_SgTypeFloat:
-	{
-	rt=OMPC_REDUCTION_FLOAT;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_FLOAT;
+        break;
+        }
     case  V_SgTypeDouble:
-	{
-	rt=OMPC_REDUCTION_DOUBLE;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_DOUBLE;
+        break;
+        }
     case  V_SgTypeLongDouble:
-	{
-	rt=OMPC_REDUCTION_LONG_DOUBLE;
-	break;
-	}
+        {
+        rt=OMPC_REDUCTION_LONG_DOUBLE;
+        break;
+        }
   default:
    {
     cout<<"Warning: OmpMidend::convertTypeId(): Sorry, omp type conversion not implemented (default reached) for SgType: "<<sgtype->class_name()<<endl;
@@ -2429,7 +2429,7 @@ int OmpMidend::splitCombinedParallelForSections(SgPragmaDeclaration* decl)
 {
   ROSE_ASSERT(decl != NULL);
   ROSE_ASSERT((OmpFrontend::recognizePragma(decl)==e_parallel_for)||\
-	(OmpFrontend::recognizePragma(decl)==e_parallel_sections)) ;
+        (OmpFrontend::recognizePragma(decl)==e_parallel_sections)) ;
 
   bool isParallelFor= (OmpFrontend::recognizePragma(decl)==e_parallel_for); 
   int offset;
@@ -2461,7 +2461,7 @@ int OmpMidend::splitCombinedParallelForSections(SgPragmaDeclaration* decl)
   ROSE_ASSERT(srcattribute != NULL);
 
   for (Rose_STL_Container<OmpSymbol*>::iterator i=srcattribute->var_list.begin();\
-	i!=srcattribute->var_list.end();i++)
+        i!=srcattribute->var_list.end();i++)
   {
     if(( (*i)->ompType == e_lastprivate ) ||((*i)->ompType == e_firstprivate ))
     {
@@ -2637,8 +2637,8 @@ We get what we want then:
                 }
         case e_threadprivate: // the translation does not happen near the pragma
                 { // OmpFrontend already collects the variables
-		  // only delete the declaration here
-		LowLevelRewrite::remove(decl);
+                  // only delete the declaration here
+                LowLevelRewrite::remove(decl);
                 break;
                 }
         case e_section:
@@ -2748,7 +2748,7 @@ int OmpMidend::transSections(SgPragmaDeclaration *decl)
       appendStatement(buildGotoStatement(labelstmt),casebody );
     
       SgCaseOptionStmt * optionstmt = buildCaseOptionStmt( \
-		buildIntVal(counter),casebody);
+                buildIntVal(counter),casebody);
       casebody->set_parent(optionstmt);
 
       appendStatement(optionstmt,switchbody);
@@ -2758,7 +2758,7 @@ int OmpMidend::transSections(SgPragmaDeclaration *decl)
                                                                                           
   // switch stmt
   SgSwitchStatement* switchstmt =  buildSwitchStatement(\
-		item_selector,switchbody);
+                item_selector,switchbody);
   item_selector->set_parent(switchstmt);
   switchbody->set_parent(switchstmt);
   
@@ -2802,13 +2802,13 @@ int OmpMidend::transSections(SgPragmaDeclaration *decl)
 //   _p_loop_stride = original stride;
 //
 //   // 3. call scheduling runtime call
-//  		//  handles dynamic, guided scheduling etc.
+//              //  handles dynamic, guided scheduling etc.
 //   _ompc_default_sched(&_p_loop_lower,&_p_loop_upper, &_p_loop_stride);
 //
 //   // 4. deep copy original loop body
 //
 //   // 5. replace any references to loop control variables   
-//	  // also replace other private/shared/reduction varialbes
+//        // also replace other private/shared/reduction varialbes
 //   for ((_p_loop_index) = (_p_loop_lower); (_p_loop_index) < (_p_loop_upper);
 //                                 (_p_loop_index) += (_p_loop_stride))
 //     {
@@ -2872,19 +2872,19 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
   appendStatement(loopvardecl2,bb1);
   appendStatement(loopvardecl3,bb1);
   appendStatement(loopvardecl4,bb1);
-	// set init values for local copies of loop control variables
+        // set init values for local copies of loop control variables
   ROSE_ASSERT(isSgForStatement(forstmt)!=NULL);
   SgExpression* lowervalue=isSgExpression( SageInterface::deepCopy(ASTtools::getForLoopTripleValues \
-		(0, isSgForStatement(forstmt))));
+                (0, isSgForStatement(forstmt))));
 
   //SgExpression should not be shared at all! So create them each time when needed!!
   SgExpression * rhslower = isSgExpression(SageInterface::deepCopy(lowervalue));
 
   SgExprStatement * expstmtlower= buildAssignStatement(buildVarRefExp(looplower),rhslower);
   appendStatement(expstmtlower,bb1);
-		//set upper bound
+                //set upper bound
   SgExpression* uppervalue=isSgExpression( SageInterface::deepCopy(ASTtools::getForLoopTripleValues \
-		(1, isSgForStatement(forstmt))));
+                (1, isSgForStatement(forstmt))));
 
 //  SgVarRefExp *lhsupper = buildVarRefExp(loopupper);
   SgExpression * rhsupper= isSgExpression(SageInterface::deepCopy(uppervalue));
@@ -2892,12 +2892,12 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
   SgExpression * testexp=isSgExprStatement(isSgForStatement(forstmt)->get_test())->get_expression();
   ROSE_ASSERT(testexp != NULL);
   if (isSgLessOrEqualOp(testexp)!=NULL) 
-	// using upper +1 since <= changed to < after normalization
+        // using upper +1 since <= changed to < after normalization
   { 
     rhsupper = buildAddOp(rhsupper, buildIntVal(1));
   }
   if (isSgGreaterOrEqualOp(testexp)!=NULL) 
-	// using upper -1 since >= changed to > after normalization
+        // using upper -1 since >= changed to > after normalization
   { 
     rhsupper = buildAddOp(rhsupper, buildIntVal(-1));
   }
@@ -2946,12 +2946,12 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
   if (ompattribute->sched_type == e_sched_none)
   {
      callstmt= buildFunctionCallStmt( 
-	SgName("_ompc_default_sched"),buildVoidType(), parameters, bb1);
+        SgName("_ompc_default_sched"),buildVoidType(), parameters, bb1);
   }  
     else if (ompattribute->sched_type == e_sched_static && ompattribute->chunk_size==NULL)
   {
      callstmt= buildFunctionCallStmt( 
-	SgName("_ompc_static_bsched"),buildVoidType(), parameters, bb1);
+        SgName("_ompc_static_bsched"),buildVoidType(), parameters, bb1);
   }
    else if (ompattribute->sched_type == e_sched_static && ompattribute->chunk_size!=NULL)
    {
@@ -2960,7 +2960,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
      SgName("_ompc_static_sched_init"),buildVoidType(), parameters2, bb1);
 
     condcall=buildFunctionCallStmt( 
-	SgName("_ompc_static_sched_next"),buildIntType(), parameters3,bb1);
+        SgName("_ompc_static_sched_next"),buildIntType(), parameters3,bb1);
    } 
    else if (ompattribute->sched_type == e_sched_dynamic)
    {
@@ -2969,7 +2969,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
      SgName("_ompc_dynamic_sched_init"),buildVoidType(),parameters2, bb1);
 
     condcall=buildFunctionCallStmt( 
-	SgName("_ompc_dynamic_sched_next"),buildIntType(), parameters3,bb1);
+        SgName("_ompc_dynamic_sched_next"),buildIntType(), parameters3,bb1);
    } 
    else if (ompattribute->sched_type == e_sched_guided)
    {
@@ -2978,7 +2978,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
      SgName("_ompc_guided_sched_init"),buildVoidType(),parameters2, bb1);
 
     condcall=buildFunctionCallStmt( 
-	SgName("_ompc_guided_sched_next"),buildIntType(),parameters3,bb1);
+        SgName("_ompc_guided_sched_next"),buildIntType(),parameters3,bb1);
    } 
    else if (ompattribute->sched_type == e_sched_runtime)
    {
@@ -2986,7 +2986,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
      SgName("_ompc_runtime_sched_init"),buildVoidType(),parameters2, bb1);
 
     condcall=buildFunctionCallStmt( 
-	SgName("_ompc_runtime_sched_next"),buildIntType(),parameters3,bb1);
+        SgName("_ompc_runtime_sched_next"),buildIntType(),parameters3,bb1);
    } else 
    {
      cout<<"Fatal error in transOmpFor! unkown sched_type"<<endl;
@@ -2995,7 +2995,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
 
   appendStatement(callstmt,bb1);
   // generate the loop body: 2 cases: default scheduling(or static without chunksize)
-  // 	      and all others
+  //          and all others
   
   SgForStatement *newforstmt;
   if  ( (ompattribute->sched_type == e_sched_none) ||\
@@ -3009,8 +3009,8 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
   } // case 2: wrap the loop body into a while loop
    else if (ompattribute->sched_type == e_sched_dynamic||\
       (ompattribute->sched_type == e_sched_static&& ompattribute->chunk_size!=NULL)||\
-	    ompattribute->sched_type == e_sched_guided||\
-	    ompattribute->sched_type == e_sched_runtime)
+            ompattribute->sched_type == e_sched_guided||\
+            ompattribute->sched_type == e_sched_runtime)
   {
     SgBasicBlock * wbody = buildBasicBlock();
 
@@ -3034,7 +3034,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
   //  on the newly copied 'for stmt' in the basic block
 
   Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(newforstmt, V_SgVarRefExp);
-	// replace all reference sites to the loop index variables
+        // replace all reference sites to the loop index variables
 
 // Liao, 11/1/2007
 // How could this work before? The loop index gets changed for the first time, the following
@@ -3047,17 +3047,17 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
       SgInitializedName * refvar = isSgVarRefExp(*i)->get_symbol()->get_declaration();
       if ( (loopvar->get_name() == refvar->get_name())\
            &&(loopvar->get_scope() == refvar->get_scope()) )
-	isSgVarRefExp(*i)->set_symbol(loopindexsymbol);
+        isSgVarRefExp(*i)->set_symbol(loopindexsymbol);
   }
-	// replace the original lower,uppper,and stride with the new ones
-	// the increment control operator may be also changed from <= to < 
-	// TODO  having a loop normalization phase to simplify the process
+        // replace the original lower,uppper,and stride with the new ones
+        // the increment control operator may be also changed from <= to < 
+        // TODO  having a loop normalization phase to simplify the process
   ASTtools::setForLoopTripleValues(0,newforstmt, buildVarRefExp(looplower));
   ASTtools::setForLoopTripleValues(1,newforstmt, buildVarRefExp(loopupper));
   ASTtools::setForLoopTripleValues(2,newforstmt, buildVarRefExp(loopstride));
 
      //TODO; for (int i=x,..), substitute SgVariableDeclaration with SgExprStatement 
-	// for SgForInitStatement of a SgForStatement
+        // for SgForInitStatement of a SgForStatement
   //variable substitution for private,shared, and reduction variables in the loop body
   if (ompattribute != NULL)
   {
@@ -3069,7 +3069,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
     variableSubstituting(decl,ompattribute,*i);
 
    //TODO performance concern, add tags for reduction, lastprivate clause,
-	// only call addXXX() if the tags are true, low priority though
+        // only call addXXX() if the tags are true, low priority though
     if(ompattribute->hasReduction) addReductionCalls(decl,ompattribute,bb1);
   // handle lastprivate right after reduction and before barrier
   //It can handle variables in both first/last private lists now
@@ -3093,12 +3093,12 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
 //----------------------------
 // translation function for combined omp parallel sections
 // tasks:
-//	split combined omp parallel sections into separated omp parallel and omp sections
-//	bottom up translation then:
-//		call transSections() first, 
-//		then transParallelRegion()
+//      split combined omp parallel sections into separated omp parallel and omp sections
+//      bottom up translation then:
+//              call transSections() first, 
+//              then transParallelRegion()
 // TODO consider moving this into frontend, pragma proprecessing or normalization phase
-//	the OmpMidend only sees simpler separated case
+//      the OmpMidend only sees simpler separated case
 int OmpMidend::transParallelSections(SgPragmaDeclaration *decl)
 {
   ROSE_ASSERT(OmpFrontend::recognizePragma(decl)==e_parallel_sections);
@@ -3122,10 +3122,10 @@ int OmpMidend::transParallelSections(SgPragmaDeclaration *decl)
 //----------------------------
 // translation function for combined omp parallel for
 // tasks:
-//	split combined omp parallel for into separated omp parallel and omp for
-//	bottom up translation then:
-//		call transOmpFor() first, 
-//		then transParallelRegion()
+//      split combined omp parallel for into separated omp parallel and omp for
+//      bottom up translation then:
+//              call transOmpFor() first, 
+//              then transParallelRegion()
 // TODO consider moving this into frontend, pragma proprecessing or normalization phase
 int OmpMidend::transParallelFor(SgPragmaDeclaration *decl)
 {
@@ -3164,7 +3164,7 @@ int OmpMidend::transMaster(SgPragmaDeclaration * decl)
 
   SgName varName("_ompc_is_master"); 
   SgExprStatement * expStmt1= buildFunctionCallStmt( 
-	varName, buildIntType(), exp_list_exp1, globalscope); 
+        varName, buildIntType(), exp_list_exp1, globalscope); 
 // true _body, deep copy of the original 
   SgBasicBlock *truebody1 =  buildBasicBlock();
   SgBasicBlock *falsebody1 = buildBasicBlock(); 
@@ -3208,13 +3208,13 @@ int OmpMidend::transSingle(SgPragmaDeclaration * decl)
   SgExprListExp * exp_list_exp1 = buildExprListExp();
 
   SgExprStatement * expStmt1= buildFunctionCallStmt( 
-	SgName("_ompc_do_single"),buildIntType(),exp_list_exp1, globalscope); 
+        SgName("_ompc_do_single"),buildIntType(),exp_list_exp1, globalscope); 
 // true _body, deep copy of the original 
   SgBasicBlock *truebody1 =  buildBasicBlock();
   SgBasicBlock *falsebody1 =  buildBasicBlock();
 
   SgStatement* nextstmt = getNextStatement(decl);
-	// add declarations for private/firstprivate variables
+        // add declarations for private/firstprivate variables
   addPrivateVarDeclarations(decl,ompattribute,truebody1);
   
   ASTtools::deepCopy(nextstmt,truebody1);
@@ -3235,7 +3235,7 @@ int OmpMidend::transSingle(SgPragmaDeclaration * decl)
   if(!ompattribute->nowait)
   {
     SgExprStatement * expStmt2= buildFunctionCallStmt( 
-	SgName("_ompc_barrier"),buildVoidType(),exp_list_exp1,globalscope);
+        SgName("_ompc_barrier"),buildVoidType(),exp_list_exp1,globalscope);
     insertStatement (decl, expStmt2, true);
   }
   LowLevelRewrite::remove(decl);
@@ -3250,7 +3250,7 @@ int OmpMidend::transBarrier(SgPragmaDeclaration * decl)
   SgScopeStatement * globalscope = isSgScopeStatement(SageInterface::getGlobalScope(decl));
   SgExprListExp * exp_list_exp1 = buildExprListExp();
   SgExprStatement * expStmt2= buildFunctionCallStmt(
-	SgName("_ompc_barrier"),buildVoidType(), exp_list_exp1,globalscope);
+        SgName("_ompc_barrier"),buildVoidType(), exp_list_exp1,globalscope);
 // replace with the two new statements
   SgStatement *parentBB = isSgStatement(decl->get_parent());
   ROSE_ASSERT(parentBB != NULL);
@@ -3361,10 +3361,10 @@ int OmpMidend::transCritical(SgPragmaDeclaration *pragDecl)
   appendExpression(exp_list_exp,address1);
 
   SgExprStatement * expStmt = buildFunctionCallStmt( 
-		SgName("_ompc_enter_critical"), buildVoidType(),exp_list_exp, scope);
+                SgName("_ompc_enter_critical"), buildVoidType(),exp_list_exp, scope);
 
   SgExprStatement * expStmt2= buildFunctionCallStmt( 
-		SgName("_ompc_exit_critical"), buildVoidType(),exp_list_exp, scope);
+                SgName("_ompc_exit_critical"), buildVoidType(),exp_list_exp, scope);
 
 // enclose the critical region using two calls and remove the pragma statement
   SgStatement *targetStmt = getNextStatement(pragDecl);
@@ -3404,10 +3404,10 @@ int OmpMidend::transAtomic(SgPragmaDeclaration *pragDecl)
   SgExprListExp * exp_list_exp = buildExprListExp();
 
   SgExprStatement * expStmt = buildFunctionCallStmt( 
-		SgName("_ompc_atomic_lock"), buildVoidType(), exp_list_exp, scope);
+                SgName("_ompc_atomic_lock"), buildVoidType(), exp_list_exp, scope);
 
   SgExprStatement * expStmt2= buildFunctionCallStmt( 
-		SgName("_ompc_atomic_unlock"), buildVoidType(), exp_list_exp, scope);
+                SgName("_ompc_atomic_unlock"), buildVoidType(), exp_list_exp, scope);
 
 // enclose the critical region using two calls and remove the pragma statement
   SgStatement *targetStmt = getNextStatement(pragDecl);
@@ -3509,7 +3509,7 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
   ROSE_ASSERT(myFuncType != NULL);
                                                                                                                
        //SgExprListExp, two parameters (argc, argv)
-	// look up symbol tables for symbols
+        // look up symbol tables for symbols
   SgScopeStatement * currentscope = mainDef->get_body();
 
   SgInitializedNamePtrList mainArgs = mainDef->get_declaration()->get_parameterList()->get_args();
@@ -3578,10 +3578,10 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
 // Also, if there are shared variables inside the parallel region
 //   we have to generate the code to wrap addresses of all shared variables 
 //   used in this parallel region. They may come from the union of several 'omp for'
-// 	 void * __ompc_argv[2];
-// 	*(__ompc_argv +0)=(void*)(&share1);
-//  	*(__ompc_argv +1)=(void*)(&share2);
-//  	_ompc_do_parallel(__ompc_func_x, __ompc_argv);
+//       void * __ompc_argv[2];
+//      *(__ompc_argv +0)=(void*)(&share1);
+//      *(__ompc_argv +1)=(void*)(&share2);
+//      _ompc_do_parallel(__ompc_func_x, __ompc_argv);
 //
 // return:  a basic block with several statements
 SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, SgFunctionDeclaration *outlinedFunc, OmpAttributeOld * ompattribute)
@@ -3614,7 +3614,7 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
   }
     //2.   *(__ompc_argv+0)=(void*)(&share1);
   SgScopeStatement* currentscope= isSgFunctionDeclaration(\
-		getEnclosingFunctionDeclaration(pragDecl))\
+                getEnclosingFunctionDeclaration(pragDecl))\
                 ->get_definition()->get_body();
   int counter=0;
   for (Rose_STL_Container<OmpSymbol* >::iterator i= ompattribute->var_list.begin();i!=ompattribute->var_list.end();i++ )
@@ -3623,10 +3623,10 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
     SgScopeStatement *varscope = isSgScopeStatement(ASTtools::get_scope(isSgNode((*i)->origVar)));
     // scope of function parameters is weird, special handling
     if (((currentscope==varscope) ||\
-	 (isSgFunctionParameterList(initname->get_parent())))
-	&&
+         (isSgFunctionParameterList(initname->get_parent())))
+        &&
          (((*i)->ompType==e_shared)||((*i)->ompType==e_firstprivate)\
-	 ||((*i)->ompType==e_lastprivate)||((*i)->ompType==e_reduction_plus)) )
+         ||((*i)->ompType==e_lastprivate)||((*i)->ompType==e_reduction_plus)) )
     {
       SgAddOp * addop= buildAddOp(buildVarRefExp(name_ompc_argv,bb1), buildIntVal(counter)); //pointertype or arraytype here?
       SgPointerDerefExp *lhs = buildPointerDerefExp(addop);
@@ -3635,7 +3635,7 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
       SgVarRefExp *rhsvar = buildVarRefExp(rhsinitname,bb1);
       SgCastExp * rhs = buildCastExp( \
                  buildAddressOfOp(rhsvar), \
-		pointertype,SgCastExp::e_C_style_cast);
+                pointertype,SgCastExp::e_C_style_cast);
 
       SgExprStatement * expstmti= buildAssignStatement(lhs,rhs);
       //cout<<"debug:"<<expstmti->unparseToString()<<endl;
@@ -3662,7 +3662,7 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
     SgVarRefExp *lhsvar = new SgVarRefExp(TRANS_FILE, varsymbol1);
 
     SgThisExp * thisexp = new SgThisExp (TRANS_FILE, \
-		new SgClassSymbol(classdef->get_declaration()));
+                new SgClassSymbol(classdef->get_declaration()));
     SgCastExp * rhs = buildCastExp(\
            thisexp,vartype,SgCastExp::e_C_style_cast);
 
@@ -3691,13 +3691,13 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
     SgFunctionDeclaration * returnFuncDef=NULL;
 
     for (Rose_STL_Container<SgDeclarationStatement*>::iterator i=testList.begin(); \
-		i!= testList.end(); i++)
+                i!= testList.end(); i++)
     {
       if (isSgFunctionDeclaration(*i)!=NULL){
         string itemName=(isSgFunctionDeclaration(*i)->get_name()).getString();
         if (itemName==targetName) {
            returnFuncDef=isSgFunctionDeclaration(*i);
-	   break;
+           break;
         }
        }// end if func decl
     }// end for
@@ -3733,21 +3733,21 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
 // insert the outlined function declaration at the same scope of 
 // its parent function declaration right before it.
 void OmpMidend::insertOutlinedFunction(SgPragmaDeclaration* decl, \
-			SgFunctionDeclaration *outlinedFunc)
+                        SgFunctionDeclaration *outlinedFunc)
 {
   SgFunctionDeclaration *targetDecl=isSgFunctionDeclaration\
-	(getEnclosingFunctionDeclaration(decl));
+        (getEnclosingFunctionDeclaration(decl));
   ROSE_ASSERT(targetDecl !=NULL);
   
   SgMemberFunctionDeclaration* memdecl = \
-	isSgMemberFunctionDeclaration(targetDecl);
+        isSgMemberFunctionDeclaration(targetDecl);
   if (memdecl == NULL) { // regular function, add to global scope
     SgGlobal *globalScope= SageInterface::getGlobalScope(decl);
     ROSE_ASSERT(globalScope != NULL);
     moveUpPreprocessingInfo(isSgStatement(outlinedFunc), \
-				isSgStatement(targetDecl));
+                                isSgStatement(targetDecl));
 
-//	isSgStatement(outlinedFunc), true);
+//      isSgStatement(outlinedFunc), true);
     insertStatement(targetDecl,outlinedFunc);
   } else    //class member function here, add to class scope
   { //TODO also consider the preprocessing info. here, though very rare
@@ -3790,7 +3790,7 @@ void OmpMidend::replacePragmaBlock(SgPragmaDeclaration* pragDecl, SgBasicBlock *
 //    variable handling (dereferences for shared variables, replace private variables
 //         using local copies, reduction statement ,etc
 void OmpMidend::generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
-		SgFunctionDeclaration * func, OmpAttributeOld *ompattribute)
+                SgFunctionDeclaration * func, OmpAttributeOld *ompattribute)
 {
 
    ROSE_ASSERT(decl); 
@@ -3803,10 +3803,10 @@ void OmpMidend::generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
 // SgInitializedName* parameter1=*(argList.begin()); //at most 1 parameter
 
    // 1. pointer declarations for shared variables & reduction variables from the same scope
-  //		int *_pp_j2;
-  //		int *_pp_j;
-  //		(_pp_j2) = (((int *) (*__ompc_args + 0)));
-  //		(_pp_j) = (((int *) (*((__ompc_args) + (1)))));
+  //            int *_pp_j2;
+  //            int *_pp_j;
+  //            (_pp_j2) = (((int *) (*__ompc_args + 0)));
+  //            (_pp_j) = (((int *) (*((__ompc_args) + (1)))));
   // process shared variable dereferencing first because first/last private variables 
   // need the results later on. 
   addSharedVarDeclarations(decl,func,ompattribute,bBlock1);
@@ -3814,8 +3814,8 @@ void OmpMidend::generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
   //  int counter=0;
   // 2. variable declarations for shared/private/reduction(plus) OpenMP variables
   //    plus dereference for pointers of shared variables
-  //   e.g.	int _p_i;
-  //		int _p_k_3;
+  //   e.g.     int _p_i;
+  //            int _p_k_3;
   addPrivateVarDeclarations(decl,ompattribute,bBlock1);
   addThreadprivateDeclarations(decl,ompattribute,bBlock1);
    //copy the enclosed parallel region code
@@ -3920,7 +3920,7 @@ SgFunctionDeclaration* OmpMidend::generateOutlinedFunction(SgPragmaDeclaration* 
     SgInitializedName* arg1 = buildInitializedName(var1_name,pType2);
     appendArg(parameterList,arg1);
     SgFunctionDeclaration * func = buildDefiningFunctionDeclaration (func_name, \
-	func_return_type,parameterList,globalscope);
+        func_return_type,parameterList,globalscope);
 
     ((func->get_declarationModifier()).get_storageModifier()).setStatic();
 

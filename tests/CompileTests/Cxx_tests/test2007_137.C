@@ -1,18 +1,18 @@
 /*
-Bug name:	interaction-between-extern-decl-and-default-args
+Bug name:       interaction-between-extern-decl-and-default-args
 
-Reported by:	Brian White
+Reported by:    Brian White
 
-Date:		Sept 29, 2007
+Date:           Sept 29, 2007
 
 Date sent:      Sept 30, 2007
 
 E-mail subject: more SPEC 2006 bugs
 
-Occurs in:  	SPEC CPU 2006 	471.omnetpp/src/libs/sim/util.cc
+Occurs in:      SPEC CPU 2006   471.omnetpp/src/libs/sim/util.cc
                                 471.omnetpp/src/libs/sim/distrib.cc
 
-Brief description:  	A function with default arguments is declared
+Brief description:      A function with default arguments is declared
                         in a header file.  ROSE emits an extern
                         declaration in the source file that #include's
                         the header, which also includes the default
@@ -24,9 +24,9 @@ Files
 -----
 bug.h           Declares a function opp_concat with default args.
 
-bug.cc		#include's bug.h and defines opp_concat.
+bug.cc          #include's bug.h and defines opp_concat.
 
- 		Compilation outputs the following errors:
+                Compilation outputs the following errors:
 
 rose_bug.cc:2: error: default argument given for parameter 3 of `char* 
    opp_concat(const char*, const char*, const char*, const char*)'
@@ -37,7 +37,7 @@ rose_bug.cc:2: error: default argument given for parameter 4 of `char*
 bug.h:1: error: after previous specification in `char* opp_concat(const char*, 
    const char*, const char*, const char*)'
 
-rose_bug.cc	The output from the backend for bug.cc.  In it, we see
+rose_bug.cc     The output from the backend for bug.cc.  In it, we see
                 that ROSE emits an extern declaration in the file rose_bug.cc,
                 which redundatly includes the default args that are 
                 already present in bug.h:

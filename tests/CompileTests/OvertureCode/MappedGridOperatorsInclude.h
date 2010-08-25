@@ -35,26 +35,26 @@
           { \
 	    where( mask ) \
             {\
-	       for( n=uC.getBase(0); n<=uC.getBound(0); n++ ) \
+               for( n=uC.getBase(0); n<=uC.getBound(0); n++ ) \
   	       { \
  	         EXPRESSION \
   	       }  \
-	    }  \
+            }  \
           }   \
           else \
             {\
-	       for( n=uC.getBase(0); n<=uC.getBound(0); n++ ) \
+               for( n=uC.getBase(0); n<=uC.getBound(0); n++ ) \
   	       { \
  	         EXPRESSION \
   	       }  \
-	    }
+            }
 
 
 // This is just like one above except that mask has a first dimension of length 1
 #define WHERE_MASK0(EXPRESSION) \
           if( useWhereMaskOnBoundary[axis][side] || bcParameters.getUseMask()  ) \
            { \
-	    where( mask(0,I1m,I2m,I3m) ) \
+            where( mask(0,I1m,I2m,I3m) ) \
             {\
 	      EXPRESSION \
 	    }  \

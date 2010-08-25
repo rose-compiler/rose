@@ -247,10 +247,10 @@ void declareBindings (void)
   {
     MPI_Aint* array_of_displacements;
     MPI_Type_hindexed (count, array_of_blocklengths, array_of_displacements,
-		       oldtype, &newtype); // L92--93
+                       oldtype, &newtype); // L92--93
     MPI_Datatype* array_of_types;
     MPI_Type_struct (count, array_of_blocklengths, array_of_displacements,
-		     array_of_types, &newtype); // L95--96
+                     array_of_types, &newtype); // L95--96
   }
   void* location;
   MPI_Aint address;
@@ -283,15 +283,15 @@ void declareBindings (void)
   int* recvcounts;
   int* displs;
   MPI_Gatherv (sendbuf, sendcount, sendtype,
-	       recvbuf, recvcounts, displs, recvtype,
+               recvbuf, recvcounts, displs, recvtype,
 	       root, comm); // L128--130
   MPI_Scatter (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-	       root, comm); // L131--132
+               root, comm); // L131--132
   int* sendcounts;
   MPI_Scatterv (sendbuf, sendcounts, displs, sendtype,
 		recvbuf, recvcount, recvtype, root, comm); // L134--135
   MPI_Allgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-		 comm); // L136--137
+                 comm); // L136--137
   MPI_Allgatherv (sendbuf, sendcount, sendtype,
 		  recvbuf, recvcounts, displs, recvtype,
 		  comm); // L138--140
@@ -300,7 +300,7 @@ void declareBindings (void)
   int* sdispls;
   int* rdispls;
   MPI_Alltoallv (sendbuf, sendcounts, sdispls, sendtype,
-		 recvbuf, recvcounts, rdispls, recvtype,
+                 recvbuf, recvcounts, rdispls, recvtype,
 		 comm); // L145--147
   MPI_Op op;
   MPI_Reduce (sendbuf, recvbuf, count, datatype, op, root, comm); // L149

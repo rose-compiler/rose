@@ -53,7 +53,7 @@ class Regrid
 			    const aString & fileName );
 
   int printStatistics( GridCollection & gc, FILE *file = NULL, 
-		       int *numberOfGridPoints=NULL );
+                       int *numberOfGridPoints=NULL );
   
   void setEfficiency(real efficiency);  // gridding efficiency, 0 < efficiency < 1
 

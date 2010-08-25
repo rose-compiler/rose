@@ -16,7 +16,7 @@ extern cr_client_id_t cr;
 
 int
 hypre_SMGResidual (void *residual_vdata,
-		   hypre_StructMatrix * A,
+                   hypre_StructMatrix * A,
 		   hypre_StructVector * x,
 		   hypre_StructVector * b, hypre_StructVector * r)
 {

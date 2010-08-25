@@ -71,7 +71,7 @@ class ApproximateGlobalInverse
   void binarySearchOverBoundary( real x[3], real & minimumDistance, int iv[3], int side=-1, int axis=-1 );
 /* ---
   void robustBinarySearchOverBoundary( real x[3], 
-				       real & minimumDistance, 
+                                       real & minimumDistance, 
 				       int iv[3],
 				       int side,
 				       int axis  );
@@ -99,7 +99,7 @@ class ApproximateGlobalInverse
   ApproximateGlobalInverse( Mapping & map );
   virtual ~ApproximateGlobalInverse();
   virtual void inverse( const realArray & x, realArray & r, realArray & rx, 
-		       MappingWorkSpace & workSpace, MappingParameters & params );
+                       MappingWorkSpace & workSpace, MappingParameters & params );
 
   void initialize();     // initialize if not already done so
   void reinitialize();   // this will force a re-initialize the inverse

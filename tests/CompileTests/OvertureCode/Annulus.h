@@ -19,7 +19,7 @@ class AnnulusMapping : public Mapping
   real x0,y0,innerRadius,outerRadius,startAngle,endAngle,zLevel;
 
   AnnulusMapping(const real innerRadius0=.5, 
-		 const real outerRadius0=1., 
+                 const real outerRadius0=1., 
 		 const real x0=0., 
 		 const real y0=0., 
 		 const real startAngle=0.,
@@ -33,7 +33,7 @@ class AnnulusMapping : public Mapping
   ~AnnulusMapping();
 
   void map( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	   MappingParameters & params=Overture::nullMappingParameters());
+            MappingParameters & params=Overture::nullMappingParameters());
 
   void basicInverse( const realArray & x, realArray & r, realArray & rx= Overture::nullRealDistributedArray(), 
            MappingParameters & params =Overture::nullMappingParameters());

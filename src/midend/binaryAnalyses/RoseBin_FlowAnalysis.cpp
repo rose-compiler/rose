@@ -283,7 +283,7 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondi
   }
 
   else if (nextFlow==NULL &&
-	   hasStopCondition==false && inst->get_kind() == x86_jmp) {
+           hasStopCondition==false && inst->get_kind() == x86_jmp) {
     // in this case we want to connect to the destination
     ROSE_ASSERT(g_algo->info);
     nextFlow = inst->cfgBinFlowOutEdge(g_algo->info);
@@ -497,7 +497,7 @@ RoseBin_FlowAnalysis::process_jumps() {
 	if (inst)
 	  if (RoseBin_support::DEBUG_MODE())
 	    cerr << "    WARNING :: process_jumps: No target found for node " << RoseBin_support::HexToString(inst->get_address())
-	       << "   " << inst->get_mnemonic() << endl;
+                 << "   " << inst->get_mnemonic() << endl;
       }
     } else {
 
@@ -872,9 +872,9 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	SgGraphNode* trg=NULL;
 	vector<SgGraphNode*> targets;
 	if (analysisName=="callgraph")
-	   vizzGraph->checkIfGraphNodeExists(hexStrf, targets);
+	  vizzGraph->checkIfGraphNodeExists(hexStrf, targets);
 	else
-	   vizzGraph->checkIfGraphNodeExists(hexStr, targets);
+	  vizzGraph->checkIfGraphNodeExists(hexStr, targets);
 	vector<SgGraphNode*>::const_iterator src_it = 
 	  targets.begin();
 	for (;src_it!=targets.end();++src_it) {

@@ -165,7 +165,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
       myfile << "subgraph \"cluster_" <</*name*/ hex_address<< "\" { \n";
       myfile << "\"" << hex_address << "\"[label=\"" << hex_address << ":"
-	     << funcName << "\\n type = " << type << "\\n \"" << add <<"];\n";
+             << funcName << "\\n type = " << type << "\\n \"" << add <<"];\n";
       //	     << name << "\\n type = " << type << "\\n \"" << add <<"];\n";
 
       callNodeType::iterator inv = callMap.lower_bound(funcName);
@@ -193,8 +193,8 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 	*/
 	//	cerr << "    +++ funcName " << funcName << "   name_n: " << name_n << endl;
 	myfile << "\"" << hex_address_n << "\"[label=\"" << hex_address_n << ":"
-	       << name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n";
-	//	<< name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n";
+               << name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n";
+        //	<< name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n";
 
       }
 
@@ -207,7 +207,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
 void
 RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,
-				 std::ofstream& myfile, string& recursiveFunctionName) {
+                                 std::ofstream& myfile, string& recursiveFunctionName) {
   //ROSE_ASSERT(unparser);
   //bool firstFunc = true;
   //  cerr << " grouping : " << grouping << endl;
@@ -323,7 +323,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
       if (grouping)
 	myfile << "subgraph \"cluster_" <</*name*/ hex_address<< "\" { \n";
       myfile << "\"" << hex_address << "\"[label=\"" << hex_address << ":"
-	     << name << "\\n type = " << type << "\\n \"" << add <<"];\n";
+             << name << "\\n type = " << type << "\\n \"" << add <<"];\n";
 
       printInternalNodes(dfg, forward_analysis, myfile, name, func);
       if (grouping)
@@ -336,7 +336,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
 
 void
 RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
-					 std::ofstream& myfile, string& recursiveFunctionName,
+                                         std::ofstream& myfile, string& recursiveFunctionName,
 					 SgAsmFunctionDeclaration* p_binFunc) {
 
   inverseNodeType::iterator inv = inverse_nodesMap.lower_bound(p_binFunc);

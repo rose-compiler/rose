@@ -307,13 +307,13 @@ CFG::build_stmt (CFG::Node* prev_node, StmtHandle stmt, CFG::NodeLabelList& exit
 /** The general structure of a top-tested loop CFG (e.g., FORTRAN DO statement, C for statement,
     while statements, etc.) is as below:
     <PRE>
- 	      |
- 	      V
- 	  header (optional)
- 	      |      _______
- 	      |     /       \  
- 	      V    V         |
- 	   condition         | 
+              |
+              V
+          header (optional)
+              |      _______
+              |     /       \  
+              V    V         |
+           condition         | 
      ________/|              |
     /         |              |
     |         V              |
@@ -325,13 +325,13 @@ CFG::build_stmt (CFG::Node* prev_node, StmtHandle stmt, CFG::NodeLabelList& exit
     |         \_____________/
     |
      \________
- 	      |
- 	      V
+              |
+              V
     </PRE>
 */
 IRStmtType
 CFG::build_CFG_loop (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabelList& exit_nodes,
-		     CFG::NodeLabelList* return_nodes)
+                     CFG::NodeLabelList* return_nodes)
 {
   // If there is a header, (as in a "for" loop), it is assimilated in the previous (prev_node) CFG node.  The
   // condition needs a separate CFG node.  So, unless prev_node is empty (in which case that can become the condition
@@ -557,19 +557,19 @@ CFG::build_CFG_twoway_branch (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabe
     optional catchall (default) body.  The structure of a multi-way branch is as follows:
 
     <PRE>
-  		|
-  		|
-  		V
-  	 ___condition______
-  	/  /  |  \ ...\    \ 
+                |
+                |
+                V
+         ___condition______
+        /  /  |  \ ...\    \ 
        /  /   |   \    \    \ 
       V  V    V    V    V    V
      B1  B2   B3  B4    Bk  catchall
       |  |    |    |    |    |
       \__|____|____|____|___/
-  		|
-  		|
-  		V
+                |
+                |
+                V
     </PRE>
 */
 IRStmtType
@@ -810,11 +810,11 @@ CFG::build_CFG_ustruct_twoway_branch (CFG::Node* prev_node, StmtHandle stmt, CFG
     but a Fortran computed goto (for example) may if it isn't known that
     one of the targets is always taken.
     <PRE>
-  		|
-  		|
-  		V
-  	 ____branch________
-  	/  /  |  \ ...\    \ 
+                |
+                |
+                V
+         ____branch________
+        /  /  |  \ ...\    \ 
        /  /   |   \    \    \ 
       V  V    V    V    V    V
      B1  B2   B3  B4    Bk  catchall (optional)
@@ -1604,7 +1604,7 @@ CFG::processBlock (CFG::Node* block)
       //
       if ((ir.GetStmtType((StmtHandle)statementsIter) == USTRUCT_TWOWAY_CONDITIONAL_T
            || ir.GetStmtType((StmtHandle)statementsIter) == USTRUCT_TWOWAY_CONDITIONAL_F)
-	  && isInternalBranch((StmtHandle)statementsIter)) {
+          && isInternalBranch((StmtHandle)statementsIter)) {
 	
 	the_worklist->addCounterToWorklist(block, (StmtHandle)statementsIter, 
 					  ir.NumberOfDelaySlots((StmtHandle)statementsIter) );
@@ -1627,13 +1627,13 @@ CFG::processBlock (CFG::Node* block)
     // Get the first statement in the fallthrough node
     StmtHandle firstInstructionInNextBlock = 0 /* NULL */;
     for (CFG::NodeStatementsIterator nextBlockIter(fallThrough[block]);
-	 (bool)nextBlockIter;
+         (bool)nextBlockIter;
 	 ++nextBlockIter) {
       firstInstructionInNextBlock = (StmtHandle)nextBlockIter;
     }			
 
     if (! (!(bool)statementsIter && 
-	   ir.ParallelWithSuccessor(firstInstructionInNextBlock))) {
+           ir.ParallelWithSuccessor(firstInstructionInNextBlock))) {
       
       blockCounterlist->decrementCounters();
     }

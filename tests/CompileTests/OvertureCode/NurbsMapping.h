@@ -48,7 +48,7 @@ public:
   int buildCurveOnSurface( NurbsMapping & curve, real r0, real r1=-1. );
 
   int circle(realArray & o,
-	     realArray & x, 
+             realArray & x, 
 	     realArray & y, 
 	     real r,
 	     real startAngle=0.,
@@ -75,7 +75,7 @@ public:
 
   // make a nurb that passes through given points, optionally pass parameterization, optionally get parameterization
   void interpolate(const realArray & x, 
-		   const int & option     = 0 ,
+                   const int & option     = 0 ,
 		   realArray & parameterization  =Overture::nullRealDistributedArray(),
                    int degree = 3 );
   
@@ -239,16 +239,16 @@ public:
 
 
   int findSpan(const int & n ,
-	       const int & p,
+               const int & p,
 	       const real & u,
 	       const realArray & uKnot );
   void basisFuns(const int & i,
-		 const real & u,
+                 const real & u,
 		 const int & p,
 		 const realArray & uKnot,
 		 realArray & basis );
   void dersBasisFuns(const int & i,
-		     const real & u,
+                     const real & u,
 		     const int & p,
 		     const int & order,
 		     const realArray & uKnot,
@@ -263,7 +263,7 @@ public:
 		intArray & span );
 
   void dersBasisFuns(const Index & I,
-		     const intArray & ia,
+                     const intArray & ia,
 		     const realArray & u,
 		     const int & p,
 		     const int & order,

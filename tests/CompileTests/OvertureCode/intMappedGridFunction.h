@@ -231,19 +231,19 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
   // This constructor takes a GridFunctionType
   // 
   intMappedGridFunction(MappedGrid & mg, 
-		     const GridFunctionParameters::GridFunctionType & type, 
-		     const Range & component0=nullRange,       // defaults to Range(0,0)
-		     const Range & component1=nullRange,
-		     const Range & component2=nullRange,
-		     const Range & component3=nullRange,
-		     const Range & component4=nullRange );
+                     const GridFunctionParameters::GridFunctionType & type, 
+                     const Range & component0=nullRange,       // defaults to Range(0,0)
+                     const Range & component1=nullRange,
+                     const Range & component2=nullRange,
+                     const Range & component3=nullRange,
+                     const Range & component4=nullRange );
 
   intMappedGridFunction(const GridFunctionParameters::GridFunctionType & type, 
-		     const Range & component0=nullRange,       // defaults to Range(0,0)
-		     const Range & component1=nullRange,
-		     const Range & component2=nullRange,
-		     const Range & component3=nullRange,
-		     const Range & component4=nullRange );
+                     const Range & component0=nullRange,       // defaults to Range(0,0)
+                     const Range & component1=nullRange,
+                     const Range & component2=nullRange,
+                     const Range & component3=nullRange,
+                     const Range & component4=nullRange );
 
 
   ~intMappedGridFunction ();
@@ -292,99 +292,99 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
   // -------- Two Argument functions -------------
   intDistributedArray operator()(const IndexArg & I0, const IndexArg & I1 ) const
     { return intDistributedArray::operator()(I0,I1); }
-					       
+                                               
   // -------- Three Argument functions -------------
   intDistributedArray operator()(const IndexArg & I0, const IndexArg & I1, const IndexArg & I2 ) const
     { return intDistributedArray::operator()(I0,I1,I2); }
 
   // -------- Four Argument functions -------------
   intDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3 ) const
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3 ) const
     { return intDistributedArray::operator()(I0,I1,I2,I3); }
 
   // -------- Five Argument functions -------------
   intDistributedArray operator()(const IndexArg & I0,             // define this for efficiency
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const int & i4 ) const
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const int & i4 ) const
     { return (*this)(I0,I1,I2,I3+rcData->R[3].length()*(i4-rcData->R[4].getBase())); }  
 
   intDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const IndexArg & I4 ) const;
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const IndexArg & I4 ) const;
 
   // -------- Six Argument functions -------------
   intDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const int & i4,
-			 const int & i5 ) const
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const int & i4,
+                         const int & i5 ) const
     { return (*this)(I0,I1,I2,I3+rcData->R[3].length()*(i4-rcData->R[4].getBase()
                                         +rcData->R[4].length()*(i5-rcData->R[5].getBase())));  }
 
   intDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const IndexArg & I4,
-			 const IndexArg & I5 ) const;
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const IndexArg & I4,
+                         const IndexArg & I5 ) const;
 
   // -------- Seven Argument functions -------------
   intDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const int & i4,
-			 const int & i5,
-			 const int & i6 ) const
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const int & i4,
+                         const int & i5,
+                         const int & i6 ) const
     { return (*this)(I0,I1,I2,I3+rcData->R[3].length()*(i4-rcData->R[4].getBase()
                                         +rcData->R[4].length()*(i5-rcData->R[5].getBase()
                                         +rcData->R[5].length()*(i6-rcData->R[6].getBase()))));  }
 
   intDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const IndexArg & I4,
-			 const IndexArg & I5,
-			 const IndexArg & I6 ) const;
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const IndexArg & I4,
+                         const IndexArg & I5,
+                         const IndexArg & I6 ) const;
 
   // -------- Eight Argument functions -------------
   intDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const int & i4,
-			 const int & i5,
-			 const int & i6,
-			 const int & i7 ) const
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const int & i4,
+                         const int & i5,
+                         const int & i6,
+                         const int & i7 ) const
     { return (*this)(I0,I1,I2,I3+rcData->R[3].length()*(i4-rcData->R[4].getBase()
                                         +rcData->R[4].length()*(i5-rcData->R[5].getBase()
                                         +rcData->R[5].length()*(i6-rcData->R[6].getBase()
                                         +rcData->R[6].length()*(i7-rcData->R[7].getBase())))));  }
 
   intDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
-			 const IndexArg & I2, 
-			 const IndexArg & I3,
-			 const IndexArg & I4,
-			 const IndexArg & I5,
-			 const IndexArg & I6,
-			 const IndexArg & I7 ) const;
+                         const IndexArg & I1, 
+                         const IndexArg & I2, 
+                         const IndexArg & I3,
+                         const IndexArg & I4,
+                         const IndexArg & I5,
+                         const IndexArg & I6,
+                         const IndexArg & I7 ) const;
 
   // Use this function when you have too many arguments to a grid function:
   //   u(i0,i1,i2,i3,i4,i5,i6,i7) -> u(i0,i1,i2,u.arg3(i3,i4,i5,i6,i7))
   int arg3(int i3, 
            int i4, 
-	   int i5=defaultValue, 
-	   int i6=defaultValue, 
-	   int i7=defaultValue) const;
+           int i5=defaultValue, 
+           int i6=defaultValue, 
+           int i7=defaultValue) const;
 
 
   // The sa, "standard argument" function permutes the arguments to that you can always
@@ -416,17 +416,17 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
   
   GridFunctionParameters::GridFunctionType 
     getGridFunctionType(const Index & component0=nullIndex,   // return the type of the grid function
-			const Index & component1=nullIndex,
-			const Index & component2=nullIndex,
-			const Index & component3=nullIndex,
-			const Index & component4=nullIndex ) const;     
+                        const Index & component1=nullIndex,
+                        const Index & component2=nullIndex,
+                        const Index & component3=nullIndex,
+                        const Index & component4=nullIndex ) const;     
 
   GridFunctionParameters::GridFunctionTypeWithComponents 
     getGridFunctionTypeWithComponents(const Index & component0=nullIndex,    // return the type of the grid function
-				      const Index & component1=nullIndex,
-				      const Index & component2=nullIndex,
-				      const Index & component3=nullIndex,
-				      const Index & component4=nullIndex ) const;     
+                                      const Index & component1=nullIndex,
+                                      const Index & component2=nullIndex,
+                                      const Index & component3=nullIndex,
+                                      const Index & component4=nullIndex ) const;     
 
   int getNumberOfComponents() const;                  // number of components
 
@@ -458,25 +458,25 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
   int dataCopy( const intMappedGridFunction & mgf );  // copy the array data only
 
   void getRanges(Range & R0,     // return the current values for the Ranges
-		 Range & R1,
-		 Range & R2,
-		 Range & R3,
-		 Range & R4,
-		 Range & R5,
-		 Range & R6,
-		 Range & R7 );
+                 Range & R1,
+                 Range & R2,
+                 Range & R3,
+                 Range & R4,
+                 Range & R5,
+                 Range & R6,
+                 Range & R7 );
 
   // link this grid function to another
   void link(const intMappedGridFunction & mgf, 
-	    const Range & R0,                   // these 5 Ranges correspond to the 5 possible components
-	    const Range & R1=nullRange,
-	    const Range & R2=nullRange,
-	    const Range & R3=nullRange,
-	    const Range & R4=nullRange );
+            const Range & R0,                   // these 5 Ranges correspond to the 5 possible components
+            const Range & R1=nullRange,
+            const Range & R2=nullRange,
+            const Range & R3=nullRange,
+            const Range & R4=nullRange );
   
   void link(const intMappedGridFunction & mgf,
             const int componentToLinkTo=0,
-	    const int numberOfComponents=1 );
+            const int numberOfComponents=1 );
 
   inline int numberOfDimensions() const { return rcData->numberOfDimensions; } 
   inline int numberOfComponents() const { return rcData->numberOfComponents; } 
@@ -501,73 +501,73 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
   updateReturnValue updateToMatchGrid();
 
   updateReturnValue updateToMatchGrid(MappedGridData & gridData, 
-			const Range & R0, 
-			const Range & R1=nullRange,
-			const Range & R2=nullRange,
-			const Range & R3=nullRange,
-			const Range & R4=nullRange,
-			const Range & R5=nullRange,
-			const Range & R6=nullRange,
-			const Range & R7=nullRange );
+                        const Range & R0, 
+                        const Range & R1=nullRange,
+                        const Range & R2=nullRange,
+                        const Range & R3=nullRange,
+                        const Range & R4=nullRange,
+                        const Range & R5=nullRange,
+                        const Range & R6=nullRange,
+                        const Range & R7=nullRange );
   
   updateReturnValue updateToMatchGrid(MappedGrid & grid, 
-			const Range & R0, 
-			const Range & R1=nullRange,
-			const Range & R2=nullRange,
-			const Range & R3=nullRange,
-			const Range & R4=nullRange,
-			const Range & R5=nullRange,
-			const Range & R6=nullRange,
-			const Range & R7=nullRange );
+                        const Range & R0, 
+                        const Range & R1=nullRange,
+                        const Range & R2=nullRange,
+                        const Range & R3=nullRange,
+                        const Range & R4=nullRange,
+                        const Range & R5=nullRange,
+                        const Range & R6=nullRange,
+                        const Range & R7=nullRange );
 
   updateReturnValue updateToMatchGrid(const Range & R0, 
-			const Range & R1=nullRange,
-			const Range & R2=nullRange,
-			const Range & R3=nullRange,
-			const Range & R4=nullRange,
-			const Range & R5=nullRange,
-			const Range & R6=nullRange,
-			const Range & R7=nullRange );
+                        const Range & R1=nullRange,
+                        const Range & R2=nullRange,
+                        const Range & R3=nullRange,
+                        const Range & R4=nullRange,
+                        const Range & R5=nullRange,
+                        const Range & R6=nullRange,
+                        const Range & R7=nullRange );
   
   updateReturnValue updateToMatchGrid(MappedGrid & grid, 
-			const int & i0, 
-			const Range & R1=nullRange,
-			const Range & R2=nullRange,
-			const Range & R3=nullRange,
-			const Range & R4=nullRange,
-			const Range & R5=nullRange,
-			const Range & R6=nullRange,
-			const Range & R7=nullRange );
+                        const int & i0, 
+                        const Range & R1=nullRange,
+                        const Range & R2=nullRange,
+                        const Range & R3=nullRange,
+                        const Range & R4=nullRange,
+                        const Range & R5=nullRange,
+                        const Range & R6=nullRange,
+                        const Range & R7=nullRange );
 
   updateReturnValue updateToMatchGrid(MappedGrid & grid, 
-				      const GridFunctionParameters::GridFunctionType & type, 
-				      const Range & component0,
-				      const Range & component1=nullRange, // defaults to Range(0,0)
-				      const Range & component2=nullRange,
-				      const Range & component3=nullRange,
-				      const Range & component4=nullRange );
+                                      const GridFunctionParameters::GridFunctionType & type, 
+                                      const Range & component0,
+                                      const Range & component1=nullRange, // defaults to Range(0,0)
+                                      const Range & component2=nullRange,
+                                      const Range & component3=nullRange,
+                                      const Range & component4=nullRange );
   updateReturnValue updateToMatchGrid(const GridFunctionParameters::GridFunctionType & type, 
-				      const Range & component0,
-				      const Range & component1=nullRange,   // defaults to Range(0,0)
-				      const Range & component2=nullRange,
-				      const Range & component3=nullRange,
-				      const Range & component4=nullRange );
+                                      const Range & component0,
+                                      const Range & component1=nullRange,   // defaults to Range(0,0)
+                                      const Range & component2=nullRange,
+                                      const Range & component3=nullRange,
+                                      const Range & component4=nullRange );
   updateReturnValue updateToMatchGrid(MappedGrid & grid, 
-				      const GridFunctionParameters::GridFunctionType & type);
+                                      const GridFunctionParameters::GridFunctionType & type);
   updateReturnValue updateToMatchGrid(const GridFunctionParameters::GridFunctionType & type);
 
 
   // update this grid function to match another grid function
   updateReturnValue updateToMatchGridFunction(const intMappedGridFunction & cgf);
   updateReturnValue updateToMatchGridFunction(const intMappedGridFunction & cgf, 
-				const Range & R0, 
-				const Range & R1=nullRange,
-				const Range & R2=nullRange,
-				const Range & R3=nullRange,
-				const Range & R4=nullRange,
-				const Range & R5=nullRange,
-				const Range & R6=nullRange,
-				const Range & R7=nullRange );
+                                const Range & R0, 
+                                const Range & R1=nullRange,
+                                const Range & R2=nullRange,
+                                const Range & R3=nullRange,
+                                const Range & R4=nullRange,
+                                const Range & R5=nullRange,
+                                const Range & R6=nullRange,
+                                const Range & R7=nullRange );
 
   // set the name of the grid function or a component
   void setName(const aString & name, 
@@ -648,15 +648,15 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
 
   // fixup unused points 
   virtual int fixupUnusedPoints(const RealArray & value =Overture::nullRealArray(), 
-			int numberOfGhostlines=1 );
+                        int numberOfGhostlines=1 );
   
 //   int zeroUnusedPoints(intMappedGridFunction & coeff, 
 //                        int value = 0,
-// 		       const Index & component0=nullIndex,
-// 		       const Index & component1=nullIndex,
-// 		       const Index & component2=nullIndex,
-// 		       const Index & component3=nullIndex,
-// 		       const Index & component4=nullIndex );
+//                     const Index & component0=nullIndex,
+//                     const Index & component1=nullIndex,
+//                     const Index & component2=nullIndex,
+//                     const Index & component3=nullIndex,
+//                     const Index & component4=nullIndex );
 
   // ************************************************
   // ***** DIFFERENTIATION CLASS FUNCTIONS **********
@@ -666,23 +666,23 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
 // Macro to define a typical function call
 #define FUNCTION(type) \
   virtual intMappedGridFunction type(const Index & I1 = nullIndex,      \
-				  const Index & I2 = nullIndex,      \
-				  const Index & I3 = nullIndex,      \
-				  const Index & I4 = nullIndex,      \
-				  const Index & I5 = nullIndex,      \
-				  const Index & I6 = nullIndex,      \
-				  const Index & I7 = nullIndex,      \
-				  const Index & I8 = nullIndex ) const; \
+                                  const Index & I2 = nullIndex,      \
+                                  const Index & I3 = nullIndex,      \
+                                  const Index & I4 = nullIndex,      \
+                                  const Index & I5 = nullIndex,      \
+                                  const Index & I6 = nullIndex,      \
+                                  const Index & I7 = nullIndex,      \
+                                  const Index & I8 = nullIndex ) const; \
                                                                      \
   virtual intMappedGridFunction type(const GridFunctionParameters & gfType,   \
                                   const Index & I1 = nullIndex,      \
-				  const Index & I2 = nullIndex,      \
-				  const Index & I3 = nullIndex,      \
-				  const Index & I4 = nullIndex,      \
-				  const Index & I5 = nullIndex,      \
-				  const Index & I6 = nullIndex,      \
-				  const Index & I7 = nullIndex,      \
-				  const Index & I8 = nullIndex ) const; \
+                                  const Index & I2 = nullIndex,      \
+                                  const Index & I3 = nullIndex,      \
+                                  const Index & I4 = nullIndex,      \
+                                  const Index & I5 = nullIndex,      \
+                                  const Index & I6 = nullIndex,      \
+                                  const Index & I7 = nullIndex,      \
+                                  const Index & I8 = nullIndex ) const; \
    
 
   // parametric derivatives in the r1,r2,r3 directions
@@ -762,41 +762,41 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
 
   //compute (u.grad)w (convective derivative of passive variable(s))
     virtual intMappedGridFunction convectiveDerivative (
-						     const intMappedGridFunction &w,
-						     const Index & I1 = nullIndex,
-						     const Index & I2 = nullIndex,
-						     const Index & I3 = nullIndex
-						     ) const;
+                                                     const intMappedGridFunction &w,
+                                                     const Index & I1 = nullIndex,
+                                                     const Index & I2 = nullIndex,
+                                                     const Index & I3 = nullIndex
+                                                     ) const;
   virtual intMappedGridFunction convectiveDerivative (const GridFunctionParameters & gfType,
-						   const intMappedGridFunction &w,
-						   const Index & I1 = nullIndex,
-						   const Index & I2 = nullIndex,
-						   const Index & I3 = nullIndex
-						   ) const;
+                                                   const intMappedGridFunction &w,
+                                                   const Index & I1 = nullIndex,
+                                                   const Index & I2 = nullIndex,
+                                                   const Index & I3 = nullIndex
+                                                   ) const;
 
 #define SCALAR_FUNCTION(type) \
   virtual intMappedGridFunction type(\
-					   const intMappedGridFunction & s,\
-					   const Index & I1 = nullIndex, \
-					   const Index & I2 = nullIndex, \
-					   const Index & I3 = nullIndex, \
-					   const Index & I4 = nullIndex,\
-					   const Index & I5 = nullIndex,\
-					   const Index & I6 = nullIndex,\
-					   const Index & I7 = nullIndex,\
-					   const Index & I8 = nullIndex\
-					   ) const;  \
+                                           const intMappedGridFunction & s,\
+                                           const Index & I1 = nullIndex, \
+                                           const Index & I2 = nullIndex, \
+                                           const Index & I3 = nullIndex, \
+                                           const Index & I4 = nullIndex,\
+                                           const Index & I5 = nullIndex,\
+                                           const Index & I6 = nullIndex,\
+                                           const Index & I7 = nullIndex,\
+                                           const Index & I8 = nullIndex\
+                                           ) const;  \
   virtual intMappedGridFunction type(const GridFunctionParameters & gfType,\
-					   const intMappedGridFunction & s,\
-					   const Index & I1 = nullIndex, \
-					   const Index & I2 = nullIndex, \
-					   const Index & I3 = nullIndex, \
-					   const Index & I4 = nullIndex,\
-					   const Index & I5 = nullIndex,\
-					   const Index & I6 = nullIndex,\
-					   const Index & I7 = nullIndex,\
-					   const Index & I8 = nullIndex\
-					   ) const;  
+                                           const intMappedGridFunction & s,\
+                                           const Index & I1 = nullIndex, \
+                                           const Index & I2 = nullIndex, \
+                                           const Index & I3 = nullIndex, \
+                                           const Index & I4 = nullIndex,\
+                                           const Index & I5 = nullIndex,\
+                                           const Index & I6 = nullIndex,\
+                                           const Index & I7 = nullIndex,\
+                                           const Index & I8 = nullIndex\
+                                           ) const;  
 
 
   // div(s grad(u)), s=scalar field
@@ -814,93 +814,93 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
 #undef SCALAR_FUNCTION
 
   virtual intMappedGridFunction derivativeScalarDerivative(
-					   const intMappedGridFunction & s,
-				           const int & direction1,
-				           const int & direction2,
-					   const Index & I1 = nullIndex, 
-					   const Index & I2 = nullIndex, 
-					   const Index & I3 = nullIndex, 
-					   const Index & I4 = nullIndex,
-					   const Index & I5 = nullIndex,
-					   const Index & I6 = nullIndex,
-					   const Index & I7 = nullIndex,
-					   const Index & I8 = nullIndex
-					   ) const;  
+                                           const intMappedGridFunction & s,
+                                           const int & direction1,
+                                           const int & direction2,
+                                           const Index & I1 = nullIndex, 
+                                           const Index & I2 = nullIndex, 
+                                           const Index & I3 = nullIndex, 
+                                           const Index & I4 = nullIndex,
+                                           const Index & I5 = nullIndex,
+                                           const Index & I6 = nullIndex,
+                                           const Index & I7 = nullIndex,
+                                           const Index & I8 = nullIndex
+                                           ) const;  
 
   virtual intMappedGridFunction derivativeScalarDerivative(const GridFunctionParameters & gfType,
-					   const intMappedGridFunction & s,
-				           const int & direction1,
-				           const int & direction2,
-					   const Index & I1 = nullIndex, 
-					   const Index & I2 = nullIndex, 
-					   const Index & I3 = nullIndex, 
-					   const Index & I4 = nullIndex,
-					   const Index & I5 = nullIndex,
-					   const Index & I6 = nullIndex,
-					   const Index & I7 = nullIndex,
-					   const Index & I8 = nullIndex
-					   ) const;  
-  virtual intMappedGridFunction derivativeScalarDerivativeCoefficients(				
-						       const intMappedGridFunction & s,
-				                       const int & direction1,
-				                       const int & direction2,
-						       const Index & I1 = nullIndex,
-						       const Index & I2 = nullIndex,
-						       const Index & I3 = nullIndex,
-						       const Index & I4 = nullIndex,
-						       const Index & I5 = nullIndex,
-						       const Index & I6 = nullIndex,
-						       const Index & I7 = nullIndex,
-						       const Index & I8 = nullIndex
-						       ) const;
-  virtual intMappedGridFunction derivativeScalarDerivativeCoefficients(
-                                                       const GridFunctionParameters & gfType,	
+                                           const intMappedGridFunction & s,
+                                           const int & direction1,
+                                           const int & direction2,
+                                           const Index & I1 = nullIndex, 
+                                           const Index & I2 = nullIndex, 
+                                           const Index & I3 = nullIndex, 
+                                           const Index & I4 = nullIndex,
+                                           const Index & I5 = nullIndex,
+                                           const Index & I6 = nullIndex,
+                                           const Index & I7 = nullIndex,
+                                           const Index & I8 = nullIndex
+                                           ) const;  
+  virtual intMappedGridFunction derivativeScalarDerivativeCoefficients(                         
                                                        const intMappedGridFunction & s,
-				                       const int & direction1,
-				                       const int & direction2,
-						       const Index & I1 = nullIndex,
-						       const Index & I2 = nullIndex,
-						       const Index & I3 = nullIndex,
-						       const Index & I4 = nullIndex,
-						       const Index & I5 = nullIndex,
-						       const Index & I6 = nullIndex,
-						       const Index & I7 = nullIndex,
-						       const Index & I8 = nullIndex
-						       ) const;
+                                                       const int & direction1,
+                                                       const int & direction2,
+                                                       const Index & I1 = nullIndex,
+                                                       const Index & I2 = nullIndex,
+                                                       const Index & I3 = nullIndex,
+                                                       const Index & I4 = nullIndex,
+                                                       const Index & I5 = nullIndex,
+                                                       const Index & I6 = nullIndex,
+                                                       const Index & I7 = nullIndex,
+                                                       const Index & I8 = nullIndex
+                                                       ) const;
+  virtual intMappedGridFunction derivativeScalarDerivativeCoefficients(
+                                                       const GridFunctionParameters & gfType,   
+                                                       const intMappedGridFunction & s,
+                                                       const int & direction1,
+                                                       const int & direction2,
+                                                       const Index & I1 = nullIndex,
+                                                       const Index & I2 = nullIndex,
+                                                       const Index & I3 = nullIndex,
+                                                       const Index & I4 = nullIndex,
+                                                       const Index & I5 = nullIndex,
+                                                       const Index & I6 = nullIndex,
+                                                       const Index & I7 = nullIndex,
+                                                       const Index & I8 = nullIndex
+                                                       ) const;
 
 
   //returns face-centered gradients
   virtual intMappedGridFunction FCgrad (
-				     const int c0 = 0,
-				     const int c1 = 0,
-				     const int c2 = 0,
-				     const int c3 = 0,
-				     const int c4 = 0,
-				     const Index & I1 = nullIndex,				
-				     const Index & I2 = nullIndex,
-				     const Index & I3 = nullIndex,
-				     const Index & I4 = nullIndex,
-				     const Index & I5 = nullIndex,
-				     const Index & I6 = nullIndex,
-				     const Index & I7 = nullIndex,
-				     const Index & I8 = nullIndex
-				     ) const;
+                                     const int c0 = 0,
+                                     const int c1 = 0,
+                                     const int c2 = 0,
+                                     const int c3 = 0,
+                                     const int c4 = 0,
+                                     const Index & I1 = nullIndex,                              
+                                     const Index & I2 = nullIndex,
+                                     const Index & I3 = nullIndex,
+                                     const Index & I4 = nullIndex,
+                                     const Index & I5 = nullIndex,
+                                     const Index & I6 = nullIndex,
+                                     const Index & I7 = nullIndex,
+                                     const Index & I8 = nullIndex
+                                     ) const;
 
   virtual intMappedGridFunction FCgrad (const GridFunctionParameters & gfType,
-				     const int c0 = 0,
-				     const int c1 = 0,
-				     const int c2 = 0,
-				     const int c3 = 0,
-				     const int c4 = 0,
-				     const Index & I1 = nullIndex,				
-				     const Index & I2 = nullIndex,
-				     const Index & I3 = nullIndex,
-				     const Index & I4 = nullIndex,
-				     const Index & I5 = nullIndex,
-				     const Index & I6 = nullIndex,
-				     const Index & I7 = nullIndex,
-				     const Index & I8 = nullIndex
-				     ) const;
+                                     const int c0 = 0,
+                                     const int c1 = 0,
+                                     const int c2 = 0,
+                                     const int c3 = 0,
+                                     const int c4 = 0,
+                                     const Index & I1 = nullIndex,                              
+                                     const Index & I2 = nullIndex,
+                                     const Index & I3 = nullIndex,
+                                     const Index & I4 = nullIndex,
+                                     const Index & I5 = nullIndex,
+                                     const Index & I6 = nullIndex,
+                                     const Index & I7 = nullIndex,
+                                     const Index & I8 = nullIndex
+                                     ) const;
 
 
 
@@ -935,7 +935,7 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
   void applyBoundaryCondition(const Index & Components,
                               const BCTypes::BCNames & boundaryConditionType,
                               const int & boundaryCondition,
-			      const RealArray & forcing,
+                              const RealArray & forcing,
                               realArray *forcinga[2][3],
                               const real & time = 0.,
                               const BoundaryConditionParameters & bcParameters 
@@ -959,8 +959,8 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
                               const RealDistributedArray & forcing,
                               const real & time = 0.,
                               const BoundaryConditionParameters & bcParameters 
-			      = Overture::defaultBoundaryConditionParameters(),
-			      const int & grid=0 );
+                              = Overture::defaultBoundaryConditionParameters(),
+                              const int & grid=0 );
 #endif
 
   // fix corners and periodic update:
@@ -969,9 +969,9 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
 
   void applyBoundaryConditionCoefficients(const Index & Equation,
                                           const Index & Component,
-					  const BCTypes::BCNames & boundaryConditionType=BCTypes::dirichlet,
-					  const int & boundaryCondition = BCTypes::allBoundaries,
-					  const BoundaryConditionParameters & bcParameters 
+                                          const BCTypes::BCNames & boundaryConditionType=BCTypes::dirichlet,
+                                          const int & boundaryCondition = BCTypes::allBoundaries,
+                                          const BoundaryConditionParameters & bcParameters 
                                           = Overture::defaultBoundaryConditionParameters(),
                                           const int & grid=0);
   
@@ -980,13 +980,13 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
   // Make a list of derivatives to be evaluated and supply arrays to save the results in
 
   void getDerivatives(const Index & I1 = nullIndex, 
-		      const Index & I2 = nullIndex, 
+                      const Index & I2 = nullIndex, 
                       const Index & I3 = nullIndex, 
-		      const Index & I4 = nullIndex, 
-		      const Index & I5 = nullIndex, 
-		      const Index & I6 = nullIndex, 
-		      const Index & I7 = nullIndex, 
-		      const Index & I8 = nullIndex ) const;  
+                      const Index & I4 = nullIndex, 
+                      const Index & I5 = nullIndex, 
+                      const Index & I6 = nullIndex, 
+                      const Index & I7 = nullIndex, 
+                      const Index & I8 = nullIndex ) const;  
 
 
   // --------member functions for boundary conditions ----------------------------------
@@ -1011,13 +1011,13 @@ class intMappedGridFunction : public intDistributedArray, public intGenericGridF
 
   void dimensionName();                           // make sure name is long enough
   void updateRanges(const Range & R0,             // update the R[] array
-		    const Range & R1,
-		    const Range & R2,
-		    const Range & R3,
-		    const Range & R4,
-		    const Range & R5,
-		    const Range & R6,
-		    const Range & R7 );
+                    const Range & R1,
+                    const Range & R2,
+                    const Range & R3,
+                    const Range & R4,
+                    const Range & R5,
+                    const Range & R6,
+                    const Range & R7 );
   
 
   // These are used by list's of ReferenceCounting objects

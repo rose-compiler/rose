@@ -27,7 +27,7 @@ class MatrixTransformGridMotionParameters : public GenericGridMotionParameters
 // ***obsolete
   MatrixTransformGridMotionParameters (const CompositeGrid& compositeGrid_);
   MatrixTransformGridMotionParameters (const int& numberOfDimensions,
-				       const int& numberOfGrids);
+                                       const int& numberOfGrids);
   
   virtual ~MatrixTransformGridMotionParameters ();
   

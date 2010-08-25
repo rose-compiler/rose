@@ -509,7 +509,7 @@ RoseBin_DataFlowAbstract::getValueInExpression(SgAsmValueExpression* valExp) {
  ***********************************************************/
 int64_t
 RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
-					   SgAsmx86Instruction* inst,
+                                           SgAsmx86Instruction* inst,
 					   std::pair<X86RegisterClass, int>  codeSearch,
 					   bool rightSide,
 					   vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
@@ -610,7 +610,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
  ***********************************************************/
 std::pair<X86RegisterClass, int>
 RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
-					   SgAsmx86Instruction* inst,
+                                           SgAsmx86Instruction* inst,
 					   bool rightSide, bool& memoryReference ) {
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
@@ -754,7 +754,7 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
     res = getValueInMemoryRefExp(left) * getValueInMemoryRefExp(right);
   } else {
     cerr << " ERROR :: getValueInMemoryRefExp - no such condition specified"
-	 << expr->class_name() << endl;
+         << expr->class_name() << endl;
   }
   return res;
 }
@@ -765,7 +765,7 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
  ***********************************************************/
 uint64_t
 RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmx86Instruction* inst,
-					   bool rightSide ) {
+                                           bool rightSide ) {
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
@@ -801,10 +801,10 @@ RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmx86Instruction* inst,
 
 int64_t
 RoseBin_DataFlowAbstract::trackValueForRegister(
-					       SgGraphNode* node,
-					       std::pair<X86RegisterClass, int>  codeSearch,
-					       bool& cantTrack,
-					       SgAsmx86RegisterReferenceExpression* refExpr_rightHand) {
+                                                SgGraphNode* node,
+                                                std::pair<X86RegisterClass, int>  codeSearch,
+                                                bool& cantTrack,
+                                                SgAsmx86RegisterReferenceExpression* refExpr_rightHand) {
   int64_t value = 0xffffffff;
   if (RoseBin_support::DEBUG_MODE())
     cout << "    ........ trying to resolve value for register :: " << codeSearch.first << "." << codeSearch.second << endl;
@@ -922,7 +922,7 @@ RoseBin_DataFlowAbstract::getSuccessor(SgGraphNode* node){
 
 RoseBin_Variable*
 RoseBin_DataFlowAbstract::createVariable(uint64_t position,
-					 vector<uint64_t> pos,
+                                         vector<uint64_t> pos,
 					 string name,
 					 DataTypes type, string description,
 					 int length,

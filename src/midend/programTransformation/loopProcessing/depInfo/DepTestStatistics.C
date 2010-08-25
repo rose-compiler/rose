@@ -505,7 +505,7 @@ void DepTestStatistics::PrintResults(void)
 			break;
 	}
    if (CmdOptions::GetInstance()->HasOption("-depAnalOnlyPrintF"))
-	{
+   {
       std::fstream outFile;
       outFile.open(fname.c_str(),std::fstream::out | std::fstream::app);
       if (outFile) {
@@ -514,7 +514,7 @@ void DepTestStatistics::PrintResults(void)
       }
    }
    else if (CmdOptions::GetInstance()->HasOption("-depAnalOnlyPrintS"))
-	{
+   {
       std::cerr << buffer.str();
    }
 }

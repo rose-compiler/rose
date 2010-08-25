@@ -45,8 +45,8 @@ class QDESIGNER_WIDGET_EXPORT KiviatView : public QGraphicsView
 
         /** Adds a dataset to the diagram
             @param data Float Data (between 0 and 1), size of vector has to be axisCount
-				   std::vectors can be converted with QVector::fromStdVector()
-		    @param color color for displaying this dataset (to distinguish datasets, if more than
+                                   std::vectors can be converted with QVector::fromStdVector()
+                    @param color color for displaying this dataset (to distinguish datasets, if more than
                     one are displayed in one single kiviat)
             @return handle to modify or delete data
         */

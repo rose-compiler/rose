@@ -30,7 +30,7 @@ namespace CompassAnalyses
 	: public Compass::AstSimpleProcessingWithRunFunction
 	{
 	  // Checker specific parameters should be allocated here.
-               Compass::OutputObject* output;
+          Compass::OutputObject* output;
 	  typedef std::pair<bool, std::vector<SgExpression*> > BoolWithTrace;
 	  std::map<SgExpression*, BoolWithTrace> traces;
 

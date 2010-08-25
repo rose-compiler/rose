@@ -22,13 +22,13 @@ QWidget* KiviatViewPlugin::createWidget(QWidget * par)
 	// setup some example data
 	QVector<float> data;
 	data << 0.1 << 0.2 << 0.3 << 0.4
-	     << 0.0 << 0.0 << 0.0 << 0.0;
-	wdg->addData(data,Qt::blue);
+             << 0.0 << 0.0 << 0.0 << 0.0;
+        wdg->addData(data,Qt::blue);
 
 	data.clear();
-	data << 0 << 0 << 0<< 0 <<
-	       0.1 << 0.5 << 0.8 << 0.4;
-	wdg->addData(data,Qt::yellow);
+	data << 0 << 0 << 0<< 0
+             << 0.1 << 0.5 << 0.8 << 0.4;
+        wdg->addData(data,Qt::yellow);
 
 	return wdg;
 }

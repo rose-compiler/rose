@@ -72,7 +72,7 @@ int PropertyTreeWidget::addSection(const QString & sectionName, int colorNr)
 }
 
 QModelIndex PropertyTreeWidget::addEntryToSection(int sectionId, const QString & prop,
-										 const QVariant & val)
+                                                  const QVariant & val)
 {
 	QModelIndex id=  model->addEntryToSection(sectionId,prop,val);
 	header()->adjustSize();
@@ -86,14 +86,14 @@ QModelIndex PropertyTreeWidget::addEntry (  const QModelIndex & par,
 											const QVariant & val)
 {
     ItemTreeModel::setupView(this);
-	return model->addEntry(par,prop,val);
+    return model->addEntry(par,prop,val);
 }
 
 
 //Custom Paint Event to set the colors
 void PropertyTreeWidget::drawRow (QPainter * p,
-		     					  const QStyleOptionViewItem & viewItem,
-								  const QModelIndex & ind) const
+                                  const QStyleOptionViewItem & viewItem,
+                                  const QModelIndex & ind) const
 {
 	bool ok;
 	int section=model->data(ind,Qt::UserRole).toInt(&ok);

@@ -109,7 +109,7 @@ class floatCompositeGridFunction : public floatGridCollectionFunction
 
   // Return a link to some specfied components 
   floatCompositeGridFunction operator()(const Range & component0,
-				   const Range & component1=nullRange,
+                                   const Range & component1=nullRange,
 				   const Range & component2=nullRange,
 				   const Range & component3=nullRange,
 				   const Range & component4=nullRange );
@@ -150,7 +150,7 @@ class floatCompositeGridFunction : public floatGridCollectionFunction
   void reference( const floatGridCollectionFunction & cgf ); // *new*
 
   virtual void setIsACoefficientMatrix(const bool trueOrFalse=TRUE, 
-				       const int stencilSize=defaultValue, 
+                                       const int stencilSize=defaultValue, 
 				       const int numberOfGhostLines=1,
 				       const int numberOfComponentsForCoefficients=1,
 				       const int offset=0 );

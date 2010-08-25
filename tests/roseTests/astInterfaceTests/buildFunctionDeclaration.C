@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
   pushScopeStack (isSgScopeStatement (globalScope));
 
   // defining  int foo(int x, float)
- 	 // build parameter list first
+  // build parameter list first
   SgInitializedName* arg1 = buildInitializedName(SgName("x"),buildIntType());
   SgInitializedName* arg2 = buildInitializedName(SgName(""),buildFloatType());
   SgFunctionParameterList * paraList = buildFunctionParameterList();

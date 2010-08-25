@@ -527,7 +527,7 @@ int main(int argc,char * * argv)
 
       /*
   TYPEArray F1 = A(all,all,-6,100)-C; // view of A includes only
-				       // elements that are set to 1
+                                      // elements that are set to 1
   TYPEArray locF1;
   locF1.partition(*Single_Processor_Partition);
   locF1.redim(F1);

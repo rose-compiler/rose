@@ -89,14 +89,14 @@ protected:
 public:
     priority_queue(const Compare& x = Compare()) :  c(), comp(x) {}
     priority_queue(const value_type* first, const value_type* last, 
-		   const Compare& x = Compare()) : c(first, last), comp(x) {
-	make_heap(c.begin(), c.end(), comp);
+                   const Compare& x = Compare()) : c(first, last), comp(x) {
+        make_heap(c.begin(), c.end(), comp);
     }
 /*
     template <class InputIterator>
     priority_queue(InputIterator first, InputIterator last, 
-		   const Compare& x = Compare()) : c(first, last), comp(x) {
-	make_heap(c.begin(), c.end(), comp);
+                   const Compare& x = Compare()) : c(first, last), comp(x) {
+        make_heap(c.begin(), c.end(), comp);
     }
 */
     bool empty() const { return c.empty(); }

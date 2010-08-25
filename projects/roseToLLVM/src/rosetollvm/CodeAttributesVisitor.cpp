@@ -1784,10 +1784,10 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
          if (visit_suspended_by_node == node) // If visiting was suspended by this node, resume visiting.
              visit_suspended_by_node = NULL;
          else {
-	   //             cerr << "Post-Skipping node "
-	   //                  << node -> class_name()
-	   //                  << endl;
-	   //             cerr.flush();
+	     //             cerr << "Post-Skipping node "
+	     //                  << node -> class_name()
+	     //                  << endl;
+	     //             cerr.flush();
              return;
          }
      }

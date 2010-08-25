@@ -368,7 +368,7 @@ void FIO13(void) {
 
 void FIO16_A(char *argv[]) {
 	/* Program running with elevated privileges where argv[1] 
-	 *  * and argv[2] are supplied by the user */
+         * and argv[2] are supplied by the user */
 
 	char x[100];
 	FILE *fp = fopen(argv[1], "w");     
@@ -377,8 +377,8 @@ void FIO16_A(char *argv[]) {
 	x[99] = '\0';
 
 	/* Write operation to an unintended file like /etc/passwd 
-	 *  * gets executed  */
-	if (fwrite(x, sizeof(x[0]), sizeof(x)/sizeof(x[0]), fp) < sizeof(x)/sizeof(x[0])) {
+         * gets executed  */
+        if (fwrite(x, sizeof(x[0]), sizeof(x)/sizeof(x[0]), fp) < sizeof(x)/sizeof(x[0])) {
 
 	}
 	/* ... */

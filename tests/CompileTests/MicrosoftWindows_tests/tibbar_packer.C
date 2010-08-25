@@ -287,7 +287,7 @@ PIMAGE_SECTION_HEADER FindSection(IMAGE_SECTION_HEADER* firstSectionHeader,
 //
 // numSections - The number of sections in the PE file.
 void MakeAllSectionsWritable(IMAGE_SECTION_HEADER* firstSectionHeader, 
-			     DWORD numSections) {
+                             DWORD numSections) {
     DWORD currentMaxVA = 0;
     int pos = 0;
 
@@ -322,7 +322,7 @@ int main( int argc, char* argv[] ) {
 
   // Open the .exe file to be packed.
   HANDLE hFile = CreateFileA(
-			     fileName,
+                             fileName,
 			     GENERIC_WRITE | GENERIC_READ,
 			     FILE_SHARE_READ | FILE_SHARE_WRITE,
 			     NULL,
@@ -413,7 +413,7 @@ int main( int argc, char* argv[] ) {
   if (!(pNTHeader->Signature == IMAGE_NT_SIGNATURE)) {
     printf("This packer only works with PE files.\n");
     printf("Signature for PE files is %x. Current signature is %x\n",
-	   IMAGE_NT_SIGNATURE, pNTHeader->Signature);
+           IMAGE_NT_SIGNATURE, pNTHeader->Signature);
     return 1;
   }
 
@@ -518,7 +518,7 @@ int main( int argc, char* argv[] ) {
   }
   sectName[8] = '\0';
   printf("Adding stub to section: name = %s, Raw size = %d, Raw Data ptr = %d\n", 
-	 sectName, 
+         sectName, 
 	 lastSection->SizeOfRawData, 
 	 lastSection->PointerToRawData);
     

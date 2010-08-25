@@ -14,7 +14,7 @@ check_single_copyprivate (FILE * logFile)
     for (i = 0; i < LOOPCOUNT; i++)
       {
 	/*
-	   int thread;
+           int thread;
 	   thread=omp_get_thread_num();
 	 */
 #pragma omp single copyprivate(j)
@@ -50,7 +50,7 @@ crosscheck_single_copyprivate (FILE * logFile)
     for (i = 0; i < LOOPCOUNT; i++)
       {
 	/*
-	   int thread;
+           int thread;
 	   thread=omp_get_thread_num();
 	 */
 #pragma omp single 

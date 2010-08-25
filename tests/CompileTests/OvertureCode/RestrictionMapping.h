@@ -22,7 +22,7 @@ private:
 public:
 
   RestrictionMapping(const real ra=0., 
-		     const real rb=1., 
+                     const real rb=1., 
 		     const real sa=0.,
 		     const real sb=1.,
 		     const real ta=0.,

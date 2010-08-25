@@ -197,10 +197,10 @@ std::string SgAsmExecutableFileFormat::isa_family_to_string(SgAsmExecutableFileF
     case ISA_ARM_Family:   return "ARM";           /* Acorn RISC Machine, Advanced RISC Machines, ARM Limited */
     case ISA_OTHER_Family: 
       switch(isa){
-	case ISA_PowerPC:
-	case ISA_PowerPC_64bit: return "PowerPC"; 
+        case ISA_PowerPC:
+        case ISA_PowerPC_64bit: return "PowerPC"; 
         default:
-	  return "Other Family";
+          return "Other Family";
       };
     default:
       break;
@@ -215,25 +215,25 @@ std::string SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::
 {
 
   switch(isa){
-    case ISA_UNSPECIFIED:         return "ISA_UNSPECIFIED";                /* File does not specify an architecture */
-    case ISA_OTHER:               return "ISA_OTHER";                /* Architecture is something other than below */
+    case ISA_UNSPECIFIED:         return "ISA_UNSPECIFIED"; /* File does not specify an architecture */
+    case ISA_OTHER:               return "ISA_OTHER";       /* Architecture is something other than below */
     case ISA_FAMILY_MASK:         return "ISA_FAMILY_MASK";
-    case ISA_IA32_286:            return "IA32_286";                /* 80286 */
-    case ISA_IA32_386:            return "IA32_386";                /* MMU with paging */
-    case ISA_IA32_486:            return "IA32_486";                /* risc-like pipelining, integrated FPU, on-chip cache */
-    case ISA_IA32_Pentium:        return "IA32_Pentium";                /* superscalar, 64-bit databus, MMX */
-    case ISA_IA32_Cyrix6x86:      return "IA32_Cyrix6x86";                /* register renaming, speculative execution */
-    case ISA_IA32_AMDK5:          return "IA32_AMDK5";                /* micro-op translation */
-    case ISA_IA32_PentiumPro:     return "IA32_PentiumPro";                /* PAE, integrated L2 cache */
-    case ISA_IA32_PentiumII:      return "IA32_PentiumII";                /* L3-cache, 3D Now, SSE */
-    case ISA_IA32_Athlon:         return "IA32_Athlon";                /* superscalar FPU, wide design */
-    case ISA_IA32_Pentium4:       return "IA32_Pentium4";                /* deeply pipelined, high frequency, SSE2, hyper-threading */
-    case ISA_IA32_PentiumM:       return "IA32_PentiumM";                /* low power */
+    case ISA_IA32_286:            return "IA32_286";        /* 80286 */
+    case ISA_IA32_386:            return "IA32_386";        /* MMU with paging */
+    case ISA_IA32_486:            return "IA32_486";        /* risc-like pipelining, integrated FPU, on-chip cache */
+    case ISA_IA32_Pentium:        return "IA32_Pentium";    /* superscalar, 64-bit databus, MMX */
+    case ISA_IA32_Cyrix6x86:      return "IA32_Cyrix6x86";  /* register renaming, speculative execution */
+    case ISA_IA32_AMDK5:          return "IA32_AMDK5";      /* micro-op translation */
+    case ISA_IA32_PentiumPro:     return "IA32_PentiumPro"; /* PAE, integrated L2 cache */
+    case ISA_IA32_PentiumII:      return "IA32_PentiumII";  /* L3-cache, 3D Now, SSE */
+    case ISA_IA32_Athlon:         return "IA32_Athlon";     /* superscalar FPU, wide design */
+    case ISA_IA32_Pentium4:       return "IA32_Pentium4";   /* deeply pipelined, high frequency, SSE2, hyper-threading */
+    case ISA_IA32_PentiumM:       return "IA32_PentiumM";   /* low power */
 
-    case ISA_X8664_Athlon64:      return "X8664_Athlon64";                /* on-die memory controller, 40-bit phys address space */
-    case ISA_X8664_Prescott:      return "X8664_Prescott";                /* deeply pipelined, high frequency, SSE3 */
-    case ISA_X8664_IntelCore:     return "X8664_IntelCore";                /* low power, multi-core, lower clock frequency */
-    case ISA_X8664_AMDPhenom:     return "X8664_AMDPhenom";                /* quad core, 128-bit FPUs, SSE4a, native mem ctrl, on-die L3 cache */
+    case ISA_X8664_Athlon64:      return "X8664_Athlon64";  /* on-die memory controller, 40-bit phys address space */
+    case ISA_X8664_Prescott:      return "X8664_Prescott";  /* deeply pipelined, high frequency, SSE3 */
+    case ISA_X8664_IntelCore:     return "X8664_IntelCore"; /* low power, multi-core, lower clock frequency */
+    case ISA_X8664_AMDPhenom:     return "X8664_AMDPhenom"; /* quad core, 128-bit FPUs, SSE4a, native mem ctrl, on-die L3 cache */
 
     case ISA_SPARC_V7:            return "SPARC_V7"; 
     case ISA_SPARC_V8:            return "SPARC_V8"; 
@@ -243,79 +243,79 @@ std::string SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::
     case ISA_SPARC_V9UA:          return "SPARC_V9UA"; 
     case ISA_SPARC_V9JPS2:        return "SPARC_V9JPS2"; 
 
-    case ISA_M68K_68000:          return "M68K_68000";                /* generation one: 16/32 internal; 8-, 16-, 32-bit interface */
+    case ISA_M68K_68000:          return "M68K_68000";      /* generation one: 16/32 internal; 8-, 16-, 32-bit interface */
     case ISA_M68K_68EC000:        return "M68K_68EC000"; 
     case ISA_M68K_68HC000:        return "M68K_68HC000"; 
     case ISA_M68K_68008:          return "M68K_68008"; 
     case ISA_M68K_68010:          return "M68K_68010"; 
     case ISA_M68K_68012:          return "M68K_68012"; 
-    case ISA_M68K_68020:          return "M68K_68020";                /* generation two: fully 32-bit */
+    case ISA_M68K_68020:          return "M68K_68020";      /* generation two: fully 32-bit */
     case ISA_M68K_68EC020:        return "M68K_68EC020"; 
     case ISA_M68K_68030:          return "M68K_68030"; 
     case ISA_M68K_68EC030:        return "M68K_68EC030"; 
-    case ISA_M68K_68040:          return "M68K_68040";                /* generation three: pipelined */
+    case ISA_M68K_68040:          return "M68K_68040";      /* generation three: pipelined */
     case ISA_M68K_68EC040:        return "M68K_68EC040"; 
     case ISA_M68K_68LC040:        return "M68K_68LC040"; 
-    case ISA_M68K_68060:          return "M68K_68060";                /* generation four: superscalar */
-    case ISA_M68K_ColdFire:       return "M68K_ColdFire";                /* other */
-    case ISA_M68K_DragonBall:     return "M68K_DragonBall";                /* other */
+    case ISA_M68K_68060:          return "M68K_68060";      /* generation four: superscalar */
+    case ISA_M68K_ColdFire:       return "M68K_ColdFire";   /* other */
+    case ISA_M68K_DragonBall:     return "M68K_DragonBall"; /* other */
 
-    case ISA_M88K_88100:          return "M88K_88100";                /* 32-bit, integrated FPU mated with 88200 MMU and cache controller */
-    case ISA_M88K_88110:          return "M88K_88110";                /* single package of 88100+88200 */
-    case ISA_M88K_88110MP:        return "M88K_88110MP";                /* on-chip comm for use in multi-processor systems */
-    case ISA_M88K_88120:          return "M88K_88120";                /* superscalar (never actually released) */
+    case ISA_M88K_88100:          return "M88K_88100";      /* 32-bit, integrated FPU mated with 88200 MMU and cache controller */
+    case ISA_M88K_88110:          return "M88K_88110";      /* single package of 88100+88200 */
+    case ISA_M88K_88110MP:        return "M88K_88110MP";    /* on-chip comm for use in multi-processor systems */
+    case ISA_M88K_88120:          return "M88K_88120";      /* superscalar (never actually released) */
 
 
-    case ISA_MIPS_MarkI:          return "MIPS_MarkI";                /* R2000, R3000 */
-    case ISA_MIPS_MarkII:         return "MIPS_MarkII";                /* R6000 */
-    case ISA_MIPS_MarkIII:        return "MIPS_MarkIII";                /* R4000 */
-    case ISA_MIPS_R2000:          return "MIPS_R2000";                /* 32-bit, Big or little endian */
-    case ISA_MIPS_R3000:          return "MIPS_R3000";                /* virtual identical: Pacempi's R3400, IDT's R3500, Toshiba R3900 */
-    case ISA_MIPS_R4000:          return "MIPS_R4000";                /* 64-bit; others in the series had larger caches and bug fixes */
-    case ISA_MIPS_R4200:          return "MIPS_R4200";                /* low-cost version of R4000 */
-    case ISA_MIPS_R4300:          return "MIPS_R4300";                /* low-cost version of R4000 with 32-bit external bus */
-    case ISA_MIPS_R4600:          return "MIPS_R4600";                /* "Orion" by Qauntum Effect Devices (QED); larger caches */
-    case ISA_MIPS_R4650:          return "MIPS_R4650";                /* by QED */
-    case ISA_MIPS_R4700:          return "MIPS_R4700";                /* "Orion" by QED */
-    case ISA_MIPS_R5000:          return "MIPS_R5000";                /* by QED */
-    case ISA_MIPS_RM7000:         return "MIPS_RM7000";                /* by PMC-Sierra; 256kB L2 and optional L3 */
-    case ISA_MIPS_R8000:          return "MIPS_R8000";                /* superscalar, fairly rare */
-    case ISA_MIPS_R10000:         return "MIPS_R10000";                /* R8000 on a single chip; 32kB caches; out-of-order */
-    case ISA_MIPS_R12000:         return "MIPS_R12000";                /* R10000 + higher clock rates */
-    case ISA_MIPS_R14000:         return "MIPS_R14000";                /* R12000 + support for DDR SRAM; 200MHz front side bus */
-    case ISA_MIPS_R16000:         return "MIPS_R16000";                /* R14000 + increased freq, more L1, smaller die */
+    case ISA_MIPS_MarkI:          return "MIPS_MarkI";      /* R2000, R3000 */
+    case ISA_MIPS_MarkII:         return "MIPS_MarkII";     /* R6000 */
+    case ISA_MIPS_MarkIII:        return "MIPS_MarkIII";    /* R4000 */
+    case ISA_MIPS_R2000:          return "MIPS_R2000";      /* 32-bit, Big or little endian */
+    case ISA_MIPS_R3000:          return "MIPS_R3000";      /* virtual identical: Pacempi's R3400, IDT's R3500, Toshiba R3900 */
+    case ISA_MIPS_R4000:          return "MIPS_R4000";      /* 64-bit; others in the series had larger caches and bug fixes */
+    case ISA_MIPS_R4200:          return "MIPS_R4200";      /* low-cost version of R4000 */
+    case ISA_MIPS_R4300:          return "MIPS_R4300";      /* low-cost version of R4000 with 32-bit external bus */
+    case ISA_MIPS_R4600:          return "MIPS_R4600";      /* "Orion" by Qauntum Effect Devices (QED); larger caches */
+    case ISA_MIPS_R4650:          return "MIPS_R4650";      /* by QED */
+    case ISA_MIPS_R4700:          return "MIPS_R4700";      /* "Orion" by QED */
+    case ISA_MIPS_R5000:          return "MIPS_R5000";      /* by QED */
+    case ISA_MIPS_RM7000:         return "MIPS_RM7000";     /* by PMC-Sierra; 256kB L2 and optional L3 */
+    case ISA_MIPS_R8000:          return "MIPS_R8000";      /* superscalar, fairly rare */
+    case ISA_MIPS_R10000:         return "MIPS_R10000";     /* R8000 on a single chip; 32kB caches; out-of-order */
+    case ISA_MIPS_R12000:         return "MIPS_R12000";     /* R10000 + higher clock rates */
+    case ISA_MIPS_R14000:         return "MIPS_R14000";     /* R12000 + support for DDR SRAM; 200MHz front side bus */
+    case ISA_MIPS_R16000:         return "MIPS_R16000";     /* R14000 + increased freq, more L1, smaller die */
     case ISA_MIPS_R16000A:        return "MIPS_R16000A"; 
-    case ISA_MIPS_16:             return "MIPS_16";                /* Unknown. Windows PE architecture 0x266 "MIPS16" */
-    case ISA_MIPS_FPU:            return "MIPS_FPU";                /* Unknown. Windows PE architecture 0x366 "MIPS with FPU" */
-    case ISA_MIPS_16FPU:          return "MIPS_16FPU";                /* Unknown. Windows PE architecture 0x466 "MIPS16 with FPU" */
+    case ISA_MIPS_16:             return "MIPS_16";         /* Unknown. Windows PE architecture 0x266 "MIPS16" */
+    case ISA_MIPS_FPU:            return "MIPS_FPU";        /* Unknown. Windows PE architecture 0x366 "MIPS with FPU" */
+    case ISA_MIPS_16FPU:          return "MIPS_16FPU";      /* Unknown. Windows PE architecture 0x466 "MIPS16 with FPU" */
 
-    case ISA_I860_860XR:          return "I860_860XR";                /* (code named N10) 25-40MHz */
-    case ISA_I860_860XP:          return "I860_860XP";                /* (code named N11) larger caches; 40-50MHz; same IS as XR */
+    case ISA_I860_860XR:          return "I860_860XR";      /* (code named N10) 25-40MHz */
+    case ISA_I860_860XP:          return "I860_860XP";      /* (code named N11) larger caches; 40-50MHz; same IS as XR */
 
-    case ISA_IA64_Itanium:        return "IA64_Itanium";                /* First generation */
-    case ISA_IA64_Itanium2:       return "IA64_Itanium2";                /* Second generation starting Nov 2007 */
+    case ISA_IA64_Itanium:        return "IA64_Itanium";    /* First generation */
+    case ISA_IA64_Itanium2:       return "IA64_Itanium2";   /* Second generation starting Nov 2007 */
 
       /* See http://en.wikipedia.org/wiki/ARM_architecture */
-    case ISA_ARM_ARM1:            return "ARM1";                /* ARM evaluation system */
-    case ISA_ARM_ARM2:            return "ARM2";                /* ARM2, ARM250 cores */
-    case ISA_ARM_ARM3:            return "ARM3";                /* ARM2a core */
-    case ISA_ARM_ARM6:            return "ARM6";                /* ARM60, ARM600, ARM610 cores */
-    case ISA_ARM_ARM7:            return "ARM7";                /* ARM{700,710,710a,7100,7500,7500FE} cores */
-    case ISA_ARM_ARM7TDMI:        return "ARM7TDMI";                /* ARM{7TDMI,7TDMI-S,710T,720T,740T,7EJ-S} cores */
-    case ISA_ARM_StrongARM:       return "StrongARM";                /* SA-110, SA-1110 cores */
-    case ISA_ARM_ARM8:            return "ARM8";                /* ARM810 core */
-    case ISA_ARM_ARM9TDMI:        return "ARM9TDMI";                /* ARM{9TDMI,920T,922T,940T} cores */
-    case ISA_ARM_ARM9E:           return "ARM9E";                /* ARM{946E-S,966E-S,968E-S,926EJ-S,966HS} cores */
-    case ISA_ARM_ARM10E:          return "ARM10E";                /* ARM{1020E,1022E,1026EJ-S} cores */
-    case ISA_ARM_XScale:          return "ARM_XScale";                /* 80200, IOP310, IOP315, 80219, IOP321, IOP33x, IOP34x, PXA210,
-									    * PXA250, PXA255, PXA26x, PXA27x, PXA800(E)F, Monahans, PXA900,
-									    * IXC1100, IXP2400, IXP2800, IXP2850, IXP2325, IXP2350, IXP42x,
-									    * IXP460, IXP465 cores */
-    case ISA_ARM_ARM11:           return "ARM11";                /* ARMv{6,6T2,6KZ,6K} cores */
-    case ISA_ARM_Cortex:          return "ARM_Cortex";                /* Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
+    case ISA_ARM_ARM1:            return "ARM1";            /* ARM evaluation system */
+    case ISA_ARM_ARM2:            return "ARM2";            /* ARM2, ARM250 cores */
+    case ISA_ARM_ARM3:            return "ARM3";            /* ARM2a core */
+    case ISA_ARM_ARM6:            return "ARM6";            /* ARM60, ARM600, ARM610 cores */
+    case ISA_ARM_ARM7:            return "ARM7";            /* ARM{700,710,710a,7100,7500,7500FE} cores */
+    case ISA_ARM_ARM7TDMI:        return "ARM7TDMI";        /* ARM{7TDMI,7TDMI-S,710T,720T,740T,7EJ-S} cores */
+    case ISA_ARM_StrongARM:       return "StrongARM";       /* SA-110, SA-1110 cores */
+    case ISA_ARM_ARM8:            return "ARM8";            /* ARM810 core */
+    case ISA_ARM_ARM9TDMI:        return "ARM9TDMI";        /* ARM{9TDMI,920T,922T,940T} cores */
+    case ISA_ARM_ARM9E:           return "ARM9E";           /* ARM{946E-S,966E-S,968E-S,926EJ-S,966HS} cores */
+    case ISA_ARM_ARM10E:          return "ARM10E";          /* ARM{1020E,1022E,1026EJ-S} cores */
+    case ISA_ARM_XScale:          return "ARM_XScale";      /* 80200, IOP310, IOP315, 80219, IOP321, IOP33x, IOP34x, PXA210,
+                                                             * PXA250, PXA255, PXA26x, PXA27x, PXA800(E)F, Monahans, PXA900,
+							     * IXC1100, IXP2400, IXP2800, IXP2850, IXP2325, IXP2350, IXP42x,
+							     * IXP460, IXP465 cores */
+    case ISA_ARM_ARM11:           return "ARM11";            /* ARMv{6,6T2,6KZ,6K} cores */
+    case ISA_ARM_Cortex:          return "ARM_Cortex";       /* Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
           
       /* Others, not yet incorporated into this enum */
-    case ISA_ATT_WE_32100:        return "ATT_WE_32100";                /* sometimes simply "M32" */
+    case ISA_ATT_WE_32100:        return "ATT_WE_32100";     /* sometimes simply "M32" */
     case ISA_IBM_System_370:      return "IBM_System_370"; 
     case ISA_HPPA:                return "HPPA"; 
     case ISA_Fujitsu_VPP500:      return "Fujitsu_VPP500"; 

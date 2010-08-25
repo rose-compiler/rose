@@ -241,64 +241,64 @@ NodesAtLineNumber::result_type NodesAtLineNumber::operator()(first_argument_type
      std::string compareFilename = compareFileInfo->get_filenameString();
 
      if( isSgIfStmt(node) != NULL ){
-	  SgIfStmt* ifStmt         = isSgIfStmt(node);
-	  SgStatement* conditional = ifStmt->get_conditional();
+          SgIfStmt* ifStmt         = isSgIfStmt(node);
+          SgStatement* conditional = ifStmt->get_conditional();
 
-	  Sg_File_Info* fileInfo = conditional->get_file_info();
+          Sg_File_Info* fileInfo = conditional->get_file_info();
 
-	  int line = fileInfo->get_line();
-	  int col  = fileInfo->get_col();
+          int line = fileInfo->get_line();
+          int col  = fileInfo->get_col();
 
        //std::cout << "Conditional has pos l"<< line << " c" << col << std::endl;
-	  AstQueryNamespace::querySubTree(conditional,std::bind2nd(*this,accumulatedList));
+          AstQueryNamespace::querySubTree(conditional,std::bind2nd(*this,accumulatedList));
        //returnList =   NodeQuery::querySubTree(conditional,std::bind2nd(std::ptr_fun(queryForLine),  compareFileInfo));
 
      } else if( isSgFunctionDeclaration(node) != NULL ){
 
-	  SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node);
-	  SgInitializedNamePtrList args = funcDecl->get_args();
+          SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node);
+          SgInitializedNamePtrList args = funcDecl->get_args();
 
-	  for(SgInitializedNamePtrList::iterator it_begin = args.begin();
-			  it_begin != args.end(); ++it_begin){
+          for(SgInitializedNamePtrList::iterator it_begin = args.begin();
+                          it_begin != args.end(); ++it_begin){
 
-	       SgInitializedName* initName = *it_begin;
+               SgInitializedName* initName = *it_begin;
 
-	       Sg_File_Info* fileInfo = initName->get_file_info();
+               Sg_File_Info* fileInfo = initName->get_file_info();
 
-	       int line = fileInfo->get_line();
-	       int col  = fileInfo->get_col();
-	       std::string filename = fileInfo->get_filenameString();
+               int line = fileInfo->get_line();
+               int col  = fileInfo->get_col();
+               std::string filename = fileInfo->get_filenameString();
 
-	       if( fileInfo->isCompilerGenerated()==false ){
-		 //	    std::cout << "Start of contruct " << initName->get_name().getString() << " l" << fileInfo->get_line() << " " << fileInfo->get_col() << std::endl;       
-		    if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
+               if( fileInfo->isCompilerGenerated()==false ){
+                 //         std::cout << "Start of contruct " << initName->get_name().getString() << " l" << fileInfo->get_line() << " " << fileInfo->get_col() << std::endl;       
+                    if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
-		      //std::cout << " filename: " << filename << " l" << line << " c" << col << std::endl;
+                      //std::cout << " filename: " << filename << " l" << line << " c" << col << std::endl;
 
-			 returnList->push_back(node);
-		    }
-	       }
+                         returnList->push_back(node);
+                    }
+               }
 
 
-	  }
+          }
 
 
      }else if(locNode != NULL){
 
-	  Sg_File_Info* fileInfo = locNode->get_file_info();
+          Sg_File_Info* fileInfo = locNode->get_file_info();
 
-	  int line = fileInfo->get_line();
-	  int col  = fileInfo->get_col();
-	  std::string filename = fileInfo->get_filenameString();
+          int line = fileInfo->get_line();
+          int col  = fileInfo->get_col();
+          std::string filename = fileInfo->get_filenameString();
 
-	  if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
+          if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
 
-	    //std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
+            //std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
 
-	       returnList->push_back(node);
+               returnList->push_back(node);
 
-	  }
+          }
 
      }
 
@@ -324,77 +324,77 @@ std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
      int compareCol  = compareFileInfo->get_col();
      std::string compareFilename = compareFileInfo->get_filenameString();
 
-	  Sg_File_Info* fileInfo = node->get_file_info();
+          Sg_File_Info* fileInfo = node->get_file_info();
 
 
-	  int line = fileInfo->get_line();
-	  int col  = fileInfo->get_col();
+          int line = fileInfo->get_line();
+          int col  = fileInfo->get_col();
           std::cout << " construct: " << node->class_name() /*<<  " filename: " << fileInfo->get_filenameString() */
                     << "line " << line << " col " << col 
                     << /*"c-filename" << compareFilename <<*/ " c-line " << compareLine << " c-col " << compareCol << std::endl;
 
      if( isSgIfStmt(node) != NULL ){
-	  SgIfStmt* ifStmt         = isSgIfStmt(node);
-	  SgStatement* conditional = ifStmt->get_conditional();
+          SgIfStmt* ifStmt         = isSgIfStmt(node);
+          SgStatement* conditional = ifStmt->get_conditional();
 
-	  Sg_File_Info* fileInfo = conditional->get_file_info();
+          Sg_File_Info* fileInfo = conditional->get_file_info();
 
-	  int line = fileInfo->get_line();
-	  int col  = fileInfo->get_col();
+          int line = fileInfo->get_line();
+          int col  = fileInfo->get_col();
 
        //std::cout << "Conditional has pos l"<< line << " c" << col << std::endl;
-	  returnList =   NodeQuery::querySubTree(conditional,std::bind2nd(std::ptr_fun(queryForLine),  compareFileInfo));
+          returnList =   NodeQuery::querySubTree(conditional,std::bind2nd(std::ptr_fun(queryForLine),  compareFileInfo));
 
      } else if( isSgFunctionDeclaration(node) != NULL ){
 
-	  SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node);
-	  SgInitializedNamePtrList args = funcDecl->get_args();
+          SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node);
+          SgInitializedNamePtrList args = funcDecl->get_args();
 
-	  for(SgInitializedNamePtrList::iterator it_begin = args.begin();
-			  it_begin != args.end(); ++it_begin){
+          for(SgInitializedNamePtrList::iterator it_begin = args.begin();
+                          it_begin != args.end(); ++it_begin){
 
-	       SgInitializedName* initName = *it_begin;
+               SgInitializedName* initName = *it_begin;
 
-	       Sg_File_Info* fileInfo = initName->get_file_info();
+               Sg_File_Info* fileInfo = initName->get_file_info();
 
-	       int line = fileInfo->get_line();
-	       int col  = fileInfo->get_col();
-	       std::string filename = fileInfo->get_filenameString();
+               int line = fileInfo->get_line();
+               int col  = fileInfo->get_col();
+               std::string filename = fileInfo->get_filenameString();
 
-	       if( fileInfo->isCompilerGenerated()==false ){
-		 	    std::cout << "Start of contruct " << initName->get_name().getString() << " l" << fileInfo->get_line() << " " << fileInfo->get_col() << std::endl;       
-		    if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
+               if( fileInfo->isCompilerGenerated()==false ){
+                            std::cout << "Start of contruct " << initName->get_name().getString() << " l" << fileInfo->get_line() << " " << fileInfo->get_col() << std::endl;       
+                    if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
-		      //std::cout << " filename: " << filename << " l" << line << " c" << col << std::endl;
+                      //std::cout << " filename: " << filename << " l" << line << " c" << col << std::endl;
 
-			 returnList.push_back(node);
-		    }
-	       }
-	  }
+                         returnList.push_back(node);
+                    }
+               }
+          }
 
 
      }else if(locNode != NULL){
 
-	  Sg_File_Info* fileInfo = locNode->get_file_info();
+          Sg_File_Info* fileInfo = locNode->get_file_info();
 
-	  int line = fileInfo->get_line();
-	  int col  = fileInfo->get_col();
+          int line = fileInfo->get_line();
+          int col  = fileInfo->get_col();
 
 
-	  std::string filename = fileInfo->get_filenameString();
+          std::string filename = fileInfo->get_filenameString();
 std::cout << "Construct was found at node position:" << node << " " << node->class_name() << " Compiler generated: "<< (fileInfo->isCompilerGenerated() ? "true" : "false") << " filename: " << filename << " l" << line << " c" << col << std::endl;
 
 //          if(fileInfo->isCompilerGenerated() == true)
 //            return returnList;
 
-	  if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
+          if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
 
             
  //              std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
                returnList.push_back(node);
 
-	  }else if(isSgVarRefExp(node) != NULL){
+          }else if(isSgVarRefExp(node) != NULL){
               //For    int arrRefExp[2]; arrRefExp[1];
               //the position of the second arrRefExp is compiler generated.
               //But the position of the wrapping PntrArrExp has a position which

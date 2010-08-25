@@ -22,7 +22,7 @@ class X{
      int x;
      void x_foo(){
 
-	A_SYMBOL->x;  
+          A_SYMBOL->x;  
      }
 };
 

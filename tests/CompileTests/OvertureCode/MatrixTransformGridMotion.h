@@ -20,7 +20,7 @@ class MatrixTransformGridMotion : public GenericGridMotion
  public:
   MatrixTransformGridMotion ();
   MatrixTransformGridMotion (CompositeGrid & cg_, 
-			     const int& numberOfLevels_,
+                             const int& numberOfLevels_,
 			     MatrixTransformGridMotionParameters* params_);
 
   MatrixTransformGridMotion (const MatrixTransformGridMotion& ggm);
@@ -29,22 +29,22 @@ class MatrixTransformGridMotion : public GenericGridMotion
   virtual ~MatrixTransformGridMotion ();
 
   void initialize (CompositeGrid & cg_,
-		   const int& numberOfLevels_,
+                   const int& numberOfLevels_,
 		   MatrixTransformGridMotionParameters* params_);
 
   virtual void moveMappings (const real & time,
-			     const real & timestep, 
+                             const real & timestep, 
 			     const int & level);
 
 
   virtual void moveMappings (const real & time,
-			     const real & timestep,
+                             const real & timestep,
 			     const realCompositeGridFunction & u,
 			     const int & level);
 
 
   virtual void getAnalyticVelocity(realMappedGridFunction& velocity,
-				   const int& grid,
+                                   const int& grid,
 				   const int& level,
 				   const real& time,
 				   CompositeGrid** cgMoving,

@@ -231,7 +231,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
   // This constructor takes a GridFunctionType
   // 
   floatMappedGridFunction(MappedGrid & mg, 
-		     const GridFunctionParameters::GridFunctionType & type, 
+                     const GridFunctionParameters::GridFunctionType & type, 
 		     const Range & component0=nullRange,       // defaults to Range(0,0)
 		     const Range & component1=nullRange,
 		     const Range & component2=nullRange,
@@ -239,7 +239,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 		     const Range & component4=nullRange );
 
   floatMappedGridFunction(const GridFunctionParameters::GridFunctionType & type, 
-		     const Range & component0=nullRange,       // defaults to Range(0,0)
+                     const Range & component0=nullRange,       // defaults to Range(0,0)
 		     const Range & component1=nullRange,
 		     const Range & component2=nullRange,
 		     const Range & component3=nullRange,
@@ -299,28 +299,28 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 
   // -------- Four Argument functions -------------
   floatDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3 ) const
     { return floatDistributedArray::operator()(I0,I1,I2,I3); }
 
   // -------- Five Argument functions -------------
   floatDistributedArray operator()(const IndexArg & I0,             // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4 ) const
     { return (*this)(I0,I1,I2,I3+rcData->R[3].length()*(i4-rcData->R[4].getBase())); }  
 
   floatDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4 ) const;
 
   // -------- Six Argument functions -------------
   floatDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4,
@@ -329,7 +329,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
                                         +rcData->R[4].length()*(i5-rcData->R[5].getBase())));  }
 
   floatDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4,
@@ -337,7 +337,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 
   // -------- Seven Argument functions -------------
   floatDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4,
@@ -348,7 +348,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
                                         +rcData->R[5].length()*(i6-rcData->R[6].getBase()))));  }
 
   floatDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4,
@@ -357,7 +357,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 
   // -------- Eight Argument functions -------------
   floatDistributedArray operator()(const IndexArg & I0,                 // define this for efficiency
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const int & i4,
@@ -370,7 +370,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
                                         +rcData->R[6].length()*(i7-rcData->R[7].getBase())))));  }
 
   floatDistributedArray operator()(const IndexArg & I0, 
-			 const IndexArg & I1, 
+                         const IndexArg & I1, 
 			 const IndexArg & I2, 
 			 const IndexArg & I3,
 			 const IndexArg & I4,
@@ -458,7 +458,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
   int dataCopy( const floatMappedGridFunction & mgf );  // copy the array data only
 
   void getRanges(Range & R0,     // return the current values for the Ranges
-		 Range & R1,
+                 Range & R1,
 		 Range & R2,
 		 Range & R3,
 		 Range & R4,
@@ -762,13 +762,13 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 
   //compute (u.grad)w (convective derivative of passive variable(s))
     virtual floatMappedGridFunction convectiveDerivative (
-						     const floatMappedGridFunction &w,
+                                                     const floatMappedGridFunction &w,
 						     const Index & I1 = nullIndex,
 						     const Index & I2 = nullIndex,
 						     const Index & I3 = nullIndex
 						     ) const;
   virtual floatMappedGridFunction convectiveDerivative (const GridFunctionParameters & gfType,
-						   const floatMappedGridFunction &w,
+                                                   const floatMappedGridFunction &w,
 						   const Index & I1 = nullIndex,
 						   const Index & I2 = nullIndex,
 						   const Index & I3 = nullIndex
@@ -776,7 +776,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 
 #define SCALAR_FUNCTION(type) \
   virtual floatMappedGridFunction type(\
-					   const floatMappedGridFunction & s,\
+                                           const floatMappedGridFunction & s,\
 					   const Index & I1 = nullIndex, \
 					   const Index & I2 = nullIndex, \
 					   const Index & I3 = nullIndex, \
@@ -787,7 +787,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 					   const Index & I8 = nullIndex\
 					   ) const;  \
   virtual floatMappedGridFunction type(const GridFunctionParameters & gfType,\
-					   const floatMappedGridFunction & s,\
+                                           const floatMappedGridFunction & s,\
 					   const Index & I1 = nullIndex, \
 					   const Index & I2 = nullIndex, \
 					   const Index & I3 = nullIndex, \
@@ -814,7 +814,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 #undef SCALAR_FUNCTION
 
   virtual floatMappedGridFunction derivativeScalarDerivative(
-					   const floatMappedGridFunction & s,
+                                           const floatMappedGridFunction & s,
 				           const int & direction1,
 				           const int & direction2,
 					   const Index & I1 = nullIndex, 
@@ -828,7 +828,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 					   ) const;  
 
   virtual floatMappedGridFunction derivativeScalarDerivative(const GridFunctionParameters & gfType,
-					   const floatMappedGridFunction & s,
+                                           const floatMappedGridFunction & s,
 				           const int & direction1,
 				           const int & direction2,
 					   const Index & I1 = nullIndex, 
@@ -841,7 +841,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 					   const Index & I8 = nullIndex
 					   ) const;  
   virtual floatMappedGridFunction derivativeScalarDerivativeCoefficients(				
-						       const floatMappedGridFunction & s,
+                                                       const floatMappedGridFunction & s,
 				                       const int & direction1,
 				                       const int & direction2,
 						       const Index & I1 = nullIndex,
@@ -871,7 +871,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 
   //returns face-centered gradients
   virtual floatMappedGridFunction FCgrad (
-				     const int c0 = 0,
+                                     const int c0 = 0,
 				     const int c1 = 0,
 				     const int c2 = 0,
 				     const int c3 = 0,
@@ -887,7 +887,7 @@ class floatMappedGridFunction : public floatDistributedArray, public floatGeneri
 				     ) const;
 
   virtual floatMappedGridFunction FCgrad (const GridFunctionParameters & gfType,
-				     const int c0 = 0,
+                                     const int c0 = 0,
 				     const int c1 = 0,
 				     const int c2 = 0,
 				     const int c3 = 0,

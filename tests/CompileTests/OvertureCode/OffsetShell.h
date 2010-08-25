@@ -23,10 +23,10 @@ class OffsetShell
   int createOffsetMappings( MappingInformation & mapInfo );
   
   int buildOffsetMappings( GenericGraphicsInterface & gi, 
-			   GraphicsParameters & parameters, MappingInformation & mapInfo );
+                           GraphicsParameters & parameters, MappingInformation & mapInfo );
 
   int generateVolumeGrids( GenericGraphicsInterface & gi, 
-			   GraphicsParameters & parameters, MappingInformation & mapInfo );
+                           GraphicsParameters & parameters, MappingInformation & mapInfo );
 
  protected:
 

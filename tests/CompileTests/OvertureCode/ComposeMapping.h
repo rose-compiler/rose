@@ -55,7 +55,7 @@ class ComposeMapping : public Mapping{
   virtual void useRobustInverse(const bool trueOrFalse=TRUE );
 
   void map( const realArray & r, realArray & x, realArray & xr = Overture::nullRealDistributedArray(),
-	   MappingParameters & params=Overture::nullMappingParameters());
+            MappingParameters & params=Overture::nullMappingParameters());
 
   void inverseMap( const realArray & x, realArray & r, realArray & rx = Overture::nullRealDistributedArray(),
                    MappingParameters & params =Overture::nullMappingParameters() );

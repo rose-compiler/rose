@@ -38,8 +38,8 @@
 #include "globals.h"
 
 /* parameters */
-#define T_BENCH	1
-#define	T_INIT	2
+#define T_BENCH 1
+#define T_INIT  2
 
 /* global variables */
 /* common /grid/ */
@@ -48,25 +48,25 @@ static int is1, is2, is3, ie1, ie2, ie3;
 /* functions prototypes */
 static void setup(int *n1, int *n2, int *n3, int lt);
 static void mg3P(double ****u, double ***v, double ****r, double a[4],
-		 double c[4], int n1, int n2, int n3, int k);
+                 double c[4], int n1, int n2, int n3, int k);
 static void psinv( double ***r, double ***u, int n1, int n2, int n3,
-		   double c[4], int k);
+                   double c[4], int k);
 static void resid( double ***u, double ***v, double ***r,
-		   int n1, int n2, int n3, double a[4], int k );
+                   int n1, int n2, int n3, double a[4], int k );
 static void rprj3( double ***r, int m1k, int m2k, int m3k,
-		   double ***s, int m1j, int m2j, int m3j, int k );
+                   double ***s, int m1j, int m2j, int m3j, int k );
 static void interp( double ***z, int mm1, int mm2, int mm3,
-		    double ***u, int n1, int n2, int n3, int k );
+                    double ***u, int n1, int n2, int n3, int k );
 static void norm2u3(double ***r, int n1, int n2, int n3,
-		    double *rnm2, double *rnmu, int nx, int ny, int nz);
+                    double *rnm2, double *rnmu, int nx, int ny, int nz);
 static void rep_nrm(double ***u, int n1, int n2, int n3,
-		    char *title, int kk);
+                    char *title, int kk);
 static void comm3(double ***u, int n1, int n2, int n3, int kk);
 static void zran3(double ***z, int n1, int n2, int n3, int nx, int ny, int k);
 static void showall(double ***z, int n1, int n2, int n3);
 static double power( double a, int n );
 static void bubble( double ten[M][2], int j1[M][2], int j2[M][2],
-		    int j3[M][2], int m, int ind );
+                    int j3[M][2], int m, int ind );
 static void zero3(double ***z, int n1, int n2, int n3);
 static void nonzero(double ***z, int n1, int n2, int n3);
 
@@ -113,49 +113,49 @@ c Read in and broadcast input data
 c---------------------------------------------------------------------*/
 
     printf("\n\n NAS Parallel Benchmarks 2.3 OpenMP C version"
-	   " - MG Benchmark\n\n");
+           " - MG Benchmark\n\n");
 
     fp = fopen("mg.input", "r");
     if (fp != NULL) {
-	printf(" Reading from input file mg.input\n");
-	fscanf(fp, "%d", &lt);
-	while(fgetc(fp) != '\n');
-	fscanf(fp, "%d%d%d", &nx[lt], &ny[lt], &nz[lt]);
-	while(fgetc(fp) != '\n');
-	fscanf(fp, "%d", &nit);
-	while(fgetc(fp) != '\n');
-	for (i = 0; i <= 7; i++) {
-	    fscanf(fp, "%d", &debug_vec[i]);
-	}
-	fclose(fp);
+        printf(" Reading from input file mg.input\n");
+        fscanf(fp, "%d", &lt);
+        while(fgetc(fp) != '\n');
+        fscanf(fp, "%d%d%d", &nx[lt], &ny[lt], &nz[lt]);
+        while(fgetc(fp) != '\n');
+        fscanf(fp, "%d", &nit);
+        while(fgetc(fp) != '\n');
+        for (i = 0; i <= 7; i++) {
+            fscanf(fp, "%d", &debug_vec[i]);
+        }
+        fclose(fp);
     } else {
-	printf(" No input file. Using compiled defaults\n");
+        printf(" No input file. Using compiled defaults\n");
     
-	lt = LT_DEFAULT;
-	nit = NIT_DEFAULT;
-	nx[lt] = NX_DEFAULT;
-	ny[lt] = NY_DEFAULT;
-	nz[lt] = NZ_DEFAULT;
+        lt = LT_DEFAULT;
+        nit = NIT_DEFAULT;
+        nx[lt] = NX_DEFAULT;
+        ny[lt] = NY_DEFAULT;
+        nz[lt] = NZ_DEFAULT;
 
-	for (i = 0; i <= 7; i++) {
-	    debug_vec[i] = DEBUG_DEFAULT;
-	}
+        for (i = 0; i <= 7; i++) {
+            debug_vec[i] = DEBUG_DEFAULT;
+        }
     }
 
     if ( (nx[lt] != ny[lt]) || (nx[lt] != nz[lt]) ) {
-	Class = 'U';
+        Class = 'U';
     } else if( nx[lt] == 32 && nit == 4 ) {
-	Class = 'S';
+        Class = 'S';
     } else if( nx[lt] == 64 && nit == 40 ) {
-	Class = 'W';
+        Class = 'W';
     } else if( nx[lt] == 256 && nit == 20 ) {
-	Class = 'B';
+        Class = 'B';
     } else if( nx[lt] == 512 && nit == 20 ) {
-	Class = 'C';
+        Class = 'C';
     } else if( nx[lt] == 256 && nit == 4 ) {
-	Class = 'A';
+        Class = 'A';
     } else {
-	Class = 'U';
+        Class = 'U';
     }
 
 /*--------------------------------------------------------------------
@@ -181,18 +181,18 @@ c-------------------------------------------------------------------*/
 /*--------------------------------------------------------------------
 c     Coefficients for the S(a) smoother
 c-------------------------------------------------------------------*/
-	c[0] =  -3.0/8.0;
-	c[1] =  1.0/32.0;
-	c[2] =  -1.0/64.0;
-	c[3] =   0.0;
+        c[0] =  -3.0/8.0;
+        c[1] =  1.0/32.0;
+        c[2] =  -1.0/64.0;
+        c[3] =   0.0;
     } else {
 /*--------------------------------------------------------------------
 c     Coefficients for the S(b) smoother
 c-------------------------------------------------------------------*/
-	c[0] =  -3.0/17.0;
-	c[1] =  1.0/33.0;
-	c[2] =  -1.0/61.0;
-	c[3] =   0.0;
+        c[0] =  -3.0/17.0;
+        c[1] =  1.0/33.0;
+        c[2] =  -1.0/61.0;
+        c[3] =   0.0;
     }
     
     lb = 1;
@@ -201,30 +201,30 @@ c-------------------------------------------------------------------*/
       
     u = (double ****)malloc((lt+1)*sizeof(double ***));
     for (l = lt; l >=1; l--) {
-	u[l] = (double ***)malloc(m3[l]*sizeof(double **));
-	for (k = 0; k < m3[l]; k++) {
-	    u[l][k] = (double **)malloc(m2[l]*sizeof(double *));
-	    for (j = 0; j < m2[l]; j++) {
-		u[l][k][j] = (double *)malloc(m1[l]*sizeof(double));
-	    }
-	}
+        u[l] = (double ***)malloc(m3[l]*sizeof(double **));
+        for (k = 0; k < m3[l]; k++) {
+            u[l][k] = (double **)malloc(m2[l]*sizeof(double *));
+            for (j = 0; j < m2[l]; j++) {
+                u[l][k][j] = (double *)malloc(m1[l]*sizeof(double));
+            }
+        }
     }
     v = (double ***)malloc(m3[lt]*sizeof(double **));
     for (k = 0; k < m3[lt]; k++) {
-	v[k] = (double **)malloc(m2[lt]*sizeof(double *));
-	for (j = 0; j < m2[lt]; j++) {
-	    v[k][j] = (double *)malloc(m1[lt]*sizeof(double));
-	}
+        v[k] = (double **)malloc(m2[lt]*sizeof(double *));
+        for (j = 0; j < m2[lt]; j++) {
+            v[k][j] = (double *)malloc(m1[lt]*sizeof(double));
+        }
     }
     r = (double ****)malloc((lt+1)*sizeof(double ***));
     for (l = lt; l >=1; l--) {
-	r[l] = (double ***)malloc(m3[l]*sizeof(double **));
-	for (k = 0; k < m3[l]; k++) {
-	    r[l][k] = (double **)malloc(m2[l]*sizeof(double *));
-	    for (j = 0; j < m2[l]; j++) {
-		r[l][k][j] = (double *)malloc(m1[l]*sizeof(double));
-	    }
-	}
+        r[l] = (double ***)malloc(m3[l]*sizeof(double **));
+        for (k = 0; k < m3[l]; k++) {
+            r[l][k] = (double **)malloc(m2[l]*sizeof(double *));
+            for (j = 0; j < m2[l]; j++) {
+                r[l][k][j] = (double *)malloc(m1[l]*sizeof(double));
+            }
+        }
     }
 
 #pragma omp parallel
@@ -244,7 +244,7 @@ c-------------------------------------------------------------------*/
     printf(" about to evaluate resid, k= %d\n", lt);*/
 
     printf(" Size: %3dx%3dx%3d (class %1c)\n",
-	   nx[lt], ny[lt], nz[lt], Class);
+           nx[lt], ny[lt], nz[lt], Class);
     printf(" Iterations: %3d\n", nit);
 }
 
@@ -274,8 +274,8 @@ c---------------------------------------------------------------------*/
     norm2u3(r[lt],n1,n2,n3,&rnm2,&rnmu,nx[lt],ny[lt],nz[lt]);
 
     for ( it = 1; it <= nit; it++) {
-	mg3P(u,v,r,a,c,n1,n2,n3,lt);
-	resid(u[lt],v,r[lt],n1,n2,n3,a,lt);
+        mg3P(u,v,r,a,c,n1,n2,n3,lt);
+        resid(u[lt],v,r[lt],n1,n2,n3,a,lt);
     }
     norm2u3(r[lt],n1,n2,n3,&rnm2,&rnmu,nx[lt],ny[lt],nz[lt]);
 
@@ -296,47 +296,47 @@ c---------------------------------------------------------------------*/
     printf(" Benchmark completed\n");
 
     if (Class != 'U') {
-	if (Class == 'S') {
+        if (Class == 'S') {
             verify_value = 0.530770700573e-04;
-	} else if (Class == 'W') {
+        } else if (Class == 'W') {
             verify_value = 0.250391406439e-17;  /* 40 iterations*/
-/*				0.183103168997d-044 iterations*/
-	} else if (Class == 'A') {
+/*                              0.183103168997d-044 iterations*/
+        } else if (Class == 'A') {
             verify_value = 0.2433365309e-5;
         } else if (Class == 'B') {
             verify_value = 0.180056440132e-5;
         } else if (Class == 'C') {
             verify_value = 0.570674826298e-06;
-	}
+        }
 
-	if ( fabs( rnm2 - verify_value ) <= epsilon ) {
+        if ( fabs( rnm2 - verify_value ) <= epsilon ) {
             verified = TRUE;
-	    printf(" VERIFICATION SUCCESSFUL\n");
-	    printf(" L2 Norm is %20.12e\n", rnm2);
-	    printf(" Error is   %20.12e\n", rnm2 - verify_value);
-	} else {
+            printf(" VERIFICATION SUCCESSFUL\n");
+            printf(" L2 Norm is %20.12e\n", rnm2);
+            printf(" Error is   %20.12e\n", rnm2 - verify_value);
+        } else {
             verified = FALSE;
-	    printf(" VERIFICATION FAILED\n");
-	    printf(" L2 Norm is             %20.12e\n", rnm2);
-	    printf(" The correct L2 Norm is %20.12e\n", verify_value);
-	}
+            printf(" VERIFICATION FAILED\n");
+            printf(" L2 Norm is             %20.12e\n", rnm2);
+            printf(" The correct L2 Norm is %20.12e\n", verify_value);
+        }
     } else {
-	verified = FALSE;
-	printf(" Problem size unknown\n");
-	printf(" NO VERIFICATION PERFORMED\n");
+        verified = FALSE;
+        printf(" Problem size unknown\n");
+        printf(" NO VERIFICATION PERFORMED\n");
     }
 
     if ( t != 0.0 ) {
-	int nn = nx[lt]*ny[lt]*nz[lt];
-	mflops = 58.*nit*nn*1.0e-6 / t;
+        int nn = nx[lt]*ny[lt]*nz[lt];
+        mflops = 58.*nit*nn*1.0e-6 / t;
     } else {
-	mflops = 0.0;
+        mflops = 0.0;
     }
 
     c_print_results("MG", Class, nx[lt], ny[lt], nz[lt], 
-		    nit, nthreads, t, mflops, "          floating point", 
-		    verified, NPBVERSION, COMPILETIME,
-		    CS1, CS2, CS3, CS4, CS5, CS6, CS7);
+                    nit, nthreads, t, mflops, "          floating point", 
+                    verified, NPBVERSION, COMPILETIME,
+                    CS1, CS2, CS3, CS4, CS5, CS6, CS7);
 }
 
 /*--------------------------------------------------------------------
@@ -350,15 +350,15 @@ c-------------------------------------------------------------------*/
     int k;
 
     for ( k = lt-1; k >= 1; k--) {
-	nx[k] = nx[k+1]/2;
-	ny[k] = ny[k+1]/2;
-	nz[k] = nz[k+1]/2;
+        nx[k] = nx[k+1]/2;
+        ny[k] = ny[k+1]/2;
+        nz[k] = nz[k+1]/2;
     }
 
     for (k = 1; k <= lt; k++) {
-	m1[k] = nx[k]+2;
-	m2[k] = nz[k]+2;
-	m3[k] = ny[k]+2;
+        m1[k] = nx[k]+2;
+        m2[k] = nz[k]+2;
+        m3[k] = ny[k]+2;
     }
 
     is1 = 1;
@@ -372,10 +372,10 @@ c-------------------------------------------------------------------*/
     *n3 = nz[lt]+2;
 
     if (debug_vec[1] >=  1 ) {
-	printf(" in setup, \n");
-	printf("  lt  nx  ny  nz  n1  n2  n3 is1 is2 is3 ie1 ie2 ie3\n");
-	printf("%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d\n",
-	       lt,nx[lt],ny[lt],nz[lt],*n1,*n2,*n3,is1,is2,is3,ie1,ie2,ie3);
+        printf(" in setup, \n");
+        printf("  lt  nx  ny  nz  n1  n2  n3 is1 is2 is3 ie1 ie2 ie3\n");
+        printf("%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d\n",
+               lt,nx[lt],ny[lt],nz[lt],*n1,*n2,*n3,is1,is2,is3,ie1,ie2,ie3);
     }
 }
 
@@ -383,7 +383,7 @@ c-------------------------------------------------------------------*/
 c-------------------------------------------------------------------*/
 
 static void mg3P(double ****u, double ***v, double ****r, double a[4],
-		 double c[4], int n1, int n2, int n3, int k) {
+                 double c[4], int n1, int n2, int n3, int k) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -400,9 +400,9 @@ c     restrict the residual from the find grid to the coarse
 c-------------------------------------------------------------------*/
 
     for (k = lt; k >= lb+1; k--) {
-	j = k-1;
-	rprj3(r[k], m1[k], m2[k], m3[k],
-	      r[j], m1[j], m2[j], m3[j], k);
+        j = k-1;
+        rprj3(r[k], m1[k], m2[k], m3[k],
+              r[j], m1[j], m2[j], m3[j], k);
     }
 
     k = lb;
@@ -413,21 +413,21 @@ c-------------------------------------------------------------------*/
     psinv(r[k], u[k], m1[k], m2[k], m3[k], c, k);
 
     for (k = lb+1; k <= lt-1; k++) {
-	j = k-1;
+        j = k-1;
 /*--------------------------------------------------------------------
 c        prolongate from level k-1  to k
 c-------------------------------------------------------------------*/
-	zero3(u[k], m1[k], m2[k], m3[k]);
-	interp(u[j], m1[j], m2[j], m3[j],
-	       u[k], m1[k], m2[k], m3[k], k);
+        zero3(u[k], m1[k], m2[k], m3[k]);
+        interp(u[j], m1[j], m2[j], m3[j],
+               u[k], m1[k], m2[k], m3[k], k);
 /*--------------------------------------------------------------------
 c        compute residual for level k
 c-------------------------------------------------------------------*/
-	resid(u[k], r[k], r[k], m1[k], m2[k], m3[k], a, k);
+        resid(u[k], r[k], r[k], m1[k], m2[k], m3[k], a, k);
 /*--------------------------------------------------------------------
 c        apply smoother
 c-------------------------------------------------------------------*/
-	psinv(r[k], u[k], m1[k], m2[k], m3[k], c, k);
+        psinv(r[k], u[k], m1[k], m2[k], m3[k], c, k);
     }
 
     j = lt - 1;
@@ -441,7 +441,7 @@ c-------------------------------------------------------------------*/
 c-------------------------------------------------------------------*/
 
 static void psinv( double ***r, double ***u, int n1, int n2, int n3,
-		   double c[4], int k) {
+                   double c[4], int k) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -462,26 +462,26 @@ c-------------------------------------------------------------------*/
     double r1[M], r2[M];
 #pragma omp for      
     for (i3 = 1; i3 < n3-1; i3++) {
-	for (i2 = 1; i2 < n2-1; i2++) {
+        for (i2 = 1; i2 < n2-1; i2++) {
             for (i1 = 0; i1 < n1; i1++) {
-		r1[i1] = r[i3][i2-1][i1] + r[i3][i2+1][i1]
-		    + r[i3-1][i2][i1] + r[i3+1][i2][i1];
-		r2[i1] = r[i3-1][i2-1][i1] + r[i3-1][i2+1][i1]
-		    + r[i3+1][i2-1][i1] + r[i3+1][i2+1][i1];
-	    }
+                r1[i1] = r[i3][i2-1][i1] + r[i3][i2+1][i1]
+                    + r[i3-1][i2][i1] + r[i3+1][i2][i1];
+                r2[i1] = r[i3-1][i2-1][i1] + r[i3-1][i2+1][i1]
+                    + r[i3+1][i2-1][i1] + r[i3+1][i2+1][i1];
+            }
             for (i1 = 1; i1 < n1-1; i1++) {
-		u[i3][i2][i1] = u[i3][i2][i1]
-		    + c[0] * r[i3][i2][i1]
-		    + c[1] * ( r[i3][i2][i1-1] + r[i3][i2][i1+1]
-			       + r1[i1] )
-		    + c[2] * ( r2[i1] + r1[i1-1] + r1[i1+1] );
+                u[i3][i2][i1] = u[i3][i2][i1]
+                    + c[0] * r[i3][i2][i1]
+                    + c[1] * ( r[i3][i2][i1-1] + r[i3][i2][i1+1]
+                               + r1[i1] )
+                    + c[2] * ( r2[i1] + r1[i1-1] + r1[i1+1] );
 /*--------------------------------------------------------------------
 c  Assume c(3) = 0    (Enable line below if c(3) not= 0)
 c---------------------------------------------------------------------
 c    >                     + c(3) * ( r2(i1-1) + r2(i1+1) )
 c-------------------------------------------------------------------*/
-	    }
-	}
+            }
+        }
     }
 
 /*--------------------------------------------------------------------
@@ -491,12 +491,12 @@ c-------------------------------------------------------------------*/
 
     if (debug_vec[0] >= 1 ) {
 #pragma omp single
-	rep_nrm(u,n1,n2,n3,"   psinv",k);
+        rep_nrm(u,n1,n2,n3,"   psinv",k);
     }
 
     if ( debug_vec[3] >= k ) {
 #pragma omp single
-	showall(u,n1,n2,n3);
+        showall(u,n1,n2,n3);
     }
 }
 
@@ -504,7 +504,7 @@ c-------------------------------------------------------------------*/
 c-------------------------------------------------------------------*/
 
 static void resid( double ***u, double ***v, double ***r,
-		   int n1, int n2, int n3, double a[4], int k ) {
+                   int n1, int n2, int n3, double a[4], int k ) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -526,26 +526,26 @@ c-------------------------------------------------------------------*/
     double u1[M], u2[M];
 #pragma omp for
     for (i3 = 1; i3 < n3-1; i3++) {
-	for (i2 = 1; i2 < n2-1; i2++) {
+        for (i2 = 1; i2 < n2-1; i2++) {
             for (i1 = 0; i1 < n1; i1++) {
-		u1[i1] = u[i3][i2-1][i1] + u[i3][i2+1][i1]
-		       + u[i3-1][i2][i1] + u[i3+1][i2][i1];
-		u2[i1] = u[i3-1][i2-1][i1] + u[i3-1][i2+1][i1]
-		       + u[i3+1][i2-1][i1] + u[i3+1][i2+1][i1];
-	    }
-	    for (i1 = 1; i1 < n1-1; i1++) {
-		r[i3][i2][i1] = v[i3][i2][i1]
-		    - a[0] * u[i3][i2][i1]
+                u1[i1] = u[i3][i2-1][i1] + u[i3][i2+1][i1]
+                       + u[i3-1][i2][i1] + u[i3+1][i2][i1];
+                u2[i1] = u[i3-1][i2-1][i1] + u[i3-1][i2+1][i1]
+                       + u[i3+1][i2-1][i1] + u[i3+1][i2+1][i1];
+            }
+            for (i1 = 1; i1 < n1-1; i1++) {
+                r[i3][i2][i1] = v[i3][i2][i1]
+                    - a[0] * u[i3][i2][i1]
 /*--------------------------------------------------------------------
 c  Assume a(1) = 0      (Enable 2 lines below if a(1) not= 0)
 c---------------------------------------------------------------------
 c    >                     - a(1) * ( u(i1-1,i2,i3) + u(i1+1,i2,i3)
 c    >                              + u1(i1) )
 c-------------------------------------------------------------------*/
-		- a[2] * ( u2[i1] + u1[i1-1] + u1[i1+1] )
-		      - a[3] * ( u2[i1-1] + u2[i1+1] );
-	    }
-	}
+                - a[2] * ( u2[i1] + u1[i1-1] + u1[i1+1] )
+                      - a[3] * ( u2[i1-1] + u2[i1+1] );
+            }
+        }
     }
 
 /*--------------------------------------------------------------------
@@ -555,12 +555,12 @@ c--------------------------------------------------------------------*/
 
     if (debug_vec[0] >= 1 ) {
 #pragma omp single
-	rep_nrm(r,n1,n2,n3,"   resid",k);
+        rep_nrm(r,n1,n2,n3,"   resid",k);
     }
 
     if ( debug_vec[2] >= k ) {
 #pragma omp single
-	showall(r,n1,n2,n3);
+        showall(r,n1,n2,n3);
     }
 }
 
@@ -568,7 +568,7 @@ c--------------------------------------------------------------------*/
 c-------------------------------------------------------------------*/
 
 static void rprj3( double ***r, int m1k, int m2k, int m3k,
-		   double ***s, int m1j, int m2j, int m3j, int k ) {
+                   double ***s, int m1j, int m2j, int m3j, int k ) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -607,46 +607,46 @@ c-------------------------------------------------------------------*/
     }
 #pragma omp for
     for (j3 = 1; j3 < m3j-1; j3++) {
-	i3 = 2*j3-d3;
+        i3 = 2*j3-d3;
 /*C        i3 = 2*j3-1*/
-	for (j2 = 1; j2 < m2j-1; j2++) {
+        for (j2 = 1; j2 < m2j-1; j2++) {
             i2 = 2*j2-d2;
 /*C           i2 = 2*j2-1*/
 
             for (j1 = 1; j1 < m1j; j1++) {
-		i1 = 2*j1-d1;
+                i1 = 2*j1-d1;
 /*C             i1 = 2*j1-1*/
-		x1[i1] = r[i3+1][i2][i1] + r[i3+1][i2+2][i1]
-		    + r[i3][i2+1][i1] + r[i3+2][i2+1][i1];
-		y1[i1] = r[i3][i2][i1] + r[i3+2][i2][i1]
-		    + r[i3][i2+2][i1] + r[i3+2][i2+2][i1];
-	    }
+                x1[i1] = r[i3+1][i2][i1] + r[i3+1][i2+2][i1]
+                    + r[i3][i2+1][i1] + r[i3+2][i2+1][i1];
+                y1[i1] = r[i3][i2][i1] + r[i3+2][i2][i1]
+                    + r[i3][i2+2][i1] + r[i3+2][i2+2][i1];
+            }
 
             for (j1 = 1; j1 < m1j-1; j1++) {
-		i1 = 2*j1-d1;
+                i1 = 2*j1-d1;
 /*C             i1 = 2*j1-1*/
-		y2 = r[i3][i2][i1+1] + r[i3+2][i2][i1+1]
-		    + r[i3][i2+2][i1+1] + r[i3+2][i2+2][i1+1];
-		x2 = r[i3+1][i2][i1+1] + r[i3+1][i2+2][i1+1]
-		    + r[i3][i2+1][i1+1] + r[i3+2][i2+1][i1+1];
-		s[j3][j2][j1] =
-		    0.5 * r[i3+1][i2+1][i1+1]
-		    + 0.25 * ( r[i3+1][i2+1][i1] + r[i3+1][i2+1][i1+2] + x2)
-		    + 0.125 * ( x1[i1] + x1[i1+2] + y2)
-		    + 0.0625 * ( y1[i1] + y1[i1+2] );
-	    }
-	}
+                y2 = r[i3][i2][i1+1] + r[i3+2][i2][i1+1]
+                    + r[i3][i2+2][i1+1] + r[i3+2][i2+2][i1+1];
+                x2 = r[i3+1][i2][i1+1] + r[i3+1][i2+2][i1+1]
+                    + r[i3][i2+1][i1+1] + r[i3+2][i2+1][i1+1];
+                s[j3][j2][j1] =
+                    0.5 * r[i3+1][i2+1][i1+1]
+                    + 0.25 * ( r[i3+1][i2+1][i1] + r[i3+1][i2+1][i1+2] + x2)
+                    + 0.125 * ( x1[i1] + x1[i1+2] + y2)
+                    + 0.0625 * ( y1[i1] + y1[i1+2] );
+            }
+        }
     }
     comm3(s,m1j,m2j,m3j,k-1);
 
     if (debug_vec[0] >= 1 ) {
 #pragma omp single
-	rep_nrm(s,m1j,m2j,m3j,"   rprj3",k-1);
+        rep_nrm(s,m1j,m2j,m3j,"   rprj3",k-1);
     }
 
     if (debug_vec[4] >= k ) {
 #pragma omp single
-	showall(s,m1j,m2j,m3j);
+        showall(s,m1j,m2j,m3j);
     }
 }
 
@@ -654,7 +654,7 @@ c-------------------------------------------------------------------*/
 c-------------------------------------------------------------------*/
 
 static void interp( double ***z, int mm1, int mm2, int mm3,
-		    double ***u, int n1, int n2, int n3, int k ) {
+                    double ***u, int n1, int n2, int n3, int k ) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -682,135 +682,135 @@ c      parameter( m=535 )
 
     if ( n1 != 3 && n2 != 3 && n3 != 3 ) {
 #pragma omp for
-	for (i3 = 0; i3 < mm3-1; i3++) {
+        for (i3 = 0; i3 < mm3-1; i3++) {
             for (i2 = 0; i2 < mm2-1; i2++) {
-		for (i1 = 0; i1 < mm1; i1++) {
-		    z1[i1] = z[i3][i2+1][i1] + z[i3][i2][i1];
-		    z2[i1] = z[i3+1][i2][i1] + z[i3][i2][i1];
-		    z3[i1] = z[i3+1][i2+1][i1] + z[i3+1][i2][i1] + z1[i1];
-		}
-		for (i1 = 0; i1 < mm1-1; i1++) {
-		    u[2*i3][2*i2][2*i1] = u[2*i3][2*i2][2*i1]
-			+z[i3][i2][i1];
-		    u[2*i3][2*i2][2*i1+1] = u[2*i3][2*i2][2*i1+1]
-			+0.5*(z[i3][i2][i1+1]+z[i3][i2][i1]);
-		}
-		for (i1 = 0; i1 < mm1-1; i1++) {
-		    u[2*i3][2*i2+1][2*i1] = u[2*i3][2*i2+1][2*i1]
-			+0.5 * z1[i1];
-		    u[2*i3][2*i2+1][2*i1+1] = u[2*i3][2*i2+1][2*i1+1]
-			+0.25*( z1[i1] + z1[i1+1] );
-		}
-		for (i1 = 0; i1 < mm1-1; i1++) {
-		    u[2*i3+1][2*i2][2*i1] = u[2*i3+1][2*i2][2*i1]
-			+0.5 * z2[i1];
-		    u[2*i3+1][2*i2][2*i1+1] = u[2*i3+1][2*i2][2*i1+1]
-			+0.25*( z2[i1] + z2[i1+1] );
-		}
-		for (i1 = 0; i1 < mm1-1; i1++) {
-		    u[2*i3+1][2*i2+1][2*i1] = u[2*i3+1][2*i2+1][2*i1]
-			+0.25* z3[i1];
-		    u[2*i3+1][2*i2+1][2*i1+1] = u[2*i3+1][2*i2+1][2*i1+1]
-			+0.125*( z3[i1] + z3[i1+1] );
-		}
-	    }
-	}
+                for (i1 = 0; i1 < mm1; i1++) {
+                    z1[i1] = z[i3][i2+1][i1] + z[i3][i2][i1];
+                    z2[i1] = z[i3+1][i2][i1] + z[i3][i2][i1];
+                    z3[i1] = z[i3+1][i2+1][i1] + z[i3+1][i2][i1] + z1[i1];
+                }
+                for (i1 = 0; i1 < mm1-1; i1++) {
+                    u[2*i3][2*i2][2*i1] = u[2*i3][2*i2][2*i1]
+                        +z[i3][i2][i1];
+                    u[2*i3][2*i2][2*i1+1] = u[2*i3][2*i2][2*i1+1]
+                        +0.5*(z[i3][i2][i1+1]+z[i3][i2][i1]);
+                }
+                for (i1 = 0; i1 < mm1-1; i1++) {
+                    u[2*i3][2*i2+1][2*i1] = u[2*i3][2*i2+1][2*i1]
+                        +0.5 * z1[i1];
+                    u[2*i3][2*i2+1][2*i1+1] = u[2*i3][2*i2+1][2*i1+1]
+                        +0.25*( z1[i1] + z1[i1+1] );
+                }
+                for (i1 = 0; i1 < mm1-1; i1++) {
+                    u[2*i3+1][2*i2][2*i1] = u[2*i3+1][2*i2][2*i1]
+                        +0.5 * z2[i1];
+                    u[2*i3+1][2*i2][2*i1+1] = u[2*i3+1][2*i2][2*i1+1]
+                        +0.25*( z2[i1] + z2[i1+1] );
+                }
+                for (i1 = 0; i1 < mm1-1; i1++) {
+                    u[2*i3+1][2*i2+1][2*i1] = u[2*i3+1][2*i2+1][2*i1]
+                        +0.25* z3[i1];
+                    u[2*i3+1][2*i2+1][2*i1+1] = u[2*i3+1][2*i2+1][2*i1+1]
+                        +0.125*( z3[i1] + z3[i1+1] );
+                }
+            }
+        }
     } else {
-	if (n1 == 3) {
+        if (n1 == 3) {
             d1 = 2;
             t1 = 1;
-	} else {
+        } else {
             d1 = 1;
             t1 = 0;
-	}
+        }
          
-	if (n2 == 3) {
+        if (n2 == 3) {
             d2 = 2;
             t2 = 1;
-	} else {
+        } else {
             d2 = 1;
             t2 = 0;
-	}
+        }
          
-	if (n3 == 3) {
+        if (n3 == 3) {
             d3 = 2;
             t3 = 1;
-	} else {
+        } else {
             d3 = 1;
             t3 = 0;
-	}
+        }
          
 #pragma omp for
-	for ( i3 = d3; i3 <= mm3-1; i3++) {
+        for ( i3 = d3; i3 <= mm3-1; i3++) {
             for ( i2 = d2; i2 <= mm2-1; i2++) {
-		for ( i1 = d1; i1 <= mm1-1; i1++) {
-		    u[2*i3-d3-1][2*i2-d2-1][2*i1-d1-1] =
-			u[2*i3-d3-1][2*i2-d2-1][2*i1-d1-1]
-			+z[i3-1][i2-1][i1-1];
-		}
-		for ( i1 = 1; i1 <= mm1-1; i1++) {
-		    u[2*i3-d3-1][2*i2-d2-1][2*i1-t1-1] =
-			u[2*i3-d3-1][2*i2-d2-1][2*i1-t1-1]
-			+0.5*(z[i3-1][i2-1][i1]+z[i3-1][i2-1][i1-1]);
-		}
-	    }
+                for ( i1 = d1; i1 <= mm1-1; i1++) {
+                    u[2*i3-d3-1][2*i2-d2-1][2*i1-d1-1] =
+                        u[2*i3-d3-1][2*i2-d2-1][2*i1-d1-1]
+                        +z[i3-1][i2-1][i1-1];
+                }
+                for ( i1 = 1; i1 <= mm1-1; i1++) {
+                    u[2*i3-d3-1][2*i2-d2-1][2*i1-t1-1] =
+                        u[2*i3-d3-1][2*i2-d2-1][2*i1-t1-1]
+                        +0.5*(z[i3-1][i2-1][i1]+z[i3-1][i2-1][i1-1]);
+                }
+            }
             for ( i2 = 1; i2 <= mm2-1; i2++) {
-		for ( i1 = d1; i1 <= mm1-1; i1++) {
-		    u[2*i3-d3-1][2*i2-t2-1][2*i1-d1-1] =
-			u[2*i3-d3-1][2*i2-t2-1][2*i1-d1-1]
-			+0.5*(z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
-		}
-		for ( i1 = 1; i1 <= mm1-1; i1++) {
-		    u[2*i3-d3-1][2*i2-t2-1][2*i1-t1-1] =
-			u[2*i3-d3-1][2*i2-t2-1][2*i1-t1-1]
-			+0.25*(z[i3-1][i2][i1]+z[i3-1][i2-1][i1]
-			       +z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
-		}
-	    }
-	}
+                for ( i1 = d1; i1 <= mm1-1; i1++) {
+                    u[2*i3-d3-1][2*i2-t2-1][2*i1-d1-1] =
+                        u[2*i3-d3-1][2*i2-t2-1][2*i1-d1-1]
+                        +0.5*(z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
+                }
+                for ( i1 = 1; i1 <= mm1-1; i1++) {
+                    u[2*i3-d3-1][2*i2-t2-1][2*i1-t1-1] =
+                        u[2*i3-d3-1][2*i2-t2-1][2*i1-t1-1]
+                        +0.25*(z[i3-1][i2][i1]+z[i3-1][i2-1][i1]
+                               +z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
+                }
+            }
+        }
 #pragma omp for
-	for ( i3 = 1; i3 <= mm3-1; i3++) {
+        for ( i3 = 1; i3 <= mm3-1; i3++) {
             for ( i2 = d2; i2 <= mm2-1; i2++) {
-		for ( i1 = d1; i1 <= mm1-1; i1++) {
-		    u[2*i3-t3-1][2*i2-d2-1][2*i1-d1-1] =
-			u[2*i3-t3-1][2*i2-d2-1][2*i1-d1-1]
-			+0.5*(z[i3][i2-1][i1-1]+z[i3-1][i2-1][i1-1]);
-		}
-		for ( i1 = 1; i1 <= mm1-1; i1++) {
-		    u[2*i3-t3-1][2*i2-d2-1][2*i1-t1-1] =
-			u[2*i3-t3-1][2*i2-d2-1][2*i1-t1-1]
-			+0.25*(z[i3][i2-1][i1]+z[i3][i2-1][i1-1]
-			       +z[i3-1][i2-1][i1]+z[i3-1][i2-1][i1-1]);
-		}
-	    }
-	    for ( i2 = 1; i2 <= mm2-1; i2++) {
-		for ( i1 = d1; i1 <= mm1-1; i1++) {
-		    u[2*i3-t3-1][2*i2-t2-1][2*i1-d1-1] =
-			u[2*i3-t3-1][2*i2-t2-1][2*i1-d1-1]
-			+0.25*(z[i3][i2][i1-1]+z[i3][i2-1][i1-1]
-			       +z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
-		}
-		for ( i1 = 1; i1 <= mm1-1; i1++) {
-		    u[2*i3-t3-1][2*i2-t2-1][2*i1-t1-1] =
-			u[2*i3-t3-1][2*i2-t2-1][2*i1-t1-1]
-			+0.125*(z[i3][i2][i1]+z[i3][i2-1][i1]
-				+z[i3][i2][i1-1]+z[i3][i2-1][i1-1]
-				+z[i3-1][i2][i1]+z[i3-1][i2-1][i1]
-				+z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
-		}
-	    }
-	}
+                for ( i1 = d1; i1 <= mm1-1; i1++) {
+                    u[2*i3-t3-1][2*i2-d2-1][2*i1-d1-1] =
+                        u[2*i3-t3-1][2*i2-d2-1][2*i1-d1-1]
+                        +0.5*(z[i3][i2-1][i1-1]+z[i3-1][i2-1][i1-1]);
+                }
+                for ( i1 = 1; i1 <= mm1-1; i1++) {
+                    u[2*i3-t3-1][2*i2-d2-1][2*i1-t1-1] =
+                        u[2*i3-t3-1][2*i2-d2-1][2*i1-t1-1]
+                        +0.25*(z[i3][i2-1][i1]+z[i3][i2-1][i1-1]
+                               +z[i3-1][i2-1][i1]+z[i3-1][i2-1][i1-1]);
+                }
+            }
+            for ( i2 = 1; i2 <= mm2-1; i2++) {
+                for ( i1 = d1; i1 <= mm1-1; i1++) {
+                    u[2*i3-t3-1][2*i2-t2-1][2*i1-d1-1] =
+                        u[2*i3-t3-1][2*i2-t2-1][2*i1-d1-1]
+                        +0.25*(z[i3][i2][i1-1]+z[i3][i2-1][i1-1]
+                               +z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
+                }
+                for ( i1 = 1; i1 <= mm1-1; i1++) {
+                    u[2*i3-t3-1][2*i2-t2-1][2*i1-t1-1] =
+                        u[2*i3-t3-1][2*i2-t2-1][2*i1-t1-1]
+                        +0.125*(z[i3][i2][i1]+z[i3][i2-1][i1]
+                                +z[i3][i2][i1-1]+z[i3][i2-1][i1-1]
+                                +z[i3-1][i2][i1]+z[i3-1][i2-1][i1]
+                                +z[i3-1][i2][i1-1]+z[i3-1][i2-1][i1-1]);
+                }
+            }
+        }
     }
 #pragma omp single
   {
     if (debug_vec[0] >= 1 ) {
-	rep_nrm(z,mm1,mm2,mm3,"z: inter",k-1);
-	rep_nrm(u,n1,n2,n3,"u: inter",k);
+        rep_nrm(z,mm1,mm2,mm3,"z: inter",k-1);
+        rep_nrm(u,n1,n2,n3,"u: inter",k);
     }
 
     if ( debug_vec[5] >= k ) {
-	showall(z,mm1,mm2,mm3);
-	showall(u,n1,n2,n3);
+        showall(z,mm1,mm2,mm3);
+        showall(u,n1,n2,n3);
     }
   } /* pragma omp single */
 }
@@ -819,7 +819,7 @@ c      parameter( m=535 )
 c-------------------------------------------------------------------*/
 
 static void norm2u3(double ***r, int n1, int n2, int n3,
-		    double *rnm2, double *rnmu, int nx, int ny, int nz) {
+                    double *rnm2, double *rnmu, int nx, int ny, int nz) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -841,26 +841,26 @@ c-------------------------------------------------------------------*/
 
 #pragma omp for    
     for (i3 = 1; i3 < n3-1; i3++) {
-	for (i2 = 1; i2 < n2-1; i2++) {
+        for (i2 = 1; i2 < n2-1; i2++) {
             for (i1 = 1; i1 < n1-1; i1++) {
-		p_s = p_s + r[i3][i2][i1] * r[i3][i2][i1];
-		tmp = fabs(r[i3][i2][i1]);
-		if (tmp > p_a) p_a = tmp;
-	    }
-	}
+                p_s = p_s + r[i3][i2][i1] * r[i3][i2][i1];
+                tmp = fabs(r[i3][i2][i1]);
+                if (tmp > p_a) p_a = tmp;
+            }
+        }
     }
     
 #pragma omp critical
     {
-	s += p_s;
-	if (p_a > *rnmu) *rnmu = p_a;
+        s += p_s;
+        if (p_a > *rnmu) *rnmu = p_a;
     }
 
 #pragma omp barrier    
 #pragma omp single
     {
-	*rnm2 = sqrt(s/(double)n);
-	s = 0.0;
+        *rnm2 = sqrt(s/(double)n);
+        s = 0.0;
     }
 }
 
@@ -868,7 +868,7 @@ c-------------------------------------------------------------------*/
 c-------------------------------------------------------------------*/
 
 static void rep_nrm(double ***u, int n1, int n2, int n3,
-		    char *title, int kk) {
+                    char *title, int kk) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -882,7 +882,7 @@ c-------------------------------------------------------------------*/
 
     norm2u3(u,n1,n2,n3,&rnm2,&rnmu,nx[kk],ny[kk],nz[kk]);
     printf(" Level%2d in %8s: norms =%21.14e%21.14e\n",
-	   kk, title, rnm2, rnmu);
+           kk, title, rnm2, rnmu);
 }
 
 /*--------------------------------------------------------------------
@@ -902,28 +902,28 @@ c-------------------------------------------------------------------*/
     /* axis = 1 */
 #pragma omp for
     for ( i3 = 1; i3 < n3-1; i3++) {
-	for ( i2 = 1; i2 < n2-1; i2++) {
-	    u[i3][i2][n1-1] = u[i3][i2][1];
-	    u[i3][i2][0] = u[i3][i2][n1-2];
-	}
+        for ( i2 = 1; i2 < n2-1; i2++) {
+            u[i3][i2][n1-1] = u[i3][i2][1];
+            u[i3][i2][0] = u[i3][i2][n1-2];
+        }
     }
 
     /* axis = 2 */
 #pragma omp for
     for ( i3 = 1; i3 < n3-1; i3++) {
-	for ( i1 = 0; i1 < n1; i1++) {
-	    u[i3][n2-1][i1] = u[i3][1][i1];
-	    u[i3][0][i1] = u[i3][n2-2][i1];
-	}
+        for ( i1 = 0; i1 < n1; i1++) {
+            u[i3][n2-1][i1] = u[i3][1][i1];
+            u[i3][0][i1] = u[i3][n2-2][i1];
+        }
     }
 
     /* axis = 3 */
 #pragma omp for
     for ( i2 = 0; i2 < n2; i2++) {
-	for ( i1 = 0; i1 < n1; i1++) {
-	    u[n3-1][i2][i1] = u[1][i2][i1];
-	    u[0][i2][i1] = u[n3-2][i2][i1];
-	}
+        for ( i1 = 0; i1 < n1; i1++) {
+            u[n3-1][i2][i1] = u[1][i2][i1];
+            u[0][i2][i1] = u[n3-2][i2][i1];
+        }
     }
 }
 
@@ -941,9 +941,9 @@ c     loads -1 at a different ten random points,
 c     and zero elsewhere.
 c-------------------------------------------------------------------*/
 
-#define MM	10
-#define	A	pow(5.0,13)
-#define	X	314159265.e0    
+#define MM      10
+#define A       pow(5.0,13)
+#define X       314159265.e0    
     
     int i0, m0, m1;
     int i1, i2, i3, d1, e1, e2, e3;
@@ -974,13 +974,13 @@ c-------------------------------------------------------------------*/
     rdummy = randlc( &x0, ai );
     
     for (i3 = 1; i3 < e3; i3++) {
-	x1 = x0;
-	for (i2 = 1; i2 < e2; i2++) {
+        x1 = x0;
+        for (i2 = 1; i2 < e2; i2++) {
             xx = x1;
             vranlc( d1, &xx, A, &(z[i3][i2][0]));
             rdummy = randlc( &x1, a1 );
-	}
-	rdummy = randlc( &x0, a2 );
+        }
+        rdummy = randlc( &x0, a2 );
     }
 
 /*--------------------------------------------------------------------
@@ -992,34 +992,34 @@ c-------------------------------------------------------------------*/
 c     each processor looks for twenty candidates
 c-------------------------------------------------------------------*/
     for (i = 0; i < MM; i++) {
-	ten[i][1] = 0.0;
-	j1[i][1] = 0;
-	j2[i][1] = 0;
-	j3[i][1] = 0;
-	ten[i][0] = 1.0;
-	j1[i][0] = 0;
-	j2[i][0] = 0;
-	j3[i][0] = 0;
+        ten[i][1] = 0.0;
+        j1[i][1] = 0;
+        j2[i][1] = 0;
+        j3[i][1] = 0;
+        ten[i][0] = 1.0;
+        j1[i][0] = 0;
+        j2[i][0] = 0;
+        j3[i][0] = 0;
     }
     for (i3 = 1; i3 < n3-1; i3++) {
-	for (i2 = 1; i2 < n2-1; i2++) {
+        for (i2 = 1; i2 < n2-1; i2++) {
             for (i1 = 1; i1 < n1-1; i1++) {
-		if ( z[i3][i2][i1] > ten[0][1] ) {
-		    ten[0][1] = z[i3][i2][i1];
-		    j1[0][1] = i1;
-		    j2[0][1] = i2;
-		    j3[0][1] = i3;
-		    bubble( ten, j1, j2, j3, MM, 1 );
-		}
-		if ( z[i3][i2][i1] < ten[0][0] ) {
-		    ten[0][0] = z[i3][i2][i1];
-		    j1[0][0] = i1;
-		    j2[0][0] = i2;
-		    j3[0][0] = i3;
-		    bubble( ten, j1, j2, j3, MM, 0 );
-		}
-	    }
-	}
+                if ( z[i3][i2][i1] > ten[0][1] ) {
+                    ten[0][1] = z[i3][i2][i1];
+                    j1[0][1] = i1;
+                    j2[0][1] = i2;
+                    j3[0][1] = i3;
+                    bubble( ten, j1, j2, j3, MM, 1 );
+                }
+                if ( z[i3][i2][i1] < ten[0][0] ) {
+                    ten[0][0] = z[i3][i2][i1];
+                    j1[0][0] = i1;
+                    j2[0][0] = i2;
+                    j3[0][0] = i3;
+                    bubble( ten, j1, j2, j3, MM, 0 );
+                }
+            }
+        }
     }
 
 /*--------------------------------------------------------------------
@@ -1028,79 +1028,79 @@ c-------------------------------------------------------------------*/
     i1 = MM - 1;
     i0 = MM - 1;
     for (i = MM - 1 ; i >= 0; i--) {
-	best = z[j3[i1][1]][j2[i1][1]][j1[i1][1]];
-	if (best == z[j3[i1][1]][j2[i1][1]][j1[i1][1]]) {
+        best = z[j3[i1][1]][j2[i1][1]][j1[i1][1]];
+        if (best == z[j3[i1][1]][j2[i1][1]][j1[i1][1]]) {
             jg[0][i][1] = 0;
             jg[1][i][1] = is1 - 1 + j1[i1][1];
             jg[2][i][1] = is2 - 1 + j2[i1][1];
             jg[3][i][1] = is3 - 1 + j3[i1][1];
             i1 = i1-1;
-	} else {
+        } else {
             jg[0][i][1] = 0;
             jg[1][i][1] = 0;
             jg[2][i][1] = 0;
             jg[3][i][1] = 0;
-	}
-	ten[i][1] = best;
-	best = z[j3[i0][0]][j2[i0][0]][j1[i0][0]];
-	if (best == z[j3[i0][0]][j2[i0][0]][j1[i0][0]]) {
+        }
+        ten[i][1] = best;
+        best = z[j3[i0][0]][j2[i0][0]][j1[i0][0]];
+        if (best == z[j3[i0][0]][j2[i0][0]][j1[i0][0]]) {
             jg[0][i][0] = 0;
             jg[1][i][0] = is1 - 1 + j1[i0][0];
             jg[2][i][0] = is2 - 1 + j2[i0][0];
             jg[3][i][0] = is3 - 1 + j3[i0][0];
             i0 = i0-1;
-	} else {
+        } else {
             jg[0][i][0] = 0;
             jg[1][i][0] = 0;
             jg[2][i][0] = 0;
             jg[3][i][0] = 0;
-	}
-	ten[i][0] = best;
+        }
+        ten[i][0] = best;
     }
     m1 = i1+1;
     m0 = i0+1;
 
 /*    printf(" negative charges at");
     for (i = 0; i < MM; i++) {
-	if (i%5 == 0) printf("\n");
-	printf(" (%3d,%3d,%3d)", jg[1][i][0], jg[2][i][0], jg[3][i][0]);
+        if (i%5 == 0) printf("\n");
+        printf(" (%3d,%3d,%3d)", jg[1][i][0], jg[2][i][0], jg[3][i][0]);
     }
     printf("\n positive charges at");
     for (i = 0; i < MM; i++) {
-	if (i%5 == 0) printf("\n");
-	printf(" (%3d,%3d,%3d)", jg[1][i][1], jg[2][i][1], jg[3][i][1]);
+        if (i%5 == 0) printf("\n");
+        printf(" (%3d,%3d,%3d)", jg[1][i][1], jg[2][i][1], jg[3][i][1]);
     }
     printf("\n small random numbers were\n");
     for (i = MM-1; i >= 0; i--) {
-	printf(" %15.8e", ten[i][0]);
+        printf(" %15.8e", ten[i][0]);
     }
     printf("\n and they were found on processor number\n");
     for (i = MM-1; i >= 0; i--) {
-	printf(" %4d", jg[0][i][0]);
+        printf(" %4d", jg[0][i][0]);
     }
     printf("\n large random numbers were\n");
     for (i = MM-1; i >= 0; i--) {
-	printf(" %15.8e", ten[i][1]);
+        printf(" %15.8e", ten[i][1]);
     }
     printf("\n and they were found on processor number\n");
     for (i = MM-1; i >= 0; i--) {
-	printf(" %4d", jg[0][i][1]);
+        printf(" %4d", jg[0][i][1]);
     }
     printf("\n");*/
 
 #pragma omp parallel for private(i2, i1)    
     for (i3 = 0; i3 < n3; i3++) {
-	for (i2 = 0; i2 < n2; i2++) {
+        for (i2 = 0; i2 < n2; i2++) {
             for (i1 = 0; i1 < n1; i1++) {
-		z[i3][i2][i1] = 0.0;
-	    }
-	}
+                z[i3][i2][i1] = 0.0;
+            }
+        }
     }
     for (i = MM-1; i >= m0; i--) {
-	z[j3[i][0]][j2[i][0]][j1[i][0]] = -1.0;
+        z[j3[i][0]][j2[i][0]][j1[i][0]] = -1.0;
     }
     for (i = MM-1; i >= m1; i--) {
-	z[j3[i][1]][j2[i][1]][j1[i][1]] = 1.0;
+        z[j3[i][1]][j2[i][1]][j1[i][1]] = 1.0;
     }
 #pragma omp parallel    
     comm3(z,n1,n2,n3,k);
@@ -1127,13 +1127,13 @@ c-------------------------------------------------------------------*/
 
     printf("\n");
     for (i3 = 0; i3 < m3; i3++) {
-	for (i1 = 0; i1 < m1; i1++) {
-	    for (i2 = 0; i2 < m2; i2++) {
-		printf("%6.3f", z[i3][i2][i1]);
-	    }
-	    printf("\n");
-	}
-	printf(" - - - - - - - \n");
+        for (i1 = 0; i1 < m1; i1++) {
+            for (i2 = 0; i2 < m2; i2++) {
+                printf("%6.3f", z[i3][i2][i1]);
+            }
+            printf("\n");
+        }
+        printf(" - - - - - - - \n");
     }
     printf("\n");
 }
@@ -1160,9 +1160,9 @@ c-------------------------------------------------------------------*/
     aj = a;
 
     while (nj != 0) {
-	if( (nj%2) == 1 ) rdummy =  randlc( &power, aj );
-	rdummy = randlc( &aj, aj );
-	nj = nj/2;
+        if( (nj%2) == 1 ) rdummy =  randlc( &power, aj );
+        rdummy = randlc( &aj, aj );
+        nj = nj/2;
     }
     
     return (power);
@@ -1172,7 +1172,7 @@ c-------------------------------------------------------------------*/
 c-------------------------------------------------------------------*/
 
 static void bubble( double ten[M][2], int j1[M][2], int j2[M][2],
-		    int j3[M][2], int m, int ind ) {
+                    int j3[M][2], int m, int ind ) {
 
 /*--------------------------------------------------------------------
 c-------------------------------------------------------------------*/
@@ -1185,51 +1185,51 @@ c-------------------------------------------------------------------*/
     int i, j_temp;
 
     if ( ind == 1 ) {
-	for (i = 0; i < m-1; i++) {
+        for (i = 0; i < m-1; i++) {
             if ( ten[i][ind] > ten[i+1][ind] ) {
 
-		temp = ten[i+1][ind];
-		ten[i+1][ind] = ten[i][ind];
-		ten[i][ind] = temp;
+                temp = ten[i+1][ind];
+                ten[i+1][ind] = ten[i][ind];
+                ten[i][ind] = temp;
 
-		j_temp = j1[i+1][ind];
-		j1[i+1][ind] = j1[i][ind];
-		j1[i][ind] = j_temp;
+                j_temp = j1[i+1][ind];
+                j1[i+1][ind] = j1[i][ind];
+                j1[i][ind] = j_temp;
 
-		j_temp = j2[i+1][ind];
-		j2[i+1][ind] = j2[i][ind];
-		j2[i][ind] = j_temp;
+                j_temp = j2[i+1][ind];
+                j2[i+1][ind] = j2[i][ind];
+                j2[i][ind] = j_temp;
 
-		j_temp = j3[i+1][ind];
-		j3[i+1][ind] = j3[i][ind];
-		j3[i][ind] = j_temp;
-	    } else {
-		return;
-	    }
-	}
+                j_temp = j3[i+1][ind];
+                j3[i+1][ind] = j3[i][ind];
+                j3[i][ind] = j_temp;
+            } else {
+                return;
+            }
+        }
     } else {
-	for (i = 0; i < m-1; i++) {
+        for (i = 0; i < m-1; i++) {
             if ( ten[i][ind] < ten[i+1][ind] ) {
 
-		temp = ten[i+1][ind];
-		ten[i+1][ind] = ten[i][ind];
-		ten[i][ind] = temp;
+                temp = ten[i+1][ind];
+                ten[i+1][ind] = ten[i][ind];
+                ten[i][ind] = temp;
 
-		j_temp = j1[i+1][ind];
-		j1[i+1][ind] = j1[i][ind];
-		j1[i][ind] = j_temp;
+                j_temp = j1[i+1][ind];
+                j1[i+1][ind] = j1[i][ind];
+                j1[i][ind] = j_temp;
 
-		j_temp = j2[i+1][ind];
-		j2[i+1][ind] = j2[i][ind];
-		j2[i][ind] = j_temp;
+                j_temp = j2[i+1][ind];
+                j2[i+1][ind] = j2[i][ind];
+                j2[i][ind] = j_temp;
 
-		j_temp = j3[i+1][ind];
-		j3[i+1][ind] = j3[i][ind];
-		j3[i][ind] = j_temp;
-	    } else {
-		return;
-	    }
-	}
+                j_temp = j3[i+1][ind];
+                j3[i+1][ind] = j3[i][ind];
+                j3[i][ind] = j_temp;
+            } else {
+                return;
+            }
+        }
     }
 }
 
@@ -1244,11 +1244,11 @@ c-------------------------------------------------------------------*/
     int i1, i2, i3;
 #pragma omp for    
     for (i3 = 0;i3 < n3; i3++) {
-	for (i2 = 0; i2 < n2; i2++) {
+        for (i2 = 0; i2 < n2; i2++) {
             for (i1 = 0; i1 < n1; i1++) {
-		z[i3][i2][i1] = 0.0;
-	    }
-	}
+                z[i3][i2][i1] = 0.0;
+            }
+        }
     }
 }
 

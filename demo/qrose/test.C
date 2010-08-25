@@ -32,11 +32,11 @@ int main()
     draw(checkWin() + 1);
 
     for (i = 1; i < 10; i += 1) {
-	   draw(i);
-	   enter(player);
-	   check = checkWin();
-	   if (check)
-	      i = 10;
+        draw(i);
+        enter(player);
+        check = checkWin();
+        if (check)
+            i = 10;
     }
 #pragma I am there
     draw(0);
@@ -134,150 +134,150 @@ void enter(int &player)
     }
 
     else if (player == 2) {
-	cout << "Computer turn, enter a number: ";
-	if ((area[1][1] > 0) && (area[2][2] == area[1][1])
-	    && (area[3][3] == 0))
-	    answ = 9;
-	else if ((area[1][2] > 0) && (area[1][2] == area[2][2])
-		 && (area[3][2] == 0))
-	    answ = 8;
-	else if ((area[1][1] > 0) && (area[2][1] == area[1][1])
-		 && (area[3][1] == 0))
-	    answ = 7;
-	else if ((area[1][1] > 0) && (area[1][1] == area[1][2])
-		 && (area[1][3] == 0))
-	    answ = 3;
-	else if ((area[1][2] > 0) && (area[1][2] == area[1][3])
-		 && (area[1][1] == 0))
-	    answ = 1;
-	else if ((area[1][3] > 0) && (area[2][2] == area[1][3])
-		 && (area[3][1] == 0))
-	    answ = 7;
-	else if ((area[2][1] > 0) && (area[2][2] == area[2][1])
-		 && (area[2][3] == 0))
-	    answ = 6;
-	else if ((area[2][2] > 0) && (area[2][2] == area[2][3])
-		 && (area[2][1] == 0))
-	    answ = 4;
-	else if ((area[1][3] > 0) && (area[2][3] == area[1][3])
-		 && (area[3][3] == 0))
-	    answ = 9;
-	else if ((area[2][1] > 0) && (area[2][1] == area[3][1])
-		 && (area[1][1] == 0))
-	    answ = 1;
-	else if ((area[3][1] > 0) && (area[2][2] == area[3][1])
-		 && (area[1][3] == 0))
-	    answ = 3;
-	else if ((area[3][1] > 0) && (area[3][2] == area[3][1])
-		 && (area[3][3] == 0))
-	    answ = 9;
-	else if ((area[3][2] > 0) && (area[2][2] == area[3][2])
-		 && (area[1][2] == 0))
-	    answ = 2;
-	else if ((area[3][3] > 0) && (area[3][3] == area[2][2])
-		 && (area[1][1] == 0))
-	    answ = 1;
-	else if ((area[3][3] > 0) && (area[3][3] == area[3][2])
-		 && (area[3][1] == 0))
-	    answ = 7;
-	else if ((area[3][3] > 0) && (area[2][3] == area[3][3])
-		 && (area[1][3] == 0))
-	    answ = 3;
-	else if ((area[1][2] > 0) && (area[1][2] == area[3][2])
-		 && (area[2][2] == 0))
-	    answ = 5;
-	else if ((area[3][1] > 0) && (area[3][1] == area[1][3])
-		 && (area[2][2] == 0))
-	    answ = 5;
-	else if ((area[1][1] > 0) && (area[3][3] == area[1][1])
-		 && (area[2][2] == 0))
-	    answ = 5;
-	else if ((area[1][1] > 0) && (area[1][1] == area[3][1])
-		 && (area[2][1] == 0))
-	    answ = 4;
-	else if ((area[1][3] > 0) && (area[3][3] == area[1][3])
-		 && (area[2][3] == 0))
-	    answ = 6;
-	else if ((area[2][1] > 0) && (area[2][3] == area[2][1])
-		 && (area[2][2] == 0))
-	    answ = 5;
-	else if ((area[1][2] == 2) && (area[1][1] == 0)
-		 && (area[1][3] == 0))
-	    answ = 1;
-	else if ((area[1][2] == 2) && (area[2][2] == 0)
-		 && (area[3][2] == 0))
-	    answ = 5;
-	else if ((area[1][1] == 2) && (area[1][2] == 0)
-		 && (area[1][3] == 0))
-	    answ = 2;
-	else if ((area[1][1] == 2) && (area[2][1] == 0)
-		 && (area[3][1] == 0))
-	    answ = 4;
-	else if ((area[2][2] == 2) && (area[1][3] == 0)
-		 && (area[3][1] == 0))
-	    answ = 3;
-	else if ((area[2][2] == 2) && (area[1][1] == 0)
-		 && (area[3][3] == 0))
-	    answ = 1;
-	else if ((area[2][2] == 2) && (area[1][2] == 0)
-		 && (area[3][2] == 0))
-	    answ = 2;
-	else if ((area[3][1] == 2) && (area[2][2] == 0)
-		 && (area[1][3] == 0))
-	    answ = 5;
-	else if ((area[3][1] == 2) && (area[3][2] == 0)
-		 && (area[3][3] == 0))
-	    answ = 8;
-	else if ((area[3][1] == 2) && (area[2][1] == 0)
-		 && (area[1][1] == 0))
-	    answ = 4;
-	else if ((area[1][1] == 2) && (area[2][2] == 0)
-		 && (area[3][3] == 0))
-	    answ = 5;
-	else if ((area[3][3] == 2) && (area[2][3] == 0)
-		 && (area[1][3] == 0))
-	    answ = 6;
-	else if ((area[3][3] == 2) && (area[2][2] == 0)
-		 && (area[1][1] == 0))
-	    answ = 5;
-	else if ((area[3][3] == 2) && (area[3][2] == 0)
-		 && (area[3][1] == 0))
-	    answ = 8;
-	else if ((area[3][2] == 2) && (area[2][2] == 0)
-		 && (area[1][2] == 0))
-	    answ = 5;
-	else if ((area[1][3] == 2) && (area[2][2] == 0)
-		 && (area[1][1] == 0))
-	    answ = 5;
-	else if ((area[1][3] == 2) && (area[2][3] == 0)
-		 && (area[3][3] == 0))
-	    answ = 6;
-	else if ((area[1][3] == 2) && (area[1][1] == 0)
-		 && (area[1][2] == 0))
-	    answ = 1;
-	else if ((area[3][2] == 2) && (area[3][1] == 0)
-		 && (area[3][3] == 0))
-	    answ = 9;
-	else if (!area[2][2])
-	    answ = 5;
-	else if (!area[1][1])
-	    answ = 1;
-	else if (!area[1][2])
-	    answ = 2;
-	else if (!area[1][3])
-	    answ = 3;
-	else if (!area[2][1])
-	    answ = 4;
-	else if (!area[2][3])
-	    answ = 6;
-	else if (!area[3][1])
-	    answ = 7;
-	else if (!area[3][2])
-	    answ = 8;
-	else if (!area[3][3])
-	    answ = 9;
+        cout << "Computer turn, enter a number: ";
+        if ((area[1][1] > 0) && (area[2][2] == area[1][1])
+            && (area[3][3] == 0))
+            answ = 9;
+        else if ((area[1][2] > 0) && (area[1][2] == area[2][2])
+                 && (area[3][2] == 0))
+            answ = 8;
+        else if ((area[1][1] > 0) && (area[2][1] == area[1][1])
+                 && (area[3][1] == 0))
+            answ = 7;
+        else if ((area[1][1] > 0) && (area[1][1] == area[1][2])
+                 && (area[1][3] == 0))
+            answ = 3;
+        else if ((area[1][2] > 0) && (area[1][2] == area[1][3])
+                 && (area[1][1] == 0))
+            answ = 1;
+        else if ((area[1][3] > 0) && (area[2][2] == area[1][3])
+                 && (area[3][1] == 0))
+            answ = 7;
+        else if ((area[2][1] > 0) && (area[2][2] == area[2][1])
+                 && (area[2][3] == 0))
+            answ = 6;
+        else if ((area[2][2] > 0) && (area[2][2] == area[2][3])
+                 && (area[2][1] == 0))
+            answ = 4;
+        else if ((area[1][3] > 0) && (area[2][3] == area[1][3])
+                 && (area[3][3] == 0))
+            answ = 9;
+        else if ((area[2][1] > 0) && (area[2][1] == area[3][1])
+                 && (area[1][1] == 0))
+            answ = 1;
+        else if ((area[3][1] > 0) && (area[2][2] == area[3][1])
+                 && (area[1][3] == 0))
+            answ = 3;
+        else if ((area[3][1] > 0) && (area[3][2] == area[3][1])
+                 && (area[3][3] == 0))
+            answ = 9;
+        else if ((area[3][2] > 0) && (area[2][2] == area[3][2])
+                 && (area[1][2] == 0))
+            answ = 2;
+        else if ((area[3][3] > 0) && (area[3][3] == area[2][2])
+                 && (area[1][1] == 0))
+            answ = 1;
+        else if ((area[3][3] > 0) && (area[3][3] == area[3][2])
+                 && (area[3][1] == 0))
+            answ = 7;
+        else if ((area[3][3] > 0) && (area[2][3] == area[3][3])
+                 && (area[1][3] == 0))
+            answ = 3;
+        else if ((area[1][2] > 0) && (area[1][2] == area[3][2])
+                 && (area[2][2] == 0))
+            answ = 5;
+        else if ((area[3][1] > 0) && (area[3][1] == area[1][3])
+                 && (area[2][2] == 0))
+            answ = 5;
+        else if ((area[1][1] > 0) && (area[3][3] == area[1][1])
+                 && (area[2][2] == 0))
+            answ = 5;
+        else if ((area[1][1] > 0) && (area[1][1] == area[3][1])
+                 && (area[2][1] == 0))
+            answ = 4;
+        else if ((area[1][3] > 0) && (area[3][3] == area[1][3])
+                 && (area[2][3] == 0))
+            answ = 6;
+        else if ((area[2][1] > 0) && (area[2][3] == area[2][1])
+                 && (area[2][2] == 0))
+            answ = 5;
+        else if ((area[1][2] == 2) && (area[1][1] == 0)
+                 && (area[1][3] == 0))
+            answ = 1;
+        else if ((area[1][2] == 2) && (area[2][2] == 0)
+                 && (area[3][2] == 0))
+            answ = 5;
+        else if ((area[1][1] == 2) && (area[1][2] == 0)
+                 && (area[1][3] == 0))
+            answ = 2;
+        else if ((area[1][1] == 2) && (area[2][1] == 0)
+                 && (area[3][1] == 0))
+            answ = 4;
+        else if ((area[2][2] == 2) && (area[1][3] == 0)
+                 && (area[3][1] == 0))
+            answ = 3;
+        else if ((area[2][2] == 2) && (area[1][1] == 0)
+                 && (area[3][3] == 0))
+            answ = 1;
+        else if ((area[2][2] == 2) && (area[1][2] == 0)
+                 && (area[3][2] == 0))
+            answ = 2;
+        else if ((area[3][1] == 2) && (area[2][2] == 0)
+                 && (area[1][3] == 0))
+            answ = 5;
+        else if ((area[3][1] == 2) && (area[3][2] == 0)
+                 && (area[3][3] == 0))
+            answ = 8;
+        else if ((area[3][1] == 2) && (area[2][1] == 0)
+                 && (area[1][1] == 0))
+            answ = 4;
+        else if ((area[1][1] == 2) && (area[2][2] == 0)
+                 && (area[3][3] == 0))
+            answ = 5;
+        else if ((area[3][3] == 2) && (area[2][3] == 0)
+                 && (area[1][3] == 0))
+            answ = 6;
+        else if ((area[3][3] == 2) && (area[2][2] == 0)
+                 && (area[1][1] == 0))
+            answ = 5;
+        else if ((area[3][3] == 2) && (area[3][2] == 0)
+                 && (area[3][1] == 0))
+            answ = 8;
+        else if ((area[3][2] == 2) && (area[2][2] == 0)
+                 && (area[1][2] == 0))
+            answ = 5;
+        else if ((area[1][3] == 2) && (area[2][2] == 0)
+                 && (area[1][1] == 0))
+            answ = 5;
+        else if ((area[1][3] == 2) && (area[2][3] == 0)
+                 && (area[3][3] == 0))
+            answ = 6;
+        else if ((area[1][3] == 2) && (area[1][1] == 0)
+                 && (area[1][2] == 0))
+            answ = 1;
+        else if ((area[3][2] == 2) && (area[3][1] == 0)
+                 && (area[3][3] == 0))
+            answ = 9;
+        else if (!area[2][2])
+            answ = 5;
+        else if (!area[1][1])
+            answ = 1;
+        else if (!area[1][2])
+            answ = 2;
+        else if (!area[1][3])
+            answ = 3;
+        else if (!area[2][1])
+            answ = 4;
+        else if (!area[2][3])
+            answ = 6;
+        else if (!area[3][1])
+            answ = 7;
+        else if (!area[3][2])
+            answ = 8;
+        else if (!area[3][3])
+            answ = 9;
 
-	cout << answ;
+        cout << answ;
     }
 
     if ((answ == 1) && (area[1][1] == 0))

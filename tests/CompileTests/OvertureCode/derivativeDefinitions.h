@@ -56,13 +56,13 @@ public:
 // Macro to define a typical function call
 #define FUNCTION(type) \
 COLLECTION_FUNCTION type(\
-			 const Index & C1 = nullIndex,      \
+                         const Index & C1 = nullIndex,      \
 			 const Index & C2 = nullIndex,      \
 			 const Index & C3 = nullIndex,      \
 			 const Index & C4 = nullIndex,      \
 			 const Index & C5 = nullIndex ) const; \
 COLLECTION_FUNCTION type(\
-			 const GridFunctionParameters & gfType, \
+                         const GridFunctionParameters & gfType, \
                          const Index & C1 = nullIndex,      \
 			 const Index & C2 = nullIndex,      \
 			 const Index & C3 = nullIndex,      \
@@ -72,7 +72,7 @@ COLLECTION_FUNCTION type(\
 
 #define FUNCTION_COEFFICIENTS(type) \
   COLLECTION_FUNCTION type(const Index & C0 = nullIndex,      \
-			   const Index & C1 = nullIndex,      \
+                           const Index & C1 = nullIndex,      \
 			   const Index & C2 = nullIndex,      \
 			   const Index & C3 = nullIndex ) const; \
   COLLECTION_FUNCTION type(const GridFunctionParameters & gfType, \
@@ -161,7 +161,7 @@ COLLECTION_FUNCTION type(\
 
   //compute (u.grad)w (convective derivative of passive variable(s))
   COLLECTION_FUNCTION convectiveDerivative(const COLLECTION_FUNCTION &w,
-					   const Index & C1 = nullIndex,
+                                           const Index & C1 = nullIndex,
 					   const Index & C2 = nullIndex,
 					   const Index & C3 = nullIndex
 					   ) const;   
@@ -175,14 +175,14 @@ COLLECTION_FUNCTION type(\
 
 #define SCALAR_FUNCTION(type) \
 COLLECTION_FUNCTION type(\
-		         const COLLECTION_FUNCTION & s,    \
+                         const COLLECTION_FUNCTION & s,    \
 			 const Index & C1 = nullIndex,      \
 			 const Index & C2 = nullIndex,      \
 			 const Index & C3 = nullIndex,      \
 			 const Index & C4 = nullIndex ) const; \
 COLLECTION_FUNCTION type(\
-			 const GridFunctionParameters & gfType, \
-		          const COLLECTION_FUNCTION & s,    \
+                         const GridFunctionParameters & gfType, \
+                         const COLLECTION_FUNCTION & s,         \
                          const Index & C1 = nullIndex,      \
 			 const Index & C2 = nullIndex,      \
 			 const Index & C3 = nullIndex,      \
@@ -195,7 +195,7 @@ COLLECTION_FUNCTION type(\
 			   const Index & C2 = nullIndex,      \
 			   const Index & C3 = nullIndex ) const; \
   COLLECTION_FUNCTION type(const GridFunctionParameters & gfType, \
-		           const COLLECTION_FUNCTION & s,    \
+                           const COLLECTION_FUNCTION & s,    \
                            const Index & C0 = nullIndex,      \
 			   const Index & C1 = nullIndex,      \
 			   const Index & C2 = nullIndex,      \
@@ -220,7 +220,7 @@ COLLECTION_FUNCTION type(\
 #undef SCALAR_FUNCTION_COEFFICIENTS
 
 COLLECTION_FUNCTION derivativeScalarDerivative(
-		         const COLLECTION_FUNCTION & s,    
+                         const COLLECTION_FUNCTION & s,    
                          const int & direction1, 
                          const int & direction2, 
 			 const Index & C1 = nullIndex,      
@@ -228,7 +228,7 @@ COLLECTION_FUNCTION derivativeScalarDerivative(
 			 const Index & C3 = nullIndex,      
 			 const Index & C4 = nullIndex ) const; 
 COLLECTION_FUNCTION derivativeScalarDerivative(
-			 const GridFunctionParameters & gfType, 
+                         const GridFunctionParameters & gfType, 
 		         const COLLECTION_FUNCTION & s,    
                          const int & direction1, 
                          const int & direction2, 
@@ -246,7 +246,7 @@ COLLECTION_FUNCTION derivativeScalarDerivativeCoefficients(const COLLECTION_FUNC
 			   const Index & C3 = nullIndex ) const; 
 
 COLLECTION_FUNCTION derivativeScalarDerivativeCoefficients(const GridFunctionParameters & gfType, 
-		           const COLLECTION_FUNCTION & s,    
+                           const COLLECTION_FUNCTION & s,    
                            const int & direction1, 
                            const int & direction2, 
                            const Index & C0 = nullIndex,      
@@ -260,14 +260,14 @@ COLLECTION_FUNCTION derivativeScalarDerivativeCoefficients(const GridFunctionPar
 
   //returns face-centered gradients
   COLLECTION_FUNCTION FCgrad (
-				 const int c0 = 0,
+                                 const int c0 = 0,
 				 const int c1 = 0,
 				 const int c2 = 0,
 				 const int c3 = 0,
 				 const int c4 = 0
 				 ) const;
   COLLECTION_FUNCTION FCgrad (const GridFunctionParameters & gfType,
-				 const int c0 = 0,
+                                 const int c0 = 0,
 				 const int c1 = 0,
 				 const int c2 = 0,
 				 const int c3 = 0,
@@ -281,7 +281,7 @@ COLLECTION_FUNCTION derivativeScalarDerivativeCoefficients(const GridFunctionPar
   // ********************************************************************
 
   void applyBoundaryConditions(
-				       const real & time = 0.,
+                                       const real & time = 0.,
 				       const int & grid =forAll);
   // fill in coefficients for the boundary conditions
   void assignBoundaryConditionCoefficients(

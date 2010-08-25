@@ -47,7 +47,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 
   // compare src statements and  bin instructions
   int match_statements(int array_src_length,
-		       int array_bin_length,
+                       int array_bin_length,
 		       SgNode* src_statements[],
 		       SgAsmNode* bin_statements[],
 		       std::string *output);
@@ -76,7 +76,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 		    int &nodes_matched);
 
   bool isVariableDeclaration(SgNode* srcNode,
-			     SgAsmNode* binNode,
+                             SgAsmNode* binNode,
 			     std::string *output,
 			     int &nodes_matched,
 			     int array_bin_length,
@@ -104,8 +104,8 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 
   std::string checkVariable(SgAsmValueExpression* rhs);
   void storeVariable(std::string val, std::string name,
-		     SgAsmValueExpression* binval);
-		
+                     SgAsmValueExpression* binval);
+
   std::string getVariableName(std::string val);
   SgAsmValueExpression* getVariableType(std::string val);
 
@@ -148,7 +148,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
   void pushOnStack(SgExpression* expr);
 
   void resolve_bin_vardecl_or_assignment(bool &isVarDecl0, 
-					 bool &isVarDecl1,
+                                         bool &isVarDecl1,
 					 bool &isAssign0,
 					 bool &isAssign1,
 					 SgAsmx86Instruction* mov

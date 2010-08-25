@@ -84,16 +84,16 @@ class Ogmg
   void printStatistics(FILE *file=stdout) const;
 
   int smoothTest(realCompositeGridFunction & u0,
-		 realCompositeGridFunction & f0 );
+                 realCompositeGridFunction & f0 );
 
   int coarseToFineTest(realCompositeGridFunction & u,
                        realCompositeGridFunction & f);
 
   int fineToCoarseTest(realCompositeGridFunction & u,
-		       realCompositeGridFunction & f);
+                       realCompositeGridFunction & f);
   
   int bcTest(realCompositeGridFunction & u,
-	     realCompositeGridFunction & f );
+             realCompositeGridFunction & f );
   
   realCompositeGridFunction & getDefect() { return defectMG;} 
 
@@ -118,7 +118,7 @@ class Ogmg
   void coarseToFine(const int & level, const int & grid);
 
   void getDefect(const int & level, 
-		 const int & grid, 
+                 const int & grid, 
 		 realArray & f,      // could be const, except reshape needed
 		 realArray & u,      // could be const, except reshape needed
 		 const Index & I1,

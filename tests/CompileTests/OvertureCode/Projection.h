@@ -195,7 +195,7 @@ class Projection
 
 
   realCompositeGridFunction project (                                          // DEBUGGING VERSION
-				     realCompositeGridFunction & uStar,
+                                     realCompositeGridFunction & uStar,
 				     PlotStuff * ps,
 				     PlotStuffParameters * psp,
 				     bool & PLOT_ON,
@@ -205,7 +205,7 @@ class Projection
       
 
   realCompositeGridFunction project (                                          // elliptic solve and return the projected velocity
-				     realCompositeGridFunction & uStar,
+                                     realCompositeGridFunction & uStar,
 				     const int & level = 0,
 				     const real & velocityTime = undefinedRealValue,
 				     const real & pressureTime = undefinedRealValue
@@ -215,11 +215,11 @@ class Projection
   void setDensity (realCompositeGridFunction & rho0); //set new density for variable density projection
 
   void associateCMPGRDBoundaryCondition (            // associate a CMPGRD boundaryCondition with a Projection boundaryConditionType
-					 const int bcCMPGRD,
+                                         const int bcCMPGRD,
 					 const BoundaryConditionType pressureBC
 					 );
   void associateOvertureBoundaryCondition (            // associate a CMPGRD boundaryCondition with a Projection boundaryConditionType
-					 const int bcCMPGRD,
+                                         const int bcCMPGRD,
 					 const BoundaryConditionType pressureBC
 					 );
   
@@ -375,15 +375,15 @@ class Projection
   void applyLaplacianBoundaryConditions ();  //apply the boundary conditions for the elliptic matrix
   
   void applyRightHandSideBoundaryConditions (                                       // apply boundary conditions to div.uStar: OBSOLETE
-					     realCompositeGridFunction & ellipticRHS,
+                                             realCompositeGridFunction & ellipticRHS,
 					     const realCompositeGridFunction & uStar,
 					     const int & level = 0,
 					     const real & velocityTime = undefinedRealValue,
 					     const real & pressureTime = undefinedRealValue
 					     );
-  			
+                        
   void applyUnprojectedVelocityBoundaryConditions (                       // apply BCs to velocity before projection
-						   realCompositeGridFunction &uStar
+                                                   realCompositeGridFunction &uStar
 						   );
   
   void applyVelocityBoundaryConditions (                                   //apply BCS to velocity after projection
@@ -401,7 +401,7 @@ class Projection
   ProjectionType getProjectionType (const realCompositeGridFunction & uStar);  // figure out projection type from input velocity type
 
   void setPhi (realCompositeGridFunction & uStar,           // this function does the actual elliptic setup and solve
-	       PlotStuff * ps,
+               PlotStuff * ps,
 	       PlotStuffParameters * psp,
 	       bool & PLOT_ON,
 	       const int & level,

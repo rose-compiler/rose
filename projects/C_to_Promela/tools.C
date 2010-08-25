@@ -135,11 +135,11 @@ bool toConvert(SgNode*node)
 		cout <<"toConvert("<<node->unparseToString()<<"): attributeExists= FALSE"<<endl;
 	}*/
 /*	if (retVal)
-	 cout <<"toConvert=true"<<endl;
+		cout <<"toConvert=true"<<endl;
 	else
-	 cout <<"toConvert=false"<<endl;*/
-	 return retVal;
-	
+	 	cout <<"toConvert=false"<<endl;*/
+	return retVal;
+
 }
 
 void flattenScopes(SgFunctionDefinition * fDef)
@@ -255,14 +255,14 @@ void replace(SgNode * parent, SgNode * current,SgNode *newNode)
 void refactorSgVarRefExpInCBlocks(SgFunctionDefinition * fDef,SgVariableDeclaration* vDec)
 {
 	SgName name=string("P")+(fDef)->get_declaration()->get_name().getString();
-  list<SgNode*> stmtList=NodeQuery::querySubTree(fDef,V_SgStatement);	
-  for (list<SgNode*>::iterator stmtIt=stmtList.begin();stmtIt!=stmtList.end();stmtIt++)
+        list<SgNode*> stmtList=NodeQuery::querySubTree(fDef,V_SgStatement);	
+        for (list<SgNode*>::iterator stmtIt=stmtList.begin();stmtIt!=stmtList.end();stmtIt++)
 	{
-	if (isSgWhileStmt(*stmtIt) || isSgIfStmt(*stmtIt) || isSgFunctionDefinition(*stmtIt)||isSgBasicBlock(*stmtIt))
-	      {
-				        cout <<"while or if, don't process"<<endl;
-								        continue;
-												      }
+		if (isSgWhileStmt(*stmtIt) || isSgIfStmt(*stmtIt) || isSgFunctionDefinition(*stmtIt)||isSgBasicBlock(*stmtIt))
+	        {
+			cout <<"while or if, don't process"<<endl;
+			continue;
+                }
 		// this stmt remains in c
 		if (!toConvert(*stmtIt))
 		{

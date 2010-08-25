@@ -32,7 +32,7 @@ SgAsmType* getRegisterType(X86PositionInRegister regSize) {
  * create a BinaryNode
  ****************************************************/
 SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt, 
-							     list<SgAsmExpression*> *children, 
+                                                             list<SgAsmExpression*> *children, 
 							     const string& typeOfOperandIn) {
   string typeOfOperand = typeOfOperandIn;
   SgAsmExpression* binNode=NULL;

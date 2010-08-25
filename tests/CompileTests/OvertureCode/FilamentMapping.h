@@ -136,12 +136,12 @@ class FilamentMapping : public Mapping
   //....
 
   void setOffset(                  real xOffset=0.,
-	                           real yOffset=0.);
+                                   real yOffset=0.);
   
   void setLength(                  real length00);
 
   void setTravelingWaveParameters( real length00=1.,    // length
-				   real aParam00=0.1,   // amplitude param A
+                                   real aParam00=0.1,   // amplitude param A
 				   real bParam00=0.05,  // - "" -  B
 				   real omega00=1.2,    // time freq.
 				   real knum00=1.2      // space freq
@@ -166,10 +166,10 @@ class FilamentMapping : public Mapping
   void setFilamentType(  FilamentType filamentType00);
   void setFilamentBoundaryType(FilamentBoundaryType filamBdryType00);
   void setHyperbolicMappingParameters( real distanceToMarch00         = 0.3,
-				       real dissipation00             = 0.2);
+                                       real dissipation00             = 0.2);
 
   void setHyperbolicGridDimensions(    int gridDimension1_,    int gridDimension2_,
-				       int gridGenDimension1_, int gridGenDimension2_);
+                                       int gridGenDimension1_, int gridGenDimension2_);
 
   void setHyperbolicGridInfo();
   void getHyperbolicGridInfo();
@@ -298,7 +298,7 @@ class FilamentMapping : public Mapping
   //--------------INTERFACE TO THE FILAMENT
   //
   void constructor(  int nFilamentPoints00, 
-		     int nEndPoints00,      
+                     int nEndPoints00,      
 		     real thickness00,     
 		     real endRadius00 );
 
@@ -331,7 +331,7 @@ class FilamentMapping : public Mapping
   //--RIGID BODY DYNAMICS
 
   void computeTranslatingMotionOffset( real time00,
-				       real xOffset00, real yOffset00,
+                                       real xOffset00, real yOffset00,
 				       real &xNew,     real &yNew);
 
   // ..not available yet
@@ -353,10 +353,10 @@ class FilamentMapping : public Mapping
   
 
   void computeTravelingWaveFilament( real t, realArray & r, 
-				     realArray & x, realArray & xr );
+                                     realArray & x, realArray & xr );
 
   void computeTravelingWaveFilament( real t, realArray & r, 
-				     realArray & x, realArray & xr,
+                                     realArray & x, realArray & xr,
 				     real xOffset00, real yOffset00);
   
   void computeTimeDerivativesForTravelingWaveFilament
@@ -366,7 +366,7 @@ class FilamentMapping : public Mapping
 	      realArray & xrt00, realArray &xrtt00);
 
   void computeCircularFilament(  real tcomp, realArray & r00, 
-				 realArray & x00, realArray &xr00,
+                                 realArray & x00, realArray &xr00,
 				 real xOffset00 =0., real yOffset00=0. );
 
   void printHyperbolicDimensions();

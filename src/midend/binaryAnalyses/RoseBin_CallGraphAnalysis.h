@@ -15,7 +15,7 @@
 
 class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
   void findClusterOfNode(SgGraphNode* next_n,
-			 int& currentCluster,
+                         int& currentCluster,
 			 std::map<SgAsmFunctionDeclaration*,int>& visited);
 
  public:
@@ -35,7 +35,7 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
 
     std::map <std::string, SgAsmFunctionDeclaration* >::iterator it;
     for (it = bin_funcs.begin();
-	 it!= bin_funcs.end(); it++) {
+         it!= bin_funcs.end(); it++) {
       delete it->second;
     }
   }

@@ -21,7 +21,7 @@ class Triangle
   void setVertices( const real x1_[3], const real x2_[3], const real x3_[3] );
   void setVertices( const RealArray & x1, const RealArray & x2, const RealArray & x3 );
   void setVertices(const realArray & grid, 
-		   const int & i1, 
+                   const int & i1, 
 		   const int & i2, 
 		   const int & i3, 
 		   const int & choice=0,

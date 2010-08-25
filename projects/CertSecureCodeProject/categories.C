@@ -23,104 +23,104 @@
 #include "categories.h"
 
 const SgBinaryOp *isAnyBinArithOp(const SgNode *node) {
-	if (isSgAddOp(node)
-	  ||isSgDivideOp(node)
-	  ||isSgModOp(node)
-	  ||isSgSubtractOp(node)
-	  ||isSgMultiplyOp(node)
-	  ||isSgExponentiationOp(node)
-	  ||isSgIntegerDivideOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgAddOp(node)
+          ||isSgDivideOp(node)
+          ||isSgModOp(node)
+          ||isSgSubtractOp(node)
+          ||isSgMultiplyOp(node)
+          ||isSgExponentiationOp(node)
+          ||isSgIntegerDivideOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyBinArithAssignOp(const SgNode *node) {
-	if (isSgPlusAssignOp(node)
-	  ||isSgDivAssignOp(node)
-	  ||isSgModAssignOp(node)
-	  ||isSgMinusAssignOp(node)
-	  ||isSgMultAssignOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgPlusAssignOp(node)
+          ||isSgDivAssignOp(node)
+          ||isSgModAssignOp(node)
+          ||isSgMinusAssignOp(node)
+          ||isSgMultAssignOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyBinBitOp(const SgNode *node) {
-	if (isSgBitAndOp(node)
-	  ||isSgBitOrOp(node)
-	  ||isSgBitXorOp(node)
-	  ||isSgLshiftOp(node)
-	  ||isSgRshiftOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgBitAndOp(node)
+          ||isSgBitOrOp(node)
+          ||isSgBitXorOp(node)
+          ||isSgLshiftOp(node)
+          ||isSgRshiftOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyBinBitAssignOp(const SgNode *node) {
-	if (isSgAndAssignOp(node)
-	  ||isSgIorAssignOp(node)
-	  ||isSgXorAssignOp(node)
-	  ||isSgLshiftAssignOp(node)
-	  ||isSgRshiftAssignOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgAndAssignOp(node)
+          ||isSgIorAssignOp(node)
+          ||isSgXorAssignOp(node)
+          ||isSgLshiftAssignOp(node)
+          ||isSgRshiftAssignOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyBinLogicOp(const SgNode *node) {
-	if (isSgAndOp(node)
-	  ||isSgOrOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgAndOp(node)
+          ||isSgOrOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyAssignOp(const SgNode *node) {
-	if (isSgAssignOp(node)
-	  ||isAnyBinArithAssignOp(node)
-	  ||isAnyBinBitAssignOp(node)
-	  ||isAnyBinLogicOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgAssignOp(node)
+          ||isAnyBinArithAssignOp(node)
+          ||isAnyBinBitAssignOp(node)
+          ||isAnyBinLogicOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyEqualityOp(const SgNode *node) {
-	if (isSgEqualityOp(node)
-	  ||isSgNotEqualOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgEqualityOp(node)
+          ||isSgNotEqualOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyRelationalOp(const SgNode *node) {
-	if (isSgGreaterOrEqualOp(node)
-	  ||isSgGreaterThanOp(node)
-	  ||isSgLessOrEqualOp(node)
-	  ||isSgLessThanOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isSgGreaterOrEqualOp(node)
+          ||isSgGreaterThanOp(node)
+          ||isSgLessOrEqualOp(node)
+          ||isSgLessThanOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 const SgBinaryOp *isAnyComparisonOp(const SgNode *node) {
-	if (isAnyEqualityOp(node)
-	  ||isAnyRelationalOp(node)) {
-		return isSgBinaryOp(node);
-	}
-	return NULL;
+        if (isAnyEqualityOp(node)
+          ||isAnyRelationalOp(node)) {
+                return isSgBinaryOp(node);
+        }
+        return NULL;
 }
 
 /** NOT ACCOUNTED FOR
-	  ||isSgConcatenationOp(node)
-	  ||isSgScopeOp(node)
-	  ||isSgArrowExp(node)
-	  ||isSgArrowStarOp(node)
-	  ||isSgCommaOpOp(node)
-	  ||isSgDotExp(node)
-	  ||isSgDotStarOp(node)
-	  ||isSgPntrArrRefExp(node)
+          ||isSgConcatenationOp(node)
+          ||isSgScopeOp(node)
+          ||isSgArrowExp(node)
+          ||isSgArrowStarOp(node)
+          ||isSgCommaOpOp(node)
+          ||isSgDotExp(node)
+          ||isSgDotStarOp(node)
+          ||isSgPntrArrRefExp(node)
 */
 
 /**
@@ -130,15 +130,15 @@ const SgBinaryOp *isAnyComparisonOp(const SgNode *node) {
  * characters
  */
 bool isAnyCharType(const SgType *type) {
-	const SgType *t = type->stripTypedefsAndModifiers();
-	return isSgTypeChar(t)
-		|| isSgTypeWchar(t)
-		|| isTypeWcharT(type);
+        const SgType *t = type->stripTypedefsAndModifiers();
+        return isSgTypeChar(t)
+                || isSgTypeWchar(t)
+                || isTypeWcharT(type);
 }
 
 bool isAnyPointerType(const SgType *type) {
-	const SgType *t = type->stripTypedefsAndModifiers();
-	return isSgPointerType(t)
-		|| isSgArrayType(t)
-		|| isTypeUintptrT(type);
+        const SgType *t = type->stripTypedefsAndModifiers();
+        return isSgPointerType(t)
+                || isSgArrayType(t)
+                || isTypeUintptrT(type);
 }

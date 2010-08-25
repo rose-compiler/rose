@@ -296,8 +296,8 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
 		array = true;
 	      if (RoseBin_support::DEBUG_MODE() ) 
 		cerr << "  malloc:  variable found :  " << varName << " array? " << RoseBin_support::resBool(array) 
-	             << "    instr : " << unparseInstruction(asmNode) <<endl;
-	      // now that we have found the usage of an array, we check 
+                     << "    instr : " << unparseInstruction(asmNode) <<endl;
+              // now that we have found the usage of an array, we check 
 	      // in a forward analysis, whether we access a value that is greater than
 	      // the length of the array
 	      if (array) {
@@ -325,13 +325,13 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
 		    if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 		      if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			cout << "   malloc - access to eax : " << unparseInstruction(asmAft) 
-			     << "   length array (var) " << length << "  access array point: " << arrayLength  <<endl;
-		      }
+                             << "   length array (var) " << length << "  access array point: " << arrayLength  <<endl;
+                      }
 		      if (arrayLength> array) {
 			if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft) 
-			       <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
-			  aft->append_properties(SgGraph::dfa_bufferoverflow,varName);		  
+                               <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
+                          aft->append_properties(SgGraph::dfa_bufferoverflow,varName);		  
 			}
 		      }
 		    }

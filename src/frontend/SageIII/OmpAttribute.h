@@ -240,7 +240,7 @@ namespace OmpSupport
       bool hasVariableList(omp_construct_enum);
       //! Get the variable list associated with a construct
       std::vector<std::pair<std::string,SgNode* > > 
-	getVariableList(omp_construct_enum);
+        getVariableList(omp_construct_enum);
 
       //! Find the relevant clauses for a variable 
       std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
@@ -251,7 +251,7 @@ namespace OmpSupport
 
       //! Get expression of a clause
       std::pair<std::string, SgExpression*>  
-	getExpression(omp_construct_enum targetConstruct);
+        getExpression(omp_construct_enum targetConstruct);
 
       //!--------values for some clauses ----------
       //
@@ -299,22 +299,22 @@ namespace OmpSupport
       //!Default constructors
       OmpAttribute()
       {
-	mNode = NULL;
-	omp_type = e_unknown;
-	init();
+        mNode = NULL;
+        omp_type = e_unknown;
+        init();
         isUserDefined = true;
       }
       //! Constructor for known directive type and originating pragma/scope node
       OmpAttribute(omp_construct_enum omptype, SgNode* mynode):
-	mNode(mynode),omp_type(omptype){ 
-	  /*The initialization order has to match the declaration order, 
-	   * otherwise get a compilation warning*/
-	  init();
+        mNode(mynode),omp_type(omptype){ 
+          /*The initialization order has to match the declaration order, 
+           * otherwise get a compilation warning*/
+          init();
           isUserDefined = true;
           // Liao 2/12/2010, we allow build empty attribute as a replacement of a default constructor.
           // This is used by autoParallization to tentatively create an instance and later fill data fields.
-	  // assert(isDirective(omptype));
-	}
+          // assert(isDirective(omptype));
+        }
 
       //! The associated SgNode for this attribute, could be SgPragmaDeclaration or other nodes
       SgNode*  mNode; 

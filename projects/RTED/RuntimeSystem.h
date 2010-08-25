@@ -23,17 +23,17 @@ void RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const
 void RuntimeSystem_roseCreateHeap(
         const char* name, 
         const char* mangl_name,
-		const char* type, 
+        const char* type, 
         const char* basetype, 
         size_t indirection_level,       // how many dereferences to get to a non-pointer type
                                         // e.g. int*** has indirection level 3
-		unsigned long int address, 
+        unsigned long int address, 
         long int size, 
         long int mallocSize,
         int fromMalloc,                 // 1 if from call to malloc
                                         // 0 otherwise, if e.g. from new
-		const char* class_name, const char* filename, const char* line,
-		const char* lineTransformed, int dimensions, ...);
+        const char* class_name, const char* filename, const char* line,
+        const char* lineTransformed, int dimensions, ...);
 
 void RuntimeSystem_roseAccessHeap(const char* filename,
 		unsigned long int base_address, // &( array[ 0 ])
@@ -75,7 +75,7 @@ void RuntimeSystem_roseFreeMemory(
                                 // whether this is a call to free (1) or delete
                                 // (0)
         const char* filename,
-		const char* line, const char* lineTransformed);
+        const char* line, const char* lineTransformed);
 
 void RuntimeSystem_roseReallocateMemory(void* ptr, unsigned long int size,
 		const char* filename, const char* line, const char* lineTransformed);
@@ -168,12 +168,12 @@ void RuntimeSystem_roseMovePointer(
 
 void RuntimeSystem_roseAccessVariable(
         unsigned long long address,
-		unsigned int size, 
+        unsigned int size, 
         unsigned long long write_address, 
         unsigned int write_size,
         int read_write_mask, //1 = read, 2 = write
         const char* filename, const char* line,
-		const char* lineTransformed);
+        const char* lineTransformed);
 
 void RuntimeSystem_roseCheckIfThisNULL(
 		void* thisExp,

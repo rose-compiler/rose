@@ -20,7 +20,7 @@ typedef struct PyStructSequence_Desc {
 } PyStructSequence_Desc;
 
 extern DL_IMPORT(void) PyStructSequence_InitType(PyTypeObject *type, 
-						 PyStructSequence_Desc *desc);
+                                                 PyStructSequence_Desc *desc);
        
 extern DL_IMPORT(PyObject *) PyStructSequence_New(PyTypeObject* type);
 

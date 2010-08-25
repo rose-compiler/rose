@@ -37,10 +37,10 @@
 
        It is not meant to be used to iterate over the document, though it is possible
        for conveneience and compatibility reasons. Indeed, QDocumentLine does not now
-	   where in the document it is located. It can obtain that information but this is
-	   a O(n) operation. Navigation within the document is one of the task devoted to
+           where in the document it is located. It can obtain that information but this is
+           a O(n) operation. Navigation within the document is one of the task devoted to
        QDocumentCursor which can move around in O(1) (or amortized O(1) in some rare
-	   cases).
+           cases).
 
        Lines can be given formatting in various way : "regular" formatting used for
        highlighting, overlays used mainly to display search matches and similar informations

@@ -495,7 +495,7 @@ struct pairltstr
 		  pair<const char *, const char *> s2)
   {
     return ( ( strcmp(s1.first, s2.first) < 0 ) &&
-	     ( strcmp(s1.second, s2.second) < 0 ) );
+             ( strcmp(s1.second, s2.second) < 0 ) );
   }
 };
 
@@ -591,7 +591,7 @@ class SideEffect : public SideEffectAnalysis {
 				    sqlite3_connection *db);
 
   int doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
-		   string &sanitizedOutputFileName,
+                   string &sanitizedOutputFileName,
 		   vector<string> &nodeListFileNames);
 
   //  string getQualifiedFunctionName(SgFunctionCallExp *astNode);
@@ -604,7 +604,7 @@ class SideEffect : public SideEffectAnalysis {
 		  callVertexIndexMap index_map);
 
   void solveRMOD(CallMultiGraph *multigraph, long projectId, 
-		 sqlite3_connection *db);
+                 sqlite3_connection *db);
 
   int nextdfn;
   deque<callVertex> vertexStack;
@@ -1420,7 +1420,7 @@ class MyTraversal
   { };
   
   MyTraversal (int setPID,
-	       sqlite3_connection *setGdb,
+               sqlite3_connection *setGdb,
 	       CallGraph *setGraph,
 	       CallGraph *setSimpleGraph,
 	       set<const char *, ltstr> *setDefinedFuncs,
@@ -1510,18 +1510,17 @@ class MyTraversal
 
     // create LMOD entry in formals, indicating that LMOD has a
     // formal argument 'formal' which is argument number 0
-    formalRow formalParam(
-			       mProjectId, 
-			       LMODRow.get_functionName().c_str(), 
-			       LMODDummyFormal.c_str(),
-			       LMODDummyParamNum);
+    formalRow formalParam(mProjectId, 
+                          LMODRow.get_functionName().c_str(), 
+                          LMODDummyFormal.c_str(),
+                          LMODDummyParamNum);
     formalParam.insert(mGDB);
     // maintain a datastructure in memory that maps function names
     // to formal parameter strings and their ordinal position in the
     // argument list.  this mirrors the database table formals.
     if (!mSideEffectPtr->separateCompilation) {
       mSideEffectPtr->insertFormal(LMODRow.get_functionName().c_str(), 
-				   LMODDummyFormal.c_str(), 
+                                   LMODDummyFormal.c_str(), 
 				   LMODDummyParamNum);
       
       mSideEffectPtr->insertFormalByPos(LMODRow.get_functionName().c_str(), 
@@ -1550,7 +1549,7 @@ class MyTraversal
 	  
 #ifdef DEBUG_OUTPUT
 	  if (debugOut) cerr << " found V_SgFunctionDefinition of " 
-			     << funcDec->get_name().str() << endl; 
+                             << funcDec->get_name().str() << endl; 
 #endif
 	  
 	  string funcName;
@@ -1575,9 +1574,8 @@ class MyTraversal
 	    
 	    // create a database entry for this function in the table 
 	    // of functions.
-	    simpleFuncRow funcRow(
-					   mProjectId, 
-					   funcName);
+	    simpleFuncRow funcRow(mProjectId, 
+                                  funcName);
       funcRow.insert(mGDB);
       int funcId = funcRow.get_id();
 
@@ -1637,9 +1635,9 @@ class MyTraversal
 
 	      // create the table entry
 	      localVarRow localVarFuncEntry(
-						 mProjectId, 
-						 funcName,
-						 (*nameIt)->get_name().str());
+                                            mProjectId, 
+                                            funcName,
+                                            (*nameIt)->get_name().str());
 	      localVarFuncEntry.insert(mGDB);
 	      
 	      // insert a corresponding entry into the memory-resident map
@@ -1650,8 +1648,8 @@ class MyTraversal
 	      // only create an entry in the formals table/map if this argument
 	      // may be modified
 	      if ( ( (*typeIt)->variantT() == V_SgPointerType ) ||
-		   ( (*typeIt)->variantT() == V_SgReferenceType ) ) {
-		
+                   ( (*typeIt)->variantT() == V_SgReferenceType ) ) {
+
 		// put < funcName, formalName, paramNum > entry in database to signify
 		// that formalName is the paramNum'th argument of funcName.
 
@@ -1667,9 +1665,9 @@ class MyTraversal
 		if (!mSideEffectPtr->separateCompilation) {
 		  
 		  mSideEffectPtr->insertFormal(funcName.c_str(),
-					       (*nameIt)->get_name().str(), 
+                                               (*nameIt)->get_name().str(), 
 					       paramNum);
-		  
+
 		  mSideEffectPtr->insertFormalByPos(funcName.c_str(),
 						    (*nameIt)->get_name().str(), 
 						    paramNum);
@@ -1760,9 +1758,8 @@ class MyTraversal
 	    // lookup function name in function table.  insert if it doesn't exist
 
 	    // create table entry
-	    simpleFuncRow calleeRow(
-					     mProjectId, 
-					     funcName);
+	    simpleFuncRow calleeRow(mProjectId, 
+                                    funcName);
       calleeRow.insert(mGDB);
 
 #if 0
@@ -1821,13 +1818,13 @@ class MyTraversal
 	    // iterate over all of the actual arguments
         SgExpressionPtrList::iterator e;
 	    for (e = expr_list.begin(), typeIt = typeList.begin(); 
-		 e != expr_list.end(); ++e, ++typeIt) {
-	      
+                 e != expr_list.end(); ++e, ++typeIt) {
+
 	      // if this is not a pointer or a reference, increment
 	      // the current arg number and move on
 	      if ( ( (*typeIt)->variantT() != V_SgPointerType ) &&
-		   ( (*typeIt)->variantT() != V_SgReferenceType ) ) {
-		argNum++;
+                   ( (*typeIt)->variantT() != V_SgReferenceType ) ) {
+                argNum++;
 		continue;
 	      }
 	      
@@ -1919,7 +1916,7 @@ class MyTraversal
 		  string callerName = caller.get_functionName();
 #if 0
 		  char tmp[callerName.length() + 
-			   strlen(astNode->get_file_info()->get_filename()) +
+                           strlen(astNode->get_file_info()->get_filename()) +
 			   MAXSTRINGSZ];
 
 		  // file_info is broken for expressions so we have to use
@@ -1957,7 +1954,7 @@ class MyTraversal
 		  if (scope == SCOPE_GLOBAL)
 		    actual.insert(0, "::");
 		  callEdgeRow edge(
-				       mProjectId, 
+                                       mProjectId, 
 				       edgeLabel, 
 				       actual.c_str(),
 				       scope, 
@@ -1997,9 +1994,9 @@ class MyTraversal
 	      string voidCallerName = caller.get_functionName();
 #if 0
 	      char tmp[voidCallerName.length() + 
-		       strlen(astNode->get_file_info()->get_filename()) +
+                       strlen(astNode->get_file_info()->get_filename()) +
 		       MAXSTRINGSZ];
-	      // file_info is broken for expressions
+              // file_info is broken for expressions
 	      sprintf(tmp, "%s-%s-%d-%d", s.c_str(), 
 		      astNode->get_file_info()->get_filename(), 
 		      astNode->get_file_info()->get_line(), 
@@ -2112,7 +2109,7 @@ class MyTraversal
 	  if (expr->get_is_lvalue()) 
 #endif
 	  if ( isSgAssignOp(expr) || 
-	       isSgPlusAssignOp(expr) ||
+               isSgPlusAssignOp(expr) ||
 	       isSgMinusAssignOp(expr) ||
 	       isSgAndAssignOp(expr) ||
 	       isSgIorAssignOp(expr) ||
@@ -2122,7 +2119,7 @@ class MyTraversal
 	       isSgXorAssignOp(expr) ||
 	       isSgLshiftAssignOp(expr) ||
 	       isSgRshiftAssignOp(expr) )
-	  { 
+          { 
 
 	    // this expression is the root of a destructive operation
 	    inheritedAttribute.setLHS(true);
@@ -2135,9 +2132,9 @@ class MyTraversal
 	    SgBinaryOp *bin = isSgBinaryOp(astNode);
 
 	    if ( ! isSgVarRefExp(expr) &&
-		 ! isSgPointerDerefExp(expr) &&
+                 ! isSgPointerDerefExp(expr) &&
 		 ( !bin || (
-			    ! isSgArrowExp(bin->get_lhs_operand()) &&
+                            ! isSgArrowExp(bin->get_lhs_operand()) &&
 			    ! isSgPntrArrRefExp(bin->get_lhs_operand()) &&
 			    ! isSgPointerDerefExp(bin->get_lhs_operand()) &&
 			    ! isSgVarRefExp(bin->get_lhs_operand()) &&
@@ -2266,9 +2263,9 @@ class MyTraversal
 	    SgNode *assign = inheritedAttribute.getAssignOp();
 #if 0
 	    char tmp[dummyCallerName.length() + 
-		     strlen(assign->get_file_info()->get_filename()) +
+                     strlen(assign->get_file_info()->get_filename()) +
 		     MAXSTRINGSZ];
-	    // file_info is broken for expressions
+            // file_info is broken for expressions
 	    sprintf(tmp, "%s-%s-%d-%d", 
 		    dummyCallerName.c_str(), 
 		    assign->get_file_info()->get_filename(), 
@@ -2306,7 +2303,7 @@ class MyTraversal
 	    if (scope == SCOPE_GLOBAL)
 	      actual.insert(0, "::");
 	    callEdgeRow edge(
-				 mProjectId, 
+                                 mProjectId, 
 				 edgeLabel, 
 				 actual.c_str(),
 				 scope, 
@@ -2371,7 +2368,7 @@ class MyTraversal
     // create a database entry for this function in the table 
     // of functions.
     simpleFuncRow funcRow(
-				   mProjectId, 
+                                   mProjectId, 
 				   funcName);
     funcRow.insert(mGDB);
 
@@ -2466,7 +2463,7 @@ SideEffect::populateFormalsFromDB(sqlite3_connection *db)
 
   for (unsigned int i = 0; i < rows.size(); ++i) {
     insertFormal(rows[i].get_functionName().c_str(),
-		 rows[i].get_formal().c_str(),
+                 rows[i].get_formal().c_str(),
 		 rows[i].get_ordinal());
 
     insertFormalByPos(rows[i].get_functionName().c_str(),
@@ -2477,7 +2474,7 @@ SideEffect::populateFormalsFromDB(sqlite3_connection *db)
 
 CallMultiGraph *
 SideEffect::createMultiGraph(CallGraph *callgraph, long projectId, 
-			     sqlite3_connection *db)
+                             sqlite3_connection *db)
 {
   // a binding multigraph is described on pp 60.  we select out
   // only those vertices that are an endpoint of an edge in the
@@ -2934,7 +2931,7 @@ SideEffect::onStack(int num)
 
 void 
 SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p, 
-		       callVertexIndexMap index_map)
+                       callVertexIndexMap index_map)
 {
   int pIndex = get( index_map, p );
   //  dfn[pName.c_str()] = nextdfn;
@@ -2969,7 +2966,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
   typedef boost::graph_traits<CallGraph>::adjacency_iterator adj_it;
   pair<adj_it, adj_it> adj_pair;
   for (adj_pair = adjacent_vertices(p, *g); adj_pair.first != adj_pair.second;
-	 ++adj_pair.first) {
+       ++adj_pair.first) {
     // NB:  consider indexing hashes, etc with numbers via index_map.
     //      tricky part:  keeping indexing consistent across graphs
     callVertex q = *(adj_pair.first);
@@ -3008,16 +3005,16 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 
       deque<const char *> gmodq_q;
       for (map_type::const_iterator i = gmodq_maps.first; 
-	   i != gmodq_maps.second; ++i) {
-	gmodq_q.push_front((*i).second);
+           i != gmodq_maps.second; ++i) {
+        gmodq_q.push_front((*i).second);
       }
 
       sort(gmodq_q.begin(), gmodq_q.end(), ltstr());
 
       deque<const char *> localq_q;
       for (map_type::const_iterator i = local_maps.first; 
-	   i != local_maps.second; ++i) {
-	localq_q.push_front((*i).second);
+           i != local_maps.second; ++i) {
+        localq_q.push_front((*i).second);
       }
 
       sort(localq_q.begin(), localq_q.end(), ltstr());
@@ -3038,12 +3035,12 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
       deque<const char *> intersection;
 
       set_difference(gmodq_q.begin(), gmodq_q.end(),
-		     localq_q.begin(), localq_q.end(),
+                     localq_q.begin(), localq_q.end(),
 		     inserter(intersection, intersection.begin()),
 		     ltstr());
 
       for (qIt = intersection.begin();
-	   qIt != intersection.end();
+           qIt != intersection.end();
 	   qIt++) {
 #ifdef DEBUG_OUTPUT
 	cout << "INSERTING " << (*qIt) << " in " << pName << " via intersection of " << qName << endl;
@@ -3079,16 +3076,16 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
 
       deque<const char *> gmodp_q;
       for (map_type::const_iterator i = gmodp_maps.first; 
-	   i != gmodp_maps.second; ++i) {
-	gmodp_q.push_front((*i).second);
+           i != gmodp_maps.second; ++i) {
+        gmodp_q.push_front((*i).second);
       }
 
       sort(gmodp_q.begin(), gmodp_q.end(), ltstr());
 
       deque<const char *> localp_q;
       for (map_type::const_iterator i = localp_maps.first; 
-	   i != localp_maps.second; ++i) {
-	localp_q.push_front((*i).second);
+           i != localp_maps.second; ++i) {
+        localp_q.push_front((*i).second);
       }
 
       sort(localp_q.begin(), localp_q.end(), ltstr());
@@ -3108,7 +3105,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
       deque<const char *> intersection;
 
       set_difference(gmodp_q.begin(), gmodp_q.end(),
-		     localp_q.begin(), localp_q.end(),
+                     localp_q.begin(), localp_q.end(),
 		     inserter(intersection, intersection.begin()),
 		     ltstr());
 
@@ -3117,7 +3114,7 @@ SideEffect::searchGMOD(CallGraph *g, string pName, callVertex p,
       cout << "    Popping " << uName << endl;
 #endif
       for (qIt = intersection.begin();
-	   qIt != intersection.end();
+           qIt != intersection.end();
 	   qIt++) {
 #ifdef DEBUG_OUTPUT
 	cout << "INSERTING " << (*qIt) << " in uname " << uName << " via intersection of " << pName << endl;
@@ -3467,7 +3464,7 @@ SideEffect::calcSideEffect(SgProject* project)
   string toplevelProjectName = "testProject"; 
   projectsRowdata toplevelProw( UNKNOWNID ,toplevelProjectName, UNKNOWNID );
   projects.retrieveCreateByColumn( &toplevelProw, "name", 
-				   toplevelProjectName );
+                                   toplevelProjectName );
   long toplevelProjectId = toplevelProw.get_id();
 
   // local table holds entries of the form < func, var > where var
@@ -3665,7 +3662,7 @@ SideEffect::calcSideEffect(SgProject* project)
       for (ep = edges(*callgraphs[i]); ep.first != ep.second; ++ep.first) {
 	
 	simpleFuncTableRowdata src(get(vertex_dbg_data, *callgraphs[i], 
-				       boost::source(*(ep.first), *callgraphs[i])));
+                                       boost::source(*(ep.first), *callgraphs[i])));
 
 
 	// keep track of which file defines a given function.
@@ -3697,7 +3694,7 @@ SideEffect::calcSideEffect(SgProject* project)
 	}
 
 	simpleFuncTableRowdata tar(get(vertex_dbg_data, *callgraphs[i], 
-				       boost::target(*(ep.first), *callgraphs[i])));
+                                       boost::target(*(ep.first), *callgraphs[i])));
 
 	// insert target vertex
 	long tarId = insertFuncToId(tar.get_functionName().c_str(), nextAggCallGraphId);
@@ -3751,7 +3748,7 @@ SideEffect::calcSideEffect(SgProject* project)
   
   vector<const char *> undefinedFuncs;
   set_difference(cFuncs.begin(), cFuncs.end(),
-		 dFuncs.begin(), dFuncs.end(),
+                 dFuncs.begin(), dFuncs.end(),
 		 inserter(undefinedFuncs, undefinedFuncs.begin()),
 		 ltstr());
   
@@ -3853,9 +3850,9 @@ SideEffect::calcSideEffect(SgProject* project)
 	// (since it is a formal parameter)
 	//	TableAccess< localVarsRowdata > localVars( &toplevelDb );
 	localVarsRowdata localVar( UNKNOWNID , toplevelProjectId, 
-				   s.c_str(), 
+                                   s.c_str(), 
 				   formal.c_str());
-	
+
 	string columns[3];
 	string names[3];
 	
@@ -3864,8 +3861,8 @@ SideEffect::calcSideEffect(SgProject* project)
 	columns[1] = "varName";
 	names[1]   = localVar.get_varName();
 	localVars.retrieveCreateByColumns( &localVar, columns, names, 2,
-					   localVar.get_projectId() );
-	
+                                           localVar.get_projectId() );
+
 	//	if (!separateCompilation) { }
 	  insertLocal(s.c_str(), 
 		      formal.c_str());
@@ -3888,7 +3885,7 @@ SideEffect::calcSideEffect(SgProject* project)
 	names[2]   = strdup(tmpStr);
 
 	formals.retrieveCreateByColumns( &formalParam, columns, names, 3,
-					 formalParam.get_projectId() );
+                                         formalParam.get_projectId() );
 
 #ifdef DEBUG_OUTPUT
 	cout << "INSERTING FORMAL " << formal.c_str() << " in " << s.c_str() << " as paramNum " << paramNum << endl;
@@ -3896,9 +3893,9 @@ SideEffect::calcSideEffect(SgProject* project)
 
 	//	if (!separateCompilation) { }
 	  insertFormal(s.c_str(), 
-		       formal.c_str(), 
+                       formal.c_str(), 
 		       paramNum);
-	  
+
 	  insertFormalByPos(s.c_str(), 
 			    formal.c_str(), 
 			    paramNum);
@@ -4118,7 +4115,7 @@ SideEffect::calcSideEffect(SgProject& project)
   }
 
   int ret = doSideEffect(nodeList, sourceFileNames, sanitizedOutputFileName,
-			 nodeListFileNames);
+                         nodeListFileNames);
 
   delete nodeList;
 
@@ -4180,7 +4177,7 @@ SideEffect::calcSideEffect(SgNode& node)
 
 int
 SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
-			 string &sanitizedOutputFileName,
+                         string &sanitizedOutputFileName,
 			 vector<string> &nodeListFileNames)
 
 {
@@ -4398,7 +4395,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
       for (ep = edges(*callgraphs[i]); ep.first != ep.second; ++ep.first) {
 	
 	simpleFuncRow src = get(boost::vertex_dbg_data, *callgraphs[i], 
-				       boost::source(*(ep.first), *callgraphs[i]));
+                                boost::source(*(ep.first), *callgraphs[i]));
 
 
 	// keep track of which file defines a given function.
@@ -4430,7 +4427,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	}
 
 	simpleFuncRow tar = get(boost::vertex_dbg_data, *callgraphs[i], 
-				       boost::target(*(ep.first), *callgraphs[i]));
+                                boost::target(*(ep.first), *callgraphs[i]));
 
 	// insert target vertex
 	long tarId = insertFuncToId(tar.get_functionName().c_str(), nextAggCallGraphId);
@@ -4484,7 +4481,7 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
   
   vector<const char *> undefinedFuncs;
   set_difference(cFuncs.begin(), cFuncs.end(),
-		 dFuncs.begin(), dFuncs.end(),
+                 dFuncs.begin(), dFuncs.end(),
 		 inserter(undefinedFuncs, undefinedFuncs.begin()),
 		 ltstr());
   
@@ -4598,8 +4595,8 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 	// (since it is a formal parameter)
 	//	TableAccess< localVarsRowdata > localVars( &toplevelDb );
 	localVarRow localVar(toplevelProjectId, 
-				   s.c_str(), 
-				   formal.c_str());
+                             s.c_str(), 
+                             formal.c_str());
   localVar.insert(&toplevelDb);
 
 	//	if (!separateCompilation) { }
@@ -4620,9 +4617,9 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 
 	//	if (!separateCompilation) { }
 	  insertFormal(s.c_str(), 
-		       formal.c_str(), 
+                       formal.c_str(), 
 		       paramNum);
-	  
+
 	  insertFormalByPos(s.c_str(), 
 			    formal.c_str(), 
 			    paramNum);

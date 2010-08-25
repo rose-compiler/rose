@@ -83,18 +83,18 @@ static double tran;
 
 /* function declarations */
 static void conj_grad (int colidx[], int rowstr[], double x[], double z[],
-		       double a[], double p[], double q[], double r[],
+                       double a[], double p[], double q[], double r[],
 		       double w[], double *rnorm);
 static void makea(int n, int nz, double a[], int colidx[], int rowstr[],
-		  int nonzer, int firstrow, int lastrow, int firstcol,
+                  int nonzer, int firstrow, int lastrow, int firstcol,
 		  int lastcol, double rcond, int arow[], int acol[],
 		  double aelt[], double v[], int iv[], double shift );
 static void sparse(double a[], int colidx[], int rowstr[], int n,
-		   int arow[], int acol[], double aelt[],
+                   int arow[], int acol[], double aelt[],
 		   int firstrow, int lastrow,
 		   double x[], boolean mark[], int nzloc[], int nnza);
 static void sprnvc(int n, int nz, double v[], int iv[], int nzloc[],
-		   int mark[]);
+                   int mark[]);
 static int icnvrt(double x, int ipwr2);
 static void vecset(int n, double v[], int iv[], int *nzv, int i, double val);
 
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     }
 
     printf("\n\n NAS Parallel Benchmarks 2.3 OpenMP C version"
-	   " - CG Benchmark\n");
+           " - CG Benchmark\n");
     printf(" Size: %10d\n", NA);
     printf(" Iterations: %5d\n", NITER);
 
@@ -157,7 +157,7 @@ c-------------------------------------------------------------------*/
 c  
 c-------------------------------------------------------------------*/
     makea(naa, nzz, a, colidx, rowstr, NONZER,
-	  firstrow, lastrow, firstcol, lastcol, 
+          firstrow, lastrow, firstcol, lastcol, 
 	  RCOND, arow, acol, aelt, v, iv, SHIFT);
     
 /*---------------------------------------------------------------------
@@ -288,7 +288,7 @@ c-------------------------------------------------------------------*/
 #pragma omp master
 {
 	if( it == 1 ) {
-	  printf("   iteration           ||r||                 zeta\n");
+            printf("   iteration           ||r||                 zeta\n");
 	}
 	printf("    %5d       %20.14e%20.13e\n", it, rnorm, zeta);
 } /* end master */
@@ -659,8 +659,8 @@ c---------------------------------------------------------------------*/
 			nnza = nnza + 1;
 			if (nnza > nz) {
 			    printf("Space for matrix elements exceeded in"
-				   " makea\n");
-			    printf("nnza, nzmax = %d, %d\n", nnza, nz);
+                                   " makea\n");
+                            printf("nnza, nzmax = %d, %d\n", nnza, nz);
 			    printf("iouter = %d\n", iouter);
 			    exit(1);
 			}
@@ -699,7 +699,7 @@ c       ... make the sparse matrix from list of elements with duplicates
 c           (v and iv are used as  workspace)
 c---------------------------------------------------------------------*/
     sparse(a, colidx, rowstr, n, arow, acol, aelt,
-	   firstrow, lastrow, v, &(iv[0]), &(iv[n]), nnza);
+           firstrow, lastrow, v, &(iv[0]), &(iv[n]), nnza);
 }
 
 /*---------------------------------------------------

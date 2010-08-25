@@ -61,7 +61,7 @@ class RoseBin_Graph : public SB_DirectedGraph {
   virtual void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
 			  bool forward_analysis, std::ofstream& myfile, bool mergedEdges) =0;
   virtual void printNodes( bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,
-			   std::ofstream &myfile, std::string& recursiveFunctionName) =0;
+                           std::ofstream &myfile, std::string& recursiveFunctionName) =0;
 
   virtual void printProlog(  std::ofstream& myfile, std::string& fileType) =0;
   virtual void printEpilog(  std::ofstream& myfile) =0;

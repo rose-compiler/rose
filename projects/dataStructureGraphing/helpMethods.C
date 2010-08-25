@@ -23,9 +23,9 @@ leftTrim (string str)
       // Iterate from the far left of string until we
       // don't have any more whitespace...
       for (j = 0;
-	   (j != s.size ()) && (whitespace.find (s.at (j)) != string::npos);
+           (j != s.size ()) && (whitespace.find (s.at (j)) != string::npos);
 	   ++j)
-	{
+        {
 	  //find the first none white space character
 	}
 
@@ -62,8 +62,8 @@ rightTrim (string str)
       // Iterate from the far right of string until we
       // don't have any more whitespace...
       for (j = s.size () - 1;
-	   (j != 0) && (whitespace.find (s.at (j)) != string::npos); --j)
-	{
+           (j != 0) && (whitespace.find (s.at (j)) != string::npos); --j)
+        {
 	  //find the first none white space character
 	  cout << s.substr (0, j) << endl;
 	}
@@ -158,7 +158,7 @@ findScopes (SgNode * astNode)
 };
 
 list < SgNode * >queryNodeClassDeclarationFromTypedefName (SgNode * astNode,
-							   SgNode * nameNode)
+                                                           SgNode * nameNode)
 {
   NodeQuerySynthesizedAttributeType returnList;
   ROSE_ASSERT (nameNode != NULL);
@@ -225,14 +225,14 @@ findTypedefFromTypeName (SgNodePtrVector nodeVector, const string sageName)
 
       typedefDeclarationList =
 	NodeQuery::querySubTree (*i,
-				 NodeQuery::TypedefDeclarations,
+                                 NodeQuery::TypedefDeclarations,
 				 NodeQuery::ChildrenOnly);
 
       list < SgNode * >::iterator j;
 
       for (j = typedefDeclarationList.begin ();
-	   j != typedefDeclarationList.end (); ++j)
-	{
+           j != typedefDeclarationList.end (); ++j)
+        {
 	  // Take an action on each typedef declarations: generate a list of variable declarations
 	  ROSE_ASSERT ((*j) != NULL);
 
@@ -263,7 +263,7 @@ findTypedefFromTypeName (SgNodePtrVector nodeVector, const string sageName)
  */
 list <
   SgNode * >findClassDeclarationsFromTypeName (SgNodePtrVector nodeVector,
-					       const string sageName)
+                                               const string sageName)
 {
   cout << "\nBEGIN A SEQUENCE OF FINDING A TYPENAME: " + sageName + "\n";
   ROSE_ASSERT (sageName.length () > 0);
@@ -318,19 +318,19 @@ list <
 	ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
 	tempNodeList =
 	  NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				   NodeQuery::ClassDeclarationsFromTypeName,
+                                   NodeQuery::ClassDeclarationsFromTypeName,
 				   NodeQuery::ChildrenOnly);
-	foundClassDeclarations.merge (tempNodeList);
+        foundClassDeclarations.merge (tempNodeList);
 
-	/*
-	   if (tempNodeList.empty () != true)
-	   {
-	   ROSE_ASSERT (tempNodeList.size () < 2);
-	   returnNode = isSgNode (*tempNodeList.begin ());
-	   ROSE_ASSERT (returnNode != NULL);
-	   foundClassDeclarations.push_back(returnNode);
-	   }
-	 */
+        /*
+           if (tempNodeList.empty () != true)
+           {
+           ROSE_ASSERT (tempNodeList.size () < 2);
+           returnNode = isSgNode (*tempNodeList.begin ());
+           ROSE_ASSERT (returnNode != NULL);
+           foundClassDeclarations.push_back(returnNode);
+           }
+         */
       }
 
   return foundClassDeclarations;
@@ -363,9 +363,9 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 
 	  tempNodeList =
 	    NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				     queryNodeClassDeclarationFromTypedefName,
+                                     queryNodeClassDeclarationFromTypedefName,
 				     NodeQuery::ChildrenOnly);
-	  if (tempNodeList.empty () != true)
+          if (tempNodeList.empty () != true)
 	    {
 	      ROSE_ASSERT (tempNodeList.size () < 2);
 	      returnNode = isSgNode (*tempNodeList.begin ());
@@ -388,12 +388,12 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
       cout << "This is not a typedef" << endl;
       if (tempNodeList.empty () == true)
 	for (nodeIterator i = nodeVector.begin (); i != nodeVector.end ();
-	     ++i)
-	  {
+             ++i)
+          {
 	    ROSE_ASSERT (isSgScopeStatement (*i) != NULL);
 	    tempNodeList =
 	      NodeQuery::querySubTree (*i, new SgName (sageName.c_str ()),
-				       NodeQuery::ClassDeclarationFromName,
+                                       NodeQuery::ClassDeclarationFromName,
 				       NodeQuery::ChildrenOnly);
 
 	    if (tempNodeList.empty () != true)

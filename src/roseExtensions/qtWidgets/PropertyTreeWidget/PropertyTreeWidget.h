@@ -21,58 +21,58 @@ class PropertyTreeModel;
  */
 class PropertyTreeWidget : public QTreeView
 {
-	Q_OBJECT
+        Q_OBJECT
 
-	public:
-		PropertyTreeWidget(QWidget * parent=0);
-		virtual ~PropertyTreeWidget();
+        public:
+                PropertyTreeWidget(QWidget * parent=0);
+                virtual ~PropertyTreeWidget();
 
 
-		/// Each section has a Background-Col and an alternating Bg-color
-		/// which is used when alternatingRowColors=true
-		int addSection(const QString & sectionName,
-				       const QColor & bgColor,
-				       const QColor & altBgColor);
+                /// Each section has a Background-Col and an alternating Bg-color
+                /// which is used when alternatingRowColors=true
+                int addSection(const QString & sectionName,
+                               const QColor & bgColor,
+                               const QColor & altBgColor);
 
-		/// Adds a new section
-		/// @param sectionName Title of sections
-		/// @param colorNr     which color to use, there are 6 different predefined colors, use 0 to 6
-		///                    if parameter is negative (default) the next "free" color is used
-		int addSection(const QString & sectionName, int colorNr=-1);
+                /// Adds a new section
+                /// @param sectionName Title of sections
+                /// @param colorNr     which color to use, there are 6 different predefined colors, use 0 to 6
+                ///                    if parameter is negative (default) the next "free" color is used
+                int addSection(const QString & sectionName, int colorNr=-1);
 
-		/// Adds a Property-Value pair to a section
-		/// @param sectionId the return value of addSection()
-		/// @param property String of the property
-		/// @param value  value as an QVariant
-		/// @return modelIndex of the Prop-value pair
-		QModelIndex addEntryToSection(int sectionId,
-									  const QString & property,
-									  const QVariant & value);
+                /// Adds a Property-Value pair to a section
+                /// @param sectionId the return value of addSection()
+                /// @param property String of the property
+                /// @param value  value as an QVariant
+                /// @return modelIndex of the Prop-value pair
+                QModelIndex addEntryToSection(int sectionId,
+                                              const QString & property,
+                                              const QVariant & value);
 
-		/// This method can be used to have a tree structure of prop-value pairs
-		/// @param parent the return value of a previous addEntry() or addEntryToSection()
-        /// @param property String of the property
-        /// @param value  value as an QVariant
-		QModelIndex addEntry (const QModelIndex & parent,
-							    const QString & property,
-							    const QVariant & value);
+                /// This method can be used to have a tree structure of prop-value pairs
+                /// @param parent the return value of a previous addEntry() or addEntryToSection()
+                /// @param property String of the property
+                /// @param value  value as an QVariant
+                QModelIndex addEntry (const QModelIndex & parent,
+                                      const QString & property,
+                                      const QVariant & value);
 
-		/// Removes all sections and entries
-		void clear();
+                /// Removes all sections and entries
+                void clear();
 
-	protected:
-		//Custom Paint Event to set the colors
-		virtual void drawRow (QPainter * p,
-							  const QStyleOptionViewItem & viewItem,
-							  const QModelIndex & index) const;
+        protected:
+                //Custom Paint Event to set the colors
+                virtual void drawRow (QPainter * p,
+                                      const QStyleOptionViewItem & viewItem,
+                                      const QModelIndex & index) const;
 
-		//Stores for each section the main and alternating Color
-		QList<QPair<QColor,QColor> > colors;
+                //Stores for each section the main and alternating Color
+                QList<QPair<QColor,QColor> > colors;
 
-		PropertyTreeModel * model;
+                PropertyTreeModel * model;
 
-		// PreDefined Colors
-		QVector<QPair<QColor,QColor> > predefColors;
+                // PreDefined Colors
+                QVector<QPair<QColor,QColor> > predefColors;
 };
 
 #endif

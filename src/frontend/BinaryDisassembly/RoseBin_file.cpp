@@ -65,7 +65,7 @@ struct SortAscending_functions_1 : public std::binary_function<functions_1, func
  * process all functions in the DB
  ****************************************************/
 void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
-					   list<string> functionFilter) {
+                                           list<string> functionFilter) {
   // get the functions
   rememberFunctions.clear();
   //int counter=0;
@@ -233,9 +233,9 @@ void RoseBin_FILE::process_instruction_query( ) {
 //#ifdef _MSC_VER
 //#pragma message ("Linux atoll() function not available in MSVC.")
  //   printf ("atoll() is not available in MSCV (need a MSC equivalent or use boost equivalent). \n");
-	//ROSE_ASSERT(false);
+        //ROSE_ASSERT(false);
 
-	//uint64_t id = 0; // atoll(vec_basic_blocks_1[i].id.c_str());
+        //uint64_t id = 0; // atoll(vec_basic_blocks_1[i].id.c_str());
  //   uint64_t parent_function = 0; // atoll(vec_basic_blocks_1[i].parent_function.c_str());
 //#else
     //uint64_t id = atoll(vec_basic_blocks_1[i].id.c_str());
@@ -328,7 +328,7 @@ void RoseBin_FILE::process_instruction_query( ) {
       hexaddr << hex << setw(8) << address ;
       if (RoseBin_support::DEBUG_MODE())
 	cout << " .rememberInstruction " << instruction->class_name() 
-	     << "  at : " << address << " hex: " << hexaddr.str() << endl;
+             << "  at : " << address << " hex: " << hexaddr.str() << endl;
       rememberInstructions[address]= instruction ;
 
 
@@ -473,7 +473,7 @@ void RoseBin_FILE::process_expression_tree_query( ) {
     
       if (RoseBin_support::DEBUG_MODE())
 	cout << ">> creating exprTree : " << exprTree.id << " - " << exprTree.expr_type << " - " 
-	     << exprTree.symbol << " - " << exprTree.immediate << " - " << exprTree.position 
+             << exprTree.symbol << " - " << exprTree.immediate << " - " << exprTree.position 
 	     << " - " << exprTree.parent_id << endl;
 
       if (exprTree.id >= (int)rememberExpressionTree.size())
@@ -558,7 +558,7 @@ void RoseBin_FILE::process_substitutions_query( ) {
       RoseBin_support::checkText(subst.replacement);
       if (RoseBin_support::DEBUG_MODE())
 	cout << ">> creating substitutions : " << subst.address << " - " << subst.operand_id << " - " 
-	     << subst.expr_id << " - " << subst.replacement << endl;
+             << subst.expr_id << " - " << subst.replacement << endl;
       rememberSubstitution[subst.address] = subst;
     } // while
 }
@@ -674,13 +674,13 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 #endif
 	// cerr << "resolveRecursivelyExpression " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
 	binExp = buildROSE->resolveRecursivelyExpression(address,expr_id_root, 
-							 subTree, 
+                                                         subTree, 
 							 typeOfOperand,
 							 &rememberExpressionTree,
 							 operand_id,
 							 &rememberSubstitution,
-							 &rememberComments);
-	//	cerr << " >>>>>>>>>>>>> Found binExp : " << binExp << " " << binExp->get_comment() << "  " << binExp->get_replacement() << endl;
+                                                         &rememberComments);
+        //      cerr << " >>>>>>>>>>>>> Found binExp : " << binExp << " " << binExp->get_comment() << "  " << binExp->get_replacement() << endl;
       } // if operand
 
       
@@ -743,8 +743,8 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 	  if (RoseBin_support::DEBUG_MODE()) {
 	    exprTreeType exprTree = buildROSE->getDebugHelp(binExp);
 	    cout << ">> append operand (to instruction): binExp: " <<binExp  
-		 << " - sym: " <<exprTree.symbol << " - immedi: " << exprTree.immediate << endl;
-	  }
+                 << " - sym: " <<exprTree.symbol << " - immedi: " << exprTree.immediate << endl;
+          }
 	}
 	if (comment!="")
 	remInstr->set_comment(comment);

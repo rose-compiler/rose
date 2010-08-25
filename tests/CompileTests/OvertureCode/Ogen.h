@@ -65,13 +65,13 @@ class Ogen
   int checkInterpolationOnBoundaries(CompositeGrid & cg);
 
   int classifyPoints(CompositeGrid & cg,
-		     realArray & invalidPoint, 
+                     realArray & invalidPoint, 
 		     int & numberOfInvalidPoints,
 		     const int & level,
 		     CompositeGrid & cg0 );
 
   int classifyRedundantPoints( CompositeGrid& cg, const int & grid, 
-			       const int & level, 
+                               const int & level, 
 			       CompositeGrid & cg0  );
 
   int computeOverlap( CompositeGrid & cg, 
@@ -86,7 +86,7 @@ class Ogen
   // int cutHolesNew(CompositeGrid & cg );
 
   int countCrossingsWithRealBoundary(CompositeGrid & cg, 
-				     const realArray & x, 
+                                     const realArray & x, 
 				     IntegerArray & crossings );
   
   int findTrueBoundary(CompositeGrid & cg);
@@ -96,7 +96,7 @@ class Ogen
   bool isNeededForDiscretization(MappedGrid& g, const int iv[3] );
   bool isOnInterpolationBoundary(MappedGrid& g, const int iv[3], const int & width=1 );
   bool isNeededForMultigridRestriction(CompositeGrid& c,
-				       const int & grid,
+                                       const int & grid,
 				       const int & l,
 				       const int iv[3]);
   real computeInterpolationQuality(CompositeGrid & cg, const int & grid,
@@ -108,17 +108,17 @@ class Ogen
   int markPointsReallyNeededForInterpolation( CompositeGrid & cg );
 
   int markPartiallyPeriodicBoundaries( CompositeGrid & cg,
-				       intArray *iInterp  );
+                                       intArray *iInterp  );
   
   int improveQuality( CompositeGrid & cg, const int & grid, RealArray & removedPointBound );
   int updateCanInterpolate( CompositeGrid & cg, CompositeGrid & cg0, RealArray & removedPointBound );
 
   int plot(const aString & title,
-	   CompositeGrid & cg,
+           CompositeGrid & cg,
            const int & queryForChanges =TRUE );
   
   int projectToBoundary( CompositeGrid & cg,
-			 const int & grid, 
+                         const int & grid, 
 			 const realArray & r,
 			 const int iv[3], 
 			 const int ivp[3], 
@@ -129,17 +129,17 @@ class Ogen
   // int projectGhostPoints(CompositeGrid & cg);
 
   int removeExteriorPoints(CompositeGrid & cg, 
-			   const bool boundariesHaveCutHoles= FALSE );
+                           const bool boundariesHaveCutHoles= FALSE );
   
   int removeExteriorPointsNew(CompositeGrid & cg, 
-			   const bool boundariesHaveCutHoles= FALSE );
+                           const bool boundariesHaveCutHoles= FALSE );
   
   int unmarkBoundaryInterpolationPoints( CompositeGrid & cg, const int & grid );
 
   int unmarkInterpolationPoints( CompositeGrid & cg, const bool & unMarkAll=FALSE );
 
   int updateGeometry(CompositeGrid & cg,
-		     CompositeGrid & cgOld,
+                     CompositeGrid & cgOld,
 		     const bool & movingGrids=FALSE, 
 		     const IntegerArray & hasMoved = Overture::nullIntArray() );
   
@@ -239,7 +239,7 @@ class Ogen
 		      const Logical       checkForOneSided);
 
   int checkCrossings(CompositeGrid & cg,
-		     const int & numToCheck, 
+                     const int & numToCheck, 
 		     const IntegerArray & ia, 
 		     intArray & mask,
 		     realArray & x,
@@ -274,7 +274,7 @@ class Ogen
                     const realArray & center );
 
   int generateInterpolationArrays( CompositeGrid & cg, 
-				   const IntegerArray & numberOfInterpolationPoints,
+                                   const IntegerArray & numberOfInterpolationPoints,
 				   intArray *iInterp );
   
   int initialize();
@@ -291,7 +291,7 @@ class Ogen
                               const bool & tryBackupRules = FALSE );
 
   int movingUpdate(CompositeGrid & cg, 
-		   CompositeGrid & cgOld, 
+                   CompositeGrid & cgOld, 
 		   const LogicalArray & hasMoved, 
 		   const MovingGridOption & option =useOptimalAlgorithm );
 

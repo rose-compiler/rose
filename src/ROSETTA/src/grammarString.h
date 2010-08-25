@@ -68,7 +68,7 @@ class GrammarString
   GrammarString( const std::string& inputFunctionNameString );
   // GrammarString( char* inputTypeNameString, char* inputVariableNameString );
   GrammarString( const std::string& inputTypeNameString,
-		 const std::string& inputVariableNameString, 
+                 const std::string& inputVariableNameString, 
 		 const std::string& defaultInitializer, 
 		 const ConstructParamEnum& isConstructorParameter,
 		 const BuildAccessEnum& buildAccessFunctions,
