@@ -378,7 +378,7 @@ namespace VirtualCFG {
       ROSE_ASSERT (!"Bad statement type in getExpressionForTest");
 
    // DQ (11/29/2009): Avoid MSVC warning about missign return stmt.
-	  return NULL;
+      return NULL;
     }
   }
 
@@ -403,8 +403,7 @@ namespace VirtualCFG {
     } else if (isSgFortranDo(srcNode) && srcIndex == 3) {
       return isSgFortranDo(srcNode)->get_bound();
     } else if (isSgSwitchStatement(srcNode)) {
-      return getExpressionForTest(
-	       isSgSwitchStatement(srcNode)->get_item_selector());
+      return getExpressionForTest(isSgSwitchStatement(srcNode)->get_item_selector());
     } else if (isSgComputedGotoStatement(srcNode) && srcIndex == 1) {
       return isSgComputedGotoStatement(srcNode)->get_label_index();
     } else if (isSgConditionalExp(srcNode) && srcIndex == 1) {
@@ -446,11 +445,11 @@ namespace VirtualCFG {
     {
       vector<SgNode*> children = lca->get_traversalSuccessorContainer();
       positionOfChild1 = src == lca ? (srcEnd ? children.size() : 0) :
-			 find(children.begin(), children.end(),
-			      ancestorsOfFrom[1]) - children.begin();
+                         find(children.begin(), children.end(),
+                              ancestorsOfFrom[1]) - children.begin();
       positionOfChild2 = tgt == lca ? (tgtEnd ? children.size() : 0) :
-			 find(children.begin(), children.end(),
-			      ancestorsOfTo[1]) - children.begin();
+                         find(children.begin(), children.end(),
+                              ancestorsOfTo[1]) - children.begin();
       ROSE_ASSERT (positionOfChild1 <= children.size());
       ROSE_ASSERT (positionOfChild2 <= children.size());
       ROSE_ASSERT (src == lca || positionOfChild1 != children.size());
@@ -468,8 +467,8 @@ namespace VirtualCFG {
       // This doesn't use findParent because here we care about lexical
       // children, not CFG children
       size_t positionOfChild = std::find(children.begin(), children.end(),
-				 ancestorsOfFrom[i + 1])
-			    - children.begin();
+                                         ancestorsOfFrom[i + 1])
+                               - children.begin();
       ROSE_ASSERT (positionOfChild != children.size());
       for (int j = positionOfChild - 1; j >= 0; --j) {
 	doEffectsBackwards(children[j], data);
@@ -500,8 +499,8 @@ namespace VirtualCFG {
       // This doesn't use findParent because here we care about lexical
       // children, not CFG children
       size_t positionOfChild = std::find(children.begin(), children.end(),
-				 ancestorsOfTo[i + 1])
-			    - children.begin();
+                                         ancestorsOfTo[i + 1])
+                               - children.begin();
       ROSE_ASSERT (positionOfChild != children.size());
       doEffectsForEnteringScope(anc, data);
       for (unsigned int j = 0; j < positionOfChild; ++j) {
@@ -567,7 +566,7 @@ namespace VirtualCFG {
       SgFunctionParameterList* pl = fd->get_declaration()->get_parameterList();
       const SgInitializedNamePtrList& params = pl->get_args();
       scopesLeaving.insert(scopesLeaving.end(),
-			   params.rbegin(), params.rend());
+                           params.rbegin(), params.rend());
     }
     return scopesLeaving;
   }

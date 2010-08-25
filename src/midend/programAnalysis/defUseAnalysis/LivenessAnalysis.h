@@ -38,7 +38,7 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
   template <typename T> bool hasANodeAboveCurrentChanged(T source);
 
   template <class T> void getAllNodesBelow(T source,
-					   std::vector<T>& visited);
+                                           std::vector<T>& visited);
   template <class T> void getAllNodesAbove(T source, std::vector<T>& visited);
   bool forwardAlgo;
 

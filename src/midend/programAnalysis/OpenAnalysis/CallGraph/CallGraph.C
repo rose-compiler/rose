@@ -83,7 +83,7 @@ CallGraph::~CallGraph()
 
 //--------------------------------------------------------------------------------------------------------------------
 CallGraph::Edge::Edge (CallGraph::Node* n1, CallGraph::Node* n2, 
-		       EdgeType _type) 
+                       EdgeType _type) 
   : DGraph::Edge(n1, n2)
 {
   type = _type;

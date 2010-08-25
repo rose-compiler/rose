@@ -712,8 +712,8 @@ FilteredCFGNode<IsDFAFilter> LivenessAnalysis::run(
 
 		if (abort) {
 			cerr << " \n\n\n Maximum iteration count is reached. ABORTING !! INFINITE EXECUTION ... \n\n"
-			     << endl;
-			worklist.clear();
+                             << endl;
+                        worklist.clear();
 #if 1
 			// need to fix this, apperently some cases run indefinetly
 			abortme = true;

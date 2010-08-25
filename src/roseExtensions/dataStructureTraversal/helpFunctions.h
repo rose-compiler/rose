@@ -21,7 +21,7 @@ extern SgNodePtrVector findScopes (SgNode * astNode);
 extern SgNode* findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType);
 extern SgTypedefDeclaration* findTypedefFromTypeName (SgNodePtrVector nodeVector, const string sageName);
 extern list<SgNode * > findClassDeclarationsFromTypeName (SgNodePtrVector nodeVector,
-				   const string sageName);
+                                                          const string sageName);
 extern list<SgNode * > queryNodeClassDeclarationFromTypedefName (SgNode * astNode,
-					  SgNode * nameNode);
+                                                                 SgNode * nameNode);
 #endif

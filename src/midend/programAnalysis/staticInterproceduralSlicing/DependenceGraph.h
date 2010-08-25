@@ -174,25 +174,25 @@ class DependenceNode:public SimpleDirectedGraphNode
   enum NodeType
   {
     CONTROL=0,                /* !< Used to indicate a dummy node for
-				 control dependence */
+                                 control dependence */
     SGNODE=1,                 /* !< Used to indicate a node with an SgNode
-				 in it */
+                                 in it */
     CALLSITE=2,               /* !< Used to indicate a call-site node for
-				 interprocedural slicing */
+                                 interprocedural slicing */
     ACTUALIN=3,               /* !< Used to indicate the arguments at a call 
-				 site */
+                                 site */
     ACTUALOUT=4,              /* !< Used to indicate returned values at a call site*/
                                   
     FORMALIN=5,               /* !< Used to indicate the arguments into a
-				 function */
+                                 function */
     FORMALOUT=6,              /* !< Used to indicate the return values from
-				 a function */
+                                 a function */
     ENTRY=7,                  /* !< Used to indicate the entry point of a
-				 function */
+                                 function */
     ACTUALRETURN=8,           /* ! since it may happen that an actual out has the same identifiyer as the actual out from the return, an ew id was introduces*/
     FORMALRETURN=9,
     NUM_NODE_TYPES          /* !< Must be last enum in list to establish
-			       number of types */
+                               number of types */
   };
   bool isDummyNode()
   {
@@ -1144,7 +1144,7 @@ class MergedDependenceGraph:public DependenceGraph
      whose set bits indicate the types of edges to consider for
      reachability. */
   std::set < DependenceNode * >_getReachable(std::set < DependenceNode * >start,
-					     int edgeTypesToFollow = 0);
+                                             int edgeTypesToFollow = 0);
 
   /* ! \brief merges graph into the current MergedDependenceGraph
 

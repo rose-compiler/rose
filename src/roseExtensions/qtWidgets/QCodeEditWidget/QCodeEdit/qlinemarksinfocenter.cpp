@@ -338,7 +338,7 @@ void QLineMarksInfoCenter::loadMarkTypes(const QString& f)
 
 	if ( !file.open(QFile::ReadOnly | QFile::Text) )
 	{
-	    qDebug() << "Failed to load MarkTypes" << f;
+	        qDebug() << "Failed to load MarkTypes" << f;
 		return;
 	}
 	// TODO : prefer QXmlStreamReader when building against Qt 4.3.0
@@ -570,30 +570,30 @@ QList<QStringList> QLineMarksInfoCenter::marksLayout(const QString& context)
 void QLineMarksInfoCenter::cursorMoved(QEditor *e)
 {
     /*
-	foreach ( const QLineMarkHandle& lmh, m_lineMarks )
-	{
-		QLineMarkType t = markType(lmh.mark);
+        foreach ( const QLineMarkHandle& lmh, m_lineMarks )
+        {
+                QLineMarkType t = markType(lmh.mark);
 
-		if (
-				(e->fileName() != lmh.file)
-			||
-				(e->document() != lmh.line->document())
-			||
-				(t.persistency == 2)
-			)
-			continue;
+                if (
+                                (e->fileName() != lmh.file)
+                        ||
+                                (e->document() != lmh.line->document())
+                        ||
+                                (t.persistency == 2)
+                        )
+                        continue;
 
-		if ( !t.persistency || (lmh.line != e->cursor().line().handle()) )
-		{
-			removeLineMark(lmh);
-			cursorMoved(e);
-			break;
-		}
-	}*/
+                if ( !t.persistency || (lmh.line != e->cursor().line().handle()) )
+                {
+                        removeLineMark(lmh);
+                        cursorMoved(e);
+                        break;
+                }
+        }*/
 }
 
 /*!
-	\internal
+        \internal
 */
 void QLineMarksInfoCenter::lineDeleted(QDocumentLineHandle *h)
 {

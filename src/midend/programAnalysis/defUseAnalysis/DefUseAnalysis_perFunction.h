@@ -22,16 +22,16 @@ class DefUseAnalysisPF : public DefUseAnalysisAbstract {
 
   template <typename T> 
     bool performUseAndDefinition(SgNode* sgNode, SgInitializedName* initName,
-			       bool isUsage, bool isDefinition, 
-			       SgNode* sgNodeBefore, bool dont_replace,
-			       T cfgNode);
+                                 bool isUsage, bool isDefinition, 
+                                 SgNode* sgNodeBefore, bool dont_replace,
+                                 T cfgNode);
 
 
   // def-use-sepcific ------------------
   void handleDefCopy(SgNode* sgNode, int nrOfInEdges, SgNode* sgNodeBefore, 
-		  filteredCFGNodeType cfgNode);
+                     filteredCFGNodeType cfgNode);
   void handleUseCopy(SgNode* sgNode, int nrOfInEdges, SgNode* sgNodeBefore, 
-		  filteredCFGNodeType cfgNode);
+                     filteredCFGNodeType cfgNode);
   template <typename T> bool defuse(T cfgNode, bool *unhandled);
 
   int nrOfNodesVisitedPF;

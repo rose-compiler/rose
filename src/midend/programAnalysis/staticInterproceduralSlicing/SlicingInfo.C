@@ -48,9 +48,9 @@ void SlicingInfo::visit(SgNode * node)
 					else
 					{
 						// if the following statement is a loop or a if markthe controlexpression instead of the controlflow-stmt
-						     if (isSgForStatement(next)) next=isSgForStatement(next)->get_test();
-						else if (isSgDoWhileStmt(next)) next=isSgDoWhileStmt(next)->get_condition ();
-						else if (isSgWhileStmt(next)) next=isSgWhileStmt(next)->get_condition();
+                                                     if (isSgForStatement(next)) next=isSgForStatement(next)->get_test();
+                                                else if (isSgDoWhileStmt(next)) next=isSgDoWhileStmt(next)->get_condition ();
+                                                else if (isSgWhileStmt(next)) next=isSgWhileStmt(next)->get_condition();
 						else if (isSgIfStmt(next)) next = isSgIfStmt(next)->get_conditional();
 						
 							

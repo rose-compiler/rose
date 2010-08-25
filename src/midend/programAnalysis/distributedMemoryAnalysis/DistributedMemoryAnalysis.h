@@ -39,13 +39,13 @@ public:
   std::vector<int> functionsPerProcess;
   static const int root_process = 0;
   std::pair<int, int> computeFunctionIndices(SgNode *root,
-					     InheritedAttributeType rootInheritedValue,
+                                             InheritedAttributeType rootInheritedValue,
 					     AstTopDownProcessing<InheritedAttributeType> *preTraversal);
   void computeFunctionIndicesPerNode(SgNode *root, std::vector<int>& functionToProcessor,  
-				     InheritedAttributeType rootInheritedValue,
+                                     InheritedAttributeType rootInheritedValue,
 				     AstTopDownProcessing<InheritedAttributeType> *preTraversal);
   void sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<InheritedAttributeType>& inhertiedValues,
-		     std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights);
+                     std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights);
   
  private:
   int my_rank;
