@@ -710,8 +710,10 @@ main(int argc, char *argv[])
             char *extension = strrchr(raw_filename, '.');
             if (extension && !strcmp(extension, ".index")) {
                 std::string basename(raw_filename, extension-raw_filename);
-                if (!raw_map.load(basename)) {
-                    fprintf(stderr, "%s: error parsing memory dump: %s\n", argv[0], raw_filename);
+                try {
+                    raw_map.load(basename);
+                } catch (const MemoryMap::Exception &e) {
+                    std::cerr <<e <<"\n";
                     exit(1);
                 }
             } else {
