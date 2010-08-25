@@ -45,24 +45,24 @@ static boolean flag[ISIZ1/2*2+1];
 
 /* function declarations */
 static void blts (int nx, int ny, int nz, int k,
-		  double omega,
-		  double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
-		  double ldz[ISIZ1][ISIZ2][5][5],
-		  double ldy[ISIZ1][ISIZ2][5][5],
-		  double ldx[ISIZ1][ISIZ2][5][5],
-		  double d[ISIZ1][ISIZ2][5][5],
-		  int ist, int iend, int jst, int jend,
-		  int nx0, int ny0 );
+                  double omega,
+                  double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
+                  double ldz[ISIZ1][ISIZ2][5][5],
+                  double ldy[ISIZ1][ISIZ2][5][5],
+                  double ldx[ISIZ1][ISIZ2][5][5],
+                  double d[ISIZ1][ISIZ2][5][5],
+                  int ist, int iend, int jst, int jend,
+                  int nx0, int ny0 );
 static void buts(int nx, int ny, int nz, int k,
-		 double omega,
-		 double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
-		 double tv[ISIZ1][ISIZ2][5],
-		 double d[ISIZ1][ISIZ2][5][5],
-		 double udx[ISIZ1][ISIZ2][5][5],
-		 double udy[ISIZ1][ISIZ2][5][5],
-		 double udz[ISIZ1][ISIZ2][5][5],
-		 int ist, int iend, int jst, int jend,
-		 int nx0, int ny0 );
+                 double omega,
+                 double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
+                 double tv[ISIZ1][ISIZ2][5],
+                 double d[ISIZ1][ISIZ2][5][5],
+                 double udx[ISIZ1][ISIZ2][5][5],
+                 double udy[ISIZ1][ISIZ2][5][5],
+                 double udz[ISIZ1][ISIZ2][5][5],
+                 int ist, int iend, int jst, int jend,
+                 int nx0, int ny0 );
 static void domain(void);
 static void erhs(void);
 static void error(void);
@@ -70,10 +70,10 @@ static void exact( int i, int j, int k, double u000ijk[5] );
 static void jacld(int k);
 static void jacu(int k);
 static void l2norm (int nx0, int ny0, int nz0,
-		    int ist, int iend,
-		    int jst, int jend,
-		    double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
-		    double sum[5]);
+                    int ist, int iend,
+                    int jst, int jend,
+                    double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
+                    double sum[5]);
 static void pintgr(void);
 static void read_input(void);
 static void rhs(void);
@@ -82,7 +82,7 @@ static void setcoeff(void);
 static void setiv(void);
 static void ssor(void);
 static void verify(double xcr[5], double xce[5], double xci,
-		   char *cclass, boolean *verified);
+                   char *cclass, boolean *verified);
 
 /*--------------------------------------------------------------------
       program applu
@@ -160,36 +160,36 @@ c   verification test
 --------------------------------------------------------------------*/
   verify ( rsdnm, errnm, frc, &cclass, &verified );
   mflops = (double)itmax*(1984.77*(double)nx0
-			 *(double)ny0
-			 *(double)nz0
-			 -10923.3*pow2((double)( nx0+ny0+nz0 )/3.0)
-			 +27770.9* (double)( nx0+ny0+nz0 )/3.0
-			 -144010.0)
+                         *(double)ny0
+                         *(double)nz0
+                         -10923.3*pow2((double)( nx0+ny0+nz0 )/3.0)
+                         +27770.9* (double)( nx0+ny0+nz0 )/3.0
+                         -144010.0)
     / (maxtime*1000000.0);
 
   c_print_results("LU", cclass, nx0,
-		  ny0, nz0, itmax, nthreads,
-		  maxtime, mflops, "          floating point", verified, 
-		  NPBVERSION, COMPILETIME, CS1, CS2, CS3, CS4, CS5, CS6, 
-		  "(none)");
+                  ny0, nz0, itmax, nthreads,
+                  maxtime, mflops, "          floating point", verified, 
+                  NPBVERSION, COMPILETIME, CS1, CS2, CS3, CS4, CS5, CS6, 
+                  "(none)");
 }
 
 /*--------------------------------------------------------------------
 --------------------------------------------------------------------*/
 
 static void blts (int nx, int ny, int nz, int k,
-		  double omega,
+                  double omega,
 /*--------------------------------------------------------------------
 c   To improve cache performance, second two dimensions padded by 1 
 c   for even number sizes only.  Only needed in v.
 --------------------------------------------------------------------*/
-		  double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
-		  double ldz[ISIZ1][ISIZ2][5][5],
-		  double ldy[ISIZ1][ISIZ2][5][5],
-		  double ldx[ISIZ1][ISIZ2][5][5],
-		  double d[ISIZ1][ISIZ2][5][5],
-		  int ist, int iend, int jst, int jend,
-		  int nx0, int ny0 ) {
+                  double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
+                  double ldz[ISIZ1][ISIZ2][5][5],
+                  double ldy[ISIZ1][ISIZ2][5][5],
+                  double ldx[ISIZ1][ISIZ2][5][5],
+                  double d[ISIZ1][ISIZ2][5][5],
+                  int ist, int iend, int jst, int jend,
+                  int nx0, int ny0 ) {
 /*--------------------------------------------------------------------
 c
 c   compute the regular-sparse, block lower triangular solution:
@@ -209,12 +209,12 @@ c  local variables
   for (i = ist; i <= iend; i++) {
     for (j = jst; j <= jend; j++) {
       for (m = 0; m < 5; m++) {
-	v[i][j][k][m] = v[i][j][k][m]
-	  - omega * (  ldz[i][j][m][0] * v[i][j][k-1][0]
-		       + ldz[i][j][m][1] * v[i][j][k-1][1]
-		       + ldz[i][j][m][2] * v[i][j][k-1][2]
-		       + ldz[i][j][m][3] * v[i][j][k-1][3]
-		       + ldz[i][j][m][4] * v[i][j][k-1][4]  );
+        v[i][j][k][m] = v[i][j][k][m]
+          - omega * (  ldz[i][j][m][0] * v[i][j][k-1][0]
+                       + ldz[i][j][m][1] * v[i][j][k-1][1]
+                       + ldz[i][j][m][2] * v[i][j][k-1][2]
+                       + ldz[i][j][m][3] * v[i][j][k-1][3]
+                       + ldz[i][j][m][4] * v[i][j][k-1][4]  );
       }
     }
   }
@@ -224,33 +224,33 @@ c  local variables
     
 #if defined(_OPENMP)      
     if (i != ist) {
-	while (flag[i-1] == 0) {
+        while (flag[i-1] == 0) {
 #pragma omp flush(flag)
-	    ;
-	}
+            ;
+        }
     }
     if (i != iend) {
-	while (flag[i] == 1) {
+        while (flag[i] == 1) {
 #pragma omp flush(flag)
-	    ;
-	}
+            ;
+        }
     }
 #endif /* _OPENMP */
     
     for (j = jst; j <= jend; j++) {
       for (m = 0; m < 5; m++) {
 
-	v[i][j][k][m] = v[i][j][k][m]
-	  - omega * ( ldy[i][j][m][0] * v[i][j-1][k][0]
-		      + ldx[i][j][m][0] * v[i-1][j][k][0]
-		      + ldy[i][j][m][1] * v[i][j-1][k][1]
-		      + ldx[i][j][m][1] * v[i-1][j][k][1]
-		      + ldy[i][j][m][2] * v[i][j-1][k][2]
-		      + ldx[i][j][m][2] * v[i-1][j][k][2]
-		      + ldy[i][j][m][3] * v[i][j-1][k][3]
-		      + ldx[i][j][m][3] * v[i-1][j][k][3]
-		      + ldy[i][j][m][4] * v[i][j-1][k][4]
-		      + ldx[i][j][m][4] * v[i-1][j][k][4] );
+        v[i][j][k][m] = v[i][j][k][m]
+          - omega * ( ldy[i][j][m][0] * v[i][j-1][k][0]
+                      + ldx[i][j][m][0] * v[i-1][j][k][0]
+                      + ldy[i][j][m][1] * v[i][j-1][k][1]
+                      + ldx[i][j][m][1] * v[i-1][j][k][1]
+                      + ldy[i][j][m][2] * v[i][j-1][k][2]
+                      + ldx[i][j][m][2] * v[i-1][j][k][2]
+                      + ldy[i][j][m][3] * v[i][j-1][k][3]
+                      + ldx[i][j][m][3] * v[i-1][j][k][3]
+                      + ldy[i][j][m][4] * v[i][j-1][k][4]
+                      + ldx[i][j][m][4] * v[i-1][j][k][4] );
       }
        
 /*--------------------------------------------------------------------
@@ -259,148 +259,148 @@ c
 c   forward elimination
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	tmat[m][0] = d[i][j][m][0];
-	tmat[m][1] = d[i][j][m][1];
-	tmat[m][2] = d[i][j][m][2];
-	tmat[m][3] = d[i][j][m][3];
-	tmat[m][4] = d[i][j][m][4];
+        tmat[m][0] = d[i][j][m][0];
+        tmat[m][1] = d[i][j][m][1];
+        tmat[m][2] = d[i][j][m][2];
+        tmat[m][3] = d[i][j][m][3];
+        tmat[m][4] = d[i][j][m][4];
       }
 
       tmp1 = 1.0 / tmat[0][0];
       tmp = tmp1 * tmat[1][0];
       tmat[1][1] =  tmat[1][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[1][2] =  tmat[1][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[1][3] =  tmat[1][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[1][4] =  tmat[1][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       v[i][j][k][1] = v[i][j][k][1]
-	- v[i][j][k][0] * tmp;
+        - v[i][j][k][0] * tmp;
 
       tmp = tmp1 * tmat[2][0];
       tmat[2][1] =  tmat[2][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[2][2] =  tmat[2][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[2][3] =  tmat[2][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[2][4] =  tmat[2][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       v[i][j][k][2] = v[i][j][k][2]
-	- v[i][j][k][0] * tmp;
+        - v[i][j][k][0] * tmp;
 
       tmp = tmp1 * tmat[3][0];
       tmat[3][1] =  tmat[3][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[3][2] =  tmat[3][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[3][3] =  tmat[3][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[3][4] =  tmat[3][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       v[i][j][k][3] = v[i][j][k][3]
-	- v[i][j][k][0] * tmp;
+        - v[i][j][k][0] * tmp;
 
       tmp = tmp1 * tmat[4][0];
       tmat[4][1] =  tmat[4][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[4][2] =  tmat[4][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[4][3] =  tmat[4][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       v[i][j][k][4] = v[i][j][k][4]
-	- v[i][j][k][0] * tmp;
+        - v[i][j][k][0] * tmp;
 
       tmp1 = 1.0 / tmat[ 1][1];
       tmp = tmp1 * tmat[ 2][1];
       tmat[2][2] =  tmat[2][2]
-	- tmp * tmat[1][2];
+        - tmp * tmat[1][2];
       tmat[2][3] =  tmat[2][3]
-	- tmp * tmat[1][3];
+        - tmp * tmat[1][3];
       tmat[2][4] =  tmat[2][4]
-	- tmp * tmat[1][4];
+        - tmp * tmat[1][4];
       v[i][j][k][2] = v[i][j][k][2]
-	- v[i][j][k][1] * tmp;
+        - v[i][j][k][1] * tmp;
 
       tmp = tmp1 * tmat[3][1];
       tmat[3][2] =  tmat[3][2]
-	- tmp * tmat[1][2];
+        - tmp * tmat[1][2];
       tmat[3][3] =  tmat[3][3]
-	- tmp * tmat[1][3];
+        - tmp * tmat[1][3];
       tmat[3][4] =  tmat[3][4]
-	- tmp * tmat[1][4];
+        - tmp * tmat[1][4];
       v[i][j][k][3] = v[i][j][k][3]
-	- v[i][j][k][1] * tmp;
+        - v[i][j][k][1] * tmp;
 
       tmp = tmp1 * tmat[4][1];
       tmat[4][2] =  tmat[4][2]
-	- tmp * tmat[1][2];
+        - tmp * tmat[1][2];
       tmat[4][3] =  tmat[4][3]
-	- tmp * tmat[1][3];
+        - tmp * tmat[1][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[1][4];
+        - tmp * tmat[1][4];
       v[i][j][k][4] = v[i][j][k][4]
-	- v[i][j][k][1] * tmp;
+        - v[i][j][k][1] * tmp;
 
       tmp1 = 1.0 / tmat[2][2];
       tmp = tmp1 * tmat[3][2];
       tmat[3][3] =  tmat[3][3]
-	- tmp * tmat[2][3];
+        - tmp * tmat[2][3];
       tmat[3][4] =  tmat[3][4]
-	- tmp * tmat[2][4];
+        - tmp * tmat[2][4];
       v[i][j][k][3] = v[i][j][k][3]
         - v[i][j][k][2] * tmp;
 
       tmp = tmp1 * tmat[4][2];
       tmat[4][3] =  tmat[4][3]
-	- tmp * tmat[2][3];
+        - tmp * tmat[2][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[2][4];
+        - tmp * tmat[2][4];
       v[i][j][k][4] = v[i][j][k][4]
-	- v[i][j][k][2] * tmp;
+        - v[i][j][k][2] * tmp;
 
       tmp1 = 1.0 / tmat[3][3];
       tmp = tmp1 * tmat[4][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[3][4];
+        - tmp * tmat[3][4];
       v[i][j][k][4] = v[i][j][k][4]
-	- v[i][j][k][3] * tmp;
+        - v[i][j][k][3] * tmp;
 
 /*--------------------------------------------------------------------
 c   back substitution
 --------------------------------------------------------------------*/
       v[i][j][k][4] = v[i][j][k][4]
-	/ tmat[4][4];
+        / tmat[4][4];
 
       v[i][j][k][3] = v[i][j][k][3]
-	- tmat[3][4] * v[i][j][k][4];
+        - tmat[3][4] * v[i][j][k][4];
       v[i][j][k][3] = v[i][j][k][3]
-	/ tmat[3][3];
+        / tmat[3][3];
 
       v[i][j][k][2] = v[i][j][k][2]
-	- tmat[2][3] * v[i][j][k][3]
-	- tmat[2][4] * v[i][j][k][4];
+        - tmat[2][3] * v[i][j][k][3]
+        - tmat[2][4] * v[i][j][k][4];
       v[i][j][k][2] = v[i][j][k][2]
-	/ tmat[2][2];
+        / tmat[2][2];
 
       v[i][j][k][1] = v[i][j][k][1]
-	- tmat[1][2] * v[i][j][k][2]
-	- tmat[1][3] * v[i][j][k][3]
-	- tmat[1][4] * v[i][j][k][4];
+        - tmat[1][2] * v[i][j][k][2]
+        - tmat[1][3] * v[i][j][k][3]
+        - tmat[1][4] * v[i][j][k][4];
       v[i][j][k][1] = v[i][j][k][1]
-	/ tmat[1][1];
+        / tmat[1][1];
 
       v[i][j][k][0] = v[i][j][k][0]
-	- tmat[0][1] * v[i][j][k][1]
-	- tmat[0][2] * v[i][j][k][2]
-	- tmat[0][3] * v[i][j][k][3]
-	- tmat[0][4] * v[i][j][k][4];
+        - tmat[0][1] * v[i][j][k][1]
+        - tmat[0][2] * v[i][j][k][2]
+        - tmat[0][3] * v[i][j][k][3]
+        - tmat[0][4] * v[i][j][k][4];
       v[i][j][k][0] = v[i][j][k][0]
-	/ tmat[0][0];
+        / tmat[0][0];
     }
     
 #if defined(_OPENMP)    
@@ -415,19 +415,19 @@ c   back substitution
 --------------------------------------------------------------------*/
 
 static void buts(int nx, int ny, int nz, int k,
-		 double omega,
+                 double omega,
 /*--------------------------------------------------------------------
 c   To improve cache performance, second two dimensions padded by 1 
 c   for even number sizes only.  Only needed in v.
 --------------------------------------------------------------------*/
-		 double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
-		 double tv[ISIZ1][ISIZ2][5],
-		 double d[ISIZ1][ISIZ2][5][5],
-		 double udx[ISIZ1][ISIZ2][5][5],
-		 double udy[ISIZ1][ISIZ2][5][5],
-		 double udz[ISIZ1][ISIZ2][5][5],
-		 int ist, int iend, int jst, int jend,
-		 int nx0, int ny0 ) {
+                 double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
+                 double tv[ISIZ1][ISIZ2][5],
+                 double d[ISIZ1][ISIZ2][5][5],
+                 double udx[ISIZ1][ISIZ2][5][5],
+                 double udy[ISIZ1][ISIZ2][5][5],
+                 double udz[ISIZ1][ISIZ2][5][5],
+                 int ist, int iend, int jst, int jend,
+                 int nx0, int ny0 ) {
 /*--------------------------------------------------------------------
 c
 c   compute the regular-sparse, block upper triangular solution:
@@ -447,12 +447,12 @@ c  local variables
   for (i = iend; i >= ist; i--) {
     for (j = jend; j >= jst; j--) {
       for (m = 0; m < 5; m++) {
-	tv[i][j][m] = 
-	  omega * (  udz[i][j][m][0] * v[i][j][k+1][0]
-		     + udz[i][j][m][1] * v[i][j][k+1][1]
-		     + udz[i][j][m][2] * v[i][j][k+1][2]
-		     + udz[i][j][m][3] * v[i][j][k+1][3]
-		     + udz[i][j][m][4] * v[i][j][k+1][4] );
+        tv[i][j][m] = 
+          omega * (  udz[i][j][m][0] * v[i][j][k+1][0]
+                     + udz[i][j][m][1] * v[i][j][k+1][1]
+                     + udz[i][j][m][2] * v[i][j][k+1][2]
+                     + udz[i][j][m][3] * v[i][j][k+1][3]
+                     + udz[i][j][m][4] * v[i][j][k+1][4] );
       }
     }
   }
@@ -463,178 +463,178 @@ c  local variables
     if (i != iend) {
       while (flag[i+1] == 0) {
 #pragma omp flush(flag)
-	;
+        ;
       }
     }
     if (i != ist) {
       while (flag[i] == 1) {
 #pragma omp flush(flag)
-	;
+        ;
       }
     }
 #endif /* _OPENMP */
     
     for (j = jend; j >= jst; j--) {
       for (m = 0; m < 5; m++) {
-	tv[i][j][m] = tv[i][j][m]
-	  + omega * ( udy[i][j][m][0] * v[i][j+1][k][0]
-		      + udx[i][j][m][0] * v[i+1][j][k][0]
-		      + udy[i][j][m][1] * v[i][j+1][k][1]
-		      + udx[i][j][m][1] * v[i+1][j][k][1]
-		      + udy[i][j][m][2] * v[i][j+1][k][2]
-		      + udx[i][j][m][2] * v[i+1][j][k][2]
-		      + udy[i][j][m][3] * v[i][j+1][k][3]
-		      + udx[i][j][m][3] * v[i+1][j][k][3]
-		      + udy[i][j][m][4] * v[i][j+1][k][4]
-		      + udx[i][j][m][4] * v[i+1][j][k][4] );
+        tv[i][j][m] = tv[i][j][m]
+          + omega * ( udy[i][j][m][0] * v[i][j+1][k][0]
+                      + udx[i][j][m][0] * v[i+1][j][k][0]
+                      + udy[i][j][m][1] * v[i][j+1][k][1]
+                      + udx[i][j][m][1] * v[i+1][j][k][1]
+                      + udy[i][j][m][2] * v[i][j+1][k][2]
+                      + udx[i][j][m][2] * v[i+1][j][k][2]
+                      + udy[i][j][m][3] * v[i][j+1][k][3]
+                      + udx[i][j][m][3] * v[i+1][j][k][3]
+                      + udy[i][j][m][4] * v[i][j+1][k][4]
+                      + udx[i][j][m][4] * v[i+1][j][k][4] );
       }
 
 /*--------------------------------------------------------------------
 c   diagonal block inversion
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	tmat[m][0] = d[i][j][m][0];
-	tmat[m][1] = d[i][j][m][1];
-	tmat[m][2] = d[i][j][m][2];
-	tmat[m][3] = d[i][j][m][3];
-	tmat[m][4] = d[i][j][m][4];
+        tmat[m][0] = d[i][j][m][0];
+        tmat[m][1] = d[i][j][m][1];
+        tmat[m][2] = d[i][j][m][2];
+        tmat[m][3] = d[i][j][m][3];
+        tmat[m][4] = d[i][j][m][4];
       }
 
       tmp1 = 1.0 / tmat[0][0];
       tmp = tmp1 * tmat[1][0];
       tmat[1][1] =  tmat[1][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[1][2] =  tmat[1][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[1][3] =  tmat[1][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[1][4] =  tmat[1][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       tv[i][j][1] = tv[i][j][1]
-	- tv[i][j][0] * tmp;
+        - tv[i][j][0] * tmp;
 
       tmp = tmp1 * tmat[2][0];
       tmat[2][1] =  tmat[2][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[2][2] =  tmat[2][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[2][3] =  tmat[2][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[2][4] =  tmat[2][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       tv[i][j][2] = tv[i][j][2]
-	- tv[i][j][0] * tmp;
+        - tv[i][j][0] * tmp;
 
       tmp = tmp1 * tmat[3][0];
       tmat[3][1] =  tmat[3][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[3][2] =  tmat[3][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[3][3] =  tmat[3][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[3][4] =  tmat[3][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       tv[i][j][3] = tv[i][j][3]
-	- tv[i][j][0] * tmp;
+        - tv[i][j][0] * tmp;
 
       tmp = tmp1 * tmat[4][0];
       tmat[4][1] =  tmat[4][1]
-	- tmp * tmat[0][1];
+        - tmp * tmat[0][1];
       tmat[4][2] =  tmat[4][2]
-	- tmp * tmat[0][2];
+        - tmp * tmat[0][2];
       tmat[4][3] =  tmat[4][3]
-	- tmp * tmat[0][3];
+        - tmp * tmat[0][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[0][4];
+        - tmp * tmat[0][4];
       tv[i][j][4] = tv[i][j][4]
-	- tv[i][j][0] * tmp;
+        - tv[i][j][0] * tmp;
 
       tmp1 = 1.0 / tmat[1][1];
       tmp = tmp1 * tmat[2][1];
       tmat[2][2] =  tmat[2][2]
-	- tmp * tmat[1][2];
+        - tmp * tmat[1][2];
       tmat[2][3] =  tmat[2][3]
-	- tmp * tmat[1][3];
+        - tmp * tmat[1][3];
       tmat[2][4] =  tmat[2][4]
-	- tmp * tmat[1][4];
+        - tmp * tmat[1][4];
       tv[i][j][2] = tv[i][j][2]
-	- tv[i][j][1] * tmp;
+        - tv[i][j][1] * tmp;
 
       tmp = tmp1 * tmat[3][1];
       tmat[3][2] =  tmat[3][2]
-	- tmp * tmat[1][2];
+        - tmp * tmat[1][2];
       tmat[3][3] =  tmat[3][3]
-	- tmp * tmat[1][3];
+        - tmp * tmat[1][3];
       tmat[3][4] =  tmat[3][4]
-	- tmp * tmat[1][4];
+        - tmp * tmat[1][4];
       tv[i][j][3] = tv[i][j][3]
-	- tv[i][j][1] * tmp;
+        - tv[i][j][1] * tmp;
 
       tmp = tmp1 * tmat[4][1];
       tmat[4][2] =  tmat[4][2]
-	- tmp * tmat[1][2];
+        - tmp * tmat[1][2];
       tmat[4][3] =  tmat[4][3]
-	- tmp * tmat[1][3];
+        - tmp * tmat[1][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[1][4];
+        - tmp * tmat[1][4];
       tv[i][j][4] = tv[i][j][4]
-	- tv[i][j][1] * tmp;
+        - tv[i][j][1] * tmp;
 
       tmp1 = 1.0 / tmat[2][2];
       tmp = tmp1 * tmat[3][2];
       tmat[3][3] =  tmat[3][3]
-	- tmp * tmat[2][3];
+        - tmp * tmat[2][3];
       tmat[3][4] =  tmat[3][4]
-	- tmp * tmat[2][4];
+        - tmp * tmat[2][4];
       tv[i][j][3] = tv[i][j][3]
-	- tv[i][j][2] * tmp;
+        - tv[i][j][2] * tmp;
 
       tmp = tmp1 * tmat[4][2];
       tmat[4][3] =  tmat[4][3]
-	- tmp * tmat[2][3];
+        - tmp * tmat[2][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[2][4];
+        - tmp * tmat[2][4];
       tv[i][j][4] = tv[i][j][4]
-	- tv[i][j][2] * tmp;
+        - tv[i][j][2] * tmp;
 
       tmp1 = 1.0 / tmat[3][3];
       tmp = tmp1 * tmat[4][3];
       tmat[4][4] =  tmat[4][4]
-	- tmp * tmat[3][4];
+        - tmp * tmat[3][4];
       tv[i][j][4] = tv[i][j][4]
-	- tv[i][j][3] * tmp;
+        - tv[i][j][3] * tmp;
 
 /*--------------------------------------------------------------------
 c   back substitution
 --------------------------------------------------------------------*/
       tv[i][j][4] = tv[i][j][4]
-	/ tmat[4][4];
+        / tmat[4][4];
 
       tv[i][j][3] = tv[i][j][3]
-	- tmat[3][4] * tv[i][j][4];
+        - tmat[3][4] * tv[i][j][4];
       tv[i][j][3] = tv[i][j][3]
-	/ tmat[3][3];
+        / tmat[3][3];
 
       tv[i][j][2] = tv[i][j][2]
-	- tmat[2][3] * tv[i][j][3]
-	- tmat[2][4] * tv[i][j][4];
+        - tmat[2][3] * tv[i][j][3]
+        - tmat[2][4] * tv[i][j][4];
       tv[i][j][2] = tv[i][j][2]
-	/ tmat[2][2];
+        / tmat[2][2];
 
       tv[i][j][1] = tv[i][j][1]
-	- tmat[1][2] * tv[i][j][2]
-	- tmat[1][3] * tv[i][j][3]
-	- tmat[1][4] * tv[i][j][4];
+        - tmat[1][2] * tv[i][j][2]
+        - tmat[1][3] * tv[i][j][3]
+        - tmat[1][4] * tv[i][j][4];
       tv[i][j][1] = tv[i][j][1]
-	/ tmat[1][1];
+        / tmat[1][1];
 
       tv[i][j][0] = tv[i][j][0]
-	- tmat[0][1] * tv[i][j][1]
-	- tmat[0][2] * tv[i][j][2]
-	- tmat[0][3] * tv[i][j][3]
-	- tmat[0][4] * tv[i][j][4];
+        - tmat[0][1] * tv[i][j][1]
+        - tmat[0][2] * tv[i][j][2]
+        - tmat[0][3] * tv[i][j][3]
+        - tmat[0][4] * tv[i][j][4];
       tv[i][j][0] = tv[i][j][0]
-	/ tmat[0][0];
+        / tmat[0][0];
 
       v[i][j][k][0] = v[i][j][k][0] - tv[i][j][0];
       v[i][j][k][1] = v[i][j][k][1] - tv[i][j][1];
@@ -669,18 +669,18 @@ c   check the sub-domain size
 --------------------------------------------------------------------*/
   if ( nx < 4 || ny < 4 || nz < 4 ) {
     printf("     SUBDOMAIN SIZE IS TOO SMALL - \n"
-	   "     ADJUST PROBLEM SIZE OR NUMBER OF PROCESSORS\n"
-	   "     SO THAT NX, NY AND NZ ARE GREATER THAN OR EQUAL\n"
-	   "     TO 4 THEY ARE CURRENTLY%3d%3d%3d\n", nx, ny, nz);
+           "     ADJUST PROBLEM SIZE OR NUMBER OF PROCESSORS\n"
+           "     SO THAT NX, NY AND NZ ARE GREATER THAN OR EQUAL\n"
+           "     TO 4 THEY ARE CURRENTLY%3d%3d%3d\n", nx, ny, nz);
     exit(1);
   }
 
   if ( nx > ISIZ1 || ny > ISIZ2 || nz > ISIZ3 ) {
     printf("     SUBDOMAIN SIZE IS TOO LARGE - \n"
-	   "     ADJUST PROBLEM SIZE OR NUMBER OF PROCESSORS\n"
-	   "     SO THAT NX, NY AND NZ ARE LESS THAN OR EQUAL TO \n"
-	   "     ISIZ1, ISIZ2 AND ISIZ3 RESPECTIVELY.  THEY ARE\n"
-	   "     CURRENTLY%4d%4d%4d\n", nx, ny, nz);
+           "     ADJUST PROBLEM SIZE OR NUMBER OF PROCESSORS\n"
+           "     SO THAT NX, NY AND NZ ARE LESS THAN OR EQUAL TO \n"
+           "     ISIZ1, ISIZ2 AND ISIZ3 RESPECTIVELY.  THEY ARE\n"
+           "     CURRENTLY%4d%4d%4d\n", nx, ny, nz);
     exit(1);
   }
 
@@ -731,9 +731,9 @@ c  local variables
   for (i = 0; i < nx; i++) {
     for (j = 0; j < ny; j++) {
       for (k = 0; k < nz; k++) {
-	for (m = 0; m < 5; m++) {
-	  frct[i][j][k][m] = 0.0;
-	}
+        for (m = 0; m < 5; m++) {
+          frct[i][j][k][m] = 0.0;
+        }
       }
     }
   }
@@ -746,22 +746,22 @@ c  local variables
       jglob = j;
       eta = ( (double)(jglob) ) / ( ny0 - 1 );
       for (k = 0; k < nz; k++) {
-	zeta = ( (double)(k) ) / ( nz - 1 );
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] =  ce[m][0]
-	    + ce[m][1] * xi
-	    + ce[m][2] * eta
-	    + ce[m][3] * zeta
-	    + ce[m][4] * xi * xi
-	    + ce[m][5] * eta * eta
-	    + ce[m][6] * zeta * zeta
-	    + ce[m][7] * xi * xi * xi
-	    + ce[m][8] * eta * eta * eta
-	    + ce[m][9] * zeta * zeta * zeta
-	    + ce[m][10] * xi * xi * xi * xi
-	    + ce[m][11] * eta * eta * eta * eta
-	    + ce[m][12] * zeta * zeta * zeta * zeta;
-	}
+        zeta = ( (double)(k) ) / ( nz - 1 );
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] =  ce[m][0]
+            + ce[m][1] * xi
+            + ce[m][2] * eta
+            + ce[m][3] * zeta
+            + ce[m][4] * xi * xi
+            + ce[m][5] * eta * eta
+            + ce[m][6] * zeta * zeta
+            + ce[m][7] * xi * xi * xi
+            + ce[m][8] * eta * eta * eta
+            + ce[m][9] * zeta * zeta * zeta
+            + ce[m][10] * xi * xi * xi * xi
+            + ce[m][11] * eta * eta * eta * eta
+            + ce[m][12] * zeta * zeta * zeta * zeta;
+        }
       }
     }
   }
@@ -777,17 +777,17 @@ c   xi-direction flux differences
   for (i = L1; i <= L2; i++) {
     for (j = jst; j <= jend; j++) {
       for (k = 1; k < nz - 1; k++) {
-	flux[i][j][k][0] = rsd[i][j][k][1];
-	u21 = rsd[i][j][k][1] / rsd[i][j][k][0];
-	q = 0.50 * (  rsd[i][j][k][1] * rsd[i][j][k][1]
-		      + rsd[i][j][k][2] * rsd[i][j][k][2]
-		      + rsd[i][j][k][3] * rsd[i][j][k][3] )
-	  / rsd[i][j][k][0];
-	flux[i][j][k][1] = rsd[i][j][k][1] * u21 + C2 * 
-	  ( rsd[i][j][k][4] - q );
-	flux[i][j][k][2] = rsd[i][j][k][2] * u21;
-	flux[i][j][k][3] = rsd[i][j][k][3] * u21;
-	flux[i][j][k][4] = ( C1 * rsd[i][j][k][4] - C2 * q ) * u21;
+        flux[i][j][k][0] = rsd[i][j][k][1];
+        u21 = rsd[i][j][k][1] / rsd[i][j][k][0];
+        q = 0.50 * (  rsd[i][j][k][1] * rsd[i][j][k][1]
+                      + rsd[i][j][k][2] * rsd[i][j][k][2]
+                      + rsd[i][j][k][3] * rsd[i][j][k][3] )
+          / rsd[i][j][k][0];
+        flux[i][j][k][1] = rsd[i][j][k][1] * u21 + C2 * 
+          ( rsd[i][j][k][4] - q );
+        flux[i][j][k][2] = rsd[i][j][k][2] * u21;
+        flux[i][j][k][3] = rsd[i][j][k][3] * u21;
+        flux[i][j][k][4] = ( C1 * rsd[i][j][k][4] - C2 * q ) * u21;
       }
     }
   }
@@ -796,103 +796,103 @@ c   xi-direction flux differences
   for (j = jst; j <= jend; j++) {
     for (k = 1; k <= nz - 2; k++) {
       for (i = ist; i <= iend; i++) {
-	for (m = 0; m < 5; m++) {
-	  frct[i][j][k][m] =  frct[i][j][k][m]
-	    - tx2 * ( flux[i+1][j][k][m] - flux[i-1][j][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          frct[i][j][k][m] =  frct[i][j][k][m]
+            - tx2 * ( flux[i+1][j][k][m] - flux[i-1][j][k][m] );
+        }
       }
       for (i = ist; i <= L2; i++) {
-	tmp = 1.0 / rsd[i][j][k][0];
+        tmp = 1.0 / rsd[i][j][k][0];
 
-	u21i = tmp * rsd[i][j][k][1];
-	u31i = tmp * rsd[i][j][k][2];
-	u41i = tmp * rsd[i][j][k][3];
-	u51i = tmp * rsd[i][j][k][4];
+        u21i = tmp * rsd[i][j][k][1];
+        u31i = tmp * rsd[i][j][k][2];
+        u41i = tmp * rsd[i][j][k][3];
+        u51i = tmp * rsd[i][j][k][4];
 
-	tmp = 1.0 / rsd[i-1][j][k][0];
+        tmp = 1.0 / rsd[i-1][j][k][0];
 
-	u21im1 = tmp * rsd[i-1][j][k][1];
-	u31im1 = tmp * rsd[i-1][j][k][2];
-	u41im1 = tmp * rsd[i-1][j][k][3];
-	u51im1 = tmp * rsd[i-1][j][k][4];
+        u21im1 = tmp * rsd[i-1][j][k][1];
+        u31im1 = tmp * rsd[i-1][j][k][2];
+        u41im1 = tmp * rsd[i-1][j][k][3];
+        u51im1 = tmp * rsd[i-1][j][k][4];
 
-	flux[i][j][k][1] = (4.0/3.0) * tx3 * 
-	  ( u21i - u21im1 );
-	flux[i][j][k][2] = tx3 * ( u31i - u31im1 );
-	flux[i][j][k][3] = tx3 * ( u41i - u41im1 );
-	flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
-	  * tx3 * ( ( u21i * u21i + u31i * u31i + u41i * u41i )
-		    - ( u21im1*u21im1 + u31im1*u31im1 + u41im1*u41im1 ) )
-	  + (1.0/6.0)
-	  * tx3 * ( u21i*u21i - u21im1*u21im1 )
-	  + C1 * C5 * tx3 * ( u51i - u51im1 );
+        flux[i][j][k][1] = (4.0/3.0) * tx3 * 
+          ( u21i - u21im1 );
+        flux[i][j][k][2] = tx3 * ( u31i - u31im1 );
+        flux[i][j][k][3] = tx3 * ( u41i - u41im1 );
+        flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
+          * tx3 * ( ( u21i * u21i + u31i * u31i + u41i * u41i )
+                    - ( u21im1*u21im1 + u31im1*u31im1 + u41im1*u41im1 ) )
+          + (1.0/6.0)
+          * tx3 * ( u21i*u21i - u21im1*u21im1 )
+          + C1 * C5 * tx3 * ( u51i - u51im1 );
       }
 
       for (i = ist; i <= iend; i++) {
-	frct[i][j][k][0] = frct[i][j][k][0]
-	  + dx1 * tx1 * (            rsd[i-1][j][k][0]
-				     - 2.0 * rsd[i][j][k][0]
-				     +       	    rsd[i+1][j][k][0] );
-	frct[i][j][k][1] = frct[i][j][k][1]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][1] - flux[i][j][k][1] )
-	  + dx2 * tx1 * (            rsd[i-1][j][k][1]
-				     - 2.0 * rsd[i][j][k][1]
-				     +           rsd[i+1][j][k][1] );
-	frct[i][j][k][2] = frct[i][j][k][2]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][2] - flux[i][j][k][2] )
-	  + dx3 * tx1 * (            rsd[i-1][j][k][2]
-				     - 2.0 * rsd[i][j][k][2]
-				     +           rsd[i+1][j][k][2] );
-	frct[i][j][k][3] = frct[i][j][k][3]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][3] - flux[i][j][k][3] )
-	  + dx4 * tx1 * (            rsd[i-1][j][k][3]
-				     - 2.0 * rsd[i][j][k][3]
-				     +           rsd[i+1][j][k][3] );
-	frct[i][j][k][4] = frct[i][j][k][4]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][4] - flux[i][j][k][4] )
-	  + dx5 * tx1 * (            rsd[i-1][j][k][4]
-				     - 2.0 * rsd[i][j][k][4]
-				     +           rsd[i+1][j][k][4] );
+        frct[i][j][k][0] = frct[i][j][k][0]
+          + dx1 * tx1 * (            rsd[i-1][j][k][0]
+                                     - 2.0 * rsd[i][j][k][0]
+                                     +              rsd[i+1][j][k][0] );
+        frct[i][j][k][1] = frct[i][j][k][1]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][1] - flux[i][j][k][1] )
+          + dx2 * tx1 * (            rsd[i-1][j][k][1]
+                                     - 2.0 * rsd[i][j][k][1]
+                                     +           rsd[i+1][j][k][1] );
+        frct[i][j][k][2] = frct[i][j][k][2]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][2] - flux[i][j][k][2] )
+          + dx3 * tx1 * (            rsd[i-1][j][k][2]
+                                     - 2.0 * rsd[i][j][k][2]
+                                     +           rsd[i+1][j][k][2] );
+        frct[i][j][k][3] = frct[i][j][k][3]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][3] - flux[i][j][k][3] )
+          + dx4 * tx1 * (            rsd[i-1][j][k][3]
+                                     - 2.0 * rsd[i][j][k][3]
+                                     +           rsd[i+1][j][k][3] );
+        frct[i][j][k][4] = frct[i][j][k][4]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][4] - flux[i][j][k][4] )
+          + dx5 * tx1 * (            rsd[i-1][j][k][4]
+                                     - 2.0 * rsd[i][j][k][4]
+                                     +           rsd[i+1][j][k][4] );
       }
 
 /*--------------------------------------------------------------------
 c   Fourth-order dissipation
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	frct[1][j][k][m] = frct[1][j][k][m]
-	  - dsspm * ( + 5.0 * rsd[1][j][k][m]
-		      - 4.0 * rsd[2][j][k][m]
-		      +           rsd[3][j][k][m] );
-	frct[2][j][k][m] = frct[2][j][k][m]
-	  - dsspm * ( - 4.0 * rsd[1][j][k][m]
-		      + 6.0 * rsd[2][j][k][m]
-		      - 4.0 * rsd[3][j][k][m]
-		      +           rsd[4][j][k][m] );
+        frct[1][j][k][m] = frct[1][j][k][m]
+          - dsspm * ( + 5.0 * rsd[1][j][k][m]
+                      - 4.0 * rsd[2][j][k][m]
+                      +           rsd[3][j][k][m] );
+        frct[2][j][k][m] = frct[2][j][k][m]
+          - dsspm * ( - 4.0 * rsd[1][j][k][m]
+                      + 6.0 * rsd[2][j][k][m]
+                      - 4.0 * rsd[3][j][k][m]
+                      +           rsd[4][j][k][m] );
       }
 
       ist1 = 3;
       iend1 = nx - 4;
       for (i = ist1; i <=iend1; i++) {
-	for (m = 0; m < 5; m++) {
-	  frct[i][j][k][m] = frct[i][j][k][m]
-	    - dsspm * (            rsd[i-2][j][k][m]
-				   - 4.0 * rsd[i-1][j][k][m]
-				   + 6.0 * rsd[i][j][k][m]
-				   - 4.0 * rsd[i+1][j][k][m]
-				   +           rsd[i+2][j][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          frct[i][j][k][m] = frct[i][j][k][m]
+            - dsspm * (            rsd[i-2][j][k][m]
+                                   - 4.0 * rsd[i-1][j][k][m]
+                                   + 6.0 * rsd[i][j][k][m]
+                                   - 4.0 * rsd[i+1][j][k][m]
+                                   +           rsd[i+2][j][k][m] );
+        }
       }
 
       for (m = 0; m < 5; m++) {
-	frct[nx-3][j][k][m] = frct[nx-3][j][k][m]
-	  - dsspm * (             rsd[nx-5][j][k][m]
-				  - 4.0 * rsd[nx-4][j][k][m]
-				  + 6.0 * rsd[nx-3][j][k][m]
-				  - 4.0 * rsd[nx-2][j][k][m]  );
-	frct[nx-2][j][k][m] = frct[nx-2][j][k][m]
-	  - dsspm * (             rsd[nx-4][j][k][m]
-				  - 4.0 * rsd[nx-3][j][k][m]
-				  + 5.0 * rsd[nx-2][j][k][m] );
+        frct[nx-3][j][k][m] = frct[nx-3][j][k][m]
+          - dsspm * (             rsd[nx-5][j][k][m]
+                                  - 4.0 * rsd[nx-4][j][k][m]
+                                  + 6.0 * rsd[nx-3][j][k][m]
+                                  - 4.0 * rsd[nx-2][j][k][m]  );
+        frct[nx-2][j][k][m] = frct[nx-2][j][k][m]
+          - dsspm * (             rsd[nx-4][j][k][m]
+                                  - 4.0 * rsd[nx-3][j][k][m]
+                                  + 5.0 * rsd[nx-2][j][k][m] );
       }
     }
   }
@@ -908,17 +908,17 @@ c   eta-direction flux differences
   for (i = ist; i <= iend; i++) {
     for (j = L1; j <= L2; j++) {
       for (k = 1; k <= nz - 2; k++) {
-	flux[i][j][k][0] = rsd[i][j][k][2];
-	u31 = rsd[i][j][k][2] / rsd[i][j][k][0];
-	q = 0.50 * (  rsd[i][j][k][1] * rsd[i][j][k][1]
-		      + rsd[i][j][k][2] * rsd[i][j][k][2]
-		      + rsd[i][j][k][3] * rsd[i][j][k][3] )
-	  / rsd[i][j][k][0];
-	flux[i][j][k][1] = rsd[i][j][k][1] * u31;
-	flux[i][j][k][2] = rsd[i][j][k][2] * u31 + C2 * 
-	  ( rsd[i][j][k][4] - q );
-	flux[i][j][k][3] = rsd[i][j][k][3] * u31;
-	flux[i][j][k][4] = ( C1 * rsd[i][j][k][4] - C2 * q ) * u31;
+        flux[i][j][k][0] = rsd[i][j][k][2];
+        u31 = rsd[i][j][k][2] / rsd[i][j][k][0];
+        q = 0.50 * (  rsd[i][j][k][1] * rsd[i][j][k][1]
+                      + rsd[i][j][k][2] * rsd[i][j][k][2]
+                      + rsd[i][j][k][3] * rsd[i][j][k][3] )
+          / rsd[i][j][k][0];
+        flux[i][j][k][1] = rsd[i][j][k][1] * u31;
+        flux[i][j][k][2] = rsd[i][j][k][2] * u31 + C2 * 
+          ( rsd[i][j][k][4] - q );
+        flux[i][j][k][3] = rsd[i][j][k][3] * u31;
+        flux[i][j][k][4] = ( C1 * rsd[i][j][k][4] - C2 * q ) * u31;
       }
     }
   }
@@ -927,104 +927,104 @@ c   eta-direction flux differences
   for (i = ist; i <= iend; i++) {
     for (k = 1; k <= nz - 2; k++) {
       for (j = jst; j <= jend; j++) {
-	for (m = 0; m < 5; m++) {
-	  frct[i][j][k][m] =  frct[i][j][k][m]
-	    - ty2 * ( flux[i][j+1][k][m] - flux[i][j-1][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          frct[i][j][k][m] =  frct[i][j][k][m]
+            - ty2 * ( flux[i][j+1][k][m] - flux[i][j-1][k][m] );
+        }
       }
       for (j = jst; j <= L2; j++) {
-	tmp = 1.0 / rsd[i][j][k][0];
+        tmp = 1.0 / rsd[i][j][k][0];
 
-	u21j = tmp * rsd[i][j][k][1];
-	u31j = tmp * rsd[i][j][k][2];
-	u41j = tmp * rsd[i][j][k][3];
-	u51j = tmp * rsd[i][j][k][4];
+        u21j = tmp * rsd[i][j][k][1];
+        u31j = tmp * rsd[i][j][k][2];
+        u41j = tmp * rsd[i][j][k][3];
+        u51j = tmp * rsd[i][j][k][4];
 
-	tmp = 1.0 / rsd[i][j-1][k][0];
+        tmp = 1.0 / rsd[i][j-1][k][0];
 
-	u21jm1 = tmp * rsd[i][j-1][k][1];
-	u31jm1 = tmp * rsd[i][j-1][k][2];
-	u41jm1 = tmp * rsd[i][j-1][k][3];
-	u51jm1 = tmp * rsd[i][j-1][k][4];
+        u21jm1 = tmp * rsd[i][j-1][k][1];
+        u31jm1 = tmp * rsd[i][j-1][k][2];
+        u41jm1 = tmp * rsd[i][j-1][k][3];
+        u51jm1 = tmp * rsd[i][j-1][k][4];
 
-	flux[i][j][k][1] = ty3 * ( u21j - u21jm1 );
-	flux[i][j][k][2] = (4.0/3.0) * ty3 * 
-	  ( u31j - u31jm1 );
-	flux[i][j][k][3] = ty3 * ( u41j - u41jm1 );
-	flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
-	  * ty3 * ( ( u21j  *u21j + u31j  *u31j + u41j  *u41j )
-		    - ( u21jm1*u21jm1 + u31jm1*u31jm1 + u41jm1*u41jm1 ) )
-	  + (1.0/6.0)
-	  * ty3 * ( u31j*u31j - u31jm1*u31jm1 )
-	  + C1 * C5 * ty3 * ( u51j - u51jm1 );
+        flux[i][j][k][1] = ty3 * ( u21j - u21jm1 );
+        flux[i][j][k][2] = (4.0/3.0) * ty3 * 
+          ( u31j - u31jm1 );
+        flux[i][j][k][3] = ty3 * ( u41j - u41jm1 );
+        flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
+          * ty3 * ( ( u21j  *u21j + u31j  *u31j + u41j  *u41j )
+                    - ( u21jm1*u21jm1 + u31jm1*u31jm1 + u41jm1*u41jm1 ) )
+          + (1.0/6.0)
+          * ty3 * ( u31j*u31j - u31jm1*u31jm1 )
+          + C1 * C5 * ty3 * ( u51j - u51jm1 );
       }
 
       for (j = jst; j <= jend; j++) {
-	frct[i][j][k][0] = frct[i][j][k][0]
-	  + dy1 * ty1 * (            rsd[i][j-1][k][0]
-				     - 2.0 * rsd[i][j][k][0]
-				     +           rsd[i][j+1][k][0] );
-	frct[i][j][k][1] = frct[i][j][k][1]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][1] - flux[i][j][k][1] )
-	  + dy2 * ty1 * (            rsd[i][j-1][k][1]
-				     - 2.0 * rsd[i][j][k][1]
-				     +           rsd[i][j+1][k][1] );
-	frct[i][j][k][2] = frct[i][j][k][2]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][2] - flux[i][j][k][2] )
-	  + dy3 * ty1 * (            rsd[i][j-1][k][2]
-				     - 2.0 * rsd[i][j][k][2]
-				     +           rsd[i][j+1][k][2] );
-	frct[i][j][k][3] = frct[i][j][k][3]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][3] - flux[i][j][k][3] )
-	  + dy4 * ty1 * (            rsd[i][j-1][k][3]
-				     - 2.0 * rsd[i][j][k][3]
-				     +           rsd[i][j+1][k][3] );
-	frct[i][j][k][4] = frct[i][j][k][4]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][4] - flux[i][j][k][4] )
-	  + dy5 * ty1 * (            rsd[i][j-1][k][4]
-				     - 2.0 * rsd[i][j][k][4]
-				     +           rsd[i][j+1][k][4] );
+        frct[i][j][k][0] = frct[i][j][k][0]
+          + dy1 * ty1 * (            rsd[i][j-1][k][0]
+                                     - 2.0 * rsd[i][j][k][0]
+                                     +           rsd[i][j+1][k][0] );
+        frct[i][j][k][1] = frct[i][j][k][1]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][1] - flux[i][j][k][1] )
+          + dy2 * ty1 * (            rsd[i][j-1][k][1]
+                                     - 2.0 * rsd[i][j][k][1]
+                                     +           rsd[i][j+1][k][1] );
+        frct[i][j][k][2] = frct[i][j][k][2]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][2] - flux[i][j][k][2] )
+          + dy3 * ty1 * (            rsd[i][j-1][k][2]
+                                     - 2.0 * rsd[i][j][k][2]
+                                     +           rsd[i][j+1][k][2] );
+        frct[i][j][k][3] = frct[i][j][k][3]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][3] - flux[i][j][k][3] )
+          + dy4 * ty1 * (            rsd[i][j-1][k][3]
+                                     - 2.0 * rsd[i][j][k][3]
+                                     +           rsd[i][j+1][k][3] );
+        frct[i][j][k][4] = frct[i][j][k][4]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][4] - flux[i][j][k][4] )
+          + dy5 * ty1 * (            rsd[i][j-1][k][4]
+                                     - 2.0 * rsd[i][j][k][4]
+                                     +           rsd[i][j+1][k][4] );
       }
 
 /*--------------------------------------------------------------------
 c   fourth-order dissipation
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	frct[i][1][k][m] = frct[i][1][k][m]
-	  - dsspm * ( + 5.0 * rsd[i][1][k][m]
-		      - 4.0 * rsd[i][2][k][m]
-		      +           rsd[i][3][k][m] );
-	frct[i][2][k][m] = frct[i][2][k][m]
-	  - dsspm * ( - 4.0 * rsd[i][1][k][m]
-		      + 6.0 * rsd[i][2][k][m]
-		      - 4.0 * rsd[i][3][k][m]
-		      +           rsd[i][4][k][m] );
+        frct[i][1][k][m] = frct[i][1][k][m]
+          - dsspm * ( + 5.0 * rsd[i][1][k][m]
+                      - 4.0 * rsd[i][2][k][m]
+                      +           rsd[i][3][k][m] );
+        frct[i][2][k][m] = frct[i][2][k][m]
+          - dsspm * ( - 4.0 * rsd[i][1][k][m]
+                      + 6.0 * rsd[i][2][k][m]
+                      - 4.0 * rsd[i][3][k][m]
+                      +           rsd[i][4][k][m] );
       }
 
       jst1 = 3;
       jend1 = ny - 4;
 
       for (j = jst1; j <= jend1; j++) {
-	for (m = 0; m < 5; m++) {
-	  frct[i][j][k][m] = frct[i][j][k][m]
-	    - dsspm * (            rsd[i][j-2][k][m]
-				   - 4.0 * rsd[i][j-1][k][m]
-				   + 6.0 * rsd[i][j][k][m]
-				   - 4.0 * rsd[i][j+1][k][m]
-				   +           rsd[i][j+2][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          frct[i][j][k][m] = frct[i][j][k][m]
+            - dsspm * (            rsd[i][j-2][k][m]
+                                   - 4.0 * rsd[i][j-1][k][m]
+                                   + 6.0 * rsd[i][j][k][m]
+                                   - 4.0 * rsd[i][j+1][k][m]
+                                   +           rsd[i][j+2][k][m] );
+        }
       }
 
       for (m = 0; m < 5; m++) {
-	frct[i][ny-3][k][m] = frct[i][ny-3][k][m]
-	  - dsspm * (             rsd[i][ny-5][k][m]
-				  - 4.0 * rsd[i][ny-4][k][m]
-				  + 6.0 * rsd[i][ny-3][k][m]
-				  - 4.0 * rsd[i][ny-2][k][m]  );
-	frct[i][ny-2][k][m] = frct[i][ny-2][k][m]
-	  - dsspm * (             rsd[i][ny-4][k][m]
-				  - 4.0 * rsd[i][ny-3][k][m]
-				  + 5.0 * rsd[i][ny-2][k][m]  );
+        frct[i][ny-3][k][m] = frct[i][ny-3][k][m]
+          - dsspm * (             rsd[i][ny-5][k][m]
+                                  - 4.0 * rsd[i][ny-4][k][m]
+                                  + 6.0 * rsd[i][ny-3][k][m]
+                                  - 4.0 * rsd[i][ny-2][k][m]  );
+        frct[i][ny-2][k][m] = frct[i][ny-2][k][m]
+          - dsspm * (             rsd[i][ny-4][k][m]
+                                  - 4.0 * rsd[i][ny-3][k][m]
+                                  + 5.0 * rsd[i][ny-2][k][m]  );
       }
 
     }
@@ -1037,115 +1037,115 @@ c   zeta-direction flux differences
   for (i = ist; i <= iend; i++) {
     for (j = jst; j <= jend; j++) {
       for (k = 0; k <= nz-1; k++) {
-	flux[i][j][k][0] = rsd[i][j][k][3];
-	u41 = rsd[i][j][k][3] / rsd[i][j][k][0];
-	q = 0.50 * (  rsd[i][j][k][1] * rsd[i][j][k][1]
-		      + rsd[i][j][k][2] * rsd[i][j][k][2]
-		      + rsd[i][j][k][3] * rsd[i][j][k][3] )
-	  / rsd[i][j][k][0];
-	flux[i][j][k][1] = rsd[i][j][k][1] * u41;
-	flux[i][j][k][2] = rsd[i][j][k][2] * u41;
-	flux[i][j][k][3] = rsd[i][j][k][3] * u41 + C2 * 
-	  ( rsd[i][j][k][4] - q );
-	flux[i][j][k][4] = ( C1 * rsd[i][j][k][4] - C2 * q ) * u41;
+        flux[i][j][k][0] = rsd[i][j][k][3];
+        u41 = rsd[i][j][k][3] / rsd[i][j][k][0];
+        q = 0.50 * (  rsd[i][j][k][1] * rsd[i][j][k][1]
+                      + rsd[i][j][k][2] * rsd[i][j][k][2]
+                      + rsd[i][j][k][3] * rsd[i][j][k][3] )
+          / rsd[i][j][k][0];
+        flux[i][j][k][1] = rsd[i][j][k][1] * u41;
+        flux[i][j][k][2] = rsd[i][j][k][2] * u41;
+        flux[i][j][k][3] = rsd[i][j][k][3] * u41 + C2 * 
+          ( rsd[i][j][k][4] - q );
+        flux[i][j][k][4] = ( C1 * rsd[i][j][k][4] - C2 * q ) * u41;
       }
 
       for (k = 1; k <= nz - 2; k++) {
-	for (m = 0; m < 5; m++) {
-	  frct[i][j][k][m] =  frct[i][j][k][m]
-	    - tz2 * ( flux[i][j][k+1][m] - flux[i][j][k-1][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          frct[i][j][k][m] =  frct[i][j][k][m]
+            - tz2 * ( flux[i][j][k+1][m] - flux[i][j][k-1][m] );
+        }
       }
       for (k = 1; k <= nz-1; k++) {
-	tmp = 1.0 / rsd[i][j][k][0];
+        tmp = 1.0 / rsd[i][j][k][0];
 
-	u21k = tmp * rsd[i][j][k][1];
-	u31k = tmp * rsd[i][j][k][2];
-	u41k = tmp * rsd[i][j][k][3];
-	u51k = tmp * rsd[i][j][k][4];
+        u21k = tmp * rsd[i][j][k][1];
+        u31k = tmp * rsd[i][j][k][2];
+        u41k = tmp * rsd[i][j][k][3];
+        u51k = tmp * rsd[i][j][k][4];
 
-	tmp = 1.0 / rsd[i][j][k-1][0];
+        tmp = 1.0 / rsd[i][j][k-1][0];
 
-	u21km1 = tmp * rsd[i][j][k-1][1];
-	u31km1 = tmp * rsd[i][j][k-1][2];
-	u41km1 = tmp * rsd[i][j][k-1][3];
-	u51km1 = tmp * rsd[i][j][k-1][4];
+        u21km1 = tmp * rsd[i][j][k-1][1];
+        u31km1 = tmp * rsd[i][j][k-1][2];
+        u41km1 = tmp * rsd[i][j][k-1][3];
+        u51km1 = tmp * rsd[i][j][k-1][4];
 
-	flux[i][j][k][1] = tz3 * ( u21k - u21km1 );
-	flux[i][j][k][2] = tz3 * ( u31k - u31km1 );
-	flux[i][j][k][3] = (4.0/3.0) * tz3 * ( u41k 
-					    - u41km1 );
-	flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
-	  * tz3 * ( ( u21k  *u21k + u31k  *u31k + u41k  *u41k )
-		    - ( u21km1*u21km1 + u31km1*u31km1 + u41km1*u41km1 ) )
-	  + (1.0/6.0)
-	  * tz3 * ( u41k*u41k - u41km1*u41km1 )
-	  + C1 * C5 * tz3 * ( u51k - u51km1 );
+        flux[i][j][k][1] = tz3 * ( u21k - u21km1 );
+        flux[i][j][k][2] = tz3 * ( u31k - u31km1 );
+        flux[i][j][k][3] = (4.0/3.0) * tz3 * ( u41k 
+                                            - u41km1 );
+        flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
+          * tz3 * ( ( u21k  *u21k + u31k  *u31k + u41k  *u41k )
+                    - ( u21km1*u21km1 + u31km1*u31km1 + u41km1*u41km1 ) )
+          + (1.0/6.0)
+          * tz3 * ( u41k*u41k - u41km1*u41km1 )
+          + C1 * C5 * tz3 * ( u51k - u51km1 );
       }
 
       for (k = 1; k <= nz - 2; k++) {
-	frct[i][j][k][0] = frct[i][j][k][0]
-	  + dz1 * tz1 * (            rsd[i][j][k+1][0]
-				     - 2.0 * rsd[i][j][k][0]
-				     +           rsd[i][j][k-1][0] );
-	frct[i][j][k][1] = frct[i][j][k][1]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][1] - flux[i][j][k][1] )
-	  + dz2 * tz1 * (            rsd[i][j][k+1][1]
-				     - 2.0 * rsd[i][j][k][1]
-				     +           rsd[i][j][k-1][1] );
-	frct[i][j][k][2] = frct[i][j][k][2]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][2] - flux[i][j][k][2] )
-	  + dz3 * tz1 * (            rsd[i][j][k+1][2]
-				     - 2.0 * rsd[i][j][k][2]
-				     +           rsd[i][j][k-1][2] );
-	frct[i][j][k][3] = frct[i][j][k][3]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][3] - flux[i][j][k][3] )
-	  + dz4 * tz1 * (            rsd[i][j][k+1][3]
-				     - 2.0 * rsd[i][j][k][3]
-				     +           rsd[i][j][k-1][3] );
-	frct[i][j][k][4] = frct[i][j][k][4]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][4] - flux[i][j][k][4] )
-	  + dz5 * tz1 * (            rsd[i][j][k+1][4]
-				     - 2.0 * rsd[i][j][k][4]
-				     +           rsd[i][j][k-1][4] );
+        frct[i][j][k][0] = frct[i][j][k][0]
+          + dz1 * tz1 * (            rsd[i][j][k+1][0]
+                                     - 2.0 * rsd[i][j][k][0]
+                                     +           rsd[i][j][k-1][0] );
+        frct[i][j][k][1] = frct[i][j][k][1]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][1] - flux[i][j][k][1] )
+          + dz2 * tz1 * (            rsd[i][j][k+1][1]
+                                     - 2.0 * rsd[i][j][k][1]
+                                     +           rsd[i][j][k-1][1] );
+        frct[i][j][k][2] = frct[i][j][k][2]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][2] - flux[i][j][k][2] )
+          + dz3 * tz1 * (            rsd[i][j][k+1][2]
+                                     - 2.0 * rsd[i][j][k][2]
+                                     +           rsd[i][j][k-1][2] );
+        frct[i][j][k][3] = frct[i][j][k][3]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][3] - flux[i][j][k][3] )
+          + dz4 * tz1 * (            rsd[i][j][k+1][3]
+                                     - 2.0 * rsd[i][j][k][3]
+                                     +           rsd[i][j][k-1][3] );
+        frct[i][j][k][4] = frct[i][j][k][4]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][4] - flux[i][j][k][4] )
+          + dz5 * tz1 * (            rsd[i][j][k+1][4]
+                                     - 2.0 * rsd[i][j][k][4]
+                                     +           rsd[i][j][k-1][4] );
       }
 
 /*--------------------------------------------------------------------
 c   fourth-order dissipation
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	frct[i][j][1][m] = frct[i][j][1][m]
-	  - dsspm * ( + 5.0 * rsd[i][j][1][m]
-		      - 4.0 * rsd[i][j][2][m]
-		      +           rsd[i][j][3][m] );
-	frct[i][j][2][m] = frct[i][j][2][m]
-	  - dsspm * (- 4.0 * rsd[i][j][1][m]
-		     + 6.0 * rsd[i][j][2][m]
-		     - 4.0 * rsd[i][j][3][m]
-		     +           rsd[i][j][4][m] );
+        frct[i][j][1][m] = frct[i][j][1][m]
+          - dsspm * ( + 5.0 * rsd[i][j][1][m]
+                      - 4.0 * rsd[i][j][2][m]
+                      +           rsd[i][j][3][m] );
+        frct[i][j][2][m] = frct[i][j][2][m]
+          - dsspm * (- 4.0 * rsd[i][j][1][m]
+                     + 6.0 * rsd[i][j][2][m]
+                     - 4.0 * rsd[i][j][3][m]
+                     +           rsd[i][j][4][m] );
       }
 
       for (k = 3; k <= nz - 4; k++) {
-	for (m = 0; m < 5; m++) {
-	  frct[i][j][k][m] = frct[i][j][k][m]
-	    - dsspm * (           rsd[i][j][k-2][m]
-				  - 4.0 * rsd[i][j][k-1][m]
-				  + 6.0 * rsd[i][j][k][m]
-				  - 4.0 * rsd[i][j][k+1][m]
-				  +           rsd[i][j][k+2][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          frct[i][j][k][m] = frct[i][j][k][m]
+            - dsspm * (           rsd[i][j][k-2][m]
+                                  - 4.0 * rsd[i][j][k-1][m]
+                                  + 6.0 * rsd[i][j][k][m]
+                                  - 4.0 * rsd[i][j][k+1][m]
+                                  +           rsd[i][j][k+2][m] );
+        }
       }
 
       for (m = 0; m < 5; m++) {
-	frct[i][j][nz-3][m] = frct[i][j][nz-3][m]
-	  - dsspm * (            rsd[i][j][nz-5][m]
-				 - 4.0 * rsd[i][j][nz-4][m]
-				 + 6.0 * rsd[i][j][nz-3][m]
-				 - 4.0 * rsd[i][j][nz-2][m]  );
+        frct[i][j][nz-3][m] = frct[i][j][nz-3][m]
+          - dsspm * (            rsd[i][j][nz-5][m]
+                                 - 4.0 * rsd[i][j][nz-4][m]
+                                 + 6.0 * rsd[i][j][nz-3][m]
+                                 - 4.0 * rsd[i][j][nz-2][m]  );
         frct[i][j][nz-2][m] = frct[i][j][nz-2][m]
-	  - dsspm * (             rsd[i][j][nz-4][m]
-				  - 4.0 * rsd[i][j][nz-3][m]
-				  + 5.0 * rsd[i][j][nz-2][m]  );
+          - dsspm * (             rsd[i][j][nz-4][m]
+                                  - 4.0 * rsd[i][j][nz-3][m]
+                                  + 5.0 * rsd[i][j][nz-2][m]  );
       }
     }
   }
@@ -1179,11 +1179,11 @@ c  local variables
     for (j = jst; j <= jend; j++) {
       jglob = j;
       for (k = 1; k <= nz-2; k++) {
-	exact( iglob, jglob, k, u000ijk );
-	for (m = 0; m < 5; m++) {
-	  tmp = ( u000ijk[m] - u[i][j][k][m] );
-	  errnm[m] = errnm[m] + tmp *tmp;
-	}
+        exact( iglob, jglob, k, u000ijk );
+        for (m = 0; m < 5; m++) {
+          tmp = ( u000ijk[m] - u[i][j][k][m] );
+          errnm[m] = errnm[m] + tmp *tmp;
+        }
       }
     }
   }
@@ -1265,94 +1265,94 @@ c   form the block daigonal
       tmp3 = tmp1 * tmp2;
 
       d[i][j][0][0] =  1.0
-	+ dt * 2.0 * (   tx1 * dx1
-			 + ty1 * dy1
-			 + tz1 * dz1 );
+        + dt * 2.0 * (   tx1 * dx1
+                         + ty1 * dy1
+                         + tz1 * dz1 );
       d[i][j][0][1] =  0.0;
       d[i][j][0][2] =  0.0;
       d[i][j][0][3] =  0.0;
       d[i][j][0][4] =  0.0;
 
       d[i][j][1][0] =  dt * 2.0
-	* (  tx1 * ( - r43 * c34 * tmp2 * u[i][j][k][1] )
-	     + ty1 * ( -       c34 * tmp2 * u[i][j][k][1] )
-	     + tz1 * ( -       c34 * tmp2 * u[i][j][k][1] ) );
+        * (  tx1 * ( - r43 * c34 * tmp2 * u[i][j][k][1] )
+             + ty1 * ( -       c34 * tmp2 * u[i][j][k][1] )
+             + tz1 * ( -       c34 * tmp2 * u[i][j][k][1] ) );
       d[i][j][1][1] =  1.0
-	+ dt * 2.0 
-	* (  tx1 * r43 * c34 * tmp1
-	     + ty1 *       c34 * tmp1
-	     + tz1 *       c34 * tmp1 )
-	+ dt * 2.0 * (   tx1 * dx2
-			 + ty1 * dy2
-			 + tz1 * dz2  );
+        + dt * 2.0 
+        * (  tx1 * r43 * c34 * tmp1
+             + ty1 *       c34 * tmp1
+             + tz1 *       c34 * tmp1 )
+        + dt * 2.0 * (   tx1 * dx2
+                         + ty1 * dy2
+                         + tz1 * dz2  );
       d[i][j][1][2] = 0.0;
       d[i][j][1][3] = 0.0;
       d[i][j][1][4] = 0.0;
 
       d[i][j][2][0] = dt * 2.0
-	* (  tx1 * ( -       c34 * tmp2 * u[i][j][k][2] )
-	     + ty1 * ( - r43 * c34 * tmp2 * u[i][j][k][2] )
-	     + tz1 * ( -       c34 * tmp2 * u[i][j][k][2] ) );
+        * (  tx1 * ( -       c34 * tmp2 * u[i][j][k][2] )
+             + ty1 * ( - r43 * c34 * tmp2 * u[i][j][k][2] )
+             + tz1 * ( -       c34 * tmp2 * u[i][j][k][2] ) );
       d[i][j][2][1] = 0.0;
       d[i][j][2][2] = 1.0
-	+ dt * 2.0
-	* (  tx1 *       c34 * tmp1
-	     + ty1 * r43 * c34 * tmp1
-	     + tz1 *       c34 * tmp1 )
-	+ dt * 2.0 * (  tx1 * dx3
-			+ ty1 * dy3
-			+ tz1 * dz3 );
+        + dt * 2.0
+        * (  tx1 *       c34 * tmp1
+             + ty1 * r43 * c34 * tmp1
+             + tz1 *       c34 * tmp1 )
+        + dt * 2.0 * (  tx1 * dx3
+                        + ty1 * dy3
+                        + tz1 * dz3 );
       d[i][j][2][3] = 0.0;
       d[i][j][2][4] = 0.0;
 
       d[i][j][3][0] = dt * 2.0
-	* (  tx1 * ( -       c34 * tmp2 * u[i][j][k][3] )
-	     + ty1 * ( -       c34 * tmp2 * u[i][j][k][3] )
-	     + tz1 * ( - r43 * c34 * tmp2 * u[i][j][k][3] ) );
+        * (  tx1 * ( -       c34 * tmp2 * u[i][j][k][3] )
+             + ty1 * ( -       c34 * tmp2 * u[i][j][k][3] )
+             + tz1 * ( - r43 * c34 * tmp2 * u[i][j][k][3] ) );
       d[i][j][3][1] = 0.0;
       d[i][j][3][2] = 0.0;
       d[i][j][3][3] = 1.0
-	+ dt * 2.0
-	* (  tx1 *       c34 * tmp1
-	     + ty1 *       c34 * tmp1
-	     + tz1 * r43 * c34 * tmp1 )
-	+ dt * 2.0 * (  tx1 * dx4
-			+ ty1 * dy4
-			+ tz1 * dz4 );
+        + dt * 2.0
+        * (  tx1 *       c34 * tmp1
+             + ty1 *       c34 * tmp1
+             + tz1 * r43 * c34 * tmp1 )
+        + dt * 2.0 * (  tx1 * dx4
+                        + ty1 * dy4
+                        + tz1 * dz4 );
       d[i][j][3][4] = 0.0;
 
       d[i][j][4][0] = dt * 2.0
-	* ( tx1 * ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
-		    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
-		    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
-		    - ( c1345 ) * tmp2 * u[i][j][k][4] )
-	    + ty1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
-		      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
-		      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
-		      - ( c1345 ) * tmp2 * u[i][j][k][4] )
-	    + tz1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
-		      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
-		      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
-		      - ( c1345 ) * tmp2 * u[i][j][k][4] ) );
+        * ( tx1 * ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
+                    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
+                    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
+                    - ( c1345 ) * tmp2 * u[i][j][k][4] )
+            + ty1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
+                      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
+                      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
+                      - ( c1345 ) * tmp2 * u[i][j][k][4] )
+            + tz1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
+                      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
+                      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
+                      - ( c1345 ) * tmp2 * u[i][j][k][4] ) );
       d[i][j][4][1] = dt * 2.0
-	* ( tx1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][1]
-	    + ty1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1]
-	    + tz1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1] );
+        * ( tx1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][1]
+            + ty1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1]
+            + tz1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1] );
       d[i][j][4][2] = dt * 2.0
-	* ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2]
-	    + ty1 * ( r43*c34 -c1345 ) * tmp2 * u[i][j][k][2]
-	    + tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2] );
+        * ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2]
+            + ty1 * ( r43*c34 -c1345 ) * tmp2 * u[i][j][k][2]
+            + tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2] );
       d[i][j][4][3] = dt * 2.0
-	* ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
-	    + ty1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
-	    + tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][3] );
+        * ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
+            + ty1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
+            + tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][3] );
       d[i][j][4][4] = 1.0
-	+ dt * 2.0 * ( tx1 * c1345 * tmp1
-		       + ty1 * c1345 * tmp1
-		       + tz1 * c1345 * tmp1 )
+        + dt * 2.0 * ( tx1 * c1345 * tmp1
+                       + ty1 * c1345 * tmp1
+                       + tz1 * c1345 * tmp1 )
         + dt * 2.0 * (  tx1 * dx5
-			+  ty1 * dy5
-			+  tz1 * dz5 );
+                        +  ty1 * dy5
+                        +  tz1 * dz5 );
 
 /*--------------------------------------------------------------------
 c   form the first block sub-diagonal
@@ -1368,70 +1368,70 @@ c   form the first block sub-diagonal
       a[i][j][0][4] =   0.0;
 
       a[i][j][1][0] = - dt * tz2
-	* ( - ( u[i][j][k-1][1]*u[i][j][k-1][3] ) * tmp2 )
-	- dt * tz1 * ( - c34 * tmp2 * u[i][j][k-1][1] );
+        * ( - ( u[i][j][k-1][1]*u[i][j][k-1][3] ) * tmp2 )
+        - dt * tz1 * ( - c34 * tmp2 * u[i][j][k-1][1] );
       a[i][j][1][1] = - dt * tz2 * ( u[i][j][k-1][3] * tmp1 )
-	- dt * tz1 * c34 * tmp1
-	- dt * tz1 * dz2 ;
+        - dt * tz1 * c34 * tmp1
+        - dt * tz1 * dz2 ;
       a[i][j][1][2] = 0.0;
       a[i][j][1][3] = - dt * tz2 * ( u[i][j][k-1][1] * tmp1 );
       a[i][j][1][4] = 0.0;
 
       a[i][j][2][0] = - dt * tz2
-	* ( - ( u[i][j][k-1][2]*u[i][j][k-1][3] ) * tmp2 )
-	- dt * tz1 * ( - c34 * tmp2 * u[i][j][k-1][2] );
+        * ( - ( u[i][j][k-1][2]*u[i][j][k-1][3] ) * tmp2 )
+        - dt * tz1 * ( - c34 * tmp2 * u[i][j][k-1][2] );
       a[i][j][2][1] = 0.0;
       a[i][j][2][2] = - dt * tz2 * ( u[i][j][k-1][3] * tmp1 )
-	- dt * tz1 * ( c34 * tmp1 )
-	- dt * tz1 * dz3;
+        - dt * tz1 * ( c34 * tmp1 )
+        - dt * tz1 * dz3;
       a[i][j][2][3] = - dt * tz2 * ( u[i][j][k-1][2] * tmp1 );
       a[i][j][2][4] = 0.0;
 
       a[i][j][3][0] = - dt * tz2
-	* ( - ( u[i][j][k-1][3] * tmp1 ) *( u[i][j][k-1][3] * tmp1 )
-	    + 0.50 * C2
-	    * ( ( u[i][j][k-1][1] * u[i][j][k-1][1]
-		  + u[i][j][k-1][2] * u[i][j][k-1][2]
-		  + u[i][j][k-1][3] * u[i][j][k-1][3] ) * tmp2 ) )
-	- dt * tz1 * ( - r43 * c34 * tmp2 * u[i][j][k-1][3] );
+        * ( - ( u[i][j][k-1][3] * tmp1 ) *( u[i][j][k-1][3] * tmp1 )
+            + 0.50 * C2
+            * ( ( u[i][j][k-1][1] * u[i][j][k-1][1]
+                  + u[i][j][k-1][2] * u[i][j][k-1][2]
+                  + u[i][j][k-1][3] * u[i][j][k-1][3] ) * tmp2 ) )
+        - dt * tz1 * ( - r43 * c34 * tmp2 * u[i][j][k-1][3] );
       a[i][j][3][1] = - dt * tz2
-	* ( - C2 * ( u[i][j][k-1][1] * tmp1 ) );
+        * ( - C2 * ( u[i][j][k-1][1] * tmp1 ) );
       a[i][j][3][2] = - dt * tz2
-	* ( - C2 * ( u[i][j][k-1][2] * tmp1 ) );
+        * ( - C2 * ( u[i][j][k-1][2] * tmp1 ) );
       a[i][j][3][3] = - dt * tz2 * ( 2.0 - C2 )
-	* ( u[i][j][k-1][3] * tmp1 )
-	- dt * tz1 * ( r43 * c34 * tmp1 )
-	- dt * tz1 * dz4;
+        * ( u[i][j][k-1][3] * tmp1 )
+        - dt * tz1 * ( r43 * c34 * tmp1 )
+        - dt * tz1 * dz4;
       a[i][j][3][4] = - dt * tz2 * C2;
 
       a[i][j][4][0] = - dt * tz2
-	* ( ( C2 * (  u[i][j][k-1][1] * u[i][j][k-1][1]
+        * ( ( C2 * (  u[i][j][k-1][1] * u[i][j][k-1][1]
                       + u[i][j][k-1][2] * u[i][j][k-1][2]
                       + u[i][j][k-1][3] * u[i][j][k-1][3] ) * tmp2
-	      - C1 * ( u[i][j][k-1][4] * tmp1 ) )
-	    * ( u[i][j][k-1][3] * tmp1 ) )
-	- dt * tz1
-	* ( - ( c34 - c1345 ) * tmp3 * (u[i][j][k-1][1]*u[i][j][k-1][1])
-	    - ( c34 - c1345 ) * tmp3 * (u[i][j][k-1][2]*u[i][j][k-1][2])
-	    - ( r43*c34 - c1345 )* tmp3 * (u[i][j][k-1][3]*u[i][j][k-1][3])
-	    - c1345 * tmp2 * u[i][j][k-1][4] );
+              - C1 * ( u[i][j][k-1][4] * tmp1 ) )
+            * ( u[i][j][k-1][3] * tmp1 ) )
+        - dt * tz1
+        * ( - ( c34 - c1345 ) * tmp3 * (u[i][j][k-1][1]*u[i][j][k-1][1])
+            - ( c34 - c1345 ) * tmp3 * (u[i][j][k-1][2]*u[i][j][k-1][2])
+            - ( r43*c34 - c1345 )* tmp3 * (u[i][j][k-1][3]*u[i][j][k-1][3])
+            - c1345 * tmp2 * u[i][j][k-1][4] );
       a[i][j][4][1] = - dt * tz2
-	* ( - C2 * ( u[i][j][k-1][1]*u[i][j][k-1][3] ) * tmp2 )
-	- dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k-1][1];
+        * ( - C2 * ( u[i][j][k-1][1]*u[i][j][k-1][3] ) * tmp2 )
+        - dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k-1][1];
       a[i][j][4][2] = - dt * tz2
-	* ( - C2 * ( u[i][j][k-1][2]*u[i][j][k-1][3] ) * tmp2 )
-	- dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k-1][2];
+        * ( - C2 * ( u[i][j][k-1][2]*u[i][j][k-1][3] ) * tmp2 )
+        - dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k-1][2];
       a[i][j][4][3] = - dt * tz2
-	* ( C1 * ( u[i][j][k-1][4] * tmp1 )
+        * ( C1 * ( u[i][j][k-1][4] * tmp1 )
             - 0.50 * C2
             * ( (  u[i][j][k-1][1]*u[i][j][k-1][1]
-		   + u[i][j][k-1][2]*u[i][j][k-1][2]
-		   + 3.0*u[i][j][k-1][3]*u[i][j][k-1][3] ) * tmp2 ) )
-	- dt * tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k-1][3];
+                   + u[i][j][k-1][2]*u[i][j][k-1][2]
+                   + 3.0*u[i][j][k-1][3]*u[i][j][k-1][3] ) * tmp2 ) )
+        - dt * tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k-1][3];
       a[i][j][4][4] = - dt * tz2
-	* ( C1 * ( u[i][j][k-1][3] * tmp1 ) )
-	- dt * tz1 * c1345 * tmp1
-	- dt * tz1 * dz5;
+        * ( C1 * ( u[i][j][k-1][3] * tmp1 ) )
+        - dt * tz1 * c1345 * tmp1
+        - dt * tz1 * dz5;
 
 /*--------------------------------------------------------------------
 c   form the second block sub-diagonal
@@ -1447,72 +1447,72 @@ c   form the second block sub-diagonal
       b[i][j][0][4] =   0.0;
 
       b[i][j][1][0] = - dt * ty2
-	* ( - ( u[i][j-1][k][1]*u[i][j-1][k][2] ) * tmp2 )
-	- dt * ty1 * ( - c34 * tmp2 * u[i][j-1][k][1] );
+        * ( - ( u[i][j-1][k][1]*u[i][j-1][k][2] ) * tmp2 )
+        - dt * ty1 * ( - c34 * tmp2 * u[i][j-1][k][1] );
       b[i][j][1][1] = - dt * ty2 * ( u[i][j-1][k][2] * tmp1 )
-	- dt * ty1 * ( c34 * tmp1 )
-	- dt * ty1 * dy2;
+        - dt * ty1 * ( c34 * tmp1 )
+        - dt * ty1 * dy2;
       b[i][j][1][2] = - dt * ty2 * ( u[i][j-1][k][1] * tmp1 );
       b[i][j][1][3] = 0.0;
       b[i][j][1][4] = 0.0;
 
       b[i][j][2][0] = - dt * ty2
-	* ( - ( u[i][j-1][k][2] * tmp1 ) *( u[i][j-1][k][2] * tmp1 )
-	    + 0.50 * C2 * ( (  u[i][j-1][k][1] * u[i][j-1][k][1]
-			       + u[i][j-1][k][2] * u[i][j-1][k][2]
-			       + u[i][j-1][k][3] * u[i][j-1][k][3] )
-			    * tmp2 ) )
-	- dt * ty1 * ( - r43 * c34 * tmp2 * u[i][j-1][k][2] );
+        * ( - ( u[i][j-1][k][2] * tmp1 ) *( u[i][j-1][k][2] * tmp1 )
+            + 0.50 * C2 * ( (  u[i][j-1][k][1] * u[i][j-1][k][1]
+                               + u[i][j-1][k][2] * u[i][j-1][k][2]
+                               + u[i][j-1][k][3] * u[i][j-1][k][3] )
+                            * tmp2 ) )
+        - dt * ty1 * ( - r43 * c34 * tmp2 * u[i][j-1][k][2] );
       b[i][j][2][1] = - dt * ty2
-	* ( - C2 * ( u[i][j-1][k][1] * tmp1 ) );
+        * ( - C2 * ( u[i][j-1][k][1] * tmp1 ) );
       b[i][j][2][2] = - dt * ty2 * ( ( 2.0 - C2 )
-				  * ( u[i][j-1][k][2] * tmp1 ) )
-	- dt * ty1 * ( r43 * c34 * tmp1 )
-	- dt * ty1 * dy3;
+                                  * ( u[i][j-1][k][2] * tmp1 ) )
+        - dt * ty1 * ( r43 * c34 * tmp1 )
+        - dt * ty1 * dy3;
       b[i][j][2][3] = - dt * ty2
-	* ( - C2 * ( u[i][j-1][k][3] * tmp1 ) );
+        * ( - C2 * ( u[i][j-1][k][3] * tmp1 ) );
       b[i][j][2][4] = - dt * ty2 * C2;
 
       b[i][j][3][0] = - dt * ty2
-	* ( - ( u[i][j-1][k][2]*u[i][j-1][k][3] ) * tmp2 )
-	- dt * ty1 * ( - c34 * tmp2 * u[i][j-1][k][3] );
+        * ( - ( u[i][j-1][k][2]*u[i][j-1][k][3] ) * tmp2 )
+        - dt * ty1 * ( - c34 * tmp2 * u[i][j-1][k][3] );
       b[i][j][3][1] = 0.0;
       b[i][j][3][2] = - dt * ty2 * ( u[i][j-1][k][3] * tmp1 );
       b[i][j][3][3] = - dt * ty2 * ( u[i][j-1][k][2] * tmp1 )
-	- dt * ty1 * ( c34 * tmp1 )
-	- dt * ty1 * dy4;
+        - dt * ty1 * ( c34 * tmp1 )
+        - dt * ty1 * dy4;
       b[i][j][3][4] = 0.0;
 
       b[i][j][4][0] = - dt * ty2
-	* ( ( C2 * (  u[i][j-1][k][1] * u[i][j-1][k][1]
-		      + u[i][j-1][k][2] * u[i][j-1][k][2]
-		      + u[i][j-1][k][3] * u[i][j-1][k][3] ) * tmp2
-	      - C1 * ( u[i][j-1][k][4] * tmp1 ) )
-	    * ( u[i][j-1][k][2] * tmp1 ) )
-	- dt * ty1
-	* ( - (     c34 - c1345 )*tmp3*(pow2(u[i][j-1][k][1]))
-	    - ( r43*c34 - c1345 )*tmp3*(pow2(u[i][j-1][k][2]))
-	    - (     c34 - c1345 )*tmp3*(pow2(u[i][j-1][k][3]))
-	    - c1345*tmp2*u[i][j-1][k][4] );
+        * ( ( C2 * (  u[i][j-1][k][1] * u[i][j-1][k][1]
+                      + u[i][j-1][k][2] * u[i][j-1][k][2]
+                      + u[i][j-1][k][3] * u[i][j-1][k][3] ) * tmp2
+              - C1 * ( u[i][j-1][k][4] * tmp1 ) )
+            * ( u[i][j-1][k][2] * tmp1 ) )
+        - dt * ty1
+        * ( - (     c34 - c1345 )*tmp3*(pow2(u[i][j-1][k][1]))
+            - ( r43*c34 - c1345 )*tmp3*(pow2(u[i][j-1][k][2]))
+            - (     c34 - c1345 )*tmp3*(pow2(u[i][j-1][k][3]))
+            - c1345*tmp2*u[i][j-1][k][4] );
       b[i][j][4][1] = - dt * ty2
-	* ( - C2 * ( u[i][j-1][k][1]*u[i][j-1][k][2] ) * tmp2 )
-	- dt * ty1
-	* ( c34 - c1345 ) * tmp2 * u[i][j-1][k][1];
+        * ( - C2 * ( u[i][j-1][k][1]*u[i][j-1][k][2] ) * tmp2 )
+        - dt * ty1
+        * ( c34 - c1345 ) * tmp2 * u[i][j-1][k][1];
       b[i][j][4][2] = - dt * ty2
-	* ( C1 * ( u[i][j-1][k][4] * tmp1 )
-	    - 0.50 * C2 
-	    * ( (  u[i][j-1][k][1]*u[i][j-1][k][1]
+        * ( C1 * ( u[i][j-1][k][4] * tmp1 )
+            - 0.50 * C2 
+            * ( (  u[i][j-1][k][1]*u[i][j-1][k][1]
                    + 3.0 * u[i][j-1][k][2]*u[i][j-1][k][2]
-		   + u[i][j-1][k][3]*u[i][j-1][k][3] ) * tmp2 ) )
-	- dt * ty1
-	* ( r43*c34 - c1345 ) * tmp2 * u[i][j-1][k][2];
+                   + u[i][j-1][k][3]*u[i][j-1][k][3] ) * tmp2 ) )
+        - dt * ty1
+        * ( r43*c34 - c1345 ) * tmp2 * u[i][j-1][k][2];
       b[i][j][4][3] = - dt * ty2
-	* ( - C2 * ( u[i][j-1][k][2]*u[i][j-1][k][3] ) * tmp2 )
-	- dt * ty1 * ( c34 - c1345 ) * tmp2 * u[i][j-1][k][3];
+        * ( - C2 * ( u[i][j-1][k][2]*u[i][j-1][k][3] ) * tmp2 )
+        - dt * ty1 * ( c34 - c1345 ) * tmp2 * u[i][j-1][k][3];
       b[i][j][4][4] = - dt * ty2
-	* ( C1 * ( u[i][j-1][k][2] * tmp1 ) )
-	- dt * ty1 * c1345 * tmp1
-	- dt * ty1 * dy5;
+        * ( C1 * ( u[i][j-1][k][2] * tmp1 ) )
+        - dt * ty1 * c1345 * tmp1
+        - dt * ty1 * dy5;
 
 /*--------------------------------------------------------------------
 c   form the third block sub-diagonal
@@ -1528,72 +1528,72 @@ c   form the third block sub-diagonal
       c[i][j][0][4] =   0.0;
 
       c[i][j][1][0] = - dt * tx2
-	* ( - ( u[i-1][j][k][1] * tmp1 ) *( u[i-1][j][k][1] * tmp1 )
-	    + C2 * 0.50 * (  u[i-1][j][k][1] * u[i-1][j][k][1]
+        * ( - ( u[i-1][j][k][1] * tmp1 ) *( u[i-1][j][k][1] * tmp1 )
+            + C2 * 0.50 * (  u[i-1][j][k][1] * u[i-1][j][k][1]
                              + u[i-1][j][k][2] * u[i-1][j][k][2]
                              + u[i-1][j][k][3] * u[i-1][j][k][3] ) * tmp2 )
-	- dt * tx1 * ( - r43 * c34 * tmp2 * u[i-1][j][k][1] );
+        - dt * tx1 * ( - r43 * c34 * tmp2 * u[i-1][j][k][1] );
       c[i][j][1][1] = - dt * tx2
-	* ( ( 2.0 - C2 ) * ( u[i-1][j][k][1] * tmp1 ) )
-	- dt * tx1 * ( r43 * c34 * tmp1 )
-	- dt * tx1 * dx2;
+        * ( ( 2.0 - C2 ) * ( u[i-1][j][k][1] * tmp1 ) )
+        - dt * tx1 * ( r43 * c34 * tmp1 )
+        - dt * tx1 * dx2;
       c[i][j][1][2] = - dt * tx2
-	* ( - C2 * ( u[i-1][j][k][2] * tmp1 ) );
+        * ( - C2 * ( u[i-1][j][k][2] * tmp1 ) );
       c[i][j][1][3] = - dt * tx2
-	* ( - C2 * ( u[i-1][j][k][3] * tmp1 ) );
+        * ( - C2 * ( u[i-1][j][k][3] * tmp1 ) );
       c[i][j][1][4] = - dt * tx2 * C2;
 
       c[i][j][2][0] = - dt * tx2
-	* ( - ( u[i-1][j][k][1] * u[i-1][j][k][2] ) * tmp2 )
-	- dt * tx1 * ( - c34 * tmp2 * u[i-1][j][k][2] );
+        * ( - ( u[i-1][j][k][1] * u[i-1][j][k][2] ) * tmp2 )
+        - dt * tx1 * ( - c34 * tmp2 * u[i-1][j][k][2] );
       c[i][j][2][1] = - dt * tx2 * ( u[i-1][j][k][2] * tmp1 );
       c[i][j][2][2] = - dt * tx2 * ( u[i-1][j][k][1] * tmp1 )
-	- dt * tx1 * ( c34 * tmp1 )
-	- dt * tx1 * dx3;
+        - dt * tx1 * ( c34 * tmp1 )
+        - dt * tx1 * dx3;
       c[i][j][2][3] = 0.0;
       c[i][j][2][4] = 0.0;
 
       c[i][j][3][0] = - dt * tx2
-	* ( - ( u[i-1][j][k][1]*u[i-1][j][k][3] ) * tmp2 )
-	- dt * tx1 * ( - c34 * tmp2 * u[i-1][j][k][3] );
+        * ( - ( u[i-1][j][k][1]*u[i-1][j][k][3] ) * tmp2 )
+        - dt * tx1 * ( - c34 * tmp2 * u[i-1][j][k][3] );
       c[i][j][3][1] = - dt * tx2 * ( u[i-1][j][k][3] * tmp1 );
       c[i][j][3][2] = 0.0;
       c[i][j][3][3] = - dt * tx2 * ( u[i-1][j][k][1] * tmp1 )
-	- dt * tx1 * ( c34 * tmp1 )
-	- dt * tx1 * dx4;
+        - dt * tx1 * ( c34 * tmp1 )
+        - dt * tx1 * dx4;
       c[i][j][3][4] = 0.0;
 
       c[i][j][4][0] = - dt * tx2
-	* ( ( C2 * (  u[i-1][j][k][1] * u[i-1][j][k][1]
-		      + u[i-1][j][k][2] * u[i-1][j][k][2]
-		      + u[i-1][j][k][3] * u[i-1][j][k][3] ) * tmp2
-	      - C1 * ( u[i-1][j][k][4] * tmp1 ) )
-	    * ( u[i-1][j][k][1] * tmp1 ) )
-	- dt * tx1
-	* ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i-1][j][k][1]) )
-	    - (     c34 - c1345 ) * tmp3 * ( pow2(u[i-1][j][k][2]) )
-	    - (     c34 - c1345 ) * tmp3 * ( pow2(u[i-1][j][k][3]) )
-	    - c1345 * tmp2 * u[i-1][j][k][4] );
+        * ( ( C2 * (  u[i-1][j][k][1] * u[i-1][j][k][1]
+                      + u[i-1][j][k][2] * u[i-1][j][k][2]
+                      + u[i-1][j][k][3] * u[i-1][j][k][3] ) * tmp2
+              - C1 * ( u[i-1][j][k][4] * tmp1 ) )
+            * ( u[i-1][j][k][1] * tmp1 ) )
+        - dt * tx1
+        * ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i-1][j][k][1]) )
+            - (     c34 - c1345 ) * tmp3 * ( pow2(u[i-1][j][k][2]) )
+            - (     c34 - c1345 ) * tmp3 * ( pow2(u[i-1][j][k][3]) )
+            - c1345 * tmp2 * u[i-1][j][k][4] );
       c[i][j][4][1] = - dt * tx2
-	* ( C1 * ( u[i-1][j][k][4] * tmp1 )
-	    - 0.50 * C2
-	    * ( (  3.0*u[i-1][j][k][1]*u[i-1][j][k][1]
-		   + u[i-1][j][k][2]*u[i-1][j][k][2]
-		   + u[i-1][j][k][3]*u[i-1][j][k][3] ) * tmp2 ) )
-	- dt * tx1
-	* ( r43*c34 - c1345 ) * tmp2 * u[i-1][j][k][1];
+        * ( C1 * ( u[i-1][j][k][4] * tmp1 )
+            - 0.50 * C2
+            * ( (  3.0*u[i-1][j][k][1]*u[i-1][j][k][1]
+                   + u[i-1][j][k][2]*u[i-1][j][k][2]
+                   + u[i-1][j][k][3]*u[i-1][j][k][3] ) * tmp2 ) )
+        - dt * tx1
+        * ( r43*c34 - c1345 ) * tmp2 * u[i-1][j][k][1];
       c[i][j][4][2] = - dt * tx2
-	* ( - C2 * ( u[i-1][j][k][2]*u[i-1][j][k][1] ) * tmp2 )
-	- dt * tx1
-	* (  c34 - c1345 ) * tmp2 * u[i-1][j][k][2];
+        * ( - C2 * ( u[i-1][j][k][2]*u[i-1][j][k][1] ) * tmp2 )
+        - dt * tx1
+        * (  c34 - c1345 ) * tmp2 * u[i-1][j][k][2];
       c[i][j][4][3] = - dt * tx2
-	* ( - C2 * ( u[i-1][j][k][3]*u[i-1][j][k][1] ) * tmp2 )
-	- dt * tx1
-	* (  c34 - c1345 ) * tmp2 * u[i-1][j][k][3];
+        * ( - C2 * ( u[i-1][j][k][3]*u[i-1][j][k][1] ) * tmp2 )
+        - dt * tx1
+        * (  c34 - c1345 ) * tmp2 * u[i-1][j][k][3];
       c[i][j][4][4] = - dt * tx2
-	* ( C1 * ( u[i-1][j][k][1] * tmp1 ) )
-	- dt * tx1 * c1345 * tmp1
-	- dt * tx1 * dx5;
+        * ( C1 * ( u[i-1][j][k][1] * tmp1 ) )
+        - dt * tx1 * c1345 * tmp1
+        - dt * tx1 * dx5;
     }
   }
 }
@@ -1625,10 +1625,10 @@ c  local variables
 #if defined(_OPENMP)  
   for (i = iend; i >= ist; i--) {
       for (j = jend; j >= jst; j--) {
-#else	  
+#else     
   for (i = ist; i <= iend; i++) {
     for (j = jst; j <= jend; j++) {
-#endif	
+#endif  
 
 /*--------------------------------------------------------------------
 c   form the block daigonal
@@ -1638,94 +1638,94 @@ c   form the block daigonal
       tmp3 = tmp1 * tmp2;
 
       d[i][j][0][0] =  1.0
-	+ dt * 2.0 * (   tx1 * dx1
-			 + ty1 * dy1
-			 + tz1 * dz1 );
+        + dt * 2.0 * (   tx1 * dx1
+                         + ty1 * dy1
+                         + tz1 * dz1 );
       d[i][j][0][1] =  0.0;
       d[i][j][0][2] =  0.0;
       d[i][j][0][3] =  0.0;
       d[i][j][0][4] =  0.0;
 
       d[i][j][1][0] =  dt * 2.0
-	* (  tx1 * ( - r43 * c34 * tmp2 * u[i][j][k][1] )
-	     + ty1 * ( -       c34 * tmp2 * u[i][j][k][1] )
-	     + tz1 * ( -       c34 * tmp2 * u[i][j][k][1] ) );
+        * (  tx1 * ( - r43 * c34 * tmp2 * u[i][j][k][1] )
+             + ty1 * ( -       c34 * tmp2 * u[i][j][k][1] )
+             + tz1 * ( -       c34 * tmp2 * u[i][j][k][1] ) );
       d[i][j][1][1] =  1.0
-	+ dt * 2.0 
-	* (  tx1 * r43 * c34 * tmp1
-	     + ty1 *       c34 * tmp1
-	     + tz1 *       c34 * tmp1 )
-	+ dt * 2.0 * (   tx1 * dx2
-			 + ty1 * dy2
-			 + tz1 * dz2  );
+        + dt * 2.0 
+        * (  tx1 * r43 * c34 * tmp1
+             + ty1 *       c34 * tmp1
+             + tz1 *       c34 * tmp1 )
+        + dt * 2.0 * (   tx1 * dx2
+                         + ty1 * dy2
+                         + tz1 * dz2  );
       d[i][j][1][2] = 0.0;
       d[i][j][1][3] = 0.0;
       d[i][j][1][4] = 0.0;
 
       d[i][j][2][0] = dt * 2.0
-	* (  tx1 * ( -       c34 * tmp2 * u[i][j][k][2] )
-	     + ty1 * ( - r43 * c34 * tmp2 * u[i][j][k][2] )
-	     + tz1 * ( -       c34 * tmp2 * u[i][j][k][2] ) );
+        * (  tx1 * ( -       c34 * tmp2 * u[i][j][k][2] )
+             + ty1 * ( - r43 * c34 * tmp2 * u[i][j][k][2] )
+             + tz1 * ( -       c34 * tmp2 * u[i][j][k][2] ) );
       d[i][j][2][1] = 0.0;
       d[i][j][2][2] = 1.0
-	+ dt * 2.0
-	* (  tx1 *       c34 * tmp1
-	     + ty1 * r43 * c34 * tmp1
-	     + tz1 *       c34 * tmp1 )
-	+ dt * 2.0 * (  tx1 * dx3
-			+ ty1 * dy3
-			+ tz1 * dz3 );
+        + dt * 2.0
+        * (  tx1 *       c34 * tmp1
+             + ty1 * r43 * c34 * tmp1
+             + tz1 *       c34 * tmp1 )
+        + dt * 2.0 * (  tx1 * dx3
+                        + ty1 * dy3
+                        + tz1 * dz3 );
       d[i][j][2][3] = 0.0;
       d[i][j][2][4] = 0.0;
 
       d[i][j][3][0] = dt * 2.0
-	* (  tx1 * ( -       c34 * tmp2 * u[i][j][k][3] )
-	     + ty1 * ( -       c34 * tmp2 * u[i][j][k][3] )
-	     + tz1 * ( - r43 * c34 * tmp2 * u[i][j][k][3] ) );
+        * (  tx1 * ( -       c34 * tmp2 * u[i][j][k][3] )
+             + ty1 * ( -       c34 * tmp2 * u[i][j][k][3] )
+             + tz1 * ( - r43 * c34 * tmp2 * u[i][j][k][3] ) );
       d[i][j][3][1] = 0.0;
       d[i][j][3][2] = 0.0;
       d[i][j][3][3] = 1.0
-	+ dt * 2.0
-	* (  tx1 *       c34 * tmp1
-	     + ty1 *       c34 * tmp1
-	     + tz1 * r43 * c34 * tmp1 )
-	+ dt * 2.0 * (  tx1 * dx4
-			+ ty1 * dy4
-			+ tz1 * dz4 );
+        + dt * 2.0
+        * (  tx1 *       c34 * tmp1
+             + ty1 *       c34 * tmp1
+             + tz1 * r43 * c34 * tmp1 )
+        + dt * 2.0 * (  tx1 * dx4
+                        + ty1 * dy4
+                        + tz1 * dz4 );
       d[i][j][3][4] = 0.0;
 
       d[i][j][4][0] = dt * 2.0
-	* ( tx1 * ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
-		    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
-		    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
-		    - ( c1345 ) * tmp2 * u[i][j][k][4] )
-	    + ty1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
-		      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
-		      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
-		      - ( c1345 ) * tmp2 * u[i][j][k][4] )
-	    + tz1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
-		      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
-		      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
-		      - ( c1345 ) * tmp2 * u[i][j][k][4] ) );
+        * ( tx1 * ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
+                    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
+                    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
+                    - ( c1345 ) * tmp2 * u[i][j][k][4] )
+            + ty1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
+                      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
+                      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
+                      - ( c1345 ) * tmp2 * u[i][j][k][4] )
+            + tz1 * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][1]) )
+                      - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][2]) )
+                      - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k][3]) )
+                      - ( c1345 ) * tmp2 * u[i][j][k][4] ) );
       d[i][j][4][1] = dt * 2.0
-	* ( tx1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][1]
-	    + ty1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1]
-	    + tz1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1] );
+        * ( tx1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][1]
+            + ty1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1]
+            + tz1 * (     c34 - c1345 ) * tmp2 * u[i][j][k][1] );
       d[i][j][4][2] = dt * 2.0
-	* ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2]
-	    + ty1 * ( r43*c34 -c1345 ) * tmp2 * u[i][j][k][2]
-	    + tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2] );
+        * ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2]
+            + ty1 * ( r43*c34 -c1345 ) * tmp2 * u[i][j][k][2]
+            + tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][2] );
       d[i][j][4][3] = dt * 2.0
-	* ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
-	    + ty1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
-	    + tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][3] );
+        * ( tx1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
+            + ty1 * ( c34 - c1345 ) * tmp2 * u[i][j][k][3]
+            + tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k][3] );
       d[i][j][4][4] = 1.0
         + dt * 2.0 * ( tx1 * c1345 * tmp1
-		       + ty1 * c1345 * tmp1
-		       + tz1 * c1345 * tmp1 )
+                       + ty1 * c1345 * tmp1
+                       + tz1 * c1345 * tmp1 )
         + dt * 2.0 * (  tx1 * dx5
-			+  ty1 * dy5
-			+  tz1 * dz5 );
+                        +  ty1 * dy5
+                        +  tz1 * dz5 );
 
 /*--------------------------------------------------------------------
 c   form the first block sub-diagonal
@@ -1741,72 +1741,72 @@ c   form the first block sub-diagonal
       a[i][j][0][4] =   0.0;
 
       a[i][j][1][0] =  dt * tx2
-	* ( - ( u[i+1][j][k][1] * tmp1 ) *( u[i+1][j][k][1] * tmp1 )
-	    + C2 * 0.50 * (  u[i+1][j][k][1] * u[i+1][j][k][1]
+        * ( - ( u[i+1][j][k][1] * tmp1 ) *( u[i+1][j][k][1] * tmp1 )
+            + C2 * 0.50 * (  u[i+1][j][k][1] * u[i+1][j][k][1]
                              + u[i+1][j][k][2] * u[i+1][j][k][2]
                              + u[i+1][j][k][3] * u[i+1][j][k][3] ) * tmp2 )
-	- dt * tx1 * ( - r43 * c34 * tmp2 * u[i+1][j][k][1] );
+        - dt * tx1 * ( - r43 * c34 * tmp2 * u[i+1][j][k][1] );
       a[i][j][1][1] =  dt * tx2
-	* ( ( 2.0 - C2 ) * ( u[i+1][j][k][1] * tmp1 ) )
-	- dt * tx1 * ( r43 * c34 * tmp1 )
-	- dt * tx1 * dx2;
+        * ( ( 2.0 - C2 ) * ( u[i+1][j][k][1] * tmp1 ) )
+        - dt * tx1 * ( r43 * c34 * tmp1 )
+        - dt * tx1 * dx2;
       a[i][j][1][2] =  dt * tx2
-	* ( - C2 * ( u[i+1][j][k][2] * tmp1 ) );
+        * ( - C2 * ( u[i+1][j][k][2] * tmp1 ) );
       a[i][j][1][3] =  dt * tx2
-	* ( - C2 * ( u[i+1][j][k][3] * tmp1 ) );
+        * ( - C2 * ( u[i+1][j][k][3] * tmp1 ) );
       a[i][j][1][4] =  dt * tx2 * C2 ;
 
       a[i][j][2][0] =  dt * tx2
-	* ( - ( u[i+1][j][k][1] * u[i+1][j][k][2] ) * tmp2 )
-	- dt * tx1 * ( - c34 * tmp2 * u[i+1][j][k][2] );
+        * ( - ( u[i+1][j][k][1] * u[i+1][j][k][2] ) * tmp2 )
+        - dt * tx1 * ( - c34 * tmp2 * u[i+1][j][k][2] );
       a[i][j][2][1] =  dt * tx2 * ( u[i+1][j][k][2] * tmp1 );
       a[i][j][2][2] =  dt * tx2 * ( u[i+1][j][k][1] * tmp1 )
-	- dt * tx1 * ( c34 * tmp1 )
-	- dt * tx1 * dx3;
+        - dt * tx1 * ( c34 * tmp1 )
+        - dt * tx1 * dx3;
       a[i][j][2][3] = 0.0;
       a[i][j][2][4] = 0.0;
 
       a[i][j][3][0] = dt * tx2
-	* ( - ( u[i+1][j][k][1]*u[i+1][j][k][3] ) * tmp2 )
-	- dt * tx1 * ( - c34 * tmp2 * u[i+1][j][k][3] );
+        * ( - ( u[i+1][j][k][1]*u[i+1][j][k][3] ) * tmp2 )
+        - dt * tx1 * ( - c34 * tmp2 * u[i+1][j][k][3] );
       a[i][j][3][1] = dt * tx2 * ( u[i+1][j][k][3] * tmp1 );
       a[i][j][3][2] = 0.0;
       a[i][j][3][3] = dt * tx2 * ( u[i+1][j][k][1] * tmp1 )
-	- dt * tx1 * ( c34 * tmp1 )
-	- dt * tx1 * dx4;
+        - dt * tx1 * ( c34 * tmp1 )
+        - dt * tx1 * dx4;
       a[i][j][3][4] = 0.0;
 
       a[i][j][4][0] = dt * tx2
-	* ( ( C2 * (  u[i+1][j][k][1] * u[i+1][j][k][1]
-		      + u[i+1][j][k][2] * u[i+1][j][k][2]
-		      + u[i+1][j][k][3] * u[i+1][j][k][3] ) * tmp2
-	      - C1 * ( u[i+1][j][k][4] * tmp1 ) )
-	    * ( u[i+1][j][k][1] * tmp1 ) )
-	- dt * tx1
-	* ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i+1][j][k][1]) )
-	    - (     c34 - c1345 ) * tmp3 * ( pow2(u[i+1][j][k][2]) )
-	    - (     c34 - c1345 ) * tmp3 * ( pow2(u[i+1][j][k][3]) )
-	    - c1345 * tmp2 * u[i+1][j][k][4] );
+        * ( ( C2 * (  u[i+1][j][k][1] * u[i+1][j][k][1]
+                      + u[i+1][j][k][2] * u[i+1][j][k][2]
+                      + u[i+1][j][k][3] * u[i+1][j][k][3] ) * tmp2
+              - C1 * ( u[i+1][j][k][4] * tmp1 ) )
+            * ( u[i+1][j][k][1] * tmp1 ) )
+        - dt * tx1
+        * ( - ( r43*c34 - c1345 ) * tmp3 * ( pow2(u[i+1][j][k][1]) )
+            - (     c34 - c1345 ) * tmp3 * ( pow2(u[i+1][j][k][2]) )
+            - (     c34 - c1345 ) * tmp3 * ( pow2(u[i+1][j][k][3]) )
+            - c1345 * tmp2 * u[i+1][j][k][4] );
       a[i][j][4][1] = dt * tx2
-	* ( C1 * ( u[i+1][j][k][4] * tmp1 )
-	    - 0.50 * C2
-	    * ( (  3.0*u[i+1][j][k][1]*u[i+1][j][k][1]
-		   + u[i+1][j][k][2]*u[i+1][j][k][2]
-		   + u[i+1][j][k][3]*u[i+1][j][k][3] ) * tmp2 ) )
-	- dt * tx1
-	* ( r43*c34 - c1345 ) * tmp2 * u[i+1][j][k][1];
+        * ( C1 * ( u[i+1][j][k][4] * tmp1 )
+            - 0.50 * C2
+            * ( (  3.0*u[i+1][j][k][1]*u[i+1][j][k][1]
+                   + u[i+1][j][k][2]*u[i+1][j][k][2]
+                   + u[i+1][j][k][3]*u[i+1][j][k][3] ) * tmp2 ) )
+        - dt * tx1
+        * ( r43*c34 - c1345 ) * tmp2 * u[i+1][j][k][1];
       a[i][j][4][2] = dt * tx2
-	* ( - C2 * ( u[i+1][j][k][2]*u[i+1][j][k][1] ) * tmp2 )
-	- dt * tx1
-	* (  c34 - c1345 ) * tmp2 * u[i+1][j][k][2];
+        * ( - C2 * ( u[i+1][j][k][2]*u[i+1][j][k][1] ) * tmp2 )
+        - dt * tx1
+        * (  c34 - c1345 ) * tmp2 * u[i+1][j][k][2];
       a[i][j][4][3] = dt * tx2
-	* ( - C2 * ( u[i+1][j][k][3]*u[i+1][j][k][1] ) * tmp2 )
-	- dt * tx1
-	* (  c34 - c1345 ) * tmp2 * u[i+1][j][k][3];
+        * ( - C2 * ( u[i+1][j][k][3]*u[i+1][j][k][1] ) * tmp2 )
+        - dt * tx1
+        * (  c34 - c1345 ) * tmp2 * u[i+1][j][k][3];
       a[i][j][4][4] = dt * tx2
-	* ( C1 * ( u[i+1][j][k][1] * tmp1 ) )
-	- dt * tx1 * c1345 * tmp1
-	- dt * tx1 * dx5;
+        * ( C1 * ( u[i+1][j][k][1] * tmp1 ) )
+        - dt * tx1 * c1345 * tmp1
+        - dt * tx1 * dx5;
 
 /*--------------------------------------------------------------------
 c   form the second block sub-diagonal
@@ -1822,72 +1822,72 @@ c   form the second block sub-diagonal
       b[i][j][0][4] =   0.0;
 
       b[i][j][1][0] =  dt * ty2
-	* ( - ( u[i][j+1][k][1]*u[i][j+1][k][2] ) * tmp2 )
-	- dt * ty1 * ( - c34 * tmp2 * u[i][j+1][k][1] );
+        * ( - ( u[i][j+1][k][1]*u[i][j+1][k][2] ) * tmp2 )
+        - dt * ty1 * ( - c34 * tmp2 * u[i][j+1][k][1] );
       b[i][j][1][1] =  dt * ty2 * ( u[i][j+1][k][2] * tmp1 )
-	- dt * ty1 * ( c34 * tmp1 )
-	- dt * ty1 * dy2;
+        - dt * ty1 * ( c34 * tmp1 )
+        - dt * ty1 * dy2;
       b[i][j][1][2] =  dt * ty2 * ( u[i][j+1][k][1] * tmp1 );
       b[i][j][1][3] = 0.0;
       b[i][j][1][4] = 0.0;
 
       b[i][j][2][0] =  dt * ty2
-	* ( - ( u[i][j+1][k][2] * tmp1 ) *( u[i][j+1][k][2] * tmp1 )
-	    + 0.50 * C2 * ( (  u[i][j+1][k][1] * u[i][j+1][k][1]
-			       + u[i][j+1][k][2] * u[i][j+1][k][2]
-			       + u[i][j+1][k][3] * u[i][j+1][k][3] )
-			    * tmp2 ) )
-	- dt * ty1 * ( - r43 * c34 * tmp2 * u[i][j+1][k][2] );
+        * ( - ( u[i][j+1][k][2] * tmp1 ) *( u[i][j+1][k][2] * tmp1 )
+            + 0.50 * C2 * ( (  u[i][j+1][k][1] * u[i][j+1][k][1]
+                               + u[i][j+1][k][2] * u[i][j+1][k][2]
+                               + u[i][j+1][k][3] * u[i][j+1][k][3] )
+                            * tmp2 ) )
+        - dt * ty1 * ( - r43 * c34 * tmp2 * u[i][j+1][k][2] );
       b[i][j][2][1] =  dt * ty2
-	* ( - C2 * ( u[i][j+1][k][1] * tmp1 ) );
+        * ( - C2 * ( u[i][j+1][k][1] * tmp1 ) );
       b[i][j][2][2] =  dt * ty2 * ( ( 2.0 - C2 )
-				 * ( u[i][j+1][k][2] * tmp1 ) )
-	- dt * ty1 * ( r43 * c34 * tmp1 )
-	- dt * ty1 * dy3;
+                                 * ( u[i][j+1][k][2] * tmp1 ) )
+        - dt * ty1 * ( r43 * c34 * tmp1 )
+        - dt * ty1 * dy3;
       b[i][j][2][3] =  dt * ty2
-	* ( - C2 * ( u[i][j+1][k][3] * tmp1 ) );
+        * ( - C2 * ( u[i][j+1][k][3] * tmp1 ) );
       b[i][j][2][4] =  dt * ty2 * C2;
 
       b[i][j][3][0] =  dt * ty2
-	* ( - ( u[i][j+1][k][2]*u[i][j+1][k][3] ) * tmp2 )
-	- dt * ty1 * ( - c34 * tmp2 * u[i][j+1][k][3] );
+        * ( - ( u[i][j+1][k][2]*u[i][j+1][k][3] ) * tmp2 )
+        - dt * ty1 * ( - c34 * tmp2 * u[i][j+1][k][3] );
       b[i][j][3][1] = 0.0;
       b[i][j][3][2] =  dt * ty2 * ( u[i][j+1][k][3] * tmp1 );
       b[i][j][3][3] =  dt * ty2 * ( u[i][j+1][k][2] * tmp1 )
-	- dt * ty1 * ( c34 * tmp1 )
-	- dt * ty1 * dy4;
+        - dt * ty1 * ( c34 * tmp1 )
+        - dt * ty1 * dy4;
       b[i][j][3][4] = 0.0;
 
       b[i][j][4][0] =  dt * ty2
-	* ( ( C2 * (  u[i][j+1][k][1] * u[i][j+1][k][1]
-		      + u[i][j+1][k][2] * u[i][j+1][k][2]
-		      + u[i][j+1][k][3] * u[i][j+1][k][3] ) * tmp2
-	      - C1 * ( u[i][j+1][k][4] * tmp1 ) )
-	    * ( u[i][j+1][k][2] * tmp1 ) )
-	- dt * ty1
-	* ( - (     c34 - c1345 )*tmp3*( pow2(u[i][j+1][k][1]) )
-	    - ( r43*c34 - c1345 )*tmp3*( pow2(u[i][j+1][k][2]) )
-	    - (     c34 - c1345 )*tmp3*( pow2(u[i][j+1][k][3]) )
-	    - c1345*tmp2*u[i][j+1][k][4] );
+        * ( ( C2 * (  u[i][j+1][k][1] * u[i][j+1][k][1]
+                      + u[i][j+1][k][2] * u[i][j+1][k][2]
+                      + u[i][j+1][k][3] * u[i][j+1][k][3] ) * tmp2
+              - C1 * ( u[i][j+1][k][4] * tmp1 ) )
+            * ( u[i][j+1][k][2] * tmp1 ) )
+        - dt * ty1
+        * ( - (     c34 - c1345 )*tmp3*( pow2(u[i][j+1][k][1]) )
+            - ( r43*c34 - c1345 )*tmp3*( pow2(u[i][j+1][k][2]) )
+            - (     c34 - c1345 )*tmp3*( pow2(u[i][j+1][k][3]) )
+            - c1345*tmp2*u[i][j+1][k][4] );
       b[i][j][4][1] =  dt * ty2
-	* ( - C2 * ( u[i][j+1][k][1]*u[i][j+1][k][2] ) * tmp2 )
-	- dt * ty1
-	* ( c34 - c1345 ) * tmp2 * u[i][j+1][k][1];
+        * ( - C2 * ( u[i][j+1][k][1]*u[i][j+1][k][2] ) * tmp2 )
+        - dt * ty1
+        * ( c34 - c1345 ) * tmp2 * u[i][j+1][k][1];
       b[i][j][4][2] =  dt * ty2
-	* ( C1 * ( u[i][j+1][k][4] * tmp1 )
-	    - 0.50 * C2 
-	    * ( (  u[i][j+1][k][1]*u[i][j+1][k][1]
-		   + 3.0 * u[i][j+1][k][2]*u[i][j+1][k][2]
-		   + u[i][j+1][k][3]*u[i][j+1][k][3] ) * tmp2 ) )
-	- dt * ty1
-	* ( r43*c34 - c1345 ) * tmp2 * u[i][j+1][k][2];
+        * ( C1 * ( u[i][j+1][k][4] * tmp1 )
+            - 0.50 * C2 
+            * ( (  u[i][j+1][k][1]*u[i][j+1][k][1]
+                   + 3.0 * u[i][j+1][k][2]*u[i][j+1][k][2]
+                   + u[i][j+1][k][3]*u[i][j+1][k][3] ) * tmp2 ) )
+        - dt * ty1
+        * ( r43*c34 - c1345 ) * tmp2 * u[i][j+1][k][2];
       b[i][j][4][3] =  dt * ty2
-	* ( - C2 * ( u[i][j+1][k][2]*u[i][j+1][k][3] ) * tmp2 )
-	- dt * ty1 * ( c34 - c1345 ) * tmp2 * u[i][j+1][k][3];
+        * ( - C2 * ( u[i][j+1][k][2]*u[i][j+1][k][3] ) * tmp2 )
+        - dt * ty1 * ( c34 - c1345 ) * tmp2 * u[i][j+1][k][3];
       b[i][j][4][4] =  dt * ty2
-	* ( C1 * ( u[i][j+1][k][2] * tmp1 ) )
-	- dt * ty1 * c1345 * tmp1
-	- dt * ty1 * dy5;
+        * ( C1 * ( u[i][j+1][k][2] * tmp1 ) )
+        - dt * ty1 * c1345 * tmp1
+        - dt * ty1 * dy5;
 
 /*--------------------------------------------------------------------
 c   form the third block sub-diagonal
@@ -1903,70 +1903,70 @@ c   form the third block sub-diagonal
       c[i][j][0][4] =   0.0;
 
       c[i][j][1][0] = dt * tz2
-	* ( - ( u[i][j][k+1][1]*u[i][j][k+1][3] ) * tmp2 )
-	- dt * tz1 * ( - c34 * tmp2 * u[i][j][k+1][1] );
+        * ( - ( u[i][j][k+1][1]*u[i][j][k+1][3] ) * tmp2 )
+        - dt * tz1 * ( - c34 * tmp2 * u[i][j][k+1][1] );
       c[i][j][1][1] = dt * tz2 * ( u[i][j][k+1][3] * tmp1 )
-	- dt * tz1 * c34 * tmp1
-	- dt * tz1 * dz2 ;
+        - dt * tz1 * c34 * tmp1
+        - dt * tz1 * dz2 ;
       c[i][j][1][2] = 0.0;
       c[i][j][1][3] = dt * tz2 * ( u[i][j][k+1][1] * tmp1 );
       c[i][j][1][4] = 0.0;
 
       c[i][j][2][0] = dt * tz2
-	* ( - ( u[i][j][k+1][2]*u[i][j][k+1][3] ) * tmp2 )
-	- dt * tz1 * ( - c34 * tmp2 * u[i][j][k+1][2] );
+        * ( - ( u[i][j][k+1][2]*u[i][j][k+1][3] ) * tmp2 )
+        - dt * tz1 * ( - c34 * tmp2 * u[i][j][k+1][2] );
       c[i][j][2][1] = 0.0;
       c[i][j][2][2] = dt * tz2 * ( u[i][j][k+1][3] * tmp1 )
-	- dt * tz1 * ( c34 * tmp1 )
-	- dt * tz1 * dz3;
+        - dt * tz1 * ( c34 * tmp1 )
+        - dt * tz1 * dz3;
       c[i][j][2][3] = dt * tz2 * ( u[i][j][k+1][2] * tmp1 );
       c[i][j][2][4] = 0.0;
 
       c[i][j][3][0] = dt * tz2
-	* ( - ( u[i][j][k+1][3] * tmp1 ) *( u[i][j][k+1][3] * tmp1 )
-	    + 0.50 * C2
-	    * ( ( u[i][j][k+1][1] * u[i][j][k+1][1]
-		  + u[i][j][k+1][2] * u[i][j][k+1][2]
-		  + u[i][j][k+1][3] * u[i][j][k+1][3] ) * tmp2 ) )
-	- dt * tz1 * ( - r43 * c34 * tmp2 * u[i][j][k+1][3] );
+        * ( - ( u[i][j][k+1][3] * tmp1 ) *( u[i][j][k+1][3] * tmp1 )
+            + 0.50 * C2
+            * ( ( u[i][j][k+1][1] * u[i][j][k+1][1]
+                  + u[i][j][k+1][2] * u[i][j][k+1][2]
+                  + u[i][j][k+1][3] * u[i][j][k+1][3] ) * tmp2 ) )
+        - dt * tz1 * ( - r43 * c34 * tmp2 * u[i][j][k+1][3] );
       c[i][j][3][1] = dt * tz2
-	* ( - C2 * ( u[i][j][k+1][1] * tmp1 ) );
+        * ( - C2 * ( u[i][j][k+1][1] * tmp1 ) );
       c[i][j][3][2] = dt * tz2
-	* ( - C2 * ( u[i][j][k+1][2] * tmp1 ) );
+        * ( - C2 * ( u[i][j][k+1][2] * tmp1 ) );
       c[i][j][3][3] = dt * tz2 * ( 2.0 - C2 )
-	* ( u[i][j][k+1][3] * tmp1 )
-	- dt * tz1 * ( r43 * c34 * tmp1 )
-	- dt * tz1 * dz4;
+        * ( u[i][j][k+1][3] * tmp1 )
+        - dt * tz1 * ( r43 * c34 * tmp1 )
+        - dt * tz1 * dz4;
       c[i][j][3][4] = dt * tz2 * C2;
 
       c[i][j][4][0] = dt * tz2
-	* ( ( C2 * (  u[i][j][k+1][1] * u[i][j][k+1][1]
+        * ( ( C2 * (  u[i][j][k+1][1] * u[i][j][k+1][1]
                       + u[i][j][k+1][2] * u[i][j][k+1][2]
                       + u[i][j][k+1][3] * u[i][j][k+1][3] ) * tmp2
-	      - C1 * ( u[i][j][k+1][4] * tmp1 ) )
-	    * ( u[i][j][k+1][3] * tmp1 ) )
-	- dt * tz1
-	* ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k+1][1]) )
-	    - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k+1][2]) )
-	    - ( r43*c34 - c1345 )* tmp3 * ( pow2(u[i][j][k+1][3]) )
-	    - c1345 * tmp2 * u[i][j][k+1][4] );
+              - C1 * ( u[i][j][k+1][4] * tmp1 ) )
+            * ( u[i][j][k+1][3] * tmp1 ) )
+        - dt * tz1
+        * ( - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k+1][1]) )
+            - ( c34 - c1345 ) * tmp3 * ( pow2(u[i][j][k+1][2]) )
+            - ( r43*c34 - c1345 )* tmp3 * ( pow2(u[i][j][k+1][3]) )
+            - c1345 * tmp2 * u[i][j][k+1][4] );
       c[i][j][4][1] = dt * tz2
-	* ( - C2 * ( u[i][j][k+1][1]*u[i][j][k+1][3] ) * tmp2 )
-	- dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k+1][1];
+        * ( - C2 * ( u[i][j][k+1][1]*u[i][j][k+1][3] ) * tmp2 )
+        - dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k+1][1];
       c[i][j][4][2] = dt * tz2
-	* ( - C2 * ( u[i][j][k+1][2]*u[i][j][k+1][3] ) * tmp2 )
-	- dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k+1][2];
+        * ( - C2 * ( u[i][j][k+1][2]*u[i][j][k+1][3] ) * tmp2 )
+        - dt * tz1 * ( c34 - c1345 ) * tmp2 * u[i][j][k+1][2];
       c[i][j][4][3] = dt * tz2
-	* ( C1 * ( u[i][j][k+1][4] * tmp1 )
+        * ( C1 * ( u[i][j][k+1][4] * tmp1 )
             - 0.50 * C2
             * ( (  u[i][j][k+1][1]*u[i][j][k+1][1]
-		   + u[i][j][k+1][2]*u[i][j][k+1][2]
-		   + 3.0*u[i][j][k+1][3]*u[i][j][k+1][3] ) * tmp2 ) )
-	- dt * tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k+1][3];
+                   + u[i][j][k+1][2]*u[i][j][k+1][2]
+                   + 3.0*u[i][j][k+1][3]*u[i][j][k+1][3] ) * tmp2 ) )
+        - dt * tz1 * ( r43*c34 - c1345 ) * tmp2 * u[i][j][k+1][3];
       c[i][j][4][4] = dt * tz2
-	* ( C1 * ( u[i][j][k+1][3] * tmp1 ) )
-	- dt * tz1 * c1345 * tmp1
-	- dt * tz1 * dz5;
+        * ( C1 * ( u[i][j][k+1][3] * tmp1 ) )
+        - dt * tz1 * c1345 * tmp1
+        - dt * tz1 * dz5;
     }
   }
 }
@@ -1975,14 +1975,14 @@ c   form the third block sub-diagonal
 --------------------------------------------------------------------*/
 
 static void l2norm (int nx0, int ny0, int nz0,
-		    int ist, int iend,
-		    int jst, int jend,
+                    int ist, int iend,
+                    int jst, int jend,
 /*--------------------------------------------------------------------
 c   To improve cache performance, second two dimensions padded by 1 
 c   for even number sizes only.  Only needed in v.
 --------------------------------------------------------------------*/
-		    double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
-		    double sum[5]) {
+                    double v[ISIZ1][ISIZ2/2*2+1][ISIZ3/2*2+1][5],
+                    double sum[5]) {
 
 /*--------------------------------------------------------------------
 c   to compute the l2-norm of vector v.
@@ -2003,11 +2003,11 @@ c  local variables
   for (i = ist; i <= iend; i++) {
     for (j = jst; j <= jend; j++) {
       for (k = 1; k <= nz0-2; k++) {
-	  sum0 = sum0 + v[i][j][k][0] * v[i][j][k][0];
-	  sum1 = sum1 + v[i][j][k][1] * v[i][j][k][1];
-	  sum2 = sum2 + v[i][j][k][2] * v[i][j][k][2];
-	  sum3 = sum3 + v[i][j][k][3] * v[i][j][k][3];
-	  sum4 = sum4 + v[i][j][k][4] * v[i][j][k][4];
+          sum0 = sum0 + v[i][j][k][0] * v[i][j][k][0];
+          sum1 = sum1 + v[i][j][k][1] * v[i][j][k][1];
+          sum2 = sum2 + v[i][j][k][2] * v[i][j][k][2];
+          sum3 = sum3 + v[i][j][k][3] * v[i][j][k][3];
+          sum4 = sum4 + v[i][j][k][4] * v[i][j][k][4];
       }
     }
   }
@@ -2041,8 +2041,8 @@ c  local variables
   int jbeg, jfin, jfin1;
   int iglob, iglob1, iglob2;
   int jglob, jglob1, jglob2;
-  double phi1[ISIZ2+2][ISIZ3+2];	/* phi1(0:isiz2+1,0:isiz3+1) */
-  double phi2[ISIZ2+2][ISIZ3+2];	/* phi2(0:isiz2+1,0:isiz3+1) */
+  double phi1[ISIZ2+2][ISIZ3+2];        /* phi1(0:isiz2+1,0:isiz3+1) */
+  double phi2[ISIZ2+2][ISIZ3+2];        /* phi2(0:isiz2+1,0:isiz3+1) */
   double  frc1, frc2, frc3;
 
 /*--------------------------------------------------------------------
@@ -2086,18 +2086,18 @@ c   initialize
       k = ki1;
 
       phi1[i][j] = C2*(  u[i][j][k][4]
-			- 0.50 * (  pow2(u[i][j][k][1])
-				    + pow2(u[i][j][k][2])
-				    + pow2(u[i][j][k][3]) )
-			/ u[i][j][k][0] );
+                        - 0.50 * (  pow2(u[i][j][k][1])
+                                    + pow2(u[i][j][k][2])
+                                    + pow2(u[i][j][k][3]) )
+                        / u[i][j][k][0] );
 
       k = ki2;
 
       phi2[i][j] = C2*(  u[i][j][k][4]
-			- 0.50 * (  pow2(u[i][j][k][1])
-				    + pow2(u[i][j][k][2])
-				    + pow2(u[i][j][k][3]) )
-			/ u[i][j][k][0] );
+                        - 0.50 * (  pow2(u[i][j][k][1])
+                                    + pow2(u[i][j][k][2])
+                                    + pow2(u[i][j][k][3]) )
+                        / u[i][j][k][0] );
     }
   }
 
@@ -2106,13 +2106,13 @@ c   initialize
   for (i = ibeg; i <= ifin1; i++) {
     for (j = jbeg; j <= jfin1; j++) {
       frc1 = frc1 + (  phi1[i][j]
-		       + phi1[i+1][j]
-		       + phi1[i][j+1]
-		       + phi1[i+1][j+1]
-		       + phi2[i][j]
-		       + phi2[i+1][j]
-		       + phi2[i][j+1]
-		       + phi2[i+1][j+1] );
+                       + phi1[i+1][j]
+                       + phi1[i][j+1]
+                       + phi1[i+1][j+1]
+                       + phi2[i][j]
+                       + phi2[i+1][j]
+                       + phi2[i][j+1]
+                       + phi2[i+1][j+1] );
     }
   }
 
@@ -2132,11 +2132,11 @@ c   initialize
     for (i = ibeg; i <= ifin; i++) {
       iglob = i;
       for (k = ki1; k <= ki2; k++) {
-	phi1[i][k] = C2*(  u[i][jbeg][k][4]
-			  - 0.50 * (  pow2(u[i][jbeg][k][1])
-				      + pow2(u[i][jbeg][k][2])
-				      + pow2(u[i][jbeg][k][3]) )
-			  / u[i][jbeg][k][0] );
+        phi1[i][k] = C2*(  u[i][jbeg][k][4]
+                          - 0.50 * (  pow2(u[i][jbeg][k][1])
+                                      + pow2(u[i][jbeg][k][2])
+                                      + pow2(u[i][jbeg][k][3]) )
+                          / u[i][jbeg][k][0] );
       }
     }
   }
@@ -2146,11 +2146,11 @@ c   initialize
     for (i = ibeg; i <= ifin; i++) {
       iglob = i;
       for (k = ki1; k <= ki2; k++) {
-	phi2[i][k] = C2*(  u[i][jfin][k][4]
-			  - 0.50 * (  pow2(u[i][jfin][k][1])
-				      + pow2(u[i][jfin][k][2])
-				      + pow2(u[i][jfin][k][3]) )
-			  / u[i][jfin][k][0] );
+        phi2[i][k] = C2*(  u[i][jfin][k][4]
+                          - 0.50 * (  pow2(u[i][jfin][k][1])
+                                      + pow2(u[i][jfin][k][2])
+                                      + pow2(u[i][jfin][k][3]) )
+                          / u[i][jfin][k][0] );
       }
     }
   }
@@ -2160,13 +2160,13 @@ c   initialize
   for (i = ibeg; i <= ifin1; i++) {
     for (k = ki1; k <= ki2-1; k++) {
       frc2 = frc2 + (  phi1[i][k]
-		       + phi1[i+1][k]
-		       + phi1[i][k+1]
-		       + phi1[i+1][k+1]
-		       + phi2[i][k]
-		       + phi2[i+1][k]
-		       + phi2[i][k+1]
-		       + phi2[i+1][k+1] );
+                       + phi1[i+1][k]
+                       + phi1[i][k+1]
+                       + phi1[i+1][k+1]
+                       + phi2[i][k]
+                       + phi2[i+1][k]
+                       + phi2[i][k+1]
+                       + phi2[i+1][k+1] );
     }
   }
 
@@ -2187,11 +2187,11 @@ c   initialize
     for (j = jbeg; j <= jfin; j++) {
       jglob = j;
       for (k = ki1; k <= ki2; k++) {
-	phi1[j][k] = C2*(  u[ibeg][j][k][4]
-			  - 0.50 * (  pow2(u[ibeg][j][k][1])
-				      + pow2(u[ibeg][j][k][2])
-				      + pow2(u[ibeg][j][k][3]) )
-			  / u[ibeg][j][k][0] );
+        phi1[j][k] = C2*(  u[ibeg][j][k][4]
+                          - 0.50 * (  pow2(u[ibeg][j][k][1])
+                                      + pow2(u[ibeg][j][k][2])
+                                      + pow2(u[ibeg][j][k][3]) )
+                          / u[ibeg][j][k][0] );
       }
     }
   }
@@ -2201,11 +2201,11 @@ c   initialize
     for (j = jbeg; j <= jfin; j++) {
       jglob = j;
       for (k = ki1; k <= ki2; k++) {
-	phi2[j][k] = C2*(  u[ifin][j][k][4]
-			  - 0.50 * (  pow2(u[ifin][j][k][1])
-				      + pow2(u[ifin][j][k][2])
-				      + pow2(u[ifin][j][k][3]) )
-			  / u[ifin][j][k][0] );
+        phi2[j][k] = C2*(  u[ifin][j][k][4]
+                          - 0.50 * (  pow2(u[ifin][j][k][1])
+                                      + pow2(u[ifin][j][k][2])
+                                      + pow2(u[ifin][j][k][3]) )
+                          / u[ifin][j][k][0] );
       }
     }
   }
@@ -2215,13 +2215,13 @@ c   initialize
   for (j = jbeg; j <= jfin1; j++) {
     for (k = ki1; k <= ki2-1; k++) {
       frc3 = frc3 + (  phi1[j][k]
-		       + phi1[j+1][k]
-		       + phi1[j][k+1]
-		       + phi1[j+1][k+1]
-		       + phi2[j][k]
-		       + phi2[j+1][k]
-		       + phi2[j][k+1]
-		       + phi2[j+1][k+1] );
+                       + phi1[j+1][k]
+                       + phi1[j][k+1]
+                       + phi1[j+1][k+1]
+                       + phi2[j][k]
+                       + phi2[j+1][k]
+                       + phi2[j][k+1]
+                       + phi2[j+1][k+1] );
     }
   }
 
@@ -2248,7 +2248,7 @@ c       nx, ny, nz = number of grid points in x, y, z directions
 --------------------------------------------------------------------*/
 
   printf("\n\n NAS Parallel Benchmarks 2.3 OpenMP C version"
-	 " - LU Benchmark\n\n");
+         " - LU Benchmark\n\n");
 
   fp = fopen("inputlu.data", "r");
   if (fp != NULL) {
@@ -2272,7 +2272,7 @@ c       nx, ny, nz = number of grid points in x, y, z directions
     
     while(fgetc(fp) != '\n'); while(fgetc(fp) != '\n');
     fscanf(fp, "%lf%lf%lf%lf%lf",
-	   &tolrsd[0], &tolrsd[1], &tolrsd[2], &tolrsd[3], &tolrsd[4]);
+           &tolrsd[0], &tolrsd[1], &tolrsd[2], &tolrsd[3], &tolrsd[4]);
     while(fgetc(fp) != '\n');
     
     while(fgetc(fp) != '\n'); while(fgetc(fp) != '\n');
@@ -2301,14 +2301,14 @@ c   check problem size
 
   if ( nx0 < 4 || ny0 < 4 || nz0 < 4 ) {
     printf("     PROBLEM SIZE IS TOO SMALL - \n"
-	   "     SET EACH OF NX, NY AND NZ AT LEAST EQUAL TO 5\n");
+           "     SET EACH OF NX, NY AND NZ AT LEAST EQUAL TO 5\n");
     exit(1);
   }
 
   if ( nx0 > ISIZ1 || ny0 > ISIZ2 || nz0 > ISIZ3 ) {
     printf("     PROBLEM SIZE IS TOO LARGE - \n"
-	   "     NX, NY AND NZ SHOULD BE EQUAL TO \n"
-	   "     ISIZ1, ISIZ2 AND ISIZ3 RESPECTIVELY\n");
+           "     NX, NY AND NZ SHOULD BE EQUAL TO \n"
+           "     ISIZ1, ISIZ2 AND ISIZ3 RESPECTIVELY\n");
     exit(1);
   }
 
@@ -2346,9 +2346,9 @@ c  local variables
   for (i = 0; i <= nx-1; i++) {
     for (j = 0; j <= ny-1; j++) {
       for (k = 0; k <= nz-1; k++) {
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] = - frct[i][j][k][m];
-	}
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] = - frct[i][j][k][m];
+        }
       }
     }
   }
@@ -2364,19 +2364,19 @@ c   xi-direction flux differences
   for (i = L1; i <= L2; i++) {
     for (j = jst; j <= jend; j++) {
       for (k = 1; k <= nz - 2; k++) {
-	flux[i][j][k][0] = u[i][j][k][1];
-	u21 = u[i][j][k][1] / u[i][j][k][0];
+        flux[i][j][k][0] = u[i][j][k][1];
+        u21 = u[i][j][k][1] / u[i][j][k][0];
 
-	q = 0.50 * (  u[i][j][k][1] * u[i][j][k][1]
-		      + u[i][j][k][2] * u[i][j][k][2]
-		      + u[i][j][k][3] * u[i][j][k][3] )
-	  / u[i][j][k][0];
+        q = 0.50 * (  u[i][j][k][1] * u[i][j][k][1]
+                      + u[i][j][k][2] * u[i][j][k][2]
+                      + u[i][j][k][3] * u[i][j][k][3] )
+          / u[i][j][k][0];
 
-	flux[i][j][k][1] = u[i][j][k][1] * u21 + C2 * 
-	  ( u[i][j][k][4] - q );
-	flux[i][j][k][2] = u[i][j][k][2] * u21;
-	flux[i][j][k][3] = u[i][j][k][3] * u21;
-	flux[i][j][k][4] = ( C1 * u[i][j][k][4] - C2 * q ) * u21;
+        flux[i][j][k][1] = u[i][j][k][1] * u21 + C2 * 
+          ( u[i][j][k][4] - q );
+        flux[i][j][k][2] = u[i][j][k][2] * u21;
+        flux[i][j][k][3] = u[i][j][k][3] * u21;
+        flux[i][j][k][4] = ( C1 * u[i][j][k][4] - C2 * q ) * u21;
       }
     } 
   } 
@@ -2385,107 +2385,107 @@ c   xi-direction flux differences
   for (j = jst; j <= jend; j++) {
     for (k = 1; k <= nz - 2; k++) {
       for (i = ist; i <= iend; i++) {
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] =  rsd[i][j][k][m]
-	    - tx2 * ( flux[i+1][j][k][m] - flux[i-1][j][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] =  rsd[i][j][k][m]
+            - tx2 * ( flux[i+1][j][k][m] - flux[i-1][j][k][m] );
+        }
       }
 
       L2 = nx-1;
 
       for (i = ist; i <= L2; i++) {
-	tmp = 1.0 / u[i][j][k][0];
+        tmp = 1.0 / u[i][j][k][0];
 
-	u21i = tmp * u[i][j][k][1];
-	u31i = tmp * u[i][j][k][2];
-	u41i = tmp * u[i][j][k][3];
-	u51i = tmp * u[i][j][k][4];
+        u21i = tmp * u[i][j][k][1];
+        u31i = tmp * u[i][j][k][2];
+        u41i = tmp * u[i][j][k][3];
+        u51i = tmp * u[i][j][k][4];
 
-	tmp = 1.0 / u[i-1][j][k][0];
+        tmp = 1.0 / u[i-1][j][k][0];
 
-	u21im1 = tmp * u[i-1][j][k][1];
-	u31im1 = tmp * u[i-1][j][k][2];
-	u41im1 = tmp * u[i-1][j][k][3];
-	u51im1 = tmp * u[i-1][j][k][4];
+        u21im1 = tmp * u[i-1][j][k][1];
+        u31im1 = tmp * u[i-1][j][k][2];
+        u41im1 = tmp * u[i-1][j][k][3];
+        u51im1 = tmp * u[i-1][j][k][4];
 
-	flux[i][j][k][1] = (4.0/3.0) * tx3 * (u21i-u21im1);
-	flux[i][j][k][2] = tx3 * ( u31i - u31im1 );
-	flux[i][j][k][3] = tx3 * ( u41i - u41im1 );
-	flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
-	  * tx3 * (   ( pow2(u21i)   + pow2(u31i)   + pow2(u41i) )
-		    - ( pow2(u21im1) + pow2(u31im1) + pow2(u41im1) ) )
-	  + (1.0/6.0)
-	  * tx3 * ( pow2(u21i) - pow2(u21im1) )
-	  + C1 * C5 * tx3 * ( u51i - u51im1 );
+        flux[i][j][k][1] = (4.0/3.0) * tx3 * (u21i-u21im1);
+        flux[i][j][k][2] = tx3 * ( u31i - u31im1 );
+        flux[i][j][k][3] = tx3 * ( u41i - u41im1 );
+        flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
+          * tx3 * (   ( pow2(u21i)   + pow2(u31i)   + pow2(u41i) )
+                    - ( pow2(u21im1) + pow2(u31im1) + pow2(u41im1) ) )
+          + (1.0/6.0)
+          * tx3 * ( pow2(u21i) - pow2(u21im1) )
+          + C1 * C5 * tx3 * ( u51i - u51im1 );
       }
 
       for (i = ist; i <= iend; i++) {
-	rsd[i][j][k][0] = rsd[i][j][k][0]
-	  + dx1 * tx1 * (            u[i-1][j][k][0]
-				     - 2.0 * u[i][j][k][0]
-				     +           u[i+1][j][k][0] );
-	rsd[i][j][k][1] = rsd[i][j][k][1]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][1] - flux[i][j][k][1] )
-	  + dx2 * tx1 * (            u[i-1][j][k][1]
-				     - 2.0 * u[i][j][k][1]
-				     +           u[i+1][j][k][1] );
-	rsd[i][j][k][2] = rsd[i][j][k][2]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][2] - flux[i][j][k][2] )
-	  + dx3 * tx1 * (            u[i-1][j][k][2]
-				     - 2.0 * u[i][j][k][2]
-				     +           u[i+1][j][k][2] );
-	rsd[i][j][k][3] = rsd[i][j][k][3]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][3] - flux[i][j][k][3] )
-	  + dx4 * tx1 * (            u[i-1][j][k][3]
-				     - 2.0 * u[i][j][k][3]
-				     +           u[i+1][j][k][3] );
-	rsd[i][j][k][4] = rsd[i][j][k][4]
-	  + tx3 * C3 * C4 * ( flux[i+1][j][k][4] - flux[i][j][k][4] )
-	  + dx5 * tx1 * (            u[i-1][j][k][4]
-				     - 2.0 * u[i][j][k][4]
-				     +           u[i+1][j][k][4] );
+        rsd[i][j][k][0] = rsd[i][j][k][0]
+          + dx1 * tx1 * (            u[i-1][j][k][0]
+                                     - 2.0 * u[i][j][k][0]
+                                     +           u[i+1][j][k][0] );
+        rsd[i][j][k][1] = rsd[i][j][k][1]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][1] - flux[i][j][k][1] )
+          + dx2 * tx1 * (            u[i-1][j][k][1]
+                                     - 2.0 * u[i][j][k][1]
+                                     +           u[i+1][j][k][1] );
+        rsd[i][j][k][2] = rsd[i][j][k][2]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][2] - flux[i][j][k][2] )
+          + dx3 * tx1 * (            u[i-1][j][k][2]
+                                     - 2.0 * u[i][j][k][2]
+                                     +           u[i+1][j][k][2] );
+        rsd[i][j][k][3] = rsd[i][j][k][3]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][3] - flux[i][j][k][3] )
+          + dx4 * tx1 * (            u[i-1][j][k][3]
+                                     - 2.0 * u[i][j][k][3]
+                                     +           u[i+1][j][k][3] );
+        rsd[i][j][k][4] = rsd[i][j][k][4]
+          + tx3 * C3 * C4 * ( flux[i+1][j][k][4] - flux[i][j][k][4] )
+          + dx5 * tx1 * (            u[i-1][j][k][4]
+                                     - 2.0 * u[i][j][k][4]
+                                     +           u[i+1][j][k][4] );
       }
 
 /*--------------------------------------------------------------------
 c   Fourth-order dissipation
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	rsd[1][j][k][m] = rsd[1][j][k][m]
-	  - dssp * ( + 5.0 * u[1][j][k][m]
-		     - 4.0 * u[2][j][k][m]
-		     +           u[3][j][k][m] );
-	rsd[2][j][k][m] = rsd[2][j][k][m]
-	  - dssp * ( - 4.0 * u[1][j][k][m]
-		     + 6.0 * u[2][j][k][m]
-		     - 4.0 * u[3][j][k][m]
-		     +           u[4][j][k][m] );
+        rsd[1][j][k][m] = rsd[1][j][k][m]
+          - dssp * ( + 5.0 * u[1][j][k][m]
+                     - 4.0 * u[2][j][k][m]
+                     +           u[3][j][k][m] );
+        rsd[2][j][k][m] = rsd[2][j][k][m]
+          - dssp * ( - 4.0 * u[1][j][k][m]
+                     + 6.0 * u[2][j][k][m]
+                     - 4.0 * u[3][j][k][m]
+                     +           u[4][j][k][m] );
       }
 
       ist1 = 3;
       iend1 = nx - 4;
 
       for (i = ist1; i <= iend1; i++) {
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] = rsd[i][j][k][m]
-	    - dssp * (            u[i-2][j][k][m]
-				  - 4.0 * u[i-1][j][k][m]
-				  + 6.0 * u[i][j][k][m]
-				  - 4.0 * u[i+1][j][k][m]
-				  +           u[i+2][j][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] = rsd[i][j][k][m]
+            - dssp * (            u[i-2][j][k][m]
+                                  - 4.0 * u[i-1][j][k][m]
+                                  + 6.0 * u[i][j][k][m]
+                                  - 4.0 * u[i+1][j][k][m]
+                                  +           u[i+2][j][k][m] );
+        }
       }
 
 
       for (m = 0; m < 5; m++) {
-	rsd[nx-3][j][k][m] = rsd[nx-3][j][k][m]
-	  - dssp * (             u[nx-5][j][k][m]
-				 - 4.0 * u[nx-4][j][k][m]
-				 + 6.0 * u[nx-3][j][k][m]
-				 - 4.0 * u[nx-2][j][k][m]  );
-	rsd[nx-2][j][k][m] = rsd[nx-2][j][k][m]
-	  - dssp * (             u[nx-4][j][k][m]
-				 - 4.0 * u[nx-3][j][k][m]
-				 + 5.0 * u[nx-2][j][k][m] );
+        rsd[nx-3][j][k][m] = rsd[nx-3][j][k][m]
+          - dssp * (             u[nx-5][j][k][m]
+                                 - 4.0 * u[nx-4][j][k][m]
+                                 + 6.0 * u[nx-3][j][k][m]
+                                 - 4.0 * u[nx-2][j][k][m]  );
+        rsd[nx-2][j][k][m] = rsd[nx-2][j][k][m]
+          - dssp * (             u[nx-4][j][k][m]
+                                 - 4.0 * u[nx-3][j][k][m]
+                                 + 5.0 * u[nx-2][j][k][m] );
       }
     }
   }
@@ -2501,18 +2501,18 @@ c   eta-direction flux differences
   for (i = ist; i <= iend; i++) {
     for (j = L1; j <= L2; j++) {
       for (k = 1; k <= nz - 2; k++) {
-	flux[i][j][k][0] = u[i][j][k][2];
-	u31 = u[i][j][k][2] / u[i][j][k][0];
+        flux[i][j][k][0] = u[i][j][k][2];
+        u31 = u[i][j][k][2] / u[i][j][k][0];
 
-	q = 0.50 * (  u[i][j][k][1] * u[i][j][k][1]
-		      + u[i][j][k][2] * u[i][j][k][2]
-		      + u[i][j][k][3] * u[i][j][k][3] )
-	  / u[i][j][k][0];
+        q = 0.50 * (  u[i][j][k][1] * u[i][j][k][1]
+                      + u[i][j][k][2] * u[i][j][k][2]
+                      + u[i][j][k][3] * u[i][j][k][3] )
+          / u[i][j][k][0];
 
-	flux[i][j][k][1] = u[i][j][k][1] * u31;
-	flux[i][j][k][2] = u[i][j][k][2] * u31 + C2 * (u[i][j][k][4]-q);
-	flux[i][j][k][3] = u[i][j][k][3] * u31;
-	flux[i][j][k][4] = ( C1 * u[i][j][k][4] - C2 * q ) * u31;
+        flux[i][j][k][1] = u[i][j][k][1] * u31;
+        flux[i][j][k][2] = u[i][j][k][2] * u31 + C2 * (u[i][j][k][4]-q);
+        flux[i][j][k][3] = u[i][j][k][3] * u31;
+        flux[i][j][k][4] = ( C1 * u[i][j][k][4] - C2 * q ) * u31;
       }
     }
   }
@@ -2521,68 +2521,68 @@ c   eta-direction flux differences
   for (i = ist; i <= iend; i++) {
     for (k = 1; k <= nz - 2; k++) {
       for (j = jst; j <= jend; j++) {
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] =  rsd[i][j][k][m]
-	    - ty2 * ( flux[i][j+1][k][m] - flux[i][j-1][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] =  rsd[i][j][k][m]
+            - ty2 * ( flux[i][j+1][k][m] - flux[i][j-1][k][m] );
+        }
       }
 
       L2 = ny-1;
       for (j = jst; j <= L2; j++) {
-	tmp = 1.0 / u[i][j][k][0];
+        tmp = 1.0 / u[i][j][k][0];
 
-	u21j = tmp * u[i][j][k][1];
-	u31j = tmp * u[i][j][k][2];
-	u41j = tmp * u[i][j][k][3];
-	u51j = tmp * u[i][j][k][4];
+        u21j = tmp * u[i][j][k][1];
+        u31j = tmp * u[i][j][k][2];
+        u41j = tmp * u[i][j][k][3];
+        u51j = tmp * u[i][j][k][4];
 
-	tmp = 1.0 / u[i][j-1][k][0];
-	u21jm1 = tmp * u[i][j-1][k][1];
-	u31jm1 = tmp * u[i][j-1][k][2];
-	u41jm1 = tmp * u[i][j-1][k][3];
-	u51jm1 = tmp * u[i][j-1][k][4];
+        tmp = 1.0 / u[i][j-1][k][0];
+        u21jm1 = tmp * u[i][j-1][k][1];
+        u31jm1 = tmp * u[i][j-1][k][2];
+        u41jm1 = tmp * u[i][j-1][k][3];
+        u51jm1 = tmp * u[i][j-1][k][4];
 
-	flux[i][j][k][1] = ty3 * ( u21j - u21jm1 );
-	flux[i][j][k][2] = (4.0/3.0) * ty3 * (u31j-u31jm1);
-	flux[i][j][k][3] = ty3 * ( u41j - u41jm1 );
-	flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
-	  * ty3 * (   ( pow2(u21j)   + pow2(u31j)   + pow2(u41j) )
-		    - ( pow2(u21jm1) + pow2(u31jm1) + pow2(u41jm1) ) )
-	  + (1.0/6.0)
-	  * ty3 * ( pow2(u31j) - pow2(u31jm1) )
-	  + C1 * C5 * ty3 * ( u51j - u51jm1 );
+        flux[i][j][k][1] = ty3 * ( u21j - u21jm1 );
+        flux[i][j][k][2] = (4.0/3.0) * ty3 * (u31j-u31jm1);
+        flux[i][j][k][3] = ty3 * ( u41j - u41jm1 );
+        flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
+          * ty3 * (   ( pow2(u21j)   + pow2(u31j)   + pow2(u41j) )
+                    - ( pow2(u21jm1) + pow2(u31jm1) + pow2(u41jm1) ) )
+          + (1.0/6.0)
+          * ty3 * ( pow2(u31j) - pow2(u31jm1) )
+          + C1 * C5 * ty3 * ( u51j - u51jm1 );
       }
 
       for (j = jst; j <= jend; j++) {
 
-	rsd[i][j][k][0] = rsd[i][j][k][0]
-	  + dy1 * ty1 * (            u[i][j-1][k][0]
-				     - 2.0 * u[i][j][k][0]
-				     +           u[i][j+1][k][0] );
+        rsd[i][j][k][0] = rsd[i][j][k][0]
+          + dy1 * ty1 * (            u[i][j-1][k][0]
+                                     - 2.0 * u[i][j][k][0]
+                                     +           u[i][j+1][k][0] );
 
-	rsd[i][j][k][1] = rsd[i][j][k][1]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][1] - flux[i][j][k][1] )
-	  + dy2 * ty1 * (            u[i][j-1][k][1]
-				     - 2.0 * u[i][j][k][1]
-				     +           u[i][j+1][k][1] );
+        rsd[i][j][k][1] = rsd[i][j][k][1]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][1] - flux[i][j][k][1] )
+          + dy2 * ty1 * (            u[i][j-1][k][1]
+                                     - 2.0 * u[i][j][k][1]
+                                     +           u[i][j+1][k][1] );
 
-	rsd[i][j][k][2] = rsd[i][j][k][2]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][2] - flux[i][j][k][2] )
-	  + dy3 * ty1 * (            u[i][j-1][k][2]
-				     - 2.0 * u[i][j][k][2]
-				     +           u[i][j+1][k][2] );
+        rsd[i][j][k][2] = rsd[i][j][k][2]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][2] - flux[i][j][k][2] )
+          + dy3 * ty1 * (            u[i][j-1][k][2]
+                                     - 2.0 * u[i][j][k][2]
+                                     +           u[i][j+1][k][2] );
 
-	rsd[i][j][k][3] = rsd[i][j][k][3]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][3] - flux[i][j][k][3] )
-	  + dy4 * ty1 * (            u[i][j-1][k][3]
-				     - 2.0 * u[i][j][k][3]
-				     +           u[i][j+1][k][3] );
+        rsd[i][j][k][3] = rsd[i][j][k][3]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][3] - flux[i][j][k][3] )
+          + dy4 * ty1 * (            u[i][j-1][k][3]
+                                     - 2.0 * u[i][j][k][3]
+                                     +           u[i][j+1][k][3] );
 
-	rsd[i][j][k][4] = rsd[i][j][k][4]
-	  + ty3 * C3 * C4 * ( flux[i][j+1][k][4] - flux[i][j][k][4] )
-	  + dy5 * ty1 * (            u[i][j-1][k][4]
-				     - 2.0 * u[i][j][k][4]
-				     +           u[i][j+1][k][4] );
+        rsd[i][j][k][4] = rsd[i][j][k][4]
+          + ty3 * C3 * C4 * ( flux[i][j+1][k][4] - flux[i][j][k][4] )
+          + dy5 * ty1 * (            u[i][j-1][k][4]
+                                     - 2.0 * u[i][j][k][4]
+                                     +           u[i][j+1][k][4] );
 
       }
 
@@ -2590,40 +2590,40 @@ c   eta-direction flux differences
 c   fourth-order dissipation
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	rsd[i][1][k][m] = rsd[i][1][k][m]
-	  - dssp * ( + 5.0 * u[i][1][k][m]
-		     - 4.0 * u[i][2][k][m]
-		     +           u[i][3][k][m] );
-	rsd[i][2][k][m] = rsd[i][2][k][m]
-	  - dssp * ( - 4.0 * u[i][1][k][m]
-		     + 6.0 * u[i][2][k][m]
-		     - 4.0 * u[i][3][k][m]
-		     +           u[i][4][k][m] );
+        rsd[i][1][k][m] = rsd[i][1][k][m]
+          - dssp * ( + 5.0 * u[i][1][k][m]
+                     - 4.0 * u[i][2][k][m]
+                     +           u[i][3][k][m] );
+        rsd[i][2][k][m] = rsd[i][2][k][m]
+          - dssp * ( - 4.0 * u[i][1][k][m]
+                     + 6.0 * u[i][2][k][m]
+                     - 4.0 * u[i][3][k][m]
+                     +           u[i][4][k][m] );
       }
 
       jst1 = 3;
       jend1 = ny - 4;
       for (j = jst1; j <= jend1; j++) {
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] = rsd[i][j][k][m]
-	    - dssp * (            u[i][j-2][k][m]
-				  - 4.0 * u[i][j-1][k][m]
-				  + 6.0 * u[i][j][k][m]
-				  - 4.0 * u[i][j+1][k][m]
-				  +           u[i][j+2][k][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] = rsd[i][j][k][m]
+            - dssp * (            u[i][j-2][k][m]
+                                  - 4.0 * u[i][j-1][k][m]
+                                  + 6.0 * u[i][j][k][m]
+                                  - 4.0 * u[i][j+1][k][m]
+                                  +           u[i][j+2][k][m] );
+        }
       }
 
       for (m = 0; m < 5; m++) {
-	rsd[i][ny-3][k][m] = rsd[i][ny-3][k][m]
-	  - dssp * (             u[i][ny-5][k][m]
-				 - 4.0 * u[i][ny-4][k][m]
-				 + 6.0 * u[i][ny-3][k][m]
-				 - 4.0 * u[i][ny-2][k][m]  );
-	rsd[i][ny-2][k][m] = rsd[i][ny-2][k][m]
-	  - dssp * (             u[i][ny-4][k][m]
-				 - 4.0 * u[i][ny-3][k][m]
-				 + 5.0 * u[i][ny-2][k][m] );
+        rsd[i][ny-3][k][m] = rsd[i][ny-3][k][m]
+          - dssp * (             u[i][ny-5][k][m]
+                                 - 4.0 * u[i][ny-4][k][m]
+                                 + 6.0 * u[i][ny-3][k][m]
+                                 - 4.0 * u[i][ny-2][k][m]  );
+        rsd[i][ny-2][k][m] = rsd[i][ny-2][k][m]
+          - dssp * (             u[i][ny-4][k][m]
+                                 - 4.0 * u[i][ny-3][k][m]
+                                 + 5.0 * u[i][ny-2][k][m] );
       }
     }
   }
@@ -2635,116 +2635,116 @@ c   zeta-direction flux differences
   for (i = ist; i <= iend; i++) {
     for (j = jst; j <= jend; j++) {
       for (k = 0; k <= nz-1; k++) {
-	flux[i][j][k][0] = u[i][j][k][3];
-	u41 = u[i][j][k][3] / u[i][j][k][0];
+        flux[i][j][k][0] = u[i][j][k][3];
+        u41 = u[i][j][k][3] / u[i][j][k][0];
 
-	q = 0.50 * (  u[i][j][k][1] * u[i][j][k][1]
-		      + u[i][j][k][2] * u[i][j][k][2]
-		      + u[i][j][k][3] * u[i][j][k][3] )
-	  / u[i][j][k][0];
+        q = 0.50 * (  u[i][j][k][1] * u[i][j][k][1]
+                      + u[i][j][k][2] * u[i][j][k][2]
+                      + u[i][j][k][3] * u[i][j][k][3] )
+          / u[i][j][k][0];
 
-	flux[i][j][k][1] = u[i][j][k][1] * u41;
-	flux[i][j][k][2] = u[i][j][k][2] * u41; 
-	flux[i][j][k][3] = u[i][j][k][3] * u41 + C2 * (u[i][j][k][4]-q);
-	flux[i][j][k][4] = ( C1 * u[i][j][k][4] - C2 * q ) * u41;
+        flux[i][j][k][1] = u[i][j][k][1] * u41;
+        flux[i][j][k][2] = u[i][j][k][2] * u41; 
+        flux[i][j][k][3] = u[i][j][k][3] * u41 + C2 * (u[i][j][k][4]-q);
+        flux[i][j][k][4] = ( C1 * u[i][j][k][4] - C2 * q ) * u41;
       }
 
       for (k = 1; k <= nz - 2; k++) {
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] =  rsd[i][j][k][m]
-	    - tz2 * ( flux[i][j][k+1][m] - flux[i][j][k-1][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] =  rsd[i][j][k][m]
+            - tz2 * ( flux[i][j][k+1][m] - flux[i][j][k-1][m] );
+        }
       }
 
       for (k = 1; k <= nz-1; k++) {
-	tmp = 1.0 / u[i][j][k][0];
+        tmp = 1.0 / u[i][j][k][0];
 
-	u21k = tmp * u[i][j][k][1];
-	u31k = tmp * u[i][j][k][2];
-	u41k = tmp * u[i][j][k][3];
-	u51k = tmp * u[i][j][k][4];
+        u21k = tmp * u[i][j][k][1];
+        u31k = tmp * u[i][j][k][2];
+        u41k = tmp * u[i][j][k][3];
+        u51k = tmp * u[i][j][k][4];
 
-	tmp = 1.0 / u[i][j][k-1][0];
+        tmp = 1.0 / u[i][j][k-1][0];
 
-	u21km1 = tmp * u[i][j][k-1][1];
-	u31km1 = tmp * u[i][j][k-1][2];
-	u41km1 = tmp * u[i][j][k-1][3];
-	u51km1 = tmp * u[i][j][k-1][4];
+        u21km1 = tmp * u[i][j][k-1][1];
+        u31km1 = tmp * u[i][j][k-1][2];
+        u41km1 = tmp * u[i][j][k-1][3];
+        u51km1 = tmp * u[i][j][k-1][4];
 
-	flux[i][j][k][1] = tz3 * ( u21k - u21km1 );
-	flux[i][j][k][2] = tz3 * ( u31k - u31km1 );
-	flux[i][j][k][3] = (4.0/3.0) * tz3 * (u41k-u41km1);
-	flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
-	  * tz3 * (   ( pow2(u21k)   + pow2(u31k)   + pow2(u41k) )
-		    - ( pow2(u21km1) + pow2(u31km1) + pow2(u41km1) ) )
-	  + (1.0/6.0)
-	  * tz3 * ( pow2(u41k) - pow2(u41km1) )
-	  + C1 * C5 * tz3 * ( u51k - u51km1 );
+        flux[i][j][k][1] = tz3 * ( u21k - u21km1 );
+        flux[i][j][k][2] = tz3 * ( u31k - u31km1 );
+        flux[i][j][k][3] = (4.0/3.0) * tz3 * (u41k-u41km1);
+        flux[i][j][k][4] = 0.50 * ( 1.0 - C1*C5 )
+          * tz3 * (   ( pow2(u21k)   + pow2(u31k)   + pow2(u41k) )
+                    - ( pow2(u21km1) + pow2(u31km1) + pow2(u41km1) ) )
+          + (1.0/6.0)
+          * tz3 * ( pow2(u41k) - pow2(u41km1) )
+          + C1 * C5 * tz3 * ( u51k - u51km1 );
       }
 
       for (k = 1; k <= nz - 2; k++) {
-	rsd[i][j][k][0] = rsd[i][j][k][0]
-	  + dz1 * tz1 * (            u[i][j][k-1][0]
-				     - 2.0 * u[i][j][k][0]
-				     +           u[i][j][k+1][0] );
-	rsd[i][j][k][1] = rsd[i][j][k][1]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][1] - flux[i][j][k][1] )
-	  + dz2 * tz1 * (            u[i][j][k-1][1]
-				     - 2.0 * u[i][j][k][1]
-				     +           u[i][j][k+1][1] );
-	rsd[i][j][k][2] = rsd[i][j][k][2]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][2] - flux[i][j][k][2] )
-	  + dz3 * tz1 * (            u[i][j][k-1][2]
-				     - 2.0 * u[i][j][k][2]
-				     +           u[i][j][k+1][2] );
-	rsd[i][j][k][3] = rsd[i][j][k][3]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][3] - flux[i][j][k][3] )
-	  + dz4 * tz1 * (            u[i][j][k-1][3]
-				     - 2.0 * u[i][j][k][3]
-				     +           u[i][j][k+1][3] );
-	rsd[i][j][k][4] = rsd[i][j][k][4]
-	  + tz3 * C3 * C4 * ( flux[i][j][k+1][4] - flux[i][j][k][4] )
-	  + dz5 * tz1 * (            u[i][j][k-1][4]
-				     - 2.0 * u[i][j][k][4]
-				     +           u[i][j][k+1][4] );
+        rsd[i][j][k][0] = rsd[i][j][k][0]
+          + dz1 * tz1 * (            u[i][j][k-1][0]
+                                     - 2.0 * u[i][j][k][0]
+                                     +           u[i][j][k+1][0] );
+        rsd[i][j][k][1] = rsd[i][j][k][1]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][1] - flux[i][j][k][1] )
+          + dz2 * tz1 * (            u[i][j][k-1][1]
+                                     - 2.0 * u[i][j][k][1]
+                                     +           u[i][j][k+1][1] );
+        rsd[i][j][k][2] = rsd[i][j][k][2]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][2] - flux[i][j][k][2] )
+          + dz3 * tz1 * (            u[i][j][k-1][2]
+                                     - 2.0 * u[i][j][k][2]
+                                     +           u[i][j][k+1][2] );
+        rsd[i][j][k][3] = rsd[i][j][k][3]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][3] - flux[i][j][k][3] )
+          + dz4 * tz1 * (            u[i][j][k-1][3]
+                                     - 2.0 * u[i][j][k][3]
+                                     +           u[i][j][k+1][3] );
+        rsd[i][j][k][4] = rsd[i][j][k][4]
+          + tz3 * C3 * C4 * ( flux[i][j][k+1][4] - flux[i][j][k][4] )
+          + dz5 * tz1 * (            u[i][j][k-1][4]
+                                     - 2.0 * u[i][j][k][4]
+                                     +           u[i][j][k+1][4] );
       }
 
 /*--------------------------------------------------------------------
 c   fourth-order dissipation
 --------------------------------------------------------------------*/
       for (m = 0; m < 5; m++) {
-	rsd[i][j][1][m] = rsd[i][j][1][m]
-	  - dssp * ( + 5.0 * u[i][j][1][m]
-		     - 4.0 * u[i][j][2][m]
-		     +           u[i][j][3][m] );
-	rsd[i][j][2][m] = rsd[i][j][2][m]
-	  - dssp * ( - 4.0 * u[i][j][1][m]
-		     + 6.0 * u[i][j][2][m]
-		     - 4.0 * u[i][j][3][m]
-		     +           u[i][j][4][m] );
+        rsd[i][j][1][m] = rsd[i][j][1][m]
+          - dssp * ( + 5.0 * u[i][j][1][m]
+                     - 4.0 * u[i][j][2][m]
+                     +           u[i][j][3][m] );
+        rsd[i][j][2][m] = rsd[i][j][2][m]
+          - dssp * ( - 4.0 * u[i][j][1][m]
+                     + 6.0 * u[i][j][2][m]
+                     - 4.0 * u[i][j][3][m]
+                     +           u[i][j][4][m] );
       }
 
       for (k = 3; k <= nz - 4; k++) {
-	for (m = 0; m < 5; m++) {
-	  rsd[i][j][k][m] = rsd[i][j][k][m]
-	    - dssp * (            u[i][j][k-2][m]
-				  - 4.0 * u[i][j][k-1][m]
-				  + 6.0 * u[i][j][k][m]
-				  - 4.0 * u[i][j][k+1][m]
-				  +           u[i][j][k+2][m] );
-	}
+        for (m = 0; m < 5; m++) {
+          rsd[i][j][k][m] = rsd[i][j][k][m]
+            - dssp * (            u[i][j][k-2][m]
+                                  - 4.0 * u[i][j][k-1][m]
+                                  + 6.0 * u[i][j][k][m]
+                                  - 4.0 * u[i][j][k+1][m]
+                                  +           u[i][j][k+2][m] );
+        }
       }
 
       for (m = 0; m < 5; m++) {
-	rsd[i][j][nz-3][m] = rsd[i][j][nz-3][m]
-	  - dssp * (             u[i][j][nz-5][m]
-				 - 4.0 * u[i][j][nz-4][m]
-				 + 6.0 * u[i][j][nz-3][m]
-				 - 4.0 * u[i][j][nz-2][m]  );
-	rsd[i][j][nz-2][m] = rsd[i][j][nz-2][m]
-	  - dssp * (             u[i][j][nz-4][m]
-				 - 4.0 * u[i][j][nz-3][m]
-				 + 5.0 * u[i][j][nz-2][m] );
+        rsd[i][j][nz-3][m] = rsd[i][j][nz-3][m]
+          - dssp * (             u[i][j][nz-5][m]
+                                 - 4.0 * u[i][j][nz-4][m]
+                                 + 6.0 * u[i][j][nz-3][m]
+                                 - 4.0 * u[i][j][nz-2][m]  );
+        rsd[i][j][nz-2][m] = rsd[i][j][nz-2][m]
+          - dssp * (             u[i][j][nz-4][m]
+                                 - 4.0 * u[i][j][nz-3][m]
+                                 + 5.0 * u[i][j][nz-2][m] );
       }
     }
   }
@@ -2989,31 +2989,31 @@ c  local variables
     for (k = 1; k < nz - 1; k++) {
       zeta = ((double)k) / (nz-1);
       if (jglob != 0 && jglob != ny0-1) {
-	eta = ( (double) (jglob) ) / (ny0-1);
-	for (i = 0; i < nx; i++) {
-	  iglob = i;
-	  if(iglob != 0 && iglob != nx0-1) {
-	    xi = ( (double) (iglob) ) / (nx0-1);
-	    exact (0,jglob,k,ue_1jk);
-	    exact (nx0-1,jglob,k,ue_nx0jk);
-	    exact (iglob,0,k,ue_i1k);
-	    exact (iglob,ny0-1,k,ue_iny0k);
-	    exact (iglob,jglob,0,ue_ij1);
-	    exact (iglob,jglob,nz-1,ue_ijnz);
-	    for (m = 0; m < 5; m++) {
-	      pxi =   ( 1.0 - xi ) * ue_1jk[m]
-		+ xi   * ue_nx0jk[m];
-	      peta =  ( 1.0 - eta ) * ue_i1k[m]
-		+ eta   * ue_iny0k[m];
-	      pzeta = ( 1.0 - zeta ) * ue_ij1[m]
-		+ zeta   * ue_ijnz[m];
+        eta = ( (double) (jglob) ) / (ny0-1);
+        for (i = 0; i < nx; i++) {
+          iglob = i;
+          if(iglob != 0 && iglob != nx0-1) {
+            xi = ( (double) (iglob) ) / (nx0-1);
+            exact (0,jglob,k,ue_1jk);
+            exact (nx0-1,jglob,k,ue_nx0jk);
+            exact (iglob,0,k,ue_i1k);
+            exact (iglob,ny0-1,k,ue_iny0k);
+            exact (iglob,jglob,0,ue_ij1);
+            exact (iglob,jglob,nz-1,ue_ijnz);
+            for (m = 0; m < 5; m++) {
+              pxi =   ( 1.0 - xi ) * ue_1jk[m]
+                + xi   * ue_nx0jk[m];
+              peta =  ( 1.0 - eta ) * ue_i1k[m]
+                + eta   * ue_iny0k[m];
+              pzeta = ( 1.0 - zeta ) * ue_ij1[m]
+                + zeta   * ue_ijnz[m];
 
-	      u[i][j][k][m] = pxi + peta + pzeta
-		- pxi * peta - peta * pzeta - pzeta * pxi
-		+ pxi * peta * pzeta;
-	    }
-	  }
-	}
+              u[i][j][k][m] = pxi + peta + pzeta
+                - pxi * peta - peta * pzeta - pzeta * pxi
+                + pxi * peta * pzeta;
+            }
+          }
+        }
       }
     }
   }
@@ -3052,12 +3052,12 @@ c   formed, if applicable on given architecture, before timestepping).
   for (i = 0; i < ISIZ1; i++) {
     for (j = 0; j < ISIZ2; j++) {
       for (k = 0; k < 5; k++) {
-	for (m = 0; m < 5; m++) {
-	  a[i][j][k][m] = 0.0;
-	  b[i][j][k][m] = 0.0;
-	  c[i][j][k][m] = 0.0;
-	  d[i][j][k][m] = 0.0;
-	}
+        for (m = 0; m < 5; m++) {
+          a[i][j][k][m] = 0.0;
+          b[i][j][k][m] = 0.0;
+          c[i][j][k][m] = 0.0;
+          d[i][j][k][m] = 0.0;
+        }
       }
     }
   }
@@ -3071,8 +3071,8 @@ c   compute the steady-state residuals
 c   compute the L2 norms of newton iteration residuals
 --------------------------------------------------------------------*/
   l2norm( nx0, ny0, nz0,
-	  ist, iend, jst, jend,
-	  rsd, rsdnm );
+          ist, iend, jst, jend,
+          rsd, rsdnm );
 }
 
   timer_clear(1);
@@ -3087,7 +3087,7 @@ c   the timestep loop
   for (istep = 1; istep <= itmax; istep++) {
 
     if (istep%20  ==  0 || istep  ==  itmax || istep  ==  1) {
-#pragma omp master	
+#pragma omp master      
       printf(" Time step %4d\n", istep);
     }
  
@@ -3097,11 +3097,11 @@ c   perform SSOR iteration
 #pragma omp for    
     for (i = ist; i <= iend; i++) {
       for (j = jst; j <= jend; j++) {
-	for (k = 1; k <= nz - 2; k++) {
-	  for (m = 0; m < 5; m++) {
-	    rsd[i][j][k][m] = dt * rsd[i][j][k][m];
-	  }
-	}
+        for (k = 1; k <= nz - 2; k++) {
+          for (m = 0; m < 5; m++) {
+            rsd[i][j][k][m] = dt * rsd[i][j][k][m];
+          }
+        }
       }
     }
 
@@ -3115,11 +3115,11 @@ c   form the lower triangular part of the jacobian matrix
 c   perform the lower triangular solution
 --------------------------------------------------------------------*/
       blts(nx, ny, nz, k,
-	   omega,
-	   rsd,
-	   a, b, c, d,
-	   ist, iend, jst, jend, 
-	   nx0, ny0 );
+           omega,
+           rsd,
+           a, b, c, d,
+           ist, iend, jst, jend, 
+           nx0, ny0 );
     }
     
 #pragma omp barrier
@@ -3134,11 +3134,11 @@ c   form the strictly upper triangular part of the jacobian matrix
 c   perform the upper triangular solution
 --------------------------------------------------------------------*/
       buts(nx, ny, nz, k,
-	   omega,
-	   rsd, tv,
-	   d, a, b, c,
-	   ist, iend, jst, jend,
-	   nx0, ny0 );
+           omega,
+           rsd, tv,
+           d, a, b, c,
+           ist, iend, jst, jend,
+           nx0, ny0 );
     }
 #pragma omp barrier 
  
@@ -3149,12 +3149,12 @@ c   update the variables
 #pragma omp for
     for (i = ist; i <= iend; i++) {
       for (j = jst; j <= jend; j++) {
-	for (k = 1; k <= nz-2; k++) {
-	  for (m = 0; m < 5; m++) {
-	    u[i][j][k][m] = u[i][j][k][m]
-	      + tmp * rsd[i][j][k][m];
-	  }
-	}
+        for (k = 1; k <= nz-2; k++) {
+          for (m = 0; m < 5; m++) {
+            u[i][j][k][m] = u[i][j][k][m]
+              + tmp * rsd[i][j][k][m];
+          }
+        }
       }
     }
  
@@ -3163,8 +3163,8 @@ c   compute the max-norms of newton iteration corrections
 --------------------------------------------------------------------*/
     if ( istep % inorm  ==  0 ) {
       l2norm( nx0, ny0, nz0,
-	      ist, iend, jst, jend,
-	      rsd, delunm );
+              ist, iend, jst, jend,
+              rsd, delunm );
     }
  
 /*--------------------------------------------------------------------
@@ -3176,21 +3176,21 @@ c   compute the steady-state residuals
 c   compute the max-norms of newton iteration residuals
 --------------------------------------------------------------------*/
     if ( ( istep % inorm  ==  0 ) ||
-	 ( istep  ==  itmax ) ) {
+         ( istep  ==  itmax ) ) {
       l2norm( nx0, ny0, nz0,
-	      ist, iend, jst, jend,
-	      rsd, rsdnm );
+              ist, iend, jst, jend,
+              rsd, rsdnm );
     }
 
 /*--------------------------------------------------------------------
 c   check the newton-iteration residuals against the tolerance levels
 --------------------------------------------------------------------*/
     if ( ( rsdnm[0] < tolrsd[0] ) &&
-	 ( rsdnm[1] < tolrsd[1] ) &&
-	 ( rsdnm[2] < tolrsd[2] ) &&
-	 ( rsdnm[3] < tolrsd[3] ) &&
-	 ( rsdnm[4] < tolrsd[4] ) ) {
-	exit(1);
+         ( rsdnm[1] < tolrsd[1] ) &&
+         ( rsdnm[2] < tolrsd[2] ) &&
+         ( rsdnm[3] < tolrsd[3] ) &&
+         ( rsdnm[4] < tolrsd[4] ) ) {
+        exit(1);
     }
   }
 } /* end parallel */
@@ -3204,7 +3204,7 @@ c   check the newton-iteration residuals against the tolerance levels
 --------------------------------------------------------------------*/
 
 static void verify(double xcr[5], double xce[5], double xci,
-		   char *cclass, boolean *verified) {
+                   char *cclass, boolean *verified) {
 
 /*--------------------------------------------------------------------
 c  verification routine                         
@@ -3351,36 +3351,36 @@ c   after 250 time steps, with DT = 2.0d+0.0
 
       } else if ( nx0 == 162 && ny0 == 162 && nz0 == 162 && itmax == 250) {
 
-	*cclass = 'C';
-	dtref = 2.0e+0;
+        *cclass = 'C';
+        dtref = 2.0e+0;
 
 /*--------------------------------------------------------------------
 c   Reference values of RMS-norms of residual, for the (162X162X162) grid,
 c   after 250 time steps, with  DT = 2.0d+0.0
 --------------------------------------------------------------------*/
-	xcrref[0] = 1.03766980323537846e+04;
-	xcrref[1] = 8.92212458801008552e+02;
-	xcrref[2] = 2.56238814582660871e+03;
-	xcrref[3] = 2.19194343857831427e+03;
-	xcrref[4] = 1.78078057261061185e+04;
+        xcrref[0] = 1.03766980323537846e+04;
+        xcrref[1] = 8.92212458801008552e+02;
+        xcrref[2] = 2.56238814582660871e+03;
+        xcrref[3] = 2.19194343857831427e+03;
+        xcrref[4] = 1.78078057261061185e+04;
 
 /*--------------------------------------------------------------------
 c   Reference values of RMS-norms of solution error, for the (162X162X162) 
 c   grid, after 250 time steps, with  DT = 2.0d+0.0
 --------------------------------------------------------------------*/
-	xceref[0] = 2.15986399716949279e+02;
-	xceref[1] = 1.55789559239863600e+01;
-	xceref[2] = 5.41318863077207766e+01;
-	xceref[3] = 4.82262643154045421e+01;
-	xceref[4] = 4.55902910043250358e+02;
+        xceref[0] = 2.15986399716949279e+02;
+        xceref[1] = 1.55789559239863600e+01;
+        xceref[2] = 5.41318863077207766e+01;
+        xceref[3] = 4.82262643154045421e+01;
+        xceref[4] = 4.55902910043250358e+02;
 
 /*--------------------------------------------------------------------
 c   Reference value of surface integral, for the (162X162X162) grid,
 c   after 250 time steps, with DT = 2.0d+0.0
 --------------------------------------------------------------------*/
-	xciref = 6.66404553572181300e+01;
+        xciref = 6.66404553572181300e+01;
       } else {
-	*verified = FALSE;
+        *verified = FALSE;
       }
 
 /*--------------------------------------------------------------------
@@ -3427,10 +3427,10 @@ c    Output the comparison of computed results to known cases.
     } else if (xcrdif[m] > epsilon) {
       *verified = FALSE;
       printf(" FAILURE: %2d  %20.13e%20.13e%20.13e\n",
-	     m,xcr[m],xcrref[m],xcrdif[m]);
+             m,xcr[m],xcrref[m],xcrdif[m]);
     } else {
       printf("          %2d  %20.13e%20.13e%20.13e\n",
-	     m,xcr[m],xcrref[m],xcrdif[m]);
+             m,xcr[m],xcrref[m],xcrdif[m]);
     }
   }
 
@@ -3446,10 +3446,10 @@ c    Output the comparison of computed results to known cases.
     } else if (xcedif[m] > epsilon) {
       *verified = FALSE;
       printf(" FAILURE: %2d  %20.13e%20.13e%20.13e\n",
-	     m,xce[m],xceref[m],xcedif[m]);
+             m,xce[m],xceref[m],xcedif[m]);
     } else {
       printf("          %2d  %20.13e%20.13e%20.13e\n",
-	     m,xce[m],xceref[m],xcedif[m]);
+             m,xce[m],xceref[m],xcedif[m]);
     }
   }
         
@@ -3464,10 +3464,10 @@ c    Output the comparison of computed results to known cases.
   } else if (xcidif > epsilon) {
     *verified = FALSE;
     printf(" FAILURE:     %20.13e%20.13e%20.13e\n", 
-	   xci, xciref, xcidif);
+           xci, xciref, xcidif);
   } else {
     printf("              %20.13e%20.13e%20.13e\n",
-	   xci, xciref, xcidif);
+           xci, xciref, xcidif);
   }
 
   if (*cclass  ==  'U') {

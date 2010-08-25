@@ -397,12 +397,11 @@ DisassemblerArm::decodeMemoryAddress(SgAsmExpression* rn) const
       case 5: return SageBuilderAsm::makeSubtractPreupdate(rn, offset);
       case 6: return SageBuilderAsm::makeAdd(rn, offset);
       case 7: return SageBuilderAsm::makeAddPreupdate(rn, offset);
-      default:
-		  {
-            ROSE_ASSERT (false);
-         // DQ (11/29/2009): Avoid MSVC warning.
-            return NULL;
-		  }
+      default: {
+        ROSE_ASSERT (false);
+        // DQ (11/29/2009): Avoid MSVC warning.
+        return NULL;
+      }
     }
 }
 
@@ -669,7 +668,7 @@ DisassemblerArm::disassemble()
               }
 
            // DQ (11/29/2009): This is a MSVC warning: warning C4805: '|' : unsafe mix of type 'uint32_t' and type 'bool' in operation
-			  switch (((insn >> 21) & 62) | bit20) { // p, u, s, l
+              switch (((insn >> 21) & 62) | bit20) { // p, u, s, l
                 case 0x0: return MAKE_INSN2(stmda, 3, rn, regs);
                 case 0x1: return MAKE_INSN2(ldmda, 3, rn, regs);
                 case 0x2: return MAKE_INSN2(stmda, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));

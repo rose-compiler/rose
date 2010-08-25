@@ -18,13 +18,12 @@ class Dd{
    int& mrClassfield;
    int mClassField;
 
-   void Dtest_function()
-      {
-	int conforms_to_rule;
-	int do_not_conform;
-	int conforms;
-	
-      }
+   void Dtest_function(){
+      int conforms_to_rule;
+      int do_not_conform;
+      int conforms;
+
+   }
  
 };
 int main(){};

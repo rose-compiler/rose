@@ -30,7 +30,7 @@ class RoseBin_Variable  {
   std::vector<uint64_t> value;
  public:
   RoseBin_Variable(uint64_t pos,
-		   std::string n,
+                   std::string n,
 		   RoseBin_DataTypes::DataTypes t, std::string d, int l,
 		   std::vector<uint64_t> v) {
     position=pos;
@@ -134,7 +134,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   int getUsageSize() { return usetable.size();}
 
   int64_t check_isRegister(SgGraphNode* node,
-			   SgAsmx86Instruction* inst,
+                           SgAsmx86Instruction* inst,
 			   std::pair<X86RegisterClass, int> codeSearch,
 			   bool rightSide,
 			   std::vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
@@ -143,14 +143,14 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
 
   int64_t check_isLeftSideRegister(SgAsmx86Instruction* inst,
-				   std::pair<X86RegisterClass, int>  codeSearch);
+                                   std::pair<X86RegisterClass, int>  codeSearch);
 
   uint64_t getValueInExpression(SgAsmValueExpression* valExp);
 
 
   // should be removed after the reference from unparse_visitor is solved
   void getRegister_val(std::pair<X86RegisterClass, int>  code,
-		   X86PositionInRegister pos,
+                       X86PositionInRegister pos,
 		       uint64_t &qw_val) {};
 
   int64_t trackValueForRegister(
@@ -162,7 +162,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
   std::pair<X86RegisterClass, int>
     check_isRegister(SgGraphNode* node, SgAsmx86Instruction* inst,
-		     bool rightSide, bool& memoryReference );
+                     bool rightSide, bool& memoryReference );
 
   SgAsmExpression* getOperand(SgAsmx86Instruction* inst,
 						bool rightSide );
@@ -194,7 +194,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
 
   RoseBin_Variable* createVariable(uint64_t position,
-				   std::vector<uint64_t> pos,
+                                   std::vector<uint64_t> pos,
 				   std::string name, RoseBin_DataTypes::DataTypes type, std::string description,
 				   int length,
 				   std::vector<uint64_t> value,

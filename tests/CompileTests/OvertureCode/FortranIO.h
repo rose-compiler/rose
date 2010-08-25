@@ -12,7 +12,7 @@ class FortranIO
   ~FortranIO();
   
   int open(const aString & name, 
-	   const aString & format,
+           const aString & format,
 	   const aString & status,
            const int & fortranUnitNumber=25 );
   int close();

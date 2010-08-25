@@ -53,128 +53,128 @@ void FIO43(void);
 void FIO44(void);
 
 void FIO(void){
-	FIO00();
-	FIO01();
-	FIO02();
-	FIO03();
-	FIO04();
-	FIO05();
-	FIO06();
-	FIO07();
-	FIO08();
-	FIO09();
-//	FIO10();
-//	FIO11();
-	FIO12();
-	FIO13();
-//	FIO14();
-	FIO15();
-	FIO16();
-	FIO17();
-	FIO30();
-	FIO31();
-	FIO32();
-	FIO33();
-	FIO34();
-	FIO35();
-	FIO36();
-	FIO37();
-	FIO38();
-	FIO39();
-	FIO40();
-	FIO41();
-	FIO42();
-	FIO43();
-	FIO44();
+        FIO00();
+        FIO01();
+        FIO02();
+        FIO03();
+        FIO04();
+        FIO05();
+        FIO06();
+        FIO07();
+        FIO08();
+        FIO09();
+//      FIO10();
+//      FIO11();
+        FIO12();
+        FIO13();
+//      FIO14();
+        FIO15();
+        FIO16();
+        FIO17();
+        FIO30();
+        FIO31();
+        FIO32();
+        FIO33();
+        FIO34();
+        FIO35();
+        FIO36();
+        FIO37();
+        FIO38();
+        FIO39();
+        FIO40();
+        FIO41();
+        FIO42();
+        FIO43();
+        FIO44();
 }
 
 /* FIO00 v.23 */
 
 void FIO00(void) {
-	char const *error_msg = "Resource not available to user.";
-	const int error_type = 3;
-	/* ... */
-	printf("Error (type %d): %s\n", error_type, error_msg);
+        char const *error_msg = "Resource not available to user.";
+        const int error_type = 3;
+        /* ... */
+        printf("Error (type %d): %s\n", error_type, error_msg);
 }
 
 /* FIO01 v.148*/
 
 void FIO01(void) {
-	const char *file_name = "Awefawef";
-	int fd;
+        const char *file_name = "Awefawef";
+        int fd;
 
-	/* initialize file_name */
+        /* initialize file_name */
 
-	fd = open(file_name, O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
-	if (fd == -1) {
-	  /* Handle Error */
-	}
+        fd = open(file_name, O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
+        if (fd == -1) {
+          /* Handle Error */
+        }
 
-	/* ... */
+        /* ... */
 
-	if (fchmod(fd, S_IRUSR) == -1) {
-	  /* Handle Error */
-	}
+        if (fchmod(fd, S_IRUSR) == -1) {
+          /* Handle Error */
+        }
 
-	close(fd);
+        close(fd);
 }
 
 /* FIO02 v.185*/
 
 void FIO02(void) {
-	char *realpath_res = NULL;
-	char t[30];
+        char *realpath_res = NULL;
+        char t[30];
 
-	/* Verify argv[1] is supplied */
+        /* Verify argv[1] is supplied */
 
-	realpath_res = realpath(t, NULL);
-	if (realpath_res == NULL) {
-	  /* handle realpath() error */
-	}
+        realpath_res = realpath(t, NULL);
+        if (realpath_res == NULL) {
+          /* handle realpath() error */
+        }
 
-	/* Verify file name */
+        /* Verify file name */
 
-	if (fopen(realpath_res, "w") == NULL) {
-		/* Handle Error */
-	}
+        if (fopen(realpath_res, "w") == NULL) {
+                /* Handle Error */
+        }
 
-	/* ... */
+        /* ... */
 
-	free(realpath_res);
-	realpath_res = NULL;
+        free(realpath_res);
+        realpath_res = NULL;
 }
 
 /* FIO03 v.108*/
 
 void FIO03(void) {
-	const char *file_name = "Awefawef";
-	const int new_file_mode = 0600;
+        const char *file_name = "Awefawef";
+        const int new_file_mode = 0600;
 
-	/* initialize file_name and new_file_mode */
+        /* initialize file_name and new_file_mode */
 
-	const int fd = open(file_name, O_CREAT | O_EXCL | O_WRONLY, new_file_mode);
-	if (fd == -1) {
-	  /* Handle Error */
-	}
+        const int fd = open(file_name, O_CREAT | O_EXCL | O_WRONLY, new_file_mode);
+        if (fd == -1) {
+          /* Handle Error */
+        }
 
-	/* ... */
-	close(fd);
+        /* ... */
+        close(fd);
 }
 
 /* FIO04 v.44 */
 void FIO04(void) {
-	const long offset = 19;
-	FILE *file = fopen("t", "w");
-	if(!file) return;
+        const long offset = 19;
+        FILE *file = fopen("t", "w");
+        if(!file) return;
 
-	/* initialize file and offset */
+        /* initialize file and offset */
 
-	if (fseek(file, offset, SEEK_SET) != 0) {
-	  /* Handle Error */
-	}
+        if (fseek(file, offset, SEEK_SET) != 0) {
+          /* Handle Error */
+        }
 
-	/* ... */
-	fclose(file);
+        /* ... */
+        fclose(file);
 }
 
 /* FIO05 v.51 */
@@ -250,41 +250,41 @@ void FIO05(void) {
 /* FIO06 v.101*/
 
 void FIO06(void) {
-	const char *file_name = "foo";
-	const int file_access_permissions = 0600;
+        const char *file_name = "foo";
+        const int file_access_permissions = 0600;
 
-	/* initialize file_name */
+        /* initialize file_name */
 
-	const int fd = open( file_name, O_CREAT | O_WRONLY, file_access_permissions);
-	if (fd == -1){
-	  /* handle Error */
-	}
+        const int fd = open( file_name, O_CREAT | O_WRONLY, file_access_permissions);
+        if (fd == -1){
+          /* handle Error */
+        }
 
-	/* ... */
-	close(fd);
+        /* ... */
+        close(fd);
 }
 
 /* FIO07 v.17 */
 
 void FIO07(void) {
-	const char *file_name = "foo";
-	FILE *fp;
+        const char *file_name = "foo";
+        FILE *fp;
 
-	/* initialize file_name */
+        /* initialize file_name */
 
-	fp = fopen(file_name, "r");
-	if (fp == NULL) {
-	  /* handle open error */
-	}
+        fp = fopen(file_name, "r");
+        if (fp == NULL) {
+          /* handle open error */
+        }
 
-	/* read data */
+        /* read data */
 
-	if (fseek(fp, 0L, SEEK_SET) != 0) {
-	  /* handle repositioning error */
-	}
+        if (fseek(fp, 0L, SEEK_SET) != 0) {
+          /* handle repositioning error */
+        }
 
-	/* continue */
-	fclose(fp);
+        /* continue */
+        fclose(fp);
 }
 
 /* FIO08 v.41 */
@@ -312,37 +312,37 @@ fclose(file);
 /* FIO09 v.14 */
 
 void FIO09(void) {
-	struct myData {
-	  char c;
-	  long l;
-	};
+        struct myData {
+          char c;
+          long l;
+        };
 
-	FILE *file = NULL;
-	struct myData data;
-	char buf[25];
-	char *end_ptr;
+        FILE *file = NULL;
+        struct myData data;
+        char buf[25];
+        char *end_ptr;
 
-	/* initialize file */
+        /* initialize file */
 
-	if (fgets(buf, 1, file) == NULL) {
-	  /* Handle Error */
-	}
+        if (fgets(buf, 1, file) == NULL) {
+          /* Handle Error */
+        }
 
-	data.c = buf[0];
+        data.c = buf[0];
 
-	if (fgets(buf, sizeof(buf), file) == NULL) {
-	  /* Handle Error */
-	}
+        if (fgets(buf, sizeof(buf), file) == NULL) {
+          /* Handle Error */
+        }
 
-	data.l = strtol(buf, &end_ptr, 10);
+        data.l = strtol(buf, &end_ptr, 10);
 
-	if ((ERANGE == errno)
-	 || (end_ptr == buf)
-	 || ('\n' != *end_ptr && '\0' != *end_ptr)) {
-		/* Handle Error */
-	}
+        if ((ERANGE == errno)
+         || (end_ptr == buf)
+         || ('\n' != *end_ptr && '\0' != *end_ptr)) {
+                /* Handle Error */
+        }
 
-	printf("%c %ld\n", data.c, data.l);
+        printf("%c %ld\n", data.c, data.l);
 }
 
 /* FIO10 v.10 */
@@ -356,43 +356,43 @@ void FIO09(void) {
 /* FIO12 v.23 */
 
 void FIO12(void) {
-	FILE *file = NULL;
-	char *buf = NULL;
-	/* Setup file */
-	if (setvbuf(file, buf, buf ? _IOFBF : _IONBF, BUFSIZ) != 0) {
-	  /* Handle error */
-	}
-	/* ... */
+        FILE *file = NULL;
+        char *buf = NULL;
+        /* Setup file */
+        if (setvbuf(file, buf, buf ? _IOFBF : _IONBF, BUFSIZ) != 0) {
+          /* Handle error */
+        }
+        /* ... */
 }
 
 /* FIO13 v.29 */
 
 void FIO13(void) {
-	FILE *fp;
-	fpos_t pos;
-	const char *file_name = "foo";
+        FILE *fp;
+        fpos_t pos;
+        const char *file_name = "foo";
 
-	/* initialize file_name */
+        /* initialize file_name */
 
-	fp = fopen(file_name, "rb");
-	if (fp == NULL) {
-	  /* handle Error */
-	}
+        fp = fopen(file_name, "rb");
+        if (fp == NULL) {
+          /* handle Error */
+        }
 
-	/* read data */
+        /* read data */
 
-	if (fgetpos(fp, &pos)) {
-	  /* handle Error */
-	}
+        if (fgetpos(fp, &pos)) {
+          /* handle Error */
+        }
 
-	/* read the data that will be "pushed back" */
+        /* read the data that will be "pushed back" */
 
-	if (fsetpos(fp, &pos)) {
-	  /* handle Error */
-	}
+        if (fsetpos(fp, &pos)) {
+          /* handle Error */
+        }
 
-	/* Continue on */
-	fclose(fp);
+        /* Continue on */
+        fclose(fp);
 }
 
 /* FIO14 v.30 */
@@ -402,51 +402,51 @@ void FIO13(void) {
 /* FIO15 v.76 */
 
 void FIO15(void) {
-	const char *dir_name = "dirfoo";
+        const char *dir_name = "dirfoo";
 
-	/* initialize dir_name */
+        /* initialize dir_name */
 
-	if (mkdir(dir_name, S_IRWXU) == -1) {
-	  /* Handle Error */
-	}
+        if (mkdir(dir_name, S_IRWXU) == -1) {
+          /* Handle Error */
+        }
 }
 
 /* FIO16 v.27 */
 
 void FIO16_A(char *argv[]) {
-	if (setuid(0) == -1) {
-	  /* Handle Error */
-	}
+        if (setuid(0) == -1) {
+          /* Handle Error */
+        }
 
-	if (chroot("chroot/jail") == -1) {
-	  /* Handle Error */
-	}
+        if (chroot("chroot/jail") == -1) {
+          /* Handle Error */
+        }
 
-	if (chdir("/") == -1) {
-	  /* Handle Error */
-	}
+        if (chdir("/") == -1) {
+          /* Handle Error */
+        }
 
-	/* Drop privileges permanently */
-	if (setgid(getgid()) == -1) {
-	  /* Handle Error */
-	}
+        /* Drop privileges permanently */
+        if (setgid(getgid()) == -1) {
+          /* Handle Error */
+        }
 
-	if (setuid(getuid()) == -1) {
-	  /* Handle Error */
-	}
+        if (setuid(getuid()) == -1) {
+          /* Handle Error */
+        }
 
-	/* Perform unprivileged operations */
+        /* Perform unprivileged operations */
 
-	FILE *fp = fopen(argv[1], "w");
-	char x[100];
-	strncpy(x, argv[2], 100);
-	x[sizeof(x) - 1] = '\0';
+        FILE *fp = fopen(argv[1], "w");
+        char x[100];
+        strncpy(x, argv[2], 100);
+        x[sizeof(x) - 1] = '\0';
 
-	/* Write operation safe is safe within jail */
-	if (fwrite(x, sizeof(x[0]), sizeof(x)/sizeof(x[0]), fp) < sizeof(x)/sizeof(x[0])) {
-		/* Handle Error */
-	}
-	fclose(fp);
+        /* Write operation safe is safe within jail */
+        if (fwrite(x, sizeof(x[0]), sizeof(x)/sizeof(x[0]), fp) < sizeof(x)/sizeof(x[0])) {
+                /* Handle Error */
+        }
+        fclose(fp);
 }
 
 void FIO16(void) {
@@ -483,7 +483,7 @@ int secure_dir(const char* path) {
     num_of_dirs++;
 
     if ((strcmp(dirname_res, ".") == 0) ||
-	(strcmp(dirname_res, "/") == 0)) {
+        (strcmp(dirname_res, "/") == 0)) {
       break;
     }
   }
@@ -513,7 +513,7 @@ int secure_dir(const char* path) {
   path_copy = NULL;
 
   /* Traverse from the root to the top, checking
- *    * permissions along the way */
+   * permissions along the way */
   for (i = 0; i < num_of_dirs; i++) {
     if (stat(dirs[i], &buf) != 0) {
        /* Handle Error */
@@ -522,7 +522,7 @@ int secure_dir(const char* path) {
       /* Directory is owned by someone besides user or root */
       secure = 0;
     } else if (!(buf.st_mode & S_ISVTX) &&
-	       (buf.st_mode & (S_IWGRP | S_IWOTH))) {
+               (buf.st_mode & (S_IWGRP | S_IWOTH))) {
       /* Others have permission to rename or remove files here */
       secure = 0;
     }
@@ -537,29 +537,29 @@ int secure_dir(const char* path) {
 }
 
 void FIO17(void) {
-	const char *file_name = "foo";
-	FILE *fp;
+        const char *file_name = "foo";
+        FILE *fp;
 
-	/* initialize file_name */
+        /* initialize file_name */
 
-	if (!secure_dir(file_name)) {
-	  /* Handle Error */
-	}
+        if (!secure_dir(file_name)) {
+          /* Handle Error */
+        }
 
-	fp = fopen(file_name, "w");
-	if (fp == NULL) {
-	  /* Handle Error */
-	}
+        fp = fopen(file_name, "w");
+        if (fp == NULL) {
+          /* Handle Error */
+        }
 
-	/*... Process file ...*/
+        /*... Process file ...*/
 
-	if (fclose(fp) != 0) {
-	  /* Handle Error */
-	}
+        if (fclose(fp) != 0) {
+          /* Handle Error */
+        }
 
-	if (remove(file_name) != 0) {
-	  /* Handle Error */
-	}
+        if (remove(file_name) != 0) {
+          /* Handle Error */
+        }
 }
 
 /* FIO30 v.60 */
@@ -577,9 +577,9 @@ void incorrect_password(char const *user) {
   if (ret < 0 || (size_t) ret >= len) {\
     /* Handle Error */
   }
-	if (fputs(msg, stderr) == EOF) {
-		/* Handle Error */
-	}
+  if (fputs(msg, stderr) == EOF) {
+    /* Handle Error */
+  }
   free(msg);
   msg = NULL;
 }
@@ -620,54 +620,54 @@ void FIO31(void) {
 
 /* ... */
 void FIO32(void) {
-	struct stat orig_st;
-	struct stat open_st;
-	int fd;
-	int flags;
-	char filename[] = "foo";
+        struct stat orig_st;
+        struct stat open_st;
+        int fd;
+        int flags;
+        char filename[] = "foo";
 
-	/* initialize filename */
+        /* initialize filename */
 
-	if (!fgets(filename, sizeof(filename), stdin)) {
-	  /* handle error */
-	}
+        if (!fgets(filename, sizeof(filename), stdin)) {
+          /* handle error */
+        }
 
-	if ((lstat(filename, &orig_st) != 0) 
-	 || (!S_ISREG(orig_st.st_mode))) 
-	{
-	  /* handle error */
-	}
+        if ((lstat(filename, &orig_st) != 0) 
+         || (!S_ISREG(orig_st.st_mode))) 
+        {
+          /* handle error */
+        }
 
-	/* A TOCTOU race condition exists here, see below */
+        /* A TOCTOU race condition exists here, see below */
 
-	fd = open(filename, OPEN_FLAGS | O_WRONLY);
-	if (fd == -1) {
-	  /* handle error */
-	}
+        fd = open(filename, OPEN_FLAGS | O_WRONLY);
+        if (fd == -1) {
+          /* handle error */
+        }
 
-	if (fstat(fd, &open_st) != 0) {
-	  /* handle error */
-	}
+        if (fstat(fd, &open_st) != 0) {
+          /* handle error */
+        }
 
-	if ((orig_st.st_mode != open_st.st_mode) ||
-		(orig_st.st_ino  != open_st.st_ino) ||
-		(orig_st.st_dev  != open_st.st_dev)) {
-	  /* file was tampered with */
-	}
+        if ((orig_st.st_mode != open_st.st_mode) ||
+                (orig_st.st_ino  != open_st.st_ino) ||
+                (orig_st.st_dev  != open_st.st_dev)) {
+          /* file was tampered with */
+        }
 
-	/* Optional: drop the O_NONBLOCK now that we are sure 
-	 *  * this is a good file */
-	if ((flags = fcntl(fd, F_GETFL)) == -1) {
-	  /* handle error */
-	}
+        /* Optional: drop the O_NONBLOCK now that we are sure 
+         *  * this is a good file */
+        if ((flags = fcntl(fd, F_GETFL)) == -1) {
+          /* handle error */
+        }
 
-	if (fcntl(fd, F_SETFL, flags & ~O_NONBLOCK) != 0) {
-	  /* handle error */
-	}
+        if (fcntl(fd, F_SETFL, flags & ~O_NONBLOCK) != 0) {
+          /* handle error */
+        }
 
-	/* operate on file */
+        /* operate on file */
 
-	close(fd);
+        close(fd);
 }
 
 /* operate on file */
@@ -675,45 +675,45 @@ void FIO32(void) {
 /* FIO33 v.59 */
 
 void FIO33(void) {
-char buf[BUFSIZ];
-char *p;
+  char buf[BUFSIZ];
+  char *p;
 
-if (fgets(buf, sizeof(buf), stdin)) {
-  /* fgets succeeds, scan for newline character */
-  p = strchr(buf, '\n');
-  if (p) {
-    *p = '\0';
+  if (fgets(buf, sizeof(buf), stdin)) {
+    /* fgets succeeds, scan for newline character */
+    p = strchr(buf, '\n');
+    if (p) {
+      *p = '\0';
+    }
+    else {
+      /* newline not found, flush stdin to end of line */
+      while ((getchar() != '\n') 
+           && !feof(stdin) 
+           && !ferror(stdin) 
+      );
+    }
   }
   else {
-    /* newline not found, flush stdin to end of line */
-    while ((getchar() != '\n') 
-         && !feof(stdin) 
-         && !ferror(stdin) 
-    );
+    /* fgets failed, handle error */
   }
-}
-else {
-  /* fgets failed, handle error */
-}
 }
 
 /* FIO34 v.78 */
 
 void FIO34(void) {
-	char buf[BUFSIZ];
-	int c;
-	int i = 0;
+        char buf[BUFSIZ];
+        int c;
+        int i = 0;
 
-	while ( ((c = getchar()) != '\n') 
-		   && !feof(stdin) 
-		   && !ferror(stdin)) 
-	{
-	  if (i < BUFSIZ-1) {
-		buf[i++] = c;
-	  }
-	}
-	buf[i] = '\0'; /* terminate NTBS */
-	printf("FIO34 %s\n", buf);
+        while ( ((c = getchar()) != '\n') 
+                   && !feof(stdin) 
+                   && !ferror(stdin)) 
+        {
+          if (i < BUFSIZ-1) {
+                buf[i++] = c;
+          }
+        }
+        buf[i] = '\0'; /* terminate NTBS */
+        printf("FIO34 %s\n", buf);
 }
 
 /* FIO35 v.49 */
@@ -724,46 +724,46 @@ void FIO34(void) {
   [(e) ? 1 : -1]
 
 void FIO35(void) {
-int c;
+  int c;
 
-FIO_static_assert(sizeof(char) < sizeof(int));
-/* EOF may not be distinguishable from a character */
-do {
-  /* ... */
-  c = getchar();
-  /* ... */
-} while (c != EOF);
+  FIO_static_assert(sizeof(char) < sizeof(int));
+  /* EOF may not be distinguishable from a character */
+  do {
+    /* ... */
+    c = getchar();
+    /* ... */
+  } while (c != EOF);
 }
 /* FIO36 v.26 */
 void FIO36(void) {
-char buf[BUFSIZ + 1];
-char *p;
+  char buf[BUFSIZ + 1];
+  char *p;
 
-if (fgets(buf, sizeof(buf), stdin)) {
-  p = strchr(buf, '\n');
-  if (p) {
-    *p = '\0';
+  if (fgets(buf, sizeof(buf), stdin)) {
+    p = strchr(buf, '\n');
+    if (p) {
+      *p = '\0';
+    }
   }
-}
-else {
-  /* handle error condition */
-}
+  else {
+    /* handle error condition */
+  }
 }
 /* FIO37 v.29 */
 
 void FIO37(void) {
-char buf[BUFSIZ + 1];
-char *p;
+  char buf[BUFSIZ + 1];
+  char *p;
 
-if (fgets(buf, sizeof(buf), stdin)) {
-  p = strchr(buf, '\n');
-  if (p) {
-    *p = '\0';
+  if (fgets(buf, sizeof(buf), stdin)) {
+    p = strchr(buf, '\n');
+    if (p) {
+      *p = '\0';
+    }
   }
-}
-else {
-  /* handle error condition */
-}
+  else {
+    /* handle error condition */
+  }
 }
 
 /* FIO38 v.24 */
@@ -778,124 +778,124 @@ void FIO38(void) {
 /* FIO39 v.24 */
 
 void FIO39(void) {
-	char data[BUFSIZ];
-	char append_data[BUFSIZ];
-	const char *filename = "foo";
-	FILE *file;
+        char data[BUFSIZ];
+        char append_data[BUFSIZ];
+        const char *filename = "foo";
+        FILE *file;
 
-	/* initialize filename */
+        /* initialize filename */
 
-	file = fopen(filename, "a+");
-	if (file == NULL) {
-	  /* handle error */
-	}
+        file = fopen(filename, "a+");
+        if (file == NULL) {
+          /* handle error */
+        }
 
-	/* initialize append_data */
+        /* initialize append_data */
 
-	if (fwrite(append_data, BUFSIZ, 1, file) != BUFSIZ) {
-	  /* Handle error */
-	}
+        if (fwrite(append_data, BUFSIZ, 1, file) != BUFSIZ) {
+          /* Handle error */
+        }
 
-	if (fseek(file, 0L, SEEK_SET) != 0) {
-	  /* Handle Error */
-	}
+        if (fseek(file, 0L, SEEK_SET) != 0) {
+          /* Handle Error */
+        }
 
-	if (fread(data, BUFSIZ, 1, file) != 0) {
-	  /* handle there not being data */
-	}
+        if (fread(data, BUFSIZ, 1, file) != 0) {
+          /* handle there not being data */
+        }
 
-	fclose(file);
+        fclose(file);
 }
 
 /* FIO40 v.23 */
 
 void FIO40(void) {
-	char buf[BUFSIZ];
-	FILE *file = NULL;
-	/* Initialize file */
+        char buf[BUFSIZ];
+        FILE *file = NULL;
+        /* Initialize file */
 
-	if (fgets(buf, sizeof(buf), file) == NULL) {
-	  /* set error flag and continue */
-	  *buf = '\0';
-	}
+        if (fgets(buf, sizeof(buf), file) == NULL) {
+          /* set error flag and continue */
+          *buf = '\0';
+        }
 }
 
 /* FIO41 v.34 */
 
 void FIO41(void) {
-	int c;
-	const char *filename = "foo";
-	FILE *fptr;
+        int c;
+        const char *filename = "foo";
+        FILE *fptr;
 
-	/* initialize filename */
+        /* initialize filename */
 
-	fptr = fopen(filename, "r");
-	if (fptr == NULL) {
-	  /* Handle Error */
-	}
+        fptr = fopen(filename, "r");
+        if (fptr == NULL) {
+          /* Handle Error */
+        }
 
-	c = getc(fptr);
-	if (c == EOF) {
-	  /* Handle Error */
-	}
-	fclose(fptr);
+        c = getc(fptr);
+        if (c == EOF) {
+          /* Handle Error */
+        }
+        fclose(fptr);
 }
 
 /* FIO42 v.81 */
 
 void FIO42(void) {
-	FILE* f;
-	const char *editor;
-	const char *filename = "foo";
+        FILE* f;
+        const char *editor;
+        const char *filename = "foo";
 
-	/* initialize filename */
+        /* initialize filename */
 
-	f = fopen(filename, "r");
-	if (f == NULL) {
-	  /* Handle fopen() error */
-	}
-	/* ... */
-	fclose(f);
-	f = NULL;
-	editor = getenv("EDITOR");
-	if (editor == NULL) {
-	  /* Handle getenv() error */
-	}
-	/* Sanitize environment before calling system()! */
-	if (system(editor) == -1) {
-		/* Handle Error */
-	}
+        f = fopen(filename, "r");
+        if (f == NULL) {
+          /* Handle fopen() error */
+        }
+        /* ... */
+        fclose(f);
+        f = NULL;
+        editor = getenv("EDITOR");
+        if (editor == NULL) {
+          /* Handle getenv() error */
+        }
+        /* Sanitize environment before calling system()! */
+        if (system(editor) == -1) {
+                /* Handle Error */
+        }
 }
 
 /* FIO43 v.110*/
 
 void FIO43(void) {
-char sfn[] = "temp-XXXXXX";
-FILE *sfp;
-const int fd = mkstemp(sfn);
-if (fd == -1) {
-  /* Handle Error */
-}
+  char sfn[] = "temp-XXXXXX";
+  FILE *sfp;
+  const int fd = mkstemp(sfn);
+  if (fd == -1) {
+    /* Handle Error */
+  }
 
-/* 
- *  * Unlink immediately to allow the name to be recycled.
- *   * The race condition here is inconsequential if the file
- *    * is created with exclusive permissions (glibc >= 2.0.7) 
- *     */
+  /* 
+   * Unlink immediately to allow the name to be recycled.
+   * The race condition here is inconsequential if the file
+   * is created with exclusive permissions (glibc >= 2.0.7) 
+   */
 
-if (unlink(sfn) == -1) {
-  /* Handle Error */
-}
+  if (unlink(sfn) == -1) {
+    /* Handle Error */
+  }
 
-sfp = fdopen(fd, "w+");
-if (sfp == NULL) {
-  close(fd);
-  /* Handle Error */
-}
+  sfp = fdopen(fd, "w+");
+  if (sfp == NULL) {
+    close(fd);
+    /* Handle Error */
+  }
 
-/* use temporary file */
+  /* use temporary file */
 
-fclose(sfp); /* also closes fd */
+  fclose(sfp); /* also closes fd */
 }
 
 /* FIO44 v.46 */
@@ -918,7 +918,7 @@ int opener(FILE* file)  {
 }
 
 void FIO44(void) {
-	if (opener(NULL) != 0) {
-		/* Handle Error */
-	}
+        if (opener(NULL) != 0) {
+                /* Handle Error */
+        }
 }

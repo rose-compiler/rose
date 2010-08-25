@@ -345,7 +345,7 @@ equationNo( const int n, const int i1, const int i2, const int i3,
   return n+1+   numberOfComponents*(i1-cg[grid].dimension(Start,axis1)+
 	(cg[grid].dimension(End,axis1)-cg[grid].dimension(Start,axis1)+1)*(i2-cg[grid].dimension(Start,axis2)+
         (cg[grid].dimension(End,axis2)-cg[grid].dimension(Start,axis2)+1)*(i3-cg[grid].dimension(Start,axis3)
-							 ))) + gridEquationBase(grid);
+                                                                           ))) + gridEquationBase(grid);
 }
 
 

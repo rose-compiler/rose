@@ -88,7 +88,7 @@ extern int aa_poll_count; /* For Ariadne - defined in tulip/mpi/src/KernelCom.c 
         /* -- event record buffer descriptor ------------------------- */
         typedef struct
         {
-	  /*           long int           ev;    /* -- event id        -- */
+          /*           long int           ev;    /* -- event id        -- */
           x_int32            ev;    /* -- event id        -- */
           x_uint16           nid;   /* -- node id         -- */
           x_uint16           tid;   /* -- thread id       -- */

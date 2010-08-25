@@ -139,14 +139,14 @@ class Terminal
 #if !ROSE_MICROSOFT_OS
 #if INSURE_BUG
   static void addElementToList ( std::vector<GrammarString *> & list,
-				 GrammarString & element );
+                                 GrammarString & element );
 #else
   static void addElementToList ( std::vector<GrammarString *> & list,
-				 const GrammarString & element );
+                                 const GrammarString & element );
 #endif
 #else
   static void addElementToList ( std::vector<GrammarString *> & list,
-				 const GrammarString & element );
+                                 const GrammarString & element );
 #endif
 
   // Member function for checking lists of GrammarStrings occuring during the
@@ -167,33 +167,33 @@ class Terminal
                  // of the grammar represented by this nonTerminal
   void setFunctionPrototype        ( const GrammarString & memberFunction );
   void setFunctionPrototype        ( const std::string& markerString, const std::string& filename, 
-				     bool pureVirtual = false );
+                                     bool pureVirtual = false );
 
   void setSubTreeFunctionPrototype ( const GrammarString & memberFunction );
   void setSubTreeFunctionPrototype ( const std::string& markerString, const std::string& filename,
-				     bool pureVirtual = false );
+                                     bool pureVirtual = false );
 
   void setFunctionSource           ( const std::string& markerString, const std::string& filename, 
-				     bool pureVirtual = false );
+                                     bool pureVirtual = false );
   void setSubTreeFunctionSource    ( const std::string& markerString, const std::string& filename, 
-				     bool pureVirtual = false );
+                                     bool pureVirtual = false );
 
   // Mechanism for excluding code from specific node or subtrees
   void excludeFunctionPrototype        ( const GrammarString & memberFunction );
   void excludeFunctionPrototype        ( const std::string& markerString, const std::string& filename, 
-					 bool pureVirtual = false );
+                                         bool pureVirtual = false );
   void excludeSubTreeFunctionPrototype ( const GrammarString & memberFunction );
   void excludeSubTreeFunctionPrototype ( const std::string& markerString, const std::string& filename, 
-					 bool pureVirtual = false );
+                                         bool pureVirtual = false );
 
   void excludeFunctionSource           ( const std::string& markerString, const std::string& filename,
-					 bool pureVirtual = false );
+                                         bool pureVirtual = false );
   void excludeSubTreeFunctionSource    ( const std::string& markerString, const std::string& filename, 
-					 bool pureVirtual = false );
+                                         bool pureVirtual = false );
 
   void excludeSubTreeDataPrototype ( const GrammarString & inputMemberData );
   void excludeSubTreeDataPrototype ( const std::string& inputTypeNameString,
-				     const std::string& inputVariableNameString,
+                                     const std::string& inputVariableNameString,
 				     const std::string& defaultInitializer );
 
 
@@ -204,7 +204,7 @@ class Terminal
 
 // AJ (12/3/2004): Added support for deleation of data members
   void setDataPrototype            ( const std::string& inputTypeNameString, 
-				     const std::string& inputVariableNameString, 
+                                     const std::string& inputVariableNameString, 
 				     const std::string& defaultInitializer,
 				     const ConstructParamEnum& constructorParameter,
 				     const BuildAccessEnum& buildAccessFunctions,

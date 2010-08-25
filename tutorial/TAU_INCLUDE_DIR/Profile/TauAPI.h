@@ -105,7 +105,7 @@ extern "C" char * Tau_phase_enable(const char *group);
 	static FunctionInfo *tauFI = NULL; \
         if (tauFI == 0) \
           tauCreateFI(&tauFI, name, type, tau_gr, #group); \
-	Profiler tauFP(tauFI, tau_gr); 
+        Profiler tauFP(tauFI, tau_gr); 
 
 #ifdef TAU_PROFILEPHASE
 #define TAU_PHASE(name, type, group) \

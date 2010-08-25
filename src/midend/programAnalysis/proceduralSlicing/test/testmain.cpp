@@ -122,7 +122,7 @@ int main(int argc, char *argv[]){
     diff_stream >> c;  // Read/extracts the first character of the file
     if(!diff_stream.eof()){
       cerr << "\nThe two files " << out_sliced << " and " << out_original
-	   << " are not identical." << endl;
+           << " are not identical." << endl;
       return -1;
     }
     else{
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]){
     sprintf(rm, "rm %s %s %s", file_w_pragmas,sliced_file, diff_file);
     if(system(rm)){
       cerr << "Removing the files " << file_w_pragmas << ", " << sliced_file  << " and "
-	   << diff_file << " failed." << endl;
+           << diff_file << " failed." << endl;
       return -1;
       }
 

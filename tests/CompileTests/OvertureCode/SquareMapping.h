@@ -11,7 +11,7 @@ class SquareMapping : public Mapping
 public:
 
   SquareMapping( const real xa=0., 
-		 const real xb=1., 
+                 const real xb=1., 
 		 const real ya=0.,
                  const real yb=1. );
 
@@ -32,7 +32,7 @@ public:
   virtual int put( GenericDataBase & dir, const aString & name) const;    // put to a database file
 
   void setVertices(const real xa=0., 
-		   const real xb=1., 
+                   const real xb=1., 
 		   const real ya=0.,
 		   const real yb=1.,
                    const real z=0. ); 

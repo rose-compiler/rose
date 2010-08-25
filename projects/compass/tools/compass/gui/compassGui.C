@@ -425,10 +425,10 @@ void CompassGui::run()
 		errorCodeROSE = system(runningROSE.c_str()) ;
 
    // DQ (1/24/2009): Added a ROSE_ASSERT().
-      ROSE_ASSERT(errorCodeROSE == 0);
+                ROSE_ASSERT(errorCodeROSE == 0);
 
    // DQ (1/24/2009): It might be more helpful if this as a ROSE_ASSERT(false) instead of "abort();"
-		if(errorCodeROSE) abort();
+                if(errorCodeROSE) abort();
 
 
 	}

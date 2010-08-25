@@ -35,17 +35,17 @@ MapCodegenState::~MapCodegenState() {
 
 void MapCodegenState::init_ortho( graph_t *pGraph ) {
 	// init open gl
-  glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 	glPushMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(-orthoX, orthoX, -orthoY, orthoY, zpos-1.0, zpos+1.0);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(-orthoX, orthoX, -orthoY, orthoY, zpos-1.0, zpos+1.0);
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
 	// save bounding box info
 	bbll = pGraph->u.bb.LL;
@@ -56,7 +56,7 @@ void MapCodegenState::pop_ortho( void ) {
 	// clean up open gl
 	glPopMatrix();
 	glDisable(GL_BLEND);
-  glEnable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
 }
 
 void MapCodegenState::set_mousepos( int x, int y ) {
@@ -86,7 +86,7 @@ void MapCodegenState::begin_graph(graph_t* pGraph, box , point )
 		if(( scaleX * mapScale )> (orthoX*2.0-mapOffset*2.0) ) {
 			mapScale = ( (orthoX*2.0-mapOffset*2.0)/scaleX);
 		}
-	}	else {
+	} else {
 		mapScale = ( mapDestSize /scaleX);
 		if(( scaleY * mapScale )> (orthoX*2.0-mapOffset*2.0) ) {
 			mapScale = ((orthoX*2.0-mapOffset*2.0)/scaleY);
@@ -208,33 +208,33 @@ void MapCodegenState::display( graph_t *pGraph ) {
 //-----------------------------------------------------------------------------
 // calculate viewing region
 void MapCodegenState::calc_viewingregion(pointf f[], double *minz, double *maxz) {
-  /* calculate rays through projection plane */
+        /* calculate rays through projection plane */
 	ntlVec3d camera( -gCamX, -gCamY, -gCamZ );
 	ntlVec3d lookat( -gLookatX, -gLookatY, 0.0 );
-  ntlVec3d direction = lookat - camera;
+        ntlVec3d direction = lookat - camera;
 	double fovy = 90.0;
 	double aspect = (double)gViewSizeX/gViewSizeY;
-  /* calculate width of screen using perpendicular triangle diven by
-   * viewing direction and screen plane */
-  double screenWidth = direction.getNorm()*tan( (fovy*0.5/180.0)*M_PI );
+        /* calculate width of screen using perpendicular triangle diven by
+         * viewing direction and screen plane */
+        double screenWidth = direction.getNorm()*tan( (fovy*0.5/180.0)*M_PI );
 
-  /* calculate vector orthogonal to up and viewing direction */
-  ntlVec3d upVec(0.0, 1.0, 0.0);
-  ntlVec3d rightVec( upVec.crossProd(direction) );
-  rightVec.normalize();
+        /* calculate vector orthogonal to up and viewing direction */
+        ntlVec3d upVec(0.0, 1.0, 0.0);
+        ntlVec3d rightVec( upVec.crossProd(direction) );
+        rightVec.normalize();
 
-  /* calculate screen plane up vector, perpendicular to viewdir and right vec */
-  upVec = ntlVec3d( rightVec.crossProd(direction) );
-  upVec.normalize();
+        /* calculate screen plane up vector, perpendicular to viewdir and right vec */
+        upVec = ntlVec3d( rightVec.crossProd(direction) );
+        upVec.normalize();
 
-  /* check if vectors are valid FIXME what to do if not? */
-  if( (upVec==ntlVec3d(0.0)) || (rightVec==ntlVec3d(0.0)) ) {
-    return;
-  }
+        /* check if vectors are valid FIXME what to do if not? */
+        if( (upVec==ntlVec3d(0.0)) || (rightVec==ntlVec3d(0.0)) ) {
+          return;
+        }
 
-  /* length from center to border of screen plane */
-  rightVec *= (screenWidth*aspect * -1.0);
-  upVec *= (screenWidth * -1.0);
+        /* length from center to border of screen plane */
+        rightVec *= (screenWidth*aspect * -1.0);
+        upVec *= (screenWidth * -1.0);
 
 	/* calc edges positions */
 	double zplane = 0.0;

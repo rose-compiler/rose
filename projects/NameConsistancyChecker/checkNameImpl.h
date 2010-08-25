@@ -94,7 +94,7 @@ class NameEnforcer{
      public:
 	  void enforceRules(SgNode*, std::list< std::pair<name_types,SgNode*> >& violations,
                                std::list< std::pair<name_types,PreprocessingInfo*> >& macroViolations  );
-	  void readFile( std::string filename);
+          void readFile( std::string filename);
           std::string get_enumName(name_types name );
 
           std::string get_reg(name_types enum_elem);
@@ -103,9 +103,9 @@ class NameEnforcer{
 	  NameEnforcer();	  
      private:
 	  void Initialize(); 
-       //map which translates between the string and the enums representing the strings
+          //map which translates between the string and the enums representing the strings
 	  std::map<std::string, name_types> s_mapStringValues;
-       //map which contains the regular expresssions which is defined
+          //map which contains the regular expresssions which is defined
 	  std::map<name_types, std::string> s_definedRegularExpressions;
 
 	  //stdext::hash_multimap<name_types,std::string> filterPathMap;
@@ -158,7 +158,7 @@ class SynthesizedAttribute
      public:
        // List of #define directives (save the PreprocessingInfo objects
        // so that we have all the source code position information).
-	  std::list<PreprocessingInfo*> accumulatedList;
+          std::list<PreprocessingInfo*> accumulatedList;
 
           void display() const;
    };

@@ -164,7 +164,7 @@ int add_macro_def(const string& filename, int lineno, int colno, const string& n
 
   /* insert the macro def: */
   sqlcmd = sqlite3_mprintf("INSERT INTO macrodefs(filename, name, def, lineno, colno) VALUES('%q','%q','%q',%d,%d);",
-			   filename.c_str(), name.c_str(), def.c_str(), lineno, colno);
+                           filename.c_str(), name.c_str(), def.c_str(), lineno, colno);
   //  sqlcmd = appendText(sqlcmd, "INSERT INTO macrodefs(filename, lineno, colno, name, def) VALUES(", 0); too cumbersome to do it this way; use sqlite3_mprintf instead.
 //  cout << "sql for add_macro_def: " << sqlcmd << endl;
 
@@ -181,7 +181,7 @@ int add_macro_def(const string& filename, int lineno, int colno, const string& n
 }
 
 int add_macro_call(const string& filename, int lineno, int colno, vector<string>& tokenlist,
-		   vector<string>& args, const string& macdeffilename, int macdeflineno,
+                   vector<string>& args, const string& macdeffilename, int macdeflineno,
 		   const string& expanded, const string& unparsed)
 {
   std::cerr << "Adding macro call: " << filename << " " ;
@@ -249,7 +249,7 @@ int add_macro_call(const string& filename, int lineno, int colno, vector<string>
 
 
   sqlcmd = sqlite3_mprintf("INSERT INTO macrocalls(filename, lineno, colno, tokenlist, expanded,  unparsed, macrodef) VALUES('%q',%d,%d,'%q','%q','%q',%d);",
-			   filename.c_str(), lineno, colno, tokenlist_str.c_str(), expanded.c_str(), unparsed.c_str(),  macdefid.id);
+                           filename.c_str(), lineno, colno, tokenlist_str.c_str(), expanded.c_str(), unparsed.c_str(),  macdefid.id);
  //  cout << "sql for add_macro_call: " << sqlcmd << endl;
 
   rc = sqlite3_exec(macdb, sqlcmd, NULL, 0, &zErrMsg);
@@ -280,7 +280,7 @@ int add_macro_call(const string& filename, int lineno, int colno, vector<string>
 }
 
 int replace_macro_call(const string& filename, int lineno, int colno, vector<string>& tokenlist,
-		       vector<string>& args, const string& macdeffilename, int macdeflineno,
+                       vector<string>& args, const string& macdeffilename, int macdeflineno,
 		       const string& expanded, const string& unparsed)
 {
   char * sqlcmd = 0;
@@ -633,9 +633,9 @@ void iterate_macro_defs_calls()
       // (3) store tokens into the macro call;
       if ( sqlite3_column_text(sqlstmt, 18)!=NULL ) {
 	if ( vec_macrocalls.size()<=0 || vec_macrocalls.back().second.size()<=0 ||
-	     vec_macrocalls.back().second.back().id!=sqlite3_column_int(sqlstmt, 17) ) {
-	  fprintf(stderr, "No mac call found for this token: last mac call id=%d %s %d...weird.\n", vec_macrocalls.back().second.back().id,
-		  sqlite3_column_text(sqlstmt, 18), sqlite3_column_int(sqlstmt, 17));
+             vec_macrocalls.back().second.back().id!=sqlite3_column_int(sqlstmt, 17) ) {
+          fprintf(stderr, "No mac call found for this token: last mac call id=%d %s %d...weird.\n", vec_macrocalls.back().second.back().id,
+                  sqlite3_column_text(sqlstmt, 18), sqlite3_column_int(sqlstmt, 17));
 	} else {
 	  char * tmptoken = sqlite3_mprintf("%s", sqlite3_column_text(sqlstmt, 18));
 	  vec_macrocalls.back().second.back().tokenlist.push_back(tmptoken);

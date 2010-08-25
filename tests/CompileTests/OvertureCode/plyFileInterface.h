@@ -21,11 +21,11 @@ public:
   ~PlyFileInterface();
 
   int       openFile(const aString &fname, 
-		     PlyFileReadWriteFlag readWrite=READ_PLY_FILE);
+                     PlyFileReadWriteFlag readWrite=READ_PLY_FILE);
   void      closeFile();
   
   void      readFile(intArray &elems, intArray &tags, realArray &xyz,
-		     int &nnode00, int &nelem00, int &ddim00, int &rdim00);
+                     int &nnode00, int &nelem00, int &ddim00, int &rdim00);
 
   void      writeFile(); // - " -
 

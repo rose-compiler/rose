@@ -520,8 +520,8 @@ void processOneFile(const std::string& fileName) {
           it->second.primitiveRules =
             scanPrimitiveRules(paramTypes.size(), rules);
 	} else if (child && child->getFunctor() == "op" &&
-		   child->getArity() == 3) {
-	  PrologAst::Integer* precNode = dynamic_cast<PrologAst::Integer*>(child->getArgs()[0]);
+                   child->getArity() == 3) {
+          PrologAst::Integer* precNode = dynamic_cast<PrologAst::Integer*>(child->getArgs()[0]);
 	  if (!precNode) {
 	    cerr << "Precedence in operator definition " << child << " is not an integer" << endl;
 	    exit(1);

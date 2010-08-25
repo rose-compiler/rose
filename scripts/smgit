@@ -78,7 +78,7 @@ useful in an environment with submodules.
                 to implement: --allow-empty, --amend, and --dry-run.
 
    merge        Merges one branch into another by first merging in
-                the main repositor (ignoring conflicts for the time
+                the main repository (ignoring conflicts for the time
                 being), then merging in the submodules, then adding
                 new submodule versions to the main repository, then
                 committing the changes in the main repository if
@@ -138,7 +138,10 @@ EOF
 $help =~ s/\n$//s;
 
 ###############################################################################################################################
-# Getopt::Long.pm inserted here to keep this script as easy to install as possible.
+# Getopt::Long.pm inserted here to keep this script as easy to install as possible.  We don't want the user to have to install
+# it before being able to run smgit.  And we can't include it along side smgit because perl might be running smgit from stdin.
+#
+# Search for "END OF" to find the end of Getopt::Long and the beginning of the smgit script itself.
 ###############################################################################################################################
 
 # Getopt::Long.pm -- Universal options parsing
@@ -2185,6 +2188,86 @@ sub do_pull {
   }
 }
 
+# Same as git-push in each submodule, except when a specific top-level branch is specified something special happens in the
+# submodules:
+#
+# When a top-level branch is specified (such as "smgit push origin rpm-bugfixes-rc") then instead of trying to push
+# rpm-bugfixes-rc in each submodule, we push the submodule branch that would be checked out by "smgit checkout rpm-bugfixes-rc".
+sub do_push {
+  my($all, $mirror, $dry_run, $porcelain, $tags, $receive_pack, $exec, $conditional_repo, $thin, $verbose, $quiet);
+  GetOptionsFromArray(\@_,
+		      "all"=>\$all, "mirror"=>\$mirror, "n|dry-run"=>\$dry_run, "porcelain"=>\$porcelain,
+		      "tags"=>\$tags, "receive-pack=s"=>\$receive_pack, "exec=s"=>\$exec, "f|force"=>\&unsupported,
+		      "repo=s"=>\$conditional_repo, "thin!"=>\$thin, "v|verbose"=>\$verbose, "q|quiet"=>\$quiet) or exit 1;
+  die "$arg0: push: incorrect usage\n" unless @_ <= 2;
+  my($repo,$refspec) = @_;
+
+  $repo =~ /[:\/]/ and
+    die "$arg0: push: repo paths are not supported by smgit.  Use a repo name instead, such as \"origin\".\n";
+
+  my $push = sub {
+    my($path) = @_;
+    my(@gitargs);
+    push @gitargs, "--all" if $all;
+    push @gitargs, "--mirror" if $mirror;
+    push @gitargs, "--dry-run" if $dry_run;
+    push @gitargs, "--porcelain" if $porcelain;
+    push @gitargs, "--tags" if $tags;
+    push @gitargs, "--receive-pack=$receive_pack" if $receive_pack;
+    push @gitargs, "--repo=$conditional_repo" if $conditional_repo;
+    push @gitargs, "--thin" if $thin;
+    push @gitargs, "--verbose" if $verbose;
+    push @gitargs, "--quiet" if $quiet;
+    push @gitargs, $repo if $repo;
+    if ($path eq "." || !$refspec) {
+      push @gitargs, $refspec if $refspec;
+      git "push", @gitargs;
+    } elsif ($refspec =~ /:/) {
+      die "$arg0: push with refspec \"$refspec\" is not implemented yet.\n";
+    } else {
+      # We're in a submodule and are pushing a refspec which is a simple branch name.  Instead of pushing the specified branch
+      # (which is a branch of the super module and might not exist here), we push the submodule branch that would have been
+      # checked out by "smgit checkout <branch>".  See switch_to_branch().
+      my($sha1_to_push) = git1 {cd=>".."}, "rev-parse", "$refspec:$path" or die;
+      my %refs = map {@$_} refs; # hash indexed by ref name
+      my $branch_to_push;
+
+      # We have nothing to push if the $sha1_to_push is already an ancestor of one of the appropriate remote branches. We do
+      # this first because it might save us some time.
+      for my $refname (sort keys %refs) {
+	next unless $refname =~ /^refs\/remotes\/$repo\/(.*)/;
+	if (merge_base($sha1_to_push, $refname) eq $sha1_to_push) {
+	  $branch_to_push = "NONE";
+	  last;
+	}
+      }
+
+      # Find a local branch head at $sha1_to_push and push that branch to a remote of the same name, creating the remote
+      # branch if necessary.
+      unless ($branch_to_push) {
+	for my $refname (sort keys %refs) {
+	  if ($refname =~ /^refs\/heads\/(.*)/ && $refs{$refname} eq $sha1_to_push) {
+	    $branch_to_push = $1;
+	    last;
+	  }
+	}
+      }
+
+      die "$arg0: could not find suitable submodule branch to push\n" unless $branch_to_push;
+      if ($branch_to_push eq "NONE") {
+	print "nothing to push ($sha1_to_push is already present on remote)\n";
+      } else {
+	git "push", @gitargs;
+      }
+    }
+  };
+
+  # Run the push command in all the submodules, then the super module. Doing it in this order will allow the remote
+  # hooks to check that a supermodule's submodules are all present before accepting the super module update.
+  execute $push, submodules;
+  execute $push;
+}
+
 # Prints some info that's useful for debugging
 sub do_debug {
   print "Debugging information from $arg0:\n";
@@ -2216,10 +2299,6 @@ my @gvers = `git --version` =~ /(\d+)\.(\d+)\.(\d+)/;
 die "$arg0: requires Git version 1.6.4 or later\n"
   unless $gvers[0]>1 || ($gvers[0]==1 && ($gvers[1]>6 || ($gvers[1]==6 && $gvers[2]>=4)));
 
-die "$arg0: you have no submodules; use plain old git instead.
-    (smgit is a wrapper around git that limits the functionality in order to
-    make it easier to use submodules.)\n" unless submodules;
-
 my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
             clone       => \&do_clone,
@@ -2228,8 +2307,12 @@ my %cmds = (branch      => \&do_branch,
             help        => sub {execute sub {git "help", @ARGV}}, # no need to execute in submodules
             merge       => \&do_merge,
 	    pull        => \&do_pull,
+	    push        => \&do_push,
            );
 
 my $cmd = shift @ARGV;
 usage if $cmd =~ /^-/ || !$cmd || ($cmd eq "help" && 0==@ARGV);
+die "$arg0: you have no submodules; use plain old git instead.
+    (smgit is a wrapper around git that limits the functionality in order to
+    make it easier to use submodules.)\n" unless submodules;
 $cmds{$cmd} ? &{$cmds{$cmd}}(@ARGV) : postorder $cmd, @ARGV;

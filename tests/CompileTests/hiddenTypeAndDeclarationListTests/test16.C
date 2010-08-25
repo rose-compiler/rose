@@ -1,18 +1,18 @@
 // test for class access modifiers:
 
 class M {
-	public:
-		int m;
+        public:
+                int m;
 };
 
 class C {
-	public:
-		int cc;
+        public:
+                int cc;
 };
 
 class A {
 
-	public:
+        public:
 
 		A() {}
 
@@ -22,7 +22,7 @@ class A {
 
                 enum E2 { en21, en22 };
 
-	protected:
+        protected:
 
 		int b;
 		int d;
@@ -31,7 +31,7 @@ class A {
 
 		M em;
 
-	private:
+        private:
 
 		int c;
 		int e();
@@ -46,18 +46,18 @@ class A {
 
 class B : A {
 
-	public :
+        public :
 
 		B() {}
 
 		int foo() {
-			double a,b,c;  // test for variables: only  a, b are hiding
+                        double a,b,c;  // test for variables: only  a, b are hiding
 
-			//int z = f1(); // valid
+                        //int z = f1(); // valid
 			// f1(a); // not valid because of memberfunction int f1();
 
-			// A* pointer_A; // not valid because of own member double A
-		}
+                        // A* pointer_A; // not valid because of own member double A
+                }
 
 		int f1(); // doesn't hide void f1(double y) of A, FUNCTION OVERLOADING
 
@@ -80,7 +80,7 @@ class B : A {
 
 int main() {
 
-	return 0;
+        return 0;
 
 }
 

@@ -22,11 +22,11 @@ public:
   
   void MappingsFromCAD::
   fileContents(aString fileName, IgesReader * &iges_, int & numberOfNurbs, int & numberOfFiniteElements,
-	       int & numberOfNodes, int & status );
+               int & numberOfNodes, int & status );
 
   CompositeSurface * MappingsFromCAD::
   readSomeNurbs( MappingInformation & mapInfo, IgesReader *iges_, int startMap, int endMap, 
-		 int numberOfNurbs, int & status );// numberOfNurbs should be stored in the IgesReader class
+                 int numberOfNurbs, int & status );// numberOfNurbs should be stored in the IgesReader class
 
 
 protected:
@@ -52,7 +52,7 @@ protected:
 
   
   int createCompositeCurve(const int & item, 
-			   IgesReader & iges, 
+                           IgesReader & iges, 
 			   int & numberOfSubCurves, 
 			   Mapping **mapPointer,
 			   Mapping *surf,
@@ -76,7 +76,7 @@ protected:
 		    RealArray & surfaceParameterScale = Overture::nullRealArray() );
 
   int createTrimmedSurface(const int & item, 
-			   IgesReader & iges, 
+                           IgesReader & iges, 
 			   Mapping *&mapPointer);
   
   int isUntrimmedSurface(IgesReader & iges, int item );
@@ -86,14 +86,14 @@ protected:
   int getTransformationMatrix(const int & item, IgesReader & iges, RealArray & rotation, RealArray & translation);
 
   int readOneCurve(int curve,
-		   IgesReader & iges, 
+                   IgesReader & iges, 
 		   Mapping * & mapPointer,
 		   RealArray & curveParameterScale);
   
   int scaleCurve( Mapping & mapping, Mapping & surf, RealArray & surfaceParameterScale);
   
   int createBoundaryEntity(const int & item, 
-			   IgesReader & iges, 
+                           IgesReader & iges, 
 			   const int & untrimmedSurfSeq,
 			   NurbsMapping *&mapPointer,
 			   RealArray & curveParameterScale);

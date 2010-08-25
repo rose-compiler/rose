@@ -64,7 +64,7 @@ bool BinaryLoaderGeneric::loadAllLibraries(SgBinaryComposite* binaryFile)
    TODO, do we need something better to disambiguate header similarity?
 */
 bool isHeaderSimilar(const SgAsmGenericHeader* matchHeader,
-		     const SgAsmGenericHeader* candidateHeader)
+                     const SgAsmGenericHeader* candidateHeader)
 {
   return (matchHeader->variantT() == candidateHeader->variantT());
 
@@ -74,7 +74,7 @@ bool isHeaderSimilar(const SgAsmGenericHeader* matchHeader,
    find all headers in candidate headers that 'match' the matchHeader
 */
 SgAsmGenericHeaderPtrList findSimilarHeaders(const SgAsmGenericHeader* matchHeader,
-					     const SgAsmGenericHeaderPtrList& candidateHeaders)
+                                             const SgAsmGenericHeaderPtrList& candidateHeaders)
 {
   SgAsmGenericHeaderPtrList matches;
   for(size_t i=0; i < candidateHeaders.size(); ++i){
@@ -186,7 +186,7 @@ bool BinaryLoaderGeneric::loadInterpLibraries(SgBinaryComposite* binaryFile,SgAs
   Rose_STL_Container<string> filesAlreadyLoaded;
   std::list<SgAsmGenericHeader*> unresolvedHeaders;
   unresolvedHeaders.insert(unresolvedHeaders.end(),
-			   interp->get_headers()->get_headers().begin(),
+                           interp->get_headers()->get_headers().begin(),
 			   interp->get_headers()->get_headers().end());
 
   
@@ -253,10 +253,10 @@ bool BinaryLoaderGeneric::layoutInterpLibraries(SgBinaryComposite*,SgAsmInterpre
    Default, add all sections
  */
 void BinaryLoaderGeneric::addSectionsForLayout(SgAsmGenericHeader* header, 
-					       SgAsmGenericSectionPtrList &allSections)
+                                               SgAsmGenericSectionPtrList &allSections)
 {
     allSections.insert(allSections.end(),
-		       header->get_sections()->get_sections().begin(),
+                       header->get_sections()->get_sections().begin(),
 		       header->get_sections()->get_sections().end());
 }
 

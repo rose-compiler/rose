@@ -89,15 +89,15 @@ AstRestructure::immediateReplace(SgStatement* astNode,string s) {
 /*
 RestructureInhType
 AstRestructure::evaluateRewriteInheritedAttribute (SgNode* astNode,
-						   RestructureInhType inheritedValue ) {
+                                                   RestructureInhType inheritedValue ) {
   RestructureInhType inh(inheritedValue,astNode);
   return inh;
 }
 
 RestructureSynType
 AstRestructure::evaluateRewriteSynthesizedAttribute (SgNode* astNode,
-						      RestructureInhType inheritedValue,
-						      SubTreeSynthesizedAttributes synList ) {
+                                                      RestructureInhType inheritedValue,
+                                                      SubTreeSynthesizedAttributes synList ) {
   RestructureSynType sa(astNode);
   for (SubTreeSynthesizedAttributes::iterator i = synList.begin(); i != synList.end(); i++) {
     sa+=*i;
@@ -111,16 +111,16 @@ AstRestructure::evaluateRewriteSynthesizedAttribute (SgNode* astNode,
   if(astNode==targetNode) {
     cout << "TARGET NODE FOUND." << endl;
     AST_Rewrite::AST_FragmentString sourceFragmentSpecifier1(includeHeaders,inheritedValue,
-							    AST_Rewrite::Preamble,
-							    AST_Rewrite::PreamblePositionInScope
-							     );
+                                                            AST_Rewrite::Preamble,
+                                                            AST_Rewrite::PreamblePositionInScope
+                                                             );
     sa.addSourceCodeString(sourceFragmentSpecifier1);      
     MidL
     AST_Rewrite::AST_FragmentString sourceFragmentSpecifier2(sourceFragment,inheritedValue,
-							    AST_Rewrite::LocalScope,
-							    AST_Rewrite::ReplaceCurrentPosition,
-							    AST_Rewrite::TransformationString,
-							    false);
+                                                            AST_Rewrite::LocalScope,
+                                                            AST_Rewrite::ReplaceCurrentPosition,
+                                                            AST_Rewrite::TransformationString,
+                                                            false);
     //MiddleLevelRewrite::insert(statement,newSourceString,MidLevelCollectionTypedefs::ReplaceCurrentPosition);
     MiddleLevelRewrite::replace(statement,newSourceString);
 

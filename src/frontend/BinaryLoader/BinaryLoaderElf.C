@@ -267,7 +267,7 @@ void prettyPrint(SgAsmElfSymbolSection* elfSection)
     SgAsmElfSymbol* symbol = elfSection->get_symbols()->get_symbols()[sym];
     
     printf("%s %s %s %s\n",
-	   symbol->get_name()->c_str(),
+           symbol->get_name()->c_str(),
 	   symbol->stringifyDefState().c_str(),
 	   symbol->stringifyType().c_str(),
 	   symbol->stringifyBinding().c_str());
@@ -281,7 +281,7 @@ struct VersionedSymbol
 {
 public:
   explicit VersionedSymbol(SgAsmElfSymbol* symbol=NULL,
-			   SgAsmElfSymbolSection* parent=NULL) : 
+                           SgAsmElfSymbolSection* parent=NULL) : 
     p_symbol(symbol),
     p_parent(parent),
     p_version_entry(NULL),
@@ -449,13 +449,13 @@ public:
       // first handle base
       if(oldSymbol.get_is_base_definition() && newSymbol.get_is_base_definition()){
 	if(oldSymbol.get_symbol()->get_elf_binding() == SgAsmElfSymbol::STB_WEAK &&
-	   newSymbol.get_symbol()->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL){
-	  // the new symbol becomes the new base
+           newSymbol.get_symbol()->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL){
+          // the new symbol becomes the new base
 	  p_versions[0] = newSymbol;
 	  start=1;
 	  if(!oldSymbol.get_version().empty() && 
-	     oldSymbol.get_version() != newSymbol.get_version()){
-	    // the old symbol was overridden, but it still has a unique
+             oldSymbol.get_version() != newSymbol.get_version()){
+            // the old symbol was overridden, but it still has a unique
 	    //  version - so we need to keep it
 	    p_versions.push_back(oldSymbol);
 	  }
@@ -475,9 +475,9 @@ public:
 	for(size_t j=0; j < p_versions.size(); ++j){
 	  oldSymbol = p_versions[j];
 	  if(oldSymbol.get_version() == newSymbol.get_version() &&                    // matching version
-	     oldSymbol.get_symbol()->get_elf_binding() == SgAsmElfSymbol::STB_WEAK && // old is weak
+             oldSymbol.get_symbol()->get_elf_binding() == SgAsmElfSymbol::STB_WEAK && // old is weak
 	     newSymbol.get_symbol()->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL){// new is strong
-	    p_versions[j] = newSymbol;// override the old symbol, 
+            p_versions[j] = newSymbol;// override the old symbol, 
 	    found=true;
 	    break;
 	  }
@@ -718,7 +718,7 @@ Thus, we're performing
 
 */
 SgAsmGenericSection* find_mapped_section(SgAsmGenericHeader* header,
-				     rose_addr_t va)
+                                         rose_addr_t va)
 {
   SgAsmGenericSectionPtrList sections = header->get_sections_by_va(va);
   SgAsmGenericSection* section=NULL;
@@ -830,7 +830,7 @@ relocate_X86_JMP_SLOT(SgAsmElfRelocEntry* reloc,
 
 void 
 relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
-			 SgAsmElfRelocSection* parentSection,
+                         SgAsmElfRelocSection* parentSection,
 			 const SymbolMap &masterSymbolMap,
 			 const SymverResolver &resolver,
 			 const size_t addrSize)
@@ -885,7 +885,7 @@ relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
 
 void 
 relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
-		   SgAsmElfRelocSection* parentSection,
+                   SgAsmElfRelocSection* parentSection,
 		   const SymbolMap &masterSymbolMap,
 		   const SymverResolver &resolver,
 		   const size_t addrSize)
@@ -969,7 +969,7 @@ relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
 
 
 void performRelocation(SgAsmElfRelocEntry* reloc, 
-		       SgAsmElfRelocSection* parentSection,
+                       SgAsmElfRelocSection* parentSection,
 		       const SgAsmElfSectionPtrList& extentSortedSections,
 		       const SymverResolver &resolver,
 		       const SymbolMap& masterSymbolMap)
@@ -1319,8 +1319,8 @@ public:
 	isLoadable=false;
       }
       if((flags & SgAsmElfSectionTableEntry::SHF_TLS) && 
-	 sectionEntry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS){ // .tbss
-	//TODO support Thread Local Storage.  In particular, .tbss gives us
+         sectionEntry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS){ // .tbss
+        //TODO support Thread Local Storage.  In particular, .tbss gives us
 	//  issues because it occupies zero disk and zero LOGICAL space
 	isLoadable=false;
       }
@@ -1332,7 +1332,7 @@ public:
 };
 
 void getSectionNameMap(SgBinaryComposite* binaryFile,
-		       SectionNameMap& allSections,
+                       SectionNameMap& allSections,
 		       SectionNameMap& loadedSections)
 {
   ElfSectionCollector visitor;
@@ -1385,8 +1385,8 @@ public:
 	
 	// TODO document this
 	if((!elfSection) || 
-	   (elfSection->get_section_entry() && 
-	    !(elfSection->get_section_entry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_ALLOC)))
+           (elfSection->get_section_entry() && 
+            !(elfSection->get_section_entry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_ALLOC)))
 	{
 	  continue;
 	}
@@ -1513,7 +1513,7 @@ findSection(const ElfSymbolMapEntryList& symbolEntry,
 }
 
 SgAsmElfSectionPtrList sectionsOfAddress(rose_addr_t va_addr,
-					 const SgAsmElfSectionPtrList &extentSortedSections)
+                                         const SgAsmElfSectionPtrList &extentSortedSections)
 {
   SgAsmElfSectionPtrList returnSections;
   for(size_t i=0; i < extentSortedSections.size(); ++i)
@@ -1551,7 +1551,7 @@ SgAsmElfSection* chooseSectionAtAddress(rose_addr_t va_addr,
 // TODO use sh_type instead of sectionName
 SgAsmElfSection* 
 findElfSection(const SgAsmElfSectionPtrList& sections,
-	       const string& sectionName)
+               const string& sectionName)
 {
   for(size_t i=0; i < sections.size(); ++i){
     if(sections[i]->get_name()->c_str() == sectionName)
@@ -1614,7 +1614,7 @@ string stringOfSectionsOfAddress(rose_addr_t va_addr,
 }
 
 void printSymbolMapEntry(const ElfSymbolMapEntryList& entries,
-			 const SgAsmElfSectionPtrList& extentSortedSections)
+                         const SgAsmElfSectionPtrList& extentSortedSections)
 {
   printf("'%s':\n", entries.front().symbol->get_name()->c_str());
 
@@ -1628,7 +1628,7 @@ void printSymbolMapEntry(const ElfSymbolMapEntryList& entries,
 
 void 
 printSymbolMap(const SymbolMap& symbolMap,
-	       const SgAsmElfSectionPtrList &extentSortedSections)
+               const SgAsmElfSectionPtrList &extentSortedSections)
 {
   SymbolMap::const_iterator iter = symbolMap.begin();
   SymbolMap::const_iterator iterEnd = symbolMap.end();
@@ -1639,7 +1639,7 @@ printSymbolMap(const SymbolMap& symbolMap,
 }
 
 ElfSymbolMapEntry chooseSymbol(const ElfSymbolMapEntryList& entries,
-			       SgAsmElfSectionTableEntry::SectionType sh_type=SgAsmElfSectionTableEntry::SHT_NULL)
+                               SgAsmElfSectionTableEntry::SectionType sh_type=SgAsmElfSectionTableEntry::SHT_NULL)
 {
   ROSE_ASSERT(!entries.empty());
   ElfSymbolMapEntry best = ElfSymbolMapEntry();

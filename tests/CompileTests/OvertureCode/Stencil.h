@@ -123,7 +123,7 @@ public:
   enum displayWhat { text=1, structure, both };
 
   void display(const aString &str="", displayWhat what = text, 
-	       ostream &os = cout) const;
+               ostream &os = cout) const;
   void displayText(const aString &str="", ostream &os = cout) const;
   void displayStructure(const aString &str="", ostream &os = cout, 
 			int legend = FALSE) const;
@@ -139,7 +139,7 @@ public:
   // Returns reference to targetGF, allows some nicer syntax 
   RealMappedGridFunction &
   applyStencil(const RealMappedGridFunction &sourceGF, 
-	       RealMappedGridFunction &targetGF, 
+               RealMappedGridFunction &targetGF, 
 	       const Index &I1, 
 	       const Index &I2, 
 	       const Index &I3, 
@@ -148,7 +148,7 @@ public:
   // Following method used by Operators who assume RealArray, not GridFunction
   RealArray &
   applyStencil(const RealArray  &sourceGF, 
-	       RealArray  &targetGF, 
+               RealArray  &targetGF, 
 	       const Index &I1, 
 	       const Index &I2, 
 	       const Index &I3, 
@@ -163,7 +163,7 @@ public:
   // For systems, mixed terms can be obtained via iE and iC
   void
   makeCoefficients(CoefficientMatrix &coeff, 
-		   const Index &I1, 
+                   const Index &I1, 
 		   const Index &I2, 
 		   const Index &I3, 
 		   const int iE = 0, // Equation
@@ -174,7 +174,7 @@ public:
   // this method returns correct operator
   void
   makeCoefficients(CoefficientMatrix &coeff, 
-		   const Index &I1, 
+                   const Index &I1, 
 		   const Index &I2, 
 		   const Index &I3, 
 		   const Index &C

@@ -157,14 +157,14 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #ifdef __cplusplus
   if ( debug >= 16 )
     std::cout << "Entered sla."
-	 << '\n' << "  argc:  " << argv.size()
-	 // << '\n' << "  argv:  " << argv
-	 << '\n' << "  flind: " << flind
-	 << '\n' << "  assop: " << assop
-	 << '\n' << "  pname: " << pname
-	 << '\n' << "  value:   " << value
-	 << '\n' << "  argd:  " << argd
-	 << std::endl;
+              << '\n' << "  argc:  " << argv.size()
+              // << '\n' << "  argv:  " << argv
+              << '\n' << "  flind: " << flind
+              << '\n' << "  assop: " << assop
+              << '\n' << "  pname: " << pname
+              << '\n' << "  value:   " << value
+              << '\n' << "  argd:  " << argd
+              << std::endl;
 #endif
 #endif
   register unsigned int i, k;
@@ -414,7 +414,7 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #ifdef __cplusplus
 	  if ( debug >= 4 )
 	    std::cout << "Deleting " << i << ':' << argv[i]
-		 << " and " << i+1 << ':' << argv[i+1] << " from argv" << std::endl;
+                      << " and " << i+1 << ':' << argv[i+1] << " from argv" << std::endl;
 #endif
 #endif
 	  argv.erase(argv.begin() + i, argv.begin() + i + 2);

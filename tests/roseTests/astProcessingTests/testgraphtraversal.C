@@ -13,7 +13,7 @@ class InheritedAttribute
          
          
          
- 	 //Naming paths code
+         //Naming paths code
 	 set<vector<SgGraphNode*> > collected_paths;
          int pathcount;
 
@@ -55,7 +55,7 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
         cout << "in loop" << endl;
     }
     int tmppathcount = 0;
-    cout << "childs name: " << child->get_name();
+    
     set<vector<SgGraphNode*> > newPathList;
     
     cout << "Number Of Inherited Attributes In Set:" << inheritedAttributesSet.size() << endl;
@@ -65,7 +65,6 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
         for (vector<InheritedAttribute>::iterator i = inheritedAttributesSet.begin(); i != inheritedAttributesSet.end(); i++) {
             
             InheritedAttribute inh = *i;
-        //    ROSE_ASSERT(inh != NULL);
             cout << "adding " << inh.pathcount << " to pathcount" << endl;
             tmppathcount += inh.pathcount;
             set<vector<SgGraphNode*> > colpath = inh.collected_paths;
@@ -85,24 +84,30 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
             }
         }
         cout << "enumerating paths" << endl;
+        set<string> namearr;
         for (set<vector<SgGraphNode*> >::iterator it = newPathList.begin(); it != newPathList.end(); it++) {
             vector<SgGraphNode*> cp = *it;
             for (vector<SgGraphNode*>::iterator jt = cp.begin(); jt != cp.end(); jt++) {
                 cout << (*jt)->get_name() << " ";
+                ROSE_ASSERT(namearr.find((*jt)->get_name()) == namearr.end());
+                namearr.insert((*jt)->get_name());
             }
+            namearr.clear();
             cout << endl;
         }
         if (loop == true) {
             cout << "Number of Paths through this loop: " << newPathList.size() << endl;
             cout << "This should match: " << tmppathcount << endl;
+            ROSE_ASSERT(tmppathcount == newPathList.size());
         }
         else {
-        //set<vector<SgGraphNode*> > cp = collect_paths(child, newPathList);
+        set<vector<SgGraphNode*> > cp = collect_paths(child, newPathList);
         cout << "Number Of Paths:" << newPathList.size() << endl;
         cout << "This should match:" << tmppathcount << endl;
+        ROSE_ASSERT(tmppathcount == newPathList.size());
         
 }
-        return InheritedAttribute(tmppathcount, newPathList);;
+        return InheritedAttribute(tmppathcount, newPathList);
     }
     else {
     cout << "no inherited attributes given" << endl;
@@ -197,6 +202,8 @@ SgDirectedGraphEdge* t17s19 = sgDG->addDirectedEdge(node17, node19, "t17s19");
 SgDirectedGraphEdge* t19s18 = sgDG->addDirectedEdge(node19, node18, "t19s18");
 SgDirectedGraphEdge* t18s16 = sgDG->addDirectedEdge(node18, node16, "t18s16");
 SgDirectedGraphEdge* t16s21 = sgDG->addDirectedEdge(node16, node21, "t16s21");
+SgDirectedGraphEdge* t19s20 = sgDG->addDirectedEdge(node19, node20, "t19s20");
+
 SgDirectedGraphEdge* t20s22 = sgDG->addDirectedEdge(node20, node22, "t20s22");
 SgDirectedGraphEdge* t20s21 = sgDG->addDirectedEdge(node20, node21, "t20s21");
 SgDirectedGraphEdge* t21s23 = sgDG->addDirectedEdge(node21, node23, "t21s23");
@@ -211,6 +218,7 @@ SgDirectedGraphEdge* t27s28 = sgDG->addDirectedEdge(node27, node28, "t27s28");
 SgDirectedGraphEdge* t28s29 = sgDG->addDirectedEdge(node28, node29, "t28s29");
 SgDirectedGraphEdge* t29s30 = sgDG->addDirectedEdge(node29, node30, "t29s30");
 SgDirectedGraphEdge* t30s23 = sgDG->addDirectedEdge(node30, node23, "t30s23");
+
 SgDirectedGraphEdge* t26s31 = sgDG->addDirectedEdge(node26, node31, "t26s31");
 SgDirectedGraphEdge* t31s32 = sgDG->addDirectedEdge(node31, node32, "t31s32");
 

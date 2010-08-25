@@ -34,8 +34,7 @@ class SpinPStructContainer
 	SgType * tPStruct,*tPPStruct;
 	std::string procName;
 	SgVariableDeclaration *_pidDecl;
-	SgVariableDeclaration * psInstanceDeclaration,
-											  * psPointerDeclaration;
+	SgVariableDeclaration * psInstanceDeclaration,* psPointerDeclaration;
 
 	//specialized constructors
 	void createPStructInstanceDeclaration();

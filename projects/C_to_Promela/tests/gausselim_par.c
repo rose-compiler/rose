@@ -161,11 +161,11 @@ int gausselim(double* matrix, int numRows, int numCols, int debug) {
     if (pivotRow != top) {
       if (rank == top) {
 	MPI_Sendrecv_replace(matrix, numCols, MPI_DOUBLE, pivotRow, 0, 
-			     pivotRow, 0, MPI_COMM_WORLD, &status);
+                             pivotRow, 0, MPI_COMM_WORLD, &status);
       }
       else if (rank == pivotRow) {
 	MPI_Sendrecv_replace(matrix, numCols, MPI_DOUBLE, top, 0, 
-			     top, 0,  MPI_COMM_WORLD, &status);
+                             top, 0,  MPI_COMM_WORLD, &status);
       }
     }
 
@@ -259,14 +259,14 @@ int main(int argc, char** argv) {
   if (argc != 3 + debug + numRows*numCols) {
     if (rank == 0) {
       printf("Incorrect number of matrix entries: %d expected, %d given.\n",
-	     numRows*numCols, argc-3-debug);
+             numRows*numCols, argc-3-debug);
     }
     exit(1);
   }
   if (nprocs != numRows) {
     if (rank == 0) {
       printf("Number of processes must equal the number of rows: %d != %d \n",
-	     nprocs, numRows);
+             nprocs, numRows);
     }
     exit(1);
   }

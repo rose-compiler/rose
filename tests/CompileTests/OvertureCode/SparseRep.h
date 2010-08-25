@@ -60,7 +60,7 @@ public:
                         int offset=0);
 
   virtual void setParameters(int stencilSize=9,        
-			     int numberOfGhostLines=1, 
+                             int numberOfGhostLines=1, 
 			     int numberOfComponents=1, 
 			     int offset=0 );
 

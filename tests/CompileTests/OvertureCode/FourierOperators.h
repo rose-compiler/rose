@@ -56,7 +56,7 @@ class FourierOperators
 			const Range & Components=nullRange );
   
   void transform(const int & forwardOrBackward,
-		 const RealDistributedArray & u, 
+                 const RealDistributedArray & u, 
 		 RealDistributedArray & uHat, 
 		 const Range & Components );
   

@@ -16,7 +16,7 @@
 #define PY_RELEASE_LEVEL_BETA	0xB
 #define PY_RELEASE_LEVEL_GAMMA	0xC
 #define PY_RELEASE_LEVEL_FINAL	0xF	/* Serial should be 0 here */
-					/* Higher for patch releases */
+                                        /* Higher for patch releases */
 
 /* Version parsed out into numeric values */
 #define PY_MAJOR_VERSION	2

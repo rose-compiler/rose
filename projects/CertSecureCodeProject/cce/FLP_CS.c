@@ -26,13 +26,13 @@ void FLP33();
 void FLP34();
 
 void FLP() {
-	FLP02();
-	FLP03();
-	FLP30();
-//	FLP31();
-	FLP32();
-	FLP33();
-	FLP34();
+        FLP02();
+        FLP03();
+        FLP30();
+//      FLP31();
+        FLP32();
+        FLP33();
+        FLP34();
 }
 
 
@@ -113,108 +113,108 @@ void FLP02(void) {
 /* FLP30_A v.25 */
 
 void FLP30(void) {
-	int count;
-	for (count = 1; count <= 10; count += 1) {
-	  const float x = count/10.0f;
-	  /* ... */
-	  printf("FLP30 %f\n", x);
-	}
+        int count;
+        for (count = 1; count <= 10; count += 1) {
+          const float x = count/10.0f;
+          /* ... */
+          printf("FLP30 %f\n", x);
+        }
 
-	for (count = 1; count <= 10; count += 1) {
-	  const double x = 100000000.0 + count;
-	  /* ... */
-	  printf("FLP30 %f\n", x);
-	}
+        for (count = 1; count <= 10; count += 1) {
+          const double x = 100000000.0 + count;
+          /* ... */
+          printf("FLP30 %f\n", x);
+        }
 }
 
 /* FLP31_A v.15 */
 
 //void FLP31(void) {
-//	double complex c = 2.0 + 4.0 * I;
-//	/* ... */
-//	double complex result = log2(creal(c));
-//	printf("%f + %fi\n", creal(result), cimag(result));
+//      double complex c = 2.0 + 4.0 * I;
+//      /* ... */
+//      double complex result = log2(creal(c));
+//      printf("%f + %fi\n", creal(result), cimag(result));
 //}
 
 /* FLP32_A v.69 */
 
 void FLP32(void) {
-	const double x = 0.0f;
-	const double y = 0.0f;
-	double result;
+        const double x = 0.0f;
+        const double y = 0.0f;
+        double result;
 
-	/* Set the value for x */
+        /* Set the value for x */
 
-	if ( isnan(x) || isless(x,-1) || isgreater(x, 1) ){
-		 /* handle domain error */
-	}
-	result = acos(x);
+        if ( isnan(x) || isless(x,-1) || isgreater(x, 1) ){
+                 /* handle domain error */
+        }
+        result = acos(x);
 
-	if ( (x == 0.f) && (y == 0.f) ) {
-		 /* handle domain error */
-	}
-	result = atan2(y, x);
+        if ( (x == 0.f) && (y == 0.f) ) {
+                /* handle domain error */
+        }
+        result = atan2(y, x);
 
-	if (isnan(x) || islessequal(x, 0)) {
-	  /* handle domain and range errors */
-	}
-	result = log(x);
+        if (isnan(x) || islessequal(x, 0)) {
+                /* handle domain and range errors */
+        }
+        result = log(x);
 
-	if (isless(x, 0)){
-	  /* handle domain error */
-	}
-	result = sqrt(x);
-	printf("FL32 %f\n", result);
+        if (isless(x, 0)){
+                /* handle domain error */
+        }
+        result = sqrt(x);
+        printf("FL32 %f\n", result);
 }
 
 /* FLP33_A v.38 */
 
 void FLP33(void) {
-const short a = 533;
-const int b = 6789;
-const long c = 466438237;
+        const short a = 533;
+        const int b = 6789;
+        const long c = 466438237;
 
-float d = a / 7.0f; /* d is 76.14286 */
-double e = b / 30.; /* e is 226.3 */
-double f = (double)c * 789; /* f is 368019768993.0 */
+        float d = a / 7.0f; /* d is 76.14286 */
+        double e = b / 30.; /* e is 226.3 */
+        double f = (double)c * 789; /* f is 368019768993.0 */
 
-d /= 7; /* d is 76.14286 */
-e /= 30; /* e is 226.3 */
-f *= 789; /* f is 368019768993.0 */
+        d /= 7; /* d is 76.14286 */
+        e /= 30; /* e is 226.3 */
+        f *= 789; /* f is 368019768993.0 */
 
 }
 
 /* FLP34_A v.43 */
 
 void FLP34(void) {
-	const long double ld = 0.0;
-	const double d1 = 0.0;
-	double d2 = 0.0;
-	float f1 = 0.0f;
-	float f2 = 0.0f;
-	int i1;
+        const long double ld = 0.0;
+        const double d1 = 0.0;
+        double d2 = 0.0;
+        float f1 = 0.0f;
+        float f2 = 0.0f;
+        int i1;
 
-	if (f1 > (float) INT_MAX || f1 < (float) INT_MIN) {
-	  /* Handle Error */
-	}
-	i1 = (int)f1;
+        if (f1 > (float) INT_MAX || f1 < (float) INT_MIN) {
+                /* Handle Error */
+        }
+        i1 = (int)f1;
 
-	if (d1 > FLT_MAX || d1 < -FLT_MAX) {
-		/* Handle error condition */
-	}
-	f1 = (float)d1;
+        if (d1 > FLT_MAX || d1 < -FLT_MAX) {
+                /* Handle error condition */
+        }
+        f1 = (float)d1;
 
-	if (ld > FLT_MAX || ld < -FLT_MAX) {
-		/* Handle error condition */
-	}
-	f2 = (float)ld;
+        if (ld > FLT_MAX || ld < -FLT_MAX) {
+                /* Handle error condition */
+        }
+        f2 = (float)ld;
 
-	if (ld > DBL_MAX || ld < -DBL_MAX) {
-		/* Handle error condition */
-	}
-	d2 = (double)ld;
+        if (ld > DBL_MAX || ld < -DBL_MAX) {
+                /* Handle error condition */
+        }
+        d2 = (double)ld;
 
-	/* End {code} */
+        /* End {code} */
 
-	printf("FLP34 %f %f %d\n", d2, f2, i1);
+        printf("FLP34 %f %f %d\n", d2, f2, i1);
 }

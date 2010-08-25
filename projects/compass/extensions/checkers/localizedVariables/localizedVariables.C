@@ -51,9 +51,9 @@ namespace CompassAnalyses {
 
 	Var* operator[](SgInitializedName* n) {
 	  for (iterator i = begin();
-	       i != end();
+               i != end();
 	       ++i) {
-	    Var* v = (*(*i))[n];
+            Var* v = (*(*i))[n];
 	    if (v != NULL)
 	      return v;
 	  }
@@ -89,7 +89,7 @@ namespace CompassAnalyses {
 
       virtual void* evaluateInheritedAttribute(SgNode* n, void*);
       virtual void* evaluateSynthesizedAttribute(SgNode* n, void*,
-						 SynthesizedAttributesList);
+                                                 SynthesizedAttributesList);
     };
   }
 }

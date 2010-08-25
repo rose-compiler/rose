@@ -12,13 +12,13 @@ Thanks,
 
 template <typename T>
 class foo
-   {
-     public:
-	  ~foo() {}
-   };
+{
+    public:
+    ~foo() {}
+};
 
 int main()
-   {
+{
      foo<int> f;
-   }
+}
 

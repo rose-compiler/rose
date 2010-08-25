@@ -31,7 +31,7 @@ public:
   int setDepthFunctionParameters( real a0, real b0, real a1, real b1 );
   int setSurface( Mapping & surface );
   int setQuadraticParameters(const real & a00,
-			     const real & a10, 
+                             const real & a10, 
 			     const real & a01, 
 			     const real & a20, 
 			     const real & a11, 

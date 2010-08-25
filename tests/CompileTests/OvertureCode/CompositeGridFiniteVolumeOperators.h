@@ -48,7 +48,7 @@ class CompositeGridFiniteVolumeOperators : public GenericCompositeGridOperators
  public:
     
   void setNumberOfBoundaryConditions(const int & number,
-				     const int & side = forAll,
+                                     const int & side = forAll,
 				     const int & axis = forAll,
 				     const int & grid0 = forAll
 				     );
@@ -56,21 +56,21 @@ class CompositeGridFiniteVolumeOperators : public GenericCompositeGridOperators
   void setBoundaryCondition(const MappedGridFiniteVolumeOperators::boundaryConditionTypes & boundaryConditionType );
 
  
-  void setBoundaryConditionValue( const real & value,
-				 const int & component,
-				 const int & index,
-				 const int & side = forAll,
-				 const int & axis = forAll,
-				 const int & grid0 = forAll);
+  void setBoundaryConditionValue(const real & value,
+                                 const int & component,
+                                 const int & index,
+                                 const int & side = forAll,
+                                 const int & axis = forAll,
+                                 const int & grid0 = forAll);
 
   void setBoundaryConditionRightHandSide (const realGridCollectionFunction & boundaryConditionRightHandSide);
  
 /* use the generic one
   void applyBoundaryConditions(
-			       realGridCollectionFunction & u,
-			       const real & time = 0.,
-			       const int & grid = forAll
-			       );
+                               realGridCollectionFunction & u,
+                               const real & time = 0.,
+                               const int & grid = forAll
+                               );
 */
 
   void applyRightHandSideBoundaryConditions(
@@ -79,7 +79,7 @@ class CompositeGridFiniteVolumeOperators : public GenericCompositeGridOperators
 					    );
  
   void applyBoundaryConditionsToCoefficients(realGridCollectionFunction & coeff, // replaces ApplyBoundaryConditions
-					     const real & time = 0.);
+                                             const real & time = 0.);
   
 
  private:

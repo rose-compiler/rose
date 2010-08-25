@@ -10,7 +10,7 @@ using namespace std;
 
 
 inline void calc(double* a_data, double* b_data, double* c_data,
-	    	 double* d_data, double* e_data, int N){
+                 double* d_data, double* e_data, int N){
   int N_ = N, i=0;
   for(i=0; i < N_; ++i) {
     A_ = ( 

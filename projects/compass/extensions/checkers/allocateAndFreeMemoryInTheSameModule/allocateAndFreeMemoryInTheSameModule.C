@@ -254,7 +254,7 @@ static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Par
 
 extern const Compass::Checker* const allocateAndFreeMemoryInTheSameModuleChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
-					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::checkerName,
+                                               CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::checkerName,
 					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::shortDescription,
 					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::longDescription,
 					       Compass::C | Compass::Cpp,

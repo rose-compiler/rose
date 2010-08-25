@@ -34,8 +34,8 @@ class Fl_Text_Display;
 // < } else if ( style & (HIGHLIGHT_MASK | PRIMARY_MASK) && Fl::focus() == this ) {
 // > } else if ( style & (HIGHLIGHT_MASK | PRIMARY_MASK) ) {
 //
-		
-			
+                
+                        
 
 // include dot/neato functions
 extern "C" {
@@ -44,56 +44,56 @@ extern "C" {
 
 
 class GraphInfo :
-	public Fl_Tabs
+        public Fl_Tabs
 {
-	public:
+        public:
 
-		//! constructor
-		GraphInfo(int x,int y,int w,int h);
+                //! constructor
+                GraphInfo(int x,int y,int w,int h);
 
-		//! destructor
-		~GraphInfo();
+                //! destructor
+                ~GraphInfo();
 
-		//! show info about this node
-		void showInfo(Agnode_t *node);
+                //! show info about this node
+                void showInfo(Agnode_t *node);
 
-		//! set hide standard attr flag
-		void setHideStdAttr(bool set) { mHideStdAttr = set; }
+                //! set hide standard attr flag
+                void setHideStdAttr(bool set) { mHideStdAttr = set; }
 
-	private:
+        private:
 
-		//! store source file locations
-		typedef struct {
-			string 	filename;
-			int 		line;
-			int 		column;
-		} SourceLocation;
-		
+                //! store source file locations
+                typedef struct {
+                        string  filename;
+                        int             line;
+                        int             column;
+                } SourceLocation;
+                
 
-		//! pointer to the box containing the node info
-		Fl_Box *mpInfBox;
+                //! pointer to the box containing the node info
+                Fl_Box *mpInfBox;
 
-		//! string storing the info about a node
-		string mInfo;
+                //! string storing the info about a node
+                string mInfo;
 
-		//! hide standard dot attributes?
-		bool mHideStdAttr;
+                //! hide standard dot attributes?
+                bool mHideStdAttr;
 
-		//! list source file locations in the current node
-		vector<SourceLocation> mSrcLocs;
+                //! list source file locations in the current node
+                vector<SourceLocation> mSrcLocs;
 
-		//! save a certain number of file buffers for quicker access
-		vector<Fl_Text_Buffer *> mBuffers;
+                //! save a certain number of file buffers for quicker access
+                vector<Fl_Text_Buffer *> mBuffers;
 
-		//! the filenames of the loaded buffers
-		vector<string> mBufferFiles;
+                //! the filenames of the loaded buffers
+                vector<string> mBufferFiles;
 
-		//! remember buffer that was last loaded
-		int mLastBuffer;
+                //! remember buffer that was last loaded
+                int mLastBuffer;
 
-		//! editor widget
-		EDIT_TYPE *mpEditor;
-		
+                //! editor widget
+                EDIT_TYPE *mpEditor;
+                
 };
 
 #endif

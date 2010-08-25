@@ -55,7 +55,7 @@ crosscheck_omp_nest_testlock (FILE * logFile)
       {
 	/*omp_set_lock(&lck); */
 	/*while(!omp_test_nest_lock(&lck))
-	   {}; */
+           {}; */
 #pragma omp flush
 	nr_threads_in_single++;
 #pragma omp flush

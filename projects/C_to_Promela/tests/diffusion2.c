@@ -117,7 +117,7 @@ void write_frame_1(int time) {
 						#pragma SPIN_TARGET
             MPI_Recv(buf, nxl, MPI_DOUBLE, from, 0, MPI_COMM_WORLD,
                      MPI_STATUS_IGNORE);
-										 
+
 					}
           else
             for (i = 1; i <= nxl; i++) buf[i-1] = u[i][j];

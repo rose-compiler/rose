@@ -425,7 +425,7 @@ void CodeGeneratorVisitor::genGlobalAggregateInitialization(SgAggregateInitializ
                         (*codeOut) << element_type_name << " " << expr_name;
                     }
                     else {
-		      // TODO: MOVE this processing to processGlobalInitializer in CodeAttributeVisitor?
+		        // TODO: MOVE this processing to processGlobalInitializer in CodeAttributeVisitor?
                         SgExpression *operand = assign_init -> get_operand();
                         SgExpression *function = (dynamic_cast<SgFunctionRefExp *>(operand)
                                                           ? isSgFunctionRefExp(operand)

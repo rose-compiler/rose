@@ -90,17 +90,17 @@ class MappingRC : public ReferenceCounting
 
   // Map the domain r to the range x
   virtual void map( const realArray & r, realArray & x, realArray &xr = Overture::nullRealDistributedArray(),
-		   MappingParameters & params =Overture::nullMappingParameters() );
+                    MappingParameters & params =Overture::nullMappingParameters() );
 
   // Map the range x back to the domain r
   virtual void inverseMap( const realArray & x, realArray & r, realArray & rx =Overture::nullRealDistributedArray(),
-			  MappingParameters & params=Overture::nullMappingParameters() );
+                           MappingParameters & params=Overture::nullMappingParameters() );
 
   virtual void basicInverse( const realArray & x, realArray & r, realArray & rx =Overture::nullRealDistributedArray(),
-			  MappingParameters & params=Overture::nullMappingParameters() );
+                             MappingParameters & params=Overture::nullMappingParameters() );
 
   virtual void mapGrid(const realArray & r, 
-		       realArray & x, 
+                       realArray & x, 
 		       realArray & xr =Overture::nullRealDistributedArray(),
 		       MappingParameters & params=Overture::nullMappingParameters() );
 

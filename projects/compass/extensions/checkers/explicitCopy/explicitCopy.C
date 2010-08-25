@@ -32,7 +32,7 @@ namespace CompassAnalyses {
       Compass::OutputObject* output;
       void use_default(SgLocatedNode* ln, bool& constr, bool& op);
       bool is_copy(SgDeclarationStatement* stmt,
-		   SgClassType *myself,
+                   SgClassType *myself,
 		   bool& isconstr);
 
       public:

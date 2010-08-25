@@ -208,14 +208,14 @@ class GenericCompositeGridOperators : public GenericCollectionOperators
 
   //compute (u.grad)w (convective derivative of passive variable(s))
   virtual realCompositeGridFunction convectiveDerivative (
-					       const realCompositeGridFunction &u, 
+                                               const realCompositeGridFunction &u, 
 					       const realCompositeGridFunction &w,
 					       const Index & C1 = nullIndex,
 					       const Index & C2 = nullIndex,
 					       const Index & C3 = nullIndex
 							   );
   virtual realCompositeGridFunction convectiveDerivative (
-							   const realCompositeGridFunction &u, 
+                                                           const realCompositeGridFunction &u, 
 							   const GridFunctionParameters & gfType,
 							   const realCompositeGridFunction &w,
 							   const Index & C1 = nullIndex,
@@ -312,14 +312,14 @@ class GenericCompositeGridOperators : public GenericCollectionOperators
 
   //returns face-centered gradients
   virtual realCompositeGridFunction FCgrad (const realCompositeGridFunction & phi,		
-					     const int c0 = 0,
+                                             const int c0 = 0,
 					     const int c1 = 0,
 					     const int c2 = 0,
 					     const int c3 = 0,
 					     const int c4 = 0
 					     );
   virtual realCompositeGridFunction FCgrad (const realCompositeGridFunction & phi,		
-					     const GridFunctionParameters & gfType,
+                                             const GridFunctionParameters & gfType,
 					     const int c0 = 0,
 					     const int c1 = 0,
 					     const int c2 = 0,
@@ -336,7 +336,7 @@ class GenericCompositeGridOperators : public GenericCollectionOperators
  public:
     
   virtual void applyBoundaryConditions(realCompositeGridFunction & u, 
-				       const real & time = 0.,
+                                       const real & time = 0.,
 				       const int & grid =forAll);
   // fill in coefficients for the boundary conditions
   virtual void assignBoundaryConditionCoefficients(realCompositeGridFunction & coeff, 

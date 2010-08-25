@@ -45,7 +45,7 @@ class DFAnalysis
   virtual std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > getDefMap()=0;
   virtual std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > getUseMap()=0;
   virtual void setMaps(std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > def,
-		       std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > use)=0;
+                       std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > use)=0;
 
 };
 

@@ -354,33 +354,33 @@ inline int & intArray::operator() ( int i ) const
            
 #if defined(PPP)
       Address_Subscript = 
-	 ( (getSerialDomain().Index_Array [0] != NULL) ? 
-	 ((*(getSerialDomain().Index_Array[0]))(i) - 
-	 getSerialDomain().Data_Base[0]) : 
+         ( (getSerialDomain().Index_Array [0] != NULL) ? 
+         ((*(getSerialDomain().Index_Array[0]))(i) - 
+         getSerialDomain().Data_Base[0]) : 
          getSerialDomain().Base[0] ) * 
-	 getSerialDomain().Stride [0];
+         getSerialDomain().Stride [0];
       for (temp=1; temp < MAX_ARRAY_DIMENSION; temp++)
          Address_Subscript += 
-	    ( (getSerialDomain().Index_Array [temp] != NULL) ? 
-	    ((*(getSerialDomain().Index_Array[temp]))(i) - 
-	    getSerialDomain().Data_Base[temp]) : 
+            ( (getSerialDomain().Index_Array [temp] != NULL) ? 
+            ((*(getSerialDomain().Index_Array[temp]))(i) - 
+            getSerialDomain().Data_Base[temp]) : 
             getSerialDomain().Base[temp] ) * 
-	    getSerialDomain().Stride [temp] * 
+            getSerialDomain().Stride [temp] * 
             getSerialDomain().Size[temp-1];
 #else
       Address_Subscript = 
-	 ( (Array_Descriptor.Array_Domain.Index_Array [0] != NULL) ? 
-	 ((*(Array_Descriptor.Array_Domain.Index_Array[0]))(i) - 
-	 Array_Descriptor.Array_Domain.Data_Base[0]) : 
+         ( (Array_Descriptor.Array_Domain.Index_Array [0] != NULL) ? 
+         ((*(Array_Descriptor.Array_Domain.Index_Array[0]))(i) - 
+         Array_Descriptor.Array_Domain.Data_Base[0]) : 
          Array_Descriptor.Array_Domain.Base[0] ) * 
-	 Array_Descriptor.Array_Domain.Stride [0];
+         Array_Descriptor.Array_Domain.Stride [0];
       for (temp=1; temp < MAX_ARRAY_DIMENSION; temp++)
          Address_Subscript += 
-	    ( (Array_Descriptor.Array_Domain.Index_Array [temp] != NULL) ? 
-	    ((*(Array_Descriptor.Array_Domain.Index_Array[temp]))(i) - 
-	    Array_Descriptor.Array_Domain.Data_Base[temp]) : 
+            ( (Array_Descriptor.Array_Domain.Index_Array [temp] != NULL) ? 
+            ((*(Array_Descriptor.Array_Domain.Index_Array[temp]))(i) - 
+            Array_Descriptor.Array_Domain.Data_Base[temp]) : 
             Array_Descriptor.Array_Domain.Base[temp] ) * 
-	    Array_Descriptor.Array_Domain.Stride [temp] * 
+            Array_Descriptor.Array_Domain.Stride [temp] * 
             Array_Descriptor.Array_Domain.Size[temp-1];
 #endif
    }
@@ -433,21 +433,21 @@ inline int & intArray::operator() ( int i ) const
    {
       Off_Processor_Including_Ghost_Boundaries =
          ((ii < Local_Data_Base[0])|| 
-   	    (ii > Local_Data_Base[0]+Local_Size[0]-1));
+            (ii > Local_Data_Base[0]+Local_Size[0]-1));
 
       Off_Processor_Excluding_Ghost_Boundaries =
          ((ii < Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	    (ii > Local_Data_Base[0]+Local_Size[0]-1-
-	      InternalGhostCellWidth[0]));
+            (ii > Local_Data_Base[0]+Local_Size[0]-1-
+              InternalGhostCellWidth[0]));
    }
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
        {
          Scalar_Indexing_For_intArray_With_Message_Passing 
               (Address_Subscript+Local_Scalar_Offset[0], 
-	      Off_Processor_Including_Ghost_Boundaries,
+              Off_Processor_Including_Ghost_Boundaries,
               Off_Processor_Excluding_Ghost_Boundaries, 
-	      Array_Index_For_int_Variable);
+              Array_Index_For_int_Variable);
        }
       else
        {
@@ -469,7 +469,7 @@ inline int & intArray::operator() ( int i ) const
 #else
 
    APP_ASSERT (Array_Descriptor.Array_View_Pointer0 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[0]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[0]);
    return Array_Descriptor.Array_View_Pointer0 [Address_Subscript];
 #endif
 }
@@ -515,7 +515,7 @@ inline int & intArray::operator() ( int i , int j ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0];
+                       Array_Descriptor.Array_Domain.Size[0];
 #endif
 
 #if defined(PPP)
@@ -572,10 +572,10 @@ inline int & intArray::operator() ( int i , int j ) const
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_intArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[1], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[1], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries,
-	  Array_Index_For_int_Variable);
+          Array_Index_For_int_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_int_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -593,7 +593,7 @@ inline int & intArray::operator() ( int i , int j ) const
 #else
 
    APP_ASSERT (Array_Descriptor.Array_View_Pointer1 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[1]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[1]);
    return Array_Descriptor.Array_View_Pointer1 [Address_Subscript];
 #endif
 }
@@ -609,7 +609,7 @@ inline int & intArray::operator() ( int i , int j , int k ) const
 #if COMPILE_DEBUG_STATEMENTS
    if (APP_DEBUG > 0)
      printf ("Inside of intArray::operator() ( int i=%d , int j=%d , int k=%d ) \n",
-	     i,j,k);
+             i,j,k);
    Test_Consistency();
 #endif
 
@@ -644,9 +644,9 @@ inline int & intArray::operator() ( int i , int j , int k ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1];
+                       Array_Descriptor.Array_Domain.Size[1];
 #endif
 
 #if defined(PPP)
@@ -691,27 +691,27 @@ inline int & intArray::operator() ( int i , int j , int k ) const
          (((ii<Local_Data_Base[0]) || 
            (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
           ((jj<Local_Data_Base[1]) || 
-	   (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+           (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
           ((kk<Local_Data_Base[2]) || 
-	   (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)));
+           (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)));
 
       Off_Processor_Excluding_Ghost_Boundaries =
          (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
            (ii>Local_Data_Base[0]+Local_Size[0]-1
-	      -InternalGhostCellWidth[0]))||
+              -InternalGhostCellWidth[0]))||
           ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-   	   (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	      -InternalGhostCellWidth[1]))||
+           (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+              -InternalGhostCellWidth[1]))||
           ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	   (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	      -InternalGhostCellWidth[2])));
+           (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+              -InternalGhostCellWidth[2])));
    }
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
        Scalar_Indexing_For_intArray_With_Message_Passing 
-	  (Address_Subscript+Local_Scalar_Offset[2], Off_Processor_Including_Ghost_Boundaries,
+          (Address_Subscript+Local_Scalar_Offset[2], Off_Processor_Including_Ghost_Boundaries,
            Off_Processor_Excluding_Ghost_Boundaries, 
-	   Array_Index_For_int_Variable);
+           Array_Index_For_int_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_int_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -728,7 +728,7 @@ inline int & intArray::operator() ( int i , int j , int k ) const
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer2 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[2]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[2]);
    return Array_Descriptor.Array_View_Pointer2 [Address_Subscript];
 #endif
 }
@@ -744,7 +744,7 @@ inline int & intArray::operator() ( int i , int j , int k , int l ) const
 #if COMPILE_DEBUG_STATEMENTS
    if (APP_DEBUG > 0)
      printf("Inside of intArray::operator()(int i=%d,int j=%d,int k=%d,int l=%d)\n",
-	    i,j,k,l);
+            i,j,k,l);
    Test_Consistency();
 #endif
 
@@ -781,11 +781,11 @@ inline int & intArray::operator() ( int i , int j , int k , int l ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2];
+                       Array_Descriptor.Array_Domain.Size[2];
 #endif
 
 #if defined(PPP)
@@ -829,36 +829,36 @@ inline int & intArray::operator() ( int i , int j , int k , int l ) const
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)));
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3])));
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_intArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[3], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[3], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_int_Variable);
+          Array_Index_For_int_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_int_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -876,7 +876,7 @@ inline int & intArray::operator() ( int i , int j , int k , int l ) const
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer3 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[3]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[3]);
    return Array_Descriptor.Array_View_Pointer3 [Address_Subscript];
    //return Array_Data [Address_Subscript];
 #endif
@@ -925,13 +925,13 @@ inline int & intArray::operator() ( int i , int j , int k , int l, int m ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3];
+                       Array_Descriptor.Array_Domain.Size[3];
 #endif
 
 #if defined(PPP)
@@ -977,41 +977,41 @@ inline int & intArray::operator() ( int i , int j , int k , int l, int m ) const
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)));
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4])));
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_intArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[4], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[4], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_int_Variable);
+          Array_Index_For_int_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_int_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -1022,15 +1022,15 @@ inline int & intArray::operator() ( int i , int j , int k , int l, int m ) const
    APP_ASSERT (Array_Index_For_int_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer4 == 
-	   getSerialArrayDescriptor().Array_Data + 
-	   getSerialDomain().Scalar_Offset[4]);
+           getSerialArrayDescriptor().Array_Data + 
+           getSerialDomain().Scalar_Offset[4]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_int_Variable[Array_Index_For_int_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer4 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer4 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[4]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[4]);
    return Array_Descriptor.Array_View_Pointer4 [Address_Subscript];
 #endif
 }
@@ -1080,15 +1080,15 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m, int n) con
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4];
+                       Array_Descriptor.Array_Domain.Size[4];
 #endif
 
 #if defined(PPP)
@@ -1135,46 +1135,46 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m, int n) con
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)));
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5])));
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_intArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[5], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[5], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_int_Variable);
+          Array_Index_For_int_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_int_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -1185,15 +1185,15 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m, int n) con
    APP_ASSERT (Array_Index_For_int_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer5 == 
-	   getSerialArrayDescriptor().Array_Data + 
-	   getSerialDomain().Scalar_Offset[5]);
+           getSerialArrayDescriptor().Array_Data + 
+           getSerialDomain().Scalar_Offset[5]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_int_Variable[Array_Index_For_int_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer5 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer5 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[5]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[5]);
    return Array_Descriptor.Array_View_Pointer5 [Address_Subscript];
 #endif
 }
@@ -1201,7 +1201,7 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m, int n) con
 
 #if MAX_ARRAY_DIMENSION >= 7
 inline int & intArray::operator() (int i, int j, int k, int l, int m, 
-				   int n, int o) const
+                                   int n, int o) const
 {
    // Note that the use of an scalar  i n d e x i n g  is not efficient in an array 
    // class.  The perfered way to  i n d e x  array objects is to use the Index 
@@ -1246,17 +1246,17 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m,
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4] +
+                       Array_Descriptor.Array_Domain.Size[4] +
                        o * Array_Descriptor.Array_Domain.Stride[6] * 
-		       Array_Descriptor.Array_Domain.Size[5];
+                       Array_Descriptor.Array_Domain.Size[5];
 #endif
 
 #if defined(PPP)
@@ -1305,51 +1305,51 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m,
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
        ((oo<Local_Data_Base[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)));
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5]))||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5]))||
        ((oo<Local_Data_Base[6]+InternalGhostCellWidth[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
-	   -InternalGhostCellWidth[6])));
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
+           -InternalGhostCellWidth[6])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_intArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[6], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[6], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_int_Variable);
+          Array_Index_For_int_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_int_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -1360,15 +1360,15 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m,
    APP_ASSERT (Array_Index_For_int_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer6 == 
-	    getSerialArrayDescriptor().Array_Data + 
-	    getSerialDomain().Scalar_Offset[6]);
+            getSerialArrayDescriptor().Array_Data + 
+            getSerialDomain().Scalar_Offset[6]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_int_Variable[Array_Index_For_int_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer6 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer6 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[6]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[6]);
    return Array_Descriptor.Array_View_Pointer6 [Address_Subscript];
 #endif
 }
@@ -1376,7 +1376,7 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m,
 
 #if MAX_ARRAY_DIMENSION >= 8
 inline int & intArray::operator() (int i, int j, int k, int l, int m, 
-				   int n, int o, int p) const
+                                   int n, int o, int p) const
 {
    // Note that the use of an scalar  i n d e x i n g  is not efficient in an array 
    // class.  The perfered way to  i n d e x  array objects is to use the Index 
@@ -1423,19 +1423,19 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m,
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4] +
+                       Array_Descriptor.Array_Domain.Size[4] +
                        o * Array_Descriptor.Array_Domain.Stride[6] * 
-		       Array_Descriptor.Array_Domain.Size[5] +
+                       Array_Descriptor.Array_Domain.Size[5] +
                        p * Array_Descriptor.Array_Domain.Stride[7] * 
-		       Array_Descriptor.Array_Domain.Size[6];
+                       Array_Descriptor.Array_Domain.Size[6];
 #endif
 
 #if defined(PPP)
@@ -1486,56 +1486,56 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m,
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
        ((oo<Local_Data_Base[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)) ||
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)) ||
        ((pp<Local_Data_Base[7]) || 
-	(pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1)));
+        (pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5]))||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5]))||
        ((oo<Local_Data_Base[6]+InternalGhostCellWidth[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
-	   -InternalGhostCellWidth[6]))||
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
+           -InternalGhostCellWidth[6]))||
        ((pp<Local_Data_Base[7]+InternalGhostCellWidth[7]) || 
-	(pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1
-	   -InternalGhostCellWidth[7])));
+        (pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1
+           -InternalGhostCellWidth[7])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_intArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[7], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[7], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_int_Variable);
+          Array_Index_For_int_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_int_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -1546,15 +1546,15 @@ inline int & intArray::operator() (int i, int j, int k, int l, int m,
    APP_ASSERT (Array_Index_For_int_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer7 == 
-	    getSerialArrayDescriptor().Array_Data + 
-	    getSerialDomain().Scalar_Offset[7]);
+            getSerialArrayDescriptor().Array_Data + 
+            getSerialDomain().Scalar_Offset[7]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_int_Variable[Array_Index_For_int_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer7 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer7 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[7]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[7]);
    return Array_Descriptor.Array_View_Pointer7 [Address_Subscript];
 #endif
 }
@@ -1830,8 +1830,8 @@ intArray::getLocalArrayWithGhostBoundaries () const
      APP_ASSERT(Array_Descriptor.SerialArray != NULL);
 
      if ((!Array_Descriptor.Array_Domain.Is_A_View) && 
-	 (!Array_Descriptor.Array_Domain.Is_A_Null_Array) &&
-	 (!getSerialDomain().Is_A_Null_Array))
+         (!Array_Descriptor.Array_Domain.Is_A_Null_Array) &&
+         (!getSerialDomain().Is_A_Null_Array))
      {
         Index_Pointer_Array_MAX_ARRAY_DIMENSION_Type Internal_Index_List;
         int i;
@@ -2187,33 +2187,33 @@ inline double & doubleArray::operator() ( int i ) const
            
 #if defined(PPP)
       Address_Subscript = 
-	 ( (getSerialDomain().Index_Array [0] != NULL) ? 
-	 ((*(getSerialDomain().Index_Array[0]))(i) - 
-	 getSerialDomain().Data_Base[0]) : 
+         ( (getSerialDomain().Index_Array [0] != NULL) ? 
+         ((*(getSerialDomain().Index_Array[0]))(i) - 
+         getSerialDomain().Data_Base[0]) : 
          getSerialDomain().Base[0] ) * 
-	 getSerialDomain().Stride [0];
+         getSerialDomain().Stride [0];
       for (temp=1; temp < MAX_ARRAY_DIMENSION; temp++)
          Address_Subscript += 
-	    ( (getSerialDomain().Index_Array [temp] != NULL) ? 
-	    ((*(getSerialDomain().Index_Array[temp]))(i) - 
-	    getSerialDomain().Data_Base[temp]) : 
+            ( (getSerialDomain().Index_Array [temp] != NULL) ? 
+            ((*(getSerialDomain().Index_Array[temp]))(i) - 
+            getSerialDomain().Data_Base[temp]) : 
             getSerialDomain().Base[temp] ) * 
-	    getSerialDomain().Stride [temp] * 
+            getSerialDomain().Stride [temp] * 
             getSerialDomain().Size[temp-1];
 #else
       Address_Subscript = 
-	 ( (Array_Descriptor.Array_Domain.Index_Array [0] != NULL) ? 
-	 ((*(Array_Descriptor.Array_Domain.Index_Array[0]))(i) - 
-	 Array_Descriptor.Array_Domain.Data_Base[0]) : 
+         ( (Array_Descriptor.Array_Domain.Index_Array [0] != NULL) ? 
+         ((*(Array_Descriptor.Array_Domain.Index_Array[0]))(i) - 
+         Array_Descriptor.Array_Domain.Data_Base[0]) : 
          Array_Descriptor.Array_Domain.Base[0] ) * 
-	 Array_Descriptor.Array_Domain.Stride [0];
+         Array_Descriptor.Array_Domain.Stride [0];
       for (temp=1; temp < MAX_ARRAY_DIMENSION; temp++)
          Address_Subscript += 
-	    ( (Array_Descriptor.Array_Domain.Index_Array [temp] != NULL) ? 
-	    ((*(Array_Descriptor.Array_Domain.Index_Array[temp]))(i) - 
-	    Array_Descriptor.Array_Domain.Data_Base[temp]) : 
+            ( (Array_Descriptor.Array_Domain.Index_Array [temp] != NULL) ? 
+            ((*(Array_Descriptor.Array_Domain.Index_Array[temp]))(i) - 
+            Array_Descriptor.Array_Domain.Data_Base[temp]) : 
             Array_Descriptor.Array_Domain.Base[temp] ) * 
-	    Array_Descriptor.Array_Domain.Stride [temp] * 
+            Array_Descriptor.Array_Domain.Stride [temp] * 
             Array_Descriptor.Array_Domain.Size[temp-1];
 #endif
    }
@@ -2266,21 +2266,21 @@ inline double & doubleArray::operator() ( int i ) const
    {
       Off_Processor_Including_Ghost_Boundaries =
          ((ii < Local_Data_Base[0])|| 
-   	    (ii > Local_Data_Base[0]+Local_Size[0]-1));
+            (ii > Local_Data_Base[0]+Local_Size[0]-1));
 
       Off_Processor_Excluding_Ghost_Boundaries =
          ((ii < Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	    (ii > Local_Data_Base[0]+Local_Size[0]-1-
-	      InternalGhostCellWidth[0]));
+            (ii > Local_Data_Base[0]+Local_Size[0]-1-
+              InternalGhostCellWidth[0]));
    }
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
        {
          Scalar_Indexing_For_doubleArray_With_Message_Passing 
               (Address_Subscript+Local_Scalar_Offset[0], 
-	      Off_Processor_Including_Ghost_Boundaries,
+              Off_Processor_Including_Ghost_Boundaries,
               Off_Processor_Excluding_Ghost_Boundaries, 
-	      Array_Index_For_double_Variable);
+              Array_Index_For_double_Variable);
        }
       else
        {
@@ -2302,7 +2302,7 @@ inline double & doubleArray::operator() ( int i ) const
 #else
 
    APP_ASSERT (Array_Descriptor.Array_View_Pointer0 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[0]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[0]);
    return Array_Descriptor.Array_View_Pointer0 [Address_Subscript];
 #endif
 }
@@ -2348,7 +2348,7 @@ inline double & doubleArray::operator() ( int i , int j ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0];
+                       Array_Descriptor.Array_Domain.Size[0];
 #endif
 
 #if defined(PPP)
@@ -2405,10 +2405,10 @@ inline double & doubleArray::operator() ( int i , int j ) const
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_doubleArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[1], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[1], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries,
-	  Array_Index_For_double_Variable);
+          Array_Index_For_double_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_double_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -2426,7 +2426,7 @@ inline double & doubleArray::operator() ( int i , int j ) const
 #else
 
    APP_ASSERT (Array_Descriptor.Array_View_Pointer1 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[1]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[1]);
    return Array_Descriptor.Array_View_Pointer1 [Address_Subscript];
 #endif
 }
@@ -2442,7 +2442,7 @@ inline double & doubleArray::operator() ( int i , int j , int k ) const
 #if COMPILE_DEBUG_STATEMENTS
    if (APP_DEBUG > 0)
      printf ("Inside of doubleArray::operator() ( int i=%d , int j=%d , int k=%d ) \n",
-	     i,j,k);
+             i,j,k);
    Test_Consistency();
 #endif
 
@@ -2477,9 +2477,9 @@ inline double & doubleArray::operator() ( int i , int j , int k ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1];
+                       Array_Descriptor.Array_Domain.Size[1];
 #endif
 
 #if defined(PPP)
@@ -2524,27 +2524,27 @@ inline double & doubleArray::operator() ( int i , int j , int k ) const
          (((ii<Local_Data_Base[0]) || 
            (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
           ((jj<Local_Data_Base[1]) || 
-	   (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+           (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
           ((kk<Local_Data_Base[2]) || 
-	   (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)));
+           (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)));
 
       Off_Processor_Excluding_Ghost_Boundaries =
          (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
            (ii>Local_Data_Base[0]+Local_Size[0]-1
-	      -InternalGhostCellWidth[0]))||
+              -InternalGhostCellWidth[0]))||
           ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-   	   (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	      -InternalGhostCellWidth[1]))||
+           (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+              -InternalGhostCellWidth[1]))||
           ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	   (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	      -InternalGhostCellWidth[2])));
+           (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+              -InternalGhostCellWidth[2])));
    }
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
        Scalar_Indexing_For_doubleArray_With_Message_Passing 
-	  (Address_Subscript+Local_Scalar_Offset[2], Off_Processor_Including_Ghost_Boundaries,
+          (Address_Subscript+Local_Scalar_Offset[2], Off_Processor_Including_Ghost_Boundaries,
            Off_Processor_Excluding_Ghost_Boundaries, 
-	   Array_Index_For_double_Variable);
+           Array_Index_For_double_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_double_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -2561,7 +2561,7 @@ inline double & doubleArray::operator() ( int i , int j , int k ) const
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer2 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[2]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[2]);
    return Array_Descriptor.Array_View_Pointer2 [Address_Subscript];
 #endif
 }
@@ -2577,7 +2577,7 @@ inline double & doubleArray::operator() ( int i , int j , int k , int l ) const
 #if COMPILE_DEBUG_STATEMENTS
    if (APP_DEBUG > 0)
      printf("Inside of doubleArray::operator()(int i=%d,int j=%d,int k=%d,int l=%d)\n",
-	    i,j,k,l);
+            i,j,k,l);
    Test_Consistency();
 #endif
 
@@ -2614,11 +2614,11 @@ inline double & doubleArray::operator() ( int i , int j , int k , int l ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2];
+                       Array_Descriptor.Array_Domain.Size[2];
 #endif
 
 #if defined(PPP)
@@ -2662,36 +2662,36 @@ inline double & doubleArray::operator() ( int i , int j , int k , int l ) const
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)));
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3])));
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_doubleArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[3], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[3], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_double_Variable);
+          Array_Index_For_double_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_double_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -2709,7 +2709,7 @@ inline double & doubleArray::operator() ( int i , int j , int k , int l ) const
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer3 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[3]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[3]);
    return Array_Descriptor.Array_View_Pointer3 [Address_Subscript];
    //return Array_Data [Address_Subscript];
 #endif
@@ -2758,13 +2758,13 @@ inline double & doubleArray::operator() ( int i , int j , int k , int l, int m )
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3];
+                       Array_Descriptor.Array_Domain.Size[3];
 #endif
 
 #if defined(PPP)
@@ -2810,41 +2810,41 @@ inline double & doubleArray::operator() ( int i , int j , int k , int l, int m )
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)));
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4])));
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_doubleArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[4], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[4], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_double_Variable);
+          Array_Index_For_double_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_double_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -2855,15 +2855,15 @@ inline double & doubleArray::operator() ( int i , int j , int k , int l, int m )
    APP_ASSERT (Array_Index_For_double_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer4 == 
-	   getSerialArrayDescriptor().Array_Data + 
-	   getSerialDomain().Scalar_Offset[4]);
+           getSerialArrayDescriptor().Array_Data + 
+           getSerialDomain().Scalar_Offset[4]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_double_Variable[Array_Index_For_double_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer4 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer4 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[4]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[4]);
    return Array_Descriptor.Array_View_Pointer4 [Address_Subscript];
 #endif
 }
@@ -2913,15 +2913,15 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m, int 
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4];
+                       Array_Descriptor.Array_Domain.Size[4];
 #endif
 
 #if defined(PPP)
@@ -2968,46 +2968,46 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m, int 
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)));
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5])));
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_doubleArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[5], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[5], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_double_Variable);
+          Array_Index_For_double_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_double_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -3018,15 +3018,15 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m, int 
    APP_ASSERT (Array_Index_For_double_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer5 == 
-	   getSerialArrayDescriptor().Array_Data + 
-	   getSerialDomain().Scalar_Offset[5]);
+           getSerialArrayDescriptor().Array_Data + 
+           getSerialDomain().Scalar_Offset[5]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_double_Variable[Array_Index_For_double_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer5 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer5 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[5]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[5]);
    return Array_Descriptor.Array_View_Pointer5 [Address_Subscript];
 #endif
 }
@@ -3034,7 +3034,7 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m, int 
 
 #if MAX_ARRAY_DIMENSION >= 7
 inline double & doubleArray::operator() (int i, int j, int k, int l, int m, 
-				   int n, int o) const
+                                   int n, int o) const
 {
    // Note that the use of an scalar  i n d e x i n g  is not efficient in an array 
    // class.  The perfered way to  i n d e x  array objects is to use the Index 
@@ -3079,17 +3079,17 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m,
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4] +
+                       Array_Descriptor.Array_Domain.Size[4] +
                        o * Array_Descriptor.Array_Domain.Stride[6] * 
-		       Array_Descriptor.Array_Domain.Size[5];
+                       Array_Descriptor.Array_Domain.Size[5];
 #endif
 
 #if defined(PPP)
@@ -3138,51 +3138,51 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m,
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
        ((oo<Local_Data_Base[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)));
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5]))||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5]))||
        ((oo<Local_Data_Base[6]+InternalGhostCellWidth[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
-	   -InternalGhostCellWidth[6])));
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
+           -InternalGhostCellWidth[6])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_doubleArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[6], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[6], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_double_Variable);
+          Array_Index_For_double_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_double_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -3193,15 +3193,15 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m,
    APP_ASSERT (Array_Index_For_double_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer6 == 
-	    getSerialArrayDescriptor().Array_Data + 
-	    getSerialDomain().Scalar_Offset[6]);
+            getSerialArrayDescriptor().Array_Data + 
+            getSerialDomain().Scalar_Offset[6]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_double_Variable[Array_Index_For_double_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer6 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer6 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[6]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[6]);
    return Array_Descriptor.Array_View_Pointer6 [Address_Subscript];
 #endif
 }
@@ -3209,7 +3209,7 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m,
 
 #if MAX_ARRAY_DIMENSION >= 8
 inline double & doubleArray::operator() (int i, int j, int k, int l, int m, 
-				   int n, int o, int p) const
+                                   int n, int o, int p) const
 {
    // Note that the use of an scalar  i n d e x i n g  is not efficient in an array 
    // class.  The perfered way to  i n d e x  array objects is to use the Index 
@@ -3256,19 +3256,19 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m,
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4] +
+                       Array_Descriptor.Array_Domain.Size[4] +
                        o * Array_Descriptor.Array_Domain.Stride[6] * 
-		       Array_Descriptor.Array_Domain.Size[5] +
+                       Array_Descriptor.Array_Domain.Size[5] +
                        p * Array_Descriptor.Array_Domain.Stride[7] * 
-		       Array_Descriptor.Array_Domain.Size[6];
+                       Array_Descriptor.Array_Domain.Size[6];
 #endif
 
 #if defined(PPP)
@@ -3319,56 +3319,56 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m,
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
        ((oo<Local_Data_Base[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)) ||
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)) ||
        ((pp<Local_Data_Base[7]) || 
-	(pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1)));
+        (pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5]))||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5]))||
        ((oo<Local_Data_Base[6]+InternalGhostCellWidth[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
-	   -InternalGhostCellWidth[6]))||
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
+           -InternalGhostCellWidth[6]))||
        ((pp<Local_Data_Base[7]+InternalGhostCellWidth[7]) || 
-	(pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1
-	   -InternalGhostCellWidth[7])));
+        (pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1
+           -InternalGhostCellWidth[7])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_doubleArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[7], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[7], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_double_Variable);
+          Array_Index_For_double_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_double_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -3379,15 +3379,15 @@ inline double & doubleArray::operator() (int i, int j, int k, int l, int m,
    APP_ASSERT (Array_Index_For_double_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer7 == 
-	    getSerialArrayDescriptor().Array_Data + 
-	    getSerialDomain().Scalar_Offset[7]);
+            getSerialArrayDescriptor().Array_Data + 
+            getSerialDomain().Scalar_Offset[7]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_double_Variable[Array_Index_For_double_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer7 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer7 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[7]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[7]);
    return Array_Descriptor.Array_View_Pointer7 [Address_Subscript];
 #endif
 }
@@ -3663,8 +3663,8 @@ doubleArray::getLocalArrayWithGhostBoundaries () const
      APP_ASSERT(Array_Descriptor.SerialArray != NULL);
 
      if ((!Array_Descriptor.Array_Domain.Is_A_View) && 
-	 (!Array_Descriptor.Array_Domain.Is_A_Null_Array) &&
-	 (!getSerialDomain().Is_A_Null_Array))
+         (!Array_Descriptor.Array_Domain.Is_A_Null_Array) &&
+         (!getSerialDomain().Is_A_Null_Array))
      {
         Index_Pointer_Array_MAX_ARRAY_DIMENSION_Type Internal_Index_List;
         int i;
@@ -4020,33 +4020,33 @@ inline float & floatArray::operator() ( int i ) const
            
 #if defined(PPP)
       Address_Subscript = 
-	 ( (getSerialDomain().Index_Array [0] != NULL) ? 
-	 ((*(getSerialDomain().Index_Array[0]))(i) - 
-	 getSerialDomain().Data_Base[0]) : 
+         ( (getSerialDomain().Index_Array [0] != NULL) ? 
+         ((*(getSerialDomain().Index_Array[0]))(i) - 
+         getSerialDomain().Data_Base[0]) : 
          getSerialDomain().Base[0] ) * 
-	 getSerialDomain().Stride [0];
+         getSerialDomain().Stride [0];
       for (temp=1; temp < MAX_ARRAY_DIMENSION; temp++)
          Address_Subscript += 
-	    ( (getSerialDomain().Index_Array [temp] != NULL) ? 
-	    ((*(getSerialDomain().Index_Array[temp]))(i) - 
-	    getSerialDomain().Data_Base[temp]) : 
+            ( (getSerialDomain().Index_Array [temp] != NULL) ? 
+            ((*(getSerialDomain().Index_Array[temp]))(i) - 
+            getSerialDomain().Data_Base[temp]) : 
             getSerialDomain().Base[temp] ) * 
-	    getSerialDomain().Stride [temp] * 
+            getSerialDomain().Stride [temp] * 
             getSerialDomain().Size[temp-1];
 #else
       Address_Subscript = 
-	 ( (Array_Descriptor.Array_Domain.Index_Array [0] != NULL) ? 
-	 ((*(Array_Descriptor.Array_Domain.Index_Array[0]))(i) - 
-	 Array_Descriptor.Array_Domain.Data_Base[0]) : 
+         ( (Array_Descriptor.Array_Domain.Index_Array [0] != NULL) ? 
+         ((*(Array_Descriptor.Array_Domain.Index_Array[0]))(i) - 
+         Array_Descriptor.Array_Domain.Data_Base[0]) : 
          Array_Descriptor.Array_Domain.Base[0] ) * 
-	 Array_Descriptor.Array_Domain.Stride [0];
+         Array_Descriptor.Array_Domain.Stride [0];
       for (temp=1; temp < MAX_ARRAY_DIMENSION; temp++)
          Address_Subscript += 
-	    ( (Array_Descriptor.Array_Domain.Index_Array [temp] != NULL) ? 
-	    ((*(Array_Descriptor.Array_Domain.Index_Array[temp]))(i) - 
-	    Array_Descriptor.Array_Domain.Data_Base[temp]) : 
+            ( (Array_Descriptor.Array_Domain.Index_Array [temp] != NULL) ? 
+            ((*(Array_Descriptor.Array_Domain.Index_Array[temp]))(i) - 
+            Array_Descriptor.Array_Domain.Data_Base[temp]) : 
             Array_Descriptor.Array_Domain.Base[temp] ) * 
-	    Array_Descriptor.Array_Domain.Stride [temp] * 
+            Array_Descriptor.Array_Domain.Stride [temp] * 
             Array_Descriptor.Array_Domain.Size[temp-1];
 #endif
    }
@@ -4099,21 +4099,21 @@ inline float & floatArray::operator() ( int i ) const
    {
       Off_Processor_Including_Ghost_Boundaries =
          ((ii < Local_Data_Base[0])|| 
-   	    (ii > Local_Data_Base[0]+Local_Size[0]-1));
+            (ii > Local_Data_Base[0]+Local_Size[0]-1));
 
       Off_Processor_Excluding_Ghost_Boundaries =
          ((ii < Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	    (ii > Local_Data_Base[0]+Local_Size[0]-1-
-	      InternalGhostCellWidth[0]));
+            (ii > Local_Data_Base[0]+Local_Size[0]-1-
+              InternalGhostCellWidth[0]));
    }
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
        {
          Scalar_Indexing_For_floatArray_With_Message_Passing 
               (Address_Subscript+Local_Scalar_Offset[0], 
-	      Off_Processor_Including_Ghost_Boundaries,
+              Off_Processor_Including_Ghost_Boundaries,
               Off_Processor_Excluding_Ghost_Boundaries, 
-	      Array_Index_For_float_Variable);
+              Array_Index_For_float_Variable);
        }
       else
        {
@@ -4135,7 +4135,7 @@ inline float & floatArray::operator() ( int i ) const
 #else
 
    APP_ASSERT (Array_Descriptor.Array_View_Pointer0 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[0]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[0]);
    return Array_Descriptor.Array_View_Pointer0 [Address_Subscript];
 #endif
 }
@@ -4181,7 +4181,7 @@ inline float & floatArray::operator() ( int i , int j ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0];
+                       Array_Descriptor.Array_Domain.Size[0];
 #endif
 
 #if defined(PPP)
@@ -4238,10 +4238,10 @@ inline float & floatArray::operator() ( int i , int j ) const
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_floatArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[1], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[1], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries,
-	  Array_Index_For_float_Variable);
+          Array_Index_For_float_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_float_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -4259,7 +4259,7 @@ inline float & floatArray::operator() ( int i , int j ) const
 #else
 
    APP_ASSERT (Array_Descriptor.Array_View_Pointer1 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[1]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[1]);
    return Array_Descriptor.Array_View_Pointer1 [Address_Subscript];
 #endif
 }
@@ -4275,7 +4275,7 @@ inline float & floatArray::operator() ( int i , int j , int k ) const
 #if COMPILE_DEBUG_STATEMENTS
    if (APP_DEBUG > 0)
      printf ("Inside of floatArray::operator() ( int i=%d , int j=%d , int k=%d ) \n",
-	     i,j,k);
+             i,j,k);
    Test_Consistency();
 #endif
 
@@ -4310,9 +4310,9 @@ inline float & floatArray::operator() ( int i , int j , int k ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1];
+                       Array_Descriptor.Array_Domain.Size[1];
 #endif
 
 #if defined(PPP)
@@ -4357,27 +4357,27 @@ inline float & floatArray::operator() ( int i , int j , int k ) const
          (((ii<Local_Data_Base[0]) || 
            (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
           ((jj<Local_Data_Base[1]) || 
-	   (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+           (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
           ((kk<Local_Data_Base[2]) || 
-	   (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)));
+           (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)));
 
       Off_Processor_Excluding_Ghost_Boundaries =
          (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
            (ii>Local_Data_Base[0]+Local_Size[0]-1
-	      -InternalGhostCellWidth[0]))||
+              -InternalGhostCellWidth[0]))||
           ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-   	   (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	      -InternalGhostCellWidth[1]))||
+           (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+              -InternalGhostCellWidth[1]))||
           ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	   (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	      -InternalGhostCellWidth[2])));
+           (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+              -InternalGhostCellWidth[2])));
    }
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
        Scalar_Indexing_For_floatArray_With_Message_Passing 
-	  (Address_Subscript+Local_Scalar_Offset[2], Off_Processor_Including_Ghost_Boundaries,
+          (Address_Subscript+Local_Scalar_Offset[2], Off_Processor_Including_Ghost_Boundaries,
            Off_Processor_Excluding_Ghost_Boundaries, 
-	   Array_Index_For_float_Variable);
+           Array_Index_For_float_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_float_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -4394,7 +4394,7 @@ inline float & floatArray::operator() ( int i , int j , int k ) const
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer2 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[2]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[2]);
    return Array_Descriptor.Array_View_Pointer2 [Address_Subscript];
 #endif
 }
@@ -4410,7 +4410,7 @@ inline float & floatArray::operator() ( int i , int j , int k , int l ) const
 #if COMPILE_DEBUG_STATEMENTS
    if (APP_DEBUG > 0)
      printf("Inside of floatArray::operator()(int i=%d,int j=%d,int k=%d,int l=%d)\n",
-	    i,j,k,l);
+            i,j,k,l);
    Test_Consistency();
 #endif
 
@@ -4447,11 +4447,11 @@ inline float & floatArray::operator() ( int i , int j , int k , int l ) const
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2];
+                       Array_Descriptor.Array_Domain.Size[2];
 #endif
 
 #if defined(PPP)
@@ -4495,36 +4495,36 @@ inline float & floatArray::operator() ( int i , int j , int k , int l ) const
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)));
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3])));
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_floatArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[3], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[3], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_float_Variable);
+          Array_Index_For_float_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_float_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -4542,7 +4542,7 @@ inline float & floatArray::operator() ( int i , int j , int k , int l ) const
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer3 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[3]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[3]);
    return Array_Descriptor.Array_View_Pointer3 [Address_Subscript];
    //return Array_Data [Address_Subscript];
 #endif
@@ -4591,13 +4591,13 @@ inline float & floatArray::operator() ( int i , int j , int k , int l, int m ) c
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3];
+                       Array_Descriptor.Array_Domain.Size[3];
 #endif
 
 #if defined(PPP)
@@ -4643,41 +4643,41 @@ inline float & floatArray::operator() ( int i , int j , int k , int l, int m ) c
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)));
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4])));
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_floatArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[4], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[4], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_float_Variable);
+          Array_Index_For_float_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_float_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -4688,15 +4688,15 @@ inline float & floatArray::operator() ( int i , int j , int k , int l, int m ) c
    APP_ASSERT (Array_Index_For_float_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer4 == 
-	   getSerialArrayDescriptor().Array_Data + 
-	   getSerialDomain().Scalar_Offset[4]);
+           getSerialArrayDescriptor().Array_Data + 
+           getSerialDomain().Scalar_Offset[4]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_float_Variable[Array_Index_For_float_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer4 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer4 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[4]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[4]);
    return Array_Descriptor.Array_View_Pointer4 [Address_Subscript];
 #endif
 }
@@ -4746,15 +4746,15 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m, int n)
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4];
+                       Array_Descriptor.Array_Domain.Size[4];
 #endif
 
 #if defined(PPP)
@@ -4801,46 +4801,46 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m, int n)
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)));
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5])));
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_floatArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[5], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[5], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_float_Variable);
+          Array_Index_For_float_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_float_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -4851,15 +4851,15 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m, int n)
    APP_ASSERT (Array_Index_For_float_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer5 == 
-	   getSerialArrayDescriptor().Array_Data + 
-	   getSerialDomain().Scalar_Offset[5]);
+           getSerialArrayDescriptor().Array_Data + 
+           getSerialDomain().Scalar_Offset[5]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_float_Variable[Array_Index_For_float_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer5 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer5 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[5]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[5]);
    return Array_Descriptor.Array_View_Pointer5 [Address_Subscript];
 #endif
 }
@@ -4867,7 +4867,7 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m, int n)
 
 #if MAX_ARRAY_DIMENSION >= 7
 inline float & floatArray::operator() (int i, int j, int k, int l, int m, 
-				   int n, int o) const
+                                   int n, int o) const
 {
    // Note that the use of an scalar  i n d e x i n g  is not efficient in an array 
    // class.  The perfered way to  i n d e x  array objects is to use the Index 
@@ -4912,17 +4912,17 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m,
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4] +
+                       Array_Descriptor.Array_Domain.Size[4] +
                        o * Array_Descriptor.Array_Domain.Stride[6] * 
-		       Array_Descriptor.Array_Domain.Size[5];
+                       Array_Descriptor.Array_Domain.Size[5];
 #endif
 
 #if defined(PPP)
@@ -4971,51 +4971,51 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m,
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
        ((oo<Local_Data_Base[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)));
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5]))||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5]))||
        ((oo<Local_Data_Base[6]+InternalGhostCellWidth[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
-	   -InternalGhostCellWidth[6])));
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
+           -InternalGhostCellWidth[6])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_floatArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[6], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[6], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_float_Variable);
+          Array_Index_For_float_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_float_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -5026,15 +5026,15 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m,
    APP_ASSERT (Array_Index_For_float_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer6 == 
-	    getSerialArrayDescriptor().Array_Data + 
-	    getSerialDomain().Scalar_Offset[6]);
+            getSerialArrayDescriptor().Array_Data + 
+            getSerialDomain().Scalar_Offset[6]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_float_Variable[Array_Index_For_float_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer6 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer6 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[6]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[6]);
    return Array_Descriptor.Array_View_Pointer6 [Address_Subscript];
 #endif
 }
@@ -5042,7 +5042,7 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m,
 
 #if MAX_ARRAY_DIMENSION >= 8
 inline float & floatArray::operator() (int i, int j, int k, int l, int m, 
-				   int n, int o, int p) const
+                                   int n, int o, int p) const
 {
    // Note that the use of an scalar  i n d e x i n g  is not efficient in an array 
    // class.  The perfered way to  i n d e x  array objects is to use the Index 
@@ -5089,19 +5089,19 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m,
 #else
    Address_Subscript = i * Array_Descriptor.Array_Domain.Stride[0] + 
                        j * Array_Descriptor.Array_Domain.Stride[1] * 
-		       Array_Descriptor.Array_Domain.Size[0] +
+                       Array_Descriptor.Array_Domain.Size[0] +
                        k * Array_Descriptor.Array_Domain.Stride[2] * 
-		       Array_Descriptor.Array_Domain.Size[1] +
+                       Array_Descriptor.Array_Domain.Size[1] +
                        l * Array_Descriptor.Array_Domain.Stride[3] * 
-		       Array_Descriptor.Array_Domain.Size[2] +
+                       Array_Descriptor.Array_Domain.Size[2] +
                        m * Array_Descriptor.Array_Domain.Stride[4] * 
-		       Array_Descriptor.Array_Domain.Size[3] +
+                       Array_Descriptor.Array_Domain.Size[3] +
                        n * Array_Descriptor.Array_Domain.Stride[5] * 
-		       Array_Descriptor.Array_Domain.Size[4] +
+                       Array_Descriptor.Array_Domain.Size[4] +
                        o * Array_Descriptor.Array_Domain.Stride[6] * 
-		       Array_Descriptor.Array_Domain.Size[5] +
+                       Array_Descriptor.Array_Domain.Size[5] +
                        p * Array_Descriptor.Array_Domain.Stride[7] * 
-		       Array_Descriptor.Array_Domain.Size[6];
+                       Array_Descriptor.Array_Domain.Size[6];
 #endif
 
 #if defined(PPP)
@@ -5152,56 +5152,56 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m,
    {
      Off_Processor_Including_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]) ||
-	(ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1)) ||
        ((jj<Local_Data_Base[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1)) ||
        ((kk<Local_Data_Base[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1)) ||
        ((ll<Local_Data_Base[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1)) ||
        ((mm<Local_Data_Base[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1)) ||
        ((nn<Local_Data_Base[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1)) ||
        ((oo<Local_Data_Base[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)) ||
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1)) ||
        ((pp<Local_Data_Base[7]) || 
-	(pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1)));
+        (pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1)));
 
      Off_Processor_Excluding_Ghost_Boundaries =
       (((ii<Local_Data_Base[0]+InternalGhostCellWidth[0]) || 
-	(ii>Local_Data_Base[0]+Local_Size[0]-1
-	   -InternalGhostCellWidth[0]))||
+        (ii>Local_Data_Base[0]+Local_Size[0]-1
+           -InternalGhostCellWidth[0]))||
        ((jj<Local_Data_Base[1]+InternalGhostCellWidth[1]) || 
-	(jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
-	   -InternalGhostCellWidth[1]))||
+        (jj>Local_Data_Base[1]+(Local_Size[1]/Local_Size[0])-1
+           -InternalGhostCellWidth[1]))||
        ((kk<Local_Data_Base[2]+InternalGhostCellWidth[2]) || 
-	(kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
-	   -InternalGhostCellWidth[2]))||
+        (kk>Local_Data_Base[2]+(Local_Size[2]/Local_Size[1])-1
+           -InternalGhostCellWidth[2]))||
        ((ll<Local_Data_Base[3]+InternalGhostCellWidth[3]) || 
-	(ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
-	   -InternalGhostCellWidth[3]))||
+        (ll>Local_Data_Base[3]+(Local_Size[3]/Local_Size[2])-1
+           -InternalGhostCellWidth[3]))||
        ((mm<Local_Data_Base[4]+InternalGhostCellWidth[4]) || 
-	(mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
-	   -InternalGhostCellWidth[4]))||
+        (mm>Local_Data_Base[4]+(Local_Size[4]/Local_Size[3])-1
+           -InternalGhostCellWidth[4]))||
        ((nn<Local_Data_Base[5]+InternalGhostCellWidth[5]) || 
-	(nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
-	   -InternalGhostCellWidth[5]))||
+        (nn>Local_Data_Base[5]+(Local_Size[5]/Local_Size[4])-1
+           -InternalGhostCellWidth[5]))||
        ((oo<Local_Data_Base[6]+InternalGhostCellWidth[6]) || 
-	(oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
-	   -InternalGhostCellWidth[6]))||
+        (oo>Local_Data_Base[6]+(Local_Size[6]/Local_Size[5])-1
+           -InternalGhostCellWidth[6]))||
        ((pp<Local_Data_Base[7]+InternalGhostCellWidth[7]) || 
-	(pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1
-	   -InternalGhostCellWidth[7])));
+        (pp>Local_Data_Base[7]+(Local_Size[7]/Local_Size[6])-1
+           -InternalGhostCellWidth[7])));
    }
 
 
    if (Optimization_Manager::Optimize_Scalar_Indexing == FALSE)
       Scalar_Indexing_For_floatArray_With_Message_Passing 
-	 (Address_Subscript+Local_Scalar_Offset[7], 
-	  Off_Processor_Including_Ghost_Boundaries,
+         (Address_Subscript+Local_Scalar_Offset[7], 
+          Off_Processor_Including_Ghost_Boundaries,
           Off_Processor_Excluding_Ghost_Boundaries, 
-	  Array_Index_For_float_Variable);
+          Array_Index_For_float_Variable);
       else
        {
          APP_ASSERT (Array_Index_For_float_Variable <= STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
@@ -5212,15 +5212,15 @@ inline float & floatArray::operator() (int i, int j, int k, int l, int m,
    APP_ASSERT (Array_Index_For_float_Variable < STATIC_LIMIT_FOR_PARALLEL_SCALAR_INDEXING_REFERENCES);
 
    APP_ASSERT (getSerialArrayDescriptor().Array_View_Pointer7 == 
-	    getSerialArrayDescriptor().Array_Data + 
-	    getSerialDomain().Scalar_Offset[7]);
+            getSerialArrayDescriptor().Array_Data + 
+            getSerialDomain().Scalar_Offset[7]);
    return (Off_Processor_Including_Ghost_Boundaries) ? 
            Static_float_Variable[Array_Index_For_float_Variable++] : 
            getSerialArrayDescriptor().Array_View_Pointer7 [Address_Subscript];
            //getSerialArrayDescriptor().Array_Data [Address_Subscript];
 #else
    APP_ASSERT (Array_Descriptor.Array_View_Pointer7 == 
-	       Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[7]);
+               Array_Descriptor.Array_Data + Array_Descriptor.Array_Domain.Scalar_Offset[7]);
    return Array_Descriptor.Array_View_Pointer7 [Address_Subscript];
 #endif
 }
@@ -5496,8 +5496,8 @@ floatArray::getLocalArrayWithGhostBoundaries () const
      APP_ASSERT(Array_Descriptor.SerialArray != NULL);
 
      if ((!Array_Descriptor.Array_Domain.Is_A_View) && 
-	 (!Array_Descriptor.Array_Domain.Is_A_Null_Array) &&
-	 (!getSerialDomain().Is_A_Null_Array))
+         (!Array_Descriptor.Array_Domain.Is_A_Null_Array) &&
+         (!getSerialDomain().Is_A_Null_Array))
      {
         Index_Pointer_Array_MAX_ARRAY_DIMENSION_Type Internal_Index_List;
         int i;

@@ -16,8 +16,8 @@
  *   FindStatementsForSlice
  *****************************************************************/
  void FindStatements::FindStatementsForSlice( SgNode* func_defn, SgNode* slicing_criterion,
-						set<SgNode*>& slice,
-						AliasAnalysisInterface* alias){
+                                              set<SgNode*>& slice,
+                                              AliasAnalysisInterface* alias){
 
    
   // Slice is the list of all statements we want for the program slice, with slicing_criterion
@@ -97,9 +97,9 @@
       
       // traversing edges into a node
       for (DefaultDUchain::EdgeIterator edges = 
-	     defuse.GetNodeEdgeIterator(refnode, DefaultDUchain::EdgeIn);
+             defuse.GetNodeEdgeIterator(refnode, DefaultDUchain::EdgeIn);
 	   !edges.ReachEnd(); ++edges) {
-	GraphEdge *e = *edges;
+        GraphEdge *e = *edges;
 	DefUseChainNode* addnode = defuse.GetEdgeEndPoint( e, DefaultDUchain::EdgeOut);
 	if(addnode->get_stmt() != NULL){
 	  //This test is needed so that we don't try to include a NULL-pointer. The get_stmt() of a input parameter is NULL as it is not a statement and we include the input parameter in the AST later, so we don't need to collect it here.

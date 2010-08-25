@@ -52,7 +52,7 @@ typedef void (*DerivativeFunctionPointer)(const realMappedGridFunction & u,
 // This typedef is used to define the derivativeFunction array which keeps pointers
 // to functions that compute the coefficients of derivatives
 typedef void (*DerivCoefficientsFunctionPointer)(RealDistributedArray & derivative,             
-						 const Index & I1,   
+                                                 const Index & I1,   
 						 const Index & I2,   
 						 const Index & I3,   
 						 const Index & E,   
@@ -378,7 +378,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
   // Make a list of derivatives to be evaluated and supply arrays to save the results in
   virtual void setNumberOfDerivativesToEvaluate( const int & numberOfDerivatives );
   virtual void setDerivativeType(const int & index, 
-				 const derivativeTypes & derivativeType, 
+                                 const derivativeTypes & derivativeType, 
 				 RealDistributedArray & ux1x2 );
   virtual void getDerivatives(const realMappedGridFunction & u, 
 			      const Index & I1 = nullIndex, 
@@ -425,7 +425,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 
   // compute pseudo-spectral derivatives
   virtual void spectralDerivatives(const int & numberOfDerivatives,
-				   const IntegerArray & derivativesToEvaluate,  
+                                   const IntegerArray & derivativesToEvaluate,  
 				   RealDistributedArray *derivative[],
 				   const realMappedGridFunction & u, 
 				   const Range & R1,
@@ -569,7 +569,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 
   // private function to update arrays to be the correct size
   void updateBoundaryConditionArrays(const int newNumberOfBoundaryConditions, 
-				     const int newNumberOfComponents );
+                                     const int newNumberOfComponents );
 
   // private boundary condition routine:
   void applyBoundaryCondition(realMappedGridFunction & u, 
@@ -660,7 +660,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 			  const int & grid=0  );
 
   void applyBCgeneralMixedDerivative(realMappedGridFunction & u, 
-				     const int side,
+                                     const int side,
 				     const int axis,
 				     const Index & Components,
 				     const BCTypes::BCNames & boundaryConditionType,
@@ -705,7 +705,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 				  const int & grid=0  );
 
   void applyBCnormalDerivative(realMappedGridFunction & u, 
-			       const int side,
+                               const int side,
 			       const int axis,
 			       const Index & Components,
 			       const BCTypes::BCNames & boundaryConditionType,
@@ -735,7 +735,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 		      const int & grid=0 );
 
   void applyBCsymmetry(realMappedGridFunction & u, 
-		       const int side,
+                       const int side,
 		       const int axis,
 		       const Index & Components,
 		       const BCTypes::BCNames & boundaryConditionType,
@@ -763,7 +763,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 			const int & grid=0  );
 
   void applyBCGenDiv(realMappedGridFunction & u, 
-		     const int side,
+                     const int side,
 		     const int axis,
 		     const real & scalarData,
 		     const RealArray & arrayData,
@@ -836,7 +836,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 
   // indicate how many boundary conditions are applied on each side
   void setNumberOfBoundaryConditions(const int & number, 
-				     const int & side=forAll, 
+                                     const int & side=forAll, 
                                      const int & axis=forAll );
     
   // associate a boundary condition with a given boundary
@@ -893,7 +893,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
   // Supply a boundary value for a boundary condition (or turn off this option)
   // 
   void setBoundaryConditionValue(const real & value,  
-				 const int & index, 
+                                 const int & index, 
                                  const int & side, 
                                  const int & axis,
                                  const bool & trueOrFalse=TRUE);
@@ -901,7 +901,7 @@ SCALAR_FUNCTION_COEFFICIENTS(divVectorScalarCoefficients)
 
   // Indicate which faces should use the boundaryConditionRightHandSide array
   void setBoundaryConditionRightHandSide(const int & index, 
-					 const int & side, 
+                                         const int & side, 
 					 const int & axis,
 					 const bool & trueOrFalse=TRUE);
                                  

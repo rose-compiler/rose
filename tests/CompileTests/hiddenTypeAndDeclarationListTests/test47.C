@@ -2,7 +2,7 @@
 
 class A {
 
-	public:
+        public:
 
 		int x;
 
@@ -12,7 +12,7 @@ class A {
 
 class B : A {
 
-	public:
+        public:
 
 		using A::x;
 
@@ -24,6 +24,6 @@ class B : A {
 
 int main() {
 
-	return 0;
+        return 0;
 
 }

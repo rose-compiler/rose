@@ -17,7 +17,7 @@ int main() {
 
 	{
   // "int min" can hide the template function "min" and the template instantiation "min"
-		int min, wwwwwwwwwwwwwww;
+                int min, wwwwwwwwwwwwwww;
 
 		{
 

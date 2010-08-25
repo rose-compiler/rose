@@ -41,24 +41,24 @@ class Indirect_Addressing_Support
         GS_TRACE_STRUCT *messageSchedule;  // this is the PGSLib trace structure
         int numberOfDuplicates;
         int numberOfSupplements;
-	int numberOfLocal;
+        int numberOfLocal;
 
-	int* supplementLocations;
-	int* duplicateLocations;
-	int* localLocations;
+        int* supplementLocations;
+        int* duplicateLocations;
+        int* localLocations;
 
-	static int VALUE;
-	static int POSITION;
-	static int SUPPLEMENT;
-	static int DUPLICATE;
-	int setupType;
+        static int VALUE;
+        static int POSITION;
+        static int SUPPLEMENT;
+        static int DUPLICATE;
+        int setupType;
 
         int local_I_base;
 
      // Data
         int* duplicateDataArray[MAX_ARRAY_DIMENSION];
         int* supplementDataArray[MAX_ARRAY_DIMENSION];
-	int* localDataArray[MAX_ARRAY_DIMENSION];
+        int* localDataArray[MAX_ARRAY_DIMENSION];
         int blockSize;
 
      // Required processor location and global index information
@@ -68,72 +68,72 @@ class Indirect_Addressing_Support
        ~Indirect_Addressing_Support ();
         Indirect_Addressing_Support ();
         Indirect_Addressing_Support ( const Array_Domain_Type & X,
-				      const int type = VALUE);
+                                      const int type = VALUE);
         Indirect_Addressing_Support ( const Array_Domain_Type & X,
-				      intSerialArray** Index_Arrays,
-				      int* global_I_base,
-				      const int type = VALUE);
+                                      intSerialArray** Index_Arrays,
+                                      int* global_I_base,
+                                      const int type = VALUE);
         Indirect_Addressing_Support ( const Array_Domain_Type & X,
-				      const Indirect_Addressing_Support & I_A,
-				      const int type);
+                                      const Indirect_Addressing_Support & I_A,
+                                      const int type);
         Indirect_Addressing_Support ( const Array_Domain_Type & X,
-				      int** I_A_Data, int* I_A_Locations,
-				      int I_base,int list_size, const int type);
+                                      int** I_A_Data, int* I_A_Locations,
+                                      int I_base,int list_size, const int type);
 
      // setup routine for pgslib
-	void initialize_pgslib();
+        void initialize_pgslib();
 
      // main gather scatter functions
         void gatherData ( );
 
         int* gatherData 
-	   (const intSerialArray & A, const int type, int& merged_size, 
-	    int* position_offset);
+           (const intSerialArray & A, const int type, int& merged_size, 
+            int* position_offset);
         float* gatherData 
-	   (const floatSerialArray & A, const int type, int& merged_size,
-	    int* position_offset);
+           (const floatSerialArray & A, const int type, int& merged_size,
+            int* position_offset);
         double* gatherData 
-	   (const doubleSerialArray & A, const int type, int& merged_size,
-	    int* position_offset);
+           (const doubleSerialArray & A, const int type, int& merged_size,
+            int* position_offset);
 
         int* gatherData 
-	   (const intSerialArray & A, const int type, int& merged_size );
+           (const intSerialArray & A, const int type, int& merged_size );
         float* gatherData 
-	   (const floatSerialArray & A, const int type, int& merged_size);
+           (const floatSerialArray & A, const int type, int& merged_size);
         double* gatherData 
-	   (const doubleSerialArray & A, const int type, int& merged_size);
+           (const doubleSerialArray & A, const int type, int& merged_size);
 
         int** gatherData 
-	   (intSerialArray** Index_Arrays, const int type, int& merged_size);
+           (intSerialArray** Index_Arrays, const int type, int& merged_size);
         float** gatherData 
-	   (floatSerialArray** Index_Arrays, const int type, int& merged_size);
+           (floatSerialArray** Index_Arrays, const int type, int& merged_size);
         double** gatherData 
-	   (doubleSerialArray** Index_Arrays, const int type, int& merged_size);
+           (doubleSerialArray** Index_Arrays, const int type, int& merged_size);
 
         void scatterData ();
         int* scatterData 
-	   (const intSerialArray & A, const int type, int& merged_size);
+           (const intSerialArray & A, const int type, int& merged_size);
         float* scatterData 
-	   (const floatSerialArray & A, const int type, int& merged_size);
+           (const floatSerialArray & A, const int type, int& merged_size);
         double* scatterData 
-	   (const doubleSerialArray & A, const int type, int& merged_size);
+           (const doubleSerialArray & A, const int type, int& merged_size);
 
      // other functions
-	int mergeIndexData 
-	   (const int merge_type, int** Data, int**Locations) const;
-	int mergeData 
-	   (const int merge_type, int* other_local, int* other_data,
-	    int** Data, const int usePosnFlag = FALSE );
-	int mergeData 
-	   (const int merge_type, float* other_local, float* other_data,
-	    float** Data, const int usePosnFlag = FALSE);
-	int mergeData 
-	   (const int merge_type, double* other_local, double* other_data,
-	    double** Data, const int usePosnFlag = FALSE);
-	
+        int mergeIndexData 
+           (const int merge_type, int** Data, int**Locations) const;
+        int mergeData 
+           (const int merge_type, int* other_local, int* other_data,
+            int** Data, const int usePosnFlag = FALSE );
+        int mergeData 
+           (const int merge_type, float* other_local, float* other_data,
+            float** Data, const int usePosnFlag = FALSE);
+        int mergeData 
+           (const int merge_type, double* other_local, double* other_data,
+            double** Data, const int usePosnFlag = FALSE);
+        
        // Indirect_Addressing_Support ( const Indirect_Addressing_Support & X );
        // Indirect_Addressing_Support & operator= 
-	//   ( const Indirect_Addressing_Support & X );
+        //   ( const Indirect_Addressing_Support & X );
 
    };
 

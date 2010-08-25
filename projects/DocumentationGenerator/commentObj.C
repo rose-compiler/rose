@@ -192,7 +192,7 @@ DoxygenEntry::set_brief(std::string newString)
 	 if(briefP == NULL)
 	   briefP = new std::string();
 
-   	 (*briefP) = "\\brief " + newString;
+         (*briefP) = "\\brief " + newString;
 
    }
 
@@ -211,7 +211,7 @@ DoxygenEntry::set_description(std::string newString)
 	 if(descriptionP == NULL)
 	   descriptionP = new std::string();
 
-	 (*descriptionP) = "\\description " + newString;
+         (*descriptionP) = "\\description " + newString;
    }
 
 

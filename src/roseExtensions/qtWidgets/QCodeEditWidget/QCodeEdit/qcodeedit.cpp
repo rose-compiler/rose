@@ -51,8 +51,8 @@ class QPanelWatcher : public QObject
 {
 	public:
 		QPanelWatcher(QCodeEdit *e)
-		 : qce(e)
-		{
+                 : qce(e)
+                {
 
 		}
 

@@ -29,17 +29,17 @@ typedef BASE_TWODIGITS_TYPE stwodigits; /* signed variant of twodigits */
 
 /* Long integer representation.
    The absolute value of a number is equal to
-   	SUM(for i=0 through abs(ob_size)-1) ob_digit[i] * 2**(SHIFT*i)
+        SUM(for i=0 through abs(ob_size)-1) ob_digit[i] * 2**(SHIFT*i)
    Negative numbers are represented with ob_size < 0;
    zero is represented by ob_size == 0.
    In a normalized number, ob_digit[abs(ob_size)-1] (the most significant
    digit) is never zero.  Also, in all cases, for all valid i,
-   	0 <= ob_digit[i] <= MASK.
+        0 <= ob_digit[i] <= MASK.
    The allocation function takes care of allocating extra memory
    so that ob_digit[0] ... ob_digit[abs(ob_size)-1] are actually available. */
 
 struct _longobject {
-	PyObject_HEAD
+        PyObject_HEAD
 	int ob_size;
 	digit ob_digit[1];
 };
