@@ -796,7 +796,6 @@ test2010_06.C \
 test2010_10.C \
 test2010_11.C \
 test2010_12.C \
-test2010_13.C \
 test2010_15.C \
 test2010_18.C \
 test2010_19.C \
@@ -830,7 +829,8 @@ test2006_03.C \
 test2006_47.C \
 test2006_67.C \
 test2006_73.C \
-test2007_130.C
+test2007_130.C \
+test2010_13.C
 
 #First 3 tests should be fixed.
 #Other failing tests are due to problems with static member variables and
