@@ -2,7 +2,7 @@
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 
-#include "statementHandler.h"
+#include "statementProcessor.h"
 
 #include "utilities/types.h"
 #include "singleton.h"
