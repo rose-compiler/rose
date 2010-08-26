@@ -22,7 +22,9 @@ INCLUDES = \
 
 noinst_PROGRAMS = genStubsAndWrappers
 if !ROSE_USING_ROSE_ANALYSIS
+if !ROSE_USE_NEW_EDG_INTERFACE
 lib_LTLIBRARIES = librosehswrap.la
+endif
 endif
 
 SRC_NONGENERATED_HSFILES = $(addprefix $(srcdir)/,$(NONGENERATED_HSFILES))
@@ -51,14 +53,18 @@ headersWithoutLineDirective: $(wildcard $(top_builddir)/src/frontend/SageIII/*.h
 run-genStubsAndWrappers-stamp: genStubsAndWrappers sage3.h.C rose.cabal.in headersWithoutLineDirective
 	mkdir -p ROSE/Sage3/Methods
 if !ROSE_USING_ROSE_ANALYSIS
+if !ROSE_USE_NEW_EDG_INTERFACE
 	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/sage3.h.C
+endif
 endif
 	touch $@
 
 if !ROSE_USING_ROSE_ANALYSIS
+if !ROSE_USE_NEW_EDG_INTERFACE
 librosehswrap_la_SOURCES = WrapROSE.C WrapSage3.C WrapCxxContainers.C
 nodist_librosehswrap_la_SOURCES = WrapSage3Classes.C
 librosehswrap_la_LIBADD = $(top_builddir)/src/librose.la
+endif
 endif
 
 all-local: cabal-build-stamp
@@ -92,6 +98,7 @@ distclean-generic: cabal-clean
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 
 if !ROSE_USING_ROSE_ANALYSIS
+if !ROSE_USE_NEW_EDG_INTERFACE
 cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal Setup.hs $(SRC_NONGENERATED_HSFILES) librosehswrap.la
 	if test "x$(srcdir)" != "x." ; then \
 		for file in $(NONGENERATED_HSFILES) ; do \
@@ -115,16 +122,23 @@ cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal Setup.hs $(SRC_NONGENERA
 else
 cabal-configure-stamp:
 endif
+else
+cabal-configure-stamp:
+endif
 
 cabal-build-stamp: cabal-configure-stamp
 if !ROSE_USING_ROSE_ANALYSIS
+if !ROSE_USE_NEW_EDG_INTERFACE
 	$(GHCBIN)/runghc Setup.hs build
+endif
 endif
 	touch $@
 
 cabal-install-stamp: cabal-build-stamp
 if !ROSE_USING_ROSE_ANALYSIS
+if !ROSE_USE_NEW_EDG_INTERFACE
 	$(GHCBIN)/runghc Setup.hs install
+endif
 endif
 	touch $@
 

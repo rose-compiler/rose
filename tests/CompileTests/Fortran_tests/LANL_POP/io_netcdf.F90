@@ -1860,7 +1860,7 @@
 !-----------------------------------------------------------------------
 
    if (status /= nf90_noerr) then
-      write(stdout,*) trim(nf90_strerror(status))
+     write(stdout,*) trim(nf90_strerror(status))
    end if
 
 !-----------------------------------------------------------------------
