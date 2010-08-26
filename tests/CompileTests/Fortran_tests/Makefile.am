@@ -523,10 +523,14 @@ check-local:
 	@echo "Tests for Fortran."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
+if !ROSE_USING_GFORTRAN_VERSION_4_0
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why.
 #	@$(MAKE) testParser
+else
+	@echo "Skipping Fortran code tests when using the gfortran version 4.0.x compiler (fails to support common command line options of later versions)."
+endif
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"

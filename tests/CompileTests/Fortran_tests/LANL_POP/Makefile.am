@@ -159,8 +159,8 @@ $(F03_TESTCODES_CURRENTLY_FAILING)
 if ROSE_USE_OPEN_FORTRAN_PARSER
 
 # DQ (8/23/2010): This tests only the ability to read the Fortran code and generate the AST.
-# TRANSLATOR_EXECUTABLE=testAnalysis
-TRANSLATOR_EXECUTABLE=testParser
+TRANSLATOR_EXECUTABLE=testAnalysis
+# TRANSLATOR_EXECUTABLE=testParser
 
 TRANSLATOR= ../../../$(TRANSLATOR_EXECUTABLE)
 # Go back and build the translator we are using to test Fortran (in case make check 
@@ -183,7 +183,7 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:verbose 3
 # ROSE_FLAGS = -rose:verbose 0
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_warnings -rose:output_parser_actions
-ROSE_FLAGS = -rose:verbose 0 
+ROSE_FLAGS = -rose:verbose 0
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -436,13 +436,17 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@echo "First make POP code using testParser."
+	@$(MAKE) TRANSLATOR_EXECUTABLE=testParser $(PASSING_TEST_Objects)
+#	@$(MAKE) clean
+#	@echo "Second make POP code using testAnalysis."
+#	@$(MAKE) TRANSLATOR_EXECUTABLE=testAnalysis $(PASSING_TEST_Objects)
 else
-	@echo "Skipping POP code tests when using the gfortran version 4.0.x compiler (fails to compile POP code).
+	@echo "Skipping POP code tests when using the gfortran version 4.0.x compiler (fails to compile POP code)."
 endif
-	@echo "************************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally) ******"
-	@echo "************************************************************************************************************"
+	@echo "********************************************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests/LANL_POP: make check rule complete (terminated normally using $(TRANSLATOR)) ******"
+	@echo "********************************************************************************************************************************"
 else
 check-local:
 	@echo "\nROSE Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
