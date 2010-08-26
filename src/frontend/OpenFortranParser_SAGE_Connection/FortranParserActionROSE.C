@@ -641,8 +641,11 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                  // For character strings the kind should always be 1.
                  // ROSE_ASSERT(lengthExpression->get_value() == 1);
 
-                    delete lengthExpression;
-                    lengthExpression = NULL;
+                    if (lengthExpression != NULL)
+                       {
+                         delete lengthExpression;
+                         lengthExpression = NULL;
+                       }
 
                  // Find the length of the string in the astTypeParameterStack
                     if (astTypeParameterStack.empty() == false)
@@ -651,6 +654,11 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                          ROSE_ASSERT(rank == 1);
 
                          lengthExpression = isSgIntVal(astTypeParameterStack.front());
+                         if (lengthExpression == NULL)
+                            {
+                              printf ("Warning type parameter is non integer type (OK for F90) \n");
+                              lengthExpression = astTypeParameterStack.front();
+                            }
                          ROSE_ASSERT(lengthExpression != NULL);
                          astTypeParameterStack.pop_front();
                        }
@@ -714,43 +722,53 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 
                  // We are enforcing that the type parameter or kind is an integer, but where the base type 
                  // is an integer it can be variable, it might be that this has be be more flexable as well.
-                    ROSE_ASSERT(integerValue != NULL);
-                    int value = integerValue->get_value();
-                    switch(value)
+                 // E.g. this fails for "real (r8), parameter, public :: c0 = 0.0_r8"
+                 // ROSE_ASSERT(integerValue != NULL);
+                    if (integerValue != NULL)
                        {
-                         case 4: 
+                         int value = integerValue->get_value();
+                         switch(value)
                             {
-                           // Nothing to do here, this is the 4 byte floating point type (already on the astBaseTypeStack).
-                              break;
+                              case 4: 
+                                 {
+                                // Nothing to do here, this is the 4 byte floating point type (already on the astBaseTypeStack).
+                                   break;
+                                 }
+
+                              case 8: 
+                                 {
+                                   SgTypeDouble* doubleType = SgTypeDouble::createType();
+                                   ROSE_ASSERT(doubleType != NULL);
+
+                                // Replace the base type with the just built string type
+                                   astBaseTypeStack.pop_front();
+                                   astBaseTypeStack.push_front(doubleType);
+                                   break;
+                                 }
+
+                              case 16: 
+                                 {
+                                   SgTypeLongDouble* longdoubleType = SgTypeLongDouble::createType();
+                                   ROSE_ASSERT(longdoubleType != NULL);
+
+                                // Replace the base type with the just built string type
+                                   astBaseTypeStack.pop_front();
+                                   astBaseTypeStack.push_front(longdoubleType);
+                                   break;
+                                 }
+
+                              default:
+                                 {
+                                   printf ("Error: not clear what size of float is required kind specified as %d \n",value);
+                                   ROSE_ASSERT(false);
+                                 }
                             }
-
-                         case 8: 
-                            {
-                              SgTypeDouble* doubleType = SgTypeDouble::createType();
-                              ROSE_ASSERT(doubleType != NULL);
-
-                           // Replace the base type with the just built string type
-                              astBaseTypeStack.pop_front();
-                              astBaseTypeStack.push_front(doubleType);
-                              break;
-                            }
-
-                         case 16: 
-                            {
-                              SgTypeLongDouble* longdoubleType = SgTypeLongDouble::createType();
-                              ROSE_ASSERT(longdoubleType != NULL);
-
-                           // Replace the base type with the just built string type
-                              astBaseTypeStack.pop_front();
-                              astBaseTypeStack.push_front(longdoubleType);
-                              break;
-                            }
-
-                         default:
-                            {
-                              printf ("Error: not clear what size of float is required kind specified as %d \n",value);
-                              ROSE_ASSERT(false);
-                            }
+                       }
+                      else
+                       {
+                      // This is the case of code such as "real (r8), parameter, public :: c0 = 0.0_r8"
+                      // for the moment we will ignore the kind specifier.
+                         printf ("Warning: ignoring the kind specified for real types: lengthExpression = %s \n",lengthExpression->class_name().c_str());
                        }
 
                  // We can ignore the lengthExpression because we use different specific types 
