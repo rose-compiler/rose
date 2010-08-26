@@ -412,6 +412,7 @@ test2005_183.C \
 test2005_184.C \
 test2005_185.C \
 test2005_187.C \
+test2005_188.C \
 test2005_189.C \
 test2005_190.C \
 test2005_191.C \
@@ -728,7 +729,7 @@ test2004_116.C
 # test2009_35.C
 
 # DQ (10/5/2007): Previous problems fixed, this is a remaining problem.
-# test2005_188.C 
+# 
 # test2005_205.C
 # test2007_95.C -- JJW 3-3-2008 gcc doesn't accept this code, and the stuff in ROSE to allow it broke Naim
 

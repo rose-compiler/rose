@@ -851,7 +851,7 @@ $(TEST_Objects):testVariableRenaming
 check-local:
 	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
-	@echo "******* ROSE/tests/roseTests/variableRenamingTests: make check rule complete (terminated normally) ******"
+	@echo "ROSE/tests/roseTests/programAnalysisTests/variableRenamingTests: make check rule complete (terminated normally)"
 	@echo "*********************************************************************************************************"
 
 clean-local:
