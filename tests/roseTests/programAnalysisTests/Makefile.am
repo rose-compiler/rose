@@ -1,7 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Need to add sibdirectory for annotation parser tests as well
-SUBDIRS = testCallGraphAnalysis defUseAnalysisTests variableLivenessTests staticInterproceduralSlicingTests sideEffectAnalysisTests
+SUBDIRS = testCallGraphAnalysis defUseAnalysisTests variableLivenessTests staticInterproceduralSlicingTests sideEffectAnalysisTests \
+		variableRenamingTests
 #ptrTraceDriver
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/dataflowAnalysis -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 

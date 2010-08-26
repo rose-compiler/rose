@@ -2423,6 +2423,7 @@ tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
 tests/roseTests/programAnalysisTests/variableLivenessTests/Makefile
+tests/roseTests/programAnalysisTests/variableRenamingTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile
@@ -2437,7 +2438,6 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
 tests/roseTests/utilTests/Makefile
-tests/roseTests/variableRenamingTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
