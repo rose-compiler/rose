@@ -5456,9 +5456,22 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                OFPCommandLine.push_back("-I" + getSourceDirectory() );
              }
 
-          OFPCommandLine.push_back(get_sourceFileNameWithPath());
-
-       // printf ("exit_after_parser: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
+       // DQ (8/24/2010): Detect the use of CPP on the fortran file and use the correct generated file from CPP, if required.
+       // OFPCommandLine.push_back(get_sourceFileNameWithPath());
+          if (requires_C_preprocessor == true)
+             {
+               string sourceFilename = get_sourceFileNameWithoutPath();
+               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
+             }
+            else
+             {
+               OFPCommandLine.push_back(get_sourceFileNameWithPath());
+             }
+          
+#if 0
+          printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
+#endif
 #if 1
        // Some security checking here could be helpful!!!
           int errorCode = systemFromVector (OFPCommandLine);
