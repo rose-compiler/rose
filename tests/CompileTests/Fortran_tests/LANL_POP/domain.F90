@@ -19,9 +19,8 @@
 
    use kinds_mod
    use constants
-! DQ (8/4/2010): Can't file this file.
-!   use communicate
-!   use broadcast
+   use communicate
+   use broadcast
    use blocks
    use distribution
    use exit_mod
