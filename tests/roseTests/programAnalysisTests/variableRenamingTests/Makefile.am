@@ -770,7 +770,6 @@ test2009_19.C \
 test2009_20.C \
 test2009_22.C \
 test2009_24.C \
-test2009_25.C \
 test2009_27.C \
 test2009_28.C \
 test2009_29.C \
@@ -830,6 +829,7 @@ test2006_47.C \
 test2006_67.C \
 test2006_73.C \
 test2007_130.C \
+test2009_25.C \
 test2010_13.C
 
 #First 3 tests should be fixed.
