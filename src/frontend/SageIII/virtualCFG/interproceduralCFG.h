@@ -37,8 +37,7 @@ public:
     // Build filtered CFG which only contains interesting nodes.
     void buildFilteredCFG();
 
-    template <class NodeT, class EdgeT>
-    void buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored);
+    void buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& all_nodes, std::set<CFGNode>& explored);
 };
 
 } // end of namespace StaticCFG
