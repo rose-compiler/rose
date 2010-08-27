@@ -82,6 +82,7 @@ namespace OmpSupport
     //addGlobalOmpDeclarations(ompfrontend, sgfile->get_globalScope(), hasMain );
 
     if (! hasMain) return ;
+    ROSE_ASSERT (mainDef!= NULL); // Liao, at this point, we expect a defining declaration of main() is found
     // add parameter  int argc , char* argv[] if not exist
     SgInitializedNamePtrList args = mainDef->get_declaration()->get_args();
     SgType * intType=  SgTypeInt::createType();
