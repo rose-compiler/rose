@@ -28,6 +28,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	critical.c \
 	critical_dead.c \
 	critical_orphaned.c \
+	dijkstra_open_mp.c \
 	dynamicChunk.c \
 	empty.c \
 	endif.c \
