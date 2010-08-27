@@ -109,7 +109,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      confdefs.h  test2001_05.h  test2001_11.h test2001_18A.h  test2003_08.h  test2003_12.h  test2003_24.h  test2004_40.h \
      test2005_154.h  test2005_158.h  test2005_15.h   test2005_26.h  test2005_81.h  test2006_33.h foo.h \
      test2001_15.h  test2001_18B.h  test2003_09.h  test2003_14.h  test2003_25.h  test2005_133.h  test2005_157.h \
-     test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_42.h test2006_187a.h \
+     test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_36.h test2006_42.h test2006_187a.h \
      test2006_187b.h test2007_08.h test2007_41.h \
      test2007_42.h test2007_47.h test2007_48.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h LogicalPath.cpp test2005_56.C
