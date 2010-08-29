@@ -650,6 +650,7 @@ test2007_171.C \
 test2007_172.C \
 test2007_173.C \
 test2008_01.C \
+test2008_03.C \
 test2008_04.C \
 test2008_05.C \
 test2008_06.C \
