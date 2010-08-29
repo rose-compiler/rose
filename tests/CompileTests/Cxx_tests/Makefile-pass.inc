@@ -654,6 +654,7 @@ test2008_03.C \
 test2008_04.C \
 test2008_05.C \
 test2008_06.C \
+test2008_08.C \
 test2008_09.C \
 test2008_10.C \
 test2008_11.C \
