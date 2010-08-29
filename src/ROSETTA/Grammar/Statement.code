@@ -728,8 +728,6 @@ HEADER_GLOBAL_START
 
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
-          virtual unsigned int cfgIndexForEnd() const;
 
 #if 1
        // DQ (10/1/2009): Adding support for new name qualification.
