@@ -1161,6 +1161,11 @@ HEADER_TYPE_MODIFIER_START
                e_intent_inout   = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
                e_intrinsic      = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
                e_optional       = 12,/*!< optional attribute specifier (for Fortran 90) */
+
+            // DQ (8/28/2010): Added support for Fortran 90 type attributes (bind already present, and access-spec handled by C/C++ access modifiers in SgDeclarationModifier
+               e_extends       = 13,/*!< optional attribute specifier (for Fortran 90) */
+               e_abstract      = 14,/*!< optional attribute specifier (for Fortran 90) */
+
             // This should map to const in the SgConstVolatileModifier
             // e_parameter      = xx,/*!< parameter attribute specifier (for Fortran 77) */
 
@@ -1168,26 +1173,26 @@ HEADER_TYPE_MODIFIER_START
             // e_pointer        = xx,/*!< pointer attribute specifier (for Fortran 90) */
             // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
             // e_protected      = xx,/*!< protected attribute specifier (for Fortran 2003) */
-               e_save           = 13,/*!< save attribute specifier (for Fortran 77) */
-               e_target         = 14,/*!< target attribute specifier (for Fortran 90) */
-               e_value          = 15,/*!< value attribute specifier (for Fortran 2003) */
+               e_save           = 15,/*!< save attribute specifier (for Fortran 77) */
+               e_target         = 16,/*!< target attribute specifier (for Fortran 90) */
+               e_value          = 17,/*!< value attribute specifier (for Fortran 2003) */
             // This should map to volatile in the SgConstVolatileModifier
             // e_volatile       = xx,/*!< volatile attribute specifier (for Fortran 2003) */
 
             // DQ (12/4/2007): Added support for GNU specific attributes
-               e_gnu_attribute__unused__            = 16,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__packed__            = 17,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__deprecated__        = 18,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__transparent_union__ = 19,/*!< GNU specific attribute for (GNU extension) */
-               e_gnu_attribute__noreturn__          = 20,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__const__             = 21,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__cdecl__             = 22,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__stdcall__           = 23,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__unused__            = 18,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__packed__            = 19,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__deprecated__        = 20,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__transparent_union__ = 21,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__noreturn__          = 22,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__const__             = 23,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__cdecl__             = 24,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__stdcall__           = 25,/*!< GNU specific attribute for function type (GNU extension) */
 
             // DQ (1/3/2009): New GNU attributes not previously supported in ROSE
-               e_gnu_attribute__warn_unused_result__ = 24,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__nonnull__            = 25,/*!< GNU specific attribute for function type (GNU extension) */
-               e_gnu_attribute__sentinel__           = 26,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__warn_unused_result__ = 26,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__nonnull__            = 27,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__sentinel__           = 28,/*!< GNU specific attribute for function type (GNU extension) */
 
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
@@ -1356,6 +1361,16 @@ HEADER_TYPE_MODIFIER_START
           bool isValue() const;
           void setValue();
           void unsetValue();
+
+       // Fortran specific attribute
+          bool isExtends() const;
+          void setExtends();
+          void unsetExtends();
+
+       // Fortran specific attribute
+          bool isAbstract() const;
+          void setAbstract();
+          void unsetAbstract();
 
        // DQ (1/3/2009): Added GNU specific attributes
           bool isGnuAttributeUnused() const;
@@ -3019,6 +3034,16 @@ void SgTypeModifier::unsetTarget()     { unsetBit(e_target,p_modifierVector); }
 bool SgTypeModifier::isValue() const  { return checkBit(e_value,p_modifierVector); }
 void SgTypeModifier::setValue()       { setBit(e_value,p_modifierVector); }
 void SgTypeModifier::unsetValue()     { unsetBit(e_value,p_modifierVector); }
+
+// Fortran specific attribute
+bool SgTypeModifier::isExtends() const  { return checkBit(e_extends,p_modifierVector); }
+void SgTypeModifier::setExtends()       { setBit(e_extends,p_modifierVector); }
+void SgTypeModifier::unsetExtends()     { unsetBit(e_extends,p_modifierVector); }
+
+// Fortran specific attribute
+bool SgTypeModifier::isAbstract() const  { return checkBit(e_abstract,p_modifierVector); }
+void SgTypeModifier::setAbstract()       { setBit(e_abstract,p_modifierVector); }
+void SgTypeModifier::unsetAbstract()     { unsetBit(e_abstract,p_modifierVector); }
 
 // DQ (1/3/2009): Added GNU specific attributes
 bool SgTypeModifier::isGnuAttributeUnused() const  { return checkBit(e_gnu_attribute__unused__,p_modifierVector); }
