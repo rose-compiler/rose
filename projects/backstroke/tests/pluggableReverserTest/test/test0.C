@@ -21,7 +21,19 @@ void event0(model* m)
     //int t = m->i;
     //m->i = m->j;
     //m->j = t;
-    m->i = 1;
+    //
+#if 1
+    if (1)
+    {
+        ++m->i;
+    }
+    else {}
+#endif
+#if 0
+    {
+    }
+#endif
+#if 0
     m->i = 1;
     m->i = 1;
     m->i = 1;
@@ -31,6 +43,7 @@ void event0(model* m)
     m->i += 1;
     m->i += 1;
     m->i += 1;
+#endif
     //m->i = -m->i + t;
     //int q,w,e,r,t,y;
     //g = 0;

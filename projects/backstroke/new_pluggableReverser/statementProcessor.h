@@ -17,6 +17,8 @@ StmtPairs processIfStmt(SgIfStmt* if_stmt);
 class ExprStatementProcessor : public StatementProcessor
 {
 public:
+    ExprStatementProcessor() { name_ = "Expression Statement Processor"; }
+
     virtual StatementReversal process(SgStatement* stmt); 
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
@@ -24,6 +26,8 @@ public:
 class BasicBlockProcessor : public StatementProcessor
 {
 public:
+    BasicBlockProcessor() { name_ = "Basic Block Processor"; }
+
     virtual StatementReversal process(SgStatement* stmt); 
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };

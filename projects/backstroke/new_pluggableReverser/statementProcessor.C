@@ -121,9 +121,17 @@ StatementReversal BasicBlockProcessor::process(SgStatement* stmt)
 vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
+    
     SgBasicBlock* body = isSgBasicBlock(stmt);
     if (body == NULL)
         return results;
+
+    cout << body->get_statements().size() << endl;
+    if (body->get_statements().empty())
+    {
+        results.push_back(EvaluationResult(var_table));
+        return results;
+    }
 
     // Use two vectors to store intermediate results.
     vector<EvaluationResult> queue[2];

@@ -82,6 +82,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, c
         foreach (const EvaluationResult& r1, res)
         {
             bool discard = false;
+#if 1
             for (size_t i = 0; i < results.size(); ++i)
             {
                 EvaluationResult& r2 = results[i];
@@ -99,6 +100,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, c
                     }
                 }
             }
+#endif
 
             if (!discard)
                 results.push_back(r1);
@@ -137,6 +139,8 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
         vector<EvaluationResult> res = stmt_processor->evaluate_(stmt, var_table);
         foreach (EvaluationResult& r1, res)
         {
+            ROSE_ASSERT(!r1.getStatementProcessors().empty());
+            
             // Remove those variables from variable version table if they are not useful anymore.
             foreach (SgExpression* var, vars_to_remove)
             {
@@ -146,6 +150,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
             // If two results have the same variable table, we remove the one which has the higher cost.
 
             bool discard = false;
+#if 1
             for (size_t i = 0; i < results.size(); ++i)
             {
                 EvaluationResult& r2 = results[i];
@@ -163,6 +168,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
                     }
                 }
             }
+#endif
 
             if (!discard)
                 results.push_back(r1);
@@ -254,8 +260,13 @@ FuncDeclPairs EventProcessor::processEvent()
 
     foreach (EvaluationResult& res, results)
     {
-        //cout << res.getExpressionProcessors().size() << endl;
-        //cout << res.getStatementProcessors().size() << endl;
+        cout << res.getExpressionProcessors().size() << endl;
+        cout << res.getStatementProcessors().size() << endl;
+
+        foreach (StatementProcessor* p, res.getStatementProcessors())
+            cout << p->getName() << endl;
+        foreach (ExpressionProcessor* p, res.getExpressionProcessors())
+            cout << p->getName() << endl;
 
         StatementReversal stmt = processStatement(body, res);
 

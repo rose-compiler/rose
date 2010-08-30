@@ -122,6 +122,7 @@ class ProcessorBase
     EventProcessor* event_processor_;
 
 protected:
+    std::string name_;
 
     ExpressionReversal processExpression(SgExpression* exp);
     StatementReversal processStatement(SgStatement* stmt);
@@ -138,7 +139,10 @@ protected:
 public:
 
     ProcessorBase() : event_processor_(NULL) {}
+    ProcessorBase(const std::string& name) : event_processor_(NULL), name_(name) {}
     
+    std::string getName() const { return name_; }
+
     void setEventProcessor(EventProcessor* processor)
     {
         event_processor_ = processor;
@@ -158,7 +162,10 @@ public:
     {
         std::vector<EvaluationResult> results = evaluate(exp, var_table, is_value_used);
         foreach (EvaluationResult& result, results)
+        {
             result.addExpressionProcessor(this);
+            std::cout << "Processor added: " << typeid(this).name() << std::endl;
+        }
         return results;
     }
 };
@@ -176,7 +183,10 @@ public:
     {
         std::vector<EvaluationResult> results = evaluate(stmt, var_table);
         foreach (EvaluationResult& result, results)
+        {
             result.addStatementProcessor(this);
+            std::cout << "Processor added:" << typeid(this).name() << std::endl;
+        }
         return results;
     }
 
