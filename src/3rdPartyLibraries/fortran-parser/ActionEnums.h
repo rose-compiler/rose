@@ -133,6 +133,9 @@ static const int TypeAttrSpec_extends=TypeAttrSpecBase+1;
 static const int TypeAttrSpec_abstract=TypeAttrSpecBase+2;
 static const int TypeAttrSpec_bind=TypeAttrSpecBase+3;
 
+// DQ (8/29/2010): This is supposed to be an automatically generated file and it appears 
+// to not be generated correctly. Could there be other values that are similarly wrong!
+#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
 static const int ComponentAttrSpec_pointer=ComponentAttrSpecBase+0;
 static const int ComponentAttrSpec_dimension_paren=ComponentAttrSpecBase+1;
 static const int ComponentAttrSpec_dimension_bracket=ComponentAttrSpecBase+2;
@@ -140,6 +143,18 @@ static const int ComponentAttrSpec_allocatable=ComponentAttrSpecBase+3;
 static const int ComponentAttrSpec_access_spec=ComponentAttrSpecBase+4;
 static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+5;
 static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
+#else
+// DQ (8/29/2010): Newer values not automatically generated properly.
+static const int ComponentAttrSpec_access_spec=ComponentAttrSpecBase+0;
+static const int ComponentAttrSpec_allocatable=ComponentAttrSpecBase+1;
+static const int ComponentAttrSpec_codimension=ComponentAttrSpecBase+2;
+static const int ComponentAttrSpec_contiguous=ComponentAttrSpecBase+3;
+static const int ComponentAttrSpec_dimension=ComponentAttrSpecBase+4;
+static const int ComponentAttrSpec_pointer=ComponentAttrSpecBase+5;
+static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+6;
+static const int ComponentAttrSpec_len=ComponentAttrSpecBase+7;
+#endif
+
 
 static const int ProcComponentAttrSpec_pointer=ProcComponentAttrSpecBase+0;
 static const int ProcComponentAttrSpec_pass=ProcComponentAttrSpecBase+1;

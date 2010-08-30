@@ -142,7 +142,11 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_23.f90 \
      test2010_25.f90 \
      test2010_28.f90 \
-     canonicalExample.f90 
+     test2010_32.f90 \
+     test2010_33.f90 \
+     test2010_34.f90 \
+     test2010_35.f90 \
+     canonicalExample.f90
 
 
 if !ROSE_USING_GFORTRAN_VERSION_4_0
@@ -314,6 +318,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_24.f90 \
      test2010_26.f90 \
      test2010_31.f90 \
+     test2010_36.f90 \
+     test2010_37.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -518,6 +524,11 @@ testSuffixRules:
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_10.F08
 	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_11.f08
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_11.f08
+
+
+tests:
+	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 
 check-local:
 	@echo "Tests for Fortran."
