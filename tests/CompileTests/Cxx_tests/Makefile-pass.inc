@@ -665,6 +665,8 @@ test2008_16.C \
 test2009_01.C \
 test2009_02.C \
 test2009_03.C \
+test2009_04.C \
+test2009_05.C \
 test2009_12.C \
 test2009_15.C \
 test2009_20.C \
