@@ -38,6 +38,11 @@ struct StatementPackage
     VariableVersionTable var_table;
 };
 
+class EvaluationResultAttribute
+{
+    virtual ~EvaluationResultAttribute() {}
+};
+
 class EvaluationResult
 {
     // Variable version table
@@ -48,11 +53,13 @@ class EvaluationResult
     std::vector<ExpressionProcessor*> exp_processors_;
     std::vector<StatementProcessor*> stmt_processors_;
 
+    EvaluationResultAttribute* attribute_;
+
 public:
 
     EvaluationResult(const VariableVersionTable& table,
             const SimpleCostModel& cost_model = SimpleCostModel())
-        : var_table_(table), cost_(cost_model) {}
+        : var_table_(table), cost_(cost_model), attribute_(NULL) {}
 
     // In this update function, update every possible item in this structure.
     // Note the order!
@@ -85,6 +92,9 @@ public:
 
     const std::vector<StatementProcessor*>& getStatementProcessors() const
     { return stmt_processors_; }
+
+    EvaluationResultAttribute* getAttribute() const { return attribute_; }
+    void setAttribute(EvaluationResultAttribute* attr) { attribute_ = attr; }
 };
 
 struct ExpressionReversal
