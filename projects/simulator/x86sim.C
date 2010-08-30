@@ -231,18 +231,23 @@ public:
         return 1;
     }
 
-    /* Called by X86InstructionSemantics */
+    /* Called by X86InstructionSemantics for the HLT instruction */
     void hlt() {
         fprintf(stderr, "hlt\n");
         abort();
     }
 
-    /* Called by X86InstructionSemantics */
+    /* Called by X86InstructionSemantics for the INT instruction */
     void interrupt(uint8_t num) {
         if (num != 0x80) {
             fprintf(stderr, "Bad interrupt\n");
             abort();
         }
+        emulate_syscall();
+    }
+
+    /* Called by X86InstructionSemantics for the SYSENTER instruction */
+    void sysenter() {
         emulate_syscall();
     }
 
@@ -1477,6 +1482,8 @@ EmulationPolicy::emulate_syscall()
             for (int i=0; i<6; i++)
                 fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
+            fprintf(stderr, "dumping specimen's memory into core* files (this might take a while)...\n");
+            map.dump("core");
             abort();
         }
     }
