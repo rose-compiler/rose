@@ -309,21 +309,30 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
             if (section->get_mapped_xperm())
                 mapperms |= MemoryMap::MM_PROT_EXEC;
 
+            /* MapElement name for debugging. This is the file base name and section name concatenated. */
+            SgFile *sg_file = SageInterface::getEnclosingNode<SgFile>(file);
+            std::string::size_type file_basename_pos = sg_file->getFileName().find_last_of("/");
+            file_basename_pos = file_basename_pos==sg_file->getFileName().npos ? 0 : file_basename_pos+1;
+            std::string melmt_name = sg_file->getFileName().substr(file_basename_pos) +
+                                     "(" + section->get_name()->get_string() + ")";
+
             /* Map the left part to the file; right part is anonymous. */
-            if (p_debug)
-                fprintf(p_debug, "    Mapping   va 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64
-                        " at file offset 0x%08"PRIx64"\n", va, ltsz, va+ltsz, offset);
-            if (p_debug && rtsz>0)
-                fprintf(p_debug, "    Anonymous va 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64" zero filled\n",
-                        va+ltsz, rtsz, va+ltsz+rtsz);
             if (ltsz>0) {
+                if (p_debug) {
+                    fprintf(p_debug, "    Mapping   va 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64
+                            " at file offset 0x%08"PRIx64" for %s\n", va, ltsz, va+ltsz, offset, melmt_name.c_str());
+                }
                 MemoryMap::MapElement melmt(va, ltsz, &(file->get_data()[0]), offset, mapperms);
-                melmt.set_name(section->get_name()->get_string());
+                melmt.set_name(melmt_name);
                 map->insert(melmt);
             }
             if (rtsz>0) {
+                if (p_debug) {
+                    fprintf(p_debug, "    Anonymous va 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64
+                            " zero filled for %s\n", va+ltsz, rtsz, va+ltsz+rtsz, melmt_name.c_str());
+                }
                 MemoryMap::MapElement melmt(va+ltsz, rtsz, mapperms);
-                melmt.set_name(section->get_name()->get_string());
+                melmt.set_name(melmt_name);
                 map->insert(melmt);
             }
 
