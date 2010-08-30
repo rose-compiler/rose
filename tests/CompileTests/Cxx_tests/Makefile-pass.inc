@@ -668,6 +668,8 @@ test2009_03.C \
 test2009_04.C \
 test2009_05.C \
 test2009_06.C \
+test2009_08.C \
+test2009_09.C \
 test2009_12.C \
 test2009_15.C \
 test2009_20.C \
