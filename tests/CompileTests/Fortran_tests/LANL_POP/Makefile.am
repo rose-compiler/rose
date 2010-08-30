@@ -431,16 +431,22 @@ $(TEST_F03_Objects): $(TRANSLATOR)
 listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) $(F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
 	egrep -n "*"  $(srcdir)/$(?)
 
+check-parsing:
+	@echo "First make POP code using testParser."
+	@$(MAKE) TRANSLATOR_EXECUTABLE=testParser $(PASSING_TEST_Objects)
+
+check-analysis:
+	@echo "Second make POP code using testAnalysis."
+	@$(MAKE) TRANSLATOR_EXECUTABLE=testAnalysis $(PASSING_TEST_Objects)
+
 check-local:
 	@echo "Tests for Fortran (LANL POP)."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
-	@echo "First make POP code using testParser."
-	@$(MAKE) TRANSLATOR_EXECUTABLE=testParser $(PASSING_TEST_Objects)
+	@$(MAKE) check-parsing
 #	@$(MAKE) clean
-#	@echo "Second make POP code using testAnalysis."
-#	@$(MAKE) TRANSLATOR_EXECUTABLE=testAnalysis $(PASSING_TEST_Objects)
+#	@$(MAKE) check-analysis
 else
 	@echo "Skipping POP code tests when using the gfortran version 4.0.x compiler (fails to compile POP code)."
 endif

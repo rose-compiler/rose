@@ -56,7 +56,7 @@ getCurrentFilename()
             // This source file requires CPP processing, so this would be the generated file with the "_preprocessed.f*" suffix.
                filename = OpenFortranParser_globalFilePointer->generate_C_preprocessor_intermediate_filename(filename);
 
-               printf ("##### Using filename = %s for the name in the file_info for a CPP generated file \n",filename.c_str());
+            // printf ("##### Using filename = %s for the name in the file_info for a CPP generated file \n",filename.c_str());
              }
         }
        else
@@ -2097,10 +2097,10 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
   // Set the non defining declaration in the defining declaration (both are required)
      SgDerivedTypeStatement* nondefiningClassDeclaration = new SgDerivedTypeStatement(name.c_str(),SgClassDeclaration::e_struct,NULL,NULL);
      assert(classDeclaration != NULL);
-   // Liao 10/30/2009. we now ask for explicit creation of SgClassType. The constructor will not create it by default
+  // Liao 10/30/2009. we now ask for explicit creation of SgClassType. The constructor will not create it by default
      if (nondefiningClassDeclaration->get_type () == NULL) 
-       nondefiningClassDeclaration->set_type (SgClassType::createType(nondefiningClassDeclaration));
-     classDeclaration->set_type(nondefiningClassDeclaration->get_type ());
+          nondefiningClassDeclaration->set_type (SgClassType::createType(nondefiningClassDeclaration));
+     classDeclaration->set_type(nondefiningClassDeclaration->get_type());
 
   // nondefiningClassDeclaration->set_endOfConstruct(SOURCE_POSITION);
 
@@ -2147,6 +2147,26 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
      assert(classDeclaration->get_definition() != NULL);
 
      ROSE_ASSERT(classDeclaration->get_definition()->get_parent() != NULL);
+
+  // DQ (8/28/2010): Save the attributes used and clear the astAttributeSpecStack for this declaration (see test2010_34.f90).
+     while (astAttributeSpecStack.empty() == false)
+        {
+          printf ("Process attribute spec %d \n",astAttributeSpecStack.front());
+          setDeclarationAttributeSpec(classDeclaration,astAttributeSpecStack.front());
+
+          if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
+             {
+               printf ("astNameStack.size() = %zu \n",astNameStack.size());
+               if (astNameStack.empty() == false)
+                  {
+                    string type_attribute_string = astNameStack.front()->text;
+                    printf ("type_attribute_string = %s \n",type_attribute_string.c_str());
+                    astNameStack.pop_front();
+                  }
+             }
+
+          astAttributeSpecStack.pop_front();
+        }
 
      return classDeclaration;
    }
@@ -2392,6 +2412,18 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
         {
        // printf ("Process attribute spec %d ",astAttributeSpecStack.front());
           setDeclarationAttributeSpec(variableDeclaration,astAttributeSpecStack.front());
+
+          if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
+             {
+               printf ("astNameStack.size() = %zu \n",astNameStack.size());
+               if (astNameStack.empty() == false)
+                  {
+                    string type_attribute_string = astNameStack.front()->text;
+                    printf ("type_attribute_string = %s \n",type_attribute_string.c_str());
+                    astNameStack.pop_front();
+                  }
+             }
+
           astAttributeSpecStack.pop_front();
         }
 
@@ -3299,8 +3331,9 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
    }
 
 
+// void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec )
 void
-setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec )
+setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec )
    {
   // printf ("In setDeclarationAttributeSpec(): variableDeclaration = %p astAttributeSpec = %d \n",variableDeclaration,astAttributeSpec);
 
@@ -3330,6 +3363,47 @@ static const int AttrSpec_NOPASS=AttrSpecBase+21;
 static const int AttrSpec_NON_OVERRIDABLE=AttrSpecBase+22;
 static const int AttrSpec_DEFERRED=AttrSpecBase+23;
 #endif
+
+#define USE_DEFAULT_COMPONENT_ATTR_SPEC
+
+#ifndef USE_DEFAULT_COMPONENT_ATTR_SPEC
+  // Note that OFP has the wrong value for this variable so set it locally!
+     static const int ComponentAttrSpec_pointer     = ComponentAttrSpecBase+0;
+     static const int ComponentAttrSpec_allocatable = ComponentAttrSpecBase+3;
+     static const int ComponentAttrSpec_access_spec = ComponentAttrSpecBase+4;
+     static const int ComponentAttrSpec_kind        = ComponentAttrSpecBase+5;
+     static const int ComponentAttrSpec_len         = ComponentAttrSpecBase+6;
+#endif
+
+#if 0
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpecBase               = %d \n",ComponentAttrSpecBase);
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_pointer           = %d \n",ComponentAttrSpec_pointer);
+#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_dimension_paren   = %d \n",ComponentAttrSpec_dimension_paren);
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_dimension_bracket = %d \n",ComponentAttrSpec_dimension_bracket);
+#endif
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_allocatable       = %d \n",ComponentAttrSpec_allocatable);
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_access_spec       = %d \n",ComponentAttrSpec_access_spec);
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_kind              = %d \n",ComponentAttrSpec_kind);
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_len               = %d \n",ComponentAttrSpec_len);
+#if ROSE_OFP_MINOR_VERSION_NUMBER > 7
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_codimension       = %d \n",ComponentAttrSpec_codimension);
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_contiguous        = %d \n",ComponentAttrSpec_contiguous);
+     printf ("In setDeclarationAttributeSpec(): ComponentAttrSpec_dimension         = %d \n",ComponentAttrSpec_dimension);
+#endif
+#endif
+
+#ifndef USE_DEFAULT_COMPONENT_ATTR_SPEC
+  // DQ (8/28/2010): Test value of static variables.
+     ROSE_ASSERT(ComponentAttrSpecBase == ComponentAttrSpec_pointer);
+
+  // DQ (8/28/2010): This is a bug in OFP that these are equal.
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_allocatable);
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_access_spec);
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_kind);
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_len);
+#endif
+
 
      switch(astAttributeSpec)
         {
@@ -3395,8 +3469,13 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
           case AttrSpec_TARGET:       variableDeclaration->get_declarationModifier().get_typeModifier().setTarget();       break;
           case AttrSpec_VALUE:        variableDeclaration->get_declarationModifier().get_typeModifier().setValue();        break;
 
+       // DQ (8/28/2010): Added support required for type-attributes-spec values (TypeAttrSpec_bind does the same as AttrSpec_BINDC).
+          case TypeAttrSpec_extends:  variableDeclaration->get_declarationModifier().get_typeModifier().setExtends();      break;
+          case TypeAttrSpec_abstract: variableDeclaration->get_declarationModifier().get_typeModifier().setAbstract();     break;
+          case TypeAttrSpec_bind:     variableDeclaration->get_declarationModifier().get_typeModifier().setBind();         break;
+
        // This maps to C/C++ modifier settings.
-          case AttrSpec_EXTERNAL:     variableDeclaration->get_declarationModifier().get_storageModifier().setExtern(); break;
+          case AttrSpec_EXTERNAL:     variableDeclaration->get_declarationModifier().get_storageModifier().setExtern();    break;
           case AttrSpec_VOLATILE:     variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setVolatile(); break;
 
           case AttrSpec_PARAMETER:
@@ -3450,23 +3529,27 @@ static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+5;
 static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 */
           case ComponentAttrSpec_pointer:
-#if 0 //FMZ 6/15/2009 : this should be ok
+#if 1
+            // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
+            // FMZ 6/15/2009 : this should be ok
                printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
+            // ROSE_ASSERT(false);
 #endif
                break;
 
 #if ROSE_OFP_MINOR_VERSION_NUMBER == 7
        // DQ (4/5/2010): These have been removed from OFP 0.8.0
           case ComponentAttrSpec_dimension_paren:
-#if 0 //FMZ 6/15/2009 : this should be ok
+#if 0
+            // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
+            // FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
 #endif
-		// Laksono 2009.10.16: This is a Fortran legal syntax to have an array inside a type !
-	       variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();    break; 
-               //printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
-               //ROSE_ASSERT(false);
-         
+            // Laksono 2009.10.16: This is a Fortran legal syntax to have an array inside a type!
+               variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
+            // printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
+            // ROSE_ASSERT(false);
                break;
 
           case ComponentAttrSpec_dimension_bracket:
@@ -3482,19 +3565,40 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 
           case ComponentAttrSpec_access_spec:
                printf ("Error: ComponentAttrSpec_access_spec used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
+            // ROSE_ASSERT(false);
                break;
 
           case ComponentAttrSpec_kind:
                printf ("Error: ComponentAttrSpec_kind used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
+            // ROSE_ASSERT(false);
                break;
 
           case ComponentAttrSpec_len:
-#if 0 //FMZ 6/15/2009 : this should be ok
+#if 1
+            // DQ (8/28/2010): Uncommented this out (problems here are likely due to another bug where the ComponentAttrSpec_len is not set properly.
+            // FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_len used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
 #endif
+               break;
+
+       // DQ (8/29/2010): Added support for new enum values
+          case ComponentAttrSpec_codimension:
+               printf ("Error: ComponentAttrSpec_codimension used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
+               break;
+
+       // DQ (8/29/2010): Added support for new enum values
+          case ComponentAttrSpec_contiguous:
+               printf ("Error: ComponentAttrSpec_contiguous used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
+               break;
+
+       // DQ (8/29/2010): Added support for new enum values
+          case ComponentAttrSpec_dimension:
+               printf ("Error: ComponentAttrSpec_dimension used as an attribute specifier (unclear how to process this) \n");
+            // ROSE_ASSERT(false);
+               variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
                break;
 
           default:
@@ -3624,6 +3728,8 @@ convertVariableSymbolToFunctionCallExp( SgVariableSymbol* variableSymbol, Token_
 void
 convertExpressionOnStackToFunctionCallExp()
    {
+  // This function is only called by R1219 c_action_procedure_designator()
+
   // This function takes a varRefExp on the astExpressionStack and converts it to a function call of the same name.
   // This addresses to need to be able to change the type of construct represented initially with little information 
   // and so for which we assumed it was a variable and only later in the sequence of parsing actions discovered that 
@@ -3640,6 +3746,7 @@ convertExpressionOnStackToFunctionCallExp()
      SgVarRefExp* varRefExp = isSgVarRefExp(expression);
      if (varRefExp != NULL)
         {
+       // Take the varRefExp off the expression stack.
           astExpressionStack.pop_front();
           SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
 
@@ -3848,6 +3955,17 @@ processFunctionPrefix( SgFunctionDeclaration* functionDeclaration )
 SgFunctionRefExp*
 generateFunctionRefExp( Token_t* nameToken )
    {
+  // This function will generate a SgFunctionRefExp using just the function name and the current scope.
+  // If the function is found in a symbol table (iterating from the current scope to the global scope)
+  // then the SgFunctionRefExp is built using the found SgFunctionSymbol.  
+  // If no SgFunctionSymbol is found in the symbol tables from iterating through all the scopes, then 
+  // a new SgProcedureHeaderStatement (function declaration) is built and an associated SgFunctionSymbol 
+  // is inserted into the global scope.  
+
+  // Note that the global scope may not be correct if the function will be seen later in 
+  // a different scope (e.g. the current module's scope).  So a fixup is required and is 
+  // called from R1106 c_action_end_module_stmt().
+
      ROSE_ASSERT(nameToken != NULL);
      std::string name = nameToken->text;
 
@@ -3862,14 +3980,18 @@ generateFunctionRefExp( Token_t* nameToken )
   // SgExprListExp* functionArguments = isSgExprListExp(astExpressionStack.front());
   // astExpressionStack.pop_front();
 
+     SgFunctionRefExp* functionRefExp = NULL;
      SgName functionName              = nameToken->text;
      SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(functionName,astScopeStack.front());
 
-     SgFunctionRefExp* functionRefExp = NULL;
+#if 0
+     printf ("In generateFunctionRefExp(): called trace_back_through_parent_scopes_lookup_function_symbol() -- functionSymbol = %p \n",functionSymbol);
+#endif
+
      if (functionSymbol != NULL)
         {
-       // Found the function symbol, so build the function call...
-       // printf ("Found the function symbol, so build the function call... \n");
+       // Found the function symbol, so build the function ref expression using the existing symbol...
+       // printf ("Found the function symbol, so build the function ref expression using the existing symbol... \n");
 
           functionRefExp = new SgFunctionRefExp(functionSymbol,NULL);
           setSourcePosition(functionRefExp);
@@ -3888,13 +4010,15 @@ generateFunctionRefExp( Token_t* nameToken )
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Generated a SgProcedureHeaderStatement for name = %s functionDeclaration = %p \n",name.c_str(),functionDeclaration);
 
+       // This is the first function declaration for this function name so we have to set it as the firstNondefiningDeclaration.
+       // Note that the first nondefining declaration is what is always used for building symbols.
           functionDeclaration->set_firstNondefiningDeclaration(functionDeclaration);
           functionDeclaration->set_definingDeclaration(NULL);
 
        // Set the parent to the global scope, mostly just to have it be non-NULL (checked by internal error checking).
           ROSE_ASSERT(astScopeStack.empty() == false);
 
-       // The global scope is the on the bottom of the stack.
+       // The global scope is ALWAYS on the bottom of the stack.
           SgGlobal* globalScope = isSgGlobal(astScopeStack.back());
           ROSE_ASSERT(globalScope != NULL);
 
@@ -3946,7 +4070,7 @@ generateFunctionCall( Token_t* nameToken )
 
 
   // DQ (5/14/2008): Now cleanup the SgInitializedName, the SgVariableSymbol, and the 
-  // SgVariableDeclarationStatement; since these are now invalid how that the name is 
+  // SgVariableDeclarationStatement; since these are now invalid now that the name is 
   // interpreted as a function call.  Note that we see R619 a little bit too late in the
   // parsing (after we have interpreted the name as a variable).
 
@@ -3955,7 +4079,7 @@ generateFunctionCall( Token_t* nameToken )
      SgFunctionSymbol* functionSymbol = NULL;
      SgClassSymbol*    classSymbol    = NULL;
      
-     SgName variableName = nameToken->text;
+     SgName variableName            = nameToken->text;
      SgScopeStatement* currentScope = astScopeStack.front();
 
      ROSE_ASSERT(currentScope != NULL);
@@ -3993,6 +4117,11 @@ generateFunctionCall( Token_t* nameToken )
 
           delete variableSymbol;
           variableSymbol = NULL;
+        }
+       else
+        {
+       // DQ (8/28/2010): Report more diagnostics.
+       // printf ("Warning: In generateFunctionCall() there was no SgVariableSymbol found to convert to a SgFunctionSymbol \n");
         }
    }
 
@@ -4088,6 +4217,14 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
   // Go looking for if this was a previously declared function
   // SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),astScopeStack.front());
      SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),currentScopeOfFunctionDeclaration);
+
+#if 1
+     printf ("In buildProcedureSupport(): functionSymbol = %p from trace_back_through_parent_scopes_lookup_function_symbol() \n",functionSymbol);
+  // printf ("In buildProcedureSupport(): procedureDeclaration scope = %p = %s \n",procedureDeclaration->get_scope(),procedureDeclaration->get_scope()->class_name().c_str());
+     printf ("In buildProcedureSupport(): procedureDeclaration scope = %p \n",procedureDeclaration->get_scope());
+     printf ("In buildProcedureSupport(): currentScopeOfFunctionDeclaration = %p = %s \n",currentScopeOfFunctionDeclaration,currentScopeOfFunctionDeclaration->class_name().c_str());
+#endif
+
      if (functionSymbol != NULL)
         {
 //FMZTEST
@@ -4111,6 +4248,9 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
        // It might be that we should build a nondefining declaration for use in the symbol.
           functionSymbol = new SgFunctionSymbol(procedureDeclaration);
           currentScopeOfFunctionDeclaration->insert_symbol(procedureDeclaration->get_name(), functionSymbol);
+#if 1
+          printf ("In buildProcedureSupport(): Added SgFunctionSymbol = %p to scope = %p = %s \n",functionSymbol,currentScopeOfFunctionDeclaration,currentScopeOfFunctionDeclaration->class_name().c_str());
+#endif
         }
 
   // Now push the function definition and the function body (SgBasicBlock) onto the astScopeStack
@@ -4737,8 +4877,6 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
         }
    }
 
-
-
 void
 convertBaseTypeOnStackToPointer()
    {
@@ -4785,4 +4923,71 @@ add_external_team_decl(string teamName) {
 
              return teamId;
  }
+
+
+void
+fixupModuleScope( SgClassDefinition* moduleScope )
+   {
+  // Fixes up function symbols to be in the correct scope when the function call appears before the function declaration.
+     ROSE_ASSERT(moduleScope != NULL);
+
+     ROSE_ASSERT(moduleScope->containsOnlyDeclarations() == true);
+     const SgDeclarationStatementPtrList & declarationList = moduleScope->getDeclarationList();
+
+  // printf ("Inside of fixupModuleScope(moduleScope = %p) \n",moduleScope);
+
+     SgDeclarationStatementPtrList::const_iterator i = declarationList.begin();
+     while (i != declarationList.end())
+        {
+          SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(*i);
+          if (functionDeclaration != NULL)
+             {
+            // Note that at this point where fixupModuleScope() is called the astScopeStack has already poped the module scope.
+            // So a valid local_symbol means that the declaration was not placed into the module scope (e.g incorrectly placed
+            // into the global scope).
+
+            // Test if there is a valid symbol associated with each function declaration.
+               SgSymbol* tempSymbol = functionDeclaration->get_symbol_from_symbol_table();
+               if (tempSymbol == NULL)
+                  {
+                 // These function without a valid symbol need to be fixed up.
+                    printf ("(tempSymbol == NULL): Identified a function declaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+
+                    SgName variableName              = functionDeclaration->get_name();
+                    SgVariableSymbol* variableSymbol = NULL;
+                    SgFunctionSymbol* functionSymbol = NULL;
+                    SgClassSymbol*    classSymbol    = NULL;
+
+                    trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,moduleScope,variableSymbol,functionSymbol,classSymbol);
+
+                    if (functionSymbol != NULL)
+                       {
+                         if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                              printf ("Found functionSymbol = %p function name = %s (erasing all traces of this function in the wrong scope) \n",functionSymbol,variableName.str());
+
+                         SgSymbolTable* symbolTable = isSgSymbolTable(functionSymbol->get_parent());
+                         ROSE_ASSERT(symbolTable != NULL);
+
+                      // Remove the symbol from the scope were it was first put (incorrectly).
+                         symbolTable->remove(functionSymbol);
+
+                      // Insert the functionSymbol into the moduleScope
+                         moduleScope->insert_symbol(variableName,functionSymbol);
+                       }
+                      else
+                       {
+                      // DQ (8/28/2010): Report more diagnostics.
+                         printf ("Warning: In fixupModuleScope() there was no SgFunctionSymbol found reset into the module scope \n");
+                       }
+                  }
+                 else
+                  {
+                 // These functions don't require any fixup.
+                 // printf ("(local_symbol != NULL): Identified a function declaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                  }
+             }
+
+          i++;
+        }
+   }
 
