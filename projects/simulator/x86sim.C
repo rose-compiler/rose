@@ -1351,23 +1351,26 @@ EmulationPolicy::emulate_syscall()
        }
 
         case 240: { /*0xf0, futex*/
-            static const Translate opflags[] = { TF(FUTEX_PRIVATE_FLAG),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_FD),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
+            static const Translate opflags[] = {
+#ifdef FUTEX_CMD_MASK
+                TF(FUTEX_PRIVATE_FLAG),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
+                TF2(FUTEX_CMD_MASK, FUTEX_FD),
+                TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
+                TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
+                TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
+                TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
+                TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
 #ifdef FUTEX_WAIT_BITSET
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
 #endif
 #ifdef FUTEX_WAKE_BITSET
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
 #endif
-                                                 T_END };
+#endif
+                T_END };
             syscall_enter("futex", "pfdppd", opflags);
             //uint32_t addr1=arg(0), op=arg(1), val1=arg(2), ptimeout=arg(3), addr2=arg(4), val3=arg(5);
             writeGPR(x86_gpr_ax, -ENOSYS);
