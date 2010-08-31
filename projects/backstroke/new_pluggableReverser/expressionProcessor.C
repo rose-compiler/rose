@@ -40,6 +40,10 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(SgExpression* exp, co
     return results;
 }
 
+
+/******************************************************************************
+ **** Definition of member functions of IdentityExpressionProcessor ***********/
+
 ExpressionReversal IdentityExpressionProcessor::process(SgExpression* exp)
 {
     return ExpressionReversal(copyExpression(exp), copyExpression(exp));

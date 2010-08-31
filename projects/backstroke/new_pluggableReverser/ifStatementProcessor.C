@@ -105,6 +105,12 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             {
                 EvaluationResult new_res2 = new_res;
                 new_res2.update(res3);
+
+                // Since we store the branch flag here, we add the cost by 1.
+                SimpleCostModel cost;
+                cost.increaseStoreCount();
+                new_res2.setCost(cost);
+
                 results.push_back(new_res2);
             }
         }

@@ -25,9 +25,11 @@ void event0(model* m)
 #if 1
     if (1)
     {
-        ++m->i;
+        m->i = 0;
     }
-    else {}
+    else {
+        m->i = 1;
+    }
 #endif
 #if 0
     {

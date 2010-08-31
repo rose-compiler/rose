@@ -87,6 +87,9 @@ public:
     const SimpleCostModel& getCost() const
     { return cost_; }
 
+    void setCost(const SimpleCostModel& cost)
+    { cost_ = cost; }
+
     const std::vector<ExpressionProcessor*>& getExpressionProcessors() const
     { return exp_processors_; }
 
