@@ -625,12 +625,21 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionStartForName(SgFunctionDefinition* node, const VarName& var);
 
-    /** Get name:num mappings for all uses at this node.
+    /** Get name:num mappings for all uses at this node. For example, if p.x appears,
+     * there will be a use for both p and p.x
      *
      * @param node The node to get uses for.
      * @return A table mapping VarName->(num, defNode) for every varName used at node. Empty table otherwise.
      */
     NumNodeRenameTable getUsesAtNode(SgNode* node);
+
+    /** Get name:num mappings for the original uses at this node. For example, if p.x appears,
+     * there will be a use for p.x, but not for p.
+     *
+     * @param node The node to get uses for.
+     * @return A table mapping VarName->(num, defNode) for every varName used at node. Empty table otherwise.
+     */
+    NumNodeRenameTable getOriginalUsesAtNode(SgNode* node);
 
     /** Get name:num mapping for use of the given variable at this node.
      *
