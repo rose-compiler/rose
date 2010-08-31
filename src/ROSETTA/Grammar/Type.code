@@ -4714,11 +4714,16 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
              {
                result = isSgModifierType(t);
              }
+
+#if 0
+       // DQ (8/27/2010): There is no problem with t not being a SgModifierType.
             else
              {
             // We want to later make this an error (the cause for this problem is the change to the build API for modifiers.
-               printf ("Error: SageBuilder::buildModifierType(SgType*) was called inapropriately internally \n");
+               ROSE_ASSERT(t != NULL);
+               printf ("Error: SageBuilder::buildModifierType(SgType*) was called inapropriately internally t = %p = %s \n",t,t->class_name().c_str());
              }
+#endif
 #endif
           ROSE_ASSERT(result != NULL);
         }

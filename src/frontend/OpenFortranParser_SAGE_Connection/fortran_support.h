@@ -219,7 +219,9 @@ SgFunctionType* generateImplicitFunctionType( std::string functionName);
 
 extern void buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attribute_spec_enum kind, Token_t *label, Token_t *sourcePositionToken );
 
-void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec );
+// DQ (8/28/2010): This is now generalized to support any SgDeclarationStatement (fix for test2010_34.f90; required for type declarations)
+// void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec );
+void setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec );
 
 SgArrayType* convertTypeOnStackToArrayType ( int count );
 
@@ -269,6 +271,9 @@ void generateAssignmentStatement( Token_t* label, bool isPointerAssignment );
 void convertBaseTypeOnStackToPointer();
 
 SgVariableSymbol* add_external_team_decl( std::string );
+
+//! Fixes up function symbols to be in the correct scope when the function call appears before the function declaration.
+void fixupModuleScope( SgClassDefinition* moduleScope );
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
