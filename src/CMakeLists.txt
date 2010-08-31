@@ -293,8 +293,7 @@ set(roseBinaryFormats_fileList_part0
    )
 
 set(roseBinaryLoader_SRC
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/binaryLoader.C
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoaderGeneric.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoader.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoaderElf.C
    )
 

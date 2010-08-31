@@ -1,14 +1,26 @@
 #include "sage3basic.h"
-#include "binaryLoader.h"
-#include <fstream>
+#include "BinaryLoaderElf.h"
 
-#include "BinaryLoaderGeneric.h" // TODO remove
-#include "BinaryLoaderElf.h" //TODO remove
+#include <fstream>
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+
+/* This binary loader can handle all ELF files. */
+bool
+BinaryLoaderElf::can_load(SgAsmGenericHeader *hdr) const
+{
+    return isSgAsmElfFileHeader(hdr)!=NULL;
+}
+
+
+
+
+
+
+
 
 #if 0
 void
@@ -108,6 +120,12 @@ getLdLibraryPaths(SgAsmElfFileHeader* /*header*/)
 //      /etc/ld.so.* - there are a bunch of files that can alter behavior - they are not handled
 //      -z nodeflib  - aparently different behavior is warrented when linked w/ -z nodeflib, 
 //                       I'm not sure how to detect this, so it is ignored
+//      vdso         - the linux virtual dynamic shared object is not loaded, but we might want
+//                     a way to simulate this in the future. [RPM 2010-08-31]
+//      interference - the methods used by ROSE to load an executable (namely, environment variables)
+//                     interfere with the loading of ROSE itself. [RPM 2010-08-31]
+//      diagnostics  - we should have some way to produce diagnostics similar to those that can be
+//                     produced by the readl loader.  E.g., LD_SHOW_AUXV, etc. [RPM 2010-08-31]
 //  
 // LD_PRELOAD - whitespace separated list of additional libraries (complex qualification for setuid)
 // [NOT SUPPORTED] /etc/ld.so.preload 
@@ -209,7 +227,7 @@ BinaryLoaderElf::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Container<st
 void
 BinaryLoaderElf::addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections)
 {
-    BinaryLoaderGeneric::addSectionsForLayout(header, allSections);
+    BinaryLoader::addSectionsForLayout(header, allSections);
 #if 0 /* the Loader seems to do all the "right" stuff with this */
     SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(header);
     ROSE_ASSERT(elfHeader != NULL);
@@ -238,8 +256,7 @@ BinaryLoaderElf::addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSe
 /* FIXME: Move this to src/ROSETTA where it belongs. [RPM 2010-08-31] */
 typedef Rose_STL_Container<SgAsmElfSection*> SgAsmElfSectionPtrList;
 
-namespace BinaryLoader {
-namespace ElfSupport {
+namespace BinaryLoader_ElfSupport {
 enum {
     VER_FLG_BASE=0x1,
     VER_FLG_WEAK=0x2,
@@ -1114,7 +1131,7 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
   //
   // build map from SgAsmGenericSection to its symbolmap map<SgAsmGenericSection*,SymbolMap>
   // biuld list of
-  typedef BinaryLoader::ElfSupport::SymbolMap SymbolMap;
+  typedef BinaryLoader_ElfSupport::SymbolMap SymbolMap;
   typedef SymbolMap::BaseMap BaseMap;
  
 
@@ -1235,8 +1252,8 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
   return true;
 }
 
-}// end namespace ElfSupport
-}// end namespace BinaryLoader
+}// end namespace BinaryLoader_ElfSupport
+
 
 /*************************************************************************************************************************
  * End of low-level ELF stuff.  Now back to the BinaryLoaderElf class itself....
@@ -1244,19 +1261,10 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
 
 
 
-bool
-BinaryLoaderElf::relocateAllLibraries(SgBinaryComposite* binaryFile)
+void
+BinaryLoaderElf::fixupSections(SgAsmInterpretation *interp)
 {
-    using namespace BinaryLoader;
-    using namespace ElfSupport;
-
-    //SectionNameMap allSectionsMap;
-    //SectionNameMap loadableSectionsMap;
-    for(size_t i=0; i < binaryFile->get_interpretations()->get_interpretations().size(); ++i){
-        BinaryLoader::ElfSupport::relocateInterpLibraries(binaryFile->get_interpretations()->get_interpretations()[i]);
-    }
-  
-    return true;
+    BinaryLoader_ElfSupport::relocateInterpLibraries(interp);
 
     /*
     // 1. Get section map (name -> list<section*>)

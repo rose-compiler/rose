@@ -1,51 +1,116 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+#include "BinaryLoader.h"
+#include "BinaryLoaderElf.h"
 #include "Loader.h"
-#include "Disassembler.h"
-#include "binaryLoader.h"
 
-#include "BinaryLoaderGeneric.h" // TODO remove
+std::vector<BinaryLoader*> BinaryLoader::loaders;
 
-bool
-BinaryLoaderGeneric::load(SgBinaryComposite* binaryFile, SgAsmGenericFile* executableAsmFile)
+/* class method */
+void
+BinaryLoader::initclass()
 {
-    ROSE_ASSERT(binaryFile->get_genericFileList()->get_files().empty());
-   
-    if (executableAsmFile == NULL) {
-        executableAsmFile = createAsmAST(binaryFile, binaryFile->get_sourceFileNameWithPath());
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        register_subclass(new BinaryLoader);            /* generically handles all formats, albeit with limited functionality */
+        register_subclass(new BinaryLoaderElf);
     }
-    ROSE_ASSERT(executableAsmFile != NULL);
-  
-    if (get_perform_dynamic_linking())
-        loadAllLibraries(binaryFile);
-    if (get_perform_layout())
-        layoutAllLibraries(binaryFile);
-    if (get_perform_relocations())
-        relocateAllLibraries(binaryFile);
-    if (get_perform_disassembly())
-        disassembleAllLibraries(binaryFile);
-    return true;
 }
 
-bool
-BinaryLoaderGeneric::loadAllLibraries(SgBinaryComposite* binaryFile)
+/* class method */
+void
+BinaryLoader::register_subclass(BinaryLoader *loader)
 {
-    ROSE_ASSERT(binaryFile != NULL);
-    SgAsmInterpretationPtrList &interps = binaryFile->get_interpretations()->get_interpretations();
-    for (size_t i=0; i < interps.size();++i) {
-        loadInterpLibraries(binaryFile, interps[i]);
+    initclass();
+    ROSE_ASSERT(loader!=NULL);
+    loaders.push_back(loader);
+}
+
+/* class method */
+BinaryLoader *
+BinaryLoader::lookup(SgAsmInterpretation *interp)
+{
+    BinaryLoader *retval = NULL;
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (size_t i=0; i<headers.size(); i++) {
+        BinaryLoader *candidate = lookup(headers[i]);
+        if (retval && retval!=candidate)
+            throw Exception("interpretation has multiple loaders");
+        retval = candidate;
     }
-    return true;
-}  
+    return retval;
+}
+
+/* class method */
+BinaryLoader *
+BinaryLoader::lookup(SgAsmGenericHeader *header)
+{
+    initclass();
+    for (size_t i=loaders.size(); i>0; --i) {
+        if (loaders[i-1]->can_load(header))
+            return loaders[i-1];
+    }
+    throw Exception("no loader for architecture");
+}
+
+/* class method */
+void
+BinaryLoader::load(SgBinaryComposite *composite)
+{
+    /* Parse the initial binary file to create an AST and the initial SgAsmInterpretation(s). */
+    ROSE_ASSERT(composite->get_genericFileList()->get_files().empty());
+    SgAsmGenericFile *file = createAsmAST(composite, composite->get_sourceFileNameWithPath());
+    ROSE_ASSERT(file!=NULL);
+    
+    /* Find an appropriate loader for each interpretation and parse, map, link, and/or relocate each interpretation as
+     * specified by the loader properties. */
+    const SgAsmInterpretationPtrList &interps = composite->get_interpretations()->get_interpretations();
+    for (size_t i=0; i<interps.size(); i++) {
+        BinaryLoader *loader = lookup(interps[i])->clone(); /* clone so we can change properties locally */
+        ROSE_ASSERT(loader!=NULL); /* lookup() should have thrown an exception already */
+        try {
+            loader->load(interps[i]);
+        } catch (...) {
+            delete loader;
+            throw;
+        }
+    }
+}
+
+void
+BinaryLoader::load(SgAsmInterpretation *interp)
+{
+    if (get_perform_dynamic_linking())
+        linkDependencies(interp);
+    if (get_perform_layout())
+        remapSections(interp);
+    if (get_perform_relocations())
+        fixupSections(interp);
+}
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool
-BinaryLoaderGeneric::isHeaderSimilar(const SgAsmGenericHeader* matchHeader, const SgAsmGenericHeader* candidateHeader)
+BinaryLoader::isHeaderSimilar(const SgAsmGenericHeader* matchHeader, const SgAsmGenericHeader* candidateHeader)
 {
     return (matchHeader->variantT() == candidateHeader->variantT());
 }
 
 SgAsmGenericHeaderPtrList
-BinaryLoaderGeneric::findSimilarHeaders(const SgAsmGenericHeader* matchHeader, const SgAsmGenericHeaderPtrList& candidateHeaders)
+BinaryLoader::findSimilarHeaders(const SgAsmGenericHeader* matchHeader, const SgAsmGenericHeaderPtrList& candidateHeaders)
 {
     SgAsmGenericHeaderPtrList matches;
     for (size_t i=0; i<candidateHeaders.size(); ++i) {
@@ -57,11 +122,8 @@ BinaryLoaderGeneric::findSimilarHeaders(const SgAsmGenericHeader* matchHeader, c
 }
 
 SgAsmGenericFile* 
-BinaryLoaderGeneric::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
+BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
 {
-    if (get_verbose(binaryFile) > 0)
-        printf("Loading Binary %s \n", filePath.c_str());
-
     ROSE_ASSERT(!filePath.empty());
   
     SgAsmGenericFile* file = SgAsmExecutableFileFormat::parseBinaryFormat(filePath.c_str());
@@ -71,7 +133,7 @@ BinaryLoaderGeneric::createAsmAST(SgBinaryComposite* binaryFile, std::string fil
     binaryFile->get_genericFileList()->get_files().push_back(file);
     file->set_parent(binaryFile);
 
-    /* Add a new disassembly interpretation to the SgBinaryComposite object for each header of the newly parsed
+    /* Add a new interpretation to the SgBinaryComposite object for each header of the newly parsed
      * SgAsmGenericFile for which a suitable interpretation does not already exist. */
     const SgAsmGenericHeaderPtrList &headers = file->get_headers()->get_headers();
     SgAsmInterpretationPtrList &interps = binaryFile->get_interpretations()->get_interpretations();
@@ -102,11 +164,13 @@ BinaryLoaderGeneric::createAsmAST(SgBinaryComposite* binaryFile, std::string fil
   return file;
 }
 
-bool
-BinaryLoaderGeneric::loadInterpLibraries(SgBinaryComposite* binaryFile, SgAsmInterpretation* interp)
+/* used to be called loadInterpLibraries */
+void
+BinaryLoader::linkDependencies(SgAsmInterpretation* interp)
 {
-    ROSE_ASSERT(binaryFile != NULL);
     ROSE_ASSERT(interp != NULL);
+    SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
+    ROSE_ASSERT(composite != NULL);
   
     /* Bootstrap DLL list - these are library names, not file paths. On *NIX machines these are called shared libraries (.so). */
     Rose_STL_Container<std::string> filesAlreadyLoaded;
@@ -121,10 +185,10 @@ BinaryLoaderGeneric::loadInterpLibraries(SgBinaryComposite* binaryFile, SgAsmInt
         Rose_STL_Container<std::string> filesToLoad = getDLLs(header, filesAlreadyLoaded);
         for(size_t i=0; i<filesToLoad.size(); ++i){
             std::string dllPath = filesToLoad[i];
-            if (get_verbose(binaryFile) > 0) {
+            if (get_verbose(composite) > 0) {
                 printf("Loading: %s\n", dllPath.c_str());
             }
-            SgAsmGenericFile* newFile = createAsmAST(binaryFile,dllPath);
+            SgAsmGenericFile* newFile = createAsmAST(composite, dllPath);
             ROSE_ASSERT(newFile != NULL); // TODO more user friendly fail notification
             filesAlreadyLoaded.push_back(dllPath); /* Mark loaded by dllPath */
             
@@ -132,22 +196,11 @@ BinaryLoaderGeneric::loadInterpLibraries(SgBinaryComposite* binaryFile, SgAsmInt
             unresolvedHeaders.insert(unresolvedHeaders.end(), newHeaders.begin(), newHeaders.end());
         }
     }
-
-    return true;
 }
 
-bool
-BinaryLoaderGeneric::layoutAllLibraries(SgBinaryComposite* binaryFile)
-{
-    SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
-    for(size_t i=0; i < interps.size(); ++i){
-        layoutInterpLibraries(binaryFile,interps[i]);
-    }
-    return true;
-}
-
-bool
-BinaryLoaderGeneric::layoutInterpLibraries(SgBinaryComposite*, SgAsmInterpretation* interp)
+/* Used to be called layoutInterpLibraries */
+void
+BinaryLoader::remapSections(SgAsmInterpretation* interp)
 {
     SgAsmGenericSectionPtrList allSections;
     Loader* loader = Loader::find_loader(interp->get_headers()->get_headers().front());
@@ -156,33 +209,27 @@ BinaryLoaderGeneric::layoutInterpLibraries(SgBinaryComposite*, SgAsmInterpretati
         addSectionsForLayout(header, allSections);		       
     }
 
-    //FIXME
-    //MCB: Note - this will likely mess up actual dynamic linking, but was necessary
-    //     to get regressions to pass - a more nuanced solution is required
-    //     (failed for fnord.ppc, testConstants)
-    //MemoryMap* memMap = loader->map_all_sections(interp->get_map(),allSections);
     MemoryMap* memMap = loader->map_code_sections(interp->get_map(), allSections);
     interp->set_map(memMap);
-    return true;
 }
 
 void
-BinaryLoaderGeneric::addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections)
+BinaryLoader::addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections)
 {
     allSections.insert(allSections.end(),
                        header->get_sections()->get_sections().begin(),
 		       header->get_sections()->get_sections().end());
 }
 
-bool
-BinaryLoaderGeneric::relocateAllLibraries(SgBinaryComposite* binaryFile)
+/* Used to be called relocateAllLibraries */
+void
+BinaryLoader::fixupSections(SgAsmInterpretation *interp)
 {
     // 1. Get section map (name -> list<section*>)
     // 2. Create Symbol map from relevant sections (.dynsym)
     // 3. Create Extent sorted list of sections
     // 4. Collect Relocation Entries.
     // 5.  for each relocation entry, perform relocation
-    return false;
 }
 
 size_t wordSizeOfFile(SgAsmGenericFile* file)
@@ -195,7 +242,7 @@ size_t wordSizeOfFile(SgAsmGenericFile* file)
 }
 
 Rose_STL_Container<std::string>
-BinaryLoaderGeneric::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Container<std::string> &dllFilesAlreadyLoaded)
+BinaryLoader::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Container<std::string> &dllFilesAlreadyLoaded)
 {
     Rose_STL_Container<std::string> files;
     ROSE_ASSERT(header != NULL);
@@ -208,15 +255,4 @@ BinaryLoaderGeneric::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Containe
             files.push_back(file);
     }
     return files;
-}
-
-bool
-BinaryLoaderGeneric::disassembleAllLibraries(SgBinaryComposite* binaryFile)
-{
-    SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
-    for (size_t i=0; i<interps.size(); ++i) {
-        SgAsmInterpretation* interp = interps[i];
-        Disassembler::disassembleInterpretation(interp);
-    }
-    return true;
 }
