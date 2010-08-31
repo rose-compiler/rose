@@ -694,6 +694,7 @@ test2010_03.C \
 test2010_04.C \
 test2010_05.C \
 test2010_06.C \
+test2010_11.C \
 test2010_18.C \
 test2010_19.C \
 test_int_lexemes.C \
