@@ -236,12 +236,6 @@ private:
      */
     DefUseTable useTable;
 
-    /** This is the table that is populated with all the use information for all the variables
-     * at all the nodes. It is populated during the VarDefUse Traversal and contains the varRefs
-     * to the actual uses of the variables.
-     */
-    DefUseTable useLocTable;
-
     /** Holds a list of the locations that a particular name is first
      * defined.
      *
@@ -462,13 +456,13 @@ public:
 
     void printRenameTable(const VarName& var);
 
-    void printRenameTable(const NodeNumRenameTable& table);
+    static void printRenameTable(const NodeNumRenameTable& table);
 
-    void printRenameTable(const NumNodeRenameTable& table);
+    static void printRenameTable(const NumNodeRenameTable& table);
 
-    void printRenameEntry(const NodeNumRenameEntry& entry);
+    static void printRenameEntry(const NodeNumRenameEntry& entry);
     
-    void printRenameEntry(const NumNodeRenameEntry& entry);
+    static void printRenameEntry(const NumNodeRenameEntry& entry);
 
 
 

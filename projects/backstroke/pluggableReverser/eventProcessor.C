@@ -40,9 +40,9 @@ VariableRenaming* ProcessorBase::getVariableRenaming()
 	return event_processor_->getVariableRenaming();
 }
 
-vector<SgExpression*> ProcessorBase::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite, VariableRenaming::NumNodeRenameEntry definitions)
+vector<SgExpression*> ProcessorBase::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
-	return event_processor_->restoreVariable(variable, useSite, definitions);
+	return event_processor_->restoreVariable(variable, availableVariables, definitions);
 }
 
 ExpressionReversalVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
@@ -160,15 +160,15 @@ StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const V
  * at the given version.
  *
  * @param variable name of the variable to be restored
- * @param useSite location where the reverse expression will go
+ * @param availableVariables variables whos values are currently available
  * @return definitions the version of the variable which should be restored
  */
-vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 	VariableRenaming::NumNodeRenameEntry definitions)
 {
 	//First, check if the variable needs restoring at all. If it has the desired version, there is nothing to do
 	vector<SgExpression*> results;
-	if (definitions == getVariableRenaming()->getReachingDefsAtNodeForName(useSite, variable))
+	if (availableVariables.matchesVersion(variable, definitions))
 	{
 		results.push_back(VariableRenaming::buildVariableReference(variable));
 		return results;
@@ -176,8 +176,14 @@ vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName 
 
 	foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
 	{
-		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, useSite, definitions);
-		results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
+		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, availableVariables, definitions);
+		
+		//FIXME: THis is a temporary patch for an infinite recursion problem
+		if (!restorerOutput.empty())
+		{
+			return restorerOutput;
+		}
+		//results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
 	}
 
 	return results;

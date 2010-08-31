@@ -27,7 +27,7 @@ private:
 	
         /** Reverses an assignment op. Returns true on success and false on failure.
          * @param reverseExpressions a list of expressions, to be executed in the specified order */
-        bool handleAssignOp(SgAssignOp* varRef, SgExpression*& reverseExpressions);
+        bool handleAssignOp(SgAssignOp* varRef, const VariableVersionTable& availableVariables, SgExpression*& reverseExpressions);
 
 	std::multimap<int, SgExpression*> collectUsesForVariable(VariableRenaming::VarName name, SgNode* node);
 };
@@ -35,15 +35,15 @@ private:
 /** The redefine technique re-executes the reaching definition to obtain the value of a variable. */
 class RedefineValueRestorer : public VariableValueRestorer
 {
-	/**
-	 * Given a variable and a version, returns an expression evaluating to the value of the variable
-	 * at the given version.
-	 *
+        /**
+         * Given a variable and a version, returns an expression evaluating to the value of the variable
+         * at the given version.
+         *
          * @param variable name of the variable to be restored
-         * @param useSite location where the reverse expression will go
+         * @param availableVariables variables whos values are currently available
          * @return definitions the version of the variable which should be restored
          */
-        virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+        virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions);
 
 private:
@@ -52,18 +52,20 @@ private:
 	
 	/** Returns true if an expression calls any functions or modifies any variables. */
 	static bool isModifyingExpression(SgExpression* expr, VariableRenaming* variableRenamingAnalysis);
+
+        static VariableRenaming::NumNodeRenameTable getOriginalUsesAtNode(VariableRenaming& varRenaming, SgNode* node);
 };
 
 class ExtractFromUseRestorer : public VariableValueRestorer
 {
-	/**
+        /**
          * Given a variable and a version, returns an expression evaluating to the value of the variable
-	 * at the given version.
-	 *
+         * at the given version.
+         *
          * @param variable name of the variable to be restored
-         * @param useSite location where the reverse expression will go
+         * @param availableVariables variables whos values are currently available
          * @return definitions the version of the variable which should be restored
          */
-        virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+        virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions);
 };

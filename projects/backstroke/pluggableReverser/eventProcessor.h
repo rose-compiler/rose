@@ -96,10 +96,10 @@ protected:
      * at the given version.
      *
      * @param variable name of the variable to be restored
-     * @param useSite location where the reverse expression will go
+     * @param availableVariables variables whos values are currently available
      * @return definitions the version of the variable which should be restored
      */
-    std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+    std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
                                                VariableRenaming::NumNodeRenameEntry definitions);
 
     SgExpression* pushVal(SgExpression* exp, SgType* type);
@@ -148,10 +148,10 @@ public:
      * at the given version.
      *
      * @param variable name of the variable to be restored
-     * @param useSite location where the reverse expression will go
+     * @param availableVariables variables whos values are currently available
      * @return definitions the version of the variable which should be restored
      */
-    virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+    virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
                                                        VariableRenaming::NumNodeRenameEntry definitions) = 0;
 
     VariableValueRestorer() : eventProcessor(NULL)
@@ -264,10 +264,10 @@ public:
      * at the given version.
      *
      * @param variable name of the variable to be restored
-     * @param useSite location where the reverse expression will go
+     * @param availableVariables variables whos values are currently available
      * @return definitions the version of the variable which should be restored
      */
-    std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+    std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
                                                VariableRenaming::NumNodeRenameEntry definitions);
 };
 

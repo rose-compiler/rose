@@ -6,6 +6,7 @@
 
 class VariableVersionTable
 {
+    //TODO: Delete this
     typedef VariableRenaming::VarName VarName;
     
     std::map<VarName, std::set<int> > table_;
@@ -17,10 +18,10 @@ public:
     VariableVersionTable() : var_renaming_(NULL) {}
     VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
 
-//    //! Once the value of a variable is restored or reversed, set its index to the previous one.
-//    void backToPreviousIndex(const VarName& var);
+    /** Returns the version of the variable, or an empty set if the variable is not in the table. */
+    std::set<int> getVersion(VariableRenaming::VarName varName) const;
 
-    //! Get the unique variable name from a AST node (could be a varref, dot or arrow operator).
+    //TODO: Delete this
     static VarName getVarName(SgNode* node);
 
     /*! Check if the given variables with their version numbers exist in the current table.
@@ -53,20 +54,18 @@ public:
     //FIXME I don't like this name!
     bool isUsingFirstUse(SgNode* node) const;
 
-//    /** Set the version with the same name of the node to the previous version of the given node.
-//      This function if mainly for store and restore mechanism. */
-//    void setPreviousVersion(SgNode* node);
+    /** Returns true if a variable is at the specified version.
+      * @param varName name of the variable to look up
+      * @param version version that the variable should have (list of possible definitions). */
+    bool matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const;
 
+    //TODO: DELETE THIS
     static bool isEmptyVarName(const VarName& var) { return var.empty(); }
     static std::vector<SgExpression*> getAllVariables(SgNode* node);
 
-    //! Check if the current index of a variable is the same as the given one.
-    bool variableHasIndex(const std::vector<int>& index) const;
-    bool variableHasIndex(int index) const;
-
     void print() const;
     
-    //! Print a VarName object.
+    //TODO: DELETE THIS
     static void print(const VarName& name);
 };
 
