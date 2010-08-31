@@ -309,12 +309,17 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
             if (section->get_mapped_xperm())
                 mapperms |= MemoryMap::MM_PROT_EXEC;
 
-            /* MapElement name for debugging. This is the file base name and section name concatenated. */
+            /* MapElement name for debugging. This is the file base name and section name concatenated.  The section under
+             * consideration might not be linked into an SgFile node yet, in which case we obviously can't include the file
+             * name. */
+            std::string melmt_name = section->get_name()->get_string();
             SgFile *sg_file = SageInterface::getEnclosingNode<SgFile>(file);
-            std::string::size_type file_basename_pos = sg_file->getFileName().find_last_of("/");
-            file_basename_pos = file_basename_pos==sg_file->getFileName().npos ? 0 : file_basename_pos+1;
-            std::string melmt_name = sg_file->getFileName().substr(file_basename_pos) +
-                                     "(" + section->get_name()->get_string() + ")";
+            if (sg_file) {
+                std::string::size_type file_basename_pos = sg_file->getFileName().find_last_of("/");
+                file_basename_pos = file_basename_pos==sg_file->getFileName().npos ? 0 : file_basename_pos+1;
+                melmt_name = sg_file->getFileName().substr(file_basename_pos) + "(" + melmt_name + ")";
+            }
+            
 
             /* Map the left part to the file; right part is anonymous. */
             if (ltsz>0) {
