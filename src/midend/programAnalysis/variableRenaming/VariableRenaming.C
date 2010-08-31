@@ -307,7 +307,6 @@ void VariableRenaming::run()
     expandedDefTable.clear();
     defTable.clear();
     useTable.clear();
-    useLocTable.clear();
     firstDefList.clear();
     nodeRenameTable.clear();
     numRenameTable.clear();
@@ -1515,7 +1514,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
         }
     }
 
-    //For every originalDef, insert expanded defs for any propogated defs
+    //For every originalDef, insert expanded defs for any propagated defs
     //that have an originalDef as a prefix
     VarName expVar;
     foreach(TableEntry::value_type& entry, originalDefTable[node])
