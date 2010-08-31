@@ -3207,6 +3207,23 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
 #endif
  }
 
+// DQ (8/27/2010): Added Fortran specific support for types based on kind expressions.
+SgModifierType*
+SageBuilder::buildFortranKindType(SgType* base_type, SgExpression* kindExpression )
+   {
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result != NULL);
+
+     result->set_type_kind(kindExpression);
+
+     SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+
+     if (result != result2)
+          delete result;
+
+     return result2;
+   }
+
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a volatile type.
 SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
