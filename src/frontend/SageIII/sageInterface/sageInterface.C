@@ -4588,6 +4588,7 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
 
     SgFunctionDeclaration* mainDecl = findMain(*i);
     if (mainDecl) 
+      if (mainDecl->get_definingDeclaration() == mainDecl) // skip non-defining main() declaration, Liao 8/27/2010
       return mainDecl;
   }
   return 0;
