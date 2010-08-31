@@ -5044,10 +5044,85 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
           info.unset_inEmbeddedDecl();
 
-          curprint ( "TYPE ");
-          curprint(classdecl_stmt->get_name().str());
+          curprint ("TYPE ");
 
-          SgName nm = classdecl_stmt->get_name();
+       // SgName nm = classdecl_stmt->get_name();
+
+       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
+          if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
+             {
+            // The PUBLIC keyword is only permitted within Modules
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+                  {
+                    curprint(", PUBLIC");
+                  }
+                 else
+                  {
+                    printf ("Warning: statement marked as public in non-module scope \n");
+                  }
+             }
+
+       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
+          if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() == true)
+             {
+            // The PRIVATE keyword is only permitted within Modules
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+                  {
+                    curprint(", PRIVATE");
+                  }
+                 else
+                  {
+                    printf ("Warning: statement marked as private in non-module scope \n");
+                  }
+             }
+
+       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() == true)
+             {
+            // The BIND keyword is only permitted within Modules
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+                  {
+                 // I think that bind implies "BIND(C)"
+                    curprint(", BIND(C)");
+                  }
+                 else
+                  {
+                    printf ("Warning: statement marked as bind in non-module scope \n");
+                  }
+             }
+
+       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() == true)
+             {
+            // The EXTENDS keyword is only permitted within Modules
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+                  {
+                    curprint(", EXTENDS(PARENT-TYPE-NAME-NOT-IMPLEMENTED)");
+                  }
+                 else
+                  {
+                    printf ("Warning: statement marked as extends in non-module scope \n");
+                  }
+             }
+
+       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() == true)
+             {
+            // The ABSTRACT keyword is only permitted within Modules
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+                  {
+                    curprint(", ABSTRACT");
+                  }
+                 else
+                  {
+                    printf ("Warning: statement marked as abstract in non-module scope \n");
+                  }
+             }
+
+       // DQ (8/28/2010): I think this is require to separate type attribute specifiers from the name of the type.
+          curprint (" :: ");
+
+          curprint(classdecl_stmt->get_name().str());
         }
    }
 
