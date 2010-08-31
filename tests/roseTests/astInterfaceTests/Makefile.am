@@ -76,7 +76,7 @@ else
 endif
 # Be sure to include proper suffixes, like .C
 # TODO: handle side effects when deleting AST nodes
-failing_generatedCodeExamples = rose_inputdeepDelete.C  
+failing_generatedCodeExamples = rose_inputdeepDelete.C 
 
 generatedCodeExamples = \
   rose_inputBlank1.C \
@@ -116,7 +116,7 @@ generatedCodeExamples = \
   rose_inputloopUnrolling.C \
   rose_inputgetDependentDecls.C \
   rose_inputloopInterchange.C \
-  rose_inputloopTiling.C
+  rose_inputloopTiling.C 
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
