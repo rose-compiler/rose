@@ -52,8 +52,6 @@ private:
 	
 	/** Returns true if an expression calls any functions or modifies any variables. */
 	static bool isModifyingExpression(SgExpression* expr, VariableRenaming* variableRenamingAnalysis);
-
-        static VariableRenaming::NumNodeRenameTable getOriginalUsesAtNode(VariableRenaming& varRenaming, SgNode* node);
 };
 
 class ExtractFromUseRestorer : public VariableValueRestorer

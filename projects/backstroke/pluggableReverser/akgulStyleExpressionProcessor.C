@@ -246,7 +246,7 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 	//However, the variables used in the initializer expression might have been changed between its location and
 	//the current node
 	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
-	VariableRenaming::NumNodeRenameTable variablesInDefExpression = getOriginalUsesAtNode(variableRenamingAnalysis, definitionExpression);
+	VariableRenaming::NumNodeRenameTable variablesInDefExpression = variableRenamingAnalysis.getOriginalUsesAtNode(definitionExpression);
 
 	//Go through all the variables used in the definition expression and check if their values have changed since the def
 	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> nameDefinitionPair;
@@ -380,47 +380,4 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 	}
 
 	return results;
-}
-
-VariableRenaming::NumNodeRenameTable RedefineValueRestorer::getOriginalUsesAtNode(VariableRenaming& varRenaming, SgNode* node)
-{
-	//The original variables are always attached to higher levels in the AST. For example,
-	//if we have p.x, the dot expression has the varname p.x attached to it, while its left
-	//child has the varname p. Hence, if we get the top nodes in the AST that are variables, we'll have all the
-	//original (not exanded) variables used in the AST.
-	class FindOriginalVariables : public AstTopDownProcessing<bool>
-	{
-	public:
-		set<VariableRenaming::VarName> originalVariablesUsed;
-
-		virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentVariable)
-		{
-			if (isParentVariable)
-			{
-				return true;
-			}
-
-			if (VariableRenaming::getVarName(node) != VariableRenaming::emptyName)
-			{
-				originalVariablesUsed.insert(VariableRenaming::getVarName(node));
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-	};
-	FindOriginalVariables originalVariableUsesTraversal;
-	originalVariableUsesTraversal.traverse(node, false);
-
-	VariableRenaming::NumNodeRenameTable result;
-	foreach(VariableRenaming::VarName varName, originalVariableUsesTraversal.originalVariablesUsed)
-	{
-		ROSE_ASSERT(result.count(varName) == 0);
-		VariableRenaming::NumNodeRenameEntry varDefs = varRenaming.getUsesAtNodeForName(node, varName);
-		result[varName] = varDefs;
-	}
-
-	return result;
 }
