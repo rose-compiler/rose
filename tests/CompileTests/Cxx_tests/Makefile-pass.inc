@@ -676,7 +676,6 @@ test2009_12.C \
 test2009_13.C \
 test2009_14.C \
 test2009_15.C \
-test2009_17.C \
 test2009_18.C \
 test2009_20.C \
 test2009_30.C \
