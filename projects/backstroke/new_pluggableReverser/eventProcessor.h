@@ -13,6 +13,11 @@ class ExpressionProcessor;
 class StatementProcessor;
 
 
+class EvaluationResultAttribute
+{
+    virtual ~EvaluationResultAttribute() {}
+};
+
 class EvaluationResult
 {
     // Variable version table
@@ -23,11 +28,13 @@ class EvaluationResult
     std::vector<ExpressionProcessor*> exp_processors_;
     std::vector<StatementProcessor*> stmt_processors_;
 
+    EvaluationResultAttribute* attribute_;
+
 public:
 
     EvaluationResult(const VariableVersionTable& table,
             const SimpleCostModel& cost_model = SimpleCostModel())
-        : var_table_(table), cost_(cost_model) {}
+        : var_table_(table), cost_(cost_model), attribute_(NULL) {}
 
     // In this update function, update every possible item in this structure.
     // Note the order!
@@ -55,11 +62,17 @@ public:
     const SimpleCostModel& getCost() const
     { return cost_; }
 
+    void setCost(const SimpleCostModel& cost)
+    { cost_ = cost; }
+
     const std::vector<ExpressionProcessor*>& getExpressionProcessors() const
     { return exp_processors_; }
 
     const std::vector<StatementProcessor*>& getStatementProcessors() const
     { return stmt_processors_; }
+
+    EvaluationResultAttribute* getAttribute() const { return attribute_; }
+    void setAttribute(EvaluationResultAttribute* attr) { attribute_ = attr; }
 };
 
 struct ExpressionReversal
@@ -97,6 +110,7 @@ class ProcessorBase
     EventProcessor* event_processor_;
 
 protected:
+    std::string name_;
 
     ExpressionReversal processExpression(SgExpression* exp);
     StatementReversal processStatement(SgStatement* stmt);
@@ -113,7 +127,10 @@ protected:
 public:
 
     ProcessorBase() : event_processor_(NULL) {}
+    ProcessorBase(const std::string& name) : event_processor_(NULL), name_(name) {}
     
+    std::string getName() const { return name_; }
+
     void setEventProcessor(EventProcessor* processor)
     {
         event_processor_ = processor;
@@ -133,7 +150,10 @@ public:
     {
         std::vector<EvaluationResult> results = evaluate(exp, var_table, is_value_used);
         foreach (EvaluationResult& result, results)
+        {
             result.addExpressionProcessor(this);
+            std::cout << "Processor added: " << typeid(this).name() << std::endl;
+        }
         return results;
     }
 };
@@ -151,7 +171,10 @@ public:
     {
         std::vector<EvaluationResult> results = evaluate(stmt, var_table);
         foreach (EvaluationResult& result, results)
+        {
             result.addStatementProcessor(this);
+            std::cout << "Processor added:" << typeid(this).name() << std::endl;
+        }
         return results;
     }
 

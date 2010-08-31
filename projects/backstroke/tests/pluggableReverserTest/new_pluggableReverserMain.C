@@ -1,6 +1,7 @@
 #include <new_pluggableReverser/eventProcessor.h>
 #include <new_pluggableReverser/expressionProcessor.h>
 #include <new_pluggableReverser/statementProcessor.h>
+#include <new_pluggableReverser/ifStatementProcessor.h>
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
@@ -22,8 +23,6 @@ int main(int argc, char * argv[])
 
 
 #if 1
-    VariableRenaming var_renaming(project);
-    var_renaming.run();
     //return 0;
     //var_renaming.toDOT("temp.dot");
 
@@ -40,18 +39,6 @@ int main(int argc, char * argv[])
     addTextForUnparser(global, includes, AstUnparseAttribute::e_before);
 
 
-    EventProcessor event_processor(NULL, &var_renaming);
-
-    // Add all expression handlers to the expression pool.
-    event_processor.addExpressionProcessor(new NullExpressionProcessor);
-    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
-    event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
-    //event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
-    //event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
-
-    // Add all statement handlers to the statement pool.
-    event_processor.addStatementProcessor(new ExprStatementProcessor);
-    event_processor.addStatementProcessor(new BasicBlockProcessor);
 
     pushScopeStack(isSgScopeStatement(global));
 
@@ -65,10 +52,40 @@ int main(int argc, char * argv[])
                 ends_with(func_name, "reverse") ||
                 ends_with(func_name, "forward"))
             continue;
-
-
         // First of all, normalize this event function.
-        backstroke_norm::normalizeEvent(decl);
+        //backstroke_norm::normalizeEvent(decl);
+    }
+
+    //generateGraphOfAST(project, "Graph");
+
+
+    VariableRenaming var_renaming(project);
+    var_renaming.run();
+
+
+    EventProcessor event_processor(NULL, &var_renaming);
+
+    // Add all expression handlers to the expression pool.
+    event_processor.addExpressionProcessor(new NullExpressionProcessor);
+    event_processor.addExpressionProcessor(new IdentityExpressionProcessor);
+    event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+    event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
+    //event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
+    //event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
+
+    // Add all statement handlers to the statement pool.
+    event_processor.addStatementProcessor(new ExprStatementProcessor);
+    event_processor.addStatementProcessor(new BasicBlockProcessor);
+    event_processor.addStatementProcessor(new IfStatementProcessor);
+    
+
+    foreach(SgFunctionDeclaration* decl, func_decls)
+    {
+        string func_name = decl->get_name();
+        if (!starts_with(func_name, "event") ||
+                ends_with(func_name, "reverse") ||
+                ends_with(func_name, "forward"))
+            continue;
 
         //var_renaming.run();
 

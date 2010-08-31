@@ -1,6 +1,7 @@
 #include "expressionProcessor.h"
 #include "utilities/Utilities.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
+#include "pluggableReverser/eventProcessor.h"
 
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -17,6 +18,9 @@ ExpressionReversal NullExpressionProcessor::process(SgExpression* exp)
 vector<EvaluationResult> NullExpressionProcessor::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
     vector<EvaluationResult> results;
+
+    // If the value of the expression is used, we cannot return NULL.
+    if (backstroke_util::isReturnValueUsed(exp)) return results;
     //SgExpression* exp = exp_pkg.exp;
 
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp) || isAssignmentOp(exp))
@@ -33,6 +37,26 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(SgExpression* exp, co
             return results;
     }
     results.push_back(EvaluationResult(var_table));
+    return results;
+}
+
+
+/******************************************************************************
+ **** Definition of member functions of IdentityExpressionProcessor ***********/
+
+ExpressionReversal IdentityExpressionProcessor::process(SgExpression* exp)
+{
+    return ExpressionReversal(copyExpression(exp), copyExpression(exp));
+}
+
+vector<EvaluationResult> IdentityExpressionProcessor::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
+{
+    vector<EvaluationResult> results;
+
+    // If an expression does not modify any value, its reverse expression may be the same as itself.
+    if (!backstroke_util::isModifyingExpression(exp))
+        results.push_back(EvaluationResult(var_table));
+
     return results;
 }
 

@@ -18,6 +18,16 @@
 class NullExpressionProcessor : public ExpressionProcessor
 {
 public:
+    NullExpressionProcessor() { name_ = "Null Expression Processor"; }
+    virtual ExpressionReversal process(SgExpression* exp);
+    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
+};
+
+//! This handler generates a reverse expression which is the same as the original expression.
+class IdentityExpressionProcessor : public ExpressionProcessor
+{
+public:
+    IdentityExpressionProcessor() { name_ = "Identity Expression Processor"; }
     virtual ExpressionReversal process(SgExpression* exp);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
@@ -26,6 +36,7 @@ public:
 class StoreAndRestoreExpressionProcessor : public ExpressionProcessor
 {
 public:
+    StoreAndRestoreExpressionProcessor() { name_ = "Store And Restore Expression Processor"; }
     virtual ExpressionReversal process(SgExpression* exp);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
@@ -34,6 +45,7 @@ public:
 class ConstructiveExpressionProcessor : public ExpressionProcessor
 {
 public:
+    ConstructiveExpressionProcessor() { name_ = "Constructive Expression Processor"; }
     virtual ExpressionReversal process(SgExpression* exp);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
@@ -42,6 +54,7 @@ public:
 class ConstructiveAssignmentProcessor : public ExpressionProcessor
 {
 public:
+    ConstructiveAssignmentProcessor() { name_ = "Constructive Assignment Processor"; }
     virtual ExpressionReversal process(SgExpression* exp);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
