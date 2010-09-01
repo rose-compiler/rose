@@ -3,6 +3,7 @@ struct model
 {
     int i;
     int j;
+    int k;
     //static int k;
 };
 
@@ -22,14 +23,28 @@ void event0(model* m)
     //m->i = m->j;
     //m->j = t;
     //
+#if 0
+    if (m->i)
+    {
+        m->j += m->i;
+    }
+    else
+    {
+        m->j -= m->i;
+    }
+#endif
 #if 1
-    if (1)
+    if (m->k)
     {
         m->i = 0;
+        //m->j += m->i;
+        //m->i = 0;
     }
     else {
-        m->i = 1;
+        //m->j -= m->i;
+        //m->i = 1;
     }
+    //++m->i;
 #endif
 #if 0
     {
@@ -42,6 +57,8 @@ void event0(model* m)
     m->i = 1;
     m->i = 1;
     m->i = 1;
+#endif
+#if 0
     m->i += 1;
     m->i += 1;
     m->i += 1;

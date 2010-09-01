@@ -30,6 +30,11 @@ StatementReversal ProcessorBase::processStatement(SgStatement* stmt)
     return event_processor_->processStatement(stmt);
 }
 
+EvaluationResultAttribute* ProcessorBase::getAttribute() const
+{
+    return event_processor_->getAttribute();
+}
+
 vector<EvaluationResult> ProcessorBase::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
     return event_processor_->evaluateExpression(exp, var_table, is_value_used);
@@ -47,24 +52,33 @@ bool ProcessorBase::isStateVariable(SgExpression* exp)
 
 ExpressionReversal EventProcessor::processExpression(SgExpression* exp)
 {
-    ROSE_ASSERT(!exp_processors.empty());
-    ExpressionProcessor* processor = exp_processors.back();
-    exp_processors.pop_back();
+    ROSE_ASSERT(!exp_processors_.empty());
+    ExpressionProcessor* processor = exp_processors_.back();
+    exp_processors_.pop_back();
     return processor->process(exp);
 }
 
 StatementReversal EventProcessor::processStatement(SgStatement* stmt)
 {
-    ROSE_ASSERT(!stmt_processors.empty());
-    StatementProcessor* processor = stmt_processors.back();
-    stmt_processors.pop_back();
+    ROSE_ASSERT(!stmt_processors_.empty());
+    StatementProcessor* processor = stmt_processors_.back();
+    stmt_processors_.pop_back();
     return processor->process(stmt);
+}
+
+EvaluationResultAttribute* EventProcessor::getAttribute()
+{
+    ROSE_ASSERT(!attributes_.empty());
+    EvaluationResultAttribute* attr = attributes_.back();
+    attributes_.pop_back();
+    return attr;
 }
 
 StatementReversal EventProcessor::processStatement(SgStatement* stmt, const EvaluationResult& result)
 {
-    exp_processors = result.getExpressionProcessors();
-    stmt_processors = result.getStatementProcessors();
+    exp_processors_ = result.getExpressionProcessors();
+    stmt_processors_ = result.getStatementProcessors();
+    attributes_ = result.getAttributes();
 
     return processStatement(stmt);
 }
@@ -75,7 +89,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, c
 
     // If two results have the same variable table, we remove the one which has the higher cost.
     
-    foreach (ExpressionProcessor* exp_processor, exp_processors_)
+    foreach (ExpressionProcessor* exp_processor, available_exp_processors_)
     {
         vector<EvaluationResult> res = exp_processor->evaluate_(exp, var_table, is_value_used);
 
@@ -134,7 +148,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
     }
 #endif
 
-    foreach (StatementProcessor* stmt_processor, stmt_processors_)
+    foreach (StatementProcessor* stmt_processor, available_stmt_processors_)
     {
         vector<EvaluationResult> res = stmt_processor->evaluate_(stmt, var_table);
         foreach (EvaluationResult& r1, res)
@@ -260,6 +274,7 @@ FuncDeclPairs EventProcessor::processEvent()
 
     foreach (EvaluationResult& res, results)
     {
+#if 0
         cout << res.getExpressionProcessors().size() << endl;
         cout << res.getStatementProcessors().size() << endl;
 
@@ -267,6 +282,7 @@ FuncDeclPairs EventProcessor::processEvent()
             cout << p->getName() << endl;
         foreach (ExpressionProcessor* p, res.getExpressionProcessors())
             cout << p->getName() << endl;
+#endif
 
         StatementReversal stmt = processStatement(body, res);
 

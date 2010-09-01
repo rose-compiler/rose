@@ -83,6 +83,29 @@ vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
     return vars;
 }
 
+bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
+{
+    vector<SgExpression*> vars = getAllVariables(exp);
+
+    foreach (SgExpression* var, vars)
+    {
+        VarName name = getVarName(var);
+        VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
+
+        ROSE_ASSERT(!defs.empty());
+        ROSE_ASSERT(table_.count(name) > 0);
+
+        foreach (VariableRenaming::NumNodeRenameEntry::value_type num_to_node, defs)
+        {
+            int num = num_to_node.first;
+            if (table_.find(name)->second.count(num) == 0)
+                return false;
+        }
+        //int num = var_renaming_->getRenameNumberForNode(name, var);
+    }
+    return true;
+}
+
 bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) const
 {
     // In this function, for expression a.b or a->b ,we only care about the version of a.b or a->b,
@@ -232,6 +255,20 @@ void VariableVersionTable::setNullVersion(SgNode* node)
     VarName var_name = getVarName(node);
     ROSE_ASSERT(table_.find(var_name) != table_.end());
     table_[var_name].clear();
+}
+
+// Merge this variable version table to another one. For each variable inside, if it has different
+// versions from those two tables, we set it to NULL version.
+void VariableVersionTable::merge(const VariableVersionTable& var_table)
+{
+    ROSE_ASSERT(var_table.table_.size() == this->table_.size());
+    for (std::map<VarName, std::set<int> >::iterator it = table_.begin();
+            it != table_.end(); ++it)
+    {
+        ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
+        if (var_table.table_.find(it->first)->second != it->second)
+            it->second.clear();
+    }
 }
 
 bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const

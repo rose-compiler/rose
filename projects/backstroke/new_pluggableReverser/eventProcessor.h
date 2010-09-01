@@ -38,8 +38,11 @@ struct StatementPackage
     VariableVersionTable var_table;
 };
 
+// This class provides a place to put the information passed from evalutation
+// to processing.
 class EvaluationResultAttribute
 {
+public:
     virtual ~EvaluationResultAttribute() {}
 };
 
@@ -53,13 +56,13 @@ class EvaluationResult
     std::vector<ExpressionProcessor*> exp_processors_;
     std::vector<StatementProcessor*> stmt_processors_;
 
-    EvaluationResultAttribute* attribute_;
+    std::vector<EvaluationResultAttribute*> attributes_;
 
 public:
 
     EvaluationResult(const VariableVersionTable& table,
             const SimpleCostModel& cost_model = SimpleCostModel())
-        : var_table_(table), cost_(cost_model), attribute_(NULL) {}
+        : var_table_(table), cost_(cost_model) {}
 
     // In this update function, update every possible item in this structure.
     // Note the order!
@@ -70,6 +73,7 @@ public:
 
         exp_processors_.insert(exp_processors_.end(), result.exp_processors_.begin(), result.exp_processors_.end());
         stmt_processors_.insert(stmt_processors_.end(), result.stmt_processors_.begin(), result.stmt_processors_.end());
+        attributes_.insert(attributes_.end(), result.attributes_.begin(), result.attributes_.end());
     }
 
     void addExpressionProcessor(ExpressionProcessor* exp_processor)
@@ -84,6 +88,9 @@ public:
     VariableVersionTable& getVarTable() 
     { return var_table_; }
 
+    void setVarTable(const VariableVersionTable& table)
+    { var_table_ = table; }
+
     const SimpleCostModel& getCost() const
     { return cost_; }
 
@@ -96,8 +103,16 @@ public:
     const std::vector<StatementProcessor*>& getStatementProcessors() const
     { return stmt_processors_; }
 
+    const std::vector<EvaluationResultAttribute*> getAttributes() const
+    { return attributes_; }
+
+    void addAttribute(EvaluationResultAttribute* attr)
+    { if (attr) attributes_.push_back(attr); }
+
+#if 0
     EvaluationResultAttribute* getAttribute() const { return attribute_; }
     void setAttribute(EvaluationResultAttribute* attr) { attribute_ = attr; }
+#endif
 };
 
 struct ExpressionReversal
@@ -139,6 +154,7 @@ protected:
 
     ExpressionReversal processExpression(SgExpression* exp);
     StatementReversal processStatement(SgStatement* stmt);
+    EvaluationResultAttribute* getAttribute() const;
 
     std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used = false);
     std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
@@ -177,7 +193,7 @@ public:
         foreach (EvaluationResult& result, results)
         {
             result.addExpressionProcessor(this);
-            std::cout << "Processor added: " << typeid(this).name() << std::endl;
+            //std::cout << "Processor added: " << typeid(this).name() << std::endl;
         }
         return results;
     }
@@ -198,7 +214,7 @@ public:
         foreach (EvaluationResult& result, results)
         {
             result.addStatementProcessor(this);
-            std::cout << "Processor added:" << typeid(this).name() << std::endl;
+            //std::cout << "Processor added:" << typeid(this).name() << std::endl;
         }
         return results;
     }
@@ -218,15 +234,16 @@ class EventProcessor
     SgFunctionDeclaration* event_;
 
     //! All expression processors which are added by the user.
-    std::vector<ExpressionProcessor*> exp_processors_;
+    std::vector<ExpressionProcessor*> available_exp_processors_;
 
     //! All statement processors which are added by the user.
-    std::vector<StatementProcessor*> stmt_processors_;
+    std::vector<StatementProcessor*> available_stmt_processors_;
 
     /*! The following processors are different from the ones above, and they 
      are for generating code. */
-    std::vector<ExpressionProcessor*> exp_processors;
-    std::vector<StatementProcessor*> stmt_processors;
+    std::vector<ExpressionProcessor*> exp_processors_;
+    std::vector<StatementProcessor*> stmt_processors_;
+    std::vector<EvaluationResultAttribute*> attributes_;
 
     //! All declarations of stacks which store values of different types.
     std::map<std::string, SgVariableDeclaration*> stack_decls_;
@@ -243,6 +260,8 @@ private:
 
     ExpressionReversal processExpression(SgExpression* exp);
     StatementReversal processStatement(SgStatement* stmt);
+    EvaluationResultAttribute* getAttribute();
+
     StatementReversal processStatement(SgStatement* stmt, const EvaluationResult& result);
 
     //! Given an expression, return all evaluation results using all expression processors.
@@ -265,13 +284,13 @@ public:
     void addExpressionProcessor(ExpressionProcessor* exp_processor)
     {
         exp_processor->setEventProcessor(this);
-        exp_processors_.push_back(exp_processor);
+        available_exp_processors_.push_back(exp_processor);
     }
 
     void addStatementProcessor(StatementProcessor* stmt_processor)
     {
         stmt_processor->setEventProcessor(this);
-        stmt_processors_.push_back(stmt_processor);
+        available_stmt_processors_.push_back(stmt_processor);
     }
 
     FuncDeclPairs processEvent();

@@ -29,6 +29,12 @@ public:
     bool checkRhsVersion(SgNode* node) const;
     bool checkVersion(SgExpression* lhs, SgExpression* rhs = NULL) const;
 
+    // Check if all varibles in the given expression have the same version in the current version table.
+    // This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
+    // check, but a cannot.
+    bool checkVersionForUse(SgExpression* exp) const;
+
+
     /** Regress the version of the given variable. Call this function once the expression or
       statement containing the given variable is reversed successfully. */
     void reverseVersion(SgNode* node);
@@ -44,6 +50,10 @@ public:
       version to NULL. */
     void setNullVersion(SgInitializedName* name);
     void setNullVersion(SgNode* node);
+
+    // Merge this variable version table to another one. For each variable inside, if it has different
+    // versions from those two tables, we set it to NULL version.
+    void merge(const VariableVersionTable& var_table);
 
     /** If the given node is using its first definition. It's useful to decide whether to reverse the value or not. */
     //FIXME I don't like this name!
