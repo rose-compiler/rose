@@ -178,39 +178,6 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
     return results;
 }
 
-/**
- * Given a variable and a version, returns an expression evaluating to the value of the variable
- * at the given version.
- *
- * @param variable name of the variable to be restored
- * @param availableVariables variables whos values are currently available
- * @return definitions the version of the variable which should be restored
- */
-vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-	VariableRenaming::NumNodeRenameEntry definitions)
-{
-	//First, check if the variable needs restoring at all. If it has the desired version, there is nothing to do
-	vector<SgExpression*> results;
-	if (availableVariables.matchesVersion(variable, definitions))
-	{
-		results.push_back(VariableRenaming::buildVariableReference(variable));
-		return results;
-	}
-
-	foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
-	{
-		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, availableVariables, definitions);
-
-		//FIXME: THis is a temporary patch for an infinite recursion problem
-		if (!restorerOutput.empty())
-		{
-			return restorerOutput;
-		}
-		//results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
-	}
-
-	return results;
-}
 
 SgExpression* EventProcessor::getStackVar(SgType* type)
 {

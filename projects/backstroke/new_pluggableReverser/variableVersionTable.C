@@ -26,18 +26,6 @@ VariableVersionTable::VariableVersionTable(
     }
 }
 
-/** Returns the version of the variable, or an empty set if the variable is not in the table. */
-set<int> VariableVersionTable::getVersion(VariableRenaming::VarName varName) const
-{
-	if (table_.count(varName) == 0)
-	{
-		set<int> result;
-		return result;
-	}
-
-	return table_.at(varName);
-}
-
 VariableVersionTable::VarName VariableVersionTable::getVarName(SgNode* node)
 {
     return VariableRenaming::getVarName(node);
@@ -270,41 +258,10 @@ bool VariableVersionTable::isUsingFirstUse(SgNode* node) const
     return false;
 }
 
-/** Returns true if a variable is at the specified version.
-  * @param varName name of the variable to look up
-  * @param version version that the variable should have (list of possible definitions). */
-bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const
-{
-	//If the variable is not in the table, the versions can't match.
-	if (table_.count(varName) == 0)
-	{
-		return false;
-	}
-
-	set<int> indices;
-	pair<int, SgNode*> versionDefPair;
-	foreach(versionDefPair, version)
-	{
-		indices.insert(versionDefPair.first);
-	}
-
-	printf("%s:\nIndices found: ", VariableRenaming::keyToString(varName).c_str());
-	foreach(int v, table_.at(varName))
-	{
-		printf("%d ", v);
-	}
-	printf("\n");
-	
-	printf("Indices required: ");
-	foreach(int v, indices)
-	{
-		printf("%d ", v);
-	}
-	printf("\n");
-
-	bool result = table_.at(varName) == indices;
-	printf("Result is %s\n\n", result ? "true" : "false");
-
-	return table_.at(varName) == indices;
-}
+//void VariableVersionTable::setPreviousVersion(SgNode* node)
+//{
+//    NumNodeRenameTable table = var_renaming_->getOriginalDefsAtNode(node);
+//    ROSE_ASSERT(table.count(getName(node)) > 0);
+//
+//}
 

@@ -118,17 +118,6 @@ protected:
     std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used = false);
     std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-    /**
-     * Given a variable and a version, returns an expression evaluating to the value of the variable
-     * at the given version.
-     *
-     * @param variable name of the variable to be restored
-     * @param availableVariables variables whos values are currently available
-     * @return definitions the version of the variable which should be restored
-     */
-    std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-                                               VariableRenaming::NumNodeRenameEntry definitions);
-
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
 
@@ -195,41 +184,6 @@ public:
     //virtual void getCost() = 0;
 };
 
-/** These types of reverse handlers recalculate a specific value of a variable at a different point
-  * in the program. */
-class VariableValueRestorer
-{
-public:
-
-    /**
-     * Given a variable and a version, returns an expression evaluating to the value of the variable
-     * at the given version.
-     *
-     * @param variable name of the variable to be restored
-     * @param availableVariables variables whos values are currently available
-     * @return definitions the version of the variable which should be restored
-     */
-    virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-                                                       VariableRenaming::NumNodeRenameEntry definitions) = 0;
-
-    VariableValueRestorer() : eventProcessor(NULL)
-    {
-    }
-
-    void setEventProcessor(EventProcessor* eventProcessor)
-    {
-        this->eventProcessor = eventProcessor;
-    }
-
-    EventProcessor* getEventProcessor()
-    {
-        return eventProcessor;
-    }
-
-private:
-
-    EventProcessor* eventProcessor;
-};
 
 class VariableRenaming;
 
@@ -243,9 +197,6 @@ class EventProcessor
 
     //! All statement processors which are added by the user.
     std::vector<StatementProcessor*> stmt_processors_;
-
-    /** Handlers which can restore a variable value without state saving. */
-    std::vector<VariableValueRestorer*> variableValueRestorers;
 
     /*! The following processors are different from the ones above, and they 
      are for generating code. */
@@ -298,12 +249,6 @@ public:
         stmt_processors_.push_back(stmt_processor);
     }
 
-    void addVariableValueRestorer(VariableValueRestorer* restorer)
-    {
-        restorer->setEventProcessor(this);
-        variableValueRestorers.push_back(restorer);
-    }
-
     FuncDeclPairs processEvent();
 
     FuncDeclPairs processEvent(SgFunctionDeclaration* event)
@@ -318,22 +263,6 @@ public:
 
     //! Get all declarations of stacks which store values of different types.
     std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
-
-    VariableRenaming* getVariableRenaming()
-    {
-        return var_renaming_;
-    }
-
-    /**
-     * Given a variable and a version, returns an expression evaluating to the value of the variable
-     * at the given version.
-     *
-     * @param variable name of the variable to be restored
-     * @param availableVariables variables whos values are currently available
-     * @return definitions the version of the variable which should be restored
-     */
-    std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-                                               VariableRenaming::NumNodeRenameEntry definitions);
 };
 
 
