@@ -673,7 +673,6 @@ test2009_09.C \
 test2009_10.C \
 test2009_11.C \
 test2009_12.C \
-test2009_13.C \
 test2009_14.C \
 test2009_15.C \
 test2009_18.C \
@@ -682,7 +681,6 @@ test2009_20.C \
 test2009_24.C \
 test2009_27.C \
 test2009_28.C \
-test2009_29.C \
 test2009_30.C \
 test2009_31.C \
 test2009_37.C \
