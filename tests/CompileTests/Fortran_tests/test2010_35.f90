@@ -11,6 +11,7 @@ module io_types
 ! !PUBLIC TYPES:
 
    ! Generic IO field descriptor
+   integer, public :: construct_file
 
    integer, parameter, public :: i4 = selected_int_kind(6)
 
@@ -26,5 +27,11 @@ module io_types
    end type
 
  contains
+
+! GNU 4.3 appears to require a function to be defined after a "contains" statement.
+ function construct_file(id) result (descriptor)
+      integer(i4) :: id
+      integer :: descriptor  ! data file descriptor
+ end function construct_file
 
 end module io_types
