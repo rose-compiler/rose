@@ -20,6 +20,7 @@
 #include "filteredCFG.h"
 
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
+ * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
  */
 class VarUniqueName : public AstAttribute
 {
@@ -295,6 +296,8 @@ private:
     /** Locate all global varibales and add them to the table.
      */
     void findGlobalVars();
+
+    bool isBuiltinVar(const VarName& var);
 
     /** Called to merge the defs from previous nodes in the CFG to this one.
      *
@@ -762,7 +765,7 @@ public:
      * @param initName The SgInitializedName* to check.
      * @return true if initName is from a library, false if otherwise.
      */
-    static bool isFromLibrary(SgInitializedName* initName);
+    static bool isFromLibrary(SgNode* node);
 
     /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
      *

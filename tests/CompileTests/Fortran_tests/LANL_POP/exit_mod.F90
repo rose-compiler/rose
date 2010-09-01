@@ -16,7 +16,6 @@
 ! !USES:
 
    use kinds_mod
-! DQ (8/4/2010): I can't find the communicate.F90 file.
    use communicate
    use constants
 
@@ -80,8 +79,6 @@
 !
 !-----------------------------------------------------------------------
 
-#if 1
-! DQ (8/4/2010): I can't find the communicate.F90 file.
    if (my_task == master_task) then
       write (6,delim_fmt)
       write (6,blank_fmt)
@@ -99,7 +96,6 @@
       write (6,blank_fmt)
       write (6,delim_fmt)
    endif
-#endif
 
 !-----------------------------------------------------------------------
 !

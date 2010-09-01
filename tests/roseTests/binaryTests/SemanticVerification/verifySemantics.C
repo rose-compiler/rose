@@ -4,12 +4,6 @@
 #include "Debugger.h"
 #include "x86InstructionSemantics.h"
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-
 static const char *trace_prefix = "    ";
 
 /* Registers names, etc. for x86 32-bit */
@@ -21,273 +15,6 @@ static const char *x86_reg_str[] = {"eip", "ebp", "esp", "orig_eax", "eax", "ebx
 static const char x86_reg_size[] = {32,    32,    32,    32,         32,    32,    32,    32,    16,    16,    16,    16,
                                     16,    16,    32,    32};
 
-
-/** Interface to the debugger implemented in Debugger*.c in this directory. */
-class Debugger {
-public:
-    /** Constructors all attach to a debugger via TCP/IP. Note that data member initializations are in ctor() so we don't
-     *  need to repeat them for each constructor. */
-    Debugger() {
-        ctor("localhost", default_port);
-    }
-    Debugger(const std::string &hostname) {
-        ctor(hostname, default_port);
-    }
-    Debugger(short port) {
-        ctor("localhost", port);
-    }
-    Debugger(const std::string &hostname, short port) {
-        ctor(hostname, port);
-    }
-
-    /** Destructor detaches from the debugger. */
-    ~Debugger() {
-        if (server>=0)
-            close(server);
-    }
-
-    /** Set breakpoint at specified address. */
-    int setbp(rose_addr_t addr) {
-        return setbp(addr, 1);
-    }
-    
-    /** Set beakpoints at all addresses in specified range. */
-    int setbp(rose_addr_t addr, rose_addr_t size) {
-        uint64_t status = execute(CMD_BREAK, addr, size);
-        return status>=0 ? 0 : -1;
-    }
-
-    /** Execute one instruction and then stop. Returns the address where the program stopped. */
-    rose_addr_t step() {
-        return execute(CMD_STEP);
-    }
-    
-    /** Continue execution until the next breakpoint is reached. Returns the address where the program stopped. */
-    rose_addr_t cont() {
-        return cont(0);
-    }
-
-    /** Continue execution until we reach the specified address, ignoring any breakpoints previously set. Returns the address
-     *  where the program stopped. */
-    int cont(rose_addr_t addr) {
-	return execute(CMD_CONT, addr);
-    }
-
-    /** Returns the memory values at the specified address. The caller should a sufficiently large buffer. The return value is
-     *  the number of bytes actually returned by the debugger, which might be less than requested if the debugger cannot read
-     *  part of the memory. */
-    size_t memory(rose_addr_t addr, size_t request_size, unsigned char *buffer) {
-        size_t return_size;
-        const unsigned char *bytes = (const unsigned char*)execute(CMD_MEM, addr, request_size, &return_size);
-        assert(request_size>=return_size);
-        memcpy(buffer, bytes, return_size);
-        memset(buffer+return_size, 0, request_size-return_size);
-        return return_size;
-    }
-    
-    /** Obtain the four-byte word at the specified memory address. Returns zero if the word is not available. */
-    uint64_t memory(rose_addr_t addr) {
-        size_t size;
-        const unsigned char *bytes = (const unsigned char*)execute(CMD_MEM, addr, 4, &size);
-        if (size!=4)
-            return 0;
-        uint64_t retval = 0;
-        for (size_t j=0; j<size; j++) {
-            retval |= (uint64_t)(bytes[j]) << (8*j);
-        }
-        return retval;
-    }
-
-    /** Obtain registers from the debugger. The registers are cached in the client, so this is an efficient operation. */
-    const RegisterSet& registers() {
-        if (!regs_current) {
-	    size_t size;
-	    const void *x = execute(CMD_REGS, &size);
-	    assert(size==sizeof(regs));
-	    memcpy(&regs, x, size);
-	    regs_current = true;
-	}
-	return regs;
-    }
-
-    /** Returns a particular register rather than the whole set. */
-    uint64_t registers(int regname) {
-        return registers().reg[regname];
-    }
-    
-    /** Return the current address (contents of register "rip"). */
-    rose_addr_t rip() {
-        return registers(X86_REG_rip);
-    }
-
-private:
-    /** Open a connection to the debugger. */
-    void ctor(const std::string &hostname, short port) {
-        /* Initialize data members. */
-        server = -1;
-        status = 0;
-        result = NULL;
-        result_nalloc = 0;
-	memset(&regs, 0, sizeof regs);
-	regs_current = false;
-
-        struct hostent *he = gethostbyname2(hostname.c_str(), AF_INET);
-        assert(he);
-
-        struct sockaddr_in addr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = my_htons(port);
-        assert(he->h_length==sizeof(addr.sin_addr.s_addr));
-        memcpy(&addr.sin_addr.s_addr, he->h_addr, he->h_length);
-
-        server = socket(AF_INET, SOCK_STREAM, 0);
-        assert(server>=0);
-        if (connect(server, (struct sockaddr*)&addr, sizeof addr)<0) {
-            fprintf(stderr, "cannot connect to server at %s:%hd: %s\n", hostname.c_str(), port, strerror(errno));
-            exit(1);
-        }
-    }
-
-    /** Replacement for system's htons(). Calling htons() on OSX gives an error "'exp' was not declared in this scope" even
-     *  though we've included <netinet/in.h>. Therefore we write our own version here. Furthermore, OSX apparently doesn't
-     *  define __BYTE_ORDER in <sys/param.h> so we have to figure it out ourselves. */
-    static short my_htons(short n) {
-        static unsigned u = 1;
-        if (*((char*)&u)) {
-            /* Little endian */
-            return (((unsigned short)n & 0x00ff)<<8) | (((unsigned short)n & 0xff00)>>8);
-        } else {
-            return n;
-        }
-    }
-
-    /** Sends zero-argument command to the server */
-    void send(DebuggerCommand cmd) {
-        regs_current = false;
-	unsigned char byte = cmd;
-	ssize_t n = write(server, &byte, 1);
-	if (n<0) {
-	    fprintf(stderr, "write command: %s\n", strerror(errno));
-	    exit(1);
-	} else if (n!=1) {
- 	    fprintf(stderr, "write command: short write\n");
-	    exit(1);
-	}
-    }
-
-    /** Sends a one-argument command to the server. */
-    void send(DebuggerCommand cmd, uint64_t arg1) {
-        send(cmd);
-        ssize_t n = write(server, &arg1, sizeof arg1);
-        if (n<0) {
-	    fprintf(stderr, "write arg1: %s\n", strerror(errno));
-	    exit(1);
-	} else if (n!=sizeof arg1) {
- 	    fprintf(stderr, "write arg1: short write\n");
-	    exit(1);
-	}
-    }
-
-    /** Sends a two-argument command to the server. */
-    void send(DebuggerCommand cmd, uint64_t arg1, uint64_t arg2) {
-        send(cmd, arg1);
-        ssize_t n = write(server, &arg2, sizeof arg2);
-        if (n<0) {
-	    fprintf(stderr, "write arg2: %s\n", strerror(errno));
-	    exit(1);
-	} else if (n!=sizeof arg2) {
- 	    fprintf(stderr, "write arg2: short write\n");
-	    exit(1);
-	}
-    }
-
-    /** Reads the status word from the server and returns it, also saving it in the "status" data member. */
-    uint64_t recv() {
-        ssize_t n = read(server, &status, sizeof status);
-	if (n<0) {
- 	    fprintf(stderr, "read status: %s\n", strerror(errno));
-	    exit(1);
-	} else if (n!=sizeof status) {
-	    fprintf(stderr, "read status: short read\n");
-	    exit(1);
-	}
-	return status;
-    }
-
-    /** Reads the status word (as a size) and the following data. The arguments and return value are like the GNU getline()
-     *  function. */
-    size_t recv(void **bufp, size_t *sizep) {
-        size_t need = recv();
-	if (need > *sizep) {
-            *sizep = need;
-	    *bufp = realloc(*bufp, *sizep);
-	    assert(*bufp);
-	}
-	ssize_t n = read(server, *bufp, need);
-	if (n<0) {
-	    fprintf(stderr, "read data: %s\n", strerror(errno));
-	    exit(1);
-	} else if ((size_t)n!=need) {
-	    fprintf(stderr, "read data: short read\n");
-	    exit(1);
-	}
-	return need;
-    }
-
-    /** Run a command with no arguments and no result data. */
-    uint64_t execute(DebuggerCommand cmd) {
-        send(cmd);
-        return recv();
-    }
-
-    /** Run a command with one argument and no result data. */
-    uint64_t execute(DebuggerCommand cmd, uint64_t arg1) {
-        send(cmd, arg1);
-        return recv();
-    }
-
-    /** Run a command with two arguments and no result data. */
-    uint64_t execute(DebuggerCommand cmd, uint64_t arg1, uint64_t arg2) {
-        send(cmd, arg1, arg2);
-	return recv();
-    }
-
-    /** Run a command with no arguments returning result data. */
-    const void* execute(DebuggerCommand cmd, size_t *sizeptr) {
-        send(cmd);
-	recv(&result, &result_nalloc);
-	if (sizeptr)
-          *sizeptr = status;
-        return result;
-    }
-
-    /** Run a command with one argument returning result data. */
-    const void* execute(DebuggerCommand cmd, uint64_t arg1, size_t *sizeptr) {
-        send(cmd, arg1);
-	recv(&result, &result_nalloc);
-	if (sizeptr)
-          *sizeptr = status;
-        return result;
-    }
-
-    /** Run a command with two arguments returning result data. */
-    const void* execute(DebuggerCommand cmd, uint64_t arg1, uint64_t arg2, size_t *sizeptr) {
-        send(cmd, arg1, arg2);
-	recv(&result, &result_nalloc);
-	if (sizeptr)
-          *sizeptr = status;
-        return result;
-    }
-
-private:
-    static const short default_port = 32002;
-    int server;                                 /* Server socket */
-    uint64_t status;		                /* Status from last executed command. */
-    void *result;                               /* Result data from last executed command. */
-    size_t result_nalloc;                       /* Current allocated size of the result buffer. */
-    RegisterSet regs;                           /* Cached values of all registers */
-    bool regs_current;                          /* Is the contents of "regs" cache current? */
-};
 
 /** Values used by X86InstructionsSemantics with the Verifier policy defined below. */
 template<size_t Nbits>
@@ -979,13 +706,24 @@ int main(int argc, char *argv[]) {
     SgAsmInterpretation *interp = isSgAsmInterpretation(NodeQuery::querySubTree(project, V_SgAsmInterpretation).back());
     assert(interp);
 
+#if 1
+    Disassembler *disassembler = Disassembler::lookup(interp)->clone();
+    assert(disassembler!=NULL);
+#else
     /* Get the instruction mapping (and some other stuff we don't really need) */
     fprintf(stderr, "Calculating call graph...\n");
     VirtualBinCFG::AuxiliaryInformation aux_info(interp);
+#endif
 
     /* Set breakpoints in every executable segment. These breakpoints correspond to the instructions we want to analyze. We set
      * breakpoints by section granularity for efficiency. */
     fprintf(stderr, "Setting break points...\n");
+#if 1 /*DEBUGGING: Set breakpoint at all addresses. [RPM 2010-08-20]*/
+    {
+        int status = dbg.setbp(0, 0xffffffff);
+        assert(status>=0);
+    }
+#else
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     for (size_t i=0; i<headers.size(); i++) {
         std::vector<SgNode*> nodes = NodeQuery::querySubTree(headers[i], V_SgAsmGenericSection);
@@ -999,6 +737,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+#endif
 
     /* Initialize verifier */
     fprintf(stderr, "Starting executable...\n");
@@ -1016,18 +755,32 @@ int main(int argc, char *argv[]) {
         if (0 == ++nprocessed % 100)
             fprintf(stderr, "verified %"PRIu64" instructions; %"PRIu64" error%s so far.\n",
                     nprocessed, nerrors, 1==nerrors?"":"s");
-
+#if 1
+        unsigned char insn_buf[15];
+        size_t nread = dbg.memory(dbg.rip(), sizeof insn_buf, insn_buf);
+        SgAsmInstruction *insn = NULL;
+        try {
+            insn = disassembler->disassembleOne(insn_buf, dbg.rip(), nread, dbg.rip(), NULL);
+        } catch(const Disassembler::Exception &e) {
+            std::cerr <<"disassembler exception: " <<e <<"\n";
+        }
+#else
         /* Look up instruction. Failure to find an instruction results from one of these two conditions:
          *     1. Rose was unable to disassemble the instruction
          *     2. We single-stepped to an address that's not known to the static analysis
          * In either case of failure we just continue until the next breakpoint. */
         SgAsmInstruction *insn = aux_info.getInstructionAtAddress(dbg.rip());
+#endif
         if (!insn) {
             dbg.cont();
             continue;
         }
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         assert(insn_x86);
+#if 1
+        /* Trace instructions */
+        fprintf(stderr, "[%07"PRIu64"] 0x%08"PRIx64": %s\n", nprocessed, insn->get_address(), unparseInstruction(insn).c_str());
+#endif
 
         /* Process instruction semantics. */
         std::ostringstream trace;

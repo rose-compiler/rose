@@ -142,7 +142,11 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_23.f90 \
      test2010_25.f90 \
      test2010_28.f90 \
-     canonicalExample.f90 
+     test2010_32.f90 \
+     test2010_33.f90 \
+     test2010_34.f90 \
+     test2010_35.f90 \
+     canonicalExample.f90
 
 
 if !ROSE_USING_GFORTRAN_VERSION_4_0
@@ -313,6 +317,9 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_22.f90 \
      test2010_24.f90 \
      test2010_26.f90 \
+     test2010_31.f90 \
+     test2010_36.f90 \
+     test2010_37.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -485,6 +492,12 @@ test2010_05.o:
 outputSpew.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:caf -rose:skip_syntax_check -c $(srcdir)/$(@:.o=.caf)
 
+# Makefile rule to reproduce a current OFP bug that causes OFP to fail silently (not returning a proper exit code).
+current_OFP_error:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:exit_after_parser -c $(srcdir)/test2010_31.f90
+
+
+
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 PASSING_MODULE_TEST_Objects = module_B_file.o
 
@@ -512,14 +525,23 @@ testSuffixRules:
 	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_11.f08
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_11.f08
 
+
+tests:
+	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+
 check-local:
 	@echo "Tests for Fortran."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
+if !ROSE_USING_GFORTRAN_VERSION_4_0
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why.
 #	@$(MAKE) testParser
+else
+	@echo "Skipping Fortran code tests when using the gfortran version 4.0.x compiler (fails to support common command line options of later versions)."
+endif
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
@@ -543,7 +565,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_01.f test2007_suffixTest_02.f77 test2007_suffixTest_03.f90 test2007_suffixTest_04.f95 \
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
-   module_A_file.f90 module_B_file.f90
+   module_A_file.f90 module_B_file.f90 test2010_31_header.f90
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests

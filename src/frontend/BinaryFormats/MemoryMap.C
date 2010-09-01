@@ -13,6 +13,89 @@
 #include "rose_getline.h"
 /* See header file for full documentation */
 
+/************************************************************************************************************************
+ * Output functions for MemoryMap exceptions
+ ************************************************************************************************************************/
+
+std::ostream&
+operator<<(std::ostream &o, const MemoryMap::Exception &e)
+{
+    e.print(o);
+    return o;
+}
+
+std::ostream&
+operator<<(std::ostream &o, const MemoryMap::Inconsistent &e)
+{
+    e.print(o);
+    return o;
+}
+
+std::ostream&
+operator<<(std::ostream &o, const MemoryMap::NotMapped &e)
+{
+    e.print(o);
+    return o;
+}
+
+std::ostream&
+operator<<(std::ostream &o, const MemoryMap::NoFreeSpace &e)
+{
+    e.print(o);
+    return o;
+}
+
+std::ostream&
+operator<<(std::ostream &o, const MemoryMap::Syntax &e)
+{
+    e.print(o);
+    return o;
+}
+
+void
+MemoryMap::Exception::print(std::ostream &o) const
+{
+    o <<"error in memory map";
+}
+
+void
+MemoryMap::Inconsistent::print(std::ostream &o) const
+{
+    using namespace StringUtility;
+    o <<"inconsistent mapping between elements"
+      <<" (" <<addrToString(a.get_va()) <<"+" <<addrToString(a.get_size()) <<"=" <<addrToString(a.get_va()+a.get_size()) <<")"
+      <<" and"
+      <<" (" <<addrToString(b.get_va()) <<"+" <<addrToString(b.get_size()) <<"=" <<addrToString(b.get_va()+b.get_size()) <<")";
+}
+
+void
+MemoryMap::NotMapped::print(std::ostream &o) const
+{
+    o <<"address " <<StringUtility::addrToString(va) <<" is not present in the memory map";
+}
+
+void
+MemoryMap::NoFreeSpace::print(std::ostream &o) const
+{
+    o <<"memory map does not have " <<StringUtility::addrToString(size) <<" bytes of free space";
+}
+
+void
+MemoryMap::Syntax::print(std::ostream &o) const
+{
+    o <<(filename.empty()?"at ":(filename+":"));
+    o <<linenum;
+    if (colnum>=0)
+        o <<"." <<colnum;
+    o <<": " <<(mesg.empty()?"syntax error":mesg);
+}
+
+/************************************************************************************************************************
+ * End of exception output functions
+ ************************************************************************************************************************/
+
+
+
 rose_addr_t
 MemoryMap::MapElement::get_va_offset(rose_addr_t va) const
 {
@@ -574,12 +657,14 @@ MemoryMap::dump(const std::string &basename) const
 bool
 MemoryMap::load(const std::string &basename)
 {
-    FILE *f = fopen((basename+".index").c_str(), "r");
+    std::string indexname = basename + ".index";
+    FILE *f = fopen(indexname.c_str(), "r");
     if (!f) return false;
 
     char *line = NULL;
     size_t line_nalloc = 0;
     ssize_t nread;
+<<<<<<< HEAD
 #ifdef _MSC_VER
 	while (true) {
 	ROSE_ASSERT(false);
@@ -699,9 +784,164 @@ MemoryMap::load(const std::string &basename)
             fclose(f);
             free(line);
             throw;
+=======
+    unsigned nlines=0;
+
+    try {
+        while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
+            char *rest, *s=line;
+            nlines++;
+
+            /* Check for empty lines and comments */
+            while (isspace(*s)) s++;
+            if (!*s || '#'==*s) continue;
+
+            /* Starting virtual address with optional "va " prefix */
+            if (!strncmp(s, "va ", 3)) s += 3;
+            errno = 0;
+            rose_addr_t va = strtoull(s, &rest, 0);
+            if (rest==s || errno)
+                throw Syntax(this, "starting virtual address expected", indexname, nlines, s-line);
+            s = rest;
+
+            /* Size, prefixed with optional "+" or "," */
+            while (isspace(*s)) s++;
+            if ('+'==*s || ','==*s) s++;
+            while (isspace(*s)) s++;
+            errno = 0;
+            rose_addr_t sz = strtoull(s, &rest, 0);
+            if (rest==s || errno)
+                throw Syntax(this, "virtual size expected", indexname, nlines, s-line);
+            s = rest;
+
+            /* Optional ending virtual address prefixed with "=" */
+            while (isspace(*s)) s++;
+            if ('='==*s) {
+                s++;
+                errno = 0;
+                (void)strtoull(s, &rest, 0);
+                if (rest==s || errno)
+                    throw Syntax(this, "ending virtual address expected after '='", indexname, nlines, s-line);
+                s = rest;
+            }
+
+            /* Permissions with optional ',' prefix. Permissions are the letters 'r', 'w', and/or 'x'. Hyphens can appear in the
+             * r/w/x string at any position and are ignored. */
+            while (isspace(*s)) s++;
+            if (','==*s) s++;
+            while (isspace(*s)) s++;
+            unsigned perm = 0;
+            while (strchr("rwx-", *s)) {
+                switch (*s++) {
+                    case 'r': perm |= MM_PROT_READ; break;
+                    case 'w': perm |= MM_PROT_WRITE; break;
+                    case 'x': perm |= MM_PROT_EXEC; break;
+                    case '-': break;
+                    default: break; /*to suppress a compiler warning*/
+                }
+            }
+
+            /* Base address, "anonymous", or file name.  Base address is introduced with the word "base", file names are
+             * anything up the the next space character. An optional "at" prefix is allowed. */
+            while (isspace(*s)) s++;
+            if (','==*s) s++;
+            while (isspace(*s)) s++;
+            if (!strncmp(s, "at", 2) && isspace(s[2])) s+= 3;
+            while (isspace(*s)) s++;
+            bool is_base=false;
+            if (!strncmp(s, "base", 4) && isspace(s[4])) {
+                s += 5;
+                is_base = true;
+            }
+            while (isspace(*s)) s++;
+            char *s2=s;
+            while (*s2 && !isspace(*s2)) s2++;
+            if (s2==s)
+                throw Syntax(this, "data source name expected", indexname, nlines, s-line);
+            std::string region_name(s, s2-s);
+            s = s2;
+
+            /* Offset from base address; optional prefix of "," or "+". */
+            while (isspace(*s)) s++;
+            if (','==*s || '+'==*s) s++;
+            while (isspace(*s)) s++;
+            errno = 0;
+            rose_addr_t offset = strtoull(s, &rest, 0);
+            if (rest==s || errno)
+                throw Syntax(this, "file offset expected", indexname, nlines, s-line);
+            s = rest;
+
+            /* Comment (optional) */
+            while (isspace(*s)) s++;
+            if (','==*s) s++;
+            while (isspace(*s)) s++;
+            char *end = s + strlen(s);
+            while (end>s && isspace(end[-1])) --end;
+            std::string comment(s, end-s);
+
+            /* Create the map element */
+            MapElement me;
+            uint8_t *buf = NULL;
+            size_t nread=0;
+            if (region_name == "anonymous") {
+                me = MapElement(va, sz, perm);
+                nread = sz;
+            } else {
+                std::string filename;
+                if (is_base) {
+                    char ext[256];
+                    sprintf(ext, "-%08"PRIx64".data", va);
+                    filename = basename+ext;
+                } else if ('/'==region_name[0]) {
+                    filename = region_name;
+                } else {
+                    std::string::size_type slash = basename.find_last_of("/");
+                    filename = slash==basename.npos ? "." : basename.substr(0, slash);
+                    filename += "/" + region_name;
+                }
+                
+
+                buf = new uint8_t[sz];
+                int fd = open(filename.c_str(), O_RDONLY);
+                if (fd<0)
+                    throw Syntax(this, "cannot open "+filename+": "+strerror(errno), indexname, nlines);
+                off_t position = lseek(fd, offset, SEEK_SET);
+                ROSE_ASSERT(position!=-1 && position==(off_t)offset);
+                while (nread<sz) {
+                    ssize_t n = TEMP_FAILURE_RETRY(::read(fd, buf+nread, sz-nread));
+                    if (n<0) {
+                        close(fd);
+                        throw Syntax(this, "read failed from "+filename+": "+strerror(errno), indexname, nlines);
+                    }
+                    if (0==n) break;
+                    nread += n;
+                }
+                close(fd);
+                me = MapElement(va, nread, buf, 0, perm);
+            }
+            me.set_name(comment);
+
+            /* Add map element to this memory map. */
+            try {
+                insert(me);
+            } catch (const Exception&) {
+                delete[] buf;
+                throw;
+            }
+            if (sz>nread) {
+                MapElement me2(va+nread, sz-nread, perm);
+                me2.set_name(comment);
+                insert(me2);
+            }
+>>>>>>> master
         }
+    } catch (...) {
+        fclose(f);
+        if (line) free(line);
+        throw;
     }
-    fclose(f); f=NULL;
-    if (line) free(line); line=NULL; line_nalloc=0;
+
+    fclose(f);
+    if (line) free(line);
     return nread<=0;
 }

@@ -4588,6 +4588,7 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
 
     SgFunctionDeclaration* mainDecl = findMain(*i);
     if (mainDecl) 
+      if (mainDecl->get_definingDeclaration() == mainDecl) // skip non-defining main() declaration, Liao 8/27/2010
       return mainDecl;
   }
   return 0;
@@ -10638,65 +10639,8 @@ SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*
 void
 SageInterface::deleteAST ( SgNode* n )
    {
-//Tan, July/15/2010:       //Re-implement DeleteAST function
+//Tan, August/25/2010:       //Re-implement DeleteAST function
 
-#if 0 
-             class DeleteAST : public SgSimpleProcessing
-                {
-                 public:
-                        void visit (SgNode* node)
-                        {
-                        //These nodes are manually deleted because they cannot be visited by the traversal
-                                //remove SgSymbolTable
-#if 0
-                                if(isSgScopeStatement(node) !=NULL){
-                                        SgSymbolTable* symbol_table = ((SgScopeStatement *)node)->get_symbol_table();
-                                        if(isSgSymbolTable(symbol_table) !=NULL){
-                                                delete symbol_table;
-                                                //printf("A SgSymbolTable was deleted\n");
-                                        }
-                                }
-#endif
-                                //remove SgFunctionSymbol
-                                if(isSgFunctionDeclaration(node) !=NULL){
-                                        SgScopeStatement *scope=((SgFunctionDeclaration*)node)->get_scope();
-                                        assert(scope != NULL);
-                                        SgSymbol* symbol = scope->first_function_symbol();
-                                        delete symbol;
-                                        //printf("A SgFunctionSymbol was deleted\n");
-                                }
-
-#if 1
-                                if(isSgInitializedName(node) !=NULL){
-                                        //remove SgVariableDefinition
-                                        SgDeclarationStatement* var_def;
-                                        var_def =  ((SgInitializedName *)node)->get_definition();
-#if 1
-                                        if(isSgVariableDefinition(var_def) !=NULL){
-                                                delete var_def;
-                                                //printf("A SgVariableDefinition was deleted\n");
-                                        }
-#endif
-#if 1
-                                        //remove SgVariableSymbol
-                                        SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
-                                        if(isSgVariableSymbol(symbol) !=NULL){
-                                                delete symbol;
-                                                //printf("A SgVariableSymbol was deleted\n");
-                                        }
-#endif
-
-                                }
-#endif
-                        //Normal nodes will be removed in a post-order way
-                                delete node;
-                        }
-              };
-
-#endif
-
-//#include<boost/foreach.hpp>
-//#define foreach BOOST_FOREACH		
 	//Use MemoryPoolTraversal to count the number of references to a certain symbol
 	//This class defines the visitors for the MemoryPoolTraversal
 	class ClassicVisitor : public ROSE_VisitorPattern
