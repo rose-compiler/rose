@@ -89,38 +89,101 @@ BinaryLoader::load(SgAsmInterpretation *interp)
         fixupSections(interp);
 }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
+std::string
+BinaryLoader::find_so_file(const std::string &libname) const
+{
+    for (std::vector<std::string>::const_iterator di=directories.begin(); di!=directories.end(); ++di) {
+        std::string libpath = *di + "/" + libname;
+        struct stat sb;
+        if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0)
+            return libpath;
+    }
+    throw Exception("cannot find file for library: " + libname);
+}
 
 bool
-BinaryLoader::isHeaderSimilar(const SgAsmGenericHeader* matchHeader, const SgAsmGenericHeader* candidateHeader)
+BinaryLoader::is_linked(SgBinaryComposite *composite, const std::string &filename)
 {
-    return (matchHeader->variantT() == candidateHeader->variantT());
+    abort(); /*FIXME*/
 }
 
-SgAsmGenericHeaderPtrList
-BinaryLoader::findSimilarHeaders(const SgAsmGenericHeader* matchHeader, const SgAsmGenericHeaderPtrList& candidateHeaders)
+bool
+BinaryLoader::is_linked(SgAsmInterpretation *interp, const std::string &filename)
 {
-    SgAsmGenericHeaderPtrList matches;
-    for (size_t i=0; i<candidateHeaders.size(); ++i) {
-        SgAsmGenericHeader* candidate = candidateHeaders[i]; 
-        if (isHeaderSimilar(matchHeader, candidate))
-            matches.push_back(candidate);
+    abort(); /*FIXME*/
+}
+
+
+/* once called loadInterpLibraries */
+void
+BinaryLoader::linkDependencies(SgAsmInterpretation* interp)
+{
+    ROSE_ASSERT(interp != NULL);
+    SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
+    ROSE_ASSERT(composite != NULL);
+
+    /* Make sure the pre-load objects are parsed and linked into the AST. */
+    for (std::vector<std::string>::const_iterator pi=preloads.begin(); pi!=preloads.end(); ++pi) {
+        std::string filename = find_so_file(*pi);
+        if (!is_linked(composite, filename))
+            createAsmAST(composite, filename);
     }
-    return matches;
+
+    /* Bootstrap */
+    std::list<SgAsmGenericHeader*> unresolved_hdrs;
+    unresolved_hdrs.insert(unresolved_hdrs.end(),
+                           interp->get_headers()->get_headers().begin(),
+                           interp->get_headers()->get_headers().end());
+
+    /* Process unresolved headers from the beginning of the queue and push new ones onto the end. */
+    while (!unresolved_hdrs.empty()) {
+        SgAsmGenericHeader *header = unresolved_hdrs.front();
+        unresolved_hdrs.pop_front();
+        std::vector<std::string> deps = dependencies(header);
+        for (std::vector<std::string>::iterator di=deps.begin(); di!=deps.end(); ++di) {
+            std::string filename = find_so_file(*di);
+            if (!is_linked(composite, filename)) {
+                SgAsmGenericFile *new_file = createAsmAST(composite, filename);
+                ROSE_ASSERT(new_file!=NULL); /*FIXME: more user-friendly failure [RPM 2010-09-01]*/
+                SgAsmGenericHeaderPtrList new_hdrs = findSimilarHeaders(header, new_file->get_headers()->get_headers());
+                unresolved_hdrs.insert(unresolved_hdrs.end(), new_hdrs.begin(), new_hdrs.end());
+            }
+        }
+    }
 }
 
+/* class method */
+SgAsmGenericHeaderPtrList
+BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPtrList &candidates)
+{
+    SgAsmGenericHeaderPtrList retval;
+    Disassembler *d1 = Disassembler::lookup(match);
+
+    for (SgAsmGenericHeaderPtrList::iterator ci=candidates.begin(); ci!=candidates.end(); ++ci) {
+        Disassembler *d2 = d1 ? Disassembler::lookup(*ci) : NULL;
+        if (!d1 && !d2) {
+            if (match->variantT() == (*ci)->variantT())
+                retval.push_back(*ci);
+        } else if (d1==d2) {
+            retval.push_back(*ci);
+        }
+    }
+    return retval;
+}
+
+/* class method */
+bool
+BinaryLoader::isHeaderSimilar(SgAsmGenericHeader *h1, SgAsmGenericHeader *h2)
+{
+    /* This is implemented in terms of findSimilarHeaders() rather than vice versa so that findSimilarHeaders() does not need
+     * to call Disassembler::lookup() so often. */
+    SgAsmGenericHeaderPtrList h2list;
+    h2list.push_back(h2);
+    return !findSimilarHeaders(h1, h2list).empty();
+}
+
+
+/* class method */
 SgAsmGenericFile* 
 BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
 {
@@ -143,7 +206,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
         for (size_t j = 0; j < interps.size(); ++j) {
             ROSE_ASSERT(!interps[j]->get_headers()->get_headers().empty());
             SgAsmGenericHeader* interpHeader = interps[j]->get_headers()->get_headers().front();
-            if (isHeaderSimilar(header,interpHeader)) {
+            if (isHeaderSimilar(header, interpHeader)) {
                 interp = interps[j];
                 break;
             }
@@ -162,40 +225,6 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
 #endif
   
   return file;
-}
-
-/* used to be called loadInterpLibraries */
-void
-BinaryLoader::linkDependencies(SgAsmInterpretation* interp)
-{
-    ROSE_ASSERT(interp != NULL);
-    SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
-    ROSE_ASSERT(composite != NULL);
-  
-    /* Bootstrap DLL list - these are library names, not file paths. On *NIX machines these are called shared libraries (.so). */
-    Rose_STL_Container<std::string> filesAlreadyLoaded;
-    std::list<SgAsmGenericHeader*> unresolvedHeaders;
-    unresolvedHeaders.insert(unresolvedHeaders.end(),
-                             interp->get_headers()->get_headers().begin(),
-                             interp->get_headers()->get_headers().end());
-
-  
-    for (/*void*/; !unresolvedHeaders.empty(); unresolvedHeaders.pop_front()) {
-        SgAsmGenericHeader* header = unresolvedHeaders.front();
-        Rose_STL_Container<std::string> filesToLoad = getDLLs(header, filesAlreadyLoaded);
-        for(size_t i=0; i<filesToLoad.size(); ++i){
-            std::string dllPath = filesToLoad[i];
-            if (get_verbose(composite) > 0) {
-                printf("Loading: %s\n", dllPath.c_str());
-            }
-            SgAsmGenericFile* newFile = createAsmAST(composite, dllPath);
-            ROSE_ASSERT(newFile != NULL); // TODO more user friendly fail notification
-            filesAlreadyLoaded.push_back(dllPath); /* Mark loaded by dllPath */
-            
-            SgAsmGenericHeaderPtrList newHeaders = findSimilarHeaders(header, newFile->get_headers()->get_headers());
-            unresolvedHeaders.insert(unresolvedHeaders.end(), newHeaders.begin(), newHeaders.end());
-        }
-    }
 }
 
 /* Used to be called layoutInterpLibraries */
@@ -221,6 +250,26 @@ BinaryLoader::addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSecti
 		       header->get_sections()->get_sections().end());
 }
 
+std::vector<std::string>
+BinaryLoader::dependencies(SgAsmGenericHeader *header)
+{
+    ROSE_ASSERT(header!=NULL);
+    std::vector<std::string> retval;
+    const SgAsmGenericDLLPtrList &dlls = header->get_dlls();
+    for (SgAsmGenericDLLPtrList::const_iterator di=dlls.begin(); di!=dlls.end(); ++di)
+        retval.push_back((*di)->get_name()->get_string());
+    return retval;
+}
+
+
+
+
+
+
+
+
+
+
 /* Used to be called relocateAllLibraries */
 void
 BinaryLoader::fixupSections(SgAsmInterpretation *interp)
@@ -230,29 +279,4 @@ BinaryLoader::fixupSections(SgAsmInterpretation *interp)
     // 3. Create Extent sorted list of sections
     // 4. Collect Relocation Entries.
     // 5.  for each relocation entry, perform relocation
-}
-
-size_t wordSizeOfFile(SgAsmGenericFile* file)
-{
-    size_t maxWordSize=0;
-    SgAsmGenericHeaderPtrList &headers= file->get_headers()->get_headers();
-    for(SgAsmGenericHeaderPtrList::iterator headerIter=headers.begin(); headerIter != headers.end(); ++headerIter)
-        maxWordSize = std::max(maxWordSize, (*headerIter)->get_word_size());
-    return maxWordSize;
-}
-
-Rose_STL_Container<std::string>
-BinaryLoader::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Container<std::string> &dllFilesAlreadyLoaded)
-{
-    Rose_STL_Container<std::string> files;
-    ROSE_ASSERT(header != NULL);
-    std::set<std::string> alreadyLoadedSet(dllFilesAlreadyLoaded.begin(), dllFilesAlreadyLoaded.end());
-
-    const SgAsmGenericDLLPtrList &dlls = header->get_dlls();
-    for (size_t j=0; j<dlls.size(); ++j) {
-        std::string file = dlls[j]->get_name()->c_str();
-        if (alreadyLoadedSet.find(file) == alreadyLoadedSet.end())
-            files.push_back(file);
-    }
-    return files;
 }

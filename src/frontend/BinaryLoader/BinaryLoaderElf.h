@@ -23,8 +23,13 @@ public:
 
 protected:
     virtual void addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections);
+
+#if 0
+    /* FIXME: replaced by dependencies() */
     virtual Rose_STL_Container<std::string> getDLLs(SgAsmGenericHeader* header,
                                                     const Rose_STL_Container<std::string> &dllFilesAlreadyLoaded);
+#endif
+
 };
 
 #endif /*ROSE_BINARYLOADERELF_H*/

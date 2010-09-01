@@ -22,6 +22,8 @@ BinaryLoaderElf::can_load(SgAsmGenericHeader *hdr) const
 
 
 
+
+
 #if 0
 void
 BinaryLoaderElf::handleSectionMapped(SgAsmGenericSection* section)
@@ -43,7 +45,7 @@ BinaryLoaderElf::handleSectionMapped(SgAsmGenericSection* section)
 #endif 
 
 /* NOTE: We assume that the value in DT_STRTAB matches dynamic->get_linked_section */
-void
+static void
 getDynamicVars(SgAsmElfFileHeader* elfHeader, std::string& rpath, std::string& runpath)
 {
     SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
@@ -69,7 +71,7 @@ getDynamicVars(SgAsmElfFileHeader* elfHeader, std::string& rpath, std::string& r
     }
 }
 
-Rose_STL_Container<std::string>
+static Rose_STL_Container<std::string>
 getLdPreload(SgAsmElfFileHeader* /*header*/)
 {
     Rose_STL_Container<std::string> ret;
@@ -86,7 +88,7 @@ getLdPreload(SgAsmElfFileHeader* /*header*/)
     return ret;
 }
 
-Rose_STL_Container<std::string>
+static Rose_STL_Container<std::string>
 parseLdPath(const std::string& rawPath)
 {
     Rose_STL_Container<std::string> ret;
@@ -102,7 +104,7 @@ parseLdPath(const std::string& rawPath)
     return ret;
 }
 
-Rose_STL_Container<std::string>
+static Rose_STL_Container<std::string>
 getLdLibraryPaths(SgAsmElfFileHeader* /*header*/)
 {                                     
     Rose_STL_Container<std::string> ret;
@@ -115,6 +117,7 @@ getLdLibraryPaths(SgAsmElfFileHeader* /*header*/)
 }
 
 
+#if 0 /*replaced by dependencies() but also need a function to set up the search path*/
 // Overall Caveats - 
 //      setuid       - the loader should do different stuff if setuid is used, we don't do that
 //      /etc/ld.so.* - there are a bunch of files that can alter behavior - they are not handled
@@ -223,6 +226,7 @@ BinaryLoaderElf::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Container<st
     }
     return files;
 }
+#endif
 
 void
 BinaryLoaderElf::addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections)

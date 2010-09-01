@@ -136,24 +136,35 @@ public:
     /** Adds a library to the list of pre-loaded libraries. These libraries are linked into the AST in the order they were
      *  added to the preload list. The @p libname should be either the base name of a library, such as "libm.so" (in which
      *  case the search directories are consulted) or a path-qualified name like "/usr/lib/libm.so". */
-    void add_preload(const std::string &libname);
-    std::vector<std::string>& get_preloads();
-    const std::vector<std::string>& get_preloads() const;
+    void add_preload(const std::string &libname) {
+        preloads.push_back(libname);
+    }
+
+    /** Returns the list of libraries that will be pre-loaded. These are loaded before other libraries even if the preload
+     *  libraries would otherwise not be loaded. */
+    const std::vector<std::string>& get_preloads() const {
+        return preloads;
+    }
 
     /** Adds a directory to the list of directories searched for libraries.  This is similar to the LD_LIBRARY_PATH
      *  environment variable of the ld-linux.so dynamic loader (see the ld.so man page). ROSE searches for libraries in
      *  directories in the order that directories were added. */
-    void add_directory(const std::string &dirname);
-    std::vector<std::string>& get_directories();
-    const std::vector<std::string>& get_directories() const;
+    void add_directory(const std::string &dirname) {
+        directories.push_back(dirname);
+    }
 
-    /** Given the name of a library, return the fully qualified name where the library is located in the file system. Returns
-     *  the empty string if the library cannot be found. */
-    std::string find_library(const std::string &libname) const;
+    /** Returns the list of shared object search directories. */
+    const std::vector<std::string>& get_directories() const {
+        return directories;
+    }
 
-    /*************************************************************************************************************************
-     * The main part of the interface.
-     *************************************************************************************************************************/
+    /** Given the name of a shared object, return the fully qualified name where the library is located in the file system.
+     *  Throws a BinaryLoader::Exception if the library cannot be found. */
+    virtual std::string find_so_file(const std::string &libname) const;
+
+    /*========================================================================================================================
+     * The main interface.
+     *======================================================================================================================== */
 public:
     /** Class method to parse, map, link, and/or relocate all interpretations of the specified binary composite. This should
      *  only be called for an SgBinaryComposite object that has been created but for which no binary files have been parsed
@@ -195,15 +206,26 @@ public:
     virtual void fixupSections(SgAsmInterpretation *interp);
 
 
-    /*************************************************************************************************************************
-     * Functions for internal use.
-     *************************************************************************************************************************/
+    /*========================================================================================================================
+     * Supporting functions
+     *======================================================================================================================== */
 protected:
+    /** Returns true if the specified file name is already linked into the AST. */
+    virtual bool is_linked(SgBinaryComposite *composite, const std::string &filename);
+    /** Returns true if the specified file name is already linked into the AST. */
+    virtual bool is_linked(SgAsmInterpretation *interp, const std::string &filename);
+
     /** Parses a single binary file. The file may be an executable, core dump, or shared library.  The machine instructions in
      *  the file are not parsed--only the binary container is parsed.  The new SgAsmGenericFile is added to the supplied
      *  binary @p composite and a new interpretation is created if necessary.  Dwarf debugging information is also parsed and
      *  added to the AST if Dwarf support is enable and the information is present in the binary container. */
     static SgAsmGenericFile *createAsmAST(SgBinaryComposite *composite, std::string filePath);
+
+    /** Finds shared object dependencies of a single binary header.  Returns a list of dependencies, which are usually library
+     *  names rather than actual files.  The library names can be turned into file names by calling find_so_file().  Only one
+     *  header is inspected (i.e., this function is not recursive) and no attempt is made to remove names from the return
+     *  value that have already been parsed into the AST. */
+    virtual std::vector<std::string> dependencies(SgAsmGenericHeader*);
 
 
     /** Selects those sections which should be layed out by the Loader and inserts them into the @p allSections argument.  The
@@ -211,23 +233,22 @@ protected:
      *  to a subset of sections. */
     virtual void addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections);
 
-    virtual void handleSectionMapped(SgAsmGenericSection* section){} /* =0 TODO */; 
-
+#if 0
     /** Helper function to get raw dll list from a file. */
     virtual Rose_STL_Container<std::string> getDLLs(SgAsmGenericHeader* header,
                                                     const Rose_STL_Container<std::string> &dllFilesAlreadyLoaded);
+#endif
 
-    /** Determine whether two headers are similar enough that they can be located in the same interpretation. */
-    static bool isHeaderSimilar(const SgAsmGenericHeader *matchHeader, const SgAsmGenericHeader *candidate);
+    /** Find all headers in @p candidateHeaders that are similar to @p matchHeader. This is used to determine whether two
+     *  headers can be placed in the same SgAsmInterpretation. We make this determination by looking at whether the
+     *  Disassembler for each header is the same.  In other words, an x86_64 header will not be similar to an i386 header even
+     *  though they are both ELF headers and both x86 architectures. */
+    static SgAsmGenericHeaderPtrList findSimilarHeaders(SgAsmGenericHeader *matchHeader,
+                                                        SgAsmGenericHeaderPtrList &candidateHeaders);
 
-    /** Find all headers in @p candidateHeaders that are similar to @p matchHeader. */
-    static SgAsmGenericHeaderPtrList findSimilarHeaders(const SgAsmGenericHeader *matchHeader,
-                                                        const SgAsmGenericHeaderPtrList &candidateHeaders);
-
-    /** Determines the likely word size of a binary.  Some executable formats allow multiple architectures to reside in
-     *  the same file (fat binaries) and it is not clear what we should do in that case.  For now we're going to guess at the
-     *  "most likely" size by returning the maximum word size across the file headers defined in the file. */
-    static size_t wordSizeOfFile(SgAsmGenericFile *file);
+    /** Determines whether two headers are similar enough to be in the same interpretation.  Two headers are similar if
+     *  disassembly would use the same Disassembler for both.  See findSimilarHeaders(). */
+    static bool isHeaderSimilar(SgAsmGenericHeader*, SgAsmGenericHeader*);
 
 
     /*************************************************************************************************************************
@@ -235,6 +256,8 @@ protected:
      *************************************************************************************************************************/
 private: 
     static std::vector<BinaryLoader*> loaders;          /**< List of loader subclasses. */
+    std::vector<std::string> preloads;                  /**< Libraries that should be pre-loaded. */
+    std::vector<std::string> directories;               /**< Directories to search for libraries with relative names. */
 
     int p_verbose;
     bool p_perform_dynamic_linking;
