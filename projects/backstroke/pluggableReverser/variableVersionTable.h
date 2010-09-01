@@ -3,6 +3,10 @@
 
 #include <rose.h>
 #include <VariableRenaming.h>
+#include <boost/shared_ptr.hpp>
+
+
+
 
 class VariableVersionTable
 {
@@ -74,6 +78,7 @@ inline bool operator ==(const VariableVersionTable& t1, const VariableVersionTab
     return t1.table_ == t2.table_;
 }
 
+typedef boost::shared_ptr<VariableVersionTable> VariableVersionTablePtr;
 
 #endif	/* BACKSTROKE_VARIABLEVERSIONTABLE_H */
 

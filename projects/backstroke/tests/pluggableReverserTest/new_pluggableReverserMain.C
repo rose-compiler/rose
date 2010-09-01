@@ -1,7 +1,7 @@
-#include <new_pluggableReverser/eventProcessor.h>
-#include <new_pluggableReverser/expressionProcessor.h>
-#include <new_pluggableReverser/statementProcessor.h>
-#include <new_pluggableReverser/ifStatementProcessor.h>
+#include <pluggableReverser/eventProcessor.h>
+#include <pluggableReverser/expressionProcessor.h>
+#include <pluggableReverser/statementProcessor.h>
+#include <pluggableReverser/ifStatementProcessor.h>
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>

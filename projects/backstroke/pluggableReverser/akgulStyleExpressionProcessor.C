@@ -6,7 +6,17 @@
 #include <numeric>
 #include <algorithm>
 
-vector<ExpressionReversal> AkgulStyleExpressionProcessor::process(SgExpression* expression, const VariableVersionTable& varTable, bool isReverseValueUsed)
+struct StoredExpressionReversal : public EvaluationResultAttribute
+{
+	StoredExpressionReversal(const ExpressionReversal& reversal) : reversal(reversal)
+	{
+		
+	}
+	
+	ExpressionReversal reversal;
+};
+
+vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* expression, const VariableVersionTable& varTable, bool isReverseValueUsed)
 {
 	if (isSgAssignOp(expression))
 	{
@@ -26,14 +36,26 @@ vector<ExpressionReversal> AkgulStyleExpressionProcessor::process(SgExpression* 
 				newVarTable.reverseVersion(getReferredVariable(assignOp->get_lhs_operand()).second);
 
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
-				vector<ExpressionReversal> result;
-				result.push_back(ExpressionReversal(forwardExp, reverseExpression, newVarTable));
+				EvaluationResult reversalInfo(newVarTable);
+				ExpressionReversal reversalResult(forwardExp, reverseExpression);
+				reversalInfo.setAttribute(new StoredExpressionReversal(reversalResult));
+				
+				vector<EvaluationResult> result;
+				result.push_back(reversalInfo);
 				return result;
 			}
 		}
 	}
 
-	return vector<ExpressionReversal > ();
+	return vector<EvaluationResult> ();
+}
+
+ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult)
+{
+	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute());
+	ROSE_ASSERT(reversalResult != NULL);
+
+	return reversalResult->reversal;
 }
 
 

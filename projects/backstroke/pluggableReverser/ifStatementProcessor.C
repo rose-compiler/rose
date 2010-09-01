@@ -8,19 +8,20 @@ using namespace SageInterface;
 
 
 
-StatementReversal IfStatementProcessor::process(SgStatement* stmt)
+StatementReversal IfStatementProcessor::process(SgStatement* stmt, const EvaluationResult& evalResult)
 {
+	ROSE_ASSERT(evalResult.getChildResults().size() == 3);
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
     ROSE_ASSERT(if_stmt);
 
     SgStatement* cond = if_stmt->get_conditional();
-    StatementReversal proc_cond = processStatement(cond);
+    StatementReversal proc_cond = processStatement(cond, evalResult.getChildResults()[2]);
 
     SgStatement* true_body = if_stmt->get_true_body();
     SgStatement* false_body = if_stmt->get_false_body();
 
-    StatementReversal proc_true_body = processStatement(true_body);
-    StatementReversal proc_false_body = processStatement(false_body);
+    StatementReversal proc_true_body = processStatement(true_body, evalResult.getChildResults()[1]);
+    StatementReversal proc_false_body = processStatement(false_body, evalResult.getChildResults()[0]);
 
     SgBasicBlock* fwd_true_block_body =  isSgBasicBlock(proc_true_body.fwd_stmt);
     SgBasicBlock* fwd_false_block_body = isSgBasicBlock(proc_false_body.fwd_stmt);
@@ -95,23 +96,22 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
         vector<EvaluationResult> true_body_res =
                 evaluateStatement(if_stmt->get_true_body(), var_table);
         foreach (const EvaluationResult& res2, true_body_res)
-        {
-            EvaluationResult new_res = res1;
-            new_res.update(res2);
-
+		{
             vector<EvaluationResult> cond_results = evaluateStatement(if_stmt->get_conditional(), var_table);
 
             foreach (const EvaluationResult& res3, cond_results)
             {
-                EvaluationResult new_res2 = new_res;
-                new_res2.update(res3);
+				EvaluationResult totalEvaluationResult(var_table);
+				totalEvaluationResult.addChildEvaluationResult(res1);
+				totalEvaluationResult.addChildEvaluationResult(res2);
+				totalEvaluationResult.addChildEvaluationResult(res3);
 
                 // Since we store the branch flag here, we add the cost by 1.
                 SimpleCostModel cost;
                 cost.increaseStoreCount();
-                new_res2.setCost(cost);
+                totalEvaluationResult.setCost(cost);
 
-                results.push_back(new_res2);
+                results.push_back(totalEvaluationResult);
             }
         }
     }
