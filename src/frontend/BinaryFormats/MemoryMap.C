@@ -419,14 +419,16 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsig
 }
 
 void
-MemoryMap::mprotect(const MapElement &region)
+MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
 {
     /* Check whether the region refers to addresses not in the memory map. */
-    ExtentMap e;
-    e.insert(ExtentPair(region.get_va(), region.get_size()));
-    e.erase(va_extents());
-    if (!e.empty())
-        throw NotMapped(this, e.begin()->first);
+    if (!relax) {
+        ExtentMap e;
+        e.insert(ExtentPair(region.get_va(), region.get_size()));
+        e.erase(va_extents());
+        if (!e.empty())
+            throw NotMapped(this, e.begin()->first);
+    }
 
     std::vector<MapElement> created;
     std::vector<MapElement>::iterator i=elements.begin();
