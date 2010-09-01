@@ -50,8 +50,8 @@ XYZ *xyz = new XYZ;
 int foo (int x);
 int foo (int a[10]);
 int foo (double x, int y){
-  int a=1;
-  return a;
+    int a=1;
+    return a;
 }
 
 
