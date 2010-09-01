@@ -313,7 +313,7 @@ SgIfStmt::cfgFindChildIndex(SgNode* n)
         {
           return 0;
         }
-       else
+     else
           if (n != NULL && (n == this->get_true_body() || n == this->get_false_body()))
              {
                return 1;
