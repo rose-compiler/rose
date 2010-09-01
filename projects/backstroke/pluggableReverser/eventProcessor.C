@@ -166,25 +166,37 @@ StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const V
 vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 	VariableRenaming::NumNodeRenameEntry definitions)
 {
-	//First, check if the variable needs restoring at all. If it has the desired version, there is nothing to do
 	vector<SgExpression*> results;
+
+	//Check if we're already trying to restore this variable to this version. Prevents infinite recursion
+	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> variableAndVersion(variable, definitions);
+	if (activeValueRestorations.count(variableAndVersion) > 0)
+	{
+		return results;
+	}
+	else
+	{
+		activeValueRestorations.insert(variableAndVersion);
+	}
+
+
+	//Check if the variable needs restoring at all. If it has the desired version, there is nothing to do
 	if (availableVariables.matchesVersion(variable, definitions))
 	{
 		results.push_back(VariableRenaming::buildVariableReference(variable));
 		return results;
 	}
 
+	//Call the variable value restoreration handlers
 	foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
 	{
 		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, availableVariables, definitions);
 		
-		//FIXME: THis is a temporary patch for an infinite recursion problem
-		if (!restorerOutput.empty())
-		{
-			return restorerOutput;
-		}
-		//results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
+		results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
 	}
+
+	//Remove this variable from the active set
+	activeValueRestorations.erase(variableAndVersion);
 
 	return results;
 }

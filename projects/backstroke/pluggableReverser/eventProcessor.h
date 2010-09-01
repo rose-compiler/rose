@@ -15,6 +15,7 @@ struct ExpressionReversal
     ExpressionReversal(
         SgExpression* exp1,
         SgExpression* exp2,
+
         const VariableVersionTable& table,
         const SimpleCostModel& cst = SimpleCostModel())
             : fwd_exp(exp1), rvs_exp(exp2), var_table(table), cost(cst)
@@ -211,6 +212,8 @@ private:
     SgExpression* pushVal(SgExpression* exp, SgType* type);
     SgExpression* popVal(SgType* type);
 
+	/** This set is used to prevent invfinite recursion when calling restoreVariable. */
+	std::set<std::pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> > activeValueRestorations;
 
 public:
     
