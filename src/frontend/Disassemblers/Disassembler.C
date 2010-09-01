@@ -337,8 +337,10 @@ SgAsmInstruction *
 Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                              AddressSet *successors)
 {
+    MemoryMap::MapElement me(buf_va, buf_size, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+    me.set_name("disassembleOne temp");
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleOne temp"));
+    map.insert(me);
     return disassembleOne(&map, start_va, successors);
 }
 
@@ -442,8 +444,10 @@ Disassembler::InstructionMap
 Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                                AddressSet *successors, InstructionMap *cache)
 {
+    MemoryMap::MapElement me(buf_va, buf_size, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+    me.set_name("disassembleBlock temp");
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleBlock temp"));
+    map.insert(me);
     return disassembleBlock(&map, start_va, successors, cache);
 }
 
@@ -638,12 +642,12 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
     while (1) {
 
         /* Advance to the next valid mapped address if necessary by scanning for the first map element that has a higher
-         * virtual address. */
+         * virtual address and is executable. */
         if (!map->find(next_va)) {
             const std::vector<MemoryMap::MapElement> &mes = map->get_elements();
             const MemoryMap::MapElement *me = NULL;
             for (size_t i=0; i<mes.size(); i++) {
-                if (mes[i].get_va() > next_va) {
+                if (mes[i].get_va() > next_va && (mes[i].get_mapperms() & MemoryMap::MM_PROT_EXEC)) {
                     me = &(mes[i]);
                     break;
                 }
@@ -733,8 +737,10 @@ Disassembler::InstructionMap
 Disassembler::disassembleBuffer(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                                 AddressSet *successors, BadMap *bad)
 {
+    MemoryMap::MapElement me(buf_va, buf_size, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+    me.set_name("disassembleBuffer temp");
     MemoryMap map;
-    map.insert(MemoryMap::MapElement(buf_va, buf_size, buf, 0).set_name("disassembleBuffer temp"));
+    map.insert(me);
     return disassembleBuffer(&map, start_va, successors, bad);
 }
 
@@ -795,8 +801,19 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
             search_function_symbols(&worklist, map, headers[i]);
     }
 
+    /* Do not require execute permission if the user wants to disassemble everything. */
+    unsigned orig_protections = get_protection();
+    if (p_search & SEARCH_NONEXE)
+        set_protection(orig_protections & ~MemoryMap::MM_PROT_EXEC);
+
     /* Disassemble all that we've mapped, according to aggressiveness settings. */
-    InstructionMap retval = disassembleBuffer(map, worklist, successors, bad);
+    InstructionMap retval;
+    try {
+        retval = disassembleBuffer(map, worklist, successors, bad);
+    } catch (...) {
+        set_protection(orig_protections);
+        throw;
+    }
 
 #if 0
     /* Mark the parts of the file corresponding to the instructions as having been referenced, since this is part of parsing.

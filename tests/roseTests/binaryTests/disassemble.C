@@ -81,7 +81,9 @@ Description:\n\
     addresses where the file contents are to be mapped.  The virtual addresses\n\
     can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
     (execute) to specify mapping permissions other than the default read and\n\
-    execute permission.\n\
+    execute permission.  By default, ROSE will only disassemble instructions\n\
+    appearing in parts of the memory address space containing execute\n\
+    permission.\n\
 \n\
   --reassemble\n\
   --no-reassemble\n\
