@@ -603,7 +603,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
   // printf ("hasKindSelector = %s \n",hasKindSelector ? "true" : "false");
      if (hasKindSelector == true)
         {
-#if 0
+#if 1
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
@@ -641,8 +641,11 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                  // For character strings the kind should always be 1.
                  // ROSE_ASSERT(lengthExpression->get_value() == 1);
 
-                    delete lengthExpression;
-                    lengthExpression = NULL;
+                    if (lengthExpression != NULL)
+                       {
+                         delete lengthExpression;
+                         lengthExpression = NULL;
+                       }
 
                  // Find the length of the string in the astTypeParameterStack
                     if (astTypeParameterStack.empty() == false)
@@ -651,6 +654,11 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                          ROSE_ASSERT(rank == 1);
 
                          lengthExpression = isSgIntVal(astTypeParameterStack.front());
+                         if (lengthExpression == NULL)
+                            {
+                              printf ("Warning type parameter is non integer type (OK for F90) \n");
+                              lengthExpression = astTypeParameterStack.front();
+                            }
                          ROSE_ASSERT(lengthExpression != NULL);
                          astTypeParameterStack.pop_front();
                        }
@@ -683,6 +691,8 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                       else
                        {
                       // create a string type using an integer expression.
+                      // Note that the SgTypeString is used where for other types (e.g. integer, float) a SgModifierType is used to how the expression
+                      // (in these cases the expression is specific to the kind where in the case of SgTypeChar this is specific to length).
                          ROSE_ASSERT(lengthExpression != NULL);
                          stringType = SgTypeString::createType(lengthExpression,0);
                        }
@@ -699,7 +709,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                  // Ignore this case since will for more the moment map logical types of all sizes to a SgTypeBool.
                  // We may want to add fortran specific logical type to the ROSE IR to support this in the future.
                  // This would allow us to save the information about the byte width of the representation.
-                    printf ("WARNING: For more the moment, we map all logical types (of all sizes: logical*1 logical*2, logical*4, and logical*8) to a SgTypeBool. \n");
+                    printf ("WARNING: For more the moment, we map all logical types (of all sizes: logical*1 logical*2, logical*4, and logical*8) to a single SgTypeBool in the IR. \n");
 
                  // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
                     delete lengthExpression;
@@ -714,50 +724,77 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 
                  // We are enforcing that the type parameter or kind is an integer, but where the base type 
                  // is an integer it can be variable, it might be that this has be be more flexable as well.
-                    ROSE_ASSERT(integerValue != NULL);
-                    int value = integerValue->get_value();
-                    switch(value)
+                 // E.g. this fails for "real (r8), parameter, public :: c0 = 0.0_r8"
+                 // ROSE_ASSERT(integerValue != NULL);
+                    if (integerValue != NULL)
                        {
-                         case 4: 
+                         int value = integerValue->get_value();
+                         switch(value)
                             {
-                           // Nothing to do here, this is the 4 byte floating point type (already on the astBaseTypeStack).
-                              break;
+                              case 4: 
+                                 {
+                                // Nothing to do here, this is the 4 byte floating point type (already on the astBaseTypeStack).
+                                   break;
+                                 }
+
+                              case 8: 
+                                 {
+                                   SgTypeDouble* doubleType = SgTypeDouble::createType();
+                                   ROSE_ASSERT(doubleType != NULL);
+
+                                // Replace the base type with the just built string type
+                                   astBaseTypeStack.pop_front();
+                                   astBaseTypeStack.push_front(doubleType);
+                                   break;
+                                 }
+
+                              case 16: 
+                                 {
+                                   SgTypeLongDouble* longdoubleType = SgTypeLongDouble::createType();
+                                   ROSE_ASSERT(longdoubleType != NULL);
+
+                                // Replace the base type with the just built string type
+                                   astBaseTypeStack.pop_front();
+                                   astBaseTypeStack.push_front(longdoubleType);
+                                   break;
+                                 }
+
+                              default:
+                                 {
+                                   printf ("Error: not clear what size of float is required kind specified as %d \n",value);
+                                   ROSE_ASSERT(false);
+                                 }
                             }
-
-                         case 8: 
-                            {
-                              SgTypeDouble* doubleType = SgTypeDouble::createType();
-                              ROSE_ASSERT(doubleType != NULL);
-
-                           // Replace the base type with the just built string type
-                              astBaseTypeStack.pop_front();
-                              astBaseTypeStack.push_front(doubleType);
-                              break;
-                            }
-
-                         case 16: 
-                            {
-                              SgTypeLongDouble* longdoubleType = SgTypeLongDouble::createType();
-                              ROSE_ASSERT(longdoubleType != NULL);
-
-                           // Replace the base type with the just built string type
-                              astBaseTypeStack.pop_front();
-                              astBaseTypeStack.push_front(longdoubleType);
-                              break;
-                            }
-
-                         default:
-                            {
-                              printf ("Error: not clear what size of float is required kind specified as %d \n",value);
-                              ROSE_ASSERT(false);
-                            }
+#if 1
+                      // DQ (8/29/2010): The lengthExpression should only be deleted when it is a 
+                      // simple integer expression (else the expression is saved and used in the type).
+                      // We can ignore the lengthExpression because we use different specific types 
+                      // (IR nodes) to distinguish the floating point sizes.
+                      // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
+                         delete lengthExpression;
+                         lengthExpression = NULL;
+#endif
                        }
+                      else
+                       {
+                      // This is the case of code such as "real (r8), parameter, public :: c0 = 0.0_r8"
+                      // for the moment we will ignore the kind specifier.
+                      // printf ("Warning: ignoring the kind specified for real types: lengthExpression = %s \n",lengthExpression->class_name().c_str());
 
+                         SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeFloat::createType(),lengthExpression);
+                         ROSE_ASSERT(typeFromKindExpression != NULL);
+
+                      // Replace the base type with the just built string type
+                         astBaseTypeStack.pop_front();
+                         astBaseTypeStack.push_front(typeFromKindExpression);
+                       }
+#if 0
                  // We can ignore the lengthExpression because we use different specific types 
                  // (IR nodes) to distinguish the floating point sizes.
                  // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
                     delete lengthExpression;
                     lengthExpression = NULL;
+#endif
                     break;
                   }
 
@@ -815,19 +852,36 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                                    ROSE_ASSERT(false);
                                  }
                             }
+
+                      // We can ignore the lengthExpression because we use different specific types 
+                      // (IR nodes) to distinguish the floating point sizes.
+                      // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
+                         delete lengthExpression;
+                         lengthExpression = NULL;
                        }
                       else
                        {
                       // This is a non-integer kind specifier, but we can't support this currently, so just map it 
                       // to the default SgTypeInt that is already present on the astBaseTypeStack (i.e. do nothing).
-                         printf ("Warning: Integer kind mapped to default integer SgTypeInt! \n");
+                      // printf ("Warning: Integer kind mapped to default integer SgTypeInt! lengthExpression = %p = %s \n",lengthExpression,lengthExpression->class_name().c_str());
+
+#if 0
+                      // Output debugging information about saved state (stack) information.
+                         outputState("hasKindSelector == true (typeFromKindExpression) in R403 c_action_intrinsic_type_spec()");
+#endif
+                         SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
+                         ROSE_ASSERT(typeFromKindExpression != NULL);
+
+                      // Replace the base type with the just built string type
+                         astBaseTypeStack.pop_front();
+                         astBaseTypeStack.push_front(typeFromKindExpression);
                        }
                     break;
                   }
 
                default:
                   {
-                 // I think that only the COMPLEX type is left.
+                 // I think that only the COMPLEX type might be left.
                     printf ("Error: unimplemented type = %s \n",intrinsicType->class_name().c_str());
                     ROSE_ASSERT(false);
                     break;
@@ -854,7 +908,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -878,8 +932,14 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_kind_selector(): token1 = %p = %s token2 = %p = %s hasExpression = %s \n",token1,token1 != NULL ? token1->text : "NULL",token2,token2 != NULL ? token2->text : "NULL",hasExpression ? "true" : "false");
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R404 c_action_kind_selector()");
+#endif
+
   // ROSE_ASSERT(hasExpression == false);
 
+#if 0
      if (astTypeStack.empty() == true)
         {
        // This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length>.
@@ -887,6 +947,7 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length> \n");
         }
+#endif
 
   // For the case of "real*8" this is the only rule called before seeing the base type ("real")
 #if 0  //FMZ (07/06/2010): work around, wait for a "real fix" from OFP 
@@ -922,7 +983,7 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
           astTypeKindStack.push_front(astExpressionStack.front());
           astExpressionStack.pop_front();
         }
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R404 c_action_kind_selector()");
 #endif
@@ -1518,6 +1579,11 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_derived_type_stmt() label = %p id = %p \n",label,id);
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R430 c_action_derived_type_stmt()");
+#endif
+
 #if !SKIP_C_ACTION_IMPLEMENTATION
      ROSE_ASSERT(id != NULL);
   // printf ("id->text = %s \n",id->text);
@@ -1533,6 +1599,15 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
 
      ROSE_ASSERT(derivedTypeStatement->get_definition() != NULL);
      astScopeStack.push_front(derivedTypeStatement->get_definition());
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R430 c_action_derived_type_stmt()");
+#endif
+#if 0
+     printf ("Exiting as a test in R430 c_action_derived_type_stmt() \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -1553,6 +1628,22 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_attr_spec(): keyword = %p = %s id = %p = %s specType = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",specType);
+
+  // If this is a access_spec then it will be handled by the R508.
+     if (specType != TypeAttrSpec_access_spec)
+        {
+          astAttributeSpecStack.push_front(specType);
+
+          ROSE_ASSERT(keyword != NULL);
+
+       // Not clear if we should bother saving the keyword, it is a bit redundant, but supported uniformally with the ROSE Fortran frontend.
+          astNameStack.push_front(keyword);
+        }
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R431 c_action_type_attr_spec()");
+#endif
    }
 
 /** R431 list
@@ -1563,11 +1654,19 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
  * @param count The number of items in the list.
  */
 void c_action_type_attr_spec_list__begin()
-{
-}
+   {
+  // I think there is nothing required to be done here.
+   }
 void c_action_type_attr_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        printf ("In c_action_type_attr_spec_list(): count = %d \n",count);
+
+#if 0
+     printf ("Exiting in c_action_type_attr_spec_list() \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 /**
  * R432
@@ -1719,9 +1818,14 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
  */
 // void c_action_component_attr_spec(int specType)
 void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
-{
+   {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_attr_spec(): attrKeyword = %p = %s specType = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",specType);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R441 c_action_component_attr_spec()");
+#endif
 
 /*
 static const int ComponentAttrSpec_pointer=ComponentAttrSpecBase+0;
@@ -1732,6 +1836,47 @@ static const int ComponentAttrSpec_access_spec=ComponentAttrSpecBase+4;
 static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+5;
 static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 */
+
+#define USE_DEFAULT_COMPONENT_ATTR_SPEC
+
+#ifndef USE_DEFAULT_COMPONENT_ATTR_SPEC
+  // Note that OFP has the wrong value for this variable so set it locally!
+     static const int ComponentAttrSpec_pointer=ComponentAttrSpecBase+0;
+     static const int ComponentAttrSpec_allocatable=ComponentAttrSpecBase+3;
+     static const int ComponentAttrSpec_access_spec=ComponentAttrSpecBase+4;
+     static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+5;
+     static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
+#endif
+
+#if 0
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpecBase               = %d \n",ComponentAttrSpecBase);
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_pointer           = %d \n",ComponentAttrSpec_pointer);
+#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_dimension_paren   = %d \n",ComponentAttrSpec_dimension_paren);
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_dimension_bracket = %d \n",ComponentAttrSpec_dimension_bracket);
+#endif
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_allocatable       = %d \n",ComponentAttrSpec_allocatable);
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_access_spec       = %d \n",ComponentAttrSpec_access_spec);
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_kind              = %d \n",ComponentAttrSpec_kind);
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_len               = %d \n",ComponentAttrSpec_len);
+#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_codimension       = %d \n",ComponentAttrSpec_codimension);
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_contiguous        = %d \n",ComponentAttrSpec_contiguous);
+     printf ("In c_action_component_attr_spec(): ComponentAttrSpec_dimension         = %d \n",ComponentAttrSpec_dimension);
+#endif
+#endif
+
+#ifndef USE_DEFAULT_COMPONENT_ATTR_SPEC
+  // DQ (8/28/2010): Test value of static variables.
+     ROSE_ASSERT(ComponentAttrSpecBase == ComponentAttrSpec_pointer);
+
+  // DQ (8/28/2010): This is a bug in OFP that these are equal.
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_allocatable);
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_access_spec);
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_kind);
+     ROSE_ASSERT(ComponentAttrSpecBase != ComponentAttrSpec_len);
+#endif
+
      switch(specType)
         {
           case ComponentAttrSpec_pointer:
@@ -1739,7 +1884,22 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_pointer spec \n");
 
-            // DQ (2/1/2009): This is the earlies point to change this.
+            // DQ (8/29/2010): Handling multiple type-attr-specs requires checking the astTypeStack 
+            // since that is where the results of previous type-attr-specs are pushed.
+            // DQ (2/1/2009): This is the earliest point to change this.
+            // convertBaseTypeOnStackToPointer();
+               if (astTypeStack.empty() == false)
+                  {
+                 // Clear the astBaseTypeStack and push value on the top of astTypeStack 
+                 // onto the astBaseTypeStack, and pop the astTypeStack. This is the case of
+                 // "type (io_dim), dimension(:), pointer :: field_dim" (see test2010_35.f90).
+                    SgType* previouslyBuiltType = astTypeStack.front();
+                    astTypeStack.pop_front();
+                    ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                 // SgType* previousBaseType = astBaseTypeStack.front();
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(previouslyBuiltType);
+                  }
                convertBaseTypeOnStackToPointer();
                break;
              }
@@ -1781,6 +1941,36 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                break;
              }
 
+          case ComponentAttrSpec_access_spec:
+             {
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("found a ComponentAttrSpec_access_spec spec \n");
+               break;
+             }
+
+#if ROSE_OFP_MINOR_VERSION_NUMBER > 7
+          case ComponentAttrSpec_codimension:
+             {
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("found a ComponentAttrSpec_codimension spec \n");
+               break;
+             }
+
+          case ComponentAttrSpec_contiguous:
+             {
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("found a ComponentAttrSpec_contiguous spec \n");
+               break;
+             }
+
+          case ComponentAttrSpec_dimension:
+             {
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("found a ComponentAttrSpec_dimension spec \n");
+               break;
+             }
+#endif
+
           default:
              {
                printf ("default reached in c_action_component_attr_spec() specType = %d \n",specType);
@@ -1790,6 +1980,11 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 
   // Push the attribue onto the stack (e.g. dimension)
      astAttributeSpecStack.push_front(specType);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R441 c_action_component_attr_spec()");
+#endif
    }
 
 /** R441 list
@@ -1803,14 +1998,25 @@ void c_action_component_attr_spec_list__begin()
    {
   // I think this is the correct assertion, but the rest of this rule is not implemented!
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R441 c_action_component_attr_spec_list__begin()");
+#endif
+
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
+     if (astNameStack.empty() == false)
+        {
+          printf ("Warning, astNameStack.size() = %zu \n",astNameStack.size());
+        }
      ROSE_ASSERT(astNameStack.empty() == true);
 
      if (astTypeStack.empty() == false)
         {
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+             {
                printf ("Warning, astTypeStack.size() = %zu \n",astTypeStack.size());
+             }
         }
 
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
@@ -1926,7 +2132,19 @@ void c_action_component_decl_list__begin()
 
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
-     ROSE_ASSERT(astNameStack.empty() == true);
+
+#if 0
+     if (astNameStack.empty() == false)
+        {
+          printf ("WARNING: In c_action_component_decl_list__begin() -- astNameStack.size() = %zu \n",astNameStack.size());
+          AstNameType* nameToken = astNameStack.front();
+          ROSE_ASSERT(nameToken->text != NULL);
+          printf ("WARNING: In c_action_component_decl_list__begin() -- Top of astNameStack = %s \n",nameToken->text);
+        }
+#endif
+
+  // DQ (8/28/2010): This is not an error, but we might want to handle it better.
+  // ROSE_ASSERT(astNameStack.empty() == true);
    }
 
 void c_action_component_decl_list(int count)
@@ -2283,8 +2501,25 @@ void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecLis
      SgName derivedTypeName = typeName->text;
      SgClassSymbol* derivedTypeSymbol = trace_back_through_parent_scopes_lookup_derived_type_symbol( derivedTypeName, getTopOfScopeStack() );
 
-     ROSE_ASSERT(derivedTypeSymbol != NULL);
-     SgType* derivedType = derivedTypeSymbol->get_type();
+  // DQ (8/29/2010): Added support for where the referenced type has not been seen yet and must be fixed up later (see R1106: c_action_end_module_stmt()).
+     SgType* derivedType = NULL;
+     if (derivedTypeSymbol == NULL)
+        {
+       // Case of where we are referencing a type that we have not seen yet in the source sequence.
+       // We will have to make up something (perhaps using SgDefaultType) and then fix it up at the end of the module.
+          printf ("Warning: type referenced has not been seen in the source sequence yet, using SgTypeDefault (will be fixed up at the end of the module processing). \n");
+
+          derivedType = SgTypeDefault::createType();
+          ROSE_ASSERT(derivedType != NULL);
+        }
+       else
+        {
+       // This is the more common case (referenced type has been seen previously).
+          ROSE_ASSERT(derivedTypeSymbol != NULL);
+          derivedType = derivedTypeSymbol->get_type();
+          ROSE_ASSERT(derivedType != NULL);
+        }
+
      ROSE_ASSERT(derivedType != NULL);
 
   // Save the type on the type stack!  We will use it in the construction of the variable declaration.
@@ -3007,7 +3242,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("Before transfer to astBaseTypeStack in R502 c_action_declaration_type_spec()");
 #endif
@@ -3030,7 +3265,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
                printf ("No type found on astTypeStack (make sure there is a base type on the astBaseTypeStack) \n");
           ROSE_ASSERT(astBaseTypeStack.empty() == false);
         }
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R502 c_action_declaration_type_spec()");
 #endif
@@ -3828,10 +4063,11 @@ void c_action_access_spec(Token_t * keyword, int type)
 
   // We normally use the front of the list, but push this onto the back so that we can pop it off the back 
   // (independent of the names pushed onto the front of the stack).  This is done because we see the keyword
-  // PRIVATE or PUBLIC before we see the list of variables.
+  // PRIVATE or PUBLIC before we see the list of variables.  In many cases this will be the only entry in 
+  // the list at this point.
      astNameStack.push_back(keyword);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R508 c_action_access_spec()");
 #endif
@@ -4147,11 +4383,17 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      int type = astAttributeSpecStack.front();
      astAttributeSpecStack.pop_front();
 
+#if 1
+  // DQ (8/28/2010: later): Changed the behaviour back to use the keywords.
      ROSE_ASSERT(astNameStack.empty() == false);
 
   // R508 pushed the keyword onto the back of the list so get it from there (and then pop it off the back)
      Token_t* private_public_keyword = astNameStack.back();
      astNameStack.pop_back();
+#else
+  // DQ (8/28/2010): changed behavior to never put access spec keywords onto the astNameStack.
+     ROSE_ASSERT(astNameStack.empty() == true);
+#endif
 
      if (type == AttrSpec_PRIVATE)
         {
@@ -13824,9 +14066,9 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
      ROSE_ASSERT(inquireStatement != NULL);
      setSourcePosition(inquireStatement);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
-     outputState("At BOTTOM of R929 c_action_inquire_stmt()");
+     outputState("At TOP of R929 c_action_inquire_stmt()");
 #endif
 
   // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
@@ -14719,6 +14961,10 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      SgModuleStatement* moduleStatement = isSgModuleStatement(astScopeStack.front()->get_parent());
      ROSE_ASSERT(moduleStatement != NULL);
 
+     SgClassDefinition* moduleScope = isSgClassDefinition(astScopeStack.front());
+     ROSE_ASSERT(moduleScope != NULL);
+  // printf ("moduleScope = %p = %s \n",moduleScope,moduleScope->class_name().c_str());
+
   // FMZ: 05/30/2008  add the subtree root to the map
      string  fileName = moduleStatement->get_name();
 
@@ -14837,6 +15083,16 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
              }
         }
 #endif
+
+  // This is part of a bug fix demonstrated by test2010_32.f90.
+  // DQ (8/28/2010): A function call in a module can apprea before it's declaration. This is supported by:
+  //    1) building the function declaration 
+  //    2) Building a function symbol
+  //    3) Put the function sysmbol into the global scope (since it is not clear where to put it)
+  //    4) Fixup function symbols of referenced function calls in the module
+  // printf ("Now process function references in the module to match against functions defined in the module scope! \n");
+  // printf ("Current scope = %p = %s \n",moduleScope,moduleScope->class_name().c_str());
+     fixupModuleScope(moduleScope);
 
 #if 0
      printf ("Exiting at the base of the fixup of SgInterfaceBody \n");
@@ -16254,7 +16510,7 @@ void c_action_call_stmt(Token_t *label, Token_t *callKeyword, Token_t *eos, ofp_
           printf ("In c_action_call_stmt(): label = %p = %s callKeyword = %p = %s hasActualArgSpecList = %s \n",
                label,label != NULL ? label->text : "NULL",callKeyword,callKeyword != NULL ? callKeyword->text : "NULL",hasActualArgSpecList ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1218 c_action_call_stmt()");
 #endif
@@ -16277,15 +16533,15 @@ void c_action_call_stmt(Token_t *label, Token_t *callKeyword, Token_t *eos, ofp_
 
      SgExprStatement* expressionStatement = new SgExprStatement(functionCallExp);
 
-  // Since this is used in a souroutine call, we know that the function is a subroutine, 
-  // so mark it as such so taht the unparser will generate the correct code.
+  // Since this is used in a subroutine call, we know that the function is a subroutine, 
+  // so mark it as such so that the unparser will generate the correct code.
      SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
      ROSE_ASSERT(functionRefExp != NULL);
      SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
      ROSE_ASSERT(functionSymbol != NULL);
      SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
 
-  // printf ("In R1218 c_action_call_stmt(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+     printf ("In R1218 c_action_call_stmt(): functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 
   // SgProgramHeaderStatement* programHeaderStatement = isSgProgramHeaderStatement(functionDeclaration);
      SgProcedureHeaderStatement* procedureHeaderStatement = isSgProcedureHeaderStatement(functionDeclaration);
@@ -16303,6 +16559,12 @@ void c_action_call_stmt(Token_t *label, Token_t *callKeyword, Token_t *eos, ofp_
   // Set or clear the astLabelSymbolStack (since it is redundant with the label being passed in)
   // There are two mechanisms used to set labels, and we never know which will be used by OFP.
      setStatementNumericLabelUsingStack(expressionStatement);
+
+  // DQ (8/25/2010): Check if there is a proper symbol in the symbol table.
+  // SgSymbol* local_symbol = subroutineDeclaration->get_symbol_from_symbol_table();
+  // SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),currentScopeOfFunctionDeclaration);
+  // ROSE_ASSERT(functionSymbol != NULL);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1218 c_action_call_stmt()");
@@ -16323,7 +16585,7 @@ void c_action_procedure_designator()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_procedure_designator() \n");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1219 c_action_procedure_designator()");
 #endif
@@ -16342,7 +16604,7 @@ void c_action_procedure_designator()
      convertExpressionOnStackToFunctionCallExp();
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1219 c_action_procedure_designator()");
 #endif
@@ -16852,6 +17114,10 @@ void c_action_subroutine_stmt(Token_t * label, Token_t * keyword, Token_t * name
   // This does not do everything required to build a function or subroutine, but it does as much as possible
   // (factors out code so that it can be called for R1117, R1224, and R1232.
      buildProcedureSupport(subroutineDeclaration,hasDummyArgList);
+
+  // DQ (8/25/2010): Check if there is a proper symbol in the symbol table.
+  // SgSymbol* local_symbol = subroutineDeclaration->get_symbol_from_symbol_table();
+  // ROSE_ASSERT(local_symbol != NULL);
 
 #if 0
   // Need to figure out which data is on the stack (should hasBindingSpec be processed before hasDummyArgList?).

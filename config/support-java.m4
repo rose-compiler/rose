@@ -45,6 +45,16 @@ elif test "x$javasetting" = xyes || test "x$javasetting" = xtry; then
       fi
     # AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVA}`/../..")
       AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVAC}`/..")
+      
+      # George Vulov (Aug. 25, 2010) On OS X the binaries found under /System/Library/Frameworks/JavaVM.framework/Versions/Current/Commands/
+      # aren't the true Java binaries; instead they check the java preferences app and then instantiate whatever version of Java
+      # is specified there. The actual java binaries are located in /System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home
+      if test "x$build_vendor" = xapple; then
+      	if (( `echo ${JAVA_PATH} | grep -c "/Commands/.."` > 0 )); then
+      		AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVAC}`/../../CurrentJDK/Home")
+      	fi
+	  fi
+      
     # echo "After setting value: JAVA_PATH = ${JAVA_PATH}"
     elif "x$javasetting" = "xyes"; then
       AC_MSG_ERROR([--with-java was given but "java" is not in PATH and JAVA_HOME was not set])
@@ -89,19 +99,7 @@ fi
 
 if test "x$USE_JAVA" = x1; then
 
-# George Vulov (08/23/2010) The fix below is not necessary. If java home is set correctly,
-# the java directory under OS X has the same structure as under any other UNIX. Make sure to append
-# /Home to the end of the java path. For example,
-# /System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
-# 			DQ (11/3/2009): This was moved from down below to check for java before the jvm
-# 			Fix the case of Apple OSX support.
-# echo "Before OS specific JAVA = ${JAVA}"
-#  if test "x$build_vendor" = xapple; then
-#     JAVA_BIN="${JAVA_PATH}/Commands"
-#  else
-     JAVA_BIN="${JAVA_PATH}/bin"
-#  fi
-
+  JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
 # echo "JAVA = ${JAVA}"
   AC_MSG_CHECKING(for java)
@@ -115,7 +113,6 @@ if test "x$USE_JAVA" = x1; then
 # This is a hack, but it seems to work to find the JVM library
   if test -x /usr/bin/javaconfig; then # We are on a Mac
     JAVA_JVM_LINK="-framework JavaVM"
-    JAVA_JVM_INCLUDE="-I`/usr/bin/javaconfig Headers`"
   else
     JAVA_JVM_FULL_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} 2>/dev/null | grep '^JVM path is' | cut -c 13-`" ; # Sun JVM
     JAVA_JVM_PATH=`dirname "${JAVA_JVM_FULL_PATH}"`
@@ -126,8 +123,10 @@ if test "x$USE_JAVA" = x1; then
       fi
     fi
     JAVA_JVM_LINK="-L${JAVA_JVM_PATH} -ljvm"
-    JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"
   fi
+  
+  JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"
+  
   AC_MSG_RESULT([$JAVA_JVM_INCLUDE and $JAVA_JVM_LINK])
 
 # JAR="${JAVA_PATH}/bin/jar"
