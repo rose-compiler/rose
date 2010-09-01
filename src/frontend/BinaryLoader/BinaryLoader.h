@@ -61,12 +61,11 @@ public:
      *======================================================================================================================== */
 public:
     BinaryLoader()
-        : p_verbose(0), p_perform_dynamic_linking(false), p_perform_relocations(false) {
-        set_verbose(SgProject::get_verbose());
-    }
+        : debug(NULL), p_perform_dynamic_linking(false), p_perform_relocations(false)
+        {}
 
     BinaryLoader(const BinaryLoader &other)
-        : p_verbose(other.p_verbose), p_perform_dynamic_linking(other.p_perform_dynamic_linking), 
+        : debug(other.debug), p_perform_dynamic_linking(other.p_perform_dynamic_linking), 
           p_perform_relocations(other.p_perform_relocations) {
     }
 
@@ -123,11 +122,8 @@ public:
     void set_perform_relocations(bool b) { p_perform_relocations = b; }
     bool get_perform_relocations() const { return p_perform_relocations; }
 
-    /* FIXME: Rename this to get_debug() and set_debug() to match Disassembler and Partitioner. [RPM 2010-08-31] */
-    void set_verbose(int verbose) { p_verbose = verbose; }
-    int get_verbose(SgBinaryComposite* composite=NULL) const {
-        return std::max(composite?composite->get_verbose():0, p_verbose);
-    }
+    void set_debug(FILE *f) { debug = f; }
+    FILE *get_debug() const { return debug; }
 
     /*========================================================================================================================
      * Searching for shared objects
@@ -258,8 +254,8 @@ private:
     static std::vector<BinaryLoader*> loaders;          /**< List of loader subclasses. */
     std::vector<std::string> preloads;                  /**< Libraries that should be pre-loaded. */
     std::vector<std::string> directories;               /**< Directories to search for libraries with relative names. */
+    FILE *debug;                                        /**< Stream where diagnostics are sent; null to disable them. */
 
-    int p_verbose;
     bool p_perform_dynamic_linking;
     bool p_perform_layout;
     bool p_perform_relocations;
