@@ -5,77 +5,72 @@
 #include <VariableRenaming.h>
 #include <boost/shared_ptr.hpp>
 
-
-
-
 class VariableVersionTable
 {
-    //TODO: Delete this
-    typedef VariableRenaming::VarName VarName;
-    
-    std::map<VarName, std::set<int> > table_;
-    VariableRenaming* var_renaming_;
+	std::map<VariableRenaming::VarName, std::set<int> > table_;
+	VariableRenaming* var_renaming_;
 
-    friend bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2);
+	friend bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2);
 
 public:
-    VariableVersionTable() : var_renaming_(NULL) {}
-    VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
 
-    /** Returns the version of the variable, or an empty set if the variable is not in the table. */
-    std::set<int> getVersion(VariableRenaming::VarName varName) const;
+	VariableVersionTable() : var_renaming_(NULL) { }
+	VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
 
-    //TODO: Delete this
-    static VarName getVarName(SgNode* node);
+	/** Returns the version of the variable, or an empty set if the variable is not in the table. */
+	std::set<int> getVersion(VariableRenaming::VarName varName) const;
 
-    /*! Check if the given variables with their version numbers exist in the current table.
-     * Note that we can check one or two expressions in urary and binary operation cases. */
-    bool checkLhsVersion(SgNode* node) const;
-    bool checkRhsVersion(SgNode* node) const;
-    bool checkVersion(SgExpression* lhs, SgExpression* rhs = NULL) const;
+	/*! Check if the given variables with their version numbers exist in the current table.
+	 * Note that we can check one or two expressions in urary and binary operation cases. */
+	bool checkLhsVersion(SgNode* node) const;
+	bool checkRhsVersion(SgNode* node) const;
+	bool checkVersion(SgExpression* lhs, SgExpression* rhs = NULL) const;
 
-    /** Regress the version of the given variable. Call this function once the expression or
-      statement containing the given variable is reversed successfully. */
-    void reverseVersion(SgNode* node);
+	/** Regress the version of the given variable. Call this function once the expression or
+	  statement containing the given variable is reversed successfully. */
+	void reverseVersion(SgNode* node);
 
-    /** Remove a variable from the current table. */
-    void removeVariable(SgNode* node)
-    { 
-        if (table_.count(getVarName(node)) > 0)
-            table_.erase(getVarName(node)); 
-    }
+	/** Remove a variable from the current table. */
+	void removeVariable(SgNode* node)
+	{
+		table_.erase(VariableRenaming::getVarName(node));
+	}
 
-    /** If a local variable is not restored at the begining of the reverse basic block, set its
-      version to NULL. */
-    void setNullVersion(SgInitializedName* name);
-    void setNullVersion(SgNode* node);
+	/** If a local variable is not restored at the begining of the reverse basic block, set its
+	  version to NULL. */
+	void setNullVersion(SgInitializedName* name);
+	void setNullVersion(SgNode* node);
 
-    /** If the given node is using its first definition. It's useful to decide whether to reverse the value or not. */
-    //FIXME I don't like this name!
-    bool isUsingFirstDefinition(SgNode* node) const;
+	/** If the given node is using its first definition. It's useful to decide whether to reverse the value or not. */
+	//FIXME I don't like this name!
+	bool isUsingFirstDefinition(SgNode* node) const;
 
-    /** If the given node is using its first use. It's useful to decide whether to remove a variable from variable version table. */
-    //FIXME I don't like this name!
-    bool isUsingFirstUse(SgNode* node) const;
+	/** If the given node is using its first use. It's useful to decide whether to remove a variable from variable version table. */
+	//FIXME I don't like this name!
+	bool isUsingFirstUse(SgNode* node) const;
 
-    /** Returns true if a variable is at the specified version.
-      * @param varName name of the variable to look up
-      * @param version version that the variable should have (list of possible definitions). */
-    bool matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const;
+	/** Returns true if a variable is at the specified version.
+	 * @param varName name of the variable to look up
+	 * @param version version that the variable should have (list of possible definitions). */
+	bool matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const;
 
-    //TODO: DELETE THIS
-    static bool isEmptyVarName(const VarName& var) { return var.empty(); }
-    static std::vector<SgExpression*> getAllVariables(SgNode* node);
+	//TODO: DELETE THIS
 
-    void print() const;
-    
-    //TODO: DELETE THIS
-    static void print(const VarName& name);
+	static bool isEmptyVarName(const VariableRenaming::VarName& var)
+	{
+		return var.empty();
+	}
+	static std::vector<SgExpression*> getAllVariables(SgNode* node);
+
+	void print() const;
+
+	//TODO: DELETE THIS
+	static void print(const VariableRenaming::VarName& name);
 };
 
 inline bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2)
 {
-    return t1.table_ == t2.table_;
+	return t1.table_ == t2.table_;
 }
 
 typedef boost::shared_ptr<VariableVersionTable> VariableVersionTablePtr;

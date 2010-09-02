@@ -54,7 +54,6 @@ int main(int argc, char * argv[])
 
 	// Add all expression handlers to the expression pool.
 	event_processor.addExpressionProcessor(new NullExpressionProcessor);
-	event_processor.addExpressionProcessor(new IdentityExpressionProcessor);
 	event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
 	event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
 	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
