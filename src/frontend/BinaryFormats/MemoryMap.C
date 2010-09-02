@@ -664,127 +664,6 @@ MemoryMap::load(const std::string &basename)
     char *line = NULL;
     size_t line_nalloc = 0;
     ssize_t nread;
-<<<<<<< HEAD
-#ifdef _MSC_VER
-	while (true) {
-	ROSE_ASSERT(false);
-#else
-    while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
-#endif
-        char *rest, *s=line;
-
-        /* Starting virtual address */
-        if (strncmp(line, "va ", 3)) break;
-        errno = 0;
-#ifdef _MSC_VER
-        rose_addr_t va = _strtoui64(s+3, &rest, 0);
-#else
-        rose_addr_t va = strtoull(s+3, &rest, 0);
-#endif
-        if (rest==s+3 || errno) break;
-        s = rest;
-        
-        /* Size */
-        if (strncmp(s, " + ", 3)) break;
-        errno = 0;
-#ifdef _MSC_VER
-        rose_addr_t sz = _strtoui64(s+3, &rest, 0);
-#else
-        rose_addr_t sz = strtoull(s+3, &rest, 0);
-#endif
-        if (rest==s+3 || errno) break;
-        s = rest;
-        
-        /* Ending virtual address (not used) */
-        if (strncmp(s, " = ", 3)) break;
-        errno = 0;
-#ifdef _MSC_VER
-        (void)_strtoui64(s+3, &rest, 0);
-#else
-        (void)strtoull(s+3, &rest, 0);
-#endif
-        if (rest==s+3 || errno) break;
-        s = rest;
-        
-        /* Permissions */
-        unsigned perm = 0;
-        while (isspace(*s)) s++;
-        if (s[0]=='r') {
-            perm |= MM_PROT_READ;
-        } else if (s[0]!='-') {
-            break;
-        }
-        if (s[1]=='w') {
-            perm |= MM_PROT_WRITE;
-        } else if (s[1]!='-') {
-            break;
-        }
-        if (s[2]=='x') {
-            perm |= MM_PROT_EXEC;
-        } else if (s[2]!='-') {
-            break;
-        }
-        s += 3;
-        
-        /* Base address name (such as "at  aaa" or "anonymous") */
-        while (isspace(*s)) s++;
-        if (strncmp(s, "at ", 3)) break;
-        s += 3;
-        while (isspace(*s)) s++;
-        char *plus = strchr(s, '+');
-        if (!plus) break;
-        while (plus>s && isspace(plus[-1])) --plus;
-        std::string region_name(s, plus-s);
-        s = plus;
-        
-        /* Offset from base address (unused) */
-        while (isspace(*s)) s++;
-        if ('+'!=*s++) break;
-        errno = 0;
-#ifdef _MSC_VER
-        (void)_strtoui64(s, &rest, 0);
-#else
-        (void)strtoull(s, &rest, 0);
-#endif
-        if (rest==s || errno) break;
-        s = rest;
-        
-        /* Comment (optional) */
-        while (isspace(*s)) s++;
-        char *end = s + strlen(s);
-        while (end>s && isspace(end[-1])) --end;
-        std::string comment(s, end-1);
-
-        /* Open data file into memory */
-        char ext[256];
-        sprintf(ext, "-0x%08"PRIx64".data", va);
-        int fd = open((basename+ext).c_str(), O_RDONLY);
-        if (fd<0) break;
-#ifdef _MSC_VER
-        void *buf = NULL;
-		ROSE_ASSERT(false);
-#else
-        void *buf = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
-#endif
-        close(fd);
-        if (!buf) break;
-
-        /* Add map element to this memory map. */
-        MapElement me(va, sz, buf, 0, perm);
-        me.set_name(comment);
-        try {
-            insert(me);
-        } catch (const Exception&) {
-#ifdef _MSC_VER
-        void *buf = NULL;
-		ROSE_ASSERT(false);
-#else
-            munmap(buf, sz);
-#endif
-            fclose(f);
-            free(line);
-            throw;
-=======
     unsigned nlines=0;
 
     try {
@@ -933,7 +812,6 @@ MemoryMap::load(const std::string &basename)
                 me2.set_name(comment);
                 insert(me2);
             }
->>>>>>> master
         }
     } catch (...) {
         fclose(f);
