@@ -12,7 +12,7 @@
  *        produce an abstract syntax tree (AST).  Although the container is parsed, the actual machine instructions are
  *        not (that is, disassembly is not part of loading).</li>
  *    <li>Linking: recursively parsing all shared object dependencies. This step does not include mapping memory into a
-          process address space or fixing up relocation information.</li>
+ *        process address space or fixing up relocation information.</li>
  *    <li>Mapping: choosing virtual addresses for parts of the binary file as if ROSE were creating a new OS process. For
  *        instance, mapping an ELF file will cause ROSE to choose virtual addresses for all the ELF Segments.  This has
  *        two side effects. First, the SgAsmGenericSection::get_mapped_actual_rva() method will now return the address that
@@ -61,12 +61,14 @@ public:
      *======================================================================================================================== */
 public:
     BinaryLoader()
-        : debug(NULL), p_perform_dynamic_linking(false), p_perform_relocations(false)
-        {}
+        : debug(NULL), p_perform_dynamic_linking(false), p_perform_layout(false), p_perform_relocations(false)
+        { init(); }
 
     BinaryLoader(const BinaryLoader &other)
-        : debug(other.debug), p_perform_dynamic_linking(other.p_perform_dynamic_linking), 
-          p_perform_relocations(other.p_perform_relocations) {
+        : debug(other.debug), p_perform_dynamic_linking(other.p_perform_dynamic_linking),
+          p_perform_layout(other.p_perform_layout), p_perform_relocations(other.p_perform_relocations) {
+        preloads = other.preloads;
+        directories = other.directories;
     }
 
     virtual ~BinaryLoader(){}
@@ -247,10 +249,12 @@ protected:
     static bool isHeaderSimilar(SgAsmGenericHeader*, SgAsmGenericHeader*);
 
 
-    /*************************************************************************************************************************
-     * Data members
-     *************************************************************************************************************************/
+    /*========================================================================================================================
+     * Private stuff
+     *======================================================================================================================== */
 private: 
+    void init();                                        /**< Further initializations in a *.C file. */
+
     static std::vector<BinaryLoader*> loaders;          /**< List of loader subclasses. */
     std::vector<std::string> preloads;                  /**< Libraries that should be pre-loaded. */
     std::vector<std::string> directories;               /**< Directories to search for libraries with relative names. */

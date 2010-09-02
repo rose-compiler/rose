@@ -6,6 +6,18 @@
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
+/* We put some initializations here in a *.C file so we don't need to recompile so much if we need to change how a
+ * BinaryLoader is constructed and we're just making the change for debugging purposes. */
+void
+BinaryLoader::init()
+{
+#if 0
+    set_perform_dynamic_linking(true);
+    set_debug(stderr);
+    add_directory("/lib32");
+#endif
+}
+
 /* class method */
 void
 BinaryLoader::initclass()
@@ -92,11 +104,19 @@ BinaryLoader::load(SgAsmInterpretation *interp)
 std::string
 BinaryLoader::find_so_file(const std::string &libname) const
 {
+    if (debug) fprintf(debug, "BinaryLoader: find library=%s...\n", libname.c_str());
     for (std::vector<std::string>::const_iterator di=directories.begin(); di!=directories.end(); ++di) {
+        if (debug) fprintf(debug, "BinaryLoader:   looking in %s...\n", di->c_str());
         std::string libpath = *di + "/" + libname;
         struct stat sb;
-        if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0)
+        if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
+            if (debug) fprintf(debug, "BinaryLoader:   found.\n");
             return libpath;
+        }
+    }
+    if (debug) {
+        if (directories.empty()) fprintf(debug, "BinaryLoader:   no search directories\n");
+        fprintf(debug, "BinaryLoader:   not found; throwing exception.\n");
     }
     throw Exception("cannot find file for library: " + libname);
 }
@@ -104,13 +124,25 @@ BinaryLoader::find_so_file(const std::string &libname) const
 bool
 BinaryLoader::is_linked(SgBinaryComposite *composite, const std::string &filename)
 {
-    abort(); /*FIXME*/
+    const SgAsmGenericFilePtrList &files = composite->get_genericFileList()->get_files();
+    for (SgAsmGenericFilePtrList::const_iterator fi=files.begin(); fi!=files.end(); ++fi) {
+        if ((*fi)->get_name()==filename)
+            return true;
+    }
+    return false;
 }
 
 bool
 BinaryLoader::is_linked(SgAsmInterpretation *interp, const std::string &filename)
 {
-    abort(); /*FIXME*/
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        SgAsmGenericFile *file = (*hi)->get_file();
+        ROSE_ASSERT(file!=NULL);
+        if (file->get_name()==filename)
+            return true;
+    }
+    return false;
 }
 
 
@@ -124,9 +156,15 @@ BinaryLoader::linkDependencies(SgAsmInterpretation* interp)
 
     /* Make sure the pre-load objects are parsed and linked into the AST. */
     for (std::vector<std::string>::const_iterator pi=preloads.begin(); pi!=preloads.end(); ++pi) {
+        if (debug) fprintf(debug, "BinaryLoader: preload object %s\n", pi->c_str());
         std::string filename = find_so_file(*pi);
-        if (!is_linked(composite, filename))
+        if (is_linked(composite, filename)) {
+            if (debug) fprintf(stderr, "BinaryLoader: %s is already parsed.\n", filename.c_str());
+        } else {
+            if (debug) fprintf(debug, "BinaryLoader: parsing %s...\n", filename.c_str());
             createAsmAST(composite, filename);
+            if (debug) fprintf(debug, "BinaryLoader: done parsing %s\n", filename.c_str());
+        }
     }
 
     /* Bootstrap */
@@ -139,11 +177,17 @@ BinaryLoader::linkDependencies(SgAsmInterpretation* interp)
     while (!unresolved_hdrs.empty()) {
         SgAsmGenericHeader *header = unresolved_hdrs.front();
         unresolved_hdrs.pop_front();
+        std::string header_name = header->get_file()->get_name();
         std::vector<std::string> deps = dependencies(header);
         for (std::vector<std::string>::iterator di=deps.begin(); di!=deps.end(); ++di) {
+            if (debug) fprintf(debug, "BinaryLoader: library %s needed by %s\n", di->c_str(), header_name.c_str());
             std::string filename = find_so_file(*di);
-            if (!is_linked(composite, filename)) {
+            if (is_linked(composite, filename)) {
+                if (debug) fprintf(debug, "BinaryLoader: %s is already parsed.\n", filename.c_str());
+            } else {
+                if (debug) fprintf(debug, "BinaryLoader: parsing %s...\n", filename.c_str());
                 SgAsmGenericFile *new_file = createAsmAST(composite, filename);
+                if (debug) fprintf(debug, "BinaryLoader: done parsing %s\n", filename.c_str());
                 ROSE_ASSERT(new_file!=NULL); /*FIXME: more user-friendly failure [RPM 2010-09-01]*/
                 SgAsmGenericHeaderPtrList new_hdrs = findSimilarHeaders(header, new_file->get_headers()->get_headers());
                 unresolved_hdrs.insert(unresolved_hdrs.end(), new_hdrs.begin(), new_hdrs.end());
