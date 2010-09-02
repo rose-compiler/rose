@@ -18,28 +18,45 @@
 class NullExpressionProcessor : public ExpressionProcessor
 {
 public:
-    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+    NullExpressionProcessor() { name_ = "Null Expression Processor"; }
+    virtual ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
+};
+
+//! This handler generates a reverse expression which is the same as the original expression.
+class IdentityExpressionProcessor : public ExpressionProcessor
+{
+public:
+    IdentityExpressionProcessor() { name_ = "Identity Expression Processor"; }
+    virtual ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
 
 //! This handler just store and restore a value, once the value is modified (state saving style).
 class StoreAndRestoreExpressionProcessor : public ExpressionProcessor
 {
 public:
-    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+    StoreAndRestoreExpressionProcessor() { name_ = "Store And Restore Expression Processor"; }
+    virtual ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
 
 //! This handler handles constructive assignment, like ++, +=, -=, etc.
 class ConstructiveExpressionProcessor : public ExpressionProcessor
 {
 public:
-    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
+    ConstructiveExpressionProcessor() { name_ = "Constructive Expression Processor"; }
+    virtual ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
 
 //! This handler handles more constructive assignment (for example, a = b - a).
-class ConstructiveAssignmentProcessor : public ExpressionProcessor
+/*class ConstructiveAssignmentProcessor : public ExpressionProcessor
 {
 public:
-    virtual ExpressionReversalVec process(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed);
-};
+    ConstructiveAssignmentProcessor() { name_ = "Constructive Assignment Processor"; }
+    virtual ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
+};*/
 
 #endif    
