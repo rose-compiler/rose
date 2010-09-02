@@ -42,9 +42,8 @@ class EvaluationResult
 
 public:
 
-	EvaluationResult(const VariableVersionTable& table,
-			const SimpleCostModel& cost_model = SimpleCostModel())
-	: var_table_(table), cost_(cost_model){ }
+	EvaluationResult(ProcessorBase* processorUsed, const VariableVersionTable& table, const SimpleCostModel& cost_model = SimpleCostModel())
+	:  var_table_(table), cost_(cost_model), processor_used_(processor_used_){ }
 
 	/** Add an evaluation result to the evalutions used in order to construct the current one.
 	  * This adds the cost of the child result to the total cost and adds the result to the list of

@@ -76,7 +76,7 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const 
     cout << body->get_statements().size() << endl;
     if (body->get_statements().empty())
     {
-        results.push_back(EvaluationResult(var_table));
+        results.push_back(EvaluationResult(this, var_table));
         return results;
     }
 
@@ -84,7 +84,7 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const 
     vector<EvaluationResult> queue[2];
 
     int i = 0;
-    queue[i].push_back(EvaluationResult(var_table));
+    queue[i].push_back(EvaluationResult(this, var_table));
 
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {
