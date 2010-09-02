@@ -4,10 +4,10 @@
 #include <rose.h>
 #include <utilities/types.h>
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 #include "variableVersionTable.h"
 #include "costModel.h"
-
-#define foreach BOOST_FOREACH
+#include "utilities/CPPDefinesAndNamespaces.h"
 
 class ExpressionProcessor;
 class StatementProcessor;
@@ -19,6 +19,8 @@ public:
 
 	virtual ~EvaluationResultAttribute() { }
 };
+
+typedef boost::shared_ptr<EvaluationResultAttribute> EvaluationResultAttributePtr;
 
 class EvaluationResult
 {
@@ -32,7 +34,7 @@ class EvaluationResult
 	ProcessorBase* processor_used_;
 
 	/** Additional attribute that the processor may choose to attach to the evaluation result. */
-	EvaluationResultAttribute* attribute_;
+	EvaluationResultAttributePtr attribute_;
 
 	/** Evaluation choices made in order to get this result. For example, for a basic block, what
 	 * were the evaluations of all the statements? */
@@ -42,7 +44,7 @@ public:
 
 	EvaluationResult(const VariableVersionTable& table,
 			const SimpleCostModel& cost_model = SimpleCostModel())
-	: var_table_(table), cost_(cost_model), attribute_(NULL) { }
+	: var_table_(table), cost_(cost_model){ }
 
 	/** Add an evaluation result to the evalutions used in order to construct the current one.
 	  * This adds the cost of the child result to the total cost and adds the result to the list of
@@ -83,22 +85,14 @@ public:
 		cost_ = cost;
 	}
 
-	EvaluationResultAttribute* getAttribute() const
+	EvaluationResultAttributePtr getAttribute() const
 	{
 		return attribute_;
 	}
 
-	void setAttribute(EvaluationResultAttribute* attr)
+	void setAttribute(EvaluationResultAttributePtr attr)
 	{
 		attribute_ = attr;
-	}
-
-	~EvaluationResult()
-	{
-		if (attribute_ != NULL)
-		{
-			delete attribute_;
-		}
 	}
 };
 

@@ -38,7 +38,7 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
 				EvaluationResult reversalInfo(newVarTable);
 				ExpressionReversal reversalResult(forwardExp, reverseExpression);
-				reversalInfo.setAttribute(new StoredExpressionReversal(reversalResult));
+				reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
 				
 				vector<EvaluationResult> result;
 				result.push_back(reversalInfo);
@@ -52,7 +52,7 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 
 ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
-	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute());
+	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute().get());
 	ROSE_ASSERT(reversalResult != NULL);
 
 	return reversalResult->reversal;
