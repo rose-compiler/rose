@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 	//Expression processors:
 	event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
 	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
-	//event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor);
+	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor);
 	event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
 
 	//Statement processors
