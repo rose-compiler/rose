@@ -140,6 +140,7 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include <sys/mman.h>
 
 #include "AsmUnparser.h"
+#include "BinaryLoader.h"
 #include "VirtualMachineSemantics.h"
 #include "SMTSolver.h"
 #include "bincfg.h"
@@ -841,17 +842,12 @@ main(int argc, char *argv[])
     }
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Choose a disassembler
+     * Parse, link, remap, relocate
      *------------------------------------------------------------------------------------------------------------------------*/
 
-    Disassembler *disassembler = NULL;
-    SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
     SgProject *project = NULL;                  /* Project if not disassembling a raw buffer */
-
-    if (!raw_entries.empty() && !do_rose_help) {
-        /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
-        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
-    } else {
+    SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
+    if (raw_entries.empty()) {
         /* Choose a disassembler based on the SgAsmInterpretation that we're disassembling */
         project = frontend(new_argc, new_argv); /*parse container but do not disassemble yet*/
         std::vector<SgAsmInterpretation*> interps
@@ -862,6 +858,25 @@ main(int argc, char *argv[])
         ROSE_ASSERT(!interps.empty());
         interp = do_dos ? interps.front() : interps.back();
 
+        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+#if 1
+        loader->set_perform_dynamic_linking(true);
+        loader->set_debug(stderr);
+        loader->add_directory("/lib32");
+#endif
+        loader->load(interp);
+    }
+
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Choose a disassembler
+     *------------------------------------------------------------------------------------------------------------------------*/
+
+    Disassembler *disassembler = NULL;
+    if (!raw_entries.empty() && !do_rose_help) {
+        /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
+        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
+    } else {
         disassembler = Disassembler::lookup(interp)->clone();
     }
 
