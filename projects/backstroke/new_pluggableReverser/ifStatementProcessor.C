@@ -135,7 +135,7 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             // For each variable, if it has the different versions from those two tables, we
             // clear its version (it has no version now).
             VariableVersionTable new_table = res1.getVarTable();
-            new_table.merge(res2.getVarTable());
+            new_table.intersect(res2.getVarTable());
             new_res.setVarTable(new_table);
 
             cout << "True:\n";

@@ -51,9 +51,9 @@ public:
     void setNullVersion(SgInitializedName* name);
     void setNullVersion(SgNode* node);
 
-    // Merge this variable version table to another one. For each variable inside, if it has different
-    // versions from those two tables, we set it to NULL version.
-    void merge(const VariableVersionTable& var_table);
+    // Intersect this variable version table to another one. For each variable inside, we set its
+    // new version which is the common indices from those two tables.
+    void intersect(const VariableVersionTable& var_table);
 
     /** If the given node is using its first definition. It's useful to decide whether to reverse the value or not. */
     //FIXME I don't like this name!

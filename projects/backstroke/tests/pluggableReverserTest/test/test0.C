@@ -23,7 +23,7 @@ void event0(model* m)
     //m->i = m->j;
     //m->j = t;
     //
-#if 0
+#if 1
     if (m->i)
     {
         m->j += m->i;
@@ -34,6 +34,7 @@ void event0(model* m)
     }
 #endif
 #if 1
+    //++m->i;
     if (m->k)
     {
         m->i = 0;
@@ -44,7 +45,7 @@ void event0(model* m)
         //m->j -= m->i;
         //m->i = 1;
     }
-    //++m->i;
+    ++m->i;
 #endif
 #if 0
     {

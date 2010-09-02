@@ -257,9 +257,7 @@ void VariableVersionTable::setNullVersion(SgNode* node)
     table_[var_name].clear();
 }
 
-// Merge this variable version table to another one. For each variable inside, if it has different
-// versions from those two tables, we set it to NULL version.
-void VariableVersionTable::merge(const VariableVersionTable& var_table)
+void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(var_table.table_.size() == this->table_.size());
     for (std::map<VarName, std::set<int> >::iterator it = table_.begin();
@@ -278,7 +276,14 @@ bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
 
     // The first definition has the number 1
     // This is also true for branch case.
-    if (num_table.size() == 1 && num_table.count(1) > 0)
+
+	// The size of the num_table does not have to be 1. Considering the following case:
+	// void event(model* m)
+	// {
+	//    if (...) m->i = 1;
+	//    m->i++; // Its reaching def has indices 1,2 not 1
+	// }
+    if (/*num_table.size() == 1 && */num_table.count(1) > 0)
         return true;
     return false;
 }
