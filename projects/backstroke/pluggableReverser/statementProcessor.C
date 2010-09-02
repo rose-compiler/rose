@@ -10,8 +10,10 @@ StatementReversal ExprStatementProcessor::process(SgStatement* stmt, const Evalu
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
+	ROSE_ASSERT(evaluationResult.getStatementProcessor() == this);
+	ROSE_ASSERT(evaluationResult.getChildResults().size() == 1);
     
-    ExpressionReversal exp = processExpression(exp_stmt->get_expression(), evaluationResult);
+    ExpressionReversal exp = processExpression(exp_stmt->get_expression(), evaluationResult.getChildResults().front());
 
     SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -30,8 +32,13 @@ vector<EvaluationResult> ExprStatementProcessor::evaluate(SgStatement* stmt, con
     if (exp_stmt == NULL)
         return results;
     
-    results = evaluateExpression(
-            exp_stmt->get_expression(), var_table);
+     vector<EvaluationResult> potentialExprReversals = evaluateExpression(exp_stmt->get_expression(), var_table);
+	 foreach(EvaluationResult& potentialExprReversal, potentialExprReversals)
+	 {
+		 EvaluationResult statementResult(this, var_table);
+		 statementResult.addChildEvaluationResult(potentialExprReversal);
+		 results.push_back(statementResult);
+	 }
 
     ROSE_ASSERT(!results.empty());
 
