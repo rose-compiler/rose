@@ -1,7 +1,11 @@
 #ifndef ROSE_MEMORY_MAP_H
 #define ROSE_MEMORY_MAP_H
 
+/* Increase ADDR if necessary to make it a multiple of ALMNT */
+#define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
 
+/* Decrease ADDR if necessary to make it a multiple of ALMNT */
+#define ALIGN_DN(ADDR,ALMNT)       (((ADDR)/(ALMNT))*(ALMNT))
 
 /** A MemoryMap is an efficient mapping from virtual addresses to source bytes.  The source bytes can be bytes of a file,
  *  bytes stored in some memory buffer, or bytes initialized to zero and are described by the MemoryMap::MapElement class.

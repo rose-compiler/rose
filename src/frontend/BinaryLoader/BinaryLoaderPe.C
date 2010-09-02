@@ -1,11 +1,16 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#include "Loader.h"
-#include "LoaderPE.h"
+#include "BinaryLoaderPe.h"
+
+/* This binary loader can handle all PE files. */
+bool
+BinaryLoaderPe::can_load(SgAsmGenericHeader *hdr) const
+{
+    return isSgAsmPEFileHeader(hdr)!=NULL;
+}
 
 /* Returns sections in order of their definition in the PE Section Table */
 SgAsmGenericSectionPtrList
-LoaderPE::order_sections(const SgAsmGenericSectionPtrList &sections) 
+BinaryLoaderPe::order_sections(const SgAsmGenericSectionPtrList &sections) 
 {
     SgAsmGenericSectionPtrList retval;
     std::map<int, SgAsmGenericSection*> candidates;
@@ -23,8 +28,8 @@ LoaderPE::order_sections(const SgAsmGenericSectionPtrList &sections)
 
 /* This algorithm was implemented based on an e-mail from Cory Cohen at CERT. [RPM 2009-08-17] */
 rose_addr_t
-LoaderPE::align_values(SgAsmGenericSection *section, rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                       rose_addr_t *offset_p, rose_addr_t *file_size_p, const MemoryMap*)
+BinaryLoaderPe::align_values(SgAsmGenericSection *section, Contribution, rose_addr_t *va_p, rose_addr_t *mem_size_p,
+                             rose_addr_t *offset_p, rose_addr_t *file_size_p, const MemoryMap*)
 {
     SgAsmGenericHeader *header = section->get_header();
     ROSE_ASSERT(header!=NULL);
@@ -46,11 +51,8 @@ LoaderPE::align_values(SgAsmGenericSection *section, rose_addr_t *va_p, rose_add
     rose_addr_t file_size = ALIGN_UP(section->get_size(), file_alignment);
 
     /* Map the entire section's file content (aligned) or the requested map size, whichever is larger. */
-//#ifdef _MSC_VER
-//	rose_addr_t mapped_size = _cpp_max(section->get_mapped_size(), file_size);
-//#else
-	rose_addr_t mapped_size = std::max(section->get_mapped_size(), file_size);
-//#endif
+    rose_addr_t mapped_size = std::max(section->get_mapped_size(), file_size);
+
     /* Align file offset downward but do not adjust file size. */
     rose_addr_t file_offset = ALIGN_DN(section->get_offset(), file_alignment);
 

@@ -1,5 +1,5 @@
-#ifndef ROSE_BINARYLOADERGENERIC_H
-#define ROSE_BINARYLOADERGENERIC_H
+#ifndef ROSE_BINARYLOADER_H
+#define ROSE_BINARYLOADER_H
 
 /** Base class for loading a static or dynamic object.
  *
@@ -61,12 +61,12 @@ public:
      *======================================================================================================================== */
 public:
     BinaryLoader()
-        : debug(NULL), p_perform_dynamic_linking(false), p_perform_layout(false), p_perform_relocations(false)
+        : debug(NULL), p_perform_dynamic_linking(false), p_perform_remap(true), p_perform_relocations(false)
         { init(); }
 
     BinaryLoader(const BinaryLoader &other)
         : debug(other.debug), p_perform_dynamic_linking(other.p_perform_dynamic_linking),
-          p_perform_layout(other.p_perform_layout), p_perform_relocations(other.p_perform_relocations) {
+          p_perform_remap(other.p_perform_remap), p_perform_relocations(other.p_perform_relocations) {
         preloads = other.preloads;
         directories = other.directories;
     }
@@ -118,8 +118,8 @@ public:
     void set_perform_dynamic_linking(bool b) { p_perform_dynamic_linking = b; }
     bool get_perform_dynamic_linking() const { return p_perform_dynamic_linking; }
 
-    void set_perform_layout(bool b) { p_perform_layout = b; }
-    bool get_perform_layout() const { return p_perform_layout; }
+    void set_perform_remap(bool b) { p_perform_remap = b; }
+    bool get_perform_remap() const { return p_perform_remap; }
 
     void set_perform_relocations(bool b) { p_perform_relocations = b; }
     bool get_perform_relocations() const { return p_perform_relocations; }
@@ -203,11 +203,104 @@ public:
      *  memory by remapSections(). Throws a BinaryLoader::Exception if an error occurs. */
     virtual void fixupSections(SgAsmInterpretation *interp);
 
+    /*========================================================================================================================
+     * Mapping functions
+     *======================================================================================================================== */
+public:
+    /** Creates a map containing all mappable sections in the file. If @p map is non-null then it will be modified in place
+     *  and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_all_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_all_sections(map, file->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map containing all mappable sections in a file header. If @p map is non-null then it will be modified in place
+     *  and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_all_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_all_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map containing the specified sections (if they are mapped). If @p map is non-null then it will be modified
+     *  in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_all_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+
+
+
+    /** Creates a map for all code-containing sections in the file. If @p map is non-null then it will be modified in place
+     *  and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_code_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_code_sections(map, file->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map for all code-containing sections reachable from the file header. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_code_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_code_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map for all code-containing sections from the specified list. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_code_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+
+
+
+    /** Creates a map for all executable sections in the file. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_executable_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_executable_sections(map, file->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map for all executable sections reachable from the file header. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_executable_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_executable_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map for all executable sections from the specified list. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_executable_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+
+
+
+    /** Creates a map for all writable sections in the file. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_writable_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_writable_sections(map, file->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map for all writable sections reachable from the file header. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_writable_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_writable_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map for all writable sections from the specified list. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_writable_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+
+    
 
     /*========================================================================================================================
-     * Supporting functions
+     * Supporting types and functions
      *======================================================================================================================== */
 protected:
+    enum Contribution {
+        CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
+        CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
+        CONTRIBUTE_SUB                  /**< Section is subtracted from the mapping. */
+    };
+
+    /** The interface for deciding whether a section contributes to a mapping.
+     *
+     *  A Selector is used to decide whether a section should contribute to the mapping, and whether that contribution should
+     *  be additive or subtractive.  Any section that contributes to a mapping will be passed through the align_values()
+     *  method, which has an opportunity to veto the section's contribution. The Selector virtual class will be subclassed for
+     *  various kinds of selections. */
+    class Selector {
+    public:
+        virtual ~Selector() {}
+        virtual Contribution contributes(SgAsmGenericSection*) = 0;
+    };
+
     /** Returns true if the specified file name is already linked into the AST. */
     virtual bool is_linked(SgBinaryComposite *composite, const std::string &filename);
     /** Returns true if the specified file name is already linked into the AST. */
@@ -229,7 +322,7 @@ protected:
     /** Selects those sections which should be layed out by the Loader and inserts them into the @p allSections argument.  The
      *  default implementation (in this base class) is to add all sections to the list. Subclasses will likely restrict this
      *  to a subset of sections. */
-    virtual void addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections);
+    virtual void addSectionsForRemap(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections);
 
 #if 0
     /** Helper function to get raw dll list from a file. */
@@ -248,6 +341,63 @@ protected:
      *  disassembly would use the same Disassembler for both.  See findSimilarHeaders(). */
     static bool isHeaderSimilar(SgAsmGenericHeader*, SgAsmGenericHeader*);
 
+    /** Computes memory mapping addresses for a section.
+     *
+     *  Operating systems generally have some alignment constraints for how a file is mapped to virtual memory, and these
+     *  correspond to the page size. For example, see the man page for Unix mmap().  There are three parts to the information
+     *  returned:
+     *
+     *  First, we need to know the entire range of file offsets that are mapped. On Unix systems only entire pages of a file
+     *  can be mapped. If the section begins with a partial page then we align the starting offset downward. Likewise if the
+     *  section ends with a partial page we extend the range.  Both of these adjustments can increase the number of file bytes
+     *  that are mapped.  The starting offset and file size are returned through the @p offset and @p file_size arguments.
+     *
+     *  Second, we need to know the entire range of virtual addresses that are affected.  Again, at least on Unix systems,
+     *  only entire pages of memory can be mapped. We therefore make the same adjustments to memory as we did to the file,
+     *  aligning the starting virtual address downward and the ending address upward. Both of these adjustments can affect the
+     *  size of the virtual address region affected.  The starting address and memory size are returned through the @p va and
+     *  @p mem_size arguments.  When the returned memory size is larger than the returned file size then the mapping will
+     *  include an anonymous region (memory that is initialized to zero rather than file contents).
+     *
+     *  Finally, we need to indicate where the first byte of the section is located in memory. If we needed to make
+     *  adjustments to the first affected virtual address then the start-of-section will not be the same as the first affected
+     *  virtual address.  The start-of-section virtual address is the return value of this function.
+     *
+     *  Additionally, this function can veto a section mapping by returning a zero memory size.  This can happen when the
+     *  Selector selects a section indiscriminantly (as with map_all_sections()) but there is not enough information to
+     *  determine where the section should be mapped.  On the other hand, it can also define a mapping for a section that
+     *  doesn't have any mapping attributes (for instance, the ELF object file loader, LoaderELFObj, maps function text
+     *  sections that are marked as "not mapped" in the ELF container by choosing free regions of virtual memory using the @p
+     *  current argument that contains the most up-to-date mapping). */
+    virtual rose_addr_t align_values(SgAsmGenericSection*, Contribution,
+                                     rose_addr_t *va,     rose_addr_t *mem_size,
+                                     rose_addr_t *offset, rose_addr_t *file_size,
+                                     const MemoryMap *current);
+
+    /** Sort sections for mapping.
+     *
+     *  Given a list of sections, sort the sections according to the order they should contribute to the mapping.  For
+     *  instance, ELF Segments should contribute to the mapping before ELF Sections.
+     *
+     *  This method can also be used as a first-line for excluding sections that meet certain criteria. It is called by
+     *  create_map() before sections are passed through the Selector object.  The default implementation excludes any section
+     *  that was synthesized by the binary parser, keeping only those that were created due to the parser encountering a
+     *  description of the section in some kind of table. */
+    virtual SgAsmGenericSectionPtrList order_sections(const SgAsmGenericSectionPtrList&);
+
+    /** Creates a memory map containing sections that satisfy some constraint.
+     *
+     *  The sections are mapped in the order specified by order_sections(), contribute to the final mapping according to the
+     *  specified Selector, and are aligned according to the rules in align_values().  If @p allow_overmap is set (the
+     *  default) then any section that contributes to the map in an additive manner will first have its virtual address space
+     *  removed from the map in order to prevent a MemoryMap::Inconsistent exception; otherwise a MemoryMap::Inconsistent
+     *  exception will be thrown when a single virtual address would map to two different source bytes, such as two different
+     *  offsets in a file.
+     *
+     *  If a memory map is supplied, then it will be modified in place and returned; otherwise a new map is allocated. */
+    virtual MemoryMap *create_map(MemoryMap *map, const SgAsmGenericSectionPtrList&, Selector*, bool allow_overmap=true);
+
+
 
     /*========================================================================================================================
      * Private stuff
@@ -261,8 +411,8 @@ private:
     FILE *debug;                                        /**< Stream where diagnostics are sent; null to disable them. */
 
     bool p_perform_dynamic_linking;
-    bool p_perform_layout;
+    bool p_perform_remap;
     bool p_perform_relocations;
 };
 
-#endif /* ROSE_BINARYLOADERGENERIC_H */
+#endif /* ROSE_BINARYLOADER_H */

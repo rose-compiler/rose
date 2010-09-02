@@ -7,7 +7,7 @@
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerArm.h"
 #include "DisassemblerX86.h"
-#include "Loader.h"
+#include "BinaryLoader.h"
 #include "Partitioner.h"
 
 #define __STDC_FORMAT_MACROS
@@ -773,7 +773,7 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
         map = new MemoryMap();
         for (size_t i=0; i<headers.size(); i++) {
             if (NULL==interp->get_map()) {
-                Loader *loader = Loader::find_loader(headers[i]);
+                BinaryLoader *loader = BinaryLoader::lookup(headers[i]); /*no need to clone since we're not changing anything*/
                 if (p_search & SEARCH_NONEXE) {
                     loader->map_all_sections(map, headers[i]->get_sections()->get_sections());
                 } else {

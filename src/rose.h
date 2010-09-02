@@ -110,10 +110,6 @@ namespace ELF{
 
 
 #include "DataConversion.h"
-#include "Loader.h"
-#include "LoaderELF.h"
-#include "LoaderELFObj.h"
-#include "LoaderPE.h"
 // Files in src/frontend/ExecFormats
 #include "MemoryMap.h"
 

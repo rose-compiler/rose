@@ -15,6 +15,53 @@ BinaryLoaderElf::can_load(SgAsmGenericHeader *hdr) const
     return isSgAsmElfFileHeader(hdr)!=NULL;
 }
 
+/* Returns ELF Segments followed by ELF Sections */
+SgAsmGenericSectionPtrList
+BinaryLoaderElf::order_sections(const SgAsmGenericSectionPtrList &sections)
+{
+    SgAsmGenericSectionPtrList retval;
+    for (int pass=0; pass<2; pass++) {
+        for (size_t i=0; i<sections.size(); i++) {
+            SgAsmElfSection *section = isSgAsmElfSection(sections[i]);
+            if (!section)
+                continue;
+            if (0==pass && section->get_segment_entry()!=NULL) {
+                retval.push_back(section);
+            } else if (1==pass && section->get_section_entry()!=NULL) {
+                retval.push_back(section);
+            }
+        }
+    }
+    return retval;
+}
+
+/* Same as superclass, but if we are mapping/unmapping an ELF Section (that is not an ELF Segment) then don't bother to align
+ * it. This is used for ELF code mapping because code is mapped by ELF Segments and then the ELF Sections fine tune it. */
+rose_addr_t
+BinaryLoaderElf::align_values(SgAsmGenericSection *_section, Contribution contrib,
+                              rose_addr_t *va_p/*out*/, rose_addr_t *mem_size_p/*out*/,
+                              rose_addr_t *offset_p/*out*/, rose_addr_t *file_size_p/*out*/,
+                              const MemoryMap *current)
+{
+    SgAsmElfSection *section = isSgAsmElfSection(_section);
+
+    rose_addr_t retval = 0;
+    rose_addr_t old_va_align = section->get_mapped_alignment();
+
+    try {
+        if (NULL==section->get_segment_entry()) {
+            if (get_debug())
+                fprintf(get_debug(), "    Temporarily relaxing memory alignment constraints.\n");
+            section->set_mapped_alignment(1);
+        }
+        retval = BinaryLoader::align_values(section, contrib, va_p, mem_size_p, offset_p, file_size_p, current);
+    } catch (...) {
+        section->set_mapped_alignment(old_va_align);
+        throw;
+    }
+    section->set_mapped_alignment(old_va_align);
+    return retval;
+}
 
 
 
@@ -227,31 +274,6 @@ BinaryLoaderElf::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Container<st
     return files;
 }
 #endif
-
-void
-BinaryLoaderElf::addSectionsForLayout(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections)
-{
-    BinaryLoader::addSectionsForLayout(header, allSections);
-#if 0 /* the Loader seems to do all the "right" stuff with this */
-    SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(header);
-    ROSE_ASSERT(elfHeader != NULL);
-
-    SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
-
-    for(size_t i=0; i < sections.size(); ++i){
-        SgAsmElfSection* elfSection = isSgAsmElfSection(sections[i]);
-        ROSE_ASSERT(elfSection != NULL);
-        SgAsmElfSectionTableEntry *sectionEntry = elfSection->get_section_entry();
-        ROSE_ASSERT(sectionEntry != NULL);
-        ROSE_ASSERT(elfSection->get_segment_entry() == NULL);
-
-        if (sectionEntry->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_ALLOC) {
-            // we only layout sections marked for allocation
-            allSections.push_back(elfSection);
-        }
-    }
-#endif
-}
 
 /*************************************************************************************************************************
  * Low-level ELF stuff begins here.  More BinaryLoaderElf methods follow this stuff.

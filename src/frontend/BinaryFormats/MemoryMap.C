@@ -5,7 +5,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include "Loader.h"
 #include "rose_getline.h"
 /* See header file for full documentation */
 
