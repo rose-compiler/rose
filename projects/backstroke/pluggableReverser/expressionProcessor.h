@@ -23,15 +23,6 @@ public:
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
 
-//! This handler generates a reverse expression which is the same as the original expression.
-class IdentityExpressionProcessor : public ExpressionProcessor
-{
-public:
-    IdentityExpressionProcessor() { name_ = "Identity Expression Processor"; }
-    virtual ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult);
-    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
-};
-
 //! This handler just store and restore a value, once the value is modified (state saving style).
 class StoreAndRestoreExpressionProcessor : public ExpressionProcessor
 {
