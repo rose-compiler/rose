@@ -229,16 +229,22 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 
 void VariableVersionTable::reverseVersion(SgNode* node)
 {
-	// Note only the original variable (not the expanded one) is reversed here.
+	// Note all expanded nodes are reversed here. For example, for m->a, both m->a
+	// and m are reversed.
 	VariableRenaming::VarName name = VariableRenaming::getVarName(node);
-	ROSE_ASSERT(name != VariableRenaming::emptyName);
-	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtNodeForName(node, name);
 
-	table_[name].clear();
-
-	foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, num_table)
+	while (!name.empty())
 	{
-		table_[name].insert(num_to_node.first);
+		ROSE_ASSERT(table_.count(name) > 0);
+		ROSE_ASSERT(name != VariableRenaming::emptyName);
+		VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtNodeForName(node, name);
+
+		table_[name].clear();
+
+		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, num_table)
+			table_[name].insert(num_to_node.first);
+
+		name.pop_back();
 	}
 }
 

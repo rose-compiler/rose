@@ -264,9 +264,23 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
     SgVarRefExp* var = isSgVarRefExp(exp);
     ROSE_ASSERT(var);
 
+	// The pointer parameter of the event function is state.
     foreach (SgInitializedName* name, event_->get_args())
     {
         if (name == var->get_symbol()->get_declaration())
+            if (isSgPointerType(name->get_type()) || isReferenceType(name->get_type()))
+                return true;
+    }
+
+    return false;
+}
+
+bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
+{
+	// The pointer parameter of the event function is state.
+    foreach (SgInitializedName* name, event_->get_args())
+    {
+        if (name == var[0])
             if (isSgPointerType(name->get_type()) || isReferenceType(name->get_type()))
                 return true;
     }
@@ -314,6 +328,31 @@ FuncDeclPairs EventProcessor::processEvent()
 
     foreach (EvaluationResult& res, results)
     {
+		/************************************************************************/
+		// Here we check the validity for each result above. We have to make sure
+		// every state variable has the version 1.
+
+		int flag = true;
+		
+		typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
+		const TableType& table = res.getVarTable().getTable();
+		foreach (const TableType::value_type& var, table)
+		{
+			if (isStateVariable(var.first))
+			{
+				if (var.second.size() != 1 || var.second.count(1) == 0)
+				{
+					flag = false;
+					break;
+				}
+			}
+		}
+		if (!flag)
+			continue;
+
+		/************************************************************************/
+
+
         StatementReversal stmt = processStatement(body, res);
 
         fixVariableReferences(stmt.fwd_stmt);

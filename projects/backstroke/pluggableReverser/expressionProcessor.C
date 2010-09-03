@@ -23,6 +23,15 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(SgExpression* exp, co
     if (backstroke_util::isReturnValueUsed(exp)) return results;
     //SgExpression* exp = exp_pkg.exp;
 
+	// We want to check variable version table to check the validity to ignore any
+	// expression or statemetn reversal. The reason is that for the following code:
+	//   if () a = 0;
+	//   a = 1;
+	// we want to reverse it into
+	//   a = pop();
+	// Here we can not use this processor to process 'a = 1;', since it may be the first def.
+	
+#if 0
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp) || isAssignmentOp(exp))
     {
         SgExpression* var = NULL;
@@ -36,6 +45,8 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(SgExpression* exp, co
         if (isStateVariable(var) && var_table.isUsingFirstDefinition(var))
             return results;
     }
+#endif
+	
     results.push_back(EvaluationResult(this, var_table));
     return results;
 }

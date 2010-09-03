@@ -39,12 +39,12 @@ public:
     bool isZeroCost() const;
 };
 
-//! Equality operator. Note that this comparison is very restricted.
+/** Equality operator. Note that this comparison is very restricted. */
 bool operator ==(const SimpleCostModel& cost1, const SimpleCostModel& cost2);
 inline bool operator !=(const SimpleCostModel& cost1, const SimpleCostModel& cost2)
 { return !(cost1 == cost2); }
 
-/*! Less than operator. This comparison is very conservative that if cost1 is less than
+/** Less than operator. This comparison is very conservative that if cost1 is less than
 cost2, every branch cost in cost2 should not be greater than that cost in the corresponding
  branch of cost1.*/
 bool operator <(const SimpleCostModel& cost1, const SimpleCostModel& cost2);

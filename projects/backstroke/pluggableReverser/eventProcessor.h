@@ -308,6 +308,7 @@ public:
 
 	//! Return if the given variable is a state variable (currently, it should be the parameter of event function).
 	bool isStateVariable(SgExpression* exp);
+	bool isStateVariable(const VariableRenaming::VarName& var);
 
 	//! Get all declarations of stacks which store values of different types.
 	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;

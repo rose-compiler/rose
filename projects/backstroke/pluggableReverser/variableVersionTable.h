@@ -17,18 +17,22 @@ public:
 	VariableVersionTable() : var_renaming_(NULL) { }
 	VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
 
+	// TODO: we may avoid to provide this interface.
+	const std::map<VariableRenaming::VarName, std::set<int> >& getTable() const
+	{ return table_; }
+
 	/** Returns the version of the variable, or an empty set if the variable is not in the table. */
 	std::set<int> getVersion(VariableRenaming::VarName varName) const;
 
-	/*! Check if the given variables with their version numbers exist in the current table.
+	/** Check if the given variables with their version numbers exist in the current table.
 	 * Note that we can check one or two expressions in urary and binary operation cases. */
 	bool checkLhsVersion(SgNode* node) const;
 	bool checkRhsVersion(SgNode* node) const;
 	bool checkVersion(SgExpression* lhs, SgExpression* rhs = NULL) const;
 
-	// Check if all varibles in the given expression have the same version in the current version table.
-    // This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
-    // check, but a cannot.
+	/** Check if all varibles in the given expression have the same version in the current version table.
+     * This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
+     * check, but a cannot. */
     bool checkVersionForUse(SgExpression* exp) const;
 
 	/** Regress the version of the given variable. Call this function once the expression or
