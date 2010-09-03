@@ -47,13 +47,6 @@ void VariableVersionTable::print() const
 	}
 }
 
-void VariableVersionTable::print(const VariableRenaming::VarName& name)
-{
-	foreach(SgInitializedName* n, name)
-	cout << n->get_name().str() << ' ';
-	cout << endl;
-}
-
 /** This function get all variables in an AST node. Note that for a variable a.b or a->b,
 	only a.b or a->b is returned, not a or b. */
 vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)

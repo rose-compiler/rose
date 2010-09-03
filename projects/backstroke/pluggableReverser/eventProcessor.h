@@ -137,8 +137,7 @@ protected:
 	ExpressionReversal processExpression(SgExpression* exp, const EvaluationResult& evaluationResult);
 	StatementReversal processStatement(SgStatement* stmt, const EvaluationResult& evaluationResult);
 
-	//TODO: Remove default argument here
-	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used = false);
+	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
 	/**
