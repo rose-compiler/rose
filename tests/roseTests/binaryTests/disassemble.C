@@ -929,18 +929,12 @@ main(int argc, char *argv[])
             partitioner->add_function(*i, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
         }
     } else {
-        /* See Disassembler::disassembleInterp() for how to construct a memory map from an interpretation. */
-        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-        map = new MemoryMap();
-        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
-            /* Load appropriate sections into the memory map */
-            Loader *loader = Loader::find_loader(*hi);
-            if (disassembler->get_search() & Disassembler::SEARCH_NONEXE) {
-                loader->map_all_sections(map, (*hi)->get_sections()->get_sections());
-            } else {
-                loader->map_code_sections(map, (*hi)->get_sections()->get_sections());
-            }
+        map = interp->get_map();
+        assert(map!=NULL);
 
+
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
             /* Seed disassembler work list with entry addresses */
             SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
             for (size_t i=0; i<entry_rvalist.size(); i++) {
