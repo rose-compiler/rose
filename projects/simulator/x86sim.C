@@ -15,6 +15,7 @@
 
 #include "x86print.h"
 #include "VirtualMachineSemantics.h"
+#include "BinaryLoader.h"
 #include <stdarg.h>
 
 /* These are necessary for the system call emulation */
@@ -367,38 +368,38 @@ EmulationPolicy::load(const char *name)
      * LoaderELF::order_sections() cause SgAsmGenericSections which are both ELF Sections and ELF Segments to appear twice in
      * the list that's ultimately processed by Loader::create_map(). Therefore we need to keep track of what sections we've
      * actually seen. */
-    struct T2: public Loader::Selector {
+    struct T2: public BinaryLoader::Selector {
         EmulationPolicy *policy;
         std::set<SgAsmGenericSection*> seen;
         T2(EmulationPolicy *policy): policy(policy) {}
-        virtual Loader::Contribution contributes(SgAsmGenericSection *_section) {
+        virtual BinaryLoader::Contribution contributes(SgAsmGenericSection *_section) {
             SgAsmElfSection *section = isSgAsmElfSection(_section);
             SgAsmElfSegmentTableEntry *segment = section ? section->get_segment_entry() : NULL;
             if (segment && seen.find(section)==seen.end()) {
                 seen.insert(section);
                 switch (segment->get_type()) {
                     case SgAsmElfSegmentTableEntry::PT_LOAD:
-                        return Loader::CONTRIBUTE_ADD;
+                        return BinaryLoader::CONTRIBUTE_ADD;
                     case SgAsmElfSegmentTableEntry::PT_INTERP:
                         char interp_name[section->get_size()+1];
                         section->read_content_local(0, interp_name, section->get_size());
                         interp_name[section->get_size()] = '\0';
                         policy->load(interp_name);
-                        return Loader::CONTRIBUTE_ADD;
+                        return BinaryLoader::CONTRIBUTE_ADD;
                     case SgAsmElfSegmentTableEntry::PT_PHDR:
                         policy->phdr_va = section->get_mapped_preferred_rva();
-                        return Loader::CONTRIBUTE_NONE;
+                        return BinaryLoader::CONTRIBUTE_NONE;
                     default:
-                        return Loader::CONTRIBUTE_NONE;
+                        return BinaryLoader::CONTRIBUTE_NONE;
                 }
             }
-            return Loader::CONTRIBUTE_NONE;
+            return BinaryLoader::CONTRIBUTE_NONE;
         }
     } selector(this);
 
     /* Load applicable sections into specimen's memory recursively, defining a MemoryMap that describes how the specimen
      * address spaces maps to our own (the simulator's) address space. */
-    Loader *loader = Loader::find_loader(fhdr);
+    BinaryLoader *loader = BinaryLoader::lookup(fhdr)->clone();
     ROSE_ASSERT(loader!=NULL);
     loader->create_map(&map, fhdr->get_mapped_sections(), &selector);
 
