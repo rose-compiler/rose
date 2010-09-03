@@ -1,6 +1,8 @@
 #include "ifStatementProcessor.h"
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
+#include <boost/shared_ptr.hpp>
+#include "utilities/CPPDefinesAndNamespaces.h"
 
 using namespace std;
 using namespace boost;
@@ -12,6 +14,8 @@ struct IfStmtConditionAttribute : public EvaluationResultAttribute
     IfStmtConditionAttribute() : cond(NULL) {}
     SgExpression* cond;
 };
+
+typedef boost::shared_ptr<IfStmtConditionAttribute> IfStmtConditionAttributePtr;
 
 StatementReversal IfStatementProcessor::process(SgStatement* stmt, const EvaluationResult& evalResult)
 {
@@ -97,7 +101,6 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
 
             //EvaluationResult new_res = res1;
 
-#if 1
             // FIXME Note here we cannot use update function. We may create a new function
             // to combine variable tables from true and false bodies.
             //new_res.update(res2);
@@ -108,7 +111,8 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             VariableVersionTable new_table = res1.getVarTable();
             new_table.intersect(res2.getVarTable());
             //new_res.setVarTable(new_table);
-
+			
+#if 1
             cout << "True:\n";
             res2.getVarTable().print();
             cout << "False:\n";
@@ -130,14 +134,13 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
 				totalEvaluationResult.addChildEvaluationResult(res3);
 				totalEvaluationResult.setVarTable(new_table);
 
-//<<<<<<< HEAD:projects/backstroke/new_pluggableReverser/ifStatementProcessor.C
                 // Here we should do an analysis to decide whether to store the branch flag.
                 // If the value of the condition is not modified during both true and false bodies,
                 // we can still use that expression. Or we can retieve the same value from other
                 // expressions. Even more comlicated analysis may be performed here.
 
                 SimpleCostModel new_cost = cost;
-                IfStmtConditionAttribute* attr = new IfStmtConditionAttribute;
+                IfStmtConditionAttributePtr attr(new IfStmtConditionAttribute);
 
                 SgExpression* cond = isSgExprStatement(if_stmt->get_conditional())->get_expression();
                 if (cond && var_table.checkVersionForUse(cond))
@@ -151,15 +154,8 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
                 }
 
                 totalEvaluationResult.setCost(new_cost);
-                totalEvaluationResult.setAttribute(EvaluationResultAttributePtr(attr));
-#if 0
-				=======
-                // Since we store the branch flag here, we add the cost by 1.
-                SimpleCostModel cost;
-                cost.increaseStoreCount();
-                totalEvaluationResult.setCost(cost);
->>>>>>> d1025b0ce107d0e39320afcfb9dd9b367337265e:projects/backstroke/pluggableReverser/ifStatementProcessor.C
-#endif
+                totalEvaluationResult.setAttribute(attr);
+
                 results.push_back(totalEvaluationResult);
             }
         }

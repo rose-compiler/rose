@@ -7,7 +7,6 @@
 #include <boost/shared_ptr.hpp>
 #include "variableVersionTable.h"
 #include "costModel.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
 
 class ExpressionProcessor;
 class StatementProcessor;
