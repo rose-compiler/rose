@@ -32,7 +32,7 @@ vector<EvaluationResult> ExprStatementProcessor::evaluate(SgStatement* stmt, con
     if (exp_stmt == NULL)
         return results;
     
-     vector<EvaluationResult> potentialExprReversals = evaluateExpression(exp_stmt->get_expression(), var_table);
+     vector<EvaluationResult> potentialExprReversals = evaluateExpression(exp_stmt->get_expression(), var_table, false);
 	 foreach(EvaluationResult& potentialExprReversal, potentialExprReversals)
 	 {
 		 EvaluationResult statementResult(this, var_table);
