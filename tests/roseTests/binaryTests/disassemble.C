@@ -859,7 +859,7 @@ main(int argc, char *argv[])
         interp = do_dos ? interps.front() : interps.back();
 
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
-#if 1
+#if 0
         loader->set_perform_dynamic_linking(true);
         loader->set_debug(stderr);
         loader->add_directory("/lib32");
