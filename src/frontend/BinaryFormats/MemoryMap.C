@@ -140,6 +140,79 @@ MemoryMap::MapElement::merge_anonymous(const MapElement &other, size_t oldsize)
     *anonymous = 1;
 }
 
+std::string
+MemoryMap::MapElement::get_name_pairings(NamePairings *pairings) const
+{
+    ROSE_ASSERT(pairings!=NULL);
+    std::string retval;
+    std::string::size_type i = 0;
+    while (i<name.size()) {
+        /* Extract the file name up to the left paren */
+        while (i<name.size() && isspace(name[i])) i++;
+        std::string::size_type fname_start = i;
+        while (i<name.size() && !isspace(name[i]) && !strchr("()+", name[i])) i++;
+        if (i>=name.size() || '('!=name[i] || fname_start==i) {
+            retval += name.substr(fname_start, i-fname_start);
+            break;
+        }
+        std::string fname = name.substr(fname_start, i-fname_start);
+        i++; /*skip over the left paren*/
+        int parens=0;
+        
+        /* Extract name(s) separated from one another by '+' */
+        while (i<name.size() && ')'!=name[i]) {
+            while (i<name.size() && isspace(name[i])) i++;
+            std::string::size_type gname_start = i;
+            while (i<name.size() && '+'!=name[i] && (parens>0 || ')'!=name[i])) {
+                if ('('==name[i]) {
+                    parens++;
+                } else if (')'==name[i]) {
+                    parens--;
+                } 
+                i++;
+            }
+            if (i>gname_start)
+                (*pairings)[fname].insert(name.substr(gname_start, i-gname_start));
+            if (i<name.size() && '+'==name[i]) i++;
+        }
+
+        /* Skip over right paren and optional space and '+' */
+        if (i<name.size() && ')'==name[i]) i++;
+        while (i<name.size() && isspace(name[i])) i++;
+        if (i<name.size() && '+'==name[i]) i++;
+    }
+    if (i<name.size())
+        retval += name.substr(i);
+    return retval;
+}
+
+MemoryMap::MapElement&
+MemoryMap::MapElement::set_name(const NamePairings &pairings, const std::string &s1, const std::string &s2)
+{
+    std::string s;
+    for (NamePairings::const_iterator pi=pairings.begin(); pi!=pairings.end(); ++pi) {
+        s += (s.empty()?"":"+") + pi->first + "(";
+        for (std::set<std::string>::const_iterator si=pi->second.begin(); si!=pi->second.end(); ++si) {
+            if ('('!=s[s.size()-1]) s += "+";
+            s += *si;
+        }
+        s += ')';
+    }
+    if (!s1.empty())
+        s += (s.empty()?"":"+") + s1;
+    if (!s2.empty())
+        s += (s.empty()?"":"+") + s2;
+    set_name(s);
+    return *this;
+}
+
+MemoryMap::MapElement &
+MemoryMap::MapElement::set_name(const std::string &s)
+{
+    name = s;
+    return *this;
+}
+
 void
 MemoryMap::MapElement::merge_names(const MapElement &other)
 {
@@ -148,18 +221,11 @@ MemoryMap::MapElement::merge_names(const MapElement &other)
     } else if (other.name.empty()) {
         /*void*/
     } else {
-        set_name(get_name()+"+"+other.get_name());
+        NamePairings pairings;
+        std::string s1 = get_name_pairings(&pairings);
+        std::string s2 = other.get_name_pairings(&pairings);
+        set_name(pairings, s1, s2);
     }
-}
-
-MemoryMap::MapElement &
-MemoryMap::MapElement::set_name(const std::string &s)
-{
-    static const size_t limit = 35;
-    name = s;
-    if (name.size()>limit)
-        name = name.substr(0, limit-3) + "...";
-    return *this;
 }
 
 bool
@@ -583,9 +649,11 @@ MemoryMap::dump(FILE *f, const char *prefix) const
                 0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
                 basename.c_str(), elements[i].get_offset());
 
-        if (!me.name.empty())
-            fprintf(f, " %s", me.name.c_str());
-        
+        if (!me.name.empty()) {
+            static const size_t limit = 55;
+            fprintf(f, " %s", (me.get_name().size()>limit ? me.get_name().substr(0, limit-3) + "..." : me.get_name()).c_str());
+        }
+
         fputc('\n', f);
     }
 }

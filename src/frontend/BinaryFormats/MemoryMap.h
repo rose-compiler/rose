@@ -20,6 +20,15 @@ public:
         MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */
         MM_PROT_NONE    = 0x0           /**< Pages cannot be accessed. */
     };
+
+    /** Data structure for memory map names.  Often, memory map element names used for debugging are of the form
+     *  \code
+     *   FILE1(NAME1a+NAME1b+...)+FILE2(NAME2a+NAME2b+...)+...
+     *  \endcode
+     *
+     *  where the file names are all unique. We'd like to be able to operate on these name strings in order to do things like
+     *  merging two elements. This data type facilitates these kinds of operations. */
+    typedef std::map<std::string, std::set<std::string> > NamePairings;
     
     /** A MemoryMap is composed of zero or more MapElements. Each map element describes a mapping from contiguous virtual
      *  addresses to contiguous file/memory bytes. A map element can point to a buffer supplied by the caller or a buffer
@@ -146,6 +155,15 @@ public:
         const std::string &get_name() const {
             return name;
         }
+
+        /** Parses the name assigned to this map element. If the name is of the form described for the NamePairings data type
+         *  then load the pairings into the @p pairings argument.  Whatever is not parsed is returned.
+         *  argument. */
+        std::string get_name_pairings(NamePairings*) const;
+        
+        /** Sets the name of this map element from the supplied pairings. Two additional strings can be concatenated into the
+         *  result. */
+        MapElement& set_name(const NamePairings&, const std::string &s1="", const std::string &s2="");
 
 #ifdef _MSC_VER
         /* CH (4/15/2010): Make < operator be its member function instead of non-member function outside to avoid template
