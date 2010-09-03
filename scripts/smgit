@@ -2314,5 +2314,5 @@ my $cmd = shift @ARGV;
 usage if $cmd =~ /^-/ || !$cmd || ($cmd eq "help" && 0==@ARGV);
 die "$arg0: you have no submodules; use plain old git instead.
     (smgit is a wrapper around git that limits the functionality in order to
-    make it easier to use submodules.)\n" unless submodules;
+    make it easier to use submodules.)\n" unless $cmd eq "clone" || submodules;
 $cmds{$cmd} ? &{$cmds{$cmd}}(@ARGV) : postorder $cmd, @ARGV;
