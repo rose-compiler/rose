@@ -1,5 +1,7 @@
 #include "rose.h"
+#ifndef _MSC_VER
 #include "rose_getline.h" /* Mac OSX v10.6 does not have GNU getline() */
+#endif
 #include "SMTSolver.h"
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
@@ -28,6 +30,8 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
             close(fd);
             break;
         }
+#else
+		ROSE_ASSERT(false);
 #endif
     }
     std::ofstream config(config_name);
@@ -53,14 +57,17 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
 #ifdef _MSC_VER
     // tps (06/23/2010) : popen not understood in Windows
     FILE *output=NULL;
+	ROSE_ASSERT(false);
 #else
     FILE *output = popen(cmd.c_str(), "r");
 #endif
     ROSE_ASSERT(output!=NULL);
     static char *line=NULL;
     static size_t line_alloc=0;
+#ifndef _MSC_VER
     ssize_t nread = rose_getline(&line, &line_alloc, output);
     ROSE_ASSERT(nread>0);
+#endif
 #ifdef _MSC_VER
     // tps (06/23/2010) : pclose not understood in Windows
     abort();
@@ -78,6 +85,7 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     } else {
 #ifdef _MSC_VER
         // tps (06/23/2010) : execl not understood in Windows
+		ROSE_ASSERT(false);
 #else
         std::cout <<"    input=" <<config_name <<", status=" <<status <<", result=" <<line;
         execl("/bin/cat", "cat", "-n", config_name, NULL);

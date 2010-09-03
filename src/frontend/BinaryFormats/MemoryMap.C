@@ -4,7 +4,11 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifndef _MSC_VER
 #include <sys/mman.h>
+#else
+#include <io.h>
+#endif
 #include "Loader.h"
 #include "rose_getline.h"
 /* See header file for full documentation */
@@ -602,29 +606,51 @@ MemoryMap::dump(const std::string &basename) const
         const MapElement &me = elements[i];
 
         char ext[256];
-        sprintf(ext, "-%08"PRIx64".data", me.get_va());
+        sprintf(ext, "-0x%08"PRIx64".data", me.get_va());
+#ifdef _MSC_VER
+        int fd = _open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
+#else
         int fd = open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
+#endif
         ROSE_ASSERT(fd>0);
         if (!me.get_base()) {
             /* anonymous and no memory allocated. Zero-fill the file */
             ROSE_ASSERT(me.get_size()>0);
+#ifdef _MSC_VER
+            off_t offset = _lseek(fd, me.get_size()-1, SEEK_SET);
+#else
             off_t offset = lseek(fd, me.get_size()-1, SEEK_SET);
+#endif
             ROSE_ASSERT(offset=me.get_size()-1);
             const int zero = 0;
+#ifdef _MSC_VER
+            ssize_t n = _write(fd, &zero, 1);
+#else
             ssize_t n = ::write(fd, &zero, 1);
+#endif
             ROSE_ASSERT(1==n);
         } else {
             const char *ptr = (const char*)me.get_base() + me.get_offset();
             size_t nremain = me.get_size();
             while (nremain>0) {
+#ifdef _MSC_VER
+                ssize_t n = 0; 
+				// todo
+				ROSE_ASSERT(false);
+#else
                 ssize_t n = TEMP_FAILURE_RETRY(::write(fd, ptr, nremain));
+#endif
                 if (n<0) perror("MemoryMap::dump: write() failed");
                 ROSE_ASSERT(n>0);
                 ptr += n;
                 nremain -= n;
             }
         }
+#ifdef _MSC_VER
         close(fd);
+#else
+        close(fd);
+#endif
     }
 }
 
