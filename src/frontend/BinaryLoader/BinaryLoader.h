@@ -77,6 +77,28 @@ private:
     /** Initialize the class. Register built-in loaders. */
     static void initclass();
 
+    /*========================================================================================================================
+     * Types
+     *======================================================================================================================== */
+public:
+    enum Contribution {
+        CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
+        CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
+        CONTRIBUTE_SUB                  /**< Section is subtracted from the mapping. */
+    };
+
+    /** The interface for deciding whether a section contributes to a mapping.
+     *
+     *  A Selector is used to decide whether a section should contribute to the mapping, and whether that contribution should
+     *  be additive or subtractive.  Any section that contributes to a mapping will be passed through the align_values()
+     *  method, which has an opportunity to veto the section's contribution. The Selector virtual class will be subclassed for
+     *  various kinds of selections. */
+    class Selector {
+    public:
+        virtual ~Selector() {}
+        virtual Contribution contributes(SgAsmGenericSection*) = 0;
+    };
+
     /*==========================================================================================================================
      * Registration and lookup methods
      *========================================================================================================================== */
@@ -277,30 +299,25 @@ public:
      *  modified in place and returned, otherwise a new map is created. */
     virtual MemoryMap *map_writable_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
 
+    /** Creates a memory map containing sections that satisfy some constraint.
+     *
+     *  The sections are mapped in the order specified by order_sections(), contribute to the final mapping according to the
+     *  specified Selector, and are aligned according to the rules in align_values().  If @p allow_overmap is set (the
+     *  default) then any section that contributes to the map in an additive manner will first have its virtual address space
+     *  removed from the map in order to prevent a MemoryMap::Inconsistent exception; otherwise a MemoryMap::Inconsistent
+     *  exception will be thrown when a single virtual address would map to two different source bytes, such as two different
+     *  offsets in a file.
+     *
+     *  If a memory map is supplied, then it will be modified in place and returned; otherwise a new map is allocated. */
+    virtual MemoryMap *create_map(MemoryMap *map, const SgAsmGenericSectionPtrList&, Selector*, bool allow_overmap=true);
+
+
     
 
     /*========================================================================================================================
      * Supporting types and functions
      *======================================================================================================================== */
 protected:
-    enum Contribution {
-        CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
-        CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
-        CONTRIBUTE_SUB                  /**< Section is subtracted from the mapping. */
-    };
-
-    /** The interface for deciding whether a section contributes to a mapping.
-     *
-     *  A Selector is used to decide whether a section should contribute to the mapping, and whether that contribution should
-     *  be additive or subtractive.  Any section that contributes to a mapping will be passed through the align_values()
-     *  method, which has an opportunity to veto the section's contribution. The Selector virtual class will be subclassed for
-     *  various kinds of selections. */
-    class Selector {
-    public:
-        virtual ~Selector() {}
-        virtual Contribution contributes(SgAsmGenericSection*) = 0;
-    };
-
     /** Returns true if the specified file name is already linked into the AST. */
     virtual bool is_linked(SgBinaryComposite *composite, const std::string &filename);
     /** Returns true if the specified file name is already linked into the AST. */
@@ -384,18 +401,6 @@ protected:
      *  that was synthesized by the binary parser, keeping only those that were created due to the parser encountering a
      *  description of the section in some kind of table. */
     virtual SgAsmGenericSectionPtrList order_sections(const SgAsmGenericSectionPtrList&);
-
-    /** Creates a memory map containing sections that satisfy some constraint.
-     *
-     *  The sections are mapped in the order specified by order_sections(), contribute to the final mapping according to the
-     *  specified Selector, and are aligned according to the rules in align_values().  If @p allow_overmap is set (the
-     *  default) then any section that contributes to the map in an additive manner will first have its virtual address space
-     *  removed from the map in order to prevent a MemoryMap::Inconsistent exception; otherwise a MemoryMap::Inconsistent
-     *  exception will be thrown when a single virtual address would map to two different source bytes, such as two different
-     *  offsets in a file.
-     *
-     *  If a memory map is supplied, then it will be modified in place and returned; otherwise a new map is allocated. */
-    virtual MemoryMap *create_map(MemoryMap *map, const SgAsmGenericSectionPtrList&, Selector*, bool allow_overmap=true);
 
 
 
