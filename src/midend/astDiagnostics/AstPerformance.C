@@ -12,12 +12,11 @@
 #include <unistd.h>
 #ifndef _MSC_VER
 #include <sys/resource.h>
+#else
+#include <windows.h> 		// getpagesize()
 #endif
 #endif
 
-#ifdef _MSC_VER
-#include <windows.h> 		// getpagesize()
-#endif
 
 #include <boost/thread.hpp>	// sleep()
 
@@ -109,8 +108,6 @@ ROSE_MemoryUsage::getPageSizeBytes() const
      GetSystemInfo(&system_info);
      return static_cast<int>(system_info.dwPageSize);
 
-//#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
-//	 return 0;
 #else
      return getpagesize();
 #endif
@@ -384,7 +381,6 @@ AstPerformance::getLock()
                printf ("Waiting for lock! counter = %lu userTolerance = %lu \n",counter,userTolerance);
 
 #ifdef _MSC_VER
-//#pragma message ("WARNING: sleep() Linux support not available in Windows.")
           Sleep(1000);
 #else
           sleep(1);
