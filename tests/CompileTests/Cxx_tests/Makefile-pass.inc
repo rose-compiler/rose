@@ -518,6 +518,7 @@ test2006_109.C \
 test2006_111.C \
 test2006_112.C \
 test2006_113.C \
+test2006_114.C \
 test2006_115.C \
 test2006_116.C \
 test2006_117.C \
@@ -555,9 +556,13 @@ test2006_163.C \
 test2006_164.C \
 test2006_165.C \
 test2006_166.C \
+test2006_177.C \
+test2006_178.C \
+test2006_179.C \
 test2006_181.C \
 test2006_183.C \
 test2006_185.C \
+test2006_189.C \
 test2007_01.C \
 test2007_02.C \
 test2007_03.C \
@@ -596,6 +601,7 @@ test2007_52.C \
 test2007_53.C \
 test2007_55.C \
 test2007_57.C \
+test2007_58.C \
 test2007_59.C \
 test2007_62.C \
 test2007_70.C \
@@ -638,14 +644,17 @@ test2007_164.C \
 test2007_165.C \
 test2007_166.C \
 test2007_167.C \
+test2007_169.C \
 test2007_170.C \
 test2007_171.C \
 test2007_172.C \
 test2007_173.C \
 test2008_01.C \
+test2008_03.C \
 test2008_04.C \
 test2008_05.C \
 test2008_06.C \
+test2008_08.C \
 test2008_09.C \
 test2008_10.C \
 test2008_11.C \
@@ -655,9 +664,25 @@ test2008_14.C \
 test2008_16.C \
 test2009_01.C \
 test2009_02.C \
+test2009_03.C \
+test2009_04.C \
+test2009_05.C \
+test2009_06.C \
+test2009_08.C \
+test2009_09.C \
+test2009_10.C \
+test2009_11.C \
 test2009_12.C \
+test2009_13.C \
+test2009_14.C \
 test2009_15.C \
+test2009_18.C \
+test2009_19.C \
 test2009_20.C \
+test2009_24.C \
+test2009_27.C \
+test2009_28.C \
+test2009_29.C \
 test2009_30.C \
 test2009_31.C \
 test2009_37.C \
@@ -669,6 +694,7 @@ test2010_03.C \
 test2010_04.C \
 test2010_05.C \
 test2010_06.C \
+test2010_11.C \
 test2010_18.C \
 test2010_19.C \
 test_int_lexemes.C \
@@ -728,7 +754,7 @@ test2004_116.C
 # test2009_35.C
 
 # DQ (10/5/2007): Previous problems fixed, this is a remaining problem.
-# test2005_188.C 
+# 
 # test2005_205.C
 # test2007_95.C -- JJW 3-3-2008 gcc doesn't accept this code, and the stuff in ROSE to allow it broke Naim
 

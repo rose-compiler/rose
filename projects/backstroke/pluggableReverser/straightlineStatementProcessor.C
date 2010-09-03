@@ -4,7 +4,7 @@
 
 #include "rose.h"
 #include "statementProcessor.h"
-#include "new_pluggableReverser/eventProcessor.h"
+#include "pluggableReverser/eventProcessor.h"
 
 
 vector<StatementReversal> StraightlineStatementProcessor::process(SgStatement* statement, const VariableVersionTable& var_table)
@@ -55,6 +55,8 @@ vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBa
 	vector<SgStatement*> scopeExitStores;
 	vector<SgVariableDeclaration*> localVarDeclarations;
 
+	VariableVersionTable currentVariableVersions = var_table;
+
 	reverse_foreach(SgStatement* s, basicBlock->get_statements())
 	{
 		// Put the declarations of local variables in the beginning of reverse
@@ -76,7 +78,7 @@ vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBa
 				SgFunctionDefinition* enclosingFunction = SageInterface::getEnclosingFunctionDefinition(basicBlock);
 				VariableRenaming::NumNodeRenameEntry definitions = getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosingFunction, varName);
 
-				vector<SgExpression*> restoredValue = restoreVariable(varName, basicBlock->get_statements().back(), definitions);
+				//vector<SgExpression*> restoredValue = restoreVariable(varName, basicBlock->get_statements().back(), definitions);
 				SgAssignInitializer* reverseVarInitializer;
 				/*if (!restoredValue.empty())
 				{
@@ -103,7 +105,7 @@ vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBa
 		}
 
 		//In this simple processor, we just take the first valid statement available
-		vector<StatementReversal> instrumentedStatements = processStatement(s, var_table);
+		vector<StatementReversal> instrumentedStatements = processStatement(s, currentVariableVersions);
 
 		if (instrumentedStatements.empty())
 		{
@@ -115,6 +117,7 @@ vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBa
 		StatementReversal instrumentedStatement = instrumentedStatements.front();
 		SgStatement* forwardStatement = instrumentedStatement.fwd_stmt;
 		SgStatement* reverseStatement = instrumentedStatement.rvs_stmt;
+		currentVariableVersions = instrumentedStatement.var_table;
 
 		//The return statement should go at the very end of the forward statement
 		//after the variables that exit scope have been stored
@@ -152,7 +155,7 @@ vector<StatementReversal> StraightlineStatementProcessor::processBasicBlock(SgBa
 		reverseBody->prepend_statement(stmt);
 	}
 
-	StatementReversal result(forwardBody, reverseBody, var_table);
+	StatementReversal result(forwardBody, reverseBody, currentVariableVersions);
 
 	vector<StatementReversal> out;
 	out.push_back(result);

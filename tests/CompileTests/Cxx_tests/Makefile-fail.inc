@@ -6,9 +6,11 @@ test2005_69.C \
 test2005_85.C \
 test2005_115.C \
 test2005_151.C \
+test2005_188.C \
 test2005_200.C \
 test2005_201.C \
 test2005_204.C \
+test2005_205.C \
 test2006_09.C \
 test2006_11.C \
 test2006_15.C \
@@ -132,6 +134,8 @@ test2007_168.C \
 test2007_174.C \
 test2007_175.C \
 test2007_176.C \
+test2009_07.C \
+test2009_17.C \
 test2009_21.C \
 test2009_22.C \
 test2009_32.C \

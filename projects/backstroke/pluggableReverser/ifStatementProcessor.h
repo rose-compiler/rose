@@ -8,7 +8,7 @@ class IfStatementProcessor : public StatementProcessor
 public:
     IfStatementProcessor() { name_ = "If Statement Processor"; }
 
-    virtual StatementReversal process(SgStatement* stmt);
+    virtual StatementReversal process(SgStatement* stmt, const EvaluationResult&);
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 

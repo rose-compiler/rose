@@ -89,7 +89,7 @@ bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 
     foreach (SgExpression* var, vars)
     {
-        VarName name = getVarName(var);
+        VariableRenaming::VarName name = VariableRenaming::getVarName(var);
         VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
         ROSE_ASSERT(!defs.empty());
@@ -123,7 +123,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
 
     //foreach (SgExpression* var, lhs_vars)
     {
-        VarName name = getVarName(lhs_var);
+        VariableRenaming::VarName name = VariableRenaming::getVarName(lhs_var);
         VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(lhs_var->get_parent(), name);
 
         ROSE_ASSERT(!defs.empty());
@@ -153,7 +153,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
         if (backstroke_util::areSameVariable(lhs_var, var))
             continue;
 
-        VarName name = getVarName(var);
+        VariableRenaming::VarName name = VariableRenaming::getVarName(var);
         VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
         ROSE_ASSERT(!defs.empty());
@@ -183,7 +183,7 @@ bool VariableVersionTable::checkRhsVersion(SgNode* node) const
 
     foreach (SgExpression* var, vars)
     {
-        VarName name = getVarName(var);
+        VariableRenaming::VarName name = VariableRenaming::getVarName(var);
         VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
         ROSE_ASSERT(!defs.empty());
@@ -212,7 +212,7 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 
     foreach (SgExpression* var, vars)
     {
-        VarName name = getVarName(var);
+        VariableRenaming::VarName name = VariableRenaming::getVarName(var);
         VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(var->get_parent(), name);
 
         ROSE_ASSERT(!defs.empty());
@@ -232,7 +232,7 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 {
     // Note only the original variable (not the expanded one) is reversed here.
     
-    VarName name = getVarName(node);
+    VariableRenaming::VarName name = VariableRenaming::getVarName(node);
     VariableRenaming::NumNodeRenameEntry num_table =
             var_renaming_->getReachingDefsAtNodeForName(node, name);
 
@@ -245,14 +245,14 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 
 void VariableVersionTable::setNullVersion(SgInitializedName* name)
 {
-    VarName var_name(1, name);
+    VariableRenaming::VarName var_name(1, name);
     ROSE_ASSERT(table_.find(var_name) != table_.end());
     table_[var_name].clear();
 }
 
 void VariableVersionTable::setNullVersion(SgNode* node)
 {
-    VarName var_name = getVarName(node);
+    VariableRenaming::VarName var_name = VariableRenaming::getVarName(node);
     ROSE_ASSERT(table_.find(var_name) != table_.end());
     table_[var_name].clear();
 }
@@ -260,7 +260,7 @@ void VariableVersionTable::setNullVersion(SgNode* node)
 void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(var_table.table_.size() == this->table_.size());
-    for (std::map<VarName, std::set<int> >::iterator it = table_.begin();
+    for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
             it != table_.end(); ++it)
     {
         ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
@@ -272,7 +272,7 @@ void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
 {
     VariableRenaming::NumNodeRenameEntry num_table =
-            var_renaming_->getReachingDefsAtNodeForName(node, getVarName(node));
+            var_renaming_->getReachingDefsAtNodeForName(node, VariableRenaming::getVarName(node));
 
     // The first definition has the number 1
     // This is also true for branch case.
@@ -291,7 +291,7 @@ bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
 bool VariableVersionTable::isUsingFirstUse(SgNode* node) const
 {
     VariableRenaming::NumNodeRenameEntry num_table =
-            var_renaming_->getUsesAtNodeForName(node, getVarName(node));
+            var_renaming_->getUsesAtNodeForName(node, VariableRenaming::getVarName(node));
 
     // The first definition has the number 1
     // FIXME This may not be true for branch case!

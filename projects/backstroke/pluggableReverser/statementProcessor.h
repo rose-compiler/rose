@@ -4,27 +4,24 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
-class BasicStatementProcessor : public StatementProcessor
+class ExprStatementProcessor : public StatementProcessor
 {
-    StatementReversalVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    StatementReversalVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    StatementReversalVec processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    StatementReversalVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
-
-
 public:
-    virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+    ExprStatementProcessor() { name_ = "Expression Statement Processor"; }
+
+    virtual StatementReversal process(SgStatement* stmt, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
-
-/** Handles return statements. The reverse of a return statement is a no-op. */
-class ReturnStatementProcessor : public StatementProcessor
+class BasicBlockProcessor : public StatementProcessor
 {
-	public:
-		virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+public:
+    BasicBlockProcessor() { name_ = "Basic Block Processor"; }
+
+    virtual StatementReversal process(SgStatement* stmt, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
+
+
 
 #endif

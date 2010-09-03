@@ -15,7 +15,7 @@ pluggableReverser_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage
 new_pluggableReverser_SOURCES = new_pluggableReverserMain.C
 new_pluggableReverser_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
 			$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
-			$(top_builddir)/projects/backstroke/new_pluggableReverser/libBackstrokenew_PluggableReverser.a \
+			$(top_builddir)/projects/backstroke/pluggableReverser/libBackstrokePluggableReverser.a \
 			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
