@@ -491,6 +491,7 @@ INPUT                  = \
                          @top_srcdir@/src/midend/programTransformation/astOutlining/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/loopProcessing/documentation.docs \
                          @top_srcdir@/src/midend/programAnalysis/documentation.docs \
+                         @top_srcdir@/src/midend/programAnalysis/variableRenaming \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
                          @top_srcdir@/src/midend/astRewriteMechanism/ASTRewrite.docs \
                          @top_srcdir@/src/midend/astProcessing \
