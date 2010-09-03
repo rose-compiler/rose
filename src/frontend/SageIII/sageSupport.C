@@ -3339,10 +3339,29 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                if (length == 2)
                   {
                     printf ("Handling the case of \"-D\" with orphened option (unclear if this is legal) \n");
-		    macroDefineOptions.push_back("-D" + argv[argIndex + 1]);
-		    ++argIndex;
+                    macroDefineOptions.push_back("-D" + argv[argIndex + 1]);
+                    ++argIndex;
                   }
              }
+            else
+             {
+            // DQ (8/27/2010): Added support for -U to undefine macros (same code as for -D option).
+               if ( (argv[argIndex][0] == '-') && (argv[argIndex][1] == 'U') )
+                  {
+                    unsigned int length = argv[argIndex].size();
+                 // printf ("Look for include path:  argv[%d] = %s length = %d \n",argIndex,argv[argIndex],length);
+
+                    macroDefineOptions.push_back(argv[argIndex]);
+
+                    if (length == 2)
+                       {
+                         printf ("Handling the case of \"-U\" with orphened option (unclear if this is legal) \n");
+                         macroDefineOptions.push_back("-U" + argv[argIndex + 1]);
+                         ++argIndex;
+                       }
+                  }
+             }
+
           argIndex++;
         }
 
@@ -5115,7 +5134,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
 
-          printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
+          if ( SgProject::get_verbose() > 0 )
+               printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
           int errorCode = 0;
 #if USE_GFORTRAN_IN_ROSE
@@ -5724,7 +5744,8 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
   // I expect that it causes a consstancy test to fail somewhere).
      int line = 1;
 
-     printf ("In LinemarkerTraversal::LinemarkerTraversal(): Push initial stack entry for line = %d fileId = %d sourceFilename = %s \n",line,fileId,sourceFilename.c_str());
+     if ( SgProject::get_verbose() > 1 )
+          printf ("In LinemarkerTraversal::LinemarkerTraversal(): Push initial stack entry for line = %d fileId = %d sourceFilename = %s \n",line,fileId,sourceFilename.c_str());
 
   // Push an entry onto the stack before doing the traversal over the whole AST.
      sourcePositionStack.push_front( pair<int,int>(line,fileId) );
@@ -5739,11 +5760,13 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
 
      if (statement != NULL)
         {
-          printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
+          if ( SgProject::get_verbose() > 1 )
+               printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
 
           AttachedPreprocessingInfoType *commentOrDirectiveList = statement->getAttachedPreprocessingInfo();
 
-          printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
+          if ( SgProject::get_verbose() > 1 )
+               printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
 
           if (commentOrDirectiveList != NULL)
              {
@@ -5768,7 +5791,8 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
 
                          int fileId = Sg_File_Info::getIDFromFilename(filename);
 
-                         printf ("line = %d fileId = %d quotedFilename = %s filename = %s options = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str(),options.c_str());
+                         if ( SgProject::get_verbose() > 1 )
+                              printf ("line = %d fileId = %d quotedFilename = %s filename = %s options = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str(),options.c_str());
 
                       // Just record the first linemarker so that we can test getting the filename correct.
                          if (line == 1 && sourcePositionStack.empty() == true)
@@ -5787,17 +5811,22 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                int line   = sourcePositionStack.front().first;
                int fileId = sourcePositionStack.front().second;
 
-               printf ("Setting the source position of statement = %p = %s to line = %d fileId = %d \n",statement,statement->class_name().c_str(),line,fileId);
+               if ( SgProject::get_verbose() > 1 )
+                    printf ("Setting the source position of statement = %p = %s to line = %d fileId = %d \n",statement,statement->class_name().c_str(),line,fileId);
 
                statement->get_file_info()->set_file_id(fileId);
             // statement->get_file_info()->set_line(line);
 
-               Sg_File_Info::display_static_data("Setting the source position of statement");
+               if ( SgProject::get_verbose() > 1 )
+                    Sg_File_Info::display_static_data("Setting the source position of statement");
 
                string filename = Sg_File_Info::getFilenameFromID(fileId);
-               printf ("filename = %s \n",filename.c_str());
 
-               printf ("filename = %s \n",statement->get_file_info()->get_filenameString().c_str());
+               if ( SgProject::get_verbose() > 1 )
+                  {
+                    printf ("filename = %s \n",filename.c_str());
+                    printf ("filename = %s \n",statement->get_file_info()->get_filenameString().c_str());
+                  }
 
                ROSE_ASSERT(statement->get_file_info()->get_filename() != NULL);
                ROSE_ASSERT(statement->get_file_info()->get_filenameString().empty() == false);

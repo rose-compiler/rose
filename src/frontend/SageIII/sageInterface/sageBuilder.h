@@ -92,7 +92,7 @@ SgTypeShort*    buildShortType();
 
 // DQ (8/21/2010): We want to move to the new buildStringType( SgExpression*,size_t) function over the older buildStringType() function.
 SgTypeString* buildStringType();
-SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );   
+SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );
 
 SgTypeVoid * buildVoidType();
 SgTypeWchar* buildWcharType();
@@ -131,6 +131,10 @@ SgModifierType* buildRestrictType(SgType* base_type);
 
 //! Build ArrayType
 SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
+
+// DQ (8/27/2010): Added Fortran specific support for types based on kind expressions.
+//! Build a type based on the Fortran kind mechanism
+SgModifierType* buildFortranKindType(SgType* base_type, SgExpression* kindExpression );
 
 //! Build function type from return type and parameter type list
 SgFunctionType * 
