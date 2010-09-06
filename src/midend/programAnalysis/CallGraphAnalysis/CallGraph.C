@@ -544,7 +544,12 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
   // we need the inclass declaration so we can determine if it is a virtual function
   if ( functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic )
   {
-    SgFunctionDefinition *functionDefinition = memberFunctionDeclaration->get_definition();
+    SgFunctionDefinition *functionDefinition = NULL;
+    SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
+      isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
+    if (memberFunctionDefDeclaration != NULL) {
+      functionDefinition = memberFunctionDefDeclaration->get_definition();
+    }
 
     // if it's not pure virtual then
     // the current function declaration is a candidate function to be called
@@ -557,8 +562,9 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
       functionList.push_back( fctProps );
 
     }
-    else
-      functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
+    else {
+      // functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
+    }
 
     // search down the class hierarchy to get
     // all redeclarations of the current member function
