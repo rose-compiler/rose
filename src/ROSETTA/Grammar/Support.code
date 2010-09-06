@@ -3501,7 +3501,6 @@ std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
-//#ifdef _MSC_VER 
 #if 0
 // DQ (11/29/2009): attempting to fix: error C2903: 'rebind' : symbol is neither a class template nor a function template
 // #pragma message ("WARNING: struct eqstr skipped for MSVC.")
@@ -3520,7 +3519,6 @@ struct eqstr
 struct hash_Name
    {
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifndef _MSC_VER 
      // CH (4/13/2010): Use boost::hash<string> instead  
      //rose_hash::hash<const char*> hasher;
      rose_hash::hash<std::string> hasher;
@@ -3534,7 +3532,7 @@ struct hash_Name
           size_t operator()(const SgName & name) const
              {
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 //               return stdext::hash_compare<const char*>()(name.str()); 
 //#else
                return hasher(name.str());
@@ -3555,7 +3553,7 @@ struct hash_Name
  // tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
 
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 // DQ (11/27/2009): Trying to fix MSVC compiler warning: 
 //    warning C4717: 'rose_hash_multimap::rose_hash_multimap' : recursive on all control paths, function will cause runtime stack overflow.
@@ -3599,7 +3597,7 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
              {}
 #endif
-#else  // ifdef _MSC_VER
+#else  // ifdef _MSCx_VER
 
 class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 //class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
@@ -5779,7 +5777,7 @@ SgSymbolTable::SgSymbolTable()
   // This should always be a non-null pointer (and never shared)!
      int symbolTableSize = 17;
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
      p_table = new BaseHashType();
@@ -5804,7 +5802,7 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
   // p_table = new SgSymbolHashMultiMap(sz);
 
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
      p_table = new BaseHashType();
@@ -6188,7 +6186,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
      assert (p_table != NULL);
 
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
 //     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator> deleteList;
 //     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
@@ -6209,7 +6207,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
 //     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
 //#else
@@ -6424,7 +6422,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
 #endif
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator elementToDelete = get_table()->end();
 //     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
 //#else
@@ -8157,7 +8155,7 @@ SgSymbolTable::get_symbols() const
 
      assert(p_table != NULL);
 // CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
 //#else
      rose_hash_multimap::iterator i = get_table()->begin();
@@ -11351,7 +11349,7 @@ SgFile::getWorkingDirectory ()
           currentDirectory[i] = '\0';  // set to NULL string
 
 // CH (4/8/2010): "direct.h" in MSVC provides getcwd()     
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 //#pragma message ("WARNING: support for Linux getcwd() unavailable in Microsoft Visual Studio.")
 //	 printf ("Error: support for Linux getcwd() unavailable in Microsoft Visual Studio.");
 //	 assert(false);
