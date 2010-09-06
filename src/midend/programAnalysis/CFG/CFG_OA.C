@@ -8,6 +8,7 @@
 #include <CFG.h>
 #include <PtrMap.h>
 
+
 #ifndef TEMPLATE_ONLY
 OpenAnalysis::ROSE_CFG_Wrap ::ROSE_CFG_Wrap( const AstNodePtr& _head )
 {
@@ -99,6 +100,7 @@ void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<N
    }
 }
 // #endif
+
 #endif
 
 

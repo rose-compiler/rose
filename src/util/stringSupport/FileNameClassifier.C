@@ -25,7 +25,6 @@
 #include "string_functions.h"
 // DQ (3/22/2009): Windows does not have this header.
 #if ROSE_MICROSOFT_OS
-// Unclear what to use here for Windows.
 #else
 #include <sys/utsname.h>
 #endif
@@ -423,10 +422,24 @@ StringUtility::OSType
 StringUtility::getOSType()
     {
 #if ROSE_MICROSOFT_OS
-	    string sysname;
-	    // We should have a proper implementation instead of defaulting to Windows.
-	    printf ("Error: uname() not supported in MSVS (not implemented but will default to WINDOWS) \n");
-	    assert(false);
+    OSVERSIONINFO osvi;
+    BOOL bIsWindowsXPorLater;
+
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+    GetVersionEx(&osvi);
+
+    bIsWindowsXPorLater = 
+       ( (osvi.dwMajorVersion > 5) ||
+       ( (osvi.dwMajorVersion == 5) && (osvi.dwMinorVersion >= 1) ));
+	    
+	string sysname;
+	if (bIsWindowsXPorLater)
+		sysname="WindowsXP";
+	else
+		sysname="Windows";
+
 #else
 	    struct utsname val;
 
@@ -440,8 +453,12 @@ StringUtility::getOSType()
 		return OS_TYPE_LINUX;
 	    else if (sysname == "Darwin")
 		return OS_TYPE_OSX;
-	    else
+	    else if (sysname == "WindowsXP")
+		return OS_TPYE_WINDOWSXP;
+	    else if (sysname == "Windows")
 		return OS_TYPE_WINDOWS;
+	    else
+		return OS_TYPE_UNKNOWN;
 	}
 
     void
