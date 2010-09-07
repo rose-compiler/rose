@@ -78,6 +78,33 @@ vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
 	return vars;
 }
 
+bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
+{
+	// First, get all variables in the given expression.
+    vector<SgExpression*> vars = getAllVariables(exp);
+
+    foreach (SgExpression* var, vars)
+    {
+		// When checking a USE var's version, we search its reaching def's version.
+        VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+        VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
+
+        ROSE_ASSERT(!defs.empty());
+        ROSE_ASSERT(table_.count(name) > 0);
+
+		set<int> reaching_def_ver;
+
+		// Get the version of its reaching def.
+        foreach (VariableRenaming::NumNodeRenameEntry::value_type& num_to_node, defs)
+			reaching_def_ver.insert(num_to_node.first);
+
+		// Compare the current version of this variable and its reaching def's version.
+		if (table_.find(name)->second != reaching_def_ver)
+			return false;
+    }
+    return true;
+}
+
 bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) const
 {
 	// In this function, for expression a.b or a->b ,we only care about the version of a.b or a->b,
@@ -230,17 +257,48 @@ void VariableVersionTable::setNullVersion(SgNode* node)
 	table_[varName].clear();
 }
 
+void VariableVersionTable::intersect(const VariableVersionTable& var_table)
+{
+    ROSE_ASSERT(var_table.table_.size() == this->table_.size());
+    for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
+            it != table_.end(); ++it)
+    {
+        ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
+
+		// Make the intersection of those two sets of versions.
+		const set<int>& ver1 = var_table.table_.find(it->first)->second;
+		const set<int>& ver2 = it->second;
+		set<int> intersection;
+
+		std::set_intersection(ver1.begin(), ver1.end(),
+				ver2.begin(), ver2.end(), inserter(intersection, intersection.begin()));
+		it->second.swap(intersection);
+
+#if 0
+        if (var_table.table_.find(it->first)->second != it->second)
+            it->second.clear();
+#endif
+    }
+}
+
 bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
 {
 	VariableRenaming::VarName varName = VariableRenaming::getVarName(node);
 	ROSE_ASSERT(varName != VariableRenaming::emptyName);
 	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtNodeForName(node, varName);
 
-	// The first definition has the number 1
-	// This is also true for branch case.
-	if (num_table.size() == 1 && num_table.count(1) > 0)
-		return true;
-	return false;
+    // The first definition has the number 1
+    // This is also true for branch case.
+
+	// The size of the num_table does not have to be 1. Considering the following case:
+	// void event(model* m)
+	// {
+	//    if (...) m->i = 1;
+	//    m->i++; // Its reaching def has indices 1,2 not 1
+	// }
+    if (/*num_table.size() == 1 && */num_table.count(1) > 0)
+        return true;
+    return false;
 }
 
 bool VariableVersionTable::isUsingFirstUse(SgNode* node) const

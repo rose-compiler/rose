@@ -90,6 +90,11 @@ public:
 		return var_table_;
 	}
 
+	void setVarTable(const VariableVersionTable& table)
+	{
+		var_table_ = table;
+	}
+
 	const SimpleCostModel& getCost() const
 	{
 		return cost_;

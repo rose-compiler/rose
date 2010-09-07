@@ -236,7 +236,7 @@ FuncDeclPairs EventProcessor::processEvent()
     vector<EvaluationResult> results = evaluateStatement(body, var_table);
 
     
-    static int ctr = 0;
+    int ctr = 0;
     // Sort the generated bodies so that those with the least cost appears first.
     sort(results.begin(), results.end());
 
@@ -247,7 +247,7 @@ FuncDeclPairs EventProcessor::processEvent()
         fixVariableReferences(stmt.fwd_stmt);
         fixVariableReferences(stmt.rvs_stmt);
 
-        string ctr_str = lexical_cast<string > (ctr++);
+        string ctr_str = lexical_cast<string> (ctr++);
 
         SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
         SgFunctionDeclaration* fwd_func_decl =
