@@ -4,19 +4,19 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
-class ExprStatementProcessor : public StatementReversalHandler
+class CombinatorialExprStatementHandler : public StatementReversalHandler
 {
 public:
-    ExprStatementProcessor() { name_ = "Expression Statement Processor"; }
+    CombinatorialExprStatementHandler() { name_ = "Combinatorial Expression Statement Handler"; }
 
     virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
-class BasicBlockProcessor : public StatementReversalHandler
+class CombinatorialBasicBlockHandler : public StatementReversalHandler
 {
 public:
-    BasicBlockProcessor() { name_ = "Basic Block Processor"; }
+    CombinatorialBasicBlockHandler() { name_ = "Combinatorial Basic Block Handler"; }
 
     virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);

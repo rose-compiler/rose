@@ -232,6 +232,7 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 	// Note all expanded nodes are reversed here. For example, for m->a, both m->a
 	// and m are reversed.
 	VariableRenaming::VarName name = VariableRenaming::getVarName(node);
+	ROSE_ASSERT(name != VariableRenaming::emptyName);
 
 	while (!name.empty())
 	{
@@ -242,7 +243,9 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 		table_[name].clear();
 
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, num_table)
-		table_[name].insert(num_to_node.first);
+		{
+			table_[name].insert(num_to_node.first);
+		}
 
 		name.pop_back();
 	}

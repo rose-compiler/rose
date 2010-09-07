@@ -6,7 +6,7 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-StatementReversal ExprStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
+StatementReversal CombinatorialExprStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
@@ -25,7 +25,7 @@ StatementReversal ExprStatementProcessor::generateReverseAST(SgStatement* stmt, 
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> ExprStatementProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> CombinatorialExprStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
@@ -46,7 +46,7 @@ vector<EvaluationResult> ExprStatementProcessor::evaluate(SgStatement* stmt, con
 }
 
 
-StatementReversal BasicBlockProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
+StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {
     SgBasicBlock* body = isSgBasicBlock(stmt);
     ROSE_ASSERT(body);
@@ -72,7 +72,7 @@ StatementReversal BasicBlockProcessor::generateReverseAST(SgStatement* stmt, con
 }
 
 
-vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
     
