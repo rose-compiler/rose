@@ -281,12 +281,9 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%s%sFileHeader.", prefix, format_name());
     }
-//#ifdef _MSC_VER
-//	int val2 = DUMP_FIELD_WIDTH-(int)strlen(p);
-//    int w = _cpp_max(1, val2);
-//#else
+
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_byte_order",             p_e_byte_order);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_word_order",             p_e_word_order);
@@ -429,11 +426,9 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sPageTableEntry.", prefix);
     }
-//#ifdef _MSC_VER
-//	int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags",  p_flags);
     fprintf(f, "%s%-*s = %u\n",     p, w, "pageno", p_pageno);
 }
@@ -540,11 +535,9 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sLESectionTableEntry.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "mapped_size",      p_mapped_size);
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",   p, w, "base_addr",        p_base_addr);
 
@@ -635,21 +628,16 @@ SgAsmLESectionTable::ctor(addr_t offset, addr_t size)
         ROSE_ASSERT(pageno>0);
         if (FAMILY_LE==fhdr->get_exec_format()->get_family()) {
             section_offset = fhdr->get_e_data_pages_offset() + (pageno-1) * fhdr->get_e_page_size();
-//#ifdef _MSC_VER
-//            section_size = _cpp_min(entry->get_mapped_size(), entry->get_pagemap_nentries() * fhdr->get_e_page_size());
-//#else
+
             section_size = std::min(entry->get_mapped_size(), entry->get_pagemap_nentries() * fhdr->get_e_page_size());
-//#endif
+
 		} else {
             ROSE_ASSERT(FAMILY_LX==fhdr->get_exec_format()->get_family());
             section_offset = fhdr->get_e_data_pages_offset() + ((pageno-1) << fhdr->get_e_page_offset_shift());
-//#ifdef _MSC_VER
-//            section_size = _cpp_min(entry->get_mapped_size(),
-//                                    (addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
-//#else
+
             section_size = std::min(entry->get_mapped_size(),
                                     (addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
-//#endif
+
 		}
 
         SgAsmLESection *section = new SgAsmLESection(fhdr);
@@ -802,11 +790,9 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sLENameTable.", prefix);
     }
-//#ifdef _MSC_VER
-//	const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
     for (size_t i = 0; i < p_names.size(); i++) {
@@ -862,11 +848,9 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sEntryPoint.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     fprintf(f, "%s%-*s = 0x%02x",    p, w, "flags",        p_flags);
     if (p_flags & 0x01)
         fprintf(f, " 32-bit");
@@ -957,11 +941,9 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%s%sEntryTable.", prefix, get_header()->format_name());
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "size", p_entries.size());
     for (size_t i = 0; i < p_entries.size(); i++) {
@@ -1022,11 +1004,9 @@ SgAsmLERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%s%sRelocTable.", prefix, get_header()->format_name());
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", p_entries.size());
     for (size_t i = 0; i < p_entries.size(); i++) {

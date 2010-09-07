@@ -48,7 +48,9 @@ for script in "$policies_dir"/*; do
     if [[ $status = 0 ]]; then
 	nsuccesses=$[nsuccesses + 1]
     elif [[ $status -lt 128 ]]; then
-	nerrors=$[nerrors + 1]
+#	nerrors=$[nerrors + 1]
+	echo "Errors detected by the $name policy. Aborting now."
+	exit 1
     else
 	nwarnings=$[nwarnings + 1]
     fi

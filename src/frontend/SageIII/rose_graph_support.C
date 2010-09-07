@@ -308,7 +308,7 @@ SgGraph::addEdge( SgGraphEdge* edge )
        // p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(edge->get_node_A()->get_index(),edge->get_node_B()->get_index()),edge));
        //
 // CH (4/9/2010): Use boost::unordered instead 
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 // tps (12/09/09) : Cannot compile this right now.
 //#pragma message("rose_graph_support.C: Problem compiling multimap")
@@ -389,7 +389,7 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
 #if 1
 
 // CH (4/9/2010): Use boost::unordered instead 
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
 #if 1
 		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
 #else
@@ -462,7 +462,7 @@ SgGraph::display_node_index_pair_to_edge_multimap() const
      while (i != p_node_index_pair_to_edge_multimap.end())
         {
 // CH (4/9/2010): Use boost::unordered instead 
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
 #if 1
 // tps (12/08/09) : Does not work under windows:  error C2039: 'first' : is not a member of 'System::UInt32'
 			printf ("   node pair: (i->first.first = %d,i->first.second = %d) SgGraphEdge: i->second = %p = %d \n",i->first.first,i->first.second,i->second,i->second->get_index());
@@ -537,7 +537,7 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
   // hash_map and hash_multimap for the internal table size.
 
 // CH (4/9/2010): Use boost::unordered instead 
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 //#pragma message ("WARNING: std::hash_map::resize() function not available in MSVC.")
 	 printf ("std::hash_map::resize() function not available in MSVC. \n");

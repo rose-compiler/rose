@@ -990,12 +990,9 @@ ROSE::getWorkingDirectory ()
 
   // CH (4/7/2010): In MSVC, the header file "direct.h" contains function 'getcwd'
 
-//#ifdef _MSC_VER
-//#pragma message ("Linux getcwd() function unavailable in MSVC.")
-//	 const char* getcwdResult = NULL; // getcwd(currentDirectory,maxPathNameLength);
-//#else
+
 	 const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
-//#endif
+
      if (!getcwdResult) {
        perror("getcwd: ");
        ROSE_ABORT();
