@@ -218,7 +218,7 @@ MemoryMap::MapElement::merge_names(const MapElement &other)
 {
     if (name.empty()) {
         set_name(other.get_name());
-    } else if (other.name.empty()) {
+    } else if (other.name.empty() || get_name()==other.get_name()) {
         /*void*/
     } else {
         NamePairings pairings;
