@@ -1,7 +1,7 @@
 #ifndef VIRTUAL_CFG_H
 #define VIRTUAL_CFG_H
 
-
+#include <vector>
 
 
 //! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
@@ -48,7 +48,8 @@ namespace VirtualCFG {
     eckComputedGotoCaseLabel, //! Case in computed goto -- number needs to be computed separately
     eckArithmeticIfLess, //! Edge for the arithmetic if expression being less than zero
     eckArithmeticIfEqual, //! Edge for the arithmetic if expression being equal to zero
-    eckArithmeticIfGreater //! Edge for the arithmetic if expression being greater than zero
+    eckArithmeticIfGreater, //! Edge for the arithmetic if expression being greater than zero
+    eckInterprocedural //! Edge spanning two procedures
   };
 
   //! A node in the control flow graph.  Each CFG node corresponds to an AST
@@ -63,11 +64,8 @@ namespace VirtualCFG {
 
     public:
     CFGNode(): node(0), index(0) {}
-    explicit CFGNode(SgNode* node, unsigned int index = 0): node(node), index(index) {
-#ifndef _MSC_VER 
-		assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
-#endif
-	}
+    CFGNode(SgNode* node, unsigned int index = 0);
+
     //! Pretty string for Dot node labels, etc.
     std::string toString() const;
     //! String for debugging graphs
@@ -301,6 +299,23 @@ namespace VirtualCFG {
   CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym);
   //! \internal Get the CFG node for a Fortran label from a reference to it
   CFGNode getCFGTargetOfFortranLabelRef(SgLabelRefExp* lRef);
-}
+  
+  //! Utility function to make CFG Edges
+  template <class Node1T, class Node2T, class EdgeT>
+  void makeEdge(Node1T from, Node2T to, std::vector<EdgeT>& result);
+
+} // end namespace VirtualCFG
+
+#define SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX 2
+#define SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX 1
+#define SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX 2
+
+#define SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX 2
+#define SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX 1
+#define SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX 2
+
+//! Utility function to make CFG Edges
+template <class NodeT1, class NodeT2, class EdgeT>
+void makeEdge(NodeT1 from, NodeT2 to, std::vector<EdgeT>& result);
 
 #endif // VIRTUAL_CFG_H

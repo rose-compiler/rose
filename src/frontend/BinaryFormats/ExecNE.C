@@ -264,11 +264,9 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNEFileHeader.", prefix);
     }
-//#ifdef _MSC_VER
-//    int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_major",         p_e_linker_major);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_minor",         p_e_linker_minor);
@@ -382,11 +380,9 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
     } else {
         sprintf(p, "%sNESectionTableEntry.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
 
     fprintf(f, "%s%-*s = %u",                      p, w, "sector",          p_sector);
     if (fhdr)
@@ -432,11 +428,9 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNESection.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
     p_st_entry->dump(f, p, -1, fhdr);
@@ -636,11 +630,9 @@ SgAsmNENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNENameTable.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
     for (size_t i = 0; i < p_names.size(); i++) {
@@ -721,11 +713,9 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNEModuleTable.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
 
     if (p_strtab) {
@@ -819,11 +809,9 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNEEntryPoint.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     if (0 == p_section_idx) {
         fprintf(f, "%s%-*s = %s\n", p, w, "type", "unused");
         ROSE_ASSERT(SgAsmNEEntryPoint::EF_ZERO == p_flags);
@@ -995,11 +983,9 @@ SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNEEntryTable.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu bundles\n", p, w, "nbundles", p_bundle_sizes.size());
     for (size_t i = 0; i < p_bundle_sizes.size(); i++) {
@@ -1202,11 +1188,9 @@ SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sRelocEntry.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     const char *s;
     switch (p_src_type) {
       case RF_SRCTYPE_8OFF:     s = "byte offset";     break;
@@ -1329,11 +1313,9 @@ SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNERelocTable.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", p_entries.size());
     for (size_t i = 0; i < p_entries.size(); i++) {

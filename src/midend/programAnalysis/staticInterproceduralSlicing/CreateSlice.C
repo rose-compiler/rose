@@ -191,7 +191,11 @@ BooleanSafeKeeper CreateSlice::evaluateSynthesizedAttribute(SgNode * node, Boole
 //                                              if (node->get_file_info ()->isOutputInCodeGeneration ())
                                         if (currentFile && node->get_file_info ()->isSameFile(currentFile)) {
 #ifndef _MSC_VER
-                                                        LowLevelRewrite::remove(isSgStatement(node));
+							LowLevelRewrite::remove(isSgStatement(node));
+#else
+ #pragma message ("WARNING: No implementation for Windows yet.")
+ ROSE_ASSERT(false);
+
 #endif
                                 }
                                 //      delete(node);

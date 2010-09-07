@@ -1,0 +1,169 @@
+#include "sage3basic.h"
+#include "CallGraph.h"
+#include "interproceduralCFG.h"
+#include <boost/foreach.hpp>
+#include <vector>
+
+#define foreach BOOST_FOREACH
+
+
+namespace StaticCFG
+{
+
+void addEdge(CFGNode from, CFGNode to, std::vector<CFGEdge>& result) {
+  // Makes a CFG edge, adding appropriate labels
+  SgNode* fromNode = from.getNode();
+  unsigned int fromIndex = from.getIndex();
+  SgNode* toNode = to.getNode();
+
+  // Exit early if the edge should not exist because of a control flow discontinuity
+  if (fromIndex == 1 && (isSgGotoStatement(fromNode) || isSgBreakStmt(fromNode) || isSgContinueStmt(fromNode))) {
+    return;
+  }
+  if (isSgReturnStmt(fromNode) && toNode == fromNode->get_parent()) {
+    SgReturnStmt* rs = isSgReturnStmt(fromNode);
+    if (fromIndex == 1 || (fromIndex == 0 && !rs->get_expression())) return;
+  }
+  if (isSgStopOrPauseStatement(fromNode) && toNode == fromNode->get_parent()) {
+    SgStopOrPauseStatement* sps = isSgStopOrPauseStatement(fromNode);
+    if (fromIndex == 0 && sps->get_stop_or_pause() == SgStopOrPauseStatement::e_stop) return;
+  }
+  if (fromIndex == 1 && isSgSwitchStatement(fromNode) &&
+      isSgSwitchStatement(fromNode)->get_body() == toNode) return;
+
+  // Create the edge
+  result.push_back(CFGEdge(from, to));
+}
+
+void InterproceduralCFG::buildFullCFG()
+{
+  all_nodes_.clear();
+  clearNodesAndEdges();
+
+  std::set<VirtualCFG::CFGNode> explored;
+  graph_ = new SgIncidenceDirectedGraph;
+
+  buildCFG(start_->cfgForBeginning(), all_nodes_, explored);
+}
+
+void InterproceduralCFG::buildFilteredCFG()
+{
+  assert(!"InterproceduralCFG:buildFilteredCFG() is unimplemented");
+}
+
+void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& all_nodes, std::set<CFGNode>& explored)
+{
+    SgNode* sgnode = n.getNode();
+    ROSE_ASSERT(sgnode);
+
+    if (explored.count(n) > 0)
+        return;
+    explored.insert(n);
+
+    SgGraphNode* from = NULL;
+    if (all_nodes.count(n) > 0)
+    {
+        from = all_nodes[n];
+    }
+    else
+    {
+        from = new SgGraphNode;
+        from->set_SgNode(sgnode);
+        from->addNewAttribute("info", new CFGNodeAttribute(n.getIndex(), graph_));
+        all_nodes[n] = from;
+        graph_->addNode(from);
+    }
+
+    std::vector<CFGEdge> outEdges;
+    unsigned int idx = n.getIndex();
+
+    if (isSgFunctionCallExp(sgnode) &&
+        idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
+      SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
+      Rose_STL_Container<SgFunctionDefinition*> defs;
+      CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
+      foreach (SgFunctionDefinition* def, defs) 
+        addEdge(n, def->cfgForBeginning(), outEdges);
+    }
+    else if (isSgConstructorInitializer(sgnode) &&
+        idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
+      SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
+      Rose_STL_Container<SgFunctionDefinition*> defs;
+      CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
+      foreach (SgFunctionDefinition* def, defs) 
+        addEdge(n, def->cfgForBeginning(), outEdges);
+    }
+    else if (isSgFunctionDefinition(sgnode) &&
+        idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
+      SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
+      SgGraphNode* funDefGraphNode = all_nodes[funDef->cfgForBeginning()];
+      ROSE_ASSERT(funDefGraphNode != NULL);
+      std::set<SgDirectedGraphEdge*> sgEdges = graph_->computeEdgeSetIn(funDefGraphNode);
+      foreach (SgDirectedGraphEdge* edge, sgEdges) {
+        SgGraphNode* sourceGN = edge->get_from();
+        SgNode* source = sourceGN->get_SgNode();
+
+        // Determine the index to which the interprocedural edge returns. TODO make member function of SgNode ?
+        unsigned int index;
+        if (source->variantT() == V_SgConstructorInitializer)
+          index = SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX + 1;
+        else if (source->variantT() == V_SgFunctionCallExp)
+          index = SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX + 1;
+        else
+          ROSE_ASSERT(!"Error: unable to determine interprocedural return index");
+
+        addEdge(n, CFGNode(source, index), outEdges);
+      }
+    }
+    else {
+      outEdges = n.outEdges();
+    }
+
+    if (outEdges.size() < 1) {
+      outEdges = n.outEdges();
+    }
+
+    std::set<CFGNode> targets; 
+
+#if 0
+    foreach (const CFGEdge& edge, outEdges)
+    {
+        CFGNode tar = edge.target();
+        targets.insert(tar);
+        if (isSgFunctionDefinition(tar.getNode()) && all_nodes.count(tar) > 0) {
+          CFGNode returnNode = CFGNode(edge.source().getNode(), edge.source().getIndex() + 1);
+          makeEdge(sgnode->cfgForEnd(), edge.source(), outEdges);
+          targets.insert(edge.source());
+        }
+    }
+#endif
+
+    foreach (const CFGEdge& edge, outEdges)
+    {
+        CFGNode tar = edge.target();
+        targets.insert(tar);
+
+        SgGraphNode* to = NULL;
+        if (all_nodes.count(tar) > 0)
+            to = all_nodes[tar];
+        else
+        {
+            to = new SgGraphNode;
+            to->set_SgNode(tar.getNode());
+            to->addNewAttribute("info", new CFGNodeAttribute(tar.getIndex(), graph_));
+            all_nodes[tar] = to;
+            graph_->addNode(to);
+        }
+
+        SgDirectedGraphEdge* new_edge = new SgDirectedGraphEdge(from, to);
+        new_edge->addNewAttribute("info", new CFGEdgeAttribute<CFGEdge>(edge));
+        graph_->addDirectedEdge(new_edge);
+    }
+
+    foreach (const CFGNode& target, targets)
+    {
+        buildCFG(target, all_nodes, explored);
+    }
+}
+
+} // end of namespace StaticCFG
