@@ -14,7 +14,8 @@ libvirtualCFG_la_SOURCES      = \
      virtualBinCFG.C \
      cfgToDot.C \
      memberFunctions.C \
-     staticCFG.C
+     staticCFG.C \
+		 interproceduralCFG.C
 
 libvirtualCFG_la_LIBADD       = 
 libvirtualCFG_la_DEPENDENCIES = $(GENERATED_SOURCE)
@@ -25,6 +26,7 @@ include_HEADERS = \
      cfgToDot.h \
      filteredCFG.h \
      filteredCFGImpl.h \
-     staticCFG.h
+     staticCFG.h \
+		 interproceduralCFG.h
 
 EXTRA_DIST = CMakeLists.txt

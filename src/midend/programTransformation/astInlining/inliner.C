@@ -316,14 +316,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      ROSE_ASSERT (function_copy);
      SgBasicBlock* funbody_copy = function_copy->get_body();
 
-// CH (4/7/2010): At least MSVC 9.0 can compile the following code
-//#ifndef _MSC_VER
-//#pragma message ("WARNING: removed reference to PRE::getFunctionDefinition() since namespace PRE is amgibuous in MSVC.")
-//     SgFunctionDefinition* targetFunction = NULL;
-//     ROSE_ASSERT(targetFunction != NULL);
-//#else
+
      SgFunctionDefinition* targetFunction = PRE::getFunctionDefinition(funcall);
-//#endif
+
      renameLabels(funbody_copy, targetFunction);
      std::cout << "Original symbol count: " << funbody_raw->get_symbol_table()->size() << std::endl;
      std::cout << "Copied symbol count: " << funbody_copy->get_symbol_table()->size() << std::endl;

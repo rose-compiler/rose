@@ -1,9 +1,4 @@
-// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
-// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 19,9 MB to 2,8MB
-#ifdef _MSC_VER
-// seems to cause problems under Linux
-//#include "rose.h"
-#endif
+
 
 #include "ReachingDefinition.h"
 #include "StmtInfoCollect.h"

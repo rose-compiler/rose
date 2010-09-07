@@ -12,31 +12,6 @@
 class ExpressionProcessor;
 class StatementProcessor;
 
-struct ExpressionPackage
-{
-    ExpressionPackage(
-            SgExpression* e,
-            const VariableVersionTable& table,
-            bool is_rvs_val_used = false)
-    : exp(e), var_table(table), is_value_used(is_rvs_val_used)
-    {}
-
-    SgExpression* exp;
-    VariableVersionTable var_table;
-    bool is_value_used;
-};
-
-struct StatementPackage
-{
-    StatementPackage(
-            SgStatement* s,
-            const VariableVersionTable& table)
-    : stmt(s), var_table(table)
-    {}
-
-    SgStatement* stmt;
-    VariableVersionTable var_table;
-};
 
 class EvaluationResult
 {

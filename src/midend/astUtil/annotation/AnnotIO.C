@@ -160,6 +160,7 @@ void read_id( istream& in, const string& s)
   {
 #ifdef _MSC_VER
 	  printf ("MSVC specific code comments out the use of throw expression... (exiting) \n");
+	  // tps: todo Windows. Not reached yet.
 	  assert(false);
 #else
 	  throw ReadError("read identifier error: expecting '" + s + "' instead of '" + r + "'");
@@ -187,6 +188,7 @@ string read_num( istream& in )
   {
 #ifdef _MSC_VER
 	  printf ("MSVC specific code comments out the use of throw expression... (exiting) \n");
+	  // tps: todo Windows. Not reached yet.
 	  assert(false);
 #else
     throw ReadError("read number error: expecting numerics instead of " + c );  
