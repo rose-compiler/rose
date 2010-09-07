@@ -681,6 +681,8 @@ class AttributeListMap {
 			       skippedTokenStream = new token_container();
 
 		       if(last_skipped == false){
+				   if(SgProject::get_verbose() >= 1)
+					   std::cout << "Pushed Skipped Token: " << token.get_value().c_str() << std::endl;
 			       skippedTokenStream->push_back(token);
 		       }else        {
 
@@ -694,10 +696,15 @@ class AttributeListMap {
 			       directivesInSkippedBranch.push_back( boost::wave::T_PP_ELSE );
 			       directivesInSkippedBranch.push_back( boost::wave::T_PP_ELIF );
 
-			       if ( std::find_if(skippedTokenStream->begin(),skippedTokenStream->end(), std::bind2nd(x,directivesInSkippedBranch) )
-					       != skippedTokenStream->end() ){
+//			       if ( std::find_if(skippedTokenStream->begin(),skippedTokenStream->end(), std::bind2nd(x,directivesInSkippedBranch) ) != skippedTokenStream->end() )
+					{
 
 				       std::string filename(skippedTokenStream->begin()->get_position().get_file().c_str());
+					   if(SgProject::get_verbose() >= 1)
+					   {
+						   std::cout << "Pushed Skipped Token: " << token.get_value().c_str() << std::endl;
+						   std::cout << "Popping Skipped Tokens: " << boost::wave::util::impl::as_string(*skippedTokenStream).c_str() << std::endl;
+					   }
 				       if(currentMapOfAttributes.find(filename)==currentMapOfAttributes.end())
 					       currentMapOfAttributes[filename] = new ROSEAttributesList();
 				       currentMapOfAttributes.find(filename)->second->addElement(*(new PreprocessingInfo(*skippedTokenStream,PreprocessingInfo::CSkippedToken,PreprocessingInfo::before)));
@@ -719,6 +726,9 @@ class AttributeListMap {
 		       //token will trigger this call to attach the skipped tokens to the AST
 		       if(skippedTokenStream != NULL)
 			       skipped_token(token,true);
+				else
+				   if(SgProject::get_verbose() >= 1)
+					   std::cout << "Token stream is null?" << std::endl;
 
 		       if(SgProject::get_verbose() >= 1)
 			       std::cout << "MAX_SKIP_WHITESPACE: " << token.get_value().c_str() << std::endl;
