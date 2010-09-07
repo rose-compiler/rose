@@ -144,12 +144,13 @@ SgAsmPESectionTable::parse()
     }
 
     /* Build the memory mapping like the real loader would do. This is the same code used by
-     * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing here early because we need it in the rest of the PE
-     * parser. */
+     * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing it here early because we need it in the rest of the
+     * PE parser. */
     ROSE_ASSERT(NULL==fhdr->get_loader_map());
     BinaryLoader *loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
     ROSE_ASSERT(loader!=NULL);
-    MemoryMap *loader_map = loader->map_all_sections(NULL, fhdr);
+    MemoryMap *loader_map = new MemoryMap;
+    loader->remap(loader_map, fhdr);
     fhdr->set_loader_map(loader_map);
 
     /* Parse each section after the loader map is created */
