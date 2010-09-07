@@ -101,7 +101,7 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
 
             foreach (const EvaluationResult& res3, cond_results)
             {
-				EvaluationResult totalEvaluationResult(var_table);
+				EvaluationResult totalEvaluationResult(this, var_table);
 				totalEvaluationResult.addChildEvaluationResult(res1);
 				totalEvaluationResult.addChildEvaluationResult(res2);
 				totalEvaluationResult.addChildEvaluationResult(res3);

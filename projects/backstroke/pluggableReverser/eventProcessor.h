@@ -42,9 +42,8 @@ class EvaluationResult
 
 public:
 
-	EvaluationResult(const VariableVersionTable& table,
-			const SimpleCostModel& cost_model = SimpleCostModel())
-	: var_table_(table), cost_(cost_model){ }
+	EvaluationResult(ProcessorBase* processorUsed, const VariableVersionTable& table, const SimpleCostModel& cost_model = SimpleCostModel())
+	:  var_table_(table), cost_(cost_model), processor_used_(processorUsed){ }
 
 	/** Add an evaluation result to the evalutions used in order to construct the current one.
 	  * This adds the cost of the child result to the total cost and adds the result to the list of
@@ -136,8 +135,7 @@ protected:
 	ExpressionReversal processExpression(SgExpression* exp, const EvaluationResult& evaluationResult);
 	StatementReversal processStatement(SgStatement* stmt, const EvaluationResult& evaluationResult);
 
-	//TODO: Remove default argument here
-	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used = false);
+	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
 	/**

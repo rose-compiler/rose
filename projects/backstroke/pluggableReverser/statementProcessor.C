@@ -10,8 +10,10 @@ StatementReversal ExprStatementProcessor::process(SgStatement* stmt, const Evalu
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
+	ROSE_ASSERT(evaluationResult.getStatementProcessor() == this);
+	ROSE_ASSERT(evaluationResult.getChildResults().size() == 1);
     
-    ExpressionReversal exp = processExpression(exp_stmt->get_expression(), evaluationResult);
+    ExpressionReversal exp = processExpression(exp_stmt->get_expression(), evaluationResult.getChildResults().front());
 
     SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -30,8 +32,13 @@ vector<EvaluationResult> ExprStatementProcessor::evaluate(SgStatement* stmt, con
     if (exp_stmt == NULL)
         return results;
     
-    results = evaluateExpression(
-            exp_stmt->get_expression(), var_table);
+     vector<EvaluationResult> potentialExprReversals = evaluateExpression(exp_stmt->get_expression(), var_table, false);
+	 foreach(EvaluationResult& potentialExprReversal, potentialExprReversals)
+	 {
+		 EvaluationResult statementResult(this, var_table);
+		 statementResult.addChildEvaluationResult(potentialExprReversal);
+		 results.push_back(statementResult);
+	 }
 
     ROSE_ASSERT(!results.empty());
 
@@ -76,7 +83,7 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const 
     cout << body->get_statements().size() << endl;
     if (body->get_statements().empty())
     {
-        results.push_back(EvaluationResult(var_table));
+        results.push_back(EvaluationResult(this, var_table));
         return results;
     }
 
@@ -84,7 +91,7 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const 
     vector<EvaluationResult> queue[2];
 
     int i = 0;
-    queue[i].push_back(EvaluationResult(var_table));
+    queue[i].push_back(EvaluationResult(this, var_table));
 
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {

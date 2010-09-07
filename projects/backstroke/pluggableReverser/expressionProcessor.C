@@ -36,7 +36,7 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(SgExpression* exp, co
         if (isStateVariable(var) && var_table.isUsingFirstDefinition(var))
             return results;
     }
-    results.push_back(EvaluationResult(var_table));
+    results.push_back(EvaluationResult(this, var_table));
     return results;
 }
 
@@ -55,7 +55,7 @@ vector<EvaluationResult> IdentityExpressionProcessor::evaluate(SgExpression* exp
 
     // If an expression does not modify any value, its reverse expression may be the same as itself.
     if (!backstroke_util::isModifyingExpression(exp))
-        results.push_back(EvaluationResult(var_table));
+        results.push_back(EvaluationResult(this, var_table));
 
     return results;
 }
@@ -110,7 +110,7 @@ vector<EvaluationResult> StoreAndRestoreExpressionProcessor::evaluate(SgExpressi
         SimpleCostModel cost;
         cost.increaseStoreCount();
 
-        results.push_back(EvaluationResult(new_var_table, cost));
+        results.push_back(EvaluationResult(this, new_var_table, cost));
     }
 
     // function call?
@@ -269,7 +269,7 @@ vector<EvaluationResult> ConstructiveExpressionProcessor::evaluate(SgExpression*
 
                 if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
                 {
-                    EvaluationResult result = EvaluationResult(new_table);
+                    EvaluationResult result = EvaluationResult(this, new_table);
                     results.push_back(result);
                 }
             }
@@ -317,7 +317,7 @@ vector<EvaluationResult> ConstructiveExpressionProcessor::evaluate(SgExpression*
                         isSgMinusAssignOp(exp) ||
                         isSgXorAssignOp(exp))
                 {
-                    EvaluationResult result = EvaluationResult(new_table);
+                    EvaluationResult result = EvaluationResult(this, new_table);
                     results.push_back(result);
                 }
 

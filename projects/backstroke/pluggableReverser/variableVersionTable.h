@@ -54,18 +54,9 @@ public:
 	 * @param version version that the variable should have (list of possible definitions). */
 	bool matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const;
 
-	//TODO: DELETE THIS
-
-	static bool isEmptyVarName(const VariableRenaming::VarName& var)
-	{
-		return var.empty();
-	}
 	static std::vector<SgExpression*> getAllVariables(SgNode* node);
 
 	void print() const;
-
-	//TODO: DELETE THIS
-	static void print(const VariableRenaming::VarName& name);
 };
 
 inline bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2)

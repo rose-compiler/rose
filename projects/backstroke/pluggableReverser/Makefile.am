@@ -8,7 +8,9 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 noinst_LIBRARIES =  libBackstrokePluggableReverser.a
 
 libBackstrokePluggableReverser_a_DEPENDENCIES =
-libBackstrokePluggableReverser_a_SOURCES = expressionProcessor.C statementProcessor.C ifStatementProcessor.C eventProcessor.C variableVersionTable.C costModel.C akgulStyleExpressionProcessor.C
+libBackstrokePluggableReverser_a_SOURCES = expressionProcessor.C statementProcessor.C ifStatementProcessor.C eventProcessor.C \
+						variableVersionTable.C costModel.C akgulStyleExpressionProcessor.C \
+						straightlineStatementProcessor.C
 libBackstrokePluggableReverser_a_includedir = $(includedir)/backstroke
 libBackstrokePluggableReverser_a_include_HEADERS = expressionProcessor.h statementProcessor.h ifStatementProcessor.h eventProcessor.h variableVersionTable.h costModel.h
 

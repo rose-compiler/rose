@@ -36,7 +36,7 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 				newVarTable.reverseVersion(getReferredVariable(assignOp->get_lhs_operand()).second);
 
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
-				EvaluationResult reversalInfo(newVarTable);
+				EvaluationResult reversalInfo(this, newVarTable);
 				ExpressionReversal reversalResult(forwardExp, reverseExpression);
 				reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
 				

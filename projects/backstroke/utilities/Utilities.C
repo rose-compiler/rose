@@ -12,7 +12,7 @@ using namespace SageBuilder;
  * @param baseName the word to be included in the variable names. */
 string backstroke_util::GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
 {
-	//TODO: This implementation tends to generate numbers that are unnecessarily high.
+	//This implementation tends to generate numbers that are unnecessarily high.
 	static int counter = 0;
 
 	string name;
