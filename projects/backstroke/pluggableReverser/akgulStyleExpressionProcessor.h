@@ -24,7 +24,6 @@ public:
 
 private:
 
-
 	/** Reverses an assignment op. Returns true on success and false on failure.
 	 * @param reverseExpressions a list of expressions, to be executed in the specified order */
 	bool handleAssignOp(SgAssignOp* varRef, const VariableVersionTable& availableVariables, SgExpression*& reverseExpressions);
@@ -43,8 +42,8 @@ class RedefineValueRestorer : public VariableValueRestorer
 	 * @param availableVariables variables whos values are currently available
 	 * @return definitions the version of the variable which should be restored
 	 */
-	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-			VariableRenaming::NumNodeRenameEntry definitions);
+	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, 
+			const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions);
 
 private:
 
@@ -64,6 +63,6 @@ class ExtractFromUseRestorer : public VariableValueRestorer
 	 * @param availableVariables variables whos values are currently available
 	 * @return definitions the version of the variable which should be restored
 	 */
-	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-			VariableRenaming::NumNodeRenameEntry definitions);
+	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, 
+			const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions);
 };

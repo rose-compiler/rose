@@ -81,28 +81,28 @@ vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
 bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 {
 	// First, get all variables in the given expression.
-    vector<SgExpression*> vars = getAllVariables(exp);
+	vector<SgExpression*> vars = getAllVariables(exp);
 
-    foreach (SgExpression* var, vars)
-    {
+	foreach(SgExpression* var, vars)
+	{
 		// When checking a USE var's version, we search its reaching def's version.
-        VariableRenaming::VarName name = VariableRenaming::getVarName(var);
-        VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
+		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
-        ROSE_ASSERT(!defs.empty());
-        ROSE_ASSERT(table_.count(name) > 0);
+		ROSE_ASSERT(!defs.empty());
+		ROSE_ASSERT(table_.count(name) > 0);
 
 		set<int> reaching_def_ver;
 
 		// Get the version of its reaching def.
-        foreach (VariableRenaming::NumNodeRenameEntry::value_type& num_to_node, defs)
-			reaching_def_ver.insert(num_to_node.first);
+		foreach(VariableRenaming::NumNodeRenameEntry::value_type& num_to_node, defs)
+		reaching_def_ver.insert(num_to_node.first);
 
 		// Compare the current version of this variable and its reaching def's version.
 		if (table_.find(name)->second != reaching_def_ver)
 			return false;
-    }
-    return true;
+	}
+	return true;
 }
 
 bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) const
@@ -242,7 +242,7 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 		table_[name].clear();
 
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, num_table)
-			table_[name].insert(num_to_node.first);
+		table_[name].insert(num_to_node.first);
 
 		name.pop_back();
 	}
@@ -265,11 +265,11 @@ void VariableVersionTable::setNullVersion(SgNode* node)
 
 void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 {
-    ROSE_ASSERT(var_table.table_.size() == this->table_.size());
-    for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
-            it != table_.end(); ++it)
-    {
-        ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
+	ROSE_ASSERT(var_table.table_.size() == this->table_.size());
+	for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
+			it != table_.end(); ++it)
+	{
+		ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
 
 		// Make the intersection of those two sets of versions.
 		const set<int>& ver1 = var_table.table_.find(it->first)->second;
@@ -281,10 +281,10 @@ void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 		it->second.swap(intersection);
 
 #if 0
-        if (var_table.table_.find(it->first)->second != it->second)
-            it->second.clear();
+		if (var_table.table_.find(it->first)->second != it->second)
+			it->second.clear();
 #endif
-    }
+	}
 }
 
 bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
@@ -293,8 +293,8 @@ bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
 	ROSE_ASSERT(varName != VariableRenaming::emptyName);
 	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtNodeForName(node, varName);
 
-    // The first definition has the number 1
-    // This is also true for branch case.
+	// The first definition has the number 1
+	// This is also true for branch case.
 
 	// The size of the num_table does not have to be 1. Considering the following case:
 	// void event(model* m)
@@ -302,9 +302,9 @@ bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
 	//    if (...) m->i = 1;
 	//    m->i++; // Its reaching def has indices 1,2 not 1
 	// }
-    if (/*num_table.size() == 1 && */num_table.count(1) > 0)
-        return true;
-    return false;
+	if (/*num_table.size() == 1 && */num_table.count(1) > 0)
+		return true;
+	return false;
 }
 
 bool VariableVersionTable::isUsingFirstUse(SgNode* node) const

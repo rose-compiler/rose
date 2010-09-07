@@ -19,7 +19,9 @@ public:
 
 	// TODO: we may avoid to provide this interface.
 	const std::map<VariableRenaming::VarName, std::set<int> >& getTable() const
-	{ return table_; }
+	{
+		return table_;
+	}
 
 	/** Returns the version of the variable, or an empty set if the variable is not in the table. */
 	std::set<int> getVersion(VariableRenaming::VarName varName) const;
@@ -31,9 +33,9 @@ public:
 	bool checkVersion(SgExpression* lhs, SgExpression* rhs = NULL) const;
 
 	/** Check if all varibles in the given expression have the same version in the current version table.
-     * This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
-     * check, but a cannot. */
-    bool checkVersionForUse(SgExpression* exp) const;
+	 * This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
+	 * check, but a cannot. */
+	bool checkVersionForUse(SgExpression* exp) const;
 
 	/** Regress the version of the given variable. Call this function once the expression or
 	  statement containing the given variable is reversed successfully. */
@@ -46,8 +48,8 @@ public:
 	}
 
 	/** Intersect this variable version table to another one. For each variable inside, we set its
-     new version which is the common indices from those two tables. */
-    void intersect(const VariableVersionTable& var_table);
+	 new version which is the common indices from those two tables. */
+	void intersect(const VariableVersionTable& var_table);
 
 	/** If a local variable is not restored at the begining of the reverse basic block, set its
 	  version to NULL. */
