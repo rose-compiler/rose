@@ -15,53 +15,78 @@ BinaryLoaderElf::can_load(SgAsmGenericHeader *hdr) const
     return isSgAsmElfFileHeader(hdr)!=NULL;
 }
 
-/* Returns ELF Segments followed by ELF Sections */
-SgAsmGenericSectionPtrList
-BinaryLoaderElf::order_sections(const SgAsmGenericSectionPtrList &sections)
+static bool
+section_cmp(SgAsmGenericSection *_a, SgAsmGenericSection *_b)
 {
-    SgAsmGenericSectionPtrList retval;
-    for (int pass=0; pass<2; pass++) {
-        for (size_t i=0; i<sections.size(); i++) {
-            SgAsmElfSection *section = isSgAsmElfSection(sections[i]);
-            if (!section)
-                continue;
-            if (0==pass && section->get_segment_entry()!=NULL) {
-                retval.push_back(section);
-            } else if (1==pass && section->get_section_entry()!=NULL) {
-                retval.push_back(section);
-            }
-        }
+    SgAsmElfSection *a = isSgAsmElfSection(_a);
+    SgAsmElfSection *b = isSgAsmElfSection(_b);
+    ROSE_ASSERT(a!=NULL && b!=NULL);
+    SgAsmElfSegmentTableEntry *a_seg = a->get_segment_entry();
+    SgAsmElfSegmentTableEntry *b_seg = b->get_segment_entry();
+    if (a_seg && b_seg) {
+#if 0
+        /* Sort ELF Segments by position in ELF Segment Table */
+        return a_seg->get_index() < b_seg->get_index();
+#else
+        /* Sort ELF Segments by preferred virtual address */
+        return a->get_mapped_preferred_rva() < b->get_mapped_preferred_rva();
+#endif
+    } else if (a_seg) {
+        /* ELF Segments come before ELF Sections */
+        return true;
+    } else {
+        /* Sort ELF Sections by position in ELF Section Table */
+        return a->get_id() < b->get_id();
     }
+}
+
+SgAsmGenericSectionPtrList
+BinaryLoaderElf::get_remap_sections(SgAsmGenericHeader *header)
+{
+    SgAsmGenericSectionPtrList retval = header->get_mapped_sections();
+    std::sort(retval.begin(), retval.end(), section_cmp);
     return retval;
 }
 
 /* Same as superclass, but if we are mapping/unmapping an ELF Section (that is not an ELF Segment) then don't bother to align
  * it. This is used for ELF code mapping because code is mapped by ELF Segments and then the ELF Sections fine tune it. */
-rose_addr_t
-BinaryLoaderElf::align_values(SgAsmGenericSection *_section, Contribution contrib,
-                              rose_addr_t *va_p/*out*/, rose_addr_t *mem_size_p/*out*/,
-                              rose_addr_t *offset_p/*out*/, rose_addr_t *file_size_p/*out*/,
-                              const MemoryMap *current)
+BinaryLoader::MappingContribution
+BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
+                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
+                              rose_addr_t *va, rose_addr_t *mem_size,
+                              rose_addr_t *offset, rose_addr_t *file_size,
+                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
+                              ConflictResolution *resolve)
 {
+    MappingContribution retval;
     SgAsmElfSection *section = isSgAsmElfSection(_section);
-
-    rose_addr_t retval = 0;
-    rose_addr_t old_va_align = section->get_mapped_alignment();
+    rose_addr_t old_malign = section->get_mapped_alignment();
+    rose_addr_t old_falign = section->get_file_alignment();
 
     try {
         if (NULL==section->get_segment_entry()) {
             if (get_debug())
                 fprintf(get_debug(), "    Temporarily relaxing memory alignment constraints.\n");
             section->set_mapped_alignment(1);
+            section->set_file_alignment(1);
         }
-        retval = BinaryLoader::align_values(section, contrib, va_p, mem_size_p, offset_p, file_size_p, current);
+        retval = BinaryLoader::align_values(_section, map, malign_lo, malign_hi, va, mem_size, offset, file_size,
+                                            va_offset, anon_lo, anon_hi, resolve);
     } catch (...) {
-        section->set_mapped_alignment(old_va_align);
+        section->set_mapped_alignment(old_malign);
+        section->set_file_alignment(old_falign);
         throw;
     }
-    section->set_mapped_alignment(old_va_align);
+    section->set_mapped_alignment(old_malign);
+    section->set_file_alignment(old_falign);
+
+    *anon_lo = false;
+    *anon_hi = true;
+    *resolve = RESOLVE_OVERMAP;
+
     return retval;
 }
+    
 
 
 
@@ -1288,7 +1313,7 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
 
 
 void
-BinaryLoaderElf::fixupSections(SgAsmInterpretation *interp)
+BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
 {
     BinaryLoader_ElfSupport::relocateInterpLibraries(interp);
 

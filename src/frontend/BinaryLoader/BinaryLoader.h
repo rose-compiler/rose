@@ -42,6 +42,25 @@
  */
 class BinaryLoader {
     /*========================================================================================================================
+     * Types
+     *======================================================================================================================== */
+public:
+
+    /** Describes how a section contributes to the overall memory map. */
+    enum MappingContribution {
+        CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
+        CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
+        CONTRIBUTE_SUB                  /**< Section is subtracted from the mapping. */
+    };
+
+    /** Describes how conflicts are resolved when mapping a section. */
+    enum ConflictResolution {
+        RESOLVE_THROW,                  /**< Throw an exception such as MemoryMap::Inconsistent. */
+        RESOLVE_OVERMAP,                /**< Free the part of the original mapping that is in conflict. */
+        RESOLVE_REMAP                   /**< Move the section to an unused part of the address space. */
+    };
+
+    /*========================================================================================================================
      * Exceptions
      *======================================================================================================================== */
 public:
@@ -76,28 +95,6 @@ public:
 private:
     /** Initialize the class. Register built-in loaders. */
     static void initclass();
-
-    /*========================================================================================================================
-     * Types
-     *======================================================================================================================== */
-public:
-    enum Contribution {
-        CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
-        CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
-        CONTRIBUTE_SUB                  /**< Section is subtracted from the mapping. */
-    };
-
-    /** The interface for deciding whether a section contributes to a mapping.
-     *
-     *  A Selector is used to decide whether a section should contribute to the mapping, and whether that contribution should
-     *  be additive or subtractive.  Any section that contributes to a mapping will be passed through the align_values()
-     *  method, which has an opportunity to veto the section's contribution. The Selector virtual class will be subclassed for
-     *  various kinds of selections. */
-    class Selector {
-    public:
-        virtual ~Selector() {}
-        virtual Contribution contributes(SgAsmGenericSection*) = 0;
-    };
 
     /*==========================================================================================================================
      * Registration and lookup methods
@@ -137,16 +134,35 @@ public:
      * Accessors for properties.
      *======================================================================================================================== */
 public:
+    /** Set whether this loader will perform the linking step. To "link" means to recursively determine what shared objects
+     *  are dependencies of the objects already in the AST and to parse them, adding them to the AST also. */
     void set_perform_dynamic_linking(bool b) { p_perform_dynamic_linking = b; }
+
+    /** Returns whether this loader will perform the linking step. See also, set_perform_dynamic_linking(). */
     bool get_perform_dynamic_linking() const { return p_perform_dynamic_linking; }
 
+    /** Set whether this loader will perform the mapping step.  To "map" a section means to make the section's content
+     *  available through a MemoryMap object attached to the interpretation that holds the section.  This step also resolves
+     *  conflicts between two or more sections that request overlapping areas of memory. */
     void set_perform_remap(bool b) { p_perform_remap = b; }
+
+    /** Returns whether this loader will perform the mapping step. See also, set_perform_remap(). */
     bool get_perform_remap() const { return p_perform_remap; }
 
+    /** Set whether this loader will perform the relocation step. To "relocate" means to process the relocation sections of an
+     *  executable and apply "fixups" to parts of memory that have been mapped. The fixups are computed based on the original
+     *  contents of that memory and the difference in locations from the section's preferred memory location and the location
+     *  chosen by this loader during the mapping phase.  There are many kinds of relocation fixups. */
     void set_perform_relocations(bool b) { p_perform_relocations = b; }
+
+    /** Returns whether this loader will perform the relocation step. See also, set_perform_relocations(). */
     bool get_perform_relocations() const { return p_perform_relocations; }
 
+    /** Set whether this loader will emit diagnostics for debugging. If the specified file is non-null then diagnostic output
+     *  is sent to that file; otherwise diagnostic output is disabled. */
     void set_debug(FILE *f) { debug = f; }
+
+    /** Returns whether this loader will emit diagnostics for debugging. See also, set_debug(). */
     FILE *get_debug() const { return debug; }
 
     /*========================================================================================================================
@@ -215,20 +231,50 @@ public:
      *  not returning any shared object that we've already parsed.
      *
      *  Throws a BinaryLoader::Exception if any error occurs. */
-    virtual void linkDependencies(SgAsmInterpretation *interp);
+    virtual void link(SgAsmInterpretation *interp);
     
-    /** Maps sections of the interpretation into the virtual address space.  Throws a BinaryLoader::Exception if an error
-     *  occurs. Ignores any mapping that might already have been defined, recalculating a new mapping from scratch. */
-    virtual void remapSections(SgAsmInterpretation *interp);
+    /** Maps sections of the interpretation into the virtual address space.
+     *
+     *  This function uses the existing MemoryMap attached to the interpretation if it is available, or creates and attaches a
+     *  new, empty MemoryMap.  When using an existing MemoryMap, the map is not cleared. This enables the caller to reserve
+     *  space in memory.
+     *
+     *  The mapping algorithms consult each section's preferred address (SgAsmGenericSection::get_mapped_preferred_rva()) and
+     *  update the section's actual address (SgAsmGenericSection::get_mapped_actual_rva()), adjusting the interpretation's
+     *  MemoryMap in the process.  The algorithms are applied to one binary file header at a time in the order the headers
+     *  appear in the interpretation.  The algorithms may control the order that sections are mapped within any given header.
+     *
+     *  Subclasses normally don't override this method, but rather the remap() method that is called by this method, namely
+     *  the remap() that takes a memory map and file header as arguments.
+     *
+     *  This method throws a BinaryLoader::Exception if an error occurs. */
+    virtual void remap(SgAsmInterpretation *interp);
 
     /** Performs relocation fixups on the specified interpretation. This should be called after sections are mapped into
-     *  memory by remapSections(). Throws a BinaryLoader::Exception if an error occurs. */
-    virtual void fixupSections(SgAsmInterpretation *interp);
+     *  memory by remap(). Throws a BinaryLoader::Exception if an error occurs. */
+    virtual void fixup(SgAsmInterpretation *interp);
 
     /*========================================================================================================================
-     * Mapping functions
+     * Mapping functions (deprecated)
+     * 
+     * These members came from the old Loader class (src/frontend/BinaryFormats/Loader.h) and were a simpler method of loading
+     * the sections of a single binary file into memory.  They are not sufficient for loading a collection of binaries in a
+     * way that is compatible with OS-level loaders.  Use the remap() method instead.
      *======================================================================================================================== */
 public:
+#if 0
+    /** The interface for deciding whether a section contributes to a mapping.
+     *
+     *  A Selector is used to decide whether a section should contribute to the mapping, and whether that contribution should
+     *  be additive or subtractive.  Any section that contributes to a mapping will be passed through the align_values()
+     *  method, which has an opportunity to veto the section's contribution. The Selector virtual class will be subclassed for
+     *  various kinds of selections. */
+    class Selector {
+    public:
+        virtual ~Selector() {}
+        virtual MappingContribution contributes(SgAsmGenericSection*) = 0;
+    };
+
     /** Creates a map containing all mappable sections in the file. If @p map is non-null then it will be modified in place
      *  and returned, otherwise a new map is created. */
     virtual MemoryMap *map_all_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
@@ -244,8 +290,6 @@ public:
     /** Creates a map containing the specified sections (if they are mapped). If @p map is non-null then it will be modified
      *  in place and returned, otherwise a new map is created. */
     virtual MemoryMap *map_all_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
-
-
 
     /** Creates a map for all code-containing sections in the file. If @p map is non-null then it will be modified in place
      *  and returned, otherwise a new map is created. */
@@ -263,8 +307,6 @@ public:
      *  modified in place and returned, otherwise a new map is created. */
     virtual MemoryMap *map_code_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
 
-
-
     /** Creates a map for all executable sections in the file. If @p map is non-null then it will be
      *  modified in place and returned, otherwise a new map is created. */
     virtual MemoryMap *map_executable_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
@@ -280,8 +322,6 @@ public:
     /** Creates a map for all executable sections from the specified list. If @p map is non-null then it will be
      *  modified in place and returned, otherwise a new map is created. */
     virtual MemoryMap *map_executable_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
-
-
 
     /** Creates a map for all writable sections in the file. If @p map is non-null then it will be
      *  modified in place and returned, otherwise a new map is created. */
@@ -310,14 +350,14 @@ public:
      *
      *  If a memory map is supplied, then it will be modified in place and returned; otherwise a new map is allocated. */
     virtual MemoryMap *create_map(MemoryMap *map, const SgAsmGenericSectionPtrList&, Selector*, bool allow_overmap=true);
-
+#endif
 
     
 
     /*========================================================================================================================
      * Supporting types and functions
      *======================================================================================================================== */
-protected:
+public:
     /** Returns true if the specified file name is already linked into the AST. */
     virtual bool is_linked(SgBinaryComposite *composite, const std::string &filename);
     /** Returns true if the specified file name is already linked into the AST. */
@@ -335,6 +375,77 @@ protected:
      *  value that have already been parsed into the AST. */
     virtual std::vector<std::string> dependencies(SgAsmGenericHeader*);
 
+    /** Remaps the sections for a particular header.  This method is often replaced by subclasses since this is where
+     *  decisions are made about alignment.  Different operating systems and their loaders have different alignment policies. */
+    virtual void remap(MemoryMap*, SgAsmGenericHeader*);
+
+    /** Selects those sections of a header that should be mapped. Returns the sections in the order they should be mapped. */
+    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {
+        return header->get_mapped_sections();
+    }
+
+    /** Extended Euclid Algorithm. The Euclid algorithm for finding the greatest common divisor (GCD) of two natural numbers,
+     *  extended to also compute a solution to Bezout's Identity.  Bezout's Identity states that if @p a and @p b are two
+     *  non-zero integers with greatest common divisor @p d, then there exist integers @p x and @p y (called Bezout
+     *  Coefficients), such that \f$ a x + b y = d \f$. Additionally @p d is the smallest positive integer for which there are
+     *  integer solutions to the preceding equation.
+     *
+     *  The returned value is the greatest common divisor of @p a and @p b.  If the caller supplies non-null pointers for @p x
+     *  and @p y then a pair of Bezout Coefficients are returned through those pointers. */
+    static int64_t gcd(int64_t a, int64_t b, int64_t *x=NULL/*out*/, int64_t *y=NULL/*out*/);
+
+    /** Calculate adjustment to cause two values to be aligned to two different alignments.  Given two values and two
+     *  alignments, return the smallest integer adjustment such that subtracting the adjustment from both values results in
+     *  each value satisfying its alignment constraint.
+     *
+     *  Note that it is not always possible to find an adjustment. When no adjustment can be found an Exception is thrown. */
+    rose_addr_t bialign(rose_addr_t val1, rose_addr_t align1,
+                        rose_addr_t val2, rose_addr_t align2);
+
+    /** For a given section, return information about how the section contributes to the memory map.
+     *
+     *  The algorithm may use information from the section itself and the memory map as defined up to this point in the
+     *  mapping process.  The main return value is an indication of whether the section adds to the map, subtracts from the
+     *  map, or does nothing to the map.  The remaining arguments are grouped according to their purpose:
+     *
+     *  <ul>
+     *    <li>Memory alignment. The @p malign_lo and @p malign_hi indicate how the section must be aligned in memory.
+     *        In particular, the @p va return value will be a multiple of @p malign_lo, and the sum of @p va and
+     *        @p mem_size will be a multiple of @p malign_hi.</li>
+     *    <li>Memory location: The @p va value is the low virtual address of the new mapping, and the @p mem_size is
+     *        the number of bytes to map.</li>
+     *    <li>File location: The @p offset value is the byte offset from the beginning of the file in which this
+     *        section appears, and the @p file_size is the number of bytes to map from the file into memory. The
+     *        @p file_size may be smaller than the @p mem_size (see below).</li>
+     *    <li>Internal offset: The size of the memory mapping may be larger than the section itself. When this
+     *        happens, the section will be located somewhere inside the mapped region.  The @p va_offset
+     *        is the offset of the section with respect to @p va (it must be non-negative).  The boolean return
+     *        values @p anon_lo and @p anon_hi determine whether ROSE will map file contents (false) or zeros (true)
+     *        below and above the section when the section is smaller than the mapped region.  Zeros are always
+     *        used for areas that are beyond the end of the file.</li>
+     *    <li>Conflicts: If an attempt is made to map a region into part of the address space that already has
+     *        a mapping, then one of three things can happen: (1) a MemoryMap::Inconsistent exception is thrown,
+     *        (2) a hole can be created by first unmapping the space in conflict, or (3) a new mapping can be chosen
+     *        automatically.  The @p resolve result indicates what should happen.</li>
+     *  </ul>
+     *
+     *  Subclasses often override this method since each operating system tends to have unique rules about how
+     *  things are mapped and how conflicts are resolved.
+     *
+     *  If so desired, the conflict resolution may be handled by the align_values() method itself since the memory map is
+     *  available there. However, a benefit of allowing a higher layer to resolve the conflict is that diagnostics will
+     *  be produced automatically when debugging is enabled.
+     *
+     *  Likewise, this method is allowed to perform the mapping itself if the algorithm in the caller, remap(), cannot
+     *  be sufficiently influenced by the values that are returned.  In this case, this method should perform the mapping
+     *  and return CONTRIB_NONE to prevent the caller from doing any further mapping. */
+    virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
+                                             rose_addr_t *malign_lo, rose_addr_t *malign_hi,
+                                             rose_addr_t *va, rose_addr_t *mem_size,
+                                             rose_addr_t *offset, rose_addr_t *file_size,
+                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
+                                             ConflictResolution *resolve);
+    
 
     /** Selects those sections which should be layed out by the Loader and inserts them into the @p allSections argument.  The
      *  default implementation (in this base class) is to add all sections to the list. Subclasses will likely restrict this
@@ -358,6 +469,7 @@ protected:
      *  disassembly would use the same Disassembler for both.  See findSimilarHeaders(). */
     static bool isHeaderSimilar(SgAsmGenericHeader*, SgAsmGenericHeader*);
 
+#if 0
     /** Computes memory mapping addresses for a section.
      *
      *  Operating systems generally have some alignment constraints for how a file is mapped to virtual memory, and these
@@ -386,7 +498,7 @@ protected:
      *  doesn't have any mapping attributes (for instance, the ELF object file loader, LoaderELFObj, maps function text
      *  sections that are marked as "not mapped" in the ELF container by choosing free regions of virtual memory using the @p
      *  current argument that contains the most up-to-date mapping). */
-    virtual rose_addr_t align_values(SgAsmGenericSection*, Contribution,
+    virtual rose_addr_t align_values(SgAsmGenericSection*, MappingContribution,
                                      rose_addr_t *va,     rose_addr_t *mem_size,
                                      rose_addr_t *offset, rose_addr_t *file_size,
                                      const MemoryMap *current);
@@ -401,7 +513,7 @@ protected:
      *  that was synthesized by the binary parser, keeping only those that were created due to the parser encountering a
      *  description of the section in some kind of table. */
     virtual SgAsmGenericSectionPtrList order_sections(const SgAsmGenericSectionPtrList&);
-
+#endif
 
 
     /*========================================================================================================================
