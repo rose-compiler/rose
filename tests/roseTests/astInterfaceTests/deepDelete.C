@@ -8,10 +8,9 @@ int main(int argc, char** argv)
   AstTests::runAllTests(project);
 
   //  generateDOT(*project);
-  SgProject* copy = deepCopy<SgProject>(project);
-  AstTests::runAllTests(copy);
-
+  SgNode* copy = deepCopy(project);
   deepDelete(copy);
+
   AstTests::runAllTests(project);
   printf("Test deepdelete finished successfully\n");
 //  backend(project);   

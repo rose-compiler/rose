@@ -538,7 +538,7 @@ namespace Hidden_List_Computation {
 										//  into the scope has already been encountered yet
 
 // CH (4/7/2010): At least MSVC 9.0 can compile the following code
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 										SetSgUsingDirectiveStatementsWithSgScopeStatement::iterator it_UsingDirectivesSet;
 //#else
 //										// tps (04/07/2009) : Problems with Hiddenlist
@@ -554,7 +554,7 @@ namespace Hidden_List_Computation {
 										//  specify the scope & the SgUsingDirectiveStatement (-> look at comparator cmp_UsingDirectiveWithScope in HiddenList.h)
 										dummy_UsingDirectiveWithScope.scope = isSgScopeStatement(it_symbol_hashmap->second->si_using_dir->get_parent());
 // CH (4/7/2010): This issue is fixed by adding 'const' to compare function.
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 										it_UsingDirectivesSet = UsingDirectivesSet.find( dummy_UsingDirectiveWithScope );
 
 										if(it_UsingDirectivesSet != UsingDirectivesSet.end() ) {
@@ -600,7 +600,7 @@ namespace Hidden_List_Computation {
 									//  into the scope has already been encountered yet
 
 // CH (4/7/2010): This issue is fixed by adding 'const' to compare function.
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 									SetSgUsingDeclarationWithScopeWithSgScopeStatement::iterator it_UsingDeclarationsSet;
 //#else
 //									//tps (12/7/2009) : Problems in Windows in Release Mode
@@ -619,7 +619,7 @@ namespace Hidden_List_Computation {
 									dummy_UsingDeclarationWithScope.scope = isSgScopeStatement(it_symbol_hashmap->second->si_using_decl->get_parent());
 
 // CH (4/7/2010): This issue is fixed by adding 'const' to compare function.
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 									it_UsingDeclarationsSet = UsingDeclarationsSet.find( dummy_UsingDeclarationWithScope );
 
 									if(it_UsingDeclarationsSet != UsingDeclarationsSet.end() ) {

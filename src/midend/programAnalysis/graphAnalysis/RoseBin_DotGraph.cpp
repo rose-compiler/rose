@@ -38,7 +38,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
   // DQ (4/23/2009): Added a typedef to refactor the specification of the type (and add the explicit reference to the hash function).
   // rose_hash::unordered_set <std::string> funcNames;
 // CH (4/9/2010): Use boost::unordered instead  
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
     typedef rose_hash::unordered_set <std::string> funcNamesType;
 #else
