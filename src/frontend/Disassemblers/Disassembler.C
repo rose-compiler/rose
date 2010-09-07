@@ -769,6 +769,10 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
 
     /* Use the memory map attached to the interpretation, or build a new one and attach it. */
     MemoryMap *map = interp->get_map();
+#if 1 /*[RPM 2010-09-07]*/
+    /* BinaryLoader must have already been called, in which case we have a MemoryMap */
+    ROSE_ASSERT(map!=NULL);
+#else
     if (!map) {
         map = new MemoryMap();
         for (size_t i=0; i<headers.size(); i++) {
@@ -783,6 +787,7 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
         }
         interp->set_map(map);
     }
+#endif
     if (p_debug) {
         fprintf(p_debug, "Disassembler: MemoryMap for disassembly:\n");
         map->dump(p_debug, "    ");
