@@ -42,13 +42,13 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	ROSE_ASSERT(!expressions.empty());
 
 	//This simple processor just takes the first valid reverse expression returned
-	EvaluationResult& instrumentedExpression = expressions.front();
-	ExpressionReversal expressionReversal = processExpression(statement->get_expression(), instrumentedExpression);
+	EvaluationResult& expressionReversalOption = expressions.front();
+	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseAST(statement->get_expression());
 	SgStatement* forwardStatement = SageBuilder::buildExprStatement(expressionReversal.fwd_exp);
 	SgStatement* reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
 
 	//We just do all the work in the evaluation step and save it as an attribute
-	EvaluationResult statementResult(this, var_table, instrumentedExpression.getCost());
+	EvaluationResult statementResult(this, var_table, expressionReversalOption.getCost());
 	StatementReversal statementReversal(forwardStatement, reverseStatement);
 	statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
 
@@ -58,7 +58,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	return result;
 }
 
-StatementReversal StraightlineStatementProcessor::process(SgStatement* statement, const EvaluationResult& reversal)
+StatementReversal StraightlineStatementProcessor::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
 {
 	ROSE_ASSERT(reversal.getChildResults().size() == 0);
 	ROSE_ASSERT(reversal.getStatementProcessor() == this);
@@ -139,7 +139,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 			exit(1);
 		}
 
-		StatementReversal instrumentedStatement = processStatement(s, possibleStatements.front());
+		StatementReversal instrumentedStatement = possibleStatements.front().generateReverseAST(s);
 		totalCost += possibleStatements.front().getCost();
 		SgStatement* forwardStatement = instrumentedStatement.fwd_stmt;
 		SgStatement* reverseStatement = instrumentedStatement.rvs_stmt;

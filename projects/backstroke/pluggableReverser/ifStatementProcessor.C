@@ -1,5 +1,6 @@
 #include "ifStatementProcessor.h"
 #include <boost/tuple/tuple.hpp>
+#include <utilities/CPPDefinesAndNamespaces.h>
 
 using namespace std;
 using namespace boost;
@@ -8,20 +9,20 @@ using namespace SageInterface;
 
 
 
-StatementReversal IfStatementProcessor::process(SgStatement* stmt, const EvaluationResult& evalResult)
+StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
 {
 	ROSE_ASSERT(evalResult.getChildResults().size() == 3);
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
     ROSE_ASSERT(if_stmt);
 
     SgStatement* cond = if_stmt->get_conditional();
-    StatementReversal proc_cond = processStatement(cond, evalResult.getChildResults()[2]);
+    StatementReversal proc_cond = evalResult.getChildResults()[2].generateReverseAST(cond);
 
     SgStatement* true_body = if_stmt->get_true_body();
     SgStatement* false_body = if_stmt->get_false_body();
 
-    StatementReversal proc_true_body = processStatement(true_body, evalResult.getChildResults()[1]);
-    StatementReversal proc_false_body = processStatement(false_body, evalResult.getChildResults()[0]);
+    StatementReversal proc_true_body = evalResult.getChildResults()[1].generateReverseAST(true_body);
+    StatementReversal proc_false_body = evalResult.getChildResults()[0].generateReverseAST(false_body);
 
     SgBasicBlock* fwd_true_block_body =  isSgBasicBlock(proc_true_body.fwd_stmt);
     SgBasicBlock* fwd_false_block_body = isSgBasicBlock(proc_false_body.fwd_stmt);

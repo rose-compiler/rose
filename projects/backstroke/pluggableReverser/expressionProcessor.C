@@ -10,7 +10,7 @@ using namespace backstroke_util;
 /******************************************************************************
  ******** Definition of member functions of NullExpressionProcessor ***********/
 
-ExpressionReversal NullExpressionProcessor::process(SgExpression* exp, const EvaluationResult& evaluationResult)
+ExpressionReversal NullExpressionProcessor::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
     return ExpressionReversal(copyExpression(exp), NULL);
 }
@@ -44,7 +44,7 @@ vector<EvaluationResult> NullExpressionProcessor::evaluate(SgExpression* exp, co
 /******************************************************************************
  **** Definition of member functions of IdentityExpressionProcessor ***********/
 
-ExpressionReversal IdentityExpressionProcessor::process(SgExpression* exp, const EvaluationResult& evaluationResult)
+ExpressionReversal IdentityExpressionProcessor::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
     return ExpressionReversal(copyExpression(exp), copyExpression(exp));
 }
@@ -64,7 +64,7 @@ vector<EvaluationResult> IdentityExpressionProcessor::evaluate(SgExpression* exp
 /******************************************************************************
  **** Definition of member functions of StoreAndRestoreExpressionProcessor ****/
 
-ExpressionReversal StoreAndRestoreExpressionProcessor::process(SgExpression* exp, const EvaluationResult& evaluationResult)
+ExpressionReversal StoreAndRestoreExpressionProcessor::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
     SgExpression* var_to_save = NULL;
 
@@ -121,7 +121,7 @@ vector<EvaluationResult> StoreAndRestoreExpressionProcessor::evaluate(SgExpressi
 /******************************************************************************
  ***** Definition of member functions of ConstructiveExpressionProcessor ******/
 
-ExpressionReversal ConstructiveExpressionProcessor::process(SgExpression* exp, const EvaluationResult& evaluationResult)
+ExpressionReversal ConstructiveExpressionProcessor::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
     {

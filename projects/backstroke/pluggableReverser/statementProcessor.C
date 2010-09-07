@@ -6,14 +6,14 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-StatementReversal ExprStatementProcessor::process(SgStatement* stmt, const EvaluationResult& evaluationResult)
+StatementReversal ExprStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
 	ROSE_ASSERT(evaluationResult.getStatementProcessor() == this);
 	ROSE_ASSERT(evaluationResult.getChildResults().size() == 1);
     
-    ExpressionReversal exp = processExpression(exp_stmt->get_expression(), evaluationResult.getChildResults().front());
+    ExpressionReversal exp = evaluationResult.getChildResults().front().generateReverseAST(exp_stmt->get_expression());
 
     SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -46,7 +46,7 @@ vector<EvaluationResult> ExprStatementProcessor::evaluate(SgStatement* stmt, con
 }
 
 
-StatementReversal BasicBlockProcessor::process(SgStatement* stmt, const EvaluationResult& evaluationResult)
+StatementReversal BasicBlockProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {
     SgBasicBlock* body = isSgBasicBlock(stmt);
     ROSE_ASSERT(body);
@@ -60,7 +60,7 @@ StatementReversal BasicBlockProcessor::process(SgStatement* stmt, const Evaluati
     {
 		const EvaluationResult& childResult = evaluationResult.getChildResults().at(childResultIndex);
 		childResultIndex--;
-        StatementReversal proc_stmt = processStatement(stmt, childResult);
+        StatementReversal proc_stmt = childResult.generateReverseAST(stmt);
 
         if (proc_stmt.fwd_stmt)
             appendStatement(proc_stmt.fwd_stmt, fwd_body);
