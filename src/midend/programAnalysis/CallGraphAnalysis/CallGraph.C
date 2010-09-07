@@ -946,7 +946,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 findNode(SgGraph* graph, std::string nid)
 {
 // CH (4/16/2010): Use boost:unordered instead
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 //#pragma message ("WARNING: commenting out use of hashmap in graph support for MSVC.")
     return NULL;
