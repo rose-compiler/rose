@@ -8,10 +8,10 @@
 #include <set>
 #include <pluggableReverser/eventProcessor.h>
 
-class AkgulStyleExpressionProcessor : public ExpressionProcessor
+class AkgulStyleExpressionProcessor : public ExpressionReversalHandler
 {
 public:
-	virtual ExpressionReversal process(SgExpression* exp, const EvaluationResult& evaluationResult);
+	virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult);
 
 	/** Attempts to reverse an expression. If the reversal fails,
 	 * this function returns an empty vector. */

@@ -50,7 +50,7 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 	return vector<EvaluationResult> ();
 }
 
-ExpressionReversal AkgulStyleExpressionProcessor::process(SgExpression* exp, const EvaluationResult& evaluationResult)
+ExpressionReversal AkgulStyleExpressionProcessor::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
 	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute().get());
 	ROSE_ASSERT(reversalResult != NULL);

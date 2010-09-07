@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 
 	//Statement processors
 	//event_processor.addStatementProcessor(new ReturnStatementProcessor);
-	//event_processor.addStatementProcessor(new StraightlineStatementProcessor);
+	event_processor.addStatementProcessor(new StraightlineStatementProcessor);
 
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
 	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);

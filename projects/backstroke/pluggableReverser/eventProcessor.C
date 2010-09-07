@@ -10,84 +10,12 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-SgExpression* ProcessorBase::pushVal(SgExpression* exp, SgType* type)
-{
-    return event_processor_->pushVal(exp, type);
-}
-
-SgExpression* ProcessorBase::popVal(SgType* type)
-{
-    return event_processor_->popVal(type);
-}
-
-
-ExpressionProcessor* EvaluationResult::getExpressionProcessor() const
-{
-	const ExpressionProcessor* expressionHandler = dynamic_cast<ExpressionProcessor*>(processor_used_);
-	ROSE_ASSERT(expressionHandler != NULL);
-	return const_cast<ExpressionProcessor*>(expressionHandler);
-}
-
-StatementProcessor* EvaluationResult::getStatementProcessor() const
-{
-	const StatementProcessor* statementHandler = dynamic_cast<const StatementProcessor*>(processor_used_);
-	ROSE_ASSERT(statementHandler != NULL);
-	return const_cast<StatementProcessor*>(statementHandler);
-}
-
-ExpressionReversal ProcessorBase::processExpression(SgExpression* exp, const EvaluationResult& evaluationResult)
-{
-    return event_processor_->processExpression(exp, evaluationResult);
-}
-
-StatementReversal ProcessorBase::processStatement(SgStatement* stmt, const EvaluationResult& evaluationResult)
-{
-    return event_processor_->processStatement(stmt, evaluationResult);
-}
-
-vector<EvaluationResult> ProcessorBase::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
-{
-    return event_processor_->evaluateExpression(exp, var_table, is_value_used);
-}
-
-vector<EvaluationResult> ProcessorBase::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
-{
-    return event_processor_->evaluateStatement(stmt, var_table);
-}
-
-
-bool ProcessorBase::isStateVariable(SgExpression* exp)
-{
-    return event_processor_->isStateVariable(exp);
-}
-
-vector<SgExpression*> ProcessorBase::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-			VariableRenaming::NumNodeRenameEntry definitions)
-{
-	return event_processor_->restoreVariable(variable, availableVariables, definitions);
-}
-
-VariableRenaming* ProcessorBase::getVariableRenaming()
-{
-	return event_processor_->getVariableRenaming();
-}
-
-ExpressionReversal EventProcessor::processExpression(SgExpression* exp, const EvaluationResult& evaluationResult)
-{
-	return evaluationResult.getExpressionProcessor()->process(exp, evaluationResult);
-}
-
-StatementReversal EventProcessor::processStatement(SgStatement* stmt, const EvaluationResult& result)
-{
-	return result.getStatementProcessor()->process(stmt, result);
-}
-
 vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
     vector<EvaluationResult> results;
 
     // If two results have the same variable table, we remove the one which has the higher cost.
-    foreach (ExpressionProcessor* exp_processor, exp_processors_)
+    foreach (ExpressionReversalHandler* exp_processor, exp_processors_)
     {
         vector<EvaluationResult> res = exp_processor->evaluate(exp, var_table, is_value_used);
 
@@ -146,7 +74,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
     }
 #endif
 
-    foreach (StatementProcessor* stmt_processor, stmt_processors_)
+    foreach (StatementReversalHandler* stmt_processor, stmt_processors_)
     {
         vector<EvaluationResult> res = stmt_processor->evaluate(stmt, var_table);
         foreach (EvaluationResult& r1, res)
@@ -352,8 +280,7 @@ FuncDeclPairs EventProcessor::processEvent()
 
 		/************************************************************************/
 
-
-        StatementReversal stmt = processStatement(body, res);
+        StatementReversal stmt = res.generateReverseAST(body);
 
         fixVariableReferences(stmt.fwd_stmt);
         fixVariableReferences(stmt.rvs_stmt);
@@ -381,7 +308,6 @@ FuncDeclPairs EventProcessor::processEvent()
         string comment = "Cost: " + lexical_cast<string>(res.getCost().getCost());
         attachComment(fwd_func_decl, comment);
         attachComment(rvs_func_decl, comment);
-
 
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
     }
