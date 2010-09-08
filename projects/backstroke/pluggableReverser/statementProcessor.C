@@ -58,7 +58,7 @@ StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement
 	int childResultIndex = body->get_statements().size() - 1;
     foreach (SgStatement* stmt, body->get_statements())
     {
-		const EvaluationResult& childResult = evaluationResult.getChildResults().at(childResultIndex);
+		const EvaluationResult& childResult = evaluationResult.getChildResults()[childResultIndex];
 		childResultIndex--;
         StatementReversal proc_stmt = childResult.generateReverseAST(stmt);
 

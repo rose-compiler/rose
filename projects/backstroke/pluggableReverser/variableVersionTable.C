@@ -30,7 +30,7 @@ set<int> VariableVersionTable::getVersion(VariableRenaming::VarName varName) con
 		return result;
 	}
 
-	return table_.at(varName);
+	return table_.find(varName)->second;
 }
 
 void VariableVersionTable::print() const
@@ -344,7 +344,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 
 	printf("%s:\nIndices found: ", VariableRenaming::keyToString(varName).c_str());
 
-	foreach(int v, table_.at(varName))
+	foreach(int v, table_.find(varName)->second)
 	{
 		printf("%d ", v);
 	}
@@ -358,9 +358,9 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 	}
 	printf("\n");
 
-	bool result = table_.at(varName) == indices;
+	bool result = table_.find(varName)->second == indices;
 	printf("Result is %s\n\n", result ? "true" : "false");
 
-	return table_.at(varName) == indices;
+	return table_.find(varName)->second == indices;
 }
 
