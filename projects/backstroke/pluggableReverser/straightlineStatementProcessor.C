@@ -48,7 +48,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	SgStatement* reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
 
 	//We just do all the work in the evaluation step and save it as an attribute
-	EvaluationResult statementResult(this, var_table, expressionReversalOption.getCost());
+	EvaluationResult statementResult(this, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
 	StatementReversal statementReversal(forwardStatement, reverseStatement);
 	statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
 
@@ -104,7 +104,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 				SgFunctionDefinition* enclosingFunction = SageInterface::getEnclosingFunctionDefinition(basicBlock);
 				VariableRenaming::NumNodeRenameEntry definitions = getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosingFunction, varName);
 
-				vector<SgExpression*> restoredValue = restoreVariable(varName, currentVariableVersions, definitions);
+				//vector<SgExpression*> restoredValue = restoreVariable(varName, currentVariableVersions, definitions);
 				SgAssignInitializer* reverseVarInitializer;
 				/*if (!restoredValue.empty())
 				{
