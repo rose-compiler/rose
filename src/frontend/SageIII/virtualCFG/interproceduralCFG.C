@@ -82,37 +82,19 @@ void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& al
       SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
       Rose_STL_Container<SgFunctionDefinition*> defs;
       CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
-      foreach (SgFunctionDefinition* def, defs) 
+      foreach (SgFunctionDefinition* def, defs) {
         addEdge(n, def->cfgForBeginning(), outEdges);
+        addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
+      }
     }
     else if (isSgConstructorInitializer(sgnode) &&
         idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
       SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
       Rose_STL_Container<SgFunctionDefinition*> defs;
       CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
-      foreach (SgFunctionDefinition* def, defs) 
+      foreach (SgFunctionDefinition* def, defs) {
         addEdge(n, def->cfgForBeginning(), outEdges);
-    }
-    else if (isSgFunctionDefinition(sgnode) &&
-        idx == SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX) {
-      SgFunctionDefinition* funDef = isSgFunctionDefinition(sgnode);
-      SgGraphNode* funDefGraphNode = all_nodes[funDef->cfgForBeginning()];
-      ROSE_ASSERT(funDefGraphNode != NULL);
-      std::set<SgDirectedGraphEdge*> sgEdges = graph_->computeEdgeSetIn(funDefGraphNode);
-      foreach (SgDirectedGraphEdge* edge, sgEdges) {
-        SgGraphNode* sourceGN = edge->get_from();
-        SgNode* source = sourceGN->get_SgNode();
-
-        // Determine the index to which the interprocedural edge returns. TODO make member function of SgNode ?
-        unsigned int index;
-        if (source->variantT() == V_SgConstructorInitializer)
-          index = SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX + 1;
-        else if (source->variantT() == V_SgFunctionCallExp)
-          index = SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX + 1;
-        else
-          ROSE_ASSERT(!"Error: unable to determine interprocedural return index");
-
-        addEdge(n, CFGNode(source, index), outEdges);
+        addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
       }
     }
     else {
