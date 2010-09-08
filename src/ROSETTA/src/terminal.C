@@ -1439,7 +1439,7 @@ Terminal::buildPointerInMemoryPoolCheck ()
                          s += "     if ( p_" + varNameString + " != NULL )\n" ;
                          s += "        { \n" ;
 		         // CH (4/8/2010): Use boost::unordered instead
-			 //			 s += "#ifdef _MSC_VER \n" ;
+			 //			 s += "#ifdef _MSCx_VER \n" ;
                          //s += "          rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it; \n" ;
 			 //			 s += "#else \n" ;
                          //s += "          rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;

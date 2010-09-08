@@ -38,7 +38,7 @@
 // #include "../../../developersScratchSpace/Dan/colorAST_tests/colorTraversal.h"
 #include "../astVisualization/wholeAST_API.h"
 
-#if 0 // def _MSC_VER
+#if 0 // def _MSCx_VER
 // DQ (11/27/2009): I think this should be required for GNU, but only MSVC reports this as an error.
 #include "buildMangledNameMap.h"
 #include "buildReplacementMap.h"
@@ -81,10 +81,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // DQ (5/27/2007): Implement this as a local variable!
   // set<SgNode*> finalDeleteSet;
 
-#ifdef _MSC_VER
-  // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-  // extern set<SgNode*> getSetOfFrontendSpecificNodes();
-#endif
+
 
 	 // Note that skipFrontendSpecificIRnodes alows the generated graphs to skip the 
   // representation or IR nodes that are marked to be frontend specific.
@@ -129,10 +126,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      if (SgProject::get_verbose() > 0)
           printf ("Running testUniqueNameGenerationTraversal (more AST tests) \n");
 
-#ifdef _MSC_VER
-  // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-  // extern void testUniqueNameGenerationTraversal();
-#endif
+
 
   // DQ (7/10/2010): This is currently an empty test.
   // testUniqueNameGenerationTraversal();
@@ -292,7 +286,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
   // DQ (2/19/2007): Build the replacement map externally and pass it in to avoid copying.
 // CH (4/9/2010): Since the type switch to boost::unordered, Windows won't suffer this any more    
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
   // DQ (11/27/2009): MSVC does not appear to support optional specification of size of hash table.
 #pragma message ("WARNING: MSVC does not appear to support optional specification of size of hash table.")
@@ -862,14 +856,9 @@ int AstMergeSupport ( SgProject* project )
                  // int fileIndex = 0;
 		                        
 		    // CH (4/7/2010): The header file "direct.h" in MSVC supports 'chdir' function.
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: MSVC does not support chdir() function in Linux.")
-//					printf ("ERROR: MSVC does not support chdir() function in Linux.");
-//					ROSE_ASSERT(false);
-//					int chdirError = -1;
-//#else
+
 					int chdirError = chdir(workingDirectory.c_str());
-//#endif
+
                     ROSE_ASSERT (chdirError == 0);
 
                     SgFile* newFile = determineFileType( vector<string>(argv, argv+argc), nextErrorCode,  project );

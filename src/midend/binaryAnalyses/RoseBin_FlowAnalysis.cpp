@@ -888,7 +888,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	// DQ (4/23/2009): We want the type defined in the base class.
 	// rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
 // CH (4/9/2010): Use boost::unordered instead   
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
 #if 1
 	rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
 #else

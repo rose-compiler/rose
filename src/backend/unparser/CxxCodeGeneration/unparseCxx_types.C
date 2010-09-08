@@ -51,7 +51,7 @@ string get_type_name(SgType* t)
 
 	   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
 //#pragma message ("WARNING: Commented out body of get_type_name()")
 //	   printf ("Error: Commented out body of get_type_name() \n");
 //	   ROSE_ASSERT(false);
@@ -727,11 +727,6 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
 	 // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
-//#ifndef _MSC_VER
-//#pragma message ("WARNING: Commented out body of unparseClassType()")
-//	   printf ("Error: Commented out body of unparseClassType() \n");
-//	   ROSE_ASSERT(false);
-//#else
      SgClassType* class_type = isSgClassType(type);
      ROSE_ASSERT(class_type != NULL);
 

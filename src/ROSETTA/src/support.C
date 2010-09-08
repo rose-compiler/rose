@@ -228,7 +228,6 @@ Grammar::setUpSupport ()
           "Support", "SupportTag", false);
 #endif
 
-//#if !ROSE_MICROSOFT_OS
 // DQ (3/30/2009): This is the moved because "#if !0" is a problem for MSVS.
 // Note that OLD_GRAPH_NODES is set to "1" above...
 // #if 0 // !OLD_GRAPH_NODES == 0
