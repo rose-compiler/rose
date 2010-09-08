@@ -1818,7 +1818,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
 	   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
 //#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
 //	   printf ("Error: Commented out body of unparseMFuncRef() \n");
 //	   ROSE_ASSERT(false);

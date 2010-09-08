@@ -913,6 +913,10 @@ HEADER_THROW_OPERATOR_START
        // DQ (1/16/2006): Added to support special version of get_type()
           SgType* get_type() const;
 
+unsigned int cfgIndexForEnd() const;
+std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
 HEADER_THROW_OPERATOR_END
 
 
@@ -937,6 +941,7 @@ HEADER_AGGREGATE_INITIALIZER_EXPRESSION_END
 HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const;
       /*! \brief Get the SgClassDeclaration associated with this constructor call.
 
           Note that in rare cases where the constructor is associated with a primative type

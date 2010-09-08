@@ -23,7 +23,8 @@ namespace VirtualCFG
 
           MakeClosure(const FindSuccessors & findSuccessors, const FindEnd & findEnd,
                       const DontAddChildren & dontAddChildren,
-                      const Join & join):findSuccessors(findSuccessors), findEnd(findEnd),
+                      const Join & join) :
+            findSuccessors(findSuccessors), findEnd(findEnd),
             dontAddChildren(dontAddChildren), join(join)
         {
         }
@@ -105,7 +106,8 @@ namespace VirtualCFG
         return makeClosure < FilteredCFGEdge < FilterFunction > >(n.inEdges(),
                                                                   &CFGNode::inEdges,
                                                                   &CFGPath::source,
-                                                                  &mergePathsReversed, filter);
+                                                                  &mergePathsReversed, 
+                                                                  filter);
     }
     // ---------------------------------------------
     // DOT OUT IMPL
@@ -116,7 +118,8 @@ namespace VirtualCFG
         std::ostream & o;
 
       public:
-      CfgToDotImpl(std::ostream & o):exploredNodes(), nodesPrinted(), o(o)
+      CfgToDotImpl(std::ostream & o) :
+        exploredNodes(), nodesPrinted(), o(o)
         {
         }
         void processNodes(NodeT n);
@@ -222,5 +225,4 @@ namespace VirtualCFG
         o << "}\n";
         return o;
     }
-
 }

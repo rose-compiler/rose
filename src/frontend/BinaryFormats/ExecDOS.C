@@ -246,11 +246,9 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sDOSFileHeader.", prefix);
     }
-//#ifdef _MSC_VER
-//	const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
 	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u bytes\n",              p, w, "e_last_page_size",     p_e_last_page_size);
     fprintf(f, "%s%-*s = %u 512-byte pages\n",     p, w, "e_total_pages",        p_e_total_pages);
@@ -357,11 +355,9 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sDOSExtendedHeader.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res1",     p_e_res1, p_e_res1);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oemid",    p_e_oemid);
