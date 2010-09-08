@@ -159,6 +159,18 @@ vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName 
 	//Remove this variable from the active set
 	activeValueRestorations.erase(variableAndVersion);
 
+	//FIXME: Here, just pick the first restorer result. In the future we should use some model to help
+	//us choose which result to use
+	if (results.size() > 1)
+	{
+		printf("Warning: Truncating some VariableValueRestorer results\n");
+		for (size_t i = 1; i < results.size(); i++)
+		{
+			SageInterface::deepDelete(results[i]);
+		}
+		results.resize(1);
+	}
+
 	return results;
 }
 

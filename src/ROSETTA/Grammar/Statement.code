@@ -728,6 +728,8 @@ HEADER_GLOBAL_START
 
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
+          virtual unsigned int cfgIndexForEnd() const;
 
 #if 1
        // DQ (10/1/2009): Adding support for new name qualification.
@@ -1170,6 +1172,12 @@ HEADER_LIST_DECLARATIONS
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
+
+       // MD (7/09/2010): Added virtual CFG methods
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          
 
 HEADER_CTOR_INITIALIZER_LIST_END
 

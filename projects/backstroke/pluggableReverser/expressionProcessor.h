@@ -15,37 +15,37 @@
  */
 
 //! This handler generates a NULL reverse expression.
-class NullExpressionProcessor : public ExpressionReversalHandler
+class NullExpressionHandler : public ExpressionReversalHandler
 {
 public:
-    NullExpressionProcessor() { name_ = "Null Expression Processor"; }
+    NullExpressionHandler() { name_ = "Null Expression Handler"; }
     virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
 
 //! This handler generates a reverse expression which is the same as the original expression.
-class IdentityExpressionProcessor : public ExpressionReversalHandler
+class IdentityExpressionHandler : public ExpressionReversalHandler
 {
 public:
-    IdentityExpressionProcessor() { name_ = "Identity Expression Processor"; }
+    IdentityExpressionHandler() { name_ = "Identity Expression Handler"; }
     virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
 
 //! This handler just store and restore a value, once the value is modified (state saving style).
-class StoreAndRestoreExpressionProcessor : public ExpressionReversalHandler
+class StoreAndRestoreExpressionHandler : public ExpressionReversalHandler
 {
 public:
-    StoreAndRestoreExpressionProcessor() { name_ = "Store And Restore Expression Processor"; }
+    StoreAndRestoreExpressionHandler() { name_ = "Store And Restore Expression Handler"; }
     virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };
 
 //! This handler handles constructive assignment, like ++, +=, -=, etc.
-class ConstructiveExpressionProcessor : public ExpressionReversalHandler
+class ConstructiveExpressionHandler : public ExpressionReversalHandler
 {
 public:
-    ConstructiveExpressionProcessor() { name_ = "Constructive Expression Processor"; }
+    ConstructiveExpressionHandler() { name_ = "Constructive Expression Handler"; }
     virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult);
     virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 };

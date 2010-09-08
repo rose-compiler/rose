@@ -99,13 +99,13 @@ public:
 	}
 
 	/**
-	 * Given a variable and a version, returns an expression evaluating to the value of the variable
-	 * at the given version.
-	 *
-	 * @param variable name of the variable to be restored
-	 * @param availableVariables variables whos values are currently available
-	 * @return definitions the version of the variable which should be restored
-	 */
+	* Given a variable and a version, returns an expression evaluating to the value of the variable
+	* at the given version.
+	*
+	* @param variable name of the variable to be restored
+	* @param availableVariables variables whos values are currently available
+	* @return definitions the version of the variable which should be restored
+	*/
 	std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions);
 };

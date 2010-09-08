@@ -6,14 +6,10 @@ HEADER_NODE_PREDECLARATION_START
 // tps (01/27/10): Added essential files..
 //#include "sage3basic.h"
 #include "setup.h"
-//#ifdef _MSC_VER
-//#include <cliext/hash_map>
-//#else
+
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-//#include <ext/hash_map>
-//#include <ext/hash_set>
-//#endif
+
 #include "Cxx_Grammar.h"
 
 #include "processSupport.h"
@@ -193,10 +189,6 @@ class mutex
 
 //! declaration of variable to control internal output of debugging information (default = 0)
 extern int SAGE_DEBUG;
-
-// JJW (1/19/2007): Added global variable for whether virtual CFG is
-// interprocedural
-extern bool interproceduralControlFlowGraph;
 
 // Introduce a way to change from std::list to std::vector easily as a test to improve performance of traversals.
 // This is now moved to ROSE/util/commandLineProcessing/setup.h so that all of ROSE will see it.
@@ -755,16 +747,7 @@ typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 #if 1
 // DQ (11/4/2009): Trying to use the boost hash_map support
 
-// CH (4/8/2010): We start to use boost::unordered_map
-//#ifdef _MSC_VER 
-#if 0
-// tps (11/17/2009) : Changed this so that it works under Windows.
-  #include <hash_set>
-  #include <hash_map>
-  #include <iostream>
-  using namespace std;
-  using namespace stdext;
-#endif
+
 
 
 // DQ (4/23/2009): See comments in sage3.h about the <ext/hash_map> section.
@@ -856,7 +839,7 @@ namespace rose_hash
         {
 // tps (11/17/2009) : Changed this so that it works under Windows.
 // CH (4/9/2010): Use boost::hash instead	    
-//#ifndef _MSC_VER 
+//#ifndef _MSCx_VER 
 #if 1	    
           rose_hash::hash<const char*> hasher;
 #else
@@ -867,7 +850,7 @@ namespace rose_hash
           size_t operator()(const std::string & name) const
              {
 // CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0		 
                return stdext::hash_compare<const char*>()(name.c_str()); 
 #else
@@ -879,7 +862,7 @@ namespace rose_hash
 
 // hashing function for s_s
 // CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0     
 inline size_t hash_value(const int & s)
 {
@@ -893,7 +876,7 @@ inline size_t hash_value(const int & s)
         {
 // tps (11/17/2009) : Changed this so that it works under Windows.
 // CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0	    
    public:
       static const size_t bucket_size = 4;
@@ -902,7 +885,7 @@ inline size_t hash_value(const int & s)
           size_t operator()(const int n) const
              {
 // CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0		 
 //		return (size_t) stdext::hash_compare<int, std::less<int> > >()(n);
         return (size_t) hash_value(n);
@@ -920,7 +903,7 @@ inline size_t hash_value(const int & s)
         {
 // tps (11/17/2009) : Changed this so that it works under Windows.
 // CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0	    
    public:
       static const size_t bucket_size = 4;
@@ -965,7 +948,7 @@ inline size_t hash_value(const int & s)
        // rose_hash::hash<const SgGraphNode*> hasher;
 	   // tps (11/17/2009) : Changed this so that it works under Windows.
 // CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0	    
    public:
       static const size_t bucket_size = 4;
@@ -988,7 +971,7 @@ inline size_t hash_value(const int & s)
 // class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0
 typedef rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string> rose_graph_string_node_hash_multimap_base_type;
 #else
@@ -1066,7 +1049,7 @@ typedef rose_graph_string_node_hash_multimap rose_graph_hash_multimap;
 // DQ (4/29/2009): Added to support ROSE Graph IR nodes
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0
 typedef rose_hash::unordered_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node> rose_graph_node_edge_hash_multimap_base_type;
 #else
@@ -1129,7 +1112,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_node_edge_hash_m
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphNode*, rose_hash::hash_integer, rose_hash::eqstr_graph_node> rose_graph_integer_node_hash_map_base_type
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int, SgGraphNode*, stdext::hash_compare <int, greater<int> > > rose_graph_integer_node_hash_map_base_type;
 #else
@@ -1191,7 +1174,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_node_has
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_map_base_type;
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_map_base_type;
 #else
@@ -1313,7 +1296,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_edge_has
 // typedef rose_hash::unordered_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair, rose_hash::eqstr_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
 
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
 #if 0
 // DQ (12/1/2009): MSVC appears to require an explicit hash_value function to avoid error:
 //    error C2440: 'type cast' : cannot convert from 'const std::pair<_Ty1,_Ty2>' to 'size_t'
@@ -1392,7 +1375,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSC_VER 
+//#ifdef _MSCx_VER 
 #if 0
 // DQ (11/29/2009): fix for: MSVC error C2064: term does not evaluate to a function taking 2 arguments
 // typedef rose_hash::unordered_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
@@ -2031,10 +2014,10 @@ HEADER_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
 
       /*! \brief Find the out edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index = false);
 
       /*! \brief Find the in edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index = false);
 #if 0
       /*! \brief Find the out edges of a CFG node from a static CFG -- internal version. */
           virtual std::vector<SgDirectedGraphEdge*> cfgOutEdges(unsigned int index, StaticCFG::CFG* cfg)
@@ -2138,10 +2121,6 @@ SOURCE_START
 
 // declaration of variable to control internal output of debuging information
 int SAGE_DEBUG = 0;  // default value is zero
-
-// JJW (1/19/2007): Added global variable for whether virtual CFG is
-// interprocedural
-bool interproceduralControlFlowGraph = false;
 
 // ###############################
 // Start of source code for SgNode

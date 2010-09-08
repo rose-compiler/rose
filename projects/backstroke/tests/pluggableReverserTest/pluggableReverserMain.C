@@ -53,16 +53,16 @@ int main(int argc, char * argv[])
 	EventProcessor event_processor(NULL, &var_renaming);
 
 	// Add all expression handlers to the expression pool.
-	event_processor.addExpressionProcessor(new NullExpressionProcessor);
-	event_processor.addExpressionProcessor(new IdentityExpressionProcessor);
-	event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
-	event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
+	event_processor.addExpressionProcessor(new NullExpressionHandler);
+	event_processor.addExpressionProcessor(new IdentityExpressionHandler);
+	event_processor.addExpressionProcessor(new StoreAndRestoreExpressionHandler);
+	event_processor.addExpressionProcessor(new ConstructiveExpressionHandler);
 	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
 	//event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor(project));
 
 	// Add all statement handlers to the statement pool.
-	event_processor.addStatementProcessor(new ExprStatementProcessor);
-	event_processor.addStatementProcessor(new BasicBlockProcessor);
+	event_processor.addStatementProcessor(new CombinatorialExprStatementHandler);
+	event_processor.addStatementProcessor(new CombinatorialBasicBlockHandler);
 	event_processor.addStatementProcessor(new IfStatementProcessor);
 
 	foreach(SgFunctionDeclaration* decl, func_decls)

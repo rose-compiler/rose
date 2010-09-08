@@ -313,13 +313,13 @@ AssemblerX86::InsnDefn::to_str() const
         strcat(buf, " + ");
     }
 
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffLLU")
-//	printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffLLU");
-//	ROSE_ASSERT(false);
-//#else
+#ifdef _MSC_VER
+#pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffLLU")
+	printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffLLU");
+	ROSE_ASSERT(false);
+#else
     ROSE_ASSERT(opcode <= 0xffffffffffLLU);
-//#endif
+#endif
     if (opcode > 0xffffffff)
         sprintf(buf+strlen(buf), "%02X", (unsigned)((opcode>>32) & 0xff));
     if (opcode > 0xffffff)
@@ -1844,6 +1844,9 @@ AssemblerX86::assembleProgram(const std::string &_source)
     close(fd);
     unlink(src_file_name);
     unlink(dst_file_name);
+#else
+	printf ("ERROR: MSVC function not impemented yet.");
+	ROSE_ASSERT(false);
 #endif
     return retval;
 }

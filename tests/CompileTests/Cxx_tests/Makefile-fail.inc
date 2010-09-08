@@ -135,9 +135,11 @@ test2007_174.C \
 test2007_175.C \
 test2007_176.C \
 test2009_07.C \
+test2009_13.C \
 test2009_17.C \
 test2009_21.C \
 test2009_22.C \
+test2009_29.C \
 test2009_32.C \
 test2009_33.C \
 test2009_34.C \
@@ -155,6 +157,7 @@ test2010_07.C \
 test2010_08.C \
 test2010_09.C \
 test2010_10.C \
+test2010_11.C \
 test2010_12.C \
 test2010_15.C \
 test2010_16.C \
