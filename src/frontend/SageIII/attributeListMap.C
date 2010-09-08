@@ -12,9 +12,7 @@
 // Include files to get the current path
 #include <unistd.h>
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: param.h header file not available in MSVC.")
-#else
+#ifndef _MSC_VER
 #include <sys/param.h>
 #endif
 

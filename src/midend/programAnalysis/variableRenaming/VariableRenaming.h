@@ -20,6 +20,7 @@
 #include "filteredCFG.h"
 
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
+ * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
  */
 class VarUniqueName : public AstAttribute
 {
@@ -235,12 +236,6 @@ private:
      */
     DefUseTable useTable;
 
-    /** This is the table that is populated with all the use information for all the variables
-     * at all the nodes. It is populated during the VarDefUse Traversal and contains the varRefs
-     * to the actual uses of the variables.
-     */
-    DefUseTable useLocTable;
-
     /** Holds a list of the locations that a particular name is first
      * defined.
      *
@@ -295,6 +290,8 @@ private:
     /** Locate all global varibales and add them to the table.
      */
     void findGlobalVars();
+
+    bool isBuiltinVar(const VarName& var);
 
     /** Called to merge the defs from previous nodes in the CFG to this one.
      *
@@ -459,13 +456,13 @@ public:
 
     void printRenameTable(const VarName& var);
 
-    void printRenameTable(const NodeNumRenameTable& table);
+    static void printRenameTable(const NodeNumRenameTable& table);
 
-    void printRenameTable(const NumNodeRenameTable& table);
+    static void printRenameTable(const NumNodeRenameTable& table);
 
-    void printRenameEntry(const NodeNumRenameEntry& entry);
+    static void printRenameEntry(const NodeNumRenameEntry& entry);
     
-    void printRenameEntry(const NumNodeRenameEntry& entry);
+    static void printRenameEntry(const NumNodeRenameEntry& entry);
 
 
 
@@ -628,12 +625,21 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionStartForName(SgFunctionDefinition* node, const VarName& var);
 
-    /** Get name:num mappings for all uses at this node.
+    /** Get name:num mappings for all uses at this node. For example, if p.x appears,
+     * there will be a use for both p and p.x
      *
      * @param node The node to get uses for.
      * @return A table mapping VarName->(num, defNode) for every varName used at node. Empty table otherwise.
      */
     NumNodeRenameTable getUsesAtNode(SgNode* node);
+
+    /** Get name:num mappings for the original uses at this node. For example, if p.x appears,
+     * there will be a use for p.x, but not for p.
+     *
+     * @param node The node to get uses for.
+     * @return A table mapping VarName->(num, defNode) for every varName used at node. Empty table otherwise.
+     */
+    NumNodeRenameTable getOriginalUsesAtNode(SgNode* node);
 
     /** Get name:num mapping for use of the given variable at this node.
      *
@@ -762,7 +768,7 @@ public:
      * @param initName The SgInitializedName* to check.
      * @return true if initName is from a library, false if otherwise.
      */
-    static bool isFromLibrary(SgInitializedName* initName);
+    static bool isFromLibrary(SgNode* node);
 
     /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
      *

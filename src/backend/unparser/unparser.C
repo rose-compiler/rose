@@ -1415,6 +1415,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // file instead of the original source file.
      if (file->get_unparse_output_filename().empty() == true)
         {
+
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 
           if (file->get_binary_only() == true)

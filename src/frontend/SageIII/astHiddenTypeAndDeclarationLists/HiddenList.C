@@ -571,8 +571,10 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
 							this->UsingDeclarationsSet
                         );
 #else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement: UsingDirectivesSet commented out right now.")
+// tps (12/7/2009) This is currently not defined since it fails in Release mode
+#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement: UsingDirectivesSet commented out right now.")
+ROSE_ASSERT(false);
+
 #endif
                         if(!AvailableHidden_Functions_Variables.empty() || !AvailableHidden_Types.empty() || !ElaboratingForcingHidden_Types.empty()  ) {
 
@@ -763,7 +765,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         dummy_UsingDirectiveWithScope.is_already_proofed_to_be_valid = false;
 
 // CH (4/7/2010) : Issue fixed as above
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
                         it_UsingDirectivesSet = this->UsingDirectivesSet.find( dummy_UsingDirectiveWithScope );
 
                         if(it_UsingDirectivesSet != this->UsingDirectivesSet.end() ) {
@@ -808,7 +810,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                         dummy_UsingDeclarationWithScope.is_already_proofed_to_be_valid = false;
 
 // CH (4/7/2010) : Issue fixed as above
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
                         it_UsingDeclarationSet = this->UsingDeclarationsSet.find( dummy_UsingDeclarationWithScope );
 
                         if(it_UsingDeclarationSet != this->UsingDeclarationsSet.end() ) {
@@ -1196,7 +1198,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                 SetSgUsingDirectiveStatementsWithSgScopeStatement::iterator it_UsingDirectivesSet;
 
 // CH (4/7/2010) : Issue fixed as above
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
                 // Robert Preissl, June 26 2007: has to be a for-loop and can't use find because there can be more than one using in a scope
                 for( it_UsingDirectivesSet = this->UsingDirectivesSet.begin(); it_UsingDirectivesSet != this->UsingDirectivesSet.end(); ++it_UsingDirectivesSet ) {
 
@@ -1272,7 +1274,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                 SetSgUsingDeclarationWithScopeWithSgScopeStatement::iterator it_UsingDeclarationsSet;
 
 // CH (4/7/2010) : Problem fixed as above.
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
                 // Robert Preissl, June 28 2007: doing (nearly) the same as we have done above with using directives:
                 for( it_UsingDeclarationsSet = this->UsingDeclarationsSet.begin(); it_UsingDeclarationsSet != this->UsingDeclarationsSet.end(); ++it_UsingDeclarationsSet ) {
 
@@ -1404,7 +1406,9 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                 );
 #else
 							// tps (12/7/2009) This is currently not defines since it fails in Release mode
-//#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement4: UsingDirectivesSet commented out right now.")
+#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement4: UsingDirectivesSet commented out right now.")
+ ROSE_ASSERT(false);
+
 #endif
 
                 if(!AvailableHidden_Functions_Variables.empty() || !AvailableHidden_Types.empty() || !ElaboratingForcingHidden_Types.empty()  ) {
@@ -2417,7 +2421,7 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
                         using_directive_with_scope.is_already_proofed_to_be_valid = false;
 
 // CH (4/7/2010) : The coresponding member has been added.
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
 						(exampleTraversal.UsingDirectivesSet).insert(using_directive_with_scope);
 //#else
 //							// tps (12/7/2009) This is currently not defines since it fails in Release mode
@@ -2451,7 +2455,7 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
                         using_declaration_with_scope.is_already_proofed_to_be_valid = false;
 
 // CH (4/7/2010) : The coresponding member has been added.
-//#ifdef _MSC_VER
+//#ifdef _MSCx_VER
                         (exampleTraversal.UsingDeclarationsSet).insert(using_declaration_with_scope);
 //#else
 //							// tps (12/7/2009) This is currently not defines since it fails in Release mode
