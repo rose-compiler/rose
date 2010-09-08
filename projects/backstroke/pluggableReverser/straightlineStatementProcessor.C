@@ -104,11 +104,11 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 				SgFunctionDefinition* enclosingFunction = SageInterface::getEnclosingFunctionDefinition(basicBlock);
 				VariableRenaming::NumNodeRenameEntry definitions = getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosingFunction, varName);
 
-				//vector<SgExpression*> restoredValue = restoreVariable(varName, basicBlock->get_statements().back(), definitions);
+				vector<SgExpression*> restoredValue = restoreVariable(varName, currentVariableVersions, definitions);
 				SgAssignInitializer* reverseVarInitializer;
 				/*if (!restoredValue.empty())
 				{
-					reverseVarInitializer = NULL;//SageBuilder::buildAssignInitializer(restoredValue.front());
+					reverseVarInitializer = SageBuilder::buildAssignInitializer(restoredValue.front());
 				}
 				else*/
 				{
