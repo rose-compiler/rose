@@ -45,14 +45,14 @@ class EvaluationResult
 	SimpleCostModel cost_;
 
 	/** The processor which produced this evaluation result. This is used during the
-	 * generation phrase to generate the actual expression. */
+	* generation phrase to generate the actual expression. */
 	ReversalHandlerBase* processor_used_;
 
 	/** Additional attribute that the processor may choose to attach to the evaluation result. */
 	EvaluationResultAttributePtr attribute_;
 
 	/** Evaluation choices made in order to get this result. For example, for a basic block, what
-	 * were the evaluations of all the statements? */
+	* were the evaluations of all the statements? */
 	std::vector<EvaluationResult> child_results;
 
 public:
@@ -61,8 +61,8 @@ public:
 	:  var_table_(table), cost_(cost_model), processor_used_(processorUsed){ }
 
 	/** Add an evaluation result to the evalutions used in order to construct the current one.
-	  * This adds the cost of the child result to the total cost and adds the result to the list of
-	  * evaluation results. It also replaces the variable version table! */
+	* This adds the cost of the child result to the total cost and adds the result to the list of
+	* evaluation results. It also replaces the variable version table! */
 	void addChildEvaluationResult(const EvaluationResult& result);
 
 	/** Generate the reverse AST for the expression whose reversal result this class holds. */
@@ -136,13 +136,13 @@ protected:
 	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
 	/**
-	 * Given a variable and a version, returns an expression evaluating to the value of the variable
-	 * at the given version.
-	 *
-	 * @param variable name of the variable to be restored
-	 * @param availableVariables variables whos values are currently available
-	 * @return definitions the version of the variable which should be restored
-	 */
+	* Given a variable and a version, returns an expression evaluating to the value of the variable
+	* at the given version.
+	*
+	* @param variable name of the variable to be restored
+	* @param availableVariables variables whos values are currently available
+	* @return definitions the version of the variable which should be restored
+	*/
 	std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions);
 
@@ -199,13 +199,13 @@ class VariableValueRestorer
 public:
 
 	/**
-	 * Given a variable and a version, returns an expression evaluating to the value of the variable
-	 * at the given version.
-	 *
-	 * @param variable name of the variable to be restored
-	 * @param availableVariables variables whos values are currently available
-	 * @return definitions the version of the variable which should be restored
-	 */
+	* Given a variable and a version, returns an expression evaluating to the value of the variable
+	* at the given version.
+	*
+	* @param variable name of the variable to be restored
+	* @param availableVariables variables whos values are currently available
+	* @return definitions the version of the variable which should be restored
+	*/
 	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions) = 0;
 
