@@ -10,87 +10,50 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-SgExpression* ProcessorBase::pushVal(SgExpression* exp, SgType* type)
+vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
-    return event_processor_->pushVal(exp, type);
-}
-
-SgExpression* ProcessorBase::popVal(SgType* type)
-{
-    return event_processor_->popVal(type);
-}
-
-ExpressionReversalVec ProcessorBase::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
-{
-    return event_processor_->processExpression(exp, var_table, isReverseValueUsed);
-}
-
-StatementReversalVec ProcessorBase::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
-{
-    return event_processor_->processStatement(stmt, var_table);
-}
-
-bool ProcessorBase::isStateVariable(SgExpression* exp)
-{
-    return event_processor_->isStateVariable(exp);
-}
-
-VariableRenaming* ProcessorBase::getVariableRenaming()
-{
-	return event_processor_->getVariableRenaming();
-}
-
-vector<SgExpression*> ProcessorBase::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite, VariableRenaming::NumNodeRenameEntry definitions)
-{
-	return event_processor_->restoreVariable(variable, useSite, definitions);
-}
-
-ExpressionReversalVec EventProcessor::processExpression(SgExpression* exp, const VariableVersionTable& var_table, bool isReverseValueUsed)
-{
-    ExpressionReversalVec output;
+    vector<EvaluationResult> results;
 
     // If two results have the same variable table, we remove the one which has the higher cost.
-    
-    foreach (ExpressionProcessor* exp_processor, exp_processors_)
+    foreach (ExpressionReversalHandler* exp_processor, exp_processors_)
     {
-        ExpressionReversalVec result = exp_processor->process(exp, var_table, isReverseValueUsed);
+        vector<EvaluationResult> res = exp_processor->evaluate(exp, var_table, is_value_used);
 
-        foreach (const ExpressionReversal& exp1, result)
+        foreach (const EvaluationResult& r1, res)
         {
             bool discard = false;
-            for (size_t i = 0; i < output.size(); ++i)
+#if 1
+            for (size_t i = 0; i < results.size(); ++i)
             {
-                ExpressionReversal& exp2 = output[i];
-                if (exp1.var_table == exp2.var_table) 
+                EvaluationResult& r2 = results[i];
+                if (r1.getVarTable() == r2.getVarTable()) 
                 {
-                    if (exp1.cost > exp2.cost)
+                    if (r1.getCost() > r2.getCost())
                     {
                         discard = true;
-                        deepDelete(exp1.fwd_exp);
-                        deepDelete(exp1.rvs_exp);
                         break;
                     }
-                    else if (exp1.cost < exp2.cost)
+                    else if (r1.getCost() < r2.getCost())
                     {
-                        deepDelete(exp2.fwd_exp);
-                        deepDelete(exp2.rvs_exp);
-                        output.erase(output.begin() + i);
+                        results.erase(results.begin() + i);
                         --i;
                     }
                 }
             }
+#endif
 
             if (!discard)
-                output.push_back(exp1);
+                results.push_back(r1);
         }
         //output.insert(output.end(), result.begin(), result.end());
     }
-    return output;
+    return results;
 }
 
-StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+
+vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    StatementReversalVec output;
+    vector<EvaluationResult> results;
 
     // Here we update the variable version table, remove those which are not used any more.
     // Note that we process statements in reverse order in any scope, a variable is not used means
@@ -111,48 +74,45 @@ StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const V
     }
 #endif
 
-    foreach (StatementProcessor* stmt_processor, stmt_processors_)
+    foreach (StatementReversalHandler* stmt_processor, stmt_processors_)
     {
-        StatementReversalVec result = stmt_processor->process(stmt, var_table);
-        foreach (StatementReversal& stmt1, result)
+        vector<EvaluationResult> res = stmt_processor->evaluate(stmt, var_table);
+        foreach (EvaluationResult& r1, res)
         {
             // Remove those variables from variable version table if they are not useful anymore.
             foreach (SgExpression* var, vars_to_remove)
             {
-                stmt1.var_table.removeVariable(var);
+                r1.getVarTable().removeVariable(var);
             }
 
             // If two results have the same variable table, we remove the one which has the higher cost.
-
             bool discard = false;
-            for (size_t i = 0; i < output.size(); ++i)
+#if 1
+            for (size_t i = 0; i < results.size(); ++i)
             {
-                StatementReversal& stmt2 = output[i];
-                if (stmt1.var_table == stmt2.var_table) 
+                EvaluationResult& r2 = results[i];
+                if (r1.getVarTable() == r2.getVarTable()) 
                 {
-                    if (stmt1.cost > stmt2.cost)
+                    if (r1.getCost() > r2.getCost())
                     {
                         discard = true;
-                        deepDelete(stmt1.fwd_stmt);
-                        deepDelete(stmt1.rvs_stmt);
                         break;
                     }
-                    else if (stmt1.cost < stmt2.cost)
+                    else if (r1.getCost() < r2.getCost())
                     {
-                        deepDelete(stmt2.fwd_stmt);
-                        deepDelete(stmt2.rvs_stmt);
-                        output.erase(output.begin() + i);
+                        results.erase(results.begin() + i);
                         --i;
                     }
                 }
             }
+#endif
 
             if (!discard)
-                output.push_back(stmt1);
+                results.push_back(r1);
         }
-        //output.insert(output.end(), result.begin(), result.end());
+        //results.insert(results.end(), result.begin(), result.end());
     }
-    return output;
+    return results;
 }
 
 /**
@@ -160,25 +120,43 @@ StatementReversalVec EventProcessor::processStatement(SgStatement* stmt, const V
  * at the given version.
  *
  * @param variable name of the variable to be restored
- * @param useSite location where the reverse expression will go
+ * @param availableVariables variables whos values are currently available
  * @return definitions the version of the variable which should be restored
  */
-vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, SgNode* useSite,
+vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 	VariableRenaming::NumNodeRenameEntry definitions)
 {
-	//First, check if the variable needs restoring at all. If it has the desired version, there is nothing to do
 	vector<SgExpression*> results;
-	if (definitions == getVariableRenaming()->getReachingDefsAtNodeForName(useSite, variable))
+
+	//Check if we're already trying to restore this variable to this version. Prevents infinite recursion
+	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> variableAndVersion(variable, definitions);
+	if (activeValueRestorations.count(variableAndVersion) > 0)
+	{
+		return results;
+	}
+	else
+	{
+		activeValueRestorations.insert(variableAndVersion);
+	}
+
+
+	//Check if the variable needs restoring at all. If it has the desired version, there is nothing to do
+	if (availableVariables.matchesVersion(variable, definitions))
 	{
 		results.push_back(VariableRenaming::buildVariableReference(variable));
 		return results;
 	}
 
+	//Call the variable value restoreration handlers
 	foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
 	{
-		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, useSite, definitions);
+		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, availableVariables, definitions);
+		
 		results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
 	}
+
+	//Remove this variable from the active set
+	activeValueRestorations.erase(variableAndVersion);
 
 	return results;
 }
@@ -214,9 +192,23 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
     SgVarRefExp* var = isSgVarRefExp(exp);
     ROSE_ASSERT(var);
 
+	// The pointer parameter of the event function is state.
     foreach (SgInitializedName* name, event_->get_args())
     {
         if (name == var->get_symbol()->get_declaration())
+            if (isSgPointerType(name->get_type()) || isReferenceType(name->get_type()))
+                return true;
+    }
+
+    return false;
+}
+
+bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
+{
+	// The pointer parameter of the event function is state.
+    foreach (SgInitializedName* name, event_->get_args())
+    {
+        if (name == var[0])
             if (isSgPointerType(name->get_type()) || isReferenceType(name->get_type()))
                 return true;
     }
@@ -255,19 +247,45 @@ FuncDeclPairs EventProcessor::processEvent()
     FuncDeclPairs outputs;
 
     SimpleCostModel cost_model;
-    StatementReversalVec bodies = processStatement(body, var_table);
+    vector<EvaluationResult> results = evaluateStatement(body, var_table);
 
     
-    static int ctr = 0;
+    int ctr = 0;
     // Sort the generated bodies so that those with the least cost appears first.
-    sort(bodies.begin(), bodies.end());
+    sort(results.begin(), results.end());
 
-    foreach (StatementReversal& stmt_obj, bodies)
+    foreach (EvaluationResult& res, results)
     {
-        fixVariableReferences(stmt_obj.fwd_stmt);
-        fixVariableReferences(stmt_obj.rvs_stmt);
+		/************************************************************************/
+		// Here we check the validity for each result above. We have to make sure
+		// every state variable has the version 1.
 
-        string ctr_str = lexical_cast<string > (ctr++);
+		int flag = true;
+		
+		typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
+		const TableType& table = res.getVarTable().getTable();
+		foreach (const TableType::value_type& var, table)
+		{
+			if (isStateVariable(var.first))
+			{
+				if (var.second.size() != 1 || var.second.count(1) == 0)
+				{
+					flag = false;
+					break;
+				}
+			}
+		}
+		if (!flag)
+			continue;
+
+		/************************************************************************/
+
+        StatementReversal stmt = res.generateReverseAST(body);
+
+        fixVariableReferences(stmt.fwd_stmt);
+        fixVariableReferences(stmt.rvs_stmt);
+
+        string ctr_str = lexical_cast<string> (ctr++);
 
         SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
         SgFunctionDeclaration* fwd_func_decl =
@@ -275,7 +293,7 @@ FuncDeclPairs EventProcessor::processEvent()
                     fwd_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-        SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt_obj.fwd_stmt));
+        SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
         SgName rvs_func_name = event_->get_name() + "_reverse" + ctr_str;
         SgFunctionDeclaration* rvs_func_decl =
@@ -283,14 +301,13 @@ FuncDeclPairs EventProcessor::processEvent()
                     rvs_func_name, event_->get_orig_return_type(),
                     isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
         SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-        SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt_obj.rvs_stmt));
+        SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
 
         // Add the cost information as comments to generated functions.
-        string comment = "Cost: " + lexical_cast<string>(stmt_obj.cost.getCost());
+        string comment = "Cost: " + lexical_cast<string>(res.getCost().getCost());
         attachComment(fwd_func_decl, comment);
         attachComment(rvs_func_decl, comment);
-
 
         outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
     }

@@ -101,12 +101,6 @@ namespace backstroke_util
         /** Returns if an expression contains any subexpression which modifies any value. */
         bool containsModifyingExpression(SgExpression* exp);
 
-        /** Returns if an expression modifies any value. */
-        bool isModifyingExpression(SgExpression* exp);
-
-        /** Returns if an expression contains any subexpression which modifies any value. */
-        bool containsModifyingExpression(SgExpression* exp);
-
         /** Returns if an expression is an assignment operator (including +=, etc.). */
         bool isAssignmentOp(SgExpression* e);
 }
