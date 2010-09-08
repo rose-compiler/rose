@@ -311,6 +311,10 @@ public:
 
     MemoryMap() : sorted(false) {}
 
+    /** Clear the entire memory map by erasing all addresses that are defined. Erasing an address range frees reference
+     *  counted anonymous mappings but not user-provided buffers. */
+    void clear();
+
     /** Insert the specified map element. Adjacent elements are coalesced when possible (see MapElement::merge()). */
     void insert(MapElement elmt);
 

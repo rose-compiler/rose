@@ -290,6 +290,12 @@ MemoryMap::MapElement::merge(const MapElement &other)
 }
 
 void
+MemoryMap::clear()
+{
+    elements.clear();
+}
+
+void
 MemoryMap::insert(MapElement add)
 {
     if (add.size==0)
