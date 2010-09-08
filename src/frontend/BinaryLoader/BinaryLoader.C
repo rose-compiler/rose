@@ -318,8 +318,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             }
             fprintf(debug, "    Specified offset:    0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
                     section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
-            fprintf(debug, "    Specified alignment: memory=[%"PRIu64",%"PRIu64"], file=%"PRIu64"\n",
-                    section->get_mapped_alignment(), section->get_mapped_alignment(), section->get_file_alignment());
+            fprintf(debug, "    Specified alignment: memory=[%"PRIu64",%"PRIu64"], file=[%"PRIu64",%"PRIu64"]\n",
+                    section->get_mapped_alignment(), section->get_mapped_alignment(),
+                    section->get_file_alignment(), section->get_file_alignment());
         }
 
         /* Figure out alignment, etc. */
@@ -332,13 +333,15 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                                                    &offset, &file_size,               /* file location outputs */
                                                    &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
                                                    &resolve);                         /* conflict resolution output */
+        rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
+        rose_addr_t falign_hi = falign_lo;
 
         if (debug) {
             if (CONTRIBUTE_NONE==contrib || 0==mem_size) {
-                fprintf(debug, "  Does not contribute to map\n");
+                fprintf(debug, "    Does not contribute to map\n");
             } else {
-                fprintf(debug, "    Adjusted alignment:  memory=[%"PRIu64",%"PRIu64"], file=%"PRIu64"\n",
-                        malign_lo, malign_hi, section->get_file_alignment());
+                fprintf(debug, "    Adjusted alignment:  memory=[%"PRIu64",%"PRIu64"], file=[%"PRIu64",%"PRIu64"]\n",
+                        malign_lo, malign_hi, falign_lo, falign_hi);
                 fprintf(debug, "    Aligned VA:          0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64,
                         va, mem_size, va+mem_size);
                 if (section->get_header()->get_base_va()+section->get_mapped_preferred_rva()==va &&
