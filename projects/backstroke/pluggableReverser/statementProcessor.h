@@ -4,27 +4,24 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
-class BasicStatementProcessor : public StatementProcessor
+class CombinatorialExprStatementHandler : public StatementReversalHandler
 {
-    StatementReversalVec processReturnStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    StatementReversalVec processExprStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    StatementReversalVec processVariableDeclaration(SgStatement* stmt, const VariableVersionTable& var_table);
-
-    StatementReversalVec processBasicBlock(SgStatement* stmt, const VariableVersionTable& var_table);
-
-
 public:
-    virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+    CombinatorialExprStatementHandler() { name_ = "Combinatorial Expression Statement Handler"; }
+
+    virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
-
-/** Handles return statements. The reverse of a return statement is a no-op. */
-class ReturnStatementProcessor : public StatementProcessor
+class CombinatorialBasicBlockHandler : public StatementReversalHandler
 {
-	public:
-		virtual StatementReversalVec process(SgStatement* stmt, const VariableVersionTable& var_table);
+public:
+    CombinatorialBasicBlockHandler() { name_ = "Combinatorial Basic Block Handler"; }
+
+    virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
+    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
+
+
 
 #endif
