@@ -19,12 +19,6 @@ inline void preventConstructionOnStack(SgNode* n)
    {
 #ifndef NDEBUG
 #ifdef _MSC_VER
-  // This is non-GNU compiler specific code being used for the Windows port of ROSE (we should test it under GNU as well).
-
-  // DQ (11/28/2009): There does not appear to be an equivalent function in Windows for GNU __builtin_frame_address()
-  // tps (11/24/2009) : What is the MS version of __builtin_frame_address
-  // FIXME: This needs to be fixed.
-
   // DQ (11/28/2009): This was a fix suggested by Robb.
   // void* frameaddr = 0;
   // Build an "auto" variable (should be located near the stack frame, I think).

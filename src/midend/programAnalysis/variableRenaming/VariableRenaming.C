@@ -249,16 +249,31 @@ VariableRenaming::VarName VariableRenaming::getVarName(SgNode* node)
 }
 
 
-bool VariableRenaming::isFromLibrary(SgInitializedName* initName)
+bool VariableRenaming::isFromLibrary(SgNode* node)
 {
-  Sg_File_Info* fi = initName->get_file_info();
+  Sg_File_Info* fi = node->get_file_info();
   if (fi->isCompilerGenerated())
     return true;
   string filename = fi->get_filenameString();
-  if ((filename.find("/include/") != std::string::npos))
+  //cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
+  if ((filename.find("include") != std::string::npos))
+  {
+      //cout << "Found 'include' in string." << endl;
       return true;
+  }
 
   return false;
+}
+
+bool VariableRenaming::isBuiltinVar(const VarName& var)
+{
+    //Test if the variable is compiler generated.
+    if(var[0]->get_name().getString().find("__") == 0)
+    {
+        //We are compiler generated, return true.
+        return true;
+    }
+    return false;
 }
 
 bool VariableRenaming::isPrefixOfName(VarName name, VarName prefix)
@@ -292,7 +307,6 @@ void VariableRenaming::run()
     expandedDefTable.clear();
     defTable.clear();
     useTable.clear();
-    useLocTable.clear();
     firstDefList.clear();
     nodeRenameTable.clear();
     numRenameTable.clear();
@@ -313,7 +327,12 @@ void VariableRenaming::run()
     {
         SgFunctionDeclaration* func = (*iter)->get_declaration();
         ROSE_ASSERT(func);
-        uniqueTrav.traverse(func);
+        if(!isFromLibrary(func))
+        {
+            if(DEBUG_MODE)
+                cout << "Running UniqueNameTrav on " << func->get_name().getString() << func << endl;
+            uniqueTrav.traverse(func);
+        }
     }
 
     if(DEBUG_MODE)
@@ -324,9 +343,12 @@ void VariableRenaming::run()
     {
         SgFunctionDeclaration* func = (*iter)->get_declaration();
         ROSE_ASSERT(func);
-        if(DEBUG_MODE)
-            cout << "Running defUseTrav on function: " << func->get_name().getString() << endl;
-        defUseTrav.traverse(func);
+        if(!isFromLibrary(func))
+        {
+            if(DEBUG_MODE)
+                cout << "Running defUseTrav on function: " << func->get_name().getString() << func << endl;
+            defUseTrav.traverse(func);
+        }
     }
 
     if(DEBUG_MODE)
@@ -351,9 +373,12 @@ void VariableRenaming::run()
     {
         SgFunctionDefinition* func = (*iter);
         ROSE_ASSERT(func);
-        if(DEBUG_MODE)
-            cout << "Running DefUse on function: " << func->get_declaration()->get_name().getString() << endl;
-        runDefUse(func);
+        if(!isFromLibrary(func))
+        {
+            if(DEBUG_MODE)
+                cout << "Running DefUse on function: " << func->get_declaration()->get_name().getString() << func << endl;
+            runDefUse(func);
+        }
     }
 
     return;
@@ -767,6 +792,10 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
 
 VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
+    if(varRename->getDebugExtra())
+    {
+        cout << "Examining " << node->class_name() << node << endl;
+    }
     //First we check if this is an initName
     if(isSgInitializedName(node))
     {
@@ -822,10 +851,21 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         //Check if the LHS has at least one varRef
         if(attrs[0].getRefs().size() > 0)
         {
+            bool thisExp = false;
+            //Check if our LHS varRef is the 'this' expression
+            if(isSgThisExp(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]))
+            {
+                thisExp = true;
+            }
+
             //Get the unique name from the highest varRef in the LHS, since this will have the most
             //fully qualified UniqueName.
-            VarUniqueName* lhsName = dynamic_cast<VarUniqueName*>(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]->getAttribute(VariableRenaming::varKeyTag));
-            ROSE_ASSERT(lhsName);
+            VarUniqueName* lhsName;
+            if(!thisExp)
+            {
+                lhsName = dynamic_cast<VarUniqueName*>(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]->getAttribute(VariableRenaming::varKeyTag));
+                ROSE_ASSERT(lhsName);
+            }
 
             //Check if the RHS has a single varRef
             if(attrs[1].getRefs().size() == 1)
@@ -834,33 +874,70 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
                 if(varRef)
                 {
-                    //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-                    VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
-                    uName->setUsesThis(lhsName->getUsesThis());
-                    varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+                    if(!thisExp)
+                    {
+                        //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
+                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
+                        uName->setUsesThis(lhsName->getUsesThis());
+                        varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
-                    VarUniqueName* uName2 = new VarUniqueName(*uName);
-                    node->setAttribute(VariableRenaming::varKeyTag,uName2);
+                        VarUniqueName* uName2 = new VarUniqueName(*uName);
+                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
+                    }
+                    else
+                    {
+                        //Create the UniqueName from the current varRef, and stores that it uses 'this'
+                        VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
+                        uName->setUsesThis(true);
+                        varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+
+                        VarUniqueName* uName2 = new VarUniqueName(*uName);
+                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
+                    }
 
                     //Return the combination of the LHS and RHS varRefs
                     return VariableRenaming::VarRefSynthAttr(attrs[0].getRefs(), varRef);
                 }
                 else
                 {
-                    //RHS could be a function call.
-                    return VariableRenaming::VarRefSynthAttr(varRef);
+                    //Since the RHS has no varRef, we can no longer
+                    //establish a direct reference chain between the LHS and any varRefs
+                    //further up the tree.
+                    return VariableRenaming::VarRefSynthAttr();
                 }
             }
             else
             {
-                //RHS could be a function call.
-                return attrs[0];
-            }   
+                //Since the RHS has no varRef, we can no longer
+                //establish a direct reference chain between the LHS and any varRefs
+                //further up the tree.
+                return VariableRenaming::VarRefSynthAttr();
+            }
         }
         else
         {
-            cout << "Error: LHS of dot has no varRefs." << endl;
-            ROSE_ASSERT(false);
+            
+            //The LHS has no varRefs, so there can be no explicit naming of varRefs above this point.
+
+            //We need to check if the RHS had a name assigned.
+            //If so, we need to remove it, because it will be incorrect.
+            if(attrs[1].getRefs().size() == 1)
+            {
+                SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs()[0]);
+
+                if(varRef)
+                {
+                    //If the RHS is a varRef and has the naming attribute set, remove it
+                    if(varRef->attributeExists(VariableRenaming::varKeyTag))
+                    {
+                        VarUniqueName* name = dynamic_cast<VarUniqueName*>(varRef->getAttribute(VariableRenaming::varKeyTag));
+                        varRef->removeAttribute(VariableRenaming::varKeyTag);
+                        delete name;
+                    }
+                }
+            }
+
+            return VarRefSynthAttr();
         }
     }
     //Now we check if we have reached an ArrowExpression, we have to merge names.
@@ -925,20 +1002,43 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                 }
                 else
                 {
-                    //RHS could be a function call
-                    return VariableRenaming::VarRefSynthAttr(varRef);
+                    //Since the RHS has no varRef, we can no longer
+                    //establish a direct reference chain between the LHS and any varRefs
+                    //further up the tree.
+                    return VariableRenaming::VarRefSynthAttr();
                 }
             }
             else
             {
-                //RHS could be a function call, and wouldn't have any varRefs.
+                //Since the RHS has no varRef, we can no longer
+                //establish a direct reference chain between the LHS and any varRefs
+                //further up the tree.
                 return VariableRenaming::VarRefSynthAttr();
             }
         }
         else
         {
-            cout << "Error: LHS of arrow has no varRefs." << endl;
-            ROSE_ASSERT(false);
+            //The LHS has no varRefs, so there can be no explicit naming of varRefs above this point.
+
+            //We need to check if the RHS had a name assigned.
+            //If so, we need to remove it, because it will be incorrect.
+            if(attrs[1].getRefs().size() == 1)
+            {
+                SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs()[0]);
+
+                if(varRef)
+                {
+                    //If the RHS is a varRef and has the naming attribute set, remove it
+                    if(varRef->attributeExists(VariableRenaming::varKeyTag))
+                    {
+                        VarUniqueName* name = dynamic_cast<VarUniqueName*>(varRef->getAttribute(VariableRenaming::varKeyTag));
+                        varRef->removeAttribute(VariableRenaming::varKeyTag);
+                        delete name;
+                    }
+                }
+            }
+
+            return VarRefSynthAttr();
         }
     }
     //Now we hit the default case. We should return a merged list.
@@ -958,7 +1058,7 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 {
     if(varRename->getDebug())
     {
-        cout << "---------<" << node->class_name() << ">-------" << node << endl;
+        cout << "---------<" << node->class_name() << node << ">-------" << node << endl;
     }
     //We want to propogate the def/use information up from the varRefs to the higher expressions.
     if(isSgInitializedName(node))
@@ -1414,7 +1514,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
         }
     }
 
-    //For every originalDef, insert expanded defs for any propogated defs
+    //For every originalDef, insert expanded defs for any propagated defs
     //that have an originalDef as a prefix
     VarName expVar;
     foreach(TableEntry::value_type& entry, originalDefTable[node])
@@ -1785,8 +1885,17 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
     //We want to see if the name is a class member (no def so far)
     if(firstDefList.count(rootName) == 0)
     {
+        //Check if the variable is a compiler builtin
+        if(isBuiltinVar(rootName))
+        {
+            //Add a definition at the start of the function
+            SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+            ROSE_ASSERT(func);
+
+            firstDefList[rootName] = func;
+        }
         //Check if the variable is declared in a class scope 
-        if(isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
+        else if(isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
         {
             //It is declared in class scope.
             //Get our enclosing function definition to insert the first definition into.
@@ -1800,7 +1909,7 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
         else if(isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
         {
             //It is declared in namespace scope.
-            //Gtet our enclosing function definition to insert the first definition into.
+            //Get our enclosing function definition to insert the first definition into.
 
             SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
             ROSE_ASSERT(func);
@@ -1810,6 +1919,8 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
         else
         {
             cout << "Error: Found variable with no firstDef point that is not a class or namespace member." << endl;
+            cout << "Variable Scope: " << SageInterface::getScope(rootName[0])->class_name() << SageInterface::getScope(rootName[0]) << endl;
+            cout << rootName[0]->class_name() << rootName[0] << "@" << rootName[0]->get_file_info()->get_line() << ":" << rootName[0]->get_file_info()->get_col() << endl;
             ROSE_ASSERT(false);
         }
     }
@@ -2174,6 +2285,49 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getUsesAtNodeForName(SgNo
     }
 
     return res;
+}
+
+VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalUsesAtNode(SgNode* node)
+{
+	//The original variables are always attached to higher levels in the AST. For example,
+	//if we have p.x, the dot expression has the varname p.x attached to it, while its left
+	//child has the varname p. Hence, if we get the top nodes in the AST that are variables, we'll have all the
+	//original (not exanded) variables used in the AST.
+	class FindOriginalVariables : public AstTopDownProcessing<bool>
+	{
+	public:
+		set<VariableRenaming::VarName> originalVariablesUsed;
+
+		virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentVariable)
+		{
+			if (isParentVariable)
+			{
+				return true;
+			}
+
+			if (VariableRenaming::getVarName(node) != VariableRenaming::emptyName)
+			{
+				originalVariablesUsed.insert(VariableRenaming::getVarName(node));
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	};
+	FindOriginalVariables originalVariableUsesTraversal;
+	originalVariableUsesTraversal.traverse(node, false);
+
+	VariableRenaming::NumNodeRenameTable result;
+	foreach(VariableRenaming::VarName varName, originalVariableUsesTraversal.originalVariablesUsed)
+	{
+		ROSE_ASSERT(result.count(varName) == 0);
+		VariableRenaming::NumNodeRenameEntry varDefs = getUsesAtNodeForName(node, varName);
+		result[varName] = varDefs;
+	}
+
+	return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsAtNode(SgNode* node)

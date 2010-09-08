@@ -46,11 +46,9 @@ LoaderPE::align_values(SgAsmGenericSection *section, rose_addr_t *va_p, rose_add
     rose_addr_t file_size = ALIGN_UP(section->get_size(), file_alignment);
 
     /* Map the entire section's file content (aligned) or the requested map size, whichever is larger. */
-//#ifdef _MSC_VER
-//	rose_addr_t mapped_size = _cpp_max(section->get_mapped_size(), file_size);
-//#else
+
 	rose_addr_t mapped_size = std::max(section->get_mapped_size(), file_size);
-//#endif
+
     /* Align file offset downward but do not adjust file size. */
     rose_addr_t file_offset = ALIGN_DN(section->get_offset(), file_alignment);
 

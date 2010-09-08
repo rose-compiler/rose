@@ -154,6 +154,8 @@ Outliner::outline (SgPragmaDeclaration* decl)
        // This will search the parent for the location of decl, but this is not found
 #ifndef _MSC_VER
 	   LowLevelRewrite::remove (decl);
+#else
+	   ROSE_ASSERT(false);
 #endif
 #else
        // DQ (2/24/2009): Added more direct concept of remove.
@@ -311,6 +313,7 @@ collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
   } // end for 
 #ifdef _MSC_VER
 //tps (12/09/09) : error C4716: '`anonymous namespace'::collectAbstractHandles' : must return a value
+#pragma warning "PragmaInterface: Returning arbitrary value";
   return 0;
 #endif
 }

@@ -1,5 +1,4 @@
-#include "sage3basic.h"
-//#include "staticCFG.h"
+#include "staticCFG.h"
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
@@ -8,37 +7,6 @@
 namespace StaticCFG
 {
 
-// This class is to store index of each node as an attribuite of SgGraphNode.
-class CFGNodeAttribute : public AstAttribute
-{
-    int index_;
-    SgIncidenceDirectedGraph* graph_;
-
-public:
-    CFGNodeAttribute(int idx = 0, SgIncidenceDirectedGraph* graph = NULL) 
-        : index_(idx), graph_(graph) {}
-
-    int getIndex() const { return index_; }
-    void setIndex(int idx) { index_ = idx; }
-
-    const SgIncidenceDirectedGraph* getGraph() const { return graph_; }
-    SgIncidenceDirectedGraph* getGraph() { return graph_; }
-
-    void setGraph(SgIncidenceDirectedGraph* graph)
-    { graph_ = graph; }
-};
-
-template <class EdgeT>
-class CFGEdgeAttribute : public AstAttribute
-{
-    EdgeT edge_;
-public:
-    CFGEdgeAttribute(const EdgeT& e) : edge_(e) {}
-    void setEdge(const EdgeT& e)
-    { edge_ = e; }
-    EdgeT getEdge() const
-    { return edge_; }
-};
 
 void CFG::clearNodesAndEdges()
 {
@@ -152,9 +120,6 @@ void CFG::buildCFG(CFGNode n)
     foreach (const VirtualCFG::CFGEdge& edge, outEdges)
     {
         CFGNode tar = edge.target();
-#if 0
-        cout << tar.toString() << endl;
-#endif
 
         SgGraphNode* to = NULL;
         if (all_nodes_.count(tar) > 0)
@@ -211,14 +176,10 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         graph_->addNode(from);
     }
 
-    //std::cout << n.getIndex() << std::endl;
     std::vector<EdgeT> outEdges = n.outEdges();
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
-#if 0
-        std::cout << tar.toString() << std::endl;
-#endif
 
         SgGraphNode* to = NULL;
         if (all_nodes.count(tar) > 0)
