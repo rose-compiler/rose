@@ -34,6 +34,11 @@ Description:\n\
     Causes the disassembler to spew (or not) diagnostics to standard error.\n\
     This is intended for ROSE developers. The default is to not spew.\n\
 \n\
+  --debug-loader\n\
+  --no-debug-loader\n\
+    Causes the loader/linker to spew (or not) diagnostics to standard error.\n\
+    This is intended for ROSE developers. The default is to not spew.\n\
+\n\
   --debug-partitioner\n\
   --no-debug-partitioner\n\
     Causes the instruction partitioner to spew (or not) diagnostics to standard\n\
@@ -41,8 +46,8 @@ Description:\n\
 \n\
   --debug\n\
   --no-debug\n\
-    Convenience switch that turns on (or off) the --debug-disassembler and\n\
-    --debug-partitioner switches.\n\
+    Convenience switch that turns on (or off) the --debug-disassembler,\n\
+    --debug-loader, and --debug-partitioner switches.\n\
 \n\
   --disassemble\n\
     Call the disassembler explicitly, using the instruction search flags\n\
@@ -611,7 +616,7 @@ int
 main(int argc, char *argv[]) 
 {
     bool show_bad = false;
-    bool do_debug_disassembler = false, do_debug_partitioner=false;
+    bool do_debug_disassembler=false, do_debug_partitioner=false, do_debug_loader=false;
     bool do_reassemble = false;
     bool do_ast_dot = false;
     bool do_cfg_dot = false;
@@ -719,14 +724,20 @@ main(int argc, char *argv[])
             }
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
+            do_debug_loader = true;
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--no-debug")) {
             do_debug_disassembler = false;
+            do_debug_loader = false;
             do_debug_partitioner = false;
         } else if (!strcmp(argv[i], "--debug-disassembler")) {
             do_debug_disassembler = true;
         } else if (!strcmp(argv[i], "--no-debug-disassembler")) {
             do_debug_disassembler = false;
+        } else if (!strcmp(argv[i], "--debug-loader")) {
+            do_debug_loader = true;
+        } else if (!strcmp(argv[i], "--no-debug-loader")) {
+            do_debug_loader = false;
         } else if (!strcmp(argv[i], "--debug-partitioner")) {
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--no-debug-partitioner")) {
@@ -859,11 +870,9 @@ main(int argc, char *argv[])
         interp = do_dos ? interps.front() : interps.back();
 
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
-#if 0
-        loader->set_perform_dynamic_linking(true);
-        loader->set_debug(stderr);
-        loader->add_directory("/lib32");
-#endif
+        if (do_debug_loader) loader->set_debug(stderr);
+        //loader->set_perform_dynamic_linking(true);
+        //loader->add_directory("/lib32");
         loader->load(interp);
     }
 
