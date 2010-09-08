@@ -307,7 +307,6 @@ void VariableRenaming::run()
     expandedDefTable.clear();
     defTable.clear();
     useTable.clear();
-    useLocTable.clear();
     firstDefList.clear();
     nodeRenameTable.clear();
     numRenameTable.clear();
@@ -1515,7 +1514,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
         }
     }
 
-    //For every originalDef, insert expanded defs for any propogated defs
+    //For every originalDef, insert expanded defs for any propagated defs
     //that have an originalDef as a prefix
     VarName expVar;
     foreach(TableEntry::value_type& entry, originalDefTable[node])
@@ -2286,6 +2285,49 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getUsesAtNodeForName(SgNo
     }
 
     return res;
+}
+
+VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalUsesAtNode(SgNode* node)
+{
+	//The original variables are always attached to higher levels in the AST. For example,
+	//if we have p.x, the dot expression has the varname p.x attached to it, while its left
+	//child has the varname p. Hence, if we get the top nodes in the AST that are variables, we'll have all the
+	//original (not exanded) variables used in the AST.
+	class FindOriginalVariables : public AstTopDownProcessing<bool>
+	{
+	public:
+		set<VariableRenaming::VarName> originalVariablesUsed;
+
+		virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentVariable)
+		{
+			if (isParentVariable)
+			{
+				return true;
+			}
+
+			if (VariableRenaming::getVarName(node) != VariableRenaming::emptyName)
+			{
+				originalVariablesUsed.insert(VariableRenaming::getVarName(node));
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	};
+	FindOriginalVariables originalVariableUsesTraversal;
+	originalVariableUsesTraversal.traverse(node, false);
+
+	VariableRenaming::NumNodeRenameTable result;
+	foreach(VariableRenaming::VarName varName, originalVariableUsesTraversal.originalVariablesUsed)
+	{
+		ROSE_ASSERT(result.count(varName) == 0);
+		VariableRenaming::NumNodeRenameEntry varDefs = getUsesAtNodeForName(node, varName);
+		result[varName] = varDefs;
+	}
+
+	return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsAtNode(SgNode* node)
