@@ -80,7 +80,7 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const 
     if (body == NULL)
         return results;
 
-    cout << body->get_statements().size() << endl;
+    //cout << body->get_statements().size() << endl;
     if (body->get_statements().empty())
     {
         results.push_back(EvaluationResult(this, var_table));
@@ -92,6 +92,34 @@ vector<EvaluationResult> BasicBlockProcessor::evaluate(SgStatement* stmt, const 
 
     int i = 0;
     queue[i].push_back(EvaluationResult(this, var_table));
+
+	// First, we set the version of every local variable inside of this basic block to NULL.
+	// This is because the initial variable table contains the final version at the end of its
+	// enclosing function definition, which will inhibit the use of variable value restorer.
+	foreach (SgStatement* stmt, body->get_statement())
+	{
+		if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
+		{
+			foreach (SgInitializedName* init_name, var_decl->get_variables())
+			{
+				var_table.setNullVersion(init_name);
+			}
+		}
+	}
+
+	// For each local variable, we try to restore it using akgul's method first. If we cannot get its
+	// final value for free, we should consider whether to store its value in forward event. We use attribute
+	// to record our selections.
+	foreach (SgStatement* stmt, body->get_statement())
+	{
+		if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
+		{
+			foreach (SgInitializedName* init_name, var_decl->get_variables())
+			{
+				var_table.setNullVersion(init_name);
+			}
+		}
+	}
 
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {
