@@ -869,6 +869,11 @@ main(int argc, char *argv[])
         ROSE_ASSERT(!interps.empty());
         interp = do_dos ? interps.front() : interps.back();
 
+        /* Clear the interpretation's memory map because frontend() may have already done the mapping. We want to re-do the
+         * mapping here because we may want to see debugging output, etc. */
+        if (interp->get_map()!=NULL)
+            interp->get_map()->clear();
+
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
         if (do_debug_loader) loader->set_debug(stderr);
         //loader->set_perform_dynamic_linking(true);
