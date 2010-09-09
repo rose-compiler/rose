@@ -133,8 +133,11 @@ vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName 
 	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> variableAndVersion(variable, definitions);
 	if (activeValueRestorations.count(variableAndVersion) > 0)
 	{
+		//printf("Detected infinite recursion. The VVT is\n");
+		//availableVariables.print();
 		return results;
-	} else
+	}
+	else
 	{
 		activeValueRestorations.insert(variableAndVersion);
 	}
@@ -144,16 +147,16 @@ vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName 
 	if (availableVariables.matchesVersion(variable, definitions))
 	{
 		results.push_back(VariableRenaming::buildVariableReference(variable));
-		return results;
 	}
-
-	//Call the variable value restoreration handlers
-
-	foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
+	else
 	{
-		vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, availableVariables, definitions);
+		//Call the variable value restoreration handlers
+		foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
+		{
+			vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, availableVariables, definitions);
 
-		results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
+			results.insert(results.end(), restorerOutput.begin(), restorerOutput.end());
+		}
 	}
 
 	//Remove this variable from the active set

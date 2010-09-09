@@ -70,6 +70,10 @@ int main(int argc, char * argv[])
 	event_processor.addStatementProcessor(new IfStatementProcessor);
 	event_processor.addStatementProcessor(new ReturnStatementHandler);
 
+	//Variable value extraction handlers
+	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
+	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
+
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
 		string func_name = decl->get_name();

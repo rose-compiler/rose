@@ -42,6 +42,7 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 				
 				vector<EvaluationResult> result;
 				result.push_back(reversalInfo);
+
 				return result;
 			}
 		}
@@ -394,6 +395,7 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 			VariableRenaming::NumNodeRenameEntry lhsVersion = variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, lhsVar);
 			printf("Recursively restoring variable '%s' to its version in line %d\n", VariableRenaming::keyToString(lhsVar).c_str(),
 				useSite->get_file_info()->get_line());
+			//availableVariables.print();
 			results = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
 			if (!results.empty())
 			{

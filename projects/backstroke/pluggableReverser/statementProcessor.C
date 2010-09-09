@@ -31,14 +31,15 @@ vector<EvaluationResult> CombinatorialExprStatementHandler::evaluate(SgStatement
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     if (exp_stmt == NULL)
         return results;
-    
-     vector<EvaluationResult> potentialExprReversals = evaluateExpression(exp_stmt->get_expression(), var_table, false);
-	 foreach(EvaluationResult& potentialExprReversal, potentialExprReversals)
-	 {
-		 EvaluationResult statementResult(this, var_table);
-		 statementResult.addChildEvaluationResult(potentialExprReversal);
-		 results.push_back(statementResult);
-	 }
+
+	vector<EvaluationResult> potentialExprReversals = evaluateExpression(exp_stmt->get_expression(), var_table, false);
+
+	foreach(const EvaluationResult& potentialExprReversal, potentialExprReversals)
+	{
+		EvaluationResult statementResult(this, var_table);
+		statementResult.addChildEvaluationResult(potentialExprReversal);
+		results.push_back(statementResult);
+	}
 
     ROSE_ASSERT(!results.empty());
 
@@ -53,7 +54,8 @@ StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* st
 vector<EvaluationResult> VariableDeclarationHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	vector<EvaluationResult> results;
-	results.push_back(EvaluationResult(this, var_table));
+	if (isSgVariableDeclaration(stmt))
+		results.push_back(EvaluationResult(this, var_table));
 	return results;
 }
 
@@ -146,6 +148,7 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 {
     vector<EvaluationResult> results;
 	VariableVersionTable new_var_table = var_table;
+	vector<SgInitializedName*> local_vars;
     
     SgBasicBlock* body = isSgBasicBlock(stmt);
     if (body == NULL)
@@ -157,21 +160,6 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
         results.push_back(EvaluationResult(this, var_table));
         return results;
     }
-
-
-	// First, we set the version of every local variable inside of this basic block to NULL.
-	// This is because the initial variable table contains the final version at the end of its
-	// enclosing function definition, which will inhibit the use of variable value restorer.
-	foreach (SgStatement* stmt, body->get_statements())
-	{
-		if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt))
-		{
-			foreach (SgInitializedName* init_name, var_decl->get_variables())
-			{
-				new_var_table.setNullVersion(init_name);
-			}
-		}
-	}
 	
     // Use two vectors to store intermediate results.
     vector<EvaluationResult> queue[2];
@@ -199,6 +187,8 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 					//First, check if we can restore the variable without savings its value.
 					VariableRenaming::VarName var_name;
 					var_name.push_back(init_name);
+					//cout << "!!!" << VariableRenaming::keyToString(var_name) << ":" << getLastVersion(init_name).begin()->first << endl;
+					//res.getVarTable().print();
 					vector<SgExpression*> restored_value = restoreVariable(var_name, res.getVarTable(), getLastVersion(init_name));
 
 					if (!restored_value.empty())
@@ -207,7 +197,11 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 						EvaluationResult new_res = res;
 						attr.local_var_restorer[init_name] = make_pair(true, restored_value[0]);
 						new_res.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute(attr)));
+						// Remember to update the version of this variable.
+						new_res.getVarTable().setLastVersion(init_name);
 						queue[1 - i].push_back(new_res);
+
+						//new_res.getVarTable().print();
 					} 
 					else
 					{
@@ -245,36 +239,34 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 
     reverse_foreach (SgStatement* stmt, body->get_statements())
     {
-        foreach (EvaluationResult& existingPartialResult, queue[i])
+        foreach (const EvaluationResult& existingPartialResult, queue[i])
         {
             vector<EvaluationResult> results = evaluateStatement(stmt, existingPartialResult.getVarTable());
             
             ROSE_ASSERT(!results.empty());
 
-            foreach (EvaluationResult& res, results)
+            foreach (const EvaluationResult& res, results)
             {
                 // Update the result.
                 EvaluationResult new_result(existingPartialResult);
 				new_result.addChildEvaluationResult(res);
+				new_result.setVarTable(res.getVarTable());
 
                 queue[1-i].push_back(new_result);
             }
         }
-        
         queue[i].clear();
         // Switch the index between 0 and 1.
         i = 1 - i;
     }
 
-#if 0
     // Remove all local variables from variable version table since we will not use them anymore. 
     // This is helpful to prune branches by comparing variable version tables. 
     foreach (EvaluationResult& result, queue[i])
     {
         foreach (SgInitializedName* var, local_vars)
-            result.var_table.removeVariable(var);
+            result.getVarTable().removeVariable(var);
     }
-#endif
 
     return queue[i];
 }
