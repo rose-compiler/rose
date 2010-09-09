@@ -894,6 +894,7 @@ string
 globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer )
    {
      string returnString;
+
 // tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
 #pragma omp critical (unparser)
      {
@@ -944,7 +945,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
   // DQ (7/19/2007): Remove lineNumber from constructor parameter list.
   // int lineNumber = 0;  // Zero indicates that ALL lines should be unparsed
 
-     // Initialize the Unparser using a special string stream inplace of the usual file stream 
+  // Initialize the Unparser using a special string stream inplace of the usual file stream 
      ostringstream outputString;
 
      const SgLocatedNode* locatedNode = isSgLocatedNode(astNode);
@@ -1155,24 +1156,60 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              {
                const SgStatement* stmt = isSgStatement(astNode);
 
+            // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-               roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
+            // roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
+               if (SageInterface::is_Fortran_language() == true)
+                  {
+                 // Unparse as a Fortran code.
+                    roseUnparser.u_fortran_locatedNode->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
+                  }
+                 else
+                  {
+                 // Unparse as a C/C++ code.
+                    roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
+                  }
              }
 
           if (isSgExpression(astNode) != NULL)
              {
                const SgExpression* expr = isSgExpression(astNode);
 
+            // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-               roseUnparser.u_exprStmt->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+            // roseUnparser.u_exprStmt->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+               if (SageInterface::is_Fortran_language() == true)
+                  {
+                 // Unparse as a Fortran code.
+                    roseUnparser.u_fortran_locatedNode->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+                  }
+                 else
+                  {
+                 // Unparse as a C/C++ code.
+                    roseUnparser.u_exprStmt->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+                  }
              }
 
           if (isSgType(astNode) != NULL)
              {
                const SgType* type = isSgType(astNode);
 
+            // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
+#if 1
                roseUnparser.u_type->unparseType ( const_cast<SgType*>(type), inheritedAttributeInfo );
+#else
+               if (SageInterface::is_Fortran_language() == true)
+                  {
+                 // Unparse as a Fortran code.
+                    roseUnparser.u_fortran_locatedNode->unparseType ( const_cast<SgType*>(type), inheritedAttributeInfo );
+                  }
+                 else
+                  {
+                 // Unparse as a C/C++ code.
+                    roseUnparser.u_type->unparseType ( const_cast<SgType*>(type), inheritedAttributeInfo );
+                  }
+#endif
              }
 
           if (isSgSymbol(astNode) != NULL)
@@ -1290,8 +1327,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          ROSE_ABORT();
                 }
              }
+
        // Liao, 8/28/2009, support for SgLocatedNodeSupport
-          if (isSgLocatedNodeSupport(astNode)!= NULL) 
+          if (isSgLocatedNodeSupport(astNode) !=  NULL) 
              {
                if (isSgOmpClause(astNode))
                   {
