@@ -421,6 +421,38 @@ MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) c
     return start_va;
 }
 
+rose_addr_t
+MemoryMap::find_last_free(rose_addr_t max) const
+{
+    if (!sorted) {
+	std::sort(elements.begin(), elements.end());
+        sorted = true;
+    }
+
+    bool found = false;
+    rose_addr_t retval = 0;
+
+    /* Is the null address free? */
+    if (elements.empty() || elements[0].get_va()>0) {
+        retval = 0;
+        found = true;
+    }
+
+    /* Try to find a higher free region */
+    for (size_t i=0; i<elements.size(); i++) {
+        rose_addr_t end = elements[i].get_va() + elements[i].get_size();
+        if (end > max) break;
+        if (i+1>=elements.size() || elements[i+1].get_va()>end) {
+            retval = end;
+            found = true;
+        }
+    }
+    
+    if (!found)
+        throw NoFreeSpace(this, 1);
+    return retval;
+}
+
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
     if (!sorted) {
@@ -594,22 +626,6 @@ MemoryMap::va_extents() const
         retval.insert(me.get_va(), me.get_size());
     }
     return retval;
-}
-
-rose_addr_t
-MemoryMap::highest_va() const
-{
-    if (elements.empty())
-        throw NotMapped(this, 0);
-    
-    if (!sorted) {
-	std::sort(elements.begin(), elements.end());
-        sorted = true;
-    }
-
-    MapElement &me = elements.back();
-    ROSE_ASSERT(me.get_size()>0);
-    return me.get_va() + me.get_size() - 1;
 }
 
 void

@@ -332,6 +332,11 @@ public:
      *  exception if the search fails to find free space. */
     rose_addr_t find_free(rose_addr_t start_va, size_t size, rose_addr_t mem_alignment=1) const;
 
+    /** Finds the highest area of unmapped addresses.  The return value is the starting address of the highest contiguous
+     *  region of unmapped address space that starts at or below the specified maximum.  If no unmapped region exists then a
+     *  MemoryMap::NoFreeSpace exception is thrown. */
+    rose_addr_t find_last_free(rose_addr_t max=(rose_addr_t)(-1)) const;
+
     /** Returns the currently defined map elements sorted by virtual address. */
     const std::vector<MapElement> &get_elements() const;
 
@@ -354,9 +359,6 @@ public:
 
     /** Returns just the virtual address extents for a memory map. */
     ExtentMap va_extents() const;
-
-    /** Returns the highest mapped address. */
-    rose_addr_t highest_va() const;
 
     /** Sets protection bits for the specified address range.  The entire address range must already be mapped, but if @p
      *  relax is set then no exception is thrown if part of the range is not mapped (that part is just ignored). */
