@@ -131,7 +131,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 		}
 
 		//In this simple processor, we just take the first valid statement available
-		vector<EvaluationResult> possibleStatements = evaluate(s, currentVariableVersions);
+		vector<EvaluationResult> possibleStatements = evaluateStatement(s, currentVariableVersions);
 		if (possibleStatements.empty())
 		{
 			fprintf(stderr, "Failed to process statement of type '%s' on line %d: %s\n", s->class_name().c_str(),
