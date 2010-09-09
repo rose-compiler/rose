@@ -206,7 +206,7 @@ public:
      *  only be called for an SgBinaryComposite object that has been created but for which no binary files have been parsed
      *  yet.  It's only called from sageSupport.C by SgBinaryComposite::buildAST().  A BinaryLoader::Exception is thrown if
      *  there's an error of some sort. */
-    static void load(SgBinaryComposite* composite);
+    static void load(SgBinaryComposite* composite, bool read_executable_file_format_only=false);
 
     /** Conditionally parse, map, link, and/or relocate the interpretation according to properties of this loader. If an error
      *  occurs, a BinaryLoader::Exception will be thrown.  The interpretation must be one that can be loaded by this loader as
@@ -443,7 +443,7 @@ public:
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
                                              rose_addr_t *offset, rose_addr_t *file_size,
-                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
+                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
                                              ConflictResolution *resolve);
     
 

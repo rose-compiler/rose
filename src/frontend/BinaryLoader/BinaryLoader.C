@@ -71,7 +71,7 @@ BinaryLoader::lookup(SgAsmGenericHeader *header)
 
 /* class method */
 void
-BinaryLoader::load(SgBinaryComposite *composite)
+BinaryLoader::load(SgBinaryComposite *composite, bool read_executable_file_format_only)
 {
     /* Parse the initial binary file to create an AST and the initial SgAsmInterpretation(s). */
     ROSE_ASSERT(composite->get_genericFileList()->get_files().empty());
@@ -83,9 +83,19 @@ BinaryLoader::load(SgBinaryComposite *composite)
     const SgAsmInterpretationPtrList &interps = composite->get_interpretations()->get_interpretations();
     for (size_t i=0; i<interps.size(); i++) {
         BinaryLoader *loader = lookup(interps[i])->clone(); /* clone so we can change properties locally */
-        ROSE_ASSERT(loader!=NULL); /* lookup() should have thrown an exception already */
+        if (read_executable_file_format_only) {
+            loader->set_perform_dynamic_linking(false);
+            loader->set_perform_remap(false);
+            loader->set_perform_relocations(false);
+        } else {
+            loader->set_perform_dynamic_linking(false);
+            loader->set_perform_remap(true);
+            loader->set_perform_relocations(false);
+        }
+
         try {
             loader->load(interps[i]);
+            delete loader;
         } catch (...) {
             delete loader;
             throw;
