@@ -212,11 +212,9 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sCOFFSymbol.", prefix);
     }
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
 
     SgAsmGenericSymbol::dump(f, p, -1);
 
@@ -397,11 +395,9 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sCOFFSymtab.", prefix);
     }
 
-//#ifdef _MSC_VER
-//    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#else
+
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-//#endif
+
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {

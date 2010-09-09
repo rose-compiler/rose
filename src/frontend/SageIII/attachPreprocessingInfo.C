@@ -23,11 +23,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
-//#ifdef _MSC_VER
-//#pragma message ("WARNING: commented out use of boost/wave.hpp header file.")
-//#else
 #include <boost/wave.hpp>
-//#endif
 ///////////////////////////////////////////////////////////////////////////////
 // Include the lexer stuff
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
@@ -41,9 +37,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 //Include files to get the current path
 #include <unistd.h>
 
-#ifdef _MSC_VER
-#pragma message ("WARNING: param.h header file not available in MSVC.")
-#else
+#ifndef _MSC_VER
 #include <sys/param.h>
 #endif
 
@@ -105,7 +99,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
 
 // CH (4/7/2010): Wave issue fixed.
-//#ifndef _MSC_VER
+//#ifndef _MSCx_VER
 //#pragma message ("WARNING: Wave support not ported to Windows MSVC.")
 //	   printf ("ERROR: Wave support not ported to Windows MSVC. \n");
 //	   ROSE_ASSERT(false);
@@ -578,7 +572,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
 #endif
 
-// endif for ifdef _MSC_VER
+// endif for ifdef _MSCx_VER
 //#endif
 
 // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
