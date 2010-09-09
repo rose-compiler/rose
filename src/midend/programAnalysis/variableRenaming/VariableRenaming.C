@@ -1,8 +1,4 @@
-/**
- * Category: SSA Analysis
- * VariableRenaming Declaration
- * Created by frye5 in Jun2010
- */
+/** Author: Justin Frye */
 
 #include "sage3basic.h"
 #include "VariableRenaming.h"
@@ -241,7 +237,7 @@ VarUniqueName* VariableRenaming::getUniqueName(SgNode* node)
 
 VariableRenaming::VarName VariableRenaming::getVarName(SgNode* node)
 {
-    if(getUniqueName(node) == NULL)
+    if(node == NULL || getUniqueName(node) == NULL)
     {
         return VariableRenaming::VarName();
     }
