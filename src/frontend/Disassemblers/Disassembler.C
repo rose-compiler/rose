@@ -769,25 +769,17 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
 
     /* Use the memory map attached to the interpretation, or build a new one and attach it. */
     MemoryMap *map = interp->get_map();
-#if 1 /*[RPM 2010-09-07]*/
-    /* BinaryLoader must have already been called, in which case we have a MemoryMap */
-    ROSE_ASSERT(map!=NULL);
-#else
     if (!map) {
-        map = new MemoryMap();
-        for (size_t i=0; i<headers.size(); i++) {
-            if (NULL==interp->get_map()) {
-                BinaryLoader *loader = BinaryLoader::lookup(headers[i]); /*no need to clone since we're not changing anything*/
-                if (p_search & SEARCH_NONEXE) {
-                    loader->map_all_sections(map, headers[i]->get_sections()->get_sections());
-                } else {
-                    loader->map_code_sections(map, headers[i]->get_sections()->get_sections());
-                }
-            }
-        }
-        interp->set_map(map);
+        if (p_debug)
+            fprintf(p_debug, "Disassembler: no memory map; remapping all sections\n");
+        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+        loader->set_perform_dynamic_linking(false);
+        loader->set_perform_remap(true);
+        loader->set_perform_relocations(false);
+        loader->load(interp);
+        map = interp->get_map();
     }
-#endif
+    ROSE_ASSERT(map);
     if (p_debug) {
         fprintf(p_debug, "Disassembler: MemoryMap for disassembly:\n");
         map->dump(p_debug, "    ");
