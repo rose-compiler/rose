@@ -2,15 +2,15 @@
 WARNING: Skipping instruction disassembly 
 
 using this memory map for disassembly:
-    va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000 i686-test1.O0.bin(LOAD#2)
+    va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000 i686-test1.O0.bin(LOAD#2+PHDR#0)
     va 0x08048114 + 0x00000013 = 0x08048127 r-- at base aaa  + 0x00000114 i686-test1.O0.bin(.interp)
-    va 0x08048127 + 0x00000001 = 0x08048128 r-x at base aaa  + 0x00000127 i686-test1.O0.bin(LOAD#2)
+    va 0x08048127 + 0x00000001 = 0x08048128 r-x at base aaa  + 0x00000127 i686-test1.O0.bin(LOAD#2+PHDR#0)
     va 0x08048128 + 0x0000013f = 0x08048267 r-- at base aaa  + 0x00000128 i686-test1.O0.bin(.dynstr+.dynsym+.hash+.note.ABI-tag)
-    va 0x08048267 + 0x00000001 = 0x08048268 r-x at base aaa  + 0x00000267 i686-test1.O0.bin(LOAD#2)
+    va 0x08048267 + 0x00000001 = 0x08048268 r-x at base aaa  + 0x00000267 i686-test1.O0.bin(LOAD#2+PHDR#0)
     va 0x08048268 + 0x00000060 = 0x080482c8 r-- at base aaa  + 0x00000268 i686-test1.O0.bin(.gnu.version+.gnu.version_r+.rel.d...
-    va 0x080482c8 + 0x000002e4 = 0x080485ac r-x at base aaa  + 0x000002c8 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2)
+    va 0x080482c8 + 0x000002e4 = 0x080485ac r-x at base aaa  + 0x000002c8 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2+PHDR#0)
     va 0x080485ac + 0x00000017 = 0x080485c3 r-- at base aaa  + 0x000005ac i686-test1.O0.bin(.rodata)
-    va 0x080485c3 + 0x00000001 = 0x080485c4 r-x at base aaa  + 0x000005c3 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2)
+    va 0x080485c3 + 0x00000001 = 0x080485c4 r-x at base aaa  + 0x000005c3 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2+PHDR#0)
     va 0x080485c4 + 0x00000004 = 0x080485c8 r-- at base aaa  + 0x000005c4 i686-test1.O0.bin(.eh_frame)
     va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at anonymous + 0x00000000 i686-test1.O0.bin(LOAD#2)
     va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000 i686-test1.O0.bin(.ctors+.data+.dtors+.dynamic+.got+...
