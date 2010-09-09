@@ -26,6 +26,9 @@ protected:
      *  were already added to the list as ELF Segments. */
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*);
 
+    /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
+    virtual rose_addr_t rebase(MemoryMap*, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&);
+
     /** Linux-specific ELF Segment and Section alignment. */
     virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,

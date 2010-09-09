@@ -57,7 +57,8 @@ public:
     enum ConflictResolution {
         RESOLVE_THROW,                  /**< Throw an exception such as MemoryMap::Inconsistent. */
         RESOLVE_OVERMAP,                /**< Free the part of the original mapping that is in conflict. */
-        RESOLVE_REMAP                   /**< Move the section to an unused part of the address space. */
+        RESOLVE_REMAP,                  /**< Move the section to any unused part of the address space. */
+        RESOLVE_REMAP_ABOVE,            /**< Move the section to a higher unused part of the address space. */
     };
 
     /*========================================================================================================================
@@ -382,6 +383,17 @@ public:
     /** Selects those sections of a header that should be mapped. Returns the sections in the order they should be mapped. */
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {
         return header->get_mapped_sections();
+    }
+
+    /** Returns an alternate base virtual address if necessary for remapping.  For instance, when mapping multiple ELF files,
+     *  each file should be mapped above a particular address that doesn't conflict with anything that's already mapped.  If
+     *  a new base address is returned, then the remapper will temporarily adjust the base address of the file header for the
+     *  duration of the mapping operation.  The default is to return the current base address.
+     *
+     *  This method is called with a memory map that describes what has been mapped so far, a file header for the sections
+     *  that are about to be mapped, and a list of sections about to be mapped. */
+    virtual rose_addr_t rebase(MemoryMap*, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
+        return header->get_base_va();
     }
 
     /** Extended Euclid Algorithm. The Euclid algorithm for finding the greatest common divisor (GCD) of two natural numbers,

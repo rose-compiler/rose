@@ -15,6 +15,7 @@ BinaryLoaderElf::can_load(SgAsmGenericHeader *hdr) const
     return isSgAsmElfFileHeader(hdr)!=NULL;
 }
 
+/* Sorter for sections returned by get_remap_sections() */
 static bool
 section_cmp(SgAsmGenericSection *_a, SgAsmGenericSection *_b)
 {
@@ -48,43 +49,77 @@ BinaryLoaderElf::get_remap_sections(SgAsmGenericHeader *header)
     return retval;
 }
 
-/* Same as superclass, but if we are mapping/unmapping an ELF Section (that is not an ELF Segment) then don't bother to align
- * it. This is used for ELF code mapping because code is mapped by ELF Segments and then the ELF Sections fine tune it. */
+/* For any given file header, start mapping at a particular location in the address space. */
+rose_addr_t
+BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
+{
+
+    /* Find the minimum address desired by the sections to be mapped */
+    rose_addr_t min_preferred_rva = (uint64_t)(-1);
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
+        min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mapped_preferred_rva());
+    rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
+
+    /* Minimum address at which to map */
+    rose_addr_t map_base_va = ALIGN_UP(map->find_last_free(), 4096);
+
+    /* If the minimum preferred virtual address is less than the floor of the mapping area then we should add the difference
+     * to the base virtual address, effectively moving the preferred mapping of all the sections up by that difference. */
+    return min_preferred_va<map_base_va ? map_base_va-min_preferred_va : header->get_base_va();
+}
+
 BinaryLoader::MappingContribution
 BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
-                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
-                              rose_addr_t *va, rose_addr_t *mem_size,
-                              rose_addr_t *offset, rose_addr_t *file_size,
-                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
-                              ConflictResolution *resolve)
+                              rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
+                              rose_addr_t *va_p, rose_addr_t *mem_size_p,
+                              rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                              rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                              ConflictResolution *resolve_p)
 {
-    MappingContribution retval;
     SgAsmElfSection *section = isSgAsmElfSection(_section);
-    rose_addr_t old_malign = section->get_mapped_alignment();
-    rose_addr_t old_falign = section->get_file_alignment();
 
-    try {
-        if (NULL==section->get_segment_entry()) {
-            if (get_debug())
-                fprintf(get_debug(), "    Temporarily relaxing memory alignment constraints.\n");
-            section->set_mapped_alignment(1);
-            section->set_file_alignment(1);
-        }
-        retval = BinaryLoader::align_values(_section, map, malign_lo, malign_hi, va, mem_size, offset, file_size,
-                                            va_offset, anon_lo, anon_hi, resolve);
-    } catch (...) {
-        section->set_mapped_alignment(old_malign);
-        section->set_file_alignment(old_falign);
-        throw;
+    /* ELF Segments are aligned using the superclass, but when the section has a low- or high-padding area we'll use file
+     * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
+     * this header's sections and sections previously mapped from other headers.  Therefore, any conflicts are within a single
+     * header and are resolved by over-mapping. */
+    if (section->get_segment_entry()) {
+
+
+        MappingContribution retval = BinaryLoader::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
+                                                                mem_size_p, offset_p, file_size_p, va_offset_p,
+                                                                anon_lo_p, anon_hi_p, resolve_p);
+        *anon_lo_p = false;
+        *anon_hi_p = true;
+        *resolve_p = RESOLVE_OVERMAP;
+        return retval;
     }
-    section->set_mapped_alignment(old_malign);
-    section->set_file_alignment(old_falign);
 
-    *anon_lo = false;
-    *anon_hi = true;
-    *resolve = RESOLVE_OVERMAP;
-
-    return retval;
+    /* ELF Sections are often used to refine areas of a segment.  A real loader ignores ELF Sections, but the refinement can
+     * be useful for analyses.  Therefore, we'll allow ELF Sections to contribute to the mapping.  Alignment of ELF Sections
+     * is temporarily set to none (because they live at arbitrary offsets in ELF Segments). If the section lives in a segment
+     * that has been mapped to an address other than its preferred address, then we must make sure the ELF Section is also
+     * similarly moved along with the ELF Segment. */
+    SgAsmElfSection *part_of = NULL; /*what segment is this section a part of (if any)? */
+    SgAsmGenericSectionPtrList sections = section->get_header()->get_mapped_sections();
+    for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
+        SgAsmElfSection *segment = isSgAsmElfSection(*si);
+        if (segment && segment->get_segment_entry() &&
+            section->get_mapped_preferred_rva() >= segment->get_mapped_preferred_rva() &&
+            section->get_mapped_preferred_rva() < segment->get_mapped_preferred_rva() + segment->get_mapped_size()) {
+            part_of = segment;
+            break;
+        }
+    }
+    rose_addr_t diff = part_of ? part_of->get_mapped_actual_rva() - part_of->get_mapped_preferred_rva() : 0;
+    *malign_hi_p = *malign_lo_p = 1; /*no alignment constraint*/
+    *va_p = section->get_mapped_preferred_rva() + diff;
+    *mem_size_p = section->get_mapped_size();
+    *offset_p = section->get_offset();
+    *file_size_p = section->get_size();
+    *va_offset_p = 0;
+    *anon_lo_p = *anon_hi_p = true;
+    *resolve_p = RESOLVE_OVERMAP;       /*erase (part of) the previous ELF Segment's memory */
+    return CONTRIBUTE_ADD;
 }
     
 

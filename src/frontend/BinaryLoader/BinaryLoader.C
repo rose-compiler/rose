@@ -306,178 +306,200 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
     SgAsmGenericFile *file = header->get_file();
     ROSE_ASSERT(file!=NULL);
 
-    if (debug) fprintf(stderr, "BinaryLoader::remap: remapping sections of %s...\n", header->get_file()->get_name().c_str());
+    if (debug) fprintf(debug, "BinaryLoader::remap: remapping sections of %s...\n", header->get_file()->get_name().c_str());
     SgAsmGenericSectionPtrList sections = get_remap_sections(header);
-    for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
-        SgAsmGenericSection *section = *si;
-        section->set_mapped_actual_rva(section->get_mapped_preferred_rva()); /*reset in case previously mapped*/
 
-        if (debug) {
-            fprintf(debug, "  mapping section [%d] \"%s\"", section->get_id(), section->get_name()->c_str());
-            if (section->get_header()->get_base_va()!=0)
-                fprintf(debug, " with base va 0x%08"PRIx64, section->get_header()->get_base_va());
-            fprintf(debug, "\n");
-            fprintf(debug, "    Specified RVA:       0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
-                    section->get_mapped_preferred_rva(), section->get_mapped_size(),
-                    section->get_mapped_preferred_rva()+section->get_mapped_size());
-            if (section->get_header()->get_base_va()!=0) {
-                fprintf(debug, "    Specified  VA:       0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
-                        section->get_header()->get_base_va() + section->get_mapped_preferred_rva(),
-                        section->get_mapped_size(),
-                        section->get_header()->get_base_va() + section->get_mapped_preferred_rva() + section->get_mapped_size());
-            }
-            fprintf(debug, "    Specified offset:    0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
-                    section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
-            fprintf(debug, "    Specified alignment: memory=[%"PRIu64",%"PRIu64"], file=[%"PRIu64",%"PRIu64"]\n",
-                    section->get_mapped_alignment(), section->get_mapped_alignment(),
-                    section->get_file_alignment(), section->get_file_alignment());
-        }
-
-        /* Figure out alignment, etc. */
-        rose_addr_t malign_lo=1, malign_hi=1, va=0, mem_size=0, offset=0, file_size=0, va_offset=0;
-        bool anon_lo=true, anon_hi=true;
-        ConflictResolution resolve = RESOLVE_THROW;
-        MappingContribution contrib = align_values(section, map,                      /* inputs */
-                                                   &malign_lo, &malign_hi,            /* alignment outputs */
-                                                   &va, &mem_size,                    /* memory location outputs */
-                                                   &offset, &file_size,               /* file location outputs */
-                                                   &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
-                                                   &resolve);                         /* conflict resolution output */
-        rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
-        rose_addr_t falign_hi = falign_lo;
-
-        if (debug) {
-            if (CONTRIBUTE_NONE==contrib || 0==mem_size) {
-                fprintf(debug, "    Does not contribute to map\n");
-            } else {
-                fprintf(debug, "    Adjusted alignment:  memory=[%"PRIu64",%"PRIu64"], file=[%"PRIu64",%"PRIu64"]\n",
-                        malign_lo, malign_hi, falign_lo, falign_hi);
-                fprintf(debug, "    Aligned VA:          0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64,
-                        va, mem_size, va+mem_size);
-                if (section->get_header()->get_base_va()+section->get_mapped_preferred_rva()==va &&
-                    section->get_mapped_size()==mem_size) {
-                    fputs(" (no change)\n", debug);
-                } else {
-                    fputc('\n', debug);
-                }
-                if (CONTRIBUTE_ADD==contrib) {
-                    fprintf(debug, "    Aligned offset:      0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"%s\n",
-                            offset, file_size, offset+file_size,
-                            section->get_offset()==offset && section->get_size()==file_size ? " (no change)" : "");
-                    fprintf(debug, "    Permissions:         %c%c%c\n", 
-                            section->get_mapped_rperm()?'r':'-',
-                            section->get_mapped_wperm()?'w':'-',
-                            section->get_mapped_xperm()?'x':'-');
-                    fprintf(debug, "    Internal offset:     0x%08"PRIx64" (va 0x%08"PRIx64")\n",
-                            va_offset, va+va_offset);
-                }
-            }
-        }
-
-        /* Sanity checks */
-        if (CONTRIBUTE_NONE==contrib || 0==mem_size)
-            continue;
-        ROSE_ASSERT(va_offset<mem_size);
-        if (file_size>mem_size) file_size = mem_size;
-        ROSE_ASSERT(va + va_offset >= header->get_base_va());
-
-        /* Erase part of the mapping? */
-        if (CONTRIBUTE_SUB==contrib) {
-            map->erase(MemoryMap::MapElement(va, mem_size));
-            continue;
-        }
-
-        /* Resolve mapping conflicts.  The new mapping may have multiple parts, so we test whether all those parts can be
-         * mapped by first mapping an anonymous region and then removing it.  In this way we can perform the test atomically
-         * rather than trying to undo the parts that had been successful. Allocating a large anonymous region does not
-         * actually allocate any memory. */
-        try {
-            MemoryMap::MapElement test(va, mem_size);
-            map->insert(test);
-            map->erase(test);
-        } catch (const MemoryMap::Exception&) {
-            switch (resolve) {
-                case RESOLVE_THROW:
-                    throw;
-                case RESOLVE_OVERMAP:
-                    map->erase(MemoryMap::MapElement(va, mem_size));
-                    break;
-                case RESOLVE_REMAP: {
-                    if (debug) fprintf(debug, "    Unable to map entire desired region.\n");
-                    rose_addr_t new_va = map->find_free(0, mem_size, malign_lo); /*may throw MemoryMap::NoFreeSpace*/
-                    ROSE_ASSERT(0 == (new_va+mem_size) % malign_hi); /*FIXME: not handled yet [RPM 2010-09-03]*/
-                    va = new_va;
-                    if (debug) {
-                        fprintf(debug, "    Relocated to:       VA 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64,
-                                va, mem_size, va+mem_size);
-                    }
-                    break;
-                }
-            }
-        }
-
-        /* Save the relative virtual address where this section is (will be) mapped.  When a section is mapped more than once
-         * (perfectly legal to do so) only the last mapping is saved. */
-        section->set_mapped_actual_rva(va + va_offset - section->get_header()->get_base_va());
-        
-        /* Permissions */
-        unsigned mapperms=MemoryMap::MM_PROT_NONE;
-        if (section->get_mapped_rperm())
-            mapperms |= MemoryMap::MM_PROT_READ;
-        if (section->get_mapped_wperm())
-            mapperms |= MemoryMap::MM_PROT_WRITE;
-        if (section->get_mapped_xperm())
-            mapperms |= MemoryMap::MM_PROT_EXEC;
-
-        /* MapElement name for debugging. This is the file base name and section name concatenated. */
-        std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
-        file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
-        std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
-
-        /* Anonymously map the part of memory beyond the physical end of the file */
-        SgAsmGenericFile *file = section->get_file();
-        rose_addr_t total = file->get_data().size(); /*total size of file*/
-        if (offset+mem_size > total) {
-            rose_addr_t n = (offset + mem_size) - total;
-            rose_addr_t a = va + total - offset;
-            MemoryMap::MapElement me(a, n, mapperms);
-            me.set_name(melmt_name);
-            map->insert(me);
-            mem_size -= n;
-            file_size = std::min(file_size, mem_size);
-        }
-        
-        /* Anonymously map the part of memory beyond the part of file */
-        if (anon_hi && mem_size>file_size) {
-            rose_addr_t n = mem_size - file_size;
-            rose_addr_t a = va + file_size;
-            MemoryMap::MapElement me(a, n, mapperms);
-            me.set_name(melmt_name);
-            map->insert(me);
-            mem_size -= n;
-        }
-        
-        /* Anonymously map the part of memory before the section */
-        if (anon_lo && va_offset>0) {
-            rose_addr_t n = va_offset - va;
-            rose_addr_t a = va;
-            MemoryMap::MapElement me(a, n, mapperms);
-            me.set_name(melmt_name);
-            map->insert(me);
-            mem_size -= n;
-            file_size -= n;
-            va += n;
-            offset += n;
-        }
-        
-        /* Map the section. We use the file content as the underlying storage of the map because we might be mapping parts of
-         * the file left and right of the actual section. */
-        if (mem_size>0) {
-            MemoryMap::MapElement me(va, mem_size, &(file->get_data()[0]), offset, mapperms);
-            me.set_name(melmt_name);
-            map->insert(me);
-        }
+    rose_addr_t old_base_va = header->get_base_va();
+    rose_addr_t new_base_va = rebase(map, header, sections);
+    if (new_base_va != old_base_va) {
+        if (debug) fprintf(debug, "  temporarily rebasing header from 0x%08"PRIx64" to 0x%08"PRIx64"\n", old_base_va, new_base_va);
+        header->set_base_va(new_base_va);
     }
+
+    try {
+        for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
+            SgAsmGenericSection *section = *si;
+            section->set_mapped_actual_rva(section->get_mapped_preferred_rva()); /*reset in case previously mapped*/
+
+            if (debug) {
+                fprintf(debug, "  mapping section [%d] \"%s\"", section->get_id(), section->get_name()->c_str());
+                if (section->get_header()->get_base_va()!=0)
+                    fprintf(debug, " with base va 0x%08"PRIx64, section->get_header()->get_base_va());
+                fprintf(debug, "\n");
+                fprintf(debug, "    Specified RVA:       0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
+                        section->get_mapped_preferred_rva(), section->get_mapped_size(),
+                        section->get_mapped_preferred_rva()+section->get_mapped_size());
+                if (section->get_header()->get_base_va()!=0) {
+                    fprintf(debug, "    Specified  VA:       0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
+                            section->get_header()->get_base_va() + section->get_mapped_preferred_rva(),
+                            section->get_mapped_size(),
+                            (section->get_header()->get_base_va() + section->get_mapped_preferred_rva() +
+                             section->get_mapped_size()));
+                }
+                fprintf(debug, "    Specified offset:    0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
+                        section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
+                fprintf(debug, "    Specified alignment: memory=[%"PRIu64",%"PRIu64"], file=[%"PRIu64",%"PRIu64"]\n",
+                        section->get_mapped_alignment(), section->get_mapped_alignment(),
+                        section->get_file_alignment(), section->get_file_alignment());
+            }
+
+            /* Figure out alignment, etc. */
+            rose_addr_t malign_lo=1, malign_hi=1, va=0, mem_size=0, offset=0, file_size=0, va_offset=0;
+            bool anon_lo=true, anon_hi=true;
+            ConflictResolution resolve = RESOLVE_THROW;
+            MappingContribution contrib = align_values(section, map,                      /* inputs */
+                                                       &malign_lo, &malign_hi,            /* alignment outputs */
+                                                       &va, &mem_size,                    /* memory location outputs */
+                                                       &offset, &file_size,               /* file location outputs */
+                                                       &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
+                                                       &resolve);                         /* conflict resolution output */
+            rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
+            rose_addr_t falign_hi = falign_lo;
+
+            if (debug) {
+                if (CONTRIBUTE_NONE==contrib || 0==mem_size) {
+                    fprintf(debug, "    Does not contribute to map\n");
+                } else {
+                    fprintf(debug, "    Adjusted alignment:  memory=[%"PRIu64",%"PRIu64"], file=[%"PRIu64",%"PRIu64"]\n",
+                            malign_lo, malign_hi, falign_lo, falign_hi);
+                    fprintf(debug, "    Aligned VA:          0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64,
+                            va, mem_size, va+mem_size);
+                    if (section->get_header()->get_base_va()+section->get_mapped_preferred_rva()==va &&
+                        section->get_mapped_size()==mem_size) {
+                        fputs(" (no change)\n", debug);
+                    } else {
+                        fputc('\n', debug);
+                    }
+                    if (va < new_base_va) {
+                        fprintf(debug, "    WARNING: aligned va 0x%08"PRIx64" is less than %sbase va 0x%08"PRIx64"\n",
+                                va, new_base_va==old_base_va?"":"temporary ", new_base_va);
+                    }
+                    if (CONTRIBUTE_ADD==contrib) {
+                        fprintf(debug, "    Aligned offset:      0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"%s\n",
+                                offset, file_size, offset+file_size,
+                                section->get_offset()==offset && section->get_size()==file_size ? " (no change)" : "");
+                        fprintf(debug, "    Permissions:         %c%c%c\n", 
+                                section->get_mapped_rperm()?'r':'-',
+                                section->get_mapped_wperm()?'w':'-',
+                                section->get_mapped_xperm()?'x':'-');
+                        fprintf(debug, "    Internal offset:     0x%08"PRIx64" (va 0x%08"PRIx64")\n",
+                                va_offset, va+va_offset);
+                    }
+                }
+            }
+
+            /* Sanity checks */
+            if (CONTRIBUTE_NONE==contrib || 0==mem_size)
+                continue;
+            ROSE_ASSERT(va_offset<mem_size);
+            if (file_size>mem_size) file_size = mem_size;
+            ROSE_ASSERT(va + va_offset >= header->get_base_va());
+
+            /* Erase part of the mapping? */
+            if (CONTRIBUTE_SUB==contrib) {
+                map->erase(MemoryMap::MapElement(va, mem_size));
+                continue;
+            }
+
+            /* Resolve mapping conflicts.  The new mapping may have multiple parts, so we test whether all those parts can be
+             * mapped by first mapping an anonymous region and then removing it.  In this way we can perform the test atomically
+             * rather than trying to undo the parts that had been successful. Allocating a large anonymous region does not
+             * actually allocate any memory. */
+            try {
+                MemoryMap::MapElement test(va, mem_size);
+                map->insert(test);
+                map->erase(test);
+            } catch (const MemoryMap::Exception&) {
+                switch (resolve) {
+                    case RESOLVE_THROW:
+                        throw;
+                    case RESOLVE_OVERMAP:
+                        map->erase(MemoryMap::MapElement(va, mem_size));
+                        break;
+                    case RESOLVE_REMAP:
+                    case RESOLVE_REMAP_ABOVE: {
+                        if (debug) fprintf(debug, "    Unable to map entire desired region.\n");
+                        rose_addr_t above = RESOLVE_REMAP_ABOVE==resolve ? va : 0;
+                        rose_addr_t new_va = map->find_free(above, mem_size, malign_lo); /*may throw MemoryMap::NoFreeSpace*/
+                        ROSE_ASSERT(0 == (new_va+mem_size) % malign_hi); /*FIXME: not handled yet [RPM 2010-09-03]*/
+                        va = new_va;
+                        if (debug) {
+                            fprintf(debug, "    Relocated to VA:     0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
+                                    va, mem_size, va+mem_size);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            /* Save the relative virtual address where this section is (will be) mapped.  When a section is mapped more than once
+             * (perfectly legal to do so) only the last mapping is saved. */
+            section->set_mapped_actual_rva(va + va_offset - section->get_header()->get_base_va());
+
+            /* Permissions */
+            unsigned mapperms=MemoryMap::MM_PROT_NONE;
+            if (section->get_mapped_rperm())
+                mapperms |= MemoryMap::MM_PROT_READ;
+            if (section->get_mapped_wperm())
+                mapperms |= MemoryMap::MM_PROT_WRITE;
+            if (section->get_mapped_xperm())
+                mapperms |= MemoryMap::MM_PROT_EXEC;
+
+            /* MapElement name for debugging. This is the file base name and section name concatenated. */
+            std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
+            file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
+            std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
+
+            /* Anonymously map the part of memory beyond the physical end of the file */
+            SgAsmGenericFile *file = section->get_file();
+            rose_addr_t total = file->get_data().size(); /*total size of file*/
+            if (offset+mem_size > total) {
+                rose_addr_t n = (offset + mem_size) - total;
+                rose_addr_t a = va + total - offset;
+                MemoryMap::MapElement me(a, n, mapperms);
+                me.set_name(melmt_name);
+                map->insert(me);
+                mem_size -= n;
+                file_size = std::min(file_size, mem_size);
+            }
+
+            /* Anonymously map the part of memory beyond the part of file */
+            if (anon_hi && mem_size>file_size) {
+                rose_addr_t n = mem_size - file_size;
+                rose_addr_t a = va + file_size;
+                MemoryMap::MapElement me(a, n, mapperms);
+                me.set_name(melmt_name);
+                map->insert(me);
+                mem_size -= n;
+            }
+
+            /* Anonymously map the part of memory before the section */
+            if (anon_lo && va_offset>0) {
+                rose_addr_t n = va_offset - va;
+                rose_addr_t a = va;
+                MemoryMap::MapElement me(a, n, mapperms);
+                me.set_name(melmt_name);
+                map->insert(me);
+                mem_size -= n;
+                file_size -= n;
+                va += n;
+                offset += n;
+            }
+
+            /* Map the section. We use the file content as the underlying storage of the map because we might be mapping parts of
+             * the file left and right of the actual section. */
+            if (mem_size>0) {
+                MemoryMap::MapElement me(va, mem_size, &(file->get_data()[0]), offset, mapperms);
+                me.set_name(melmt_name);
+                map->insert(me);
+            }
+        }
+        header->set_base_va(old_base_va);
+    } catch(...) {
+        header->set_base_va(old_base_va);
+        throw;
+    }
+
     if (debug) {
         fprintf(debug, "Loader: created map:\n");
         map->dump(debug, "    ");
