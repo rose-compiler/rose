@@ -7,6 +7,7 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "err.h"
 
 using namespace std;
 
@@ -24,17 +25,31 @@ namespace VirtualCFG {
     return s;
   }
 
+  CFGNode::CFGNode(SgNode* node, unsigned int index): node(node), index(index) {
+#ifndef _MSC_VER 
+    assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
+#endif
+    if (!(node && index <= node->cfgIndexForEnd())) {
+      warnx ("created CFGNode with illegal index");
+    }
+  }
+
   string CFGNode::toString() const {
+      ostringstream s;
     if (isSgFunctionDefinition(node)) {
       switch (index) {
-	case 0: return "Start";
-	case 1: return "After parameters";
-	case 2: return "End";
-	default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
+          case 0: s << "Start("; break; 
+          case 1: s << "After parameters("; break;
+          case 2: s << "End("; break;
+          default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
-    } else {
-      return toStringForDebugging();
+      s << isSgFunctionDefinition(node)->get_declaration()->get_qualified_name().str() << ")" << std::endl; 
     }
+    s << toStringForDebugging();
+  //if (isSgFunctionDefinition(node)) {
+  //  s << std::endl << "decl'd by: <" << isSgFunctionDefinition(node)->get_declaration()->class_name() << "> @" << 
+  //    isSgFunctionDefinition(node)->get_declaration()->get_startOfConstruct()->get_line();
+    return s.str();
   }
 
   string CFGNode::toStringForDebugging() const {
@@ -113,6 +128,9 @@ namespace VirtualCFG {
         case eckArithmeticIfGreater:
           s << "greater";
           break;
+    case eckInterprocedural:
+          s << "interprocedural";
+          break;
 	default:
 	  s << "unknown";
 	  break;
@@ -120,6 +138,8 @@ namespace VirtualCFG {
       s << ")";
       anyNonEmpty = true;
     }
+#if 0
+    // MD 2010-07-19 This analysis should be disabled by default
     vector<SgInitializedName*> exitingScopes = scopesBeingExited();
     vector<SgInitializedName*> enteringScopes = scopesBeingEntered();
     if (!exitingScopes.empty()) {
@@ -142,6 +162,7 @@ namespace VirtualCFG {
       s << ")";
       anyNonEmpty = true;
     }
+#endif
     return s.str();
   }
 
@@ -326,6 +347,14 @@ namespace VirtualCFG {
       } else {
 	return eckFalse;
       }
+    } else if (isSgFunctionCallExp(srcNode) && 
+               srcIndex == 2 && 
+               !isSgFunctionCallExp(tgtNode)) {
+        return eckInterprocedural;
+    } else if (isSgFunctionCallExp(tgtNode) && 
+               tgtIndex == 3 && 
+               !isSgFunctionCallExp(srcNode)) {
+        return eckInterprocedural;
     } else {
       // No key
       return eckUnconditional;

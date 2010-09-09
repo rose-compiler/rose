@@ -6,10 +6,7 @@
 #include <algorithm>
 #include <fstream>
 
-#ifdef _MSC_VER
-// DQ (11/27/2009): This header file is not available using MSVS (Windows).
-// #include <wait.h>
-#else
+#ifndef _MSC_VER
 // DQ (11/27/2009): This header file is not available using MSVS (Windows).
 #include <sys/wait.h>
 #endif
