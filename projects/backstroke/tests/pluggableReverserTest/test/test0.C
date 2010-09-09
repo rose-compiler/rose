@@ -72,3 +72,17 @@ void event1(model* m)
     else
         m->i = 0;
 }
+
+void event2(model* m)
+{
+    int i = 10;
+    m->i += i;
+    m-> j += i;
+}
+
+void event3(model* m)
+{
+    int t = m->i;
+    m->i = m->j;
+    m->j = t;
+}

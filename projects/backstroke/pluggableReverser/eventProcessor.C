@@ -207,6 +207,8 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
 
 	// The pointer parameter of the event function is state.
 
+	// We should 
+
 	foreach(SgInitializedName* name, event_->get_args())
 	{
 		if (name == var->get_symbol()->get_declaration())
@@ -254,9 +256,6 @@ SgExpression* EventProcessor::popVal(SgType* type)
 
 bool EventProcessor::checkVersion(const VariableVersionTable& var_table)
 {
-	// Here we check the validity for each result above. We have to make sure
-	// every state variable has the version 1.
-
 	typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
 
 	foreach(const TableType::value_type& var, var_table.getTable())
@@ -291,30 +290,11 @@ FuncDeclPairs EventProcessor::processEvent()
 
 	foreach(EvaluationResult& res, results)
 	{
-		/************************************************************************/
 		// Here we check the validity for each result above. We have to make sure
 		// every state variable has the version 1.
-
-		int flag = true;
-
-		typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
-		const TableType& table = res.getVarTable().getTable();
-
-		foreach(const TableType::value_type& var, table)
-		{
-			if (isStateVariable(var.first))
-			{
-				if (var.second.size() != 1 || var.second.count(1) == 0)
-				{
-					flag = false;
-					break;
-				}
-			}
-		}
-		if (!flag)
+		if (!checkVersion(res.getVarTable()))
 			continue;
-
-		/************************************************************************/
+		
 
 		StatementReversal stmt = res.generateReverseAST(body);
 

@@ -226,6 +226,20 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 	return true;
 }
 
+void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
+{
+	VariableRenaming::VarName name;
+	name.push_back(init_name);
+	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());
+	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtFunctionEndForName(enclosing_func, name);
+
+	table_[name].clear();
+	foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, num_table)
+	{
+		table_[name].insert(num_to_node.first);
+	}
+}
+
 void VariableVersionTable::reverseVersion(SgNode* node)
 {
 	// Note all expanded nodes are reversed here. For example, for m->a, both m->a

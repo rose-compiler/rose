@@ -18,10 +18,9 @@ public:
 	VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
 
 	// TODO: we may avoid to provide this interface.
-	const std::map<VariableRenaming::VarName, std::set<int> >& getTable() const
-	{
-		return table_;
-	}
+	const std::map<VariableRenaming::VarName, std::set<int> >&
+	getTable() const
+	{ return table_; }
 
 	/** Returns the version of the variable, or an empty set if the variable is not in the table. */
 	std::set<int> getVersion(VariableRenaming::VarName varName) const;
@@ -36,6 +35,10 @@ public:
 	* This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
 	* check, but a cannot. */
 	bool checkVersionForUse(SgExpression* exp) const;
+
+	/** Set the version of the given variable to its last version in its scope. This method is for local
+	 * variables. */
+	void setLastVersion(SgInitializedName* init_name);
 
 	/** Regress the version of the given variable. Call this function once the expression or
 	* statement containing the given variable is reversed successfully. */
