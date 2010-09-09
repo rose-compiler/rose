@@ -10,6 +10,8 @@
 #include <boost/timer.hpp>
 
 #include "utilities/CPPDefinesAndNamespaces.h"
+#include "pluggableReverser/returnStatementHandler.h"
+#include "pluggableReverser/akgulStyleExpressionProcessor.h"
 
 
 
@@ -66,6 +68,7 @@ int main(int argc, char * argv[])
 	event_processor.addStatementProcessor(new VariableDeclarationHandler);
 	event_processor.addStatementProcessor(new CombinatorialBasicBlockHandler);
 	event_processor.addStatementProcessor(new IfStatementProcessor);
+	event_processor.addStatementProcessor(new ReturnStatementHandler);
 
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
