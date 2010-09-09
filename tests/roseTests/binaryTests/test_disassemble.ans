@@ -1,6 +1,3 @@
-
-WARNING: Skipping instruction disassembly 
-
 using this memory map for disassembly:
     va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000 i686-test1.O0.bin(LOAD#2+PHDR#0)
     va 0x08048114 + 0x00000013 = 0x08048127 r-- at base aaa  + 0x00000114 i686-test1.O0.bin(.interp)
