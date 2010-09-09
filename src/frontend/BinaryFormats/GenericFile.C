@@ -53,17 +53,6 @@ SgAsmGenericFile::parse(std::string fileName)
     unsigned char *mapped = new unsigned char[nbytes];
     if (!mapped)
         throw FormatError("Could not allocate memory for binary file");
-<<<<<<< HEAD
-=======
-
-// CH (4/6/2010): The "io.h" in MSVS does support read()
-//#ifdef _MSCx_VER
-//#pragma message ("WARNING: MSVS des not support Linux read() function.")
-//    printf ("ERROR: MSVS des not support Linux read() function.");
-//    ROSE_ASSERT(false);
-//    ssize_t nread = 0;
-//#else
->>>>>>> origin/master
     ssize_t nread = read(p_fd, mapped, nbytes);
     if (nread<0 || (size_t)nread!=nbytes)
         throw FormatError("Could not read entire binary file");
