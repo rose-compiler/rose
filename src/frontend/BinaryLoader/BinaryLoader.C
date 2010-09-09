@@ -306,7 +306,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
     SgAsmGenericFile *file = header->get_file();
     ROSE_ASSERT(file!=NULL);
 
-    if (debug) fprintf(stderr, "BinaryLoader::remap: remapping sections...\n");
+    if (debug) fprintf(stderr, "BinaryLoader::remap: remapping sections of %s...\n", header->get_file()->get_name().c_str());
     SgAsmGenericSectionPtrList sections = get_remap_sections(header);
     for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
         SgAsmGenericSection *section = *si;
@@ -444,7 +444,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             me.set_name(melmt_name);
             map->insert(me);
             mem_size -= n;
-            file_size = std::max(file_size, mem_size);
+            file_size = std::min(file_size, mem_size);
         }
         
         /* Anonymously map the part of memory beyond the part of file */
