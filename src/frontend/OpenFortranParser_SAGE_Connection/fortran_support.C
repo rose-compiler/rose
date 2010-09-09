@@ -3482,6 +3482,9 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
             // printf ("Error: PARAMETER is an attribute that implies constant value ('const' in C/C++) \n");
                variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
 
+            // Output debugging information about saved state (stack) information.
+               outputState("In setDeclarationAttributeSpec(): case AttrSpec_PARAMETER");
+
                if (astBaseTypeStack.empty() == false)
                   {
                     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -4218,7 +4221,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
   // SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),astScopeStack.front());
      SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),currentScopeOfFunctionDeclaration);
 
-#if 1
+#if 0
      printf ("In buildProcedureSupport(): functionSymbol = %p from trace_back_through_parent_scopes_lookup_function_symbol() \n",functionSymbol);
   // printf ("In buildProcedureSupport(): procedureDeclaration scope = %p = %s \n",procedureDeclaration->get_scope(),procedureDeclaration->get_scope()->class_name().c_str());
      printf ("In buildProcedureSupport(): procedureDeclaration scope = %p \n",procedureDeclaration->get_scope());

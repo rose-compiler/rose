@@ -41,6 +41,9 @@
 
 using namespace std;
 
+// DQ (9/6/2010): Allow this to be commented out to simplify debugging using gdb.
+// #define ENABLE_FORTRAN_ERROR_HANDLER
+
 #define ERROR_CODE 4
 
 #if 0 //FMZ
@@ -122,11 +125,15 @@ int openFortranParser_main(int argc, char **argv)
          printf ("Call the function that will start a JVM and call the OFP \n");
        }
 
+#ifdef ENABLE_FORTRAN_ERROR_HANDLER
     fortran_error_handler_begin();
+#endif
 
     int status = runOFP(argc, argv);
 
+#ifdef ENABLE_FORTRAN_ERROR_HANDLER
     fortran_error_handler_end();
+#endif
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH
