@@ -318,10 +318,6 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::VarName varName, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions)
 {
-	printf("----Looking for uses of %s----\nVersion:", VariableRenaming::keyToString(varName).c_str());
-	VariableRenaming::printRenameEntry(definitions);
-	availableVariables.print();
-
 	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
 	vector<SgExpression*> results;
 
