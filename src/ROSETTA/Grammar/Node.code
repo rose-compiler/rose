@@ -1817,9 +1817,11 @@ HEADER_START
         // virtual std::string unparseToString(SgUnparse_Info* info = NULL) const;
         // Jeremiah (11/9/2007): The default value is not recognized by gdb.
            virtual std::string unparseToString(SgUnparse_Info* info) const;
-           inline std::string unparseToString() const {
-              return this->unparseToString(NULL);
-            }
+
+        // DQ (9/6/2010): Move this to the source file (we want to eliminate function definitions in header files).
+        // The existence of this function addresses a bug in gdb (see comment from Jeremiah (11/9/2007) above).
+        // inline std::string unparseToString() const { return this->unparseToString(NULL); }
+           std::string unparseToString() const;
 
        //! This function unparses the AST node (including comments and white space)
           std::string unparseToCompleteString();
@@ -2618,6 +2620,13 @@ $CLASSNAME::unparseToString(SgUnparse_Info* info) const
   // default settings).
      std::string outputString = globalUnparseToString(this,info);
      return outputString;
+   }
+
+std::string
+$CLASSNAME::unparseToString() const
+   {
+  // DQ (9/6/2010): Move this to the source file (we want to eliminate function definitions in header files).
+     return this->unparseToString(NULL);
    }
 
 std::string
