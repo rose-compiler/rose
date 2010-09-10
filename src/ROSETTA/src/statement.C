@@ -2403,6 +2403,10 @@ Grammar::setUpStatements ()
      InquireStatement.setDataPrototype ( "SgExpression*", "pending", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/3/2010): Added to handle case of "INQUIRE (IOLENGTH=<VarRefExp>)"
+     InquireStatement.setDataPrototype ( "SgVarRefExp*", "iolengthExp", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
   // This IR node combined read and write, which I have decided to separate into individual IR nodes. 
 

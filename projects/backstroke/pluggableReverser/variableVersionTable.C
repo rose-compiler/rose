@@ -13,7 +13,6 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 
 	foreach(VariableRenaming::NumNodeRenameTable::value_type name_to_num, num_node_table)
 	{
-
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, name_to_num.second)
 		{
 			table_[name_to_num.first].insert(num_to_node.first);
