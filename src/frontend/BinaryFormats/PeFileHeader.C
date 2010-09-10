@@ -524,7 +524,7 @@ SgAsmPEFileHeader::create_table_sections()
 
         tabsec->set_mapped_alignment(1);
         tabsec->set_mapped_preferred_rva(pair->get_e_rva().get_rva());
-        tabsec->set_mapped_actual_rva(pair->get_e_rva().get_rva()); /*FIXME: not sure this is correct. [RPM 2009-09-11]*/
+        tabsec->set_mapped_actual_va(pair->get_e_rva().get_rva()+get_base_va()); /*FIXME: not sure this is correct. [RPM 2009-09-11]*/
         tabsec->set_mapped_size(pair->get_e_size());
         tabsec->set_mapped_rperm(true);
         tabsec->set_mapped_wperm(false);

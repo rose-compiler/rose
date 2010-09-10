@@ -81,6 +81,18 @@ rose_rva_t::get_rel(SgAsmGenericSection *s)
     return get_rva() - s->get_mapped_preferred_rva();
 }
 
+/** Return the absolute address if known.  If this object is bound to a section then this method returns
+ *  the absolute address (relative address plus section address plus base address). Otherwise it returns the
+ *  relative virtual address that was assigned. */
+rose_addr_t
+rose_rva_t::get_va() const
+{
+    if (!section)
+        return addr;
+    ROSE_ASSERT(section->is_mapped());
+    return addr + section->get_mapped_preferred_rva() + section->get_base_va();
+}
+
 /** Convert to a string representation */
 std::string
 rose_rva_t::to_string() const

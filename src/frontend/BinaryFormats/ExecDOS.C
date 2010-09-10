@@ -228,7 +228,7 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     p_rm_section->set_synthesized(true);
     p_rm_section->set_purpose(SP_PROGRAM);
     p_rm_section->set_mapped_preferred_rva(0);
-    p_rm_section->set_mapped_actual_rva(0); /*will be assigned by Loader*/
+    p_rm_section->set_mapped_actual_va(0); /*will be assigned by Loader*/
     p_rm_section->set_mapped_size(rm_size);
     p_rm_section->set_mapped_rperm(true);
     p_rm_section->set_mapped_wperm(true);

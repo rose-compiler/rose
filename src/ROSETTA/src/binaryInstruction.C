@@ -1760,7 +1760,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","contains_code","= false",               /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("rose_addr_t","mapped_actual_rva","= 0",        /*doxygen*/
+     AsmGenericSection.setDataPrototype("rose_addr_t","mapped_actual_va","= 0",         /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
