@@ -18,7 +18,7 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 			// If the variable is a local variable of the given function (except parameters), we will set its
 			// version to NULL.
 			if (SageInterface::isAncestor(
-					isSgFunctionDeclaration(func_decl->get_definingDeclaration())->get_definition()->get_body(),
+					backstroke_util::getFunctionBody(func_decl),
 					name_to_num.first[0]->get_declaration()))
 			{
 				//cout << VariableRenaming::keyToString(name_to_num.first) << endl;

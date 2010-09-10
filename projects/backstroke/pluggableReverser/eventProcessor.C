@@ -201,6 +201,12 @@ SgExpression* EventProcessor::getStackVar(SgType* type)
 
 bool EventProcessor::isStateVariable(SgExpression* exp)
 {
+	VariableRenaming::VarName var_name = VariableRenaming::getVarName(exp);
+	if (var_name.empty())
+		return false;
+	return isStateVariable(var_name);
+
+	/*
 	// First, get the most lhs operand, which may be the model object.
 	while (isSgBinaryOp(exp))
 		exp = isSgBinaryOp(exp)->get_lhs_operand();
@@ -220,12 +226,18 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
 	}
 
 	return false;
+	*/
 }
 
 bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 {
-	// The pointer parameter of the event function is state.
+	// Currently we assume all variables except those defined inside the event function
+	// are state varibles.
+	return !SageInterface::isAncestor(
+			backstroke_util::getFunctionBody(event_),
+			var[0]->get_declaration());
 
+#if 0
 	foreach(SgInitializedName* name, event_->get_args())
 	{
 		if (name == var[0])
@@ -234,6 +246,7 @@ bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 	}
 
 	return false;
+#endif
 }
 
 std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const

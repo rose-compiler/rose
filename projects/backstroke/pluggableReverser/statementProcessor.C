@@ -48,7 +48,17 @@ vector<EvaluationResult> CombinatorialExprStatementHandler::evaluate(SgStatement
 
 StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {
-	return StatementReversal(copyStatement(stmt), NULL);
+	SgStatement* fwd_stmt = copyStatement(stmt);
+
+	// Remove the attached preprocessing info from this statement. This is to prevent the following case:
+	//  #if 1
+	//  int i;
+	//  ...
+	//  #endif
+	// where we don't want to copy "#if 1" which may lead to error.
+	fwd_stmt->set_attachedPreprocessingInfoPtr(NULL);
+	
+	return StatementReversal(fwd_stmt, NULL);
 }
 
 vector<EvaluationResult> VariableDeclarationHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
@@ -250,8 +260,6 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
                 // Update the result.
                 EvaluationResult new_result(existingPartialResult);
 				new_result.addChildEvaluationResult(res);
-				new_result.setVarTable(res.getVarTable());
-
                 queue[1-i].push_back(new_result);
             }
         }
