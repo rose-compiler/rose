@@ -48,7 +48,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	SgStatement* reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
 
 	//We just do all the work in the evaluation step and save it as an attribute
-	EvaluationResult statementResult(this, var_table, expressionReversalOption.getCost());
+	EvaluationResult statementResult(this, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
 	StatementReversal statementReversal(forwardStatement, reverseStatement);
 	statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
 
@@ -104,11 +104,11 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 				SgFunctionDefinition* enclosingFunction = SageInterface::getEnclosingFunctionDefinition(basicBlock);
 				VariableRenaming::NumNodeRenameEntry definitions = getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosingFunction, varName);
 
-				//vector<SgExpression*> restoredValue = restoreVariable(varName, basicBlock->get_statements().back(), definitions);
+				//vector<SgExpression*> restoredValue = restoreVariable(varName, currentVariableVersions, definitions);
 				SgAssignInitializer* reverseVarInitializer;
 				/*if (!restoredValue.empty())
 				{
-					reverseVarInitializer = NULL;//SageBuilder::buildAssignInitializer(restoredValue.front());
+					reverseVarInitializer = SageBuilder::buildAssignInitializer(restoredValue.front());
 				}
 				else*/
 				{
@@ -131,7 +131,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 		}
 
 		//In this simple processor, we just take the first valid statement available
-		vector<EvaluationResult> possibleStatements = evaluate(s, currentVariableVersions);
+		vector<EvaluationResult> possibleStatements = evaluateStatement(s, currentVariableVersions);
 		if (possibleStatements.empty())
 		{
 			fprintf(stderr, "Failed to process statement of type '%s' on line %d: %s\n", s->class_name().c_str(),

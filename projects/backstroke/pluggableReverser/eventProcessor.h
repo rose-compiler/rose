@@ -47,7 +47,7 @@ private:
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
 	SgExpression* popVal(SgType* type);
 
-	/** This set is used to prevent invfinite recursion when calling restoreVariable. */
+	/** This set is used to prevent infinite recursion when calling restoreVariable. */
 	std::set<std::pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> > activeValueRestorations;
 
 public:
@@ -85,6 +85,10 @@ public:
 	//! Return if the given variable is a state variable (currently, it should be the parameter of event function).
 	bool isStateVariable(SgExpression* exp);
 	bool isStateVariable(const VariableRenaming::VarName& var);
+
+	/** Check if every state variable in the given variable version table has the initial version
+	 * which should be 1. */
+	bool checkForInitialVersions(const VariableVersionTable& var_table);
 
 	//! Get all declarations of stacks which store values of different types.
 	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;

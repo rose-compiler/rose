@@ -7,6 +7,7 @@
 #include "pluggableReverser/statementProcessor.h"
 #include "pluggableReverser/straightlineStatementProcessor.h"
 #include "pluggableReverser/akgulStyleExpressionProcessor.h"
+#include "pluggableReverser/returnStatementHandler.h"
 
 
 int main(int argc, char** argv)
@@ -34,17 +35,18 @@ int main(int argc, char** argv)
 	var_renaming.run();
 	EventProcessor event_processor(NULL, &var_renaming);
 
-	//Add the processors in order of priority. The lower ones will be used only if higher ones do not produce results
-	//Expression processors:
+	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
+	//Expression handlers:
 	event_processor.addExpressionProcessor(new ConstructiveExpressionHandler);
 	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
 	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor);
 	event_processor.addExpressionProcessor(new StoreAndRestoreExpressionHandler);
 
-	//Statement processors
-	//event_processor.addStatementProcessor(new ReturnStatementProcessor);
+	//Statement handler
+	event_processor.addStatementProcessor(new ReturnStatementHandler);
 	event_processor.addStatementProcessor(new StraightlineStatementProcessor);
 
+	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
 	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
 

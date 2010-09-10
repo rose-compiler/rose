@@ -112,7 +112,7 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             new_table.intersect(res2.getVarTable());
             //new_res.setVarTable(new_table);
 			
-#if 1
+#if 0
             cout << "True:\n";
             res2.getVarTable().print();
             cout << "False:\n";

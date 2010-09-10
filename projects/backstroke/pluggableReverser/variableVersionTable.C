@@ -13,10 +13,19 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 
 	foreach(VariableRenaming::NumNodeRenameTable::value_type name_to_num, num_node_table)
 	{
-
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, name_to_num.second)
 		{
-			table_[name_to_num.first].insert(num_to_node.first);
+			// If the variable is a local variable of the given function (except parameters), we will set its
+			// version to NULL.
+			if (SageInterface::isAncestor(
+					isSgFunctionDeclaration(func_decl->get_definingDeclaration())->get_definition()->get_body(),
+					name_to_num.first[0]->get_declaration()))
+			{
+				//cout << VariableRenaming::keyToString(name_to_num.first) << endl;
+				table_[name_to_num.first];
+			}
+			else
+				table_[name_to_num.first].insert(num_to_node.first);
 		}
 	}
 }
@@ -39,10 +48,9 @@ void VariableVersionTable::print() const
 
 	foreach(VarIdxPair var_idx, table_)
 	{
-		foreach(SgInitializedName* name, var_idx.first)
-		cout << name->get_name().str() << ' ';
+		cout << VariableRenaming::keyToString(var_idx.first) << " : ";
 		foreach(int i, var_idx.second)
-		cout << i << ' ';
+			cout << i << ' ';
 		cout << endl;
 	}
 }
@@ -53,7 +61,7 @@ vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
 {
 	vector<SgExpression*> vars;
 
-	vector<SgExpression*> exps = querySubTree<SgExpression > (node);
+	vector<SgExpression*> exps = querySubTree<SgExpression>(node);
 
 	//ROSE_ASSERT(!exps.empty());
 
@@ -227,6 +235,20 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 	return true;
 }
 
+void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
+{
+	VariableRenaming::VarName name;
+	name.push_back(init_name);
+	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());
+	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtFunctionEndForName(enclosing_func, name);
+
+	table_[name].clear();
+	foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, num_table)
+	{
+		table_[name].insert(num_to_node.first);
+	}
+}
+
 void VariableVersionTable::reverseVersion(SgNode* node)
 {
 	// Note all expanded nodes are reversed here. For example, for m->a, both m->a
@@ -342,6 +364,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 		indices.insert(versionDefPair.first);
 	}
 
+#if 0
 	printf("%s:\nIndices found: ", VariableRenaming::keyToString(varName).c_str());
 
 	foreach(int v, table_.find(varName)->second)
@@ -360,6 +383,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 
 	bool result = table_.find(varName)->second == indices;
 	printf("Result is %s\n\n", result ? "true" : "false");
+#endif
 
 	return table_.find(varName)->second == indices;
 }
