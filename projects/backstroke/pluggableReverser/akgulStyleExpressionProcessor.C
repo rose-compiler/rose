@@ -318,6 +318,10 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::VarName varName, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions)
 {
+	printf("----Looking for uses of %s----\nVersion:", VariableRenaming::keyToString(varName).c_str());
+	VariableRenaming::printRenameEntry(definitions);
+	availableVariables.print();
+
 	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
 	vector<SgExpression*> results;
 
@@ -332,7 +336,7 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 		//There might be multiple versions we require. Only add the uses that have all the desired versions
 		foreach(SgNode* potentialUseNode, usesForVersion)
 		{
-			VariableRenaming::NumNodeRenameEntry definitionsAtUse = variableRenamingAnalysis.getReachingDefsAtNodeForName(potentialUseNode, varName);
+			VariableRenaming::NumNodeRenameEntry definitionsAtUse = variableRenamingAnalysis.getUsesAtNodeForName(potentialUseNode, varName);
 
 			if (definitionsAtUse == definitions)
 			{
@@ -382,13 +386,47 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 			//Ok, restore the lhs variable to the version used in the assignment.
 			//Then, that expression will hold the desired value of x
 			VariableRenaming::NumNodeRenameEntry lhsVersion = variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, lhsVar);
-			printf("Recursively restoring variable '%s' to its version in line %d\n", VariableRenaming::keyToString(lhsVar).c_str(),
-				useSite->get_file_info()->get_line());
-			//availableVariables.print();
+			printf("Recursively restoring variable '%s' to version ", VariableRenaming::keyToString(lhsVar).c_str());
+			VariableRenaming::printRenameEntry(lhsVersion);
+			printf(" on line %d\n", useSite->get_file_info()->get_line());
+
 			results = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
 			if (!results.empty())
 			{
 				return results;
+			}
+		}
+		else if (isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite))
+		{
+			SgUnaryOp* incOrDecrOp = isSgUnaryOp(useSite);
+			ROSE_ASSERT(VariableRenaming::getVarName(incOrDecrOp->get_operand()) == varName);
+
+			//Ok, so we have something like a++. The initial version of a is 1 and the final version of a is 2. (for example)
+			//We would like to recover version 1 given version two
+			VariableRenaming::NumNodeRenameEntry versionAfterIncrement = variableRenamingAnalysis.getDefsAtNodeForName(incOrDecrOp, varName);
+			printf("Recursively restoring variable '%s' to version ", VariableRenaming::keyToString(varName).c_str());
+			VariableRenaming::printRenameEntry(versionAfterIncrement);
+
+			vector<SgExpression*> valuesAfterIncrement = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterIncrement);
+			if (!valuesAfterIncrement.empty())
+			{
+				//Success! Now all we have to do is subtract 1 to recover the value we want
+				SgExpression* valueAfterIncrement = valuesAfterIncrement.front();
+				SgExpression* result;
+				if (isSgPlusPlusOp(incOrDecrOp))
+				{
+					result = SageBuilder::buildSubtractOp(valueAfterIncrement, SageBuilder::buildIntVal(1));
+				}
+				else if (isSgMinusMinusOp(incOrDecrOp))
+				{
+					result = SageBuilder::buildAddOp(valueAfterIncrement, SageBuilder::buildIntVal(1));
+				}
+				else
+				{
+					ROSE_ASSERT(false);
+				}
+
+				results.push_back(result);
 			}
 		}
 	}
