@@ -343,8 +343,14 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
   // curprint("/* Top of statement */ \n ");
 
+#if 0
+     int line    = stmt->get_startOfConstruct()->get_raw_line();
+     string file = stmt->get_startOfConstruct()->get_filenameString();
+     printf ("Unparse (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
+#endif
+
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("Unparse statement (%p): sage_class_name() = %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
+     printf ("Unparse statement (%p): %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
 
   // DQ (4/17/2007): Added enforcement for endOfConstruct().
      ROSE_ASSERT (stmt->get_endOfConstruct() != NULL);
@@ -596,6 +602,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                default:
                  // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
                  // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
+                 // unparseLanguageSpecificStatement(stmt,info);
+                 // unp->repl->unparseLanguageSpecificStatement(stmt,info);
                     unparseLanguageSpecificStatement(stmt,info);
                     break;
              }
@@ -687,13 +695,17 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
   // DQ (3/21/2004): This assertion should have been in place before now!
      ROSE_ASSERT (expr != NULL);
 
+#if 0
+     printf ("Unparse (language independent = %s) expression (%p): %s compiler-generated = %s \n",languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
+#endif
+
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
   // DQ (8/21/2005): Suppress comments when unparsing to build type names
      if ( !info.SkipComments() || !info.SkipCPPDirectives() )
         {
           ROSE_ASSERT(expr->get_startOfConstruct() != NULL);
           ROSE_ASSERT(expr->get_file_info() != NULL);
-          printf ("Unparse expression (%p): sage_class_name() = %s compiler-generated = %s \n",expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
+          printf ("Unparse expression (%p): %s compiler-generated = %s \n",expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
           char buffer[100];
           snprintf (buffer,100,"%p",expr);
           curprint ( "\n/* Top of unparseExpression " + expr->class_name() 
