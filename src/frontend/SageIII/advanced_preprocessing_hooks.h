@@ -66,19 +66,15 @@ public:
     token_type lastPreprocDirective;
     int numberOfIfs;
 
-    token_type last_elif;
-    token_type last_else;
-    token_type last_endif;
-
     std::string includeDirective;
     token_type includeDirectiveToken;    
+	bool skipping;
+	bool updatingLastToken;
+	token_type last_token;
     advanced_preprocessing_hooks() /*: need_comment(true)*/ {
        numberOfIfs = 0;
-       using namespace boost::wave;
-       last_elif = token_type(boost::wave::T_PP_ELIF,"#elif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
-       last_else = token_type(boost::wave::T_PP_ELSE,"#else",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
-       last_endif = token_type(boost::wave::T_PP_ENDIF,"#endif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
-
+	   skipping = false;
+	   updatingLastToken = false;
     }
 
     
@@ -350,81 +346,77 @@ public:
     //  preprocessing directive.
     //
     ///////////////////////////////////////////////////////////////////////////
-    template <typename ContextT, typename TokenT>
-    bool 
-    found_directive(ContextT const& ctx, TokenT const& directive)
-    {
+	template <typename ContextT, typename TokenT>
+	bool 
+	found_directive(ContextT const& ctx, TokenT const& directive)
+	{
 		 if(SgProject::get_verbose() >= 1)
 			std::cout << "found_directive!" << std::endl;
 
+		skipping = false;
         lastPreprocDirective = directive;
         // print the commented conditional directives
         using namespace boost::wave;
         token_id id = token_id(directive);
 
-#if 0
-        //A define statement is handled differently from all other preprocessor
-        //directives. Therefore it should not be handled by found_directive;
-        switch(id){
-	     case T_PP_QHEADER:   //#include "..."
-	     case T_PP_HHEADER:   //#include <...>
-	//	std::cout << "Token to include directive: " << directive.get_value() << std::endl;        
-		includeDirectiveToken = directive;
-             //   attributeListMap->found_directive(directive);
+		bool record = true;
+		switch(id)
+		{
+			case T_PP_LINE:    //#line
+			case T_PP_UNDEF:   //#undef
+			case T_PP_WARNING: //#warning
+			case T_PP_DEFINE:  //#define
+				record = false;
+				break; // handled via lastPreprocDirective in their own methods
+			case T_PP_IF:      //#if
+			case T_PP_IFDEF:   //#ifdef
+			case T_PP_IFNDEF:  //#ifndef
+			case T_PP_ELSE:	   //#else
+			case T_PP_ELIF:	   //#elif
+				break; // appended too as necessary in skipped_token and evaluated_conditional_expression
+			case T_PP_ENDIF:   //#endif
+			case T_PP_ERROR:   //#error
+			case T_PP_PRAGMA:  //#pragma
+			case T_PP_INCLUDE: //#include \"...\"
+				break;
+			case T_PP_QHEADER: //#include <...>
+			case T_PP_HHEADER: //#include ...
+				break;
+			default:           //<something else (" << directive.get_value() << ")>
+				break;
+		}
+		if (record)
+			attributeListMap->found_directive(directive);
 
-		break;	     
-	     case T_PP_INCLUDE:   //#include
-	     case T_PP_IF:        //#if
-	     case T_PP_IFDEF:     //#ifdef
-	     case T_PP_IFNDEF:    //#ifndef
-	     case T_PP_DEFINE:    //#define
-	     case T_PP_WARNING:   //#warning
-	     case T_PP_LINE:      //#line
-	     case T_PP_UNDEF:     //#undef
-		break;
-	     case T_PP_ELSE:      //#else
-               last_else = directive;
-               // std::cout << "Found #else\n";
-                break; 
-	     case T_PP_ELIF:      //#elif
-               last_elif = directive;
-               // std::cout << "Found #elif\n";
-                break; 
-	     case T_PP_ENDIF:      //#endif
-               last_endif = directive;
-               // std::cout << "Found #endif\n";
-                break; 
-	     default:
-		if(id!=T_PP_DEFINE)
-		     attributeListMap->found_directive(directive);
-		break;
-	}
-#endif
+		attributeListMap->flush_token_stream();
+		updatingLastToken = true;
 
-		 if(SgProject::get_verbose() >= 1)
+		if(SgProject::get_verbose() >= 1)
+		{
+			switch(id)
 			{
-				switch(id)
-				{
-					case T_PP_DEFINE:    std::cout << "Directive is: #define\n"; break;
-					case T_PP_IF:        std::cout << "Directive is: #if\n"; break;
-					case T_PP_IFDEF:     std::cout << "Directive is: #ifdef\n"; break;
-					case T_PP_IFNDEF:    std::cout << "Directive is: #ifndef\n"; break;
-					case T_PP_ELSE:      std::cout << "Directive is: #else\n"; break;
-					case T_PP_ELIF:      std::cout << "Directive is: #elif\n"; break;
-					case T_PP_ENDIF:     std::cout << "Directive is: #endif\n"; break;
-					case T_PP_ERROR:     std::cout << "Directive is: #error\n"; break;
-					case T_PP_LINE:      std::cout << "Directive is: #line\n"; break;
-					case T_PP_PRAGMA:    std::cout << "Directive is: #pragma\n"; break;
-					case T_PP_UNDEF:     std::cout << "Directive is: #undef\n"; break;
-					case T_PP_WARNING:   std::cout << "Directive is: #warning\n"; break;
-					case T_PP_INCLUDE:   std::cout << "Directive is: #include \"...\"\n"; break;
-					case T_PP_QHEADER:   std::cout << "Directive is: #include <...>\n"; break;
-					case T_PP_HHEADER:   std::cout << "Directive is: #include ...\n"; break;
-					default:             std::cout << "Directive is: <something else>\n"; break;
-				}
-		   }
-      return false;
-    }
+				case T_PP_DEFINE:    std::cout << "Directive is: #define\n"; break;
+				case T_PP_IF:        std::cout << "Directive is: #if\n"; break;
+				case T_PP_IFDEF:     std::cout << "Directive is: #ifdef\n"; break;
+				case T_PP_IFNDEF:    std::cout << "Directive is: #ifndef\n"; break;
+				case T_PP_ELSE:      std::cout << "Directive is: #else\n"; break;
+				case T_PP_ELIF:      std::cout << "Directive is: #elif\n"; break;
+				case T_PP_ENDIF:     std::cout << "Directive is: #endif\n"; break;
+				case T_PP_ERROR:     std::cout << "Directive is: #error\n"; break;
+				case T_PP_LINE:      std::cout << "Directive is: #line\n"; break;
+				case T_PP_PRAGMA:    std::cout << "Directive is: #pragma\n"; break;
+				case T_PP_UNDEF:     std::cout << "Directive is: #undef\n"; break;
+				case T_PP_WARNING:   std::cout << "Directive is: #warning\n"; break;
+				case T_PP_INCLUDE:   std::cout << "Directive is: #include \"...\"\n"; break;
+				case T_PP_QHEADER:   std::cout << "Directive is: #include <...>\n"; break;
+				case T_PP_HHEADER:   std::cout << "Directive is: #include ...\n"; break;
+				default:             std::cout << "Directive is: <something else>\n"; break;
+			}
+		}
+
+		last_token = directive;
+		return false;
+	}
 
 	///////////////////////////////////////////////////////////////////////////
 	//
@@ -440,46 +432,6 @@ public:
 
 		using namespace boost::wave;
 		token_id id = token_id(token);
-
-#if 0
-		//A define statement is handled differently from all other preprocessor
-		//directives. Therefore it should not be handled by found_directive;
-		switch(id)
-		{
-			case T_PP_QHEADER:   //#include "..."
-			case T_PP_HHEADER:   //#include <...>
-				//	std::cout << "Token to include directive: " << directive.get_value() << std::endl;        
-				includeDirectiveToken = directive;
-				//   attributeListMap->found_directive(directive);
-
-				break;	     
-			case T_PP_INCLUDE:   //#include
-			case T_PP_IF:        //#if
-			case T_PP_IFDEF:     //#ifdef
-			case T_PP_IFNDEF:    //#ifndef
-			case T_PP_DEFINE:    //#define
-			case T_PP_WARNING:   //#warning
-			case T_PP_LINE:      //#line
-			case T_PP_UNDEF:     //#undef
-				break;
-			case T_PP_ELSE:      //#else
-				last_else = directive;
-				// std::cout << "Found #else\n";
-				break; 
-			case T_PP_ELIF:      //#elif
-				last_elif = directive;
-				// std::cout << "Found #elif\n";
-				break; 
-			case T_PP_ENDIF:      //#endif
-				last_endif = directive;
-				// std::cout << "Found #endif\n";
-				break; 
-			default:
-				if(id!=T_PP_DEFINE)
-					attributeListMap->found_directive(directive);
-				break;
-		}
-#endif
 
 		if(SgProject::get_verbose() >= 1)
 		{
@@ -503,44 +455,34 @@ public:
 				default:             std::cout << "<something else (" << id << ")>: "; break;
 			}
 //		   std::cout << boost::wave::util::impl::as_string(token).c_str() << std::endl;
-		   std::cout << token.get_value() << std::endl;
+		   if (token != token_type())
+			   std::cout << token.get_value().c_str() << std::endl;
 		}
 		return token;
 	}
 
- ///////////////////////////////////////////////////////////////////////////
- //
- //  The function 'evaluated_conditional_expression' is called, whenever a 
- //  conditional preprocessing expression was evaluated (the expression
- //  given to a #if, #ifdef or #ifndef directive)
- //
- //  The parameter 'expression' holds the non-expanded token sequence
- //  comprising the evaluated expression.
- //
- //  The parameter expression_value contains the result of the evaluation of
- //  the expression in the current preprocessing context.
- //
- ///////////////////////////////////////////////////////////////////////////
-    template <typename ContextT, typename TokenT, typename ContainerT>
-            bool
-            evaluated_conditional_expression(ContextT const& ctx, 
-                            TokenT const& directive, ContainerT const& expression, 
-                            bool expression_value)
-               {
+	///////////////////////////////////////////////////////////////////////////
+	//
+	//  The function 'evaluated_conditional_expression' is called, whenever a 
+	//  conditional preprocessing expression was evaluated (the expression
+	//  given to a #if, #ifdef or #ifndef directive)
+	//
+	//  The parameter 'expression' holds the non-expanded token sequence
+	//  comprising the evaluated expression.
+	//
+	//  The parameter expression_value contains the result of the evaluation of
+	//  the expression in the current preprocessing context.
+	//
+	///////////////////////////////////////////////////////////////////////////
+	template <typename ContextT, typename TokenT, typename ContainerT>
+	bool
+	evaluated_conditional_expression(ContextT const& ctx, TokenT const& directive, ContainerT const& expression, bool expression_value)
+	{
+		using namespace boost::wave;
+		token_id id = token_id(directive);
 
-                 using namespace boost::wave;
-                 token_id id = token_id(directive);
+		ROSE_ASSERT(directive == lastPreprocDirective);
 
-		 if(SgProject::get_verbose() >= 1){
-						     
-                      if( T_PP_ELIF  == id)
-                             std::cout << "Found an #elif.  Last directive is: " << lastPreprocDirective.get_value().c_str() << std::endl;
-                      else if( T_PP_ELSE  == id)
-                             std::cout << "Found an #else.  Last directive is: " << lastPreprocDirective.get_value().c_str() << std::endl;
-                      else if( T_PP_ENDIF  == id)
-                             std::cout << "Found an #endif.  Last directive is: " << lastPreprocDirective.get_value().c_str() << std::endl;
-		 }
-		      
 		if(SgProject::get_verbose() >= 1)
 		{
 			std::cout << "Conditional: ";
@@ -564,150 +506,121 @@ public:
 				default:             std::cout << "<something else (" << id << ")>: "; break;
 			}
 //		   std::cout << boost::wave::util::impl::as_string(token).c_str() << std::endl;
-		   std::cout << directive.get_value() << std::endl;
+		   std::cout << directive.get_value().c_str() << std::endl;
 		}
- 
+		token_container whitespace;
+		whitespace.push_back(token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(), 0, 0)));
+		// directive was already given up in found_directive.  here we add to the expression
+		attributeListMap->update_token(lastPreprocDirective, whitespace, expression_value);
+		attributeListMap->update_token(lastPreprocDirective, expression, expression_value);
 
-                 attributeListMap->found_directive(lastPreprocDirective,expression, expression_value);
-                 return false;  // ok to continue, do not re-evaluate expression
+		// King84 (2010.09.09):
+		// Tell later guys to update the previous token as soon as we start skipping
+		// This is important to associate conditions with skipped #elif directives
+		updatingLastToken = true; 
 
+		last_token = directive;
+		return false; // ok to continue, do not re-evaluate expression
+	}
 
-               }
+	///////////////////////////////////////////////////////////////////////////
+	//
+	//  The function 'skipped_token' is called, whenever a token is about to be
+	//  skipped due to a false preprocessor condition (code fragments to be
+	//  skipped inside the not evaluated conditional #if/#else/#endif branches).
+	//
+	//  The parameter 'token' refers to the token to be skipped.
+	//  
+	//
+	///////////////////////////////////////////////////////////////////////////
+	template <typename ContextT, typename TokenT>
+	void
+	skipped_token(ContextT const& ctx, TokenT const& token)
+	{
+		using namespace boost::wave;
+		//Process all tokens to be skipped except the ones without a filename,
+		//e.g macro definitions from the commandline
+		if (token.get_position().get_file().size() == 0)
+			return;
+		if (token == last_token && token.get_position() == last_token.get_position())
+			return;
 
- ///////////////////////////////////////////////////////////////////////////
- //
- //  The function 'skipped_token' is called, whenever a token is about to be
- //  skipped due to a false preprocessor condition (code fragments to be
- //  skipped inside the not evaluated conditional #if/#else/#endif branches).
- //
- //  The parameter 'token' refers to the token to be skipped.
- //  
- //
- ///////////////////////////////////////////////////////////////////////////
-    template <typename ContextT, typename TokenT>
-            void
-            skipped_token(ContextT const& ctx, TokenT const& token)
-               {
-              //Process all tokens to be skipped except the ones without a filename,
-              //e.g macro definitions from the commandline
-              //       if(tokenmacro_name.get_position().get_file().size()!=0)  
+		token_id id = token_id(token);
+		token_id lastid = token_id(lastPreprocDirective);
+		if (lastPreprocDirective == token_type())
+		{
+			attributeListMap->skipped_token(token);
+		}
+		else if (token != lastPreprocDirective)
+		{
+			if (id == T_NEWLINE) // if it's a newline, it's the end of the previous token not that trailing-slash linesare already taken into account by wave
+				updatingLastToken = false;
 
-                 int lineNo = token.get_position().get_line(); 
-                 //int colNo  = token.get_position().get_column(); 
-                 string filename = std::string(token.get_position().get_file().c_str());
-
-             	 int lineNoElif = last_elif.get_position().get_line(); 
-             	 int lineNoElse = last_else.get_position().get_line(); 
-             	 int lineNoEndif = last_endif.get_position().get_line(); 
-		 //int colNoElif  = last_elif.get_position().get_column(); 
-
-
-                 //AS(01/16/07) If the false-block of a preprocessor #if #elif #endif is an #elif the #elif token is not
-                 //registered as a skipped token. This is a temporary fix for this problem. FIXME               
-                 if(lineNo==lineNoElif)
-				{
-                   if(filename == std::string(last_elif.get_position().get_file().c_str()) ){
-                         attributeListMap->skipped_token(last_elif);
-                         last_elif = token_type(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),lineNo,0));
-                         attributeListMap->skipped_token(last_elif);
-
-                         last_elif = token_type(boost::wave::T_PP_ELIF,"#elif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
-
-                   }
-				}
-				else if (lineNo == lineNoElse)
-				{
-					attributeListMap->skipped_token(last_else);
-					last_else = token_type(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),lineNo,0));
-					attributeListMap->skipped_token(last_else);
-					last_else = token_type(boost::wave::T_PP_ELSE,"#else",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
-				}
-				else if (lineNo == lineNoEndif)
-				{
-					attributeListMap->skipped_token(last_endif);
-					last_endif = token_type(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),lineNo,0));
-					attributeListMap->skipped_token(last_endif);
-					last_endif = token_type(boost::wave::T_PP_ENDIF,"#endif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
-				}
- 
-
-                 attributeListMap->skipped_token(token);
-                 using namespace boost::wave;
-
-                 token_id wave_typeid = token_id(token);
-
-<<<<<<< Updated upstream:src/frontend/SageIII/advanced_preprocessing_hooks.h
-<<<<<<< Updated upstream:src/frontend/SageIII/advanced_preprocessing_hooks.h
-=======
-=======
->>>>>>> Stashed changes:src/frontend/SageIII/advanced_preprocessing_hooks.h
-		 if(SgProject::get_verbose() >= 1)
+			// This is if we have to associated skipped tokens with a previous token.  We do this for the last directive until we get a newline
+			if (updatingLastToken)
 			{
-				switch(wave_typeid)
-				{
-					case T_PP_DEFINE:    std::cout << "Found: #define\n"; break;
-					case T_PP_IF:        std::cout << "Found: #if\n"; break;
-					case T_PP_IFDEF:     std::cout << "Found: #ifdef\n"; break;
-					case T_PP_IFNDEF:    std::cout << "Found: #ifndef\n"; break;
-					case T_PP_ELSE:      std::cout << "Found: #else\n"; break;
-					case T_PP_ELIF:      std::cout << "Found: #elif\n"; break;
-					case T_PP_ENDIF:     std::cout << "Found: #endif\n"; break;
-					case T_PP_ERROR:     std::cout << "Found: #error\n"; break;
-					case T_PP_LINE:      std::cout << "Found: #line\n"; break;
-					case T_PP_PRAGMA:    std::cout << "Found: #pragma\n"; break;
-					case T_PP_UNDEF:     std::cout << "Found: #undef\n"; break;
-					case T_PP_WARNING:   std::cout << "Found: #warning\n"; break;
-					case T_PP_INCLUDE:   std::cout << "Found: #include \"...\"\n"; break;
-					case T_PP_QHEADER:   std::cout << "Found: #include <...>\n"; break;
-					case T_PP_HHEADER:   std::cout << "Found: #include ...\n"; break;
-					default:             std::cout << "Found: <something else>\n"; break;
-				}
-		   }
-
-
-
-<<<<<<< Updated upstream:src/frontend/SageIII/advanced_preprocessing_hooks.h
->>>>>>> Stashed changes:src/frontend/SageIII/advanced_preprocessing_hooks.h
-=======
->>>>>>> Stashed changes:src/frontend/SageIII/advanced_preprocessing_hooks.h
-		 if(SgProject::get_verbose() >= 1)
+				token_container tc;
+				tc.push_back(token);
+				if(SgProject::get_verbose() >= 1)
+					std::cout << "Updating previous token (" << lastPreprocDirective.get_value().c_str() << ") with token " << token.get_value().c_str() << std::endl;
+				attributeListMap->update_token(lastPreprocDirective, tc, false);
+			}
+			else if (skipping || (lastid != T_PP_IF && lastid != T_PP_IFDEF && lastid != T_PP_IFNDEF && lastid != T_PP_ELIF)) // if we skipped the first newline
 			{
-				switch(wave_typeid)
-				{
-					case T_PP_DEFINE:    std::cout << "Found: #define\n"; break;
-					case T_PP_IF:        std::cout << "Found: #if\n"; break;
-					case T_PP_IFDEF:     std::cout << "Found: #ifdef\n"; break;
-					case T_PP_IFNDEF:    std::cout << "Found: #ifndef\n"; break;
-					case T_PP_ELSE:      std::cout << "Found: #else\n"; break;
-					case T_PP_ELIF:      std::cout << "Found: #elif\n"; break;
-					case T_PP_ENDIF:     std::cout << "Found: #endif\n"; break;
-					case T_PP_ERROR:     std::cout << "Found: #error\n"; break;
-					case T_PP_LINE:      std::cout << "Found: #line\n"; break;
-					case T_PP_PRAGMA:    std::cout << "Found: #pragma\n"; break;
-					case T_PP_UNDEF:     std::cout << "Found: #undef\n"; break;
-					case T_PP_WARNING:   std::cout << "Found: #warning\n"; break;
-					case T_PP_INCLUDE:   std::cout << "Found: #include \"...\"\n"; break;
-					case T_PP_QHEADER:   std::cout << "Found: #include <...>\n"; break;
-					case T_PP_HHEADER:   std::cout << "Found: #include ...\n"; break;
-					default:             std::cout << "Found: <something else>\n"; break;
-				}
-		   }
+				attributeListMap->skipped_token(token);
+			}
+		}
 
+		switch(id)
+		{
+			case T_PP_DEFINE:
+			case T_PP_IF:
+			case T_PP_IFDEF:
+			case T_PP_IFNDEF:
+			case T_PP_ELSE:
+			case T_PP_ELIF:
+			case T_PP_ENDIF:
+			case T_PP_ERROR:
+			case T_PP_LINE:
+			case T_PP_PRAGMA:
+			case T_PP_UNDEF:
+			case T_PP_WARNING:
+			case T_PP_INCLUDE:
+			case T_PP_QHEADER:
+			case T_PP_HHEADER:
+				lastPreprocDirective = token; // since found_directive doesn't get called
+				break;
+			default:
+				break;
+		}
 
-
-                 if(SgProject::get_verbose() >= 1)
-                      if( T_PP_ELIF  == wave_typeid)
-                             std::cout << "Found: #elif.  Last directive is: " << lastPreprocDirective.get_value().c_str() << std::endl;
-                      else if( T_PP_ELSE  == wave_typeid)
-                             std::cout << "Found: #else.  Last directive is: " << lastPreprocDirective.get_value().c_str() << std::endl;
-                      else if( T_PP_ENDIF  == wave_typeid)
-                             std::cout << "Found: #endif.  Last directive is: " << lastPreprocDirective.get_value().c_str() << std::endl;
-
-
-              //     else
-              //      std::cout << "SKIPPED BECAUSE FILE IS NULL: " << token.get_value().c_str();
-
-               }
+		if(SgProject::get_verbose() >= 1)
+		{
+			switch(id)
+			{
+				case T_PP_DEFINE:    std::cout << "Skipped: #define\n"; break;
+				case T_PP_IF:        std::cout << "Skipped: #if\n"; break;
+				case T_PP_IFDEF:     std::cout << "Skipped: #ifdef\n"; break;
+				case T_PP_IFNDEF:    std::cout << "Skipped: #ifndef\n"; break;
+				case T_PP_ELSE:      std::cout << "Skipped: #else\n"; break;
+				case T_PP_ELIF:      std::cout << "Skipped: #elif\n"; break;
+				case T_PP_ENDIF:     std::cout << "Skipped: #endif\n"; break;
+				case T_PP_ERROR:     std::cout << "Skipped: #error\n"; break;
+				case T_PP_LINE:      std::cout << "Skipped: #line\n"; break;
+				case T_PP_PRAGMA:    std::cout << "Skipped: #pragma\n"; break;
+				case T_PP_UNDEF:     std::cout << "Skipped: #undef\n"; break;
+				case T_PP_WARNING:   std::cout << "Skipped: #warning\n"; break;
+				case T_PP_INCLUDE:   std::cout << "Skipped: #include \"...\"\n"; break;
+				case T_PP_QHEADER:   std::cout << "Skipped: #include <...>\n"; break;
+				case T_PP_HHEADER:   std::cout << "Skipped: #include ...\n"; break;
+				default:             std::cout << "Skipped: <something else (" << token.get_value().c_str() << ")>\n"; break;
+			}
+			if (lastPreprocDirective != token_type())
+				std::cout << "\tskipping is " << skipping << "\tupdatingLastToken is " << updatingLastToken << "\tlastPreprocDirective is " << lastPreprocDirective.get_value().c_str() << std::endl;
+		}
+		skipping = true; // skipping lets us skip the extra newline that shows up after #if statements
+		last_token = token;
+	}
 
  ///////////////////////////////////////////////////////////////////////////
  //
@@ -802,15 +715,40 @@ public:
                }
 
 
-    template <typename ContextT, typename TokenT>
-            bool
-            may_skip_whitespace(ContextT const& ctx, TokenT& token, bool& skipped_newline)
-               { 
-                 if(SgProject::get_verbose() >= 1)
-                    std::cout << "MAX_SKIP_WHITESPACE: " << token.get_value().c_str() << std::endl;
+	template <typename ContextT, typename TokenT>
+	bool
+	may_skip_whitespace(ContextT const& ctx, TokenT& token, bool& skipped_newline)
+	{
+		if (token == lastPreprocDirective && token.get_position() == lastPreprocDirective.get_position())
+			return false;
+		if (token == last_token && token.get_position() == last_token.get_position())
+			return false;
+		if (SgProject::get_verbose() >= 1)
+			if (token != TokenT())
+				std::cout << "MAX_SKIP_WHITESPACE: " << token.get_value().c_str() << std::endl;
 
-                 attributeListMap->may_skip_whitespace(ctx,token,skipped_newline);
-                 return false; }
+		using namespace boost::wave;
+		token_id id = token_id(token);
+		if (id != T_EOF && id != T_EOI && id != T_NEWLINE)
+		{
+			if (SgProject::get_verbose() >= 1)
+				std::cout << "Normal reported" << std::endl;
+			attributeListMap->may_skip_whitespace(ctx, token, skipped_newline);
+		}
+		else if (skipping) // then we need to flush tokens
+		{
+			if (SgProject::get_verbose() >= 1)
+				std::cout << "Skip leads to flushing" << std::endl;
+			attributeListMap->flush_token_stream();
+		}
+		else
+		{
+			if (SgProject::get_verbose() >= 1)
+				std::cout << "EOF or newline leads to flushing" << std::endl;
+			attributeListMap->flush_token_stream();
+		}
+		return false;
+	}
 
 	template <typename ContextT, typename ExceptionT>
 	void throw_exception(ContextT const &ctx, ExceptionT const& e)
@@ -826,7 +764,6 @@ public:
 			std::cout << "DETECTED_INCLUDE_GUARD" << include_guard << " in file " << filename << std::endl;
 	}
 
-<<<<<<< Updated upstream:src/frontend/SageIII/advanced_preprocessing_hooks.h
 	template <typename ContextT, typename TokenT>
 	void detected_pragma_once(ContextT const &ctx, TokenT const& pragma_token, std::string const& filename)
 	{
@@ -834,40 +771,12 @@ public:
 			std::cout << "DETECTED_PRAGMA_ONCE " << pragma_token.get_value() << " in file " << filename << std::endl;
 	}
 
-<<<<<<< Updated upstream:src/frontend/SageIII/advanced_preprocessing_hooks.h
-=======
-=======
->>>>>>> Stashed changes:src/frontend/SageIII/advanced_preprocessing_hooks.h
-	template <typename ContextT, typename ExceptionT>
-	void throw_exception(ContextT const &ctx, ExceptionT const& e)
-	{
-		if (SgProject::get_verbose() >= 1)
-			std::cout << "THROW_EXCEPTION" << std::endl;
-	}
-
-	template <typename ContextT>
-	void detected_include_guard(ContextT const &ctx, std::string const& filename, std::string const& include_guard)
-	{
-		if (SgProject::get_verbose() >= 1)
-			std::cout << "DETECTED_INCLUDE_GUARD" << include_guard << " in file " << filename << std::endl;
-	}
-
-	template <typename ContextT, typename TokenT>
-	void detected_pragma_once(ContextT const &ctx, TokenT const& pragma_token, std::string const& filename)
-	{
-		if (SgProject::get_verbose() >= 1)
-			std::cout << "DETECTED_PRAGMA_ONCE " << pragma_token.get_value() << " in file " << filename << std::endl;
-	}
-
-<<<<<<< Updated upstream:src/frontend/SageIII/advanced_preprocessing_hooks.h
->>>>>>> Stashed changes:src/frontend/SageIII/advanced_preprocessing_hooks.h
-=======
->>>>>>> Stashed changes:src/frontend/SageIII/advanced_preprocessing_hooks.h
 	template <typename ContextT, typename ContainerT>
 	bool found_error_directive(ContextT const &ctx, ContainerT const &message)
 	{
 		if (SgProject::get_verbose() >= 1)
 			std::cout << "FOUND_ERROR_DIRECTIVE" << std::endl;
+		return false;
 	}
 
 
