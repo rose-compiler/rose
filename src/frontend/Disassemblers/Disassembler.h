@@ -43,12 +43,15 @@
  *  method in order to disassemble the entire executable in one call.  However, if the executable contains multiple
  *  independent interpretations (like a PE file that contains a Windows executable and a DOS executable) then the best
  *  practice is to disassemble each interpretation individually.  The disassemble() method is convenient for this.
+ *  Disassemblers only disassemble memory that is marked with the protections returned by get_protections(); normally the
+ *  execute bit must be set.
  *
  *  While the main purpose of the Disassembler class is to disassemble instructions, it also needs to be able to group those
  *  instructions into basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration). It uses an instance of the
  *  Partitioner class to do so.  The user can supply a partitioner to the disassembler or have the disassembler create a
  *  default partitioner on the fly.  The user is also free to call the partitioner directly on the InstructionMap object
- *  returned by most of the disassembler methods.
+ *  returned by most of the disassembler methods. As described in the Partitioner documentation, the output of a Disassembler
+ *  can be provided as input to the Partitioner, or the Partitioner can be configured to call the Disassembler as needed.
  *
  *  For example, the following code disassembles every single possible address of all bytes that are part of an executable
  *  ELF Segment but which are not defined as any other known part of the file (not a table, ELF Section, header, etc.). By
@@ -100,9 +103,9 @@
  *  Disassembler::register_subclass(new MyDisassembler(8)); // 64-bit
  *  @endcode
  *
- *  Another example is shown in the tests/roseTests/binaryTests/disassembleBuffer.C source code. It is an example of how a
- *  Disassembler object can be used to disassemble a buffer containing bare machine code when one doesn't have an associated
- *  executable file.
+ *  Additional examples are shown in the disassembleBuffer.C and disassemble.C sources in the tests/roseTests/binaryTests
+ *  directory. They are examples of how a Disassembler object can be used to disassemble a buffer containing bare machine code
+ *  when one doesn't have an associated executable file.
  */
 class Disassembler {
 public:
@@ -210,12 +213,15 @@ public:
 
     Disassembler()
         : p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
-        p_wordsize(4), p_sex(SgAsmExecutableFileFormat::ORDER_LSB), p_alignment(4), p_ndisassembled(0)
+          p_wordsize(4), p_sex(SgAsmExecutableFileFormat::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
+          p_protection(MemoryMap::MM_PROT_EXEC)
         {ctor();}
 
     Disassembler(const Disassembler& other)
         : p_partitioner(other.p_partitioner), p_search(other.p_search), p_debug(other.p_debug), p_wordsize(other.p_wordsize),
-          p_sex(other.p_sex), p_alignment(other.p_alignment), p_ndisassembled(other.p_ndisassembled) {}
+          p_sex(other.p_sex), p_alignment(other.p_alignment), p_ndisassembled(other.p_ndisassembled),
+          p_protection(other.p_protection)
+        {}
 
     virtual ~Disassembler() {}
 
@@ -354,6 +360,18 @@ public:
         return p_ndisassembled;
     }
 
+    /** Normally the disassembler will only read memory when the execute permission is turned on for the memory.  This can be
+     *  changed to some other set of MemoryMap::Protection bits with this function. All bits that are set here must also be
+     *  present for the memory being disassembled. */
+    void set_protection(unsigned bitvec) {
+        p_protection = bitvec;
+    }
+
+    /** Returns a bit vector describing which bits must be enabled in the MemoryMap in order for the disassembler to read from
+     *  that memory.  The default is that MemoryMap::MM_PROT_EXEC must be set. */
+    unsigned get_protection() const {
+        return p_protection;
+    }
 
 
 
@@ -524,6 +542,7 @@ protected:
     size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
+    unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
 };
 
 #endif

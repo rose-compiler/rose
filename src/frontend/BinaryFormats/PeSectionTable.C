@@ -1,8 +1,6 @@
 /* Windows PE Section Tables (SgAsmPESectionTable and related classes) */
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#include "Loader.h"
+#include "BinaryLoader.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -142,12 +140,13 @@ SgAsmPESectionTable::parse()
     }
 
     /* Build the memory mapping like the real loader would do. This is the same code used by
-     * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing here early because we need it in the rest of the PE
-     * parser. */
+     * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing it here early because we need it in the rest of the
+     * PE parser. */
     ROSE_ASSERT(NULL==fhdr->get_loader_map());
-    Loader *loader = Loader::find_loader(fhdr);
+    BinaryLoader *loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
     ROSE_ASSERT(loader!=NULL);
-    MemoryMap *loader_map = loader->map_all_sections(NULL, fhdr);
+    MemoryMap *loader_map = new MemoryMap;
+    loader->remap(loader_map, fhdr);
     fhdr->set_loader_map(loader_map);
 
     /* Parse each section after the loader map is created */

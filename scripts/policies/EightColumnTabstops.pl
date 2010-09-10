@@ -114,7 +114,8 @@ while (my $filename = $files->next_file) {
 	$indent = $actual;
 	if ($delta && /^\s*?\t/ && $delta % $base) {
 	  if ($verbose) {
-	    print "$filename:$linenum: warning: TAB-based indentation is not a multiple of $base\n";
+	    $nfail++;
+	    print "$filename:$linenum: TAB-based indentation is not a multiple of $base\n";
 	  } else {
 	    print $desc unless $nfail++;
 	    print "  $filename\n";
