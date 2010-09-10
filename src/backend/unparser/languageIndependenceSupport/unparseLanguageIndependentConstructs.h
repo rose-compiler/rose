@@ -120,6 +120,9 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) = 0;
           virtual void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) = 0;
 
+       // DQ (9/6/2010): Mark the derived class to support debugging.
+          virtual std::string languageName() const = 0;
+
       //! unparse expression functions implemented in unparse_expr.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
           virtual void unparseExpression              (SgExpression* expr, SgUnparse_Info& info);
