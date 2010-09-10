@@ -18,31 +18,45 @@ struct StoredExpressionReversal : public EvaluationResultAttribute
 
 vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* expression, const VariableVersionTable& varTable, bool isReverseValueUsed)
 {
-	if (isSgAssignOp(expression))
+	if (backstroke_util::isAssignmentOp(expression))
 	{
-		SgAssignOp* assignOp = isSgAssignOp(expression);
+		SgBinaryOp* assignOp = isSgBinaryOp(expression);
+		ROSE_ASSERT(assignOp != NULL && "All assignments should be binary ops");
 
 		if (backstroke_util::IsVariableReference(assignOp->get_lhs_operand()))
 		{
-			SgExpression* reverseExpression;
-			if (handleAssignOp(assignOp, varTable, reverseExpression))
+			//Get the variable on the left side of the assign op
+			VariableRenaming::VarName destroyedVarName;
+			SgExpression* destroyedVarExpression;
+			tie(destroyedVarName, destroyedVarExpression) = getReferredVariable(assignOp->get_lhs_operand());
+			ROSE_ASSERT(destroyedVarName != VariableRenaming::emptyName);
+
+			//Get the version of the variable before it was overwritten
+			VariableRenaming::NumNodeRenameEntry reachingDefs = getVariableRenaming()->getReachingDefsAtNodeForName(assignOp->get_rhs_operand(), destroyedVarName);
+
+			//Call the variable value restorer plugins
+			vector<SgExpression*> restoredValues = restoreVariable(destroyedVarName, varTable, reachingDefs);
+			if (!restoredValues.empty())
 			{
+				//Success! Let's build an assign op to restore the value
+				SgExpression* reverseExpression = SageBuilder::buildAssignOp(SageInterface::copyExpression(destroyedVarExpression), restoredValues.front());
 				string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
 				printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
 						expression->unparseToString().c_str(), reverseExpString.c_str());
 
 				//Indicate in the variable version table that we have restored this variable and return
 				VariableVersionTable newVarTable = varTable;
-				newVarTable.reverseVersion(getReferredVariable(assignOp->get_lhs_operand()).second);
+				newVarTable.reverseVersion(destroyedVarExpression);
 
+				//Build the evaluation result and return it
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
-				EvaluationResult reversalInfo(this, newVarTable);
 				ExpressionReversal reversalResult(forwardExp, reverseExpression);
+
+				EvaluationResult reversalInfo(this, newVarTable);
 				reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
-				
+
 				vector<EvaluationResult> result;
 				result.push_back(reversalInfo);
-
 				return result;
 			}
 		}
@@ -58,31 +72,6 @@ ExpressionReversal AkgulStyleExpressionProcessor::generateReverseAST(SgExpressio
 	ROSE_ASSERT(evaluationResult.getExpressionProcessor() == this);
 
 	return reversalResult->reversal;
-}
-
-
-bool AkgulStyleExpressionProcessor::handleAssignOp(SgAssignOp* assignOp, const VariableVersionTable& availableVariables, SgExpression*& reverseExpression)
-{
-	reverseExpression = NULL;
-	ROSE_ASSERT(assignOp != NULL);
-	
-	//Get the variable on the left side of the assign op
-	VariableRenaming::VarName destroyedVarName;
-	SgExpression* destroyedVarExpression;
-	tie(destroyedVarName, destroyedVarExpression) = getReferredVariable(assignOp->get_lhs_operand());
-	ROSE_ASSERT(destroyedVarName != VariableRenaming::emptyName);
-
-	VariableRenaming::NumNodeRenameEntry reachingDefs = getVariableRenaming()->getReachingDefsAtNodeForName(assignOp->get_rhs_operand(), destroyedVarName);
-
-	vector<SgExpression*> restoredValues = restoreVariable(destroyedVarName, availableVariables, reachingDefs);
-	if (!restoredValues.empty())
-	{
-		//Success! Let's build an assign op to restore the value
-		reverseExpression = SageBuilder::buildAssignOp(SageInterface::copyExpression(destroyedVarExpression), restoredValues.front());
-		return true;
-	}
-
-	return false;
 }
 
 
