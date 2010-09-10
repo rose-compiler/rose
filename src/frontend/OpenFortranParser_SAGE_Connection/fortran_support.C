@@ -4251,7 +4251,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
        // It might be that we should build a nondefining declaration for use in the symbol.
           functionSymbol = new SgFunctionSymbol(procedureDeclaration);
           currentScopeOfFunctionDeclaration->insert_symbol(procedureDeclaration->get_name(), functionSymbol);
-#if 1
+#if 0
           printf ("In buildProcedureSupport(): Added SgFunctionSymbol = %p to scope = %p = %s \n",functionSymbol,currentScopeOfFunctionDeclaration,currentScopeOfFunctionDeclaration->class_name().c_str());
 #endif
         }
