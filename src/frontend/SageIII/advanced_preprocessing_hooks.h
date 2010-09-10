@@ -350,7 +350,7 @@ public:
 	bool 
 	found_directive(ContextT const& ctx, TokenT const& directive)
 	{
-		 if(SgProject::get_verbose() >= 1)
+		if(SgProject::get_verbose() >= 1)
 			std::cout << "found_directive!" << std::endl;
 
 		skipping = false;
@@ -455,8 +455,8 @@ public:
 				default:             std::cout << "<something else (" << id << ")>: "; break;
 			}
 //		   std::cout << boost::wave::util::impl::as_string(token).c_str() << std::endl;
-		   if (token != token_type())
-			   std::cout << token.get_value().c_str() << std::endl;
+			if (token != token_type())
+				std::cout << token.get_value().c_str() << std::endl;
 		}
 		return token;
 	}
@@ -506,7 +506,7 @@ public:
 				default:             std::cout << "<something else (" << id << ")>: "; break;
 			}
 //		   std::cout << boost::wave::util::impl::as_string(token).c_str() << std::endl;
-		   std::cout << directive.get_value().c_str() << std::endl;
+			std::cout << directive.get_value().c_str() << std::endl;
 		}
 		token_container whitespace;
 		whitespace.push_back(token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(), 0, 0)));

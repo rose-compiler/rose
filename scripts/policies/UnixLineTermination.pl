@@ -15,7 +15,7 @@ use FileLister;
 my $nfail=0;
 my $files = FileLister->new();
 while (my $filename = $files->next_file) {
-  next if $filename =~ /\.(pdf|rtf)$/;
+  next if $filename =~ /\.(pdf|rtf|vimsession)$/;
   if (-T $filename && open FILE, "<", $filename) {
     my @content = <FILE>;
     close FILE;
