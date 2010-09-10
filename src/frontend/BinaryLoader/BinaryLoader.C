@@ -319,7 +319,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
     try {
         for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
             SgAsmGenericSection *section = *si;
-            section->set_mapped_actual_rva(section->get_mapped_preferred_rva()); /*reset in case previously mapped*/
+            section->set_mapped_actual_va(0); /*reset in case previously mapped*/
 
             if (debug) {
                 fprintf(debug, "  mapping section [%d] \"%s\"", section->get_id(), section->get_name()->c_str());
@@ -432,9 +432,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 }
             }
 
-            /* Save the relative virtual address where this section is (will be) mapped.  When a section is mapped more than once
+            /* Save the virtual address where this section is (will be) mapped.  When a section is mapped more than once
              * (perfectly legal to do so) only the last mapping is saved. */
-            section->set_mapped_actual_rva(va + va_offset - section->get_header()->get_base_va());
+            section->set_mapped_actual_va(va + va_offset);
 
             /* Permissions */
             unsigned mapperms=MemoryMap::MM_PROT_NONE;

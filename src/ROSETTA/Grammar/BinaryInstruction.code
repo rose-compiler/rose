@@ -873,7 +873,7 @@ HEADER_GENERIC_SECTION_START
 			: local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
 			p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
 			p_mapped_preferred_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false),
-			p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_rva(0)
+			p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_va(0)
 			{ctor(f, fhdr);}
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
@@ -938,7 +938,6 @@ HEADER_GENERIC_SECTION_START
 		virtual void  set_mapped_preferred_rva(addr_t); /* Move a section w/o regard to other section mappings */
 		addr_t 	      get_base_va() const;            	/* Convenience to get header's base VA */
 		addr_t 	      get_mapped_preferred_va() const;	/* Like get_mapped_preferred_rva() except returns absolute VA */
-		addr_t	      get_mapped_actual_va() const;	/* Like get_mapped_actual_rva() except returns absolute VA */
 		addr_t        get_va_offset(addr_t va) const;  	/* Return file offset for specified virtual address */
 		addr_t	      get_rva_offset(addr_t rva) const;	/* Return file offset for specified relative virtual address */
 

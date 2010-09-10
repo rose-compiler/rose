@@ -651,7 +651,7 @@ SgAsmLESectionTable::ctor(addr_t offset, addr_t size)
 
         /* Section permissions */
         section->set_mapped_preferred_rva(entry->get_base_addr());
-        section->set_mapped_actual_rva(0); /*assigned by Loader*/
+        section->set_mapped_actual_va(0); /*assigned by Loader*/
         section->set_mapped_size(entry->get_mapped_size());
         section->set_mapped_rperm((entry->get_flags() & SgAsmLESectionTableEntry::SF_READABLE)
                                   == SgAsmLESectionTableEntry::SF_READABLE);

@@ -110,9 +110,9 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
             break;
         }
     }
-    rose_addr_t diff = part_of ? part_of->get_mapped_actual_rva() - part_of->get_mapped_preferred_rva() : 0;
+    rose_addr_t diff = part_of ? part_of->get_mapped_actual_va() - part_of->get_mapped_preferred_va() : 0;
     *malign_hi_p = *malign_lo_p = 1; /*no alignment constraint*/
-    *va_p = section->get_mapped_preferred_rva() + diff;
+    *va_p = section->get_header()->get_base_va() + section->get_mapped_preferred_rva() + diff;
     *mem_size_p = section->get_mapped_size();
     *offset_p = section->get_offset();
     *file_size_p = section->get_size();
@@ -892,13 +892,13 @@ relocate_X86_JMP_SLOT(SgAsmElfRelocEntry* reloc,
   // reloc->get_r_offset is the va assuming the library was not moved
   //  so we have to adjust it by the same amount the library WAS moved
   const rose_addr_t reloc_va = 
-    reloc->get_r_offset() + (targetSection->get_mapped_actual_rva() - targetSection->get_mapped_preferred_rva());
+    reloc->get_r_offset() + (targetSection->get_mapped_actual_va() - targetSection->get_mapped_preferred_va());
 
   // offset from start of section 
   rose_addr_t relocSectionOffset = reloc_va - targetSection->get_mapped_actual_va();
 
   const rose_addr_t symbol_va = 
-    sourceSymbol->get_value() + (sourceSection->get_mapped_actual_rva() - sourceSection->get_mapped_preferred_rva());
+    sourceSymbol->get_value() + (sourceSection->get_mapped_actual_va() - sourceSection->get_mapped_preferred_va());
 
   SgFileContentList contents = targetSection->get_data();
 
@@ -943,7 +943,7 @@ relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
   SgAsmGenericSection* targetSection=find_mapped_section(relocHeader,reloc->get_r_offset());
   ROSE_ASSERT(NULL != targetSection);
 
-  rose_addr_t targetSectionShift=(targetSection->get_mapped_actual_rva() - targetSection->get_mapped_preferred_rva());
+  rose_addr_t targetSectionShift=(targetSection->get_mapped_actual_va() - targetSection->get_mapped_preferred_va());
   if(targetSectionShift == 0){
     // _RELATIVE locations are used to shift address so they are still pointing at the same object
     //  of the section was loaded at the 'preferred' address, nothing needs to be done
@@ -1032,13 +1032,13 @@ relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
   // reloc->get_r_offset is the va assuming the library was not moved
   //  so we have to adjust it by the same amount the library WAS moved
   const rose_addr_t reloc_va = 
-    reloc->get_r_offset() + (targetSection->get_mapped_actual_rva() - targetSection->get_mapped_preferred_rva());
+    reloc->get_r_offset() + (targetSection->get_mapped_actual_va() - targetSection->get_mapped_preferred_va());
 
   // offset from start of section 
   rose_addr_t relocSectionOffset = reloc_va - targetSection->get_mapped_actual_va();
 
   const rose_addr_t symbol_va = 
-    sourceSymbol->get_value() + (sourceSection->get_mapped_actual_rva() - sourceSection->get_mapped_preferred_rva());
+    sourceSymbol->get_value() + (sourceSection->get_mapped_actual_va() - sourceSection->get_mapped_preferred_va());
 
   SgFileContentList contents = targetSection->get_data();
   rose_addr_t reloc_value = symbol_va + reloc->get_r_addend();

@@ -884,7 +884,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
     while (plt_offset<plt->get_mapped_size()) {
 
         /* Find an x86 instruction */
-        SgAsmInstruction *insn = find_instruction(plt->get_mapped_actual_rva()+plt_offset);
+        SgAsmInstruction *insn = find_instruction(plt->get_mapped_actual_va()+plt_offset);
         if (!insn) {
             ++plt_offset;
             continue;
@@ -966,7 +966,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
                  * the value is used directly (the above code handled that case). */            
                 SgAsmGenericSection *section = symbol->get_bound();
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
-                    value += section->get_header()->get_base_va() + section->get_mapped_actual_rva();
+                    value += section->get_mapped_actual_va();
                 if (find_instruction(value))
                     add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());
             }

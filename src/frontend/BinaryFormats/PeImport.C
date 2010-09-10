@@ -294,12 +294,13 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
 
     /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero */
     if (rva.get_section()!=isec) {
+        rose_addr_t start_rva = isec->get_mapped_actual_va() - isec->get_base_va();
         import_mesg("SgAsmPEImportSection::ctor: warning: %s RVA is outside PE Import Table\n"
                     "        Import Directory Entry #%zu\n"
                     "        %s RVA is %s\n"
                     "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
                     tname, idir_idx, tname, rva.to_string().c_str(),
-                    isec->get_mapped_actual_rva(), isec->get_mapped_actual_rva()+isec->get_mapped_size());
+                    start_rva, start_rva+isec->get_mapped_size());
     }
 
     for (size_t i=0; 1; i++) {
@@ -528,7 +529,7 @@ SgAsmPEImportSection::parse()
     ROSE_ASSERT(fhdr!=NULL);
 
     ROSE_ASSERT(is_mapped());
-    rose_addr_t idir_rva = get_mapped_actual_rva();
+    rose_addr_t idir_rva = get_mapped_actual_va() - fhdr->get_base_va();
 
     for (size_t i = 0; 1; i++) {
         /* Read idata directory entries. The list is terminated with a zero-filled entry whose idx will be negative */
@@ -540,13 +541,14 @@ SgAsmPEImportSection::parse()
 
         rva_t rva = idir->get_dll_name_rva();
         if (rva.get_section()!=this) {
+            rose_addr_t start_rva = get_mapped_actual_va() - get_base_va();
             import_mesg("SgAsmPEImportSection::ctor: warning: Name RVA is outside PE Import Table\n"
                         "        Import Directory Entry #%zu\n"
                         "        Name RVA is %s\n"
                         "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
                         i,
                         rva.to_string().c_str(),
-                        get_mapped_actual_rva(), get_mapped_actual_rva()+get_mapped_size());
+                        start_rva, start_rva+get_mapped_size());
         }
 
         /* Import Lookup Table */
