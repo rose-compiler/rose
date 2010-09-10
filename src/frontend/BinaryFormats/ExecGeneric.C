@@ -1,10 +1,8 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include "checkIsModifiedFlag.h"
-#include "Loader.h"
 #include <algorithm>
 #include <fstream>
 
@@ -53,7 +51,6 @@ SgAsmGenericFile *
 SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 {
     SgAsmGenericFile *ef=NULL;
-    Loader::initclass();
     std::vector<DataConverter*> converters;
     converters.push_back(NULL); /*no conversion*/
     converters.push_back(new Rot13);

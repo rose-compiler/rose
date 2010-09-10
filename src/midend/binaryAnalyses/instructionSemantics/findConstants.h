@@ -1020,6 +1020,10 @@ struct FindConstantsPolicy {
         currentRset.setToBottom();
     }
 
+    void sysenter() {
+        currentRset.setToBottom();
+    }
+
     XVariablePtr<64> rdtsc() { // FIXME
         return number<64>(0);
     }

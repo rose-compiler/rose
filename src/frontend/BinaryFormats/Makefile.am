@@ -25,10 +25,9 @@ libroseBinaryFormats_la_SOURCES = \
    PeExport.C PeFileHeader.C PeImport.C PeSection.C PeStringTable.C PeSymbolTable.C \
    ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C \
    ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C \
-   LoaderELFObj.C LoaderPE.C ExecDOS.C ExecNE.C ExecLE.C \
-   ExecGeneric.C PeSectionTable.C Loader.C LoaderELF.C
+   ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C
 
-include_HEADERS = DataConversion.h IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
+include_HEADERS = DataConversion.h IntelPinSupport.h MemoryMap.h
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
 EXTRA_DIST = CMakeLists.txt IntelPinSupport.C

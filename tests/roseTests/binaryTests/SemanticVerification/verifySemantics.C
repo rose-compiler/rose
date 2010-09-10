@@ -155,6 +155,9 @@ public:
 
     /* Called for the INT instruction */
     void interrupt(uint8_t num) {} /*FIXME*/
+
+    /* Called for the SYSENTER instruction */
+    void sysenter() {} /*FIXME*/
     
     VerifierValue<32> filterCallTarget(VerifierValue<32> x) {return x;}
     VerifierValue<32> filterIndirectJumpTarget(VerifierValue<32> x) {return x;}

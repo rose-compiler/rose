@@ -42,15 +42,7 @@ SgAsmGenericFile::parse(std::string fileName)
     ROSE_ASSERT(p_fd < 0); /*can call parse() only once per object*/
 
     set_name(fileName);
-
-// CH (4/6/2010): The "io.h" in MSVS does support open()
-//#ifdef _MSCx_VER
-//#pragma message ("WARNING: MSVS des not support Linux open() function.")
-//    printf ("ERROR: MSVS des not support Linux open() function.");
-//    ROSE_ASSERT(false);
-//#else
     p_fd = open(fileName.c_str(), O_RDONLY);
-//#endif
     if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
         std::string mesg = "Could not open binary file";
         throw FormatError(mesg + ": " + strerror(errno));
@@ -61,16 +53,7 @@ SgAsmGenericFile::parse(std::string fileName)
     unsigned char *mapped = new unsigned char[nbytes];
     if (!mapped)
         throw FormatError("Could not allocate memory for binary file");
-
-// CH (4/6/2010): The "io.h" in MSVS does support read()
-//#ifdef _MSCx_VER
-//#pragma message ("WARNING: MSVS des not support Linux read() function.")
-//    printf ("ERROR: MSVS des not support Linux read() function.");
-//    ROSE_ASSERT(false);
-//    ssize_t nread = 0;
-//#else
     ssize_t nread = read(p_fd, mapped, nbytes);
-//#endif
     if (nread<0 || (size_t)nread!=nbytes)
         throw FormatError("Could not read entire binary file");
 
@@ -106,19 +89,10 @@ SgAsmGenericFile::~SgAsmGenericFile()
         delete[] mapped;
     p_data.clear();
 
-    if ( p_fd >= 0 ) {
-
-// CH (4/6/2010): The "io.h" in MSVS does support "close(int)"
-//#ifdef _MSCx_VER
-//#pragma message ("WARNING: MSVS des not support Linux close() function.")
-//        printf ("ERROR: MSVS des not support Linux close() function.");
-//        ROSE_ASSERT(false);
-//#else
+    if ( p_fd >= 0 )
         close(p_fd);
-//#endif
-    }
 
- // Delete the pointers to the IR nodes containing the STL lists
+    // Delete the pointers to the IR nodes containing the STL lists
     delete p_headers;
     p_headers = NULL;
     delete p_holes;

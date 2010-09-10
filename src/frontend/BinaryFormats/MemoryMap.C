@@ -9,7 +9,6 @@
 #else
 #include <io.h>
 #endif
-#include "Loader.h"
 #include "rose_getline.h"
 /* See header file for full documentation */
 
@@ -145,26 +144,92 @@ MemoryMap::MapElement::merge_anonymous(const MapElement &other, size_t oldsize)
     *anonymous = 1;
 }
 
-void
-MemoryMap::MapElement::merge_names(const MapElement &other)
+std::string
+MemoryMap::MapElement::get_name_pairings(NamePairings *pairings) const
 {
-    if (name.empty()) {
-        set_name(other.get_name());
-    } else if (other.name.empty()) {
-        /*void*/
-    } else {
-        set_name(get_name()+"+"+other.get_name());
+    ROSE_ASSERT(pairings!=NULL);
+    std::string retval;
+    std::string::size_type i = 0;
+    while (i<name.size()) {
+        /* Extract the file name up to the left paren */
+        while (i<name.size() && isspace(name[i])) i++;
+        std::string::size_type fname_start = i;
+        while (i<name.size() && !isspace(name[i]) && !strchr("()+", name[i])) i++;
+        if (i>=name.size() || '('!=name[i] || fname_start==i) {
+            retval += name.substr(fname_start, i-fname_start);
+            break;
+        }
+        std::string fname = name.substr(fname_start, i-fname_start);
+        i++; /*skip over the left paren*/
+        int parens=0;
+        
+        /* Extract name(s) separated from one another by '+' */
+        while (i<name.size() && ')'!=name[i]) {
+            while (i<name.size() && isspace(name[i])) i++;
+            std::string::size_type gname_start = i;
+            while (i<name.size() && '+'!=name[i] && (parens>0 || ')'!=name[i])) {
+                if ('('==name[i]) {
+                    parens++;
+                } else if (')'==name[i]) {
+                    parens--;
+                } 
+                i++;
+            }
+            if (i>gname_start)
+                (*pairings)[fname].insert(name.substr(gname_start, i-gname_start));
+            if (i<name.size() && '+'==name[i]) i++;
+        }
+
+        /* Skip over right paren and optional space and '+' */
+        if (i<name.size() && ')'==name[i]) i++;
+        while (i<name.size() && isspace(name[i])) i++;
+        if (i<name.size() && '+'==name[i]) i++;
     }
+    if (i<name.size())
+        retval += name.substr(i);
+    return retval;
+}
+
+MemoryMap::MapElement&
+MemoryMap::MapElement::set_name(const NamePairings &pairings, const std::string &s1, const std::string &s2)
+{
+    std::string s;
+    for (NamePairings::const_iterator pi=pairings.begin(); pi!=pairings.end(); ++pi) {
+        s += (s.empty()?"":"+") + pi->first + "(";
+        for (std::set<std::string>::const_iterator si=pi->second.begin(); si!=pi->second.end(); ++si) {
+            if ('('!=s[s.size()-1]) s += "+";
+            s += *si;
+        }
+        s += ')';
+    }
+    if (!s1.empty())
+        s += (s.empty()?"":"+") + s1;
+    if (!s2.empty())
+        s += (s.empty()?"":"+") + s2;
+    set_name(s);
+    return *this;
 }
 
 MemoryMap::MapElement &
 MemoryMap::MapElement::set_name(const std::string &s)
 {
-    static const size_t limit = 35;
     name = s;
-    if (name.size()>limit)
-        name = name.substr(0, limit-3) + "...";
     return *this;
+}
+
+void
+MemoryMap::MapElement::merge_names(const MapElement &other)
+{
+    if (name.empty()) {
+        set_name(other.get_name());
+    } else if (other.name.empty() || get_name()==other.get_name()) {
+        /*void*/
+    } else {
+        NamePairings pairings;
+        std::string s1 = get_name_pairings(&pairings);
+        std::string s2 = other.get_name_pairings(&pairings);
+        set_name(pairings, s1, s2);
+    }
 }
 
 bool
@@ -226,6 +291,12 @@ MemoryMap::MapElement::merge(const MapElement &other)
         merge_anonymous(other, oldsize);
 
     return true;
+}
+
+void
+MemoryMap::clear()
+{
+    elements.clear();
 }
 
 void
@@ -354,6 +425,38 @@ MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) c
     return start_va;
 }
 
+rose_addr_t
+MemoryMap::find_last_free(rose_addr_t max) const
+{
+    if (!sorted) {
+	std::sort(elements.begin(), elements.end());
+        sorted = true;
+    }
+
+    bool found = false;
+    rose_addr_t retval = 0;
+
+    /* Is the null address free? */
+    if (elements.empty() || elements[0].get_va()>0) {
+        retval = 0;
+        found = true;
+    }
+
+    /* Try to find a higher free region */
+    for (size_t i=0; i<elements.size(); i++) {
+        rose_addr_t end = elements[i].get_va() + elements[i].get_size();
+        if (end > max) break;
+        if (i+1>=elements.size() || elements[i+1].get_va()>end) {
+            retval = end;
+            found = true;
+        }
+    }
+    
+    if (!found)
+        throw NoFreeSpace(this, 1);
+    return retval;
+}
+
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
     if (!sorted) {
@@ -423,14 +526,16 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsig
 }
 
 void
-MemoryMap::mprotect(const MapElement &region)
+MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
 {
     /* Check whether the region refers to addresses not in the memory map. */
-    ExtentMap e;
-    e.insert(ExtentPair(region.get_va(), region.get_size()));
-    e.erase(va_extents());
-    if (!e.empty())
-        throw NotMapped(this, e.begin()->first);
+    if (!relax) {
+        ExtentMap e;
+        e.insert(ExtentPair(region.get_va(), region.get_size()));
+        e.erase(va_extents());
+        if (!e.empty())
+            throw NotMapped(this, e.begin()->first);
+    }
 
     std::vector<MapElement> created;
     std::vector<MapElement>::iterator i=elements.begin();
@@ -527,22 +632,6 @@ MemoryMap::va_extents() const
     return retval;
 }
 
-rose_addr_t
-MemoryMap::highest_va() const
-{
-    if (elements.empty())
-        throw NotMapped(this, 0);
-    
-    if (!sorted) {
-	std::sort(elements.begin(), elements.end());
-        sorted = true;
-    }
-
-    MapElement &me = elements.back();
-    ROSE_ASSERT(me.get_size()>0);
-    return me.get_va() + me.get_size() - 1;
-}
-
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
@@ -586,9 +675,11 @@ MemoryMap::dump(FILE *f, const char *prefix) const
                 0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
                 basename.c_str(), elements[i].get_offset());
 
-        if (!me.name.empty())
-            fprintf(f, " %s", me.name.c_str());
-        
+        if (!me.name.empty()) {
+            static const size_t limit = 55;
+            fprintf(f, " %s", (me.get_name().size()>limit ? me.get_name().substr(0, limit-3) + "..." : me.get_name()).c_str());
+        }
+
         fputc('\n', f);
     }
 }

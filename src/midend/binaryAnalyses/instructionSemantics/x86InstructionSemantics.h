@@ -2479,6 +2479,13 @@ struct X86InstructionSemantics {
                 break;
             }
 
+            case x86_sysenter: {
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
+                policy.sysenter();
+                break;
+            }
+
             default: {
                 throw Exception("instruction not implemented", insn);
                 break;
