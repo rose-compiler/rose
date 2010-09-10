@@ -305,6 +305,7 @@ void BtorTranslationPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
     hooks->hlt(this);
   }
   void BtorTranslationPolicy::interrupt(uint8_t num) {} // FIXME
+  void BtorTranslationPolicy::sysenter() {} // FIXME
   BtorWordType<64> BtorTranslationPolicy::rdtsc() {return problem.build_var(64, "timestamp");}
 
   void BtorTranslationPolicy::writeBackCond(Comp cond) {
