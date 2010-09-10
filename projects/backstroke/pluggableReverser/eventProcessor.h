@@ -88,7 +88,7 @@ public:
 
 	/** Check if every state variable in the given variable version table has the initial version
 	 * which should be 1. */
-	bool checkVersion(const VariableVersionTable& var_table);
+	bool checkForInitialVersions(const VariableVersionTable& var_table);
 
 	//! Get all declarations of stacks which store values of different types.
 	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;

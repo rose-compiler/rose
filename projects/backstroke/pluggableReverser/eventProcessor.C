@@ -257,7 +257,7 @@ SgExpression* EventProcessor::popVal(SgType* type)
 					buildExprListExp(getStackVar(type)));
 }
 
-bool EventProcessor::checkVersion(const VariableVersionTable& var_table)
+bool EventProcessor::checkForInitialVersions(const VariableVersionTable& var_table)
 {
 	typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
 
@@ -295,7 +295,7 @@ FuncDeclPairs EventProcessor::processEvent()
 	{
 		// Here we check the validity for each result above. We have to make sure
 		// every state variable has the version 1.
-		if (!checkVersion(res.getVarTable()))
+		if (!checkForInitialVersions(res.getVarTable()))
 			continue;
 		
 
