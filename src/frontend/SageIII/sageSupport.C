@@ -11,7 +11,7 @@
 #include "astMergeAPI.h"
 //#include "sageSupport.h"
 
-#include "binaryLoader.h"
+#include "BinaryLoader.h"
 #include "Partitioner.h"
 #include "sageBuilder.h"
 
@@ -5949,6 +5949,10 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
 {
+
+    /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
+     * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
+     * fixups) all dependencies also.  See the BinaryLoader class for details. */
     if (get_isLibraryArchive()) {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
@@ -5961,11 +5965,10 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
             buildAsmAST(filename);
         }
     } else {
-        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == true);
-	BinaryLoader::load(this);
-        //buildAsmAST(this->get_sourceFileNameWithPath());
+        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty());
+	BinaryLoader::load(this, get_read_executable_file_format_only());
     }
-#if MCBTODO
+
     /* Disassemble each interpretation */
     if (get_read_executable_file_format_only()) {
         printf ("\nWARNING: Skipping instruction disassembly \n\n");
@@ -5975,7 +5978,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
             Disassembler::disassembleInterpretation(interps[i]);
         }
     }
-#endif //MCBTODO
+
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
     // addresses are unparsed (see Jeremiah for details).
     // Skip running gnu assemble on the output since we include text that would make this a problem.

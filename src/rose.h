@@ -110,10 +110,6 @@ namespace ELF{
 
 
 #include "DataConversion.h"
-#include "Loader.h"
-#include "LoaderELF.h"
-#include "LoaderELFObj.h"
-#include "LoaderPE.h"
 // Files in src/frontend/ExecFormats
 #include "MemoryMap.h"
 
@@ -137,9 +133,6 @@ namespace ELF{
 
 #include "powerpcInstructionEnum.h"
 #include "powerpcInstructionProperties.h"
-
-// Files in src/frontent/BinaryLoader
-#include "binaryLoader.h"
 
 // Files in src/frontend/Disassemblers
 #include "Disassembler.h"

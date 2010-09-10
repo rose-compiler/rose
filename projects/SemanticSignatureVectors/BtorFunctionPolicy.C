@@ -148,8 +148,8 @@ void BtorFunctionPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
   }
 
   void BtorFunctionPolicy::interrupt(uint8_t num) {} // FIXME
+  void BtorFunctionPolicy::sysenter() {} // FIXME
   BtorWordType<64> BtorFunctionPolicy::rdtsc() {return problem.build_var(64, "timestamp");}
-
 
   void BtorFunctionPolicy::startBlock(uint64_t addr) {
   }

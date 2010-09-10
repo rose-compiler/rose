@@ -573,6 +573,11 @@ public:
         cur_state = State(); /*reset entire machine state*/
     }
 
+    /** Called only for the SYSENTER instruction. */
+    void sysenter() {
+        cur_state = State(); /*reset entire machine state*/
+    }
+
 
 
     /*************************************************************************************************************************
