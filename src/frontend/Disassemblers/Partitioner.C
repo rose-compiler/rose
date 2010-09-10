@@ -632,6 +632,15 @@ Partitioner::canonic_block(rose_addr_t va)
     ROSE_ASSERT(!"possible alias loop");
 }
 
+/* Finds an existing function definition. */
+Partitioner::Function *
+Partitioner::find_function(rose_addr_t entry_va)
+{
+    Functions::iterator fi = functions.find(entry_va);
+    if (fi==functions.end()) return NULL;
+    return fi->second;
+}
+
 /* Adds or updates a function definition. */
 Partitioner::Function *
 Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string name)
@@ -1483,13 +1492,19 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         BasicBlock *target_bb = find_bb_containing(target_va);
 
         /* Optionally create or add reason flags to called function. */
-        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET))
-            add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+        Function *new_function = NULL;
+        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)) {
+            new_function = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+        } else if (find_function(target_va)!=NULL) {
+            find_function(target_va)->reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+        }
 
-        /* If the call target is in the middle of some other existing function (i.e., not its entry address) then mark
-         * that function as pending so that the target block can be removed and the target function's blocks rediscovered.
-         * In other words, treat the target block as if it where a conflict like above. */
-        if (target_bb && target_bb->function && target_bb->function!=f && target_va!=target_bb->function->entry_va)
+        /* If the call target is part of a function (the current function or some other) and it's not the entry block then we
+         * might need to rediscover the blocks of that function.   We don't need to rediscover the blocks of that function if
+         * that function is the current function and should remain in the current function (i.e., we didn't create a new
+         * function). */
+        if (target_bb && target_bb->function && target_va!=target_bb->function->entry_va &&
+            (target_bb->function!=f || new_function!=NULL))
             target_bb->function->pending = true;
         
         /* Discovery continues at the successors. */
