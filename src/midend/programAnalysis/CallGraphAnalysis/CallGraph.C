@@ -856,17 +856,25 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
     }
   }
 }
+//
+// Add the declaration for functionCallExp to functionList. In the case of 
+// function pointers and virtual functions, append the set of declarations
+// to functionList. 
+void 
+getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<Properties *>& functionList) {
+  ROSE_ASSERT(!"getPropertiesForSgConstructorInitializer is unimplemented");
+}
 
 // Add the declaration for functionCallExp to functionList. In the case of 
 // function pointers and virtual functions, append the set of declarations
 // to functionList. 
 void 
-CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, 
+getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp, 
                          ClassHierarchyWrapper* classHierarchy,
                          Rose_STL_Container<Properties *>& functionList) {
-
-  ROSE_ASSERT(isSgFunctionCallExp(sgexp)); // TODO add support for SgConstructorINitializer
-  SgExpression* functionExp = isSgFunctionCallExp(sgexp)->get_function();
+  SgExpression* functionExp = sgFunCallExp->get_function();
   ROSE_ASSERT ( functionExp != NULL );
 
   switch ( functionExp->variantT() )
@@ -1047,6 +1055,29 @@ CallTargetSet::getPropertiesForExpression(SgExpression* sgexp,
         cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
         ROSE_ASSERT ( false );
       }
+  }
+}
+// Add the declaration for functionCallExp to functionList. In the case of 
+// function pointers and virtual functions, append the set of declarations
+// to functionList. 
+void 
+CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<Properties *>& functionList) {
+  switch( sgexp->variantT() ) {
+    case V_SgFunctionCallExp: {
+            getPropertiesForSgFunctionCallExp(isSgFunctionCallExp(sgexp), 
+                classHierarchy, functionList);
+            break;
+         }
+    case V_SgConstructorInitializer: {
+            getPropertiesForSgConstructorInitializer(isSgConstructorInitializer(sgexp), 
+                classHierarchy, functionList);
+            break;
+         }
+    default: {
+            std::cerr << "Error: cannot determine Properties for " << sgexp->class_name() << std::endl; 
+         }
   }
 }
 
