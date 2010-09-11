@@ -826,7 +826,7 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
 
              Rose_STL_Container<Properties*> functionList;
              ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-             CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
+             CallTargetSet::getPropertiesForExpression(call, &classHierarchy, functionList);
              Rose_STL_Container<Properties*>::iterator prop;
              for (prop = functionList.begin(); prop != functionList.end(); prop++) {
                SgFunctionDeclaration* candidateDecl = (*prop)->functionDeclaration;
@@ -861,11 +861,12 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
 // function pointers and virtual functions, append the set of declarations
 // to functionList. 
 void 
-CallTargetSet::retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp, 
+CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, 
                          ClassHierarchyWrapper* classHierarchy,
                          Rose_STL_Container<Properties *>& functionList) {
 
-  SgExpression* functionExp = functionCallExp->get_function();
+  ROSE_ASSERT(isSgFunctionCallExp(sgexp)); // TODO add support for SgConstructorINitializer
+  SgExpression* functionExp = isSgFunctionCallExp(sgexp)->get_function();
   ROSE_ASSERT ( functionExp != NULL );
 
   switch ( functionExp->variantT() )
@@ -1100,7 +1101,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     {
       SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
       ROSE_ASSERT ( functionCallExp != NULL );
-      CallTargetSet::retrieveFunctionDeclarations(functionCallExp, classHierarchy, functionList);
+      CallTargetSet::getPropertiesForExpression(functionCallExp, classHierarchy, functionList);
       i++;
     }
   }
