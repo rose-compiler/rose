@@ -83,7 +83,7 @@ namespace CallTargetSet
 
   // populates functionList with declarations of all functions that may get
   // called via an SgFunctionCallExp node.
-  void retrieveFunctionDeclarations(SgFunctionCallExp* functionCall,
+  void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
                                     Rose_STL_Container<Properties *>& functionList);
   void getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, Rose_STL_Container<SgExpression*>& calls);
