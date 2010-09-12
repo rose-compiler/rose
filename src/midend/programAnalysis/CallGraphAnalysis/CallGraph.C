@@ -759,7 +759,6 @@ CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* target
 void 
 CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp, 
                                       Rose_STL_Container<SgFunctionDefinition*>& defs) {
-  //TODO add classHierarchy parameter
   CallTargetSet::getPropertiesForExpression(exp, &classHierarchy, functionList);
   Rose_STL_Container<Properties*>::iterator prop;
   for (prop = functionList.begin(); prop != functionList.end(); prop++) {
@@ -798,7 +797,7 @@ getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit,
   // currently, all constructor initializers can be handled by solveConstructorInitializer
   const std::vector<Properties*>& props = CallTargetSet::solveConstructorInitializer(sgCtorInit);
   foreach (Properties* prop, props) {
-    functionList.push_back(prop); //TODO faster way to append?
+    functionList.push_back(prop); //TODO faster way to append vectors?
   }
 }
 
