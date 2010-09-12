@@ -85,16 +85,23 @@ void InterproceduralCFG::buildCFG(CFGNode n,
           ROSE_ASSERT( isSgExpression(sgnode) );
           Rose_STL_Container<SgFunctionDefinition*> defs;
           CallTargetSet::getDefinitionsForExpression(isSgExpression(sgnode), classHierarchy, defs); 
-          foreach (SgFunctionDefinition* def, defs) {
-            addEdge(n, def->cfgForBeginning(), outEdges);
-            addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
+          if (defs.size() == 0) {
+            std::cerr << sgnode->get_file_info()->get_filenameString() 
+                      << ":"
+                      << sgnode->get_file_info()->get_line()
+                      << " warning: CallGraph found no definition(s) for "
+                      << sgnode->class_name()
+                      << ". Skipping interprocedural behavior."
+                      << std::endl;
+            outEdges = n.outEdges();
+          } else {
+            foreach (SgFunctionDefinition* def, defs) {
+              addEdge(n, def->cfgForBeginning(), outEdges);
+              addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
+            }
           }
     }
     else {
-      outEdges = n.outEdges();
-    }
-
-    if (outEdges.size() < 1) {
       outEdges = n.outEdges();
     }
 
