@@ -2,6 +2,7 @@
 #define INTERPROCEDURAL_CFG_H 
 
 #include "staticCFG.h"
+#include "CallGraph.h"
 #include <map>
 #include <set>
 #include <string>
