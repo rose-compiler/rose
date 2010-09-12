@@ -26,8 +26,42 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluate(SgStatement* s
 	{
 		return evaluateExpressionStatement(expressionStatement, var_table);
 	}
-	else if (isSgVariableDeclaration(statement))
+	else if (SgVariableDeclaration* declarations = isSgVariableDeclaration(statement))
 	{
+		/*VariableVersionTable currentVariables = var_table;
+
+		reverse_foreach(SgInitializedName* localVar, declarations->get_variables())
+		{
+			SgInitializer* initializer = localVar->get_initializer();
+			if (initializer == NULL)
+			{
+				continue;
+			}
+			else if (SgAssignInitializer* assignInit = isSgAssignInitializer(initializer))
+			{
+				SgExpression* initializerExpression = assignInit->get_operand();
+				vector<EvaluationResult> initializerReversals = evaluateExpression(initializerExpression, currentVariables, false);
+
+				//Pick an evaluation result here
+			}
+			else if (SgConstructorInitializer* constructorInit = isSgConstructorInitializer(initializer))
+			{
+				ROSE_ASSERT(constructorInit && "Constructor initializer not handled yet. This is a type of function call");
+			}
+			else if (isSgAggregateInitializer(initializer))
+			{
+				printf("Aggregate initializer not supported yet\n");
+				ROSE_ASSERT(false);
+			}
+			else
+			{
+				printf("Encountered unknown initializer type.");
+				ROSE_ASSERT(false);
+			}
+		}*/
+
+
+
 		StatementReversal reversal(SageInterface::copyStatement(statement), NULL);
 		EvaluationResult result(this, var_table);
 		result.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(reversal)));
@@ -53,8 +87,16 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	//This simple processor just takes the first valid reverse expression returned
 	EvaluationResult& expressionReversalOption = expressions.front();
 	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseAST(statement->get_expression());
-	SgStatement* forwardStatement = SageBuilder::buildExprStatement(expressionReversal.fwd_exp);
-	SgStatement* reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
+	SgStatement* forwardStatement = NULL;
+	if (expressionReversal.fwd_exp != NULL)
+	{
+		forwardStatement = SageBuilder::buildExprStatement(expressionReversal.fwd_exp);
+	}
+	SgStatement* reverseStatement = NULL;
+	if (expressionReversal.rvs_exp != NULL)
+	{
+		reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
+	}
 
 	//We just do all the work in the evaluation step and save it as an attribute
 	EvaluationResult statementResult(this, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());

@@ -55,19 +55,45 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 /******************************************************************************
  **** Definition of member functions of IdentityExpressionProcessor ***********/
 
+struct IdentityExpressionAttribute : public EvaluationResultAttribute
+{
+	bool reverseIsNull;
+};
+
 ExpressionReversal IdentityExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
 	ROSE_ASSERT(evaluationResult.getExpressionProcessor() == this && evaluationResult.getChildResults().size() == 0);
-	return ExpressionReversal(copyExpression(exp), copyExpression(exp));
+	IdentityExpressionAttribute* attribute = dynamic_cast<IdentityExpressionAttribute*>(evaluationResult.getAttribute().get());
+	ROSE_ASSERT(attribute != NULL);
+
+	SgExpression* forwardExpression = SageInterface::copyExpression(exp);
+	SgExpression* reverseExpression;
+	if (attribute->reverseIsNull)
+	{
+		reverseExpression = NULL;
+	}
+	else
+	{
+		reverseExpression = SageInterface::copyExpression(exp);
+	}
+
+	return ExpressionReversal(forwardExpression, reverseExpression);
 }
 
 vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
 {
 	vector<EvaluationResult> results;
 
-	// If an expression does not modify any value, its reverse expression may be the same as itself.
-	if (!backstroke_util::isModifyingExpression(exp) && reverseValueUsed)
-		results.push_back(EvaluationResult(this, var_table));
+	// If an expression does not modify any value and its value is used, the reverse is the same as itself
+	if (!backstroke_util::isModifyingExpression(exp))
+	{
+		EvaluationResult result(this, var_table);
+		IdentityExpressionAttribute* attribute = new IdentityExpressionAttribute;
+		attribute->reverseIsNull = !reverseValueUsed;
+		
+		result.setAttribute(EvaluationResultAttributePtr(attribute));
+		results.push_back(result);
+	}
 
 	return results;
 }

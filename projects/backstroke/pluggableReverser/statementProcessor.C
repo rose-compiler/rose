@@ -63,6 +63,8 @@ StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* st
 
 vector<EvaluationResult> VariableDeclarationHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
+	//FIXME: reverse the initializer expression, if it's there. For example,
+	//int a = b++;
 	vector<EvaluationResult> results;
 	if (isSgVariableDeclaration(stmt))
 		results.push_back(EvaluationResult(this, var_table));

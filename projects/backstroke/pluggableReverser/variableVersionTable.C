@@ -237,6 +237,7 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 
 void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
 {
+	//FIXME: This does not set the versions of all the expanded variables
 	VariableRenaming::VarName name;
 	name.push_back(init_name);
 	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());

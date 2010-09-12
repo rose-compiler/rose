@@ -11,6 +11,7 @@ class StatementReversalHandler;
 class ReversalHandlerBase;
 class EventProcessor;
 
+//TODO: Just use std::pair here
 struct ExpressionReversal
 {
 	ExpressionReversal(SgExpression* fwd, SgExpression * rvs)
@@ -20,6 +21,7 @@ struct ExpressionReversal
 	SgExpression* rvs_exp;
 };
 
+//TODO: Just use std::pair here
 struct StatementReversal
 {
 	StatementReversal(SgStatement* fwd, SgStatement * rvs)

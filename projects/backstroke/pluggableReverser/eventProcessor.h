@@ -55,13 +55,13 @@ public:
 	EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
 	: event_(func_decl), var_renaming_(var_renaming) { }
 
-	void addExpressionProcessor(ExpressionReversalHandler* exp_processor)
+	void addExpressionHandler(ExpressionReversalHandler* exp_processor)
 	{
 		exp_processor->setEventProcessor(this);
 		exp_processors_.push_back(exp_processor);
 	}
 
-	void addStatementProcessor(StatementReversalHandler* stmt_processor)
+	void addStatementHandler(StatementReversalHandler* stmt_processor)
 	{
 		stmt_processor->setEventProcessor(this);
 		stmt_processors_.push_back(stmt_processor);
