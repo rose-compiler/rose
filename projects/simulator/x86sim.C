@@ -15,6 +15,7 @@
 
 #include "x86print.h"
 #include "VirtualMachineSemantics.h"
+#include "BinaryLoaderElf.h"
 #include <stdarg.h>
 
 /* These are necessary for the system call emulation */
@@ -89,11 +90,10 @@ public:
     };
 
 public:
-    MemoryMap map;                              /* Describes how specimen's memory is mapped to simulator memory */
+    MemoryMap *map;                             /* Describes how specimen's memory is mapped to simulator memory */
     Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
     Disassembler::InstructionMap icache;        /* Cache of disassembled instructions */
     uint32_t brk_va;                            /* Current value for brk() syscall; initialized by load() */
-    uint32_t phdr_va;                           /* Virtual address for PT_PHDR ELF segment, or zero; initialized by load() */
     static const size_t n_gdt=8192;             /* Number of global descriptor table entries */
     user_desc gdt[n_gdt];                       /* Global descriptor table */
     SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
@@ -117,12 +117,12 @@ public:
     bool trace_mem;                             /* Show memory read/write operations */
     bool trace_mmap;                            /* Show changes in the memory map */
     bool trace_syscall;                         /* Show each system call */
-
+    bool trace_loader;                          /* Show diagnostics for the program loading */
 
     EmulationPolicy()
-        : disassembler(NULL), brk_va(0), phdr_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          debug(NULL),
-          trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false) {
+        : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
+          debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
+          trace_loader(false) {
 
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
             writeGPR((X86GeneralPurposeRegister)i, 0);
@@ -231,18 +231,23 @@ public:
         return 1;
     }
 
-    /* Called by X86InstructionSemantics */
+    /* Called by X86InstructionSemantics for the HLT instruction */
     void hlt() {
         fprintf(stderr, "hlt\n");
         abort();
     }
 
-    /* Called by X86InstructionSemantics */
+    /* Called by X86InstructionSemantics for the INT instruction */
     void interrupt(uint8_t num) {
         if (num != 0x80) {
             fprintf(stderr, "Bad interrupt\n");
             abort();
         }
+        emulate_syscall();
+    }
+
+    /* Called by X86InstructionSemantics for the SYSENTER instruction */
+    void sysenter() {
         emulate_syscall();
     }
 
@@ -284,11 +289,11 @@ public:
         ROSE_ASSERT(cond.is_known());
         if (cond.known_value()) {
             uint8_t buf[Len/8];
-            size_t nread = map.read(buf, base+offset, Len/8);
+            size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8) {
                 fprintf(stderr, "read %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
                 fprintf(stderr, "memory map at failure:\n");
-                map.dump(stderr, "  ");
+                map->dump(stderr, "  ");
                 abort();
             }
             uint64_t result = 0;
@@ -323,16 +328,140 @@ public:
             uint8_t buf[Len/8];
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 buf[j] = (data.known_value() >> i) & 0xff;
-            size_t nwritten = map.write(buf, base+offset, Len/8);
+            size_t nwritten = map->write(buf, base+offset, Len/8);
             if (nwritten!=Len/8) {
                 fprintf(stderr, "write %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
                 fprintf(stderr, "memory map at failure:\n");
-                map.dump(stderr, "  ");
+                map->dump(stderr, "  ");
                 abort();
             }
         }
     }
 };
+
+#if 1 /* Switch between the new BinaryLoader interface and the older Loader-like interface [RPM 2010-09-08] */
+
+/* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
+ * We want ROSE to link the interpreter (usually /lib/ld-linux.so) into the AST but not link in any other shared objects.
+ * Then we want ROSE to map the interpreter (if present) and all main ELF Segments into the specimen address space but not
+ * make any of the usual adjustments for ELF Sections that also specify a mapping. */
+
+struct SimLoader: public BinaryLoaderElf {
+public:
+    SgAsmGenericHeader *interpreter;                    /* header linked into AST for .interp section */
+
+    SimLoader(SgAsmInterpretation *interp, bool trace): interpreter(NULL) {
+        if (trace) set_debug(stderr);
+        set_perform_dynamic_linking(false);             /* we explicitly link in the interpreter and nothing else */
+        set_perform_remap(true);                        /* map interpreter and main binary into specimen memory */
+        set_perform_relocations(false);                 /* allow simulated interpreter to perform relocation fixups */
+
+        /* Link the interpreter into the AST */
+        SgAsmGenericHeader *header = interp->get_headers()->get_headers().front();
+        std::string interpreter_name = find_interpreter(header);
+        if (!interpreter_name.empty()) {
+            SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
+            ROSE_ASSERT(composite!=NULL);
+            SgAsmGenericFile *ifile = createAsmAST(composite, interpreter_name);
+            interpreter = ifile->get_headers()->get_headers().front();
+        }
+    }
+
+    /* Finds the name of the interpreter (usually "/lib/ld-linux.so") if any */
+    std::string find_interpreter(SgAsmGenericHeader *header) {
+        struct: public SgSimpleProcessing {
+            std::string interp_name;
+            void visit(SgNode *node) {
+                SgAsmElfSection *section = isSgAsmElfSection(node);
+                SgAsmElfSegmentTableEntry *segment = section ? section->get_segment_entry() : NULL;
+                if (segment && SgAsmElfSegmentTableEntry::PT_INTERP==segment->get_type()) {
+                    char buf[section->get_size()];
+                    section->read_content_local(0, buf, section->get_size());
+                    interp_name = std::string(buf, section->get_size());
+                }
+            }
+        } t1;
+        t1.traverse(header, preorder);
+        return t1.interp_name;
+    }
+
+    /* Returns ELF PT_LOAD Segments in order by virtual address. */
+    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {
+        SgAsmGenericSectionPtrList retval;
+        SgAsmGenericSectionPtrList sections = BinaryLoaderElf::get_remap_sections(header);
+        for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); si++) {
+            SgAsmElfSection *section = isSgAsmElfSection(*si);
+            SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
+            if (entry && entry->get_type()==SgAsmElfSegmentTableEntry::PT_LOAD)
+                retval.push_back(section);
+        }
+        return retval;
+    }
+
+    /* Same as superclass but do not use anonymous mapping for high alignment area */
+    virtual MappingContribution align_values(SgAsmGenericSection *section, MemoryMap *map,
+                                             rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
+                                             rose_addr_t *va_p, rose_addr_t *mem_size_p,
+                                             rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                                             rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                                             ConflictResolution *resolve_p) {
+        MappingContribution retval = BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
+                                                                   mem_size_p, offset_p, file_size_p, va_offset_p,
+                                                                   anon_lo_p, anon_hi_p, resolve_p);
+        //*anon_hi_p = false;
+        return retval;
+    }
+};
+
+SgAsmGenericHeader*
+EmulationPolicy::load(const char *name)
+{
+
+    /* Link the main binary into the AST without further linking, mapping, or relocating. */
+    if (debug)
+        fprintf(debug, "loading %s...\n", name);
+    char *frontend_args[4];
+    frontend_args[0] = strdup("-");
+    frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
+    frontend_args[2] = strdup(name);
+    frontend_args[3] = NULL;
+    SgProject *project = frontend(3, frontend_args);
+
+    /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
+     * (we'll use the PE interpretation). */
+    SgAsmInterpretation *interp = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
+    SgAsmGenericHeader *fhdr = interp->get_headers()->get_headers().front();
+    writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
+
+    /* Link the interpreter into the AST */
+    SimLoader *loader = new SimLoader(interp, trace_loader);
+
+    /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
+     * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 even though the libs preferred
+     * addresses start at zero.  We can accomplish the same thing simply by rebasing the library. */
+    if (loader->interpreter) {
+        loader->interpreter->set_base_va(0x40000000);
+        writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
+    }
+
+    /* Map all segments into simulated memory */
+    loader->load(interp);
+    delete loader;
+    loader = NULL;
+    map = interp->get_map();
+
+    /* Find a disassembler. */
+    if (!disassembler)
+        disassembler = Disassembler::lookup(interp)->clone();
+
+    /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
+     * below ld-linux.so.2 was loaded, the stack, etc. */
+    brk_va = ALIGN_UP(map->find_last_free(0x40000000), PAGE_SIZE);
+
+    return fhdr;
+}
+
+#else
 
 SgAsmGenericHeader*
 EmulationPolicy::load(const char *name)
@@ -346,8 +475,10 @@ EmulationPolicy::load(const char *name)
     frontend_args[3] = NULL;
     SgProject *project = frontend(3, frontend_args);
 
-    /* Find the best file header. For Windows programs, skip the DOS header if there's another later header. */
-    SgAsmGenericHeader *fhdr = SageInterface::querySubTree<SgAsmGenericHeader>(project, V_SgAsmGenericHeader).back();
+    /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
+     * (we'll use the PE interpretation). */
+    SgAsmInterpretation *interp = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
+    SgAsmGenericHeader *fhdr = interp->get_headers()->get_headers().front();
     writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
 
     /* Find a suitable disassembler and clone it in case we want to set properties locally. We only do this for the first
@@ -362,46 +493,47 @@ EmulationPolicy::load(const char *name)
      * LoaderELF::order_sections() cause SgAsmGenericSections which are both ELF Sections and ELF Segments to appear twice in
      * the list that's ultimately processed by Loader::create_map(). Therefore we need to keep track of what sections we've
      * actually seen. */
-    struct T2: public Loader::Selector {
+    struct T2: public BinaryLoader::Selector {
         EmulationPolicy *policy;
         std::set<SgAsmGenericSection*> seen;
         T2(EmulationPolicy *policy): policy(policy) {}
-        virtual Loader::Contribution contributes(SgAsmGenericSection *_section) {
+        virtual BinaryLoader::Contribution contributes(SgAsmGenericSection *_section) {
             SgAsmElfSection *section = isSgAsmElfSection(_section);
             SgAsmElfSegmentTableEntry *segment = section ? section->get_segment_entry() : NULL;
             if (segment && seen.find(section)==seen.end()) {
                 seen.insert(section);
                 switch (segment->get_type()) {
                     case SgAsmElfSegmentTableEntry::PT_LOAD:
-                        return Loader::CONTRIBUTE_ADD;
+                        return BinaryLoader::CONTRIBUTE_ADD;
                     case SgAsmElfSegmentTableEntry::PT_INTERP:
                         char interp_name[section->get_size()+1];
                         section->read_content_local(0, interp_name, section->get_size());
                         interp_name[section->get_size()] = '\0';
                         policy->load(interp_name);
-                        return Loader::CONTRIBUTE_ADD;
+                        return BinaryLoader::CONTRIBUTE_ADD;
                     case SgAsmElfSegmentTableEntry::PT_PHDR:
                         policy->phdr_va = section->get_mapped_preferred_rva();
-                        return Loader::CONTRIBUTE_NONE;
+                        return BinaryLoader::CONTRIBUTE_NONE;
                     default:
-                        return Loader::CONTRIBUTE_NONE;
+                        return BinaryLoader::CONTRIBUTE_NONE;
                 }
             }
-            return Loader::CONTRIBUTE_NONE;
+            return BinaryLoader::CONTRIBUTE_NONE;
         }
     } selector(this);
 
     /* Load applicable sections into specimen's memory recursively, defining a MemoryMap that describes how the specimen
      * address spaces maps to our own (the simulator's) address space. */
-    Loader *loader = Loader::find_loader(fhdr);
+    BinaryLoader *loader = BinaryLoader::lookup(fhdr)->clone();
     ROSE_ASSERT(loader!=NULL);
     loader->create_map(&map, fhdr->get_mapped_sections(), &selector);
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address.
      * Note that we haven't mapped the stack yet, which is typically above all the segments loaded from the file. */
-    brk_va = ALIGN_UP(map.highest_va()+1, PAGE_SIZE);
+    brk_va = ALIGN_UP(map->highest_va()+1, PAGE_SIZE);
     return fhdr;
 }
+#endif
 
 void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 {
@@ -415,7 +547,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     size_t stack_addr = sp - stack_size;
     MemoryMap::MapElement melmt(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
     melmt.set_name("stack");
-    map.insert(melmt);
+    map->insert(melmt);
 
     /* Initialize the stack with specimen's argc and argv */
     std::vector<uint32_t> pointers;                     /* pointers pushed onto stack at the end of initialization */
@@ -423,8 +555,10 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     for (int i=0; i<argc; i++) {
         size_t len = strlen(argv[i]) + 1; /*inc. NUL termination*/
         sp -= len;
-        map.write(argv[i], sp, len);
+        map->write(argv[i], sp, len);
         pointers.push_back(sp);
+        if (trace_loader)
+            fprintf(stderr, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, argv[i]);
     }
     pointers.push_back(0); /*the argv NULL terminator*/
 
@@ -433,25 +567,87 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         if (!environ[i]) break;
         size_t len = strlen(environ[i]) + 1;
         sp -= len;
-        map.write(environ[i], sp, len);
+        map->write(environ[i], sp, len);
         pointers.push_back(sp);
+        if (trace_loader)
+            fprintf(stderr, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, environ[i]);
     }
     pointers.push_back(0); /*environment NULL terminator*/
 
     /* Initialize stack with auxv, where each entry is two words in the pointers vector. This information is only present for
      * dynamically linked executables. */
     if (fhdr->get_section_by_name(".interp")) {
-        pointers.push_back(3); /*AT_PHDR*/              pointers.push_back(phdr_va);
-        pointers.push_back(4); /*AT_PHENT*/
-          pointers.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-        pointers.push_back(5); /*AT_PHNUM*/             pointers.push_back(fhdr->get_e_phnum());
-        pointers.push_back(6); /*AT_PAGESZ*/            pointers.push_back(PAGE_SIZE);
-        pointers.push_back(9); /*AT_ENTRY*/             pointers.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
-        pointers.push_back(11); /*AT_UID*/              pointers.push_back(getuid());
-        pointers.push_back(12); /*AT_EUID*/             pointers.push_back(geteuid());
-        pointers.push_back(13); /*AT_GID*/              pointers.push_back(getgid());
-        pointers.push_back(14); /*AT_EGID*/             pointers.push_back(getegid());
-        pointers.push_back(23); /*AT_SECURE*/           pointers.push_back(false);
+        struct T1: public SgSimpleProcessing {
+            rose_addr_t phdr_rva;
+            T1(): phdr_rva(0) {}
+            void visit(SgNode *node) {
+                SgAsmElfSection *section = isSgAsmElfSection(node);
+                SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
+                if (0==phdr_rva && entry && entry->get_type()==SgAsmElfSegmentTableEntry::PT_PHDR)
+                    phdr_rva = section->get_mapped_preferred_rva();
+            }
+        } t1;
+        t1.traverse(fhdr, preorder);
+
+        /* AT_PHDR */
+        pointers.push_back(3); /*AT_PHDR*/
+        pointers.push_back(t1.phdr_rva + fhdr->get_base_va());
+        if (trace_loader)
+            fprintf(stderr, "AT_PHDR = 0x%08"PRIx32"\n", pointers.back());
+
+        /*AT_PHENT*/
+        pointers.push_back(4);
+        pointers.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+        if (trace_loader)
+            fprintf(stderr, "AT_PHENT = 0x%08"PRIx32"\n", pointers.back());
+
+        /* AT_PHNUM */
+        pointers.push_back(5);
+        pointers.push_back(fhdr->get_e_phnum());
+        if (trace_loader)
+            fprintf(stderr, "AT_PHNUM = %"PRId32"\n", pointers.back());
+
+        /* AT_PAGESZ */
+        pointers.push_back(6);
+        pointers.push_back(PAGE_SIZE);
+        if (trace_loader)
+            fprintf(stderr, "AT_PAGESZ = %"PRId32"\n", pointers.back());
+
+        /* AT_ENTRY */
+        pointers.push_back(9);
+        pointers.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
+        if (trace_loader)
+            fprintf(stderr, "AT_ENTRY = 0x%08"PRIx32"\n", pointers.back());
+
+        /* AT_UID */
+        pointers.push_back(11);
+        pointers.push_back(getuid());
+        if (trace_loader)
+            fprintf(stderr, "AT_UID = %"PRId32"\n", pointers.back());
+
+        /* AT_EUID */
+        pointers.push_back(12);
+        pointers.push_back(geteuid());
+        if (trace_loader)
+            fprintf(stderr, "AT_EUID = %"PRId32"\n", pointers.back());
+
+        /* AT_GID */
+        pointers.push_back(13);
+        pointers.push_back(getgid());
+        if (trace_loader)
+            fprintf(stderr, "AT_GID = %"PRId32"\n", pointers.back());
+
+        /* AT_EGID */
+        pointers.push_back(14);
+        pointers.push_back(getegid());
+        if (trace_loader)
+            fprintf(stderr, "AT_EGID = %"PRId32"\n", pointers.back());
+
+        /* AT_SECURE */
+        pointers.push_back(23);
+        pointers.push_back(false);
+        if (trace_loader)
+            fprintf(stderr, "AT_SECURE = %"PRId32"\n", pointers.back());
     }
     pointers.push_back(0); /*AT_NULL*/          pointers.push_back(0);
 
@@ -463,7 +659,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
      */
     sp &= ~3U; /*align to four-bytes*/
     sp -= 4 * pointers.size();
-    map.write(&(pointers[0]), sp, 4*pointers.size());
+    map->write(&(pointers[0]), sp, 4*pointers.size());
 
     writeGPR(x86_gpr_sp, sp);
 }
@@ -480,7 +676,7 @@ EmulationPolicy::current_insn()
         ROSE_ASSERT(insn!=NULL); /*shouldn't be possible due to check below*/
         size_t insn_sz = insn->get_raw_bytes().size();
         SgUnsignedCharList curmem(insn_sz);
-        size_t nread = map.read(&curmem[0], ip, insn_sz);
+        size_t nread = map->read(&curmem[0], ip, insn_sz);
         if (nread==insn_sz && curmem==insn->get_raw_bytes())
             return insn;
         icache.erase(found);
@@ -489,11 +685,11 @@ EmulationPolicy::current_insn()
     /* Disassemble (and cache) a new instruction */
     SgAsmx86Instruction *insn = NULL;
     try {
-        insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, ip));
+        insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
         std::cerr <<"dumping specimen's memory into core* files (this might take a while)...\n";
-        map.dump("core");
+        map->dump("core");
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
@@ -506,12 +702,12 @@ EmulationPolicy::my_addr(uint32_t va)
 {
     /* Read from specimen in order to make sure that the memory is allocated and mapped into ROSE. */
     uint32_t word;
-    size_t nread = map.read(&word, va, sizeof word);
+    size_t nread = map->read(&word, va, sizeof word);
     ROSE_ASSERT(nread==sizeof word);
 
     /* Obtain mapping information */
-    const MemoryMap::MapElement *me = map.find(va);
-    ROSE_ASSERT(me!=NULL); /*because the map.read() was successful above*/
+    const MemoryMap::MapElement *me = map->find(va);
+    ROSE_ASSERT(me!=NULL); /*because the map->read() was successful above*/
     uint8_t *base = (uint8_t*)me->get_base();
     size_t offset = me->get_va_offset(va);
     return base+offset;
@@ -523,7 +719,7 @@ EmulationPolicy::read_string(uint32_t va)
     std::string retval;
     while (1) {
         uint8_t byte;
-        size_t nread = map.read(&byte, va++, 1);
+        size_t nread = map->read(&byte, va++, 1);
         ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
         if (!byte)
             return retval;
@@ -538,7 +734,7 @@ EmulationPolicy::read_string_vector(uint32_t va)
     size_t size = 4;
     while(1) {
       char buf[size];
-      size_t nread = map.read(buf, va, size);
+      size_t nread = map->read(buf, va, size);
 
       ROSE_ASSERT(nread == size);
 
@@ -596,7 +792,7 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, -errno);
             } else {
                 writeGPR(x86_gpr_ax, nread);
-                map.write(buf, buf_va, nread);
+                map->write(buf, buf_va, nread);
             }
             syscall_leave("d");
             break;
@@ -608,7 +804,7 @@ EmulationPolicy::emulate_syscall()
             uint32_t buf_va=arg(1);
             size_t size=arg(2);
             uint8_t buf[size];
-            size_t nread = map.read(buf, buf_va, size);
+            size_t nread = map->read(buf, buf_va, size);
             ROSE_ASSERT(nread==size);
             ssize_t nwritten = write(fd, buf, size);
             if (-1==nwritten) {
@@ -668,7 +864,7 @@ EmulationPolicy::emulate_syscall()
                 if (status) {
                   uint32_t status_le;
                   SgAsmExecutableFileFormat::host_to_le(status, &status_le);
-                  size_t nwritten = map.write(&status_le, sys_status, 4);
+                  size_t nwritten = map->write(&status_le, sys_status, 4);
                   ROSE_ASSERT(4==nwritten);
                 }
             }
@@ -720,7 +916,7 @@ EmulationPolicy::emulate_syscall()
             if (t) {
               uint32_t t_le;
               SgAsmExecutableFileFormat::host_to_le(t, &t_le);
-              size_t nwritten = map.write(&t_le, result, 4);
+              size_t nwritten = map->write(&t_le, result, 4);
               ROSE_ASSERT(4==nwritten);    }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("t");
@@ -799,17 +995,17 @@ EmulationPolicy::emulate_syscall()
                 if (newbrk > brk_va) {
                     MemoryMap::MapElement melmt(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
                     melmt.set_name("brk syscall");
-                    map.insert(melmt);
+                    map->insert(melmt);
                     brk_va = newbrk;
                 } else if (newbrk>0 && newbrk<brk_va) {
-                    map.erase(MemoryMap::MapElement(newbrk, brk_va-newbrk));
+                    map->erase(MemoryMap::MapElement(newbrk, brk_va-newbrk));
                     brk_va = newbrk;
                 }
                 retval= brk_va;
             }
             if (debug && newbrk!=0 && trace_mmap) {
                 fprintf(debug, "  memory map after brk syscall:\n");
-                map.dump(debug, "    ");
+                map->dump(debug, "    ");
             }
 
             writeGPR(x86_gpr_ax, retval);
@@ -852,7 +1048,7 @@ EmulationPolicy::emulate_syscall()
                     } else {
                         /* The Linux kernel and glibc have different definitions for termios, with very different sizes (39
                          * bytes vs 60) */                  
-                        size_t nwritten = map.write(&ti, arg2, 39);
+                        size_t nwritten = map->write(&ti, arg2, 39);
                         ROSE_ASSERT(39==nwritten);
                     }
                     break;
@@ -865,7 +1061,7 @@ EmulationPolicy::emulate_syscall()
                     } else {
                         uint32_t pgrp_le;
                         SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
-                        size_t nwritten = map.write(&pgrp_le, arg2, 4);
+                        size_t nwritten = map->write(&pgrp_le, arg2, 4);
                         ROSE_ASSERT(4==nwritten);
                         result = 0;
                     }
@@ -874,7 +1070,7 @@ EmulationPolicy::emulate_syscall()
                     
                 case TIOCSPGRP: { /*tcsetpgrp*/
                     uint32_t pgid_le;
-                    size_t nread = map.read(&pgid_le, arg2, 4);
+                    size_t nread = map->read(&pgid_le, arg2, 4);
                     ROSE_ASSERT(4==nread);
                     pid_t pgid = SgAsmExecutableFileFormat::le_to_host(pgid_le);
                     result = tcsetpgrp(fd, pgid);
@@ -889,7 +1085,7 @@ EmulationPolicy::emulate_syscall()
                     if (-1==result) {
                         result = -errno;
                     } else {
-                        size_t nwritten = map.write(&ws, arg2, sizeof ws);
+                        size_t nwritten = map->write(&ws, arg2, sizeof ws);
                         ROSE_ASSERT(nwritten==sizeof ws);
                     }
                     break;
@@ -965,7 +1161,7 @@ EmulationPolicy::emulate_syscall()
             if (result == -1) {
                 result = -errno;
             } else {
-                size_t nwritten = map.write(sys_buf, buf, result);
+                size_t nwritten = map->write(sys_buf, buf, result);
                 ROSE_ASSERT(nwritten == (size_t)result);
             }
             writeGPR(x86_gpr_ax, result);
@@ -979,10 +1175,10 @@ EmulationPolicy::emulate_syscall()
             uint32_t sz=arg(1);
             uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
             uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
-            map.erase(MemoryMap::MapElement(aligned_va, aligned_sz));
+            map->erase(MemoryMap::MapElement(aligned_va, aligned_sz));
             if (debug && trace_mmap) {
                 fprintf(debug, " memory map after munmap syscall:\n");
-                map.dump(debug, "    ");
+                map->dump(debug, "    ");
             }
             writeGPR(x86_gpr_ax, 0);
             syscall_leave("d");
@@ -1002,7 +1198,7 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("wait4", "dpfp", wflags);
             uint32_t pid=arg(0), status_ptr=arg(1), options=arg(2), rusage_ptr=arg(3);
             uint32_t status;
-            size_t nread = map.read(&status, status_ptr, 4);
+            size_t nread = map->read(&status, status_ptr, 4);
             ROSE_ASSERT(nread == 4);
             struct rusage sys_rusage;
             int result = wait4(pid, &status, options, &sys_rusage);
@@ -1010,11 +1206,11 @@ EmulationPolicy::emulate_syscall()
                 result = -errno;
             } else {
                 if (status_ptr != 0) {
-                    size_t nwritten = map.write(&status, status_ptr, 4);
+                    size_t nwritten = map->write(&status, status_ptr, 4);
                     ROSE_ASSERT(nwritten == 4);
                 }
                 if (rusage_ptr != 0) {
-                    size_t nwritten = map.write(&sys_rusage, rusage_ptr, sizeof(struct rusage));
+                    size_t nwritten = map->write(&sys_rusage, rusage_ptr, sizeof(struct rusage));
                     ROSE_ASSERT(nwritten == sizeof(struct rusage));
                 }
             }
@@ -1034,7 +1230,7 @@ EmulationPolicy::emulate_syscall()
             strcpy(buf+3*65, "#1 SMP Wed Jun 18 12:35:02 EDT 2008");    /*version*/
             strcpy(buf+4*65, "i386");                                   /*machine*/
             strcpy(buf+5*65, "example.com");                            /*domainname*/
-            size_t nwritten = map.write(buf, dest_va, sizeof buf);
+            size_t nwritten = map->write(buf, dest_va, sizeof buf);
             if( nwritten <= 0 ) {
               writeGPR(x86_gpr_ax, -EFAULT);
               break;
@@ -1060,7 +1256,7 @@ EmulationPolicy::emulate_syscall()
             uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
 
             try {
-                map.mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
+                map->mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
             } catch (const MemoryMap::NotMapped &e) {
                 writeGPR(x86_gpr_ax, -EFAULT);
                 break;
@@ -1071,7 +1267,7 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             if (debug && trace_mmap) {
                 fprintf(debug, "  memory map after mprotect syscall:\n");
-                map.dump(debug, "    ");
+                map->dump(debug, "    ");
             }
             break;
         }
@@ -1083,19 +1279,19 @@ EmulationPolicy::emulate_syscall()
             uint32_t retval = 0;
             for (int i=0; i<niov; i++) {
                 uint32_t buf_va_le;
-                size_t nread = map.read(&buf_va_le, iov_va+i*8+0, 4);
+                size_t nread = map->read(&buf_va_le, iov_va+i*8+0, 4);
                 ROSE_ASSERT(4==nread);
                 uint32_t buf_va = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
                 
                 uint32_t buf_sz_le;
-                nread = map.read(&buf_sz_le, iov_va+i*8+4, 4);
+                nread = map->read(&buf_sz_le, iov_va+i*8+4, 4);
                 ROSE_ASSERT(4==nread);
                 uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
 
                 if (debug)
                     fprintf(debug, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf_va, buf_sz);
                 uint8_t buf[buf_sz];
-                nread = map.read(buf, buf_va, buf_sz);
+                nread = map->read(buf, buf_va, buf_sz);
                 ROSE_ASSERT(nread==buf_sz);
                 ssize_t nwritten = write(fd, buf, buf_sz);
                 if (-1==nwritten) {
@@ -1127,11 +1323,11 @@ EmulationPolicy::emulate_syscall()
 
             SignalAction saved = signal_action[signum];
             if (action_va) {
-                size_t nread = map.read(signal_action+signum, action_va, sizeof saved);
+                size_t nread = map->read(signal_action+signum, action_va, sizeof saved);
                 ROSE_ASSERT(nread==sizeof(*signal_action));
             }
             if (oldact_va) {
-                size_t nwritten = map.write(&saved, oldact_va, sizeof saved);
+                size_t nwritten = map->write(&saved, oldact_va, sizeof saved);
                 ROSE_ASSERT(nwritten==sizeof(*signal_action));
             }
 
@@ -1149,7 +1345,7 @@ EmulationPolicy::emulate_syscall()
             //size_t sigsetsize=arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
-            size_t nread = map.read(&sigset, set_va, sizeof sigset);
+            size_t nread = map->read(&sigset, set_va, sizeof sigset);
             ROSE_ASSERT(nread==sizeof sigset);
 
             if (0==how) {
@@ -1167,7 +1363,7 @@ EmulationPolicy::emulate_syscall()
             }
 
             if (get_va) {
-                size_t nwritten = map.write(&saved, get_va, sizeof saved);
+                size_t nwritten = map->write(&saved, get_va, sizeof saved);
                 ROSE_ASSERT(nwritten==sizeof saved);
             }
             writeGPR(x86_gpr_ax, 0);
@@ -1185,7 +1381,7 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, -errno);
             } else {
                 if (rl_va) {
-                    size_t nwritten = map.write(&rl, rl_va, sizeof rl);
+                    size_t nwritten = map->write(&rl, rl_va, sizeof rl);
                     ROSE_ASSERT(nwritten==sizeof rl);
                 }
                 writeGPR(x86_gpr_ax, 0);
@@ -1214,7 +1410,7 @@ EmulationPolicy::emulate_syscall()
 
             if (!start) {
                 try {
-                    start = map.find_free(mmap_start, aligned_size, PAGE_SIZE);
+                    start = map->find_free(mmap_start, aligned_size, PAGE_SIZE);
                 } catch (const MemoryMap::NoFreeSpace &e) {
                     writeGPR(x86_gpr_ax, -ENOMEM);
                     goto mmap2_done;
@@ -1233,8 +1429,8 @@ EmulationPolicy::emulate_syscall()
             } else {
                 MemoryMap::MapElement melmt(start, aligned_size, buf, 0, rose_perms);
                 melmt.set_name("mmap2 syscall");
-                map.erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
-                map.insert(melmt);
+                map->erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
+                map->insert(melmt);
                 writeGPR(x86_gpr_ax, start);
             }
 
@@ -1242,7 +1438,7 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("p");
             if (debug && trace_mmap) {
                 fprintf(debug, "  memory map after mmap2 syscall:\n");
-                map.dump(debug, "    ");
+                map->dump(debug, "    ");
             }
 
             break;
@@ -1346,23 +1542,26 @@ EmulationPolicy::emulate_syscall()
        }
 
         case 240: { /*0xf0, futex*/
-            static const Translate opflags[] = { TF(FUTEX_PRIVATE_FLAG),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_FD),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
+            static const Translate opflags[] = {
+#ifdef FUTEX_CMD_MASK
+                TF(FUTEX_PRIVATE_FLAG),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
+                TF2(FUTEX_CMD_MASK, FUTEX_FD),
+                TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
+                TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
+                TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
+                TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
+                TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
 #ifdef FUTEX_WAIT_BITSET
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
 #endif
 #ifdef FUTEX_WAKE_BITSET
-                                                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
+                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
 #endif
-                                                 T_END };
+#endif
+                T_END };
             syscall_enter("futex", "pfdppd", opflags);
             //uint32_t addr1=arg(0), op=arg(1), val1=arg(2), ptimeout=arg(3), addr2=arg(4), val3=arg(5);
             writeGPR(x86_gpr_ax, -ENOSYS);
@@ -1375,7 +1574,7 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("set_thread_area", "p");
             uint32_t u_info_va=arg(0);
             user_desc ud;
-            size_t nread = map.read(&ud, u_info_va, sizeof ud);
+            size_t nread = map->read(&ud, u_info_va, sizeof ud);
             ROSE_ASSERT(nread==sizeof ud);
 #if 1 /*FIXME: should be using syscall_enter*/
             if (debug && trace_syscall) {
@@ -1397,7 +1596,7 @@ EmulationPolicy::emulate_syscall()
                     fprintf(debug, "  assigned entry number = %d\n", (int)ud.entry_number);
             }
             gdt[ud.entry_number] = ud;
-            size_t nwritten = map.write(&ud, u_info_va, sizeof ud);
+            size_t nwritten = map->write(&ud, u_info_va, sizeof ud);
             ROSE_ASSERT(nwritten==sizeof ud);
             writeGPR(x86_gpr_ax, 0);
             /* Reload all the segreg shadow values from the (modified) descriptor table */
@@ -1425,12 +1624,12 @@ EmulationPolicy::emulate_syscall()
             if (sizeof(int)>4) {
                 tidptr = new int;
                 *tidptr = 0;
-                size_t nread = map.read(tidptr, tid_va, 4);
+                size_t nread = map->read(tidptr, tid_va, 4);
                 ROSE_ASSERT(4==nread);
-                const MemoryMap::MapElement *orig = map.find(tid_va);
+                const MemoryMap::MapElement *orig = map->find(tid_va);
                 MemoryMap::MapElement submap(tid_va, 4, tidptr, 0, orig->get_mapperms());
                 submap.set_name("set_tid_address");
-                map.insert(submap);
+                map->insert(submap);
             } else {
                 tidptr = (int*)my_addr(tid_va);
             }
@@ -1441,7 +1640,7 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             if (debug && trace_mmap) {
                 fprintf(debug, "  memory map after set_tid_address syscall:\n");
-                map.dump(debug, "    ");
+                map->dump(debug, "    ");
             }
             break;
         }
@@ -1477,6 +1676,8 @@ EmulationPolicy::emulate_syscall()
             for (int i=0; i<6; i++)
                 fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
+            fprintf(stderr, "dumping specimen's memory into core* files (this might take a while)...\n");
+            map->dump("core");
             abort();
         }
     }
@@ -1550,6 +1751,8 @@ main(int argc, char *argv[])
     typedef X86InstructionSemantics<EmulationPolicy, VirtualMachineSemantics::ValueType> Semantics;
     EmulationPolicy policy;
     Semantics t(policy);
+    uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
+    std::string dump_name = "core";
 
     /* Parse command-line */
     int argno = 1;
@@ -1564,7 +1767,14 @@ main(int argc, char *argv[])
                 char *comma = strchr(s, ',');
                 std::string word(s, comma?comma-s:strlen(s));
                 s = comma ? comma+1 : NULL;
-                if (word=="insn") {
+                if (word=="all") {
+                    policy.trace_insn = true;
+                    policy.trace_state = true;
+                    policy.trace_mem = true;
+                    policy.trace_mmap = true;
+                    policy.trace_syscall = true;
+                    policy.trace_loader = true;
+                } else if (word=="insn") {
                     policy.trace_insn = true;
                 } else if (word=="state") {
                     policy.trace_state = true;
@@ -1574,6 +1784,8 @@ main(int argc, char *argv[])
                     policy.trace_mmap = true;
                 } else if (word=="syscall") {
                     policy.trace_syscall = true;
+                } else if (word=="loader") {
+                    policy.trace_loader = true;
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: insn, state, mem, mmap, syscall\n", argv[0]);
                     exit(1);
@@ -1584,6 +1796,17 @@ main(int argc, char *argv[])
             policy.debug = stderr;
             policy.trace_insn = true;
             policy.trace_syscall = true;
+            argno++;
+        } else if (!strncmp(argv[argno], "--dump=", 7)) {
+            char *rest;
+            errno = 0;
+            dump_at = strtoul(argv[argno]+7, &rest, 0);
+            if (rest==argv[argno]+7 || errno!=0) {
+                fprintf(stderr, "%s: --dump=N requires an address, N\n", argv[0]);
+                exit(1);
+            }
+            if (','==rest[0] && rest[1])
+                dump_name = rest+1;
             argno++;
         } else {
             fprintf(stderr, "usage: %s [--debug] PROGRAM ARGUMENTS...\n", argv[0]);
@@ -1597,18 +1820,23 @@ main(int argc, char *argv[])
     /* Debugging */
     if (policy.debug && policy.trace_mmap) {
         fprintf(policy.debug, "memory map after program load:\n");
-        policy.map.dump(policy.debug, "  ");
+        policy.map->dump(policy.debug, "  ");
     }
 
     /* Execute the program */
     bool seen_entry_va = false;
     while (true) {
         try {
+            if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
+                fprintf(stderr, "Reached dump point. Dumping pseudo-core files...\n");
+                policy.map->dump(dump_name);
+                dump_at = 0;
+            }
             SgAsmx86Instruction *insn = policy.current_insn();
             if (policy.debug && policy.trace_mmap &&
                 !seen_entry_va && insn->get_address()==fhdr->get_base_va()+fhdr->get_entry_rva()) {
                 fprintf(policy.debug, "memory map at program entry:\n");
-                policy.map.dump(policy.debug, "  ");
+                policy.map->dump(policy.debug, "  ");
                 seen_entry_va = true;
             }
             t.processInstruction(insn);

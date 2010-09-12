@@ -32,7 +32,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
    {
   // This is the C and C++ specific expression code generation
 
-  // printf ("In Unparse_ExprStmt::unparseLanguageSpecificExpression ( expr = %p = %s ) \n",expr,expr->class_name().c_str());
+#if 0
+     printf ("In C/C++ Unparse_ExprStmt::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
+#endif
 
      switch (expr->variant())
         {
