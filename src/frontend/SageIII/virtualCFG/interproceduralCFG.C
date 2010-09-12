@@ -79,8 +79,8 @@ void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& al
 
     if ((isSgFunctionCallExp(sgnode) &&
          idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) ||
-        (isSgFunctionCallExp(sgnode) &&
-         idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX)) {
+        (isSgConstructorInitializer(sgnode) &&
+         idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX)) {
 
           ClassHierarchyWrapper classHierarchy(SageInterface::getProject()); //todo   move elsewhere
           Rose_STL_Container<Properties*> propList;
