@@ -37,9 +37,6 @@ void addEdge(CFGNode from, CFGNode to, std::vector<CFGEdge>& result) {
 
 void InterproceduralCFG::buildFullCFG()
 {
-  all_nodes_.clear();
-  clearNodesAndEdges();
-
   std::set<VirtualCFG::CFGNode> explored;
   graph_ = new SgIncidenceDirectedGraph;
   ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
