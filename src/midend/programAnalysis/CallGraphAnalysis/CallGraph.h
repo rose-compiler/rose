@@ -96,6 +96,9 @@ namespace CallTargetSet
   void getDefinitionsForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
                                     Rose_STL_Container<SgFunctionDefinition*>& defList);
+  void getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
+                                   ClassHierarchyWrapper* classHierarchy,
+                                   Rose_STL_Container<SgExpression*>& exps);
 #if 0
   void getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, Rose_STL_Container<SgExpression*>& calls);
   void getFunctionDefinitionsForCallLikeExp(SgExpression* exp, Rose_STL_Container<SgFunctionDefinition*>& defs);
