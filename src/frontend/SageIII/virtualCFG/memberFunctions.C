@@ -4,6 +4,8 @@
 #include "CallGraph.h"
 #include <vector>
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 using namespace std;
 using namespace VirtualCFG;
 
@@ -3102,19 +3104,11 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
       case SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX: {
                 if (virtualInterproceduralControlFlowGraphs) {
                   ROSE_ASSERT(!"not updated for callgraph refactor"); //TODO
-#if 0
-                  Rose_STL_Container<SgFunctionDefinitions*> defs;
-                  CallTargetSet::getPropertiesForExpression(this, props);
-                  foreach (SgFunctionDefinition* def, def) {
-                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
-#endif
-#if 0
+                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
                   Rose_STL_Container<SgFunctionDefinition*> defs;
-                  CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
-                  Rose_STL_Container<SgFunctionDefinition*>::iterator def;
-                  for (def = defs.begin(); def != defs.end(); ++def) 
-                    makeEdge(CFGNode(this, idx), (*def)->cfgForBeginning(), result);
-#endif
+                  CallTargetSet::getDefinitionsForExpression(this, &classHierarchy, defs);
+                  foreach (SgFunctionDefinition* def, defs) 
+                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
                 }
                 else {
                   makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);

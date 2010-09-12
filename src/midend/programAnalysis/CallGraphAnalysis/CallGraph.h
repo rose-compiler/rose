@@ -85,11 +85,17 @@ namespace CallTargetSet
   // an initialization.
   std::vector<Properties*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
-  // populates functionList with declarations of all functions that may get
-  // called via an SgFunctionCallExp node.
+  // populates functionList with declarations of all functions that may get called.
   void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<Properties *>& functionList);
+                                    Rose_STL_Container<Properties*>& propList);
+
+  // populates functionList with definitions of all functions that may get called. This 
+  // is basically a wrapper around getPropertiesForExpression that extracts the 
+  // SgFunctionDefinition from the Properties object
+  void getDefinitionsForExpression(SgExpression* exp,
+                                    ClassHierarchyWrapper* classHierarchy,
+                                    Rose_STL_Container<SgFunctionDefinition*>& defList);
 #if 0
   void getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, Rose_STL_Container<SgExpression*>& calls);
   void getFunctionDefinitionsForCallLikeExp(SgExpression* exp, Rose_STL_Container<SgFunctionDefinition*>& defs);

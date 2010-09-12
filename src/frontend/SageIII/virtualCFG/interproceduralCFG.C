@@ -82,23 +82,11 @@ void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& al
         (isSgConstructorInitializer(sgnode) &&
          idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX)) {
 
-          ClassHierarchyWrapper classHierarchy(SageInterface::getProject()); //todo   move elsewhere
-          Rose_STL_Container<Properties*> propList;
+          ClassHierarchyWrapper classHierarchy(SageInterface::getProject()); //TODO move elsewhere
           Rose_STL_Container<SgFunctionDefinition*> defs;
 
           ROSE_ASSERT( isSgExpression(sgnode) );
-          CallTargetSet::getPropertiesForExpression(isSgExpression(sgnode), &classHierarchy, propList);
-          foreach (Properties* prop, propList) {
-            SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
-            ROSE_ASSERT(candidateDecl);
-            candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
-            if (candidateDecl == NULL) 
-              break;
-            SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
-            if (candidateDef != NULL) 
-              defs.push_back(candidateDef);
-          }
-
+          CallTargetSet::getDefinitionsForExpression(isSgExpression(sgnode), &classHierarchy, defs); 
           foreach (SgFunctionDefinition* def, defs) {
             addEdge(n, def->cfgForBeginning(), outEdges);
             addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
