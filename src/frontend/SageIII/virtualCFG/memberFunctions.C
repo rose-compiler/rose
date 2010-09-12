@@ -3103,6 +3103,12 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
                 if (virtualInterproceduralControlFlowGraphs) {
                   ROSE_ASSERT(!"not updated for callgraph refactor"); //TODO
 #if 0
+                  Rose_STL_Container<SgFunctionDefinitions*> defs;
+                  CallTargetSet::getPropertiesForExpression(this, props);
+                  foreach (SgFunctionDefinition* def, def) {
+                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+#endif
+#if 0
                   Rose_STL_Container<SgFunctionDefinition*> defs;
                   CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
                   Rose_STL_Container<SgFunctionDefinition*>::iterator def;
