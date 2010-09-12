@@ -1019,6 +1019,25 @@ CallTargetSet::getPropertiesForExpression(SgExpression* sgexp,
   }
 }
 
+void 
+CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<SgFunctionDefinition*>& defList) {
+  Rose_STL_Container<Properties*> props;
+  CallTargetSet::getPropertiesForExpression(sgexp, classHierarchy, props);
+  foreach (Properties* prop, props) {
+    SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
+    ROSE_ASSERT(candidateDecl);
+    candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
+    if (candidateDecl != NULL) {
+      SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
+      if (candidateDef != NULL) {
+        defList.push_back(candidateDef);
+      }
+    }
+  }
+}
+
 FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     SgProject *project, ClassHierarchyWrapper *classHierarchy )
 {
