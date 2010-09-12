@@ -69,6 +69,9 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseLanguageSpecificStatement (SgStatement*  stmt, SgUnparse_Info& info);
           virtual void unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (9/6/2010): Mark the derived class to support debugging.
+          virtual std::string languageName() const { return "Fortran Unparser"; }
+
       //! unparse expression functions implemented in unparse_expr.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
        // virtual void unparseExpression              (SgExpression* expr, SgUnparse_Info& info);

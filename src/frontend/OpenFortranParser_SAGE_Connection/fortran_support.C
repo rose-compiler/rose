@@ -1782,7 +1782,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // C++ using declaration (SgUsingDeclarationStatement), using directives (SgUsingDirectiveStatement), a
   // Fortran use statement (SgUseStatement).  This will be done in another function, not yet implemented.
 
-#if 0
+#if 1
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableName = %s currentScope = %p \n",variableName.str(),currentScope);
 #endif
@@ -1802,6 +1802,11 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
      printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p \n",variableSymbol);
      printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): functionSymbol = %p \n",functionSymbol);
      printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): classSymbol    = %p \n",classSymbol);
+#endif
+
+#if 0
+     printf ("Output the symbol table at the current scope (debugging): \n");
+     currentScope->get_symbol_table()->print("Output the symbol table at the current scope");
 #endif
 
   // DQ (12/12/2007): Added test for if this is a function!
@@ -1843,24 +1848,93 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
           token.type = 0;
           token.text = strdup(variableName.str());
 
-       // Check if this is a scope using implicit none rules, however for now even if we know it is function we first build it as a variable and later convert it to either an array or a function (or a derived type)
-          bool isAnImplicitScope = isImplicitNoneScope();
-          if (isAnImplicitScope == true)
+       // Check if this is a scope using implicit none rules, however for now even if we know it is function we 
+       // first build it as a variable and later convert it to either an array or a function (or a derived type).
+          bool isAnImplicitNoneScope = isImplicitNoneScope();
+          if (isAnImplicitNoneScope == true)
              {
-            // This has to be a function call since we can't be building a variable to represent an implicitly type variable.
-#if 0
+            // This has to be a function call since we can't be building a variable to represent an implicitly type variable. 
+            // See jacobi.f for an example of this. Also, currently test2010_45.f90 demonstrates a case of "integer x = 42, y = x" 
+            // where the initializer to "y" is not built as a symbol yet as part of the construction of the variable declaration.
+#if 1
                outputState("scope marked as implict none, so we must construct function in trace_back_through_parent_scopes_lookup_variable_symbol()");
+
+            // DQ (9/11/2010): Since this must be a function, we can build a function reference expression and a function declaration, but in what scope.
+            // Or we could define a list of unresolved functions and fix them up at the end of the module or global scope.  This is a general problem
+            // and demonstrated by test2010_46.f90 
+
+               ROSE_ASSERT(astNameStack.empty() == false);
+               ROSE_ASSERT(astNameStack.front()->text != NULL);
+
+               SgName name = astNameStack.front()->text;
+            // astNameStack.pop_front();
+
+            // Define this as a function returning void type for now, but it will have to be fixed when we finally see the function definition.
+               SgFunctionType* functionType             = new SgFunctionType (SgTypeVoid::createType());
+               SgFunctionDefinition* functionDefinition = NULL;
+
+               SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(name,functionType,functionDefinition);
+               ROSE_ASSERT(functionDeclaration != NULL);
+
+            // We have not yet seen the declaration for this function so it can only be marked as compiler gnerated for now!
+               setSourcePosition(functionDeclaration);
+               setSourcePosition(functionDeclaration->get_parameterList());
+
+               ROSE_ASSERT(functionDeclaration->get_endOfConstruct()   != NULL);
+               ROSE_ASSERT(functionDeclaration->get_startOfConstruct() != NULL);
+
+               setSourcePositionCompilerGenerated(functionDeclaration);
+               setSourcePositionCompilerGenerated(functionDeclaration->get_parameterList());
+
+               ROSE_ASSERT(functionDeclaration->get_endOfConstruct()   != NULL);
+               ROSE_ASSERT(functionDeclaration->get_startOfConstruct() != NULL);
+
+               ROSE_ASSERT(functionSymbol == NULL);
+               functionSymbol = new SgFunctionSymbol(functionDeclaration);
+               ROSE_ASSERT(functionSymbol != NULL);
+
+               ROSE_ASSERT(astScopeStack.empty() == false);
+               SgScopeStatement* scope = astScopeStack.back();
+               ROSE_ASSERT(scope != NULL);
+               SgGlobal* globalScope = isSgGlobal(scope);
+               ROSE_ASSERT(globalScope != NULL);
+
+            // Set the scope to be global scope since we have not yet seen the function definition!
+            // If it was from a module, then the module should have been included. If we were in a 
+            // module then this should be fixed up at the end of the module scope (and we will have 
+            // seen the function definition by then).  If this needs to be fixed up in global scope 
+            // then we will see the function definition by then (at the end of the translation unit).
+               functionDeclaration->set_scope(globalScope);
+
+            // We also have to set the first non-defining declaration.
+               functionDeclaration->set_firstNondefiningDeclaration(functionDeclaration);
+
+            // We also have to set the parent...
+               ROSE_ASSERT(functionDeclaration->get_parent() == NULL);
+               functionDeclaration->set_parent(globalScope);
+               ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
+
+               printf ("Adding function name = %s to the global scope (even thouhg we have not seen the definition yet) \n",name.str());
+               globalScope->insert_symbol(name,functionSymbol);
+
+            // Add this function to the list of unresolved functions so that we can fixup the AST afterward (close of module scope or close of global scope).
+               astUnresolvedFunctionsList.push_front(functionDeclaration);
+#if 0
                printf ("Error: scope marked as implict none, so we must construct name = %s as a function (function reference expression) \n",variableName.str());
                ROSE_ASSERT(false);
+#endif
              }
             else
              {
 #else
             // This has to be a function call since we can't be building a variable to represent an implicitly type variable.
-               printf ("Warning: scope marked as implict none, so we must construct name = %s as a function (function reference expression) \n",variableName.str());
+            // DQ (9/11/2010): This can alternatively be something like "integer x = 42, y = x" where the initializer to "y" is not  
+            // built as a symbol yet as part of the construction of the variable declaration. See test2010_45.f90 for an example.
+               printf ("Warning: scope marked as implict none, so we must construct name = %s as a function or variable (function or variable reference expression) (if a variable ew need to locate it in the current variable declaration)\n",variableName.str());
              }
-#endif
+
              {
+#endif
             // Since "implicit none" has not been specified we have to build an implicitly typed variable
 
             // Push the name onto the stack
@@ -1914,12 +1988,12 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
              }
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
 
-#if 0
+#if 1
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p functionSymbol = %p \n",variableSymbol,functionSymbol);
@@ -2156,11 +2230,11 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
 
           if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
              {
-               printf ("astNameStack.size() = %zu \n",astNameStack.size());
+            // printf ("astNameStack.size() = %zu \n",astNameStack.size());
                if (astNameStack.empty() == false)
                   {
                     string type_attribute_string = astNameStack.front()->text;
-                    printf ("type_attribute_string = %s \n",type_attribute_string.c_str());
+                 // printf ("type_attribute_string = %s \n",type_attribute_string.c_str());
                     astNameStack.pop_front();
                   }
              }
@@ -2218,7 +2292,7 @@ isImplicitNoneScope()
 SgVariableDeclaration* 
 buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
    {
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildVariableDeclaration()");
 #endif
@@ -2228,21 +2302,21 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
   // been marked as "implicit none".
      if (buildingImplicitVariable == true)
         {
-          bool isAnImplicitScope = isImplicitNoneScope();
+          bool isAnImplicitNoneScope = isImplicitNoneScope();
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("In buildVariableDeclaration(): isAnImplicitScope = %s \n",(isAnImplicitScope == true) ? "true" : "false");
+               printf ("In buildVariableDeclaration(): isAnImplicitNoneScope = %s \n",(isAnImplicitNoneScope == true) ? "true" : "false");
 #if 0
-          if (isAnImplicitScope == true)
+          if (isAnImplicitNoneScope == true)
              {
-               outputState("Warning: isAnImplicitScope == true buildVariableDeclaration()");
+               outputState("Warning: isAnImplicitNoneScope == true buildVariableDeclaration()");
              }
 #endif
        // First we build it as a variable then we build it as a function (a few rules later)
        // So although we know at this point that this is going to be a function, we have to
        // build it as a varialbe so that it can be evaluated for converstion from a variable 
        // into a function or array a bit later.
-       // ROSE_ASSERT(isAnImplicitScope == false);
+       // ROSE_ASSERT(isAnImplicitNoneScope == false);
         }
 
   // printf ("buildingImplicitVariable = %s \n",buildingImplicitVariable ? "true" : "false");
@@ -2282,6 +2356,12 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      SgInitializedName* lastInitializedNameForSourcePosition  = NULL;
 
      do {
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("In loop over variables in buildVariableDeclaration()");
+#endif
+       // printf ("At TOP of processing list of variables declared in a single declaration \n");
+
           SgInitializedName* initializedName = isSgInitializedName(astNodeStack.front());
 
        // These are used to set the source position of the SgVariableDeclaration
@@ -2305,7 +2385,14 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
           variableDeclaration->prepend_variable(initializedName,initializedName->get_initializer());
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+             {
                printf ("After variableDeclaration->prepend_variable(): initializedName = %p = %s initializer = %p \n",initializedName,initializedName->get_name().str(),initializedName->get_initializer());
+               if (initializedName->get_initializer() != NULL)
+                  {
+                    SgExpression* initializer = initializedName->get_initializer();
+                    printf ("--- initializedName->get_initializer() = %p = %s = %s \n",initializer,initializer->class_name().c_str(),SageInterface::get_name(initializer).c_str());
+                  }
+             }
 
        // setSourcePosition(initializedName->get_definition());
           ROSE_ASSERT(initializedName->get_definition()->get_startOfConstruct() != NULL);
@@ -2375,6 +2462,8 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
 
        // We should have at least one element in the variable list.
           ROSE_ASSERT(variableDeclaration->get_variables().empty() == false);
+
+       // printf ("At BOTTOM of processing list of variables declared in a single declaration \n");
         }
      while ( (buildingImplicitVariable == false) && (astNodeStack.empty() == false) );
 
@@ -2415,11 +2504,11 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
 
           if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
              {
-               printf ("astNameStack.size() = %zu \n",astNameStack.size());
+            // printf ("astNameStack.size() = %zu \n",astNameStack.size());
                if (astNameStack.empty() == false)
                   {
                     string type_attribute_string = astNameStack.front()->text;
-                    printf ("type_attribute_string = %s \n",type_attribute_string.c_str());
+                 // printf ("type_attribute_string = %s \n",type_attribute_string.c_str());
                     astNameStack.pop_front();
                   }
              }
@@ -3147,6 +3236,11 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
   // printf ("In buildAttributeSpecificationStatement(): kind = %d label = %s \n",kind,label != NULL ? label->text : "NULL");
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of buildAttributeSpecificationStatement()");
+#endif
+
      SgAttributeSpecificationStatement *attributeSpecificationStatement = new SgAttributeSpecificationStatement();
 
   // DQ (10/6/2008): It seems that we all of a sudden need thes to be set!
@@ -3165,6 +3259,31 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
      attributeSpecificationStatement->set_attribute_kind(kind);
 
   // printf ("In buildAttributeSpecificationStatement(): astNameStack.size() = %zu \n",astNameStack.size());
+
+  // DQ (9/11/2010): Added support for F2003 "protected" statement.
+     if (kind == SgAttributeSpecificationStatement::e_protectedStatement)
+        {
+       // Note that in Fortran "protected" only means that the variable cannot be modified, but it can be read, so this is different from C++.
+          printf ("In buildAttributeSpecificationStatement(): kind == SgAttributeSpecificationStatement::e_protectedStatement \n");
+
+          ROSE_ASSERT(astScopeStack.empty() == false);
+          ROSE_ASSERT(astScopeStack.front() != NULL);
+
+          ROSE_ASSERT(astNameStack.empty() == false);
+          ROSE_ASSERT(astNameStack.front()->text != NULL);
+          SgName name = astNameStack.front()->text;
+          printf ("building protected statement for variable name = %s \n",name.str());
+          SgVariableSymbol* variableSymbol = astScopeStack.front()->lookup_variable_symbol(name);
+          ROSE_ASSERT(variableSymbol != NULL);
+          SgInitializedName* initializedName = variableSymbol->get_declaration();
+          ROSE_ASSERT(initializedName != NULL);
+
+       // Using new support for fortran "protected" specification of variables.
+          initializedName->set_protected_declaration(true);
+
+       // printf ("SgAttributeSpecificationStatement::e_protectedStatement is not yet supported \n");
+       // ROSE_ASSERT(false);
+        }
 
      if (kind == SgAttributeSpecificationStatement::e_bindStatement)
         {
@@ -3438,7 +3557,30 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
        // This maps to a C/C++ modifier setting.
           case AttrSpec_PUBLIC:       variableDeclaration->get_declarationModifier().get_accessModifier().setPublic();    break;
           case AttrSpec_PRIVATE:      variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();   break;
-          case AttrSpec_PROTECTED:    variableDeclaration->get_declarationModifier().get_accessModifier().setProtected(); break;
+
+
+       // DQ (9/11/2010): Fortran protected attribute is not the same a C++ protected attribute, so we use a different mechanism 
+       // that can be associated with individual variables if required (as required with the protected statment is used with 
+       // subsets of variables that might appear in a variable declaration).
+       // case AttrSpec_PROTECTED:    variableDeclaration->get_declarationModifier().get_accessModifier().setProtected(); break;
+          case AttrSpec_PROTECTED:
+             {
+            // variableDeclaration->get_declarationModifier().get_accessModifier().setProtected(); break;
+            // Using new support for fortran "protected" specification of variables.
+               SgVariableDeclaration* local_variableDeclaration = isSgVariableDeclaration(variableDeclaration);
+               printf ("Setting all the variables in a variable declaration as protected \n");
+               SgInitializedNamePtrList::iterator i = local_variableDeclaration->get_variables().begin();
+               while (i != local_variableDeclaration->get_variables().end())
+                  {
+                    (*i)->set_protected_declaration(true);
+                    i++;
+                  }
+#if 0
+               printf ("Exiting after setting all the variables in a variable declaration as protected \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
 
        // These represent special Fortran specific support in ROSE.
           case AttrSpec_ALLOCATABLE:  variableDeclaration->get_declarationModifier().get_typeModifier().setAllocatable();  break;
@@ -3481,6 +3623,9 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
           case AttrSpec_PARAMETER:
             // printf ("Error: PARAMETER is an attribute that implies constant value ('const' in C/C++) \n");
                variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+
+            // Output debugging information about saved state (stack) information.
+               outputState("In setDeclarationAttributeSpec(): case AttrSpec_PARAMETER");
 
                if (astBaseTypeStack.empty() == false)
                   {
@@ -4218,7 +4363,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
   // SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),astScopeStack.front());
      SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),currentScopeOfFunctionDeclaration);
 
-#if 1
+#if 0
      printf ("In buildProcedureSupport(): functionSymbol = %p from trace_back_through_parent_scopes_lookup_function_symbol() \n",functionSymbol);
   // printf ("In buildProcedureSupport(): procedureDeclaration scope = %p = %s \n",procedureDeclaration->get_scope(),procedureDeclaration->get_scope()->class_name().c_str());
      printf ("In buildProcedureSupport(): procedureDeclaration scope = %p \n",procedureDeclaration->get_scope());
@@ -4248,7 +4393,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
        // It might be that we should build a nondefining declaration for use in the symbol.
           functionSymbol = new SgFunctionSymbol(procedureDeclaration);
           currentScopeOfFunctionDeclaration->insert_symbol(procedureDeclaration->get_name(), functionSymbol);
-#if 1
+#if 0
           printf ("In buildProcedureSupport(): Added SgFunctionSymbol = %p to scope = %p = %s \n",functionSymbol,currentScopeOfFunctionDeclaration,currentScopeOfFunctionDeclaration->class_name().c_str());
 #endif
         }
@@ -4616,7 +4761,7 @@ isPubliclyAccessible( SgSymbol* symbol )
      SgDeclarationStatement* declaration = isSgDeclarationStatement(symbol_basis);
      if (declaration != NULL)
         {
-       // printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+       // printf ("In isPubliclyAccessible(): declaration = %p = %s symbol = %s \n",declaration,declaration->class_name().c_str(),symbol->get_name().str());
 
        // Publically accessible is either declared explicitly as public, or not defined as anything (default in Fortran is public).
           if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
@@ -4636,11 +4781,30 @@ isPubliclyAccessible( SgSymbol* symbol )
                SgDeclarationStatement* declaration = isSgDeclarationStatement(parent);
                if (declaration != NULL)
                   {
+#if 0
                  // printf ("declaration (from SgInitializedName) = %p = %s \n",declaration,declaration->class_name().c_str());
+                    printf ("In isPubliclyAccessible(): declaration = %p = %s symbol = %s \n",declaration,declaration->class_name().c_str(),symbol->get_name().str());
+                    declaration->get_declarationModifier().display("In isPubliclyAccessible()");
+#endif
                     if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
                         declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
                        {
                          returnValue = true;
+                       }
+                      else
+                       {
+                      // DQ (9/11/2010): See test2007_176.f03 for an example of the F2003 use of the "protected" keyword.
+                      // If it was marked as protected in the variable then either it will be found in a parent scope 
+                      // (for module functions) or it should not be put into the current scope as an aliased variable symbol.
+                      // printf ("This may still be a protected variable. \n");
+
+                      // DQ (9/11/2010): But make sure this is not marked as protected (is so then we want to include it as an aliased symbol).
+                         if (initializedName->get_protected_declaration() == true)
+                            {
+                           // This should not be considered a publicly accessible variable (don't put it into the synbol table as an aliased symbol.
+                              printf ("In isPubliclyAccessible(): Note that this variable is marked as protected (so must be included as an aliased symbol \n");
+                              returnValue = true;
+                            }
                        }
 
                  // declaration->get_declarationModifier().get_accessModifier().display("In isPubliclyAccessible()");

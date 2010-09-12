@@ -480,7 +480,9 @@ Grammar::setUpSupport ()
      InitializedName.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+  // DQ (9/11/2010): Added support for fortran "protected" marking of variables.
+     InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      Name.setFunctionPrototype                ( "HEADER_NAME", "../Grammar/Support.code");
