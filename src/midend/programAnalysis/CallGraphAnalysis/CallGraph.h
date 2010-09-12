@@ -81,6 +81,10 @@ namespace CallTargetSet
   // member function (non/polymorphic) call
   std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
 
+  // returns the list of Properties of all constructors that may get called via 
+  // an initialization.
+  std::vector<Properties*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
+
   // populates functionList with declarations of all functions that may get
   // called via an SgFunctionCallExp node.
   void getPropertiesForExpression(SgExpression* exp,
