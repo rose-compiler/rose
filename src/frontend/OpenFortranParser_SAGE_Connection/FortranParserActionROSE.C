@@ -3551,7 +3551,7 @@ void c_action_entity_decl(Token_t * id)
           printf ("In R504 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 c_action_entity_decl()");
 #endif
@@ -3806,7 +3806,7 @@ void c_action_entity_decl(Token_t * id)
      astNameStack.pop_front();
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 c_action_entity_decl()");
 #endif
@@ -15180,10 +15180,10 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                                 // SgAliasSymbol* aliasSymbol = new SgAliasSymbol(functionSymbol,/* isRenamed = true */ true,interfaceName);
                                 // SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol,interfaceName);
                                    SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol->get_declaration(),functionSymbol,interfaceName);
-
+#if 0
                                    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                                        printf ("Insert aliased symbol name = %s (renamed from functionName = %s )\n",interfaceName.str(),functionName.str());
-
+                                        printf ("R1106 Insert aliased symbol name = %s (renamed from functionName = %s )\n",interfaceName.str(),functionName.str());
+#endif
                                 // Accumulate the list of required SgRenameSymbol IR nodes, and add them after we finish the traversal over the current scops symbols
                                 // currentScope->insert_symbol(interfaceName,aliasSymbol);
                                 // currentScope->insert_symbol(interfaceName,renameSymbol);
@@ -15511,10 +15511,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                        {
                          SgName symbolName = symbol->get_name();
                          SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
-
+#if 0
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("Insert aliased symbol name = %s \n",symbolName.str());
-
+                              printf ("R1109 (hasOnly == false && empty astNodeStack) Insert aliased symbol name = %s \n",symbolName.str());
+#endif
                          currentScope->insert_symbol(symbolName,aliasSymbol);
                        }
 
@@ -15555,10 +15555,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                               bool isRenamed = hasRenameList;
                               SgName declarationName = renamePair->get_local_name();
                               SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed = true */ true,declarationName);
-
+#if 0
                               if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                                   printf ("Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
-
+                                   printf ("R1109 (non-empty astNodeStack)Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
+#endif
                               currentScope->insert_symbol(declarationName,aliasSymbol);
 
                               setOfRenamedSymbols.insert(symbol);
@@ -15586,10 +15586,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                       // Add the symbols not renamed explicitly.
                          SgName symbolName = symbol->get_name();
                          SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
-
+#if 0
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("Insert aliased symbol name = %s (non-renamed symbol) \n",symbolName.str());
-
+                              printf ("R1109 (add the non-renamed symbols) Insert aliased symbol name = %s (non-renamed symbol) \n",symbolName.str());
+#endif
                          currentScope->insert_symbol(symbolName,aliasSymbol);
                        }
 
@@ -15653,10 +15653,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                             {
                               aliasSymbol = new SgAliasSymbol(symbol,isRenamed);
                             }
-
+#if 0
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
-
+                              printf ("R1109 (hasOnly == false && astNodeStack.empty() == false) Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
+#endif
                          currentScope->insert_symbol(local_name,aliasSymbol);
                        }
 
@@ -17617,7 +17617,7 @@ void c_action_end_of_stmt(Token_t * eos)
   // test2007_19.f90) then do so.
   // build_implicit_program_statement_if_required();
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1238 c_action_end_of_stmt()");
 #endif
