@@ -34,14 +34,10 @@ public:
     InterproceduralCFG(SgNode* node, bool is_filtered = false) 
       : CFG(node, is_filtered) {}
 
-    ~InterproceduralCFG() { 
-      clearNodesAndEdges(); 
-    }
-
     // Build CFG for debugging.
-    void buildFullCFG();
+    virtual void buildFullCFG();
     // Build filtered CFG which only contains interesting nodes.
-    void buildFilteredCFG();
+    virtual void buildFilteredCFG();
 };
 
 } // end of namespace StaticCFG
