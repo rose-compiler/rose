@@ -773,7 +773,7 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX: { 
-      if (! virtualInterproceduralControlFlowGraphs) { 
+      if (virtualInterproceduralControlFlowGraphs) { 
         ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
         Rose_STL_Container<SgExpression*> exps;
         CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
@@ -793,7 +793,7 @@ SgFunctionDefinition::cfgInEdges(unsigned int idx) {
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: {
-      if (! virtualInterproceduralControlFlowGraphs) {
+      if (virtualInterproceduralControlFlowGraphs) {
         ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
         Rose_STL_Container<SgExpression*> exps;
         CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
