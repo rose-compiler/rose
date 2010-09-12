@@ -42,16 +42,20 @@ void InterproceduralCFG::buildFullCFG()
 
   std::set<VirtualCFG::CFGNode> explored;
   graph_ = new SgIncidenceDirectedGraph;
+  ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
 
-  buildCFG(start_->cfgForBeginning(), all_nodes_, explored);
+  buildCFG(start_->cfgForBeginning(), all_nodes_, explored, &classHierarchy);
 }
 
 void InterproceduralCFG::buildFilteredCFG()
 {
-  assert(!"InterproceduralCFG:buildFilteredCFG() is unimplemented");
+  ROSE_ASSERT(!"InterproceduralCFG:buildFilteredCFG() is unimplemented");
 }
 
-void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& all_nodes, std::set<CFGNode>& explored)
+void InterproceduralCFG::buildCFG(CFGNode n, 
+                                  std::map<CFGNode, SgGraphNode*>& all_nodes, 
+                                  std::set<CFGNode>& explored,
+                                  ClassHierarchyWrapper* classHierarchy)
 {
     SgNode* sgnode = n.getNode();
     ROSE_ASSERT(sgnode);
@@ -82,11 +86,10 @@ void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& al
         (isSgConstructorInitializer(sgnode) &&
          idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX)) {
 
-          ClassHierarchyWrapper classHierarchy(SageInterface::getProject()); //TODO move elsewhere
           Rose_STL_Container<SgFunctionDefinition*> defs;
 
           ROSE_ASSERT( isSgExpression(sgnode) );
-          CallTargetSet::getDefinitionsForExpression(isSgExpression(sgnode), &classHierarchy, defs); 
+          CallTargetSet::getDefinitionsForExpression(isSgExpression(sgnode), classHierarchy, defs); 
           foreach (SgFunctionDefinition* def, defs) {
             addEdge(n, def->cfgForBeginning(), outEdges);
             addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
@@ -125,7 +128,7 @@ void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& al
 
     foreach (const CFGNode& target, targets)
     {
-        buildCFG(target, all_nodes, explored);
+        buildCFG(target, all_nodes, explored, classHierarchy);
     }
 }
 
