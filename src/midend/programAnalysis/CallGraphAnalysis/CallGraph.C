@@ -702,7 +702,7 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
   if (decl != NULL) {
     SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
     if (defDecl != NULL) {
-      props.push_back(new Properties(defDecl)); //TODO is this right use of Prop? 
+      props.push_back(new Properties(defDecl));
     }
   }
   return props;
