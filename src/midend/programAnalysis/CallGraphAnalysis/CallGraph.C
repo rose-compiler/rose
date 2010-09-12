@@ -1055,23 +1055,13 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     ROSE_ASSERT ( defDecl );
     ROSE_ASSERT ( functionDefinition != NULL );
     hasDefinition = true;
-    Rose_STL_Container<SgNode*> functionCallExpList;
-    functionCallExpList = NodeQuery::querySubTree ( functionDefinition, V_SgFunctionCallExp );
 
-    // printf ("functionCallExpList.size() = %zu \n",functionCallExpList.size());
-
-    // list<SgFunctionDeclaration*> functionList;
-    Rose_STL_Container<SgNode*>::iterator i = functionCallExpList.begin();
-
-    // for all functions getting called in the body of the current function
-    // we need to get their declarations, or the set of declarations for
-    // function pointers and virtual functions
-    while (i != functionCallExpList.end())
-    {
-      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
-      ROSE_ASSERT ( functionCallExp != NULL );
-      CallTargetSet::getPropertiesForExpression(functionCallExp, classHierarchy, functionList);
-      i++;
+    Rose_STL_Container<SgNode*> functionCallExpList = 
+      NodeQuery::querySubTree(functionDefinition, V_SgFunctionCallExp);
+    foreach (SgNode* functionCallExp, functionCallExpList) {
+      CallTargetSet::getPropertiesForExpression(isSgFunctionCallExp(functionCallExp), 
+                                                classHierarchy, 
+                                                functionList);
     }
 
     Rose_STL_Container<SgNode*> ctorInitList = 
