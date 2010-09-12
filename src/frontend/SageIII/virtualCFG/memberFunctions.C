@@ -773,12 +773,15 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
     case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX: { 
      if (! virtualInterproceduralControlFlowGraphs) 
        break;
+     ROSE_ASSERT(!"not updated for callgraph refactor"); //TODO
+#if 0
      Rose_STL_Container<SgExpression*> calls;
      CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgExpression*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
        makeEdge(CFGNode(this, idx), (*call)->cfgForEnd(), result);
      break;
+#endif
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
   }
@@ -793,12 +796,15 @@ SgFunctionDefinition::cfgInEdges(unsigned int idx) {
     case 0: {
      if (! virtualInterproceduralControlFlowGraphs) 
        break;
+     ROSE_ASSERT(!"not updated for callgraph refactor"); //TODO
+#if 0
      Rose_STL_Container<SgExpression*> calls;
      CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
      Rose_STL_Container<SgExpression*>::iterator call;
      for (call = calls.begin(); call != calls.end(); ++call) 
        makeEdge((*call)->cfgForEnd(), CFGNode(this, idx), result);
      break;
+#endif
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 2: {
@@ -3095,11 +3101,14 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX: {
                 if (virtualInterproceduralControlFlowGraphs) {
+                  ROSE_ASSERT(!"not updated for callgraph refactor"); //TODO
+#if 0
                   Rose_STL_Container<SgFunctionDefinition*> defs;
                   CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
                   Rose_STL_Container<SgFunctionDefinition*>::iterator def;
                   for (def = defs.begin(); def != defs.end(); ++def) 
                     makeEdge(CFGNode(this, idx), (*def)->cfgForBeginning(), result);
+#endif
                 }
                 else {
                   makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
@@ -3121,11 +3130,14 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
                 if (virtualInterproceduralControlFlowGraphs) {
+                  ROSE_ASSERT(!"not updated for callgraph refactor"); //TODO
+#if 0
                   Rose_STL_Container<SgFunctionDefinition*> defs;
                   CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
                   Rose_STL_Container<SgFunctionDefinition*>::iterator def;
                   for (def = defs.begin(); def != defs.end(); ++def) 
                     makeEdge((*def)->cfgForEnd(), CFGNode(this, idx), result);
+#endif 
                 }
                 else
                   makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
