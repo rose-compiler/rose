@@ -1073,6 +1073,14 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
       CallTargetSet::getPropertiesForExpression(functionCallExp, classHierarchy, functionList);
       i++;
     }
+
+    Rose_STL_Container<SgNode*> ctorInitList = 
+      NodeQuery::querySubTree(functionDefinition, V_SgConstructorInitializer);
+    foreach (SgNode* ctorInit, ctorInitList) {
+      CallTargetSet::getPropertiesForExpression(isSgConstructorInitializer(ctorInit), 
+                                                classHierarchy, 
+                                                functionList);
+    }
   }
 }
 
