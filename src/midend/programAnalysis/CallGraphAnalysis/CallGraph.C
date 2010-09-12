@@ -3,6 +3,9 @@
 //#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #ifdef HAVE_SQLITE3
 #include "sqlite3x.h"
 using namespace sqlite3x;
@@ -692,6 +695,19 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
   return functionList; 
 }
 
+std::vector<Properties*>
+CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
+  std::vector<Properties*> props;
+  SgMemberFunctionDeclaration* decl = sgCtorInit->get_declaration();
+  if (decl != NULL) {
+    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+    if (defDecl != NULL) {
+      props.push_back(new Properties(defDecl)); //TODO is this right use of Prop? 
+    }
+  }
+  return props;
+}
+
 #if 0 
 void 
 CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* targetDef, 
@@ -779,7 +795,11 @@ void
 getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit, 
                          ClassHierarchyWrapper* classHierarchy,
                          Rose_STL_Container<Properties *>& functionList) {
-  ROSE_ASSERT(!"getPropertiesForSgConstructorInitializer is unimplemented");
+  // currently, all constructor initializers can be handled by solveConstructorInitializer
+  const std::vector<Properties*>& props = CallTargetSet::solveConstructorInitializer(sgCtorInit);
+  foreach (Properties* prop, props) {
+    functionList.push_back(prop); //TODO faster way to append?
+  }
 }
 
 // Add the declaration for functionCallExp to functionList. In the case of 
