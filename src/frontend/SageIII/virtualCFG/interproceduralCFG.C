@@ -77,25 +77,32 @@ void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& al
     std::vector<CFGEdge> outEdges;
     unsigned int idx = n.getIndex();
 
-    if (isSgFunctionCallExp(sgnode) &&
-        idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) {
-      SgFunctionCallExp* fxnCall = isSgFunctionCallExp(sgnode);
-      Rose_STL_Container<SgFunctionDefinition*> defs;
-      CallTargetSet::getFunctionDefinitionsForCallLikeExp(fxnCall, defs);
-      foreach (SgFunctionDefinition* def, defs) {
-        addEdge(n, def->cfgForBeginning(), outEdges);
-        addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
-      }
-    }
-    else if (isSgConstructorInitializer(sgnode) &&
-        idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX) {
-      SgConstructorInitializer* ctorInit = isSgConstructorInitializer(sgnode);
-      Rose_STL_Container<SgFunctionDefinition*> defs;
-      CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctorInit, defs);
-      foreach (SgFunctionDefinition* def, defs) {
-        addEdge(n, def->cfgForBeginning(), outEdges);
-        addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
-      }
+    if ((isSgFunctionCallExp(sgnode) &&
+         idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) ||
+        (isSgFunctionCallExp(sgnode) &&
+         idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX)) {
+
+          ClassHierarchyWrapper classHierarchy(SageInterface::getProject()); //todo   move elsewhere
+          Rose_STL_Container<Properties*> propList;
+          Rose_STL_Container<SgFunctionDefinition*> defs;
+
+          ROSE_ASSERT( isSgExpression(sgnode) );
+          CallTargetSet::getPropertiesForExpression(isSgExpression(sgnode), &classHierarchy, propList);
+          foreach (Properties* prop, propList) {
+            SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
+            ROSE_ASSERT(candidateDecl);
+            candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
+            if (candidateDecl == NULL) 
+              break;
+            SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
+            if (candidateDef != NULL) 
+              defs.push_back(candidateDef);
+          }
+
+          foreach (SgFunctionDefinition* def, defs) {
+            addEdge(n, def->cfgForBeginning(), outEdges);
+            addEdge(def->cfgForEnd(), CFGNode(sgnode, idx+1), outEdges);
+          }
     }
     else {
       outEdges = n.outEdges();
@@ -106,20 +113,6 @@ void InterproceduralCFG::buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& al
     }
 
     std::set<CFGNode> targets; 
-
-#if 0
-    foreach (const CFGEdge& edge, outEdges)
-    {
-        CFGNode tar = edge.target();
-        targets.insert(tar);
-        if (isSgFunctionDefinition(tar.getNode()) && all_nodes.count(tar) > 0) {
-          CFGNode returnNode = CFGNode(edge.source().getNode(), edge.source().getIndex() + 1);
-          makeEdge(sgnode->cfgForEnd(), edge.source(), outEdges);
-          targets.insert(edge.source());
-        }
-    }
-#endif
-
     foreach (const CFGEdge& edge, outEdges)
     {
         CFGNode tar = edge.target();
