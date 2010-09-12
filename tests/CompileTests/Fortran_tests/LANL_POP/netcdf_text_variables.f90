@@ -57,7 +57,9 @@
      localCount ( :numDims+1) = (/ len(values(1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -89,7 +91,9 @@
      localCount ( :numDims+1) = (/ len(values(1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -121,7 +125,9 @@
      localCount ( :numDims+1) = (/ len(values(1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -153,7 +159,9 @@
      localCount ( :numDims+1) = (/ len(values(1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -185,7 +193,9 @@
      localCount ( :numDims+1) = (/ len(values(1, 1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -217,7 +227,9 @@
      localCount ( :numDims+1) = (/ len(values(1, 1, 1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -249,7 +261,9 @@
      localCount ( :numDims+1) = (/ len(values(1, 1, 1, 1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -313,7 +327,9 @@
      localCount (:numDims+1) = (/ len(values(1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -345,7 +361,9 @@
      localCount (:numDims+1) = (/ len(values(1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -377,7 +395,9 @@
      localCount (:numDims+1) = (/ len(values(1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -409,7 +429,9 @@
      localCount (:numDims+1) = (/ len(values(1, 1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -441,7 +463,9 @@
      localCount (:numDims+1) = (/ len(values(1, 1, 1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)
@@ -473,7 +497,9 @@
      localCount (:numDims+1) = (/ len(values(1, 1, 1, 1, 1, 1, 1)), shape(values) /)
      localCount (numDims+2:) = 0
      localStride(:         ) = 1
-     localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
+
+! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
+!    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
  
      if(present(start))  localStart (:size(start))  = start(:)
      if(present(count))  localCount (:size(count))  = count(:)

@@ -151,6 +151,10 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_40.f90 \
      test2010_41.f90 \
      test2010_42.f90 \
+     test2010_44.f90 \
+     test2010_45.f90 \
+     test2010_46.f90 \
+     test2010_47.f90 \
      canonicalExample.f90
 
 
@@ -273,6 +277,7 @@ OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
      exampleA251f.f \
      schedule.f \
      testNewOFP.f
+
 
 F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += $(OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS)
 
