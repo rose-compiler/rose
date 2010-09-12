@@ -85,10 +85,8 @@ void InterproceduralCFG::buildCFG(CFGNode n,
          idx == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX) ||
         (isSgConstructorInitializer(sgnode) &&
          idx == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX)) {
-
-          Rose_STL_Container<SgFunctionDefinition*> defs;
-
           ROSE_ASSERT( isSgExpression(sgnode) );
+          Rose_STL_Container<SgFunctionDefinition*> defs;
           CallTargetSet::getDefinitionsForExpression(isSgExpression(sgnode), classHierarchy, defs); 
           foreach (SgFunctionDefinition* def, defs) {
             addEdge(n, def->cfgForBeginning(), outEdges);
