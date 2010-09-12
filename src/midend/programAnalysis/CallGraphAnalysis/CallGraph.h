@@ -86,8 +86,10 @@ namespace CallTargetSet
   void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
                                     Rose_STL_Container<Properties *>& functionList);
+#if 0
   void getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, Rose_STL_Container<SgExpression*>& calls);
   void getFunctionDefinitionsForCallLikeExp(SgExpression* exp, Rose_STL_Container<SgFunctionDefinition*>& defs);
+#endif
 };
 
 class FunctionData
