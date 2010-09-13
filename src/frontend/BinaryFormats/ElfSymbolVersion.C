@@ -17,6 +17,13 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+/*========================================================================================================================
+ * Methods for classes related to the GNU Symbol Version Table
+ *
+ * SgAsmElfSymverSection, contains a list of
+ * SgAsmElfSymverEntry
+ *======================================================================================================================== */
+
 /** Adds the newly constructed symver Entry to the specified ELF Symver Section. */
 void
 SgAsmElfSymverEntry::ctor(SgAsmElfSymverSection *symver)
@@ -145,7 +152,17 @@ SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
-void SgAsmElfSymverDefinedAux::ctor(SgAsmElfSymverDefinedEntry* entry, SgAsmElfSymverDefinedSection* symver)
+/*========================================================================================================================
+ * Methods for classes related to the GNU Symbol Version Definition Table
+ *
+ * SgAsmElfSymverDefinedSection, each containing a list of
+ * SgAsmElfSymverDefinedEntry, each containing a list of
+ * SgAsmElfSymverDefinedAux, each pointing to a name string
+ *======================================================================================================================== */
+
+/** Constructor links this new Aux into the specified Entry of the specified Symbol Version Definition Table. */
+void
+SgAsmElfSymverDefinedAux::ctor(SgAsmElfSymverDefinedEntry* entry, SgAsmElfSymverDefinedSection* symver)
 {
     SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linked_section());
     ROSE_ASSERT(strsec!=NULL);
@@ -159,7 +176,11 @@ void SgAsmElfSymverDefinedAux::ctor(SgAsmElfSymverDefinedEntry* entry, SgAsmElfS
     set_parent(entry);
 }
 
-void SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) const
+/** Print debugging information about the specified auxiliary data for an entry in the Symbol Version Definition Table. Note
+ *  that in order to have a more compact output, SgAsmElfSymverDefinedEntry::dump() prints the SgAsmElfSymverDefinedAux
+ *  objects explicitly rather than calling this method. */
+void
+SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -172,13 +193,17 @@ void SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) co
     fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->c_str());
 }
 
-void SgAsmElfSymverDefinedAux::parse(ByteOrder sex, const ElfSymverDefinedAux_disk* disk)
+/** Initialize this object with data parsed from a file. */
+void
+SgAsmElfSymverDefinedAux::parse(ByteOrder sex, const ElfSymverDefinedAux_disk* disk)
 {
     rose_addr_t name_offset  = disk_to_host(sex, disk->vda_name);
     get_name()->set_string(name_offset);
 }
 
-void *SgAsmElfSymverDefinedAux::encode(ByteOrder sex, ElfSymverDefinedAux_disk* disk) const
+/** Convert this object into the disk format record to be written back to the Symbol Version Definition Table. */
+void *
+SgAsmElfSymverDefinedAux::encode(ByteOrder sex, ElfSymverDefinedAux_disk* disk) const
 {
     addr_t name_offset = p_name->get_offset();
     ROSE_ASSERT(name_offset!=SgAsmGenericString::unallocated);
@@ -186,8 +211,7 @@ void *SgAsmElfSymverDefinedAux::encode(ByteOrder sex, ElfSymverDefinedAux_disk* 
     return disk;
 }
 
-
-/** Adds the newly constructed symver defined entry to the specified symver. */
+/** Constructor links this new entry into the specified Symbol Version Definition Table. */
 void
 SgAsmElfSymverDefinedEntry::ctor(SgAsmElfSymverDefinedSection *section)
 {
@@ -206,7 +230,7 @@ SgAsmElfSymverDefinedEntry::ctor(SgAsmElfSymverDefinedSection *section)
     p_hash  = 0;
 }
 
-/** Initialize symbol by parsing an Entry table entry.*/
+/** Initialize this entry of the Symbol Version Definition Table by parsing information from the file. */
 void
 SgAsmElfSymverDefinedEntry::parse(ByteOrder sex, const ElfSymverDefinedEntry_disk *disk)
 {
@@ -216,7 +240,7 @@ SgAsmElfSymverDefinedEntry::parse(ByteOrder sex, const ElfSymverDefinedEntry_dis
     p_hash  = disk_to_host(sex, disk->vd_hash);  
 }
 
-/** Encode an Entry into disk format */
+/** Convert this entry of the Symbol Version Definition Table into the disk format. */
 void *
 SgAsmElfSymverDefinedEntry::encode(ByteOrder sex, ElfSymverDefinedEntry_disk *disk) const
 {
@@ -242,16 +266,11 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     /* compact one-line-per-entry format */
     if (0==idx)
         fprintf(f, "%s%-*s   %-8s %6s %10s %6s %-6s \n", p, w, "", "Version", "Index", "Hash", "Flags", "Names");
-    fprintf(f,   "%s%-*s =  0x%04zx  0x%04zx 0x%08x 0x%04x ", p, w, "", p_version, p_index, p_hash, (uint32_t)p_flags);
-
+    fprintf(f,   "%s%-*s =  0x%04zx  0x%04zx 0x%08x 0x%04x", p, w, "", p_version, p_index, p_hash, (uint32_t)p_flags);
     const SgAsmElfSymverDefinedAuxPtrList &entries=get_entries()->get_entries();
-    if (entries.empty()) {
-        fprintf(f, "<zero entries>");
-    }
-    for (size_t i=0; i < entries.size(); ++i) {
-        fprintf(f, "%s ", entries[i]->get_name()->c_str());
-    }
-    fprintf(f, "\n");
+    for (size_t i=0; i < entries.size(); ++i)
+        fprintf(f, "%s %s", 0==i?"":",", entries[i]->get_name()->c_str());
+    fputc('\n', f);
 }
 
 /** Non-parsing constructor */
@@ -313,7 +332,10 @@ SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *strings)
  *  don't exceed the size of the section (to keep from running away on a bad file).
  *  
  *  We have a similar problem with the number of Aux's per Entry (vd_cnt versus vda_aux=0). However, in this case, we respect
- *  the min of the two (i.e. we assume cnt is right, but if vda_aux is zero earlier than expected, we stop).
+ *  the min of the two (i.e. we assume cnt is right, but if vda_aux is zero earlier than expected, we stop).  This is
+ *  necessary because the spec allows two or more entries to point into (possibly different places) of a shared aux array.
+ *  This parser creates a new SgAsmElfSymverDefinedAux object every time an element of the aux array is read from disk,
+ *  ensuring that each SgAsmElfSymverDefinedEntry points to its own copies.
  *  
  *  All offsets are relative to the start of the struct they were specified in. I.e.,
  *
@@ -496,8 +518,18 @@ SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) con
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
-/** .gnu.version_r */
-void SgAsmElfSymverNeededAux::ctor(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNeededSection* symver)
+/*========================================================================================================================
+ * Methods for section relating to the GNU Symbol Version Requirements Table.
+ *
+ * SgAsmElfSymverNeededSection, each containing a list of
+ * SgAsmElfSymverNeededEntry, each containing a list of
+ * SgAsmElfSymverNeededAux.
+ *======================================================================================================================== */
+
+/** Constructor adds this auxiliary information object to the specified entry of the specified GNU Symbol Version Requirements
+ *  Table. */
+void
+SgAsmElfSymverNeededAux::ctor(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNeededSection* symver)
 {
     SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linked_section());
     ROSE_ASSERT(NULL != strsec);
@@ -514,7 +546,11 @@ void SgAsmElfSymverNeededAux::ctor(SgAsmElfSymverNeededEntry* entry, SgAsmElfSym
     p_hash  = 0;
 }
 
-void SgAsmElfSymverNeededAux::dump(FILE *f, const char *prefix, ssize_t idx) const
+/** Prints debugging information about this auxiliary record of an entry of the GNU Symbol Version Requirements Table. Note
+ *  that this method is not normally called since SgAsmElfSymverNeededEntry::dump() prints the auxiliary information
+ *  explicitly for a more compact listing. */
+void
+SgAsmElfSymverNeededAux::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -523,11 +559,15 @@ void SgAsmElfSymverNeededAux::dump(FILE *f, const char *prefix, ssize_t idx) con
         sprintf(p, "%sElfSymverNeededAux.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-  
+    fprintf(f, "%s%-*s = %04zx\n", p, w, "other", get_other());
+    fprintf(f, "%s%-*s = 0x%08x\n", p, w, "hash", get_hash());
+    fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags", get_flags());
     fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->c_str());
 }
 
-void SgAsmElfSymverNeededAux::parse(ByteOrder sex, const ElfSymverNeededAux_disk* disk)
+/** Initialize this auxiliary record by parsing data from the file. */
+void
+SgAsmElfSymverNeededAux::parse(ByteOrder sex, const ElfSymverNeededAux_disk* disk)
 {
     p_hash = disk_to_host(sex,disk->vna_hash);
     p_flags= disk_to_host(sex,disk->vna_flags);
@@ -537,7 +577,9 @@ void SgAsmElfSymverNeededAux::parse(ByteOrder sex, const ElfSymverNeededAux_disk
     get_name()->set_string(name_offset);
 }
 
-void *SgAsmElfSymverNeededAux::encode(ByteOrder sex, ElfSymverNeededAux_disk* disk) const
+/** Encode this auxiliary record into a format that can be written to a file. */
+void *
+SgAsmElfSymverNeededAux::encode(ByteOrder sex, ElfSymverNeededAux_disk* disk) const
 {
     host_to_disk(sex,p_hash,&disk->vna_hash);
     host_to_disk(sex,p_flags,&disk->vna_flags);
@@ -549,8 +591,7 @@ void *SgAsmElfSymverNeededAux::encode(ByteOrder sex, ElfSymverNeededAux_disk* di
     return disk;
 }
 
-
-/** Adds the newly constructed symver needed entry to the specified symver. */
+/** Constructor adds this entry to the specified GNU Symbol Version Requirements Table. */
 void
 SgAsmElfSymverNeededEntry::ctor(SgAsmElfSymverNeededSection *section)
 {
@@ -570,6 +611,7 @@ SgAsmElfSymverNeededEntry::ctor(SgAsmElfSymverNeededSection *section)
     p_version  = 0;
 }
 
+/** Initialize this entry of the GNU Symbol Version Requirements Table by parsing information from the file. */
 void
 SgAsmElfSymverNeededEntry::parse(ByteOrder sex, const ElfSymverNeededEntry_disk *disk)
 {
@@ -578,7 +620,7 @@ SgAsmElfSymverNeededEntry::parse(ByteOrder sex, const ElfSymverNeededEntry_disk 
     get_file_name()->set_string(file_offset);
 }
 
-/** Encode an Entry into disk format */
+/** Encode an entry of the GNU Symbol Version Requirements Table into disk format. */
 void *
 SgAsmElfSymverNeededEntry::encode(ByteOrder sex, ElfSymverNeededEntry_disk *disk) const
 {
@@ -591,7 +633,7 @@ SgAsmElfSymverNeededEntry::encode(ByteOrder sex, ElfSymverNeededEntry_disk *disk
     return disk;
 }
 
-/** Print some debugging info. */
+/** Print some debugging info for an entry of the GNU Symbol Version Requirements Table. */
 void
 SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -607,16 +649,15 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (0==idx)
         fprintf(f, "%s%-*s   %-8s %-22s %6s %10s %6s %s\n", p, w, "", "Version", "File", "Other", "Hash", "Flags", "Name");
     fprintf(f,   "%s%-*s =   0x%04zx %s", p, w, "", p_version, get_file_name()->c_str());
-
     const SgAsmElfSymverNeededAuxPtrList &entries=get_entries()->get_entries();
     if (entries.empty()) {
-        fprintf(f, "<zero entries>\n");
+        fprintf(f, "<no auxiliary entries>\n");
     } else {
         fprintf(f, "\n");
     }
-
-    for (size_t i=0; i < entries.size(); ++i) {
+    for (size_t i=0; i<entries.size(); ++i) {
         SgAsmElfSymverNeededAux* aux = entries[i];
+        aux->dump(f, p, i);
         fprintf(f,   "%s%-*s =                                 0x%04zx 0x%08x 0x%04x %s\n", p, w, "", 
                 aux->get_other(), aux->get_hash(), aux->get_flags(), aux->get_name()->c_str());
     }
@@ -634,8 +675,15 @@ SgAsmElfSymverNeededSection::ctor(SgAsmElfStringSection *strings)
     p_linked_section = strings;
 }
 
-/** See SgAsmElfSymverDefinedSection::parse for information about the layout of this structure.
- *  They use different objects, but they basic structure is the same. */
+/** Parse a GNU Symbol Version Requirements Table. The layout of this table is very similar to the layout of the GNU Symbol
+ *  Version Definition Table and users should refer to SgAsmElfSymverDefinedSection::parse() for details.  Different data
+ *  structures are used between the Definition and Requirements tables:
+ *
+ *  <ul>
+ *    <li>SgAsmElfSymverNeededSection corresponds to SgAsmElfSymverDefinedSection.</li>
+ *    <li>SgAsmElfSymverNeededEntry corresponds to SgAsmElfSymverDefinedEntry.</li>
+ *    <li>SgAsmElfSymverNeededAux corresponds to SgAsmElfSymverDefinedAux.</li>
+ *  </ul> */
 SgAsmElfSymverNeededSection *
 SgAsmElfSymverNeededSection::parse()
 {
@@ -718,7 +766,6 @@ SgAsmElfSymverNeededSection::calculate_sizes(size_t *entsize, size_t *required, 
         *entcount = nentries;
     return total_size;
 }
-
 
 /** Write SymverNeeded section back to disk. For more information about encoding, see SgAsmElfSymverNeededSection::parse() */
 void
