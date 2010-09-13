@@ -60,7 +60,7 @@ rose_rva_t&
 rose_rva_t::bind(SgAsmGenericHeader *fhdr)
 {
     rose_addr_t va = get_rva() + fhdr->get_base_va();
-    SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(va);
+    SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(va, true);
     return set_section(secbind);
 }
 
