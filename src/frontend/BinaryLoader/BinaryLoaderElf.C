@@ -244,23 +244,15 @@ int get_verbose()
     return 5;
 }
 
-/* This could be moved to SgAsmElfSymbolSection::dump() [RPM 2010-09-11] */
-void prettyPrint(SgAsmElfSymbolSection* elfSection)
-{
-    SgAsmGenericFile* file = SageInterface::getEnclosingNode<SgAsmGenericFile>(elfSection);
-    printf("SECTION: %s : %s\n", file->get_name().c_str(), elfSection->get_name()->c_str());
-    for (size_t sym=0; sym< elfSection->get_symbols()->get_symbols().size(); ++sym){
-        SgAsmElfSymbol* symbol = elfSection->get_symbols()->get_symbols()[sym];
-
-        printf("%s %s %s %s\n",
-               symbol->get_name()->c_str(),
-               symbol->stringifyDefState().c_str(),
-               symbol->stringifyType().c_str(),
-               symbol->stringifyBinding().c_str());
-    }
-}
-
-
+/** Symbol from .dynsym combined with additional information.  The additional information is:
+ *  <ul>
+ *    <li>A pointer to the .dynsym section in which this symbol appeared.  For some reason, the section in which the symbol
+ *        was defined is not a parent of the symbol in the AST. [FIXME RPM 2010-09-13]</li>
+ *    <li>The symbol's entry in the GNU Symbol Version Table (.gnu.version section)</li>
+ *    <li>The symbol's entry in the GNU Symbol Version Definition Table (.gnu.version_d section), if any.</li>
+ *    <li>The symbol's auxiliary information (and thus, indirectly, the table entry) from the GNU Symbol Version
+ *        Requirements Table (.gnu.version_r section), if any.</li>
+ *  </ul> */
 struct VersionedSymbol {
 public:
     explicit VersionedSymbol(SgAsmElfSymbol* symbol=NULL, SgAsmElfSymbolSection* parent=NULL)
@@ -288,10 +280,10 @@ public:
 
     bool get_is_base_definition() const {
         if (NULL == p_version_entry)
-             return true; // unversioned entries are always considered "base"
+             return true; /* unversioned entries are always considered "base" */
         if (NULL == p_version_def)
-             return false; // if its not a definition - its clearly not a base definition
-        if (p_version_def && p_version_def->get_flags() & VER_FLG_BASE)
+             return false; /* if it's not a definition, then it's clearly not a base definition */
+        if (p_version_def->get_flags() & VER_FLG_BASE)
             return true;
         return false;
     }
@@ -300,11 +292,12 @@ public:
         return p_symbol;
     }
 
+    /** Returns the .dynsym section where this symbol was defined. FIXME: This could use a better name. [RPM 2010-09-13] */
     SgAsmElfSymbolSection* get_parent() const {
         return p_parent;
     }
 
-    /** if empty string - there is no associated version */
+    /** Returns the version string for a symbol. The empty string is returned if the symbol has no associated version. */
     std::string get_version() const {
         if (p_version_def)
             return p_version_def->get_entries()->get_entries().front()->get_name()->c_str();
@@ -313,8 +306,9 @@ public:
         return std::string();
     }
 
+    /** Returns the name of the symbol. */
     std::string get_name() const {
-        return p_symbol->get_name()->c_str();
+        return p_symbol->get_name()->get_string();
     }
 
     std::string dump_versioned_name() const {
@@ -343,6 +337,7 @@ public:
         return name;
     }
 
+    /* Initializes the symbol and section where the symbol is defined. */
     void set_symbol(SgAsmElfSymbol* symbol, SgAsmElfSymbolSection* parent) {
         p_symbol=symbol;p_parent=parent;
     }
@@ -516,46 +511,46 @@ struct SymverResolver {
         SgAsmElfSymverDefinedSection* symver_def=NULL;
         SgAsmElfSymverNeededSection* symver_need=NULL;
 
+        /* Locate the .dynsym, .gnu.version, .gnu.version_d, and/or .gnu_version_r sections. We could have done this with
+         * header->get_section_by_name(), but this is possibly more reliable. */
         SgAsmGenericSectionPtrList& sections = header->get_sections()->get_sections();
         for (size_t sec=0; sec < sections.size(); ++sec) {
             SgAsmGenericSection* section = sections[sec];
             if (isSgAsmElfSymbolSection(section) && isSgAsmElfSymbolSection(section)->get_is_dynamic()) {
                 dynsym = isSgAsmElfSymbolSection(section);
-                //section->dump(stdout,"",0);
             } else if(isSgAsmElfSymverSection(section)) {
                 symver = isSgAsmElfSymverSection(section);
-                //section->dump(stdout,"",0);
             } else if(isSgAsmElfSymverDefinedSection(section)) {
                 symver_def = isSgAsmElfSymverDefinedSection(section);
-                //section->dump(stdout,"",0);
             } else if(isSgAsmElfSymverNeededSection(section)) {
                 symver_need=isSgAsmElfSymverNeededSection(section);
-                //section->dump(stdout,"",0);
             }
         }
 
-        if (NULL != symver_def) {
-            makeSymbolVersionDefMap(symver_def);
-        }
-        if (NULL != symver_need) {
-            makeSymbolVersionNeedMap(symver_need);
-        }
-
-        makeVersionedSymbolMap(dynsym, symver);
+        /* Build maps */
+        if (symver_def)
+            makeSymbolVersionDefMap(symver_def);        /* for p_symbolVersionDefMap */
+        if (symver_need)
+            makeSymbolVersionNeedMap(symver_need);      /* for p_symbolVersionNeedMap */
+        makeVersionedSymbolMap(dynsym, symver);         /* for p_versionedSymbolMap */
     }
 
+    /** Returns the VersionedSymbol corresponding to the specified symbol. The specified symbol must be a member of the
+     *  versioned symbol map (or an assertion fails). */
     VersionedSymbol get_versioned_symbol(SgAsmElfSymbol* symbol) const {
-        if (p_versionedSymbolMap.empty()) {
-            // we don't actually have versioned symbols, so return the identity version
+        /* If we don't actually have versioned symbols, return the identity version. */
+        if (p_versionedSymbolMap.empty())
             return VersionedSymbol(symbol);
-        }
+
+        /* We should have every symbol that might get looked up in here */
         VersionedSymbolMap::const_iterator iter = p_versionedSymbolMap.find(symbol);
-        // We should have every symbol that might get looked up in here
         ROSE_ASSERT(p_versionedSymbolMap.end() != iter);
         return *(iter->second);
     }
 
 private:
+    /** Initialize the p_symbolVersionDefMap from the ELF Symbol Version Definition Table.  This mapping is from each entry's
+     *  get_index() to the entry itself. */
     void makeSymbolVersionDefMap(SgAsmElfSymverDefinedSection* section) {
         ROSE_ASSERT(NULL != section);
         SgAsmElfSymverDefinedEntryPtrList& defs = section->get_entries()->get_entries();
@@ -565,6 +560,9 @@ private:
         }
     }
 
+    /** Initialize the p_symbolVersionNeedMap from the ELF Symbol Version Requirements Table auxiliary information.  The
+     *  mapping is from each auxiliary's get_other() to the auxiliary. The table entries are available indirectly since an
+     *  SgAsmElfSymverNeededEntry is the parent of each SgAsmElfSymverNeededAux. */
     void makeSymbolVersionNeedMap(SgAsmElfSymverNeededSection* section) {
         ROSE_ASSERT(NULL != section);
         SgAsmElfSymverNeededEntryPtrList& needs = section->get_entries()->get_entries();
@@ -582,42 +580,39 @@ private:
      *  Prereqs: p_symbolVersionDefMap must be initialized before calling this
      *  Note: symver may be null, in which case VersionedSymbols are basically just
      *        a wrapper to their SgAsmElfSymbol. */
-    void makeVersionedSymbolMap(SgAsmElfSymbolSection* dynsym, SgAsmElfSymverSection* symver) {
+    void makeVersionedSymbolMap(SgAsmElfSymbolSection* dynsym, SgAsmElfSymverSection* symver/*=NULL*/) {
         ROSE_ASSERT(dynsym && dynsym->get_is_dynamic());
         SgAsmElfSymbolPtrList& symbols = dynsym->get_symbols()->get_symbols();
 
-        /// symverSection may be NULL, but if it isn't, it must have the same number of entries as dynsym
+        /* symverSection may be NULL, but if it isn't, it must have the same number of entries as dynsym */
         ROSE_ASSERT(NULL == symver || symbols.size() == symver->get_entries()->get_entries().size());
 
-        for (size_t sym=0; sym < symbols.size(); ++sym) {
-            SgAsmElfSymbol *symbol = symbols[sym];
+        for (size_t symbol_idx=0; symbol_idx<symbols.size(); symbol_idx++) {
+            SgAsmElfSymbol *symbol = symbols[symbol_idx];
 
             ROSE_ASSERT(p_versionedSymbolMap.end() == p_versionedSymbolMap.find(symbol));
-
             VersionedSymbol* versionedSymbol = new VersionedSymbol;
             p_versionedSymbolMap.insert(std::make_pair(symbol,versionedSymbol));
 
             versionedSymbol->set_symbol(symbol,dynsym);
             if (symver) {
-                SgAsmElfSymverEntry *symverEntry = symver->get_entries()->get_entries()[sym];
+                SgAsmElfSymverEntry *symverEntry = symver->get_entries()->get_entries()[symbol_idx];
                 uint16_t value=symverEntry->get_value();
         
-                if (0x8000 & value) {
-                    //  VERSYM_HIDDEN = 0x8000 - if set, we should actually completely ignore the symbol
-                    //                  unless this version is specifically requested (which is the normal case anwyay?)
-                    //                  at any rate - we need to strip bit-15
-                    //                  This appears to be poorly documented by the spec
-                    value = value & 0x7fff;
-                }
+                /*  VERSYM_HIDDEN = 0x8000 - if set, we should actually completely ignore the symbol
+                 *  unless this version is specifically requested (which is the normal case anwyay?)
+                 *  at any rate - we need to strip bit-15
+                 * This appears to be poorly documented by the spec  [MCB] */
+                value &= ~0x8000;
 
                 if (0 == value || 1 == value) {
-                    // 0 and 1 are special (local and global respectively) they DO NOT correspond to entries on symver_def
-                    //  Also, (no documentation for this) if bit 15 is set, this symbol should be ignored?
+                    /* 0 and 1 are special (local and global respectively) they DO NOT correspond to entries on symver_def
+                     * Also, (no documentation for this) if bit 15 is set, this symbol should be ignored? [MCB] */
                     versionedSymbol->set_version_entry(symverEntry);    
                 } else {
                     SymbolVersionDefinitionMap::const_iterator defIter = p_symbolVersionDefMap.find(value);
                     SymbolVersionNeededMap::const_iterator needIter = p_symbolVersionNeedMap.find(value);
-                    // we must have a match from defs or needs, not both,not neither
+                    /* We must have a match from defs or needs, not both, not neither. */
                     ROSE_ASSERT((p_symbolVersionDefMap.end() == defIter) != (p_symbolVersionNeedMap.end() == needIter));
                     versionedSymbol->set_version_entry(symverEntry);
                     if (p_symbolVersionDefMap.end() != defIter) {
@@ -634,8 +629,16 @@ private:
     typedef std::map<uint16_t, SgAsmElfSymverDefinedEntry*> SymbolVersionDefinitionMap;
     typedef std::map<uint16_t, SgAsmElfSymverNeededAux*> SymbolVersionNeededMap;
 
+    /** Map from each ELF Symbol Version Definition Table entry's get_index() to the entry itself. */
     SymbolVersionDefinitionMap p_symbolVersionDefMap;
+
+    /** Map from each auxiliary's get_other() to the auxiliary itself. The auxiliaries come from the GNU Symbol Version
+     *  Requirements Table, each entry of which points to a list of auxiliaries.  The parent of each auxiliary is the table
+     *  entry that contained the auxiliary, thus this mapping also maps get_other() to GNU Symbol Version Requirements Table
+     *  entries. */
     SymbolVersionNeededMap p_symbolVersionNeedMap;
+
+    /** Map from an SgAsmElfSymbol to a VersionedSymbol. */
     VersionedSymbolMap p_versionedSymbolMap;
 };
 
@@ -1096,124 +1099,116 @@ void performRelocations(SgAsmElfFileHeader* elfHeader,
 void
 BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
 {
+    typedef BinaryLoader_ElfSupport::SymbolMap SymbolMap;
+    typedef SymbolMap::BaseMap BaseMap;
+    typedef std::vector<std::pair<SgAsmGenericSection*, BaseMap*> > SymbolMapList;
+
+
     // build map for each symbol table map<std::string,SgElfSymbol>
     // compute global symbol resolution
     //   in the DT_SYMBOLIC case, start w/ local map(s) before proceeding
     //
     // build map from SgAsmGenericSection to its symbolmap map<SgAsmGenericSection*,SymbolMap>
     // biuld list of
-    typedef BinaryLoader_ElfSupport::SymbolMap SymbolMap;
-    typedef SymbolMap::BaseMap BaseMap;
 
+    /* Build a mapping (symbolMaps) from each ".dynsym" section (one per file header) to a SymbolMap::BaseMap. The BaseMap
+     * holds the symbols defined (i.e., not local, hidden, or only referenced) by the section. */
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
-
-    typedef std::vector<std::pair<SgAsmGenericSection*, BaseMap*> > SymbolMapList;
-    SymbolMapList symbolMaps;
-
+    SymbolMapList symbolMaps; /*maps each .dynsym section to a SymbolMap::BaseMap object. */
     for (size_t h=0; h < headers.size(); ++h) {
         SgAsmGenericHeader* header = headers[h];
+        if (get_debug())
+            fprintf(get_debug(), "BinaryLoaderElf: building symbol map for %s...\n", header->get_file()->get_name().c_str());
         BinaryLoader_ElfSupport::SymverResolver versionResolver(header);
 
-        SgAsmGenericSectionPtrList& sections = header->get_sections()->get_sections();
+        /* There must be zero or one ELF Section named ".dynsym" under this header.  If the section does not exist then the
+         * header is not dynamically linked and neither provides nor requires dynamic symbol resolution.
+         * 
+         * Manual 1-10 under SHT_SYMTAB and SHT_DYNSYM: ...SHT_DYNSYM section holds a minimal set of dynamic linking symbols.
+         * FIXME: Technically, the dynsym may be omitted, and we should truly use the .dynamic section's DT_SYMTAB entry(ies) */
+        SgAsmElfSymbolSection *dynsym = isSgAsmElfSymbolSection(header->get_section_by_name(".dynsym"));
+        if (!dynsym) continue;
+        ROSE_ASSERT(dynsym->get_section_entry());
+        ROSE_ASSERT(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_section_entry()->get_sh_type());
 
-        for (size_t sec=0; sec < sections.size(); ++sec) {
-            SgAsmGenericSection* section = sections[sec];
+        /* Add each symbol definition to the BaseMap and then add the BaseMap to the symbolMaps */
+        BaseMap* symbolMap = new BaseMap;
+        for (size_t symbol_idx=0; symbol_idx<dynsym->get_symbols()->get_symbols().size(); symbol_idx++) {
+            if (0==symbol_idx) continue; /*this must be undefined, so we can skip it*/
 
-            SgAsmElfSymbolSection* elfSection = isSgAsmElfSymbolSection(section);
-            if (NULL == elfSection) {
-                continue;
-            }
-            if (SgAsmElfSectionTableEntry::SHT_DYNSYM != elfSection->get_section_entry()->get_sh_type()) {
-                continue;
-            }
-            /**
-                Manual 1-10 under SHT_SYMTAB and SHT_DYNSYM:
-                ...SHT_DYNSYM section holds a minimal set of dynamic linking symbols
-                NOTE: Technically, the dynsym may be omitted, and we should truly
-                use the .dynamic section's DT_SYMTAB entry(ies)
-            */
-            BaseMap* symbolMap = new BaseMap;
-            // Note: We should be able to safely skip sym==0, which "must" be undefined
-            for (size_t sym=0; sym< elfSection->get_symbols()->get_symbols().size(); ++sym) {
-                SgAsmElfSymbol* symbol = elfSection->get_symbols()->get_symbols()[sym];
-                if (get_debug())
-                    fprintf(get_debug(), "Considering symbol [%zu] - '%s' : ", sym, symbol->get_name()->c_str());
+            SgAsmElfSymbol* symbol = dynsym->get_symbols()->get_symbols()[symbol_idx];
+            if (get_debug()) fprintf(get_debug(), "  symbol [%zu] \"%s\" ", symbol_idx, symbol->get_name()->c_str());
 
-                BinaryLoader_ElfSupport::VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
-                if (symver.get_is_local()) {
-                    if (get_debug())
-                        fprintf(get_debug(), "ignored - local\n");
-                    // symbols in the dynsym should never be local (if this is isn't the case, we can ignore them)
-                    // symbol versioning also may make symbols "local"
-                    continue;
-                }
-                if (symver.get_is_hidden()) {
-                    if (get_debug()) fprintf(get_debug(), "ignored - hidden\n");
-                    // symbol versioning can result in 'hidden' symbols that should be ignored
-                    continue;
-                }
-                if (symver.get_is_reference()) {
-                    if (get_debug()) fprintf(get_debug(), "ignored - reference\n");
-                    // symbol versioning lets us determine which symbols are 'references' i.e.
-                    //  that are only used to help relocating
-                    continue;
-                }
-                if (get_debug()) fprintf(get_debug(), "\n");
-                std::string symName=symver.get_name();
+            BinaryLoader_ElfSupport::VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
+            if (symver.get_is_local()) {
+                /* Symbols in the dynsym should never be local (if this is isn't the case, we can ignore them). Symbol
+                 * versioning also may make symbols "local". */
+                if (get_debug()) fprintf(get_debug(), " local (ignoring)\n");
+            } else if (symver.get_is_hidden()) {
+                /* Symbol versioning can result in 'hidden' symbols that should be ignored. */
+                if (get_debug()) fprintf(get_debug(), " hidden (ignoring)\n");
+            } else if (symver.get_is_reference()) {
+                /* Symbol versioning lets us determine which symbols are 'references' i.e.  that are only used to help
+                 * relocating */     
+                if (get_debug()) fprintf(get_debug(), " reference (ignoring)\n");
+            } else {
+                std::string symName = symver.get_name();
+                ROSE_ASSERT(symName==symbol->get_name()->get_string());
                 SymbolMap::Entry &symbolEntry = (*symbolMap)[symName];
-
                 symbolEntry.addVersion(symver);
+                if (get_debug()) fputs(" added.\n", get_debug());
             }
-
-            symbolMaps.push_back(std::make_pair(elfSection, symbolMap));
         }
+        symbolMaps.push_back(std::make_pair(dynsym, symbolMap));
     }
+
+    /* Construct a masterSymbolMap by merging all the definitions from the symbolMaps we created above. */
+    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: resolving dynamic symbols...\n");
     SymbolMap masterSymbolMap;
     BaseMap& masterSymbolMapBase=masterSymbolMap.get_base_map();
-
-    for (size_t i=0; i < symbolMaps.size(); ++i) {
-        const BaseMap* symbolMap = symbolMaps[i].second;
-        BaseMap::const_iterator newSymbolIter = symbolMap->begin();
-
-        for(; newSymbolIter != symbolMap->end(); ++newSymbolIter) {
+    for (SymbolMapList::const_iterator smi=symbolMaps.begin(); smi!=symbolMaps.end(); ++smi) {
+        const BaseMap *symbolMap = smi->second;
+        for(BaseMap::const_iterator newSymbolIter=symbolMap->begin(); newSymbolIter!=symbolMap->end(); ++newSymbolIter) {
             const SymbolMap::Entry &newEntry = newSymbolIter->second;
             const std::string symName = newSymbolIter->first;
-
             BaseMap::iterator oldSymbolIter=masterSymbolMapBase.find(symName);
 
-            if (masterSymbolMapBase.end() == oldSymbolIter) {
-                // no symbol yet, set it [this is the most common case]
+            if (oldSymbolIter == masterSymbolMapBase.end()) {
+                /* no symbol yet, set it (this is the most common case) */
                 masterSymbolMapBase[symName] = newSymbolIter->second;
-                continue;
             } else {
-                // otherwise, we have to go through version by version to 'merge'
-                //  a complete map
+                /* We have to go through version by version to 'merge' a complete map */
                 oldSymbolIter->second.merge(newEntry);
             }
         }
     }
+    if (get_debug()) {
+        for (BaseMap::const_iterator bmi=masterSymbolMapBase.begin(); bmi!=masterSymbolMapBase.end(); ++bmi) {
+            const std::string name = bmi->first;
+            const SymbolMap::Entry &entry = bmi->second;
+            fprintf(get_debug(), "  %s\n", entry.get_vsymbol().dump_versioned_name().c_str());
+        }
+    }
 
+    /* Perform relocations on all mapped sections of all the headers of this interpretation */
+    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: performing relocation fixups...\n");
     SgAsmElfSectionPtrList mappedSections;
-
     for (size_t h=0; h < headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
         ROSE_ASSERT(elfHeader != NULL);
-
         SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
-        for (size_t i=0; i < sections.size(); ++i) {
+        for (size_t i=0; i<sections.size(); ++i) {
             if (sections[i]->is_mapped()) {
                 ROSE_ASSERT(NULL != isSgAsmElfSection(sections[i]));
                 mappedSections.push_back(isSgAsmElfSection(sections[i]));
             }
         }
     }
-    SgAsmElfSectionPtrList extentSortedSections;
     //std::sort(mappedSections.begin(),mappedSections.end(),extentSorterActualVA);
-
-    for (size_t h=0; h < headers.size(); ++h) {
+    for (size_t h=0; h<headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
         ROSE_ASSERT(NULL != elfHeader);
-        performRelocations(elfHeader, extentSortedSections, masterSymbolMap);
+        performRelocations(elfHeader, mappedSections, masterSymbolMap);
     }
 }
 
