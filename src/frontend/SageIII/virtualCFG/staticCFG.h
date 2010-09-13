@@ -45,7 +45,7 @@ public:
         buildCFG();
     }
 
-    ~CFG() 
+    virtual ~CFG()
     { clearNodesAndEdges(); }
 
     // Set the start node for graph building. 
@@ -57,7 +57,7 @@ public:
 
 
     // Build CFG according to the 'is_filtered_' flag.
-    virtual void buildCFG()
+    void buildCFG()
     {
         if (is_filtered_) buildFilteredCFG();
         else buildFullCFG();
