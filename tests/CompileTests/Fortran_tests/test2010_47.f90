@@ -1,11 +1,11 @@
 module test2007_176_mod1
-     integer, protected :: val
-   ! integer :: val
-   ! integer, protected :: age
+   ! The keyword "protected" is specific to F2003.
+   ! integer, protected :: val
+     integer :: val
      integer :: age
 
-   ! The bug here is that "protected" as a statement is not equivalent to its specification in the variable declaration.
-     protected :: age
+   ! The keyword "protected" is specific to F2003.
+   ! protected :: age
 
   contains
      subroutine set_val(arg)
@@ -25,10 +25,8 @@ program dt_init01
      call set_val(88)
      call set_age(38)
 
-   ! This should fail (and does in ROSE) if the declaration used the "protected" attribute (but we don't have the semantic analysis in place).
+   ! If these variables are not setup at "protected" then they can be accessed
      value = val
-
-   ! This should fail if the "protected" statement if modified but not if the variable is read only.
      his_age = age
 
      print *, value, his_age
