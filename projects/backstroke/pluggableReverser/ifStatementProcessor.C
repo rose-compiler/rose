@@ -72,10 +72,20 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
     // Make sure every if statement has a true and false body after being normalized.
     ROSE_ASSERT(if_stmt->get_false_body());
 
-    vector<EvaluationResult> false_body_res =
-            evaluateStatement(if_stmt->get_false_body(), var_table);
+	SgStatement* true_body = if_stmt->get_true_body();
+	SgStatement* false_body = if_stmt->get_false_body();
+	VariableVersionTable true_body_var_table, false_body_var_table;
+	tie(true_body_var_table, false_body_var_table) = var_table.getVarTablesForIfBodies(true_body, false_body);
+
+	cout << "true_body_var_table:\n";
+	true_body_var_table.print();
+	cout << "false_body_var_table:\n";
+	false_body_var_table.print();
+
     vector<EvaluationResult> true_body_res =
-            evaluateStatement(if_stmt->get_true_body(), var_table);
+            evaluateStatement(if_stmt->get_true_body(), true_body_var_table);
+    vector<EvaluationResult> false_body_res =
+            evaluateStatement(if_stmt->get_false_body(), false_body_var_table);
 
     SimpleCostModel cost;
 
@@ -105,7 +115,7 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             // For each variable, if it has the different versions from those two tables, we
             // clear its version (it has no version now).
             VariableVersionTable new_table = res1.getVarTable();
-            new_table.intersect(res2.getVarTable());
+            new_table.setUnion(res2.getVarTable());
             //new_res.setVarTable(new_table);
 			
 #if 0

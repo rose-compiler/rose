@@ -571,3 +571,14 @@ SgBasicBlock* backstroke_util::getFunctionBody(SgFunctionDeclaration* func_decl)
 	else
 		return NULL;
 }
+
+SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
+{
+	while (node)
+	{
+		if (SgIfStmt* if_stmt = isSgIfStmt(node->get_parent()))
+			if (node == if_stmt->get_true_body() || node == if_stmt->get_false_body())
+				return isSgStatement(node);
+		node = node->get_parent();
+	}
+}

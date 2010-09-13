@@ -113,5 +113,8 @@ namespace backstroke_util
 
 	/** Given a function declaration, get its definition's body. If it does not have a definition, return NULL. */
 	SgBasicBlock* getFunctionBody(SgFunctionDeclaration* func_decl);
+
+	//! Get the closest enclosing if body (either true or false body) of the given node.
+	SgStatement* getEnclosingIfBody(SgNode* node);
 }
 

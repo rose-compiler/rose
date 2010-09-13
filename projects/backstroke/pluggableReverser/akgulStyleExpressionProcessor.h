@@ -46,7 +46,6 @@ class RedefineValueRestorer : public VariableValueRestorer
 private:
 
 
-
 	/** Returns true if an expression calls any functions or modifies any variables. */
 	static bool isModifyingExpression(SgExpression* expr, VariableRenaming* variableRenamingAnalysis);
 };

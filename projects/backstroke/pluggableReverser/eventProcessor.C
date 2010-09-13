@@ -303,7 +303,9 @@ FuncDeclPairs EventProcessor::processEvent()
 		// every state variable has the version 1.
 		if (!checkForInitialVersions(res.getVarTable()))
 			continue;
-		
+
+		// Print all handlers used in this result.
+		res.printHandlers();
 
 		StatementReversal stmt = res.generateReverseStatement();
 
