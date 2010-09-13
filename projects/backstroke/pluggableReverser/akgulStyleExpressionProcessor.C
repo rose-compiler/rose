@@ -35,11 +35,11 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 			VariableRenaming::NumNodeRenameEntry reachingDefs = getVariableRenaming()->getReachingDefsAtNodeForName(assignOp->get_rhs_operand(), destroyedVarName);
 
 			//Call the variable value restorer plugins
-			vector<SgExpression*> restoredValues = restoreVariable(destroyedVarName, varTable, reachingDefs);
-			if (!restoredValues.empty())
+			SgExpression* restoredValue = restoreVariable(destroyedVarName, varTable, reachingDefs);
+			if (restoredValue != NULL)
 			{
 				//Success! Let's build an assign op to restore the value
-				SgExpression* reverseExpression = SageBuilder::buildAssignOp(SageInterface::copyExpression(destroyedVarExpression), restoredValues.front());
+				SgExpression* reverseExpression = SageBuilder::buildAssignOp(SageInterface::copyExpression(destroyedVarExpression), restoredValue);
 				string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
 				printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
 						expression->unparseToString().c_str(), reverseExpString.c_str());
@@ -150,40 +150,6 @@ multimap<int, SgExpression*> AkgulStyleExpressionProcessor::collectUsesForVariab
 }
 
 
-vector<SgExpression*> RedefineValueRestorer::findVarReferences(VariableRenaming::VarName var, SgNode* root)
-{
-	class SearchTraversal : public AstTopDownProcessing<bool>
-	{
-	public:
-		VariableRenaming::VarName desiredVar;
-		vector<SgExpression*> result;
-
-		virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentReference)
-		{
-			if (isParentReference)
-			{
-				return true;
-			}
-
-			if (VariableRenaming::getVarName(node) == desiredVar)
-			{
-				ROSE_ASSERT(isSgExpression(node)); //The variable name should always be attached to an expression
-				result.push_back(isSgExpression(node));
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-	};
-
-	SearchTraversal traversal;
-	traversal.desiredVar = var;
-	traversal.traverse(root, false);
-	return traversal.result;
-}
-
 /** Implement redefine technique */
 vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::VarName destroyedVarName, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions)
@@ -250,65 +216,11 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 
 	//Ok, so the variable was previously defined by assignment to initExpression.
 	//Now we need to see if we can re-execute that expression
-	if (isModifyingExpression(definitionExpression, getEventProcessor()->getVariableRenaming()))
+	SgExpression* definitionExpressionValue = getEventProcessor()->restoreExpressionValue(definitionExpression, availableVariables);
+	if (definitionExpressionValue != NULL)
 	{
-		return results;
+		results.push_back(definitionExpressionValue);
 	}
-
-	//Ok, so the initializer expression has no side effects! We can just re-execute it to restore the variable.
-	//However, the variables used in the initializer expression might have been changed between its location and
-	//the current node
-	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
-	VariableRenaming::NumNodeRenameTable variablesInDefExpression = variableRenamingAnalysis.getOriginalUsesAtNode(definitionExpression);
-
-	//Go through all the variables used in the definition expression and check if their values have changed since the def
-	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> nameDefinitionPair;
-	SgExpression* definitionExpressionCopy = SageInterface::copyExpression(definitionExpression);
-
-	foreach(nameDefinitionPair, variablesInDefExpression)
-	{
-		VariableRenaming::NumNodeRenameEntry varVersionAtDefinition = nameDefinitionPair.second;
-
-		if (!availableVariables.matchesVersion(nameDefinitionPair.first, varVersionAtDefinition))
-		{
-			printf("Recursively restoring variable '%s' to its value at line %d.\n", VariableRenaming::keyToString(nameDefinitionPair.first).c_str(),
-					definitionExpression->get_file_info()->get_line());
-
-			//See if we can recursively restore the variable so we can re-execute the definition
-			vector<SgExpression*> recursivelyRestoredValues = getEventProcessor()->restoreVariable(nameDefinitionPair.first, availableVariables, varVersionAtDefinition);
-			if (!recursivelyRestoredValues.empty())
-			{
-				SgExpression* restoredOldValue = recursivelyRestoredValues.front();
-				vector<SgExpression*> restoredVarReferences = findVarReferences(nameDefinitionPair.first, definitionExpressionCopy);
-
-				foreach (SgExpression* restoredVarReference, restoredVarReferences)
-				{
-					printf("Replacing '%s' with '%s'\n", restoredVarReference->unparseToString().c_str(), restoredOldValue->unparseToString().c_str());
-
-					//If the whole definition itself is a variable reference, eg (t = a), then we can't use SageInterface::replaceExpression
-					//because the parent of the variable reference is null. Manually replace the definition expression with the restored value
-					if (definitionExpressionCopy == restoredVarReference)
-					{
-						SageInterface::deepDelete(definitionExpressionCopy);
-						definitionExpressionCopy = SageInterface::copyExpression(restoredOldValue);
-						break;
-					}
-
-					SageInterface::replaceExpression(restoredVarReference, SageInterface::copyExpression(restoredOldValue));
-				}
-
-				SageInterface::deepDelete(restoredOldValue);
-			}
-			else
-			{
-				SageInterface::deepDelete(definitionExpressionCopy);
-				return results;
-			}
-		}
-	}
-
-	//Ok, all we need to do is re-execute the original initializer
-	results.push_back(definitionExpressionCopy);
 
 	return results;
 }
@@ -389,8 +301,11 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 			VariableRenaming::printRenameEntry(lhsVersion);
 			printf(" on line %d\n", useSite->get_file_info()->get_line());
 
-			vector<SgExpression*> resultsFromThisUse = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
-			results.insert(results.begin(), resultsFromThisUse.begin(), resultsFromThisUse.end());
+			SgExpression* resultFromThisUse = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
+			if (resultFromThisUse != NULL)
+			{
+				results.push_back(resultFromThisUse);
+			}
 		}
 		else if (isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite))
 		{
@@ -403,8 +318,8 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 			printf("Recursively restoring variable '%s' to version ", VariableRenaming::keyToString(varName).c_str());
 			VariableRenaming::printRenameEntry(versionAfterIncrement);
 
-			vector<SgExpression*> valuesAfterIncrement = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterIncrement);
-			foreach(SgExpression* valueAfterIncrement, valuesAfterIncrement)
+			SgExpression* valueAfterIncrement = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterIncrement);
+			if (valueAfterIncrement != NULL)
 			{
 				//Success! Now all we have to do is subtract 1 to recover the value we want
 				SgExpression* result;

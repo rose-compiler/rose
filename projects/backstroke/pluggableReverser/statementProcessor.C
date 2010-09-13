@@ -170,13 +170,13 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 					var_name.push_back(init_name);
 					//cout << "!!!" << VariableRenaming::keyToString(var_name) << ":" << getLastVersion(init_name).begin()->first << endl;
 					//res.getVarTable().print();
-					vector<SgExpression*> restored_value = restoreVariable(var_name, res.getVarTable(), getLastVersion(init_name));
+					SgExpression* restored_value = restoreVariable(var_name, res.getVarTable(), getLastVersion(init_name));
 
-					if (!restored_value.empty())
+					if (restored_value != NULL)
 					{
-						cout << "Retrieving value from " << get_name(restored_value[0]) << endl;
+						cout << "Retrieving value from " << get_name(restored_value) << endl;
 						EvaluationResult new_res = res;
-						attr.local_var_restorer[init_name] = make_pair(true, restored_value[0]);
+						attr.local_var_restorer[init_name] = make_pair(true, restored_value);
 						new_res.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute(attr)));
 						// Remember to update the version of this variable.
 						new_res.getVarTable().setLastVersion(init_name);

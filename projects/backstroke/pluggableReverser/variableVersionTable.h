@@ -36,8 +36,8 @@ public:
 	* check, but a cannot. */
 	bool checkVersionForUse(SgExpression* exp) const;
 
-	/** Set the version of the given variable to its last version in its scope. This method is for local
-	 * variables. */
+	//! Set the version of the given variable to its last version in its scope. This method is for local
+	//! variables.
 	void setLastVersion(SgInitializedName* init_name);
 
 	/** Regress the version of the given variable. Call this function once the expression or

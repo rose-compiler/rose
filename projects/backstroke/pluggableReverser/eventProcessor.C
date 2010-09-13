@@ -10,12 +10,37 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
+void EventProcessor::addExpressionHandler(ExpressionReversalHandler* exp_processor)
+{
+	exp_processor->setEventProcessor(this);
+	exp_processors_.push_back(exp_processor);
+}
+
+void EventProcessor::addStatementHandler(StatementReversalHandler* stmt_processor)
+{
+	stmt_processor->setEventProcessor(this);
+	stmt_processors_.push_back(stmt_processor);
+}
+
+void EventProcessor::addVariableValueRestorer(VariableValueRestorer* restorer)
+{
+	restorer->setEventProcessor(this);
+	variableValueRestorers.push_back(restorer);
+}
+
+FuncDeclPairs EventProcessor::processEvent(SgFunctionDeclaration* event)
+{
+	event_ = event;
+	FuncDeclPairs result = processEvent();
+	event_ = NULL;
+	return result;
+}
+
 vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
 	vector<EvaluationResult> results;
 
 	// If two results have the same variable table, we remove the one which has the higher cost.
-
 	foreach(ExpressionReversalHandler* exp_processor, exp_processors_)
 	{
 		vector<EvaluationResult> res = exp_processor->evaluate(exp, var_table, is_value_used);
@@ -117,15 +142,8 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 	return results;
 }
 
-/**
- * Given a variable and a version, returns an expression evaluating to the value of the variable
- * at the given version.
- *
- * @param variable name of the variable to be restored
- * @param availableVariables variables whos values are currently available
- * @return definitions the version of the variable which should be restored
- */
-vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
+
+SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 				VariableRenaming::NumNodeRenameEntry definitions)
 {
 	vector<SgExpression*> results;
@@ -134,9 +152,7 @@ vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName 
 	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> variableAndVersion(variable, definitions);
 	if (activeValueRestorations.count(variableAndVersion) > 0)
 	{
-		//printf("Detected infinite recursion. The VVT is\n");
-		//availableVariables.print();
-		return results;
+		return NULL;
 	}
 	else
 	{
@@ -167,7 +183,6 @@ vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName 
 	//us choose which result to use
 	if (results.size() > 1)
 	{
-		printf("Warning: Truncating some VariableValueRestorer results\n");
 		for (size_t i = 1; i < results.size(); i++)
 		{
 			SageInterface::deepDelete(results[i]);
@@ -175,7 +190,7 @@ vector<SgExpression*> EventProcessor::restoreVariable(VariableRenaming::VarName 
 		results.resize(1);
 	}
 
-	return results;
+	return results.empty() ? NULL : results.front();
 }
 
 SgExpression* EventProcessor::getStackVar(SgType* type)
@@ -206,28 +221,6 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
 	if (var_name.empty())
 		return false;
 	return isStateVariable(var_name);
-
-	/*
-	// First, get the most lhs operand, which may be the model object.
-	while (isSgBinaryOp(exp))
-		exp = isSgBinaryOp(exp)->get_lhs_operand();
-
-	SgVarRefExp* var = isSgVarRefExp(exp);
-	ROSE_ASSERT(var);
-
-	// The pointer parameter of the event function is state.
-
-	// We should 
-
-	foreach(SgInitializedName* name, event_->get_args())
-	{
-		if (name == var->get_symbol()->get_declaration())
-			if (isSgPointerType(name->get_type()) || isReferenceType(name->get_type()))
-				return true;
-	}
-
-	return false;
-	*/
 }
 
 bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
@@ -345,5 +338,68 @@ FuncDeclPairs EventProcessor::processEvent()
 	}
 
 	return outputs;
+}
+
+
+SgExpression* EventProcessor::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
+{
+	//Right now, if the expression has side effects we just assume we can't reevaluate it
+	if (backstroke_util::containsModifyingExpression(expression))
+	{
+		return NULL;
+	}
+
+	//Ok, so the expression has no side effects! We can just re-execute it
+	//However, the variables used in the expression might have been changed between its location and the current node
+	VariableRenaming::NumNodeRenameTable variablesInExpression = var_renaming_->getOriginalUsesAtNode(expression);
+
+	//Go through all the variables used in the definition expression and check if their values have changed since the def
+	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> nameDefinitionPair;
+	SgExpression* expressionCopy = SageInterface::copyExpression(expression);
+
+	foreach(nameDefinitionPair, variablesInExpression)
+	{
+		VariableRenaming::NumNodeRenameEntry originalVarVersion = nameDefinitionPair.second;
+
+		if (!availableVariables.matchesVersion(nameDefinitionPair.first, originalVarVersion))
+		{
+			printf("Recursively restoring variable '%s' to its value at line %d.\n", VariableRenaming::keyToString(nameDefinitionPair.first).c_str(),
+					expression->get_file_info()->get_line());
+
+			//See if we can recursively restore the variable so we can re-execute the definition
+			SgExpression* restoredOldValue = restoreVariable(nameDefinitionPair.first, availableVariables, originalVarVersion);
+			if (restoredOldValue != NULL)
+			{
+				vector<SgExpression*> restoredVarReferences = backstroke_util::findVarReferences(nameDefinitionPair.first, expressionCopy);
+
+				foreach (SgExpression* restoredVarReference, restoredVarReferences)
+				{
+					printf("Replacing '%s' with '%s'\n", restoredVarReference->unparseToString().c_str(), restoredOldValue->unparseToString().c_str());
+
+					//If the whole definition itself is a variable reference, eg (t = a), then we can't use SageInterface::replaceExpression
+					//because the parent of the variable reference is null. Manually replace the definition expression with the restored value
+					if (expressionCopy == restoredVarReference)
+					{
+						SageInterface::deepDelete(expressionCopy);
+						expressionCopy = SageInterface::copyExpression(restoredOldValue);
+						break;
+					}
+
+					SageInterface::replaceExpression(restoredVarReference, SageInterface::copyExpression(restoredOldValue));
+				}
+
+				SageInterface::deepDelete(restoredOldValue);
+			}
+			else
+			{
+				//There is a variable whose value we could not extract
+				SageInterface::deepDelete(expressionCopy);
+				return NULL;
+			}
+		}
+	}
+
+	//Ok, we restored all variables to the correct value. This should evaluate the same as the original expression
+	return expressionCopy;
 }
 
