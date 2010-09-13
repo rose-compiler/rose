@@ -90,7 +90,7 @@ void event3(model* m)
     int t = m->i;
     m->i = m->j;
     m->j = t;
-#if 0
+#if 1
     int i = 0;
     int j = i;
     int k = j;

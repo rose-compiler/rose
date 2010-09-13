@@ -52,7 +52,7 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
 				ExpressionReversal reversalResult(forwardExp, reverseExpression);
 
-				EvaluationResult reversalInfo(this, newVarTable);
+				EvaluationResult reversalInfo(this, expression, newVarTable);
 				reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
 
 				vector<EvaluationResult> result;
@@ -69,7 +69,7 @@ ExpressionReversal AkgulStyleExpressionProcessor::generateReverseAST(SgExpressio
 {
 	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute().get());
 	ROSE_ASSERT(reversalResult != NULL);
-	ROSE_ASSERT(evaluationResult.getExpressionProcessor() == this);
+	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this);
 
 	return reversalResult->reversal;
 }
@@ -318,10 +318,6 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::VarName varName, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions)
 {
-	printf("----Looking for uses of %s----\nVersion:", VariableRenaming::keyToString(varName).c_str());
-	VariableRenaming::printRenameEntry(definitions);
-	availableVariables.print();
-
 	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
 	vector<SgExpression*> results;
 
@@ -345,11 +341,14 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 		}
 	}
 
+	//printf("\nLooking for uses of %s:\n", VariableRenaming::keyToString(varName).c_str());
+
 	//We've collected all the use sites!
 	//Print them out to check if this is right
 	//Then process them to extract the variables!
 	reverse_foreach (SgNode* useSite, useSites)
 	{
+		//printf("Line %d: %s: %s\n", useSite->get_file_info()->get_line(), useSite->class_name().c_str(), useSite->unparseToString().c_str());
 		//If we're restoring x and we have the assignment a = x, we
 		//can extract x from the value of a. An assign initializer is almost exactly like an assign op
 		if (isSgAssignOp(useSite) || isSgAssignInitializer(useSite))
@@ -390,11 +389,8 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 			VariableRenaming::printRenameEntry(lhsVersion);
 			printf(" on line %d\n", useSite->get_file_info()->get_line());
 
-			results = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
-			if (!results.empty())
-			{
-				return results;
-			}
+			vector<SgExpression*> resultsFromThisUse = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
+			results.insert(results.begin(), resultsFromThisUse.begin(), resultsFromThisUse.end());
 		}
 		else if (isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite))
 		{
@@ -408,10 +404,9 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 			VariableRenaming::printRenameEntry(versionAfterIncrement);
 
 			vector<SgExpression*> valuesAfterIncrement = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterIncrement);
-			if (!valuesAfterIncrement.empty())
+			foreach(SgExpression* valueAfterIncrement, valuesAfterIncrement)
 			{
 				//Success! Now all we have to do is subtract 1 to recover the value we want
-				SgExpression* valueAfterIncrement = valuesAfterIncrement.front();
 				SgExpression* result;
 				if (isSgPlusPlusOp(incOrDecrOp))
 				{

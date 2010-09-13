@@ -325,6 +325,7 @@ struct BtorTranslationPolicy {
 
   void hlt();
   void interrupt(uint8_t num);
+  void sysenter();
   BtorWordType<64> rdtsc();
 
   void writeBackCond(Comp cond);

@@ -460,10 +460,6 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/BinaryFormats/Hexdump.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/IntelPinSupport.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/Loader.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/LoaderELF.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/LoaderELFObj.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/LoaderPE.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/MemoryMap.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeExport.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C \
@@ -474,6 +470,7 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/stringify.C \
+			 @top_srcdir@/src/frontend/BinaryLoader \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \

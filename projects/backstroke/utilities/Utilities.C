@@ -527,3 +527,12 @@ void backstroke_util::removeUselessParen(SgNode* root)
             exp->set_need_paren(false);
     }
 }
+
+SgBasicBlock* backstroke_util::getFunctionBody(SgFunctionDeclaration* func_decl)
+{
+	SgFunctionDeclaration* func_defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+	if (func_defining_decl)
+		return func_defining_decl->get_definition()->get_body();
+	else
+		return NULL;
+}

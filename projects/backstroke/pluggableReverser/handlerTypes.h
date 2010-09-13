@@ -11,6 +11,7 @@ class StatementReversalHandler;
 class ReversalHandlerBase;
 class EventProcessor;
 
+//TODO: Just use std::pair here
 struct ExpressionReversal
 {
 	ExpressionReversal(SgExpression* fwd, SgExpression * rvs)
@@ -20,6 +21,7 @@ struct ExpressionReversal
 	SgExpression* rvs_exp;
 };
 
+//TODO: Just use std::pair here
 struct StatementReversal
 {
 	StatementReversal(SgStatement* fwd, SgStatement * rvs)
@@ -48,6 +50,9 @@ class EvaluationResult
 	* generation phrase to generate the actual expression. */
 	ReversalHandlerBase* processor_used_;
 
+	//!The expression or statement to which this evaluation result pertains
+	SgNode* input_;
+
 	/** Additional attribute that the processor may choose to attach to the evaluation result. */
 	EvaluationResultAttributePtr attribute_;
 
@@ -57,8 +62,10 @@ class EvaluationResult
 
 public:
 
-	EvaluationResult(ReversalHandlerBase* processorUsed, const VariableVersionTable& table, const SimpleCostModel& cost_model = SimpleCostModel())
-	:  var_table_(table), cost_(cost_model), processor_used_(processorUsed){ }
+	EvaluationResult(ReversalHandlerBase* processorUsed, SgNode* input, 
+			const VariableVersionTable& table,
+			const SimpleCostModel& cost_model = SimpleCostModel())
+	:  var_table_(table), cost_(cost_model), processor_used_(processorUsed), input_(input){ }
 
 	/** Add an evaluation result to the evalutions used in order to construct the current one.
 	* This adds the cost of the child result to the total cost and adds the result to the list of
@@ -66,54 +73,36 @@ public:
 	void addChildEvaluationResult(const EvaluationResult& result);
 
 	/** Generate the reverse AST for the expression whose reversal result this class holds. */
-	ExpressionReversal generateReverseAST(SgExpression* expression) const;
+	ExpressionReversal generateReverseExpression() const;
 
 	/** Generate the reverse AST for the statement whose reversal result this class holds. */
-	StatementReversal generateReverseAST(SgStatement* statement) const;
+	StatementReversal generateReverseStatement() const;
 
-	ExpressionReversalHandler* getExpressionProcessor() const;
+	ExpressionReversalHandler* getExpressionHandler() const;
 
-	StatementReversalHandler* getStatementProcessor() const;
+	StatementReversalHandler* getStatementHandler() const;
 
-	const VariableVersionTable& getVarTable() const
-	{
-		return var_table_;
-	}
+	const VariableVersionTable& getVarTable() const;
 
-	const std::vector<EvaluationResult>& getChildResults() const
-	{
-		return child_results;
-	}
+	const std::vector<EvaluationResult>& getChildResults() const;
 
-	VariableVersionTable& getVarTable()
-	{
-		return var_table_;
-	}
+	VariableVersionTable& getVarTable();
 
-	void setVarTable(const VariableVersionTable& table)
-	{
-		var_table_ = table;
-	}
+	void setVarTable(const VariableVersionTable& table);
 
-	const SimpleCostModel& getCost() const
-	{
-		return cost_;
-	}
+	const SimpleCostModel& getCost() const;
 
-	void setCost(const SimpleCostModel& cost)
-	{
-		cost_ = cost;
-	}
+	void setCost(const SimpleCostModel& cost);
 
-	EvaluationResultAttributePtr getAttribute() const
-	{
-		return attribute_;
-	}
+	EvaluationResultAttributePtr getAttribute() const;
 
-	void setAttribute(EvaluationResultAttributePtr attr)
-	{
-		attribute_ = attr;
-	}
+	void setAttribute(EvaluationResultAttributePtr attr);
+
+	//! Returns the expression which was processed to produce this evaluation result
+	SgExpression* getExpressionInput() const;
+
+	//! Returns the statement which was processed to produce this evaluation result
+	SgStatement* getStatementInput() const;
 };
 
 

@@ -109,7 +109,7 @@ AsmUnparser::unparse(std::ostream &o, SgAsmBlock *blk)
 
         /* Remove no-op sequences from the listing. */
         std::vector<bool> is_noop;
-        if (blk_detect_noop_seq || blk_remove_noop_seq || blk_show_noop_seq) {
+        if ((blk_detect_noop_seq || blk_remove_noop_seq || blk_show_noop_seq) && !insns.empty()) {
             typedef std::vector<std::pair<size_t, size_t> > NoopSequences; /* array of index,size pairs */
             NoopSequences noops = insns.front()->find_noop_subsequences(insns, true, true);
             if (!noops.empty()) {

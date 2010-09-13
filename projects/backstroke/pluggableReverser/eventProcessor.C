@@ -22,6 +22,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, c
 
 		foreach(const EvaluationResult& r1, res)
 		{
+			ROSE_ASSERT(r1.getExpressionInput() == exp);
 			bool discard = false;
 #if 1
 			for (size_t i = 0; i < results.size(); ++i)
@@ -80,8 +81,8 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 
 		foreach(EvaluationResult& r1, res)
 		{
+			ROSE_ASSERT(r1.getStatementInput() == stmt);
 			// Remove those variables from variable version table if they are not useful anymore.
-
 			foreach(SgExpression* var, vars_to_remove)
 			{
 				r1.getVarTable().removeVariable(var);
@@ -201,6 +202,12 @@ SgExpression* EventProcessor::getStackVar(SgType* type)
 
 bool EventProcessor::isStateVariable(SgExpression* exp)
 {
+	VariableRenaming::VarName var_name = VariableRenaming::getVarName(exp);
+	if (var_name.empty())
+		return false;
+	return isStateVariable(var_name);
+
+	/*
 	// First, get the most lhs operand, which may be the model object.
 	while (isSgBinaryOp(exp))
 		exp = isSgBinaryOp(exp)->get_lhs_operand();
@@ -220,12 +227,18 @@ bool EventProcessor::isStateVariable(SgExpression* exp)
 	}
 
 	return false;
+	*/
 }
 
 bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 {
-	// The pointer parameter of the event function is state.
+	// Currently we assume all variables except those defined inside the event function
+	// are state varibles.
+	return !SageInterface::isAncestor(
+			backstroke_util::getFunctionBody(event_),
+			var[0]->get_declaration());
 
+#if 0
 	foreach(SgInitializedName* name, event_->get_args())
 	{
 		if (name == var[0])
@@ -234,6 +247,7 @@ bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 	}
 
 	return false;
+#endif
 }
 
 std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const
@@ -279,8 +293,7 @@ FuncDeclPairs EventProcessor::processEvent()
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
 
-	SgBasicBlock* body =
-					isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
+	SgBasicBlock* body = isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
 	FuncDeclPairs outputs;
 
 	SimpleCostModel cost_model;
@@ -299,7 +312,7 @@ FuncDeclPairs EventProcessor::processEvent()
 			continue;
 		
 
-		StatementReversal stmt = res.generateReverseAST(body);
+		StatementReversal stmt = res.generateReverseStatement();
 
 		fixVariableReferences(stmt.fwd_stmt);
 		fixVariableReferences(stmt.rvs_stmt);

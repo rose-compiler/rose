@@ -10,10 +10,10 @@ StatementReversal CombinatorialExprStatementHandler::generateReverseAST(SgStatem
 {
     SgExprStatement* exp_stmt = isSgExprStatement(stmt);
     ROSE_ASSERT(exp_stmt);
-	ROSE_ASSERT(evaluationResult.getStatementProcessor() == this);
+	ROSE_ASSERT(evaluationResult.getStatementHandler() == this);
 	ROSE_ASSERT(evaluationResult.getChildResults().size() == 1);
     
-    ExpressionReversal exp = evaluationResult.getChildResults().front().generateReverseAST(exp_stmt->get_expression());
+    ExpressionReversal exp = evaluationResult.getChildResults().front().generateReverseExpression();
 
     SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
@@ -36,7 +36,7 @@ vector<EvaluationResult> CombinatorialExprStatementHandler::evaluate(SgStatement
 
 	foreach(const EvaluationResult& potentialExprReversal, potentialExprReversals)
 	{
-		EvaluationResult statementResult(this, var_table);
+		EvaluationResult statementResult(this, stmt, var_table);
 		statementResult.addChildEvaluationResult(potentialExprReversal);
 		results.push_back(statementResult);
 	}
@@ -44,19 +44,6 @@ vector<EvaluationResult> CombinatorialExprStatementHandler::evaluate(SgStatement
     ROSE_ASSERT(!results.empty());
 
     return results;
-}
-
-StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
-{
-	return StatementReversal(copyStatement(stmt), NULL);
-}
-
-vector<EvaluationResult> VariableDeclarationHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
-{
-	vector<EvaluationResult> results;
-	if (isSgVariableDeclaration(stmt))
-		results.push_back(EvaluationResult(this, var_table));
-	return results;
 }
 
 StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
@@ -115,10 +102,7 @@ StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement
 				}
 				else
 				{
-					SgStatement* just_decl = buildVariableDeclaration(
-							init_name->get_name(),
-							init_name->get_type(),
-							NULL, rvs_body);
+					SgStatement* just_decl = buildVariableDeclaration(init_name->get_name(), init_name->get_type(), NULL, rvs_body);
 
 					appendStatement(just_decl, rvs_body);
 				}
@@ -127,12 +111,9 @@ StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement
 	}
 
 
-
-	int childResultIndex = 0;
-    reverse_foreach (SgStatement* stmt, body->get_statements())
+	foreach(const EvaluationResult& childResult, evaluationResult.getChildResults())
     {
-		const EvaluationResult& childResult = evaluationResult.getChildResults()[childResultIndex++];
-        StatementReversal proc_stmt = childResult.generateReverseAST(stmt);
+        StatementReversal proc_stmt = childResult.generateReverseStatement();
 
         if (proc_stmt.fwd_stmt)
             prependStatement(proc_stmt.fwd_stmt, fwd_body);
@@ -157,7 +138,7 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
     //cout << body->get_statements().size() << endl;
     if (body->get_statements().empty())
     {
-        results.push_back(EvaluationResult(this, var_table));
+        results.push_back(EvaluationResult(this, stmt, var_table));
         return results;
     }
 	
@@ -166,7 +147,7 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
     int i = 0;
 
 	// Set the initial result and push it into the first vector.
-	EvaluationResult init_res(this, new_var_table);
+	EvaluationResult init_res(this, stmt, new_var_table);
 	init_res.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute));
     queue[i].push_back(init_res);
 
@@ -250,8 +231,6 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
                 // Update the result.
                 EvaluationResult new_result(existingPartialResult);
 				new_result.addChildEvaluationResult(res);
-				new_result.setVarTable(res.getVarTable());
-
                 queue[1-i].push_back(new_result);
             }
         }
@@ -278,4 +257,20 @@ VariableRenaming::NumNodeRenameEntry CombinatorialBasicBlockHandler::getLastVers
 	var_name.push_back(init_name);
 	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());
 	return getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosing_func, var_name);
+}
+
+StatementReversal NullStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
+{
+	ROSE_ASSERT(evaluationResult.getStatementHandler() == this && evaluationResult.getChildResults().empty());
+	return StatementReversal(NULL, NULL);
+}
+
+vector<EvaluationResult> NullStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+{
+	vector<EvaluationResult> results;
+	if (isSgNullStatement(stmt))
+	{
+		results.push_back(EvaluationResult(this, stmt, var_table));
+	}
+	return results;
 }

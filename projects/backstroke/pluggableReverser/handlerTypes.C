@@ -3,25 +3,69 @@
 
 using namespace std;
 
-SgExpression* ReversalHandlerBase::pushVal(SgExpression* exp, SgType* type)
+const std::vector<EvaluationResult>& EvaluationResult::getChildResults() const
 {
-    return event_processor_->pushVal(exp, type);
+	return child_results;
 }
 
-SgExpression* ReversalHandlerBase::popVal(SgType* type)
+VariableVersionTable& EvaluationResult::getVarTable()
 {
-    return event_processor_->popVal(type);
+	return var_table_;
+}
+
+const VariableVersionTable& EvaluationResult::getVarTable() const
+{
+	return var_table_;
 }
 
 
-ExpressionReversalHandler* EvaluationResult::getExpressionProcessor() const
+void EvaluationResult::setVarTable(const VariableVersionTable& table)
+{
+	var_table_ = table;
+}
+
+const SimpleCostModel& EvaluationResult::getCost() const
+{
+	return cost_;
+}
+
+void EvaluationResult::setCost(const SimpleCostModel& cost)
+{
+	cost_ = cost;
+}
+
+EvaluationResultAttributePtr EvaluationResult::getAttribute() const
+{
+	return attribute_;
+}
+
+void EvaluationResult::setAttribute(EvaluationResultAttributePtr attr)
+{
+	attribute_ = attr;
+}
+
+SgExpression* EvaluationResult::getExpressionInput() const
+{
+	SgExpression* expression = dynamic_cast<SgExpression*>(input_);
+	ROSE_ASSERT(expression != NULL);
+	return expression;
+}
+
+SgStatement* EvaluationResult::getStatementInput() const
+{
+	SgStatement* statement = dynamic_cast<SgStatement*>(input_);
+	ROSE_ASSERT(statement != NULL);
+	return statement;
+}
+
+ExpressionReversalHandler* EvaluationResult::getExpressionHandler() const
 {
 	const ExpressionReversalHandler* expressionHandler = dynamic_cast<ExpressionReversalHandler*>(processor_used_);
 	ROSE_ASSERT(expressionHandler != NULL);
 	return const_cast<ExpressionReversalHandler*>(expressionHandler);
 }
 
-StatementReversalHandler* EvaluationResult::getStatementProcessor() const
+StatementReversalHandler* EvaluationResult::getStatementHandler() const
 {
 	const StatementReversalHandler* statementHandler = dynamic_cast<const StatementReversalHandler*>(processor_used_);
 	ROSE_ASSERT(statementHandler != NULL);
@@ -35,17 +79,28 @@ void EvaluationResult::addChildEvaluationResult(const EvaluationResult& result)
 	var_table_ = result.var_table_;
 }
 
-ExpressionReversal EvaluationResult::generateReverseAST(SgExpression* expression) const
+ExpressionReversal EvaluationResult::generateReverseExpression() const
 {
-	return getExpressionProcessor()->generateReverseAST(expression, *this);
+	return getExpressionHandler()->generateReverseAST(getExpressionInput(), *this);
 }
 
-StatementReversal EvaluationResult::generateReverseAST(SgStatement* statement) const
+StatementReversal EvaluationResult::generateReverseStatement() const
 {
-	return getStatementProcessor()->generateReverseAST(statement, *this);
+	return getStatementHandler()->generateReverseAST(getStatementInput(), *this);
 }
 
-vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
+SgExpression* ReversalHandlerBase::pushVal(SgExpression* exp, SgType* type)
+{
+    return event_processor_->pushVal(exp, type);
+}
+
+SgExpression* ReversalHandlerBase::popVal(SgType* type)
+{
+    return event_processor_->popVal(type);
+}
+
+vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp,
+		const VariableVersionTable& var_table, bool is_value_used)
 {
     return event_processor_->evaluateExpression(exp, var_table, is_value_used);
 }
@@ -61,8 +116,8 @@ bool ReversalHandlerBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-vector<SgExpression*> ReversalHandlerBase::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
-			VariableRenaming::NumNodeRenameEntry definitions)
+vector<SgExpression*> ReversalHandlerBase::restoreVariable(VariableRenaming::VarName variable, 
+		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
 	return event_processor_->restoreVariable(variable, availableVariables, definitions);
 }

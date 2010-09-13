@@ -18,7 +18,7 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 			// If the variable is a local variable of the given function (except parameters), we will set its
 			// version to NULL.
 			if (SageInterface::isAncestor(
-					isSgFunctionDeclaration(func_decl->get_definingDeclaration())->get_definition()->get_body(),
+					backstroke_util::getFunctionBody(func_decl),
 					name_to_num.first[0]->get_declaration()))
 			{
 				//cout << VariableRenaming::keyToString(name_to_num.first) << endl;
@@ -237,6 +237,7 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 
 void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
 {
+	//FIXME: This does not set the versions of all the expanded variables
 	VariableRenaming::VarName name;
 	name.push_back(init_name);
 	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());
@@ -364,7 +365,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 		indices.insert(versionDefPair.first);
 	}
 
-#if 0
+#if	1
 	printf("%s:\nIndices found: ", VariableRenaming::keyToString(varName).c_str());
 
 	foreach(int v, table_.find(varName)->second)

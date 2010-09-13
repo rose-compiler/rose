@@ -2,40 +2,40 @@
 #define REVERSE_COMPUTATION_STMT_PROCESSOR_H
 
 #include <rose.h>
-#include "eventProcessor.h"
+#include "handlerTypes.h"
 
 class CombinatorialExprStatementHandler : public StatementReversalHandler
 {
 public:
-    CombinatorialExprStatementHandler() { name_ = "Combinatorial Expression Statement Handler"; }
 
-    virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
-    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
-};
+	CombinatorialExprStatementHandler()
+	{
+		name_ = "Combinatorial Expression Statement Handler";
+	}
 
-class VariableDeclarationHandler : public StatementReversalHandler
-{
-public:
-    VariableDeclarationHandler() { name_ = "Variable Declaration Handler"; }
-
-    virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
-    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
+	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
 class CombinatorialBasicBlockHandler : public StatementReversalHandler
 {
 public:
-    CombinatorialBasicBlockHandler() { name_ = "Combinatorial Basic Block Handler"; }
 
-    virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
-    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+	CombinatorialBasicBlockHandler()
+	{
+		name_ = "Combinatorial Basic Block Handler";
+	}
+
+	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
+	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 
 private:
+
 	struct LocalVarRestoreAttribute : public EvaluationResultAttribute
 	{
 		/** For each local variable, we record whether to restore it and how to restore it.
 		 * (if SgExpression* is NULL, we push and pop its value. Otherwise, we use it to restore) */
-		std::map<SgInitializedName*, std::pair<bool, SgExpression*> >  local_var_restorer;
+		std::map < SgInitializedName*, std::pair<bool, SgExpression*> > local_var_restorer;
 	};
 	typedef boost::shared_ptr<LocalVarRestoreAttribute> LocalVarRestoreAttributePtr;
 
@@ -44,5 +44,17 @@ private:
 };
 
 
+//! Handles SgNullStatement
+class NullStatementHandler : public StatementReversalHandler
+{
+public:
+	NullStatementHandler()
+	{
+		name_ = "SgNullStatement handler";
+	}
+
+	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
+	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+};
 
 #endif
