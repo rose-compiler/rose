@@ -164,7 +164,8 @@
       path = trim(data_file%full_name)/&
              &/'.hdr'
 
-      inquire(file=path, exist=header_exists)
+! DQ (9/12/2010): Commented out incomplete handling of inqure support.
+!     inquire(file=path, exist=header_exists)
 
       if (header_exists) then
          open (unit=data_file%id(2), file=path, status='old')

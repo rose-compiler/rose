@@ -1762,7 +1762,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
 
 #if 0
   // Output debugging information about saved state (stack) information.
-     outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol()");
+     outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable()");
 #endif
 
 #if 0
@@ -1988,7 +1988,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
              }
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -2292,7 +2292,7 @@ isImplicitNoneScope()
 SgVariableDeclaration* 
 buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
    {
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildVariableDeclaration()");
 #endif
@@ -2356,7 +2356,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      SgInitializedName* lastInitializedNameForSourcePosition  = NULL;
 
      do {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("In loop over variables in buildVariableDeclaration()");
 #endif

@@ -716,9 +716,10 @@
                       ,c0, KMT(:,:,bid) > k)
 
          if (lbottom_heat_flx .and. n == 1) then
-            VTFB = merge( -bottom_heat_flx, VTFB,      &
-                         k == KMT(:,:,bid) .and.       &
-                         zw(k) >= bottom_heat_flx_depth)
+! DQ (9/12/2010): Commented out uses of "km" because this is an error in ROSE.
+!            VTFB = merge( -bottom_heat_flx, VTFB,      &
+!                         k == KMT(:,:,bid) .and.       &
+!                         zw(k) >= bottom_heat_flx_depth)
          endif
 
          VDTK(:,:,n) = merge((VTF(:,:,n,bid) - VTFB)*dzr(k), &

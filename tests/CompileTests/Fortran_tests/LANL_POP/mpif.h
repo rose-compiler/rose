@@ -463,7 +463,7 @@
        EXTERNAL MPI_TYPE_NULL_COPY_FN
        EXTERNAL MPI_CONVERSION_FN_NULL
 
-     ! DQ (8/5/2010): Bug in ROSE.
+     ! DQ (8/5/2010): Bug in use of gfortran for syntax checking of input to ROSE.
      ! REAL*8 MPI_WTIME, MPI_WTICK
      ! REAL*8 PMPI_WTIME, PMPI_WTICK
        REAL MPI_WTIME, MPI_WTICK
