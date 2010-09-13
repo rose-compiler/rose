@@ -5,6 +5,12 @@
  * Sun: http://docs.sun.com/app/docs/doc/819-0690/chapter6-54676?a=view
  * LSB: http://refspecs.freestandards.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/symversion.html
  * Redhat: http://people.redhat.com/drepper/symbol-versioning
+ *
+ * Related SageIII classes:
+ *    SgAsmElfSymverSection -- GNU Symvol Version Table; The ".gnu.version" section, subclass of SgAsmElfSection. This
+ *                             table is parallel to the list of symbols in the ".dynsym" section.
+ *    SgAsmElfSymverEntry   -- A single entry in an SgAsmElfSymverSection, usually an index into one of the other
+ *                             version tables, but some special values are also defined.
  */
 
 #include "sage3basic.h"
@@ -37,11 +43,12 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
-    /* compact one-line-per-entry format */
-    if (0==idx)
-        fprintf(f, "%s%-*s   %-10s\n", p, w, "", "Value");
-
-    fprintf(f, "%s%-*s = 0x%08zx\n", p, w, "", p_value);
+    fprintf(f, "%s%-*s = %zu", p, w, "", p_value);
+    switch (p_value) {
+        case 0: fprintf(f, " (local)\n"); break;
+        case 1: fprintf(f, " (global)\n"); break;
+        default: fprintf(f, "\n"); break;
+    }
 }
 
 /** Non-parsing constructor */
@@ -88,7 +95,6 @@ SgAsmElfSymverSection::calculate_sizes(size_t *entsize, size_t *required, size_t
                            extra_sizes,
                            entsize, required, optional, entcount);
 }
-
 
 /** Write symver table sections back to disk */
 void
