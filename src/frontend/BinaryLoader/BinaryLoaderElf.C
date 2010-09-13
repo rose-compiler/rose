@@ -1083,10 +1083,19 @@ void performRelocations(SgAsmElfFileHeader* elfHeader,
 // }
 // #endif
 
+}// end namespace BinaryLoader_ElfSupport
+
+
+/*************************************************************************************************************************
+ * End of low-level ELF stuff.  Now back to the BinaryLoaderElf class itself....
+ *************************************************************************************************************************/
+
+
+
 // [ Reference Elf TIS Portal Formats Specification, Version 1.1 ]
-bool relocateInterpLibraries(SgAsmInterpretation* interp)
+void
+BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
 {
-    bool verbose = get_verbose() > 1;
     // build map for each symbol table map<std::string,SgElfSymbol>
     // compute global symbol resolution
     //   in the DT_SYMBOLIC case, start w/ local map(s) before proceeding
@@ -1103,7 +1112,7 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
 
     for (size_t h=0; h < headers.size(); ++h) {
         SgAsmGenericHeader* header = headers[h];
-        SymverResolver versionResolver(header);
+        BinaryLoader_ElfSupport::SymverResolver versionResolver(header);
 
         SgAsmGenericSectionPtrList& sections = header->get_sections()->get_sections();
 
@@ -1127,29 +1136,29 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
             // Note: We should be able to safely skip sym==0, which "must" be undefined
             for (size_t sym=0; sym< elfSection->get_symbols()->get_symbols().size(); ++sym) {
                 SgAsmElfSymbol* symbol = elfSection->get_symbols()->get_symbols()[sym];
-                if (verbose)
-                    printf("Considering symbol [%zu] - '%s' : ", sym, symbol->get_name()->c_str());
+                if (get_debug())
+                    fprintf(get_debug(), "Considering symbol [%zu] - '%s' : ", sym, symbol->get_name()->c_str());
 
-                VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
+                BinaryLoader_ElfSupport::VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
                 if (symver.get_is_local()) {
-                    if (verbose)
-                        printf("ignored - local\n");
+                    if (get_debug())
+                        fprintf(get_debug(), "ignored - local\n");
                     // symbols in the dynsym should never be local (if this is isn't the case, we can ignore them)
                     // symbol versioning also may make symbols "local"
                     continue;
                 }
                 if (symver.get_is_hidden()) {
-                    if (verbose) printf("ignored - hidden\n");
+                    if (get_debug()) fprintf(get_debug(), "ignored - hidden\n");
                     // symbol versioning can result in 'hidden' symbols that should be ignored
                     continue;
                 }
                 if (symver.get_is_reference()) {
-                    if (verbose) printf("ignored - reference\n");
+                    if (get_debug()) fprintf(get_debug(), "ignored - reference\n");
                     // symbol versioning lets us determine which symbols are 'references' i.e.
                     //  that are only used to help relocating
                     continue;
                 }
-                if (verbose) printf("\n");
+                if (get_debug()) fprintf(get_debug(), "\n");
                 std::string symName=symver.get_name();
                 SymbolMap::Entry &symbolEntry = (*symbolMap)[symName];
 
@@ -1206,22 +1215,8 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
         ROSE_ASSERT(NULL != elfHeader);
         performRelocations(elfHeader, extentSortedSections, masterSymbolMap);
     }
-    return true;
 }
 
-}// end namespace BinaryLoader_ElfSupport
-
-
-/*************************************************************************************************************************
- * End of low-level ELF stuff.  Now back to the BinaryLoaderElf class itself....
- *************************************************************************************************************************/
-
-
-
-void
-BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
-{
-    BinaryLoader_ElfSupport::relocateInterpLibraries(interp);
 
     /*
     // 1. Get section map (name -> list<section*>)
@@ -1242,7 +1237,7 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
     // 5.  for each relocation entry, perform relocation
     processRelocations(relocations,symbolMap,extentSortedSections);
     */
-}
+
 
 
 /* This is a big section of commented out code. I'm prefixing all lines with "//" to make it more obvious. [RPM 2010-08-31] */
