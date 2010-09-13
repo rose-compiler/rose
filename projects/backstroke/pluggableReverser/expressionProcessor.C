@@ -85,7 +85,7 @@ vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, 
 	vector<EvaluationResult> results;
 
 	// If an expression does not modify any value and its value is used, the reverse is the same as itself
-	if (!backstroke_util::isModifyingExpression(exp))
+	if (!backstroke_util::containsModifyingExpression(exp))
 	{
 		EvaluationResult result(this, exp, var_table);
 		IdentityExpressionAttribute* attribute = new IdentityExpressionAttribute;
