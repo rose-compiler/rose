@@ -45,7 +45,6 @@ class RedefineValueRestorer : public VariableValueRestorer
 
 private:
 
-	static std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);
 
 	/** Returns true if an expression calls any functions or modifies any variables. */
 	static bool isModifyingExpression(SgExpression* expr, VariableRenaming* variableRenamingAnalysis);

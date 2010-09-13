@@ -48,7 +48,7 @@ class EvaluationResult
 
 	/** The processor which produced this evaluation result. This is used during the
 	* generation phrase to generate the actual expression. */
-	ReversalHandlerBase* processor_used_;
+	ReversalHandlerBase* handler_used_;
 
 	//!The expression or statement to which this evaluation result pertains
 	SgNode* input_;
@@ -62,10 +62,10 @@ class EvaluationResult
 
 public:
 
-	EvaluationResult(ReversalHandlerBase* processorUsed, SgNode* input, 
+	EvaluationResult(ReversalHandlerBase* handler_used, SgNode* input,
 			const VariableVersionTable& table,
 			const SimpleCostModel& cost_model = SimpleCostModel())
-	:  var_table_(table), cost_(cost_model), processor_used_(processorUsed), input_(input){ }
+	:  var_table_(table), cost_(cost_model), handler_used_(handler_used), input_(input){ }
 
 	/** Add an evaluation result to the evalutions used in order to construct the current one.
 	* This adds the cost of the child result to the total cost and adds the result to the list of
@@ -103,6 +103,9 @@ public:
 
 	//! Returns the statement which was processed to produce this evaluation result
 	SgStatement* getStatementInput() const;
+
+	//! Print all handlers inside of this result.
+	void printHandlers() const;
 };
 
 
@@ -131,9 +134,9 @@ protected:
 	* @param variable name of the variable to be restored
 	* @param availableVariables variables whos values are currently available
 	* @param definitions the version of the variable which should be restored
-	* @return expessions that when evaluated will produce the desired version of the variable
+	* @return expession that when evaluated will produce the desired version of the variable
 	*/
-	std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
+	SgExpression* restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions);
 
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
@@ -143,6 +146,7 @@ protected:
 	bool isStateVariable(SgExpression* exp);
 
 	VariableRenaming* getVariableRenaming();
+
 
 public:
 
