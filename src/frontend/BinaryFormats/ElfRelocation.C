@@ -194,14 +194,13 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     if (0==idx)
         fprintf(f, "%s%-*s   %-10s %-4s %-10s %-10s %-10s Name + Addend\n", p, w, "", "Offset", "Type", "Addend", "Sym", "Value");
 
-    //static const char* 
-    //if(header)const char* typeStr = to_string(p_type,
-    fprintf(f, "%s%-*s = 0x%08"PRIx64,p, w, "", p_r_offset);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64, p, w, "", p_r_offset);
     SgAsmGenericHeader* header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(this);
-    if(header)
-      fprintf(f, " %10s", to_string(p_type,header->get_isa()).c_str());
-    else
-      fprintf(f, "       0x%02zx", (size_t)p_type);
+    if (header) {
+        fprintf(f, " %10s", to_string(p_type, header->get_isa()).c_str());
+    } else {
+        fprintf(f, "       0x%02zx", (size_t)p_type);
+    }
 
     fprintf(f, " 0x%08"PRIx64" %4lu", p_r_addend, p_sym);
     if (!symtab) {
@@ -221,13 +220,13 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 
 /** Non-parsing constructor */
 void
-SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols,SgAsmElfSection *targetsec)
+SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols, SgAsmElfSection *targetsec/*=NULL*/)
 {
     p_entries = new SgAsmElfRelocEntryList;
     p_entries->set_parent(this);
     ROSE_ASSERT(symbols!=NULL);
     p_linked_section = symbols;
-    p_target_section = targetsec;// this may be NULL
+    p_target_section = targetsec;
 }
 
 /** Parse an existing ELF Rela Section */
@@ -383,6 +382,13 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     SgAsmElfSection::dump(f, p, -1);
     SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_linked_section());
     fprintf(f, "%s%-*s = %s\n", p, w, "uses_addend", p_uses_addend ? "yes" : "no");
+
+    if (p_target_section) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "target_section",
+                p_target_section->get_id(), p_target_section->get_name()->c_str());
+    } else {
+        fprintf(f, "%s%-*s = NULL\n", p, w, "target_section");
+    }
 
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfRelocEntry *ent = p_entries->get_entries()[i];
