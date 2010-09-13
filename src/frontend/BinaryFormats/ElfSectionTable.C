@@ -156,16 +156,16 @@ SgAsmElfSectionTable::parse()
             SgAsmElfSectionTableEntry *entry = entries[i];
             ROSE_ASSERT(entry->get_sh_link()<entries.size());
             SgAsmElfSection *linked = entry->get_sh_link()>0 ? is_parsed[entry->get_sh_link()] : NULL;
+
+            /* Relocation sections have a second linked section stored in sh_info. */
 	    SgAsmElfSection *relLinked = NULL;
 	    bool needRelLinked = false;
-	    if((entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_REL ||
-		entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_RELA) 
-               && entry->get_sh_info() > 0){
-
-              ROSE_ASSERT(entry->get_sh_info() < entries.size());
-	      // relocation sections have a second linked section stored in sh_info
-	      needRelLinked = true;
-	      relLinked = is_parsed[entry->get_sh_info()];
+	    if ((entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_REL ||
+                 entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_RELA) 
+                && entry->get_sh_info() > 0) {
+                ROSE_ASSERT(entry->get_sh_info() < entries.size());
+                needRelLinked = true;
+                relLinked = is_parsed[entry->get_sh_info()];
             }
 	       
             if (is_parsed[i]) {
@@ -175,83 +175,83 @@ SgAsmElfSectionTable::parse()
                 try_again = true;
             } else {
                 switch (entry->get_sh_type()) {
-                  case SgAsmElfSectionTableEntry::SHT_NULL:
-                    /* Null entry. We still create the section just to hold the section header. */
-                    is_parsed[i] = new SgAsmElfSection(fhdr);
-                    break;
-                  case SgAsmElfSectionTableEntry::SHT_NOBITS:
-                    /* These types of sections don't occupy any file space (e.g., BSS) */
-                    is_parsed[i] = new SgAsmElfSection(fhdr);
-                    break;
-                  case SgAsmElfSectionTableEntry::SHT_DYNAMIC: {
-                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
-                      ROSE_ASSERT(strsec);
-                      is_parsed[i] = new SgAsmElfDynamicSection(fhdr, strsec);
-                      break;
-                  }
-                  case SgAsmElfSectionTableEntry::SHT_DYNSYM: {
-                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
-                      ROSE_ASSERT(strsec);
-                      SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
-                      symsec->set_is_dynamic(true);
-                      is_parsed[i] = symsec;
-                      break;
-                  }
-                  case SgAsmElfSectionTableEntry::SHT_SYMTAB: {
-                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
-                      ROSE_ASSERT(strsec);
-                      SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
-                      symsec->set_is_dynamic(false);
-                      is_parsed[i] = symsec;
-                      break;
-                  }
-                  case SgAsmElfSectionTableEntry::SHT_STRTAB:
-                    is_parsed[i] = new SgAsmElfStringSection(fhdr);
-                    break;
-                  case SgAsmElfSectionTableEntry::SHT_REL: {
-                      SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
-                      ROSE_ASSERT(symbols);
-                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols,relLinked);
-                      relocsec->set_uses_addend(false);
-                      is_parsed[i] = relocsec;
-                      break;
-                  }
-                  case SgAsmElfSectionTableEntry::SHT_RELA: {
-                      SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
-                      ROSE_ASSERT(symbols);
-                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols,relLinked);
-                      relocsec->set_uses_addend(true);
-                      is_parsed[i] = relocsec;
-                      break;
-                  }
-                  case SgAsmElfSectionTableEntry::SHT_PROGBITS: {
-                      std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
-                      if (section_name == ".eh_frame") {
-                          is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
-                      } else {
-                          is_parsed[i] = new SgAsmElfSection(fhdr);
-                      }
-                      break;
-                  }
-		  case SgAsmElfSectionTableEntry::SHT_GNU_versym: {
-		      is_parsed[i] = new SgAsmElfSymverSection(fhdr);
-		      break;
-		  }
-		  case SgAsmElfSectionTableEntry::SHT_GNU_verdef: {
-                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
-                      ROSE_ASSERT(strsec);
-		      is_parsed[i] = new SgAsmElfSymverDefinedSection(fhdr,strsec);
-		      break;
-		  }
-		  case SgAsmElfSectionTableEntry::SHT_GNU_verneed: {
-                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
-                      ROSE_ASSERT(strsec);
-		      is_parsed[i] = new SgAsmElfSymverNeededSection(fhdr,strsec);
-		      break;
-		  }
-                  default:
-                    is_parsed[i] = new SgAsmElfSection(fhdr);
-                    break;
+                    case SgAsmElfSectionTableEntry::SHT_NULL:
+                        /* Null entry. We still create the section just to hold the section header. */
+                        is_parsed[i] = new SgAsmElfSection(fhdr);
+                        break;
+                    case SgAsmElfSectionTableEntry::SHT_NOBITS:
+                        /* These types of sections don't occupy any file space (e.g., BSS) */
+                        is_parsed[i] = new SgAsmElfSection(fhdr);
+                        break;
+                    case SgAsmElfSectionTableEntry::SHT_DYNAMIC: {
+                        SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                        ROSE_ASSERT(strsec);
+                        is_parsed[i] = new SgAsmElfDynamicSection(fhdr, strsec);
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_DYNSYM: {
+                        SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                        ROSE_ASSERT(strsec);
+                        SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
+                        symsec->set_is_dynamic(true);
+                        is_parsed[i] = symsec;
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_SYMTAB: {
+                        SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                        ROSE_ASSERT(strsec);
+                        SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
+                        symsec->set_is_dynamic(false);
+                        is_parsed[i] = symsec;
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_STRTAB:
+                        is_parsed[i] = new SgAsmElfStringSection(fhdr);
+                        break;
+                    case SgAsmElfSectionTableEntry::SHT_REL: {
+                        SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
+                        ROSE_ASSERT(symbols);
+                        SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, relLinked);
+                        relocsec->set_uses_addend(false);
+                        is_parsed[i] = relocsec;
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_RELA: {
+                        SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
+                        ROSE_ASSERT(symbols);
+                        SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, relLinked);
+                        relocsec->set_uses_addend(true);
+                        is_parsed[i] = relocsec;
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_PROGBITS: {
+                        std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
+                        if (section_name == ".eh_frame") {
+                            is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
+                        } else {
+                            is_parsed[i] = new SgAsmElfSection(fhdr);
+                        }
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_GNU_versym: {
+                        is_parsed[i] = new SgAsmElfSymverSection(fhdr);
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_GNU_verdef: {
+                        SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                        ROSE_ASSERT(strsec);
+                        is_parsed[i] = new SgAsmElfSymverDefinedSection(fhdr,strsec);
+                        break;
+                    }
+                    case SgAsmElfSectionTableEntry::SHT_GNU_verneed: {
+                        SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                        ROSE_ASSERT(strsec);
+                        is_parsed[i] = new SgAsmElfSymverNeededSection(fhdr,strsec);
+                        break;
+                    }
+                    default:
+                        is_parsed[i] = new SgAsmElfSection(fhdr);
+                        break;
                 }
                 is_parsed[i]->init_from_section_table(entry, section_name_strings, i);
                 is_parsed[i]->parse();
