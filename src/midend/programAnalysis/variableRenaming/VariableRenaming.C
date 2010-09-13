@@ -1281,12 +1281,18 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 		{
 			cout << "Merging attr[" << i << "]" << endl;
 		}
-		defs.insert(defs.end(), attrs[i].getDefs().begin(), attrs[i].getDefs().end());
+		//defs.insert(defs.end(), attrs[i].getDefs().begin(), attrs[i].getDefs().end());
+		//George Vulov 9/13/2010: We don't propagate defs up the tree by default, just uses. 
+		//If we propagate defs up the tree for arbitrary nodes, e.g. (SgInitializer), then we get spurious defs
+		uses.insert(uses.end(), attrs[i].getDefs().begin(), attrs[i].getDefs().end());
 		uses.insert(uses.end(), attrs[i].getUses().begin(), attrs[i].getUses().end());
 	}
 
+//George Vulov 9/13/2010: We don't propagate defs up the tree by default, just uses.
+//If we propagate defs up the tree for arbitrary nodes, e.g. (SgInitializer), then we get spurious defs
+#if 0
 	//Set all the defs as being defined here.
-	foreach(NodeVec::value_type& iter, defs)
+	foreach(SgNode* iter, defs)
 	{
 		//Get the unique name of the def.
 		VarUniqueName * uName = varRename->getUniqueName(iter);
@@ -1300,9 +1306,10 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 			cout << "Found def for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
 		}
 	}
+#endif
 
 	//Set all the uses as being used here.
-	foreach(NodeVec::value_type& iter, uses)
+	foreach(SgNode* iter, uses)
 	{
 		//Get the unique name of the def.
 		VarUniqueName * uName = varRename->getUniqueName(iter);
