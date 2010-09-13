@@ -271,7 +271,7 @@ SgAsmGenericHeader::get_section_by_offset(addr_t offset, addr_t size, size_t *nf
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns sections in this header that are mapped to include the specified relative virtual address. */
+/** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_rva(addr_t rva) const
 {
@@ -286,7 +286,8 @@ SgAsmGenericHeader::get_sections_by_rva(addr_t rva) const
     return retval;
 }
 
-/** Returns single section in this header that is mapped to include the specified relative virtual address. */
+/** Returns the single section having a preferred mapping that includes the specified relative virtual address. If there are
+ *  no sections or multiple sections satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) const
 {
@@ -295,31 +296,48 @@ SgAsmGenericHeader::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) c
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns sections in this header that are mapped to include the specified virtual address */
+/** Returns sections having a preferred or actual mapping that includes the specified virtual address.  If @p use_preferred is
+ *  set, then the condition is evaluated by looking at the section's preferred mapping, otherwise the actual mapping is used.
+ *  If an actual mapping is used, the specified virtual address must be part of the actual mapped section, not merely in the
+ *  memory region that was also mapped to satisfy alignment constraints. */
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_va(addr_t va) const
+SgAsmGenericHeader::get_sections_by_va(addr_t va, bool use_preferred) const
 {
-    if (va < get_base_va())
-        return SgAsmGenericSectionPtrList();
-    addr_t rva = va - get_base_va();
-    return get_sections_by_rva(rva);
+    if (use_preferred) {
+        if (va < get_base_va())
+            return SgAsmGenericSectionPtrList();
+        addr_t rva = va - get_base_va();
+        return get_sections_by_rva(rva);
+    }
+     
+    SgAsmGenericSectionPtrList retval;
+    for (size_t i=0; i<p_sections->get_sections().size(); i++) {
+        SgAsmGenericSection *section = p_sections->get_sections()[i];
+        if (section->is_mapped() &&
+            va>=section->get_mapped_actual_va() && va<section->get_mapped_actual_va()+section->get_mapped_size())
+            retval.push_back(section);
+    }
+    return retval;
 }
 
-/** Returns single section in this header that is mapped to include the specified virtual address. See also
- *  get_best_section_by_va(). */
+/** Returns the section having a preferred or actual mapping that includes the specified virtual address. If @p use_preferred
+ *  is set, then the condition is evaluated by looking at the section's preferred mapping, otherwise the actual mapping is
+ *  used. If an actual mapping is used, the specified virtual address must be part of the actual mapped section, not merely in
+ *  the memory region that was also mapped to satisfy alignment constraints.  If there are no sections or multiple sections
+ *  satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_va(addr_t va, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_va(addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
 {
-    SgAsmGenericSectionPtrList possible = get_sections_by_va(va);
+    SgAsmGenericSectionPtrList possible = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
 }
 
 /** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_best_section_by_va(addr_t va, size_t *nfound) const
+SgAsmGenericHeader::get_best_section_by_va(addr_t va, bool use_preferred, size_t *nfound) const
 {
-    const SgAsmGenericSectionPtrList &candidates = get_sections_by_va(va);
+    const SgAsmGenericSectionPtrList &candidates = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = candidates.size();
     return SgAsmGenericFile::best_section_by_va(candidates, va);
 }
