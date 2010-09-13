@@ -816,9 +816,6 @@ Grammar::setUpBinaryInstructions ()
      AsmElfEHFrameEntryFD.setDataPrototype("SgUnsignedCharList", "instructions", "",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     /** .gnu.version, .gnu.version_d, .gnu.version.r 
-         gnu extension to support symbol versioning
-     */
 
      /* The GNU Symbol Version Table (.gnu.version section).  The section points to an SgAsmElfSymverEntryPtrList containing a
       * list of SgAsmElfSymverEntry objects. */
@@ -832,18 +829,22 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSymverEntry.setFunctionPrototype("HEADER_ELF_SYMVER_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSymverEntry.setDataPrototype("size_t", "value", "= 0",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     
-     /* .gnu.version_d */
+
+
+
+     /* The GNU Symbol Version Definitions (.gnu.version_d section).  The SgAsmElfSymverDefinedSection points to a list of
+      * entries (SgAsmSymverDefinedEntry), which in turn point to a list of auxilliary members (SgAsmSymverDefinedAux). See
+      * SgAsmSymverDefinedSection::parse() for a good description of the disk format. */
      AsmElfSymverDefinedSection.setFunctionPrototype("HEADER_ELF_SYMVER_DEFINED_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSymverDefinedSection.setDataPrototype("SgAsmElfSymverDefinedEntryList*", "entries", "= NULL",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AsmElfSymverDefinedEntryList.setDataPrototype("SgAsmElfSymverDefinedEntryPtrList", "entries", "",
-                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
+                                                   NO_DELETE);
 
      AsmElfSymverDefinedAuxList.setDataPrototype("SgAsmElfSymverDefinedAuxPtrList", "entries", "",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
 
      AsmElfSymverDefinedEntry.setFunctionPrototype("HEADER_ELF_SYMVER_DEFINED_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSymverDefinedEntry.setDataPrototype("size_t", "version", "= 0",
@@ -862,7 +863,11 @@ Grammar::setUpBinaryInstructions ()
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-     /* .gnu.version_r */
+
+     /* The GNU Symbol Version Requirements Table (.gnu.version_r section).  The format of this table is similar to the GNU
+      * Symbol Version Definitions Table described above, namey that the table object (SgAsmElfSymverNeededSection) points to
+      * a list of entries (SgAsmElfSymverNeededEntry), which of which point to a list of auxilliary information
+      * (SgAsmElfSymverNeededAux). */
      AsmElfSymverNeededSection.setFunctionPrototype("HEADER_ELF_SYMVER_NEEDED_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSymverNeededSection.setDataPrototype("SgAsmElfSymverNeededEntryList*", "entries", "= NULL",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -872,7 +877,6 @@ Grammar::setUpBinaryInstructions ()
 
      AsmElfSymverNeededAuxList.setDataPrototype("SgAsmElfSymverNeededAuxPtrList", "entries", "",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
 
      AsmElfSymverNeededEntry.setFunctionPrototype("HEADER_ELF_SYMVER_NEEDED_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSymverNeededEntry.setDataPrototype("size_t", "version", "= 0",
