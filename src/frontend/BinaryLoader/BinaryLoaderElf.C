@@ -122,218 +122,106 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
     return CONTRIBUTE_ADD;
 }
 
-
-
-
-
-
-
-
-
-
-#if 0
+/* class method */
 void
-BinaryLoaderElf::handleSectionMapped(SgAsmGenericSection* section)
+BinaryLoaderElf::get_dynamic_vars(SgAsmGenericHeader *hdr, std::string &rpath/*out*/, std::string &runpath/*out*/)
 {
-    if (isSgAsmElfSection(section)) {
-        SgAsmElfSection* elfSection = isSgAsmElfSection(section);
-        // needed to fix up SHT_NOBITS sections (like bss)
-        if (elfSection->get_section_entry() &&
-            (elfSection->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS)) {
-            uint64_t nbytes=elfSection->get_section_entry()->get_sh_size();
-            if (nbytes) {
-                section->set_mapped_size(nbytes);
-                unsigned char* zeroBits = section->local_content(nbytes);
-                memset(zeroBits, 0, nbytes);
+    rpath = runpath = "";
+
+    SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(hdr->get_section_by_name(".dynamic"));
+    if (dynamic) {
+        SgAsmElfDynamicEntryPtrList& entries = dynamic->get_entries()->get_entries();
+        for (size_t i=0; i<entries.size(); ++i) {
+            if (SgAsmElfDynamicEntry::DT_RPATH == entries[i]->get_d_tag()) {
+                rpath = entries[i]->get_d_val().to_string();
+            } else if (SgAsmElfDynamicEntry::DT_RUNPATH == entries[i]->get_d_tag()) {
+                runpath = entries[i]->get_d_val().to_string();
             }
         }
     }
 }
-#endif
 
-/* NOTE: We assume that the value in DT_STRTAB matches dynamic->get_linked_section */
-static void
-getDynamicVars(SgAsmElfFileHeader* elfHeader, std::string& rpath, std::string& runpath)
+void
+BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
 {
-    SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
-
-    SgAsmElfDynamicSection* dynamic=NULL;
-    for (size_t i=0; i < sections.size(); ++i) {
-        if (isSgAsmElfDynamicSection(sections[i])) {
-            dynamic = isSgAsmElfDynamicSection(sections[i]);
-            break;
-        }
-    }
-    if(NULL == dynamic)
-        return;
-
-    SgAsmElfDynamicEntryPtrList& entries = dynamic->get_entries()->get_entries();
-    //SgAsmElfStringSection* strtab = isSgAsmElfStringSection(dynamic->get_linked_section());
-    for (size_t i=0; i < entries.size();++i) {
-        if (SgAsmElfDynamicEntry::DT_RPATH == entries[i]->get_d_tag()) {
-            rpath = entries[i]->get_d_val().to_string();
-        } else if (SgAsmElfDynamicEntry::DT_RUNPATH == entries[i]->get_d_tag()) {
-            runpath = entries[i]->get_d_val().to_string();
-        }
-    }
-}
-
-static Rose_STL_Container<std::string>
-getLdPreload(SgAsmElfFileHeader* /*header*/)
-{
-    Rose_STL_Container<std::string> ret;
-    const char* ld_preload_env=getenv("LD_PRELOAD");
-    if (NULL == ld_preload_env)
-        return ret;
-    std::string ldPrelodStr;
-    boost::regex re;
-    re.assign("\\s+");
-    boost::sregex_token_iterator iter(ldPrelodStr.begin(), ldPrelodStr.end(), re, -1);
-    boost::sregex_token_iterator iterEnd;
-    for (; iter != iterEnd; ++iter)
-        ret.push_back(*iter);
-    return ret;
-}
-
-static Rose_STL_Container<std::string>
-parseLdPath(const std::string& rawPath)
-{
-    Rose_STL_Container<std::string> ret;
-    if (rawPath.empty())
-        return ret;
-
-    boost::regex re;
-    re.assign("[:;]");
-    boost::sregex_token_iterator iter(rawPath.begin(), rawPath.end(), re, -1);
-    boost::sregex_token_iterator iterEnd;
-    for (; iter != iterEnd; ++iter)
-        ret.push_back(*iter);
-    return ret;
-}
-
-static Rose_STL_Container<std::string>
-getLdLibraryPaths(SgAsmElfFileHeader* /*header*/)
-{
-    Rose_STL_Container<std::string> ret;
-    const char* ld_preload_env =  getenv("LD_PRELOAD");
+    /* The LD_PRELOAD environment variable may contain space-separated library names */
+    const char* ld_preload_env = getenv("LD_PRELOAD");
     if (ld_preload_env) {
-        return parseLdPath(ld_preload_env);
-    } else {
-        return ret;
+        std::string s = ld_preload_env;
+        boost::regex re;
+        re.assign("\\s+");
+        boost::sregex_token_iterator iter(s.begin(), s.end(), re, -1);
+        boost::sregex_token_iterator iterEnd;
+        for (; iter!=iterEnd; ++iter)
+            add_preload(*iter);
     }
-}
 
-
-#if 0 /*replaced by dependencies() but also need a function to set up the search path*/
-// Overall Caveats -
-//      setuid       - the loader should do different stuff if setuid is used, we don't do that
-//      /etc/ld.so.* - there are a bunch of files that can alter behavior - they are not handled
-//      -z nodeflib  - aparently different behavior is warrented when linked w/ -z nodeflib,
-//                       I'm not sure how to detect this, so it is ignored
-//      vdso         - the linux virtual dynamic shared object is not loaded, but we might want
-//                     a way to simulate this in the future. [RPM 2010-08-31]
-//      interference - the methods used by ROSE to load an executable (namely, environment variables)
-//                     interfere with the loading of ROSE itself. [RPM 2010-08-31]
-//      diagnostics  - we should have some way to produce diagnostics similar to those that can be
-//                     produced by the readl loader.  E.g., LD_SHOW_AUXV, etc. [RPM 2010-08-31]
-//
-// LD_PRELOAD - whitespace separated list of additional libraries (complex qualification for setuid)
-// [NOT SUPPORTED] /etc/ld.so.preload
-// DT_RPATH from .dynamic (only if DT_RUNPATH does NOT exist)
-// LD_LIBRARY_PATH from environment (no setuid)
-// DT_RUNPATH from .dynamic
-// [NOT SUPPORTED] from /etc/ld.so.cache (unless compiled w/ -z nodeflib)
-// '/lib'                                (unless compiled w/ -z nodeflib)
-// '/usr/lib'                            (unless copmiled w/ -z nodeflib)
-Rose_STL_Container<std::string>
-BinaryLoaderElf::getDLLs(SgAsmGenericHeader* header, const Rose_STL_Container<std::string> &dllFilesAlreadyLoaded)
-{
-    // not sure what nodeflib does...
-    SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(header);
-    ROSE_ASSERT(NULL != elfHeader);
-
-    // LD_PRELOAD - list of libraries to be loaded
-    Rose_STL_Container<std::string> ldLibs=getLdPreload(elfHeader);
-
+    /* Add the DT_RPATH directories to the search path (only if no DT_RUNPATH). Use of DT_RPATH is deprecated. */
     std::string rpath, runpath;
-    getDynamicVars(elfHeader,rpath,runpath);
-
-    Rose_STL_Container<std::string> libPaths;
+    get_dynamic_vars(hdr, rpath, runpath);
     if (!rpath.empty() && runpath.empty()) {
-        // if DT_RPATH is exists AND LD_RUNPATH does NOT exist, seach DT_RPATHs first
-        libPaths = parseLdPath(rpath);
+        boost::regex re;
+        re.assign("[:;]");
+        boost::sregex_token_iterator iter(rpath.begin(), rpath.end(), re, -1);
+        boost::sregex_token_iterator iterEnd;
+        for (; iter!=iterEnd; ++iter)
+            add_directory(*iter);
     }
-    // examine LD_LIBRARY_PATH environment variable
-    Rose_STL_Container<std::string> ldLibPaths = getLdLibraryPaths(elfHeader);
-
-    libPaths.insert(libPaths.end(), ldLibPaths.begin(), ldLibPaths.end());
+    
+    /* Add the paths from the LD_LIBRARY_PATH environment variable */
+    const char *ld_library_path_env = getenv("LD_LIBRARY_PATH");
+    if (ld_library_path_env) {
+        std::string s = ld_library_path_env;
+        boost::regex re;
+        re.assign("[:;]");
+        boost::sregex_token_iterator iter(s.begin(), s.end(), re, -1);
+        boost::sregex_token_iterator iterEnd;
+        for (; iter!=iterEnd; ++iter)
+            add_directory(*iter);
+    }
+    
+    /* Add paths from the .dynamic DT_RUNPATH variable */
     if (!runpath.empty()) {
-        // if DT_RUNPATH exist, search those path's after LD_LIBRARY_PATH
-        Rose_STL_Container<std::string> runPaths = parseLdPath(runpath);
-        libPaths.insert(libPaths.end(), runPaths.begin(), runPaths.end());
+        boost::regex re;
+        re.assign("[:;]");
+        boost::sregex_token_iterator iter(runpath.begin(), runpath.end(), re, -1);
+        boost::sregex_token_iterator iterEnd;
+        for (; iter!=iterEnd; ++iter)
+            add_directory(*iter);
     }
-
-    if ((header->get_isa() & SgAsmGenericHeader::ISA_FAMILY_MASK) == SgAsmGenericHeader::ISA_X8664_Family) {
-        // Not sure what actually says this is standard, but redhat 5.3 seems to require it
-        libPaths.push_back("/lib64");
-        libPaths.push_back("/usr/lib64");
-    }
-
-    libPaths.push_back("/lib");
-    libPaths.push_back("/usr/lib");
-
-    Rose_STL_Container<std::string> files;
-
-    ROSE_ASSERT(header != NULL);
-    std::set<std::string> alreadyLoadedSet;
-    for (size_t i=0; i < dllFilesAlreadyLoaded.size(); ++i) {
-        boost::filesystem::path p(dllFilesAlreadyLoaded[i]);
-        //FIXME !! tps (12/18/2009) : Commented out for now since it assumes BOOST 1.4 and does not compile for anyone else
-        // Re-enabling it to see what happens since this is an integral part of the algorithm. [RPM 2010-08-31]
-        alreadyLoadedSet.insert(p.filename());
-    }
-
-    const SgAsmGenericDLLPtrList &rawdlls = header->get_dlls();
-    printf("handling dlls for '%s'\n", header->get_file()->get_name().c_str());
-
-    for (size_t j=0; j < rawdlls.size(); ++j) {
-        std::string dll = rawdlls[j]->get_name()->c_str();
-        printf("  looking for dll '%s' : ", dll.c_str());
-        if (alreadyLoadedSet.find(dll) != alreadyLoadedSet.end()) {
-            printf("already loaded\n");
-            // already loaded TODO - check to make sure [MCB]
-            continue;
-        }
-        printf(" searching paths...\n");
-
-        for(size_t p=0; p < libPaths.size(); ++p){
-            boost::filesystem::path libPath(libPaths[p]);
-            libPath /= dll;
-            std::string file=libPath.file_string();
-
-            //FIXME !! tps (12/18/2009) : Commented out for now since it assumes BOOST 1.4 and does not compile for anyone else
-            // Re-enabling it to see what happens since this is an integral part of the algorithm. [RPM 2010-08-31]
-            printf("      trying '%s':", file.c_str());
-            if (!boost::filesystem::is_regular_file(libPath)) {
-                printf(" file not found\n");
-                continue;
-            }
-
-            // have to make sure it actually opens
-            std::ifstream test(file.c_str());
-            if (test.bad()) {
-                printf(" could not be opened\n");
-                continue;
-            }
-
-            printf(" good\n");
-            files.push_back(file);
-            break;
+    
+    /* Add architecture-specific libraries */
+    if (hdr) {
+        switch (hdr->get_isa() & SgAsmGenericHeader::ISA_FAMILY_MASK) {
+            case SgAsmGenericHeader::ISA_X8664_Family:
+                add_directory("/lib64");
+                add_directory("/usr/lib64");
+                break;
+            case SgAsmGenericHeader::ISA_IA32_Family:
+                add_directory("/lib32");
+                add_directory("/usr/lib32");
+                break;
+            default:
+                /*none*/
+                break;
         }
     }
-    return files;
+
+    /* Add system library locations */
+    add_directory("/lib");
+    add_directory("/usr/lib");
 }
-#endif
+
+    
+
+
+
+
+
+
+
+
+
 
 /*************************************************************************************************************************
  * Low-level ELF stuff begins here.  More BinaryLoaderElf methods follow this stuff.
