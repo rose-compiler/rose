@@ -90,9 +90,18 @@ void event3(model* m)
     int t = m->i;
     m->i = m->j;
     m->j = t;
-#if 1
+#if 0
     int i = 0;
     int j = i;
     int k = j;
 #endif
+}
+
+void event4(model* m)
+{
+    if (m->j)
+    {
+        m->i += 10;
+    }
+    m->i = 10;
 }

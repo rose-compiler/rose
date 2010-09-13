@@ -104,7 +104,7 @@ bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 
 		// Get the version of its reaching def.
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type& num_to_node, defs)
-		reaching_def_ver.insert(num_to_node.first);
+			reaching_def_ver.insert(num_to_node.first);
 
 		// Compare the current version of this variable and its reaching def's version.
 		if (table_.find(name)->second != reaching_def_ver)
@@ -112,6 +112,35 @@ bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 	}
 	return true;
 }
+
+bool VariableVersionTable::checkVersionForDef(SgExpression* exp) const
+{
+	// First, get all variables in the given expression.
+	vector<SgExpression*> vars = getAllVariables(exp);
+
+	foreach(SgExpression* var, vars)
+	{
+		// When checking a USE var's version, we search its reaching def's version.
+		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(var->get_parent(), name);
+
+		ROSE_ASSERT(!defs.empty());
+		ROSE_ASSERT(table_.count(name) > 0);
+
+		set<int> reaching_def_ver;
+
+		// Get the version of its reaching def.
+		foreach(VariableRenaming::NumNodeRenameEntry::value_type& num_to_node, defs)
+			reaching_def_ver.insert(num_to_node.first);
+
+		// Compare the current version of this variable and its reaching def's version.
+		if (table_.find(name)->second != reaching_def_ver)
+			return false;
+	}
+	return true;
+}
+
+#if 0
 
 bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) const
 {
@@ -234,6 +263,8 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 	}
 	return true;
 }
+
+#endif
 
 void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
 {

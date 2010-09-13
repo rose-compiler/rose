@@ -271,7 +271,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 			// in the variable version table.
 
 
-			if (var_table.checkVersion(operand))
+			if (var_table.checkVersionForDef(operand))
 			{
 				// Once reversed, the version number should backward.
 				VariableVersionTable new_table(var_table);
@@ -317,7 +317,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 			// To make sure it is reversed correctly, a should has the version number 1 and
 			// b should has the version number 2 in the variable version table.
 
-			if (var_table.checkVersion(lhs_operand, rhs_operand) &&
+			if (var_table.checkVersionForDefUse(lhs_operand, rhs_operand) &&
 					constructive)
 			{
 				// Once reversed, the version number should backward.
