@@ -1,9 +1,4 @@
-/* 
- * File:   VariableRenaming.h
- * Author: frye5
- *
- * Created on June 15, 2010, 4:12 PM
- */
+//Author: Justin Frye
 
 #ifndef SSAANALYSIS_H
 #define	SSAANALYSIS_H
