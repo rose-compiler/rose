@@ -57,7 +57,7 @@ public:
 
 
     // Build CFG according to the 'is_filtered_' flag.
-    void buildCFG()
+    virtual void buildCFG()
     {
         if (is_filtered_) buildFilteredCFG();
         else buildFullCFG();
