@@ -268,6 +268,7 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 
 void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
 {
+	//FIXME: This does not set the versions of all the expanded variables
 	VariableRenaming::VarName name;
 	name.push_back(init_name);
 	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());
@@ -395,7 +396,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 		indices.insert(versionDefPair.first);
 	}
 
-#if 0
+#if	1
 	printf("%s:\nIndices found: ", VariableRenaming::keyToString(varName).c_str());
 
 	foreach(int v, table_.find(varName)->second)
