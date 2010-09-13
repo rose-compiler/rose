@@ -100,8 +100,7 @@ void event3(model* m)
 void event4(model* m)
 {
     if (m->j)
-    {
-        m->i += 10;
-    }
+        if (m->k)
+            m->i += 10;
     m->i = 10;
 }

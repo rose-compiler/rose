@@ -19,8 +19,10 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 {
 	vector<EvaluationResult> results;
 
+	// Now NullExpressionHander only handles expressions without side effects. Those with side effects are
+	// handled by IdentityExpressionHandler.
 	// If the value of the expression is used, we cannot return NULL.
-	if (reverseValueUsed)
+	if (!backstroke_util::containsModifyingExpression(exp) || reverseValueUsed)
 		return results;
 	//SgExpression* exp = exp_pkg.exp;
 

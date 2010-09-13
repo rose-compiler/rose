@@ -320,9 +320,47 @@ void VariableVersionTable::setNullVersion(SgNode* node)
 	table_[varName].clear();
 }
 
+std::pair<VariableVersionTable, VariableVersionTable>
+VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const
+{
+	VariableVersionTable true_body_var_table = *this;
+	VariableVersionTable false_body_var_table = *this;
+
+	foreach (TableType::value_type var_version, table_)
+	{
+		foreach (int version, var_version.second)
+		{
+			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
+			SgStatement* if_body = backstroke_util::getEnclosingIfBody(def_node);
+			if (if_body == true_body)
+			{
+				true_body_var_table.table_[var_version.first].clear();
+				true_body_var_table.table_[var_version.first].insert(version);
+			}
+			else if (if_body == false_body)
+			{
+				false_body_var_table.table_[var_version.first].clear();
+				false_body_var_table.table_[var_version.first].insert(version);
+			}
+
+			if (SageInterface::isAncestor(true_body, def_node))
+			{
+				false_body_var_table.table_[var_version.first].erase(version);
+			}
+			else if (SageInterface::isAncestor(false_body, def_node))
+			{
+				true_body_var_table.table_[var_version.first].erase(version);
+			}
+		}
+	}
+
+	return make_pair(true_body_var_table, false_body_var_table);
+}
+
 void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 {
 	ROSE_ASSERT(var_table.table_.size() == this->table_.size());
+	
 	for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
 			it != table_.end(); ++it)
 	{
@@ -336,6 +374,31 @@ void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 		std::set_intersection(ver1.begin(), ver1.end(),
 				ver2.begin(), ver2.end(), inserter(intersection, intersection.begin()));
 		it->second.swap(intersection);
+
+#if 0
+		if (var_table.table_.find(it->first)->second != it->second)
+			it->second.clear();
+#endif
+	}
+}
+
+void VariableVersionTable::setUnion(const VariableVersionTable& var_table)
+{
+	ROSE_ASSERT(var_table.table_.size() == this->table_.size());
+
+	for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
+			it != table_.end(); ++it)
+	{
+		ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
+
+		// Make the intersection of those two sets of versions.
+		const set<int>& ver1 = var_table.table_.find(it->first)->second;
+		const set<int>& ver2 = it->second;
+		set<int> result;
+
+		std::set_union(ver1.begin(), ver1.end(),
+				ver2.begin(), ver2.end(), inserter(result, result.begin()));
+		it->second.swap(result);
 
 #if 0
 		if (var_table.table_.find(it->first)->second != it->second)

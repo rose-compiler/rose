@@ -7,7 +7,9 @@
 
 class VariableVersionTable
 {
-	std::map<VariableRenaming::VarName, std::set<int> > table_;
+	typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
+	
+	TableType table_;
 	VariableRenaming* var_renaming_;
 
 	friend bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2);
@@ -62,9 +64,21 @@ public:
 		table_.erase(VariableRenaming::getVarName(node));
 	}
 
+	/** This function gets two variable version tabes for true/false bodies in an if statement.
+	 * Since currently there is no fi function in implementation, this is a workaround to get the
+	 * correct vartable at the end of each body. At the end of if statement, for each variable,
+	 * check the def node for its each version. If that version is defined in true body, remove
+	 * this version when processing false body, and removing and vice versa. If that version is defined in  */
+	std::pair<VariableVersionTable, VariableVersionTable>
+	getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const;
+
 	/** Intersect this variable version table to another one. For each variable inside, we set its
 	* new version which is the common indices from those two tables. */
 	void intersect(const VariableVersionTable& var_table);
+
+	/** Set union this variable version table to another one. For each variable inside, we set its
+	* new version which is the all indices from those two tables. */
+	void setUnion(const VariableVersionTable& var_table);
 
 	/** If a local variable is not restored at the begining of the reverse basic block, set its
 	* version to NULL. */
