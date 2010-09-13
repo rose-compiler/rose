@@ -803,7 +803,7 @@ Thus, we're performing
 */
 SgAsmGenericSection* find_mapped_section(SgAsmGenericHeader* header, rose_addr_t va)
 {
-    SgAsmGenericSectionPtrList sections = header->get_sections_by_va(va);
+    SgAsmGenericSectionPtrList sections = header->get_sections_by_va(va, false);
     SgAsmGenericSection* section=NULL;
     for (size_t sec=0; sec < sections.size(); ++sec) {
         SgAsmElfSection* elfSection = isSgAsmElfSection(sections[sec]);

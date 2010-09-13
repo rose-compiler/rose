@@ -180,7 +180,8 @@ SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
         p_entry_type = ILT_ORDINAL;
         p_ordinal = ilt_word & 0xffff;
         p_extra_bits = ilt_word & ~(ordmask|0xffff);
-    } else if (0!=(ilt_word & ~hnrvamask) || NULL==fhdr->get_best_section_by_va((ilt_word&hnrvamask) + fhdr->get_base_va())) {
+    } else if (0!=(ilt_word & ~hnrvamask) ||
+               NULL==fhdr->get_best_section_by_va((ilt_word&hnrvamask) + fhdr->get_base_va(), false)) {
         /* Bound address */
         p_entry_type = ILT_BOUND_RVA;
         p_bound_rva = ilt_word;

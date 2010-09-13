@@ -1012,15 +1012,15 @@ HEADER_GENERIC_HEADER_START
 		SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
 		SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size) const;
 		SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva) const;
-		SgAsmGenericSectionPtrList get_sections_by_va(addr_t va) const;
+		SgAsmGenericSectionPtrList get_sections_by_va(addr_t va, bool use_preferred) const;
 
 		/* Section lookup functions (singular) */
 		SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
 		SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
 		SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0) const;
 		SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0) const;
-		SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0) const;
-		SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_va(addr_t va, bool use_preferred, size_t *nfound=0) const;
+		SgAsmGenericSection *get_best_section_by_va(addr_t va, bool use_preferred, size_t *nfound=0) const;
 
 	private:
 		void ctor();
