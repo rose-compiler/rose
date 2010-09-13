@@ -198,7 +198,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO(AsmElfStringSection,  "AsmElfStringSection",  "AsmElfStringSectionTag");
      NEW_TERMINAL_MACRO(AsmElfEHFrameSection, "AsmElfEHFrameSection", "AsmElfEHFrameSection");
      NEW_TERMINAL_MACRO(AsmElfNoteSection,    "AsmElfNoteSection",    "AsmElfNoteSection");
-     NEW_TERMINAL_MACRO(AsmElfSymverSection,"AsmElfSymverSection","AsmElfSymverSection");
+     NEW_TERMINAL_MACRO(AsmElfSymverSection,  "AsmElfSymverSection",  "AsmElfSymverSection");
      NEW_TERMINAL_MACRO(AsmElfSymverDefinedSection,"AsmElfSymverDefinedSection","AsmElfSymverDefinedSection");
      NEW_TERMINAL_MACRO(AsmElfSymverNeededSection,"AsmElfSymverNeededSection","AsmElfSymverNeededSection");
 
@@ -819,7 +819,9 @@ Grammar::setUpBinaryInstructions ()
      /** .gnu.version, .gnu.version_d, .gnu.version.r 
          gnu extension to support symbol versioning
      */
-     /* .gnu.version */
+
+     /* The GNU Symbol Version Table (.gnu.version section).  The section points to an SgAsmElfSymverEntryPtrList containing a
+      * list of SgAsmElfSymverEntry objects. */
      AsmElfSymverSection.setFunctionPrototype("HEADER_ELF_SYMVER_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSymverSection.setDataPrototype("SgAsmElfSymverEntryList*", "entries", "= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
