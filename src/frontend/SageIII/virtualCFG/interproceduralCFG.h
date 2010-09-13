@@ -2,6 +2,7 @@
 #define INTERPROCEDURAL_CFG_H 
 
 #include "staticCFG.h"
+#include "CallGraph.h"
 #include <map>
 #include <set>
 #include <string>
@@ -21,7 +22,11 @@ using VirtualCFG::CFGEdge;
 
 class InterproceduralCFG : public CFG
 {
-
+protected:
+    void buildCFG(CFGNode n, 
+                  std::map<CFGNode, SgGraphNode*>& all_nodes, 
+                  std::set<CFGNode>& explored,
+                  ClassHierarchyWrapper* classHierarchy);
 public:
     InterproceduralCFG() : CFG() {}
 
@@ -29,15 +34,10 @@ public:
     InterproceduralCFG(SgNode* node, bool is_filtered = false) 
       : CFG(node, is_filtered) {}
 
-    ~InterproceduralCFG() 
-    { clearNodesAndEdges(); }
-
     // Build CFG for debugging.
-    void buildFullCFG();
+    virtual void buildFullCFG();
     // Build filtered CFG which only contains interesting nodes.
-    void buildFilteredCFG();
-
-    void buildCFG(CFGNode n, std::map<CFGNode, SgGraphNode*>& all_nodes, std::set<CFGNode>& explored);
+    virtual void buildFilteredCFG();
 };
 
 } // end of namespace StaticCFG

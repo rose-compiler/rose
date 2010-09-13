@@ -3,6 +3,9 @@
 //#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #ifdef HAVE_SQLITE3
 #include "sqlite3x.h"
 using namespace sqlite3x;
@@ -692,168 +695,31 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
   return functionList; 
 }
 
-void 
-CallTargetSet::getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* targetDef, 
-                                      Rose_STL_Container<SgExpression*>& calls) {
-
-  VariantVector vv(V_SgFunctionCallExp);
-  Rose_STL_Container<SgNode*> callCandidates = NodeQuery::queryMemoryPool(vv);
-  Rose_STL_Container<SgNode*>::iterator callCandidate;
-
-  for (callCandidate = callCandidates.begin(); 
-       callCandidate != callCandidates.end(); ++callCandidate) { 
-    SgFunctionCallExp* callexp = isSgFunctionCallExp(*callCandidate);
-
-    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
-    CallTargetSet::getFunctionDefinitionsForCallLikeExp(callexp, candidateDefs);
-    Rose_STL_Container<SgFunctionDefinition*>::iterator candidateDef;
-    for(candidateDef = candidateDefs.begin(); 
-        candidateDef != candidateDefs.end(); ++candidateDef) {
-      if (*candidateDef == targetDef) {
-        calls.push_back(callexp);
-        break;
-      }
+std::vector<Properties*>
+CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
+  std::vector<Properties*> props;
+  SgMemberFunctionDeclaration* decl = sgCtorInit->get_declaration();
+  if (decl != NULL) {
+    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+    if (defDecl != NULL) {
+      props.push_back(new Properties(defDecl));
     }
   }
-
-  VariantVector vv2(V_SgConstructorInitializer);
-  Rose_STL_Container<SgNode*> ctorCandidates = NodeQuery::queryMemoryPool(vv2);
-  Rose_STL_Container<SgNode*>::iterator ctorCandidate;
-
-  for (ctorCandidate = ctorCandidates.begin(); 
-       ctorCandidate != ctorCandidates.end(); ++ctorCandidate) { 
-    SgConstructorInitializer* ctor = isSgConstructorInitializer(*ctorCandidate);
-
-    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
-    CallTargetSet::getFunctionDefinitionsForCallLikeExp(ctor, candidateDefs);
-    Rose_STL_Container<SgFunctionDefinition*>::iterator candidateDef;
-    for(candidateDef = candidateDefs.begin(); 
-        candidateDef != candidateDefs.end(); ++candidateDef) {
-      if (*candidateDef == targetDef) {
-        calls.push_back(ctor);
-        break;
-      }
-    }
-  }
-#if 0 // optimized, but buggy
-  // Process SgFunctionCallExps
-  VariantVector vv(V_SgFunctionCallExp);
-  Rose_STL_Container<SgNode*> returnSites = NodeQuery::queryMemoryPool(vv);
-  Rose_STL_Container<SgNode*>::iterator site;
-
-  SgFunctionDeclaration* targetDecl = def->get_declaration();
-  if (targetDecl != NULL) targetDecl = isSgFunctionDeclaration(targetDecl->get_definingDeclaration());
-  ROSE_ASSERT(targetDecl);
-
-  for (site = returnSites.begin(); site != returnSites.end(); ++site) { 
-    SgFunctionCallExp* callexp = isSgFunctionCallExp(*site);
-    SgFunctionDeclaration* candidateDecl = callexp->getAssociatedFunctionDeclaration();
-    
-    // If function pointer, resolve by matching types.
-    if (candidateDecl == NULL) { 
-      // Get candidate type 
-      SgExpression* fxn = callexp->get_function();
-      ROSE_ASSERT(fxn != NULL);
-      SgFunctionType* candidateType = isSgFunctionType(fxn->get_type());
-      SgFunctionType* targetType = isSgFunctionType(targetDecl->get_type());
-      if (candidateType->unparseToString() == targetType->unparseToString()) 
-        calls.push_back(callexp);
-      continue;
-    }
-
-    // If virtual function, resolve with class heirarchy
-
-    // MD 07-21-2010 
-    // Currently, get_definingDeclaration returns a declaration for virtual functions.
-    // However, this is incorrect since the defining declaration cannot be resolved 
-    // statically. Future work on ROSE will make get_definingDeclaration return NULL for 
-    // virtual functions. Until this is implemented, this check is necessary. 
-    SgFunctionModifier fnMod = candidateDecl->get_functionModifier();
-    SgMemberFunctionDeclaration* candidateMemDecl = isSgMemberFunctionDeclaration(candidateDecl);
-    bool isVirtual = fnMod.isVirtual() || fnMod.isPureVirtual();
-    if (candidateMemDecl) {
-      SgClassDeclaration* classDecl = candidateMemDecl->get_associatedClassDeclaration();
-      ROSE_ASSERT(classDecl);
-      SgClassType* classType = classDecl->get_type();
-      ROSE_ASSERT(classType);
-      ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-
-      std::vector<Properties*> props = 
-        CallTargetSet::solveMemberFunctionCall(classType, &classHierarchy, candidateMemDecl, false);
-      
-      Rose_STL_Container<Properties*>::iterator prop;
-      for (prop = props.begin(); prop != props.end(); ++prop) {
-        SgFunctionDeclaration* callerDecl = (*prop)->functionDeclaration;
-        if (callerDecl != NULL) 
-          callerDecl = isSgFunctionDeclaration(callerDecl->get_definingDeclaration());
-        else if (targetDecl == callerDecl) 
-          calls.push_back(callexp);
-      }
-      continue;
-    }
-
-    // If statically-resolvable functon call, resolve with AST
-    if (candidateDecl == targetDecl) {
-      calls.push_back(callexp);
-      continue;
-    }
-  }
-#endif
-
-#if 0
-  // Process SgConstructorInitializers
-  VariantVector vv2(V_SgConstructorInitializer);     
-  Rose_STL_Container<SgNode*> callers2 = NodeQuery::queryMemoryPool(vv2);
-  Rose_STL_Container<SgNode*>::iterator caller2;
-  for (caller2 = callers2.begin(); caller2 != callers2.end(); ++caller2) { 
-    SgConstructorInitializer* ctorInit = isSgConstructorInitializer(*caller2);
-    SgMemberFunctionDeclaration* ctorDecl = ctorInit->get_declaration(); 
-    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(ctorDecl->get_definingDeclaration());
-    if (defDecl == NULL) continue;
-    SgFunctionDefinition* candidateDef = defDecl->get_definition();
-    if (candidateDef == targetDef) calls.push_back(ctorInit);
-  }
-#endif
+  return props;
 }
 
+//
+// Add the declaration for functionCallExp to functionList. In the case of 
+// function pointers and virtual functions, append the set of declarations
+// to functionList. 
 void 
-CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp, 
-                                      Rose_STL_Container<SgFunctionDefinition*>& defs) {
-  switch (exp->variantT()) {
-    case V_SgFunctionCallExp: {
-             SgFunctionCallExp* call = isSgFunctionCallExp(exp);
-             SgFunctionDeclaration* targetDecl = call->getAssociatedFunctionDeclaration();
-
-             Rose_STL_Container<Properties*> functionList;
-             ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
-             CallTargetSet::retrieveFunctionDeclarations(call, &classHierarchy, functionList);
-             Rose_STL_Container<Properties*>::iterator prop;
-             for (prop = functionList.begin(); prop != functionList.end(); prop++) {
-               SgFunctionDeclaration* candidateDecl = (*prop)->functionDeclaration;
-               ROSE_ASSERT(candidateDecl);
-               candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
-               if (candidateDecl == NULL) // member function pointer call?
-                 break;
-               SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
-               if (candidateDef != NULL) 
-                 defs.push_back(candidateDef);
-             }
-             break;
-    }
-    case V_SgConstructorInitializer: {
-             SgConstructorInitializer* ctor = isSgConstructorInitializer(exp);
-             SgMemberFunctionDeclaration* decl = ctor->get_declaration();
-             if (decl == NULL) break;
-             SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-             if (defDecl == NULL) break;
-             SgFunctionDefinition* defn = defDecl->get_definition();
-             ROSE_ASSERT(defn);
-             defs.push_back(defn);
-             break;
-    }
-    default: {
-             ROSE_ASSERT(!"Unable to get definitions for expression");
-    }
+getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<Properties *>& functionList) {
+  // currently, all constructor initializers can be handled by solveConstructorInitializer
+  const std::vector<Properties*>& props = CallTargetSet::solveConstructorInitializer(sgCtorInit);
+  foreach (Properties* prop, props) {
+    functionList.push_back(prop); //TODO faster way to append vectors?
   }
 }
 
@@ -861,11 +727,10 @@ CallTargetSet::getFunctionDefinitionsForCallLikeExp(SgExpression* exp,
 // function pointers and virtual functions, append the set of declarations
 // to functionList. 
 void 
-CallTargetSet::retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp, 
+getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp, 
                          ClassHierarchyWrapper* classHierarchy,
                          Rose_STL_Container<Properties *>& functionList) {
-
-  SgExpression* functionExp = functionCallExp->get_function();
+  SgExpression* functionExp = sgFunCallExp->get_function();
   ROSE_ASSERT ( functionExp != NULL );
 
   switch ( functionExp->variantT() )
@@ -1048,6 +913,83 @@ CallTargetSet::retrieveFunctionDeclarations(SgFunctionCallExp* functionCallExp,
       }
   }
 }
+// Add the declaration for functionCallExp to functionList. In the case of 
+// function pointers and virtual functions, append the set of declarations
+// to functionList. 
+void 
+CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<Properties *>& functionList) {
+  switch( sgexp->variantT() ) {
+    case V_SgFunctionCallExp: {
+            getPropertiesForSgFunctionCallExp(isSgFunctionCallExp(sgexp), 
+                                              classHierarchy, 
+                                              functionList);
+            break;
+         }
+    case V_SgConstructorInitializer: {
+            getPropertiesForSgConstructorInitializer(isSgConstructorInitializer(sgexp), 
+                                                     classHierarchy, 
+                                                     functionList);
+            break;
+         }
+    default: {
+            std::cerr << "Error: cannot determine Properties for " << sgexp->class_name() << std::endl; 
+            break;
+         }
+  }
+}
+
+void 
+CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<SgFunctionDefinition*>& defList) {
+  Rose_STL_Container<Properties*> props;
+  CallTargetSet::getPropertiesForExpression(sgexp, classHierarchy, props);
+  foreach (Properties* prop, props) {
+    SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
+    ROSE_ASSERT(candidateDecl);
+    candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
+    if (candidateDecl != NULL) {
+      SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
+      if (candidateDef != NULL) {
+        defList.push_back(candidateDef);
+      }
+    }
+  }
+}
+
+void 
+CallTargetSet::getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
+                                           ClassHierarchyWrapper* classHierarchy,
+                                           Rose_STL_Container<SgExpression*>& exps) {
+  VariantVector vv(V_SgFunctionCallExp);
+  Rose_STL_Container<SgNode*> callCandidates = NodeQuery::queryMemoryPool(vv);
+  foreach (SgNode* callCandidate, callCandidates) {
+    SgFunctionCallExp* callexp = isSgFunctionCallExp(callCandidate);
+    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
+    CallTargetSet::getDefinitionsForExpression(callexp, classHierarchy, candidateDefs);
+    foreach (SgFunctionDefinition* candidateDef, candidateDefs) {
+      if (candidateDef == targetDef) {
+        exps.push_back(callexp);
+        break;
+      }
+    }
+  }
+  VariantVector vv2(V_SgConstructorInitializer);
+  Rose_STL_Container<SgNode*> ctorCandidates = NodeQuery::queryMemoryPool(vv2);
+  foreach (SgNode* ctorCandidate, ctorCandidates) {
+    SgConstructorInitializer* ctorInit = isSgConstructorInitializer(ctorCandidate);
+    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
+    CallTargetSet::getDefinitionsForExpression(ctorInit, classHierarchy, candidateDefs);
+    foreach (SgFunctionDefinition* candidateDef, candidateDefs) {
+      if (candidateDef == targetDef) {
+        exps.push_back(ctorInit);
+        break;
+      }
+    }
+  }
+}
 
 FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     SgProject *project, ClassHierarchyWrapper *classHierarchy )
@@ -1085,23 +1027,21 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     ROSE_ASSERT ( defDecl );
     ROSE_ASSERT ( functionDefinition != NULL );
     hasDefinition = true;
-    Rose_STL_Container<SgNode*> functionCallExpList;
-    functionCallExpList = NodeQuery::querySubTree ( functionDefinition, V_SgFunctionCallExp );
 
-    // printf ("functionCallExpList.size() = %zu \n",functionCallExpList.size());
+    Rose_STL_Container<SgNode*> functionCallExpList = 
+      NodeQuery::querySubTree(functionDefinition, V_SgFunctionCallExp);
+    foreach (SgNode* functionCallExp, functionCallExpList) {
+      CallTargetSet::getPropertiesForExpression(isSgFunctionCallExp(functionCallExp), 
+                                                classHierarchy, 
+                                                functionList);
+    }
 
-    // list<SgFunctionDeclaration*> functionList;
-    Rose_STL_Container<SgNode*>::iterator i = functionCallExpList.begin();
-
-    // for all functions getting called in the body of the current function
-    // we need to get their declarations, or the set of declarations for
-    // function pointers and virtual functions
-    while (i != functionCallExpList.end())
-    {
-      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
-      ROSE_ASSERT ( functionCallExp != NULL );
-      CallTargetSet::retrieveFunctionDeclarations(functionCallExp, classHierarchy, functionList);
-      i++;
+    Rose_STL_Container<SgNode*> ctorInitList = 
+      NodeQuery::querySubTree(functionDefinition, V_SgConstructorInitializer);
+    foreach (SgNode* ctorInit, ctorInitList) {
+      CallTargetSet::getPropertiesForExpression(isSgConstructorInitializer(ctorInit), 
+                                                classHierarchy, 
+                                                functionList);
     }
   }
 }
