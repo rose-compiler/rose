@@ -29,14 +29,10 @@ StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, co
     IfStmtConditionAttribute* cond_attr = dynamic_cast<IfStmtConditionAttribute*>(attr.get());
     ROSE_ASSERT(cond_attr);
 
-    SgStatement* cond = if_stmt->get_conditional();
-    StatementReversal proc_cond = evalResult.getChildResults()[2].generateReverseAST(cond);
+    StatementReversal proc_cond = evalResult.getChildResults()[2].generateReverseStatement();
 
-    SgStatement* true_body = if_stmt->get_true_body();
-    SgStatement* false_body = if_stmt->get_false_body();
-
-    StatementReversal proc_true_body = evalResult.getChildResults()[1].generateReverseAST(true_body);
-    StatementReversal proc_false_body = evalResult.getChildResults()[0].generateReverseAST(false_body);
+    StatementReversal proc_true_body = evalResult.getChildResults()[1].generateReverseStatement();
+    StatementReversal proc_false_body = evalResult.getChildResults()[0].generateReverseStatement();
 
     SgBasicBlock* fwd_true_block_body =  isSgBasicBlock(proc_true_body.fwd_stmt);
     SgBasicBlock* fwd_false_block_body = isSgBasicBlock(proc_false_body.fwd_stmt);
@@ -128,7 +124,7 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
 
             foreach (const EvaluationResult& res3, cond_results)
             {
-				EvaluationResult totalEvaluationResult(this, var_table);
+				EvaluationResult totalEvaluationResult(this, stmt, var_table);
 				totalEvaluationResult.addChildEvaluationResult(res1);
 				totalEvaluationResult.addChildEvaluationResult(res2);
 				totalEvaluationResult.addChildEvaluationResult(res3);

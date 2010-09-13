@@ -26,49 +26,6 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluate(SgStatement* s
 	{
 		return evaluateExpressionStatement(expressionStatement, var_table);
 	}
-	else if (SgVariableDeclaration* declarations = isSgVariableDeclaration(statement))
-	{
-		/*VariableVersionTable currentVariables = var_table;
-
-		reverse_foreach(SgInitializedName* localVar, declarations->get_variables())
-		{
-			SgInitializer* initializer = localVar->get_initializer();
-			if (initializer == NULL)
-			{
-				continue;
-			}
-			else if (SgAssignInitializer* assignInit = isSgAssignInitializer(initializer))
-			{
-				SgExpression* initializerExpression = assignInit->get_operand();
-				vector<EvaluationResult> initializerReversals = evaluateExpression(initializerExpression, currentVariables, false);
-
-				//Pick an evaluation result here
-			}
-			else if (SgConstructorInitializer* constructorInit = isSgConstructorInitializer(initializer))
-			{
-				ROSE_ASSERT(constructorInit && "Constructor initializer not handled yet. This is a type of function call");
-			}
-			else if (isSgAggregateInitializer(initializer))
-			{
-				printf("Aggregate initializer not supported yet\n");
-				ROSE_ASSERT(false);
-			}
-			else
-			{
-				printf("Encountered unknown initializer type.");
-				ROSE_ASSERT(false);
-			}
-		}*/
-
-
-
-		StatementReversal reversal(SageInterface::copyStatement(statement), NULL);
-		EvaluationResult result(this, var_table);
-		result.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(reversal)));
-		vector<EvaluationResult> results;
-		results.push_back(result);
-		return results;
-	}
 
 	return vector<EvaluationResult> ();
 }
@@ -86,7 +43,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 
 	//This simple processor just takes the first valid reverse expression returned
 	EvaluationResult& expressionReversalOption = expressions.front();
-	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseAST(statement->get_expression());
+	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseExpression();
 	SgStatement* forwardStatement = NULL;
 	if (expressionReversal.fwd_exp != NULL)
 	{
@@ -99,7 +56,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	}
 
 	//We just do all the work in the evaluation step and save it as an attribute
-	EvaluationResult statementResult(this, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
+	EvaluationResult statementResult(this, statement, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
 	StatementReversal statementReversal(forwardStatement, reverseStatement);
 	statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
 
@@ -112,7 +69,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 StatementReversal StraightlineStatementProcessor::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
 {
 	ROSE_ASSERT(reversal.getChildResults().size() == 0);
-	ROSE_ASSERT(reversal.getStatementProcessor() == this);
+	ROSE_ASSERT(reversal.getStatementHandler() == this);
 
 	StoredStatementReversal* storedResult = dynamic_cast<StoredStatementReversal*>(reversal.getAttribute().get());
 	ROSE_ASSERT(storedResult != NULL);
@@ -193,7 +150,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 			exit(1);
 		}
 
-		StatementReversal instrumentedStatement = possibleStatements.front().generateReverseAST(s);
+		StatementReversal instrumentedStatement = possibleStatements.front().generateReverseStatement();
 		totalCost += possibleStatements.front().getCost();
 		SgStatement* forwardStatement = instrumentedStatement.fwd_stmt;
 		SgStatement* reverseStatement = instrumentedStatement.rvs_stmt;
@@ -237,7 +194,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 
 	//We actually did both cost evaluation and code generation. Store the result as an attribute
 	StatementReversal result(forwardBody, reverseBody);
-	EvaluationResult costAndStuff(this, currentVariableVersions, totalCost);
+	EvaluationResult costAndStuff(this, basicBlock, currentVariableVersions, totalCost);
 	costAndStuff.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(result)));
 
 	vector<EvaluationResult> out;

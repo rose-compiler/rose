@@ -3,6 +3,7 @@
 #include <pluggableReverser/statementProcessor.h>
 #include <pluggableReverser/ifStatementProcessor.h>
 #include <pluggableReverser/akgulStyleExpressionProcessor.h>
+#include "pluggableReverser/variableDeclarationHandler.h"
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
@@ -69,6 +70,7 @@ int main(int argc, char * argv[])
 	event_processor.addStatementHandler(new CombinatorialBasicBlockHandler);
 	event_processor.addStatementHandler(new IfStatementProcessor);
 	event_processor.addStatementHandler(new ReturnStatementHandler);
+	event_processor.addStatementHandler(new NullStatementHandler);
 
 	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
@@ -109,5 +111,4 @@ int main(int argc, char * argv[])
 	cout << "Test Done!\n";
 
 	return backend(project);
-	return 0;
 }

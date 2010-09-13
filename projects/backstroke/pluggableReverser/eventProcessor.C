@@ -22,6 +22,7 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, c
 
 		foreach(const EvaluationResult& r1, res)
 		{
+			ROSE_ASSERT(r1.getExpressionInput() == exp);
 			bool discard = false;
 #if 1
 			for (size_t i = 0; i < results.size(); ++i)
@@ -80,8 +81,8 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 
 		foreach(EvaluationResult& r1, res)
 		{
+			ROSE_ASSERT(r1.getStatementInput() == stmt);
 			// Remove those variables from variable version table if they are not useful anymore.
-
 			foreach(SgExpression* var, vars_to_remove)
 			{
 				r1.getVarTable().removeVariable(var);
@@ -292,8 +293,7 @@ FuncDeclPairs EventProcessor::processEvent()
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
 
-	SgBasicBlock* body =
-					isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
+	SgBasicBlock* body = isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
 	FuncDeclPairs outputs;
 
 	SimpleCostModel cost_model;
@@ -312,7 +312,7 @@ FuncDeclPairs EventProcessor::processEvent()
 			continue;
 		
 
-		StatementReversal stmt = res.generateReverseAST(body);
+		StatementReversal stmt = res.generateReverseStatement();
 
 		fixVariableReferences(stmt.fwd_stmt);
 		fixVariableReferences(stmt.rvs_stmt);

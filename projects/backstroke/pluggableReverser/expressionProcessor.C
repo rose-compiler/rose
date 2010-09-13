@@ -48,7 +48,7 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 	}
 #endif
 
-	results.push_back(EvaluationResult(this, var_table));
+	results.push_back(EvaluationResult(this, exp, var_table));
 	return results;
 }
 
@@ -62,7 +62,7 @@ struct IdentityExpressionAttribute : public EvaluationResultAttribute
 
 ExpressionReversal IdentityExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
-	ROSE_ASSERT(evaluationResult.getExpressionProcessor() == this && evaluationResult.getChildResults().size() == 0);
+	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this && evaluationResult.getChildResults().size() == 0);
 	IdentityExpressionAttribute* attribute = dynamic_cast<IdentityExpressionAttribute*>(evaluationResult.getAttribute().get());
 	ROSE_ASSERT(attribute != NULL);
 
@@ -87,7 +87,7 @@ vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, 
 	// If an expression does not modify any value and its value is used, the reverse is the same as itself
 	if (!backstroke_util::isModifyingExpression(exp))
 	{
-		EvaluationResult result(this, var_table);
+		EvaluationResult result(this, exp, var_table);
 		IdentityExpressionAttribute* attribute = new IdentityExpressionAttribute;
 		attribute->reverseIsNull = !reverseValueUsed;
 		
@@ -145,7 +145,7 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 		SimpleCostModel cost;
 		cost.increaseStoreCount();
 
-		EvaluationResult result(this, new_var_table, cost);
+		EvaluationResult result(this, exp, new_var_table, cost);
 		result.setAttribute(EvaluationResultAttributePtr(new StoreAndRestoreAttribute(var_to_save)));
 		results.push_back(result);
 	}
@@ -305,7 +305,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 
 				if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
 				{
-					EvaluationResult result = EvaluationResult(this, new_table);
+					EvaluationResult result = EvaluationResult(this, exp, new_table);
 					results.push_back(result);
 				}
 			}
@@ -354,7 +354,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 						isSgMinusAssignOp(exp) ||
 						isSgXorAssignOp(exp))
 				{
-					EvaluationResult result = EvaluationResult(this, new_table);
+					EvaluationResult result = EvaluationResult(this, exp, new_table);
 					results.push_back(result);
 				}
 
