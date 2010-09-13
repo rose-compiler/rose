@@ -171,6 +171,34 @@ class AttributeListMap {
                  return false;
 		  }
 
+	// King84 (2010.09.09): Added to support getting arguments for conditionals which had been skipped
+	template <typename TokenT, typename ContainerT>
+	void
+	update_token(TokenT const& token, ContainerT const& stream, bool expression_value)
+	{
+//		typename TokenT::position_type::string_type filename(token.get_position().get_file().c_str());
+		std::string filename(token.get_position().get_file().c_str());
+		// ensure that the file exists
+		ROSE_ASSERT(currentMapOfAttributes.find(filename) != currentMapOfAttributes.end());
+		// get the list of attributes
+		std::vector<PreprocessingInfo*>& infos = currentMapOfAttributes.find(filename)->second->getList();
+		for(std::vector<PreprocessingInfo*>::reverse_iterator i = infos.rbegin(); i != infos.rend(); ++i)
+		{
+			// match this one
+			if ((*(*i)->get_token_stream())[0] == token && (*(*i)->get_token_stream())[0].get_position() == token.get_position())
+			{
+				// TODO: something with expression_value once the PreprocessingInfo actually decides to start storing it
+				for (typename ContainerT::const_iterator item = stream.begin(); item != stream.end(); ++item)
+				{
+					(*i)->push_back_token_stream(*item);
+				}
+				return;
+			}
+		}
+		ROSE_ASSERT(!"Token to update not found!");
+	}
+
+
        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        //  The function
        //           found_directive(TokenT const&, ...)
@@ -191,8 +219,14 @@ class AttributeListMap {
 		       //Translate from wave to rose type-id notation
 		       switch(wave_typeid){
 			       case T_PP_IFDEF:     //#ifdef
+						rose_typeid = PreprocessingInfo::CpreprocessorIfdefDeclaration;
+						break;
 			       case T_PP_IFNDEF:    //#ifndef
+						rose_typeid = PreprocessingInfo::CpreprocessorIfndefDeclaration;
+						break;
 			       case T_PP_IF:        //#if
+						rose_typeid = PreprocessingInfo::CpreprocessorIfDeclaration;
+						break;
 				       //These directive have expression attached to them and should be handled
 				       //by  found_directive(TokenT const& directive, ContainerT const& expression)
 				       ROSE_ASSERT(false); 
@@ -201,7 +235,6 @@ class AttributeListMap {
 				       rose_typeid = PreprocessingInfo::CpreprocessorDefineDeclaration;
 				       break;
 			       case T_PP_ELIF:      //#elif
-				       std::cout << "ELIF\n";
 				       rose_typeid = PreprocessingInfo::CpreprocessorElifDeclaration;
 				       break;
 			       case T_PP_ELSE:      //#else
@@ -669,61 +702,117 @@ class AttributeListMap {
 
 	       };
 
-       template <typename TokenT>
-	       void
-	       skipped_token(TokenT const& token, bool last_skipped = false)
-	       {
-		       //The skipped_token(...) function is called whenever a 
-		       //part of a preprocessing #if #else/#elif #endif conditional
-		       //is evaluated as false. The false part is handled here.
+		template <typename TokenT>
+		void
+		skipped_token(TokenT const& token, bool last_skipped = false)
+		{
+			//The skipped_token(...) function is called whenever a 
+			//part of a preprocessing #if #else/#elif #endif conditional
+			//is evaluated as false. The false part is handled here.
+			//King84 (2010.09.09):
+			//This does not handle the test conditions of #elif or #if
+			//Those are handled via update_token(...).  For now, other
+			//directives that are within the false branch are just skipped
+			//and don't have directives built from them.
 
-		       if(skippedTokenStream == NULL)
-			       skippedTokenStream = new token_container();
+			if(skippedTokenStream == NULL)
+				skippedTokenStream = new token_container();
 
-		       if(last_skipped == false){
-			       skippedTokenStream->push_back(token);
-		       }else        {
+			if(last_skipped == false)
+			{
+				if(SgProject::get_verbose() >= 1)
+					std::cout << "Pushed Skipped Token: " << token.get_value().c_str() << std::endl;
+				skippedTokenStream->push_back(token);
+			}
+			else
+			{
+				skippedTokenStream->push_back(token);
 
-			       findDirectiveInList<token_container::value_type,boost::wave::token_id> x;
+				if(SgProject::get_verbose() >= 1)
+				{
+					std::cout << "Pushed Skipped Token: " << token.get_value().c_str() << std::endl;
+					std::cout << "Popping Skipped Tokens: " << boost::wave::util::impl::as_string(*skippedTokenStream).c_str() << std::endl;
+				}
+				std::string filename(skippedTokenStream->begin()->get_position().get_file().c_str());
+				if (currentMapOfAttributes.find(filename) == currentMapOfAttributes.end())
+					currentMapOfAttributes[filename] = new ROSEAttributesList();
+				currentMapOfAttributes.find(filename)->second->addElement(*(new PreprocessingInfo(*skippedTokenStream, PreprocessingInfo::CSkippedToken, PreprocessingInfo::before)));
 
-			       std::list<boost::wave::token_id> directivesInSkippedBranch;
-			       directivesInSkippedBranch.push_back( boost::wave::T_PP_ENDIF );
-			       directivesInSkippedBranch.push_back( boost::wave::T_PP_IF );
-			       directivesInSkippedBranch.push_back( boost::wave::T_PP_IFDEF );
-			       directivesInSkippedBranch.push_back( boost::wave::T_PP_IFNDEF );
-			       directivesInSkippedBranch.push_back( boost::wave::T_PP_ELSE );
-			       directivesInSkippedBranch.push_back( boost::wave::T_PP_ELIF );
+				ROSE_ASSERT(skippedTokenStream != NULL);
+				delete skippedTokenStream;
+				skippedTokenStream = NULL;
+			}
+			if (SgProject::get_verbose() >= 1)
+				std::cout << "SKIPPED TOKEN: " << token.get_value().c_str() << std::endl;
+		}
 
-			       if ( std::find_if(skippedTokenStream->begin(),skippedTokenStream->end(), std::bind2nd(x,directivesInSkippedBranch) )
-					       != skippedTokenStream->end() ){
+		inline void flush_token_stream()
+		{
+			if (skippedTokenStream == NULL || skippedTokenStream->begin() == skippedTokenStream->end())
+				return;
 
-				       std::string filename(skippedTokenStream->begin()->get_position().get_file().c_str());
-				       if(currentMapOfAttributes.find(filename)==currentMapOfAttributes.end())
-					       currentMapOfAttributes[filename] = new ROSEAttributesList();
-				       currentMapOfAttributes.find(filename)->second->addElement(*(new PreprocessingInfo(*skippedTokenStream,PreprocessingInfo::CSkippedToken,PreprocessingInfo::before)));
-			       }
-			       ROSE_ASSERT(skippedTokenStream!=NULL);
-			       delete skippedTokenStream;
-			       skippedTokenStream = NULL;
-		       }
-		       if(SgProject::get_verbose() >= 1)
-			       std::cout << "SKIPPED TOKEN: " << token.get_value().c_str() << std::endl;
+			std::string filename(skippedTokenStream->begin()->get_position().get_file().c_str());
+			if (currentMapOfAttributes.find(filename) == currentMapOfAttributes.end())
+				currentMapOfAttributes[filename] = new ROSEAttributesList();
+			currentMapOfAttributes.find(filename)->second->addElement(*(new PreprocessingInfo(*skippedTokenStream, PreprocessingInfo::CSkippedToken, PreprocessingInfo::before)));
+			delete skippedTokenStream;
+			skippedTokenStream = NULL;
+		}
 
-	       }
+		template <typename ContextT, typename TokenT>
+	    bool
+	    may_skip_whitespace(ContextT const& ctx, TokenT& token, bool& skipped_newline)
+	    {
+			using namespace boost::wave;
+			//After the last skipped token has been processed the first non-skipped
+			//token will trigger this call to attach the skipped tokens to the AST
+			token_id id = token_id(token);
+			bool skip = id == T_PP_ELSE || id == T_PP_ELIF || id == T_PP_ENDIF;
+			using namespace boost::wave;
+			if(SgProject::get_verbose() >= 1)
+			{
+				switch(token_id(token))
+				{
+					case T_PP_DEFINE:    std::cout << "Skip White: #define\n"; break;
+					case T_PP_IF:        std::cout << "Skip White: #if\n"; break;
+					case T_PP_IFDEF:     std::cout << "Skip White: #ifdef\n"; break;
+					case T_PP_IFNDEF:    std::cout << "Skip White: #ifndef\n"; break;
+					case T_PP_ELSE:      std::cout << "Skip White: #else\n"; break;
+					case T_PP_ELIF:      std::cout << "Skip White: #elif\n"; break;
+					case T_PP_ENDIF:     std::cout << "Skip White: #endif\n"; break;
+					case T_PP_ERROR:     std::cout << "Skip White: #error\n"; break;
+					case T_PP_LINE:      std::cout << "Skip White: #line\n"; break;
+					case T_PP_PRAGMA:    std::cout << "Skip White: #pragma\n"; break;
+					case T_PP_UNDEF:     std::cout << "Skip White: #undef\n"; break;
+					case T_PP_WARNING:   std::cout << "Skip White: #warning\n"; break;
+					case T_PP_INCLUDE:   std::cout << "Skip White: #include \"...\"\n"; break;
+					case T_PP_QHEADER:   std::cout << "Skip White: #include <...>\n"; break;
+					case T_PP_HHEADER:   std::cout << "Skip White: #include ...\n"; break;
+					default:             std::cout << "Skip White: <something else (" << token.get_value() << ")>\n"; break;
+				}
+			}
+			if (skip)
+			{
+				skipped_token(token, true);
+			}
+			else
+			{
+				if (skippedTokenStream != NULL) // flush the tokens and don't add this one (instead of calling skipped_token)
+				{
+					if(SgProject::get_verbose() >= 1)
+					{
+						std::cout << "Whitespace makes us pop skipped tokens: " << boost::wave::util::impl::as_string(*skippedTokenStream).c_str() << std::endl;
+					}
+					flush_token_stream();
+				}
+				else if(SgProject::get_verbose() >= 1)
+					std::cout << "Token stream is null?" << std::endl;
+			}
 
-       template <typename ContextT, typename TokenT>
-	       bool
-	       may_skip_whitespace(ContextT const& ctx, TokenT& token, bool& skipped_newline)
-	       {
-		       //After the last skipped token has been processed the first non-skipped
-		       //token will trigger this call to attach the skipped tokens to the AST
-		       if(skippedTokenStream != NULL)
-			       skipped_token(token,true);
-
-		       if(SgProject::get_verbose() >= 1)
-			       std::cout << "MAX_SKIP_WHITESPACE: " << token.get_value().c_str() << std::endl;
-		       return false; 
-	       }
+	       if(SgProject::get_verbose() >= 1)
+		       std::cout << "MAX_SKIP_WHITESPACE: " << token.get_value().c_str() << std::endl;
+	       return false; 
+       }
 
 
        ////////////////////////////////////////////////////////////////////////////////////  
@@ -785,3 +874,5 @@ bool AttributeListMap::found_include_directive(TokenT directive, std::string rel
    }
 
 #endif
+
+
