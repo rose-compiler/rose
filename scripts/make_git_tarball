@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Builds a tar ball of all ROSE source, including all submodules.  To use, run this script in a Git repository where
+# HEAD is the version to tar up.  It must be run from the top of the ROSE source tree (it checks this).
+#
+# Files that are locally modified do not end up in the tarball. Only files from the Git repository itself are added.
+
+if [[ ! -f src/rose.h ]]; then
+    echo "$0: must be run from the top of the ROSE source tree." >&2
+    exit 1
+fi
+
+basename="rose-$(git rev-parse HEAD |cut -c1-8)"
+trap "rm -f $basename.tar $basename.tar.2" EXIT
+
+set -e
+echo "generating $basename.tar.gz..."
+git archive --format=tar --prefix=$basename/ HEAD >$basename.tar
+for submodule in $(git submodule |cut -c43- |cut -d' ' -f1); do
+    echo "adding $submodule..."
+    (cd $submodule && git archive --format=tar --prefix=$basename/$submodule/ HEAD) >$basename.tar.2
+    tar Af $basename.tar $basename.tar.2
+    rm $basename.tar.2
+done
+echo "compressing..."
+gzip --force $basename.tar
