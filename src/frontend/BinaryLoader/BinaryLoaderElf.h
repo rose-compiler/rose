@@ -54,8 +54,6 @@ public:
 
     /** Symbol from .dynsym combined with additional information.  The additional information is:
      *  <ul>
-     *    <li>A pointer to the .dynsym section in which this symbol appeared.  For some reason, the section in which the symbol
-     *        was defined is not a parent of the symbol in the AST. [FIXME RPM 2010-09-13]</li>
      *    <li>The symbol's entry in the GNU Symbol Version Table (.gnu.version section)</li>
      *    <li>The symbol's entry in the GNU Symbol Version Definition Table (.gnu.version_d section), if any.</li>
      *    <li>The symbol's auxiliary information (and thus, indirectly, the table entry) from the GNU Symbol Version
@@ -64,21 +62,14 @@ public:
     class VersionedSymbol {
     private:
         SgAsmElfSymbol* p_symbol;
-        SgAsmElfSymbolSection* p_parent;
         SgAsmElfSymverEntry* p_version_entry;
         SgAsmElfSymverDefinedEntry* p_version_def;
         SgAsmElfSymverNeededAux* p_version_need;
     public:
-        explicit VersionedSymbol(SgAsmElfSymbol* symbol=NULL, SgAsmElfSymbolSection* parent=NULL)
-            : p_symbol(symbol), p_parent(parent), p_version_entry(NULL), p_version_def(NULL), p_version_need(NULL)
+        explicit VersionedSymbol(SgAsmElfSymbol* symbol)
+            : p_symbol(symbol), p_version_entry(NULL), p_version_def(NULL), p_version_need(NULL)
             {}
 
-        /** (Re)initializes this symbol and symbol section pointers. */
-        void set_symbol(SgAsmElfSymbol *symbol, SgAsmElfSymbolSection *parent) {
-            p_symbol = symbol;
-            p_parent = parent;
-        }
-        
         /** Returns true if this symbol is visible only locally. */
         bool is_local() const;
 
@@ -92,14 +83,21 @@ public:
          *  definition with the VER_FLG_BASE flag set. */
         bool is_base_definition() const;
 
+        /** (Re)initializes this symbol. */
+        void set_symbol(SgAsmElfSymbol *symbol) {
+            p_symbol = symbol;
+        }
+        
         /** Returns the symbol part of this versioned symbol. */
         SgAsmElfSymbol *get_symbol() const {
             return p_symbol;
         }
 
         /** Returns the symbol section (.dynsym) where this symbol was defined. */
-        SgAsmElfSymbolSection *get_parent() const {
-            return p_parent;
+        SgAsmElfSymbolSection *get_section() const {
+            SgAsmElfSymbolSection *retval = SageInterface::getEnclosingNode<SgAsmElfSymbolSection>(p_symbol);
+            ROSE_ASSERT(retval!=NULL);
+            return retval;
         }
         
         /** Returns the version string of this symbol. The empty string is returned if the symbol has no associated version. */
@@ -161,8 +159,8 @@ public:
         VersionedSymbol get_vsymbol(const VersionedSymbol &version) const;
 
         /** Returns the section where the base version symbol was defined. */
-        SgAsmElfSymbolSection *get_parent() const {
-            return get_vsymbol().get_parent();
+        SgAsmElfSymbolSection *get_section() const {
+            return get_vsymbol().get_section();
         }
 
         /** Add an additional versioned symbol to this entry.  An entry can have only one base definition and an assertion

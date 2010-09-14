@@ -600,10 +600,9 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
         SgAsmElfSymbol *symbol = symbols[symbol_idx];
 
         ROSE_ASSERT(p_versionedSymbolMap.end() == p_versionedSymbolMap.find(symbol));
-        VersionedSymbol* versionedSymbol = new VersionedSymbol;
+        VersionedSymbol* versionedSymbol = new VersionedSymbol(symbol);
         p_versionedSymbolMap.insert(std::make_pair(symbol,versionedSymbol));
 
-        versionedSymbol->set_symbol(symbol,dynsym);
         if (symver) {
             SgAsmElfSymverEntry *symverEntry = symver->get_entries()->get_entries()[symbol_idx];
             uint16_t value=symverEntry->get_value();
@@ -755,7 +754,7 @@ BinaryLoaderElf::relocate_X86_JMP_SLOT(SgAsmElfRelocEntry* reloc,
 
     ROSE_ASSERT(0 != sourceSymbol->get_st_shndx());// test an assumption
 
-    SgAsmGenericHeader* symbolHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(sourceVSymbol.get_parent());
+    SgAsmGenericHeader* symbolHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(sourceSymbol);
 
 
     // The symbol contains a virtual address in a section in the same file as the symbol
@@ -887,7 +886,7 @@ BinaryLoaderElf::relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
     ROSE_ASSERT(NULL != sourceSymbol);
     ROSE_ASSERT(0 != sourceSymbol->get_st_shndx());// test an assumption
 
-    SgAsmGenericHeader* symbolHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(sourceVSymbol.get_parent());
+    SgAsmGenericHeader* symbolHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(sourceSymbol);
 
 
     // The symbol contains a virtual address in a section in the same file as the symbol
