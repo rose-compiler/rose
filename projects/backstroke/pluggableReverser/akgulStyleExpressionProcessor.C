@@ -75,26 +75,6 @@ ExpressionReversal AkgulStyleExpressionProcessor::generateReverseAST(SgExpressio
 }
 
 
-/** Returns true if an expression calls any functions or modifies any variables. */
-bool RedefineValueRestorer::isModifyingExpression(SgExpression* expr, VariableRenaming* variableRenamingAnalysis)
-{
-	//TODO: Make this work with functions on the whitelist that we know are side-effect free
-	//e.g. abs(), cos(), pow()
-	if (!NodeQuery::querySubTree(expr, V_SgFunctionCallExp).empty())
-	{
-		return true;
-	}
-
-	//Use the variable renaming and see if there are any defs in this expression
-	if (!variableRenamingAnalysis->getDefsForSubtree(expr).empty())
-	{
-		return true;
-	}
-
-	return false;
-}
-
-
 /** Returns the variable name referred by the expression. Also returns
  *  the AST expression for referring to that variable (using the variable renaming analysis).
   * Handles comma ops correctly. */
@@ -170,56 +150,89 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 			reachingDefinition->get_file_info()->get_line());
 
 	//Find what expression was evaluated to assign the variable to its previous value
-	SgExpression* definitionExpression;
-	if (SgAssignOp* assignOp = isSgAssignOp(reachingDefinition))
+	if (isSgAssignOp(reachingDefinition) || isSgInitializedName(reachingDefinition))
 	{
-		//Check that this assign op is for the same variable
-		ROSE_ASSERT(AkgulStyleExpressionProcessor::getReferredVariable(assignOp->get_lhs_operand()).first == destroyedVarName);
-
-		definitionExpression = assignOp->get_rhs_operand();
-	}
-	else if (SgInitializedName* declaration = isSgInitializedName(reachingDefinition))
-	{
-		//FIXME: The initialized name might be for the parent of this variable.
-		//For example, the reaching defintion of s.x might be s = foo(). In this case,
-		//we have to restore s, then append the .x accessor to it...
-
-		//If the previous definition is a declaration without an initializer and the declaration is not
-		//in a function parameter list, then the previous value of the variable is undefined and we don't
-		//need to restore it
-		if (declaration->get_initializer() == NULL)
+		SgExpression* definitionExpression;
+		if (SgAssignOp * assignOp = isSgAssignOp(reachingDefinition))
 		{
-			if (isSgFunctionParameterList(declaration->get_parent()))
+			//Check that this assign op is for the same variable
+			ROSE_ASSERT(AkgulStyleExpressionProcessor::getReferredVariable(assignOp->get_lhs_operand()).first == destroyedVarName);
+
+			definitionExpression = assignOp->get_rhs_operand();
+		}
+		else if (SgInitializedName * declaration = isSgInitializedName(reachingDefinition))
+		{
+			//FIXME: The initialized name might be for the parent of this variable.
+			//For example, the reaching defintion of s.x might be s = foo(). In this case,
+			//we have to restore s, then append the .x accessor to it...
+
+			//If the previous definition is a declaration without an initializer and the declaration is not
+			//in a function parameter list, then the previous value of the variable is undefined and we don't
+			//need to restore it
+			if (declaration->get_initializer() == NULL)
 			{
-				//The variable has a well-defined previous value but we can't re-execute its defintion
+				if (isSgFunctionParameterList(declaration->get_parent()))
+				{
+					//The variable has a well-defined previous value but we can't re-execute its defintion
+					return results;
+				}
+
+				results.push_back(VariableRenaming::buildVariableReference(destroyedVarName));
 				return results;
 			}
+			else if (SgAssignInitializer * assignInit = isSgAssignInitializer(declaration->get_initializer()))
+			{
+				definitionExpression = assignInit->get_operand();
+			}
+			else
+			{
+				//Todo: Handle constructor initializer, aggregate initializer, etc.
+				return results;
+			}
+		}
 
-			results.push_back(VariableRenaming::buildVariableReference(destroyedVarName));
-			return results;
-		}
-		else if (SgAssignInitializer* assignInit = isSgAssignInitializer(declaration->get_initializer()))
+		//Ok, so the variable was previously defined by assignment to initExpression.
+		//Now we need to see if we can re-execute that expression
+		SgExpression* definitionExpressionValue = getEventProcessor()->restoreExpressionValue(definitionExpression, availableVariables);
+		if (definitionExpressionValue != NULL)
 		{
-			definitionExpression = assignInit->get_operand();
+			results.push_back(definitionExpressionValue);
 		}
-		else
+	}
+	else if (isSgPlusPlusOp(reachingDefinition) || isSgMinusMinusOp(reachingDefinition))
+	{
+		SgUnaryOp* incrementOp = isSgUnaryOp(reachingDefinition);
+		ROSE_ASSERT(incrementOp != NULL && VariableRenaming::getVarName(incrementOp->get_operand()) == destroyedVarName);
+
+		//See what version of the variable was used
+		VariableRenaming::NumNodeRenameEntry versionIncremented = getEventProcessor()->getVariableRenaming()->
+				getUsesAtNodeForName(incrementOp->get_operand(), destroyedVarName);
+
+		//Restore that version
+		SgExpression* valueBeforeIncrement = getEventProcessor()->restoreVariable(destroyedVarName, availableVariables, versionIncremented);
+		if (valueBeforeIncrement != NULL)
 		{
-			//Todo: Handle constructor initializer, aggregate initializer, etc.
-			return results;
+			SgExpression* restoredValue;
+			if (isSgPlusPlusOp(incrementOp))
+			{
+				restoredValue = SageBuilder::buildAddOp(valueBeforeIncrement, SageBuilder::buildIntVal(1));
+			}
+			else if (isSgMinusMinusOp(incrementOp))
+			{
+				restoredValue = SageBuilder::buildSubtractOp(valueBeforeIncrement, SageBuilder::buildIntVal(1));
+			}
+			else
+			{
+				ROSE_ASSERT(false);
+			}
+
+			results.push_back(restoredValue);
 		}
 	}
 	else
 	{
-		//Todo: Handle other types of reaching definitions, in addition to initialized name and assign op?
+		//Todo: Handle other types of reaching definitions, in addition to initialized name, assign op, plus plus, and minus minus
 		return results;
-	}
-
-	//Ok, so the variable was previously defined by assignment to initExpression.
-	//Now we need to see if we can re-execute that expression
-	SgExpression* definitionExpressionValue = getEventProcessor()->restoreExpressionValue(definitionExpression, availableVariables);
-	if (definitionExpressionValue != NULL)
-	{
-		results.push_back(definitionExpressionValue);
 	}
 
 	return results;
