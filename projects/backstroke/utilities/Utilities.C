@@ -500,7 +500,7 @@ bool backstroke_util::containsModifyingExpression(SgExpression* exp)
     return false;
 }
 
-bool backstroke_util::isAssignmentOp(SgExpression* e)
+bool backstroke_util::isAssignmentOp(SgNode* e)
 {
     return isSgAssignOp(e) ||
         isSgPlusAssignOp(e) ||
@@ -581,4 +581,5 @@ SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
 				return isSgStatement(node);
 		node = node->get_parent();
 	}
+	return NULL;
 }

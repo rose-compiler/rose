@@ -135,6 +135,7 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 		VariableRenaming::NumNodeRenameEntry definitions)
 {
 	vector<SgExpression*> results;
+	VariableRenaming& varRenaming = *getEventProcessor()->getVariableRenaming();
 
 	if (definitions.size() > 1)
 	{
@@ -205,8 +206,7 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 		ROSE_ASSERT(incrementOp != NULL && VariableRenaming::getVarName(incrementOp->get_operand()) == destroyedVarName);
 
 		//See what version of the variable was used
-		VariableRenaming::NumNodeRenameEntry versionIncremented = getEventProcessor()->getVariableRenaming()->
-				getUsesAtNodeForName(incrementOp->get_operand(), destroyedVarName);
+		VariableRenaming::NumNodeRenameEntry versionIncremented = varRenaming.getUsesAtNodeForName(incrementOp->get_operand(), destroyedVarName);
 
 		//Restore that version
 		SgExpression* valueBeforeIncrement = getEventProcessor()->restoreVariable(destroyedVarName, availableVariables, versionIncremented);
@@ -229,9 +229,81 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 			results.push_back(restoredValue);
 		}
 	}
+	else if (backstroke_util::isAssignmentOp(reachingDefinition))
+	{
+		//These are all the assignments that also use the left value in addition to the right.
+		//E.g. /=,  *=, &=, etc. We restore bot the left and the right operands to their pre-assignment version
+		SgBinaryOp* assignment = isSgBinaryOp(reachingDefinition);
+		ROSE_ASSERT(VariableRenaming::getVarName(assignment->get_lhs_operand()) == destroyedVarName);
+
+		//Find the version of the variable before the assignment
+		VariableRenaming::NumNodeRenameEntry lhsVersion =
+				varRenaming.getReachingDefsAtNodeForName(assignment->get_lhs_operand(), destroyedVarName);
+		printf("The lhs version was \n");
+		VariableRenaming::printRenameEntry(lhsVersion);
+
+		//Restore the left-hand side and the right-hand side
+		SgExpression* lhsValue = getEventProcessor()->restoreVariable(destroyedVarName, availableVariables, lhsVersion);
+		SgExpression* rhsValue = getEventProcessor()->restoreExpressionValue(assignment->get_rhs_operand(), availableVariables);
+
+		//Combine the lhs and rhs according to the assignment type to restore the value
+		if (lhsValue != NULL && rhsValue != NULL)
+		{
+			switch (assignment->variantT())
+			{
+				case V_SgPlusAssignOp:
+					results.push_back(SageBuilder::buildAddOp(lhsValue, rhsValue));
+					break;
+				case V_SgMinusAssignOp:
+					results.push_back(SageBuilder::buildSubtractOp(lhsValue, rhsValue));
+					break;
+				case V_SgMultAssignOp:
+					results.push_back(SageBuilder::buildMultiplyOp(lhsValue, rhsValue));
+					break;
+				case V_SgDivAssignOp:
+					results.push_back(SageBuilder::buildDivideOp(lhsValue, rhsValue));
+					break;
+				case V_SgModAssignOp:
+					results.push_back(SageBuilder::buildModOp(lhsValue, rhsValue));
+					break;
+				case V_SgIorAssignOp:
+					results.push_back(SageBuilder::buildBitOrOp(lhsValue, rhsValue));
+					break;
+				case V_SgAndAssignOp:
+					results.push_back(SageBuilder::buildBitAndOp(lhsValue, rhsValue));
+					break;
+				case V_SgXorAssignOp:
+					results.push_back(SageBuilder::buildBitXorOp(lhsValue, rhsValue));
+					break;
+				case V_SgLshiftAssignOp:
+					results.push_back(SageBuilder::buildLshiftOp(lhsValue, rhsValue));
+					break;
+				case V_SgRshiftAssignOp:
+					results.push_back(SageBuilder::buildRshiftOp(lhsValue, rhsValue));
+					break;
+				default:
+					ROSE_ASSERT(false);
+			}
+		}
+		else
+		{
+			//One of the restorations did not succeed, delete the trees
+			if (lhsValue != NULL)
+			{
+				SageInterface::deepDelete(lhsValue);
+			}
+			if (rhsValue != NULL)
+			{
+				SageInterface::deepDelete(rhsValue);
+			}
+		}
+	}
 	else
 	{
-		//Todo: Handle other types of reaching definitions, in addition to initialized name, assign op, plus plus, and minus minus
+		//What other types of reaching definitions are there??
+		printf("********** WARNING **********\n");
+		printf("In RedefineValueRestorer: Encountered unhandled reaching definition of type %s\n",
+			reachingDefinition->class_name().c_str());
 		return results;
 	}
 
