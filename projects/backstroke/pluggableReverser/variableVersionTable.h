@@ -64,11 +64,12 @@ public:
 		table_.erase(VariableRenaming::getVarName(node));
 	}
 
-	/** This function gets two variable version tabes for true/false bodies in an if statement.
+	/** This function gets two variable version tables for true/false bodies in an if statement.
 	 * Since currently there is no fi function in implementation, this is a workaround to get the
 	 * correct vartable at the end of each body. At the end of if statement, for each variable,
 	 * check the def node for its each version. If that version is defined in true body, remove
-	 * this version when processing false body, and removing and vice versa. If that version is defined in  */
+	 * this version in var table of the false body, and if thie def's enclosing if body is true body,
+	 * remove other versions in var table of the true body. And vice versa.  */
 	std::pair<VariableVersionTable, VariableVersionTable>
 	getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const;
 

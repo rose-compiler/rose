@@ -546,4 +546,5 @@ SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
 				return isSgStatement(node);
 		node = node->get_parent();
 	}
+	return NULL;
 }

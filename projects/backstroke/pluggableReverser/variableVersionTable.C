@@ -320,6 +320,12 @@ void VariableVersionTable::setNullVersion(SgNode* node)
 	table_[varName].clear();
 }
 
+/** This function gets two variable version tables for true/false bodies in an if statement.
+ * Since currently there is no fi function in implementation, this is a workaround to get the
+ * correct vartable at the end of each body. At the end of if statement, for each variable,
+ * check the def node for its each version. If that version is defined in true body, remove
+ * this version in var table of the false body, and if thie def's enclosing if body is true body,
+ * remove other versions in var table of the true body. And vice versa.  */
 std::pair<VariableVersionTable, VariableVersionTable>
 VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const
 {
@@ -334,13 +340,24 @@ VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatemen
 			SgStatement* if_body = backstroke_util::getEnclosingIfBody(def_node);
 			if (if_body == true_body)
 			{
-				true_body_var_table.table_[var_version.first].clear();
-				true_body_var_table.table_[var_version.first].insert(version);
+				VariableRenaming::NumNodeRenameEntry num_node_entry =
+						var_renaming_->getReachingDefsAtNodeForName(true_body, var_version.first);
+				foreach (VariableRenaming::NumNodeRenameEntry::value_type num_node, num_node_entry)
+					if (true_body_var_table.table_[var_version.first].count(num_node.first) > 0)
+						true_body_var_table.table_[var_version.first].erase(num_node.first);
+
+				//true_body_var_table.table_[var_version.first].clear();
+				//true_body_var_table.table_[var_version.first].insert(version);
 			}
 			else if (if_body == false_body)
 			{
-				false_body_var_table.table_[var_version.first].clear();
-				false_body_var_table.table_[var_version.first].insert(version);
+				VariableRenaming::NumNodeRenameEntry num_node_entry =
+						var_renaming_->getReachingDefsAtNodeForName(false_body, var_version.first);
+				foreach (VariableRenaming::NumNodeRenameEntry::value_type num_node, num_node_entry)
+					if (false_body_var_table.table_[var_version.first].count(num_node.first) > 0)
+						false_body_var_table.table_[var_version.first].erase(num_node.first);
+				//false_body_var_table.table_[var_version.first].clear();
+				//false_body_var_table.table_[var_version.first].insert(version);
 			}
 
 			if (SageInterface::isAncestor(true_body, def_node))

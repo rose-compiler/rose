@@ -83,9 +83,9 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
 	false_body_var_table.print();
 
     vector<EvaluationResult> true_body_res =
-            evaluateStatement(if_stmt->get_true_body(), true_body_var_table);
+            evaluateStatement(true_body, true_body_var_table);
     vector<EvaluationResult> false_body_res =
-            evaluateStatement(if_stmt->get_false_body(), false_body_var_table);
+            evaluateStatement(false_body, false_body_var_table);
 
     SimpleCostModel cost;
 
