@@ -66,8 +66,8 @@ namespace backstroke_util
 	/** Returns a boolean value to indicate whether the return value (rvalue) of the given expression is used. */
 	bool isReturnValueUsed(SgExpression* exp);
 
-	/** Prints an error message associated with a certain node. Also outputs the file and location
-	 * of the node. */
+	//! Prints an error message associated with a certain node. Also outputs the file and location
+	//! of the node.
 	void printCompilerError(SgNode* badNode, const char * message);
 
 	namespace util_private
