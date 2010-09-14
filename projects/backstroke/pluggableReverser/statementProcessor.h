@@ -33,8 +33,8 @@ private:
 
 	struct LocalVarRestoreAttribute : public EvaluationResultAttribute
 	{
-		/** For each local variable, we record whether to restore it and how to restore it.
-		 * (if SgExpression* is NULL, we push and pop its value. Otherwise, we use it to restore) */
+		//! For each local variable, we record whether to restore it and how to restore it.
+		//! (if SgExpression* is NULL, we push and pop its value. Otherwise, we use it to restore) */
 		std::map < SgInitializedName*, std::pair<bool, SgExpression*> > local_var_restorer;
 	};
 	typedef boost::shared_ptr<LocalVarRestoreAttribute> LocalVarRestoreAttributePtr;

@@ -133,7 +133,7 @@ bool ReversalHandlerBase::isStateVariable(SgExpression* exp)
     return event_processor_->isStateVariable(exp);
 }
 
-vector<SgExpression*> ReversalHandlerBase::restoreVariable(VariableRenaming::VarName variable, 
+SgExpression* ReversalHandlerBase::restoreVariable(VariableRenaming::VarName variable, 
 		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
 	return event_processor_->restoreVariable(variable, availableVariables, definitions);

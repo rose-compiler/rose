@@ -44,11 +44,6 @@ class RedefineValueRestorer : public VariableValueRestorer
 			const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions);
 
 private:
-
-	static std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);
-
-	/** Returns true if an expression calls any functions or modifies any variables. */
-	static bool isModifyingExpression(SgExpression* expr, VariableRenaming* variableRenamingAnalysis);
 };
 
 class ExtractFromUseRestorer : public VariableValueRestorer

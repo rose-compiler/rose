@@ -142,6 +142,41 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> backstroke_util::Creat
 	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
 }
 
+
+vector<SgExpression*> backstroke_util::findVarReferences(VariableRenaming::VarName var, SgNode* root)
+{
+	class SearchTraversal : public AstTopDownProcessing<bool>
+	{
+	public:
+		VariableRenaming::VarName desiredVar;
+		vector<SgExpression*> result;
+
+		virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentReference)
+		{
+			if (isParentReference)
+			{
+				return true;
+			}
+
+			if (VariableRenaming::getVarName(node) == desiredVar)
+			{
+				ROSE_ASSERT(isSgExpression(node)); //The variable name should always be attached to an expression
+				result.push_back(isSgExpression(node));
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	};
+
+	SearchTraversal traversal;
+	traversal.desiredVar = var;
+	traversal.traverse(root, false);
+	return traversal.result;
+}
+
 #define ISZERO(value, ValType) \
     if (ValType* val = is##ValType(value)) \
 return val->get_value() == 0;

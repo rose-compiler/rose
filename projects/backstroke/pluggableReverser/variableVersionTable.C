@@ -476,7 +476,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 		indices.insert(versionDefPair.first);
 	}
 
-#if	1
+#if	0
 	printf("%s:\nIndices found: ", VariableRenaming::keyToString(varName).c_str());
 
 	foreach(int v, table_.find(varName)->second)
