@@ -69,13 +69,13 @@ public:
 	FuncDeclPairs processEvent();
 	FuncDeclPairs processEvent(SgFunctionDeclaration* event);
 
-	/** Return if the given variable is a state variable (currently we assume all variables except
-	 * those defined inside the event function are state varibles). */
+	//! Return if the given variable is a state variable (currently we assume all variables except
+	//! those defined inside the event function are state varibles).
 	bool isStateVariable(SgExpression* exp);
 	bool isStateVariable(const VariableRenaming::VarName& var);
 
-	/** Check if every state variable in the given variable version table has the initial version
-	 * which should be 1. */
+	//! Check if every state variable in the given variable version table has the initial version
+	//! which should be 1.
 	bool checkForInitialVersions(const VariableVersionTable& var_table);
 
 	//! Get all declarations of stacks which store values of different types.

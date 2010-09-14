@@ -35,27 +35,27 @@ public:
 	bool checkVersion(SgExpression* lhs, SgExpression* rhs = NULL) const;
 #endif
 
-	/** Check if all varibles in the given expression have the same version in the current version table.
-	 * This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
-	 * check, but a cannot. */
+	//! Check if all varibles in the given expression have the same version in the current version table.
+	//! This is only for expressions which are USE not DEF. For example, for a = b, only b can use this
+	//! check, but a cannot. 
 	bool checkVersionForUse(SgExpression* exp) const;
 
-	/** Check if all varibles in the given expression have the same version in the current version table.
-	 * This is only for expressions which are DEF not USE. For example, for a = b, only a can use this
-	 * check, but b cannot. */
+	//! Check if all varibles in the given expression have the same version in the current version table.
+	//! This is only for expressions which are DEF not USE. For example, for a = b, only a can use this
+	//! check, but b cannot.
 	bool checkVersionForDef(SgExpression* exp) const;
 
-	/** This is a combination of two functions above, which checks two expressions for def and use separately.
-	 * For example, for a += b, both a and b are checked. */
+	//! This is a combination of two functions above, which checks two expressions for def and use separately.
+	//! For example, for a += b, both a and b are checked.
 	bool checkVersionForDefUse(SgExpression* lhs_exp, SgExpression* rhs_exp) const
 	{ return checkVersionForDef(lhs_exp) && checkVersionForUse(rhs_exp); }
 
-	/** Set the version of the given variable to its last version in its scope. This method is for local
-	 * variables. */
+	//! Set the version of the given variable to its last version in its scope. This method is for local
+	//! variables.
 	void setLastVersion(SgInitializedName* init_name);
 
-	/** Regress the version of the given variable. Call this function once the expression or
-	 * statement containing the given variable is reversed successfully. */
+	//! Regress the version of the given variable. Call this function once the expression or
+	//! statement containing the given variable is reversed successfully. 
 	void reverseVersion(SgNode* node);
 
 	/** Remove a variable from the current table. */
@@ -64,11 +64,11 @@ public:
 		table_.erase(VariableRenaming::getVarName(node));
 	}
 
-	/** This function gets two variable version tabes for true/false bodies in an if statement.
-	 * Since currently there is no fi function in implementation, this is a workaround to get the
-	 * correct vartable at the end of each body. At the end of if statement, for each variable,
-	 * check the def node for its each version. If that version is defined in true body, remove
-	 * this version when processing false body, and removing and vice versa. If that version is defined in  */
+	//! This function gets two variable version tabes for true/false bodies in an if statement.
+	//! Since currently there is no fi function in implementation, this is a workaround to get the
+	//! correct vartable at the end of each body. At the end of if statement, for each variable,
+	//! check the def node for its each version. If that version is defined in true body, remove
+	//! this version when processing false body, and removing and vice versa. If that version is defined in 
 	std::pair<VariableVersionTable, VariableVersionTable>
 	getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const;
 

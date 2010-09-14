@@ -365,7 +365,8 @@ SgExpression* EventProcessor::restoreExpressionValue(SgExpression* expression, c
 
 		if (!availableVariables.matchesVersion(nameDefinitionPair.first, originalVarVersion))
 		{
-			printf("Recursively restoring variable '%s' to its value at line %d.\n", VariableRenaming::keyToString(nameDefinitionPair.first).c_str(),
+			printf("Recursively restoring variable '%s' to its value at line %d.\n",
+					VariableRenaming::keyToString(nameDefinitionPair.first).c_str(),
 					expression->get_file_info()->get_line());
 
 			//See if we can recursively restore the variable so we can re-execute the definition
@@ -376,10 +377,11 @@ SgExpression* EventProcessor::restoreExpressionValue(SgExpression* expression, c
 
 				foreach (SgExpression* restoredVarReference, restoredVarReferences)
 				{
-					printf("Replacing '%s' with '%s'\n", restoredVarReference->unparseToString().c_str(), restoredOldValue->unparseToString().c_str());
+					printf("Replacing '%s' with '%s'\n", restoredVarReference->unparseToString().c_str(),
+							restoredOldValue->unparseToString().c_str());
 
-					//If the whole definition itself is a variable reference, eg (t = a), then we can't use SageInterface::replaceExpression
-					//because the parent of the variable reference is null. Manually replace the definition expression with the restored value
+					//If the expression itself is a variable reference, eg (t = a),  we can't use SageInterface::replaceExpression
+					//because the parent of the variable reference is null. Manually replace the expression with the restored value
 					if (expressionCopy == restoredVarReference)
 					{
 						SageInterface::deepDelete(expressionCopy);
