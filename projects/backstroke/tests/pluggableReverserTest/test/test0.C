@@ -85,6 +85,7 @@ void event2(model* m)
 
 #endif
 
+#if 0
 void event3(model* m)
 {
     int t = m->i;
@@ -96,11 +97,15 @@ void event3(model* m)
     int k = j;
 #endif
 }
+#endif
+
 
 void event4(model* m)
 {
+    m->i = 10;
     if (m->j)
-        if (m->k)
-            m->i += 10;
+        m->i += 10;
+    if (m->k)
+        m->i = 10;
     m->i = 10;
 }

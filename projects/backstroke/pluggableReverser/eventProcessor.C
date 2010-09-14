@@ -52,14 +52,15 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, c
 #if 1
 			for (size_t i = 0; i < results.size(); ++i)
 			{
-				EvaluationResult& r2 = results[i];
+				const EvaluationResult& r2 = results[i];
 				if (r1.getVarTable() == r2.getVarTable())
 				{
 					if (r1.getCost() > r2.getCost())
 					{
 						discard = true;
 						break;
-					} else if (r1.getCost() < r2.getCost())
+					}
+					else if (r1.getCost() < r2.getCost())
 					{
 						results.erase(results.begin() + i);
 						--i;
@@ -74,6 +75,32 @@ vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, c
 		//output.insert(output.end(), result.begin(), result.end());
 	}
 	return results;
+}
+
+vector<EvaluationResult> EventProcessor::filterResults(const vector<EvaluationResult>& results)
+{
+	set<size_t> discarded_idx;
+	for (size_t i = 0; i < results.size(); ++i)
+	{
+		for (size_t j = i + 1; j < results.size(); ++j)
+		{
+			if (results[i].getVarTable() == results[j].getVarTable())
+			{
+				if (results[i].getCost() < results[j].getCost())
+					discarded_idx.insert(j);
+				if (results[j].getCost() < results[i].getCost())
+					discarded_idx.insert(i);
+			}
+		}
+	}
+
+	vector<EvaluationResult> new_results;
+	for (size_t i = 0; i < results.size(); ++i)
+	{
+		if (discarded_idx.count(i) == 0)
+			new_results.push_back(results[i]);
+	}
+	return new_results;
 }
 
 vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
@@ -115,17 +142,18 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 
 			// If two results have the same variable table, we remove the one which has the higher cost.
 			bool discard = false;
-#if 1
+#if 0
 			for (size_t i = 0; i < results.size(); ++i)
 			{
-				EvaluationResult& r2 = results[i];
+				const EvaluationResult& r2 = results[i];
 				if (r1.getVarTable() == r2.getVarTable())
 				{
 					if (r1.getCost() > r2.getCost())
 					{
 						discard = true;
 						break;
-					} else if (r1.getCost() < r2.getCost())
+					}
+					else if (r1.getCost() < r2.getCost())
 					{
 						results.erase(results.begin() + i);
 						--i;
@@ -139,7 +167,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 		}
 		//results.insert(results.end(), result.begin(), result.end());
 	}
-	return results;
+	return filterResults	(results);
 }
 
 
@@ -306,6 +334,8 @@ FuncDeclPairs EventProcessor::processEvent()
 
 		// Print all handlers used in this result.
 		res.printHandlers();
+		res.getCost().print();
+		res.getVarTable().print();
 
 		StatementReversal stmt = res.generateReverseStatement();
 
