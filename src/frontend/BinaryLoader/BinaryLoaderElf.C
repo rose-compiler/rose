@@ -216,8 +216,7 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
 void
 BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
 {
-    typedef SymbolMap::BaseMap BaseMap;
-    typedef std::vector<std::pair<SgAsmGenericSection*, BaseMap*> > SymbolMapList;
+    typedef std::vector<std::pair<SgAsmGenericSection*, SymbolMap*> > SymbolMapList;
 
 
     // build map for each symbol table map<std::string,SgElfSymbol>
@@ -248,7 +247,7 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
         ROSE_ASSERT(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_section_entry()->get_sh_type());
 
         /* Add each symbol definition to the BaseMap and then add the BaseMap to the symbolMaps */
-        BaseMap* symbolMap = new BaseMap;
+        SymbolMap* symbolMap = new SymbolMap;
         for (size_t symbol_idx=0; symbol_idx<dynsym->get_symbols()->get_symbols().size(); symbol_idx++) {
             if (0==symbol_idx) continue; /*this must be undefined, so we can skip it*/
 
@@ -281,17 +280,16 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
     /* Construct a masterSymbolMap by merging all the definitions from the symbolMaps we created above. */
     if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: resolving dynamic symbols...\n");
     SymbolMap masterSymbolMap;
-    BaseMap& masterSymbolMapBase=masterSymbolMap.get_base_map();
     for (SymbolMapList::const_iterator smi=symbolMaps.begin(); smi!=symbolMaps.end(); ++smi) {
-        const BaseMap *symbolMap = smi->second;
-        for(BaseMap::const_iterator newSymbolIter=symbolMap->begin(); newSymbolIter!=symbolMap->end(); ++newSymbolIter) {
+        const SymbolMap *symbolMap = smi->second;
+        for(SymbolMap::const_iterator newSymbolIter=symbolMap->begin(); newSymbolIter!=symbolMap->end(); ++newSymbolIter) {
             const SymbolMapEntry &newEntry = newSymbolIter->second;
             const std::string symName = newSymbolIter->first;
-            BaseMap::iterator oldSymbolIter=masterSymbolMapBase.find(symName);
+            SymbolMap::iterator oldSymbolIter=masterSymbolMap.find(symName);
 
-            if (oldSymbolIter == masterSymbolMapBase.end()) {
+            if (oldSymbolIter == masterSymbolMap.end()) {
                 /* no symbol yet, set it (this is the most common case) */
-                masterSymbolMapBase[symName] = newSymbolIter->second;
+                masterSymbolMap[symName] = newSymbolIter->second;
             } else {
                 /* We have to go through version by version to 'merge' a complete map */
                 oldSymbolIter->second.merge(newEntry);
@@ -299,10 +297,10 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
         }
     }
     if (get_debug()) {
-        for (BaseMap::const_iterator bmi=masterSymbolMapBase.begin(); bmi!=masterSymbolMapBase.end(); ++bmi) {
+        for (SymbolMap::const_iterator bmi=masterSymbolMap.begin(); bmi!=masterSymbolMap.end(); ++bmi) {
             const std::string name = bmi->first;
             const SymbolMapEntry &entry = bmi->second;
-            fprintf(get_debug(), "  %s\n", entry.get_vsymbol().dump_versioned_name().c_str());
+            fprintf(get_debug(), "  %s\n", entry.get_vsymbol().get_versioned_name().c_str());
         }
     }
 
@@ -380,7 +378,7 @@ BinaryLoaderElf::VersionedSymbol::get_version() const
 }
 
 std::string
-BinaryLoaderElf::VersionedSymbol::dump_versioned_name() const
+BinaryLoaderElf::VersionedSymbol::get_versioned_name() const
 {
     std::string name = get_name();
     if (is_hidden())
@@ -496,21 +494,21 @@ BinaryLoaderElf::SymbolMapEntry::merge(const SymbolMapEntry& newEntry)
  *======================================================================================================================== */
 
 const BinaryLoaderElf::SymbolMapEntry *
-BinaryLoaderElf::SymbolMap::find(std::string name) const
+BinaryLoaderElf::SymbolMap::lookup(std::string name) const
 {
-    BaseMap::const_iterator iter = p_base_map.find(name);
-    if (p_base_map.end() ==iter)
+    const_iterator iter = find(name);
+    if (end() ==iter)
         return NULL;
     return &(iter->second);
 }
 
 const BinaryLoaderElf::SymbolMapEntry *
-BinaryLoaderElf::SymbolMap::find(std::string name, std::string version) const
+BinaryLoaderElf::SymbolMap::lookup(std::string name, std::string version) const
 {
     if (version.empty()) {
-        return find(name);
+        return lookup(name);
     } else {
-        return find(name + "("  + version + ")");
+        return lookup(name + "("  + version + ")");
     }
 }
 
@@ -741,10 +739,10 @@ BinaryLoaderElf::relocate_X86_JMP_SLOT(SgAsmElfRelocEntry* reloc,
 
     VersionedSymbol relocVSymbol = resolver.get_versioned_symbol(relocSymbol);
     if (get_verbose() > 0)
-        printf("relocVSymbol: %s\n", relocVSymbol.dump_versioned_name().c_str());
+        printf("relocVSymbol: %s\n", relocVSymbol.get_versioned_name().c_str());
 
     std::string symbolName=relocVSymbol.get_name();
-    const SymbolMapEntry *symbolEntry = masterSymbolMap.find(symbolName);
+    const SymbolMapEntry *symbolEntry = masterSymbolMap.lookup(symbolName);
 
     if (NULL == symbolEntry) { // TODO check for weak relocsymbol
         printf("Could not find symbol '%s'\n", relocSymbol->get_name()->c_str());
@@ -874,10 +872,10 @@ BinaryLoaderElf::relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
 
     VersionedSymbol relocVSymbol = resolver.get_versioned_symbol(relocSymbol);
     if (get_verbose() > 0)
-        printf("relocVSymbol: %s\n", relocVSymbol.dump_versioned_name().c_str());
+        printf("relocVSymbol: %s\n", relocVSymbol.get_versioned_name().c_str());
 
     std::string symbolName=relocVSymbol.get_name();
-    const SymbolMapEntry *symbolEntry = masterSymbolMap.find(symbolName);
+    const SymbolMapEntry *symbolEntry = masterSymbolMap.lookup(symbolName);
 
     if (NULL == symbolEntry) { // TODO check for weak relocsymbol
         printf("Could not find symbol '%s'\n", relocSymbol->get_name()->c_str());

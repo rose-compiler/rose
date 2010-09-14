@@ -111,7 +111,7 @@ public:
         }
         
         /** Returns the full, versionioned name of this symbol. Used for debugging. */
-        std::string dump_versioned_name() const;
+        std::string get_versioned_name() const;
         
         /** Set the version pointer for this symbol. */
         void set_version_entry(SgAsmElfSymverEntry *entry) {
@@ -179,29 +179,16 @@ public:
         }
     };
 
-    /* FIXME: We should probably make this a subclass of std::map<>, in which case we wouldn't need the extra level of
-     *        indirection to get the BaseMap. [RPM 2010-09-14] */
     /** A mapping from symbol name (with optional version in parentheses) to SymbolMapEntry. */
-    class SymbolMap {
+    class SymbolMap: public std::map<std::string/*symbol name*/, SymbolMapEntry> {
     public:
-        typedef std::map<std::string, SymbolMapEntry> BaseMap;
-
-        /* FIXME: This should be renamed to lookup() since find() generally returns an iterator. [RPM 2010-09-14] */
         /** Finds and returns the entry having the specified name.  Returns the null pointer if the name cannot be found. */
-        const SymbolMapEntry *find(std::string name) const;
+        const SymbolMapEntry *lookup(std::string name) const;
 
-        /* FIXME: This should be renamed to lookup() since find() generally returns an iterator. [RPM 2010-09-14] */
         /** Finds and returns the entry having the specified name and version.  Returns the null pointer if the name cannot be
          *  found.  The lookup is performed by enclosing the version string in parentheses (if the version is not empty) and
          *  appending it to the symbol name. */
-        const SymbolMapEntry *find(std::string name, std::string version) const;
-
-        BaseMap& get_base_map() {
-            return p_base_map;
-        }
-
-    private:
-        BaseMap p_base_map;
+        const SymbolMapEntry *lookup(std::string name, std::string version) const;
     };
     
     class SymverResolver {
