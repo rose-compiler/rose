@@ -43,12 +43,20 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 
 	//This simple processor just takes the first valid reverse expression returned
 	EvaluationResult& expressionReversalOption = expressions.front();
-	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseAST(statement->get_expression());
-	SgStatement* forwardStatement = SageBuilder::buildExprStatement(expressionReversal.fwd_exp);
-	SgStatement* reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
+	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseExpression();
+	SgStatement* forwardStatement = NULL;
+	if (expressionReversal.fwd_exp != NULL)
+	{
+		forwardStatement = SageBuilder::buildExprStatement(expressionReversal.fwd_exp);
+	}
+	SgStatement* reverseStatement = NULL;
+	if (expressionReversal.rvs_exp != NULL)
+	{
+		reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
+	}
 
 	//We just do all the work in the evaluation step and save it as an attribute
-	EvaluationResult statementResult(this, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
+	EvaluationResult statementResult(this, statement, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
 	StatementReversal statementReversal(forwardStatement, reverseStatement);
 	statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
 
@@ -61,7 +69,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 StatementReversal StraightlineStatementProcessor::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
 {
 	ROSE_ASSERT(reversal.getChildResults().size() == 0);
-	ROSE_ASSERT(reversal.getStatementProcessor() == this);
+	ROSE_ASSERT(reversal.getStatementHandler() == this);
 
 	StoredStatementReversal* storedResult = dynamic_cast<StoredStatementReversal*>(reversal.getAttribute().get());
 	ROSE_ASSERT(storedResult != NULL);
@@ -83,19 +91,15 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 	VariableVersionTable currentVariableVersions = var_table;
 	SimpleCostModel totalCost;
 
-	reverse_foreach(SgStatement* s, basicBlock->get_statements())
+	//First pass: handle declarations of local variables
+	foreach(SgStatement* statement, basicBlock->get_statements())
 	{
 		// Put the declarations of local variables in the beginning of reverse
 		// basic block and retrieve their values. Store values of all local
 		// variables in the end of of forward basic block.
 		// Also refer to the function "processVariableDeclaration"
-		if (SgVariableDeclaration * variableDeclaration = isSgVariableDeclaration(s))
+		if (SgVariableDeclaration * variableDeclaration = isSgVariableDeclaration(statement))
 		{
-			//Add a copy of the declaration to the forward body
-			SgVariableDeclaration* forwardBodyDeclaration = isSgVariableDeclaration(SageInterface::copyStatement(variableDeclaration));
-			forwardBody->prepend_statement(forwardBodyDeclaration);
-
-
 			foreach(SgInitializedName* localVar, variableDeclaration->get_variables())
 			{
 				//First, check if we can restore the variable without savings its value
@@ -104,13 +108,13 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 				SgFunctionDefinition* enclosingFunction = SageInterface::getEnclosingFunctionDefinition(basicBlock);
 				VariableRenaming::NumNodeRenameEntry definitions = getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosingFunction, varName);
 
-				//vector<SgExpression*> restoredValue = restoreVariable(varName, currentVariableVersions, definitions);
+				SgExpression* restoredValue = restoreVariable(varName, currentVariableVersions, definitions);
 				SgAssignInitializer* reverseVarInitializer;
-				/*if (!restoredValue.empty())
+				if (restoredValue != NULL)
 				{
-					reverseVarInitializer = SageBuilder::buildAssignInitializer(restoredValue.front());
+					reverseVarInitializer = SageBuilder::buildAssignInitializer(restoredValue);
 				}
-				else*/
+				else
 				{
 					//Push(save) the variable at the bottom of the forward statement
 					SgExpression* storeVarValue = pushVal(SageBuilder::buildVarRefExp(localVar, forwardBody), localVar->get_type());
@@ -119,17 +123,24 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 
 					//In the reverse body, declare & pop the variable at the very top
 					reverseVarInitializer = SageBuilder::buildAssignInitializer(popVal(localVar->get_type()));
+
+					//Note that we have stored one variable
+					totalCost.increaseStoreCount(1);
 				}
-		
+
 				SgVariableDeclaration* reverseDeclaration = SageBuilder::buildVariableDeclaration(localVar->get_name(),
 						localVar->get_type(), reverseVarInitializer);
 				localVarDeclarations.push_back(reverseDeclaration);
+
+				//Update the variable version table to indicate that this variable has been restored
+				currentVariableVersions.setLastVersion(localVar);
 			}
-
-			//No need to do further processing for variable declarations
-			continue;
 		}
+	}
 
+	//Second pass: reverse all the statements
+	reverse_foreach(SgStatement* s, basicBlock->get_statements())
+	{
 		//In this simple processor, we just take the first valid statement available
 		vector<EvaluationResult> possibleStatements = evaluateStatement(s, currentVariableVersions);
 		if (possibleStatements.empty())
@@ -139,7 +150,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 			exit(1);
 		}
 
-		StatementReversal instrumentedStatement = possibleStatements.front().generateReverseAST(s);
+		StatementReversal instrumentedStatement = possibleStatements.front().generateReverseStatement();
 		totalCost += possibleStatements.front().getCost();
 		SgStatement* forwardStatement = instrumentedStatement.fwd_stmt;
 		SgStatement* reverseStatement = instrumentedStatement.rvs_stmt;
@@ -170,7 +181,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 	}
 
 	//Before exiting scope, store all local variables
-	reverse_foreach(SgStatement* stmt, scopeExitStores)
+	foreach(SgStatement* stmt, scopeExitStores)
 	{
 		forwardBody->append_statement(stmt);
 	}
@@ -183,7 +194,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 
 	//We actually did both cost evaluation and code generation. Store the result as an attribute
 	StatementReversal result(forwardBody, reverseBody);
-	EvaluationResult costAndStuff(this, currentVariableVersions, totalCost);
+	EvaluationResult costAndStuff(this, basicBlock, currentVariableVersions, totalCost);
 	costAndStuff.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(result)));
 
 	vector<EvaluationResult> out;

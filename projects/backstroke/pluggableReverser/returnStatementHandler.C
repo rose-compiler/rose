@@ -13,7 +13,7 @@ vector<EvaluationResult> ReturnStatementHandler::evaluate(SgStatement* statement
 	{
 		//We only allow a return statement to appear as the very last statement in a function. Assert this
 		ROSE_ASSERT(SageInterface::getEnclosingFunctionDefinition(statement)->get_body()->get_statements().back() == returnStatement);
-		EvaluationResult evaluation(this, var_table);
+		EvaluationResult evaluation(this, statement, var_table);
 		results.push_back(evaluation);
 	}
 
@@ -22,7 +22,7 @@ vector<EvaluationResult> ReturnStatementHandler::evaluate(SgStatement* statement
 
 StatementReversal ReturnStatementHandler::generateReverseAST(SgStatement* statement, const EvaluationResult& evaluationResult)
 {
-	ROSE_ASSERT(evaluationResult.getStatementProcessor() == this && evaluationResult.getChildResults().size() == 0);
+	ROSE_ASSERT(evaluationResult.getStatementHandler() == this && evaluationResult.getChildResults().size() == 0);
 	ROSE_ASSERT(isSgReturnStmt(statement));
 
 	//The reverse of a return statement is a no-op

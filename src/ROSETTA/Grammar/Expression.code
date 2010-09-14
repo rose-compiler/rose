@@ -2622,18 +2622,18 @@ SOURCE_DOT_EXPRESSION_END
 SOURCE_DOT_STAR_OPERATOR_EXPRESSION_START
 
 SgType*
-$CLASSNAME::get_type() const
+SgDotStarOp::get_type() const
    {
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
-  // For the SgDotStarExp, the type is the type of the rhs operand (e.g. "A.*x" where "x" is a member function pointer of the class "A").
+  // For the SgDotStarOp, the type is the type of the rhs operand (e.g. "A.*x" where "x" is a member function pointer of the class "A").
 
   // Comment from Jeremiah (7/20/2006)
   // In SOURCE_DOT_STAR_OPERATOR_EXPRESSION's get_type() method, the expression type is computed as the type of the RHS operand.  
   // This is most likely a pointer to member type, though, not the type of the underlying member (assuming the types of 
   // pointer-to-member expressions are set correctly).  The same issue applies to SOURCE_ARROW_STAR_OPERATOR_EXPRESSION.
 
-  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type from rhs = %s \n",get_rhs_operand()->class_name().c_str());
+  // printf ("SgDotStarOp::get_type(): p_expression_type has been removed, we have to compute the appropriate type from rhs = %s \n",get_rhs_operand()->class_name().c_str());
 
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
@@ -2693,10 +2693,10 @@ $CLASSNAME::get_type() const
 #ifdef ROSE_USE_EDG_VERSION_4
             // DQ (12/31/2008): This appears to be the correct fix for EDG version 4.0, 
             // but it is unclear why this is not an issue for EDG 3.x previously.
-            // printf ("Using default case in $CLASSNAME::get_type() differently with EDG version 4.x someType = %s \n",someType->class_name().c_str());
+            // printf ("Using default case in SgDotStarOp::get_type() differently with EDG version 4.x someType = %s \n",someType->class_name().c_str());
                returnType = someType;
 #else
-               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               printf ("Error: default reached in In SgDotStarOp::get_type() someType = %s \n",someType->class_name().c_str());
                ROSE_ASSERT(false);
 #endif
              }
@@ -2715,13 +2715,13 @@ SOURCE_DOT_STAR_OPERATOR_EXPRESSION_END
 SOURCE_ARROW_STAR_OPERATOR_EXPRESSION_START
 
 SgType*
-$CLASSNAME::get_type() const
+SgArrowStarOp::get_type() const
    {
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
-  // For the SgArrowStarExp, the type is the type of the rhs operand (e.g. "A->*x" where "x" is a member function pointer of the pointer to the class "A").
+  // For the SgArrowStarOp, the type is the type of the rhs operand (e.g. "A->*x" where "x" is a member function pointer of the pointer to the class "A").
 
-  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type from rhs = %s \n",get_rhs_operand()->class_name().c_str());
+  // printf ("SgArrowStarOp::get_type(): p_expression_type has been removed, we have to compute the appropriate type from rhs = %s \n",get_rhs_operand()->class_name().c_str());
 
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
@@ -2776,14 +2776,14 @@ $CLASSNAME::get_type() const
 
           default:
              {
-               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               printf ("Error: default reached in In SgArrowStarOp::get_type() someType = %s \n",someType->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
 
      ROSE_ASSERT(returnType != NULL);
 
-  // printf ("$CLASSNAME::get_type(): get the type of the rhs operand returnType = %s \n",returnType->class_name().c_str());
+  // printf ("SgArrowStarOp::get_type(): get the type of the rhs operand returnType = %s \n",returnType->class_name().c_str());
 
      return returnType;
    }
@@ -3219,7 +3219,6 @@ SgPointerDerefExp::get_type() const
                returnType = someType;
                break;
              }
-
 #endif
 
 #if 0
@@ -3557,7 +3556,7 @@ SOURCE_CAST_EXPRESSION_END
 SOURCE_POINTER_ARRAY_REFERENCE_EXPRESSION_START
 
 SgType*
-$CLASSNAME::get_type() const
+SgPntrArrRefExp::get_type() const
    {
   // DQ (1/16/2006): In this function we want to return the base type of the array being referenced (lhs->get_type()).
 
@@ -3622,6 +3621,14 @@ $CLASSNAME::get_type() const
                goto keepStripping;
              }
 
+       // DQ (9/12/2010): Added SgTypeFloat support to handle Fortran support (in file LANL_POP/grid.F90).
+          case V_SgTypeFloat:
+             {
+            // DQ (8/17/2010): I think that this is the correct handling of the return value generation.
+               returnType = someType;
+               break;
+             }
+
 #ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (10/3/2006): Added case of array reference of string type (assume it returns a char).
        // Once we have a wcharString type then we have to add that case to this list as well!
@@ -3643,7 +3650,7 @@ $CLASSNAME::get_type() const
           default:
              {
 #if 1
-               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %s \n",someType->class_name().c_str());
                get_file_info()->display("location of error: debug");
 
             // DQ (9/27/2006): This can be a compiler generated IR nde so look at the parent.
@@ -3651,7 +3658,7 @@ $CLASSNAME::get_type() const
                if (locatedNode != NULL)
                     locatedNode->get_file_info()->display("location of parent: debug");
 #endif
-               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %s \n",someType->class_name().c_str());
                ROSE_ASSERT(false);
              }
 #else

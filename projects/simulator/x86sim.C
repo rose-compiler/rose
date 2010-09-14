@@ -416,6 +416,10 @@ public:
 SgAsmGenericHeader*
 EmulationPolicy::load(const char *name)
 {
+    /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
+     * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
+     * instead (see BinaryLoaderElf::rebase()) */
+    rose_addr_t ld_linux_base_va = 0x40000000;
 
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
     if (debug)
@@ -440,7 +444,7 @@ EmulationPolicy::load(const char *name)
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 even though the libs preferred
      * addresses start at zero.  We can accomplish the same thing simply by rebasing the library. */
     if (loader->interpreter) {
-        loader->interpreter->set_base_va(0x40000000);
+        loader->interpreter->set_base_va(ld_linux_base_va);
         writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
     }
 
@@ -455,7 +459,7 @@ EmulationPolicy::load(const char *name)
         disassembler = Disassembler::lookup(interp)->clone();
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
-     * below ld-linux.so.2 was loaded, the stack, etc. */
+     * below where ld-linux.so.2 was loaded, the stack, etc. */
     brk_va = ALIGN_UP(map->find_last_free(0x40000000), PAGE_SIZE);
 
     return fhdr;

@@ -2,6 +2,8 @@
 #include <pluggableReverser/expressionProcessor.h>
 #include <pluggableReverser/statementProcessor.h>
 #include <pluggableReverser/ifStatementProcessor.h>
+#include <pluggableReverser/akgulStyleExpressionProcessor.h>
+#include "pluggableReverser/variableDeclarationHandler.h"
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
@@ -55,18 +57,24 @@ int main(int argc, char * argv[])
 	EventProcessor event_processor(NULL, &var_renaming);
 
 	// Add all expression handlers to the expression pool.
-	event_processor.addExpressionProcessor(new NullExpressionHandler);
-	event_processor.addExpressionProcessor(new IdentityExpressionHandler);
-	event_processor.addExpressionProcessor(new StoreAndRestoreExpressionHandler);
-	event_processor.addExpressionProcessor(new ConstructiveExpressionHandler);
+	event_processor.addExpressionHandler(new NullExpressionHandler);
+	event_processor.addExpressionHandler(new IdentityExpressionHandler);
+	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
+	event_processor.addExpressionHandler(new ConstructiveExpressionHandler);
 	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
-	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor);
+	event_processor.addExpressionHandler(new AkgulStyleExpressionProcessor);
 
 	// Add all statement handlers to the statement pool.
-	event_processor.addStatementProcessor(new CombinatorialExprStatementHandler);
-	event_processor.addStatementProcessor(new CombinatorialBasicBlockHandler);
-	event_processor.addStatementProcessor(new IfStatementProcessor);
-	event_processor.addStatementProcessor(new ReturnStatementHandler);
+	event_processor.addStatementHandler(new CombinatorialExprStatementHandler);
+	event_processor.addStatementHandler(new VariableDeclarationHandler);
+	event_processor.addStatementHandler(new CombinatorialBasicBlockHandler);
+	event_processor.addStatementHandler(new IfStatementProcessor);
+	event_processor.addStatementHandler(new ReturnStatementHandler);
+	event_processor.addStatementHandler(new NullStatementHandler);
+
+	//Variable value extraction handlers
+	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
+	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
 
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
@@ -103,5 +111,4 @@ int main(int argc, char * argv[])
 	cout << "Test Done!\n";
 
 	return backend(project);
-	return 0;
 }

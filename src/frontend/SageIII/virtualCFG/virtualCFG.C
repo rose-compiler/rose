@@ -7,7 +7,7 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#include "err.h"
+#include <err.h>
 
 using namespace std;
 
@@ -347,13 +347,21 @@ namespace VirtualCFG {
       } else {
 	return eckFalse;
       }
-    } else if (isSgFunctionCallExp(srcNode) && 
-               srcIndex == 2 && 
+    } else if (isSgFunctionCallExp(srcNode) &&
+               srcIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX &&
                !isSgFunctionCallExp(tgtNode)) {
         return eckInterprocedural;
-    } else if (isSgFunctionCallExp(tgtNode) && 
-               tgtIndex == 3 && 
+    } else if (isSgFunctionCallExp(tgtNode) &&
+               tgtIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX+1 &&
                !isSgFunctionCallExp(srcNode)) {
+        return eckInterprocedural;
+    } else if (isSgConstructorInitializer(srcNode) &&
+               srcIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX &&
+               !isSgConstructorInitializer(tgtNode)) {
+        return eckInterprocedural;
+    } else if (isSgConstructorInitializer(tgtNode) &&
+               tgtIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX+1 &&
+               !isSgConstructorInitializer(srcNode)) {
         return eckInterprocedural;
     } else {
       // No key
