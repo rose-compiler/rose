@@ -191,27 +191,48 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     /* compact one-line-per-reloc format */
-    if (0==idx)
-        fprintf(f, "%s%-*s   %-10s %-4s %-10s %-10s %-10s Name + Addend\n", p, w, "", "Offset", "Type", "Addend", "Sym", "Value");
-
-    fprintf(f, "%s%-*s = 0x%08"PRIx64, p, w, "", p_r_offset);
-    SgAsmGenericHeader* header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(this);
-    if (header) {
-        fprintf(f, " %10s", to_string(p_type, header->get_isa()).c_str());
-    } else {
-        fprintf(f, "       0x%02zx", (size_t)p_type);
+    if (0==idx) {
+        fprintf(f, "%s%-*s   %-10s %-20s %-10s %4s %-10s %s\n",
+                p, w, "", "Offset", "Type", "Addend", "Sym", "Value", "Name + Addend");
     }
 
-    fprintf(f, " 0x%08"PRIx64" %4lu", p_r_addend, p_sym);
+    /* Offset */
+    fprintf(f, "%s%-*s = 0x%08"PRIx64, p, w, "", p_r_offset);
+
+    /* Type */
+    SgAsmGenericHeader* header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(this);
+    if (header) {
+        fprintf(f, " %-20s", to_string(p_type, header->get_isa()).c_str());
+    } else {
+        fprintf(f, " 0x%02zx                ", (size_t)p_type);
+    }
+
+    /* Addend */
+    if (p_r_addend) {
+        fprintf(f, " 0x%08"PRIx64, p_r_addend);
+    } else {
+        fprintf(f, " %10s", "");
+    }
+
+    /* Symbol index */
+    fprintf(f, " %4lu", p_sym);
+
+    /* Symbol value and name */
     if (!symtab) {
-        fprintf(f, " 0x%08x <no-symtab>", 0);
+        fprintf(f, " %10s <no symtab>", "");
     } else if (p_sym>=symtab->get_symbols()->get_symbols().size()) {
-        fprintf(f, " 0x%08x <range>", 0);
+        fprintf(f, " %10s <out of range>", "");
     } else {
         SgAsmGenericSymbol *sym = symtab->get_symbols()->get_symbols()[p_sym];
         fprintf(f, " 0x%08"PRIx64" %s", sym->get_value(), sym->get_name()->c_str());
     }
-    fprintf(f, " + %"PRIu64"\n", p_r_addend);
+
+    /* Addend in decimal */
+    if (p_r_addend)
+        fprintf(f, " + %"PRIu64, p_r_addend);
+    fputc('\n', f);
+
+    /* Auxiliary data */
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %zu bytes\n", p, w, ".extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
