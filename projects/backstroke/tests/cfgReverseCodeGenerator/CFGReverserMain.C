@@ -9,6 +9,7 @@
 #include "pluggableReverser/akgulStyleExpressionProcessor.h"
 #include "pluggableReverser/returnStatementHandler.h"
 #include "pluggableReverser/variableDeclarationHandler.h"
+#include "pluggableReverser/redefineValueRestorer.h"
 
 
 int main(int argc, char** argv)

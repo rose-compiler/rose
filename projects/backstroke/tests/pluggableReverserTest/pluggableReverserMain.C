@@ -13,6 +13,7 @@
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "pluggableReverser/returnStatementHandler.h"
 #include "pluggableReverser/akgulStyleExpressionProcessor.h"
+#include "pluggableReverser/redefineValueRestorer.h"
 
 
 
