@@ -590,6 +590,13 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtNodeForName(SgNode* node, const VarName& var);
 
+    /** Get the final versions if all variables at the end of the given scope.
+     *
+     * @param bb The scope to get variables for.
+     * @return A table of VarName->(num, defNode) for all variables at the end of the scope. Empty table otherwise.
+     */
+	NumNodeRenameTable getReachingDefsAtScopeEnd(SgScopeStatement* scope);
+
     /** Get the final versions if all variables at the end of the given function.
      *
      * @param node The function to get variables for.
