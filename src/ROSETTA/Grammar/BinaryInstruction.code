@@ -970,7 +970,7 @@ HEADER_GENERIC_HEADER_START
 	public:
           	explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
 			: SgAsmGenericSection(ef, NULL),
-			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
+			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_sections(NULL)
 			{ctor();}
 
 		virtual ~SgAsmGenericHeader();
@@ -988,10 +988,6 @@ HEADER_GENERIC_HEADER_START
 		        ROSE_ASSERT(p_dlls != NULL);
 			return p_dlls->get_dlls();
 		}
-
-		/* Functions for symbols */
-		void add_symbol(SgAsmGenericSymbol*); /* add a new symbol to the symbol table. Duplicates are allowed. */
-		SgAsmGenericSymbolPtrList& get_symbol_list();
 
 		/* Accessors for protected/private members */
 		std::vector<unsigned char>& get_magic() {return p_magic;}
@@ -5154,13 +5150,6 @@ const char *
 SgAsmGenericHeader::format_name() const
    {
      return "ASM_GENERIC_HEADER";
-   }
-
-SgAsmGenericSymbolPtrList & 
-SgAsmGenericHeader::get_symbol_list()
-   {
-     ROSE_ASSERT(p_symbols != NULL);
-     return p_symbols->get_symbols();
    }
 
 SgAsmGenericFormat::ByteOrder
