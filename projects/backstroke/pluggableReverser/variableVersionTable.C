@@ -15,7 +15,17 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 	{
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, name_to_num.second)
 		{
-			table_[name_to_num.first].insert(num_to_node.first);
+			// If the variable is a local variable of the given function (except parameters), we will set its
+			// version to NULL.
+			if (SageInterface::isAncestor(
+					backstroke_util::getFunctionBody(func_decl),
+					name_to_num.first[0]->get_declaration()))
+			{
+				//cout << VariableRenaming::keyToString(name_to_num.first) << endl;
+				table_[name_to_num.first];
+			}
+			else
+				table_[name_to_num.first].insert(num_to_node.first);
 		}
 	}
 }
@@ -38,10 +48,9 @@ void VariableVersionTable::print() const
 
 	foreach(VarIdxPair var_idx, table_)
 	{
-		foreach(SgInitializedName* name, var_idx.first)
-		cout << name->get_name().str() << ' ';
+		cout << VariableRenaming::keyToString(var_idx.first) << " : ";
 		foreach(int i, var_idx.second)
-		cout << i << ' ';
+			cout << i << ' ';
 		cout << endl;
 	}
 }
@@ -52,7 +61,7 @@ vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
 {
 	vector<SgExpression*> vars;
 
-	vector<SgExpression*> exps = querySubTree<SgExpression > (node);
+	vector<SgExpression*> exps = querySubTree<SgExpression>(node);
 
 	//ROSE_ASSERT(!exps.empty());
 
@@ -95,7 +104,7 @@ bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 
 		// Get the version of its reaching def.
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type& num_to_node, defs)
-		reaching_def_ver.insert(num_to_node.first);
+			reaching_def_ver.insert(num_to_node.first);
 
 		// Compare the current version of this variable and its reaching def's version.
 		if (table_.find(name)->second != reaching_def_ver)
@@ -103,6 +112,35 @@ bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 	}
 	return true;
 }
+
+bool VariableVersionTable::checkVersionForDef(SgExpression* exp) const
+{
+	// First, get all variables in the given expression.
+	vector<SgExpression*> vars = getAllVariables(exp);
+
+	foreach(SgExpression* var, vars)
+	{
+		// When checking a USE var's version, we search its reaching def's version.
+		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(var->get_parent(), name);
+
+		ROSE_ASSERT(!defs.empty());
+		ROSE_ASSERT(table_.count(name) > 0);
+
+		set<int> reaching_def_ver;
+
+		// Get the version of its reaching def.
+		foreach(VariableRenaming::NumNodeRenameEntry::value_type& num_to_node, defs)
+			reaching_def_ver.insert(num_to_node.first);
+
+		// Compare the current version of this variable and its reaching def's version.
+		if (table_.find(name)->second != reaching_def_ver)
+			return false;
+	}
+	return true;
+}
+
+#if 0
 
 bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) const
 {
@@ -226,6 +264,23 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 	return true;
 }
 
+#endif
+
+void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
+{
+	//FIXME: This does not set the versions of all the expanded variables
+	VariableRenaming::VarName name;
+	name.push_back(init_name);
+	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());
+	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtFunctionEndForName(enclosing_func, name);
+
+	table_[name].clear();
+	foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, num_table)
+	{
+		table_[name].insert(num_to_node.first);
+	}
+}
+
 void VariableVersionTable::reverseVersion(SgNode* node)
 {
 	// Note all expanded nodes are reversed here. For example, for m->a, both m->a
@@ -265,9 +320,47 @@ void VariableVersionTable::setNullVersion(SgNode* node)
 	table_[varName].clear();
 }
 
+std::pair<VariableVersionTable, VariableVersionTable>
+VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const
+{
+	VariableVersionTable true_body_var_table = *this;
+	VariableVersionTable false_body_var_table = *this;
+
+	foreach (TableType::value_type var_version, table_)
+	{
+		foreach (int version, var_version.second)
+		{
+			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
+			SgStatement* if_body = backstroke_util::getEnclosingIfBody(def_node);
+			if (if_body == true_body)
+			{
+				true_body_var_table.table_[var_version.first].clear();
+				true_body_var_table.table_[var_version.first].insert(version);
+			}
+			else if (if_body == false_body)
+			{
+				false_body_var_table.table_[var_version.first].clear();
+				false_body_var_table.table_[var_version.first].insert(version);
+			}
+
+			if (SageInterface::isAncestor(true_body, def_node))
+			{
+				false_body_var_table.table_[var_version.first].erase(version);
+			}
+			else if (SageInterface::isAncestor(false_body, def_node))
+			{
+				true_body_var_table.table_[var_version.first].erase(version);
+			}
+		}
+	}
+
+	return make_pair(true_body_var_table, false_body_var_table);
+}
+
 void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 {
 	ROSE_ASSERT(var_table.table_.size() == this->table_.size());
+	
 	for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
 			it != table_.end(); ++it)
 	{
@@ -281,6 +374,31 @@ void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 		std::set_intersection(ver1.begin(), ver1.end(),
 				ver2.begin(), ver2.end(), inserter(intersection, intersection.begin()));
 		it->second.swap(intersection);
+
+#if 0
+		if (var_table.table_.find(it->first)->second != it->second)
+			it->second.clear();
+#endif
+	}
+}
+
+void VariableVersionTable::setUnion(const VariableVersionTable& var_table)
+{
+	ROSE_ASSERT(var_table.table_.size() == this->table_.size());
+
+	for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
+			it != table_.end(); ++it)
+	{
+		ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
+
+		// Make the intersection of those two sets of versions.
+		const set<int>& ver1 = var_table.table_.find(it->first)->second;
+		const set<int>& ver2 = it->second;
+		set<int> result;
+
+		std::set_union(ver1.begin(), ver1.end(),
+				ver2.begin(), ver2.end(), inserter(result, result.begin()));
+		it->second.swap(result);
 
 #if 0
 		if (var_table.table_.find(it->first)->second != it->second)
@@ -341,6 +459,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 		indices.insert(versionDefPair.first);
 	}
 
+#if	0
 	printf("%s:\nIndices found: ", VariableRenaming::keyToString(varName).c_str());
 
 	foreach(int v, table_.find(varName)->second)
@@ -359,6 +478,7 @@ bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, Var
 
 	bool result = table_.find(varName)->second == indices;
 	printf("Result is %s\n\n", result ? "true" : "false");
+#endif
 
 	return table_.find(varName)->second == indices;
 }

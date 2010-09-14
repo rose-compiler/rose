@@ -18,28 +18,43 @@ struct StoredExpressionReversal : public EvaluationResultAttribute
 
 vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* expression, const VariableVersionTable& varTable, bool isReverseValueUsed)
 {
-	if (isSgAssignOp(expression))
+	if (backstroke_util::isAssignmentOp(expression))
 	{
-		SgAssignOp* assignOp = isSgAssignOp(expression);
+		SgBinaryOp* assignOp = isSgBinaryOp(expression);
+		ROSE_ASSERT(assignOp != NULL && "All assignments should be binary ops");
 
 		if (backstroke_util::IsVariableReference(assignOp->get_lhs_operand()))
 		{
-			SgExpression* reverseExpression;
-			if (handleAssignOp(assignOp, varTable, reverseExpression))
+			//Get the variable on the left side of the assign op
+			VariableRenaming::VarName destroyedVarName;
+			SgExpression* destroyedVarExpression;
+			tie(destroyedVarName, destroyedVarExpression) = getReferredVariable(assignOp->get_lhs_operand());
+			ROSE_ASSERT(destroyedVarName != VariableRenaming::emptyName);
+
+			//Get the version of the variable before it was overwritten
+			VariableRenaming::NumNodeRenameEntry reachingDefs = getVariableRenaming()->getReachingDefsAtNodeForName(assignOp->get_rhs_operand(), destroyedVarName);
+
+			//Call the variable value restorer plugins
+			SgExpression* restoredValue = restoreVariable(destroyedVarName, varTable, reachingDefs);
+			if (restoredValue != NULL)
 			{
+				//Success! Let's build an assign op to restore the value
+				SgExpression* reverseExpression = SageBuilder::buildAssignOp(SageInterface::copyExpression(destroyedVarExpression), restoredValue);
 				string reverseExpString = reverseExpression == NULL ? "NULL" : reverseExpression->unparseToString();
 				printf("Line %d:  Reversing '%s' with the expression %s'\n\n", expression->get_file_info()->get_line(),
 						expression->unparseToString().c_str(), reverseExpString.c_str());
 
 				//Indicate in the variable version table that we have restored this variable and return
 				VariableVersionTable newVarTable = varTable;
-				newVarTable.reverseVersion(getReferredVariable(assignOp->get_lhs_operand()).second);
+				newVarTable.reverseVersion(destroyedVarExpression);
 
+				//Build the evaluation result and return it
 				SgExpression* forwardExp = SageInterface::copyExpression(assignOp);
-				EvaluationResult reversalInfo(this, newVarTable);
 				ExpressionReversal reversalResult(forwardExp, reverseExpression);
+
+				EvaluationResult reversalInfo(this, expression, newVarTable);
 				reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
-				
+
 				vector<EvaluationResult> result;
 				result.push_back(reversalInfo);
 				return result;
@@ -54,34 +69,9 @@ ExpressionReversal AkgulStyleExpressionProcessor::generateReverseAST(SgExpressio
 {
 	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute().get());
 	ROSE_ASSERT(reversalResult != NULL);
-	ROSE_ASSERT(evaluationResult.getExpressionProcessor() == this);
+	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this);
 
 	return reversalResult->reversal;
-}
-
-
-bool AkgulStyleExpressionProcessor::handleAssignOp(SgAssignOp* assignOp, const VariableVersionTable& availableVariables, SgExpression*& reverseExpression)
-{
-	reverseExpression = NULL;
-	ROSE_ASSERT(assignOp != NULL);
-	
-	//Get the variable on the left side of the assign op
-	VariableRenaming::VarName destroyedVarName;
-	SgExpression* destroyedVarExpression;
-	tie(destroyedVarName, destroyedVarExpression) = getReferredVariable(assignOp->get_lhs_operand());
-	ROSE_ASSERT(destroyedVarName != VariableRenaming::emptyName);
-
-	VariableRenaming::NumNodeRenameEntry reachingDefs = getVariableRenaming()->getReachingDefsAtNodeForName(assignOp->get_rhs_operand(), destroyedVarName);
-
-	vector<SgExpression*> restoredValues = restoreVariable(destroyedVarName, availableVariables, reachingDefs);
-	if (!restoredValues.empty())
-	{
-		//Success! Let's build an assign op to restore the value
-		reverseExpression = SageBuilder::buildAssignOp(SageInterface::copyExpression(destroyedVarExpression), restoredValues.front());
-		return true;
-	}
-
-	return false;
 }
 
 
@@ -160,40 +150,6 @@ multimap<int, SgExpression*> AkgulStyleExpressionProcessor::collectUsesForVariab
 }
 
 
-vector<SgExpression*> RedefineValueRestorer::findVarReferences(VariableRenaming::VarName var, SgNode* root)
-{
-	class SearchTraversal : public AstTopDownProcessing<bool>
-	{
-	public:
-		VariableRenaming::VarName desiredVar;
-		vector<SgExpression*> result;
-
-		virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentReference)
-		{
-			if (isParentReference)
-			{
-				return true;
-			}
-
-			if (VariableRenaming::getVarName(node) == desiredVar)
-			{
-				ROSE_ASSERT(isSgExpression(node)); //The variable name should always be attached to an expression
-				result.push_back(isSgExpression(node));
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-	};
-
-	SearchTraversal traversal;
-	traversal.desiredVar = var;
-	traversal.traverse(root, false);
-	return traversal.result;
-}
-
 /** Implement redefine technique */
 vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::VarName destroyedVarName, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions)
@@ -260,65 +216,11 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 
 	//Ok, so the variable was previously defined by assignment to initExpression.
 	//Now we need to see if we can re-execute that expression
-	if (isModifyingExpression(definitionExpression, getEventProcessor()->getVariableRenaming()))
+	SgExpression* definitionExpressionValue = getEventProcessor()->restoreExpressionValue(definitionExpression, availableVariables);
+	if (definitionExpressionValue != NULL)
 	{
-		return results;
+		results.push_back(definitionExpressionValue);
 	}
-
-	//Ok, so the initializer expression has no side effects! We can just re-execute it to restore the variable.
-	//However, the variables used in the initializer expression might have been changed between its location and
-	//the current node
-	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
-	VariableRenaming::NumNodeRenameTable variablesInDefExpression = variableRenamingAnalysis.getOriginalUsesAtNode(definitionExpression);
-
-	//Go through all the variables used in the definition expression and check if their values have changed since the def
-	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> nameDefinitionPair;
-	SgExpression* definitionExpressionCopy = SageInterface::copyExpression(definitionExpression);
-
-	foreach(nameDefinitionPair, variablesInDefExpression)
-	{
-		VariableRenaming::NumNodeRenameEntry varVersionAtDefinition = nameDefinitionPair.second;
-
-		if (!availableVariables.matchesVersion(nameDefinitionPair.first, varVersionAtDefinition))
-		{
-			printf("Recursively restoring variable '%s' to its value at line %d.\n", VariableRenaming::keyToString(nameDefinitionPair.first).c_str(),
-					definitionExpression->get_file_info()->get_line());
-
-			//See if we can recursively restore the variable so we can re-execute the definition
-			vector<SgExpression*> recursivelyRestoredValues = getEventProcessor()->restoreVariable(nameDefinitionPair.first, availableVariables, varVersionAtDefinition);
-			if (!recursivelyRestoredValues.empty())
-			{
-				SgExpression* restoredOldValue = recursivelyRestoredValues.front();
-				vector<SgExpression*> restoredVarReferences = findVarReferences(nameDefinitionPair.first, definitionExpressionCopy);
-
-				foreach (SgExpression* restoredVarReference, restoredVarReferences)
-				{
-					printf("Replacing '%s' with '%s'\n", restoredVarReference->unparseToString().c_str(), restoredOldValue->unparseToString().c_str());
-
-					//If the whole definition itself is a variable reference, eg (t = a), then we can't use SageInterface::replaceExpression
-					//because the parent of the variable reference is null. Manually replace the definition expression with the restored value
-					if (definitionExpressionCopy == restoredVarReference)
-					{
-						SageInterface::deepDelete(definitionExpressionCopy);
-						definitionExpressionCopy = SageInterface::copyExpression(restoredOldValue);
-						break;
-					}
-
-					SageInterface::replaceExpression(restoredVarReference, SageInterface::copyExpression(restoredOldValue));
-				}
-
-				SageInterface::deepDelete(restoredOldValue);
-			}
-			else
-			{
-				SageInterface::deepDelete(definitionExpressionCopy);
-				return results;
-			}
-		}
-	}
-
-	//Ok, all we need to do is re-execute the original initializer
-	results.push_back(definitionExpressionCopy);
 
 	return results;
 }
@@ -342,7 +244,7 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 		//There might be multiple versions we require. Only add the uses that have all the desired versions
 		foreach(SgNode* potentialUseNode, usesForVersion)
 		{
-			VariableRenaming::NumNodeRenameEntry definitionsAtUse = variableRenamingAnalysis.getReachingDefsAtNodeForName(potentialUseNode, varName);
+			VariableRenaming::NumNodeRenameEntry definitionsAtUse = variableRenamingAnalysis.getUsesAtNodeForName(potentialUseNode, varName);
 
 			if (definitionsAtUse == definitions)
 			{
@@ -351,11 +253,14 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 		}
 	}
 
+	//printf("\nLooking for uses of %s:\n", VariableRenaming::keyToString(varName).c_str());
+
 	//We've collected all the use sites!
 	//Print them out to check if this is right
 	//Then process them to extract the variables!
 	reverse_foreach (SgNode* useSite, useSites)
 	{
+		//printf("Line %d: %s: %s\n", useSite->get_file_info()->get_line(), useSite->class_name().c_str(), useSite->unparseToString().c_str());
 		//If we're restoring x and we have the assignment a = x, we
 		//can extract x from the value of a. An assign initializer is almost exactly like an assign op
 		if (isSgAssignOp(useSite) || isSgAssignInitializer(useSite))
@@ -392,12 +297,46 @@ vector<SgExpression*> ExtractFromUseRestorer::restoreVariable(VariableRenaming::
 			//Ok, restore the lhs variable to the version used in the assignment.
 			//Then, that expression will hold the desired value of x
 			VariableRenaming::NumNodeRenameEntry lhsVersion = variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, lhsVar);
-			printf("Recursively restoring variable '%s' to its version in line %d\n", VariableRenaming::keyToString(lhsVar).c_str(),
-				useSite->get_file_info()->get_line());
-			results = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
-			if (!results.empty())
+			printf("Recursively restoring variable '%s' to version ", VariableRenaming::keyToString(lhsVar).c_str());
+			VariableRenaming::printRenameEntry(lhsVersion);
+			printf(" on line %d\n", useSite->get_file_info()->get_line());
+
+			SgExpression* resultFromThisUse = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
+			if (resultFromThisUse != NULL)
 			{
-				return results;
+				results.push_back(resultFromThisUse);
+			}
+		}
+		else if (isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite))
+		{
+			SgUnaryOp* incOrDecrOp = isSgUnaryOp(useSite);
+			ROSE_ASSERT(VariableRenaming::getVarName(incOrDecrOp->get_operand()) == varName);
+
+			//Ok, so we have something like a++. The initial version of a is 1 and the final version of a is 2. (for example)
+			//We would like to recover version 1 given version two
+			VariableRenaming::NumNodeRenameEntry versionAfterIncrement = variableRenamingAnalysis.getDefsAtNodeForName(incOrDecrOp, varName);
+			printf("Recursively restoring variable '%s' to version ", VariableRenaming::keyToString(varName).c_str());
+			VariableRenaming::printRenameEntry(versionAfterIncrement);
+
+			SgExpression* valueAfterIncrement = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterIncrement);
+			if (valueAfterIncrement != NULL)
+			{
+				//Success! Now all we have to do is subtract 1 to recover the value we want
+				SgExpression* result;
+				if (isSgPlusPlusOp(incOrDecrOp))
+				{
+					result = SageBuilder::buildSubtractOp(valueAfterIncrement, SageBuilder::buildIntVal(1));
+				}
+				else if (isSgMinusMinusOp(incOrDecrOp))
+				{
+					result = SageBuilder::buildAddOp(valueAfterIncrement, SageBuilder::buildIntVal(1));
+				}
+				else
+				{
+					ROSE_ASSERT(false);
+				}
+
+				results.push_back(result);
 			}
 		}
 	}
