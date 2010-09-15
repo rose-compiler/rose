@@ -29,7 +29,9 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
    {
   // This is the Fortran specific expression code generation
 
-  // printf ("In FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression ( expr = %p = %s ) \n",expr,expr->class_name().c_str());
+#if 0
+     printf ("In FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
+#endif
 
      switch (expr->variantT())
         {

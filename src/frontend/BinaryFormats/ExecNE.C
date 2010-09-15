@@ -476,10 +476,10 @@ SgAsmNESectionTable::ctor()
         section->set_purpose(SP_PROGRAM);
         section->set_st_entry(entry);
 
-        /* All NE sections are mapped. There desired address is apparently based on their file offset. */
+        /* All NE sections are mapped. Their desired address is apparently based on their file offset. */
         addr_t mapped_rva = section_offset - fhdr->get_offset();
         section->set_mapped_preferred_rva(mapped_rva);
-        section->set_mapped_actual_rva(0); /*assigned by Loader*/
+        section->set_mapped_actual_va(0); /*assigned by Loader*/
         section->set_mapped_size(entry->get_virtual_size());
 
         unsigned section_type = entry->get_flags() & SgAsmNESectionTableEntry::SF_TYPE_MASK;
