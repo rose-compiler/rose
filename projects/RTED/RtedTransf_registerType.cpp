@@ -96,7 +96,6 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 	}
 
 	ROSE_ASSERT(cdef);
-	ROSE_ASSERT(elements.size()>0);
 	ROSE_ASSERT(cdef->get_declaration()->get_type());
 	string classmanglnametype=cdef->get_declaration()->get_type()->class_name();
 //	string classmanglname=cdef->get_mangled_name().str(); //problem line!!! need to debug more. fails under 32bit
