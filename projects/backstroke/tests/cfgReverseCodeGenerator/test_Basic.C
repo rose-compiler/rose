@@ -26,7 +26,7 @@ int reverseMe(int in, State* state)
 
 	int i;
 	i = 3;
-	i = b;
+	i *= b;
 
 	//The following test fails
 	//Line l1;

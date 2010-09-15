@@ -31,6 +31,9 @@ class EventProcessor
 	//! The variable renaming analysis object.
 	VariableRenaming* var_renaming_;
 
+	//! This set is used to prevent infinite recursion when calling restoreVariable.
+	std::set<std::pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> > activeValueRestorations;
+
 	//! Make those two classes the friends to let them use some private methods.
 	friend class ReversalHandlerBase;
 
@@ -47,49 +50,38 @@ private:
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
 	SgExpression* popVal(SgType* type);
 
-	/** This set is used to prevent invfinite recursion when calling restoreVariable. */
-	std::set<std::pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> > activeValueRestorations;
 
 public:
 
 	EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
 	: event_(func_decl), var_renaming_(var_renaming) { }
 
-	void addExpressionProcessor(ExpressionReversalHandler* exp_processor)
-	{
-		exp_processor->setEventProcessor(this);
-		exp_processors_.push_back(exp_processor);
-	}
+	//! Add an expression handler to the pool of expression handlers.
+	void addExpressionHandler(ExpressionReversalHandler* exp_processor);
 
-	void addStatementProcessor(StatementReversalHandler* stmt_processor)
-	{
-		stmt_processor->setEventProcessor(this);
-		stmt_processors_.push_back(stmt_processor);
-	}
+	//! Add a statement handler to the pool of statement handlers
+	void addStatementHandler(StatementReversalHandler* stmt_processor);
 
-	void addVariableValueRestorer(VariableValueRestorer* restorer)
-	{
-		restorer->setEventProcessor(this);
-		variableValueRestorers.push_back(restorer);
-	}
+	//! Add a value extractor to the pool of variable value restorers
+	void addVariableValueRestorer(VariableValueRestorer* restorer);
 
+	//! The main interface which proceses an event function.
 	FuncDeclPairs processEvent();
+	FuncDeclPairs processEvent(SgFunctionDeclaration* event);
 
-	FuncDeclPairs processEvent(SgFunctionDeclaration* event)
-	{
-		event_ = event;
-		//stack_decls_.clear();
-		return processEvent();
-	}
-
-	//! Return if the given variable is a state variable (currently, it should be the parameter of event function).
+	//! Return if the given variable is a state variable (currently we assume all variables except
+	//! those defined inside the event function are state varibles).
 	bool isStateVariable(SgExpression* exp);
 	bool isStateVariable(const VariableRenaming::VarName& var);
+
+	//! Check if every state variable in the given variable version table has the initial version
+	//! which should be 1.
+	bool checkForInitialVersions(const VariableVersionTable& var_table);
 
 	//! Get all declarations of stacks which store values of different types.
 	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
 
-	VariableRenaming* getVariableRenaming()
+	VariableRenaming* getVariableRenaming() const
 	{
 		return var_renaming_;
 	}
@@ -100,10 +92,18 @@ public:
 	*
 	* @param variable name of the variable to be restored
 	* @param availableVariables variables whos values are currently available
-	* @return definitions the version of the variable which should be restored
+	* @param definition the version of the variable which should be restored
+	* @return NULL on failure; else an expression that evaluates to the value of the variable
 	*/
-	std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
+	SgExpression* restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions);
+
+	//! Restores the value of an expression given a set of currently available variables. For example, if the
+	//! expression is (a + b), the values of a and b will be extracted from the currently available variables, and then
+	//! the expression val(a) + val(b) will be returned.
+	//!
+	//! @returns expression evaluating to the same value as the original, or NULL on failure
+	SgExpression* restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables);
 };
 
 

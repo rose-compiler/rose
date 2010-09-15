@@ -5970,9 +5970,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     }
 
     /* Disassemble each interpretation */
-    if (get_read_executable_file_format_only()) {
-        printf ("\nWARNING: Skipping instruction disassembly \n\n");
-    } else {
+    if (!get_read_executable_file_format_only()) {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
             Disassembler::disassembleInterpretation(interps[i]);

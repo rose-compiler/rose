@@ -553,7 +553,7 @@ SgAsmGenericFile::get_sections_by_va(addr_t va) const
             retval.push_back(*i);
 
         /* Header sections */
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_va(va);
+        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_va(va, true);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;

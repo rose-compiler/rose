@@ -309,7 +309,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      }
 
      ctx.set_language(boost::wave::enable_long_long(ctx.get_language()));
-     ctx.set_language(boost::wave::enable_preserve_comments(ctx.get_language()));
+//     ctx.set_language(boost::wave::enable_preserve_comments(ctx.get_language()));
      ctx.set_language(boost::wave::enable_variadics(ctx.get_language()));
   // Force a specific file to be included before all others
 

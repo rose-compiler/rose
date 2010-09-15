@@ -4,6 +4,8 @@
 #include "CallGraph.h"
 #include <vector>
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 using namespace std;
 using namespace VirtualCFG;
 
@@ -771,14 +773,14 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX: { 
-     if (! virtualInterproceduralControlFlowGraphs) 
-       break;
-     Rose_STL_Container<SgExpression*> calls;
-     CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
-     Rose_STL_Container<SgExpression*>::iterator call;
-     for (call = calls.begin(); call != calls.end(); ++call) 
-       makeEdge(CFGNode(this, idx), (*call)->cfgForEnd(), result);
-     break;
+      if (virtualInterproceduralControlFlowGraphs) { 
+        ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
+        Rose_STL_Container<SgExpression*> exps;
+        CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
+        foreach (SgExpression* exp, exps) 
+          makeEdge(CFGNode(this, idx), exp->cfgForEnd(), result);
+      }
+      break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
   }
@@ -791,14 +793,14 @@ SgFunctionDefinition::cfgInEdges(unsigned int idx) {
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: {
-     if (! virtualInterproceduralControlFlowGraphs) 
-       break;
-     Rose_STL_Container<SgExpression*> calls;
-     CallTargetSet::getCallLikeExpsForFunctionDefinition(this, calls);
-     Rose_STL_Container<SgExpression*>::iterator call;
-     for (call = calls.begin(); call != calls.end(); ++call) 
-       makeEdge((*call)->cfgForEnd(), CFGNode(this, idx), result);
-     break;
+      if (virtualInterproceduralControlFlowGraphs) {
+        ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
+        Rose_STL_Container<SgExpression*> exps;
+        CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
+        foreach (SgExpression* exp, exps) 
+          makeEdge(exp->cfgForEnd(), CFGNode(this, idx), result);
+      }
+      break;
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 2: {
@@ -3095,11 +3097,11 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
       case SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX: {
                 if (virtualInterproceduralControlFlowGraphs) {
+                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
                   Rose_STL_Container<SgFunctionDefinition*> defs;
-                  CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
-                  Rose_STL_Container<SgFunctionDefinition*>::iterator def;
-                  for (def = defs.begin(); def != defs.end(); ++def) 
-                    makeEdge(CFGNode(this, idx), (*def)->cfgForBeginning(), result);
+                  CallTargetSet::getDefinitionsForExpression(this, &classHierarchy, defs);
+                  foreach (SgFunctionDefinition* def, defs) 
+                    makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
                 }
                 else {
                   makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
@@ -3121,11 +3123,11 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
                 if (virtualInterproceduralControlFlowGraphs) {
+                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
                   Rose_STL_Container<SgFunctionDefinition*> defs;
-                  CallTargetSet::getFunctionDefinitionsForCallLikeExp(this, defs);
-                  Rose_STL_Container<SgFunctionDefinition*>::iterator def;
-                  for (def = defs.begin(); def != defs.end(); ++def) 
-                    makeEdge((*def)->cfgForEnd(), CFGNode(this, idx), result);
+                  CallTargetSet::getDefinitionsForExpression(this, &classHierarchy, defs);
+                  foreach (SgFunctionDefinition* def, defs) 
+                    makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
                 }
                 else
                   makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
