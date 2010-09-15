@@ -17,7 +17,6 @@ Alternative to smgit to checkin:
    git push origin <YOUR BRANCH>
 
 
-
 #################### Sources of information on git ####################
 
 We will try to give you a fast introduction to git, but you should also consider looking up these documents
