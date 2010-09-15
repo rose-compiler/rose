@@ -41,16 +41,17 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 		//can extract x from the value of a. An assign initializer is almost exactly like an assign op
 		if (isSgAssignOp(useSite) || isSgAssignInitializer(useSite))
 		{
-			VariableRenaming::VarName rhsVar, lhsVar;
+			VariableRenaming::VarName lhsVar;
 
+			SgExpression* useExpression;
 			if (SgAssignOp* assignOpUse = isSgAssignOp(useSite))
 			{
-				rhsVar = variableRenamingAnalysis.getVarName(assignOpUse->get_rhs_operand());
+				useExpression = assignOpUse->get_rhs_operand();
 				lhsVar = variableRenamingAnalysis.getVarName(assignOpUse->get_lhs_operand());
 			}
 			else if (SgAssignInitializer* assignInitializer = isSgAssignInitializer(useSite))
 			{
-				rhsVar = variableRenamingAnalysis.getVarName(assignInitializer->get_operand());
+				useExpression = assignInitializer->get_operand();
 				SgInitializedName* declaredVar = isSgInitializedName(assignInitializer->get_parent());
 				ROSE_ASSERT(declaredVar != NULL);
 				lhsVar = variableRenamingAnalysis.getVarName(declaredVar);
@@ -60,27 +61,27 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 				ROSE_ASSERT(false);
 			}
 
-			//If this is a more complex op, such as a = x + y, we'll handle it in the future
-			if (rhsVar != varName || lhsVar == VariableRenaming::emptyName)
+			//The left-hand side of the assign is more complex than just a variable. This should have been normalized...
+			if (lhsVar == VariableRenaming::emptyName)
 			{
 				continue;
 			}
 
-			printf("Found suitable use for variable %s. Its value was saved in variable %s on line %d\n",
-				VariableRenaming::keyToString(varName).c_str(), VariableRenaming::keyToString(lhsVar).c_str(),
+			printf("Found suitable use for variable %s. Its value was saved in expression '%s' on line %d\n",
+				VariableRenaming::keyToString(varName).c_str(), useExpression->unparseToString().c_str(),
 				useSite->get_file_info()->get_line());
 
 			//Ok, restore the lhs variable to the version used in the assignment.
-			//Then, that expression will hold the desired value of x
 			VariableRenaming::NumNodeRenameEntry lhsVersion = variableRenamingAnalysis.getReachingDefsAtNodeForName(useSite, lhsVar);
 			printf("Recursively restoring variable '%s' to version ", VariableRenaming::keyToString(lhsVar).c_str());
 			VariableRenaming::printRenameEntry(lhsVersion);
 			printf(" on line %d\n", useSite->get_file_info()->get_line());
 
-			SgExpression* resultFromThisUse = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
-			if (resultFromThisUse != NULL)
+			SgExpression* useExpressionValue = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
+			if (useExpressionValue != NULL)
 			{
-				results.push_back(resultFromThisUse);
+				SgExpression* restoredVarValue = restoreVariableFromExpression(varName, availableVariables, useExpression, useExpressionValue);
+				results.push_back(restoredVarValue);
 			}
 		}
 		else if (isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite))
@@ -118,4 +119,91 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 	}
 
 	return results;
+}
+
+SgExpression* ExtractFromUseValueRestorer::restoreVariableFromExpression(VariableRenaming::VarName variable,
+			const VariableVersionTable& availableVariables, SgExpression* expression, SgExpression* expressionValue)
+{
+	VariableRenaming& varRenaming = *getEventProcessor()->getVariableRenaming();
+
+	if (VariableRenaming::getVarName(expression) != VariableRenaming::emptyName)
+	{
+		//We're trying to restore the value of x, and the expression itself is x. So, nothing to do
+		if (VariableRenaming::getVarName(expression) == variable)
+		{
+			return expressionValue;
+		}
+		else
+		{
+			//TODO The expression is a variable, but it could be a struct that contains x.
+			//Here we should build an expression to extract x from its parent
+			SageInterface::deepDelete(expressionValue);
+			return NULL;
+		}
+	}
+	else if (isSgAddOp(expression) || isSgSubtractOp(expression) || isSgBitXorOp(expression))
+	{
+		//We know the value of b + x and we would like to restore the value of x. For this, we need to restore the value of b
+		SgBinaryOp* binaryOp = isSgBinaryOp(expression);
+
+		//For addition and subtraction, we can only extact values from integer types (not floating point due to rounding error)
+		if ((isSgAddOp(expression) || isSgSubtractOp(expression)) && !expression->get_type()->isIntegerType())
+		{
+			SageInterface::deepDelete(expressionValue);
+			return NULL;
+		}
+
+		//Find if x is used in the right-hand-side or the left-hand side
+		bool usedLeft = !varRenaming.getUsesAtNodeForName(binaryOp->get_lhs_operand(), variable).empty();
+		bool usedRight = !varRenaming.getUsesAtNodeForName(binaryOp->get_rhs_operand(), variable).empty();
+		ROSE_ASSERT(usedLeft || usedRight);
+		if (usedLeft && usedRight)
+		{
+			//We can't extract the value if it's used on both sides of the op
+			SageInterface::deepDelete(expressionValue);
+			return NULL;
+		}
+
+		//Whichever side the variable is in, we need to restore the value of the other one
+		SgExpression* otherOperand = usedLeft ? binaryOp->get_rhs_operand() : binaryOp->get_lhs_operand();
+		SgExpression* otherOperandValue = getEventProcessor()->restoreExpressionValue(otherOperand, availableVariables);
+		if (otherOperandValue == NULL)
+		{
+			SageInterface::deepDelete(expressionValue);
+			return NULL;
+		}
+
+		SgExpression* usedExpressionValue;
+		//Case 1: We have the value of (b + x) and we have the value of (b). Then, x = (b + x) - (b)
+		if (isSgAddOp(binaryOp))
+		{
+			usedExpressionValue = SageBuilder::buildSubtractOp(expressionValue, otherOperandValue);
+		}
+		//Case 2: We have the value of (x - b) and we have the value of (b). Then, x = (x - b) + (b)
+		else if (isSgSubtractOp(binaryOp) && usedLeft)
+		{
+			usedExpressionValue = SageBuilder::buildAddOp(expressionValue, otherOperandValue);
+		}
+		//Case 3: We have the value of (b - x) and we have the value of (b). Then x = b - (b - x)
+		else if (isSgSubtractOp(binaryOp) && usedRight)
+		{
+			usedExpressionValue = SageBuilder::buildSubtractOp(otherOperandValue, expressionValue);
+		}
+		//Case 4: We have the value of (b ^ x) and we have the value of (b). Then x = (b ^ x) ^ b
+		else if (isSgBitXorOp(binaryOp))
+		{
+			usedExpressionValue = SageBuilder::buildBitXorOp(expressionValue, otherOperandValue);
+		}
+		else
+		{
+			ROSE_ASSERT(false);
+		}
+
+		//If there is chained addition such as (a + b + x), we have to recurse to recover x
+		SgExpression* usedExpression = usedLeft ? binaryOp->get_lhs_operand() : binaryOp->get_rhs_operand();
+		return restoreVariableFromExpression(variable, availableVariables, usedExpression, usedExpressionValue);
+	}
+
+	SageInterface::deepDelete(expressionValue);
+	return NULL;
 }
