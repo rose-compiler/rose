@@ -8,6 +8,7 @@ include_HEADERS = \
      rose-g++-headerfilefixup.h \
      rose_specific_cdefs.h
 
+# DQ (9/15/2010): Added UPC header files.
 # DQ (8/14/2010): Added modified header file iomanip-gnu-4.5 to fix code in new 4.5 header files 
 # that ROSE can't compile and which appear to be C++0X specific code included by mistake.
 # DQ (9/3/2006): Reorganized the lists of EXTRA_DIST and include_HEADERS.
@@ -28,7 +29,8 @@ EXTRA_DIST = CMakeLists.txt \
      macro_names_to_remove \
      cleanConfigGuessOutput \
      get_compiler_header_dirs \
-     iomanip-gnu-4.5
+     iomanip-gnu-4.5 \
+     upc.h upc_relaxed.h upc_strict.h upc_collective.h
 
 # DQ (9/3/2006): I think that if we have config.guess, depend, install-sh, and dirincludes; then we don't need "missing"
 # missing
