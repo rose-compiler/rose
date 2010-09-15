@@ -116,5 +116,9 @@ namespace backstroke_util
 
 	//! Get the closest enclosing if body (either true or false body) of the given node.
 	SgStatement* getEnclosingIfBody(SgNode* node);
+
+	/** This function get all variables in an AST node. Note that for a variable a.b or a->b,
+	only a.b or a->b is returned, not a or b. */
+	std::vector<SgExpression*> getAllVariables(SgNode* node);
 }
 

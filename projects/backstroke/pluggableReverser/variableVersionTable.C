@@ -55,36 +55,6 @@ void VariableVersionTable::print() const
 	}
 }
 
-/** This function get all variables in an AST node. Note that for a variable a.b or a->b,
-	only a.b or a->b is returned, not a or b. */
-vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
-{
-	vector<SgExpression*> vars;
-
-	vector<SgExpression*> exps = querySubTree<SgExpression>(node);
-
-	//ROSE_ASSERT(!exps.empty());
-
-	foreach(SgExpression* exp, exps)
-	{
-		SgExpression* cand = NULL;
-		if (isSgVarRefExp(exp))
-			cand = exp;
-		else if (isSgDotExp(exp) && isSgVarRefExp(isSgDotExp(exp)->get_rhs_operand()))
-			cand = exp;
-		else if (isSgArrowExp(exp) && isSgVarRefExp(isSgArrowExp(exp)->get_rhs_operand()))
-			cand = exp;
-
-		if (cand != NULL &&
-				isSgDotExp(cand->get_parent()) == NULL &&
-				isSgArrowExp(cand->get_parent()) == NULL)
-		{
-			vars.push_back(cand);
-		}
-	}
-
-	return vars;
-}
 
 bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 {
@@ -424,7 +394,7 @@ void VariableVersionTable::setUnion(const VariableVersionTable& var_table)
 	}
 }
 
-bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
+bool VariableVersionTable::isUsingFirstDef(SgNode* node) const
 {
 	VariableRenaming::VarName varName = VariableRenaming::getVarName(node);
 	ROSE_ASSERT(varName != VariableRenaming::emptyName);
@@ -453,7 +423,7 @@ bool VariableVersionTable::isUsingFirstUse(SgNode* node) const
 	// The first definition has the number 1
 	// FIXME This may not be true for branch case!
 	if (num_table.size() == 1 && num_table.count(1) > 0)
-		return isUsingFirstDefinition(node);
+		return isUsingFirstDef(node);
 	return false;
 }
 
