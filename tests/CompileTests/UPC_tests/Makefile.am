@@ -81,8 +81,10 @@ $(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.upc)
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
+# DQ (9/15/2010): Moved UPC standard header files to be included automatically (moved to the ROSE compiler include directory).
 # put the headers here for now. TODO: Move them to a better place
-EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
+# EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
+EXTRA_DIST = $(ALL_TESTCODES) 
 
 check-local:
 	@echo "Tests for UPC examples."
