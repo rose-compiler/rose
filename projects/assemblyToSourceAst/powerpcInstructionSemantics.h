@@ -8,6 +8,10 @@
 #include <iostream>
 #include "integerOps.h"
 
+#include "SgAsmExpression.h"
+#include "SgAsmPowerpcInstruction.h"
+#include "conversions.h"
+
 #ifdef Word
 #error "Having a macro called \"Word\" conflicts with powerpcInstructionSemantics.h"
 #endif
@@ -49,7 +53,7 @@ struct PowerpcInstructionSemantics {
  // This function does the address evaluation.
 
     ROSE_ASSERT(e != NULL);
- // printf ("In read32(): e = %p = %s \n",e,e->class_name().c_str());
+    //printf ("In read32(): e = %p = %s \n",e,e->class_name().c_str());
 
     switch (e->variantT()) {
 
@@ -69,22 +73,19 @@ struct PowerpcInstructionSemantics {
            return readMemory<32>(readEffectiveAddress(e),policy.true_());
          }
 
-      case V_SgAsmByteValueExpression: {
-        uint64_t val = isSgAsmByteValueExpression(e)->get_value();
-        return number<32>(val);
-      }
-      case V_SgAsmWordValueExpression: {
-        uint64_t val = isSgAsmWordValueExpression(e)->get_value();
-        return number<32>(val);
-      }
+      case V_SgAsmByteValueExpression:
+      case V_SgAsmWordValueExpression:
       case V_SgAsmDoubleWordValueExpression: {
-        uint64_t val = isSgAsmDoubleWordValueExpression(e)->get_value();
-        return number<32>(val);
+           uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
+           //std::cerr << "read32 of immediate, returning " << (val & 0xFFFFFFFFULL) << std::endl;
+           return number<32>(val & 0xFFFFFFFFULL);
       }
+
       case V_SgAsmQuadWordValueExpression: {
         uint64_t val = isSgAsmQuadWordValueExpression(e)->get_value();
         return number<32>(val & 0xFFFFFFFFULL);
       }
+
       case V_SgAsmPowerpcRegisterReferenceExpression: {
         SgAsmPowerpcRegisterReferenceExpression* ref = isSgAsmPowerpcRegisterReferenceExpression(e);
         ROSE_ASSERT(ref != NULL);
@@ -198,6 +199,7 @@ struct PowerpcInstructionSemantics {
                // ROSE_ASSERT(false);
 
                   policy.writeSPR(ref->get_register_number(),value);
+		          break;
                 }
               
              default:
@@ -257,7 +259,6 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
 
   void translate(SgAsmPowerpcInstruction* insn) {
-    fprintf(stderr, "%s\n", unparseInstructionWithAddress(insn).c_str());
     policy.writeIP(policy.template number<32>((unsigned int)(insn->get_address() + 4)));
     PowerpcInstructionKind kind = insn->get_kind();
     const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
@@ -270,10 +271,23 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 //       where this should be evaluated, unless we should be generating a
 //       
 
+      case powerpc_nor:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.invert(policy.or_(read32(operands[1]),read32(operands[2]))));
+           break;
+         }
+
       case powerpc_or:
          {
            ROSE_ASSERT(operands.size() == 3);
            write32(operands[0], policy.or_(read32(operands[1]),read32(operands[2])));
+           break;
+         }
+      case powerpc_fmr:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+           write32(operands[0], read32(operands[1]));
            break;
          }
 
@@ -304,6 +318,15 @@ build_mask(uint8_t mb_value, uint8_t me_value)
          {
            ROSE_ASSERT(operands.size() == 3);
            write32(operands[0], policy.xor_(read32(operands[1]),read32(operands[2])));
+           break;
+         }
+
+      case powerpc_xor_record:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+	       Word(32) result = policy.xor_(read32(operands[1]),read32(operands[2]));
+           write32(operands[0], result);
+	       record(result);
            break;
          }
 
@@ -341,6 +364,30 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            Word(32) bitMask = number<32>(mask);
 
            write32(operands[0],policy.and_(rotatedReg,bitMask));
+           break;
+         }
+
+      case powerpc_rlwinm_record:
+         {
+           ROSE_ASSERT(operands.size() == 5);
+           Word(32) RS = read32(operands[1]);
+           Word(5) SH = extract<0, 5>(read32(operands[2]));
+
+           SgAsmByteValueExpression* MB = isSgAsmByteValueExpression(operands[3]);
+           ROSE_ASSERT(MB != NULL);
+           int mb_value = MB->get_value();
+
+           SgAsmByteValueExpression* ME = isSgAsmByteValueExpression(operands[4]);
+           ROSE_ASSERT(ME != NULL);
+
+           int me_value = ME->get_value();
+           uint32_t mask = build_mask(mb_value,me_value);
+
+           Word(32) rotatedReg = policy.rotateLeft(RS,SH);
+           Word(32) bitMask = number<32>(mask);
+	       Word(32) result = policy.and_(rotatedReg,bitMask);
+           write32(operands[0], result);
+	       record(result);
            break;
          }
 
@@ -405,6 +452,31 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+      case powerpc_andc:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.and_(read32(operands[1]),policy.invert(read32(operands[2]))));
+           break;
+         }
+
+      case powerpc_and_record:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+	       Word(32) result = policy.and_(read32(operands[1]),read32(operands[2]));
+           write32(operands[0], result);
+	       record(result);
+           break;
+         }
+
+      case powerpc_andc_record:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+	       Word(32) result = policy.and_(read32(operands[1]),policy.invert(read32(operands[2])));
+           write32(operands[0], result);
+	       record(result);
+           break;
+         }
+
       case powerpc_mfspr:
          {
            ROSE_ASSERT(operands.size() == 2);
@@ -427,9 +499,12 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
       case powerpc_stw:
       case powerpc_stwx:
+      case powerpc_stwcx_record:
          {
            ROSE_ASSERT(operands.size() == 2);
-           write32(operands[1],read32(operands[0]));
+	       Word(32) result = read32(operands[0]);
+           write32(operands[1], result);
+	       if(kind == powerpc_stwcx_record) record(result);
            break;
          }
 
@@ -480,19 +555,37 @@ build_mask(uint8_t mb_value, uint8_t me_value)
          {
            ROSE_ASSERT(operands.size() == 1);
            policy.writeSPR(powerpc_spr_lr,number<32>(insn->get_address() + 4));
-           policy.writeIP(read32(operands[0]));
+	       Word(32) target = (policy.add(read32(operands[0]), number<32>(insn->get_address())));
+           policy.writeIP(target);
            break;
          }
 
       case powerpc_b:
          {
            ROSE_ASSERT(operands.size() == 1);
-           policy.writeIP(read32(operands[0]));
+	       Word(32) target = (policy.add(read32(operands[0]), number<32>(insn->get_address())));
+           policy.writeIP(target);
            break;
+         }
+
+      case powerpc_bla:
+         {
+            ROSE_ASSERT(operands.size() == 1);
+            policy.writeSPR(powerpc_spr_lr,number<32>(insn->get_address() + 4));
+            policy.writeIP(read32(operands[0]));
+            break;
+         }
+
+      case powerpc_ba:
+         {
+            ROSE_ASSERT(operands.size() == 1);
+            policy.writeIP(read32(operands[0]));
+            break;
          }
 
       case powerpc_lwz:
       case powerpc_lwzx:
+      case powerpc_lwarx:
          {
            ROSE_ASSERT(operands.size() == 2);
            write32(operands[0],read32(operands[1]));
@@ -611,6 +704,22 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+      case powerpc_lbzu:
+      case powerpc_lbzux:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+           SgAsmMemoryReferenceExpression* memoryReference = isSgAsmMemoryReferenceExpression(operands[1]);
+           SgAsmBinaryAdd* binaryAdd = isSgAsmBinaryAdd(memoryReference->get_address());
+           ROSE_ASSERT(binaryAdd != NULL);
+
+           SgAsmExpression* RA = binaryAdd->get_lhs();
+
+           Word(32) effectiveAddress = readEffectiveAddress(operands[1]);
+           write32(operands[0],policy.concat(read8(operands[1]),number<24>(0)));
+           write32(RA,effectiveAddress);
+           break;
+         }
+
       case powerpc_lha:
       case powerpc_lhax:
          {
@@ -701,6 +810,9 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+      case powerpc_bcl:
+	      policy.writeSPR(powerpc_spr_lr, policy.readIP());
+          // fall through
       case powerpc_bc:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -731,7 +843,10 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            Word(4) CR_field = policy.readCRField(bi_value/4);
            Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
-           policy.writeIP(policy.ite(policy.and_(CTR_ok,COND_ok),read32(operands[2]),policy.readIP()));
+	       Word(32) target = (policy.add(read32(operands[2]), number<32>(insn->get_address())));
+           policy.writeIP(policy.ite(policy.and_(CTR_ok,COND_ok),
+				          target,
+				          policy.readIP()));
            break;
          }
 
@@ -1009,6 +1124,32 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+      case powerpc_bcctr:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           SgAsmByteValueExpression* byteValue = isSgAsmByteValueExpression(operands[0]);
+           ROSE_ASSERT(byteValue != NULL);
+           uint8_t boConstant = byteValue->get_value();
+
+           bool BO_1 = boConstant & 0x8;
+           bool BO_0 = boConstant & 0x10;
+
+           SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
+           ROSE_ASSERT(BI != NULL);
+           ROSE_ASSERT(BI->get_register_class() == powerpc_regclass_cr);
+           ROSE_ASSERT(BI->get_conditionRegisterGranularity() == powerpc_condreggranularity_bit);
+
+        // This needs a collection of helpfer functions!
+           int bi_value = BI->get_register_number();
+           Word(4) CR_field = policy.readCRField(bi_value/4);
+           Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
+           Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
+
+           policy.writeIP(policy.ite(COND_ok,policy.and_(policy.readSPR(powerpc_spr_ctr),number<32>(0xFFFFFFFC)),policy.readIP()));
+
+           break;
+         }
+
       case powerpc_bcctrl:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -1126,7 +1267,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
-       default: fprintf(stderr, "Bad instruction %s\n", toString(kind).c_str()); abort();
+      default: fprintf(stderr, "Bad instruction\n"); abort();
     }
   }
 
@@ -1137,21 +1278,6 @@ build_mask(uint8_t mb_value, uint8_t me_value)
     policy.finishInstruction(insn);
   }
 
-  void processBlock(const SgAsmStatementPtrList& stmts, size_t begin, size_t end) {
-    if (begin == end) return;
-    policy.startBlock(stmts[begin]->get_address());
-    for (size_t i = begin; i < end; ++i) {
-      processInstruction(isSgAsmPowerpcInstruction(stmts[i]));
-    }
-    policy.finishBlock(stmts[begin]->get_address());
-  }
-
-  void processBlock(SgAsmBlock* b) {
-    const SgAsmStatementPtrList& stmts = b->get_statementList();
-    if (stmts.empty()) return;
-    if (!isSgAsmInstruction(stmts[0])) return; // A block containing functions or something
-    processBlock(stmts, 0, stmts.size());
-  }
 
 };
 

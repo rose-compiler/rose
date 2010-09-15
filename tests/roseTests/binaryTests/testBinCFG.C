@@ -21,14 +21,7 @@ main(int argc, char *argv[])
       new_argv[new_argc++] = argv[i];
     }
     
-    /* The -rose:read_executable_file_format_only causes a prominent warning to be displayed:
-     *   >
-     *   >WARNING: Skipping instruction disassembly
-     *   >
-     */
     SgProject *project = frontend(new_argc, new_argv);
-    printf("No, please ignore the previous warning; Rest assured, we're doing disassembly!\n\n");
-
 
     /* Process each interpretation individually */
     std::vector<SgNode*> interps = NodeQuery::querySubTree(project, V_SgAsmInterpretation);

@@ -25,7 +25,7 @@ using namespace std;
 
 // ********************************************************************
 // ********************************************************************
-//     General support functions for c_acation implementation
+//     General support functions for c_action implementation
 // ********************************************************************
 // ********************************************************************
 
@@ -83,7 +83,7 @@ void c_action_generic_name_list__begin()
    {
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R102 c_action_generic_name_list__begin()");
 #endif
@@ -603,7 +603,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
   // printf ("hasKindSelector = %s \n",hasKindSelector ? "true" : "false");
      if (hasKindSelector == true)
         {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
@@ -804,7 +804,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                     SgIntVal* integerValue = isSgIntVal(lengthExpression);
                     if (integerValue != NULL)
                        {
+#if 0
                          int value = integerValue->get_value();
+                      // DQ (9/3/2010): We want to support always wrapping types to include the kind when it is specified explicitly.
                          switch(value)
                             {
                               case 1: 
@@ -852,12 +854,20 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                                    ROSE_ASSERT(false);
                                  }
                             }
-
                       // We can ignore the lengthExpression because we use different specific types 
                       // (IR nodes) to distinguish the floating point sizes.
                       // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
                          delete lengthExpression;
                          lengthExpression = NULL;
+#else
+                      // DQ (9/3/2010): This restores the previous handling with wrapped all types explicitly marked with kind.
+                         SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
+                         ROSE_ASSERT(typeFromKindExpression != NULL);
+
+                      // Replace the base type with the just built string type
+                         astBaseTypeStack.pop_front();
+                         astBaseTypeStack.push_front(typeFromKindExpression);
+#endif
                        }
                       else
                        {
@@ -908,7 +918,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -2509,7 +2519,9 @@ void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecLis
        // We will have to make up something (perhaps using SgDefaultType) and then fix it up at the end of the module.
           printf ("Warning: type referenced has not been seen in the source sequence yet, using SgTypeDefault (will be fixed up at the end of the module processing). \n");
 
-          derivedType = SgTypeDefault::createType();
+       // DQ (9/6/2010): Fix this later!
+       // derivedType = SgTypeDefault::createType();
+          derivedType = SgTypeInt::createType();
           ROSE_ASSERT(derivedType != NULL);
         }
        else
@@ -2837,7 +2849,7 @@ void c_action_ac_implied_do()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_implied_do() \n");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R470 list c_action_ac_implied_do()");
 #endif
@@ -2967,7 +2979,7 @@ void c_action_ac_implied_do()
   // astInitializerStack.push_front(impliedDo);
      astExpressionStack.push_front(impliedDo);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R470 list c_action_ac_implied_do()");
 #endif
@@ -2987,7 +2999,7 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
 
   // Pull off 2 elements from the astExpressionStack (and a third if hasStride == true)
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R471 list c_action_ac_implied_do_control()");
 #endif
@@ -3028,7 +3040,7 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
 
      astExpressionStack.push_front(loopControl);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R471 list c_action_ac_implied_do_control()");
 #endif
@@ -3242,7 +3254,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("Before transfer to astBaseTypeStack in R502 c_action_declaration_type_spec()");
 #endif
@@ -3265,7 +3277,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
                printf ("No type found on astTypeStack (make sure there is a base type on the astBaseTypeStack) \n");
           ROSE_ASSERT(astBaseTypeStack.empty() == false);
         }
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R502 c_action_declaration_type_spec()");
 #endif
@@ -3300,7 +3312,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",attr);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R503 c_action_attr_spec()");
 #endif
@@ -3402,7 +3414,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
            case AttrSpec_PARAMETER:
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                      printf ("found a PARAMETER spec \n");
+                    printf ("found a PARAMETER spec (AttrSpec_PARAMETER = %d)\n",AttrSpec_PARAMETER);
                  break;
               }
 
@@ -3505,7 +3517,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
           astAttributeSpecStack.push_front(attr);
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R503 c_action_attr_spec()");
 #endif
@@ -3539,7 +3551,7 @@ void c_action_entity_decl(Token_t * id)
           printf ("In R504 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 c_action_entity_decl()");
 #endif
@@ -3635,7 +3647,6 @@ void c_action_entity_decl(Token_t * id)
   // ROSE_ASSERT(astInitializerStack.empty() == true);
      ROSE_ASSERT(astExpressionStack.empty() == true);
 
-#if 1
   // DQ (5/15/2008): Added support to make sure that this is not a previously declared name (see test2008_29.f)
      SgVariableSymbol* variableSymbol = NULL;
      SgFunctionSymbol* functionSymbol = NULL;
@@ -3719,29 +3730,36 @@ void c_action_entity_decl(Token_t * id)
              {
             // Unclear what to do here!
                initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
-               //FMZ 6/8/2010: set the it as a result of the function, avoid unparser duplicate the type decl
-               //SgFunctionSymbol=>SgFunctionDeclaration=>
+            // FMZ 6/8/2010: set the it as a result of the function, avoid unparser duplicate the type decl
+            // SgFunctionSymbol=>SgFunctionDeclaration=>
                SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionSymbol->get_declaration());
                functionDeclaration->set_result_name(initializedName);
              }
             else
              {
+            // printf ("Building a new SgInitializedName that will be assembled into a variable declaration later. \n");
                initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
+
+            // DQ (9/11/2010): There is not associated SgVariableSymbol associated with this, so we need to build one.
+            // This fixes test2010_45.f90 which references a variable declared in the same variable declaration.
+               SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+               ROSE_ASSERT(astScopeStack.empty() == false);
+               astScopeStack.front()->insert_symbol(name,variableSymbol);
              }
         }
      ROSE_ASSERT(initializedName != NULL);
-#else
-     SgInitializedName* initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
-#endif
 
   // FMZ (2/19/2007): Added for CoArray
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-     if (astAttributeSpecStack.empty() == false && 
-           astAttributeSpecStack.front()==AttrSpec_COARRAY) {
-               astAttributeSpecStack.pop_front();
-               initializedName->set_isCoArray(true);
-     } else 
-               initializedName->set_isCoArray(false);
+     if (astAttributeSpecStack.empty() == false && astAttributeSpecStack.front()==AttrSpec_COARRAY)
+        {
+          astAttributeSpecStack.pop_front();
+          initializedName->set_isCoArray(true);
+        }
+       else 
+        {
+          initializedName->set_isCoArray(false);
+        }
 #endif
  
 
@@ -3788,7 +3806,7 @@ void c_action_entity_decl(Token_t * id)
      astNameStack.pop_front();
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 c_action_entity_decl()");
 #endif
@@ -5730,6 +5748,11 @@ void c_action_protected_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_protected_stmt(): keyword = %p = %s \n",keyword,keyword != NULL ? keyword->text : "NULL");
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R542 c_action_protected_stmt()");
+#endif
+
   // An AttributeSpecification statement can be the first statement in a program
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
      build_implicit_program_statement_if_required();
@@ -5737,7 +5760,7 @@ void c_action_protected_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
      ROSE_ASSERT(keyword != NULL);
      buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_protectedStatement,label,keyword);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R542 c_action_protected_stmt()");
 #endif
@@ -6758,27 +6781,28 @@ void c_action_substring_range(ofp_bool hasLowerBound, ofp_bool hasUpperBound)
  */
 void c_action_data_ref(int numPartRef)
    {
-  // This is a part of a variable reference (any likely used many other places as well)
+  // This is a part of a variable reference (and likely used many other places as well)
   // I am not sure what to do with this rule (unless the point is to build a variable here, instead of in R601)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_data_ref(): (variable built here) numPartRef = %d \n",numPartRef);
+          printf ("In R612 c_action_data_ref(): (variable built here) numPartRef = %d \n",numPartRef);
 
+   //----FMZ (2/8/2010)  fixed derived type component references
+     SgType* data_type = NULL;
+     SgClassDefinition* class_def = isSgClassDefinition(astScopeStack.front());
+     bool need_push_back_scp_stk = false;
 
-  //----FMZ (2/8/2010)  fixed derived type component references
-    SgType* data_type = NULL;
-    SgClassDefinition* class_def = isSgClassDefinition(astScopeStack.front());
-    bool need_push_back_scp_stk = false;
-
-    if (class_def!=NULL )  {
-      SgDerivedTypeStatement*  derived_type = isSgDerivedTypeStatement(class_def->get_declaration());
-      if (derived_type !=NULL  && numPartRef == 1) {
-            astScopeStack.pop_front();
-            need_push_back_scp_stk = true;
-       if (astExpressionStack.empty() == false && isSgNullExpression(astExpressionStack.front())!=NULL)
-              astExpressionStack.pop_front();
-       }
-    }
+     if (class_def!=NULL )
+        {
+          SgDerivedTypeStatement*  derived_type = isSgDerivedTypeStatement(class_def->get_declaration());
+          if (derived_type !=NULL  && numPartRef == 1)
+             {
+               astScopeStack.pop_front();
+               need_push_back_scp_stk = true;
+               if (astExpressionStack.empty() == false && isSgNullExpression(astExpressionStack.front())!=NULL)
+                    astExpressionStack.pop_front();
+             }
+        }
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -6788,22 +6812,26 @@ void c_action_data_ref(int numPartRef)
   // FMZ (2/11/2009): Here we could have SgCAFCoExpression in the astExpressionStack
   // We need to pop out the SgNode to complete whatever need to be done regularly
   //  (without co-array image selector)
-  bool processCoarray = false;
-  SgCAFCoExpression* coExpr = NULL;
-  if (numPartRef == 1) {
-     if (astExpressionStack.empty() == false) {
-          processCoarray=(astExpressionStack.front()->variantT()==V_SgCAFCoExpression);
-      }
+     bool processCoarray = false;
+     SgCAFCoExpression* coExpr = NULL;
+     if (numPartRef == 1)
+        {
+          if (astExpressionStack.empty() == false)
+             {
+               processCoarray=(astExpressionStack.front()->variantT()==V_SgCAFCoExpression);
+             }
 
-     if (processCoarray) { //need to pop out the CoExpresion first
-           coExpr = isSgCAFCoExpression(astExpressionStack.front());
-           ROSE_ASSERT(coExpr != NULL);
-           if (coExpr->get_referData()) //already processed
-              processCoarray = false;
-           else
-              astExpressionStack.pop_front();
+          if (processCoarray)
+             {
+            // need to pop out the CoExpresion first
+               coExpr = isSgCAFCoExpression(astExpressionStack.front());
+               ROSE_ASSERT(coExpr != NULL);
+               if (coExpr->get_referData()) //already processed
+                    processCoarray = false;
+                 else
+                    astExpressionStack.pop_front();
+             }
         }
-}
 
   // ROSE_ASSERT(numPartRef <= 1);
      if (numPartRef > 1)
@@ -6812,10 +6840,7 @@ void c_action_data_ref(int numPartRef)
        // in C it is "record.field".  "field" is on the top of the stack
        // and "record" is next on the stack.  First we have to find the
        // record then reference the field off of the record.
-
         }
-
-    
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
   // Build the SgVarRefExp object
@@ -6845,6 +6870,7 @@ void c_action_data_ref(int numPartRef)
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(SgName(variableName),getTopOfScopeStack());
        // DQ (5/15/2008): Introduced as a temporary test!
        // ROSE_ASSERT(functionSymbol == NULL);
+       // printf ("result of call to trace_back_through_parent_scopes_lookup_function_symbol() = %p \n",functionSymbol);
 
        // DQ (4/29/2008): Added support for detecting derived types
           SgClassSymbol* classSymbol       = trace_back_through_parent_scopes_lookup_derived_type_symbol(variableName,getTopOfScopeStack());
@@ -10574,13 +10600,23 @@ void c_action_case_stmt(Token_t *label, Token_t *caseKeyword, Token_t *id, Token
              }
         }
        else
-        {     
-          SgExpression* keyExpression = getTopOfExpressionStack();
-          astExpressionStack.pop_front();
+        {
+       // DQ (9/6/2010): The case stmt can take a list of expressions as keys.
+       // SgExpression* keyExpression = getTopOfExpressionStack();
+       // astExpressionStack.pop_front();
+       // caseOrDefaultStatement = new SgCaseOptionStmt(keyExpression,body);
+          SgExprListExp* exprListExp = new SgExprListExp();
+          ROSE_ASSERT(exprListExp != NULL);
+          setSourcePosition(exprListExp);
+          while (astExpressionStack.empty() == false)
+             {
+               exprListExp->prepend_expression(astExpressionStack.front());
+               astExpressionStack.pop_front();
+             }
 
-          caseOrDefaultStatement = new SgCaseOptionStmt(keyExpression,body);
+          caseOrDefaultStatement = new SgCaseOptionStmt(exprListExp,body);
 
-       // A valid id is will be a "case construct name"
+       // A valid id will be a "case construct name"
           if (id != NULL)
              {
                isSgCaseOptionStmt(caseOrDefaultStatement)->set_case_construct_name(id->text);
@@ -10601,6 +10637,26 @@ void c_action_case_stmt(Token_t *label, Token_t *caseKeyword, Token_t *id, Token
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R810 c_action_case_stmt()");
 #endif
+
+  // DQ (9/6/2010): Added error checking to support test2010_39.f90 test code.
+  // Error checking for astExpressionStack
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_parent() != NULL);
+     SgWhereStatement* whereStatement = isSgWhereStatement(astScopeStack.front()->get_parent());
+     SgIfStmt* ifStatement = isSgIfStmt(astScopeStack.front()->get_parent());
+     if (whereStatement != NULL || ifStatement != NULL)
+        {
+       // If in a where statement produced with R 619:section-subscript-list__begin then the 
+       // condition is on the stack, else if it was produced with R744:where-construct-stmt 
+       // then the condition was used directly and already cleared from the stack.
+       // ROSE_ASSERT(astExpressionStack.empty() == false);
+          ROSE_ASSERT(astExpressionStack.size() <= 1);
+        }
+       else
+        {
+       // If this is NOT a where statement then the stack should be empty.
+          ROSE_ASSERT(astExpressionStack.empty() == true);
+        }
    }
 
 /** R811
@@ -12301,15 +12357,19 @@ void c_action_close_stmt(Token_t *label, Token_t *closeKeyword, Token_t *eos)
      ROSE_ASSERT(closeStatement != NULL);
      setSourcePosition(closeStatement);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R908 c_action_close_stmt()");
 #endif
 
+  // DQ (9/6/2010): Switch to using the astNameStack since there can be an additional 
+  // expression on the astExpressionStack due to an if stmt predicate (see test2010_40.f90).
   // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
-     while (astExpressionStack.empty() == false)
+  // while (astExpressionStack.empty() == false)
+     while (astNameStack.empty() == false)
         {
           ROSE_ASSERT(astNameStack.empty() == false);
+          ROSE_ASSERT(astExpressionStack.empty() == false);
 
           SgExpression* expression = astExpressionStack.front();
           Token_t* name = astNameStack.front();
@@ -12428,11 +12488,12 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 
      setStatementNumericLabel(readStatement,label);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R910 c_action_read_stmt()");
 #endif
 
+#if 1
 #if 0
   // The variables in the read statement are on the top of the stack
      int numberOfVariables = astExpressionStack.size() - astNameStack.size();
@@ -12456,11 +12517,26 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 #else
   // DQ (12/19/2007): This is a more uniform handling of the SgExprListExp (computed in R915)
   // SgExprListExp* exprListExp = isSgExprListExp(astExpressionStack.front());
+#if 1
      SgExprListExp* exprListExp = NULL;
      if (astExpressionStack.empty() == false)
         {
+       // DQ (9/6/2010): This is used in test2007_109.f90
           exprListExp = isSgExprListExp(astExpressionStack.front());
-          astExpressionStack.pop_front();
+
+       // DQ (9/6/2010): Handle the case of empty input-item-list (see test2010_40.f90)
+       // astExpressionStack.pop_front();
+       // ROSE_ASSERT(exprListExp != NULL);
+          if (exprListExp == NULL)
+             {
+               exprListExp = new SgExprListExp();
+               setSourcePosition(exprListExp);
+             }
+            else
+             {
+               astExpressionStack.pop_front();
+               ROSE_ASSERT(exprListExp != NULL);
+             }
         }
        else
         {
@@ -12468,13 +12544,24 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
           exprListExp = new SgExprListExp();
           setSourcePosition(exprListExp);
         }
+#else
+     SgExprListExp* exprListExp = new SgExprListExp();
+     ROSE_ASSERT(exprListExp != NULL);
+     setSourcePosition(exprListExp);
+     while (astExpressionStack.empty() == false)
+        {
+          exprListExp->prepend_expression(astExpressionStack.front());
+          astExpressionStack.pop_front();
+        }
+#endif
 
      ROSE_ASSERT(exprListExp != NULL);
  	  readStatement->set_io_stmt_list(exprListExp);
      exprListExp->set_parent(readStatement);
 #endif
+#endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("After processing the numberOfVariables in R910 c_action_read_stmt()");
 #endif
@@ -13163,10 +13250,15 @@ void c_action_io_control_spec(ofp_bool hasExpression, Token_t * keyword, ofp_boo
        // ROSE_ASSERT(false);
           ROSE_ASSERT(hasExpression == true);
         }
-#if 0
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R913 c_action_io_control_spec()");
 #endif
+
+  // DQ (9/6/2010): Added error checking. We can't assert equalify since an if stmt can have a predicate on the stack.
+  // ROSE_ASSERT(astExpressionStack.size() == astNameStack.size());
+     ROSE_ASSERT(astExpressionStack.size() >= astNameStack.size());
    }
 
 /** R913 list
@@ -13184,6 +13276,37 @@ void c_action_io_control_spec_list(int count)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("c_action_io_control_spec_list(): count = %d \n",count);
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R913 list c_action_io_control_spec_list()");
+#endif
+
+// DQ (9/6/2010): Comment this out to allow the separate expressions to be see easily in R910 c_action_read_stmt().
+// Note that we need to associate each expression with names on the astNameStack.
+#if 0
+#if 1
+  // DQ (9/6/2010): Use this rule directly, or refactor this general support.
+     c_action_input_item_list(count);
+#else
+  // DQ (9/6/2010): This code is a copy of that in void c_action_input_item_list(int count)
+     SgExprListExp* exprListExp = new SgExprListExp();
+     ROSE_ASSERT(exprListExp != NULL);
+
+  // while (astExpressionStack.empty() == false)
+     for (int i = 0; i < count; i++)
+        {
+          exprListExp->prepend_expression(astExpressionStack.front());
+          astExpressionStack.front()->set_parent(exprListExp);
+          astExpressionStack.pop_front();
+        }
+
+     setSourcePosition(exprListExp);
+     ROSE_ASSERT(astExpressionStack.empty() == true);
+     astExpressionStack.push_front(exprListExp);
+#endif
+#endif
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R913 list c_action_io_control_spec_list()");
@@ -14057,7 +14180,7 @@ void c_action_flush_spec_list(int count)
 void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id, Token_t *eos, ofp_bool isType2)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_inquire_stmt(): inquireKeyword = %p = %s \n",inquireKeyword,inquireKeyword != NULL ? inquireKeyword->text : "NULL");
+        printf ("In c_action_inquire_stmt(): inquireKeyword = %p = %s id = %s isType2 = %s \n",inquireKeyword,inquireKeyword != NULL ? inquireKeyword->text : "NULL",id != NULL ? id->text : "NULL",isType2 ? "true" : "false");
 
      initialize_global_scope_if_required();
      build_implicit_program_statement_if_required();
@@ -14071,188 +14194,187 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
      outputState("At TOP of R929 c_action_inquire_stmt()");
 #endif
 
-  // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
-     while (astExpressionStack.empty() == false)
+     if (isType2 == true)
         {
-          ROSE_ASSERT(astNameStack.empty() == false);
+       // This is the "INQUIRE (IOLENGTH=IOL)" case.
+          ROSE_ASSERT(id != NULL);
+          ROSE_ASSERT(id->text != NULL);
+          ROSE_ASSERT( matchingName(id->text,"iolength") == true);
 
-          SgExpression* expression = astExpressionStack.front();
-          Token_t* name = astNameStack.front();
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          printf ("astExpressionStack.front() = %p = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str());
 
-       // We don't need the current_IO_Control_Spec data structure in the code below.
-
-       // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
-          if ( strncasecmp(name->text,"unit",4) == 0 || strncmp(name->text,"defaultString",13) == 0)
-             {
-               inquireStatement->set_unit(expression);
-             }
-          else if ( strncasecmp(name->text,"iostat",6) == 0 )
-             {
-               inquireStatement->set_iostat(expression);
-             }
-          else if ( strncasecmp(name->text,"err",3) == 0 )
-             {
-            // inquireStatement->set_err(expression);
-#if 1
-               ROSE_ASSERT(expression != NULL);
-               SgExpression* labelRefExp = buildLabelRefExp(expression);
-               ROSE_ASSERT(labelRefExp != NULL);
-               inquireStatement->set_err(labelRefExp);
-               labelRefExp->set_parent(inquireStatement);
-#else
-               inquireStatement->set_err(expression);
-#endif
-             }
-          else if ( strncasecmp(name->text,"iomsg",5) == 0 )
-             {
-               inquireStatement->set_iomsg(expression);
-             }
-          else if ( strncasecmp(name->text,"file",4) == 0 )
-             {
-               inquireStatement->set_file(expression);
-             }
-          else if ( strncasecmp(name->text,"access",6) == 0 )
-             {
-               inquireStatement->set_access(expression);
-             }
-          else if ( strncasecmp(name->text,"form",4) == 0 )
-             {
-               inquireStatement->set_form(expression);
-             }
-          else if ( strncasecmp(name->text,"recl",4) == 0 )
-             {
-               inquireStatement->set_recl(expression);
-             }
-          else if ( strncasecmp(name->text,"blank",5) == 0 )
-             {
-               inquireStatement->set_blank(expression);
-             }
-          else if ( strncasecmp(name->text,"exist",5) == 0 )
-             {
-               inquireStatement->set_exist(expression);
-             }
-          else if ( strncasecmp(name->text,"opened",6) == 0 )
-             {
-               inquireStatement->set_opened(expression);
-             }
-          else if ( strncasecmp(name->text,"number",6) == 0 )
-             {
-               inquireStatement->set_number(expression);
-             }
-          else if ( strncasecmp(name->text,"named",5) == 0 )
-             {
-               inquireStatement->set_named(expression);
-             }
-          else if ( strncasecmp(name->text,"name",4) == 0 )
-             {
-               inquireStatement->set_name(expression);
-             }
-          else if ( strncasecmp(name->text,"sequential",10) == 0 )
-             {
-               inquireStatement->set_sequential(expression);
-             }
-          else if ( strncasecmp(name->text,"direct",6) == 0 )
-             {
-               inquireStatement->set_direct(expression);
-             }
-          else if ( strncasecmp(name->text,"formatted",9) == 0 )
-             {
-               inquireStatement->set_formatted(expression);
-             }
-          else if ( strncasecmp(name->text,"unformatted",11) == 0 )
-             {
-               inquireStatement->set_unformatted(expression);
-             }
-          else if ( strncasecmp(name->text,"nextrec",7) == 0 )
-             {
-               inquireStatement->set_nextrec(expression);
-             }
-          else if ( strncasecmp(name->text,"position",8) == 0 )
-             {
-               inquireStatement->set_position(expression);
-             }
-          else if ( strncasecmp(name->text,"action",6) == 0 )
-             {
-               inquireStatement->set_action(expression);
-             }
-          else if ( strncasecmp(name->text,"read",4) == 0 )
-             {
-               inquireStatement->set_read(expression);
-             }
-          else if ( strncasecmp(name->text,"write",5) == 0 )
-             {
-               inquireStatement->set_write(expression);
-             }
-          else if ( strncasecmp(name->text,"readwrite",9) == 0 )
-             {
-               inquireStatement->set_readwrite(expression);
-             }
-          else if ( strncasecmp(name->text,"delim",5) == 0 )
-             {
-               inquireStatement->set_delim(expression);
-             }
-          else if ( strncasecmp(name->text,"pad",3) == 0 )
-             {
-               inquireStatement->set_pad(expression);
-             }
-          else if ( strncasecmp(name->text,"asynchronous",12) == 0 )
-             {
-               inquireStatement->set_asynchronous(expression);
-             }
-          else if ( strncasecmp(name->text,"decimal",7) == 0 )
-             {
-               inquireStatement->set_decimal(expression);
-             }
-          else if ( strncasecmp(name->text,"stream",5) == 0 )
-             {
-               inquireStatement->set_stream(expression);
-             }
-          else if ( strncasecmp(name->text,"size",4) == 0 )
-             {
-               inquireStatement->set_size(expression);
-             }
-          else if ( strncasecmp(name->text,"pending",7) == 0 )
-             {
-               inquireStatement->set_pending(expression);
-             }
-/*
-     unparse_IO_Control_Support("FILE",inquireStatement->get_file(),info);
-     unparse_IO_Control_Support("ACCESS",inquireStatement->get_access(),info);
-     unparse_IO_Control_Support("FORM",inquireStatement->get_form(),info);
-     unparse_IO_Control_Support("RECL",inquireStatement->get_recl(),info);
-     unparse_IO_Control_Support("BLANK",inquireStatement->get_blank(),info);
-     unparse_IO_Control_Support("EXIST",inquireStatement->get_exist(),info);
-     unparse_IO_Control_Support("OPENED",inquireStatement->get_opened(),info);
-     unparse_IO_Control_Support("NUMBER",inquireStatement->get_number(),info);
-     unparse_IO_Control_Support("NAMED",inquireStatement->get_named(),info);
-     unparse_IO_Control_Support("NAME",inquireStatement->get_name(),info);
-     unparse_IO_Control_Support("SEQUENTIAL",inquireStatement->get_sequential(),info);
-     unparse_IO_Control_Support("DIRECT",inquireStatement->get_direct(),info);
-     unparse_IO_Control_Support("FORMATTED",inquireStatement->get_formatted(),info);
-     unparse_IO_Control_Support("UNFORMATTED",inquireStatement->get_unformatted(),info);
-     unparse_IO_Control_Support("NEXTREC",inquireStatement->get_nextrec(),info);
-
-  // F90 specific 
-     unparse_IO_Control_Support("POSITION",inquireStatement->get_position(),info);
-     unparse_IO_Control_Support("ACTION",inquireStatement->get_action(),info);
-     unparse_IO_Control_Support("READ",inquireStatement->get_read(),info);
-     unparse_IO_Control_Support("WRITE",inquireStatement->get_write(),info);
-     unparse_IO_Control_Support("READWRITE",inquireStatement->get_readwrite(),info);
-     unparse_IO_Control_Support("DELIM",inquireStatement->get_delim(),info);
-     unparse_IO_Control_Support("PAD",inquireStatement->get_pad(),info);
-
-  // F2003 specific
-     unparse_IO_Control_Support("ASYNCHRONOUS",inquireStatement->get_asynchronous(),info);
-     unparse_IO_Control_Support("DECIMAL",inquireStatement->get_decimal(),info);
-     unparse_IO_Control_Support("STREAM",inquireStatement->get_stream(),info);
-     unparse_IO_Control_Support("SIZE",inquireStatement->get_size(),info);
-     unparse_IO_Control_Support("PENDING",inquireStatement->get_pending(),info);
-*/
-
-          astNameStack.pop_front();
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExprListExp* outputList = isSgExprListExp(astExpressionStack.front());
+          ROSE_ASSERT(outputList != NULL);
           astExpressionStack.pop_front();
+          inquireStatement->set_io_stmt_list(outputList);
 
-          expression->set_parent(inquireStatement);
+          SgVarRefExp* scalarIntegerExpression = isSgVarRefExp(astExpressionStack.front());
+          ROSE_ASSERT(scalarIntegerExpression != NULL);
+          astExpressionStack.pop_front();
+          inquireStatement->set_iolengthExp(scalarIntegerExpression);
+
+          ROSE_ASSERT(astExpressionStack.empty() == true);
+#if 0
+          printf ("Exiting in case of INQUIRE (IOLENGTH=IOL) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+       // This is the "INQUIRE(inquire-spec-list)" case.
+
+       // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
+          while (astExpressionStack.empty() == false)
+             {
+               ROSE_ASSERT(astNameStack.empty() == false);
+
+               SgExpression* expression = astExpressionStack.front();
+               Token_t* name = astNameStack.front();
+
+            // We don't need the current_IO_Control_Spec data structure in the code below.
+
+            // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
+               if ( strncasecmp(name->text,"unit",4) == 0 || strncmp(name->text,"defaultString",13) == 0)
+                  {
+                    inquireStatement->set_unit(expression);
+                  }
+               else if ( strncasecmp(name->text,"iostat",6) == 0 )
+                  {
+                    inquireStatement->set_iostat(expression);
+                  }
+               else if ( strncasecmp(name->text,"err",3) == 0 )
+                  {
+                 // inquireStatement->set_err(expression);
+#if 1
+                    ROSE_ASSERT(expression != NULL);
+                    SgExpression* labelRefExp = buildLabelRefExp(expression);
+                    ROSE_ASSERT(labelRefExp != NULL);
+                    inquireStatement->set_err(labelRefExp);
+                    labelRefExp->set_parent(inquireStatement);
+#else
+                    inquireStatement->set_err(expression);
+#endif
+                  }
+               else if ( strncasecmp(name->text,"iomsg",5) == 0 )
+                  {
+                    inquireStatement->set_iomsg(expression);
+                  }
+               else if ( strncasecmp(name->text,"file",4) == 0 )
+                  {
+                    inquireStatement->set_file(expression);
+                  }
+               else if ( strncasecmp(name->text,"access",6) == 0 )
+                  {
+                    inquireStatement->set_access(expression);
+                  }
+               else if ( strncasecmp(name->text,"form",4) == 0 )
+                  {
+                    inquireStatement->set_form(expression);
+                  }
+               else if ( strncasecmp(name->text,"recl",4) == 0 )
+                  {
+                    inquireStatement->set_recl(expression);
+                  }
+               else if ( strncasecmp(name->text,"blank",5) == 0 )
+                  {
+                    inquireStatement->set_blank(expression);
+                  }
+               else if ( strncasecmp(name->text,"exist",5) == 0 )
+                  {
+                    inquireStatement->set_exist(expression);
+                  }
+               else if ( strncasecmp(name->text,"opened",6) == 0 )
+                  {
+                    inquireStatement->set_opened(expression);
+                  }
+               else if ( strncasecmp(name->text,"number",6) == 0 )
+                  {
+                    inquireStatement->set_number(expression);
+                  }
+               else if ( strncasecmp(name->text,"named",5) == 0 )
+                  {
+                    inquireStatement->set_named(expression);
+                  }
+               else if ( strncasecmp(name->text,"name",4) == 0 )
+                  {
+                    inquireStatement->set_name(expression);
+                  }
+               else if ( strncasecmp(name->text,"sequential",10) == 0 )
+                  {
+                    inquireStatement->set_sequential(expression);
+                  }
+               else if ( strncasecmp(name->text,"direct",6) == 0 )
+                  {
+                    inquireStatement->set_direct(expression);
+                  }
+               else if ( strncasecmp(name->text,"formatted",9) == 0 )
+                  {
+                    inquireStatement->set_formatted(expression);
+                  }
+               else if ( strncasecmp(name->text,"unformatted",11) == 0 )
+                  {
+                    inquireStatement->set_unformatted(expression);
+                  }
+               else if ( strncasecmp(name->text,"nextrec",7) == 0 )
+                  {
+                    inquireStatement->set_nextrec(expression);
+                  }
+               else if ( strncasecmp(name->text,"position",8) == 0 )
+                  {
+                    inquireStatement->set_position(expression);
+                  }
+               else if ( strncasecmp(name->text,"action",6) == 0 )
+                  {
+                    inquireStatement->set_action(expression);
+                  }
+               else if ( strncasecmp(name->text,"read",4) == 0 )
+                  {
+                    inquireStatement->set_read(expression);
+                  }
+               else if ( strncasecmp(name->text,"write",5) == 0 )
+                  {
+                    inquireStatement->set_write(expression);
+                  }
+               else if ( strncasecmp(name->text,"readwrite",9) == 0 )
+                  {
+                    inquireStatement->set_readwrite(expression);
+                  }
+               else if ( strncasecmp(name->text,"delim",5) == 0 )
+                  {
+                    inquireStatement->set_delim(expression);
+                  }
+               else if ( strncasecmp(name->text,"pad",3) == 0 )
+                  {
+                    inquireStatement->set_pad(expression);
+                  }
+               else if ( strncasecmp(name->text,"asynchronous",12) == 0 )
+                  {
+                    inquireStatement->set_asynchronous(expression);
+                  }
+               else if ( strncasecmp(name->text,"decimal",7) == 0 )
+                  {
+                    inquireStatement->set_decimal(expression);
+                  }
+               else if ( strncasecmp(name->text,"stream",5) == 0 )
+                  {
+                    inquireStatement->set_stream(expression);
+                  }
+               else if ( strncasecmp(name->text,"size",4) == 0 )
+                  {
+                    inquireStatement->set_size(expression);
+                  }
+               else if ( strncasecmp(name->text,"pending",7) == 0 )
+                  {
+                    inquireStatement->set_pending(expression);
+                  }
+
+               astNameStack.pop_front();
+               astExpressionStack.pop_front();
+
+               expression->set_parent(inquireStatement);
+             }
         }
 
      astScopeStack.front()->append_statement(inquireStatement);
@@ -14261,6 +14383,11 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
      delete current_IO_Control_Spec;
      current_IO_Control_Spec = NULL;
      ROSE_ASSERT(current_IO_Control_Spec == NULL);
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R929 c_action_inquire_stmt()");
 #endif
    }
 
@@ -14989,7 +15116,6 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      SgClassDefinition* moduleDefinition = moduleStatement->get_definition();
      ROSE_ASSERT(moduleDefinition != NULL);
 
-#if 1
   // Note that there can be many interface statements in a module.
      std::vector<SgInterfaceStatement*> interfaceList = moduleStatement->get_interfaces();
      for (size_t i = 0; i < interfaceList.size(); i++)
@@ -15018,7 +15144,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                  // Fixup the functionDeclaration in the interface body
                     SgName functionName = interfaceBody->get_function_name();
 
-                    printf ("Fixup functionName = %s in interfaceName = %s \n",functionName.str(),interfaceName.str());
+                 // printf ("Fixup functionName = %s in interfaceName = %s \n",functionName.str(),interfaceName.str());
 
                  // DQ (9/29/2008): inject all symbols from the module's symbol table into symbol table at current scope.
                     SgSymbol* symbol = moduleDefinition->first_any_symbol();
@@ -15040,7 +15166,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionSymbol->get_declaration());
                               ROSE_ASSERT(functionDeclaration != NULL);
 
-                              printf ("Found symbol for function = %s in interfaceName = %s \n",functionDeclaration->get_name().str(),interfaceName.str());
+                           // printf ("Found symbol for function = %s in interfaceName = %s \n",functionDeclaration->get_name().str(),interfaceName.str());
 
                               if (functionDeclaration->get_name() == functionName)
                                  {
@@ -15054,10 +15180,10 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                                 // SgAliasSymbol* aliasSymbol = new SgAliasSymbol(functionSymbol,/* isRenamed = true */ true,interfaceName);
                                 // SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol,interfaceName);
                                    SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol->get_declaration(),functionSymbol,interfaceName);
-
+#if 0
                                    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                                        printf ("Insert aliased symbol name = %s (renamed from functionName = %s )\n",interfaceName.str(),functionName.str());
-
+                                        printf ("R1106 Insert aliased symbol name = %s (renamed from functionName = %s )\n",interfaceName.str(),functionName.str());
+#endif
                                 // Accumulate the list of required SgRenameSymbol IR nodes, and add them after we finish the traversal over the current scops symbols
                                 // currentScope->insert_symbol(interfaceName,aliasSymbol);
                                 // currentScope->insert_symbol(interfaceName,renameSymbol);
@@ -15082,7 +15208,6 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                currentScope->insert_symbol(interfaceName,renameSymbolList[i]);
              }
         }
-#endif
 
   // This is part of a bug fix demonstrated by test2010_32.f90.
   // DQ (8/28/2010): A function call in a module can apprea before it's declaration. This is supported by:
@@ -15300,11 +15425,6 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
        // support in place for reading the *.mod files of any previously declared modules 
        // from other translation units.
 
-       // Once we find the module declaration to the module
-#if 0
-          printf ("Error: module not found in current translation unit! (need contribution from Rice) \n");
-          ROSE_ASSERT(false);
-#else 
        // FMZ:(5/28/2008) importing the module declaration from modName.rmod file
        // save the global variable
         
@@ -15333,11 +15453,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                cout << "Error : cannot find the module (module should have been seen in a previously generated file) : "<< modName << endl;
                ROSE_ASSERT(false);
              }
-    
-         ROSE_ASSERT (moduleStatement != NULL);
-         
-         OpenFortranParser_globalFilePointer = savedFilePointer;
-#endif
+
+          ROSE_ASSERT (moduleStatement != NULL);
+
+          OpenFortranParser_globalFilePointer = savedFilePointer;
         }
        else
         {
@@ -15392,10 +15511,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                        {
                          SgName symbolName = symbol->get_name();
                          SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
-
+#if 0
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("Insert aliased symbol name = %s \n",symbolName.str());
-
+                              printf ("R1109 (hasOnly == false && empty astNodeStack) Insert aliased symbol name = %s \n",symbolName.str());
+#endif
                          currentScope->insert_symbol(symbolName,aliasSymbol);
                        }
 
@@ -15436,10 +15555,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                               bool isRenamed = hasRenameList;
                               SgName declarationName = renamePair->get_local_name();
                               SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed = true */ true,declarationName);
-
+#if 0
                               if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                                   printf ("Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
-
+                                   printf ("R1109 (non-empty astNodeStack)Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
+#endif
                               currentScope->insert_symbol(declarationName,aliasSymbol);
 
                               setOfRenamedSymbols.insert(symbol);
@@ -15467,10 +15586,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                       // Add the symbols not renamed explicitly.
                          SgName symbolName = symbol->get_name();
                          SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
-
+#if 0
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("Insert aliased symbol name = %s (non-renamed symbol) \n",symbolName.str());
-
+                              printf ("R1109 (add the non-renamed symbols) Insert aliased symbol name = %s (non-renamed symbol) \n",symbolName.str());
+#endif
                          currentScope->insert_symbol(symbolName,aliasSymbol);
                        }
 
@@ -15534,10 +15653,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                             {
                               aliasSymbol = new SgAliasSymbol(symbol,isRenamed);
                             }
-
+#if 0
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
-
+                              printf ("R1109 (hasOnly == false && astNodeStack.empty() == false) Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
+#endif
                          currentScope->insert_symbol(local_name,aliasSymbol);
                        }
 
@@ -16163,29 +16282,43 @@ void c_action_procedure_stmt(Token_t *label, Token_t *module, Token_t *procedure
           SgInterfaceStatement* interfaceStatement = astInterfaceStack.front();
 
           ROSE_ASSERT(astNameStack.empty() == false);
+#if 0
           string procedure_name = astNameStack.front()->text;
           printf ("procedure_name = %s \n",procedure_name.c_str());
-#if 0
-       // Save these names for later when the functions are built and then use them to 
-       // build the interfaceStatement->get_interface_procedure_declarations() list.
-          interfaceStatement->get_interface_procedure_names().push_back(procedure_name);
-#else
           SgName name = procedure_name;
           SgFunctionDeclaration* nullFunctionDeclaration = NULL;
           SgInterfaceBody* interfaceBody = new SgInterfaceBody(name,nullFunctionDeclaration,/*use_function_name*/ true);
           interfaceStatement->get_interface_body_list().push_back(interfaceBody);
           interfaceBody->set_parent(interfaceStatement);
           setSourcePosition(interfaceBody);
-#endif
           astNameStack.pop_front();
+#else
+       // DQ (9/7/2010): A procedure interface can have a list of names, so we have to process the list saved on the astNameStack.
+       // See test2010_42.f90 for an example of this problem.
+          while (astNameStack.empty() == false)
+             {
+               string procedure_name = astNameStack.front()->text;
+            // printf ("procedure_name = %s \n",procedure_name.c_str());
+               SgName name = procedure_name;
+               SgFunctionDeclaration* nullFunctionDeclaration = NULL;
+               SgInterfaceBody* interfaceBody = new SgInterfaceBody(name,nullFunctionDeclaration,/*use_function_name*/ true);
+               interfaceStatement->get_interface_body_list().push_back(interfaceBody);
+               interfaceBody->set_parent(interfaceStatement);
+               setSourcePosition(interfaceBody);
+               astNameStack.pop_front();
+             }
+#endif
         }
 #endif
 
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1206 c_action_procedure_stmt()");
 #endif
+
+  // DQ (9/7/2010): Added error checking.
+     ROSE_ASSERT(astNameStack.empty() == true);
    }
 
 /** R1207
@@ -16541,7 +16674,7 @@ void c_action_call_stmt(Token_t *label, Token_t *callKeyword, Token_t *eos, ofp_
      ROSE_ASSERT(functionSymbol != NULL);
      SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
 
-     printf ("In R1218 c_action_call_stmt(): functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+  // printf ("In R1218 c_action_call_stmt(): functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 
   // SgProgramHeaderStatement* programHeaderStatement = isSgProgramHeaderStatement(functionDeclaration);
      SgProcedureHeaderStatement* procedureHeaderStatement = isSgProcedureHeaderStatement(functionDeclaration);

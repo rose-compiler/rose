@@ -45,7 +45,7 @@ public:
         buildCFG();
     }
 
-    ~CFG() 
+    virtual ~CFG()
     { clearNodesAndEdges(); }
 
     // Set the start node for graph building. 

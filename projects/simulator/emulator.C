@@ -318,6 +318,10 @@ struct EmulationPolicy {
         linuxSyscall(ms);
     }
 
+    void sysenter() {
+        abort(); /*fixme*/
+    }
+
     Value<32> filterCallTarget(Value<32> a) {
         return a;
     }

@@ -143,7 +143,7 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, 
     /* The old PowerpcDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4];
-    size_t tempsz = map->read(temp, start_va, sizeof temp);
+    size_t tempsz = map->read(temp, start_va, sizeof temp, get_protection());
 
     /* Treat the bytes as a big-endian instruction.  Note that PowerPC is big-endian, but PowerPC can support both big- and
      * little-endian processor modes (with much weirdness; e.g. PDP endian like propoerties). */
