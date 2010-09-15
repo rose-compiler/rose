@@ -10,6 +10,7 @@
 #include "pluggableReverser/returnStatementHandler.h"
 #include "pluggableReverser/variableDeclarationHandler.h"
 #include "pluggableReverser/redefineValueRestorer.h"
+#include "pluggableReverser/extractFromUseValueRestorer.h"
 
 
 int main(int argc, char** argv)
@@ -52,7 +53,7 @@ int main(int argc, char** argv)
 
 	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
-	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
+	event_processor.addVariableValueRestorer(new ExtractFromUseValueRestorer);
 
 	//Call the reverser and get the results
 	SageBuilder::pushScopeStack(globalScope);
