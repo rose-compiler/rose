@@ -342,7 +342,7 @@ SgExpression* EventProcessor::restoreExpressionValue(SgExpression* expression, c
 	//However, the variables used in the expression might have been changed between its location and the current node
 	VariableRenaming::NumNodeRenameTable variablesInExpression = var_renaming_->getOriginalUsesAtNode(expression);
 
-	//Go through all the variables used in the definition expression and check if their values have changed since the def
+	//Go through all the variables used in the definition expression and check if their values have changed
 	pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> nameDefinitionPair;
 	SgExpression* expressionCopy = SageInterface::copyExpression(expression);
 
