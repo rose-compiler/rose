@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <err.h>
 
+char *TCID = "syscall.4";
+int TST_TOTAL = 1;
+
+
 char pfilname[40] = "";
 char buf = 'w';
 

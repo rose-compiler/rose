@@ -5,6 +5,10 @@
 
 #include <err.h>
 
+char *TCID = "syscall.122";
+int TST_TOTAL = 1;
+
+
 int exp_enos[] = { 0, 0 };
 
 struct utsname un;

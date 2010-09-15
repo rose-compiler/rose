@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <err.h>
 
+char *TCID = "syscall.83";
+int TST_TOTAL = 1;
+
+
 char sym[40] = "";
 int main() {
   sprintf(sym,"/tmp/devnull.%d",getpid());

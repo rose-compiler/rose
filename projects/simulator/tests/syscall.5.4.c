@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include "err.h"
 
+char *TCID = "syscall.5";
+int TST_TOTAL = 1;
+
+
 int fd, ifile, mypid, first;
 int nfile;
 int *buf;

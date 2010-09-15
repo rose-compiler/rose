@@ -2,6 +2,10 @@
 #include <sys/types.h>
 #include <err.h>
 
+char *TCID = "syscall.64";
+int TST_TOTAL = 1;
+
+
 int main() {
   int result = getppid();
 

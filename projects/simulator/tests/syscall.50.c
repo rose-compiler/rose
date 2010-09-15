@@ -2,6 +2,10 @@
 #include <unistd.h>
 #include <err.h>
 
+char *TCID = "syscall.50";
+int TST_TOTAL = 1;
+
+
 int main() {
   int result = getegid();
 

@@ -3,6 +3,9 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 
+char *TCID = "syscall.114";
+int TST_TOTAL = 1;
+
 int main() {
   pid_t pid = 0;
   int status;
