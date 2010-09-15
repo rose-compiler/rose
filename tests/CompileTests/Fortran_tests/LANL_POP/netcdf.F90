@@ -34,22 +34,23 @@
 !     length of the argument character string. 
 !
  module netcdf
-  use typeSizes, only: OneByteInt, TwoByteInt, FourByteInt, EightByteInt, &
-                       FourByteReal, EightByteReal
+
+  use typeSizes, only: OneByteInt, TwoByteInt, FourByteInt, EightByteInt, FourByteReal, EightByteReal
+
   implicit none
   private
 
-  include "netcdf_constants.f90"
-  include "netcdf_externals.f90"
-  include "netcdf_overloads.f90"
-  include "netcdf_visibility.f90"
+#include "netcdf_constants.f90"
+#include "netcdf_externals.f90"
+#include "netcdf_overloads.f90"
+#include "netcdf_visibility.f90"
 contains
-  include "netcdf_file.f90"
-  include "netcdf3_file.f90"
-  include "netcdf_dims.f90"
-  include "netcdf_attributes.f90"
-  include "netcdf_variables.f90"
-  include "netcdf_text_variables.f90"
-  include "netcdf_expanded.f90"
-  include "netcdf_eightbyte.f90"
+#include "netcdf_file.f90"
+#include "netcdf3_file.f90"
+#include "netcdf_dims.f90"
+#include "netcdf_attributes.f90"
+#include "netcdf_variables.f90"
+#include "netcdf_text_variables.f90"
+#include "netcdf_expanded.f90"
+#include "netcdf_eightbyte.f90"
 end module netcdf

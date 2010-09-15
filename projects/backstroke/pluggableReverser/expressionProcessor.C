@@ -19,8 +19,10 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 {
 	vector<EvaluationResult> results;
 
+	// Now NullExpressionHander only handles expressions without side effects. Those with side effects are
+	// handled by IdentityExpressionHandler.
 	// If the value of the expression is used, we cannot return NULL.
-	if (reverseValueUsed)
+	if (!backstroke_util::containsModifyingExpression(exp) || reverseValueUsed)
 		return results;
 	//SgExpression* exp = exp_pkg.exp;
 
@@ -48,26 +50,52 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 	}
 #endif
 
-	results.push_back(EvaluationResult(this, var_table));
+	results.push_back(EvaluationResult(this, exp, var_table));
 	return results;
 }
 
 /******************************************************************************
  **** Definition of member functions of IdentityExpressionProcessor ***********/
 
+struct IdentityExpressionAttribute : public EvaluationResultAttribute
+{
+	bool reverseIsNull;
+};
+
 ExpressionReversal IdentityExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
-	ROSE_ASSERT(evaluationResult.getExpressionProcessor() == this && evaluationResult.getChildResults().size() == 0);
-	return ExpressionReversal(copyExpression(exp), copyExpression(exp));
+	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this && evaluationResult.getChildResults().size() == 0);
+	IdentityExpressionAttribute* attribute = dynamic_cast<IdentityExpressionAttribute*>(evaluationResult.getAttribute().get());
+	ROSE_ASSERT(attribute != NULL);
+
+	SgExpression* forwardExpression = SageInterface::copyExpression(exp);
+	SgExpression* reverseExpression;
+	if (attribute->reverseIsNull)
+	{
+		reverseExpression = NULL;
+	}
+	else
+	{
+		reverseExpression = SageInterface::copyExpression(exp);
+	}
+
+	return ExpressionReversal(forwardExpression, reverseExpression);
 }
 
 vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
 {
 	vector<EvaluationResult> results;
 
-	// If an expression does not modify any value, its reverse expression may be the same as itself.
-	if (!backstroke_util::isModifyingExpression(exp) && reverseValueUsed)
-		results.push_back(EvaluationResult(this, var_table));
+	// If an expression does not modify any value and its value is used, the reverse is the same as itself
+	if (!backstroke_util::containsModifyingExpression(exp))
+	{
+		EvaluationResult result(this, exp, var_table);
+		IdentityExpressionAttribute* attribute = new IdentityExpressionAttribute;
+		attribute->reverseIsNull = !reverseValueUsed;
+		
+		result.setAttribute(EvaluationResultAttributePtr(attribute));
+		results.push_back(result);
+	}
 
 	return results;
 }
@@ -119,7 +147,7 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 		SimpleCostModel cost;
 		cost.increaseStoreCount();
 
-		EvaluationResult result(this, new_var_table, cost);
+		EvaluationResult result(this, exp, new_var_table, cost);
 		result.setAttribute(EvaluationResultAttributePtr(new StoreAndRestoreAttribute(var_to_save)));
 		results.push_back(result);
 	}
@@ -271,7 +299,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 			// in the variable version table.
 
 
-			if (var_table.checkVersion(operand))
+			if (var_table.checkVersionForDef(operand))
 			{
 				// Once reversed, the version number should backward.
 				VariableVersionTable new_table(var_table);
@@ -279,7 +307,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 
 				if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
 				{
-					EvaluationResult result = EvaluationResult(this, new_table);
+					EvaluationResult result = EvaluationResult(this, exp, new_table);
 					results.push_back(result);
 				}
 			}
@@ -317,7 +345,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 			// To make sure it is reversed correctly, a should has the version number 1 and
 			// b should has the version number 2 in the variable version table.
 
-			if (var_table.checkVersion(lhs_operand, rhs_operand) &&
+			if (var_table.checkVersionForDefUse(lhs_operand, rhs_operand) &&
 					constructive)
 			{
 				// Once reversed, the version number should backward.
@@ -328,7 +356,7 @@ vector<EvaluationResult> ConstructiveExpressionHandler::evaluate(SgExpression* e
 						isSgMinusAssignOp(exp) ||
 						isSgXorAssignOp(exp))
 				{
-					EvaluationResult result = EvaluationResult(this, new_table);
+					EvaluationResult result = EvaluationResult(this, exp, new_table);
 					results.push_back(result);
 				}
 

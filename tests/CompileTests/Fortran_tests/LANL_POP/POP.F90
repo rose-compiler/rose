@@ -32,6 +32,9 @@
 
    implicit none
 
+! Turn off all but the module handling using the use statement for testing
+#if 1
+
 !EOP
 !BOC
 !-----------------------------------------------------------------------
@@ -152,6 +155,8 @@
 
 !-----------------------------------------------------------------------
 !EOC
+
+#endif
 
  end program POP
 

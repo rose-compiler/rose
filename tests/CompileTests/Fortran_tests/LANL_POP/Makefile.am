@@ -36,7 +36,7 @@ F90_EXTRA_TESTS =
 
 # NET CDF library source files (from the web)
 NET_CDF_FILES = \
-   netcdf.f90 \
+   netcdf.F90 \
    netcdf3_file.f90 \
    netcdf_attributes.f90 \
    netcdf_constants.f90 \
@@ -218,7 +218,7 @@ communicate.o: $(TRANSLATOR) kinds_mod.o
 exit_mod.o: $(TRANSLATOR) communicate.o constants.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-domain.o: $(TRANSLATOR) constants.o blocks.o io_types.o boundary.o
+domain.o: $(TRANSLATOR) kinds_mod.o constants.o communicate.o broadcast.o blocks.o distribution.o exit_mod.o io_types.o boundary.o domain_size.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 blocks.o: $(TRANSLATOR) kinds_mod.o exit_mod.o domain_size.o
@@ -389,10 +389,22 @@ POP.o: $(TRANSLATOR) kinds_mod.o communicate.o domain.o timers.o time_management
 
 # DQ (8/23/2010): Added support for NetCDFlib
 netcdf.o: $(TRANSLATOR) typeSizes.o
-	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 typeSizes.o: $(TRANSLATOR)
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+
+
+# io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+
+
+
+
+
+
 
 
 # Example of how to call the OpenFortranParser
@@ -434,10 +446,12 @@ listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_F
 check-parsing:
 	@echo "First make POP code using testParser."
 	@$(MAKE) TRANSLATOR_EXECUTABLE=testParser $(PASSING_TEST_Objects)
+	@echo "Test of check-parsing rule terminated normally..."
 
 check-analysis:
 	@echo "Second make POP code using testAnalysis."
 	@$(MAKE) TRANSLATOR_EXECUTABLE=testAnalysis $(PASSING_TEST_Objects)
+	@echo "Test of check-analysis rule terminated normally..."
 
 check-local:
 	@echo "Tests for Fortran (LANL POP)."

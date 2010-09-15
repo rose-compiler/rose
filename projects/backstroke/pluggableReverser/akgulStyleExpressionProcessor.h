@@ -25,10 +25,6 @@ public:
 
 private:
 
-	/** Reverses an assignment op. Returns true on success and false on failure.
-	* @param reverseExpressions a list of expressions, to be executed in the specified order */
-	bool handleAssignOp(SgAssignOp* varRef, const VariableVersionTable& availableVariables, SgExpression*& reverseExpressions);
-
 	std::multimap<int, SgExpression*> collectUsesForVariable(VariableRenaming::VarName name, SgNode* node);
 };
 
@@ -41,14 +37,14 @@ class RedefineValueRestorer : public VariableValueRestorer
 	*
 	* @param variable name of the variable to be restored
 	* @param availableVariables variables whose values are currently available
-	* @return definitions the version of the variable which should be restored
+	* @param definitions the version of the variable which should be restored
+	* @return expessions that when evaluated will produce the desired version of the variable
 	*/
 	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, 
 			const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions);
 
 private:
 
-	static std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);
 
 	/** Returns true if an expression calls any functions or modifies any variables. */
 	static bool isModifyingExpression(SgExpression* expr, VariableRenaming* variableRenamingAnalysis);
@@ -62,7 +58,8 @@ class ExtractFromUseRestorer : public VariableValueRestorer
 	*
 	* @param variable name of the variable to be restored
 	* @param availableVariables variables whos values are currently available
-	* @return definitions the version of the variable which should be restored
+	* @param definitions the version of the variable which should be restored
+	* @return expessions that when evaluated will produce the desired version of the variable
 	*/
 	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, 
 			const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions);
