@@ -43,7 +43,7 @@ void * RtedDebug::guiMain(void * rtedVoid)
 
     //qDebug() << "In Gui Thread - starting" << pthread_self();
 
-    r->app = new QApplication(0,NULL);
+    r->app = new QApplication(0); /* tps changed, removed second param NULL */
     r->dlg = new DbgMainWindow(r);
 
     // Initialization finished, go back to rtsi thread
@@ -157,7 +157,7 @@ void RtedDebug::printDbg(const QString & s)
 {
     return;
 
-    if(gui.id== -1 || rtsi.id== -1)
+    if(gui.id < 0 || rtsi.id < 0)
     {
         qDebug() << "Not yet initialized" << gui.id << rtsi.id ;
         return;

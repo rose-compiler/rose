@@ -211,7 +211,7 @@ bool initialize_next_array = false;
 void
 RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
 			      const char* type, const char* basetype, size_t indirection_level,
-			      unsigned_int address, signed_int size,
+			      addr_type address, signed_int size,
 			      signed_int mallocSize, int fromMalloc, const char* class_name,
 			      const char* filename, const char* line, const char* lineTransformed,
 			      int dimensionality, ...){
@@ -290,7 +290,7 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
  ********************************************************/
 void
 RuntimeSystem_roseAccessHeap(const char* filename,
-			      unsigned_int base_address, unsigned_int address, signed_int size,
+				  addr_type base_address, addr_type address, size_t size,
 			      int read_write_mask, const char* line, const char* lineTransformed){
 
 
@@ -307,7 +307,7 @@ RuntimeSystem_roseAccessHeap(const char* filename,
 // ***************************************** ARRAY FUNCTIONS *************************************
 
 
-void RuntimeSystem_checkMemoryAccess( unsigned_int address, signed_int size, int read_write_mask ) {
+void RuntimeSystem_checkMemoryAccess( addr_type address, signed_int size, int read_write_mask ) {
 
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
@@ -761,7 +761,7 @@ int RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* type,
 				      const char* basetype,
 				      size_t indirection_level,
-				      unsigned_int address,
+				      addr_type address,
 				      unsigned int size,
 				      int init,
 
@@ -811,7 +811,7 @@ int RuntimeSystem_roseCreateObject(
         const char* type_name,
         const char* base_type,
         size_t indirection_level,
-        unsigned_int address,
+        addr_type address,
         unsigned int size,
         const char* filename,
         const char* line,
@@ -844,7 +844,7 @@ RuntimeSystem_roseInitVariable(
 			       const char* base_type,
 			       size_t indirection_level,
 			       const char* class_name,
-			       unsigned_long address,
+			       addr_type address,
 			       unsigned int size,
 			       int ismalloc,
 			       int pointer_changed,
@@ -900,7 +900,7 @@ RuntimeSystem_roseInitVariable(
 //    int q = *p;
 void
 RuntimeSystem_roseMovePointer(
-			      unsigned_long address,
+			      addr_type address,
 			      const char* type,
 			      const char* base_type,
 			      size_t indirection_level,
@@ -928,7 +928,7 @@ RuntimeSystem_roseMovePointer(
  * This function tells the runtime system that a variable is used
  ********************************************************/
 void RuntimeSystem_roseAccessVariable(
-				      unsigned_long address,
+				      addr_type address,
 				      unsigned int size,
 				      unsigned_long write_address,
 				      unsigned int write_size,
