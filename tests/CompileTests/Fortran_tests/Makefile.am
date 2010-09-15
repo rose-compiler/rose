@@ -540,6 +540,7 @@ testSuffixRules:
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
 
 check-local:
 	@echo "Tests for Fortran."
