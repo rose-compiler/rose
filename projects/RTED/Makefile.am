@@ -7,7 +7,7 @@ EXTRA_DIST = index_array.txt \
 	     extract-actual-error.sed extract-expected-error.sed
 
 # Currently, we exclude 32bit and MacOS
-if !OS_VENDOR_REDHAT_32BIT
+#if !OS_VENDOR_REDHAT_32BIT
 if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
@@ -372,7 +372,7 @@ TRANSFORMING_FILES +=  -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
 TRANSFORMING_FILES += rm $(patsubst %_rose$(strip $(1)), %.bin, $@);
-TRANSFORMING_FILES += echo " done.";
+TRANSFORMING_FILES += echo " done. ";
 TRANSFORMING_FILES += echo -n "    running transformation ... $(patsubst %_rose$(strip $(1)), %.bin, $@)";
 
 TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) \
@@ -854,5 +854,5 @@ check-local:
 endif
 
 
-endif
+#endif
 endif

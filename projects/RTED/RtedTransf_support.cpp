@@ -887,18 +887,34 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
     if (exp)
       copy_exp = make_lvalue_visitor.visit_subtree(  exp -> copy( copy ));
 
+    int n = sizeof(void *); // n=4 on 32bit and 8on 64bit
     SgExpression *arg;
     SgCastExp *cast_op = NULL;
+    if (n==4) {
     if (exp)
      cast_op=   buildCastExp(
             buildAddressOfOp( copy_exp ),
-            buildUnsignedLongLongType()
+            buildUnsignedIntType()
         );
     else
         cast_op=   buildCastExp(
-               buildLongLongIntVal( 0),
-               buildUnsignedLongLongType()
+               buildIntVal( 0),
+               buildUnsignedIntType()
            );
+    } else {
+        if (exp)
+         cast_op=   buildCastExp(
+                buildAddressOfOp( copy_exp ),
+                buildUnsignedLongLongType()
+            );
+        else
+            cast_op=   buildCastExp(
+                   buildLongLongIntVal( 0),
+                   buildUnsignedLongLongType()
+               );
+
+    }
+
 
     if( offset != NULL ) {
         ROSE_ASSERT( exp != NULL );
