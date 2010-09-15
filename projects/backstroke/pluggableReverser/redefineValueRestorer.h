@@ -19,6 +19,19 @@ class RedefineValueRestorer : public VariableValueRestorer
 			const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions);
 
 private:
+
+	//! Handle +=, -=, */, etc
+	std::vector<SgExpression*> handleUseAssignDefinition(VariableRenaming::VarName variable,
+			const VariableVersionTable& availableVariables, SgNode* reachingDefinition);
+
+	//! The reaching definition is ++ or --
+	std::vector<SgExpression*> handleIncrementDecrementDefinition(VariableRenaming::VarName variable,
+			const VariableVersionTable& availableVariables, SgNode* reachingDefinition);
+
+	//! The reaching definition is an assign op or an initialized name.
+	//! An initialized name with a SgAssignInitializer is pretty much identical to an assign op
+	std::vector<SgExpression*> handleAssignOp(VariableRenaming::VarName variable,
+			const VariableVersionTable& availableVariables, SgNode* reachingDefinition);
 };
 
 #endif	/* REDEFINEVALUERESTORER_H */
