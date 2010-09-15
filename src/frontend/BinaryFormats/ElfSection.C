@@ -55,7 +55,7 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
     /* Memory mapping */
     if (shdr->get_sh_addr() > 0) {
         set_mapped_preferred_rva(shdr->get_sh_addr());
-        set_mapped_actual_rva(0); /*will be assigned by Loader*/
+        set_mapped_actual_va(0); /*will be assigned by Loader*/
         set_mapped_size(shdr->get_sh_size());
         set_mapped_rperm(true);
         set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
@@ -63,7 +63,7 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
         set_mapped_alignment(shdr->get_sh_addralign());
     } else {
         set_mapped_preferred_rva(0);
-        set_mapped_actual_rva(0); /*will be assigned by Loader*/
+        set_mapped_actual_va(0); /*will be assigned by Loader*/
         set_mapped_size(0);
         set_mapped_rperm(false);
         set_mapped_wperm(false);
@@ -120,7 +120,7 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
     
     /* Memory mapping */
     set_mapped_preferred_rva(shdr->get_vaddr());
-    set_mapped_actual_rva(0); /*will be assigned by Loader*/
+    set_mapped_actual_va(0); /*will be assigned by Loader*/
     set_mapped_size(shdr->get_memsz());
     set_mapped_alignment(shdr->get_align());
     set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);

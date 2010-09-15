@@ -16,10 +16,10 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     /* Read disk-formatted export directory */
     PEExportDirectory_disk disk;
     try {
-        section->read_content(fhdr->get_loader_map(), section->get_mapped_actual_rva(), &disk, sizeof disk);
+        section->read_content(fhdr->get_loader_map(), section->get_mapped_actual_va(), &disk, sizeof disk);
     } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEExportDirectory::ctor: error: export directory at RVA 0x%08"PRIx64
-                " contains unmapped virtual address 0x%08"PRIx64"\n", section->get_mapped_actual_rva(), e.va);
+                " contains unmapped virtual address 0x%08"PRIx64"\n", section->get_mapped_actual_va(), e.va);
         if (e.map) {
             fprintf(stderr, "Memory map in effect at time of error:\n");
             e.map->dump(stderr, "    ");
@@ -227,7 +227,7 @@ SgAsmPEExportSection::parse()
         /* If export address is within this section then it points to a NUL-terminated forwarder name.
          * FIXME: Is this the proper precondition? [RPM 2009-08-20] */
         SgAsmGenericString *forwarder = NULL;
-        if (expaddr.get_rva()>=get_mapped_actual_rva() && expaddr.get_rva()<get_mapped_actual_rva()+get_mapped_size()) {
+        if (expaddr.get_va()>=get_mapped_actual_va() && expaddr.get_va()<get_mapped_actual_va()+get_mapped_size()) {
             std::string s;
             try {
                 s = read_content_str(fhdr->get_loader_map(), expaddr.get_rva());

@@ -81,13 +81,28 @@ namespace CallTargetSet
   // member function (non/polymorphic) call
   std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
 
-  // populates functionList with declarations of all functions that may get
-  // called via an SgFunctionCallExp node.
-  void retrieveFunctionDeclarations(SgFunctionCallExp* functionCall,
+  // returns the list of Properties of all constructors that may get called via 
+  // an initialization.
+  std::vector<Properties*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
+
+  // Populates functionList with Properties of all functions that may get called.
+  void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<Properties *>& functionList);
-  void getCallLikeExpsForFunctionDefinition(SgFunctionDefinition* def, Rose_STL_Container<SgExpression*>& calls);
-  void getFunctionDefinitionsForCallLikeExp(SgExpression* exp, Rose_STL_Container<SgFunctionDefinition*>& defs);
+                                    Rose_STL_Container<Properties*>& propList);
+
+  // Populates functionList with definitions of all functions that may get called. This 
+  // is basically a wrapper around getPropertiesForExpression that extracts the 
+  // SgFunctionDefinition from the Properties object
+  void getDefinitionsForExpression(SgExpression* exp,
+                                    ClassHierarchyWrapper* classHierarchy,
+                                    Rose_STL_Container<SgFunctionDefinition*>& defList);
+
+  // Gets a vector of SgExpressions that are associated with the current SgFunctionDefinition.
+  // This functionality is necessary for virtual, interprocedural control flow graphs. However, 
+  // it is costly and should be used infrequently (or optimized!).
+  void getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
+                                   ClassHierarchyWrapper* classHierarchy,
+                                   Rose_STL_Container<SgExpression*>& exps);
 };
 
 class FunctionData
