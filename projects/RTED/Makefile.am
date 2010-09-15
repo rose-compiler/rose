@@ -7,7 +7,7 @@ EXTRA_DIST = index_array.txt \
 	     extract-actual-error.sed extract-expected-error.sed
 
 # Currently, we exclude 32bit and MacOS
-#if !OS_VENDOR_REDHAT_32BIT
+if !OS_VENDOR_REDHAT_32BIT
 if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
@@ -854,5 +854,5 @@ check-local:
 endif
 
 
-#endif
+endif
 endif
