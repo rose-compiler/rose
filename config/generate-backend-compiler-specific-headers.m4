@@ -126,6 +126,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
 
  # DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${BACKEND_C_COMPILER}_HEADERS directory.
  # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
+   echo "Copying UPC header files into ./include-staging/${BACKEND_C_COMPILER}_HEADERS directory ..."
    cp ${srcdir}/config/upc.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
    cp ${srcdir}/config/upc_relaxed.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
    cp ${srcdir}/config/upc_strict.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS

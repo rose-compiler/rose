@@ -63,7 +63,9 @@ version_ok () {
 }
 
 # DQ (9/15/2010): Add df call to check on diskspace (debugging)
-df
+#echo "Report on diskspace availablity for this build."
+#df
+#echo ""
 
 # DQ (12/22/2005): remove the autoconf caches
 rm -rf autom4te.cache
