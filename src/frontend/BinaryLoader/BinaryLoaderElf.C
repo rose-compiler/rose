@@ -906,26 +906,6 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
 
     
 void
-BinaryLoaderElf::fixup_apply_symbol_value(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
-                                          size_t nbytes, MemoryMap *memmap)
-{
-    rose_addr_t target_va;
-    rose_addr_t value = fixup_info_expr("S", reloc, resolver, memmap, &target_va);
-    fixup_apply(value, reloc, memmap, target_va, nbytes);
-}
-
-void
-BinaryLoaderElf::fixup_apply_relative(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver, 
-                                      size_t nbytes, MemoryMap *memmap)
-{
-    char expr[16];
-    sprintf(expr, "%zuBA+", nbytes);
-    rose_addr_t target_va;
-    rose_addr_t value = fixup_info_expr(expr, reloc, resolver, memmap, &target_va);
-    fixup_apply(value, reloc, memmap, target_va, nbytes);
-}
-
-void
 BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
 {
     SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
@@ -1177,19 +1157,26 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                 reloc->get_r_offset(), reloc->reloc_name().c_str(), relocSymbol->get_name()->c_str());
     }
 
+    rose_addr_t target_va = 0;
     switch (isa & SgAsmGenericHeader::ISA_FAMILY_MASK) {
         case SgAsmGenericHeader::ISA_IA32_Family:
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_386_JMP_SLOT:
-                case SgAsmElfRelocEntry::R_386_GLOB_DAT:
-                    fixup_apply_symbol_value(reloc, resolver, 4, memmap);
+                case SgAsmElfRelocEntry::R_386_GLOB_DAT: {
+                    rose_addr_t value = fixup_info_expr("S", reloc, resolver, memmap, &target_va);
+                    fixup_apply(value, reloc, memmap, target_va, 4);
                     break;
-                case SgAsmElfRelocEntry::R_386_COPY:
+                }
+                case SgAsmElfRelocEntry::R_386_COPY: {
                     fixup_apply_symbol_copy(reloc, resolver, memmap);
                     break;
-                case SgAsmElfRelocEntry::R_386_RELATIVE:
-                    fixup_apply_relative(reloc, resolver, 4, memmap);
+                }
+                case SgAsmElfRelocEntry::R_386_RELATIVE: {
+                    rose_addr_t target_va;
+                    rose_addr_t value = fixup_info_expr("4BA+", reloc, resolver, memmap, &target_va);
+                    fixup_apply(value, reloc, memmap, target_va, 4);
                     break;
+                }
 #if 0
                 case SgAsmElfRelocEntry::R_386_32:
                     relocate_386_32(reloc, symbol, symbolMap, extentSortedSections, 4);
@@ -1230,9 +1217,11 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
         case SgAsmGenericHeader::ISA_X8664_Family:
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_X86_64_JUMP_SLOT:
-                case SgAsmElfRelocEntry::R_X86_64_GLOB_DAT:
-                    fixup_apply_symbol_value(reloc, resolver, 8, memmap);
+                case SgAsmElfRelocEntry::R_X86_64_GLOB_DAT: {
+                    rose_addr_t value = fixup_info_expr("S", reloc, resolver, memmap, &target_va);
+                    fixup_apply(value, reloc, memmap, target_va, 8);
                     break;
+                }
 #if 0
                 case SgAsmElfRelocEntry::R_X86_64_32:
                     /* TODO should zero extend symbol value [MCB] */
@@ -1246,9 +1235,11 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                 case SgAsmElfRelocEntry::R_X86_64_64:
                     relocate_X86_64_64(reloc, parentSection, resolver, 8);
                     break;
-                case SgAsmElfRelocEntry::R_X86_64_RELATIVE:
-                    relocate_X86_64_RELATIVE(reloc, parentSection, resolver, 8);
+                case SgAsmElfRelocEntry::R_X86_64_RELATIVE: {
+                    rose_addr_t value = fixup_info_expr("8BA+", reloc, resolver, memmap, &target_va);
+                    fixup_apply(value, reloc, memmap, target_va, 8);
                     break;
+                }
                 default:
                     if (get_debug())
                         fprintf(get_debug(), "    not implemented\n");

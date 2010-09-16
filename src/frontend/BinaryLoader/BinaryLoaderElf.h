@@ -363,18 +363,9 @@ protected:
      *  being writable. */
     void fixup_apply(rose_addr_t value, SgAsmElfRelocEntry*, MemoryMap*, rose_addr_t target_va=0, size_t nbytes=0);
 
-    /** Performs relocation fixup by inserting a symbol value into memory.  The symbol value is adjusted according to how much
-     *  the symbol's section was translated during memory mapping. */
-    void fixup_apply_symbol_value(SgAsmElfRelocEntry*, const SymverResolver&, size_t nbytes, MemoryMap*);
-
     /** Copies symbol memory to the relocation target.  This is usually used to copy initialized library data (initialized by
      *  the loader calling a constructor) into a common location in the executable's .bss. */
     void fixup_apply_symbol_copy(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
-
-    /** Performs a relative fixup. The quantity A+B is written to the relocation target, where A is the addend either from the
-     *  specimen memory (REL) or the relocation record (RELA) and B is the base address (difference between actual mapped
-     *  address and preferred address for the section containing the relocation target). */
-    void fixup_apply_relative(SgAsmElfRelocEntry*, const SymverResolver&, size_t nbytes, MemoryMap*);
 
     /*========================================================================================================================
      * Functions moved here from the BinaryLoader_ElfSupport name space.
