@@ -10639,6 +10639,7 @@ SageInterface::deleteAST ( SgNode* n )
 
 	//Use MemoryPoolTraversal to count the number of references to a certain symbol
 	//This class defines the visitors for the MemoryPoolTraversal
+
 	class ClassicVisitor : public ROSE_VisitorPattern
 	{
 		private: 
@@ -10880,9 +10881,8 @@ SageInterface::deleteAST ( SgNode* n )
 			SgEnumFieldSymbolPtr = NULL;											
 		}		
 		
-	// Override virtural function defined in base class
 	
-	// SgVariableSymbol	
+	// SgVariableSymbol and SgEnumFieldSymbol	
 		void visit(SgInitializedName* node)
 		{
 			if(SgVariableSymbolPtr !=NULL){
@@ -10927,14 +10927,15 @@ SageInterface::deleteAST ( SgNode* n )
 					}	
 				}
 			}		
-			
+			#if 0
 			if(function_decl!=NULL){
 				if(node->get_symbol_from_symbol_table() == NULL){
 					SgDeclarationStatement * define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
 					SgDeclarationStatement * first_nondefine = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
-					//if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
+					if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
 				}
 			}
+			#endif
 		}
 	
 		void visit(SgFunctionRefExp* node)
@@ -11134,7 +11135,7 @@ SageInterface::deleteAST ( SgNode* n )
 	};
 	
 	
-	//Traverse AST in post order, delete nodes and their symbol if it's safe to do so
+	//Tan August,25,2010 //Traverse AST in post order, delete nodes and their symbols if it's safe to do so
 	class DeleteAST : public SgSimpleProcessing,  ROSE_VisitTraversal  
 		{
 			public:
@@ -11143,8 +11144,9 @@ SageInterface::deleteAST ( SgNode* n )
 			{
 			//These nodes are manually deleted because they cannot be visited by the traversal
 				/*////////////////////////////////////////////////
-				/remove SgVariableDefinition and SgVariableSymbol
+				/remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
 				/////////////////////////////////////////////////*/
+
 				if(isSgInitializedName(node) !=NULL){
 					//remove SgVariableDefinition
 					SgDeclarationStatement* var_def;
@@ -11175,7 +11177,7 @@ SageInterface::deleteAST ( SgNode* n )
 								if(visitor.get_num_EnumField_pointers()==1){
 									((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol); 				
 									delete symbol;
-									printf("A SgEnumFieldSymbol was deleted\n");
+									//printf("A SgEnumFieldSymbol was deleted\n");
 								}
 							}
 							
@@ -11423,7 +11425,9 @@ SageInterface::deleteAST ( SgNode* n )
 					}						    
 					ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
 					traverseMemoryPoolVisitorPattern(visitor);
+
 				}
+//Tan: I have no idea why the codes below cannot work. Perhaps it conflicts with some prior works
 #if 0				
 				if(isSgMemberFunctionRefExp(node) !=NULL){
 					SgMemberFunctionSymbol* symbol = ((SgMemberFunctionRefExp*)node)->get_symbol_i();
@@ -11445,8 +11449,44 @@ SageInterface::deleteAST ( SgNode* n )
 						//printf("A SgFunctionTypeSymbol was deleted\n");  
 					}									
 				}
+#endif
 
+                                /*////////////////////////////////////////////////
+                                /remove SgInterfaceSymbol and SgModuleSymbol
+                                /////////////////////////////////////////////////*/
+
+				if(isSgInterfaceStatement(node) !=NULL){
+					if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
+						if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+							SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
+							if(isSgInterfaceSymbol(symbol)){
+								((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+								delete symbol;
+								//printf("A SgInterfaceSymbol was deleted\n");  
+							}
+						}
+					}		
+								
+				}			
 				
+				
+				if(isSgModuleStatement(node) !=NULL){
+					if(((SgClassDeclaration*)node)->get_scope()!=NULL){
+						if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+							SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
+							if(isSgModuleSymbol(symbol)){
+								((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+								delete symbol;
+								//printf("A SgModuleSymbol was deleted\n");  
+							}
+						}
+					}		
+								
+				}	
+
+
+//Tan: I got stuck in deleting the SgTemplateArgument 
+#if 0				
 				if(isSgTemplateInstantiationMemberFunctionDecl(node) !=NULL){     
 				   	if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()!=NULL){
 						if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL){	
@@ -11549,12 +11589,14 @@ SageInterface::deleteAST ( SgNode* n )
 					traverseMemoryPoolVisitorPattern(visitor);		
 				}											
 					
-
 #endif
+
 			//Normal nodes  will be removed in a post-order way
 			delete node;
 			}
 		};
+
+
      	  DeleteAST deleteTree;
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
