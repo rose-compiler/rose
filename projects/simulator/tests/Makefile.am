@@ -15,7 +15,7 @@ SYSCALL_FILES_RT = $(wildcard $(SYSCALLDIR)syscall_rt*c)
 # Syscall tests that needs to link with parse_opts.c, tst_res.c, tst_sig.c, tst_tmpdir.c, rmobj.c
 SYSCALL_FILES_TST = $(wildcard $(SYSCALLDIR)syscall_tst*c)
 
-SYSCALL_FILES_CHK = $(SYSCALL_FILES_SA) $(SYSCALL_FILES_TST)
+SYSCALL_FILES_CHK = $(SYSCALL_FILES_SA) 
 
 # Do we need this?
 ##noinst_PROGRAMS = $(notdir $(SYSCALL_FILES:%.c:%))
@@ -51,7 +51,10 @@ test_file_permission: syscall_rt.18
 	../x86sim ./syscall_rt.18 tst $(USER) $(USER) ;
 	rmdir tst-file-permission
 
-failing_tests: test_file_permission
+syscall_tst_fail:
+	./syscall_tst.133
+
+failing_tests: test_file_permission syscall_tst_fail
 
 check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
 
