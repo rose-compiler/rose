@@ -262,39 +262,71 @@ protected:
      *  interpretation. */
     void build_master_symbol_table(SgAsmInterpretation*);
 
-    /** Finds basic relocation parameters for relocations.  Given a relocation entry, a symbol table, and a symbol resolver,
-     *  return the following information:
-     *  <ul>
-     *    <li>The symbol, if any, associated with the relocation, returned through the @p reloc_symbol_p argument.</li>
-     *    <li>The symbol, if any, which is the corresponding definition for the relocation symbol by consulting
-     *        the supplied resolver object.  This symbol is returned via the @p source_symbol_p argument.</li>
-     *    <li>The adjustment due to memory mapping that must be applied to the source symbol value. The adjustment
-     *        is the difference between the actual mapped address and the preferred mapped address of the source
-     *        symbol's section (i.e., the section containing the symbol's value interpreted as an address).</li>
-     *    <li>The adjustment due to memory mapping of the relocation offset.  This is the difference between
-     *        the actual mapped address and the preferred mapped address of the section containing the relocation
-     *        offset interpreted as an address.</li>
-     *  </ul>
+    /*========================================================================================================================
+     * Methods returning prerequisite information for fixups.  These names all begin with "fixup_info_".
+     *======================================================================================================================== */
+protected:
+
+    /** Returns the defining symbol for a relocation, if any.  The relocation optionally points to a symbol under the same
+     *  file header as the relocation.  We then consult the supplied @p resolver to find a defining symbol under a possibly
+     *  different file header of the same interpretation.  The defining symbol is returned.
      *
-     *  If the relocation does not reference a symbol then @p reloc_symbol_p will point to the null pointer and
-     *  @p reloc_adj_p will point to zero.  If the relocation does not reference a symbol, or the symbol has no definition
-     *  then @p source_symbol_p will point to the null pointer and @p source_adj_p will point to zero. */
-    void get_fixup_info(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
-                        SgAsmElfSymbol **source_symbol_p/*out*/, rose_addr_t *source_adj_p/*out*/,
-                        SgAsmElfSymbol **reloc_symbol_p/*out*/, rose_addr_t *reloc_adj_p/*out*/);
+     *  If the relocation does not refer to a symbol, or the symbol is weak with no definition then a null pointer is
+     *  returned. Otherwise, if a defining symbol cannot be located via the resolver, then an Exception is thrown.
+     *
+     *  Debugging information is conditionally output and indented four spaces. */
+    SgAsmElfSymbol *fixup_info_reloc_symbol(SgAsmElfRelocEntry*, const SymverResolver&);
+
+    /** Returns the virtual address where a relocation should be supplied.  The relocation address is computed by treating the
+     *  relocation offset as a virtual address, finding the section that would have contained that virtual address had all
+     *  sections of the relocation's header been mapped at their preferred addresses, and returning the sum of the relocation
+     *  offset with the difference between the section's actual and preferred mapping addresses.  The section and adjustment
+     *  are optionally returned through the @p section_p and @p adj_p pointer arguments.
+     *
+     *  If no section can be found for the relocation offset then an Exception is thrown.
+     *
+     *  Debugging information is conditionally output and indented four spaces. */
+    rose_addr_t fixup_info_target_va(SgAsmElfRelocEntry*, SgAsmGenericSection **section_p=NULL, rose_addr_t *adj_p=NULL);
+
+    /** Returns the virtual address of a symbol adjusted for remapping.  The return value is computed by treating the symbol
+     *  value as a virtual address, finding the section that would have contained that virtual address had all sections of the
+     *  symbol's header been mapped at their preferred addresses, and returning the sum of the symbol value with the
+     *  difference between the section's actual and preferred mapping addresses.  The section and adjustment are optionally
+     *  returned through the @p section_p and @p adj_p pointer arguments.
+     *
+     *  If no section can be found for the relocation offset then an Exception is thrown.
+     *
+     *  Debugging information is conditionally output and indented four spaces. */
+    rose_addr_t fixup_info_symbol_va(SgAsmElfSymbol*, SgAsmGenericSection **section_p=NULL, rose_addr_t *adj_p=NULL);
+
+    /** Returns the addend associated with a relocation.  If the relocation appears in a RELA relocation section then the
+     *  addend is that which is specified in the relocation entry itself.  Otherwise the supplied relocation target virtual
+     *  address and memory map are used to read the addend from specimen memory.
+     *
+     *  The @p nbytes arguments indicates how many bytes are read from the specimen's memory if the relocation is not of the
+     *  RELA variety.  The byte sex is obtained from information in the relocation's file header.
+     *
+     *  An Exception is thrown if an attempt is made to read from memory which is not mapped or not readable. */
+    rose_addr_t fixup_info_addend(SgAsmElfRelocEntry*, rose_addr_t target_va, MemoryMap*, size_t nbytes);
+
+    /*========================================================================================================================
+     * Methods that apply a relocation fixup.  These names all begin with "fixup_apply_".
+     *======================================================================================================================== */
+protected:
+
 
     /** Performs relocation fixup by inserting a symbol value into memory.  The symbol value is adjusted according to how much
      *  the symbol's section was translated during memory mapping. */
-    void fixup_symbol_value(SgAsmElfRelocEntry*, const SymverResolver&, size_t nbytes, MemoryMap*);
+    void fixup_apply_symbol_value(SgAsmElfRelocEntry*, const SymverResolver&, size_t nbytes, MemoryMap*);
 
     /** Copies symbol memory to the relocation target.  This is usually used to copy initialized library data (initialized by
      *  the loader calling a constructor) into a common location in the executable's .bss. */
-    void fixup_symbol_copy(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
+    void fixup_apply_symbol_copy(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
 
     /** Performs a relative fixup. The quantity A+B is written to the relocation target, where A is the addend either from the
      *  specimen memory (REL) or the relocation record (RELA) and B is the base address (difference between actual mapped
      *  address and preferred address for the section containing the relocation target). */
-    void fixup_relative(SgAsmElfRelocEntry*, const SymverResolver&, const size_t addr_size, MemoryMap*);
+    void fixup_apply_relative(SgAsmElfRelocEntry*, const SymverResolver&, const size_t addr_size, MemoryMap*);
 
     /*========================================================================================================================
      * Functions moved here from the BinaryLoader_ElfSupport name space.
@@ -323,8 +355,6 @@ protected:
     /** Symbol table for an entire interpretation.  This symbol table is created by the fixup() method via
      *  build_master_symbol_table() and used by various relocation fixups. */
     SymbolMap p_symbols;
-    
-
 };
 
 #endif /*ROSE_BINARYLOADERELF_H*/

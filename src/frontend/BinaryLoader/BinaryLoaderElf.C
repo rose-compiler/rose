@@ -637,129 +637,200 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
 }
 
 /*========================================================================================================================
- * Relocation fixups
+ * Relocation fixup information methods. Names all begin with "fixup_info_".
  *======================================================================================================================== */
 
-void
-BinaryLoaderElf::get_fixup_info(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
-                                SgAsmElfSymbol **source_symbol_p/*out*/, rose_addr_t *source_adj_p/*out*/,
-                                SgAsmElfSymbol **reloc_symbol_p/*out*/, rose_addr_t *reloc_adj_p/*out*/)
+SgAsmElfSymbol *
+BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver)
 {
-    ROSE_ASSERT(NULL != reloc);
-    SgAsmElfSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
-    ROSE_ASSERT(NULL != reloc_section);
-    SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(reloc_section->get_linked_section());
-    ROSE_ASSERT(NULL != linkedSymbolSection);
-
-    /* Find the symbol associated with the relocation entry, and the corresponding defining symbol. */
-    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
-    if (reloc->get_sym()>0) {
-        /* Relocation references a symbol. Get the symbol. */
-        ROSE_ASSERT(reloc->get_sym() < linkedSymbolSection->get_symbols()->get_symbols().size());
-        relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
-        ROSE_ASSERT(NULL != relocSymbol);
-        VersionedSymbol relocVSymbol = resolver.get_versioned_symbol(relocSymbol);
-        if (get_debug())
-            fprintf(get_debug(), "    reloc symbol: %s\n", relocVSymbol.get_versioned_name().c_str());
-
-        /* Find the defining symbol associated with the relocation symbol.  Call this the source symbol. */
-        std::string symbolName=relocVSymbol.get_name();
-        const SymbolMapEntry *symbolEntry = p_symbols.lookup(symbolName);
-        bool is_weak = relocSymbol->get_elf_binding()==SgAsmElfSymbol::STB_WEAK;
-        if (!symbolEntry && !is_weak) {
-            if (get_debug())
-                fprintf(get_debug(), "    could not find symbol in symbol map (skipping relocation)\n");
-            throw Exception(symbolName + " not defined in master symbol table");
-        }
-        if (symbolEntry) {
-            VersionedSymbol sourceVSymbol = symbolEntry->get_vsymbol(relocVSymbol);
-            sourceSymbol = sourceVSymbol.get_symbol();
-            ROSE_ASSERT(NULL != sourceSymbol);
-            ROSE_ASSERT(0 != sourceSymbol->get_st_shndx());/* test an assumption [MCB] */
-        }
+    ROSE_ASSERT(reloc!=NULL);
+    if (0==reloc->get_sym()) {
+        if (get_debug()) fprintf(get_debug(), "    reloc symbol: <none>\n");
+        return NULL;
     }
 
-    /* Get the relocation target adjustment. The target is the address where the relocation fixup is applied. The adjustment
-     * is calculated as follows: find the section containg the relocation's offset interpreted as a virtual address.  The
-     * adjustment is the difference between the section's actual mapped address and its preferred mapped address. */
-    SgAsmGenericHeader* relocHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc->get_parent());
-    SgAsmGenericSection* targetSection = find_section_by_preferred_va(relocHeader, reloc->get_r_offset());
-    ROSE_ASSERT(targetSection!=NULL);
-    rose_addr_t target_adj = targetSection->get_mapped_actual_va() - targetSection->get_mapped_preferred_va();
+    /* Look up symbol referenced by the relocation entry */
+    SgAsmElfSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
+    ROSE_ASSERT(reloc_section!=NULL);
+    SgAsmElfSymbolSection* symbol_section = isSgAsmElfSymbolSection(reloc_section->get_linked_section());
+    ROSE_ASSERT(symbol_section!=NULL);
+    ROSE_ASSERT(reloc->get_sym() < symbol_section->get_symbols()->get_symbols().size());
+    SgAsmElfSymbol *reloc_sym = symbol_section->get_symbols()->get_symbols()[reloc->get_sym()];
+    ROSE_ASSERT(reloc_sym!=NULL);
+    VersionedSymbol reloc_vsym = resolver.get_versioned_symbol(reloc_sym);
+    if (get_debug())
+        fprintf(get_debug(), "    reloc symbol: %s\n", reloc_vsym.get_versioned_name().c_str());
+
+    /* Find the defining versioned symbol associated with the relocation symbol.  This is the return value. */
+    std::string symbol_name = reloc_vsym.get_name();
+    const SymbolMapEntry *symbol_entry = p_symbols.lookup(symbol_name);
+    bool is_weak = reloc_sym->get_elf_binding() == SgAsmElfSymbol::STB_WEAK;
+    if (!symbol_entry) {
+        if (!is_weak) {
+            if (get_debug()) fprintf(get_debug(), "    could not find symbol in master symbol table\n");
+            throw Exception(symbol_name + " not defined in master symbol table");
+        }
+        return NULL; /*weak symbol with no definition*/
+    }
+
+    /* Convert versioned symbol into an ELF Symbol */
+    VersionedSymbol source_vsym = symbol_entry->get_vsymbol(reloc_vsym);
+    SgAsmElfSymbol *retval = source_vsym.get_symbol();
+    ROSE_ASSERT(retval!=NULL);
+    ROSE_ASSERT(0 != retval->get_st_shndx());/* test an assumption [MCB] */
+    return retval;
+}
+
+rose_addr_t
+BinaryLoaderElf::fixup_info_target_va(SgAsmElfRelocEntry *reloc, SgAsmGenericSection **section_p, rose_addr_t *adj_p)
+{
+    SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    SgAsmGenericSection *section = find_section_by_preferred_va(header, reloc->get_r_offset());
+    if (!section) {
+        if (get_debug())
+            fprintf(get_debug(), "    target: no suitable section at preferred va 0x%08"PRIx64"\n", reloc->get_r_offset());
+        throw Exception("reloc target " + StringUtility::addrToString(reloc->get_r_offset()) + " is not mapped");
+    }
+            
+    rose_addr_t target_adj = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
     rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+
     if (get_debug()) {
-        fprintf(get_debug(), "    target: file=\"%s\"\n", relocHeader->get_file()->get_name().c_str());
-        fprintf(get_debug(), "            section=[%d] \"%s\"\n", targetSection->get_id(), targetSection->get_name()->c_str());
+        fprintf(get_debug(), "    target: file=\"%s\"\n", header->get_file()->get_name().c_str());
+        fprintf(get_debug(), "            section=[%d] \"%s\"\n", section->get_id(), section->get_name()->c_str());
         fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
-                targetSection->get_mapped_preferred_va(), targetSection->get_mapped_actual_va());
+                section->get_mapped_preferred_va(), section->get_mapped_actual_va());
         fprintf(get_debug(), "            va 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                 reloc->get_r_offset(), target_adj, target_va);
     }
 
-    /* Get the relocation source adjustment. The source is the defining (source) symbol corresponding to the symbol referred
-     * to by the relocation, if any, as calculated above.  The adjustment is determined by finding the section containing the
-     * symbol's value interpreted as an address, and taking the difference between the section's actual mapped address and its
-     * preferred mapped address. */
-    rose_addr_t symbol_va = 0;
-    rose_addr_t source_adj = 0;
-    if (sourceSymbol) {
-        SgAsmGenericHeader* symbolHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(sourceSymbol);
-        SgAsmGenericSection* sourceSection = find_section_by_preferred_va(symbolHeader, sourceSymbol->get_value());
-        ROSE_ASSERT(sourceSection!=NULL);
-        source_adj = sourceSection->get_mapped_actual_va() - sourceSection->get_mapped_preferred_va();
-        symbol_va = sourceSymbol->get_value() + source_adj;
-        if (get_debug()) {
-            fprintf(get_debug(), "    source: file=\"%s\"\n", symbolHeader->get_file()->get_name().c_str());
-            fprintf(get_debug(), "            section=[%d] \"%s\"\n",
-                    sourceSection->get_id(), sourceSection->get_name()->c_str());
-            fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
-                    sourceSection->get_mapped_preferred_va(), sourceSection->get_mapped_actual_va());
-            fprintf(get_debug(), "            value 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                    sourceSymbol->get_value(), source_adj, symbol_va);
-        }
-    } else if (get_debug()) {
-        fprintf(get_debug(), "    source: weak and not defined; using zero as value\n");
-    }
-    
-    /* Return values */
-    if (source_symbol_p)
-        *source_symbol_p = sourceSymbol;
-    if (source_adj_p)
-        *source_adj_p = source_adj;
-    if (reloc_symbol_p)
-        *reloc_symbol_p = relocSymbol;
-    if (reloc_adj_p)
-        *reloc_adj_p = target_adj;
+    if (section_p)
+        *section_p = section;
+    if (adj_p)
+        *adj_p = target_adj;
+    return target_va;
 }
 
-void
-BinaryLoaderElf::fixup_symbol_value(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
-                                    const size_t addrSize, MemoryMap *memmap)
+rose_addr_t
+BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSection **section_p, rose_addr_t *adj_p)
 {
-    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
-    rose_addr_t source_adj, target_adj;
-    get_fixup_info(reloc, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
-    rose_addr_t symbol_va = sourceSymbol ? sourceSymbol->get_value() + source_adj : 0;
-    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
-    
-    /* Fixup mapped memory. FIXME: we're assuming the specimen is for a little-endian CPU [RPM 2010-09-15] */
-    if (get_debug()) {
-        fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu bytes) to address 0x%08"PRIx64"\n",
-                symbol_va, addrSize, target_va);
+    if (!symbol) {
+        if (get_debug())
+            fprintf(get_debug(), "    symbol: no symbol; possibly weak with no definition\n");
+        if (section_p)
+            *section_p = NULL;
+        if (adj_p)
+            *adj_p = 0;
+        return 0;
     }
-    switch (addrSize) {
+
+    SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(symbol);
+    SgAsmGenericSection *section = find_section_by_preferred_va(header, symbol->get_value());
+    if (!section) {
+        if (get_debug())
+            fprintf(get_debug(), "    symbol: no suitable section at preferred va 0x%08"PRIx64"\n", symbol->get_value());
+        throw Exception("symbol value " + StringUtility::addrToString(symbol->get_value()) + " is not mapped");
+    }
+
+    rose_addr_t symbol_adj = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+    rose_addr_t symbol_va = symbol->get_value() + symbol_adj;
+    if (get_debug()) {
+        fprintf(get_debug(), "    symbol: file=\"%s\"\n", header->get_file()->get_name().c_str());
+        fprintf(get_debug(), "            section=[%d] \"%s\"\n", section->get_id(), section->get_name()->c_str());
+        fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
+                section->get_mapped_preferred_va(), section->get_mapped_actual_va());
+        fprintf(get_debug(), "            value 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                symbol->get_value(), symbol_adj, symbol_va);
+    }
+
+    if (section_p)
+        *section_p = section;
+    if (adj_p)
+        *adj_p = symbol_adj;
+    return symbol_va;
+}
+
+rose_addr_t
+BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, MemoryMap *memmap, size_t nbytes)
+{
+    SgAsmElfRelocSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
+    ROSE_ASSERT(reloc_section!=NULL);
+    
+    if (reloc_section->get_uses_addend()) {
+        if (get_debug())
+            fprintf(get_debug(), "    addend from reloc is 0x%08"PRIx64"\n", reloc->get_r_addend());
+        return reloc->get_r_addend();
+    }
+
+    if (get_debug())
+        fprintf(get_debug(), "    reading %zu-byte addend from memory at 0x%08"PRIx64"\n", nbytes, target_va);
+    rose_addr_t retval = 0;
+    SgAsmExecutableFileFormat::ByteOrder sex = reloc_section->get_header()->get_sex();
+    ROSE_ASSERT(memmap!=0);
+    switch (nbytes) {
         case 4: {
-            uint32_t le;
-            SgAsmExecutableFileFormat::host_to_le(symbol_va, &le);
-            size_t nwrite = memmap->write(&le, target_va, sizeof le);
-            ROSE_ASSERT(nwrite==sizeof le);
+            uint32_t guest;
+            size_t nread = memmap->read(&guest, target_va, sizeof guest);
+            if (nread<sizeof guest) {
+                if (get_debug())
+                    fprintf(get_debug(), "    short read of relocation addend at 0x%08"PRIx64"\n", target_va);
+                throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
+            }
+            retval = SgAsmExecutableFileFormat::disk_to_host(sex, guest);
             break;
         }
         case 8: {
-            uint64_t le;
-            SgAsmExecutableFileFormat::host_to_le(symbol_va, &le);
-            size_t nwrite = memmap->write(&le, target_va, sizeof le);
-            ROSE_ASSERT(nwrite==sizeof le);
+            uint64_t guest;
+            size_t nread = memmap->read(&guest, target_va, sizeof guest);
+            if (nread<sizeof guest) {
+                if (get_debug())
+                    fprintf(get_debug(), "    short read of relocation addend at 0x%08"PRIx64"\n", target_va);
+                throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
+            }
+            retval = SgAsmExecutableFileFormat::disk_to_host(sex, guest);
+            break;
+        }
+        default:
+            ROSE_ASSERT(!"not implemented");
+    }
+
+    if (get_debug())
+        fprintf(get_debug(), "    addend from memory is 0x%08"PRIx64"\n", retval);
+    return retval;
+}
+
+/*========================================================================================================================
+ * Methods that apply relocation fixups. Their names all begin with "fixup_apply_".
+ *======================================================================================================================== */
+
+void
+BinaryLoaderElf::fixup_apply_symbol_value(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
+                                          const size_t addr_size, MemoryMap *memmap)
+{
+    SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
+    rose_addr_t target_va = fixup_info_target_va(reloc);
+    rose_addr_t symbol_va = fixup_info_symbol_va(symbol);
+
+    SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    SgAsmExecutableFileFormat::ByteOrder sex = header->get_sex();
+
+    if (get_debug()) {
+        fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu bytes) to address 0x%08"PRIx64"\n",
+                symbol_va, addr_size, target_va);
+    }
+    switch (addr_size) {
+        case 4: {
+            uint32_t guest;
+            SgAsmExecutableFileFormat::host_to_disk(sex, symbol_va, &guest);
+            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            ROSE_ASSERT(nwrite==sizeof guest);
+            break;
+        }
+        case 8: {
+            uint64_t guest;
+            SgAsmExecutableFileFormat::host_to_disk(sex, symbol_va, &guest);
+            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            ROSE_ASSERT(nwrite==sizeof guest);
             break;
         }
         default:
@@ -768,16 +839,12 @@ BinaryLoaderElf::fixup_symbol_value(SgAsmElfRelocEntry* reloc, const SymverResol
 }
 
 void
-BinaryLoaderElf::fixup_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
-                                   MemoryMap *memmap)
+BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
 {
-    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
-    rose_addr_t source_adj, target_adj;
-    get_fixup_info(reloc, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
-    ROSE_ASSERT(sourceSymbol!=NULL);
-    rose_addr_t symbol_va = sourceSymbol->get_value() + source_adj;
-    size_t      symbol_sz = sourceSymbol->get_size();
-    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+    SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
+    rose_addr_t target_va = fixup_info_target_va(reloc);
+    rose_addr_t symbol_va = fixup_info_symbol_va(symbol);
+    size_t symbol_sz = symbol->get_size();
     
     if (get_debug()) {
         fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu byte%s) to address 0x%08"PRIx64"\n",
@@ -797,36 +864,35 @@ BinaryLoaderElf::fixup_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolv
 }
 
 void
-BinaryLoaderElf::fixup_relative(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver, 
-                                const size_t addr_size, MemoryMap *memmap)
+BinaryLoaderElf::fixup_apply_relative(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver, 
+                                      const size_t addr_size, MemoryMap *memmap)
 {
-    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
-    rose_addr_t source_adj, target_adj;
-    get_fixup_info(reloc, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
-    ROSE_ASSERT(relocSymbol==NULL); /* _RELATIVE relocs must set their symbol index to zero */
-    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+    SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
+    ROSE_ASSERT(symbol==NULL); /* _RELATIVE relocs must set their symbol index to zero */
+    rose_addr_t target_adj;
+    rose_addr_t target_va = fixup_info_target_va(reloc, NULL, &target_adj);
+    rose_addr_t value = fixup_info_addend(reloc, target_va, memmap, addr_size) + target_adj;
 
-    /* FIXME: Assumes reloc is a RELA. REL relocs require reading from specimen memory. [RPM 2010-09-15] */
-    rose_addr_t value = reloc->get_r_addend() + target_adj;
+    SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    SgAsmExecutableFileFormat::ByteOrder sex = header->get_sex();
 
-    /* FIXME: assumes specimen is little endian. [RPM 2010-09-15] */
     if (get_debug()) {
         fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu bytes) to address 0x%08"PRIx64"\n",
                 value, addr_size, target_va);
     }
     switch (addr_size) {
         case 4: {
-            uint32_t le;
-            SgAsmExecutableFileFormat::host_to_le(value, &le);
-            size_t nwrite = memmap->write(&le, target_va, sizeof le);
-            ROSE_ASSERT(nwrite==sizeof le);
+            uint32_t guest;
+            SgAsmExecutableFileFormat::host_to_disk(sex, value, &guest);
+            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            ROSE_ASSERT(nwrite==sizeof guest);
             break;
         }
         case 8: {
-            uint64_t le;
-            SgAsmExecutableFileFormat::host_to_le(value, &le);
-            size_t nwrite = memmap->write(&le, target_va, sizeof le);
-            ROSE_ASSERT(nwrite==sizeof le);
+            uint64_t guest;
+            SgAsmExecutableFileFormat::host_to_disk(sex, value, &guest);
+            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            ROSE_ASSERT(nwrite==sizeof guest);
             break;
         }
         default:
@@ -1050,13 +1116,13 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_386_JMP_SLOT:
                 case SgAsmElfRelocEntry::R_386_GLOB_DAT:
-                    fixup_symbol_value(reloc, resolver, 4, memmap);
+                    fixup_apply_symbol_value(reloc, resolver, 4, memmap);
                     break;
                 case SgAsmElfRelocEntry::R_386_COPY:
-                    fixup_symbol_copy(reloc, resolver, memmap);
+                    fixup_apply_symbol_copy(reloc, resolver, memmap);
                     break;
                 case SgAsmElfRelocEntry::R_386_RELATIVE:
-                    fixup_relative(reloc, resolver, 4, memmap);
+                    fixup_apply_relative(reloc, resolver, 4, memmap);
                     break;
 #if 0
                 case SgAsmElfRelocEntry::R_386_32:
@@ -1099,7 +1165,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_X86_64_JUMP_SLOT:
                 case SgAsmElfRelocEntry::R_X86_64_GLOB_DAT:
-                    fixup_symbol_value(reloc, resolver, 8, memmap);
+                    fixup_apply_symbol_value(reloc, resolver, 8, memmap);
                     break;
 #if 0
                 case SgAsmElfRelocEntry::R_X86_64_32:
